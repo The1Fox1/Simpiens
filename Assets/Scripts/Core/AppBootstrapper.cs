@@ -1,0 +1,37 @@
+using UnityEngine;
+using VContainer;
+using VContainer.Unity;
+using Simpiens.Entities;
+
+namespace Simpiens.Core
+{
+    /// <summary>
+    /// The absolute entry point for the simulation.
+    /// This removes the need for an "App" or "GameManager" GameObject in the scene.
+    /// </summary>
+    public class AppBootstrapper : LifetimeScope
+    {
+        // This runs before any scene is loaded, injecting our entire game structure programmatically.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void AutoBoot()
+        {
+            GameObject bootGo = new GameObject("[AppBootstrapper]");
+            DontDestroyOnLoad(bootGo);
+            
+            // VContainer's LifetimeScope builds automatically in Awake()
+            bootGo.AddComponent<AppBootstrapper>();
+        }
+
+        protected override void Configure(IContainerBuilder builder)
+        {
+            // 1. Core Services
+            builder.RegisterEntryPoint<ScreenBoundsGenerator>();
+            
+            // 2. Factories
+            builder.Register<NodeFactory>(Lifetime.Singleton);
+
+            // 3. Entry Points (App Logic)
+            builder.RegisterEntryPoint<SimulationStarter>();
+        }
+    }
+}

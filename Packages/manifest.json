@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "com.unity.addressables": "2.3.1",
+    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.feature.2d": "2.0.2",
     "com.unity.ide.rider": "3.0.39",
