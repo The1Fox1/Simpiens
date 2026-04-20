@@ -7,6 +7,8 @@ Role: Full-stack architecture, focusing on separating C# simulation logic from a
 
 Core Constraints:
 
+Unity Libraries preference: Be aware of type overlap between the standard .NET libraries and Unity specific types (such as Unity.GUID vs System.Guid) and lean toward Unity types unless there's a reason not to.
+
 No Logic in MonoBehaviours: MonoBehaviour scripts must strictly act as dumb views. They only handle rendering, animations, and reading state from a central manager.
 
 Dual-Loop System: Create a central SimulationManager that handles the real-time Unity tick, and a separate CognitiveEngine that processes agent reasoning asynchronously via Tasks/message queues.
