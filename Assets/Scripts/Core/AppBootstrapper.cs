@@ -3,6 +3,7 @@ using VContainer;
 using VContainer.Unity;
 using Simpiens.Entities;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition;
 using Simpiens.Intervention;
 
@@ -34,6 +35,8 @@ namespace Simpiens.Core
             builder.Register<NodeFactory>(Lifetime.Singleton);
 
             // 3. Simulation & Cognition Systems
+            builder.Register<WorldRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<ContextValidator>(Lifetime.Singleton);

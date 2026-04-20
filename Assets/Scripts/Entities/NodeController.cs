@@ -1,6 +1,6 @@
+using Simpiens.Simulation;
 using UnityEngine;
 using VContainer;
-using Simpiens.Simulation;
 
 namespace Simpiens.Entities
 {
@@ -13,7 +13,17 @@ namespace Simpiens.Entities
     {
         private float _baseSpeed;
         private Rigidbody2D rb;
+        private CircleCollider2D col;
         private ISimulationClock _simulationClock;
+
+        public GUID Id { get; private set; }
+
+        // Expose radius for spatial hashing
+        public float Radius => col != null ? col.radius : 0.5f;
+
+        // Expose position and velocity for the snapshot
+        public Vector2 Position => transform.position;
+        public Vector2 Velocity => rb.linearVelocity;
 
         [Inject]
         public void Construct(ISimulationClock clock)
@@ -23,10 +33,11 @@ namespace Simpiens.Entities
         }
 
         // Configuration is now injected via code, completely bypassing the Unity Inspector
-        public void Initialize(NodeConfiguration config)
+        public void Initialize(GUID id, NodeConfiguration config)
         {
+            Id = id;
             _baseSpeed = config.Speed;
-            
+
             // Assign a random initial direction
             float randomAngle = Random.Range(0f, 360f);
             Vector2 initialDirection = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
@@ -40,11 +51,12 @@ namespace Simpiens.Entities
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            
+            col = GetComponent<CircleCollider2D>();
+
             // For a top-down 2D simulation, we don't want nodes to fall or rotate when bumping.
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
-            
+
             // Continuous dynamic collision detection prevents fast-moving nodes from tunneling 
             // through boundaries, though it is slightly more CPU intensive.
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -53,7 +65,7 @@ namespace Simpiens.Entities
         private void HandleMultiplierChanged(float newMultiplier)
         {
             if (rb == null) return;
-            
+
             // Re-scale the current velocity magnitude while preserving direction
             if (rb.linearVelocity.sqrMagnitude > 0.001f)
             {

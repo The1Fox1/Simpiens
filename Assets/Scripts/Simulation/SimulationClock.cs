@@ -7,7 +7,7 @@ namespace Simpiens.Simulation
     public class SimulationClock : ISimulationClock, ITickable
     {
         public long CurrentTick { get; private set; }
-        public float TimeMultiplier { get; private set; } = 3f;
+        public float TimeMultiplier { get; private set; } = 1f;
 
         public event Action<long> OnSimulationTick;
         public event Action<float> OnTimeMultiplierChanged;
