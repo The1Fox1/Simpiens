@@ -1,4 +1,6 @@
 using UnityEngine;
+using VContainer;
+using Simpiens.Simulation;
 
 namespace Simpiens.Entities
 {
@@ -9,22 +11,30 @@ namespace Simpiens.Entities
     [RequireComponent(typeof(CircleCollider2D))]
     public class NodeController : MonoBehaviour
     {
-        private float _speed;
+        private float _baseSpeed;
         private Rigidbody2D rb;
+        private ISimulationClock _simulationClock;
+
+        [Inject]
+        public void Construct(ISimulationClock clock)
+        {
+            _simulationClock = clock;
+            _simulationClock.OnTimeMultiplierChanged += HandleMultiplierChanged;
+        }
 
         // Configuration is now injected via code, completely bypassing the Unity Inspector
         public void Initialize(NodeConfiguration config)
         {
-            _speed = config.Speed;
+            _baseSpeed = config.Speed;
             
             // Assign a random initial direction
             float randomAngle = Random.Range(0f, 360f);
             Vector2 initialDirection = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
 
             // Instead of translating in Update(), we set velocity once. 
-            // The physics engine handles continuous movement from here, eliminating 
-            // per-frame C# overhead and garbage generation for basic movement.
-            rb.linearVelocity = initialDirection * _speed;
+            // We scale the base speed by the clock's multiplier.
+            float initialMultiplier = _simulationClock != null ? _simulationClock.TimeMultiplier : 1f;
+            rb.linearVelocity = initialDirection * (_baseSpeed * initialMultiplier);
         }
 
         private void Awake()
@@ -40,8 +50,31 @@ namespace Simpiens.Entities
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         }
 
-        // We removed Update() entirely. 
-        // Zero allocation in hot paths is easily achieved if there is no hot path to begin with!
-        // The physics engine natively handles the bounds bouncing and inter-node collisions.
+        private void HandleMultiplierChanged(float newMultiplier)
+        {
+            if (rb == null) return;
+            
+            // Re-scale the current velocity magnitude while preserving direction
+            if (rb.linearVelocity.sqrMagnitude > 0.001f)
+            {
+                Vector2 currentDirection = rb.linearVelocity.normalized;
+                rb.linearVelocity = currentDirection * (_baseSpeed * newMultiplier);
+            }
+            else
+            {
+                // Edge case: if velocity was zero, pick a random direction to resume
+                float randomAngle = Random.Range(0f, 360f);
+                Vector2 dir = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
+                rb.linearVelocity = dir * (_baseSpeed * newMultiplier);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_simulationClock != null)
+            {
+                _simulationClock.OnTimeMultiplierChanged -= HandleMultiplierChanged;
+            }
+        }
     }
 }

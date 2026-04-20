@@ -1,52 +1,25 @@
-using UnityEngine;
-using Simpiens.Entities;
+using Simpiens.Simulation;
+using VContainer.Unity;
 
 namespace Simpiens.Core
 {
-    public class SimulationManager : MonoBehaviour
+    /// <summary>
+    /// Handles the real-time Unity tick, keeping it decoupled from slow agent cognition.
+    /// Implements ITickable from VContainer to run on Unity's Update loop without being a MonoBehaviour.
+    /// </summary>
+    public class SimulationManager : ISimulationManager, ITickable
     {
-        [Header("Simulation Settings")]
-        [Tooltip("The prefab to spawn for each Simpien node.")]
-        [SerializeField] private NodeController nodePrefab;
-        [Tooltip("How many nodes to spawn at the start of the simulation.")]
-        [SerializeField] private int initialNodeCount = 20;
+        public bool IsPaused { get; private set; }
 
-        private Camera mainCamera;
-        private Vector2 spawnBounds;
+        public void Pause() => IsPaused = true;
+        public void Resume() => IsPaused = false;
 
-        private void Start()
+        public void Tick()
         {
-            mainCamera = Camera.main;
-            // Calculate bounds slightly smaller than the screen to spawn them safely inside
-            spawnBounds = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, mainCamera.transform.position.z)) * 0.9f;
+            if (IsPaused) return;
 
-            InitializeSimulation();
-        }
-
-        private void InitializeSimulation()
-        {
-            if (nodePrefab == null)
-            {
-                Debug.LogError("SimulationManager: Node Prefab is not assigned in the Inspector!");
-                return;
-            }
-
-            for (int i = 0; i < initialNodeCount; i++)
-            {
-                SpawnNode();
-            }
-        }
-
-        private void SpawnNode()
-        {
-            // Generate a random position within spawn bounds
-            Vector2 spawnPosition = new Vector2(
-                Random.Range(-spawnBounds.x, spawnBounds.x),
-                Random.Range(-spawnBounds.y, spawnBounds.y)
-            );
-
-            // Instantiate the prefab (this creates a clone of the GameObject in the scene)
-            Instantiate(nodePrefab, spawnPosition, Quaternion.identity);
+            // Fast loop: Physics, rendering updates, and immediate game rules.
+            // DO NOT process agent cognition here.
         }
     }
 }

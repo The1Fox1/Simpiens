@@ -1,0 +1,19 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Unity assets must use LF (Unity uses LF internally)
+*.unity text eol=lf
+*.asset text eol=lf
+*.prefab text eol=lf
+*.anim text eol=lf
+*.mat text eol=lf
+*.meta text eol=lf
+*.controller text eol=lf
+
+# Script files (handled by Rider/Antigravity)
+*.cs text eol=lf
+*.shader text eol=lf
+
+# Solution and project files (optional, LF is acceptable)
+*.sln text eol=lf
+*.csproj text eol=lf

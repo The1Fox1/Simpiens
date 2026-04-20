@@ -2,6 +2,9 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 using Simpiens.Entities;
+using Simpiens.Simulation;
+using Simpiens.Cognition;
+using Simpiens.Intervention;
 
 namespace Simpiens.Core
 {
@@ -30,7 +33,14 @@ namespace Simpiens.Core
             // 2. Factories
             builder.Register<NodeFactory>(Lifetime.Singleton);
 
-            // 3. Entry Points (App Logic)
+            // 3. Simulation & Cognition Systems
+            builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<ContextValidator>(Lifetime.Singleton);
+            builder.Register<ICognitiveEngine, CognitiveEngine>(Lifetime.Singleton);
+            builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
+
+            // 4. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();
         }
     }
