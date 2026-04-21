@@ -1,5 +1,6 @@
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Cognition.Pathfinding;
 using VContainer.Unity;
 
 namespace Simpiens.Core

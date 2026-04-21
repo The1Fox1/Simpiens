@@ -76,14 +76,39 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
+        /// Checks if a given cell is walkable (does not contain a Wall or Resource).
+        /// Returns false if out of bounds.
+        /// </summary>
+        public bool IsWalkable(int cellX, int cellY)
+        {
+            if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
+
+            int index = cellY * Width + cellX;
+            int count = CellCounts[index];
+            var cellArray = Grid[index];
+
+            for (int i = 0; i < count; i++)
+            {
+                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Resource)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Thread-safe query method for cognitive agents to find entities in a radius.
         /// </summary>
         public void GetEntitiesInRange(Vector2 position, float radius, List<EntitySnapshot> results)
         {
-            int minX = Mathf.Max(0, Mathf.FloorToInt((position.x - radius) / CellSize));
-            int maxX = Mathf.Min(Width - 1, Mathf.FloorToInt((position.x + radius) / CellSize));
-            int minY = Mathf.Max(0, Mathf.FloorToInt((position.y - radius) / CellSize));
-            int maxY = Mathf.Min(Height - 1, Mathf.FloorToInt((position.y + radius) / CellSize));
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+
+            int minX = Mathf.FloorToInt((position.x - radius + offsetX) / CellSize);
+            int maxX = Mathf.FloorToInt((position.x + radius + offsetX) / CellSize);
+            int minY = Mathf.FloorToInt((position.y - radius + offsetY) / CellSize);
+            int maxY = Mathf.FloorToInt((position.y + radius + offsetY) / CellSize);
 
             float sqrRadius = radius * radius;
 
@@ -91,7 +116,10 @@ namespace Simpiens.Simulation.Spatial
             {
                 for (int x = minX; x <= maxX; x++)
                 {
+                    if (x < 0 || x >= Width || y < 0 || y >= Height) continue;
+                    
                     int cellIndex = y * Width + x;
+                    
                     int count = CellCounts[cellIndex];
                     var cellArray = Grid[cellIndex];
 

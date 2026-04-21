@@ -1,8 +1,8 @@
+using Simpiens.Entities;
+using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
-using Simpiens.Entities;
-using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Core
 {
@@ -14,12 +14,14 @@ namespace Simpiens.Core
     {
         private readonly NodeFactory _nodeFactory;
         private readonly ISpatialPartition _spatialPartition;
+        private readonly IObjectResolver _resolver;
 
         [Inject]
-        public SimulationStarter(NodeFactory nodeFactory, ISpatialPartition spatialPartition)
+        public SimulationStarter(NodeFactory nodeFactory, ISpatialPartition spatialPartition, IObjectResolver resolver)
         {
             _nodeFactory = nodeFactory;
             _spatialPartition = spatialPartition;
+            _resolver = resolver;
         }
 
         public void Start()
@@ -35,17 +37,14 @@ namespace Simpiens.Core
                 worldHeight = cam.orthographicSize * 2f;
                 worldWidth = worldHeight * cam.aspect;
             }
-            
+
             // Initialize with the calculated bounds and a reasonable cell size
             _spatialPartition.Initialize(worldWidth, worldHeight, 1.0f);
 
-            // Test spawning a few nodes
-            for (int i = 0; i < 10; i++)
-            {
-                // We'll spawn them near the center
-                Vector2 randomPos = Random.insideUnitCircle * 2f;
-                _nodeFactory.CreateNode(randomPos);
-            }
+            // Attach GridVisualizer for Validation Testing
+            var visualizerGo = new GameObject("[GridVisualizer]");
+            var visualizer = visualizerGo.AddComponent<GridVisualizer>();
+            _resolver.Inject(visualizer);
         }
     }
 }

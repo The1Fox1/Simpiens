@@ -5,6 +5,8 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition;
+using Simpiens.Cognition.Pathfinding;
+using Simpiens.Cognition.Testing;
 using Simpiens.Intervention;
 
 namespace Simpiens.Core
@@ -37,13 +39,18 @@ namespace Simpiens.Core
             // 3. Simulation & Cognition Systems
             builder.Register<WorldRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<ContextValidator>(Lifetime.Singleton);
             builder.Register<ICognitiveEngine, CognitiveEngine>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
 
-            // 4. Entry Points (App Logic)
+            // 4. Testing & Validation Harness
+            builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces();
+
+            // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();
         }
     }

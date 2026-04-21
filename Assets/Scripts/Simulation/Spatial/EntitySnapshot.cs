@@ -13,13 +13,15 @@ namespace Simpiens.Simulation.Spatial
         public readonly Vector2 Position;
         public readonly Vector2 Velocity;
         public readonly float Radius;
+        public readonly EntityType Type;
 
-        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius)
+        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type)
         {
             Id = id;
             Position = position;
             Velocity = velocity;
             Radius = radius;
+            Type = type;
         }
     }
 }

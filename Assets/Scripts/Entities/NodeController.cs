@@ -1,4 +1,5 @@
 using Simpiens.Simulation;
+using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 
@@ -24,6 +25,8 @@ namespace Simpiens.Entities
         // Expose position and velocity for the snapshot
         public Vector2 Position => transform.position;
         public Vector2 Velocity => rb.linearVelocity;
+        
+        public EntityType Type { get; set; } = EntityType.Pawn;
 
         [Inject]
         public void Construct(ISimulationClock clock)
@@ -38,14 +41,19 @@ namespace Simpiens.Entities
             Id = id;
             _baseSpeed = config.Speed;
 
-            // Assign a random initial direction
-            float randomAngle = Random.Range(0f, 360f);
-            Vector2 initialDirection = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
+            // Only apply automatic physics velocity to Dynamic bodies (e.g. bouncing nodes)
+            // Kinematic bodies (like SwarmAgents) are moved explicitly via their own controllers.
+            if (rb.bodyType == RigidbodyType2D.Dynamic)
+            {
+                // Assign a random initial direction
+                float randomAngle = Random.Range(0f, 360f);
+                Vector2 initialDirection = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
 
-            // Instead of translating in Update(), we set velocity once. 
-            // We scale the base speed by the clock's multiplier.
-            float initialMultiplier = _simulationClock != null ? _simulationClock.TimeMultiplier : 1f;
-            rb.linearVelocity = initialDirection * (_baseSpeed * initialMultiplier);
+                // Instead of translating in Update(), we set velocity once. 
+                // We scale the base speed by the clock's multiplier.
+                float initialMultiplier = _simulationClock != null ? _simulationClock.TimeMultiplier : 1f;
+                rb.linearVelocity = initialDirection * (_baseSpeed * initialMultiplier);
+            }
         }
 
         private void Awake()
@@ -64,7 +72,7 @@ namespace Simpiens.Entities
 
         private void HandleMultiplierChanged(float newMultiplier)
         {
-            if (rb == null) return;
+            if (rb == null || rb.bodyType != RigidbodyType2D.Dynamic) return;
 
             // Re-scale the current velocity magnitude while preserving direction
             if (rb.linearVelocity.sqrMagnitude > 0.001f)
