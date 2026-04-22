@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
@@ -12,7 +12,7 @@ namespace Simpiens.Cognition.Pathfinding
 {
     public interface IAsyncPathfinder
     {
-        Task<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot);
+        UniTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot);
     }
 
     /// <summary>
@@ -42,24 +42,22 @@ namespace Simpiens.Cognition.Pathfinding
             _responsePool.Enqueue(response);
         }
 
-        public Task<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot)
+        public async UniTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot)
         {
             // Retain snapshot before sending to worker thread to ensure it stays alive.
             snapshot.Retain();
 
-            // Task.Run explicitly schedules the heavy array iteration onto a ThreadPool worker thread.
-            return Task.Run(() =>
+            try
             {
-                try
-                {
-                    return ProcessRequest(request, snapshot);
-                }
-                finally
-                {
-                    // Safe release once the background work is completed.
-                    snapshot.Release();
-                }
-            });
+                // Jumps off the main thread cleanly for zero-allocation background work
+                await UniTask.SwitchToThreadPool();
+                return ProcessRequest(request, snapshot);
+            }
+            finally
+            {
+                // Safe release once the background work is completed.
+                snapshot.Release();
+            }
         }
 
         private PathResponse ProcessRequest(PathRequest request, SharedWorldSnapshot snapshot)

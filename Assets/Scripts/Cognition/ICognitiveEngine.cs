@@ -1,5 +1,5 @@
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Simpiens.Cognition
 {
@@ -9,6 +9,6 @@ namespace Simpiens.Cognition
         /// Initiates the cognitive loop for a specific agent.
         /// This runs asynchronously outside the main Unity frame cycle.
         /// </summary>
-        Task<AgentDecision?> ProcessAgentCognitionAsync(string agentId, CancellationToken cancellationToken);
+        UniTask<AgentDecision?> ProcessAgentCognitionAsync(string agentId, CancellationToken cancellationToken);
     }
 }

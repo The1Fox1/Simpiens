@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition.Pathfinding;
@@ -27,13 +27,13 @@ namespace Simpiens.Cognition.Testing
             _currentPos2D = transform.position;
             
             // Initial request
-            RequestNewPath();
+            RequestNewPathAsync().Forget();
         }
 
-        private Task<PathResponse> _pendingPathTask;
+        private bool _isPathfinding;
         private float _retryTimer;
 
-        private void RequestNewPath()
+        private async UniTaskVoid RequestNewPathAsync()
         {
             if (_spatialPartition == null || _pathfinder == null) return;
 
@@ -67,7 +67,21 @@ namespace Simpiens.Cognition.Testing
                 TargetPosition = target
             };
             
-            _pendingPathTask = _pathfinder.CalculatePathAsync(request, snapshot);
+            _isPathfinding = true;
+            try
+            {
+                var response = await _pathfinder.CalculatePathAsync(request, snapshot);
+                OnPathComplete(response);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Pathfinding failed: {ex}");
+                _retryTimer = 0.5f;
+            }
+            finally
+            {
+                _isPathfinding = false;
+            }
         }
 
         private void OnPathComplete(PathResponse response)
@@ -93,23 +107,8 @@ namespace Simpiens.Cognition.Testing
         public void ManualUpdate() // Called by SwarmSpawner to avoid 1000 Update() overhead
         {
             // Non-blocking polling for path resolution
-            if (_pendingPathTask != null)
+            if (_isPathfinding)
             {
-                if (_pendingPathTask.IsCompleted)
-                {
-                    if (_pendingPathTask.IsFaulted)
-                    {
-                        Debug.LogError(_pendingPathTask.Exception);
-                        _pendingPathTask = null;
-                        _retryTimer = 0.5f; // Wait before retry on failure
-                    }
-                    else
-                    {
-                        var response = _pendingPathTask.Result;
-                        _pendingPathTask = null;
-                        OnPathComplete(response);
-                    }
-                }
                 return; // wait until path is resolved
             }
 
@@ -118,14 +117,14 @@ namespace Simpiens.Cognition.Testing
                 _retryTimer -= Time.deltaTime;
                 if (_retryTimer <= 0)
                 {
-                    RequestNewPath();
+                    RequestNewPathAsync().Forget();
                 }
                 return;
             }
 
             if (_currentPath == null || !_currentPath.IsValid)
             {
-                RequestNewPath();
+                RequestNewPathAsync().Forget();
                 return;
             }
 
@@ -145,7 +144,7 @@ namespace Simpiens.Cognition.Testing
                 {
                     _currentPath.ReturnToPool();
                     _currentPath = null;
-                    RequestNewPath();
+                    RequestNewPathAsync().Forget();
                     return;
                 }
             }
@@ -159,7 +158,7 @@ namespace Simpiens.Cognition.Testing
                     // Path complete!
                     _currentPath.ReturnToPool();
                     _currentPath = null;
-                    RequestNewPath();
+                    RequestNewPathAsync().Forget();
                     return;
                 }
                 _targetPos2D = _currentPath.Waypoints[_currentWaypointIndex];

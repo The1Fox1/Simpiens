@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Simpiens.Simulation;
 
 namespace Simpiens.Cognition
@@ -19,17 +20,20 @@ namespace Simpiens.Cognition
             _contextValidator = contextValidator;
         }
 
-        public async Task<AgentDecision?> ProcessAgentCognitionAsync(string agentId, CancellationToken cancellationToken)
+        public async UniTask<AgentDecision?> ProcessAgentCognitionAsync(string agentId, CancellationToken cancellationToken)
         {
             long initiatedTick = _simulationClock.CurrentTick;
 
             try
             {
                 // Note: Avoid Unity API calls in here. Use pure C# data structures.
-                
+
+                // Explicitly jump to a background thread
+                await UniTask.SwitchToThreadPool();
+
                 // Example simulated async delay representing inference or complex reasoning
-                await Task.Delay(100, cancellationToken);
-                
+                await UniTask.Delay(100, cancellationToken: cancellationToken);
+
                 // Ensure task stops if cancellation was requested
                 cancellationToken.ThrowIfCancellationRequested();
 
