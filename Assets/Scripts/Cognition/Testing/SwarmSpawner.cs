@@ -15,17 +15,24 @@ namespace Simpiens.Cognition.Testing
         private readonly IAsyncPathfinder _pathfinder;
         private readonly IWorldRegistry _registry;
 
-        private readonly List<DumbSwarmAgent> _agents = new List<DumbSwarmAgent>(1000);
+        private readonly List<AutonomousAgent> _agents = new List<AutonomousAgent>(1000);
 
-        public int SpawnCount = 1000;
+        public int SpawnCount = 10;
 
         [Inject]
-        public SwarmSpawner(ISpatialPartition spatialPartition, IAsyncPathfinder pathfinder, IWorldRegistry registry)
+        public SwarmSpawner(ISpatialPartition spatialPartition, IAsyncPathfinder pathfinder, IWorldRegistry registry, ISimulationManager simulationManager)
         {
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
             _registry = registry;
+
+            // In Epic 3, we create the evaluator once and share it among agents, or we could inject it
+            _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
+            _simulationManager = simulationManager;
         }
+
+        private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
+        private readonly ISimulationManager _simulationManager;
 
         public void Start()
         {
@@ -57,14 +64,11 @@ namespace Simpiens.Cognition.Testing
 
                 var controller = agentGo.AddComponent<NodeController>();
                 controller.Type = EntityType.Pawn;
-                controller.Initialize(GUID.Generate(), new NodeConfiguration(speed: 2f));
+                controller.Initialize(UnityEngine.GUID.Generate(), new NodeConfiguration(speed: 2f));
                 _registry.RegisterNode(controller);
 
-                var agent = agentGo.AddComponent<DumbSwarmAgent>();
-                agent.Initialize(_spatialPartition, _pathfinder);
-
-                // Only draw path for the first few to avoid drawing 1000 lines
-                agent.DrawPath = (i < 50);
+                var agent = agentGo.AddComponent<AutonomousAgent>();
+                agent.Initialize(controller.Id, _spatialPartition, _evaluator, _simulationManager);
 
                 _agents.Add(agent);
             }

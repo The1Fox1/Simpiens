@@ -5,5 +5,7 @@ namespace Simpiens.Simulation
         void Pause();
         void Resume();
         bool IsPaused { get; }
+
+        void EnqueueIntent(Simpiens.Cognition.Contracts.AgentIntent intent);
     }
 }
