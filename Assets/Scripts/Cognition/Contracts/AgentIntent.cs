@@ -7,6 +7,7 @@ namespace Simpiens.Cognition.Contracts
     public abstract class AgentIntent
     {
         public readonly UnityEngine.GUID AgentId;
+        public System.Action OnComplete { get; set; }
 
         protected AgentIntent(UnityEngine.GUID agentId)
         {

@@ -26,6 +26,8 @@ namespace Simpiens.Cognition
         public float Hunger { get; set; } = 50f;
         public float Energy { get; set; } = 100f;
 
+        public bool HasActiveIntent { get; private set; }
+
 
 
         public void Initialize(UnityEngine.GUID id, ISpatialPartition spatialPartition, ICognitiveEvaluator evaluator, ISimulationManager simulationManager)
@@ -40,7 +42,7 @@ namespace Simpiens.Cognition
 
         public void ManualUpdate() // Called by SwarmSpawner to avoid Monobehaviour Update overhead
         {
-            if (_isEvaluating) return;
+            if (_isEvaluating || HasActiveIntent) return;
 
             // Simple drive simulation
             Hunger += Time.deltaTime * 2f; // Hunger increases over time
@@ -67,6 +69,10 @@ namespace Simpiens.Cognition
                 snapshot.Retain();
 
                 var intent = await _evaluator.EvaluateAsync(context, _cts.Token);
+
+                // Set intent tracking so agent waits until it completes
+                HasActiveIntent = true;
+                intent.OnComplete = () => HasActiveIntent = false;
 
                 // Pass back to simulation manager queue
                 _simulationManager.EnqueueIntent(intent);

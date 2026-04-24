@@ -41,7 +41,8 @@ namespace Simpiens.Cognition.Evaluators
             // Simple hysteresis: if Hunger is very low, we don't even consider eating.
             if (context.Hunger < LowHungerThreshold)
             {
-                return new IdleIntent(context.AgentId);
+                // Active Idling: pick a random location 3-5 tiles away
+                return await GetWanderIntentAsync(context);
             }
 
             // Score calculation
@@ -99,6 +100,40 @@ namespace Simpiens.Cognition.Evaluators
             }
 
             // Fallback
+            return await GetWanderIntentAsync(context);
+        }
+
+        [System.ThreadStatic]
+        private static System.Random _random;
+
+        private async UniTask<AgentIntent> GetWanderIntentAsync(AgentContext context)
+        {
+            if (_random == null) _random = new System.Random();
+
+            // Pick a random point 3 to 5 units away using thread-safe System.Random
+            float angle = (float)(_random.NextDouble() * Mathf.PI * 2);
+            float distance = 3f + (float)(_random.NextDouble() * 2f);
+            
+            Vector2 randomDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            Vector2 targetPos = context.Position + randomDir * distance;
+
+            // Optional: if the spatial grid has bounds, we could clamp this.
+            // For now, let the pathfinder validate it.
+
+            var pathRequest = new PathRequest
+            {
+                StartPosition = context.Position,
+                TargetPosition = targetPos
+            };
+
+            var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
+
+            if (pathResponse.IsValid)
+            {
+                return new WanderIntent(context.AgentId, pathResponse);
+            }
+
+            pathResponse.ReturnToPool();
             return new IdleIntent(context.AgentId);
         }
     }
