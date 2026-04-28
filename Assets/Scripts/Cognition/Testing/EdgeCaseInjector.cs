@@ -5,7 +5,7 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace Simpiens.Cognition.Testing
+namespace Simpiens.Testing
 {
     public class EdgeCaseInjector : ITickable
     {

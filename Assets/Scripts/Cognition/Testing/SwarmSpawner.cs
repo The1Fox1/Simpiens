@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Simpiens.Cognition;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
@@ -7,7 +8,7 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace Simpiens.Cognition.Testing
+namespace Simpiens.Testing
 {
     public class SwarmSpawner : ITickable, IStartable
     {

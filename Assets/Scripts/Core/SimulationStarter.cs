@@ -1,11 +1,12 @@
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Testing;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace Simpiens.Core
+namespace Simpiens.Core.Bootstrapping
 {
     /// <summary>
     /// Serves as the main controller for the simulation state.

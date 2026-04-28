@@ -7,7 +7,7 @@ using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer.Unity;
 
-namespace Simpiens.Core
+namespace Simpiens.Simulation
 {
     public class ActiveIntentState
     {

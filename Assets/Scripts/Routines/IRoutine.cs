@@ -1,4 +1,4 @@
-namespace Simpiens.Routines
+namespace Simpiens.Core
 {
     /// <summary>
     /// Represents a continuous visual/physical action (like moving or animating)

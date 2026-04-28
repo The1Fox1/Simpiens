@@ -1,0 +1,59 @@
+You are crossing the threshold from a basic state machine into the territory of a deeply systemic narrative engine. To get agents to coordinate attacks, hold grudges, and execute long-term goals without melting your CPU, you have to fundamentally change how they process time and context.
+
+Utility AI is great for immediate biological drives (Hunger, Sleep), but "build a tribe and wage war" requires multi-step planning and retained knowledge.
+
+Here are the architectural epics required to build this out, ordered by structural dependency, along with estimated phases for fleshing them out.
+
+Epic 5: The Memory & Knowledge Matrix
+An agent cannot plot revenge or form a tribe if it operates purely in the present tense. Before we add complex reasoning, agents must be able to remember the past and store it efficiently.
+
+Feature 1: Local Knowledge Grids. Agents should not have omniscient access to the global SharedWorldSnapshot. They need a personal "Fog of War" memory map (e.g., "I saw a berry bush at X:10, Y:20 three days ago, but it might be gone now").
+
+Feature 2: Event Ledgers (The TTRPG Log). Agents need a localized database of events they have witnessed or been a part of ("Agent B attacked me at Tick 4500").
+
+Estimated Effort: 2 Phases. Phase 1 sets up the C# memory data structures and updates the Cognitive Loop to read from memory rather than just the immediate visual grid. Phase 2 implements information decay (forgetting) and information sharing (gossiping when agents idle near each other).
+
+Epic 6: Multi-Step Reasoning (GOAP / HTN)
+Basic utility AI only solves one step at a time. To craft a weapon, an agent must first find wood, then find stone, then find a workbench.
+
+Feature 1: Goal-Oriented Action Planning (GOAP) or Hierarchical Task Networks (HTN). You need a system that can chain AgentIntents together backward from a desired state.
+
+Feature 2: Long-Term vs. Short-Term Context. The background UniTask pipeline must be split. Short-term reflexive intent (e.g., "dodge that arrow") must preempt and suspend long-term intent (e.g., "build a wall").
+
+Estimated Effort: 3 Phases. Phase 1 builds the action graph and state prerequisites. Phase 2 implements the A* search through the action graph (the actual "planning"). Phase 3 integrates the planner with your existing Utility AI, allowing basic drives to interrupt long-term plans.
+
+Epic 7: The Sociopolitical & Relationship System
+With memory and planning in place, agents can now factor other agents into their goals.
+
+Feature 1: The Affinity Matrix. A thread-safe, multidimensional dictionary tracking relationships. This isn't just a 1-100 "liking" scale; it needs axes for Trust, Fear, and Allegiance.
+
+Feature 2: Tribal Tagging & Hierarchy. Agents need metadata linking them to a group EntityId, which dictates shared goals and resource pooling.
+
+Estimated Effort: 2 Phases. Phase 1 implements the data layer (Affinity updates based on the Event Ledger). Phase 2 implements group behavior, where the SimulationManager can issue a global AgentIntent to an entire tribe's queue simultaneously.
+
+Epic 8: Inventory & World Construction
+Agents need to manipulate the world permanently to build civilizations.
+
+Feature 1: Entity Inventories. Agents need localized data arrays to hold items, transferring them from the global ResourceData into personal space.
+
+Feature 2: The Build Intent. A pipeline for agents to drop resources back into the grid and permanently alter the SharedWorldSnapshot (e.g., turning a walkable tile into an unwalkable "Wall" tile).
+
+Estimated Effort: 2 Phases. Phase 1 handles item pick-up, drop-off, and inventory data synchronization. Phase 2 handles placing new structures into the spatial hash grid.
+
+Epic 9: Martial Engagement & Tactical Reasoning
+Combat is the most intensive system because it requires rapid, highly volatile state mutations.
+
+Feature 1: Health, Damage, and Projectile Data. Adding combat stats to the AgentContext and defining data structures for transient entities like flying arrows.
+
+Feature 2: Tactical Grid Evaluation. During combat, the cognitive engine must evaluate tiles not just for pathfinding, but for safety (cover, distance from threat, line of sight).
+
+Estimated Effort: 3 Phases. Phase 1 builds the melee combat state machine and damage resolution on the main thread. Phase 2 implements ranged combat and line-of-sight math. Phase 3 introduces tactical pathfinding (fleeing, flanking) in the background threads.
+
+Epic 10: The Agentic Narrative Engine (MCP Integration)
+This is the ultimate layer. Instead of hardcoding why an agent wants to start a war, you hand their Memory Ledger and Sociopolitical Matrix to an external model context protocol.
+
+Feature 1: Payload Serialization. Converting the complex C# AgentContext and Memory Ledger into a lightweight JSON payload.
+
+Feature 2: The LLM Evaluator. An ICognitiveEvaluator that fires off an asynchronous request to your model, receives the narrative reasoning, and translates it back into a concrete AgentIntent (e.g., AttackTribe(TribeId)).
+
+Estimated Effort: 2 Phases. Phase 1 builds the serialization and the asynchronous network call layer. Phase 2 handles prompt engineering, response parsing, and error handling for hallucinations or invalid commands.

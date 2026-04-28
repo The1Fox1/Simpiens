@@ -1,7 +1,8 @@
+using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 
-namespace Simpiens.Simulation.Spatial
+namespace Simpiens.Testing
 {
     /// <summary>
     /// Visualizes the Buffer A (SharedWorldSnapshot) data state directly without referencing GameObjects.
@@ -10,7 +11,7 @@ namespace Simpiens.Simulation.Spatial
     public class GridVisualizer : MonoBehaviour
     {
         private ISpatialPartition _spatialPartition;
-        
+
         [Inject]
         public void Construct(ISpatialPartition spatialPartition)
         {
@@ -23,7 +24,7 @@ namespace Simpiens.Simulation.Spatial
 
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return;
-            
+
             // Retain snapshot while reading to prevent it from being recycled (though OnDrawGizmos runs on main thread, it's good practice)
             snapshot.Retain();
 
@@ -32,7 +33,7 @@ namespace Simpiens.Simulation.Spatial
                 float cellSize = snapshot.CellSize;
                 int width = snapshot.Width;
                 int height = snapshot.Height;
-                
+
                 // Assuming origin is at center. Match SpatialHashGrid math:
                 float offsetX = (width * cellSize) * 0.5f;
                 float offsetY = (height * cellSize) * 0.5f;

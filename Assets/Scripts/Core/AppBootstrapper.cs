@@ -6,10 +6,10 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Pathfinding;
-using Simpiens.Cognition.Testing;
+using Simpiens.Testing;
 using Simpiens.Intervention;
 
-namespace Simpiens.Core
+namespace Simpiens.Core.Bootstrapping
 {
     /// <summary>
     /// The absolute entry point for the simulation.
