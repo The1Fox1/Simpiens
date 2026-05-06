@@ -52,7 +52,7 @@ namespace Simpiens.Cognition.Evaluators
             foreach (var kvp in context.Memory.SpatialMemoryMap)
             {
                 var record = kvp.Value;
-                if (record.Type == EntityType.Resource)
+                if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                 {
                     Vector2 recordPos = new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y);
                     float dist = Vector2.Distance(context.Position, recordPos);

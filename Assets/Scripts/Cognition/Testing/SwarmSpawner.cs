@@ -29,11 +29,13 @@ namespace Simpiens.Testing
 
             // In Epic 3, we create the evaluator once and share it among agents, or we could inject it
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
+            _frustrationEvaluator = new Simpiens.Cognition.Evaluators.FrustrationEvaluator(_pathfinder);
             _simulationManager = simulationManager;
             _clock = clock;
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
+        private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _frustrationEvaluator;
         private readonly ISimulationManager _simulationManager;
         private readonly ISimulationClock _clock;
 
@@ -71,7 +73,7 @@ namespace Simpiens.Testing
                 _registry.RegisterNode(controller);
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
-                agent.Initialize(controller.Id, _spatialPartition, _evaluator, _simulationManager, _clock);
+                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _frustrationEvaluator, _evaluator }, _simulationManager, _clock);
 
                 _agents.Add(agent);
             }

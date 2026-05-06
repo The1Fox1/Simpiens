@@ -12,7 +12,7 @@ namespace Simpiens.Cognition
     {
         // Dependencies
         private ISpatialPartition _spatialPartition;
-        private ICognitiveEvaluator _evaluator;
+        private ICognitiveEvaluator[] _evaluators;
         private ISimulationManager _simulationManager;
         private ISimulationClock _clock;
 
@@ -27,16 +27,17 @@ namespace Simpiens.Cognition
         //    State
         public float Hunger { get; set; } = 50f;
         public float Energy { get; set; } = 100f;
+        public float Frustration { get; set; } = 0f;
 
         public bool HasActiveIntent { get; private set; }
 
 
 
-        public void Initialize(UnityEngine.GUID id, ISpatialPartition spatialPartition, ICognitiveEvaluator evaluator, ISimulationManager simulationManager, ISimulationClock clock)
+        public void Initialize(UnityEngine.GUID id, ISpatialPartition spatialPartition, ICognitiveEvaluator[] evaluators, ISimulationManager simulationManager, ISimulationClock clock)
         {
             AgentId = id;
             _spatialPartition = spatialPartition;
-            _evaluator = evaluator;
+            _evaluators = evaluators;
             _simulationManager = simulationManager;
             _clock = clock;
 
@@ -50,6 +51,7 @@ namespace Simpiens.Cognition
 
             // Simple drive simulation
             Hunger += Time.deltaTime * 2f; // Hunger increases over time
+            Frustration = Mathf.Max(0f, Frustration - Time.deltaTime * 1f); // Decays slowly
 
             EvaluateCognitionAsync().Forget();
         }
@@ -65,7 +67,7 @@ namespace Simpiens.Cognition
             _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: (uint)_clock.CurrentTick);
 
             // The ContextBuilder essentially aggregates this
-            var context = new AgentContext(AgentId, transform.position, Hunger, Energy, snapshot, _memory);
+            var context = new AgentContext(AgentId, transform.position, Hunger, Energy, Frustration, snapshot, _memory, (uint)_clock.CurrentTick);
 
             try
             {
@@ -75,11 +77,49 @@ namespace Simpiens.Cognition
                 // Ensure the snapshot stays alive while we process in background
                 snapshot.Retain();
 
-                var intent = await _evaluator.EvaluateAsync(context, _cts.Token);
+                AgentIntent intent = null;
+                for (int i = 0; i < _evaluators.Length; i++)
+                {
+                    intent = await _evaluators[i].EvaluateAsync(context, _cts.Token);
+                    if (intent != null) break;
+                }
+
+                if (intent == null) intent = new IdleIntent(context.AgentId);
 
                 // Set intent tracking so agent waits until it completes
                 HasActiveIntent = true;
-                intent.OnComplete = () => HasActiveIntent = false;
+                intent.OnComplete = (result) => 
+                {
+                    HasActiveIntent = false;
+
+                    uint currentTick = (uint)_clock.CurrentTick;
+
+                    if (intent is PanicIntent)
+                    {
+                        Frustration = 0f;
+                    }
+                    else if (result == IntentResult.Success)
+                    {
+                        Frustration = Mathf.Max(0f, Frustration - 50f);
+                        if (intent is IdleIntent) Frustration += 5f;
+                    }
+                    else if (result == IntentResult.TargetMissing || result == IntentResult.PathBlocked)
+                    {
+                        Frustration += 25f;
+                    }
+
+                    if (intent is HarvestResourceIntent harvestIntent)
+                    {
+                        if (result == IntentResult.TargetMissing)
+                        {
+                            _memory.RemoveMemory(harvestIntent.TargetEntityId);
+                        }
+                        else if (result == IntentResult.PathBlocked || result == IntentResult.Aborted)
+                        {
+                            _memory.BlacklistEntity(harvestIntent.TargetEntityId, currentTick + 100);
+                        }
+                    }
+                };
 
                 // Pass back to simulation manager queue
                 _simulationManager.EnqueueIntent(intent);

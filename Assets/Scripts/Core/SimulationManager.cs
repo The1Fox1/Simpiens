@@ -76,15 +76,15 @@ namespace Simpiens.Simulation
                 {
                     // Agent node no longer exists
                     keysToRemove.Add(agentId);
-                    CompleteIntent(state.Intent);
+                    CompleteIntent(state.Intent, IntentResult.Aborted);
                     continue;
                 }
 
-                bool isComplete = ExecuteIntent(node, state);
-                if (isComplete)
+                var result = ExecuteIntent(node, state);
+                if (result != IntentResult.InProgress)
                 {
                     keysToRemove.Add(agentId);
-                    CompleteIntent(state.Intent);
+                    CompleteIntent(state.Intent, result);
                 }
             }
 
@@ -97,16 +97,19 @@ namespace Simpiens.Simulation
             _spatialPartition.UpdateFromRegistry(_worldRegistry);
         }
 
-        private bool ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
+        private IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
         {
             switch (state.Intent)
             {
                 case WanderIntent wander:
                     return ExecutePathMovement(node, wander.Path, ref state.CurrentWaypointIndex);
 
+                case PanicIntent panic:
+                    return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
+
                 case HarvestResourceIntent harvest:
-                    bool reached = ExecutePathMovement(node, harvest.Path, ref state.CurrentWaypointIndex);
-                    if (reached)
+                    var reachResult = ExecutePathMovement(node, harvest.Path, ref state.CurrentWaypointIndex);
+                    if (reachResult == IntentResult.Success)
                     {
                         // State Mutation: Harvesting
                         if (_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
@@ -131,24 +134,55 @@ namespace Simpiens.Simulation
                                     resourceNode.gameObject.SetActive(false);
                                 }
                             }
+                            return IntentResult.Success;
                         }
-                        return true;
+                        else
+                        {
+                            return IntentResult.TargetMissing;
+                        }
                     }
-                    return false;
+                    return reachResult;
 
                 case IdleIntent idle:
                     // Agent is explicitly doing nothing, complete immediately so they can re-evaluate later.
-                    return true;
+                    return IntentResult.Success;
             }
 
-            return true;
+            return IntentResult.Success;
         }
 
-        private bool ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
+        private IntentResult ExecutePanicMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
         {
             if (currentIndex >= path.Length)
             {
-                return true; // Reached end
+                return IntentResult.Success; // Reached end
+            }
+
+            Vector2 targetPos = path.Waypoints[currentIndex];
+
+            // Ignore IsPositionBlocked entirely to physically break free from any deadlock!
+            float step = 2f * Time.deltaTime; // Ideally, fetch from node configuration
+            node.transform.position = Vector2.MoveTowards(node.Position, targetPos, step);
+
+            // Check if reached the current waypoint
+            if (Vector2.Distance(node.Position, targetPos) < 0.05f)
+            {
+                currentIndex++;
+                // If this was the last waypoint, return true indicating completion
+                if (currentIndex >= path.Length)
+                {
+                    return IntentResult.Success;
+                }
+            }
+
+            return IntentResult.InProgress;
+        }
+
+        private IntentResult ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
+        {
+            if (currentIndex >= path.Length)
+            {
+                return IntentResult.Success; // Reached end
             }
 
             Vector2 targetPos = path.Waypoints[currentIndex];
@@ -156,7 +190,7 @@ namespace Simpiens.Simulation
             // Path Invalidation: Check if next step is blocked
             if (IsPositionBlocked(targetPos, node.Id))
             {
-                return true; // Abort path, force recalculation
+                return IntentResult.PathBlocked; // Abort path, force recalculation
             }
 
             // Move the pawn visually and logically
@@ -170,11 +204,11 @@ namespace Simpiens.Simulation
                 // If this was the last waypoint, return true indicating completion
                 if (currentIndex >= path.Length)
                 {
-                    return true;
+                    return IntentResult.Success;
                 }
             }
 
-            return false;
+            return IntentResult.InProgress;
         }
 
         private bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId)
@@ -207,7 +241,7 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        private void CompleteIntent(AgentIntent intent)
+        private void CompleteIntent(AgentIntent intent, IntentResult result)
         {
             if (intent is HarvestResourceIntent hri)
             {
@@ -217,8 +251,12 @@ namespace Simpiens.Simulation
             {
                 wi.Path.ReturnToPool();
             }
+            else if (intent is PanicIntent pi)
+            {
+                pi.Path.ReturnToPool();
+            }
 
-            intent.OnComplete?.Invoke();
+            intent.OnComplete?.Invoke(result);
         }
     }
 }
