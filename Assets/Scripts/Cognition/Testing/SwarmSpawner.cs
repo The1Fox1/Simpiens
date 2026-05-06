@@ -21,7 +21,7 @@ namespace Simpiens.Testing
         public int SpawnCount = 10;
 
         [Inject]
-        public SwarmSpawner(ISpatialPartition spatialPartition, IAsyncPathfinder pathfinder, IWorldRegistry registry, ISimulationManager simulationManager)
+        public SwarmSpawner(ISpatialPartition spatialPartition, IAsyncPathfinder pathfinder, IWorldRegistry registry, ISimulationManager simulationManager, ISimulationClock clock)
         {
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
@@ -30,10 +30,12 @@ namespace Simpiens.Testing
             // In Epic 3, we create the evaluator once and share it among agents, or we could inject it
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
             _simulationManager = simulationManager;
+            _clock = clock;
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
         private readonly ISimulationManager _simulationManager;
+        private readonly ISimulationClock _clock;
 
         public void Start()
         {
@@ -69,7 +71,7 @@ namespace Simpiens.Testing
                 _registry.RegisterNode(controller);
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
-                agent.Initialize(controller.Id, _spatialPartition, _evaluator, _simulationManager);
+                agent.Initialize(controller.Id, _spatialPartition, _evaluator, _simulationManager, _clock);
 
                 _agents.Add(agent);
             }

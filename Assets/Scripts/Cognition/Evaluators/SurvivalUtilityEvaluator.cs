@@ -31,12 +31,8 @@ namespace Simpiens.Cognition.Evaluators
 
         public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
-            if (_queryResults == null)
-            {
-                _queryResults = new List<EntitySnapshot>(64);
-            }
-
-            _queryResults.Clear();
+            // The _queryResults list is no longer used here, but kept if needed by other logic.
+            // Querying spatial memory doesn't allocate.
 
             // Simple hysteresis: if Hunger is very low, we don't even consider eating.
             if (context.Hunger < LowHungerThreshold)
@@ -49,18 +45,17 @@ namespace Simpiens.Cognition.Evaluators
             // Base utility from hunger
             float baseUtility = context.Hunger;
 
-            // Query nearby entities
-            context.Snapshot.GetEntitiesInRange(context.Position, 20f, _queryResults);
-
-            EntitySnapshot? bestResource = null;
+            // Query nearby entities from memory
+            Simpiens.Cognition.Memory.SpatialMemoryRecord? bestResource = null;
             float highestUtility = -1f;
 
-            for (int i = 0; i < _queryResults.Count; i++)
+            foreach (var kvp in context.Memory.SpatialMemoryMap)
             {
-                var entity = _queryResults[i];
-                if (entity.Type == EntityType.Resource)
+                var record = kvp.Value;
+                if (record.Type == EntityType.Resource)
                 {
-                    float dist = Vector2.Distance(context.Position, entity.Position);
+                    Vector2 recordPos = new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y);
+                    float dist = Vector2.Distance(context.Position, recordPos);
 
                     // The closer it is, the higher the utility. 
                     // If hunger is above HighHungerThreshold, we drastically boost the score to commit.
@@ -72,7 +67,7 @@ namespace Simpiens.Cognition.Evaluators
                     if (utility > highestUtility && utility > 0)
                     {
                         highestUtility = utility;
-                        bestResource = entity;
+                        bestResource = record;
                     }
                 }
             }
@@ -83,14 +78,14 @@ namespace Simpiens.Cognition.Evaluators
                 var pathRequest = new PathRequest
                 {
                     StartPosition = context.Position,
-                    TargetPosition = bestResource.Value.Position
+                    TargetPosition = new Vector2(bestResource.Value.LastKnownLocation.x, bestResource.Value.LastKnownLocation.y)
                 };
 
                 var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
 
                 if (pathResponse.IsValid)
                 {
-                    return new HarvestResourceIntent(context.AgentId, bestResource.Value.Id, pathResponse);
+                    return new HarvestResourceIntent(context.AgentId, bestResource.Value.EntityId, pathResponse);
                 }
                 else
                 {

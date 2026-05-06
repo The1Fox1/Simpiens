@@ -14,8 +14,10 @@ namespace Simpiens.Cognition
         private ISpatialPartition _spatialPartition;
         private ICognitiveEvaluator _evaluator;
         private ISimulationManager _simulationManager;
+        private ISimulationClock _clock;
 
         // Private fields
+        private Simpiens.Cognition.Memory.AgentMemory _memory;
         private bool _isEvaluating;
         private CancellationTokenSource _cts;
 
@@ -30,13 +32,15 @@ namespace Simpiens.Cognition
 
 
 
-        public void Initialize(UnityEngine.GUID id, ISpatialPartition spatialPartition, ICognitiveEvaluator evaluator, ISimulationManager simulationManager)
+        public void Initialize(UnityEngine.GUID id, ISpatialPartition spatialPartition, ICognitiveEvaluator evaluator, ISimulationManager simulationManager, ISimulationClock clock)
         {
             AgentId = id;
             _spatialPartition = spatialPartition;
             _evaluator = evaluator;
             _simulationManager = simulationManager;
+            _clock = clock;
 
+            _memory = new Simpiens.Cognition.Memory.AgentMemory();
             _cts = new CancellationTokenSource();
         }
 
@@ -57,8 +61,11 @@ namespace Simpiens.Cognition
 
             _isEvaluating = true;
 
+            Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: (uint)_clock.CurrentTick);
+
             // The ContextBuilder essentially aggregates this
-            var context = new AgentContext(AgentId, transform.position, Hunger, Energy, snapshot);
+            var context = new AgentContext(AgentId, transform.position, Hunger, Energy, snapshot, _memory);
 
             try
             {

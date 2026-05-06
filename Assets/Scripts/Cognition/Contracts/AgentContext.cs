@@ -17,14 +17,16 @@ namespace Simpiens.Cognition.Contracts
         public readonly float Energy;
 
         public readonly SharedWorldSnapshot Snapshot;
+        public readonly Simpiens.Cognition.Memory.AgentMemory Memory;
 
-        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, SharedWorldSnapshot snapshot)
+        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory)
         {
             AgentId = agentId;
             Position = position;
             Hunger = hunger;
             Energy = energy;
             Snapshot = snapshot;
+            Memory = memory;
         }
     }
 }
