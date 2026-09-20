@@ -40,9 +40,17 @@ This document tracks the progression of the Simpiens architecture, mapping compl
 - **Intent Feedback & Deadlock Relief:** Integrated `IntentResult` (`Success`, `TargetMissing`, `PathBlocked`, `Aborted`) to drive agent drive mutations. Added target blacklisting and `FrustrationEvaluator` / `PanicIntent` for deadlock avoidance.
 - **Timed Idling & Emergent Gossip:** Added a `Duration` property to `IdleIntent`. When agents idle in proximity (within 2.5 units), `SimulationManager` coordinates a zero-allocation mutual gossip exchange (`TryGossip`), transferring spatial records, updating intel to fresher timestamps, logging ledger events, and relieving frustration.
 
+## Epic 6: Multi-Step Reasoning (GOAP)
+**Focus:** Introducing Goal-Oriented Action Planning to transition agents from single-step reactive utility AI to multi-step chain reasoning.
+**Key Decisions:**
+- **Phase 1 (Zero-Allocation Action Graph & State Bitmasks):**
+  - Designed `WorldState` as a 16-byte stack struct (`ulong Values, Mask`) rather than heap-allocated dictionaries. Precondition evaluation and effect applications operate via bitwise operations in single-digit clock cycles with 0 GC allocations.
+  - Implemented `GoapAction` and `GoapGoal` base abstractions with procedural context validation and dynamic utility scoring.
+  - Implemented `ActionGraph` with zero-allocation forward (`GetApplicableActions`) and backward (`GetActionsSatisfying`) querying for A* dependency chaining.
+
 ## Future Progression
 *(See `curentfocus.txt` for upcoming epics)*
-- **Epic 6: Multi-Step Reasoning** (GOAP / HTN planners)
+- **Epic 6: Multi-Step Reasoning** (Phase 2: A* Graph Search; Phase 3: Planner Integration & Reflexive Preemption)
 - **Epic 7: Sociopolitical & Relationship System** (Affinity matrices, Tribal metadata)
 - **Epic 8: Inventory & World Construction** (Item ownership, permanent world mutations)
 - **Epic 9: Martial Engagement** (Tactical evaluation, transient projectile data)

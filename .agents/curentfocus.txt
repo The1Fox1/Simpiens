@@ -14,11 +14,10 @@ Feature 2: Event Ledgers & Gossip (Completed). Agents maintain ring-buffer event
 Current Focus: Epic 6: Multi-Step Reasoning (GOAP / HTN)
 Basic utility AI only solves one step at a time. To craft a weapon, an agent must first find wood, then find stone, then find a workbench.
 
-Feature 1: Goal-Oriented Action Planning (GOAP) or Hierarchical Task Networks (HTN). You need a system that can chain AgentIntents together backward from a desired state.
-
-Feature 2: Long-Term vs. Short-Term Context. The background UniTask pipeline must be split. Short-term reflexive intent (e.g., "dodge that arrow") must preempt and suspend long-term intent (e.g., "build a wall").
-
-Estimated Effort: 3 Phases. Phase 1 builds the action graph and state prerequisites. Phase 2 implements the A* search through the action graph (the actual "planning"). Phase 3 integrates the planner with your existing Utility AI, allowing basic drives to interrupt long-term plans.
+Feature 1: Goal-Oriented Action Planning (GOAP).
+- Phase 1 (Completed): Zero-allocation bitmask WorldState, GoapAction definitions with preconditions & effects, GoapGoal structures, and ActionGraph prerequisite dependency resolution.
+- Phase 2 (Next Focus): A* search through the action graph to build sequential action plans backward from goal state.
+- Phase 3: Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption.
 
 Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.

@@ -50,6 +50,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Epic5Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Epic6Phase1Validator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();
