@@ -11,15 +11,15 @@ Feature 1: Local Knowledge Grids (Completed). Agents have personal Fog of War me
 
 Feature 2: Event Ledgers & Gossip (Completed). Agents maintain ring-buffer event ledgers, track social interaction cooldowns, exchange spatial/event memories during IdleIntents when within 2.5 units, and relieve frustration.
 
-Current Focus: Epic 6: Multi-Step Reasoning (GOAP / HTN)
+Epic 6: Multi-Step Reasoning (GOAP / HTN) [COMPLETED]
 Basic utility AI only solves one step at a time. To craft a weapon, an agent must first find wood, then find stone, then find a workbench.
 
 Feature 1: Goal-Oriented Action Planning (GOAP).
 - Phase 1 (Completed): Zero-allocation bitmask WorldState, GoapAction definitions with preconditions & effects, GoapGoal structures, and ActionGraph prerequisite dependency resolution.
 - Phase 2 (Completed): High-performance A* search through the action graph (GoapPlanner) with pre-allocated node pools, binary min-heap, open-addressing closed table, branch cost optimization, and 0-allocation plan reconstruction.
-- Phase 3 (Next Focus): Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption and plan step execution.
+- Phase 3 (Completed): Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption, in-flight intent preemption (ISimulationManager.AbortIntent), WorldStateBuilder, and sequential plan step execution.
 
-Epic 7: The Sociopolitical & Relationship System
+Current Focus: Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.
 
 Feature 1: The Affinity Matrix. A thread-safe, multidimensional dictionary tracking relationships. This isn't just a 1-100 "liking" scale; it needs axes for Trust, Fear, and Allegiance.

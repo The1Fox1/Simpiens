@@ -39,6 +39,27 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
+        /// Copies another plan's actions and costs into this reusable plan without allocating.
+        /// </summary>
+        public void CopyFrom(GoapPlan other)
+        {
+            if (other == null)
+            {
+                Clear();
+                return;
+            }
+
+            _actions.Clear();
+            int count = other._actions.Count;
+            for (int i = 0; i < count; i++)
+            {
+                _actions.Add(other._actions[i]);
+            }
+            TotalCost = other.TotalCost;
+            CurrentStepIndex = other.CurrentStepIndex;
+        }
+
+        /// <summary>
         /// Appends an action to the end of the plan sequence.
         /// </summary>
         public void AddAction(GoapAction action, float cost)

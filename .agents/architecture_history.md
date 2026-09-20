@@ -50,13 +50,17 @@ This document tracks the progression of the Simpiens architecture, mapping compl
 - **Phase 2 (A* Graph Search Engine & Zero-Allocation Planner):**
   - Designed `GoapPlanner` using forward A* search guided by an admissible branchless bitwise Hamming weight heuristic (`CountUnsatisfiedFacts` * minimum action cost).
   - Engineered zero-allocation search infrastructure: struct node pool (`GoapPlanNode[]`), array-backed binary min-heap open list (`int[] _openHeap`), and flat open-addressing closed hash table (`ClosedEntry[] _closedTable`).
-  - Added `GoapPlan` reusable container that supports sequential step advancement and reset without allocating memory.
-  - Verified branch cost optimization (e.g. choosing 0.5-cost `EatCarriedFood` over 6.0-cost `Harvest` chain) and confirmed 10,000 plan searches execute in ~11ms with strictly 0 bytes of heap allocation.
+- **Phase 3 (Planner Integration & Reflexive Preemption):**
+  - Designed and implemented a Two-Tier Cognitive Architecture: Tier 1 handles emergency biological drives (e.g., Panic when Frustration > 80f) while Tier 2 handles deliberative long-term multi-step planning (`GoapCognitiveEvaluator`).
+  - Added `WorldStateBuilder` for zero-allocation mapping from `AgentContext` and `AgentMemory` to bitmask `WorldState` in ~1-2 microseconds with strictly 0 GC allocations.
+  - Implemented sequential plan execution in `AutonomousAgent`: stepping through `GoapPlan.CurrentAction.CreateIntentAsync()`, advancing steps upon `IntentResult.Success`, and invalidating plans upon environment mismatches (`TargetMissing`, `PathBlocked`).
+  - Implemented reflexive preemption: when Tier 1 panic or emergency triggers, in-flight physical movement in `SimulationManager` is safely cancelled via `ISimulationManager.AbortIntent(agentId)`, freeing the active slot and resetting the deliberative plan without state corruption.
+  - Verified end-to-end integration via `Epic6Phase3Validator` with zero compile warnings and 0 runtime allocations.
 
 ## Future Progression
 *(See `curentfocus.txt` for upcoming epics)*
-- **Epic 6: Multi-Step Reasoning** (Phase 3: Planner Integration & Reflexive Preemption)
 - **Epic 7: Sociopolitical & Relationship System** (Affinity matrices, Tribal metadata)
 - **Epic 8: Inventory & World Construction** (Item ownership, permanent world mutations)
 - **Epic 9: Martial Engagement** (Tactical evaluation, transient projectile data)
 - **Epic 10: Agentic Narrative Engine** (MCP JSON payload serialization, LLM evaluators)
+

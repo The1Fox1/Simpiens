@@ -53,6 +53,15 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public abstract AgentIntent CreateIntent(AgentContext context);
 
+        /// <summary>
+        /// Asynchronous factory method that produces an AgentIntent, allowing actions to perform
+        /// asynchronous pathfinding or queries on worker threads.
+        /// </summary>
+        public virtual Cysharp.Threading.Tasks.UniTask<AgentIntent> CreateIntentAsync(AgentContext context, System.Threading.CancellationToken ct = default)
+        {
+            return Cysharp.Threading.Tasks.UniTask.FromResult(CreateIntent(context));
+        }
+
         public override string ToString() => $"[Action: {Name}, Cost={BaseCost}]";
     }
 }

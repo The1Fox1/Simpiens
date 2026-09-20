@@ -18,20 +18,41 @@ namespace Simpiens.Testing
 
         private readonly List<AutonomousAgent> _agents = new List<AutonomousAgent>(1000);
 
+        private readonly Simpiens.Cognition.Planning.IGoapPlanner _planner;
+        private readonly Simpiens.Cognition.Planning.ActionGraph _actionGraph;
+        private readonly List<Simpiens.Cognition.Planning.GoapGoal> _goals;
+
         public int SpawnCount = 10;
 
         [Inject]
-        public SwarmSpawner(ISpatialPartition spatialPartition, IAsyncPathfinder pathfinder, IWorldRegistry registry, ISimulationManager simulationManager, ISimulationClock clock)
+        public SwarmSpawner(
+            ISpatialPartition spatialPartition, 
+            IAsyncPathfinder pathfinder, 
+            IWorldRegistry registry, 
+            ISimulationManager simulationManager, 
+            ISimulationClock clock,
+            Simpiens.Cognition.Planning.IGoapPlanner planner)
         {
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
             _registry = registry;
-
-            // In Epic 3, we create the evaluator once and share it among agents, or we could inject it
-            _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
-            _frustrationEvaluator = new Simpiens.Cognition.Evaluators.FrustrationEvaluator(_pathfinder);
             _simulationManager = simulationManager;
             _clock = clock;
+            _planner = planner;
+
+            _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
+            _frustrationEvaluator = new Simpiens.Cognition.Evaluators.FrustrationEvaluator(_pathfinder);
+
+            _actionGraph = new Simpiens.Cognition.Planning.ActionGraph();
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SearchResourceAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToResourceAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.HarvestResourceAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.EatCarriedFoodAction());
+
+            _goals = new List<Simpiens.Cognition.Planning.GoapGoal>
+            {
+                new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal()
+            };
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
@@ -73,7 +94,7 @@ namespace Simpiens.Testing
                 _registry.RegisterNode(controller);
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
-                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _frustrationEvaluator, _evaluator }, _simulationManager, _clock);
+                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _frustrationEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
 
                 _agents.Add(agent);
             }

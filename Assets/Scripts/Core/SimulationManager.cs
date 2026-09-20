@@ -49,6 +49,17 @@ namespace Simpiens.Simulation
             _intentQueue.Enqueue(intent);
         }
 
+        public bool AbortIntent(UnityEngine.GUID agentId)
+        {
+            if (_activeIntents.TryGetValue(agentId, out var state))
+            {
+                _activeIntents.Remove(agentId);
+                CompleteIntent(state.Intent, IntentResult.Aborted);
+                return true;
+            }
+            return false;
+        }
+
         public void RegisterResource(ResourceData data)
         {
             _resources[data.EntityId] = data;
