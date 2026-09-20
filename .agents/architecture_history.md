@@ -32,9 +32,16 @@ This document tracks the progression of the Simpiens architecture, mapping compl
 - **Thread-Safe State Mutation:** When an agent successfully completes an intent (like harvesting), the main thread mutates the state (e.g., decrementing `ResourceData` yields and increasing `Hunger`). 
 - **Thread-Safe Randomization:** Discovered and fixed `UnityException` failures caused by `UnityEngine.Random` on background threads by utilizing `[System.ThreadStatic]` instances of `System.Random` alongside thread-safe `Mathf` trigonometric functions.
 
+## Epic 5: The Memory & Knowledge Matrix
+**Focus:** Removing omniscience and grounding agents in localized, decaying, and socially shareable memory.
+**Key Decisions:**
+- **Local Fog-of-War Memory:** Replaced direct queries against the global `SharedWorldSnapshot` with a local `AgentMemory` containing a `SpatialMemoryMap` and ring-buffer `MemoryLedger`.
+- **Line-of-Sight & Temporal Decay:** Implemented dual-layer memory pruning in `UpdateMemory`. Unobserved entities fade over time based on type-specific decay thresholds (`PawnDecayTicks = 400`, `ResourceDecayTicks = 1500`), while entities seen to be missing are pruned immediately.
+- **Intent Feedback & Deadlock Relief:** Integrated `IntentResult` (`Success`, `TargetMissing`, `PathBlocked`, `Aborted`) to drive agent drive mutations. Added target blacklisting and `FrustrationEvaluator` / `PanicIntent` for deadlock avoidance.
+- **Timed Idling & Emergent Gossip:** Added a `Duration` property to `IdleIntent`. When agents idle in proximity (within 2.5 units), `SimulationManager` coordinates a zero-allocation mutual gossip exchange (`TryGossip`), transferring spatial records, updating intel to fresher timestamps, logging ledger events, and relieving frustration.
+
 ## Future Progression
 *(See `curentfocus.txt` for upcoming epics)*
-- **Epic 5: The Memory & Knowledge Matrix** (Local knowledge grids, Event Ledgers)
 - **Epic 6: Multi-Step Reasoning** (GOAP / HTN planners)
 - **Epic 7: Sociopolitical & Relationship System** (Affinity matrices, Tribal metadata)
 - **Epic 8: Inventory & World Construction** (Item ownership, permanent world mutations)

@@ -5,8 +5,11 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class IdleIntent : AgentIntent
     {
-        public IdleIntent(UnityEngine.GUID agentId) : base(agentId)
+        public readonly float Duration;
+
+        public IdleIntent(UnityEngine.GUID agentId, float duration = 2.0f) : base(agentId)
         {
+            Duration = duration;
         }
     }
 }

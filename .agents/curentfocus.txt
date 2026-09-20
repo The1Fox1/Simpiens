@@ -4,16 +4,14 @@ Utility AI is great for immediate biological drives (Hunger, Sleep), but "build 
 
 Here are the architectural epics required to build this out, ordered by structural dependency, along with estimated phases for fleshing them out.
 
-Epic 5: The Memory & Knowledge Matrix
-An agent cannot plot revenge or form a tribe if it operates purely in the present tense. Before we add complex reasoning, agents must be able to remember the past and store it efficiently.
+Epic 5: The Memory & Knowledge Matrix [COMPLETED]
+An agent cannot plot revenge or form a tribe if it operates purely in the present tense. Agents now remember the past and store it efficiently with decaying spatial maps, event ledgers, and peer gossip.
 
-Feature 1: Local Knowledge Grids. Agents should not have omniscient access to the global SharedWorldSnapshot. They need a personal "Fog of War" memory map (e.g., "I saw a berry bush at X:10, Y:20 three days ago, but it might be gone now").
+Feature 1: Local Knowledge Grids (Completed). Agents have personal Fog of War memory maps, temporal decay (Pawns: 400 ticks, Resources: 1500 ticks), and line-of-sight pruning.
 
-Feature 2: Event Ledgers (The TTRPG Log). Agents need a localized database of events they have witnessed or been a part of ("Agent B attacked me at Tick 4500").
+Feature 2: Event Ledgers & Gossip (Completed). Agents maintain ring-buffer event ledgers, track social interaction cooldowns, exchange spatial/event memories during IdleIntents when within 2.5 units, and relieve frustration.
 
-Estimated Effort: 2 Phases. Phase 1 sets up the C# memory data structures and updates the Cognitive Loop to read from memory rather than just the immediate visual grid. Phase 2 implements information decay (forgetting) and information sharing (gossiping when agents idle near each other).
-
-Epic 6: Multi-Step Reasoning (GOAP / HTN)
+Current Focus: Epic 6: Multi-Step Reasoning (GOAP / HTN)
 Basic utility AI only solves one step at a time. To craft a weapon, an agent must first find wood, then find stone, then find a workbench.
 
 Feature 1: Goal-Oriented Action Planning (GOAP) or Hierarchical Task Networks (HTN). You need a system that can chain AgentIntents together backward from a desired state.

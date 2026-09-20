@@ -24,12 +24,19 @@ namespace Simpiens.Cognition
 
         // Public properties
         public UnityEngine.GUID AgentId { get; private set; }
-        //    State
+        public Simpiens.Cognition.Memory.AgentMemory Memory => _memory;
+
+        // State
         public float Hunger { get; set; } = 50f;
         public float Energy { get; set; } = 100f;
         public float Frustration { get; set; } = 0f;
 
         public bool HasActiveIntent { get; private set; }
+
+        public void RelieveFrustration(float amount)
+        {
+            Frustration = Mathf.Max(0f, Frustration - amount);
+        }
 
 
 

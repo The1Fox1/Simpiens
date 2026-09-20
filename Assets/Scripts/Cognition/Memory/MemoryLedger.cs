@@ -34,5 +34,18 @@ namespace Simpiens.Cognition.Memory
             int actualIndex = (_head - _count + index + _events.Length) % _events.Length;
             return _events[actualIndex];
         }
+
+        public void GetRecentEvents(uint currentTick, uint maxAgeTicks, System.Collections.Generic.List<MemoryEvent> results)
+        {
+            for (int i = 0; i < _count; i++)
+            {
+                int actualIndex = (_head - _count + i + _events.Length) % _events.Length;
+                var evt = _events[actualIndex];
+                if (currentTick >= evt.SimulationTick && (currentTick - evt.SimulationTick) <= maxAgeTicks)
+                {
+                    results.Add(evt);
+                }
+            }
+        }
     }
 }

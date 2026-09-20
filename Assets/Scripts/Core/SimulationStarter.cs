@@ -52,6 +52,12 @@ namespace Simpiens.Core.Bootstrapping
             var visualizer = visualizerGo.AddComponent<GridVisualizer>();
             _resolver.Inject(visualizer);
 
+            if (Application.isBatchMode)
+            {
+                var batchGo = new GameObject("[BatchPlaymodeController]");
+                batchGo.AddComponent<BatchPlaymodeController>();
+            }
+
             SpawnResources();
         }
 

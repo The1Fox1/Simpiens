@@ -49,6 +49,7 @@ namespace Simpiens.Core.Bootstrapping
             // 4. Testing & Validation Harness
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Epic5Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();

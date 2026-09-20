@@ -13,6 +13,7 @@ namespace Simpiens.Simulation
     {
         public AgentIntent Intent;
         public int CurrentWaypointIndex;
+        public float ElapsedTime;
     }
 
     /// <summary>
@@ -23,6 +24,7 @@ namespace Simpiens.Simulation
     {
         private readonly IWorldRegistry _worldRegistry;
         private readonly ISpatialPartition _spatialPartition;
+        private readonly ISimulationClock _clock;
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
         
@@ -32,10 +34,11 @@ namespace Simpiens.Simulation
 
         public bool IsPaused { get; private set; }
 
-        public SimulationManager(IWorldRegistry worldRegistry, ISpatialPartition spatialPartition)
+        public SimulationManager(IWorldRegistry worldRegistry, ISpatialPartition spatialPartition, ISimulationClock clock = null)
         {
             _worldRegistry = worldRegistry;
             _spatialPartition = spatialPartition;
+            _clock = clock;
         }
 
         public void Pause() => IsPaused = true;
@@ -144,11 +147,57 @@ namespace Simpiens.Simulation
                     return reachResult;
 
                 case IdleIntent idle:
-                    // Agent is explicitly doing nothing, complete immediately so they can re-evaluate later.
-                    return IntentResult.Success;
+                    state.ElapsedTime += Time.deltaTime;
+
+                    // Social interaction: Gossip when idling near other agents
+                    CheckGossipOpportunity(node);
+
+                    if (state.ElapsedTime >= idle.Duration)
+                    {
+                        return IntentResult.Success;
+                    }
+                    return IntentResult.InProgress;
             }
 
             return IntentResult.Success;
+        }
+
+        private const float GossipRadius = 2.5f;
+
+        private void CheckGossipOpportunity(Simpiens.Entities.NodeController node)
+        {
+            var agentA = node.GetComponent<Simpiens.Cognition.AutonomousAgent>();
+            if (agentA == null || agentA.Memory == null) return;
+
+            uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+
+            var activeNodes = _worldRegistry.ActiveNodes;
+            int count = activeNodes.Count;
+            for (int i = 0; i < count; i++)
+            {
+                var otherNode = activeNodes[i];
+                if (otherNode == node || otherNode.Type != EntityType.Pawn) continue;
+
+                float distSqr = (otherNode.Position - node.Position).sqrMagnitude;
+                if (distSqr <= GossipRadius * GossipRadius)
+                {
+                    var agentB = otherNode.GetComponent<Simpiens.Cognition.AutonomousAgent>();
+                    if (agentB != null && agentB.Memory != null)
+                    {
+                        if (agentA.Memory.CanGossipWith(agentB.AgentId, currentTick))
+                        {
+                            if (agentA.Memory.TryGossip(agentB.Memory, agentB.AgentId, agentA.AgentId, currentTick))
+                            {
+                                agentA.RelieveFrustration(15f);
+                                agentB.RelieveFrustration(15f);
+
+                                Debug.Log($"[Gossip] Agents {agentA.AgentId.ToString().Substring(0, 6)} and {agentB.AgentId.ToString().Substring(0, 6)} exchanged knowledge at tick {currentTick}!");
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private IntentResult ExecutePanicMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)

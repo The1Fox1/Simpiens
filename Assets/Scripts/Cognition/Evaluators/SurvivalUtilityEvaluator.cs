@@ -37,7 +37,11 @@ namespace Simpiens.Cognition.Evaluators
             // Simple hysteresis: if Hunger is very low, we don't even consider eating.
             if (context.Hunger < LowHungerThreshold)
             {
-                // Active Idling: pick a random location 3-5 tiles away
+                if (_random == null) _random = new System.Random();
+                if (_random.NextDouble() < 0.45)
+                {
+                    return new IdleIntent(context.AgentId, duration: 2.0f);
+                }
                 return await GetWanderIntentAsync(context);
             }
 
@@ -129,7 +133,7 @@ namespace Simpiens.Cognition.Evaluators
             }
 
             pathResponse.ReturnToPool();
-            return new IdleIntent(context.AgentId);
+            return new IdleIntent(context.AgentId, duration: 1.5f);
         }
     }
 }
