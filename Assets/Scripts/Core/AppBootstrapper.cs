@@ -6,6 +6,7 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Pathfinding;
+using Simpiens.Cognition.Planning;
 using Simpiens.Testing;
 using Simpiens.Intervention;
 
@@ -44,6 +45,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<ContextValidator>(Lifetime.Singleton);
             builder.Register<ICognitiveEngine, CognitiveEngine>(Lifetime.Singleton);
+            builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
 
             // 4. Testing & Validation Harness
@@ -51,6 +53,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Epic5Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Epic6Phase1Validator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Epic6Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();

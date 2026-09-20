@@ -78,6 +78,28 @@ namespace Simpiens.Cognition.Planning
             return (Mask & bit) != 0;
         }
 
+        /// <summary>
+        /// Calculates the number of facts in the required state that are either missing or mismatching in this state.
+        /// Uses branchless Hamming weight (popcount) for single-digit nanosecond execution with zero allocations.
+        /// </summary>
+        public int CountUnsatisfiedFacts(in WorldState required)
+        {
+            // A fact is unsatisfied if it is in required.Mask, but this state does not match required.Values
+            // Mismatch: (Values ^ required.Values) & required.Mask
+            ulong mismatch = (Values ^ required.Values) & required.Mask;
+            return PopCount(mismatch);
+        }
+
+        /// <summary>
+        /// Branchless 64-bit Hamming weight (popcount) calculation.
+        /// </summary>
+        public static int PopCount(ulong v)
+        {
+            v = v - ((v >> 1) & 0x5555555555555555UL);
+            v = (v & 0x3333333333333333UL) + ((v >> 2) & 0x3333333333333333UL);
+            return (int)((((v + (v >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
+        }
+
         public bool Equals(WorldState other)
         {
             return Values == other.Values && Mask == other.Mask;

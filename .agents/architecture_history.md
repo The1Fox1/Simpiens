@@ -47,10 +47,15 @@ This document tracks the progression of the Simpiens architecture, mapping compl
   - Designed `WorldState` as a 16-byte stack struct (`ulong Values, Mask`) rather than heap-allocated dictionaries. Precondition evaluation and effect applications operate via bitwise operations in single-digit clock cycles with 0 GC allocations.
   - Implemented `GoapAction` and `GoapGoal` base abstractions with procedural context validation and dynamic utility scoring.
   - Implemented `ActionGraph` with zero-allocation forward (`GetApplicableActions`) and backward (`GetActionsSatisfying`) querying for A* dependency chaining.
+- **Phase 2 (A* Graph Search Engine & Zero-Allocation Planner):**
+  - Designed `GoapPlanner` using forward A* search guided by an admissible branchless bitwise Hamming weight heuristic (`CountUnsatisfiedFacts` * minimum action cost).
+  - Engineered zero-allocation search infrastructure: struct node pool (`GoapPlanNode[]`), array-backed binary min-heap open list (`int[] _openHeap`), and flat open-addressing closed hash table (`ClosedEntry[] _closedTable`).
+  - Added `GoapPlan` reusable container that supports sequential step advancement and reset without allocating memory.
+  - Verified branch cost optimization (e.g. choosing 0.5-cost `EatCarriedFood` over 6.0-cost `Harvest` chain) and confirmed 10,000 plan searches execute in ~11ms with strictly 0 bytes of heap allocation.
 
 ## Future Progression
 *(See `curentfocus.txt` for upcoming epics)*
-- **Epic 6: Multi-Step Reasoning** (Phase 2: A* Graph Search; Phase 3: Planner Integration & Reflexive Preemption)
+- **Epic 6: Multi-Step Reasoning** (Phase 3: Planner Integration & Reflexive Preemption)
 - **Epic 7: Sociopolitical & Relationship System** (Affinity matrices, Tribal metadata)
 - **Epic 8: Inventory & World Construction** (Item ownership, permanent world mutations)
 - **Epic 9: Martial Engagement** (Tactical evaluation, transient projectile data)

@@ -16,8 +16,8 @@ Basic utility AI only solves one step at a time. To craft a weapon, an agent mus
 
 Feature 1: Goal-Oriented Action Planning (GOAP).
 - Phase 1 (Completed): Zero-allocation bitmask WorldState, GoapAction definitions with preconditions & effects, GoapGoal structures, and ActionGraph prerequisite dependency resolution.
-- Phase 2 (Next Focus): A* search through the action graph to build sequential action plans backward from goal state.
-- Phase 3: Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption.
+- Phase 2 (Completed): High-performance A* search through the action graph (GoapPlanner) with pre-allocated node pools, binary min-heap, open-addressing closed table, branch cost optimization, and 0-allocation plan reconstruction.
+- Phase 3 (Next Focus): Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption and plan step execution.
 
 Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.
