@@ -413,6 +413,7 @@ namespace Simpiens.Simulation
 
         internal bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId, float pawnClearanceRadius = 0.4f)
         {
+            if (_spatialPartition == null) return false;
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return false;
 
