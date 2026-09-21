@@ -342,12 +342,10 @@ namespace Simpiens.Simulation
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
             if (IsPositionBlocked(targetPos, node.Id, clearance))
             {
-                state.StallCount++;
-                var reflexResult = ApplyProgressiveUnstuckReflex(node, targetPos, state);
-                if (reflexResult != IntentResult.InProgress)
-                {
-                    return reflexResult; // Abort path, force recalculation
-                }
+                // Do not advance position into the obstructed target this frame.
+                // Stationary state will accumulate TimeSinceLastProgress in Section 1.
+                // If blocked continuously for >= 1.0s, the progressive watchdog reflex will handle unsticking cleanly.
+                return IntentResult.InProgress;
             }
 
             // 3. Move the pawn visually and logically
@@ -382,8 +380,10 @@ namespace Simpiens.Simulation
             if (state.StallCount <= 2)
             {
                 // Tier 1: Local Clearance Nudge (Orthogonal shift to break symmetrical collider face-offs)
-                float sign = (state.StallCount == 1) ? 1.0f : -1.0f;
-                Vector2 perpendicular = new Vector2(-dir.y, dir.x) * (0.2f * sign);
+                // StallCount 1: shifts +0.2f along perpendicular.
+                // StallCount 2: shifts -0.4f to test the opposite flank (-0.2f relative to original centerline).
+                float displacement = (state.StallCount == 1) ? 0.2f : -0.4f;
+                Vector2 perpendicular = new Vector2(-dir.y, dir.x) * displacement;
                 node.transform.position = (Vector2)node.transform.position + perpendicular;
                 state.LastSampledPosition = node.Position;
                 return IntentResult.InProgress;
