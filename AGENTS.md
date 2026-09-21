@@ -46,3 +46,5 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **No MonoBehaviours for Logic**: Game objects are dumb views.
 - **Zero Allocations in Hot Paths**: Use Structs, object pooling, and standard `for` loops in tick-critical areas.
 - **Dual-Loop System**: Use `SimulationManager` for Unity's tick, and `CognitiveEngine` for asynchronous background tasks.
+- **Defensive Null-Safety for Test Isolation**: Core domain services (`SimulationManager`, `AutonomousAgent`, `CognitiveEngine`) must be null-safe regarding their injected interfaces (`ISpatialPartition`, `IWorldRegistry`, `ISimulationClock`). Domain validators in `Assets/Scripts/Testing/` instantiate these services directly in isolation with `null` dependencies. Never dereference an injected dependency without a null guard or fallback (e.g., `_spatialPartition == null` returns unblocked/empty, `_clock == null` defaults to tick 0).
+

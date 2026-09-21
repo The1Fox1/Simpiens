@@ -17,4 +17,6 @@ MCP-Ready Interface: Define interfaces for the agent reasoning layer that align 
 
 Influence Queue: Implement a PlayerInterventionService using the Command pattern. Player inputs must be queued as data objects (InfluenceEvent) that agents ingest during their cognitive polling cycle, rather than direct state mutations.
 
+Defensive Null-Safety for Test Isolation: Core services (SimulationManager, AutonomousAgent, CognitiveEngine) must be resilient to null-injected dependencies (ISpatialPartition, IWorldRegistry, ISimulationClock). Domain validation suites in Assets/Scripts/Testing/ instantiate services in headless isolation with null parameters; all injected subsystems must be guarded with benign default fallbacks to prevent runtime NullReferenceExceptions during testing.
+
 First Output: Generate the interface definitions and structural boilerplate for the SimulationManager, CognitiveEngine, and PlayerInterventionService. Do not implement the Unity rendering logic yet.
