@@ -51,12 +51,11 @@ namespace Simpiens.Testing.Navigation
                 Intent = new WanderIntent(node.Id, path),
                 CurrentWaypointIndex = 0,
                 LastSampledPosition = Vector2.zero,
-                TimeSinceLastProgress = 0.95f,
+                TimeSinceLastProgress = 1.0f,
                 StallCount = 0
             };
 
-            // Call ExecutePathMovement when position hasn't moved for > 1.0s
-            // Time.deltaTime will push 0.95f past 1.0f
+            // Call ExecutePathMovement when position hasn't moved for >= 1.0s
             var result = simManager.ExecutePathMovement(node, path, state);
 
             Assert(state.StallCount >= 1, $"Watchdog incremented StallCount when movement stalled (actual: {state.StallCount})");
@@ -112,7 +111,7 @@ namespace Simpiens.Testing.Navigation
             Assert(state.UseRelaxedClearance == true, "Tier 2 reflex activated UseRelaxedClearance on ActiveIntentState.");
 
             GameObject.DestroyImmediate(go);
-            Debug.Log("[PASS] Test 2: Tier 2 Relaxed clearance tolerance activated.");
+            Debug.Log("[PASS] Test 3: Tier 2 Relaxed clearance tolerance activated.");
         }
 
         private void ValidateTier3DisengageAndBlacklist()
