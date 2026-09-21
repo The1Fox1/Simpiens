@@ -52,7 +52,12 @@ namespace Simpiens.Cognition.Planning
         private readonly List<GoapAction> _applicableActionsBuffer;
         private readonly int[] _pathScratch;
 
-        public GoapPlanner(int maxNodes = 256)
+        [VContainer.Inject]
+        public GoapPlanner() : this(256)
+        {
+        }
+
+        public GoapPlanner(int maxNodes)
         {
             _maxNodes = maxNodes;
             _nodePool = new GoapPlanNode[maxNodes];
