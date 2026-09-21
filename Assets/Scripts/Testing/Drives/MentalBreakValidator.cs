@@ -6,6 +6,7 @@ using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Cognition.Memory;
+using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
@@ -98,7 +99,7 @@ namespace Simpiens.Testing.Drives
             agent.Initialize(node.Id, null, null, simManager, clock);
 
             // Seed agent with an active intent
-            var wanderIntent = new WanderIntent(node.Id, default);
+            var wanderIntent = new WanderIntent(node.Id, new PathResponse());
             simManager.EnqueueIntent(wanderIntent);
             simManager.ProcessQueuedIntents();
 

@@ -278,9 +278,9 @@ namespace Simpiens.Simulation
 
         private IntentResult ExecutePanicMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
         {
-            if (currentIndex >= path.Length)
+            if (path == null || path.Waypoints == null || currentIndex >= path.Length)
             {
-                return IntentResult.Success; // Reached end
+                return IntentResult.Success; // Reached end or empty
             }
 
             Vector2 targetPos = path.Waypoints[currentIndex];
@@ -306,9 +306,9 @@ namespace Simpiens.Simulation
 
         internal IntentResult ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ActiveIntentState state)
         {
-            if (state.CurrentWaypointIndex >= path.Length)
+            if (path == null || path.Waypoints == null || state.CurrentWaypointIndex >= path.Length)
             {
-                return IntentResult.Success; // Reached end
+                return IntentResult.Success; // Reached end or empty
             }
 
             Vector2 targetPos = path.Waypoints[state.CurrentWaypointIndex];
@@ -447,18 +447,18 @@ namespace Simpiens.Simulation
         {
             if (intent is HarvestResourceIntent hri)
             {
-                hri.Path.ReturnToPool();
+                hri.Path?.ReturnToPool();
             }
             else if (intent is WanderIntent wi)
             {
-                wi.Path.ReturnToPool();
+                wi.Path?.ReturnToPool();
             }
             else if (intent is PanicIntent pi)
             {
-                pi.Path.ReturnToPool();
+                pi.Path?.ReturnToPool();
             }
 
-            intent.OnComplete?.Invoke(result);
+            intent?.OnComplete?.Invoke(result);
         }
     }
 }
