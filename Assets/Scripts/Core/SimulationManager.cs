@@ -49,8 +49,19 @@ namespace Simpiens.Simulation
             _intentQueue.Enqueue(intent);
         }
 
+        public void ProcessQueuedIntents()
+        {
+            while (_intentQueue.TryDequeue(out var intent))
+            {
+                // Register as the current active intent for this agent
+                _activeIntents[intent.AgentId] = new ActiveIntentState { Intent = intent, CurrentWaypointIndex = 0 };
+            }
+        }
+
         public bool AbortIntent(UnityEngine.GUID agentId)
         {
+            ProcessQueuedIntents();
+
             if (_activeIntents.TryGetValue(agentId, out var state))
             {
                 _activeIntents.Remove(agentId);
@@ -70,45 +81,47 @@ namespace Simpiens.Simulation
             if (IsPaused) return;
 
             // Process queued intents from background cognitive threads
-            while (_intentQueue.TryDequeue(out var intent))
+            ProcessQueuedIntents();
+
+            // Execute active intents if registry is present
+            if (_worldRegistry != null)
             {
-                // Register as the current active intent for this agent
-                _activeIntents[intent.AgentId] = new ActiveIntentState { Intent = intent, CurrentWaypointIndex = 0 };
-            }
+                // We iterate over a copy of the values, or carefully manage removal to avoid collection modified exceptions.
+                var keysToRemove = new List<UnityEngine.GUID>();
 
-            // Execute active intents
-            // We iterate over a copy of the values, or carefully manage removal to avoid collection modified exceptions.
-            var keysToRemove = new List<UnityEngine.GUID>();
-
-            foreach (var kvp in _activeIntents)
-            {
-                var agentId = kvp.Key;
-                var state = kvp.Value;
-
-                var node = _worldRegistry.GetNode(agentId);
-                if (node == null)
+                foreach (var kvp in _activeIntents)
                 {
-                    // Agent node no longer exists
-                    keysToRemove.Add(agentId);
-                    CompleteIntent(state.Intent, IntentResult.Aborted);
-                    continue;
+                    var agentId = kvp.Key;
+                    var state = kvp.Value;
+
+                    var node = _worldRegistry.GetNode(agentId);
+                    if (node == null)
+                    {
+                        // Agent node no longer exists
+                        keysToRemove.Add(agentId);
+                        CompleteIntent(state.Intent, IntentResult.Aborted);
+                        continue;
+                    }
+
+                    var result = ExecuteIntent(node, state);
+                    if (result != IntentResult.InProgress)
+                    {
+                        keysToRemove.Add(agentId);
+                        CompleteIntent(state.Intent, result);
+                    }
                 }
 
-                var result = ExecuteIntent(node, state);
-                if (result != IntentResult.InProgress)
+                foreach (var id in keysToRemove)
                 {
-                    keysToRemove.Add(agentId);
-                    CompleteIntent(state.Intent, result);
+                    _activeIntents.Remove(id);
                 }
-            }
-
-            foreach (var id in keysToRemove)
-            {
-                _activeIntents.Remove(id);
             }
 
             // Generate the thread-safe global snapshot for any cognitive agents that poll this frame
-            _spatialPartition.UpdateFromRegistry(_worldRegistry);
+            if (_spatialPartition != null && _worldRegistry != null)
+            {
+                _spatialPartition.UpdateFromRegistry(_worldRegistry);
+            }
         }
 
         private IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)

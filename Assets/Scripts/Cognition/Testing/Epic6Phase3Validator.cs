@@ -135,9 +135,9 @@ namespace Simpiens.Testing
                 completionResult = res;
             };
 
-            // Enqueue and tick to register as active intent
+            // Enqueue and process to register as active intent
             simManager.EnqueueIntent(intent);
-            simManager.Tick();
+            simManager.ProcessQueuedIntents();
 
             // Abort active intent
             bool aborted = simManager.AbortIntent(agentId);
