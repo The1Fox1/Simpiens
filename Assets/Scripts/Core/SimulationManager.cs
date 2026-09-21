@@ -14,6 +14,12 @@ namespace Simpiens.Simulation
         public AgentIntent Intent;
         public int CurrentWaypointIndex;
         public float ElapsedTime;
+
+        // Motor Watchdog Tracking
+        public Vector2 LastSampledPosition;
+        public float TimeSinceLastProgress;
+        public int StallCount;
+        public bool UseRelaxedClearance;
     }
 
     /// <summary>
@@ -31,6 +37,7 @@ namespace Simpiens.Simulation
         // Main thread tracking stores
         private readonly Dictionary<UnityEngine.GUID, ResourceData> _resources = new Dictionary<UnityEngine.GUID, ResourceData>();
         private readonly Dictionary<UnityEngine.GUID, ActiveIntentState> _activeIntents = new Dictionary<UnityEngine.GUID, ActiveIntentState>();
+        private readonly List<UnityEngine.GUID> _keysToRemove = new List<UnityEngine.GUID>(64);
 
         public bool IsPaused { get; private set; }
 
@@ -53,8 +60,20 @@ namespace Simpiens.Simulation
         {
             while (_intentQueue.TryDequeue(out var intent))
             {
+                Vector2 initialPos = Vector2.zero;
+                if (_worldRegistry != null)
+                {
+                    var node = _worldRegistry.GetNode(intent.AgentId);
+                    if (node != null) initialPos = node.Position;
+                }
+
                 // Register as the current active intent for this agent
-                _activeIntents[intent.AgentId] = new ActiveIntentState { Intent = intent, CurrentWaypointIndex = 0 };
+                _activeIntents[intent.AgentId] = new ActiveIntentState
+                {
+                    Intent = intent,
+                    CurrentWaypointIndex = 0,
+                    LastSampledPosition = initialPos
+                };
             }
         }
 
@@ -86,8 +105,7 @@ namespace Simpiens.Simulation
             // Execute active intents if registry is present
             if (_worldRegistry != null)
             {
-                // We iterate over a copy of the values, or carefully manage removal to avoid collection modified exceptions.
-                var keysToRemove = new List<UnityEngine.GUID>();
+                _keysToRemove.Clear();
 
                 foreach (var kvp in _activeIntents)
                 {
@@ -98,7 +116,7 @@ namespace Simpiens.Simulation
                     if (node == null)
                     {
                         // Agent node no longer exists
-                        keysToRemove.Add(agentId);
+                        _keysToRemove.Add(agentId);
                         CompleteIntent(state.Intent, IntentResult.Aborted);
                         continue;
                     }
@@ -106,14 +124,15 @@ namespace Simpiens.Simulation
                     var result = ExecuteIntent(node, state);
                     if (result != IntentResult.InProgress)
                     {
-                        keysToRemove.Add(agentId);
+                        _keysToRemove.Add(agentId);
                         CompleteIntent(state.Intent, result);
                     }
                 }
 
-                foreach (var id in keysToRemove)
+                int removeCount = _keysToRemove.Count;
+                for (int i = 0; i < removeCount; i++)
                 {
-                    _activeIntents.Remove(id);
+                    _activeIntents.Remove(_keysToRemove[i]);
                 }
             }
 
@@ -132,14 +151,14 @@ namespace Simpiens.Simulation
             {
                 case WanderIntent wander:
                     if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Walking;
-                    return ExecutePathMovement(node, wander.Path, ref state.CurrentWaypointIndex);
+                    return ExecutePathMovement(node, wander.Path, state);
 
                 case PanicIntent panic:
                     if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
                     return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
 
                 case HarvestResourceIntent harvest:
-                    var reachResult = ExecutePathMovement(node, harvest.Path, ref state.CurrentWaypointIndex);
+                    var reachResult = ExecutePathMovement(node, harvest.Path, state);
                     if (reachResult == IntentResult.Success)
                     {
                         // Check if resource still exists before gathering
@@ -284,31 +303,67 @@ namespace Simpiens.Simulation
             return IntentResult.InProgress;
         }
 
-        private IntentResult ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
+        internal IntentResult ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ActiveIntentState state)
         {
-            if (currentIndex >= path.Length)
+            if (state.CurrentWaypointIndex >= path.Length)
             {
                 return IntentResult.Success; // Reached end
             }
 
-            Vector2 targetPos = path.Waypoints[currentIndex];
+            Vector2 targetPos = path.Waypoints[state.CurrentWaypointIndex];
 
-            // Path Invalidation: Check if next step is blocked
-            if (IsPositionBlocked(targetPos, node.Id))
+            // 1. Motor Watchdog Progress Tracking
+            float distMoved = Vector2.Distance(node.Position, state.LastSampledPosition);
+            if (distMoved >= 0.05f)
             {
-                return IntentResult.PathBlocked; // Abort path, force recalculation
+                state.LastSampledPosition = node.Position;
+                state.TimeSinceLastProgress = 0f;
+                state.StallCount = 0;
+                state.UseRelaxedClearance = false;
+            }
+            else
+            {
+                state.TimeSinceLastProgress += Time.deltaTime;
+                if (state.TimeSinceLastProgress >= 1.0f)
+                {
+                    state.StallCount++;
+                    state.TimeSinceLastProgress = 0f;
+
+                    var reflexResult = ApplyProgressiveUnstuckReflex(node, targetPos, state);
+                    if (reflexResult != IntentResult.InProgress)
+                    {
+                        return reflexResult;
+                    }
+                }
             }
 
-            // Move the pawn visually and logically
+            // 2. Path Invalidation: Check if next step is blocked
+            float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
+            if (IsPositionBlocked(targetPos, node.Id, clearance))
+            {
+                state.StallCount++;
+                var reflexResult = ApplyProgressiveUnstuckReflex(node, targetPos, state);
+                if (reflexResult != IntentResult.InProgress)
+                {
+                    return reflexResult; // Abort path, force recalculation
+                }
+            }
+
+            // 3. Move the pawn visually and logically
             float step = 2f * Time.deltaTime; // Ideally, fetch from node configuration
             node.transform.position = Vector2.MoveTowards(node.Position, targetPos, step);
 
             // Check if reached the current waypoint
             if (Vector2.Distance(node.Position, targetPos) < 0.05f)
             {
-                currentIndex++;
+                state.CurrentWaypointIndex++;
+                state.LastSampledPosition = node.Position;
+                state.TimeSinceLastProgress = 0f;
+                state.StallCount = 0;
+                state.UseRelaxedClearance = false;
+
                 // If this was the last waypoint, return true indicating completion
-                if (currentIndex >= path.Length)
+                if (state.CurrentWaypointIndex >= path.Length)
                 {
                     return IntentResult.Success;
                 }
@@ -317,7 +372,46 @@ namespace Simpiens.Simulation
             return IntentResult.InProgress;
         }
 
-        private bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId)
+        internal IntentResult ApplyProgressiveUnstuckReflex(Simpiens.Entities.NodeController node, Vector2 targetPos, ActiveIntentState state)
+        {
+            Vector2 toTarget = targetPos - (Vector2)node.Position;
+            float dist = toTarget.magnitude;
+            Vector2 dir = dist > 0.001f ? toTarget / dist : Vector2.up;
+
+            if (state.StallCount <= 2)
+            {
+                // Tier 1: Local Clearance Nudge (Orthogonal shift to break symmetrical collider face-offs)
+                float sign = (state.StallCount == 1) ? 1.0f : -1.0f;
+                Vector2 perpendicular = new Vector2(-dir.y, dir.x) * (0.2f * sign);
+                node.transform.position = (Vector2)node.transform.position + perpendicular;
+                state.LastSampledPosition = node.Position;
+                return IntentResult.InProgress;
+            }
+            else if (state.StallCount == 3)
+            {
+                // Tier 2: Relaxed Clearance Repath
+                state.UseRelaxedClearance = true;
+                return IntentResult.InProgress;
+            }
+            else
+            {
+                // Tier 3: Target Disengage & Blacklist Back-Off (StallCount >= 4)
+                node.transform.position = (Vector2)node.transform.position - (dir * 0.5f);
+
+                if (state.Intent is HarvestResourceIntent harvest)
+                {
+                    if (node.Agent != null && node.Agent.Memory != null)
+                    {
+                        uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+                        node.Agent.Memory.BlacklistEntity(harvest.TargetEntityId, currentTick + 300);
+                    }
+                }
+
+                return IntentResult.PathBlocked;
+            }
+        }
+
+        internal bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId, float pawnClearanceRadius = 0.4f)
         {
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return false;
@@ -339,8 +433,8 @@ namespace Simpiens.Simulation
                     if (entity.Type == EntityType.Wall) return true;
                     if (entity.Type == EntityType.Pawn)
                     {
-                        // Dynamic validation: if another pawn is currently standing exactly there.
-                        if (Vector2.Distance(entity.Position, targetPos) < 0.4f) return true;
+                        // Dynamic validation: if another pawn is currently standing within clearance radius
+                        if (Vector2.Distance(entity.Position, targetPos) < pawnClearanceRadius) return true;
                     }
                 }
             }

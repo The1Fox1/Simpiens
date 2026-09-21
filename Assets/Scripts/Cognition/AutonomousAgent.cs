@@ -61,6 +61,7 @@ namespace Simpiens.Cognition
         }
         public float Frustration { get; set; } = 0f;
         public bool HasFoodInInventory { get; set; } = false;
+        public int NavigationalStalls { get; set; } = 0;
 
         public bool HasActiveIntent { get; private set; }
 
@@ -273,8 +274,7 @@ namespace Simpiens.Cognition
                     }
                     else if (result == IntentResult.Success)
                     {
-                        Frustration = Mathf.Max(0f, Frustration - 50f);
-                        if (intent is IdleIntent) Frustration += 5f;
+                        NavigationalStalls = 0;
 
                         // If the completed intent was part of our active plan, advance the step
                         if (HasActivePlan)
@@ -308,7 +308,7 @@ namespace Simpiens.Cognition
                     }
                     else if (result == IntentResult.TargetMissing || result == IntentResult.PathBlocked || result == IntentResult.Aborted)
                     {
-                        Frustration += 25f;
+                        NavigationalStalls++;
                         AbortActivePlan();
                     }
 
