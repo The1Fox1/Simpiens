@@ -126,25 +126,30 @@ namespace Simpiens.Simulation
 
         private IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
         {
+            var agent = node.Agent;
+
             switch (state.Intent)
             {
                 case WanderIntent wander:
+                    if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Walking;
                     return ExecutePathMovement(node, wander.Path, ref state.CurrentWaypointIndex);
 
                 case PanicIntent panic:
+                    if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
                     return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
 
                 case HarvestResourceIntent harvest:
                     var reachResult = ExecutePathMovement(node, harvest.Path, ref state.CurrentWaypointIndex);
                     if (reachResult == IntentResult.Success)
                     {
+                        if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
+
                         // State Mutation: Harvesting
                         if (_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
                         {
                             resourceData.RemainingYield--;
 
                             // Increase agent hunger
-                            var agent = node.GetComponent<Simpiens.Cognition.AutonomousAgent>();
                             if (agent != null)
                             {
                                 agent.Hunger = Mathf.Min(100f, agent.Hunger + 50f);
@@ -168,6 +173,10 @@ namespace Simpiens.Simulation
                             return IntentResult.TargetMissing;
                         }
                     }
+                    else if (reachResult == IntentResult.InProgress)
+                    {
+                        if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Walking;
+                    }
                     return reachResult;
 
                 case IdleIntent idle:
@@ -175,6 +184,11 @@ namespace Simpiens.Simulation
 
                     // Social interaction: Gossip when idling near other agents
                     CheckGossipOpportunity(node);
+
+                    if (agent != null && Time.time >= agent.LastGossipTimestamp + 1.5f)
+                    {
+                        agent.VisualState = Simpiens.Entities.AgentVisualState.Idle;
+                    }
 
                     if (state.ElapsedTime >= idle.Duration)
                     {
@@ -190,7 +204,7 @@ namespace Simpiens.Simulation
 
         private void CheckGossipOpportunity(Simpiens.Entities.NodeController node)
         {
-            var agentA = node.GetComponent<Simpiens.Cognition.AutonomousAgent>();
+            var agentA = node.Agent;
             if (agentA == null || agentA.Memory == null) return;
 
             uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
@@ -205,7 +219,7 @@ namespace Simpiens.Simulation
                 float distSqr = (otherNode.Position - node.Position).sqrMagnitude;
                 if (distSqr <= GossipRadius * GossipRadius)
                 {
-                    var agentB = otherNode.GetComponent<Simpiens.Cognition.AutonomousAgent>();
+                    var agentB = otherNode.Agent;
                     if (agentB != null && agentB.Memory != null)
                     {
                         if (agentA.Memory.CanGossipWith(agentB.AgentId, currentTick))
@@ -214,6 +228,9 @@ namespace Simpiens.Simulation
                             {
                                 agentA.RelieveFrustration(15f);
                                 agentB.RelieveFrustration(15f);
+
+                                agentA.TriggerGossipVisual(Time.time);
+                                agentB.TriggerGossipVisual(Time.time);
 
                                 Debug.Log($"[Gossip] Agents {agentA.AgentId.ToString().Substring(0, 6)} and {agentB.AgentId.ToString().Substring(0, 6)} exchanged knowledge at tick {currentTick}!");
                                 break;

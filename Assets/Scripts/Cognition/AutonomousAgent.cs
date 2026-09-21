@@ -5,6 +5,7 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Actions;
+using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
@@ -49,6 +50,16 @@ namespace Simpiens.Cognition
 
         public bool HasActiveIntent { get; private set; }
 
+        // Visual State
+        public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
+        public float LastGossipTimestamp { get; private set; } = -10f;
+
+        public void TriggerGossipVisual(float timestamp)
+        {
+            LastGossipTimestamp = timestamp;
+            VisualState = AgentVisualState.Gossiping;
+        }
+
         public void RelieveFrustration(float amount)
         {
             Frustration = Mathf.Max(0f, Frustration - amount);
@@ -58,6 +69,7 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
+            VisualState = AgentVisualState.Idle;
         }
 
         public void Initialize(
@@ -116,6 +128,7 @@ namespace Simpiens.Cognition
             if (snapshot == null) return;
 
             _isEvaluating = true;
+            VisualState = AgentVisualState.Thinking;
 
             Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
             _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: (uint)_clock.CurrentTick);
@@ -216,6 +229,7 @@ namespace Simpiens.Cognition
                 intent.OnComplete = (result) =>
                 {
                     HasActiveIntent = false;
+                    VisualState = AgentVisualState.Idle;
                     uint currentTick = (uint)_clock.CurrentTick;
 
                     if (intent is PanicIntent)

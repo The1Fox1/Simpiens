@@ -28,6 +28,16 @@ namespace Simpiens.Entities
         
         public EntityType Type { get; set; } = EntityType.Pawn;
 
+        private Simpiens.Cognition.AutonomousAgent _agent;
+        public Simpiens.Cognition.AutonomousAgent Agent
+        {
+            get
+            {
+                if (_agent == null) _agent = GetComponent<Simpiens.Cognition.AutonomousAgent>();
+                return _agent;
+            }
+        }
+
         [Inject]
         public void Construct(ISimulationClock clock)
         {

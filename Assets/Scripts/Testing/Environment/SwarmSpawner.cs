@@ -74,11 +74,8 @@ namespace Simpiens.Testing.Environment
                 agentGo.transform.position = Random.insideUnitCircle * 5f;
 
                 var sr = agentGo.AddComponent<SpriteRenderer>();
-                var tex = new Texture2D(1, 1);
-                tex.SetPixel(0, 0, Color.cyan);
-                tex.Apply();
-                sr.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
-                agentGo.transform.localScale = Vector3.one * 0.2f; // Small dots
+                sr.sprite = AgentSpriteLibrary.GetAgentSprite(AgentVisualState.Idle, 0);
+                agentGo.transform.localScale = Vector3.one * 0.7f; // Clear, readable icon size
 
                 // Register them as pawns so they appear in the GridVisualizer
                 var rb = agentGo.AddComponent<Rigidbody2D>();
@@ -86,7 +83,7 @@ namespace Simpiens.Testing.Environment
                 rb.bodyType = RigidbodyType2D.Kinematic; // They move via interpolation, not physics
 
                 var col = agentGo.AddComponent<CircleCollider2D>();
-                col.radius = 0.1f;
+                col.radius = 0.35f;
 
                 var controller = agentGo.AddComponent<NodeController>();
                 controller.Type = EntityType.Pawn;
@@ -95,6 +92,9 @@ namespace Simpiens.Testing.Environment
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
                 agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _frustrationEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
+
+                // Attach AgentView for animated visual feedback
+                agentGo.AddComponent<AgentView>();
 
                 _agents.Add(agent);
             }

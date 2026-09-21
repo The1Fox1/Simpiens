@@ -72,18 +72,15 @@ namespace Simpiens.Core.Bootstrapping
                 resourceGo.transform.position = Random.insideUnitCircle * 8f; // Scatter around
 
                 var sr = resourceGo.AddComponent<SpriteRenderer>();
-                var tex = new Texture2D(1, 1);
-                tex.SetPixel(0, 0, Color.green);
-                tex.Apply();
-                sr.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
-                resourceGo.transform.localScale = Vector3.one * 0.3f; // Slightly larger than pawns
+                sr.sprite = AgentSpriteLibrary.ResourceSprite;
+                resourceGo.transform.localScale = Vector3.one * 0.8f; // Clear berry bush size
 
                 var rb = resourceGo.AddComponent<Rigidbody2D>();
                 rb.gravityScale = 0f;
                 rb.bodyType = RigidbodyType2D.Static;
 
                 var col = resourceGo.AddComponent<CircleCollider2D>();
-                col.radius = 0.15f;
+                col.radius = 0.4f;
 
                 var controller = resourceGo.AddComponent<NodeController>();
                 controller.Type = EntityType.Resource;
