@@ -101,6 +101,13 @@ namespace Simpiens.Entities
                     transform.localScale = _baseScale;
                     break;
 
+                case AgentVisualState.Resting:
+                    // Snoozing breathing cycle and relaxed head slump
+                    float restBreath = 1f + Mathf.Sin(t * 1.5f) * 0.04f;
+                    transform.localScale = new Vector3(_baseScale.x * restBreath, _baseScale.y * (2f - restBreath), _baseScale.z);
+                    transform.localRotation = Quaternion.Euler(0f, 0f, 2f);
+                    break;
+
                 case AgentVisualState.Idle:
                 default:
                     // Calm rhythmic breathing

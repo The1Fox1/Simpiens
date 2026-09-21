@@ -1,6 +1,6 @@
 # Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog
 
-- **Status**: IN PROGRESS (Phase 3 Completed, Phase 4 Pending)
+- **Status**: COMPLETED
 - **Preceding Epic**: Epic 6: Multi-Step Reasoning (GOAP / HTN)
 - **Following Epic**: Epic 7: The Sociopolitical & Relationship System (Affinity Matrix & Tribal Hierarchy)
 - **Architectural Layer**: Cognition (Tier 1 Reflexes & Tier 2 GOAP Drives) & Core Simulation (`SimulationManager`)
@@ -89,9 +89,9 @@ flowchart TD
   - **Exhaustion Collapse (`Energy <= 5f`)**:
     - Agent collapses into an emergency nap on the spot (`IdleIntent` with `IsExhaustionCollapsed = true`), recovering energy to at least $30f$.
 
-### Phase 4: Visual Poses, Telemetry & Domain Validation Suite
+### Phase 4: Visual Poses, Telemetry & Domain Validation Suite [COMPLETED]
 - **Scope**:
-  - Complete visual cues in `AgentSpriteLibrary` for `Harvesting` (gold), `Panicking` (red exclamation), `Resting` (blue zzz), `Gossiping` (yellow dialog), `Walking` (cyan arrow), and `Idle` (white).
+  - Complete visual cues in `AgentSpriteLibrary` for `Harvesting` (gold), `Panicking` (red exclamation), `Resting` (blue zzz), `Gossiping` (magenta bubble), `Walking` (emerald), `Thinking` (indigo), and `Idle` (cyan).
   - Automated domain validation suite in `Assets/Scripts/Testing/Drives/DriveSystemValidator.cs`.
   - Benchmark confirming strictly 0 GC allocations in `ManualUpdate()` and `SimulationManager.Tick()`.
 

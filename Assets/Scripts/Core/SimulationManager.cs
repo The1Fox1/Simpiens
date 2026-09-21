@@ -143,7 +143,7 @@ namespace Simpiens.Simulation
             }
         }
 
-        private IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
+        internal IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
         {
             var agent = node.Agent;
 
@@ -207,11 +207,18 @@ namespace Simpiens.Simulation
                     state.ElapsedTime += Time.deltaTime;
 
                     // Social interaction: Gossip when idling near other agents
-                    CheckGossipOpportunity(node);
+                    if (agent == null || !agent.IsExhaustionCollapsed)
+                    {
+                        CheckGossipOpportunity(node);
+                    }
 
                     if (agent != null && Time.time >= agent.LastGossipTimestamp + 1.5f)
                     {
-                        if (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.HarvestResourceAction)
+                        if (agent.IsExhaustionCollapsed || (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
+                        {
+                            agent.VisualState = Simpiens.Entities.AgentVisualState.Resting;
+                        }
+                        else if (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.HarvestResourceAction)
                         {
                             agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
                         }
@@ -236,7 +243,8 @@ namespace Simpiens.Simulation
         private void CheckGossipOpportunity(Simpiens.Entities.NodeController node)
         {
             var agentA = node.Agent;
-            if (agentA == null || agentA.Memory == null) return;
+            if (agentA == null || agentA.Memory == null || agentA.IsExhaustionCollapsed) return;
+            if (_worldRegistry == null) return;
 
             uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
 
@@ -251,7 +259,7 @@ namespace Simpiens.Simulation
                 if (distSqr <= GossipRadius * GossipRadius)
                 {
                     var agentB = otherNode.Agent;
-                    if (agentB != null && agentB.Memory != null)
+                    if (agentB != null && agentB.Memory != null && !agentB.IsExhaustionCollapsed)
                     {
                         if (agentA.Memory.CanGossipWith(agentB.AgentId, currentTick))
                         {

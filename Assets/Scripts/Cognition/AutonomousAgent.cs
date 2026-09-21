@@ -64,7 +64,7 @@ namespace Simpiens.Cognition
         public int NavigationalStalls { get; set; } = 0;
         public bool IsExhaustionCollapsed { get; private set; } = false;
 
-        public bool HasActiveIntent { get; private set; }
+        public bool HasActiveIntent { get; internal set; }
 
         // Visual State
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
@@ -155,6 +155,11 @@ namespace Simpiens.Cognition
                 IsExhaustionCollapsed = true;
             }
 
+            if (IsExhaustionCollapsed)
+            {
+                VisualState = AgentVisualState.Resting;
+            }
+
             if (HasActiveIntent && (emergencyExhaustion || emergencyStarvation))
             {
                 if (_simulationManager != null)
@@ -183,7 +188,14 @@ namespace Simpiens.Cognition
             if (snapshot == null) return;
 
             _isEvaluating = true;
-            VisualState = AgentVisualState.Thinking;
+            if (IsExhaustionCollapsed)
+            {
+                VisualState = AgentVisualState.Resting;
+            }
+            else
+            {
+                VisualState = AgentVisualState.Thinking;
+            }
 
             Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
             uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;

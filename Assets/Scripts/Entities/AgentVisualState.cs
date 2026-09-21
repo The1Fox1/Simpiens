@@ -11,6 +11,7 @@ namespace Simpiens.Entities
         Harvesting = 2,
         Gossiping = 3,
         Panicking = 4,
-        Thinking = 5
+        Thinking = 5,
+        Resting = 6
     }
 }

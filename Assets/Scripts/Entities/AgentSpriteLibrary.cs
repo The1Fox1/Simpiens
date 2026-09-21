@@ -10,7 +10,7 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[6, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[7, 2];
         private static readonly Sprite _resourceSprite;
 
         public static Sprite ResourceSprite => _resourceSprite;
@@ -82,7 +82,16 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Thinking, 0] = CreateSprite(PatternThink0, thinkPalette, "Agent_Think_0");
             _agentSprites[(int)AgentVisualState.Thinking, 1] = CreateSprite(PatternThink1, thinkPalette, "Agent_Think_1");
 
-            // 7. Resource (Berry Bush)
+            // 7. Resting Sprites (Soft Blue / Nightcap Outfit + Zzz)
+            var restPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(59, 130, 246, 255),
+                shadow: new Color32(29, 78, 216, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Resting, 0] = CreateSprite(PatternRest0, restPalette, "Agent_Rest_0");
+            _agentSprites[(int)AgentVisualState.Resting, 1] = CreateSprite(PatternRest1, restPalette, "Agent_Rest_1");
+
+            // 8. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
@@ -96,7 +105,7 @@ namespace Simpiens.Entities
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 6) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= 7) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -116,7 +125,8 @@ namespace Simpiens.Entities
                 { 'S', shadow },
                 { 'T', tool },
                 { '!', ex },
-                { '?', q }
+                { '?', q },
+                { 'Z', new Color32(147, 197, 253, 255) }
             };
         }
 
@@ -395,6 +405,46 @@ namespace Simpiens.Entities
             "...#CCCCCCCC#...",
             "...#KC####C#....",
             "....#SSSSSS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternRest0 =
+        {
+            "..........ZZ....",
+            "...........Z....",
+            "..........ZZ....",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#K##KK##K#..",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#CCCCCCCC#...",
+            "...#KC####CK#...",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternRest1 =
+        {
+            "........ZZ......",
+            ".........Z..ZZ..",
+            "........ZZ...Z..",
+            ".....######.ZZ..",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#K##KK##K#..",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#CCCCCCCC#...",
+            "...#KC####CK#...",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
             "....###..###...."
         };
 
