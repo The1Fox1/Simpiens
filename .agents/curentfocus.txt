@@ -19,7 +19,24 @@ Feature 1: Goal-Oriented Action Planning (GOAP).
 - Phase 2 (Completed): High-performance A* search through the action graph (GoapPlanner) with pre-allocated node pools, binary min-heap, open-addressing closed table, branch cost optimization, and 0-allocation plan reconstruction.
 - Phase 3 (Completed): Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption, in-flight intent preemption (ISimulationManager.AbortIntent), WorldStateBuilder, and sequential plan step execution.
 
-Current Focus: Epic 7: The Sociopolitical & Relationship System
+Current Focus: Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog
+Before agents can form tribes or wage wars (Epic 7), their individual autonomy must be resilient and biologically grounded. This epic decouples physical navigational stalls from internal biological drives, introduces a multifaceted needs hierarchy, and establishes critical mental breaks (panic/starvation) that override deliberate planning.
+
+Feature 1: Multifaceted Biological Drives & GOAP Goal Dynamic Priority.
+- Phase 1: Structured AgentNeeds (Hunger, Energy, Social) with continuous decay, WorldState bitmask extensions, dynamic GOAP goal priorities (SatiateHungerGoal, RestGoal, SocializeGoal), and clean drive replenishment.
+
+Feature 2: Autonomous Motor Watchdog (Unstuck Failsafe).
+- Phase 2: Navigation watchdog in SimulationManager/NodeController detecting physical deadlocks, zero positional progress, and repeated path obstruction; implements progressive multi-tiered unstuck reflexes (local clearance nudge, relaxed repath, target disengage) without corrupting biological or emotional state.
+
+Feature 3: Mental Breaks & Emergency Reflexes (Starvation Panic & Exhaustion Collapse).
+- Phase 3: Critical drive thresholds in Tier 1 Reflexive Evaluators. Starvation Panic (Hunger >= 85f and no known food) wipes stale resource memory, triggers the red panic pose, and launches high-speed exploratory spiral sprints; Exhaustion Collapse forces emergency rest upon depletion.
+
+Feature 4: Visual Feedback & Domain Validation Suite.
+- Phase 4: Integration of distinct visual states (Harvesting, Panicking, Resting, Gossiping, Walking, Idle) with the sprite renderer and comprehensive domain-driven test harness in Assets/Scripts/Testing/Drives/ verifying 0 GC allocations, watchdog recovery, and panic transitions.
+
+Estimated Effort: 4 Phases.
+
+Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.
 
 Feature 1: The Affinity Matrix. A thread-safe, multidimensional dictionary tracking relationships. This isn't just a 1-100 "liking" scale; it needs axes for Trust, Fear, and Allegiance.

@@ -59,6 +59,7 @@ This document tracks the progression of the Simpiens architecture, mapping compl
 
 ## Future Progression
 *(See `curentfocus.txt` for upcoming epics)*
+- **Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog** (Decoupling motor unstuck watchdog from biological drives, multifaceted needs hierarchy, emergency starvation panic & exhaustion breaks)
 - **Epic 7: Sociopolitical & Relationship System** (Affinity matrices, Tribal metadata)
 - **Epic 8: Inventory & World Construction** (Item ownership, permanent world mutations)
 - **Epic 9: Martial Engagement** (Tactical evaluation, transient projectile data)
