@@ -62,6 +62,7 @@ namespace Simpiens.Cognition
         public float Frustration { get; set; } = 0f;
         public bool HasFoodInInventory { get; set; } = false;
         public int NavigationalStalls { get; set; } = 0;
+        public bool IsExhaustionCollapsed { get; private set; } = false;
 
         public bool HasActiveIntent { get; private set; }
 
@@ -116,10 +117,14 @@ namespace Simpiens.Cognition
             float hunger = Mathf.Min(100f, Needs.Hunger + Time.deltaTime * 1.5f);
 
             float energy = Needs.Energy;
-            if (HasActivePlan && _activePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction)
+            if (IsExhaustionCollapsed || (HasActivePlan && _activePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
             {
-                // Rapidly replenish energy while actively resting
+                // Rapidly replenish energy while actively resting or recovering from exhaustion collapse
                 energy = Mathf.Min(100f, energy + Time.deltaTime * 15f);
+                if (IsExhaustionCollapsed && energy >= 30f)
+                {
+                    IsExhaustionCollapsed = false;
+                }
             }
             else if (VisualState == AgentVisualState.Walking)
             {
@@ -138,11 +143,24 @@ namespace Simpiens.Cognition
             Frustration = Mathf.Max(0f, Frustration - Time.deltaTime * 1f); // Decays slowly
 
             // Tier 1 Reflexive Preemption Check:
-            // If an agent is executing an active intent and an emergency condition occurs (Frustration > 80),
-            // preempt the active intent on the main thread and cancel the long-term plan!
-            if (HasActiveIntent && Frustration > 80f)
+            // If an agent is executing an active intent and an emergency condition occurs:
+            // 1. Exhaustion Collapse (Energy <= 5f)
+            // 2. Starvation Panic (Hunger >= 85f and no known food in inventory or memory)
+            // Preempt the active intent on the main thread and cancel the long-term plan!
+            bool emergencyExhaustion = energy <= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.ExhaustionThreshold;
+            bool emergencyStarvation = hunger >= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.StarvationThreshold && !HasFoodInInventory && !HasKnownFood();
+
+            if (emergencyExhaustion)
             {
-                _simulationManager.AbortIntent(AgentId);
+                IsExhaustionCollapsed = true;
+            }
+
+            if (HasActiveIntent && (emergencyExhaustion || emergencyStarvation))
+            {
+                if (_simulationManager != null)
+                {
+                    _simulationManager.AbortIntent(AgentId);
+                }
                 AbortActivePlan();
                 HasActiveIntent = false;
 
@@ -160,6 +178,7 @@ namespace Simpiens.Cognition
 
         private async UniTaskVoid EvaluateCognitionAsync()
         {
+            if (_spatialPartition == null) return;
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return;
 
@@ -167,9 +186,10 @@ namespace Simpiens.Cognition
             VisualState = AgentVisualState.Thinking;
 
             Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
-            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: (uint)_clock.CurrentTick);
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
+            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: tick);
 
-            var context = new AgentContext(AgentId, transform.position, Needs, Frustration, snapshot, _memory, (uint)_clock.CurrentTick);
+            var context = new AgentContext(AgentId, transform.position, Needs, Frustration, snapshot, _memory, tick);
 
             try
             {
@@ -181,8 +201,14 @@ namespace Simpiens.Cognition
 
                 AgentIntent intent = null;
 
+                // If agent is in exhaustion collapse, suppress normal planning and force rest
+                if (IsExhaustionCollapsed)
+                {
+                    intent = new IdleIntent(context.AgentId, 2.0f);
+                }
+
                 // Tier 1: Check Reflexive Evaluators (Panic, Emergency Drives)
-                if (_evaluators != null)
+                if (intent == null && _evaluators != null)
                 {
                     for (int i = 0; i < _evaluators.Length; i++)
                     {
@@ -337,6 +363,23 @@ namespace Simpiens.Cognition
                 snapshot.Release();
                 _isEvaluating = false;
             }
+        }
+
+        public bool HasKnownFood()
+        {
+            if (HasFoodInInventory) return true;
+            if (_memory == null || _memory.SpatialMemoryMap == null) return false;
+
+            uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+            foreach (var kvp in _memory.SpatialMemoryMap)
+            {
+                var record = kvp.Value;
+                if (record.Type == Simpiens.Simulation.Spatial.EntityType.Resource && !_memory.IsBlacklisted(record.EntityId, currentTick))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void OnDestroy()

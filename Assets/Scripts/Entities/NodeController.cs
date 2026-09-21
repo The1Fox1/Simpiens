@@ -18,6 +18,7 @@ namespace Simpiens.Entities
         private ISimulationClock _simulationClock;
 
         public GUID Id { get; private set; }
+        public float BaseSpeed => _baseSpeed > 0f ? _baseSpeed : 2f;
 
         // Expose radius for spatial hashing
         public float Radius => col != null ? col.radius : 0.5f;

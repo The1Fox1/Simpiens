@@ -29,7 +29,7 @@ Feature 2: Autonomous Motor Watchdog (Unstuck Failsafe).
 - Phase 2: Navigation watchdog in SimulationManager/NodeController detecting physical deadlocks, zero positional progress, and repeated path obstruction; implements progressive multi-tiered unstuck reflexes (local clearance nudge, relaxed repath, target disengage) without corrupting biological or emotional state.
 
 Feature 3: Mental Breaks & Emergency Reflexes (Starvation Panic & Exhaustion Collapse).
-- Phase 3: Critical drive thresholds in Tier 1 Reflexive Evaluators. Starvation Panic (Hunger >= 85f and no known food) wipes stale resource memory, triggers the red panic pose, and launches high-speed exploratory spiral sprints; Exhaustion Collapse forces emergency rest upon depletion.
+- Phase 3 (Completed): Critical drive thresholds in Tier 1 Reflexive Evaluators (MentalBreakEvaluator). Starvation Panic (Hunger >= 85f and no known food) wipes stale resource memory, triggers red panic pose, and launches 1.5x exploratory sprint; Exhaustion Collapse (Energy <= 5f) forces emergency rest until Energy >= 30f.
 
 Feature 4: Visual Feedback & Domain Validation Suite.
 - Phase 4: Integration of distinct visual states (Harvesting, Panicking, Resting, Gossiping, Walking, Idle) with the sprite renderer and comprehensive domain-driven test harness in Assets/Scripts/Testing/Drives/ verifying 0 GC allocations, watchdog recovery, and panic transitions.

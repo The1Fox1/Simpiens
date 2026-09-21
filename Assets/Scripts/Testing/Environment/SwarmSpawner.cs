@@ -41,7 +41,7 @@ namespace Simpiens.Testing.Environment
             _planner = planner;
 
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
-            _frustrationEvaluator = new Simpiens.Cognition.Evaluators.FrustrationEvaluator(_pathfinder);
+            _mentalBreakEvaluator = new Simpiens.Cognition.Evaluators.MentalBreakEvaluator(_pathfinder);
 
             _actionGraph = new Simpiens.Cognition.Planning.ActionGraph();
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SearchResourceAction());
@@ -60,7 +60,7 @@ namespace Simpiens.Testing.Environment
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
-        private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _frustrationEvaluator;
+        private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _mentalBreakEvaluator;
         private readonly ISimulationManager _simulationManager;
         private readonly ISimulationClock _clock;
 
@@ -95,7 +95,7 @@ namespace Simpiens.Testing.Environment
                 _registry.RegisterNode(controller);
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
-                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _frustrationEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
+                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
 
                 // Attach AgentView for animated visual feedback
                 agentGo.AddComponent<AgentView>();

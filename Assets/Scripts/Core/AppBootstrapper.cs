@@ -59,6 +59,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<PlanExecutionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Drives.DriveDecayValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Navigation.MotorWatchdogValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Drives.MentalBreakValidator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();

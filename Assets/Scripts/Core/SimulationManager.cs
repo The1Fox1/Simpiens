@@ -286,7 +286,8 @@ namespace Simpiens.Simulation
             Vector2 targetPos = path.Waypoints[currentIndex];
 
             // Ignore IsPositionBlocked entirely to physically break free from any deadlock!
-            float step = 2f * Time.deltaTime; // Ideally, fetch from node configuration
+            float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
+            float step = speed * Time.deltaTime;
             node.transform.position = Vector2.MoveTowards(node.Position, targetPos, step);
 
             // Check if reached the current waypoint

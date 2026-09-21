@@ -1,6 +1,6 @@
 # Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog
 
-- **Status**: IN PROGRESS (Phase 1 Planning)
+- **Status**: IN PROGRESS (Phase 3 Completed, Phase 4 Pending)
 - **Preceding Epic**: Epic 6: Multi-Step Reasoning (GOAP / HTN)
 - **Following Epic**: Epic 7: The Sociopolitical & Relationship System (Affinity Matrix & Tribal Hierarchy)
 - **Architectural Layer**: Cognition (Tier 1 Reflexes & Tier 2 GOAP Drives) & Core Simulation (`SimulationManager`)
@@ -61,7 +61,7 @@ flowchart TD
 
 ## 3. Epic Alpha Phases Overview
 
-### Phase 1: Multifaceted Biological Drives & Dynamic GOAP Goal Priorities
+### Phase 1: Multifaceted Biological Drives & Dynamic GOAP Goal Priorities [COMPLETED]
 - **Scope**:
   - Zero-allocation `AgentNeeds` stack struct (`Hunger`, `Energy`, `Social`).
   - Continuous decay and replenishment loops in `AutonomousAgent.ManualUpdate()`.
@@ -69,7 +69,7 @@ flowchart TD
   - Dynamic GOAP Goal Priorities: `SatiateHungerGoal`, `RestGoal`, `SocializeGoal`.
   - Introducing `RestAction` (`IdleIntent`) and `StateFact.IsResting`.
 
-### Phase 2: Autonomous Motor Watchdog (Dedicated Navigation Unstuck Failsafe)
+### Phase 2: Autonomous Motor Watchdog (Dedicated Navigation Unstuck Failsafe) [COMPLETED]
 - **Scope**:
   - Completely decouple physical collisions and geometry entrapment from biological/emotional states.
   - Zero-allocation `MotorWatchdog` tracking positional delta $\Delta \vec{p}$ and consecutive path blocks in `SimulationManager`.
@@ -78,16 +78,16 @@ flowchart TD
     2. Relaxed clearance repath (reduced pawn-to-pawn distance buffer).
     3. Target disengage and temporary blacklist in memory.
 
-### Phase 3: Mental Breaks & Emergency Reflexes (The Panic System)
+### Phase 3: Mental Breaks & Emergency Reflexes (The Panic System) [COMPLETED]
 - **Scope**:
-  - Refactor `FrustrationEvaluator` into `MentalBreakEvaluator` as a Tier 1 Reflexive Evaluator.
+  - Refactored `FrustrationEvaluator` into `MentalBreakEvaluator` as a Tier 1 Reflexive Evaluator.
   - **Starvation Panic (`Hunger >= 85f` & no known food)**:
     - Preempts in-flight intent via `ISimulationManager.AbortIntent`.
     - Prunes depleted resource entries from `SpatialMemoryMap`.
     - Triggers the **Red Panicking pose** (`AgentVisualState.Panicking`).
     - Emits a high-speed ($1.5\times$) wide-area exploratory spiral sprint (`PanicIntent`) to discover new resources.
   - **Exhaustion Collapse (`Energy <= 5f`)**:
-    - Agent collapses into an emergency nap on the spot (`IdleIntent` with `IsResting = true`), forced to recover energy to at least $30f$.
+    - Agent collapses into an emergency nap on the spot (`IdleIntent` with `IsExhaustionCollapsed = true`), recovering energy to at least $30f$.
 
 ### Phase 4: Visual Poses, Telemetry & Domain Validation Suite
 - **Scope**:
