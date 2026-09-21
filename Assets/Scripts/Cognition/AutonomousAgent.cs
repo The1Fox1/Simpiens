@@ -85,7 +85,10 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
-            VisualState = AgentVisualState.Idle;
+            if (!IsExhaustionCollapsed)
+            {
+                VisualState = AgentVisualState.Idle;
+            }
         }
 
         public void Initialize(
@@ -124,6 +127,7 @@ namespace Simpiens.Cognition
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
                     IsExhaustionCollapsed = false;
+                    VisualState = AgentVisualState.Idle;
                 }
             }
             else if (VisualState == AgentVisualState.Walking)
@@ -168,6 +172,11 @@ namespace Simpiens.Cognition
                 }
                 AbortActivePlan();
                 HasActiveIntent = false;
+
+                if (IsExhaustionCollapsed)
+                {
+                    VisualState = AgentVisualState.Resting;
+                }
 
                 if (!_isEvaluating)
                 {

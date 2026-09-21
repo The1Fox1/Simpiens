@@ -196,7 +196,7 @@ namespace Simpiens.Testing.Drives
             agent.ManualUpdate();
 
             Assert(agent.IsExhaustionCollapsed, "Agent collapsed into IsExhaustionCollapsed when Energy <= 5f.");
-            Assert(agent.VisualState == AgentVisualState.Resting, "VisualState switched to Resting on exhaustion collapse.");
+            Assert(agent.VisualState == AgentVisualState.Resting, $"VisualState switched to Resting on exhaustion collapse (actual: {agent.VisualState}).");
             Assert(!agent.HasActiveIntent, "Active intent aborted on emergency exhaustion collapse.");
 
             // Verify recovery threshold
