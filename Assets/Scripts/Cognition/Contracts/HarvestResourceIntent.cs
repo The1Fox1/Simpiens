@@ -9,11 +9,13 @@ namespace Simpiens.Cognition.Contracts
     {
         public readonly UnityEngine.GUID TargetEntityId;
         public readonly PathResponse Path;
+        public readonly float GatherDuration;
 
-        public HarvestResourceIntent(UnityEngine.GUID agentId, UnityEngine.GUID targetEntityId, PathResponse path) : base(agentId)
+        public HarvestResourceIntent(UnityEngine.GUID agentId, UnityEngine.GUID targetEntityId, PathResponse path, float gatherDuration = 1.5f) : base(agentId)
         {
             TargetEntityId = targetEntityId;
             Path = path;
+            GatherDuration = gatherDuration;
         }
     }
 }

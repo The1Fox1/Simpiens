@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override AgentIntent CreateIntent(AgentContext context)
         {
-            return new IdleIntent(context.AgentId, 1.0f);
+            return new IdleIntent(context.AgentId, 1.5f);
         }
     }
 }

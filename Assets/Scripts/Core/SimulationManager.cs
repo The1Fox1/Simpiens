@@ -142,36 +142,41 @@ namespace Simpiens.Simulation
                     var reachResult = ExecutePathMovement(node, harvest.Path, ref state.CurrentWaypointIndex);
                     if (reachResult == IntentResult.Success)
                     {
-                        if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
-
-                        // State Mutation: Harvesting
-                        if (_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
-                        {
-                            resourceData.RemainingYield--;
-
-                            // Increase agent hunger
-                            if (agent != null)
-                            {
-                                agent.Hunger = Mathf.Min(100f, agent.Hunger + 50f);
-                            }
-
-                            // Destroy resource if empty
-                            if (resourceData.RemainingYield <= 0)
-                            {
-                                _resources.Remove(harvest.TargetEntityId);
-                                var resourceNode = _worldRegistry.GetNode(harvest.TargetEntityId);
-                                if (resourceNode != null)
-                                {
-                                    _worldRegistry.UnregisterNode(resourceNode);
-                                    resourceNode.gameObject.SetActive(false);
-                                }
-                            }
-                            return IntentResult.Success;
-                        }
-                        else
+                        // Check if resource still exists before gathering
+                        if (!_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
                         {
                             return IntentResult.TargetMissing;
                         }
+
+                        if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
+
+                        state.ElapsedTime += Time.deltaTime;
+                        if (state.ElapsedTime < harvest.GatherDuration)
+                        {
+                            return IntentResult.InProgress;
+                        }
+
+                        // State Mutation: Harvesting completed
+                        resourceData.RemainingYield--;
+
+                        // Replenish agent hunger
+                        if (agent != null)
+                        {
+                            agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
+                        }
+
+                        // Destroy resource if empty
+                        if (resourceData.RemainingYield <= 0)
+                        {
+                            _resources.Remove(harvest.TargetEntityId);
+                            var resourceNode = _worldRegistry.GetNode(harvest.TargetEntityId);
+                            if (resourceNode != null)
+                            {
+                                _worldRegistry.UnregisterNode(resourceNode);
+                                resourceNode.gameObject.SetActive(false);
+                            }
+                        }
+                        return IntentResult.Success;
                     }
                     else if (reachResult == IntentResult.InProgress)
                     {
@@ -187,7 +192,14 @@ namespace Simpiens.Simulation
 
                     if (agent != null && Time.time >= agent.LastGossipTimestamp + 1.5f)
                     {
-                        agent.VisualState = Simpiens.Entities.AgentVisualState.Idle;
+                        if (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.HarvestResourceAction)
+                        {
+                            agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
+                        }
+                        else
+                        {
+                            agent.VisualState = Simpiens.Entities.AgentVisualState.Idle;
+                        }
                     }
 
                     if (state.ElapsedTime >= idle.Duration)
