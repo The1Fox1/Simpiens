@@ -11,6 +11,7 @@ namespace Simpiens.Cognition.Planning
     public static class WorldStateBuilder
     {
         public const float HungerThreshold = 50f;
+        public const float RestThreshold = 80f;
         public const float ReachResourceDistance = 1.5f;
         public const float PeerProximityDistance = 2.5f;
         public const float ThreatFrustrationThreshold = 60f;
@@ -25,6 +26,9 @@ namespace Simpiens.Cognition.Planning
             // 1. Biological Drives
             bool isHungry = context.Hunger > HungerThreshold;
             state = state.With(StateFact.IsHungry, isHungry);
+
+            bool isResting = context.Energy >= RestThreshold;
+            state = state.With(StateFact.IsResting, isResting);
 
             // 2. Inventory / Equipment
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);

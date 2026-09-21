@@ -241,6 +241,10 @@ namespace Simpiens.Simulation
                                 agentA.RelieveFrustration(15f);
                                 agentB.RelieveFrustration(15f);
 
+                                // Fulfill biological social need
+                                agentA.Social = Mathf.Min(100f, agentA.Social + 25f);
+                                agentB.Social = Mathf.Min(100f, agentB.Social + 25f);
+
                                 agentA.TriggerGossipVisual(Time.time);
                                 agentB.TriggerGossipVisual(Time.time);
 

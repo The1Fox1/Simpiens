@@ -43,8 +43,22 @@ namespace Simpiens.Cognition
         public bool HasActivePlan => !_activePlan.IsEmpty && !_activePlan.IsFinished;
 
         // State
-        public float Hunger { get; set; } = 50f;
-        public float Energy { get; set; } = 100f;
+        public AgentNeeds Needs { get; set; } = AgentNeeds.Default;
+        public float Hunger
+        {
+            get => Needs.Hunger;
+            set => Needs = new AgentNeeds(value, Needs.Energy, Needs.Social);
+        }
+        public float Energy
+        {
+            get => Needs.Energy;
+            set => Needs = new AgentNeeds(Needs.Hunger, value, Needs.Social);
+        }
+        public float Social
+        {
+            get => Needs.Social;
+            set => Needs = new AgentNeeds(Needs.Hunger, Needs.Energy, value);
+        }
         public float Frustration { get; set; } = 0f;
         public bool HasFoodInInventory { get; set; } = false;
 
@@ -97,8 +111,29 @@ namespace Simpiens.Cognition
 
         public void ManualUpdate() // Called by SwarmSpawner to avoid MonoBehaviour Update overhead
         {
-            // Simple drive simulation
-            Hunger += Time.deltaTime * 2f; // Hunger increases over time
+            // Multifaceted biological drive simulation
+            float hunger = Mathf.Min(100f, Needs.Hunger + Time.deltaTime * 1.5f);
+
+            float energy = Needs.Energy;
+            if (HasActivePlan && _activePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction)
+            {
+                // Rapidly replenish energy while actively resting
+                energy = Mathf.Min(100f, energy + Time.deltaTime * 15f);
+            }
+            else if (VisualState == AgentVisualState.Walking)
+            {
+                // Walking drains energy faster
+                energy = Mathf.Max(0f, energy - Time.deltaTime * 1.0f);
+            }
+            else
+            {
+                // Baseline metabolic energy drain
+                energy = Mathf.Max(0f, energy - Time.deltaTime * 0.2f);
+            }
+
+            float social = Mathf.Max(0f, Needs.Social - Time.deltaTime * 0.5f);
+
+            Needs = new AgentNeeds(hunger, energy, social);
             Frustration = Mathf.Max(0f, Frustration - Time.deltaTime * 1f); // Decays slowly
 
             // Tier 1 Reflexive Preemption Check:
@@ -133,7 +168,7 @@ namespace Simpiens.Cognition
             Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
             _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: (uint)_clock.CurrentTick);
 
-            var context = new AgentContext(AgentId, transform.position, Hunger, Energy, Frustration, snapshot, _memory, (uint)_clock.CurrentTick);
+            var context = new AgentContext(AgentId, transform.position, Needs, Frustration, snapshot, _memory, (uint)_clock.CurrentTick);
 
             try
             {
@@ -254,6 +289,14 @@ namespace Simpiens.Cognition
                             {
                                 Hunger = Mathf.Max(0f, Hunger - 40f);
                                 HasFoodInInventory = false;
+                            }
+                            else if (completedAction is Simpiens.Cognition.Planning.Actions.RestAction)
+                            {
+                                Energy = Mathf.Min(100f, Energy + 30f);
+                            }
+                            else if (completedAction is Simpiens.Cognition.Planning.Actions.TravelToPeerAction)
+                            {
+                                Social = Mathf.Min(100f, Social + 25f);
                             }
 
                             _activePlan.AdvanceStep();

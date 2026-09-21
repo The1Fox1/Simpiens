@@ -48,10 +48,14 @@ namespace Simpiens.Testing.Environment
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToResourceAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.HarvestResourceAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.EatCarriedFoodAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RestAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToPeerAction());
 
             _goals = new List<Simpiens.Cognition.Planning.GoapGoal>
             {
-                new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal()
+                new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal(),
+                new Simpiens.Cognition.Planning.Goals.RestGoal(),
+                new Simpiens.Cognition.Planning.Goals.SocializeGoal()
             };
         }
 

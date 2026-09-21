@@ -12,25 +12,32 @@ namespace Simpiens.Cognition.Contracts
         public readonly GUID AgentId;
         public readonly Vector2 Position;
         
-        // Internal Drives (0.0f to 100.0f)
-        public readonly float Hunger;
-        public readonly float Energy;
+        // Internal Drives & Needs
+        public readonly AgentNeeds Needs;
+        public float Hunger => Needs.Hunger;
+        public float Energy => Needs.Energy;
+        public float Social => Needs.Social;
 
         public readonly SharedWorldSnapshot Snapshot;
         public readonly Simpiens.Cognition.Memory.AgentMemory Memory;
         public readonly uint CurrentTick;
         public readonly float Frustration;
 
-        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, float frustration, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory, uint currentTick)
+        public AgentContext(GUID agentId, Vector2 position, in AgentNeeds needs, float frustration, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory, uint currentTick)
         {
             AgentId = agentId;
             Position = position;
-            Hunger = hunger;
-            Energy = energy;
+            Needs = needs;
             Frustration = frustration;
             Snapshot = snapshot;
             Memory = memory;
             CurrentTick = currentTick;
+        }
+
+        // Backward-compatible constructor
+        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, float frustration, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory, uint currentTick)
+            : this(agentId, position, new AgentNeeds(hunger, energy, 50f), frustration, snapshot, memory, currentTick)
+        {
         }
     }
 }
