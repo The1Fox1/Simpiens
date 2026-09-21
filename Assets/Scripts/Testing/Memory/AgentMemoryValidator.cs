@@ -4,17 +4,17 @@ using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer.Unity;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Memory
 {
     /// <summary>
-    /// Automated validation harness for Epic 5 Phase 2: Memory Decay & Gossip.
-    /// Executes on startup to verify all memory retention and social exchange invariants.
+    /// Automated validation harness for Agent Memory & Gossip Systems.
+    /// Executes on startup to verify memory retention, decay, and peer gossip exchange invariants.
     /// </summary>
-    public class Epic5Phase2Validator : IStartable
+    public class AgentMemoryValidator : IStartable
     {
         public void Start()
         {
-            Debug.Log("[Epic5Phase2Validator] Beginning automated validation of Epic 5 Phase 2...");
+            Debug.Log("[AgentMemoryValidator] Beginning automated validation of Agent Memory & Gossip Systems...");
 
             ValidateMemoryDecay();
             ValidateGossipTransmission();
@@ -22,7 +22,7 @@ namespace Simpiens.Testing
             ValidateGossipCooldown();
             ValidateIdleDuration();
 
-            Debug.Log("<color=green>[Epic5Phase2Validator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[AgentMemoryValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryDecay()

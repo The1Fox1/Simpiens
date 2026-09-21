@@ -7,17 +7,17 @@ using UnityEngine;
 using VContainer.Unity;
 using Debug = UnityEngine.Debug;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Planning
 {
     /// <summary>
-    /// Automated test harness for Epic 6 Phase 1: Action Graph & State Prerequisites.
+    /// Automated test harness for GOAP Domain: WorldState Bitmasks, Action Prerequisites, and ActionGraph.
     /// Runs on startup to verify bitmask operations, action preconditions, and graph connectivity.
     /// </summary>
-    public class Epic6Phase1Validator : IStartable
+    public class GoapDomainValidator : IStartable
     {
         public void Start()
         {
-            Debug.Log("[Epic6Phase1Validator] Beginning automated validation of Epic 6 Phase 1...");
+            Debug.Log("[GoapDomainValidator] Beginning automated validation of GOAP Domain & ActionGraph...");
 
             ValidateWorldStateBitmask();
             ValidateActionPrerequisites();
@@ -25,7 +25,7 @@ namespace Simpiens.Testing
             ValidateGoalSatisfaction();
             ValidateZeroAllocationPerformance();
 
-            Debug.Log("<color=green>[Epic6Phase1Validator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[GoapDomainValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBitmask()

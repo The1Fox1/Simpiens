@@ -15,17 +15,17 @@ using UnityEngine;
 using VContainer.Unity;
 using Debug = UnityEngine.Debug;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Planning
 {
     /// <summary>
-    /// Automated test harness for Epic 6 Phase 3: Planner Integration & Reflexive Preemption.
+    /// Automated test harness for Cognitive Plan Execution & Preemption.
     /// Validates two-tier cognition, step progression, in-flight intent preemption, and plan invalidation.
     /// </summary>
-    public class Epic6Phase3Validator : IStartable
+    public class PlanExecutionValidator : IStartable
     {
         public void Start()
         {
-            Debug.Log("[Epic6Phase3Validator] Beginning automated validation of Epic 6 Phase 3...");
+            Debug.Log("[PlanExecutionValidator] Beginning automated validation of Plan Execution & Preemption...");
 
             ValidateWorldStateBuilder();
             ValidateSequentialStepProgression();
@@ -34,7 +34,7 @@ namespace Simpiens.Testing
             ValidateGoapCognitiveEvaluatorIntegration().Forget();
             ValidateZeroAllocationWorldStateBenchmark();
 
-            Debug.Log("<color=green>[Epic6Phase3Validator] ALL TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[PlanExecutionValidator] ALL TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBuilder()

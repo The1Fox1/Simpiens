@@ -7,8 +7,10 @@ using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
-using Simpiens.Testing;
 using Simpiens.Intervention;
+using Simpiens.Testing.Environment;
+using Simpiens.Testing.Memory;
+using Simpiens.Testing.Planning;
 
 namespace Simpiens.Core.Bootstrapping
 {
@@ -51,10 +53,10 @@ namespace Simpiens.Core.Bootstrapping
             // 4. Testing & Validation Harness
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Epic5Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Epic6Phase1Validator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Epic6Phase2Validator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Epic6Phase3Validator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<AgentMemoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<GoapDomainValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<GoapPlannerValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<PlanExecutionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();

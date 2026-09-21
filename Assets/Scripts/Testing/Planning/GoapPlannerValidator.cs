@@ -8,13 +8,13 @@ using UnityEngine;
 using VContainer.Unity;
 using Debug = UnityEngine.Debug;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Planning
 {
     /// <summary>
-    /// Automated test harness for Epic 6 Phase 2: A* Action Graph Search (GOAP Planner).
+    /// Automated test harness for GOAP A* Search & Planning Engine.
     /// Tests plan resolution, cost optimization, branch pruning, and zero-allocation performance.
     /// </summary>
-    public class Epic6Phase2Validator : IStartable
+    public class GoapPlannerValidator : IStartable
     {
         private class MockInvalidAction : GoapAction
         {
@@ -31,7 +31,7 @@ namespace Simpiens.Testing
 
         public void Start()
         {
-            Debug.Log("[Epic6Phase2Validator] Beginning automated validation of Epic 6 Phase 2...");
+            Debug.Log("[GoapPlannerValidator] Beginning automated validation of GOAP A* Search & Planner...");
 
             var planner = new GoapPlanner();
             var plan = new GoapPlan();
@@ -55,7 +55,7 @@ namespace Simpiens.Testing
             ValidateAlreadySatisfiedGoal(planner, plan, dummyContext);
             ValidateZeroAllocationBenchmark(planner, plan, dummyContext);
 
-            Debug.Log("<color=green>[Epic6Phase2Validator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[GoapPlannerValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateSingleStepPlan(GoapPlanner planner, GoapPlan plan, AgentContext context)

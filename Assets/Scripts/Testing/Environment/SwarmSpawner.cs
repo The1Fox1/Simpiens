@@ -8,7 +8,7 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Environment
 {
     public class SwarmSpawner : ITickable, IStartable
     {

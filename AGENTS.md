@@ -34,8 +34,10 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - **Key Files**: `WorldRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`, `SimulationManager.cs`.
 
 - **`Testing/`**
-  Isolated debug and validation tools.
-  - **Key Files**: `EdgeCaseInjector.cs`, `SwarmSpawner.cs`, `GridVisualizer.cs`.
+  Isolated debug and domain-driven validation tools.
+  - `Environment/`: Spawners, chaos injectors, and batch runners (`SwarmSpawner.cs`, `EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`).
+  - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
+  - `Planning/`: GOAP domain, A* graph search, and plan preemption validation (`GoapDomainValidator.cs`, `GoapPlannerValidator.cs`, `PlanExecutionValidator.cs`).
 
 ---
 

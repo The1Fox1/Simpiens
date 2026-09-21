@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Simpiens.Testing
+namespace Simpiens.Testing.Environment
 {
     /// <summary>
     /// Headless/batch mode watcher that monitors log output for [Gossip] events

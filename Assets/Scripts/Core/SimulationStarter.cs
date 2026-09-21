@@ -2,6 +2,7 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Testing;
+using Simpiens.Testing.Environment;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
