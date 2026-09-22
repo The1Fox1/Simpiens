@@ -1,6 +1,6 @@
 # Epic 7: The Sociopolitical & Relationship System
 
-- **Status**: IN PROGRESS (Phase 1 Ready for Implementation)
+- **Status**: IN PROGRESS (Phase 1 Completed, Phase 2 Pending)
 - **Preceding Epic**: Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog
 - **Following Epic**: Epic 8: Inventory, Economy & Construction
 - **Architectural Layer**: Cognition (`AgentMemory`, `AffinityMatrix`, GOAP Planning) & Core Simulation (`SimulationManager`)
@@ -78,7 +78,7 @@ Rather than a simplistic 0–100 "friendship" slider, relationships are modeled 
 
 ## 4. Epic 7 Phases Overview
 
-### Phase 1: The Social Affinity Matrix & Relational Dynamics [ACTIVE]
+### Phase 1: The Social Affinity Matrix & Relational Dynamics [COMPLETED]
 - **Zero-Allocation Data Layer**:
   - `AffinityRecord`: 16-byte unmanaged struct (`Warmth`, `Trust`, `Fear`, `Respect`, `InteractionCount`, `LastInteractionTick`).
   - `AffinityMatrix`: Sparse, on-demand dictionary in [`AgentMemory.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Memory/AgentMemory.cs). Unseen agents consume 0 memory.
