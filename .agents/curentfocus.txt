@@ -37,20 +37,20 @@ Feature 4: Visual Feedback & Domain Validation Suite.
 Current Focus: Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.
 
-Feature 1: The Affinity Matrix. A thread-safe, multidimensional dictionary tracking relationships. This isn't just a 1-100 "liking" scale; it needs axes for Trust, Fear, and Allegiance.
+Feature 1: The Social Affinity Matrix & Relational Dynamics.
+- Phase 1 (Active): Sparse, zero-allocation relationship records in AgentMemory tracking Warmth (-100 to +100), Trust (-100 to +100), Fear (0 to 100), and Respect (-100 to +100). Interpersonal gossip increases Warmth/Trust/Respect and relieves Fear, while distrust/fear suppresses gossip. GOAP WorldState integration with relational facts (HasWarmCompanion, HasTrustedPeer, HasFearedThreat, HasRespectedLeader).
 
-Feature 2: Tribal Tagging & Hierarchy. Agents need metadata linking them to a group EntityId, which dictates shared goals and resource pooling.
+Feature 2: Tribal Tagging & Authority Hierarchy.
+- Phase 2: Agents maintain TribeId and TribalRole (Chieftain, Elder, Follower, Outcast). Chieftain commands propagate via the InfluenceQueue / PlayerInterventionService as cognitive signals rather than direct state mutations. Inter-tribal diplomacy seeds baseline affinities.
 
-Estimated Effort: 2 Phases. Phase 1 implements the data layer (Affinity updates based on the Event Ledger). Phase 2 implements group behavior, where the SimulationManager can issue a global AgentIntent to an entire tribe's queue simultaneously.
+Epic 8: Inventory, Economy & Construction
+Agents need to manipulate the world permanently to build civilizations. Physical resource pooling belongs here once inventory and storage structures exist.
 
-Epic 8: Inventory & World Construction
-Agents need to manipulate the world permanently to build civilizations.
+Feature 1: Entity Inventories & Item Transport.
+- Phase 1: Stack-allocated personal inventories, item pick-up, drop-off, and container transfer from global ResourceData.
 
-Feature 1: Entity Inventories. Agents need localized data arrays to hold items, transferring them from the global ResourceData into personal space.
-
-Feature 2: The Build Intent. A pipeline for agents to drop resources back into the grid and permanently alter the SharedWorldSnapshot (e.g., turning a walkable tile into an unwalkable "Wall" tile).
-
-Estimated Effort: 2 Phases. Phase 1 handles item pick-up, drop-off, and inventory data synchronization. Phase 2 handles placing new structures into the spatial hash grid.
+Feature 2: Tribal Resource Pooling & World Construction.
+- Phase 2: Shared tribe stockpiles and the Build Intent pipeline, allowing agents to place structures (e.g. walls) directly into the SpatialHashGrid.
 
 Epic 9: Martial Engagement & Tactical Reasoning
 Combat is the most intensive system because it requires rapid, highly volatile state mutations.
