@@ -38,10 +38,10 @@ Current Focus: Epic 7: The Sociopolitical & Relationship System
 With memory and planning in place, agents can now factor other agents into their goals.
 
 Feature 1: The Social Affinity Matrix & Relational Dynamics.
-- Phase 1 (Active): Sparse, zero-allocation relationship records in AgentMemory tracking Warmth (-100 to +100), Trust (-100 to +100), Fear (0 to 100), and Respect (-100 to +100). Interpersonal gossip increases Warmth/Trust/Respect and relieves Fear, while distrust/fear suppresses gossip. GOAP WorldState integration with relational facts (HasWarmCompanion, HasTrustedPeer, HasFearedThreat, HasRespectedLeader).
+- Phase 1 (Completed): Sparse, zero-allocation relationship records in AgentMemory tracking Warmth (-100 to +100), Trust (-100 to +100), Fear (0 to 100), and Respect (-100 to +100). Interpersonal gossip increases Warmth/Trust/Respect and relieves Fear, while distrust/fear suppresses gossip. GOAP WorldState integration with relational facts (HasWarmCompanion, HasTrustedPeer, HasFearedThreat, HasRespectedLeader).
 
 Feature 2: Tribal Tagging & Authority Hierarchy.
-- Phase 2: Agents maintain TribeId and TribalRole (Chieftain, Elder, Follower, Outcast). Chieftain commands propagate via the InfluenceQueue / PlayerInterventionService as cognitive signals rather than direct state mutations. Inter-tribal diplomacy seeds baseline affinities.
+- Phase 2 (Active): Agents maintain TribeId and TribalRole (Chieftain, Elder, Follower, Outcast). Chieftain commands propagate via the InfluenceQueue / PlayerInterventionService as cognitive signals rather than direct state mutations. Inter-tribal diplomacy seeds baseline affinities.
 
 Epic 8: Inventory, Economy & Construction
 Agents need to manipulate the world permanently to build civilizations. Physical resource pooling belongs here once inventory and storage structures exist.
