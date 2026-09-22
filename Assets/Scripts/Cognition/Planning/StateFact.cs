@@ -18,6 +18,10 @@ namespace Simpiens.Cognition.Planning
         IsThreatened = 9,
         AtHomeLocation = 10,
         IsResting = 11,
-        IsStressed = 12
+        IsStressed = 12,
+        HasWarmCompanion = 13,
+        HasTrustedPeer = 14,
+        HasFearedThreat = 15,
+        HasRespectedLeader = 16
     }
 }

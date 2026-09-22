@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Cognition.Social;
 
 namespace Simpiens.Cognition.Memory
 {
@@ -24,6 +25,9 @@ namespace Simpiens.Cognition.Memory
 
         private readonly Dictionary<GUID, uint> _blacklistedEntities;
         private readonly Dictionary<GUID, uint> _lastGossipWithAgent;
+        private readonly Dictionary<GUID, AffinityRecord> _affinityMap;
+
+        public Dictionary<GUID, AffinityRecord> AffinityMap => _affinityMap;
 
         public AgentMemory(int ledgerCapacity = 50, int initialMapCapacity = 64)
         {
@@ -31,6 +35,7 @@ namespace Simpiens.Cognition.Memory
             SpatialMemoryMap = new Dictionary<GUID, SpatialMemoryRecord>(initialMapCapacity);
             _blacklistedEntities = new Dictionary<GUID, uint>();
             _lastGossipWithAgent = new Dictionary<GUID, uint>();
+            _affinityMap = new Dictionary<GUID, AffinityRecord>(16);
         }
 
         public static uint GetDecayThreshold(EntityType type)
@@ -153,6 +158,32 @@ namespace Simpiens.Cognition.Memory
             }
         }
 
+        public AffinityRecord GetAffinity(GUID peerId, uint currentTick)
+        {
+            if (_affinityMap.TryGetValue(peerId, out var record))
+            {
+                var regressed = record.RegressTowardNeutral(currentTick);
+                if (regressed != record)
+                {
+                    _affinityMap[peerId] = regressed;
+                }
+                return regressed;
+            }
+            return AffinityRecord.Neutral;
+        }
+
+        public void RecordInteraction(GUID peerId, sbyte deltaWarmth, sbyte deltaTrust, sbyte deltaFear, sbyte deltaRespect, uint currentTick)
+        {
+            var current = GetAffinity(peerId, currentTick);
+            _affinityMap[peerId] = current.WithInteraction(deltaWarmth, deltaTrust, deltaFear, deltaRespect, currentTick);
+        }
+
+        public bool IsTrusted(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Trust >= threshold;
+        public bool IsDistrusted(GUID peerId, uint currentTick, sbyte threshold = -20) => GetAffinity(peerId, currentTick).Trust <= threshold;
+        public bool IsFeared(GUID peerId, uint currentTick, sbyte threshold = 40) => GetAffinity(peerId, currentTick).Fear >= threshold;
+        public bool IsWarm(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Warmth >= threshold;
+        public bool IsRespected(GUID peerId, uint currentTick, sbyte threshold = 30) => GetAffinity(peerId, currentTick).Respect >= threshold;
+
         public bool CanGossipWith(GUID peerId, uint currentTick, uint cooldownTicks = 300)
         {
             if (_lastGossipWithAgent.TryGetValue(peerId, out var lastTick))
@@ -167,6 +198,14 @@ namespace Simpiens.Cognition.Memory
             if (peerMemory == null) return false;
 
             if (!CanGossipWith(peerId, currentTick, cooldownTicks)) return false;
+
+            // Relational pre-filter: Distrusted or terrified agents refuse to converse
+            var myAffinity = GetAffinity(peerId, currentTick);
+            var peerAffinity = peerMemory.GetAffinity(myId, currentTick);
+            if (myAffinity.Trust < -20 || myAffinity.Fear > 60 || peerAffinity.Trust < -20 || peerAffinity.Fear > 60)
+            {
+                return false;
+            }
 
             // Mutual spatial knowledge exchange
             // Share this agent's spatial memory to peer
@@ -210,6 +249,11 @@ namespace Simpiens.Cognition.Memory
             // Record gossip events in ledgers
             EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipShared, peerId, Vector2Int.zero, currentTick));
             peerMemory.EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipReceived, myId, Vector2Int.zero, currentTick));
+
+            // Record relational bonding across the 4 axes:
+            // Mutual knowledge sharing builds warmth (+5), trust (+10), respect (+5), and relieves fear (-5)
+            RecordInteraction(peerId, deltaWarmth: 5, deltaTrust: 10, deltaFear: -5, deltaRespect: 5, currentTick);
+            peerMemory.RecordInteraction(myId, deltaWarmth: 5, deltaTrust: 10, deltaFear: -5, deltaRespect: 5, currentTick);
 
             // Set cooldowns
             _lastGossipWithAgent[peerId] = currentTick;

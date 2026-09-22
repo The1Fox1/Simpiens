@@ -75,6 +75,29 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.KnowsResourceLocation, knowsResource);
                 state = state.With(StateFact.AtResourceLocation, atResource);
                 state = state.With(StateFact.IsNearPeer, isNearPeer);
+
+                // 5. Relational / Social Matrix
+                bool hasWarmCompanion = false;
+                bool hasTrustedPeer = false;
+                bool hasFearedThreat = false;
+                bool hasRespectedLeader = false;
+
+                if (context.Memory.AffinityMap != null)
+                {
+                    foreach (var kvp in context.Memory.AffinityMap)
+                    {
+                        var affinity = context.Memory.GetAffinity(kvp.Key, context.CurrentTick);
+                        if (affinity.Warmth >= 30) hasWarmCompanion = true;
+                        if (affinity.Trust >= 30) hasTrustedPeer = true;
+                        if (affinity.Fear >= 50) hasFearedThreat = true;
+                        if (affinity.Respect >= 30) hasRespectedLeader = true;
+                    }
+                }
+
+                state = state.With(StateFact.HasWarmCompanion, hasWarmCompanion);
+                state = state.With(StateFact.HasTrustedPeer, hasTrustedPeer);
+                state = state.With(StateFact.HasFearedThreat, hasFearedThreat);
+                state = state.With(StateFact.HasRespectedLeader, hasRespectedLeader);
             }
 
             return state;

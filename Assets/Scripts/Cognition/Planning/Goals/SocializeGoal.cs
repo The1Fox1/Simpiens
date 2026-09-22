@@ -16,7 +16,23 @@ namespace Simpiens.Cognition.Planning.Goals
         public override float CalculatePriority(AgentContext context)
         {
             // The more isolated (lower social score), the higher the priority
-            return 100f - context.Social;
+            float priority = 100f - context.Social;
+
+            // Relational modifier: If agent knows warm or trusted companions, socializing is more appealing
+            if (context.Memory != null && context.Memory.AffinityMap != null)
+            {
+                foreach (var kvp in context.Memory.AffinityMap)
+                {
+                    var record = context.Memory.GetAffinity(kvp.Key, context.CurrentTick);
+                    if (record.Warmth >= 20 || record.Trust >= 20)
+                    {
+                        priority += 10f;
+                        break;
+                    }
+                }
+            }
+
+            return priority;
         }
 
         public override bool IsValid(AgentContext context)
