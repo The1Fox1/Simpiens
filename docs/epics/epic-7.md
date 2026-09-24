@@ -1,8 +1,8 @@
-# Epic 7: The Sociopolitical & Relationship System
+# Epic 7: The Social Affinity Matrix & Relational Dynamics
 
-- **Status**: IN PROGRESS (Phase 1 Completed, Phase 2 Pending)
+- **Status**: COMPLETED (Phase 1 Implemented; Subsequent Phases Pivoted to Epic Beta)
 - **Preceding Epic**: Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog
-- **Following Epic**: Epic 8: Inventory, Economy & Construction
+- **Following Epic**: Epic Beta: Concrete World Mechanics & Physical Interdependence
 - **Architectural Layer**: Cognition (`AgentMemory`, `AffinityMatrix`, GOAP Planning) & Core Simulation (`SimulationManager`)
 
 ---
@@ -76,14 +76,14 @@ Rather than a simplistic 0–100 "friendship" slider, relationships are modeled 
 
 ---
 
-## 4. Epic 7 Phases Overview
+## 4. Epic 7 Phases & Architectural Pivot
 
 ### Phase 1: The Social Affinity Matrix & Relational Dynamics [COMPLETED]
 - **Zero-Allocation Data Layer**:
   - `AffinityRecord`: 16-byte unmanaged struct (`Warmth`, `Trust`, `Fear`, `Respect`, `InteractionCount`, `LastInteractionTick`).
   - `AffinityMatrix`: Sparse, on-demand dictionary in [`AgentMemory.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Memory/AgentMemory.cs). Unseen agents consume 0 memory.
 - **Relational Updates & Ledger Binding**:
-  - Mutual gossip updates: Successful knowledge exchange awards $+5\text{ Warmth}$, $+10\text{ Trust}$, $-5\text{ Fear}$, $+5\text{ Respect}$.
+  - Mutual gossip updates: Successful knowledge exchange awards $+3\text{ Warmth}$, $+2\text{ Trust}$, $+1\text{ Respect}$.
   - Temporal regression: Extreme scores slowly regress toward neutral over long time horizons ($1,000\text{ ticks}$).
 - **Selective Socialization in Simulation**:
   - In `SimulationManager.CheckGossipOpportunity`, gossip is **suppressed** if `Trust < -20` (distrusted) or `Fear > 60` (intimidated).
@@ -93,13 +93,15 @@ Rather than a simplistic 0–100 "friendship" slider, relationships are modeled 
 - **Automated Domain Validation Suite**:
   - `AffinityMatrixValidator.cs` in `Assets/Scripts/Testing/Sociopolitical/` verifying all 5 core dynamics with strictly 0 GC allocations.
 
-### Phase 2: Tribal Tagging, Hierarchy & Collective Influence [PENDING]
-- **Identity & Tribal Metadata**:
-  - `TribeId` (GUID) and `TribalRole` (`Chieftain`, `Elder`, `Warrior`, `Gatherer`, `Outcast`).
-- **Chieftain Authority & Tribal Command Dispatch**:
-  - Chieftain orders propagate via `IPlayerInterventionService` / `InfluenceQueue` as external cognitive signals (e.g. `TribalRallyEvent`), ingested by members off-thread into `ObeyChieftainGoal` weighted by personal `Allegiance` and `Fear`.
-- **Inter-Tribe Diplomacy**:
-  - Tribal default affinities (e.g. Tribe A vs Tribe B relations) seed initial baseline affinities for member agents.
+### Phase 2: Tribal Tagging, Hierarchy & Collective Influence [CANCELLED & PIVOTED]
+> [!WARNING]
+> **Architectural Pivot Notice**:
+> Phase 2 was cancelled to avoid the **"Simulation Void Trap"** (prematurely designing high-level political hierarchies before agents have tangible, observable physical stakes on the map to validate them against).
+> Furthermore, hardcoded concepts like "Tribes" push the architecture into a monolithic survival-sim paradigm when target design favors transient parties, guilds, and emergent factional dynamics.
+> 
+> **Resolution**:
+> - We insert **Epic Beta: Concrete World Mechanics & Physical Interdependence** immediately to ground the Dyadic matrix in observable map mechanics (Contention & Yielding, Altruistic Food Sharing, and Campfire Gathering Anchors).
+> - Macro-societal structures will be implemented in **Epic 8: Socio-Political Structures & The Generic Group Primitive**, utilizing a 4-layer taxonomy and a parameter-driven `Group` primitive rather than hardcoded tribe classes.
 
 ---
 

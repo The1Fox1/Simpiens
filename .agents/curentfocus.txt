@@ -34,38 +34,36 @@ Feature 3: Mental Breaks & Emergency Reflexes (Starvation Panic & Exhaustion Col
 Feature 4: Visual Feedback & Domain Validation Suite.
 - Phase 4 (Completed): Integration of distinct visual states (Harvesting, Panicking, Resting, Gossiping, Walking, Thinking, Idle) with procedural micro-animations in AgentView, and master domain validation suite DriveSystemValidator in Assets/Scripts/Testing/Drives/ verifying 0 GC allocations, watchdog recovery, and panic/collapse transitions.
 
-Current Focus: Epic 7: The Sociopolitical & Relationship System
-With memory and planning in place, agents can now factor other agents into their goals.
-
-Feature 1: The Social Affinity Matrix & Relational Dynamics.
+Epic 7: The Social Affinity Matrix & Relational Dynamics [COMPLETED]
 - Phase 1 (Completed): Sparse, zero-allocation relationship records in AgentMemory tracking Warmth (-100 to +100), Trust (-100 to +100), Fear (0 to 100), and Respect (-100 to +100). Interpersonal gossip increases Warmth/Trust/Respect and relieves Fear, while distrust/fear suppresses gossip. GOAP WorldState integration with relational facts (HasWarmCompanion, HasTrustedPeer, HasFearedThreat, HasRespectedLeader).
+- Phase 2 (Cancelled & Pivoted): Macro tribal hierarchies paused to avoid the "simulation void trap". Pivoted to physical interdependence in Epic Beta; macro-structures deferred to Epic 8 using the generic Group primitive.
 
-Feature 2: Tribal Tagging & Authority Hierarchy.
-- Phase 2 (Active): Agents maintain TribeId and TribalRole (Chieftain, Elder, Follower, Outcast). Chieftain commands propagate via the InfluenceQueue / PlayerInterventionService as cognitive signals rather than direct state mutations. Inter-tribal diplomacy seeds baseline affinities.
+Current Focus: Epic Beta: Concrete World Mechanics & Physical Interdependence
+Before agents organize into high-level sociopolitical structures, the Dyadic matrix (Warmth, Trust, Fear, Respect) must have concrete, observable physical consequences on the map across existing survival loops.
 
-Epic 8: Inventory, Economy & Construction
-Agents need to manipulate the world permanently to build civilizations. Physical resource pooling belongs here once inventory and storage structures exist.
+Feature 1: Resource Contention & Social Yielding.
+- Phase 1 (Active): When two pawns approach the same finite resource node, evaluate a deterministic social dominance delta (Fear & Respect). Submissive pawns yield, repath without frustration, and blacklist the node for 150 ticks; symmetrical rivalry triggers simultaneous harvesting, loser frustration (+25), and negative memory logging (Warmth -15, Respect -10).
 
-Feature 1: Entity Inventories & Item Transport.
-- Phase 1: Stack-allocated personal inventories, item pick-up, drop-off, and container transfer from global ResourceData.
+Feature 2: Altruistic Sharing & Food Transfer.
+- Phase 2: Sated pawns (Hunger < 40) near critically starving or collapsed peers evaluate ShareResourceIntent based on Warmth and Trust. Main-thread execution transfers food, relieves collapse, and logs positive memory events (Warmth +25, Trust +30).
 
-Feature 2: Tribal Resource Pooling & World Construction.
-- Phase 2: Shared tribe stockpiles and the Build Intent pipeline, allowing agents to place structures (e.g. walls) directly into the SpatialHashGrid.
+Feature 3: Gathering Anchors & Organic Social Familiarity.
+- Phase 3: World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns and steadily accumulates Warmth and Trust, fostering organic social cliques.
 
-Epic 9: Martial Engagement & Tactical Reasoning
-Combat is the most intensive system because it requires rapid, highly volatile state mutations.
+Epic 8: Socio-Political Structures & The Generic Group Primitive
+With physical interdependence proven, agents organize into collective structures using the 4-layer sociological taxonomy and a parameter-driven Group primitive (avoiding rigid class monoliths).
 
-Feature 1: Health, Damage, and Projectile Data. Adding combat stats to the AgentContext and defining data structures for transient entities like flying arrows.
+Feature 1: Identity Tags & The Generic Group Primitive.
+- Phase 1: Identity tags (race, profession, origin) injecting baseline Dyadic modifiers. Implementation of the generic Group primitive (GroupData, GroupMembership, GroupDirective) supporting transient parties and persistent guilds.
 
-Feature 2: Tactical Grid Evaluation. During combat, the cognitive engine must evaluate tiles not just for pathfinding, but for safety (cover, distance from threat, line of sight).
+Feature 2: Hierarchical Authority, Collective Directives & Succession.
+- Phase 2: Role ranks, command priority, and directive scoring in ICognitiveEvaluator (compliance vs defiance).
 
-Estimated Effort: 3 Phases. Phase 1 builds the melee combat state machine and damage resolution on the main thread. Phase 2 implements ranged combat and line-of-sight math. Phase 3 introduces tactical pathfinding (fleeing, flanking) in the background threads.
+Epic 9: Personal Inventories, Economy & World Construction
+Agents manipulate the world permanently to build civilizations. Stack-allocated personal inventories, item hauling, shared group stockpiles, and structural placement in SpatialHashGrid.
 
-Epic 10: The Agentic Narrative Engine (MCP Integration)
-This is the ultimate layer. Instead of hardcoding why an agent wants to start a war, you hand their Memory Ledger and Sociopolitical Matrix to an external model context protocol.
+Epic 10: Martial Engagement & Tactical Reasoning
+Combat state machines, ranged/melee damage resolution, cover evaluation, and background tactical pathfinding (fleeing, flanking).
 
-Feature 1: Payload Serialization. Converting the complex C# AgentContext and Memory Ledger into a lightweight JSON payload.
-
-Feature 2: The LLM Evaluator. An ICognitiveEvaluator that fires off an asynchronous request to your model, receives the narrative reasoning, and translates it back into a concrete AgentIntent (e.g., AttackTribe(TribeId)).
-
-Estimated Effort: 2 Phases. Phase 1 builds the serialization and the asynchronous network call layer. Phase 2 handles prompt engineering, response parsing, and error handling for hallucinations or invalid commands.
+Epic 11: The Agentic Narrative Engine (MCP Integration)
+External model context protocol integration. DTO serialization of AgentContext, PersonalityProfile, Memory Ledgers, and Group directives to an LLM evaluator for asynchronous narrative direction, dialogue, and high-level goal injection.
