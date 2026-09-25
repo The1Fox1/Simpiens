@@ -43,6 +43,7 @@ namespace Simpiens.Simulation
         private readonly List<UnityEngine.GUID> _keysToRemove = new List<UnityEngine.GUID>(64);
 
         public bool IsPaused { get; private set; }
+        public IWorldRegistry WorldRegistry => _worldRegistry;
 
         public SimulationManager(IWorldRegistry worldRegistry, ISpatialPartition spatialPartition, ISimulationClock clock = null)
         {
@@ -161,9 +162,53 @@ namespace Simpiens.Simulation
                     return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
 
                 case HarvestResourceIntent harvest:
+                    uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+
+                    // 1. Check if resource is already depleted
+                    bool isDepleted = !_resources.TryGetValue(harvest.TargetEntityId, out var resourceData) || resourceData.RemainingYield <= 0;
+                    if (isDepleted)
+                    {
+                        // If competitor was not recorded yet, look for nearby competitor that took it
+                        if (state.ContestedCompetitorId == default && _worldRegistry != null)
+                        {
+                            var activeNodes = _worldRegistry.ActiveNodes;
+                            for (int i = 0; i < activeNodes.Count; i++)
+                            {
+                                var other = activeNodes[i];
+                                if (other.Id != node.Id && other.Type == EntityType.Pawn && Vector2.Distance(other.Position, node.Position) <= 2.5f)
+                                {
+                                    state.ContestedCompetitorId = other.Id;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // If resource was depleted while actively contesting:
+                        if (state.ContestedCompetitorId != default && agent != null)
+                        {
+                            // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
+                            agent.Frustration = Mathf.Min(100f, agent.Frustration + 25f);
+                            agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
+                            agent.TriggerTantrumVisual(Time.time);
+                            agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
+
+                            agent.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                Simpiens.Cognition.Memory.MemoryEventType.ContentionFaced,
+                                state.ContestedCompetitorId,
+                                Vector2Int.RoundToInt(node.Position),
+                                currentTick));
+
+                            agent.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 5, deltaRespect: -10, currentTick);
+
+                            string compName = _worldRegistry?.GetNode(state.ContestedCompetitorId)?.name ?? state.ContestedCompetitorId.ToString().Substring(0, 8);
+                            Debug.Log($"<color=#ef4444><b>[Contention Defeat]</b> Agent '{node.name}' lost harvest to competitor '{compName}'! +25 Frustration. Logged ContentionFaced. Tantrum triggered!</color>");
+                        }
+                        return IntentResult.TargetMissing;
+                    }
+
                     var targetResourceNode = _worldRegistry?.GetNode(harvest.TargetEntityId);
-                    bool withinHarvestReach = false;
-                    if (targetResourceNode != null)
+                    bool withinHarvestReach = state.ElapsedTime > 0f;
+                    if (!withinHarvestReach && targetResourceNode != null)
                     {
                         float distToResource = Vector2.Distance(node.Position, targetResourceNode.Position);
                         if (distToResource <= 0.8f)
@@ -175,45 +220,6 @@ namespace Simpiens.Simulation
                     var reachResult = withinHarvestReach ? IntentResult.Success : ExecutePathMovement(node, harvest.Path, state);
                     if (reachResult == IntentResult.Success)
                     {
-                        uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
-
-                        // Check if resource still exists before gathering
-                        if (!_resources.TryGetValue(harvest.TargetEntityId, out var resourceData) || resourceData.RemainingYield <= 0)
-                        {
-                            // If competitor was not recorded yet, look for nearby competitor that took it
-                            if (state.ContestedCompetitorId == default && _worldRegistry != null)
-                            {
-                                var activeNodes = _worldRegistry.ActiveNodes;
-                                for (int i = 0; i < activeNodes.Count; i++)
-                                {
-                                    var other = activeNodes[i];
-                                    if (other.Id != node.Id && other.Type == EntityType.Pawn && Vector2.Distance(other.Position, node.Position) <= 2.5f)
-                                    {
-                                        state.ContestedCompetitorId = other.Id;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // If resource was depleted while actively contesting:
-                            if (state.ContestedCompetitorId != default && agent != null)
-                            {
-                                // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
-                                agent.Frustration = Mathf.Min(100f, agent.Frustration + 25f);
-                                agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
-                                agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
-
-                                agent.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
-                                    Simpiens.Cognition.Memory.MemoryEventType.ContentionFaced,
-                                    state.ContestedCompetitorId,
-                                    Vector2Int.RoundToInt(node.Position),
-                                    currentTick));
-
-                                agent.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 5, deltaRespect: -10, currentTick);
-                            }
-                            return IntentResult.TargetMissing;
-                        }
-
                         // Social Yielding Protocol: Check if any other pawn is also targeting/harvesting this node
                         Simpiens.Entities.NodeController competitorNode = null;
                         if (_worldRegistry != null)
@@ -266,6 +272,8 @@ namespace Simpiens.Simulation
                                     Vector2Int.RoundToInt(competitorNode.Position),
                                     currentTick));
 
+                                Debug.Log($"<color=#f59e0b><b>[Social Yielding]</b> Agent '{node.name}' yielded to dominant peer '{competitorNode.name}'. Stepped back 0.5m.</color>");
+
                                 return IntentResult.PathBlocked;
                             }
 
@@ -303,6 +311,9 @@ namespace Simpiens.Simulation
                                 Vector2Int.RoundToInt(node.Position),
                                 currentTick));
                             agent?.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, currentTick);
+
+                            string compName = _worldRegistry?.GetNode(state.ContestedCompetitorId)?.name ?? state.ContestedCompetitorId.ToString().Substring(0, 8);
+                            Debug.Log($"<color=#10b981><b>[Contention Victory]</b> Agent '{node.name}' won harvest against '{compName}'. Logged ContentionFaced.</color>");
                         }
 
                         // Destroy resource if empty

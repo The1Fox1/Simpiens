@@ -38,8 +38,13 @@ namespace Simpiens.Entities
             // Determine active visual state
             var state = _agent.VisualState;
 
+            // Tantrum visual persistence: keep showing panicking for 2.5s after contention defeat
+            if (Time.time < _agent.LastTantrumTimestamp + 2.5f)
+            {
+                state = AgentVisualState.Panicking;
+            }
             // Yielding visual persistence: keep showing yielding for 1.2s after yielding
-            if (Time.time < _agent.LastYieldTimestamp + 1.2f)
+            else if (Time.time < _agent.LastYieldTimestamp + 1.2f)
             {
                 state = AgentVisualState.Yielding;
             }

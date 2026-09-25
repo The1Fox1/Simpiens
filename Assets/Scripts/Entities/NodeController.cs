@@ -20,6 +20,11 @@ namespace Simpiens.Entities
         public GUID Id { get; private set; }
         public float BaseSpeed => _baseSpeed > 0f ? _baseSpeed : 2f;
 
+#if UNITY_EDITOR
+        [Header("Editor Debug Info")]
+        [SerializeField] private string _inspectorGuid;
+#endif
+
         // Expose radius for spatial hashing
         public float Radius => col != null ? col.radius : 0.5f;
 
@@ -51,6 +56,10 @@ namespace Simpiens.Entities
         {
             Id = id;
             _baseSpeed = config.Speed;
+
+#if UNITY_EDITOR
+            _inspectorGuid = id.ToString();
+#endif
 
             // Only apply automatic physics velocity to Dynamic bodies (e.g. bouncing nodes)
             // Kinematic bodies (like SwarmAgents) are moved explicitly via their own controllers.

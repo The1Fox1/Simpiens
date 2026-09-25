@@ -70,6 +70,20 @@ namespace Simpiens.Cognition
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
         public float LastGossipTimestamp { get; private set; } = -10f;
         public float LastYieldTimestamp { get; private set; } = -10f;
+        public float LastTantrumTimestamp { get; private set; } = -10f;
+
+#if UNITY_EDITOR
+        [Header("Runtime Telemetry (Editor Debug)")]
+        [SerializeField] private AgentVisualState _inspectorVisualState;
+        [SerializeField] private float _inspectorFrustration;
+        [SerializeField] private float _inspectorHunger;
+        [SerializeField] private float _inspectorEnergy;
+        [SerializeField] private float _inspectorSocial;
+        [SerializeField] private string _inspectorActiveGoal;
+        [SerializeField] private string _inspectorActiveAction;
+        [SerializeField] [TextArea(3, 6)] private string _inspectorRecentEvents;
+        [SerializeField] [TextArea(3, 6)] private string _inspectorDyadicAffinities;
+#endif
 
         public void TriggerGossipVisual(float timestamp)
         {
@@ -83,6 +97,12 @@ namespace Simpiens.Cognition
             VisualState = AgentVisualState.Yielding;
         }
 
+        public void TriggerTantrumVisual(float timestamp)
+        {
+            LastTantrumTimestamp = timestamp;
+            VisualState = AgentVisualState.Panicking;
+        }
+
         public void RelieveFrustration(float amount)
         {
             Frustration = Mathf.Max(0f, Frustration - amount);
@@ -92,7 +112,7 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
-            if (!IsExhaustionCollapsed)
+            if (!IsExhaustionCollapsed && Time.time >= LastTantrumTimestamp + 2.5f)
             {
                 VisualState = AgentVisualState.Idle;
             }
@@ -123,6 +143,16 @@ namespace Simpiens.Cognition
 
         public void ManualUpdate() // Called by SwarmSpawner to avoid MonoBehaviour Update overhead
         {
+#if UNITY_EDITOR
+            UpdateEditorTelemetry();
+#endif
+
+            if (Time.time < LastTantrumTimestamp + 2.5f)
+            {
+                VisualState = AgentVisualState.Panicking;
+                return;
+            }
+
             // Multifaceted biological drive simulation
             float hunger = Mathf.Min(100f, Needs.Hunger + Time.deltaTime * 1.5f);
 
@@ -319,8 +349,19 @@ namespace Simpiens.Cognition
                 intent.OnComplete = (result) =>
                 {
                     HasActiveIntent = false;
-                    VisualState = AgentVisualState.Idle;
-                    uint currentTick = (uint)_clock.CurrentTick;
+                    if (Time.time < LastTantrumTimestamp + 2.5f)
+                    {
+                        VisualState = AgentVisualState.Panicking;
+                    }
+                    else if (Time.time < LastYieldTimestamp + 1.2f)
+                    {
+                        VisualState = AgentVisualState.Yielding;
+                    }
+                    else
+                    {
+                        VisualState = AgentVisualState.Idle;
+                    }
+                    uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
 
                     if (intent is PanicIntent)
                     {
@@ -409,6 +450,71 @@ namespace Simpiens.Cognition
             }
             return false;
         }
+
+#if UNITY_EDITOR
+        private void UpdateEditorTelemetry()
+        {
+            _inspectorVisualState = (Time.time < LastTantrumTimestamp + 2.5f) ? AgentVisualState.Panicking :
+                                    (Time.time < LastYieldTimestamp + 1.2f) ? AgentVisualState.Yielding :
+                                    (Time.time < LastGossipTimestamp + 1.5f) ? AgentVisualState.Gossiping :
+                                    VisualState;
+            _inspectorFrustration = Frustration;
+            _inspectorHunger = Needs.Hunger;
+            _inspectorEnergy = Needs.Energy;
+            _inspectorSocial = Needs.Social;
+            _inspectorActiveGoal = _activeGoal != null ? _activeGoal.GetType().Name : "(None)";
+            _inspectorActiveAction = (HasActivePlan && _activePlan.CurrentAction != null) ? _activePlan.CurrentAction.GetType().Name : "(None)";
+
+            IWorldRegistry registry = null;
+            if (_simulationManager is SimulationManager sm)
+            {
+                registry = sm.WorldRegistry;
+            }
+
+            if (_memory != null)
+            {
+                var ledger = _memory.EventLedger;
+                if (ledger != null && ledger.Count > 0)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    int start = Mathf.Max(0, ledger.Count - 6);
+                    for (int i = ledger.Count - 1; i >= start; i--)
+                    {
+                        var evt = ledger.GetEvent(i);
+                        string subjectName = "None";
+                        if (evt.SubjectId != default)
+                        {
+                            var targetNode = registry?.GetNode(evt.SubjectId);
+                            subjectName = targetNode != null ? targetNode.name : evt.SubjectId.ToString().Substring(0, 8);
+                        }
+                        sb.AppendLine($"[Tick {evt.SimulationTick}] {evt.EventType} (Subject: {subjectName}, Pos: {evt.Location})");
+                    }
+                    _inspectorRecentEvents = sb.ToString();
+                }
+                else
+                {
+                    _inspectorRecentEvents = "(No events recorded yet)";
+                }
+
+                if (_memory.AffinityMap != null && _memory.AffinityMap.Count > 0)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    foreach (var kvp in _memory.AffinityMap)
+                    {
+                        var peerNode = registry?.GetNode(kvp.Key);
+                        string peerName = peerNode != null ? peerNode.name : kvp.Key.ToString().Substring(0, 8);
+                        var rel = kvp.Value;
+                        sb.AppendLine($"{peerName}: W:{rel.Warmth:+0;-#;0} T:{rel.Trust:+0;-#;0} F:{rel.Fear:+0;-#;0} R:{rel.Respect:+0;-#;0} (Interactions: {rel.InteractionCount})");
+                    }
+                    _inspectorDyadicAffinities = sb.ToString();
+                }
+                else
+                {
+                    _inspectorDyadicAffinities = "(No relational contacts yet)";
+                }
+            }
+        }
+#endif
 
         private void OnDestroy()
         {
