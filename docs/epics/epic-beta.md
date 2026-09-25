@@ -197,17 +197,41 @@ flowchart TD
 Pawns currently let their companions starve to death in front of them while holding full bellies.
 
 #### Mechanism
-A sated pawn ($Hunger < 40$) who perceives an incapacitated or critically starving peer ($Hunger \ge 85$ or `IsExhaustionCollapsed`) evaluates an altruistic aid action:
+A sated pawn ($Hunger < 50$) who perceives an incapacitated or critically starving peer ($Hunger \ge 85$ or `IsExhaustionCollapsed`) evaluates an altruistic aid action:
 
 $$\text{Utility}_{\text{share}} = (\text{Warmth} \times 0.5) + (\text{Trust} \times 0.3) - (\text{SelfHunger} \times 0.4) + (\text{IsCollapsed} \ ? \ +30 : 0)$$
 
-- If $\text{Utility}_{\text{share}} \ge 25f$:
-  1. Giver emits `ShareResourceIntent(TargetPawnId, FoodAmount = 40f)`.
-  2. Giver approaches starving pawn ($1.5\text{m}$ reach).
-  3. Main-thread execution in `SimulationManager`:
-     - Transfers $40$ hunger satisfaction: Giver $+15$ Hunger (metabolic exertion), Receiver $-40$ Hunger.
-     - If Receiver was `IsExhaustionCollapsed` and hunger drops below panic, emergency collapse state is alleviated.
-     - Logs `MemoryEventType.AidGiven` (Giver: $+10\text{ Warmth}$, $+5\text{ Respect}$) and `MemoryEventType.AidReceived` (Receiver: $+25\text{ Warmth}$, $+30\text{ Trust}$, $+15\text{ Respect}$).
+- **Resolution Branches**:
+  1. If $\text{Utility}_{\text{share}} \ge 25f$:
+     - Giver formulates and emits `ShareResourceIntent(TargetPawnId, Path, TransferDuration = 1.0f, FoodAmount = 40f)`.
+     - Giver navigates to starving pawn ($1.5\text{m}$ interaction reach).
+     - Giver triggers `AgentVisualState.Sharing = 8` (outstretched offering gesture, emerald/mint palette, pulsating micro-animation).
+     - Authoritative execution in `SimulationManager`:
+       - Transfers $40$ hunger satisfaction: Giver $+15$ Hunger (metabolic exertion), Receiver $-40$ Hunger.
+       - If Receiver was in starvation panic or collapse and hunger drops below $85$, panic/collapse state is alleviated.
+       - Giver logs `MemoryEventType.AidGiven` (Giver: $+10\text{ Warmth}$, $+5\text{ Respect}$).
+       - Receiver logs `MemoryEventType.AidReceived` (Receiver: $+25\text{ Warmth}$, $+30\text{ Trust}$, $+15\text{ Respect}$).
+  2. If $\text{Utility}_{\text{share}} < 25f$:
+     - Sated pawn exhibits **Selfish Indifference**: ignores the starving peer to pursue its own survival or leisure goals.
+
+#### Dual-Loop Synchronization
+- **Worker Thread (Async Cognition / Evaluators & GOAP)**:
+  - Read-only spatial check: `context.Snapshot` provides `peer.Hunger` and `peer.IsCollapsed` without locking or main-thread access.
+  - Off-thread utility calculation: `context.Memory.CalculateAltruismScore(peer.Id, ...)`.
+  - Asynchronous path calculation via `_pathfinder` to target peer.
+- **Main Thread Authoritative Validation (`SimulationManager.cs`)**:
+  - Validates target peer still exists in `_worldRegistry`.
+  - Moves giver towards receiver using `ExecutePathMovement`.
+  - Triggers sharing visual pose and executes state mutations: modifies hunger values, updates dyadic affinities, and appends memory events.
+
+#### Acceptance Criteria
+- **User Visual Acceptance**:
+  - `SwarmAgent_6` (Warm companion) paths to starving `SwarmAgent_7`, assumes `Sharing` pose with warm pulsating glow, feeds `SwarmAgent_7`, and `SwarmAgent_7` recovers from panic.
+  - `SwarmAgent_8` (Estranged peer) ignores starving `SwarmAgent_9` and walks away.
+  - Dyads 1, 2, 3 retain existing fear-yielding, respect-yielding, and rivalry contention behavior.
+- **Engineering Acceptance**:
+  - Clean Roslyn compilation (0 errors, 0 warnings).
+  - Automated test suite `AltruisticSharingValidator` passing all 5 headless domain tests + 0-GC allocation benchmark.
 
 ---
 
