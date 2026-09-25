@@ -75,6 +75,10 @@ namespace Simpiens.Testing.Environment
             SpawnDemoBush(bushRoot, new Vector2(0f, 0f), 1, out var bushRespectId);
             SpawnDemoBush(bushRoot, new Vector2(4f, 0f), 1, out var bushRivalryId);
 
+            // Pre-spawn 2 background foraging bushes with 5 yields each so yielding pawns can forage peacefully
+            SpawnDemoBush(bushRoot, new Vector2(-2f, 3.5f), 5, out _);
+            SpawnDemoBush(bushRoot, new Vector2(2f, 3.5f), 5, out _);
+
             for (int i = 0; i < SpawnCount; i++)
             {
                 GameObject agentGo = new GameObject($"SwarmAgent_{i}");
@@ -123,22 +127,22 @@ namespace Simpiens.Testing.Environment
             if (_agents.Count >= 6)
             {
                 // Dyad 1 (Fear Asymmetry): Agent 1 fears Agent 0 (Fear = 75). Agent 1 will yield Bush 0 to Agent 0.
-                _agents[0].Hunger = 70f;
-                _agents[1].Hunger = 70f;
+                _agents[0].Hunger = 60f;
+                _agents[1].Hunger = 60f;
                 _agents[1].Memory.RecordInteraction(_agents[0].AgentId, deltaWarmth: 0, deltaTrust: 0, deltaFear: 75, deltaRespect: 0, 0);
                 _agents[0].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-4, 0), 0);
                 _agents[1].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-4, 0), 0);
 
                 // Dyad 2 (Respect Asymmetry): Agent 3 respects Agent 2 (Respect = 80). Agent 3 will defer Bush 1 to Agent 2.
-                _agents[2].Hunger = 70f;
-                _agents[3].Hunger = 70f;
+                _agents[2].Hunger = 60f;
+                _agents[3].Hunger = 60f;
                 _agents[3].Memory.RecordInteraction(_agents[2].AgentId, deltaWarmth: 20, deltaTrust: 20, deltaFear: 0, deltaRespect: 80, 0);
                 _agents[2].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(0, 0), 0);
                 _agents[3].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(0, 0), 0);
 
                 // Dyad 3 (Symmetrical Rivalry): Agent 4 and Agent 5 are mutual rivals (Warmth -40, Respect -20).
-                _agents[4].Hunger = 70f;
-                _agents[5].Hunger = 70f;
+                _agents[4].Hunger = 60f;
+                _agents[5].Hunger = 60f;
                 _agents[4].Memory.RecordInteraction(_agents[5].AgentId, deltaWarmth: -40, deltaTrust: -30, deltaFear: 0, deltaRespect: -20, 0);
                 _agents[5].Memory.RecordInteraction(_agents[4].AgentId, deltaWarmth: -40, deltaTrust: -30, deltaFear: 0, deltaRespect: -20, 0);
                 _agents[4].Memory.SpatialMemoryMap[bushRivalryId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRivalryId, EntityType.Resource, new Vector2Int(4, 0), 0);

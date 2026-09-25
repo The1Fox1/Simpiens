@@ -168,8 +168,10 @@ namespace Simpiens.Simulation
                     bool isDepleted = !_resources.TryGetValue(harvest.TargetEntityId, out var resourceData) || resourceData.RemainingYield <= 0;
                     if (isDepleted)
                     {
-                        // If competitor was not recorded yet, look for nearby competitor that took it
-                        if (state.ContestedCompetitorId == default && _worldRegistry != null)
+                        // An agent only suffers a contention defeat if:
+                        // 1. A head-to-head rivalry was already established (state.ContestedCompetitorId != default), OR
+                        // 2. The agent had already reached the bush and was actively harvesting when it depleted (state.ElapsedTime > 0f)
+                        if (state.ContestedCompetitorId == default && state.ElapsedTime > 0f && _worldRegistry != null)
                         {
                             var activeNodes = _worldRegistry.ActiveNodes;
                             for (int i = 0; i < activeNodes.Count; i++)
@@ -189,7 +191,7 @@ namespace Simpiens.Simulation
                             // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
                             agent.Frustration = Mathf.Min(100f, agent.Frustration + 25f);
                             agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
-                            agent.TriggerTantrumVisual(Time.time);
+                            agent.TriggerTantrumVisual();
                             agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
 
                             agent.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
