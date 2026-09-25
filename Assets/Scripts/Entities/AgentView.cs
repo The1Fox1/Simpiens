@@ -39,17 +39,17 @@ namespace Simpiens.Entities
             var state = _agent.VisualState;
 
             // Tantrum visual persistence: keep showing panicking for 2.5s after contention defeat
-            if (Time.time < _agent.LastTantrumTimestamp + 2.5f)
+            if (_agent.IsInTantrum)
             {
                 state = AgentVisualState.Panicking;
             }
             // Yielding visual persistence: keep showing yielding for 1.2s after yielding
-            else if (Time.time < _agent.LastYieldTimestamp + 1.2f)
+            else if (_agent.IsYielding)
             {
                 state = AgentVisualState.Yielding;
             }
             // Gossip visual persistence: keep showing gossip for 1.5s after exchange
-            else if (Time.time < _agent.LastGossipTimestamp + 1.5f)
+            else if (_agent.IsGossiping)
             {
                 state = AgentVisualState.Gossiping;
             }

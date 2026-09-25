@@ -344,7 +344,7 @@ namespace Simpiens.Simulation
                         CheckGossipOpportunity(node);
                     }
 
-                    if (agent != null && Time.time >= agent.LastGossipTimestamp + 1.5f)
+                    if (agent != null && !agent.IsGossiping)
                     {
                         if (agent.IsExhaustionCollapsed || (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
                         {

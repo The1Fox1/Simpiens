@@ -67,6 +67,14 @@ namespace Simpiens.Cognition
         public bool HasActiveIntent { get; internal set; }
 
         // Visual State
+        private float _tantrumTimer = 0f;
+        private float _yieldingTimer = 0f;
+        private float _gossipTimer = 0f;
+
+        public bool IsInTantrum => _tantrumTimer > 0f;
+        public bool IsYielding => _yieldingTimer > 0f;
+        public bool IsGossiping => _gossipTimer > 0f;
+
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
         public float LastGossipTimestamp { get; private set; } = -10f;
         public float LastYieldTimestamp { get; private set; } = -10f;
@@ -85,21 +93,24 @@ namespace Simpiens.Cognition
         [SerializeField] [TextArea(3, 6)] private string _inspectorDyadicAffinities;
 #endif
 
-        public void TriggerGossipVisual(float timestamp)
+        public void TriggerGossipVisual(float timestamp = 0f)
         {
             LastGossipTimestamp = timestamp;
+            _gossipTimer = 1.5f;
             VisualState = AgentVisualState.Gossiping;
         }
 
-        public void TriggerYieldVisual(float timestamp)
+        public void TriggerYieldVisual(float timestamp = 0f)
         {
             LastYieldTimestamp = timestamp;
+            _yieldingTimer = 1.2f;
             VisualState = AgentVisualState.Yielding;
         }
 
-        public void TriggerTantrumVisual(float timestamp)
+        public void TriggerTantrumVisual(float timestamp = 0f)
         {
             LastTantrumTimestamp = timestamp;
+            _tantrumTimer = 2.5f;
             VisualState = AgentVisualState.Panicking;
         }
 
@@ -112,7 +123,7 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
-            if (!IsExhaustionCollapsed && Time.time >= LastTantrumTimestamp + 2.5f)
+            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f)
             {
                 VisualState = AgentVisualState.Idle;
             }
@@ -147,8 +158,19 @@ namespace Simpiens.Cognition
             UpdateEditorTelemetry();
 #endif
 
-            if (Time.time < LastTantrumTimestamp + 2.5f)
+            if (_yieldingTimer > 0f)
             {
+                _yieldingTimer -= Time.deltaTime;
+            }
+
+            if (_gossipTimer > 0f)
+            {
+                _gossipTimer -= Time.deltaTime;
+            }
+
+            if (_tantrumTimer > 0f)
+            {
+                _tantrumTimer -= Time.deltaTime;
                 VisualState = AgentVisualState.Panicking;
                 return;
             }
@@ -349,11 +371,11 @@ namespace Simpiens.Cognition
                 intent.OnComplete = (result) =>
                 {
                     HasActiveIntent = false;
-                    if (Time.time < LastTantrumTimestamp + 2.5f)
+                    if (_tantrumTimer > 0f)
                     {
                         VisualState = AgentVisualState.Panicking;
                     }
-                    else if (Time.time < LastYieldTimestamp + 1.2f)
+                    else if (_yieldingTimer > 0f)
                     {
                         VisualState = AgentVisualState.Yielding;
                     }
@@ -454,9 +476,9 @@ namespace Simpiens.Cognition
 #if UNITY_EDITOR
         private void UpdateEditorTelemetry()
         {
-            _inspectorVisualState = (Time.time < LastTantrumTimestamp + 2.5f) ? AgentVisualState.Panicking :
-                                    (Time.time < LastYieldTimestamp + 1.2f) ? AgentVisualState.Yielding :
-                                    (Time.time < LastGossipTimestamp + 1.5f) ? AgentVisualState.Gossiping :
+            _inspectorVisualState = _tantrumTimer > 0f ? AgentVisualState.Panicking :
+                                    _yieldingTimer > 0f ? AgentVisualState.Yielding :
+                                    _gossipTimer > 0f ? AgentVisualState.Gossiping :
                                     VisualState;
             _inspectorFrustration = Frustration;
             _inspectorHunger = Needs.Hunger;
