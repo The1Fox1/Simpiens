@@ -14,14 +14,23 @@ namespace Simpiens.Simulation.Spatial
         public readonly Vector2 Velocity;
         public readonly float Radius;
         public readonly EntityType Type;
+        public readonly bool IsCollapsed;
+        public readonly float Hunger;
 
         public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type)
+            : this(id, position, velocity, radius, type, false, 0f)
+        {
+        }
+
+        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger)
         {
             Id = id;
             Position = position;
             Velocity = velocity;
             Radius = radius;
             Type = type;
+            IsCollapsed = isCollapsed;
+            Hunger = hunger;
         }
     }
 }

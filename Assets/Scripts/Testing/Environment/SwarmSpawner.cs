@@ -22,7 +22,7 @@ namespace Simpiens.Testing.Environment
         private readonly Simpiens.Cognition.Planning.ActionGraph _actionGraph;
         private readonly List<Simpiens.Cognition.Planning.GoapGoal> _goals;
 
-        public int SpawnCount = 6;
+        public int SpawnCount = 10;
 
         [Inject]
         public SwarmSpawner(
@@ -42,6 +42,7 @@ namespace Simpiens.Testing.Environment
 
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
             _mentalBreakEvaluator = new Simpiens.Cognition.Evaluators.MentalBreakEvaluator(_pathfinder);
+            _altruismEvaluator = new Simpiens.Cognition.Evaluators.AltruismEvaluator(_pathfinder);
 
             _actionGraph = new Simpiens.Cognition.Planning.ActionGraph();
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SearchResourceAction());
@@ -50,17 +51,20 @@ namespace Simpiens.Testing.Environment
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.EatCarriedFoodAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RestAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToPeerAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ShareFoodAction());
 
             _goals = new List<Simpiens.Cognition.Planning.GoapGoal>
             {
                 new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal(),
                 new Simpiens.Cognition.Planning.Goals.RestGoal(),
-                new Simpiens.Cognition.Planning.Goals.SocializeGoal()
+                new Simpiens.Cognition.Planning.Goals.SocializeGoal(),
+                new Simpiens.Cognition.Planning.Goals.AidCompanionGoal()
             };
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _mentalBreakEvaluator;
+        private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _altruismEvaluator;
         private readonly ISimulationManager _simulationManager;
         private readonly ISimulationClock _clock;
 
@@ -84,17 +88,21 @@ namespace Simpiens.Testing.Environment
                 GameObject agentGo = new GameObject($"SwarmAgent_{i}");
                 agentGo.transform.SetParent(root.transform);
 
-                // Configure predetermined positions for the 3 demonstration dyads
+                // Configure predetermined positions for the 5 demonstration dyads
                 if (i == 0) agentGo.transform.position = new Vector2(-4f, 1.2f);
                 else if (i == 1) agentGo.transform.position = new Vector2(-4f, -1.2f);
                 else if (i == 2) agentGo.transform.position = new Vector2(0f, 1.2f);
                 else if (i == 3) agentGo.transform.position = new Vector2(0f, -1.2f);
                 else if (i == 4) agentGo.transform.position = new Vector2(4f, 1.2f);
                 else if (i == 5) agentGo.transform.position = new Vector2(4f, -1.2f);
+                else if (i == 6) agentGo.transform.position = new Vector2(-2f, 1.2f);
+                else if (i == 7) agentGo.transform.position = new Vector2(-2f, -1.2f);
+                else if (i == 8) agentGo.transform.position = new Vector2(2f, 1.2f);
+                else if (i == 9) agentGo.transform.position = new Vector2(2f, -1.2f);
                 else
                 {
                     // Spread any extra background agents out in a clear open zone above the demonstration arena
-                    agentGo.transform.position = new Vector2(-6f + (i - 6) * 2.5f, 6f);
+                    agentGo.transform.position = new Vector2(-6f + (i - 10) * 2.5f, 6f);
                 }
 
                 var sr = agentGo.AddComponent<SpriteRenderer>();
@@ -115,7 +123,7 @@ namespace Simpiens.Testing.Environment
                 _registry.RegisterNode(controller);
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
-                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
+                agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals);
 
                 // Attach AgentView for animated visual feedback
                 agentGo.AddComponent<AgentView>();
@@ -147,6 +155,25 @@ namespace Simpiens.Testing.Environment
                 _agents[5].Memory.RecordInteraction(_agents[4].AgentId, deltaWarmth: -40, deltaTrust: -30, deltaFear: 0, deltaRespect: -20, 0);
                 _agents[4].Memory.SpatialMemoryMap[bushRivalryId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRivalryId, EntityType.Resource, new Vector2Int(4, 0), 0);
                 _agents[5].Memory.SpatialMemoryMap[bushRivalryId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRivalryId, EntityType.Resource, new Vector2Int(4, 0), 0);
+            }
+
+            if (_agents.Count >= 10)
+            {
+                // Dyad 4 (Altruistic Companions): Agent 6 loves Agent 7 (Warmth = 85, Trust = 80).
+                // Agent 6 is sated (Hunger = 20), Agent 7 is starving (Hunger = 90).
+                // Agent 6 will approach Agent 7, trigger Sharing pose, and feed Agent 7!
+                _agents[6].Hunger = 20f;
+                _agents[7].Hunger = 90f;
+                _agents[6].Memory.RecordInteraction(_agents[7].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
+                _agents[7].Memory.RecordInteraction(_agents[6].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
+
+                // Dyad 5 (Selfish Indifference): Agent 8 is estranged/hostile to Agent 9 (Warmth = -20, Trust = -10).
+                // Agent 8 is sated (Hunger = 20), Agent 9 is starving (Hunger = 90).
+                // Agent 8 will ignore Agent 9 and seek its own goals; Agent 9 receives no aid.
+                _agents[8].Hunger = 20f;
+                _agents[9].Hunger = 90f;
+                _agents[8].Memory.RecordInteraction(_agents[9].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
+                _agents[9].Memory.RecordInteraction(_agents[8].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
             }
         }
 

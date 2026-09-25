@@ -13,6 +13,7 @@ namespace Simpiens.Entities
         Panicking = 4,
         Thinking = 5,
         Resting = 6,
-        Yielding = 7
+        Yielding = 7,
+        Sharing = 8
     }
 }

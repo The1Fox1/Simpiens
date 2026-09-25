@@ -70,10 +70,12 @@ namespace Simpiens.Cognition
         private float _tantrumTimer = 0f;
         private float _yieldingTimer = 0f;
         private float _gossipTimer = 0f;
+        private float _sharingTimer = 0f;
 
         public bool IsInTantrum => _tantrumTimer > 0f;
         public bool IsYielding => _yieldingTimer > 0f;
         public bool IsGossiping => _gossipTimer > 0f;
+        public bool IsSharing => _sharingTimer > 0f;
 
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
         public float LastGossipTimestamp { get; private set; } = -10f;
@@ -114,6 +116,25 @@ namespace Simpiens.Cognition
             VisualState = AgentVisualState.Panicking;
         }
 
+        public void TriggerSharingVisual(float timestamp = 0f)
+        {
+            _sharingTimer = 1.2f;
+            VisualState = AgentVisualState.Sharing;
+        }
+
+        public void TriggerReliefVisual()
+        {
+            if (IsExhaustionCollapsed)
+            {
+                IsExhaustionCollapsed = false;
+            }
+            if (_tantrumTimer > 0f)
+            {
+                _tantrumTimer = 0f;
+            }
+            VisualState = AgentVisualState.Idle;
+        }
+
         public void RelieveFrustration(float amount)
         {
             Frustration = Mathf.Max(0f, Frustration - amount);
@@ -123,7 +144,7 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
-            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f)
+            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f && _sharingTimer <= 0f)
             {
                 VisualState = AgentVisualState.Idle;
             }
@@ -161,6 +182,11 @@ namespace Simpiens.Cognition
             if (_yieldingTimer > 0f)
             {
                 _yieldingTimer -= Time.deltaTime;
+            }
+
+            if (_sharingTimer > 0f)
+            {
+                _sharingTimer -= Time.deltaTime;
             }
 
             if (_gossipTimer > 0f)
@@ -379,6 +405,10 @@ namespace Simpiens.Cognition
                     {
                         VisualState = AgentVisualState.Yielding;
                     }
+                    else if (_sharingTimer > 0f)
+                    {
+                        VisualState = AgentVisualState.Sharing;
+                    }
                     else
                     {
                         VisualState = AgentVisualState.Idle;
@@ -478,6 +508,7 @@ namespace Simpiens.Cognition
         {
             _inspectorVisualState = _tantrumTimer > 0f ? AgentVisualState.Panicking :
                                     _yieldingTimer > 0f ? AgentVisualState.Yielding :
+                                    _sharingTimer > 0f ? AgentVisualState.Sharing :
                                     _gossipTimer > 0f ? AgentVisualState.Gossiping :
                                     VisualState;
             _inspectorFrustration = Frustration;

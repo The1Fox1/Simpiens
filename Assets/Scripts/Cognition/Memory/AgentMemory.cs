@@ -194,6 +194,18 @@ namespace Simpiens.Cognition.Memory
             return affinity.Fear + (affinity.Respect * 0.8f);
         }
 
+        /// <summary>
+        /// Calculates altruism utility score toward a distressed peer:
+        /// (Warmth * 0.5) + (Trust * 0.3) - (SelfHunger * 0.4) + (IsTargetCollapsed ? 30 : 0).
+        /// Scores >= 25 indicate willingness to share food with this peer.
+        /// </summary>
+        public float CalculateAltruismScore(GUID peerId, uint currentTick, float selfHunger, bool isTargetCollapsed)
+        {
+            var affinity = GetAffinity(peerId, currentTick);
+            float collapseBonus = isTargetCollapsed ? 30f : 0f;
+            return (affinity.Warmth * 0.5f) + (affinity.Trust * 0.3f) - (selfHunger * 0.4f) + collapseBonus;
+        }
+
         public bool CanGossipWith(GUID peerId, uint currentTick, uint cooldownTicks = 300)
         {
             if (_lastGossipWithAgent.TryGetValue(peerId, out var lastTick))

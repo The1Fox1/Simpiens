@@ -22,6 +22,7 @@ namespace Simpiens.Cognition.Planning
         HasWarmCompanion = 13,
         HasTrustedPeer = 14,
         HasFearedThreat = 15,
-        HasRespectedLeader = 16
+        HasRespectedLeader = 16,
+        HasAidedPeer = 17
     }
 }

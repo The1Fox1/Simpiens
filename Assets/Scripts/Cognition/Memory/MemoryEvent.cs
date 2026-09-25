@@ -11,7 +11,9 @@ namespace Simpiens.Cognition.Memory
         GossipShared,
         ResourceYielded,
         ResourceClaimed,
-        ContentionFaced
+        ContentionFaced,
+        AidGiven,
+        AidReceived
     }
 
     public readonly struct MemoryEvent

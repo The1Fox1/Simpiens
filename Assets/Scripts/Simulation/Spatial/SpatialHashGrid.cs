@@ -85,7 +85,9 @@ namespace Simpiens.Simulation.Spatial
                 var radius = node.Radius;
                 var type = node.Type;
 
-                var snapshot = new EntitySnapshot(node.Id, pos, node.Velocity, radius, type);
+                bool isCollapsed = node.Agent != null && node.Agent.IsExhaustionCollapsed;
+                float hunger = node.Agent != null ? node.Agent.Hunger : 0f;
+                var snapshot = new EntitySnapshot(node.Id, pos, node.Velocity, radius, type, isCollapsed, hunger);
 
                 // Find cells overlapped by this entity
                 int minX = Mathf.Max(0, Mathf.FloorToInt((pos.x - radius + offsetX) / _cellSize));

@@ -44,6 +44,7 @@ namespace Simpiens.Simulation
 
         public bool IsPaused { get; private set; }
         public IWorldRegistry WorldRegistry => _worldRegistry;
+        internal Dictionary<UnityEngine.GUID, ActiveIntentState> ActiveIntents => _activeIntents;
 
         public SimulationManager(IWorldRegistry worldRegistry, ISpatialPartition spatialPartition, ISimulationClock clock = null)
         {
@@ -336,6 +337,82 @@ namespace Simpiens.Simulation
                         if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Walking;
                     }
                     return reachResult;
+
+                case ShareResourceIntent share:
+                    uint aidTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+                    var targetNode = _worldRegistry?.GetNode(share.TargetPawnId);
+                    if (targetNode == null)
+                    {
+                        return IntentResult.TargetMissing;
+                    }
+
+                    bool withinAidReach = state.ElapsedTime > 0f;
+                    if (!withinAidReach)
+                    {
+                        float distToTarget = Vector2.Distance(node.Position, targetNode.Position);
+                        if (distToTarget <= 1.5f)
+                        {
+                            withinAidReach = true;
+                        }
+                    }
+
+                    var aidReachResult = withinAidReach ? IntentResult.Success : ExecutePathMovement(node, share.Path, state);
+                    if (aidReachResult == IntentResult.Success)
+                    {
+                        if (agent != null)
+                        {
+                            agent.VisualState = Simpiens.Entities.AgentVisualState.Sharing;
+                            agent.TriggerSharingVisual();
+                        }
+
+                        state.ElapsedTime += Time.deltaTime;
+                        if (state.ElapsedTime < share.TransferDuration)
+                        {
+                            return IntentResult.InProgress;
+                        }
+
+                        // State Mutation: Food transfer
+                        if (agent != null)
+                        {
+                            agent.Hunger = Mathf.Min(100f, agent.Hunger + 15f);
+                            agent.HasFoodInInventory = false;
+                        }
+
+                        var receiverAgent = targetNode.Agent;
+                        if (receiverAgent != null)
+                        {
+                            receiverAgent.Hunger = Mathf.Max(0f, receiverAgent.Hunger - share.FoodAmount);
+                            if (receiverAgent.Hunger < 85f)
+                            {
+                                receiverAgent.TriggerReliefVisual();
+                            }
+                        }
+
+                        // Giver logs AidGiven (+10 Warmth, +5 Respect)
+                        agent?.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                            Simpiens.Cognition.Memory.MemoryEventType.AidGiven,
+                            share.TargetPawnId,
+                            Vector2Int.RoundToInt(node.Position),
+                            aidTick));
+                        agent?.Memory?.RecordInteraction(share.TargetPawnId, deltaWarmth: 10, deltaTrust: 5, deltaFear: 0, deltaRespect: 5, aidTick);
+
+                        // Receiver logs AidReceived (+25 Warmth, +30 Trust, +15 Respect)
+                        receiverAgent?.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                            Simpiens.Cognition.Memory.MemoryEventType.AidReceived,
+                            node.Id,
+                            Vector2Int.RoundToInt(targetNode.Position),
+                            aidTick));
+                        receiverAgent?.Memory?.RecordInteraction(node.Id, deltaWarmth: 25, deltaTrust: 30, deltaFear: -10, deltaRespect: 15, aidTick);
+
+                        Debug.Log($"<color=#10b981><b>[Altruistic Aid]</b> Agent '{node.name}' shared {share.FoodAmount:F0} food with '{targetNode.name}'! (Giver Hunger: {agent?.Hunger:F0}, Receiver Hunger: {receiverAgent?.Hunger:F0})</color>");
+
+                        return IntentResult.Success;
+                    }
+                    else if (aidReachResult == IntentResult.InProgress)
+                    {
+                        if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Walking;
+                    }
+                    return aidReachResult;
 
                 case IdleIntent idle:
                     state.ElapsedTime += Time.deltaTime;

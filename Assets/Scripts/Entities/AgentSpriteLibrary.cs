@@ -10,7 +10,7 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[8, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[9, 2];
         private static readonly Sprite _resourceSprite;
 
         public static Sprite ResourceSprite => _resourceSprite;
@@ -100,13 +100,22 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Yielding, 0] = CreateSprite(PatternYield0, yieldPalette, "Agent_Yield_0");
             _agentSprites[(int)AgentVisualState.Yielding, 1] = CreateSprite(PatternYield1, yieldPalette, "Agent_Yield_1");
 
-            // 9. Resource (Berry Bush)
+            // 9. Sharing Sprites (Compassionate Emerald/Mint Outfit + Extended Hands)
+            var sharePalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(52, 211, 153, 255),
+                shadow: new Color32(16, 185, 129, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Sharing, 0] = CreateSprite(PatternShare0, sharePalette, "Agent_Share_0");
+            _agentSprites[(int)AgentVisualState.Sharing, 1] = CreateSprite(PatternShare1, sharePalette, "Agent_Share_1");
+
+            // 10. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
                 { '#', new Color32(20, 50, 25, 255) },
                 { 'G', new Color32(34, 139, 34, 255) },
-                { 'R', new Color32(220, 38, 38, 255) }
+                { 'R', new Color32(220, 38, 28, 255) }
             };
             _resourceSprite = CreateSprite(PatternBerryBush, bushPalette, "Resource_BerryBush");
         }
@@ -114,7 +123,7 @@ namespace Simpiens.Entities
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 8) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= 9) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -492,6 +501,46 @@ namespace Simpiens.Entities
             "...#K######K#...",
             "...#KKCCCCKK#...",
             "....#CCCCCC#....",
+            "....#CCCCCC#....",
+            "....#KC##CK#....",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternShare0 =
+        {
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#CCCCCC#KK#..",
+            "...#CCCCCC#KK#..",
+            "....#CCCCCC#....",
+            "....#KC##CK#....",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternShare1 =
+        {
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#CCCCCC##KK#.",
+            "...#CCCCCC##KK#.",
             "....#CCCCCC#....",
             "....#KC##CK#....",
             "....#SSSSSS#....",

@@ -48,6 +48,11 @@ namespace Simpiens.Entities
             {
                 state = AgentVisualState.Yielding;
             }
+            // Sharing visual persistence: keep showing sharing for 1.2s during food transfer
+            else if (_agent.IsSharing)
+            {
+                state = AgentVisualState.Sharing;
+            }
             // Gossip visual persistence: keep showing gossip for 1.5s after exchange
             else if (_agent.IsGossiping)
             {
@@ -124,6 +129,13 @@ namespace Simpiens.Entities
                     float yieldSquash = 1f - (Mathf.Abs(Mathf.Sin(t * 6f)) * 0.08f);
                     transform.localRotation = Quaternion.Euler(0f, 0f, yieldTilt);
                     transform.localScale = new Vector3(_baseScale.x * yieldSquash, _baseScale.y * yieldSquash, _baseScale.z);
+                    break;
+
+                case AgentVisualState.Sharing:
+                    // Compassionate offering: gentle forward tilt and soft pulsing scale
+                    float sharePulse = 1f + (Mathf.Abs(Mathf.Sin(t * 6f)) * 0.08f);
+                    transform.localRotation = Quaternion.Euler(0f, 0f, -3f);
+                    transform.localScale = _baseScale * sharePulse;
                     break;
 
                 case AgentVisualState.Idle:
