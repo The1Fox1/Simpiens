@@ -127,11 +127,11 @@ namespace Simpiens.Testing.Sociopolitical
 
         private void ValidateWorldStateRelationalFactMapping()
         {
-            var mem = new AgentMemory();
+            var memNeutral = new AgentMemory();
             var dummyGuid = GUID.Generate();
 
             // 1. Initial State: No relationships
-            var contextNeutral = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, mem, 100);
+            var contextNeutral = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memNeutral, 100);
             var stateNeutral = WorldStateBuilder.BuildWorldState(contextNeutral);
 
             Assert(stateNeutral.Get(StateFact.HasWarmCompanion) == false, "HasWarmCompanion is false initially.");
@@ -140,14 +140,15 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(stateNeutral.Get(StateFact.HasRespectedLeader) == false, "HasRespectedLeader is false initially.");
 
             // 2. Add Warm, Trusted, and Respected ally
+            var memPopulated = new AgentMemory();
             var allyId = GUID.Generate();
-            mem.RecordInteraction(allyId, deltaWarmth: 35, deltaTrust: 40, deltaFear: 0, deltaRespect: 45, currentTick: 100);
+            memPopulated.RecordInteraction(allyId, deltaWarmth: 35, deltaTrust: 40, deltaFear: 0, deltaRespect: 45, currentTick: 100);
 
             // 3. Add Feared threat
             var threatId = GUID.Generate();
-            mem.RecordInteraction(threatId, deltaWarmth: -20, deltaTrust: -30, deltaFear: 65, deltaRespect: 0, currentTick: 100);
+            memPopulated.RecordInteraction(threatId, deltaWarmth: -20, deltaTrust: -30, deltaFear: 65, deltaRespect: 0, currentTick: 100);
 
-            var contextPopulated = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, mem, 100);
+            var contextPopulated = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memPopulated, 100);
             var statePopulated = WorldStateBuilder.BuildWorldState(contextPopulated);
 
             Assert(statePopulated.Get(StateFact.HasWarmCompanion) == true, "HasWarmCompanion is true when Warmth >= 30.");

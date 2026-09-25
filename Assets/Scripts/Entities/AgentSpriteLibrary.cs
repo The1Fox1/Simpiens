@@ -172,7 +172,9 @@ namespace Simpiens.Entities
             texture.SetPixels32(pixels);
             texture.Apply();
 
-            return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 16f);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 16f);
+            sprite.name = name;
+            return sprite;
         }
 
         #region ASCII Pattern Definitions (16x16)
