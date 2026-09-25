@@ -184,6 +184,16 @@ namespace Simpiens.Cognition.Memory
         public bool IsWarm(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Warmth >= threshold;
         public bool IsRespected(GUID peerId, uint currentTick, sbyte threshold = 30) => GetAffinity(peerId, currentTick).Respect >= threshold;
 
+        /// <summary>
+        /// Calculates social submission score toward a peer: Fear + (Respect * 0.8).
+        /// High submission indicates willingness to yield contested resources to this peer.
+        /// </summary>
+        public float CalculateSubmissionScore(GUID peerId, uint currentTick)
+        {
+            var affinity = GetAffinity(peerId, currentTick);
+            return affinity.Fear + (affinity.Respect * 0.8f);
+        }
+
         public bool CanGossipWith(GUID peerId, uint currentTick, uint cooldownTicks = 300)
         {
             if (_lastGossipWithAgent.TryGetValue(peerId, out var lastTick))

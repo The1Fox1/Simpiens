@@ -8,7 +8,10 @@ namespace Simpiens.Cognition.Memory
         ResourceSpotted,
         AgentSpotted,
         GossipReceived,
-        GossipShared
+        GossipShared,
+        ResourceYielded,
+        ResourceClaimed,
+        ContentionFaced
     }
 
     public readonly struct MemoryEvent

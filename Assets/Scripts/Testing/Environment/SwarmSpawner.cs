@@ -68,14 +68,30 @@ namespace Simpiens.Testing.Environment
         {
             // Create a root for organization
             GameObject root = new GameObject("[SwarmAgents]");
+            GameObject bushRoot = new GameObject("[DemoContestedBushes]");
+
+            // Pre-spawn 3 contested demonstration bushes with 1 yield each
+            SpawnDemoBush(bushRoot, new Vector2(-4f, 0f), 1, out var bushFearId);
+            SpawnDemoBush(bushRoot, new Vector2(0f, 0f), 1, out var bushRespectId);
+            SpawnDemoBush(bushRoot, new Vector2(4f, 0f), 1, out var bushRivalryId);
 
             for (int i = 0; i < SpawnCount; i++)
             {
                 GameObject agentGo = new GameObject($"SwarmAgent_{i}");
                 agentGo.transform.SetParent(root.transform);
 
-                // Spread them out initially
-                agentGo.transform.position = Random.insideUnitCircle * 5f;
+                // Configure predetermined positions for the 3 demonstration dyads
+                if (i == 0) agentGo.transform.position = new Vector2(-4f, 1.2f);
+                else if (i == 1) agentGo.transform.position = new Vector2(-4f, -1.2f);
+                else if (i == 2) agentGo.transform.position = new Vector2(0f, 1.2f);
+                else if (i == 3) agentGo.transform.position = new Vector2(0f, -1.2f);
+                else if (i == 4) agentGo.transform.position = new Vector2(4f, 1.2f);
+                else if (i == 5) agentGo.transform.position = new Vector2(4f, -1.2f);
+                else
+                {
+                    // Spread background agents out randomly
+                    agentGo.transform.position = Random.insideUnitCircle * 5f + Vector2.up * 4f;
+                }
 
                 var sr = agentGo.AddComponent<SpriteRenderer>();
                 sr.sprite = AgentSpriteLibrary.GetAgentSprite(AgentVisualState.Idle, 0);
@@ -102,6 +118,58 @@ namespace Simpiens.Testing.Environment
 
                 _agents.Add(agent);
             }
+
+            // Seed relational dyads for visual demonstration
+            if (_agents.Count >= 6)
+            {
+                // Dyad 1 (Fear Asymmetry): Agent 1 fears Agent 0 (Fear = 75). Agent 1 will yield Bush 0 to Agent 0.
+                _agents[0].Hunger = 70f;
+                _agents[1].Hunger = 70f;
+                _agents[1].Memory.RecordInteraction(_agents[0].AgentId, deltaWarmth: 0, deltaTrust: 0, deltaFear: 75, deltaRespect: 0, 0);
+                _agents[0].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-4, 0), 0);
+                _agents[1].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-4, 0), 0);
+
+                // Dyad 2 (Respect Asymmetry): Agent 3 respects Agent 2 (Respect = 80). Agent 3 will defer Bush 1 to Agent 2.
+                _agents[2].Hunger = 70f;
+                _agents[3].Hunger = 70f;
+                _agents[3].Memory.RecordInteraction(_agents[2].AgentId, deltaWarmth: 20, deltaTrust: 20, deltaFear: 0, deltaRespect: 80, 0);
+                _agents[2].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(0, 0), 0);
+                _agents[3].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(0, 0), 0);
+
+                // Dyad 3 (Symmetrical Rivalry): Agent 4 and Agent 5 are mutual rivals (Warmth -40, Respect -20).
+                _agents[4].Hunger = 70f;
+                _agents[5].Hunger = 70f;
+                _agents[4].Memory.RecordInteraction(_agents[5].AgentId, deltaWarmth: -40, deltaTrust: -30, deltaFear: 0, deltaRespect: -20, 0);
+                _agents[5].Memory.RecordInteraction(_agents[4].AgentId, deltaWarmth: -40, deltaTrust: -30, deltaFear: 0, deltaRespect: -20, 0);
+                _agents[4].Memory.SpatialMemoryMap[bushRivalryId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRivalryId, EntityType.Resource, new Vector2Int(4, 0), 0);
+                _agents[5].Memory.SpatialMemoryMap[bushRivalryId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRivalryId, EntityType.Resource, new Vector2Int(4, 0), 0);
+            }
+        }
+
+        private void SpawnDemoBush(GameObject root, Vector2 pos, int yield, out UnityEngine.GUID resId)
+        {
+            var resourceGo = new GameObject($"DemoBush_{pos.x}_{pos.y}");
+            resourceGo.transform.SetParent(root.transform);
+            resourceGo.transform.position = pos;
+
+            var sr = resourceGo.AddComponent<SpriteRenderer>();
+            sr.sprite = AgentSpriteLibrary.ResourceSprite;
+            resourceGo.transform.localScale = Vector3.one * 0.8f;
+
+            var rb = resourceGo.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Static;
+
+            var col = resourceGo.AddComponent<CircleCollider2D>();
+            col.radius = 0.4f;
+
+            var controller = resourceGo.AddComponent<NodeController>();
+            controller.Type = EntityType.Resource;
+            resId = UnityEngine.GUID.Generate();
+            controller.Initialize(resId, new NodeConfiguration(speed: 0f));
+
+            _registry.RegisterNode(controller);
+            _simulationManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = yield });
         }
 
         public void Tick()

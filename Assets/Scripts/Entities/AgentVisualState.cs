@@ -12,6 +12,7 @@ namespace Simpiens.Entities
         Gossiping = 3,
         Panicking = 4,
         Thinking = 5,
-        Resting = 6
+        Resting = 6,
+        Yielding = 7
     }
 }

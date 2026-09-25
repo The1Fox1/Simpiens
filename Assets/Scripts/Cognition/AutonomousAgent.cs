@@ -69,11 +69,18 @@ namespace Simpiens.Cognition
         // Visual State
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
         public float LastGossipTimestamp { get; private set; } = -10f;
+        public float LastYieldTimestamp { get; private set; } = -10f;
 
         public void TriggerGossipVisual(float timestamp)
         {
             LastGossipTimestamp = timestamp;
             VisualState = AgentVisualState.Gossiping;
+        }
+
+        public void TriggerYieldVisual(float timestamp)
+        {
+            LastYieldTimestamp = timestamp;
+            VisualState = AgentVisualState.Yielding;
         }
 
         public void RelieveFrustration(float amount)

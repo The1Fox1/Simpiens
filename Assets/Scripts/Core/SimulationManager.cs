@@ -20,6 +20,9 @@ namespace Simpiens.Simulation
         public float TimeSinceLastProgress;
         public int StallCount;
         public bool UseRelaxedClearance;
+
+        // Contention Tracking
+        public UnityEngine.GUID ContestedCompetitorId;
     }
 
     /// <summary>
@@ -161,10 +164,87 @@ namespace Simpiens.Simulation
                     var reachResult = ExecutePathMovement(node, harvest.Path, state);
                     if (reachResult == IntentResult.Success)
                     {
+                        uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+
                         // Check if resource still exists before gathering
                         if (!_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
                         {
+                            // If resource was depleted while actively contesting:
+                            if (state.ContestedCompetitorId != default && agent != null)
+                            {
+                                // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
+                                agent.Frustration = Mathf.Min(100f, agent.Frustration + 25f);
+                                agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
+                                agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
+
+                                agent.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                    Simpiens.Cognition.Memory.MemoryEventType.ContentionFaced,
+                                    state.ContestedCompetitorId,
+                                    Vector2Int.RoundToInt(node.Position),
+                                    currentTick));
+
+                                agent.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 5, deltaRespect: -10, currentTick);
+                            }
                             return IntentResult.TargetMissing;
+                        }
+
+                        // Social Yielding Protocol: Check if any other pawn is also targeting/harvesting this node
+                        Simpiens.Entities.NodeController competitorNode = null;
+                        if (_worldRegistry != null)
+                        {
+                            foreach (var kvp in _activeIntents)
+                            {
+                                if (kvp.Key != node.Id && kvp.Value.Intent is HarvestResourceIntent otherHarvest)
+                                {
+                                    if (otherHarvest.TargetEntityId == harvest.TargetEntityId)
+                                    {
+                                        var otherNode = _worldRegistry.GetNode(kvp.Key);
+                                        if (otherNode != null && Vector2.Distance(otherNode.Position, node.Position) <= 2.5f)
+                                        {
+                                            competitorNode = otherNode;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (competitorNode != null)
+                        {
+                            float subA = agent != null && agent.Memory != null ? agent.Memory.CalculateSubmissionScore(competitorNode.Id, currentTick) : 0f;
+                            float subB = competitorNode.Agent != null && competitorNode.Agent.Memory != null ? competitorNode.Agent.Memory.CalculateSubmissionScore(node.Id, currentTick) : 0f;
+
+                            // Asymmetrical Dominance: If this pawn submits to competitor
+                            if (subA >= 30f && (subA - subB) >= 15f)
+                            {
+                                // This pawn yields to dominant competitor
+                                agent?.TriggerYieldVisual(Time.time);
+
+                                // Step back 0.5 units away from competitor
+                                Vector2 awayDir = ((Vector2)node.Position - (Vector2)competitorNode.Position).normalized;
+                                if (awayDir == Vector2.zero) awayDir = Vector2.down;
+                                node.transform.position = (Vector2)node.transform.position + awayDir * 0.5f;
+
+                                // Blacklist node for 150 ticks
+                                agent?.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
+
+                                // Log memory events
+                                agent?.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                    Simpiens.Cognition.Memory.MemoryEventType.ResourceYielded,
+                                    competitorNode.Id,
+                                    Vector2Int.RoundToInt(node.Position),
+                                    currentTick));
+                                competitorNode.Agent?.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                    Simpiens.Cognition.Memory.MemoryEventType.ResourceClaimed,
+                                    node.Id,
+                                    Vector2Int.RoundToInt(competitorNode.Position),
+                                    currentTick));
+
+                                return IntentResult.PathBlocked;
+                            }
+
+                            // Otherwise, Symmetrical Rivalry: mark contested competitor
+                            state.ContestedCompetitorId = competitorNode.Id;
                         }
 
                         if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
@@ -182,6 +262,17 @@ namespace Simpiens.Simulation
                         if (agent != null)
                         {
                             agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
+                        }
+
+                        // If this was a contested victory, log ContentionFaced and dyadic hit
+                        if (state.ContestedCompetitorId != default)
+                        {
+                            agent?.Memory?.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                Simpiens.Cognition.Memory.MemoryEventType.ContentionFaced,
+                                state.ContestedCompetitorId,
+                                Vector2Int.RoundToInt(node.Position),
+                                currentTick));
+                            agent?.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, currentTick);
                         }
 
                         // Destroy resource if empty

@@ -38,8 +38,13 @@ namespace Simpiens.Entities
             // Determine active visual state
             var state = _agent.VisualState;
 
+            // Yielding visual persistence: keep showing yielding for 1.2s after yielding
+            if (Time.time < _agent.LastYieldTimestamp + 1.2f)
+            {
+                state = AgentVisualState.Yielding;
+            }
             // Gossip visual persistence: keep showing gossip for 1.5s after exchange
-            if (Time.time < _agent.LastGossipTimestamp + 1.5f)
+            else if (Time.time < _agent.LastGossipTimestamp + 1.5f)
             {
                 state = AgentVisualState.Gossiping;
             }
@@ -106,6 +111,14 @@ namespace Simpiens.Entities
                     float restBreath = 1f + Mathf.Sin(t * 1.5f) * 0.04f;
                     transform.localScale = new Vector3(_baseScale.x * restBreath, _baseScale.y * (2f - restBreath), _baseScale.z);
                     transform.localRotation = Quaternion.Euler(0f, 0f, 2f);
+                    break;
+
+                case AgentVisualState.Yielding:
+                    // Submissive cowering flinch: backwards body tilt and slight scale shrink
+                    float yieldTilt = Mathf.Sin(t * 8f) * -5f;
+                    float yieldSquash = 1f - (Mathf.Abs(Mathf.Sin(t * 6f)) * 0.08f);
+                    transform.localRotation = Quaternion.Euler(0f, 0f, yieldTilt);
+                    transform.localScale = new Vector3(_baseScale.x * yieldSquash, _baseScale.y * yieldSquash, _baseScale.z);
                     break;
 
                 case AgentVisualState.Idle:

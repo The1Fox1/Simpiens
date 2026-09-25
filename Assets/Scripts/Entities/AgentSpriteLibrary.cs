@@ -10,7 +10,7 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[7, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[8, 2];
         private static readonly Sprite _resourceSprite;
 
         public static Sprite ResourceSprite => _resourceSprite;
@@ -91,7 +91,16 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Resting, 0] = CreateSprite(PatternRest0, restPalette, "Agent_Rest_0");
             _agentSprites[(int)AgentVisualState.Resting, 1] = CreateSprite(PatternRest1, restPalette, "Agent_Rest_1");
 
-            // 8. Resource (Berry Bush)
+            // 8. Yielding Sprites (Warm Amber / Submissive Cower)
+            var yieldPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(251, 191, 36, 255),
+                shadow: new Color32(217, 119, 6, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Yielding, 0] = CreateSprite(PatternYield0, yieldPalette, "Agent_Yield_0");
+            _agentSprites[(int)AgentVisualState.Yielding, 1] = CreateSprite(PatternYield1, yieldPalette, "Agent_Yield_1");
+
+            // 9. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
@@ -105,7 +114,7 @@ namespace Simpiens.Entities
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 7) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= 8) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -443,6 +452,46 @@ namespace Simpiens.Entities
             "...#CCCCCCCC#...",
             "...#CCCCCCCC#...",
             "...#KC####CK#...",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternYield0 =
+        {
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#K##KK##K#..",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "...#KCCCCCCK#...",
+            "...#KKCCCCKK#...",
+            "....#CCCCCC#....",
+            "....#CCCCCC#....",
+            "....#KC##CK#....",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternYield1 =
+        {
+            "................",
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#K##KK##K#..",
+            "....#KKKKKK#....",
+            "...#K######K#...",
+            "...#KKCCCCKK#...",
+            "....#CCCCCC#....",
+            "....#CCCCCC#....",
+            "....#KC##CK#....",
             "....#SSSSSS#....",
             "....#SS##SS#....",
             "....###..###...."
