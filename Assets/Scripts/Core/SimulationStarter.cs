@@ -58,38 +58,6 @@ namespace Simpiens.Core.Bootstrapping
                 var batchGo = new GameObject("[BatchPlaymodeController]");
                 batchGo.AddComponent<BatchPlaymodeController>();
             }
-
-            SpawnResources();
-        }
-
-        private void SpawnResources()
-        {
-            GameObject root = new GameObject("[Resources]");
-            for (int i = 0; i < 20; i++)
-            {
-                var resourceGo = new GameObject($"Resource_{i}");
-                resourceGo.transform.SetParent(root.transform);
-                resourceGo.transform.position = Random.insideUnitCircle * 8f; // Scatter around
-
-                var sr = resourceGo.AddComponent<SpriteRenderer>();
-                sr.sprite = AgentSpriteLibrary.ResourceSprite;
-                resourceGo.transform.localScale = Vector3.one * 0.8f; // Clear berry bush size
-
-                var rb = resourceGo.AddComponent<Rigidbody2D>();
-                rb.gravityScale = 0f;
-                rb.bodyType = RigidbodyType2D.Static;
-
-                var col = resourceGo.AddComponent<CircleCollider2D>();
-                col.radius = 0.4f;
-
-                var controller = resourceGo.AddComponent<NodeController>();
-                controller.Type = EntityType.Resource;
-                var resId = UnityEngine.GUID.Generate();
-                controller.Initialize(resId, new NodeConfiguration(speed: 0f));
-
-                _registry.RegisterNode(controller);
-                _simulationManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = 5 });
-            }
         }
     }
 }

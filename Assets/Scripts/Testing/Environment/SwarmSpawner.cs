@@ -22,7 +22,7 @@ namespace Simpiens.Testing.Environment
         private readonly Simpiens.Cognition.Planning.ActionGraph _actionGraph;
         private readonly List<Simpiens.Cognition.Planning.GoapGoal> _goals;
 
-        public int SpawnCount = 10;
+        public int SpawnCount = 6;
 
         [Inject]
         public SwarmSpawner(
@@ -89,8 +89,8 @@ namespace Simpiens.Testing.Environment
                 else if (i == 5) agentGo.transform.position = new Vector2(4f, -1.2f);
                 else
                 {
-                    // Spread background agents out randomly
-                    agentGo.transform.position = Random.insideUnitCircle * 5f + Vector2.up * 4f;
+                    // Spread any extra background agents out in a clear open zone above the demonstration arena
+                    agentGo.transform.position = new Vector2(-6f + (i - 6) * 2.5f, 6f);
                 }
 
                 var sr = agentGo.AddComponent<SpriteRenderer>();

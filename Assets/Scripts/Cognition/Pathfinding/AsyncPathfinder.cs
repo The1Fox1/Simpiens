@@ -75,48 +75,54 @@ namespace Simpiens.Cognition.Pathfinding
 
             Vector2 currentPos = request.StartPosition;
             Vector2 targetPos = request.TargetPosition;
-            Vector2 direction = (targetPos - currentPos).normalized;
-
             float distance = Vector2.Distance(currentPos, targetPos);
-            float stepSize = snapshot.CellSize;
-
-            int steps = Mathf.Min(Mathf.CeilToInt(distance / stepSize), MaxPathLength);
 
             response.Length = 0;
 
-            for (int i = 1; i <= steps; i++) // Start from 1 to avoid adding start position
+            if (distance <= 0.05f)
             {
-                Vector2 nextPos = currentPos + direction * (i * stepSize);
+                response.IsValid = true;
+                response.IsComplete = true;
+                return response;
+            }
 
-                // Convert to grid coords
-                float offsetX = (snapshot.Width * snapshot.CellSize) * 0.5f;
-                float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
+            Vector2 direction = (targetPos - currentPos).normalized;
+            float stepSize = 0.5f;
+            int steps = Mathf.Min(Mathf.CeilToInt(distance / stepSize), MaxPathLength);
+
+            float offsetX = (snapshot.Width * snapshot.CellSize) * 0.5f;
+            float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
+
+            for (int i = 1; i <= steps; i++)
+            {
+                float stepDist = i * stepSize;
+                Vector2 nextPos = (stepDist >= distance) ? targetPos : currentPos + direction * stepDist;
 
                 int cellX = Mathf.FloorToInt((nextPos.x + offsetX) / snapshot.CellSize);
                 int cellY = Mathf.FloorToInt((nextPos.y + offsetY) / snapshot.CellSize);
 
-                // Stricter validation
                 if (cellX < 0 || cellX >= snapshot.Width || cellY < 0 || cellY >= snapshot.Height)
                 {
-                    break; // Out of bounds
+                    break;
                 }
 
                 if (snapshot.IsWalkable(cellX, cellY))
                 {
                     response.Waypoints[response.Length] = nextPos;
                     response.Length++;
+                    if (nextPos == targetPos)
+                    {
+                        break;
+                    }
                 }
                 else
                 {
-                    // Blocked! We hit a wall or resource.
                     break;
                 }
             }
 
-            // If we generated at least one step, it's valid
             response.IsValid = response.Length > 0;
             response.IsComplete = true;
-
             return response;
         }
     }

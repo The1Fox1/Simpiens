@@ -89,7 +89,7 @@ namespace Simpiens.Simulation.Spatial
 
             for (int i = 0; i < count; i++)
             {
-                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Resource)
+                if (cellArray[i].Type == EntityType.Wall)
                 {
                     return false;
                 }

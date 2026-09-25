@@ -59,34 +59,6 @@ namespace Simpiens.Cognition.Evaluators
                 if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                 {
                     Vector2 recordPos = new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y);
-
-                    // Relational Contention Pre-filter: Check if an intimidating or respected peer is near the resource
-                    if (context.Snapshot != null)
-                    {
-                        if (_queryResults == null) _queryResults = new List<EntitySnapshot>(16);
-                        _queryResults.Clear();
-                        context.Snapshot.GetEntitiesInRange(recordPos, 2.0f, _queryResults);
-                        bool peerDominates = false;
-                        for (int q = 0; q < _queryResults.Count; q++)
-                        {
-                            var neighbor = _queryResults[q];
-                            if (neighbor.Type == EntityType.Pawn && neighbor.Id != context.AgentId)
-                            {
-                                var affinity = context.Memory.GetAffinity(neighbor.Id, context.CurrentTick);
-                                if (affinity.Fear >= 40 || affinity.Respect >= 50)
-                                {
-                                    peerDominates = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (peerDominates)
-                        {
-                            // Submissive agent yields this candidate resource to dominant peer
-                            continue;
-                        }
-                    }
-
                     float dist = Vector2.Distance(context.Position, recordPos);
 
                     // The closer it is, the higher the utility. 

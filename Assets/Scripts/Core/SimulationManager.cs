@@ -161,14 +161,40 @@ namespace Simpiens.Simulation
                     return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
 
                 case HarvestResourceIntent harvest:
-                    var reachResult = ExecutePathMovement(node, harvest.Path, state);
+                    var targetResourceNode = _worldRegistry?.GetNode(harvest.TargetEntityId);
+                    bool withinHarvestReach = false;
+                    if (targetResourceNode != null)
+                    {
+                        float distToResource = Vector2.Distance(node.Position, targetResourceNode.Position);
+                        if (distToResource <= 0.8f)
+                        {
+                            withinHarvestReach = true;
+                        }
+                    }
+
+                    var reachResult = withinHarvestReach ? IntentResult.Success : ExecutePathMovement(node, harvest.Path, state);
                     if (reachResult == IntentResult.Success)
                     {
                         uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
 
                         // Check if resource still exists before gathering
-                        if (!_resources.TryGetValue(harvest.TargetEntityId, out var resourceData))
+                        if (!_resources.TryGetValue(harvest.TargetEntityId, out var resourceData) || resourceData.RemainingYield <= 0)
                         {
+                            // If competitor was not recorded yet, look for nearby competitor that took it
+                            if (state.ContestedCompetitorId == default && _worldRegistry != null)
+                            {
+                                var activeNodes = _worldRegistry.ActiveNodes;
+                                for (int i = 0; i < activeNodes.Count; i++)
+                                {
+                                    var other = activeNodes[i];
+                                    if (other.Id != node.Id && other.Type == EntityType.Pawn && Vector2.Distance(other.Position, node.Position) <= 2.5f)
+                                    {
+                                        state.ContestedCompetitorId = other.Id;
+                                        break;
+                                    }
+                                }
+                            }
+
                             // If resource was depleted while actively contesting:
                             if (state.ContestedCompetitorId != default && agent != null)
                             {
@@ -243,8 +269,12 @@ namespace Simpiens.Simulation
                                 return IntentResult.PathBlocked;
                             }
 
-                            // Otherwise, Symmetrical Rivalry: mark contested competitor
+                            // Otherwise, Symmetrical Rivalry: mark contested competitor on both pawns
                             state.ContestedCompetitorId = competitorNode.Id;
+                            if (_activeIntents.TryGetValue(competitorNode.Id, out var compState))
+                            {
+                                compState.ContestedCompetitorId = node.Id;
+                            }
                         }
 
                         if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Harvesting;
