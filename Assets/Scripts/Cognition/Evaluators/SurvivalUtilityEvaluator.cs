@@ -15,6 +15,7 @@ namespace Simpiens.Cognition.Evaluators
         // Hysteresis thresholds to prevent rapid state flipping
         private const float HighHungerThreshold = 60f;
         private const float LowHungerThreshold = 20f;
+        public const float MaxResourceEngagementDistance = 8.0f;
 
         // Caching the state across ticks per agent could be done by passing previous intent, 
         // but for now we evaluate based purely on context. If hunger > High, utility goes up.
@@ -61,6 +62,9 @@ namespace Simpiens.Cognition.Evaluators
                     Vector2 recordPos = new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y);
                     float dist = Vector2.Distance(context.Position, recordPos);
 
+                    // Disregard resources beyond maximum local engagement range
+                    if (dist > MaxResourceEngagementDistance) continue;
+
                     // The closer it is, the higher the utility. 
                     // If hunger is above HighHungerThreshold, we drastically boost the score to commit.
                     float hysteresisBoost = context.Hunger > HighHungerThreshold ? 50f : 0f;
@@ -78,24 +82,36 @@ namespace Simpiens.Cognition.Evaluators
 
             if (bestResource.HasValue)
             {
+                Vector2 targetPos = new Vector2(bestResource.Value.LastKnownLocation.x, bestResource.Value.LastKnownLocation.y);
+
+                // Defensive null-safety for isolated tests
+                if (_pathfinder == null)
+                {
+                    return new HarvestResourceIntent(context.AgentId, bestResource.Value.EntityId, default);
+                }
+
                 // Calculate path to verify reachability
                 var pathRequest = new PathRequest
                 {
                     StartPosition = context.Position,
-                    TargetPosition = new Vector2(bestResource.Value.LastKnownLocation.x, bestResource.Value.LastKnownLocation.y)
+                    TargetPosition = targetPos
                 };
 
                 var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
 
-                if (pathResponse.IsValid)
+                // Path must not only be valid, but must actually reach within harvest proximity (<= 1.0m) of the target
+                if (pathResponse.IsValid && pathResponse.Length > 0)
                 {
-                    return new HarvestResourceIntent(context.AgentId, bestResource.Value.EntityId, pathResponse);
+                    Vector2 finalWaypoint = pathResponse.Waypoints[pathResponse.Length - 1];
+                    float distToTarget = Vector2.Distance(finalWaypoint, targetPos);
+                    if (distToTarget <= 1.0f)
+                    {
+                        return new HarvestResourceIntent(context.AgentId, bestResource.Value.EntityId, pathResponse);
+                    }
                 }
-                else
-                {
-                    // Clean up invalid path
-                    pathResponse.ReturnToPool();
-                }
+
+                // Clean up unreachable or wall-blocked path
+                pathResponse.ReturnToPool();
             }
 
             // Fallback

@@ -17,7 +17,7 @@ namespace Simpiens.Cognition.Evaluators
         public const float AltruismThreshold = 25f;
         public const float SatedHungerThreshold = 50f;
         public const float DistressHungerThreshold = 85f;
-        public const float PerceptionRadius = 15f;
+        public const float PerceptionRadius = 6.0f;
 
         private readonly IAsyncPathfinder _pathfinder;
 
@@ -60,6 +60,12 @@ namespace Simpiens.Cognition.Evaluators
                 var peer = _peerResults[i];
                 if (peer.Id == context.AgentId || peer.Type != EntityType.Pawn) continue;
 
+                // Line-of-sight check: agents cannot perceive distressed peers through walls
+                if (context.Snapshot != null && !context.Snapshot.HasLineOfSight(context.Position, peer.Position))
+                {
+                    continue;
+                }
+
                 // Check if peer is in distress (critically starving or collapsed)
                 bool isDistressed = peer.Hunger >= DistressHungerThreshold || peer.IsCollapsed;
                 if (!isDistressed) continue;
@@ -88,9 +94,14 @@ namespace Simpiens.Cognition.Evaluators
                 };
 
                 var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
-                if (pathResponse.IsValid)
+                if (pathResponse.IsValid && pathResponse.Length > 0)
                 {
-                    return new ShareResourceIntent(context.AgentId, bestTargetId, pathResponse);
+                    Vector2 finalWaypoint = pathResponse.Waypoints[pathResponse.Length - 1];
+                    float distToPeer = Vector2.Distance(finalWaypoint, bestTargetPos);
+                    if (distToPeer <= 1.5f)
+                    {
+                        return new ShareResourceIntent(context.AgentId, bestTargetId, pathResponse);
+                    }
                 }
 
                 pathResponse.ReturnToPool();

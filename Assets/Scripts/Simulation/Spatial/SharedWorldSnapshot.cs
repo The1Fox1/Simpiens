@@ -98,6 +98,43 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
+        /// Checks whether a straight line between two world positions is unobstructed by walls.
+        /// Zero allocations, thread-safe off-thread evaluation.
+        /// </summary>
+        public bool HasLineOfSight(Vector2 start, Vector2 end)
+        {
+            float distance = Vector2.Distance(start, end);
+            if (distance < 0.1f) return true;
+
+            float stepSize = 0.5f;
+            int steps = Mathf.CeilToInt(distance / stepSize);
+            Vector2 dir = (end - start) / distance;
+
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+
+            // Check intermediate steps along the ray (excluding endpoints)
+            for (int i = 1; i < steps; i++)
+            {
+                Vector2 sample = start + dir * (i * stepSize);
+                int cellX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
+                int cellY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
+
+                if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height)
+                {
+                    return false;
+                }
+
+                if (!IsWalkable(cellX, cellY))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Thread-safe query method for cognitive agents to find entities in a radius.
         /// </summary>
         public void GetEntitiesInRange(Vector2 position, float radius, List<EntitySnapshot> results)

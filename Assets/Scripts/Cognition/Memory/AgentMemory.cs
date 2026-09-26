@@ -86,6 +86,13 @@ namespace Simpiens.Cognition.Memory
             for (int i = 0; i < count; i++)
             {
                 var entity = _queryResults[i];
+
+                // Line-of-sight check: agents cannot perceive through walls
+                if (snapshot != null && !snapshot.HasLineOfSight(queryPos, entity.Position))
+                {
+                    continue;
+                }
+
                 Vector2Int entityPosInt = new Vector2Int(Mathf.RoundToInt(entity.Position.x), Mathf.RoundToInt(entity.Position.y));
 
                 if (SpatialMemoryMap.TryGetValue(entity.Id, out var record))
@@ -124,6 +131,12 @@ namespace Simpiens.Cognition.Memory
                 float dist = Vector2.Distance(queryPos, new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y));
                 if (dist <= visionRadius)
                 {
+                    // If obstructed by a wall, the agent cannot verify whether the entity is gone
+                    if (snapshot != null && !snapshot.HasLineOfSight(queryPos, new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y)))
+                    {
+                        continue;
+                    }
+
                     // The location is in vision, but the entity is not. It has been destroyed or moved away.
                     _keysToRemove.Add(kvp.Key);
                     continue;

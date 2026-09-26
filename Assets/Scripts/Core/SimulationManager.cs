@@ -223,6 +223,12 @@ namespace Simpiens.Simulation
                     var reachResult = withinHarvestReach ? IntentResult.Success : ExecutePathMovement(node, harvest.Path, state);
                     if (reachResult == IntentResult.Success)
                     {
+                        // Ensure the agent is genuinely within physical harvest proximity of the target resource
+                        if (targetResourceNode != null && Vector2.Distance(node.Position, targetResourceNode.Position) > 1.2f)
+                        {
+                            return IntentResult.PathBlocked;
+                        }
+
                         // Social Yielding Protocol: Check if any other pawn is also targeting/harvesting this node
                         Simpiens.Entities.NodeController competitorNode = null;
                         if (_worldRegistry != null)

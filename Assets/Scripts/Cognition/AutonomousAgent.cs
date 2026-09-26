@@ -14,6 +14,8 @@ namespace Simpiens.Cognition
 {
     public class AutonomousAgent : MonoBehaviour
     {
+        public const int DefaultVisionRadius = 6;
+
         // Dependencies
         private ISpatialPartition _spatialPartition;
         private ICognitiveEvaluator[] _evaluators;
@@ -293,7 +295,7 @@ namespace Simpiens.Cognition
 
             Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
             uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
-            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: 20, currentTick: tick);
+            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick);
 
             var context = new AgentContext(AgentId, transform.position, Needs, Frustration, snapshot, _memory, tick);
 
