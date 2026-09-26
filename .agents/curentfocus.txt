@@ -48,9 +48,9 @@ Feature 2: Altruistic Sharing & Food Transfer.
 - Phase 2 (Completed): Sated pawns (Hunger < 40) near critically starving or collapsed peers evaluate ShareResourceIntent based on Warmth and Trust. Main-thread execution transfers food, relieves collapse, and logs positive memory events (Warmth +25, Trust +30, Respect +15).
 
 Feature 3: Gathering Anchors & Organic Social Familiarity.
-- Phase 3 (Current Focus): World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns (3x) and steadily accumulates Warmth and Trust, fostering organic social cliques and shared hearth bonding.
+- Phase 3 (Completed): World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns (3x) and steadily accumulates Warmth and Trust, fostering organic social cliques and shared hearth bonding. Verified with 6 domain tests and zero allocations.
 
-Epic 8: Socio-Political Structures & The Generic Group Primitive
+Current Focus: Epic 8: Socio-Political Structures & The Generic Group Primitive
 With physical interdependence proven, agents organize into collective structures using the 4-layer sociological taxonomy and a parameter-driven Group primitive (avoiding rigid class monoliths).
 
 Feature 1: Identity Tags & The Generic Group Primitive.

@@ -156,7 +156,7 @@ namespace Simpiens.Cognition.Groups
  ─────────────────────────────────────────────────────────────────────────────
  Phase 1: Resource Contention & Yielding (Fear & Respect on Finite Nodes) [COMPLETED]
  Phase 2: Altruistic Sharing & Food Transfer (Warmth & Trust in Survival) [COMPLETED]
- Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [IN DESIGN / ACTIVE]
+ Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [COMPLETED]
  ─────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -235,7 +235,7 @@ $$\text{Utility}_{\text{share}} = (\text{Warmth} \times 0.5) + (\text{Trust} \ti
 
 ---
 
-### Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [ACTIVE FOCUS]
+### Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [COMPLETED]
 
 #### 1. Problem
 Currently, pawns wander aimlessly across the map when their immediate biological drives (Hunger, Energy) are satisfied. Social encounters are purely accidental, occurring either when pawns coincidentally path near each other or awkwardly pursue moving peers via `TravelToPeerAction`. This creates an atomized, chaotic world where pawns have no home base, safe zone, or communal focus.
