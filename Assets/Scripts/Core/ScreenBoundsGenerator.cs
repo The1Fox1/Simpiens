@@ -25,6 +25,12 @@ namespace Simpiens.Core
                 return;
             }
 
+            // Ensure camera frames the 5 playpens (-10 to +10) with generous margins
+            if (cam.orthographicSize < 6.0f)
+            {
+                cam.orthographicSize = 6.0f;
+            }
+
             // Calculate screen dimensions in world space
             float screenHeight = cam.orthographicSize * 2f;
             float screenWidth = screenHeight * cam.aspect;

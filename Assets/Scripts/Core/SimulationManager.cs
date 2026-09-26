@@ -809,7 +809,7 @@ namespace Simpiens.Simulation
                 if (entity.Id != ignoreAgentId)
                 {
                     if (entity.Type == EntityType.Wall) return true;
-                    if (entity.Type == EntityType.Anchor && Vector2.Distance(entity.Position, targetPos) < 0.6f) return true;
+                    if (entity.Type == EntityType.Anchor && Vector2.Distance(entity.Position, targetPos) < 0.45f) return true;
                     if (entity.Type == EntityType.Pawn)
                     {
                         // Dynamic validation: if another pawn is currently standing within clearance radius

@@ -84,19 +84,19 @@ namespace Simpiens.Testing.Environment
 
             // 2. Pre-spawn demonstration bushes inside each pen
             // Pen 1 (Fear Yield): Center bush (1 yield) and secondary foraging bush (3 yields)
-            SpawnDemoBush(bushRoot, new Vector2(-6f, 0f), 1, out var bushFearId);
-            SpawnDemoBush(bushRoot, new Vector2(-6f, -2.5f), 3, out _);
+            SpawnDemoBush(bushRoot, new Vector2(-8f, 0f), 1, out var bushFearId);
+            SpawnDemoBush(bushRoot, new Vector2(-8f, -2.2f), 3, out _);
 
             // Pen 2 (Respect Defer): Center bush (1 yield) and secondary foraging bush (3 yields)
-            SpawnDemoBush(bushRoot, new Vector2(-3f, 0f), 1, out var bushRespectId);
-            SpawnDemoBush(bushRoot, new Vector2(-3f, -2.5f), 3, out _);
+            SpawnDemoBush(bushRoot, new Vector2(-4f, 0f), 1, out var bushRespectId);
+            SpawnDemoBush(bushRoot, new Vector2(-4f, -2.2f), 3, out _);
 
             // Pen 3 (Rivalry Contest): Center contested bush (1 yield, no secondary bush)
             SpawnDemoBush(bushRoot, new Vector2(0f, 0f), 1, out var bushRivalryId);
 
             // 3. Pre-spawn demonstration campfires inside Pens 4 and 5
-            SpawnDemoCampfire(campfireRoot, new Vector2(3f, 0f), out var campfirePen4Id);
-            SpawnDemoCampfire(campfireRoot, new Vector2(6f, 0f), out var campfirePen5Id);
+            SpawnDemoCampfire(campfireRoot, new Vector2(4f, 0f), out var campfirePen4Id);
+            SpawnDemoCampfire(campfireRoot, new Vector2(8f, 0f), out var campfirePen5Id);
 
             for (int i = 0; i < SpawnCount; i++)
             {
@@ -104,20 +104,20 @@ namespace Simpiens.Testing.Environment
                 agentGo.transform.SetParent(root.transform);
 
                 // Configure predetermined positions for the 5 demonstration dyads within their respective play pens
-                if (i == 0) agentGo.transform.position = new Vector2(-6f, 1.8f);       // Pen 1: Dominant
-                else if (i == 1) agentGo.transform.position = new Vector2(-6f, -1.2f); // Pen 1: Submissive
-                else if (i == 2) agentGo.transform.position = new Vector2(-3f, 1.8f);  // Pen 2: Respected
-                else if (i == 3) agentGo.transform.position = new Vector2(-3f, -1.2f); // Pen 2: Deferent
+                if (i == 0) agentGo.transform.position = new Vector2(-8f, 1.8f);       // Pen 1: Dominant
+                else if (i == 1) agentGo.transform.position = new Vector2(-8f, -1.0f); // Pen 1: Submissive
+                else if (i == 2) agentGo.transform.position = new Vector2(-4f, 1.8f);  // Pen 2: Respected
+                else if (i == 3) agentGo.transform.position = new Vector2(-4f, -1.0f); // Pen 2: Deferent
                 else if (i == 4) agentGo.transform.position = new Vector2(0f, 1.5f);   // Pen 3: Rival A
                 else if (i == 5) agentGo.transform.position = new Vector2(0f, -1.5f);  // Pen 3: Rival B
-                else if (i == 6) agentGo.transform.position = new Vector2(3f, 1.2f);   // Pen 4: Altruistic Donor
-                else if (i == 7) agentGo.transform.position = new Vector2(3f, -1.2f);  // Pen 4: Starving Companion
-                else if (i == 8) agentGo.transform.position = new Vector2(6f, 1.2f);   // Pen 5: Selfish Peer
-                else if (i == 9) agentGo.transform.position = new Vector2(6f, -1.2f);  // Pen 5: Starving Stranger
+                else if (i == 6) agentGo.transform.position = new Vector2(4f, 1.8f);   // Pen 4: Altruistic Donor
+                else if (i == 7) agentGo.transform.position = new Vector2(4f, -1.8f);  // Pen 4: Starving Companion
+                else if (i == 8) agentGo.transform.position = new Vector2(8f, 1.8f);   // Pen 5: Selfish Peer
+                else if (i == 9) agentGo.transform.position = new Vector2(8f, -1.8f);  // Pen 5: Starving Stranger
                 else
                 {
                     // Spread any extra background agents out in a clear open zone above the demonstration arena
-                    agentGo.transform.position = new Vector2(-6f + (i - 10) * 2.5f, 6f);
+                    agentGo.transform.position = new Vector2(-8f + (i - 10) * 2.5f, 6f);
                 }
 
                 var sr = agentGo.AddComponent<SpriteRenderer>();
@@ -153,15 +153,15 @@ namespace Simpiens.Testing.Environment
                 _agents[0].Hunger = 60f;
                 _agents[1].Hunger = 60f;
                 _agents[1].Memory.RecordInteraction(_agents[0].AgentId, deltaWarmth: 0, deltaTrust: 0, deltaFear: 75, deltaRespect: 0, 0);
-                _agents[0].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-6, 0), 0);
-                _agents[1].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-6, 0), 0);
+                _agents[0].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-8, 0), 0);
+                _agents[1].Memory.SpatialMemoryMap[bushFearId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushFearId, EntityType.Resource, new Vector2Int(-8, 0), 0);
 
                 // Dyad 2 (Respect Asymmetry): Agent 3 respects Agent 2 (Respect = 80). Agent 3 will defer Bush 1 to Agent 2.
                 _agents[2].Hunger = 60f;
                 _agents[3].Hunger = 60f;
                 _agents[3].Memory.RecordInteraction(_agents[2].AgentId, deltaWarmth: 20, deltaTrust: 20, deltaFear: 0, deltaRespect: 80, 0);
-                _agents[2].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(-3, 0), 0);
-                _agents[3].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(-3, 0), 0);
+                _agents[2].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(-4, 0), 0);
+                _agents[3].Memory.SpatialMemoryMap[bushRespectId] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(bushRespectId, EntityType.Resource, new Vector2Int(-4, 0), 0);
 
                 // Dyad 3 (Symmetrical Rivalry): Agent 4 and Agent 5 are mutual rivals (Warmth -40, Respect -20).
                 _agents[4].Hunger = 60f;
@@ -181,8 +181,8 @@ namespace Simpiens.Testing.Environment
                 _agents[7].Hunger = 90f;
                 _agents[6].Memory.RecordInteraction(_agents[7].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
                 _agents[7].Memory.RecordInteraction(_agents[6].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
-                _agents[6].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(3, 0), 0);
-                _agents[7].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(3, 0), 0);
+                _agents[6].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(4, 0), 0);
+                _agents[7].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(4, 0), 0);
 
                 // Dyad 5 (Selfish Indifference & Hearth Isolation): Agent 8 is estranged/hostile to Agent 9 (Warmth = -20, Trust = -10).
                 // Agent 8 is sated (Hunger = 20), Agent 9 is starving (Hunger = 90).
@@ -191,19 +191,19 @@ namespace Simpiens.Testing.Environment
                 _agents[9].Hunger = 90f;
                 _agents[8].Memory.RecordInteraction(_agents[9].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
                 _agents[9].Memory.RecordInteraction(_agents[8].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
-                _agents[8].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(6, 0), 0);
-                _agents[9].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(6, 0), 0);
+                _agents[8].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(8, 0), 0);
+                _agents[9].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(8, 0), 0);
             }
         }
 
         private void SpawnPlayPens(GameObject root)
         {
-            float[] dividerX = new float[] { -7.5f, -4.5f, -1.5f, 1.5f, 4.5f, 7.5f };
+            float[] dividerX = new float[] { -10f, -6f, -2f, 2f, 6f, 10f };
             float minY = -3.5f;
             float maxY = 3.5f;
 
-            // Spawn top and bottom horizontal perimeter walls from -7.5 to +7.5 (step 1.0)
-            for (float x = -7.5f; x <= 7.55f; x += 1.0f)
+            // Spawn top and bottom horizontal perimeter walls from -10.0 to +10.0 (step 1.0)
+            for (float x = -10.0f; x <= 10.05f; x += 1.0f)
             {
                 SpawnWallNode(root, new Vector2(x, maxY));
                 SpawnWallNode(root, new Vector2(x, minY));
@@ -220,11 +220,11 @@ namespace Simpiens.Testing.Environment
             }
 
             // Spawn distinct titles above each play pen
-            SpawnPenTitle(root, -6.0f, 4.2f, "1. Fear Yield", new Color(1f, 0.75f, 0.2f));
-            SpawnPenTitle(root, -3.0f, 4.2f, "2. Respect Defer", new Color(0.35f, 0.8f, 1f));
+            SpawnPenTitle(root, -8.0f, 4.2f, "1. Fear Yield", new Color(1f, 0.75f, 0.2f));
+            SpawnPenTitle(root, -4.0f, 4.2f, "2. Respect Defer", new Color(0.35f, 0.8f, 1f));
             SpawnPenTitle(root, 0.0f, 4.2f, "3. Rivalry Contest", new Color(1f, 0.4f, 0.4f));
-            SpawnPenTitle(root, 3.0f, 4.2f, "4. Altruism & Hearth", new Color(0.3f, 0.95f, 0.5f));
-            SpawnPenTitle(root, 6.0f, 4.2f, "5. Selfish Peer", new Color(0.75f, 0.8f, 0.85f));
+            SpawnPenTitle(root, 4.0f, 4.2f, "4. Altruism & Hearth", new Color(0.3f, 0.95f, 0.5f));
+            SpawnPenTitle(root, 8.0f, 4.2f, "5. Selfish Peer", new Color(0.75f, 0.8f, 0.85f));
         }
 
         private void SpawnWallNode(GameObject root, Vector2 pos)
@@ -316,7 +316,7 @@ namespace Simpiens.Testing.Environment
             rb.bodyType = RigidbodyType2D.Static;
 
             var col = campfireGo.AddComponent<CircleCollider2D>();
-            col.radius = 0.5f;
+            col.radius = 0.35f;
 
             var controller = campfireGo.AddComponent<NodeController>();
             controller.Type = EntityType.Anchor;
