@@ -12,8 +12,10 @@ namespace Simpiens.Entities
     {
         private static readonly Sprite[,] _agentSprites = new Sprite[9, 2];
         private static readonly Sprite _resourceSprite;
+        private static readonly Sprite _wallSprite;
 
         public static Sprite ResourceSprite => _resourceSprite;
+        public static Sprite WallSprite => _wallSprite;
 
         static AgentSpriteLibrary()
         {
@@ -118,6 +120,16 @@ namespace Simpiens.Entities
                 { 'R', new Color32(220, 38, 28, 255) }
             };
             _resourceSprite = CreateSprite(PatternBerryBush, bushPalette, "Resource_BerryBush");
+
+            // 11. Stone Wall (Impassable play pen barrier)
+            var wallPalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { '#', new Color32(30, 41, 59, 255) },   // Slate 800 mortar/border
+                { 'S', new Color32(148, 163, 184, 255) }, // Slate 400 stone bevel
+                { 'B', new Color32(71, 85, 105, 255) }   // Slate 600 stone brick body
+            };
+            _wallSprite = CreateSprite(PatternStoneWall, wallPalette, "Obstacle_StoneWall");
         }
 
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
@@ -566,6 +578,26 @@ namespace Simpiens.Entities
             ".....##..##.....",
             "................",
             "................"
+        };
+
+        private static readonly string[] PatternStoneWall =
+        {
+            "################",
+            "#SSSSSSSSSSSSSS#",
+            "#SBBBBBB#SBBBBB#",
+            "#SBBBBBB#SBBBBB#",
+            "#SSSSSSSSSSSSSS#",
+            "################",
+            "#SBBBB#SBBBBBBB#",
+            "#SBBBB#SBBBBBBB#",
+            "#SSSSSSSSSSSSSS#",
+            "################",
+            "#SBBBBBBB#SBBBB#",
+            "#SBBBBBBB#SBBBB#",
+            "#SSSSSSSSSSSSSS#",
+            "################",
+            "#SBBBB#SBBBBBBB#",
+            "################"
         };
 
         #endregion
