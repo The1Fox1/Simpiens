@@ -471,6 +471,11 @@ namespace Simpiens.Cognition
                             {
                                 Social = Mathf.Min(100f, Social + 25f);
                             }
+                            else if (completedAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction)
+                            {
+                                Social = Mathf.Min(100f, Social + 20f);
+                                Energy = Mathf.Min(100f, Energy + 10f);
+                            }
 
                             _activePlan.AdvanceStep();
                             if (_activePlan.IsFinished)

@@ -89,7 +89,7 @@ namespace Simpiens.Simulation.Spatial
 
             for (int i = 0; i < count; i++)
             {
-                if (cellArray[i].Type == EntityType.Wall)
+                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Anchor)
                 {
                     return false;
                 }
@@ -125,9 +125,15 @@ namespace Simpiens.Simulation.Spatial
                     return false;
                 }
 
-                if (!IsWalkable(cellX, cellY))
+                int index = cellY * Width + cellX;
+                int count = CellCounts[index];
+                var cellArray = Grid[index];
+                for (int c = 0; c < count; c++)
                 {
-                    return false;
+                    if (cellArray[c].Type == EntityType.Wall)
+                    {
+                        return false;
+                    }
                 }
             }
 

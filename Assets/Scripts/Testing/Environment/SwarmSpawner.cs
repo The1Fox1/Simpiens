@@ -52,13 +52,16 @@ namespace Simpiens.Testing.Environment
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RestAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToPeerAction());
             _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ShareFoodAction());
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToAnchorAction(_pathfinder));
+            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction());
 
             _goals = new List<Simpiens.Cognition.Planning.GoapGoal>
             {
                 new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal(),
                 new Simpiens.Cognition.Planning.Goals.RestGoal(),
                 new Simpiens.Cognition.Planning.Goals.SocializeGoal(),
-                new Simpiens.Cognition.Planning.Goals.AidCompanionGoal()
+                new Simpiens.Cognition.Planning.Goals.AidCompanionGoal(),
+                new Simpiens.Cognition.Planning.Goals.GatherAtAnchorGoal()
             };
         }
 
@@ -73,6 +76,7 @@ namespace Simpiens.Testing.Environment
             // Create roots for organization
             GameObject root = new GameObject("[SwarmAgents]");
             GameObject bushRoot = new GameObject("[DemoContestedBushes]");
+            GameObject campfireRoot = new GameObject("[DemoCampfires]");
             GameObject pensRoot = new GameObject("[PlayPens]");
 
             // 1. Construct the 5 bordered Play Pens
@@ -89,6 +93,10 @@ namespace Simpiens.Testing.Environment
 
             // Pen 3 (Rivalry Contest): Center contested bush (1 yield, no secondary bush)
             SpawnDemoBush(bushRoot, new Vector2(0f, 0f), 1, out var bushRivalryId);
+
+            // 3. Pre-spawn demonstration campfires inside Pens 4 and 5
+            SpawnDemoCampfire(campfireRoot, new Vector2(3f, 0f), out var campfirePen4Id);
+            SpawnDemoCampfire(campfireRoot, new Vector2(6f, 0f), out var campfirePen5Id);
 
             for (int i = 0; i < SpawnCount; i++)
             {
@@ -166,21 +174,25 @@ namespace Simpiens.Testing.Environment
 
             if (_agents.Count >= 10)
             {
-                // Dyad 4 (Altruistic Companions): Agent 6 loves Agent 7 (Warmth = 85, Trust = 80).
+                // Dyad 4 (Altruistic Companions & Hearth): Agent 6 loves Agent 7 (Warmth = 85, Trust = 80).
                 // Agent 6 is sated (Hunger = 20), Agent 7 is starving (Hunger = 90).
-                // Agent 6 will approach Agent 7, trigger Sharing pose, and feed Agent 7!
+                // Agent 6 will approach Agent 7, feed Agent 7, and once sated, gather around the Pen 4 campfire!
                 _agents[6].Hunger = 20f;
                 _agents[7].Hunger = 90f;
                 _agents[6].Memory.RecordInteraction(_agents[7].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
                 _agents[7].Memory.RecordInteraction(_agents[6].AgentId, deltaWarmth: 85, deltaTrust: 80, deltaFear: 0, deltaRespect: 20, 0);
+                _agents[6].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(3, 0), 0);
+                _agents[7].Memory.SpatialMemoryMap[campfirePen4Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen4Id, EntityType.Anchor, new Vector2Int(3, 0), 0);
 
-                // Dyad 5 (Selfish Indifference): Agent 8 is estranged/hostile to Agent 9 (Warmth = -20, Trust = -10).
+                // Dyad 5 (Selfish Indifference & Hearth Isolation): Agent 8 is estranged/hostile to Agent 9 (Warmth = -20, Trust = -10).
                 // Agent 8 is sated (Hunger = 20), Agent 9 is starving (Hunger = 90).
-                // Agent 8 will ignore Agent 9 and seek its own goals; Agent 9 receives no aid.
+                // Agent 8 ignores Agent 9 and relaxes alone by the Pen 5 campfire; starving Agent 9 receives no aid.
                 _agents[8].Hunger = 20f;
                 _agents[9].Hunger = 90f;
                 _agents[8].Memory.RecordInteraction(_agents[9].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
                 _agents[9].Memory.RecordInteraction(_agents[8].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, 0);
+                _agents[8].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(6, 0), 0);
+                _agents[9].Memory.SpatialMemoryMap[campfirePen5Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen5Id, EntityType.Anchor, new Vector2Int(6, 0), 0);
             }
         }
 
@@ -211,7 +223,7 @@ namespace Simpiens.Testing.Environment
             SpawnPenTitle(root, -6.0f, 4.2f, "1. Fear Yield", new Color(1f, 0.75f, 0.2f));
             SpawnPenTitle(root, -3.0f, 4.2f, "2. Respect Defer", new Color(0.35f, 0.8f, 1f));
             SpawnPenTitle(root, 0.0f, 4.2f, "3. Rivalry Contest", new Color(1f, 0.4f, 0.4f));
-            SpawnPenTitle(root, 3.0f, 4.2f, "4. Altruistic Aid", new Color(0.3f, 0.95f, 0.5f));
+            SpawnPenTitle(root, 3.0f, 4.2f, "4. Altruism & Hearth", new Color(0.3f, 0.95f, 0.5f));
             SpawnPenTitle(root, 6.0f, 4.2f, "5. Selfish Peer", new Color(0.75f, 0.8f, 0.85f));
         }
 
@@ -287,6 +299,34 @@ namespace Simpiens.Testing.Environment
 
             _registry.RegisterNode(controller);
             _simulationManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = yield });
+        }
+
+        private void SpawnDemoCampfire(GameObject root, Vector2 pos, out UnityEngine.GUID anchorId)
+        {
+            var campfireGo = new GameObject($"DemoCampfire_{pos.x}_{pos.y}");
+            campfireGo.transform.SetParent(root.transform);
+            campfireGo.transform.position = pos;
+
+            var sr = campfireGo.AddComponent<SpriteRenderer>();
+            sr.sprite = AgentSpriteLibrary.GetCampfireSprite(0);
+            campfireGo.transform.localScale = Vector3.one * 0.9f;
+
+            var rb = campfireGo.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Static;
+
+            var col = campfireGo.AddComponent<CircleCollider2D>();
+            col.radius = 0.5f;
+
+            var controller = campfireGo.AddComponent<NodeController>();
+            controller.Type = EntityType.Anchor;
+            anchorId = UnityEngine.GUID.Generate();
+            controller.Initialize(anchorId, new NodeConfiguration(speed: 0f));
+
+            campfireGo.AddComponent<CampfireView>();
+
+            _registry.RegisterNode(controller);
+            _simulationManager.RegisterAnchor(anchorId, pos, radius: 3.0f);
         }
 
         public void Tick()

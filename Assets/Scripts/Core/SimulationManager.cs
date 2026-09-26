@@ -25,6 +25,20 @@ namespace Simpiens.Simulation
         public UnityEngine.GUID ContestedCompetitorId;
     }
 
+    public readonly struct AnchorData
+    {
+        public readonly UnityEngine.GUID EntityId;
+        public readonly UnityEngine.Vector2 Position;
+        public readonly float Radius;
+
+        public AnchorData(UnityEngine.GUID entityId, UnityEngine.Vector2 position, float radius = 3.0f)
+        {
+            EntityId = entityId;
+            Position = position;
+            Radius = radius;
+        }
+    }
+
     /// <summary>
     /// Handles the real-time Unity tick, keeping it decoupled from slow agent cognition.
     /// Implements ITickable from VContainer to run on Unity's Update loop without being a MonoBehaviour.
@@ -39,8 +53,11 @@ namespace Simpiens.Simulation
         
         // Main thread tracking stores
         private readonly Dictionary<UnityEngine.GUID, ResourceData> _resources = new Dictionary<UnityEngine.GUID, ResourceData>();
+        private readonly Dictionary<UnityEngine.GUID, AnchorData> _anchors = new Dictionary<UnityEngine.GUID, AnchorData>();
         private readonly Dictionary<UnityEngine.GUID, ActiveIntentState> _activeIntents = new Dictionary<UnityEngine.GUID, ActiveIntentState>();
         private readonly List<UnityEngine.GUID> _keysToRemove = new List<UnityEngine.GUID>(64);
+        private readonly List<Simpiens.Entities.NodeController> _hearthPawnsBuffer = new List<Simpiens.Entities.NodeController>(32);
+        private readonly List<AnchorData> _activeAnchorsBuffer = new List<AnchorData>(16);
 
         public bool IsPaused { get; private set; }
         public IWorldRegistry WorldRegistry => _worldRegistry;
@@ -100,6 +117,11 @@ namespace Simpiens.Simulation
             _resources[data.EntityId] = data;
         }
 
+        public void RegisterAnchor(UnityEngine.GUID id, Vector2 position, float radius = 3.0f)
+        {
+            _anchors[id] = new AnchorData(id, position, radius);
+        }
+
         public void Tick()
         {
             if (IsPaused) return;
@@ -139,6 +161,13 @@ namespace Simpiens.Simulation
                 {
                     _activeIntents.Remove(_keysToRemove[i]);
                 }
+            }
+
+            // Evaluate Hearth Dynamics & Proximity Bonding every 50 ticks
+            uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
+            if (currentTick % 50 == 0)
+            {
+                EvaluateHearthProximity(currentTick);
             }
 
             // Generate the thread-safe global snapshot for any cognitive agents that poll this frame
@@ -512,6 +541,117 @@ namespace Simpiens.Simulation
             }
         }
 
+        internal void EvaluateHearthProximity(uint currentTick)
+        {
+            if (_worldRegistry == null) return;
+
+            // Collect all anchors (from registered anchors and active world nodes)
+            _activeAnchorsBuffer.Clear();
+            foreach (var kvp in _anchors)
+            {
+                _activeAnchorsBuffer.Add(kvp.Value);
+            }
+
+            var activeNodes = _worldRegistry.ActiveNodes;
+            int totalNodes = activeNodes.Count;
+
+            for (int i = 0; i < totalNodes; i++)
+            {
+                var n = activeNodes[i];
+                if (n.Type == EntityType.Anchor && !_anchors.ContainsKey(n.Id))
+                {
+                    _activeAnchorsBuffer.Add(new AnchorData(n.Id, n.Position, 3.0f));
+                }
+            }
+
+            int anchorCount = _activeAnchorsBuffer.Count;
+            if (anchorCount == 0) return;
+
+            for (int a = 0; a < anchorCount; a++)
+            {
+                var anchor = _activeAnchorsBuffer[a];
+                _hearthPawnsBuffer.Clear();
+
+                for (int n = 0; n < totalNodes; n++)
+                {
+                    var node = activeNodes[n];
+                    if (node.Type == EntityType.Pawn && node.Agent != null)
+                    {
+                        if (Vector2.Distance(node.Position, anchor.Position) <= anchor.Radius)
+                        {
+                            _hearthPawnsBuffer.Add(node);
+                        }
+                    }
+                }
+
+                int pawnCount = _hearthPawnsBuffer.Count;
+                if (pawnCount == 0) continue;
+
+                // 1. Environmental Comfort: Quench frustration and satisfy social drive
+                for (int p = 0; p < pawnCount; p++)
+                {
+                    var agent = _hearthPawnsBuffer[p].Agent;
+                    // Double frustration decay while relaxing near the fire (relieve 1.0 extra per 50 ticks)
+                    agent.RelieveFrustration(1.0f);
+
+                    // When 2 or more pawns are gathered, replenish social drive (+1.0/sec => ~1.0 per 50 ticks)
+                    if (pawnCount >= 2)
+                    {
+                        agent.Social = Mathf.Min(100f, agent.Social + 1.0f);
+                    }
+                }
+
+                // 2. Accelerated Gossip & Passive Propinquity Bonding between pairs
+                for (int i = 0; i < pawnCount; i++)
+                {
+                    var nodeA = _hearthPawnsBuffer[i];
+                    var agentA = nodeA.Agent;
+                    if (agentA.Memory == null || agentA.IsExhaustionCollapsed) continue;
+
+                    for (int j = i + 1; j < pawnCount; j++)
+                    {
+                        var nodeB = _hearthPawnsBuffer[j];
+                        var agentB = nodeB.Agent;
+                        if (agentB.Memory == null || agentB.IsExhaustionCollapsed) continue;
+
+                        // A. Accelerated Gossip: cooldown 100 ticks instead of 300
+                        if (agentA.Memory.CanGossipWith(agentB.AgentId, currentTick, cooldownTicks: 100))
+                        {
+                            if (agentA.Memory.TryGossip(agentB.Memory, agentB.AgentId, agentA.AgentId, currentTick, cooldownTicks: 100))
+                            {
+                                agentA.RelieveFrustration(15f);
+                                agentB.RelieveFrustration(15f);
+                                agentA.Social = Mathf.Min(100f, agentA.Social + 25f);
+                                agentB.Social = Mathf.Min(100f, agentB.Social + 25f);
+                                agentA.TriggerGossipVisual(Time.time);
+                                agentB.TriggerGossipVisual(Time.time);
+                                Debug.Log($"[Campfire Gossip] Agents {agentA.AgentId.ToString().Substring(0, 6)} and {agentB.AgentId.ToString().Substring(0, 6)} gossiped around hearth at tick {currentTick}!");
+                            }
+                        }
+
+                        // B. Passive Hearth Bonding: Every 100 ticks co-present around hearth
+                        if (currentTick % 100 == 0)
+                        {
+                            agentA.Memory.RecordInteraction(agentB.AgentId, deltaWarmth: 2, deltaTrust: 1, deltaFear: -2, deltaRespect: 0, currentTick);
+                            agentB.Memory.RecordInteraction(agentA.AgentId, deltaWarmth: 2, deltaTrust: 1, deltaFear: -2, deltaRespect: 0, currentTick);
+
+                            agentA.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                Simpiens.Cognition.Memory.MemoryEventType.CampfireCompanionship,
+                                agentB.AgentId,
+                                Vector2Int.RoundToInt(nodeA.Position),
+                                currentTick));
+
+                            agentB.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
+                                Simpiens.Cognition.Memory.MemoryEventType.CampfireCompanionship,
+                                agentA.AgentId,
+                                Vector2Int.RoundToInt(nodeB.Position),
+                                currentTick));
+                        }
+                    }
+                }
+            }
+        }
+
         private IntentResult ExecutePanicMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
         {
             if (path == null || path.Waypoints == null || currentIndex >= path.Length)
@@ -669,6 +809,7 @@ namespace Simpiens.Simulation
                 if (entity.Id != ignoreAgentId)
                 {
                     if (entity.Type == EntityType.Wall) return true;
+                    if (entity.Type == EntityType.Anchor && Vector2.Distance(entity.Position, targetPos) < 0.6f) return true;
                     if (entity.Type == EntityType.Pawn)
                     {
                         // Dynamic validation: if another pawn is currently standing within clearance radius

@@ -5,6 +5,7 @@ namespace Simpiens.Simulation.Spatial
         Walkable, // Represents an empty/walkable cell if needed
         Pawn,
         Resource,
-        Wall
+        Wall,
+        Anchor
     }
 }

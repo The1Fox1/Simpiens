@@ -64,6 +64,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<Simpiens.Testing.Sociopolitical.AffinityMatrixValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Sociopolitical.ResourceContentionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Sociopolitical.AltruisticSharingValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Sociopolitical.GatheringAnchorValidator>(Lifetime.Singleton).AsImplementedInterfaces();
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();

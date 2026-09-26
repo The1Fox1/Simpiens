@@ -10,6 +10,7 @@ namespace Simpiens.Cognition.Memory
         public const uint DefaultDecayTicks = 1000;
         public const uint ResourceDecayTicks = 1500;
         public const uint PawnDecayTicks = 400;
+        public const uint AnchorDecayTicks = 5000;
 
         public MemoryLedger EventLedger { get; }
         public Dictionary<GUID, SpatialMemoryRecord> SpatialMemoryMap { get; }
@@ -44,6 +45,7 @@ namespace Simpiens.Cognition.Memory
             {
                 case EntityType.Pawn: return PawnDecayTicks;
                 case EntityType.Resource: return ResourceDecayTicks;
+                case EntityType.Anchor: return AnchorDecayTicks;
                 default: return DefaultDecayTicks;
             }
         }

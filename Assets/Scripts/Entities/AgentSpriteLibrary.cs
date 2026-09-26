@@ -13,9 +13,11 @@ namespace Simpiens.Entities
         private static readonly Sprite[,] _agentSprites = new Sprite[9, 2];
         private static readonly Sprite _resourceSprite;
         private static readonly Sprite _wallSprite;
+        private static readonly Sprite[] _campfireSprites = new Sprite[2];
 
         public static Sprite ResourceSprite => _resourceSprite;
         public static Sprite WallSprite => _wallSprite;
+        public static Sprite GetCampfireSprite(int frame) => _campfireSprites[frame & 1];
 
         static AgentSpriteLibrary()
         {
@@ -130,6 +132,21 @@ namespace Simpiens.Entities
                 { 'B', new Color32(71, 85, 105, 255) }   // Slate 600 stone brick body
             };
             _wallSprite = CreateSprite(PatternStoneWall, wallPalette, "Obstacle_StoneWall");
+
+            // 12. Campfire (Gathering Anchor with animated embers & flames)
+            var campfirePalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { 'S', new Color32(100, 116, 139, 255) }, // Slate ring stones
+                { 's', new Color32(71, 85, 105, 255) },   // Shadow stones
+                { 'W', new Color32(120, 53, 15, 255) },   // Charred wood logs
+                { 'w', new Color32(69, 26, 3, 255) },     // Dark wood bark
+                { 'F', new Color32(239, 68, 68, 255) },   // Flame red outer
+                { 'O', new Color32(249, 115, 22, 255) },  // Flame orange core
+                { 'Y', new Color32(253, 224, 71, 255) }   // Embers bright yellow
+            };
+            _campfireSprites[0] = CreateSprite(PatternCampfire0, campfirePalette, "Anchor_Campfire_0");
+            _campfireSprites[1] = CreateSprite(PatternCampfire1, campfirePalette, "Anchor_Campfire_1");
         }
 
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
@@ -598,6 +615,46 @@ namespace Simpiens.Entities
             "################",
             "#SBBBB#SBBBBBBB#",
             "################"
+        };
+
+        private static readonly string[] PatternCampfire0 =
+        {
+            "................",
+            ".....SSSSSS.....",
+            "...SS......SS...",
+            "..S...F..F...S..",
+            ".S...FO..OF...S.",
+            ".S..FOYYYYOF..S.",
+            "S...W.OYYO.W...S",
+            "S..W...YY...W..S",
+            "S..w..OYYO..w..S",
+            "S...W.OYYO.W...S",
+            ".S..FOYYYYOF..S.",
+            ".S...FO..OF...S.",
+            "..S...F..F...S..",
+            "...ss......ss...",
+            ".....ssssss.....",
+            "................"
+        };
+
+        private static readonly string[] PatternCampfire1 =
+        {
+            "................",
+            ".....SSSSSS.....",
+            "...SS......SS...",
+            "..S....FF....S..",
+            ".S...FFYYFF...S.",
+            ".S..FOOYYOOF..S.",
+            "S...W.YYYY.W...S",
+            "S..W.OYYYYO.W..S",
+            "S..w..YYYY..w..S",
+            "S...W.OYYO.W...S",
+            ".S..FOOYYOOF..S.",
+            ".S...FF..FF...S.",
+            "..S....FF....S..",
+            "...ss......ss...",
+            ".....ssssss.....",
+            "................"
         };
 
         #endregion

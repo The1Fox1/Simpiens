@@ -14,6 +14,7 @@ namespace Simpiens.Cognition.Planning
         public const float RestThreshold = 80f;
         public const float ReachResourceDistance = 1.5f;
         public const float PeerProximityDistance = 2.5f;
+        public const float AnchorProximityDistance = 3.0f;
         public const float ThreatFrustrationThreshold = 60f;
 
         /// <summary>
@@ -44,9 +45,12 @@ namespace Simpiens.Cognition.Planning
                 bool knowsResource = false;
                 bool atResource = false;
                 bool isNearPeer = false;
+                bool knowsAnchor = false;
+                bool atAnchor = false;
 
                 float reachDistSqr = ReachResourceDistance * ReachResourceDistance;
                 float peerDistSqr = PeerProximityDistance * PeerProximityDistance;
+                float anchorDistSqr = AnchorProximityDistance * AnchorProximityDistance;
 
                 foreach (var kvp in context.Memory.SpatialMemoryMap)
                 {
@@ -70,11 +74,23 @@ namespace Simpiens.Cognition.Planning
                             isNearPeer = true;
                         }
                     }
+                    else if (record.Type == EntityType.Anchor && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
+                    {
+                        knowsAnchor = true;
+                        Vector2 loc = record.LastKnownLocation;
+                        float distSqr = (loc - context.Position).sqrMagnitude;
+                        if (distSqr <= anchorDistSqr)
+                        {
+                            atAnchor = true;
+                        }
+                    }
                 }
 
                 state = state.With(StateFact.KnowsResourceLocation, knowsResource);
                 state = state.With(StateFact.AtResourceLocation, atResource);
                 state = state.With(StateFact.IsNearPeer, isNearPeer);
+                state = state.With(StateFact.KnowsAnchorLocation, knowsAnchor);
+                state = state.With(StateFact.AtAnchorLocation, atAnchor);
 
                 // 5. Relational / Social Matrix
                 bool hasWarmCompanion = false;

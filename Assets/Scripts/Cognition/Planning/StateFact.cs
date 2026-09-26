@@ -23,6 +23,9 @@ namespace Simpiens.Cognition.Planning
         HasTrustedPeer = 14,
         HasFearedThreat = 15,
         HasRespectedLeader = 16,
-        HasAidedPeer = 17
+        HasAidedPeer = 17,
+        KnowsAnchorLocation = 18,
+        AtAnchorLocation = 19,
+        IsGatheredAtAnchor = 20
     }
 }

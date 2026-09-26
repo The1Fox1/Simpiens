@@ -13,7 +13,8 @@ namespace Simpiens.Cognition.Memory
         ResourceClaimed,
         ContentionFaced,
         AidGiven,
-        AidReceived
+        AidReceived,
+        CampfireCompanionship
     }
 
     public readonly struct MemoryEvent
