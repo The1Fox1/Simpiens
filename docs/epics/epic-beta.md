@@ -154,15 +154,15 @@ namespace Simpiens.Cognition.Groups
 ```
  Epic Beta Roadmap
  ─────────────────────────────────────────────────────────────────────────────
- Phase 1: Resource Contention & Yielding (Fear & Respect on Finite Nodes)
- Phase 2: Altruistic Sharing & Food Transfer (Warmth & Trust in Survival)
- Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths)
+ Phase 1: Resource Contention & Yielding (Fear & Respect on Finite Nodes) [COMPLETED]
+ Phase 2: Altruistic Sharing & Food Transfer (Warmth & Trust in Survival) [COMPLETED]
+ Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [IN DESIGN / ACTIVE]
  ─────────────────────────────────────────────────────────────────────────────
 ```
 
 ---
 
-### Phase 1: Resource Contention & Yielding (Fear & Respect Integration)
+### Phase 1: Resource Contention & Yielding (Fear & Respect Integration) [COMPLETED]
 
 #### Problem
 Currently, when two pawns target the same berry bush, the first to finish the timer consumes the yield. The second pawn finishes a moment later, finds a depleted node, and suffers generic frustration. This is an unrealistic race condition.
@@ -191,7 +191,7 @@ flowchart TD
 
 ---
 
-### Phase 2: Altruistic Sharing & Food Transfer (Warmth & Trust Integration)
+### Phase 2: Altruistic Sharing & Food Transfer (Warmth & Trust Integration) [COMPLETED]
 
 #### Problem
 Pawns currently let their companions starve to death in front of them while holding full bellies.
@@ -235,22 +235,117 @@ $$\text{Utility}_{\text{share}} = (\text{Warmth} \times 0.5) + (\text{Trust} \ti
 
 ---
 
-### Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths)
+### Phase 3: Gathering Anchors & Organic Social Bonding (Campfires & Hearths) [ACTIVE FOCUS]
 
-#### Problem
-Pawns currently wander across the map at random when idle. Social interactions only occur via random collision trajectories.
+#### 1. Problem
+Currently, pawns wander aimlessly across the map when their immediate biological drives (Hunger, Energy) are satisfied. Social encounters are purely accidental, occurring either when pawns coincidentally path near each other or awkwardly pursue moving peers via `TravelToPeerAction`. This creates an atomized, chaotic world where pawns have no home base, safe zone, or communal focus.
 
-#### Mechanism
-1. **World Entity**: Introduce `GatheringAnchor` (e.g. `Campfire`, a stationary simulation node with `EntityType.Anchor`).
-2. **GOAP Gravitation**:
-   - Action: `TravelToAnchorAction` (`Preconditions: None`, `Effects: AtAnchorLocation = true`).
-   - Goal: `GatherAtAnchorGoal` (`DesiredState: AtAnchorLocation = true`).
-   - Priority: Dynamic fallback when drives are satisfied ($Hunger < 40$, $Energy > 50$, $Social < 80$). Priority $= 80 - \text{Social}$.
-3. **Proximity Bonding Loop**:
-   - When multiple pawns sit within $3.0\text{m}$ of a `GatheringAnchor` during an `IdleIntent`:
-     - Gossip frequency increases ($3\times$ faster cooldown: 100 ticks instead of 300).
-     - Every 100 ticks spent together around an anchor quietly awards $+2\text{ Warmth}$ and $+1\text{ Trust}$ to all present peers.
-   - **Emergent Consequence**: Pawns naturally form social cliques, buddies, and mutual trust clusters around shared hearths *organically*, providing the emergent social fabric needed for Epic 8 groups!
+Sociologically, real social networks (friendships, families, bands) form around **propinquity**—the repeated, passive co-presence of individuals at shared physical gathering sites (campfires, watering holes, hearths). Without gathering anchors, agents lack the shared context necessary to build organic warmth and trust before organizing into higher-level groups in Epic 8.
+
+#### 2. Theoretical Mechanism: Propinquity & The Gathering Anchor
+We introduce the **Gathering Anchor** primitive (instantiated as a `Campfire` / `Hearth` node) that exerts deterministic social and spatial gravitation over healthy, sated pawns.
+
+```mermaid
+flowchart TD
+    subgraph Cognitive Evaluation (Worker Thread)
+        A["Pawn Evaluates GOAP Goals"] --> B{"Biological Crisis?\n(Hunger >= 60 or Energy <= 20)"}
+        B -->|Yes| S["Survival Goals Dominate:\nSatiateHunger / Rest\n(Priority 80-100)"]
+        B -->|No: Sated & Healthy| G["GatherAtAnchorGoal Evaluated:\nPriority = max(0, 75 - Social) + 15\nDominates Generic Wander"]
+        G --> P["Formulate Plan:\n1. TravelToAnchorAction\n2. RelaxAtAnchorAction"]
+    end
+
+    subgraph Simulation Execution (Main Thread)
+        P --> M["SimulationManager executes movement\nPawn settles on anchor perimeter (1.5m - 2.5m)"]
+        M --> L["Hearth Proximity Loop (every 50 ticks)"]
+        L --> H1["Accelerated Gossip:\nCooldown reduced from 300 to 100 ticks (3x faster)"]
+        L --> H2["Passive Dyadic Bonding:\nEvery 100 ticks co-present around hearth:\n+2 Warmth, +1 Trust, -2 Fear"]
+        L --> H3["Environmental Comfort:\nFrustration decay doubled (2x)\nSocial drive replenished (+1.0/s)"]
+    end
+
+    H2 --> E["Emergent Social Clusters:\nPawns who share a hearth naturally form mutual bonds (Warmth > 40, Trust > 40)\nGrounding Epic 8 Group Formation!"]
+```
+
+#### 3. Concrete Architectural Specifications
+
+##### A. World Entity Representation (`EntityType.Anchor`)
+- **Spatial Enumeration**: Extend `Simpiens.Simulation.Spatial.EntityType` with `Anchor = 4`.
+- **Node Configuration**:
+  - Stationary simulation node with `EntityType.Anchor`, base radius $0.5\text{m}$.
+  - Impassable core cell (`IsWalkable = false` for the central fire tile) prevents agents from standing inside the flames.
+  - Interaction perimeter ring: Pawns gather in the open perimeter radius between $1.5\text{m}$ and $2.5\text{m}$.
+- **Procedural Visuals (`AgentSpriteLibrary.cs`)**:
+  - `PatternCampfire`: 16x16 ASCII pixel art featuring a circular river-stone firepit, char log cross, and 2-frame procedural dancing flame/embers animation with radiant amber/gold illumination.
+
+##### B. Perception & Spatial Memory
+- **Perception Registration**: When an agent perceives a `GatheringAnchor` within its vision radius ($6.0\text{m}$), it records the entity into `AgentMemory.SpatialMemoryMap` under `EntityType.Anchor`.
+- **Semi-Permanent Memory Retention**: Anchors possess extended memory retention (decay threshold 5,000 ticks or permanent until verified destroyed), representing lasting landmarks in an agent's mental map.
+
+##### C. GOAP Planning Integration
+- **Discrete Bitmask Facts (`StateFact.cs`)**:
+  - `KnowsAnchorLocation = 18`: Set if agent has a non-blacklisted `EntityType.Anchor` in its `SpatialMemoryMap`.
+  - `AtAnchorLocation = 19`: Set if agent's current position is within $3.0\text{m}$ of a known anchor.
+  - `IsGatheredAtAnchor = 20`: Set while executing an active relaxation/bonding intent within the anchor radius.
+- **WorldState Mapping (`WorldStateBuilder.cs`)**:
+  - Scans `context.Memory.SpatialMemoryMap` for `EntityType.Anchor`. If found and reachable, sets `KnowsAnchorLocation = true`.
+  - Computes Euclidean distance to nearest known anchor. If $\le 3.0\text{m}$, sets `AtAnchorLocation = true`.
+- **Goal Definition (`GatherAtAnchorGoal.cs`)**:
+  - Desired State: `IsGatheredAtAnchor = true`.
+  - Dynamic Priority Calculation:
+    $$P_{\text{gather}} = \begin{cases} 0, & \text{if } \text{Hunger} \ge 60 \text{ or } \text{Energy} \le 20 \\ \max(0, 75 - \text{Social}) + 15, & \text{otherwise} \end{cases}$$
+    - If starving ($Hunger \ge 60$) or exhausted ($Energy \le 20$), $P_{\text{gather}} = 0$, ensuring `SatiateHungerGoal` ($P \approx 80-100$) and `RestGoal` ($P \approx 80-95$) have absolute dominance.
+    - When sated and energetic, $P_{\text{gather}}$ evaluates between $15$ and $90$, easily surpassing generic wandering ($P \approx 10$) and drawing agents toward the hearth.
+- **Action Pipeline**:
+  - **`TravelToAnchorAction.cs`**:
+    - Preconditions: `KnowsAnchorLocation = true`.
+    - Effects: `AtAnchorLocation = true`.
+    - Creates a `WanderIntent` targeting a randomized valid clearance point on the anchor's perimeter ($1.5\text{m} - 2.5\text{m}$).
+  - **`RelaxAtAnchorAction.cs`**:
+    - Preconditions: `AtAnchorLocation = true`.
+    - Effects: `IsGatheredAtAnchor = true`, `IsResting = true`.
+    - Creates an `IdleIntent` with a relaxed $3.0\text{s}$ duration, keeping the pawn settled at the campfire.
+
+##### D. Main-Thread Hearth Dynamics & Bonding Loop (`SimulationManager.cs`)
+In `SimulationManager.Tick()`, a dedicated hearth evaluation runs every 50 ticks (cadence optimized for performance):
+1. **Cluster Detection**: Identifies all active pawns stationed within $3.0\text{m}$ of each registered `GatheringAnchor`.
+2. **Accelerated Peer Gossip**: Co-present pawns have their gossip cooldown reduced from 300 ticks to 100 ticks ($3\times$ acceleration), exchanging memories rapidly around the fire.
+3. **Passive Relational Propinquity**:
+   - For every pair of pawns co-present within $3.0\text{m}$ of the same anchor for $\ge 100$ continuous ticks:
+     - $\Delta\text{Warmth} = +2$
+     - $\Delta\text{Trust} = +1$
+     - $\Delta\text{Fear} = -2$ (communal security reduces intimidation)
+   - Appends `MemoryEventType.CampfireCompanionship` into both pawns' memory ledgers.
+4. **Physiological & Emotional Comfort**:
+   - Frustration decay rate is doubled ($2\times$) from $-1.0/\text{sec}$ to $-2.0/\text{sec}$ while resting within campfire warmth.
+   - When $\ge 2$ pawns are gathered at the anchor, `Needs.Social` replenishes at $+1.0/\text{sec}$, satisfying social drive without requiring explicit physical travel.
+
+##### E. Dual-Loop Synchronization
+- **Worker Thread (UniTask Cognitive Loop)**:
+  - Off-thread goal evaluation, priority calculation, and A* action graph search with zero heap allocations.
+  - Zero-allocation pathfinding to campfire perimeter points via `AsyncPathfinder`.
+- **Main Thread (`SimulationManager.cs`)**:
+  - Authoritative spatial tracking of anchors and pawns.
+  - Applies hunger/social replenish rates and dyadic relational increments safely on the main thread.
+  - Triggers procedural gossip animations and floating visual cues.
+
+#### 4. Automated Domain Validation Suite (`GatheringAnchorValidator.cs`)
+To maintain the repository's strict enterprise testing standard, a headless validation suite will be implemented in `Assets/Scripts/Testing/Sociopolitical/GatheringAnchorValidator.cs`:
+1. **`ValidateAnchorDetectionAndWorldStateMapping()`**: Proves `WorldStateBuilder` correctly detects anchors in memory and sets `KnowsAnchorLocation` and `AtAnchorLocation` bitmask flags.
+2. **`ValidateGatherAtAnchorGoalPriorityDominance()`**: Proves that sated pawns prioritize `GatherAtAnchorGoal` ($P \approx 50-75$) over generic wandering ($P \approx 10$), while starving pawns ($Hunger \ge 60$) zero out anchor priority in favor of food.
+3. **`ValidateAStarPlanFormulationToAnchor()`**: Confirms `GoapPlanner` generates a valid 2-step plan (`TravelToAnchorAction` $\rightarrow$ `RelaxAtAnchorAction`) with zero allocations.
+4. **`ValidateHearthProximityBondingAndGossipAcceleration()`**: Confirms co-presence around an anchor accelerates gossip cooldown to 100 ticks and accumulates $+2$ Warmth, $+1$ Trust, and $-2$ Fear.
+5. **`ValidateHearthFrustrationAndSocialReplenishment()`**: Confirms doubled frustration decay and $+1.0/\text{sec}$ social drive recovery during campfire co-presence.
+6. **`ValidateZeroAllocationHearthBondingTick()`**: Validates that 1,000 iterations of hearth proximity checks and dyadic updates produce **$0\text{ bytes}$ of GC allocation**.
+
+#### 5. Acceptance Criteria
+- **User Visual Acceptance**:
+  - A campfire entity is rendered with an animated procedural sprite in the playpens / demonstration area.
+  - Sated pawns autonomously path to the campfire, sit in relaxed posture along its perimeter, exchange gossip, and accumulate mutual warmth and trust over time.
+  - Starving or exhausted pawns ignore the campfire until their vital biological needs are fulfilled.
+- **Engineering Acceptance**:
+  - Roslyn C# compilation clean with **0 errors and 0 warnings**.
+  - `GatheringAnchorValidator.cs` passes all 6 headless domain validation tests.
+  - Full defensive null-safety preserved across all new classes.
+
 
 ---
 

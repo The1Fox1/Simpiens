@@ -45,10 +45,10 @@ Feature 1: Resource Contention & Social Yielding.
 - Phase 1 (Completed): When two pawns approach the same finite resource node, evaluate a deterministic social dominance delta (Fear & Respect). Submissive pawns yield, repath without frustration, and blacklist the node for 150 ticks; symmetrical rivalry triggers simultaneous harvesting, loser frustration (+25), and negative memory logging (Warmth -15, Respect -10).
 
 Feature 2: Altruistic Sharing & Food Transfer.
-- Phase 2 (Next): Sated pawns (Hunger < 40) near critically starving or collapsed peers evaluate ShareResourceIntent based on Warmth and Trust. Main-thread execution transfers food, relieves collapse, and logs positive memory events (Warmth +25, Trust +30).
+- Phase 2 (Completed): Sated pawns (Hunger < 40) near critically starving or collapsed peers evaluate ShareResourceIntent based on Warmth and Trust. Main-thread execution transfers food, relieves collapse, and logs positive memory events (Warmth +25, Trust +30, Respect +15).
 
 Feature 3: Gathering Anchors & Organic Social Familiarity.
-- Phase 3: World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns and steadily accumulates Warmth and Trust, fostering organic social cliques.
+- Phase 3 (Current Focus): World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns (3x) and steadily accumulates Warmth and Trust, fostering organic social cliques and shared hearth bonding.
 
 Epic 8: Socio-Political Structures & The Generic Group Primitive
 With physical interdependence proven, agents organize into collective structures using the 4-layer sociological taxonomy and a parameter-driven Group primitive (avoiding rigid class monoliths).
