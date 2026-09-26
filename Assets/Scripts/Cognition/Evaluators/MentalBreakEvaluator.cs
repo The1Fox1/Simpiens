@@ -57,25 +57,35 @@ namespace Simpiens.Cognition.Evaluators
                     }
 
                     if (_random == null) _random = new System.Random();
-                    float angle = (float)(_random.NextDouble() * Mathf.PI * 2);
-                    float distance = 10f + (float)(_random.NextDouble() * 5f); // 10 to 15 units away
+                    float baseAngle = (float)(_random.NextDouble() * Mathf.PI * 2);
 
-                    Vector2 randomDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                    Vector2 targetPos = context.Position + randomDir * distance;
+                    const int candidateCount = 8;
+                    const float angleStep = (Mathf.PI * 2f) / candidateCount;
+                    float distance = 2.5f + (float)(_random.NextDouble() * 2f); // 2.5 to 4.5 units away (fits within playpens and local bounds)
 
-                    var pathRequest = new PathRequest
+                    for (int c = 0; c < candidateCount; c++)
                     {
-                        StartPosition = context.Position,
-                        TargetPosition = targetPos
-                    };
+                        float candAngle = baseAngle + c * angleStep;
+                        Vector2 candDir = new Vector2(Mathf.Cos(candAngle), Mathf.Sin(candAngle));
+                        Vector2 targetPos = context.Position + candDir * distance;
 
-                    var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
-                    if (pathResponse.IsValid)
-                    {
-                        return new PanicIntent(context.AgentId, pathResponse);
+                        var pathRequest = new PathRequest
+                        {
+                            StartPosition = context.Position,
+                            TargetPosition = targetPos
+                        };
+
+                        var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
+                        if (pathResponse.IsValid && pathResponse.Length > 0)
+                        {
+                            return new PanicIntent(context.AgentId, pathResponse);
+                        }
+
+                        pathResponse.ReturnToPool();
                     }
 
-                    pathResponse.ReturnToPool();
+                    // Fallback in-place panic intent if boxed in completely, preserving panic state without falling back to GOAP
+                    return new PanicIntent(context.AgentId, default);
                 }
             }
 

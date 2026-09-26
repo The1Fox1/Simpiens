@@ -38,8 +38,8 @@ namespace Simpiens.Entities
             // Determine active visual state
             var state = _agent.VisualState;
 
-            // Tantrum visual persistence: keep showing panicking for 2.5s after contention defeat
-            if (_agent.IsInTantrum)
+            // Tantrum / Starvation panic visual persistence: keep showing panicking during crisis
+            if (_agent.IsInTantrum || _agent.IsStarvationPanicking)
             {
                 state = AgentVisualState.Panicking;
             }

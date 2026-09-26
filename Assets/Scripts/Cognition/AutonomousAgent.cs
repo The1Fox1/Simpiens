@@ -67,6 +67,7 @@ namespace Simpiens.Cognition
         public bool IsExhaustionCollapsed { get; private set; } = false;
 
         public bool HasActiveIntent { get; internal set; }
+        private AgentIntent _currentIntent;
 
         // Visual State
         private float _tantrumTimer = 0f;
@@ -78,6 +79,7 @@ namespace Simpiens.Cognition
         public bool IsYielding => _yieldingTimer > 0f;
         public bool IsGossiping => _gossipTimer > 0f;
         public bool IsSharing => _sharingTimer > 0f;
+        public bool IsStarvationPanicking => Needs.Hunger >= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.StarvationThreshold && !HasFoodInInventory && !HasKnownFood();
 
         public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
         public float LastGossipTimestamp { get; private set; } = -10f;
@@ -146,7 +148,8 @@ namespace Simpiens.Cognition
         {
             _activePlan.Clear();
             _activeGoal = null;
-            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f && _sharingTimer <= 0f)
+            _currentIntent = null;
+            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f && _sharingTimer <= 0f && !IsStarvationPanicking)
             {
                 VisualState = AgentVisualState.Idle;
             }
@@ -251,18 +254,33 @@ namespace Simpiens.Cognition
                 VisualState = AgentVisualState.Resting;
             }
 
-            if (HasActiveIntent && (emergencyExhaustion || emergencyStarvation))
+            bool shouldPreempt = false;
+            if (emergencyExhaustion && !(_currentIntent is IdleIntent))
+            {
+                shouldPreempt = true;
+            }
+            else if (emergencyStarvation && !(_currentIntent is PanicIntent))
+            {
+                shouldPreempt = true;
+            }
+
+            if (HasActiveIntent && shouldPreempt)
             {
                 if (_simulationManager != null)
                 {
                     _simulationManager.AbortIntent(AgentId);
                 }
                 AbortActivePlan();
+                _currentIntent = null;
                 HasActiveIntent = false;
 
                 if (IsExhaustionCollapsed)
                 {
                     VisualState = AgentVisualState.Resting;
+                }
+                else if (emergencyStarvation && _tantrumTimer <= 0f)
+                {
+                    VisualState = AgentVisualState.Panicking;
                 }
 
                 if (!_isEvaluating)
@@ -287,6 +305,10 @@ namespace Simpiens.Cognition
             if (IsExhaustionCollapsed)
             {
                 VisualState = AgentVisualState.Resting;
+            }
+            else if (IsStarvationPanicking)
+            {
+                VisualState = AgentVisualState.Panicking;
             }
             else
             {
@@ -395,11 +417,13 @@ namespace Simpiens.Cognition
                 }
 
                 // Set intent tracking so agent waits until it completes
+                _currentIntent = intent;
                 HasActiveIntent = true;
                 intent.OnComplete = (result) =>
                 {
+                    _currentIntent = null;
                     HasActiveIntent = false;
-                    if (_tantrumTimer > 0f)
+                    if (_tantrumTimer > 0f || IsStarvationPanicking)
                     {
                         VisualState = AgentVisualState.Panicking;
                     }

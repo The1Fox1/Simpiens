@@ -160,7 +160,18 @@ namespace Simpiens.Simulation
 
                 case PanicIntent panic:
                     if (agent != null) agent.VisualState = Simpiens.Entities.AgentVisualState.Panicking;
-                    return ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
+                    state.ElapsedTime += Time.deltaTime;
+                    var panicResult = ExecutePanicMovement(node, panic.Path, ref state.CurrentWaypointIndex);
+                    if (panicResult == IntentResult.Success)
+                    {
+                        // Enforce a minimum duration of at least 1.0 second for panic behavior to prevent sub-second visual jitter
+                        if (state.ElapsedTime < 1.0f)
+                        {
+                            return IntentResult.InProgress;
+                        }
+                        return IntentResult.Success;
+                    }
+                    return panicResult;
 
                 case HarvestResourceIntent harvest:
                     uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
