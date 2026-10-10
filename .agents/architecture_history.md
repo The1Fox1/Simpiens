@@ -318,3 +318,24 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Demo-pen visual anomalies remain: pawn stacking at the Pen 4 hearth and Pens 9/10, and obstacle penetration (watchdog nudges and back-offs are not checked against walls).
   - `StaticNavGrid` is never cleared on respawn, so injected chaos walls persist across scenarios.
   - Treasury drain is §3.3.
+
+## Architectural Decision: Navigation Clearance & Visual Stability (Milestone 1 closure, Phase 1, 2026-10-10)
+- **Problem:** PlayMode was 10/14. Wall penetrations, pawn stacking and visual thrashing failed `OutpostSupplyLoopScenario` and all three anomaly scenarios.
+- **Root causes (from traces):**
+  - A* pinned its final waypoint to the exact target even inside blocked cells.
+  - Watchdog nudges, back-offs, the contention yield step and panic movement wrote positions with no wall or pawn check.
+  - The static grid was never cleared on respawn.
+  - Pawn separation compared against one-tick-stale snapshot positions.
+  - Reflex pre-emption reset the visual state to Idle mid-evaluation.
+- **Decision:**
+  - **Invariant:** a pawn centre never enters a statically blocked cell. Walls are rasterized inflated by `NavConstants.PawnBodyRadius`, so that invariant alone guarantees no geometric overlap.
+  - Smoothing and movement use an exact grid traversal (`IsSegmentStaticClear`).
+  - **Single displacement entry point:** `SimulationManager.TryDisplacePawn` is wall-checked and crowd-aware. Panic movement ignores occupied waypoints, but never walls or pawns.
+  - **Pawn separation** uses snapshot cells to find candidates and live registry positions to judge them. Stepping apart is always allowed. An occupied final waypoint within 1m counts as arrival.
+  - **Play-area border:** cells outside ±20 are permanently blocked, and the border survives `StaticNavGrid.Clear()`.
+  - **Visual stability:** reflex pre-emption doesn't touch visuals. `AgentView` holds displayed states for at least 2 ticks. The anomaly detector measures the rendered state, because thrashing is a visual defect.
+  - **Planner:** `GatherSalvage`, `SearchSalvage` and `ScoutSector` set `AtTradeStall = false`.
+  - **Provisional economy:** a `ProvisionalCaravanExport` faucet. It is explicitly not the §3.3 economy model, which the producer has deferred.
+- **Verification:** `NavigationClearanceValidator` (6 tests), `SupplyLoopValidator` Tests 4b and 6. PlayMode 14/14 in 3 consecutive runs, with zero validator assertion failures at boot.
+- **Recorded deviation:** §1A.2 #15. Cognition writes plan and intent bookkeeping off-thread.
+

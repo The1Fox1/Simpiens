@@ -32,6 +32,19 @@ Out of scope here (later Milestone 1 steps in §3A): resuming Epic MAP, MemoryPa
 
 ## Phase 1 — Green PlayMode
 
+> **Status: DONE 2026-10-10.** PlayMode 14/14 across 3 consecutive runs. Commits `c10a57f`, `e74c2d2`, `c12871f`, `cdf6514`, `498bb6c`.
+>
+> **Differences from the plan below:**
+> - **Body clearance:** done by inflating wall rasterization by the pawn radius plus snapped A* endpoints and an exact segment traversal, instead of a per-step circle test (equivalent guarantee, cheaper).
+> - **Arrival slots (1E):** replaced by live-position pawn separation and arrival tolerance. Every displacement is now crowd-aware, panic included. The remaining stacking came from panic runs and unchecked watchdog nudges, not from a shared destination.
+> - **Thrashing (1F):** the trace showed `Thinking > Idle > Walking`, caused by reflex pre-emption resetting the visual to Idle. Fixed at the source, plus a 2-tick display dwell in `AgentView`. The detector now measures the rendered state.
+> - **Found along the way:**
+>   - Pawns walked to the edge of the oversized grid, so a ±20 play-area border was added.
+>   - A planner bug: salvage/scout actions didn't clear `AtTradeStall`.
+>   - A validator broken since §3.1 (`BountyFulfillmentValidator` Test 3).
+>   - New known deviation §1A.2 #15 (off-thread plan bookkeeping).
+> - **Provisional economy stopgap:** fixed navigation exposed the treasury drain inside the scenario horizon, so `ProvisionalCaravanExport` was added (Phase 3's "only if needed" clause).
+
 ### Evidence (latest run, `Logs/playmode-results.xml`, 10/14 pass)
 
 | Scenario | Failure | Representative anomaly |

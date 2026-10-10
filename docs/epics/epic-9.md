@@ -1,6 +1,6 @@
 # Epic 9: The Outpost Economy & Public Bounties
 
-- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md); the live-loop criterion of its Definition of Done (§1B) is not yet demonstrated. The review §3.1 supply side was implemented on 2026-10-09. Its PlayMode scenario (`OutpostSupplyLoopScenario`) shows the loop emerging without injection, but still fails on demo-pen anomalies. Promotion is held until §3.2/§3.3 land (see [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker)).
+- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md); the live-loop criterion of its Definition of Done (§1B) is not yet demonstrated. The review §3.1 supply side was implemented on 2026-10-09. Its PlayMode scenario (`OutpostSupplyLoopScenario`) passes without injection and with zero anomalies (2026-10-10). Promotion is held until §3.2/§3.3 land (see [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker)).
 - **Track**: Track A: Core Simulation & Cognition Engine
 - **Preceding Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Following Epic**: Epic 10: Sector Hazards & Dungeon Descent

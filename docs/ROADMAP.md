@@ -110,6 +110,7 @@ These violate §1A.1 or the project architecture rules today. They are recorded 
 | 12 | ~~No live population could run the Milestone 1 loop: all session agents were scripted into walled demo pens, the trade stall sat inside Pen 3, and the seeded Scout bounty targeted walled Pen 7.~~ **RESOLVED in code (2026-10-09, review §3.1):** the open yard north of the pens is now the *Outpost Commons* (stall, Ore Ridge, Herb Hollow, food bushes) with 6 free crawler agents (`SpawnCount` 24 → 30). | §1B | [`SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs) |
 | 13 | ~~Seeded bounties bypassed escrow (`RegisterBounty` locked nothing), so delivery minted gold via a direct `AddGold`.~~ **RESOLVED in code (2026-10-09, review §3.1):** `RegisterBounty` routes through the same escrow lock as `PostBountyCommand` and rejects un-escrowable bounties; delivery pays only by releasing escrow. Session gold enters through a single `InitialSeed` ledger faucet. | Ledger conservation | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs), [`DeliverBountyIntentHandler.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Handlers/DeliverBountyIntentHandler.cs) |
 | 14 | `SimulationManager` executes active intents by enumerating the `_activeIntents` `Dictionary` (and stalls, bounties and anchors the same way), so contention and other order-sensitive outcomes depend on hash order. Together with #6 this makes a tick non-reproducible. (Recorded 2026-10-09.) | 3 | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
+| 15 | The background cognition task writes per-agent state off the main thread: plan state (`AbortActivePlan`, `ActivePlan.CopyFrom`, `ActiveGoal`), `CurrentIntent`/`HasActiveIntent` and `VisualState`. In practice this is serialized per agent by the `IsEvaluating`/`HasActiveIntent` guards, but it is not single-writer. Narrows #3's resolution: memory and inventory are snapshot-isolated; plan and intent bookkeeping are not. (Recorded 2026-10-10.) | 6 | [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs) |
 
 ### 1A.3 Logging (Producer decision, 2026-10-09)
 
@@ -200,13 +201,14 @@ To bridge low-level technical epics with high-level game design goals, developme
 
 ### Milestone 1 Status (verified against the code, 2026-10-09): NOT YET CLOSED
 
-Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) has been run: the loop emerges, but the scenario still fails on its zero-anomaly assertion (see below). Latest PlayMode run (2026-10-09): **10/14 pass**. Gaps:
+Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) **passes** (2026-10-10, closure plan Phase 1): no injection, zero anomalies. Latest PlayMode runs (2026-10-10): **14/14 pass, 3 consecutive runs**. The supply-loop part of §1B is therefore demonstrated; Epic 9 stays `MECHANISM COMPLETE` by producer decision until §3.2/§3.3 land. Gaps:
 
 - ~~**No salvage supply.**~~ **Implemented (2026-10-09, §3.1):** resources are typed (`ResourceData.YieldItem`, `EntitySnapshot`/`SpatialMemoryRecord.ResourceKind`); harvesting ore/herb nodes yields items; `SearchSalvage → GatherSalvage → TravelToStall → DeliverBounty/SellSalvage` chains are plannable; `EarnIncomeGoal` drives no-bounty salvage sales. Root cause also fixed: GOAP never ran live (§1A.2 #11).
 - ~~**Scout bounties have no fulfilment behaviour.**~~ **Implemented (2026-10-09, §3.1):** typed claims (`ClaimGatherBountyAction` / `ClaimScoutBountyAction`), `ScoutSectorAction` + `ScoutIntentHandler` (enter the sector), `ReportScoutBountyAction` (report at a stall, sector marked explored).
 - ~~**Trade stall ration stock only decreases.**~~ **Implemented (2026-10-09, §3.1):** `SupplyService` supply caravan (every 600 ticks, cap 50, 2g/unit `SupplyCaravan` sink) and dormant-node regrowth (regrowth on for all nodes, pens included).
 - **Live loop emerges (2026-10-09, PlayMode, no injection):** crawlers claim and fulfil the seeded Scout bounty (about t260, Herb Hollow explored) and Gather bounty (about t720, player trust +15). They sell salvage, and the caravan restocks and nodes regrow with ledger conservation intact. This needed the trace-driven GOAP fixes (need-driven aid, static reachability regions, planner relevance pruning, affordability gating).
-- **Still blocking closure (§1B):** `OutpostSupplyLoopScenario` fails on its final zero-anomaly assertion. Pawn stacking is almost entirely **inside the demo pens** (77 of 80 incidents: Pen 4 hearth, Pens 9/10; 3 in the Commons). The three anomaly scenarios also fail on pen stacking/penetration/thrashing, including watchdog nudges that aren't checked against walls. Both are next for Track A/C.
+- ~~**Still blocking closure (§1B):** `OutpostSupplyLoopScenario` fails on its final zero-anomaly assertion (pen stacking, wall penetration, thrashing).~~ **Resolved (2026-10-10, [closure plan](../.agents/milestone1_closure_plan.md) Phase 1):** body-aware navigation (inflated wall rasterization, snapped A* endpoints, exact segment clearance, wall- and crowd-checked displacement, live-position pawn separation, nav-grid reset, ±20 play-area border), a visual-flash fix with a 2-tick display dwell in `AgentView`, and a planner fix (salvage/scout actions clear `AtTradeStall`).
+- **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
 - **Epic MAP is `PAUSED`**, so the live session still runs in the isolated play-pen test arena rather than the outpost map (initial 9 sectors built as WIP towards the 12-sector target).
@@ -222,15 +224,15 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 | Review # | Recommendation (section) | Status | Evidence / what remains |
 | :-: | :--- | :--- | :--- |
 | 1 | Fixed-tick simulation; durations in ticks; views interpolate (§2.1) | ✅ Done | §1A.2 #1. `SimulationManager` runs on `OnSimulationTick`; frame time remains only in views (`AgentMotor`, `AgentView`, `CampfireView`) and UI refresh. |
-| 2 | Close the Milestone 1 supply side (§3.1) | ✅ Done in code; loop emerges live | §1A.2 #11–13, *Milestone 1 Status*. `OutpostSupplyLoopScenario` still fails on demo-pen anomalies, not on the loop. |
+| 2 | Close the Milestone 1 supply side (§3.1) | ✅ Done; live scenario passes | §1A.2 #11–13, *Milestone 1 Status*. `OutpostSupplyLoopScenario` passes with zero anomalies (2026-10-10). |
 | 3 | Single-writer threading; fix `Retain` ordering (§2.3) | ✅ Done | §1A.2 #3. |
-| 4 | Grid A* + static walkability, gating MAP (§2.6) | ✅ Done | §1A.2 #7, plus static reachability regions. Remaining: `StaticNavGrid` is not cleared on respawn; watchdog nudges/back-offs are not wall-checked. |
+| 4 | Grid A* + static walkability, gating MAP (§2.6) | ✅ Done | §1A.2 #7, plus static reachability regions. Navigation clearance follow-ups (grid reset, wall-checked watchdog, body clearance) done 2026-10-10. |
 | 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ⬜ Not started | No trait struct exists. `ResourceTargeting` / `BountyQueries` give deterministic selection, not scored considerations. **Blocks Epic 9 promotion** (producer decision 2026-10-09). |
 | 6 | Intent-handler registry, typed `InfluenceEvent`, gold ledger (§2.4) | ✅ Done | §1A.2 #4, #10, #13. `SimulationManager` down from ~1,500 to ~1,190 lines. The legacy string `InfluenceEvent` constructor still exists. |
 | 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load still needs `MemoryPack` (not installed). |
 | 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. No soak runner (Epic Test-2). No measured agent budget. |
 | 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ⬜ Not started | About 30 validators are still registered in `AppBootstrapper` and run at boot; single `Simpiens.asmdef`; `CognitiveEngine` stub still registered; production domain in `SwarmSpawner` (§1A.2 #9). |
-| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | 🟨 Partial | Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation). No written model; treasury drain observed in live runs. **Blocks Epic 9 promotion.** |
+| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ⏸ Deferred | Producer decision 2026-10-09: decide once the game is functional. Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation, provisional `ProvisionalCaravanExport` faucet). **Blocks Epic 9 promotion.** |
 | 10b | "Why?" agent inspector (§3.4) | ⬜ Not started | SimLog decision traces (§1A.3) cover developers only. |
 | 10c | Live-scenario Definition of Done (§4.2) | ✅ Done | §1B. |
 | 10d | Docs single source of truth (§4.3) | ✅ Done | §0. |
@@ -238,16 +240,20 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 Other review items still open:
 - **GOAP fact budget (§2.7):** 36 of 64 facts used (`StateFact` 0–35).
 - **Determinism (§2.1 note):** §1A.2 #5 (unseeded RNG), #6 (cognition completion order), #14 (dictionary-ordered intent execution). These are required for multiplayer (§1A.1) and cheap to fix now.
+- **Single writer:** §1A.2 #15 (cognition writes plan/intent bookkeeping off-thread).
 
-### Proposed Milestone 1 closure sequence (pending producer approval)
+### Milestone 1 closure sequence (approved 2026-10-09)
 
-1. **Green PlayMode.** Fix the demo-pen anomalies (wall-checked watchdog nudges, `StaticNavGrid` reset, pen stacking) so `OutpostSupplyLoopScenario` and the 3 anomaly scenarios pass. This meets §1B for the supply loop.
-2. **Economy model (§3.3).** Write the one-pager and tune the treasury drain.
-3. **Personality + considerations (§3.2).** → Epic 9 can then be promoted to `COMPLETED`.
-4. **Remaining Milestone 1 scope:** resume Epic MAP (live outpost map), deliver `MemoryPack` serialization.
-5. **Before Epic 10:** soak test and scaling work (#8).
+Implementation plan: [`.agents/milestone1_closure_plan.md`](../.agents/milestone1_closure_plan.md).
 
-Can run in parallel at low cost: test-scope/asmdef separation (#9) and determinism fixes (#5, #6, #14).
+1. ~~**Green PlayMode.**~~ **Done 2026-10-10:** 14/14, `OutpostSupplyLoopScenario` meets §1B for the supply loop.
+2. **Determinism** (#5, #6, #14): seeded `SimRandom`, ordered intent application and iteration.
+3. **Economy:** observation-only soak now; the economy model (§3.3) is **deferred** until the game is functional.
+4. **Personality + considerations (§3.2).** Pen demo agents stay neutral.
+5. **Test-scope separation** (#9, review §2.8).
+6. **Docs + promotion.** Epic 9 → `COMPLETED` once §3.2 and the deferred §3.3 land.
+
+Later Milestone 1 scope: resume Epic MAP (live outpost map), deliver `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
 
 ---
 
