@@ -138,6 +138,9 @@ namespace Simpiens.Cognition
             set => State.VisualState = value;
         }
 
+        /// <summary>Current logical tick, or -1 without a clock (headless). Read-only, for views.</summary>
+        public long CurrentSimTick => _clock != null ? _clock.CurrentTick : -1;
+
         public float LastGossipTimestamp => State.LastGossipTimestamp;
         public float LastYieldTimestamp => State.LastYieldTimestamp;
         public float LastTantrumTimestamp => State.LastTantrumTimestamp;

@@ -282,12 +282,14 @@ namespace Simpiens.Cognition
             Frustration = Mathf.Max(0f, Frustration - amount);
         }
 
-        public void AbortActivePlan()
+        /// <param name="resetVisual">False when the same evaluation immediately issues a replacement intent
+        /// (reflex pre-emption, invalid step): resetting to Idle there only flashes Thinking > Idle > next state.</param>
+        public void AbortActivePlan(bool resetVisual = true)
         {
             ActivePlan.Clear();
             ActiveGoal = null;
             CurrentIntent = null;
-            if (!IsExhaustionCollapsed && TantrumTimer <= 0f && SharingTimer <= 0f && !IsStarvationPanicking)
+            if (resetVisual && !IsExhaustionCollapsed && TantrumTimer <= 0f && SharingTimer <= 0f && !IsStarvationPanicking)
             {
                 VisualState = AgentVisualState.Idle;
             }

@@ -29,7 +29,10 @@ namespace Simpiens.Testing.Diagnostics
             public int ReversalCount;
 
             public AgentVisualState LastVisualState;
+            public AgentView View;
+            public bool ViewResolved;
             public readonly float[] StateTransitionTimestamps = new float[5];
+            public readonly AgentVisualState[] StateTransitionStates = new AgentVisualState[5];
             public int StateTransitionIndex;
             public int StateTransitionCount;
 
@@ -57,8 +60,9 @@ namespace Simpiens.Testing.Diagnostics
                 if (ReversalCount < ReversalTimestamps.Length) ReversalCount++;
             }
 
-            public void RecordStateTransition(float timestamp)
+            public void RecordStateTransition(float timestamp, AgentVisualState newState)
             {
+                StateTransitionStates[StateTransitionIndex] = newState;
                 StateTransitionTimestamps[StateTransitionIndex] = timestamp;
                 StateTransitionIndex = (StateTransitionIndex + 1) % StateTransitionTimestamps.Length;
                 if (StateTransitionCount < StateTransitionTimestamps.Length) StateTransitionCount++;
@@ -240,10 +244,17 @@ namespace Simpiens.Testing.Diagnostics
             var agent = node.Agent;
             if (agent == null) return;
 
-            var currentState = agent.VisualState;
+            // Measure what the player sees: the view's displayed state (with its display dwell) when rendered,
+            // otherwise the raw simulation state (headless)
+            if (!history.ViewResolved)
+            {
+                history.View = node.GetComponent<AgentView>();
+                history.ViewResolved = true;
+            }
+            var currentState = history.View != null ? history.View.DisplayedState : agent.VisualState;
             if (currentState != history.LastVisualState)
             {
-                history.RecordStateTransition(currentTime);
+                history.RecordStateTransition(currentTime, currentState);
 
                 // Check if 4 state transitions occurred in <= 0.5s simulation window
                 float maxWindow = 0.5f / (_clock != null && _clock.TimeMultiplier > 0f ? _clock.TimeMultiplier : 1f);
@@ -263,13 +274,27 @@ namespace Simpiens.Testing.Diagnostics
                             node.Id,
                             default,
                             node.Position,
-                            $"Rapid visual state thrashing (4 switches in {windowDuration:F2}s, current: {currentState})"
+                            $"Rapid visual state thrashing (4 switches in {windowDuration:F2}s, current: {currentState}; sequence: {DescribeTransitions(history)})"
                         ));
                     }
                 }
 
                 history.LastVisualState = currentState;
             }
+        }
+
+        /// <summary>The last four transitions, oldest first (diagnostic text, only built when an anomaly fires).</summary>
+        private static string DescribeTransitions(AgentTelemetryHistory history)
+        {
+            int len = history.StateTransitionStates.Length;
+            var sb = new System.Text.StringBuilder();
+            for (int k = 4; k >= 1; k--)
+            {
+                int idx = (history.StateTransitionIndex - k + len) % len;
+                if (sb.Length > 0) sb.Append(" > ");
+                sb.Append(history.StateTransitionStates[idx]);
+            }
+            return sb.ToString();
         }
 
         private void EvaluateStacking(IReadOnlyList<NodeController> activeNodes, long tick, float currentTime, float dt)
@@ -338,7 +363,7 @@ namespace Simpiens.Testing.Diagnostics
                 Vector2 pos = node.Position;
 
                 // 1. Boundary breach check (+- 20 units)
-                if (Mathf.Abs(pos.x) > 20f || Mathf.Abs(pos.y) > 20f)
+                if (Mathf.Abs(pos.x) > NavConstants.PlayAreaHalfExtent || Mathf.Abs(pos.y) > NavConstants.PlayAreaHalfExtent)
                 {
                     if (_histories.TryGetValue(node.Id, out var h) && (currentTime - h.LastBreachAlertTime >= 1.0f))
                     {

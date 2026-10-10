@@ -15,6 +15,17 @@ namespace Simpiens.Entities
         private AutonomousAgent _agent;
         private Vector3 _baseScale = Vector3.one;
 
+        /// <summary>
+        /// Minimum logical ticks a displayed state is held before switching. Sub-tick simulation flashes
+        /// (Thinking > Idle > Walking on instant intents) are real but unreadable; the view smooths them out.
+        /// 2 ticks keeps at most 3 switches per 0.6 sim-seconds, below the thrashing threshold (4 per 0.5 s).
+        /// </summary>
+        public const int MinDisplayTicks = 2;
+
+        /// <summary>The state currently rendered (after overrides and the display dwell).</summary>
+        public AgentVisualState DisplayedState { get; private set; } = AgentVisualState.Idle;
+        private long _displayedSinceTick = long.MinValue;
+
         private void Awake()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -59,6 +70,8 @@ namespace Simpiens.Entities
                 state = AgentVisualState.Gossiping;
             }
 
+            state = ApplyDisplayDwell(state);
+
             // Calculate animation frame
             float animSpeed = (state == AgentVisualState.Panicking) ? 8f : 4f;
             int frame = (int)(Time.time * animSpeed) & 1;
@@ -72,6 +85,21 @@ namespace Simpiens.Entities
 
             // Apply zero-allocation procedural micro-animations
             ApplyMicroAnimation(state);
+        }
+
+        private AgentVisualState ApplyDisplayDwell(AgentVisualState desired)
+        {
+            if (desired == DisplayedState) return desired;
+
+            long tick = _agent.CurrentSimTick;
+            if (tick >= 0 && _displayedSinceTick != long.MinValue && tick - _displayedSinceTick < MinDisplayTicks)
+            {
+                return DisplayedState; // hold the current state until the dwell elapses
+            }
+
+            DisplayedState = desired;
+            _displayedSinceTick = tick;
+            return desired;
         }
 
         private void ApplyMicroAnimation(AgentVisualState state)

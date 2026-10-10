@@ -156,7 +156,7 @@ namespace Simpiens.Cognition
                             {
                                 SimLog.Planning.ZLogDebug($"{SimLog.Agent(context.AgentId)} plan for {agent.ActiveGoal?.Name} pre-empted by reflex {evaluators[i].GetType().Name}");
                             }
-                            agent.AbortActivePlan();
+                            agent.AbortActivePlan(resetVisual: false);
                             source = evaluators[i].GetType().Name;
                             break;
                         }
@@ -185,7 +185,7 @@ namespace Simpiens.Cognition
                             {
                                 SimLog.Planning.ZLogDebug($"{SimLog.Agent(context.AgentId)} plan for {agent.ActiveGoal?.Name} aborted: step {currentAction?.Name ?? "none"} no longer valid");
                             }
-                            agent.AbortActivePlan();
+                            agent.AbortActivePlan(resetVisual: false);
                         }
                     }
 
