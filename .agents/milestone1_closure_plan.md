@@ -1,10 +1,10 @@
 # Plan — Milestone 1 Closure (ROADMAP §3A recommended sequence)
 
-> **Status: proposed 2026-10-09, awaiting producer approval.** Nothing below has been implemented.
+> **Status: approved 2026-10-09** (producer). Phase order approved. Economy design decisions are **deferred** until the game is functional (see Phase 3). Pen demo agents stay neutral. Work proceeds on `feat/milestone1-supply-loop-zlogger`.
 >
 > **Source:** [ROADMAP §3A](../docs/ROADMAP.md#3a-architecture-review-remediation-tracker) proposed sequence, consultant review [`architecture_review.md`](../docs/reviews/architecture_review.md) §2.5, §2.7, §2.8, §3.2, §3.3.
 >
-> **Branch:** continue on `feat/milestone1-supply-loop-zlogger` or cut `feat/milestone1-closure` (producer call). Commit after every phase (AGENTS.md *Version Control*).
+> **Branch:** `feat/milestone1-supply-loop-zlogger` (producer decision). Commit after every phase (AGENTS.md *Version Control*).
 
 ## Goal
 
@@ -23,8 +23,8 @@ Out of scope here (later Milestone 1 steps in §3A): resuming Epic MAP, MemoryPa
 | :-: | :--- | :-: | :--- | :--- |
 | 1 | Green PlayMode: navigation body clearance, wall-checked watchdog, nav-grid reset, stacking, thrashing | M | — | §1B gate for the supply loop |
 | 2 | Determinism: seeded RNG, ordered intent apply, ordered iteration | S | — (do before 3 so tuning runs are reproducible) | Reproducible PlayMode, multiplayer invariants |
-| 3 | Economy model doc + faucets/sinks + soak instrumentation | S–M | 2 (recommended) | Epic 9 promotion |
-| 4 | Personality + considerations | M | 3 (tuning reuses the economy soak) | Epic 9 promotion |
+| 3 | Economy: **observation-only** soak now; design decisions + model **deferred** until the game is functional | S now / S–M later | 2 (recommended) | Epic 9 promotion (when the deferred part lands) |
+| 4 | Personality + considerations | M | 1, 2 (tuned against the live-loop scenarios, not an economy band) | Epic 9 promotion |
 | 5 | Test-scope separation | S–M | — (any time; avoid running concurrently with 1 in `SwarmSpawner`) | Clean boot, shippable build |
 | 6 | Docs + promotion | S | 1–4 | Epic 9 `COMPLETED` |
 
@@ -134,7 +134,15 @@ Commit: `fix(simulation): seeded SimRandom and deterministic intent ordering`. U
 
 **Diagnosis:** the stall pays out for salvage it can never resell, agents can feed themselves for free, and the caravan only removes gold. So the treasury drains to zero, and the loop then stalls (affordability gating stops all salvage sales). This is structural, not a tuning problem.
 
-### Producer decisions needed (before code)
+### Deferred (producer decision 2026-10-09)
+
+The producer wants the game functional before making economy decisions. For now, Phase 3 delivers only:
+- **Observation soak:** `EconomySoakScenario` records treasury, agent gold, stock and faucet/sink totals to `Logs/economy-soak.csv`. It asserts only ledger conservation, with **no** pace band. Its data informs the deferred decisions.
+- **Provisional stopgap, only if needed:** if the treasury drain stalls the loop inside a PlayMode scenario's horizon, add the smallest reversible fix (e.g. a caravan export at placeholder prices), named `Provisional*` in `SupplyTuning`. It is not a design commitment.
+
+Everything below this heading waits for the producer.
+
+### Producer decisions needed (deferred)
 
 1. **Salvage outlet (faucet):** the caravan *buys* salvage from the stall at an export price (e.g. ore 28g, herb 34g). Proposed default: **yes**. It gives the player a margin to manage, the core trading-post fantasy.
 2. **Agent sinks:** which of these? (a) free bushes yield less/regrow slower so rations matter; (b) daily lodging/upkeep fee; (c) gear wear (defer to Epic 10). Proposed default: **(a) only** for Milestone 1.
@@ -173,7 +181,7 @@ Commits: `docs(economy): one-page economy model` · `feat(economy): caravan salv
 ### Verification
 - New `PersonalityValidator`: same seed gives the same personalities; a greedy agent picks the higher-reward farther bounty and a low-diligence agent picks the nearer one; reservation price varies across agents.
 - **Live (§1B):** new PlayMode `PriceResponseScenario`. Raise the ration price in steps (via `UpdateStallPricesCommand`, the player's real lever, not injected outcomes) and assert purchase volume falls **gradually** across agents rather than all at once. This is the review's §3.2 "price slider is an on/off switch" check.
-- Economy soak still inside its band.
+- Economy soak: ledger conservation holds (no pace band until the economy decisions are made).
 
 Commits: `feat(cognition): agent personality` · `feat(planning): utility considerations for target selection` · `test(playmode): price response scenario`.
 
@@ -217,7 +225,7 @@ Following the ROADMAP §0 order:
 
 ## Open questions for the producer
 
-1. Approve the phase order (in particular, Phase 2 before 3).
-2. Economy decisions 1–4 in Phase 3.
-3. Should pen demo agents also get varied personalities, or stay neutral (proposed: neutral)?
-4. Branch: keep using `feat/milestone1-supply-loop-zlogger` or start `feat/milestone1-closure`?
+1. ~~Phase order~~: approved 2026-10-09.
+2. Economy decisions 1–4 in Phase 3: **deferred** until the game is functional.
+3. ~~Pen personalities~~: **neutral** (decided 2026-10-09).
+4. ~~Branch~~: `feat/milestone1-supply-loop-zlogger` (decided 2026-10-09).
