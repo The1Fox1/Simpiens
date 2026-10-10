@@ -39,6 +39,10 @@ namespace Simpiens.Testing.Environment
         public const uint HerbRegrowTicks = 600;
         public const uint OreRegrowTicks = 900;
 
+        private readonly IEntityIdAllocator _idAllocator;
+
+        private UnityEngine.GUID NextEntityId() => _idAllocator != null ? _idAllocator.Next() : UnityEngine.GUID.Generate();
+
         [Inject]
         public SwarmSpawner(
             ISpatialPartition spatialPartition, 
@@ -46,8 +50,11 @@ namespace Simpiens.Testing.Environment
             IWorldRegistry registry, 
             ISimulationManager simulationManager, 
             ISimulationClock clock,
-            Simpiens.Cognition.Planning.IGoapPlanner planner)
+            Simpiens.Cognition.Planning.IGoapPlanner planner,
+            SimulationSettings settings,
+            IEntityIdAllocator idAllocator)
         {
+            _idAllocator = idAllocator;
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
             _registry = registry;
@@ -61,8 +68,8 @@ namespace Simpiens.Testing.Environment
             }
 
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
-            _cognitionService = new AgentCognitionService(null, new Simpiens.Cognition.Evaluators.AmbientWanderEvaluator(_pathfinder));
-            _mentalBreakEvaluator = new Simpiens.Cognition.Evaluators.MentalBreakEvaluator(_pathfinder);
+            _cognitionService = new AgentCognitionService(null, new Simpiens.Cognition.Evaluators.AmbientWanderEvaluator(_pathfinder, settings));
+            _mentalBreakEvaluator = new Simpiens.Cognition.Evaluators.MentalBreakEvaluator(_pathfinder, settings);
             _altruismEvaluator = new Simpiens.Cognition.Evaluators.AltruismEvaluator(_pathfinder);
 
             _actionGraph = new Simpiens.Cognition.Planning.ActionGraph();
@@ -123,6 +130,7 @@ namespace Simpiens.Testing.Environment
 
             _agents.Clear();
             _registry?.Clear();
+            _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn
             SimLog.ClearAgentNames();
             _simulationManager?.ResetState();
 
@@ -213,7 +221,7 @@ namespace Simpiens.Testing.Environment
 
                 var controller = agentGo.AddComponent<NodeController>();
                 controller.Type = EntityType.Pawn;
-                controller.Initialize(UnityEngine.GUID.Generate(), new NodeConfiguration(speed: 2f));
+                controller.Initialize(NextEntityId(), new NodeConfiguration(speed: 2f));
                 _registry.RegisterNode(controller);
                 SimLog.RegisterAgentName(controller.Id, AgentLabel(i));
 
@@ -408,7 +416,7 @@ namespace Simpiens.Testing.Environment
             // Seed the Outpost Commons trade stall and initial bounties (Epic UI-2 / §3.1 supply loop)
             if (_simulationManager != null)
             {
-                var stallId = UnityEngine.GUID.Generate();
+                var stallId = NextEntityId();
                 var outpostStall = new TradeStallData(
                     stallId,
                     position: OutpostStallPosition,
@@ -583,7 +591,7 @@ namespace Simpiens.Testing.Environment
 
             var controller = wallGo.AddComponent<NodeController>();
             controller.Type = EntityType.Wall;
-            controller.Initialize(UnityEngine.GUID.Generate(), new NodeConfiguration(speed: 0f));
+            controller.Initialize(NextEntityId(), new NodeConfiguration(speed: 0f));
 
             _registry.RegisterNode(controller);
         }
@@ -629,7 +637,7 @@ namespace Simpiens.Testing.Environment
             var controller = resourceGo.AddComponent<NodeController>();
             controller.Type = EntityType.Resource;
             controller.ConfigureResourceKind(yieldItem);
-            resId = UnityEngine.GUID.Generate();
+            resId = NextEntityId();
             controller.Initialize(resId, new NodeConfiguration(speed: 0f));
 
             _registry.RegisterNode(controller);
@@ -663,7 +671,7 @@ namespace Simpiens.Testing.Environment
 
             var controller = campfireGo.AddComponent<NodeController>();
             controller.Type = EntityType.Anchor;
-            anchorId = UnityEngine.GUID.Generate();
+            anchorId = NextEntityId();
             controller.Initialize(anchorId, new NodeConfiguration(speed: 0f));
 
             campfireGo.AddComponent<CampfireView>();

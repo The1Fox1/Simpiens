@@ -22,10 +22,12 @@ namespace Simpiens.Core.Bootstrapping
         private readonly ISimulationManager _simulationManager;
         private readonly IObjectResolver _resolver;
         private readonly IWorldRegistry _registry;
+        private readonly SimulationSettings _settings;
 
         [Inject]
-        public SimulationStarter(NodeFactory nodeFactory, ISpatialPartition spatialPartition, IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager)
+        public SimulationStarter(NodeFactory nodeFactory, ISpatialPartition spatialPartition, IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager, SimulationSettings settings)
         {
+            _settings = settings;
             _nodeFactory = nodeFactory;
             _spatialPartition = spatialPartition;
             _resolver = resolver;
@@ -35,7 +37,7 @@ namespace Simpiens.Core.Bootstrapping
 
         public void Start()
         {
-            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap)");
+            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}");
 
             // Initialize Spatial Partition
             Camera cam = Camera.main;

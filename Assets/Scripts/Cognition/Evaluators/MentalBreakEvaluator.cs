@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
+using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
@@ -20,16 +21,15 @@ namespace Simpiens.Cognition.Evaluators
         public const float ExhaustionThreshold = 5f;
 
         private readonly IAsyncPathfinder _pathfinder;
-
-        [System.ThreadStatic]
-        private static System.Random _random;
+        private readonly ulong _seed;
 
         [System.ThreadStatic]
         private static List<UnityEngine.GUID> _staleResourceKeys;
 
-        public MentalBreakEvaluator(IAsyncPathfinder pathfinder)
+        public MentalBreakEvaluator(IAsyncPathfinder pathfinder, SimulationSettings settings = null)
         {
             _pathfinder = pathfinder;
+            _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
         }
 
         public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
@@ -57,12 +57,12 @@ namespace Simpiens.Cognition.Evaluators
                         return new PanicIntent(context.AgentId, default);
                     }
 
-                    if (_random == null) _random = new System.Random();
-                    float baseAngle = (float)(_random.NextDouble() * Mathf.PI * 2);
+                    var rng = SimRandom.For(_seed, context.AgentId, context.CurrentTick, SimRandomSalt.PanicDirection);
+                    float baseAngle = rng.NextFloat() * Mathf.PI * 2f;
 
                     const int candidateCount = 8;
                     const float angleStep = (Mathf.PI * 2f) / candidateCount;
-                    float distance = 2.5f + (float)(_random.NextDouble() * 2f); // 2.5 to 4.5 units away (fits within playpens and local bounds)
+                    float distance = rng.Range(2.5f, 4.5f); // 2.5 to 4.5 units away (fits within playpens and local bounds)
 
                     for (int c = 0; c < candidateCount; c++)
                     {

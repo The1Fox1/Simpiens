@@ -71,6 +71,8 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<NodeFactory>(Lifetime.Singleton);
 
             // 3. Simulation, Cognition & Narrative Systems
+            builder.RegisterInstance(SimulationSettings.FromEnvironment());
+            builder.Register<EntityIdAllocator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<WorldRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
@@ -106,6 +108,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<Simpiens.Testing.Navigation.MotorWatchdogValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Navigation.GridAStarValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Navigation.NavigationClearanceValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Environment.DeterminismValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Drives.MentalBreakValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Drives.DriveSystemValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Sociopolitical.AffinityMatrixValidator>(Lifetime.Singleton).AsImplementedInterfaces();

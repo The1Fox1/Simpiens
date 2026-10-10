@@ -84,6 +84,9 @@ namespace Simpiens.Simulation
         private readonly List<BountyContract> _activeBountiesBuffer = new List<BountyContract>(16);
         private readonly List<ushort> _expiredBountiesBuffer = new List<ushort>(16);
         private readonly Dictionary<UnityEngine.GUID, ActiveIntentState> _activeIntents = new Dictionary<UnityEngine.GUID, ActiveIntentState>();
+        // Deterministic ordering (ROADMAP §1A.1 rule 3): active intents execute in agent-id order, never Dictionary order
+        private readonly List<UnityEngine.GUID> _activeIntentOrder = new List<UnityEngine.GUID>(64);
+        private readonly List<AgentIntent> _pendingIntents = new List<AgentIntent>(64);
         private readonly List<UnityEngine.GUID> _keysToRemove = new List<UnityEngine.GUID>(64);
         private readonly List<Simpiens.Entities.NodeController> _hearthPawnsBuffer = new List<Simpiens.Entities.NodeController>(32);
         private readonly List<ISocialAgent> _hearthAgentsBuffer = new List<ISocialAgent>(32);
@@ -250,8 +253,17 @@ namespace Simpiens.Simulation
 
         public void ProcessQueuedIntents()
         {
-            while (_intentQueue.TryDequeue(out var intent))
+            // Cognition finishes in thread-pool order; apply this tick's arrivals in agent-id order instead
+            _pendingIntents.Clear();
+            while (_intentQueue.TryDequeue(out var queued))
             {
+                if (queued != null) _pendingIntents.Add(queued);
+            }
+            SortStable(_pendingIntents, (a, b) => a.AgentId.CompareTo(b.AgentId));
+
+            for (int p = 0; p < _pendingIntents.Count; p++)
+            {
+                var intent = _pendingIntents[p];
                 Vector2 initialPos = Vector2.zero;
                 if (_worldRegistry != null)
                 {
@@ -260,6 +272,7 @@ namespace Simpiens.Simulation
                 }
 
                 // Register as the current active intent for this agent
+                if (!_activeIntents.ContainsKey(intent.AgentId)) InsertSorted(_activeIntentOrder, intent.AgentId);
                 _activeIntents[intent.AgentId] = new ActiveIntentState
                 {
                     Intent = intent,
@@ -267,6 +280,41 @@ namespace Simpiens.Simulation
                     LastSampledPosition = initialPos
                 };
             }
+            _pendingIntents.Clear();
+        }
+
+        // Stable insertion sort: per-tick lists are small, it allocates nothing, and equal keys keep arrival order
+        private static void SortStable<T>(List<T> list, System.Comparison<T> compare)
+        {
+            for (int i = 1; i < list.Count; i++)
+            {
+                var item = list[i];
+                int j = i - 1;
+                while (j >= 0 && compare(list[j], item) > 0)
+                {
+                    list[j + 1] = list[j];
+                    j--;
+                }
+                list[j + 1] = item;
+            }
+        }
+
+        private sealed class GuidComparer : IComparer<UnityEngine.GUID>
+        {
+            public static readonly GuidComparer Instance = new GuidComparer();
+            public int Compare(UnityEngine.GUID x, UnityEngine.GUID y) => x.CompareTo(y);
+        }
+
+        private static void InsertSorted(List<UnityEngine.GUID> sorted, UnityEngine.GUID id)
+        {
+            int index = sorted.BinarySearch(id, GuidComparer.Instance);
+            if (index < 0) sorted.Insert(~index, id);
+        }
+
+        private static void RemoveSorted(List<UnityEngine.GUID> sorted, UnityEngine.GUID id)
+        {
+            int index = sorted.BinarySearch(id, GuidComparer.Instance);
+            if (index >= 0) sorted.RemoveAt(index);
         }
 
         public bool AbortIntent(UnityEngine.GUID agentId)
@@ -276,6 +324,7 @@ namespace Simpiens.Simulation
             if (_activeIntents.TryGetValue(agentId, out var state))
             {
                 _activeIntents.Remove(agentId);
+                RemoveSorted(_activeIntentOrder, agentId);
                 CompleteIntent(state.Intent, IntentResult.Aborted);
                 return true;
             }
@@ -311,6 +360,7 @@ namespace Simpiens.Simulation
             {
                 _activeStallsBuffer.Add(kvp.Value);
             }
+            SortStable(_activeStallsBuffer, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));
         }
 
         /// <summary>
@@ -396,6 +446,7 @@ namespace Simpiens.Simulation
                     _activeBountiesBuffer.Add(kvp.Value);
                 }
             }
+            SortStable(_activeBountiesBuffer, (a, b) => a.BountyId.CompareTo(b.BountyId));
         }
 
         private void ProcessInfluenceEvent(in InfluenceEvent influence, uint currentTick)
@@ -549,6 +600,7 @@ namespace Simpiens.Simulation
         {
             while (_intentQueue.TryDequeue(out _)) { }
             _activeIntents.Clear();
+            _activeIntentOrder.Clear();
             _resources.Clear();
             _dormantNodes.Clear();
             _supplyService?.Reset();
@@ -622,6 +674,7 @@ namespace Simpiens.Simulation
 
                 if (_expiredBountiesBuffer.Count > 0)
                 {
+                    SortStable(_expiredBountiesBuffer, (a, b) => a.CompareTo(b));
                     for (int i = 0; i < _expiredBountiesBuffer.Count; i++)
                     {
                         ushort expiredId = _expiredBountiesBuffer[i];
@@ -670,10 +723,10 @@ namespace Simpiens.Simulation
             {
                 _keysToRemove.Clear();
 
-                foreach (var kvp in _activeIntents)
+                for (int k = 0; k < _activeIntentOrder.Count; k++)
                 {
-                    var agentId = kvp.Key;
-                    var state = kvp.Value;
+                    var agentId = _activeIntentOrder[k];
+                    if (!_activeIntents.TryGetValue(agentId, out var state)) continue;
 
                     var node = _worldRegistry.GetNode(agentId);
                     if (node == null)
@@ -696,6 +749,7 @@ namespace Simpiens.Simulation
                 for (int i = 0; i < removeCount; i++)
                 {
                     _activeIntents.Remove(_keysToRemove[i]);
+                    RemoveSorted(_activeIntentOrder, _keysToRemove[i]);
                 }
             }
 
@@ -789,6 +843,7 @@ namespace Simpiens.Simulation
             {
                 _activeAnchorsBuffer.Add(kvp.Value);
             }
+            SortStable(_activeAnchorsBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
 
             var activeNodes = _worldRegistry.ActiveNodes;
             int totalNodes = activeNodes.Count;

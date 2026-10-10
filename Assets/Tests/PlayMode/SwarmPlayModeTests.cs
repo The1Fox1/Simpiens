@@ -113,6 +113,20 @@ namespace Simpiens.Tests.PlayMode
             validator.RunAllValidationTests();
         }
 
+        [Test]
+        public void Scenario_NavigationClearance_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Navigation.NavigationClearanceValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_Determinism_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Environment.DeterminismValidator();
+            validator.RunAllValidationTests();
+        }
+
         private IEnumerator ExecuteScenario(ISimulationScenario scenario)
         {
             Debug.Log($"[SwarmPlayModeTests] >>> Starting Scenario: {scenario.Name} <<<");

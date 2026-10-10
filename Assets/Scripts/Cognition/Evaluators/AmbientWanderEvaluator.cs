@@ -2,6 +2,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
+using Simpiens.Simulation;
 using UnityEngine;
 
 namespace Simpiens.Cognition.Evaluators
@@ -9,34 +10,33 @@ namespace Simpiens.Cognition.Evaluators
     /// <summary>
     /// Tier-3 ambient fallback: idles or wanders a short distance when neither the Tier-1 reflexes
     /// nor Tier-2 GOAP produced an intent. Logic moved unchanged from the former SurvivalUtilityEvaluator.
-    /// NOTE: still uses an unseeded thread-static System.Random (ROADMAP §1A.2 Deviation #5); do not copy.
+    /// Randomness is seeded per (agent, tick) through <see cref="SimRandom"/>, so a given seed reproduces the same choices.
     /// </summary>
     public class AmbientWanderEvaluator : ICognitiveEvaluator
     {
-        private const double IdleChance = 0.45;
+        private const float IdleChance = 0.45f;
 
         private readonly IAsyncPathfinder _pathfinder;
+        private readonly ulong _seed;
 
-        [System.ThreadStatic]
-        private static System.Random _random;
-
-        public AmbientWanderEvaluator(IAsyncPathfinder pathfinder)
+        public AmbientWanderEvaluator(IAsyncPathfinder pathfinder, SimulationSettings settings = null)
         {
             _pathfinder = pathfinder;
+            _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
         }
 
         public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
-            if (_random == null) _random = new System.Random();
+            var rng = SimRandom.For(_seed, context.AgentId, context.CurrentTick, SimRandomSalt.AmbientWander);
 
-            if (_random.NextDouble() < IdleChance || _pathfinder == null)
+            if (rng.NextFloat() < IdleChance || _pathfinder == null)
             {
                 return new IdleIntent(context.AgentId, duration: 2.0f);
             }
 
-            // Pick a random point 3 to 5 units away using thread-safe System.Random
-            float angle = (float)(_random.NextDouble() * Mathf.PI * 2);
-            float distance = 3f + (float)(_random.NextDouble() * 2f);
+            // Pick a point 3 to 5 units away
+            float angle = rng.NextFloat() * Mathf.PI * 2f;
+            float distance = rng.Range(3f, 5f);
 
             Vector2 randomDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
             Vector2 targetPos = context.Position + randomDir * distance;

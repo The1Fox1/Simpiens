@@ -100,11 +100,12 @@ namespace Simpiens.Cognition.Planning.Handlers
                         {
                             if (otherHarvest.TargetEntityId == harvest.TargetEntityId)
                             {
+                                // Lowest id wins ties so the outcome never depends on Dictionary order
                                 var otherNode = context.WorldRegistry.GetNode(kvp.Key);
-                                if (otherNode != null && Vector2.Distance(otherNode.Position, node.Position) <= 2.5f)
+                                if (otherNode != null && Vector2.Distance(otherNode.Position, node.Position) <= 2.5f &&
+                                    (competitorNode == null || otherNode.Id.CompareTo(competitorNode.Id) < 0))
                                 {
                                     competitorNode = otherNode;
-                                    break;
                                 }
                             }
                         }

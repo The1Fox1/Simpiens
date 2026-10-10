@@ -14,8 +14,11 @@ namespace Simpiens.Testing.Environment
         private readonly IWorldRegistry _registry;
 
         [Inject]
-        public EdgeCaseInjector(ISpatialPartition spatialPartition, NodeFactory nodeFactory, IWorldRegistry registry)
+        private readonly IEntityIdAllocator _idAllocator;
+
+        public EdgeCaseInjector(ISpatialPartition spatialPartition, NodeFactory nodeFactory, IWorldRegistry registry, IEntityIdAllocator idAllocator = null)
         {
+            _idAllocator = idAllocator;
             _spatialPartition = spatialPartition;
             _nodeFactory = nodeFactory;
             _registry = registry;
@@ -77,7 +80,7 @@ namespace Simpiens.Testing.Environment
 
             var controller = nodeGo.AddComponent<NodeController>();
             controller.Type = EntityType.Wall;
-            controller.Initialize(GUID.Generate(), config);
+            controller.Initialize(_idAllocator != null ? _idAllocator.Next() : GUID.Generate(), config);
 
             _registry.RegisterNode(controller);
         }
