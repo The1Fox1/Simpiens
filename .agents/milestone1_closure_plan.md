@@ -107,6 +107,14 @@ Commits: `fix(navigation): body-aware movement and clearance smoothing` · `fix(
 
 ## Phase 2 — Determinism (§1A.2 #5, #6, #14)
 
+> **Status: DONE 2026-10-10** (`1dc831b`). PlayMode 16/16.
+>
+> **Differences from the plan below:**
+> - **Added `EntityIdAllocator`.** Entity ids came from `GUID.Generate()`, and they feed tie-breaks, exploration hashes and `SimRandom` keys, so a seeded RNG alone could not reproduce a run.
+> - **Harvest contention** now picks the lowest-id competitor.
+> - **`DeterminismValidator` Test 3** was mutation-checked: restoring insertion-order application makes it fail.
+> - **Validator wrappers:** PlayMode wrappers added for `DeterminismValidator` and `NavigationClearanceValidator`. Boot-time `IStartable` failures are only logged.
+
 ### Changes
 
 **2A. Seeded, stateless RNG.**

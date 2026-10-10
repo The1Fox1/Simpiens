@@ -339,3 +339,14 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Verification:** `NavigationClearanceValidator` (6 tests), `SupplyLoopValidator` Tests 4b and 6. PlayMode 14/14 in 3 consecutive runs, with zero validator assertion failures at boot.
 - **Recorded deviation:** §1A.2 #15. Cognition writes plan and intent bookkeeping off-thread.
 
+## Architectural Decision: Seeded Determinism (Milestone 1 closure, Phase 2, 2026-10-10)
+- **Problem:** §1A.1 requires seeded randomness and deterministic ordering, but simulation decisions used unseeded thread-static `System.Random`. Entity ids came from `GUID.Generate()`, and intents were applied in thread-pool completion order and executed in `Dictionary` order (§1A.2 #5, #6, #14).
+- **Decision:**
+  - **`SimRandom`** is a stateless SplitMix64 stream derived from (seed, entity, tick, salt), rather than a stateful shared RNG. Cognition runs off-thread in arbitrary order, and a stream that depends only on its inputs needs no locking or `[ThreadStatic]`.
+  - **One salt per decision** (`SimRandomSalt`), so independent decisions by the same agent in the same tick don't share draws.
+  - **`SimulationSettings`** carries the seed (`SIMPIENS_SEED` / `-simseed`, default 20261009) and is logged at boot.
+  - **`EntityIdAllocator`** issues seeded ids and resets on respawn. Ids are inputs to tie-breaks, hashes and RNG keys, so they are part of the deterministic state.
+  - **Ordering in `SimulationManager`:** each tick's arrivals are applied in agent-id order with a stable insertion sort, which is allocation-free and keeps per-agent arrival order. Active intents run from a sorted id list. Small per-tick buffers are sorted.
+- **Not addressed:** the tick on which an async cognition result arrives (§1A.2 #6 remainder), and `foreach` over memory maps inside GOAP actions.
+- **Verification:** `DeterminismValidator`, 4 tests including a mutation check of the ordering test. PlayMode 16/16.
+
