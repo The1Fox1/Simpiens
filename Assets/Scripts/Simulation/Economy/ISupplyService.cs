@@ -37,6 +37,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Cumulative number of stall restocks since the last Reset.</summary>
         int RestockCount { get; }
 
+        /// <summary>Provisional salvage export visits since the last reset.</summary>
+        int ExportCount { get; }
+
         /// <summary>Schedules a depleted node to regrow at readyTick.</summary>
         void RegisterDormant(GUID resourceId, uint readyTick);
 

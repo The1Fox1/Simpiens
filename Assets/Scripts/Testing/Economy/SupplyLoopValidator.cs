@@ -40,12 +40,13 @@ namespace Simpiens.Testing.Economy
             ValidateInventoryFullHarvestFails();
             ValidateDeterministicRegrowth();
             ValidateSupplyCaravan();
+            ValidateProvisionalSalvageExport();
             ValidateScoutBountyFulfilment();
             ValidateSalvageBountyPlan();
             ValidateWellFedAgentReachesGoap();
             ValidateZeroAllocSupplyTicks();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SupplyLoopValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -166,6 +167,37 @@ namespace Simpiens.Testing.Economy
             Assert(supply.RestockCount == 1, "Full stall not restocked again.");
 
             Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, treasury and ledger conservation.");
+        }
+
+        // ---------------------------------------------------------------------------------------------
+        // 4b. PROVISIONAL export: caravan buys salvage above the reserve (named faucet) before restocking
+        // ---------------------------------------------------------------------------------------------
+        private void ValidateProvisionalSalvageExport()
+        {
+            var registry = new WorldRegistry();
+            var ledger = new EconomyLedger();
+            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                provisionalOreExportPrice: 24, provisionalHerbExportPrice: 30, provisionalExportReserve: 10));
+            var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+
+            // Broke stall holding surplus salvage: export revenue (5×24 + 2×30 = 180g) must fund the 100g restock
+            var stallId = NextGuid();
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 15, herbStock: 12, treasuryGold: 0));
+
+            while (sim.CurrentTick < 20) sim.Tick();
+
+            Assert(sim.TryGetTradeStall(stallId, out var stall), "Stall retrieved.");
+            Assert(stall.OreStock == 10 && stall.HerbStock == 10, $"Export leaves the reserve (ore {stall.OreStock}, herb {stall.HerbStock}).");
+            Assert(stall.RationStock == 50, $"Export revenue funded the restock (stock {stall.RationStock}).");
+            Assert(stall.TreasuryGold == 80, $"Treasury = 180g export - 100g restock (got {stall.TreasuryGold}).");
+            Assert(supply.ExportCount == 1 && ledger.TotalFaucetedGold == 180, $"Export faucet recorded 180g (got {ledger.TotalFaucetedGold}).");
+            Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+
+            // Stock at reserve: no further export
+            while (sim.CurrentTick < 40) sim.Tick();
+            Assert(supply.ExportCount == 1, "Stock at reserve is not exported again.");
+
+            Debug.Log("[SupplyLoopValidator] Test 4b Passed: Provisional caravan export is a named faucet that keeps the reserve.");
         }
 
         // ---------------------------------------------------------------------------------------------
