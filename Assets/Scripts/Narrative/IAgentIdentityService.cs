@@ -1,0 +1,37 @@
+using UnityEngine;
+
+namespace Simpiens.Narrative
+{
+    /// <summary>
+    /// Service for mapping procedural GUIDs to human-friendly agent identities (e.g., Burt, Bob, Alice).
+    /// Guarantees 100% deterministic naming across game ticks, scene reloads, and play sessions.
+    /// </summary>
+    public interface IAgentIdentityService
+    {
+        /// <summary>
+        /// Returns the friendly persona name for the given agent (e.g. "Burt", "Bob", "Alice").
+        /// </summary>
+        string GetFriendlyName(GUID agentId);
+
+        /// <summary>
+        /// Returns a narrative role or title for the agent (e.g. "Settler", "Forager", "Scout").
+        /// </summary>
+        string GetFriendlyTitle(GUID agentId);
+
+        /// <summary>
+        /// Returns a formatted name combining the friendly persona with an optional technical identifier.
+        /// (e.g. "Burt [SwarmAgent_6]").
+        /// </summary>
+        string GetFormattedDisplayName(GUID agentId, string fallbackName = null);
+
+        /// <summary>
+        /// Allows registering or overriding an agent's name (e.g. player renamed pawn or narrative event).
+        /// </summary>
+        void RegisterCustomName(GUID agentId, string name);
+
+        /// <summary>
+        /// Allows registering or overriding an agent's title.
+        /// </summary>
+        void RegisterCustomTitle(GUID agentId, string title);
+    }
+}

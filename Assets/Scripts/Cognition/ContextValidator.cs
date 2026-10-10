@@ -1,5 +1,7 @@
 using Simpiens.Simulation;
 using UnityEngine;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Cognition
 {
@@ -25,7 +27,7 @@ namespace Simpiens.Cognition
 
             if (tickDelta > StaleTickThreshold)
             {
-                Debug.LogWarning($"[ContextValidator] Decision '{decision.ActionId}' discarded. Delta: {tickDelta} ticks.");
+                SimLog.Cognition.ZLogWarning($"ContextValidator discarded stale decision '{decision.ActionId}' ({tickDelta} ticks old)");
                 return false;
             }
 

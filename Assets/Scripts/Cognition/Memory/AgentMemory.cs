@@ -5,7 +5,7 @@ using Simpiens.Cognition.Social;
 
 namespace Simpiens.Cognition.Memory
 {
-    public class AgentMemory
+    public class AgentMemory : IAgentMemory
     {
         public const uint DefaultDecayTicks = 1000;
         public const uint ResourceDecayTicks = 1500;
@@ -28,7 +28,12 @@ namespace Simpiens.Cognition.Memory
         private readonly Dictionary<GUID, uint> _lastGossipWithAgent;
         private readonly Dictionary<GUID, AffinityRecord> _affinityMap;
 
+        private readonly AgentMemorySnapshot[] _snapshots;
+        private int _snapshotIndex;
+
         public Dictionary<GUID, AffinityRecord> AffinityMap => _affinityMap;
+        public IReadOnlyDictionary<GUID, uint> BlacklistedEntities => _blacklistedEntities;
+        public Dictionary<GUID, uint> BlacklistMap => _blacklistedEntities;
 
         public AgentMemory(int ledgerCapacity = 50, int initialMapCapacity = 64)
         {
@@ -37,6 +42,13 @@ namespace Simpiens.Cognition.Memory
             _blacklistedEntities = new Dictionary<GUID, uint>();
             _lastGossipWithAgent = new Dictionary<GUID, uint>();
             _affinityMap = new Dictionary<GUID, AffinityRecord>(16);
+
+            _snapshots = new AgentMemorySnapshot[2]
+            {
+                new AgentMemorySnapshot(initialMapCapacity, 16),
+                new AgentMemorySnapshot(initialMapCapacity, 16)
+            };
+            _snapshotIndex = 0;
         }
 
         public static uint GetDecayThreshold(EntityType type)
@@ -102,12 +114,13 @@ namespace Simpiens.Cognition.Memory
                     // Update existing record
                     record.LastKnownLocation = entityPosInt;
                     record.LastSeenTick = currentTick;
+                    record.ResourceKind = entity.ResourceKind;
                     SpatialMemoryMap[entity.Id] = record;
                 }
                 else
                 {
                     // Create new record
-                    SpatialMemoryMap[entity.Id] = new SpatialMemoryRecord(entity.Id, entity.Type, entityPosInt, currentTick);
+                    SpatialMemoryMap[entity.Id] = new SpatialMemoryRecord(entity.Id, entity.Type, entityPosInt, currentTick, entity.ResourceKind);
                     
                     // Add event to the ledger for spotting new entities
                     MemoryEventType eventType = entity.Type == EntityType.Resource ? MemoryEventType.ResourceSpotted : MemoryEventType.AgentSpotted;
@@ -177,20 +190,60 @@ namespace Simpiens.Cognition.Memory
         {
             if (_affinityMap.TryGetValue(peerId, out var record))
             {
-                var regressed = record.RegressTowardNeutral(currentTick);
-                if (regressed != record)
-                {
-                    _affinityMap[peerId] = regressed;
-                }
-                return regressed;
+                return record.RegressTowardNeutral(currentTick);
             }
             return AffinityRecord.Neutral;
+        }
+
+        public IAgentMemory GetSnapshot(uint currentTick)
+        {
+            _snapshotIndex = 1 - _snapshotIndex;
+            var snap = _snapshots[_snapshotIndex];
+            snap.PopulateFrom(this, currentTick);
+            return snap;
+        }
+
+        public bool TryGetSpatialRecord(GUID entityId, out SpatialMemoryRecord record)
+        {
+            return SpatialMemoryMap.TryGetValue(entityId, out record);
+        }
+
+        public void PruneStaleResourceMemories(uint currentTick)
+        {
+            if (_keysToRemove == null)
+            {
+                _keysToRemove = new List<GUID>(16);
+            }
+            _keysToRemove.Clear();
+
+            foreach (var kvp in SpatialMemoryMap)
+            {
+                if (kvp.Value.Type == EntityType.Resource)
+                {
+                    _keysToRemove.Add(kvp.Key);
+                }
+            }
+
+            for (int i = 0; i < _keysToRemove.Count; i++)
+            {
+                SpatialMemoryMap.Remove(_keysToRemove[i]);
+            }
         }
 
         public void RecordInteraction(GUID peerId, sbyte deltaWarmth, sbyte deltaTrust, sbyte deltaFear, sbyte deltaRespect, uint currentTick)
         {
             var current = GetAffinity(peerId, currentTick);
             _affinityMap[peerId] = current.WithInteraction(deltaWarmth, deltaTrust, deltaFear, deltaRespect, currentTick);
+        }
+
+        public void SetAffinity(GUID peerId, AffinityRecord record)
+        {
+            _affinityMap[peerId] = record;
+        }
+
+        public void RecordEvent(MemoryEventType type, GUID subjectId, Vector2Int location, uint simulationTick)
+        {
+            EventLedger.AddEvent(new MemoryEvent(type, subjectId, location, simulationTick));
         }
 
         public bool IsTrusted(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Trust >= threshold;

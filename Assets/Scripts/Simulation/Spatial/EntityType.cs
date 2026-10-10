@@ -6,6 +6,7 @@ namespace Simpiens.Simulation.Spatial
         Pawn,
         Resource,
         Wall,
-        Anchor
+        Anchor,
+        Stall
     }
 }

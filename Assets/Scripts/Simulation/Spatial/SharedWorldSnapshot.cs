@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Simpiens.Cognition.Groups;
+using Simpiens.Simulation.Economy;
 using UnityEngine;
 
 namespace Simpiens.Simulation.Spatial
@@ -23,6 +25,26 @@ namespace Simpiens.Simulation.Spatial
         // Each cell has a pre-allocated array of EntitySnapshots.
         public readonly EntitySnapshot[][] Grid;
         public readonly int[] CellCounts;
+
+        // Sociopolitical Group Snapshot (Epic 8)
+        public const int MaxGroups = 64;
+        public readonly GroupData[] GroupBuffer = new GroupData[MaxGroups];
+        public int ActiveGroupCount;
+
+        // Outpost Economy & Trade Stalls (Epic 9 Slice 2)
+        public const int MaxStalls = 8;
+        public readonly TradeStallData[] StallBuffer = new TradeStallData[MaxStalls];
+        public int ActiveStallCount;
+
+        // Outpost Economy & Public Bounties (Epic 9 Slice 3)
+        public const int MaxBounties = 16;
+        public readonly BountyContract[] BountyBuffer = new BountyContract[MaxBounties];
+        public int ActiveBountyCount;
+        public ReadOnlySpan<BountyContract> Bounties => new ReadOnlySpan<BountyContract>(BountyBuffer, 0, ActiveBountyCount);
+
+        // Static Navigation Grid (Section 2.6)
+        public StaticNavGrid StaticGrid { get; private set; }
+        public void SetStaticGrid(StaticNavGrid staticGrid) => StaticGrid = staticGrid;
 
         public SharedWorldSnapshot(int width, int height, float cellSize, int maxEntitiesPerCell, Action<SharedWorldSnapshot> returnAction)
         {
@@ -57,6 +79,173 @@ namespace Simpiens.Simulation.Spatial
         public void Clear()
         {
             Array.Clear(CellCounts, 0, CellCounts.Length);
+            Array.Clear(GroupBuffer, 0, ActiveGroupCount);
+            ActiveGroupCount = 0;
+            Array.Clear(StallBuffer, 0, ActiveStallCount);
+            ActiveStallCount = 0;
+            Array.Clear(BountyBuffer, 0, ActiveBountyCount);
+            ActiveBountyCount = 0;
+        }
+
+        /// <summary>
+        /// Lock-free, zero-allocation lookup of a group's snapshot state by group ID (1..64).
+        /// </summary>
+        public bool TryGetGroup(byte groupId, out GroupData groupData)
+        {
+            if (groupId == 0 || groupId > MaxGroups)
+            {
+                groupData = GroupData.Empty;
+                return false;
+            }
+
+            int count = ActiveGroupCount;
+            for (int i = 0; i < count; i++)
+            {
+                if (GroupBuffer[i].GroupId == groupId)
+                {
+                    groupData = GroupBuffer[i];
+                    return true;
+                }
+            }
+
+            groupData = GroupData.Empty;
+            return false;
+        }
+
+        /// <summary>
+        /// Synchronizes group snapshot data into the pre-allocated buffer with zero heap allocations.
+        /// </summary>
+        public void SetGroups(GroupData[] source, int count)
+        {
+            if (source == null)
+            {
+                ActiveGroupCount = 0;
+                return;
+            }
+
+            int toCopy = Mathf.Min(count, MaxGroups);
+            Array.Copy(source, GroupBuffer, toCopy);
+            ActiveGroupCount = toCopy;
+        }
+
+        /// <summary>
+        /// Lock-free, zero-allocation lookup of a trade stall's snapshot state by entity ID.
+        /// </summary>
+        public bool TryGetStall(GUID stallId, out TradeStallData stallData)
+        {
+            if (stallId == default)
+            {
+                stallData = TradeStallData.Empty;
+                return false;
+            }
+
+            int count = ActiveStallCount;
+            for (int i = 0; i < count; i++)
+            {
+                if (StallBuffer[i].StallEntityId == stallId)
+                {
+                    stallData = StallBuffer[i];
+                    return true;
+                }
+            }
+
+            stallData = TradeStallData.Empty;
+            return false;
+        }
+
+        /// <summary>
+        /// Synchronizes trade stall snapshot data into the pre-allocated buffer with zero heap allocations.
+        /// </summary>
+        public void SetStalls(TradeStallData[] source, int count)
+        {
+            if (source == null)
+            {
+                ActiveStallCount = 0;
+                return;
+            }
+
+            int toCopy = Mathf.Min(count, MaxStalls);
+            Array.Copy(source, StallBuffer, toCopy);
+            ActiveStallCount = toCopy;
+        }
+
+        /// <summary>
+        /// Synchronizes trade stall snapshot data from a list with zero heap allocations.
+        /// </summary>
+        public void SetStalls(IReadOnlyList<TradeStallData> source)
+        {
+            if (source == null)
+            {
+                ActiveStallCount = 0;
+                return;
+            }
+
+            int toCopy = Mathf.Min(source.Count, MaxStalls);
+            for (int i = 0; i < toCopy; i++)
+            {
+                StallBuffer[i] = source[i];
+            }
+            ActiveStallCount = toCopy;
+        }
+
+        /// <summary>
+        /// Lock-free, zero-allocation lookup of a public bounty contract by bounty ID.
+        /// </summary>
+        public bool TryGetBounty(ushort bountyId, out BountyContract bounty)
+        {
+            if (bountyId == 0)
+            {
+                bounty = BountyContract.Empty;
+                return false;
+            }
+
+            int count = ActiveBountyCount;
+            for (int i = 0; i < count; i++)
+            {
+                if (BountyBuffer[i].BountyId == bountyId)
+                {
+                    bounty = BountyBuffer[i];
+                    return true;
+                }
+            }
+
+            bounty = BountyContract.Empty;
+            return false;
+        }
+
+        /// <summary>
+        /// Synchronizes public bounty contracts into the pre-allocated buffer with zero heap allocations.
+        /// </summary>
+        public void SetBounties(BountyContract[] source, int count)
+        {
+            if (source == null)
+            {
+                ActiveBountyCount = 0;
+                return;
+            }
+
+            int toCopy = Mathf.Min(count, MaxBounties);
+            Array.Copy(source, BountyBuffer, toCopy);
+            ActiveBountyCount = toCopy;
+        }
+
+        /// <summary>
+        /// Synchronizes public bounty contracts from a list with zero heap allocations.
+        /// </summary>
+        public void SetBounties(IReadOnlyList<BountyContract> source)
+        {
+            if (source == null)
+            {
+                ActiveBountyCount = 0;
+                return;
+            }
+
+            int toCopy = Mathf.Min(source.Count, MaxBounties);
+            for (int i = 0; i < toCopy; i++)
+            {
+                BountyBuffer[i] = source[i];
+            }
+            ActiveBountyCount = toCopy;
         }
 
         public void AddEntity(int cellX, int cellY, in EntitySnapshot snapshot)
@@ -76,12 +265,17 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
-        /// Checks if a given cell is walkable (does not contain a Wall or Resource).
+        /// Checks if a given cell is walkable (does not contain a Static Wall, Dynamic Wall, Anchor, or Stall).
         /// Returns false if out of bounds.
         /// </summary>
         public bool IsWalkable(int cellX, int cellY)
         {
             if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
+
+            if (StaticGrid != null && !StaticGrid.IsCellWalkable(cellX, cellY))
+            {
+                return false;
+            }
 
             int index = cellY * Width + cellX;
             int count = CellCounts[index];
@@ -89,7 +283,7 @@ namespace Simpiens.Simulation.Spatial
 
             for (int i = 0; i < count; i++)
             {
-                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Anchor)
+                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Anchor || cellArray[i].Type == EntityType.Stall)
                 {
                     return false;
                 }
@@ -98,7 +292,7 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
-        /// Checks whether a straight line between two world positions is unobstructed by walls.
+        /// Checks whether a straight line between two world positions is unobstructed by walls and corner intersections.
         /// Zero allocations, thread-safe off-thread evaluation.
         /// </summary>
         public bool HasLineOfSight(Vector2 start, Vector2 end)
@@ -106,17 +300,20 @@ namespace Simpiens.Simulation.Spatial
             float distance = Vector2.Distance(start, end);
             if (distance < 0.1f) return true;
 
-            float stepSize = 0.5f;
+            float stepSize = 0.25f;
             int steps = Mathf.CeilToInt(distance / stepSize);
             Vector2 dir = (end - start) / distance;
 
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
 
-            // Check intermediate steps along the ray (excluding endpoints)
-            for (int i = 1; i < steps; i++)
+            int prevCellX = Mathf.FloorToInt((start.x + offsetX) / CellSize);
+            int prevCellY = Mathf.FloorToInt((start.y + offsetY) / CellSize);
+
+            // Check intermediate steps along the ray
+            for (int i = 1; i <= steps; i++)
             {
-                Vector2 sample = start + dir * (i * stepSize);
+                Vector2 sample = (i == steps) ? end : start + dir * (i * stepSize);
                 int cellX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
                 int cellY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
 
@@ -125,16 +322,37 @@ namespace Simpiens.Simulation.Spatial
                     return false;
                 }
 
-                int index = cellY * Width + cellX;
-                int count = CellCounts[index];
-                var cellArray = Grid[index];
-                for (int c = 0; c < count; c++)
+                // Check diagonal transition: if moving diagonally across cells, both orthogonal cells must be clear
+                if (cellX != prevCellX && cellY != prevCellY)
                 {
-                    if (cellArray[c].Type == EntityType.Wall)
+                    if (!IsWalkable(cellX, prevCellY) || !IsWalkable(prevCellX, cellY))
                     {
                         return false;
                     }
                 }
+
+                // Check target cell walkability (excluding final destination point if it's an interactable object)
+                if (i < steps)
+                {
+                    if (StaticGrid != null && !StaticGrid.IsCellWalkable(cellX, cellY))
+                    {
+                        return false;
+                    }
+
+                    int index = cellY * Width + cellX;
+                    int count = CellCounts[index];
+                    var cellArray = Grid[index];
+                    for (int c = 0; c < count; c++)
+                    {
+                        if (cellArray[c].Type == EntityType.Wall)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                prevCellX = cellX;
+                prevCellY = cellY;
             }
 
             return true;

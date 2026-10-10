@@ -14,7 +14,19 @@ namespace Simpiens.Cognition.Memory
         ContentionFaced,
         AidGiven,
         AidReceived,
-        CampfireCompanionship
+        CampfireCompanionship,
+        JoinedGroup,
+        LeftGroup,
+        Promoted,
+        Demoted,
+        DirectiveReceived,
+        DirectiveComplied,
+        SubordinateDefied,
+        DesertedGroup,
+        GroupFormed,
+        LeadershipAssumed,
+        DominanceChallenged,
+        GroupSchism
     }
 
     public readonly struct MemoryEvent

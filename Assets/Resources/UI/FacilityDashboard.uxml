@@ -1,0 +1,255 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Style src="FacilityDashboard.uss" />
+    <ui:VisualElement name="dashboard-root" class="dashboard-root">
+        <!-- Top Navigation Bar -->
+        <ui:VisualElement name="header-bar" class="header-bar">
+            <ui:VisualElement class="header-left">
+                <ui:Label text="SIMPIENS FACILITY OS" class="header-title" />
+                <ui:Label name="facility-status-badge" text="OPERATIONAL" class="status-pill status-pill-green" />
+            </ui:VisualElement>
+            <ui:VisualElement class="header-center">
+                <ui:Label name="treasury-gold-label" text="💰 250 GOLD" class="hud-metric-pill hud-gold" />
+                <ui:Label name="provisions-stock-label" text="🍞 50 RATIONS" class="hud-metric-pill hud-stock" />
+                <ui:Label name="salvage-stock-label" text="⛏️ 10 ORE | 🌿 10 HERB" class="hud-metric-pill hud-stock" />
+                <ui:Label name="bounties-active-label" text="📜 0 BOUNTIES" class="hud-metric-pill hud-bounties" />
+            </ui:VisualElement>
+            <ui:VisualElement class="header-right">
+                <ui:Button name="btn-merchant-terminal" text="⚖️ MERCHANT" class="hud-nav-button" />
+                <ui:Button name="btn-bounty-board" text="📜 BOUNTIES" class="hud-nav-button" />
+                <ui:Label name="clock-tick-label" text="TICK: 0000" class="header-metric" />
+                <ui:Label name="clock-multiplier-label" text="SPEED: 1.0x" class="header-metric" />
+                <ui:Button name="btn-view-toggle" text="[TAB] TOGGLE 2D VIEW" class="view-toggle-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Main 3-Column Content Container -->
+        <ui:VisualElement name="main-container" class="main-container">
+            <!-- Column 1: Facility Sectors -->
+            <ui:VisualElement name="sectors-panel" class="panel sectors-panel">
+                <ui:Label text="FACILITY SECTORS" class="panel-header" />
+                <ui:ScrollView name="sectors-scroll-list" class="scroll-list sectors-scroll-list" />
+            </ui:VisualElement>
+
+            <!-- Column 2: Active Sector Inhabitants & Live Feed -->
+            <ui:VisualElement name="sector-detail-panel" class="panel sector-detail-panel">
+                <ui:VisualElement class="sector-header-box">
+                    <ui:Label name="active-sector-name" text="COMMON HEARTH" class="panel-header" />
+                    <ui:Label name="active-sector-desc" text="Campfire relaxation, accelerated gossip, and communal bonding." class="sector-description-text" />
+                </ui:VisualElement>
+
+                <ui:Label text="RESIDENTS IN SECTOR" class="sub-header" />
+                <ui:ScrollView name="agents-scroll-list" class="scroll-list agents-scroll-list" />
+
+                <ui:Label text="RECENT SECTOR EVENTS" class="sub-header" />
+                <ui:ScrollView name="events-scroll-list" class="scroll-list events-scroll-list" />
+            </ui:VisualElement>
+
+            <!-- Column 3: Selected Agent Dossier -->
+            <ui:VisualElement name="agent-dossier-panel" class="panel agent-dossier-panel">
+                <ui:Label text="AGENT DOSSIER" class="panel-header" />
+                
+                <ui:VisualElement name="dossier-empty-state" class="dossier-empty-state">
+                    <ui:Label text="Select an agent from the sector roster to view live psychological &amp; biological telemetry." class="empty-state-text" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="dossier-details-container" class="dossier-details-container" style="display: none;">
+                    <ui:VisualElement class="agent-title-row">
+                        <ui:Label name="dossier-agent-name" text="SwarmAgent_0" class="dossier-name-text" />
+                        <ui:Label name="dossier-visual-badge" text="IDLE" class="state-badge" />
+                    </ui:VisualElement>
+
+                    <!-- Drive Telemetry -->
+                    <ui:Label text="BIOLOGICAL DRIVES" class="sub-header" />
+                    <ui:VisualElement class="drive-row">
+                        <ui:Label text="Hunger:" class="drive-label" />
+                        <ui:ProgressBar name="bar-hunger" class="drive-bar bar-hunger" high-value="100" />
+                        <ui:Label name="val-hunger" text="0%" class="drive-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="drive-row">
+                        <ui:Label text="Energy:" class="drive-label" />
+                        <ui:ProgressBar name="bar-energy" class="drive-bar bar-energy" high-value="100" />
+                        <ui:Label name="val-energy" text="100%" class="drive-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="drive-row">
+                        <ui:Label text="Social:" class="drive-label" />
+                        <ui:ProgressBar name="bar-social" class="drive-bar bar-social" high-value="100" />
+                        <ui:Label name="val-social" text="100%" class="drive-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="drive-row">
+                        <ui:Label text="Frustration:" class="drive-label" />
+                        <ui:ProgressBar name="bar-frustration" class="drive-bar bar-frustration" high-value="100" />
+                        <ui:Label name="val-frustration" text="0%" class="drive-val" />
+                    </ui:VisualElement>
+
+                    <!-- Cognitive Intent -->
+                    <ui:Label text="COGNITIVE INTENT (GOAP)" class="sub-header" />
+                    <ui:VisualElement class="intent-box">
+                        <ui:VisualElement class="intent-row">
+                            <ui:Label text="Goal:" class="intent-key" />
+                            <ui:Label name="dossier-active-goal" text="GatherAtAnchorGoal" class="intent-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="intent-row">
+                            <ui:Label text="Action:" class="intent-key" />
+                            <ui:Label name="dossier-active-action" text="RelaxAtAnchorAction" class="intent-val" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Dyadic Relationships -->
+                    <ui:Label text="SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)" class="sub-header" />
+                    <ui:ScrollView name="dossier-affinities-list" class="scroll-list affinities-list" />
+
+                    <!-- Player Intervention Buttons -->
+                    <ui:Label text="PLAYER INTERVENTION" class="sub-header" />
+                    <ui:VisualElement class="intervention-row">
+                        <ui:Button name="btn-feed-ration" text="🍎 Give Ration" class="action-btn btn-feed" />
+                        <ui:Button name="btn-calm-tantrum" text="🕊️ Calm Frustration" class="action-btn btn-calm" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Merchant Terminal Overlay Modal -->
+        <ui:VisualElement name="merchant-terminal-overlay" class="modal-overlay" style="display: none;">
+            <ui:VisualElement class="modal-window merchant-modal-window">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-title-box">
+                        <ui:Label text="⚖️ OUTPOST MERCHANT TERMINAL" class="modal-title" />
+                        <ui:Label text="Stall inventory management &amp; automated commodity pricing." class="modal-subtitle" />
+                    </ui:VisualElement>
+                    <ui:Button name="btn-close-merchant" text="✕" class="modal-close-button" />
+                </ui:VisualElement>
+
+                <!-- Stall Status Bar -->
+                <ui:VisualElement class="terminal-status-bar">
+                    <ui:Label name="merchant-stall-status" text="Stall #1 @ Central Corridor" class="terminal-status-text" />
+                    <ui:Label name="merchant-stall-treasury" text="Treasury: 250 Gold" class="terminal-status-gold" />
+                    <ui:Label name="merchant-stall-inventory" text="Stock: 50 Rations | 10 Ore | 10 Herb" class="terminal-status-stock" />
+                </ui:VisualElement>
+
+                <!-- Pricing Sliders -->
+                <ui:VisualElement class="pricing-container">
+                    <ui:Label text="COMMODITY EXCHANGE RATES" class="sub-header" />
+
+                    <!-- Ration Sell Price -->
+                    <ui:VisualElement class="slider-row">
+                        <ui:VisualElement class="slider-label-box">
+                            <ui:Label text="🍞 Provision Sell Price:" class="slider-title" />
+                            <ui:Label text="(Outpost sells rations to hungry agents)" class="slider-desc" />
+                        </ui:VisualElement>
+                        <ui:SliderInt name="slider-ration-price" low-value="1" high-value="50" value="15" class="custom-slider" />
+                        <ui:Label name="label-ration-price" text="15 Gold" class="slider-value-display" />
+                    </ui:VisualElement>
+
+                    <!-- Iron Ore Buy Price -->
+                    <ui:VisualElement class="slider-row">
+                        <ui:VisualElement class="slider-label-box">
+                            <ui:Label text="⛏️ Iron Ore Buy Price:" class="slider-title" />
+                            <ui:Label text="(Outpost purchases ore from salvagers)" class="slider-desc" />
+                        </ui:VisualElement>
+                        <ui:SliderInt name="slider-ore-price" low-value="1" high-value="50" value="20" class="custom-slider" />
+                        <ui:Label name="label-ore-price" text="20 Gold" class="slider-value-display" />
+                    </ui:VisualElement>
+
+                    <!-- Medicinal Herb Buy Price -->
+                    <ui:VisualElement class="slider-row">
+                        <ui:VisualElement class="slider-label-box">
+                            <ui:Label text="🌿 Herb Buy Price:" class="slider-title" />
+                            <ui:Label text="(Outpost purchases medicinal flora)" class="slider-desc" />
+                        </ui:VisualElement>
+                        <ui:SliderInt name="slider-herb-price" low-value="1" high-value="50" value="25" class="custom-slider" />
+                        <ui:Label name="label-herb-price" text="25 Gold" class="slider-value-display" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Apply Button -->
+                <ui:VisualElement class="modal-footer-row">
+                    <ui:Label name="merchant-feedback-label" text="" class="modal-feedback-text" />
+                    <ui:Button name="btn-apply-prices" text="💾 APPLY COMMODITY PRICES" class="action-btn-primary" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Bounty Board Overlay Modal -->
+        <ui:VisualElement name="bounty-board-overlay" class="modal-overlay" style="display: none;">
+            <ui:VisualElement class="modal-window bounty-modal-window">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-title-box">
+                        <ui:Label text="📜 PUBLIC BOUNTY BOARD" class="modal-title" />
+                        <ui:Label text="Contract posting, automated escrow, and public agent directives." class="modal-subtitle" />
+                    </ui:VisualElement>
+                    <ui:Button name="btn-close-bounties" text="✕" class="modal-close-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="bounty-modal-body">
+                    <!-- Column 1: Active Contracts List -->
+                    <ui:VisualElement class="bounty-list-column">
+                        <ui:VisualElement class="bounty-list-header-row">
+                            <ui:Label text="ACTIVE CONTRACTS" class="sub-header" />
+                            <ui:Label name="bounty-count-badge" text="0 ACTIVE" class="bounty-count-badge" />
+                        </ui:VisualElement>
+                        <ui:ScrollView name="bounties-scroll-list" class="scroll-list bounties-scroll-list" />
+                    </ui:VisualElement>
+
+                    <!-- Column 2: Post Contract Form -->
+                    <ui:VisualElement class="bounty-form-column">
+                        <ui:Label text="POST NEW CONTRACT" class="sub-header" />
+
+                        <!-- Type Selector -->
+                        <ui:VisualElement class="form-group">
+                            <ui:Label text="Contract Directive Type:" class="form-label" />
+                            <ui:DropdownField name="dropdown-bounty-type" choices="GatherResource,ScoutSector" value="GatherResource" class="form-dropdown" />
+                        </ui:VisualElement>
+
+                        <!-- Sector Selector -->
+                        <ui:VisualElement class="form-group">
+                            <ui:VisualElement class="form-label-row">
+                                <ui:Label text="Target Sector:" class="form-label" />
+                                <ui:Label name="label-bounty-sector" text="Sector 2" class="form-val-label" />
+                            </ui:VisualElement>
+                            <ui:SliderInt name="slider-bounty-sector" low-value="1" high-value="10" value="2" class="custom-slider" />
+                        </ui:VisualElement>
+
+                        <!-- Item Type Selector -->
+                        <ui:VisualElement class="form-group" name="group-bounty-item">
+                            <ui:Label text="Requested Salvage Item:" class="form-label" />
+                            <ui:DropdownField name="dropdown-bounty-item" choices="IronOre,MedicinalHerb" value="IronOre" class="form-dropdown" />
+                        </ui:VisualElement>
+
+                        <!-- Quantity Stepper / Slider -->
+                        <ui:VisualElement class="form-group" name="group-bounty-qty">
+                            <ui:VisualElement class="form-label-row">
+                                <ui:Label text="Required Quantity:" class="form-label" />
+                                <ui:Label name="label-bounty-qty" text="1 Unit" class="form-val-label" />
+                            </ui:VisualElement>
+                            <ui:SliderInt name="slider-bounty-qty" low-value="1" high-value="10" value="1" class="custom-slider" />
+                        </ui:VisualElement>
+
+                        <!-- Reward Gold Slider -->
+                        <ui:VisualElement class="form-group">
+                            <ui:VisualElement class="form-label-row">
+                                <ui:Label text="Reward Escrow (Gold):" class="form-label" />
+                                <ui:Label name="label-bounty-reward" text="25 Gold" class="form-val-label" />
+                            </ui:VisualElement>
+                            <ui:SliderInt name="slider-bounty-reward" low-value="10" high-value="100" value="25" class="custom-slider" />
+                        </ui:VisualElement>
+
+                        <!-- Duration Slider -->
+                        <ui:VisualElement class="form-group">
+                            <ui:VisualElement class="form-label-row">
+                                <ui:Label text="Contract Duration:" class="form-label" />
+                                <ui:Label name="label-bounty-duration" text="1000 Ticks" class="form-val-label" />
+                            </ui:VisualElement>
+                            <ui:SliderInt name="slider-bounty-duration" low-value="500" high-value="3000" value="1000" class="custom-slider" />
+                        </ui:VisualElement>
+
+                        <!-- Post Button -->
+                        <ui:VisualElement class="modal-footer-row form-submit-row">
+                            <ui:Label name="bounty-feedback-label" text="" class="modal-feedback-text" />
+                            <ui:Button name="btn-post-bounty" text="✍️ POST BOUNTY (ESCROW GOLD)" class="action-btn-gold" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

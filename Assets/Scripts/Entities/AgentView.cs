@@ -138,6 +138,22 @@ namespace Simpiens.Entities
                     transform.localScale = _baseScale * sharePulse;
                     break;
 
+                case AgentVisualState.Rallying:
+                    // Disciplined marching bob & upright posture
+                    float rallyBob = 1f + Mathf.Abs(Mathf.Sin(t * 8f)) * 0.08f;
+                    float rallyTilt = Mathf.Sin(t * 6f) * 2f;
+                    transform.localRotation = Quaternion.Euler(0f, 0f, rallyTilt);
+                    transform.localScale = _baseScale * rallyBob;
+                    break;
+
+                case AgentVisualState.Defiant:
+                    // Rebellious rigid stance with defiant jitter
+                    float defiantTilt = Mathf.Sin(t * 14f) * 4f;
+                    float defiantScale = 1f + (Mathf.Sin(t * 12f) * 0.05f);
+                    transform.localRotation = Quaternion.Euler(0f, 0f, defiantTilt);
+                    transform.localScale = _baseScale * defiantScale;
+                    break;
+
                 case AgentVisualState.Idle:
                 default:
                     // Calm rhythmic breathing

@@ -191,11 +191,11 @@ namespace Simpiens.Testing.Sociopolitical
             agentE.Memory.RecordInteraction(nodeF.Id, deltaWarmth: -30, deltaTrust: -20, deltaFear: 0, deltaRespect: -20, 0);
             agentF.Memory.RecordInteraction(nodeE.Id, deltaWarmth: -30, deltaTrust: -20, deltaFear: 0, deltaRespect: -20, 0);
 
-            // Start harvest for both with 0.1s gather duration
+            // Start harvest for both with 1.0s gather duration
             var pathE = new PathResponse { Length = 0, IsValid = true };
             var pathF = new PathResponse { Length = 0, IsValid = true };
-            simManager.EnqueueIntent(new HarvestResourceIntent(nodeE.Id, resId, pathE, gatherDuration: 0.1f));
-            simManager.EnqueueIntent(new HarvestResourceIntent(nodeF.Id, resId, pathF, gatherDuration: 0.1f));
+            simManager.EnqueueIntent(new HarvestResourceIntent(nodeE.Id, resId, pathE, gatherDuration: 1.0f));
+            simManager.EnqueueIntent(new HarvestResourceIntent(nodeF.Id, resId, pathF, gatherDuration: 1.0f));
 
             // Tick 1: Both arrive, neither yields, both enter Harvesting
             simManager.Tick();
@@ -204,12 +204,12 @@ namespace Simpiens.Testing.Sociopolitical
 
             // Manually advance state to simulate E finishing first and claiming the single yield
             // Call ExecuteIntent directly to test deterministic resolution
-            var activeE = new ActiveIntentState { Intent = new HarvestResourceIntent(nodeE.Id, resId, pathE, 0.1f), ElapsedTime = 0.15f };
+            var activeE = new ActiveIntentState { Intent = new HarvestResourceIntent(nodeE.Id, resId, pathE, 1.0f), ElapsedTime = 1.05f };
             var resultE = simManager.ExecuteIntent(nodeE, activeE);
             Assert(resultE == IntentResult.Success, "Pawn E successfully harvested the single yield.");
 
             // Now Pawn F finishes slightly later and finds node depleted
-            var activeF = new ActiveIntentState { Intent = new HarvestResourceIntent(nodeF.Id, resId, pathF, 0.1f), ElapsedTime = 0.15f, ContestedCompetitorId = nodeE.Id };
+            var activeF = new ActiveIntentState { Intent = new HarvestResourceIntent(nodeF.Id, resId, pathF, 1.0f), ElapsedTime = 1.05f, ContestedCompetitorId = nodeE.Id };
             var resultF = simManager.ExecuteIntent(nodeF, activeF);
             Assert(resultF == IntentResult.TargetMissing, "Pawn F failed harvest with TargetMissing.");
             Assert(agentF.Frustration == 25f, $"Pawn F suffered +25 Frustration penalty (actual: {agentF.Frustration})");

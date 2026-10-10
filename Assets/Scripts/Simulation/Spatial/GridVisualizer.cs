@@ -65,6 +65,11 @@ namespace Simpiens.Testing
                             if (type == EntityType.Wall) hasWall = true;
                         }
 
+                        if (snapshot.StaticGrid != null && !snapshot.StaticGrid.IsCellWalkable(x, y))
+                        {
+                            hasWall = true;
+                        }
+
                         if (hasWall)
                         {
                             Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.8f); // Gray for walls (optional extra)

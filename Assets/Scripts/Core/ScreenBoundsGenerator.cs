@@ -1,5 +1,7 @@
 using UnityEngine;
 using VContainer.Unity;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Core
 {
@@ -21,15 +23,16 @@ namespace Simpiens.Core
             Camera cam = Camera.main;
             if (cam == null || !cam.orthographic)
             {
-                Debug.LogError("ScreenBoundsGenerator requires an Orthographic Main Camera in the scene.");
+                SimLog.Bootstrap.ZLogError($"ScreenBoundsGenerator requires an orthographic main camera in the scene");
                 return;
             }
 
-            // Ensure camera frames the 5 playpens (-10 to +10) with generous margins
-            if (cam.orthographicSize < 6.0f)
+            // Ensure camera frames the 36x28 utilitarian outpost map with generous margins
+            if (cam.orthographicSize < 14.5f)
             {
-                cam.orthographicSize = 6.0f;
+                cam.orthographicSize = 14.5f;
             }
+            cam.transform.position = new Vector3(0f, 0f, cam.transform.position.z);
 
             // Calculate screen dimensions in world space
             float screenHeight = cam.orthographicSize * 2f;
@@ -43,11 +46,12 @@ namespace Simpiens.Core
             GameObject boundsRoot = new GameObject("[ScreenBounds]");
             Object.DontDestroyOnLoad(boundsRoot);
 
-            // Create 4 wall GameObjects
-            CreateWall("TopWall", new Vector2(0, halfHeight + _wallThickness / 2f), new Vector2(screenWidth + _wallThickness * 2, _wallThickness), boundsRoot.transform);
-            CreateWall("BottomWall", new Vector2(0, -halfHeight - _wallThickness / 2f), new Vector2(screenWidth + _wallThickness * 2, _wallThickness), boundsRoot.transform);
-            CreateWall("LeftWall", new Vector2(-halfWidth - _wallThickness / 2f, 0), new Vector2(_wallThickness, screenHeight + _wallThickness * 2), boundsRoot.transform);
-            CreateWall("RightWall", new Vector2(halfWidth + _wallThickness / 2f, 0), new Vector2(_wallThickness, screenHeight + _wallThickness * 2), boundsRoot.transform);
+            // Create 4 wall GameObjects centered around camera position
+            Vector2 camPos = cam.transform.position;
+            CreateWall("TopWall", new Vector2(camPos.x, camPos.y + halfHeight + _wallThickness / 2f), new Vector2(screenWidth + _wallThickness * 2, _wallThickness), boundsRoot.transform);
+            CreateWall("BottomWall", new Vector2(camPos.x, camPos.y - halfHeight - _wallThickness / 2f), new Vector2(screenWidth + _wallThickness * 2, _wallThickness), boundsRoot.transform);
+            CreateWall("LeftWall", new Vector2(camPos.x - halfWidth - _wallThickness / 2f, camPos.y), new Vector2(_wallThickness, screenHeight + _wallThickness * 2), boundsRoot.transform);
+            CreateWall("RightWall", new Vector2(camPos.x + halfWidth + _wallThickness / 2f, camPos.y), new Vector2(_wallThickness, screenHeight + _wallThickness * 2), boundsRoot.transform);
         }
 
         private void CreateWall(string wallName, Vector2 position, Vector2 size, Transform parent)

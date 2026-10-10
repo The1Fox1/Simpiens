@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Cognition.Contracts;
 using UnityEngine;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Cognition.Planning
 {
@@ -49,7 +51,13 @@ namespace Simpiens.Cognition.Planning
         private readonly int _closedMask;
 
         // Scratch buffers for zero-allocation expansion
-        private readonly List<GoapAction> _applicableActionsBuffer;
+
+        // Per-call relevance/validity cache, indexed like ActionGraph.Actions (grows only if the graph grows)
+        private bool[] _actionUsable = new bool[32];
+        private float[] _actionStepCost = new float[32];
+
+        /// <summary>Nodes allocated by the most recent Plan call (diagnostics and tests).</summary>
+        public int LastNodeCount { get; private set; }
         private readonly int[] _pathScratch;
 
         [VContainer.Inject]
@@ -73,7 +81,6 @@ namespace Simpiens.Cognition.Planning
             _occupiedSlots = new int[tableSize];
             _closedMask = tableSize - 1;
 
-            _applicableActionsBuffer = new List<GoapAction>(32);
             _pathScratch = new int[maxNodes];
         }
 
@@ -99,7 +106,18 @@ namespace Simpiens.Cognition.Planning
                     return true;
                 }
 
-                // 2. Reset search buffers
+                // 2. Restrict the search to actions that can contribute to the goal and are valid now.
+                //    Irrelevant actions (e.g. Rest while planning a bounty) only touch facts the goal never
+                //    depends on, so skipping them is sound and keeps impossible goals from exhausting the pool.
+                var actions = actionGraph.Actions;
+                int actionCount = actions.Count;
+                if (!PrepareRelevantActions(actions, actionCount, currentState, goal.DesiredState, context))
+                {
+                    LastNodeCount = 0;
+                    return false;
+                }
+
+                // 3. Reset search buffers
                 ResetSearch();
 
                 // 3. Create root node
@@ -130,24 +148,15 @@ namespace Simpiens.Cognition.Planning
                         break;
                     }
 
-                    // Query applicable actions from this state
-                    _applicableActionsBuffer.Clear();
-                    actionGraph.GetApplicableActions(currentNode.State, _applicableActionsBuffer);
-
-                    int actionCount = _applicableActionsBuffer.Count;
+                    // Expand only relevant, valid actions whose preconditions hold in this state
                     for (int i = 0; i < actionCount; i++)
                     {
-                        var action = _applicableActionsBuffer[i];
+                        if (!_actionUsable[i]) continue;
 
-                        // Procedural validation check (e.g. line-of-sight, memory existence)
-                        if (!action.IsValid(context))
-                        {
-                            continue;
-                        }
+                        var action = actions[i];
+                        if (!action.CanRunOn(currentNode.State)) continue;
 
-                        // Calculate dynamic cost (must be positive)
-                        float stepCost = action.GetCost(context);
-                        if (stepCost <= 0f) stepCost = action.BaseCost > 0f ? action.BaseCost : 0.01f;
+                        float stepCost = _actionStepCost[i];
 
                         // Apply action effects to produce successor state
                         WorldState successorState = currentNode.State.ApplyEffects(action.Effects);
@@ -174,6 +183,7 @@ namespace Simpiens.Cognition.Planning
                         if (_nodeCount >= _maxNodes)
                         {
                             // Node pool exhausted; terminate search to maintain frame budget
+                            SimLog.Planning.ZLogWarning($"GOAP node pool exhausted ({_maxNodes} nodes) planning {goal.Name} for {SimLog.Agent(context.AgentId)}; search truncated");
                             break;
                         }
 
@@ -193,6 +203,8 @@ namespace Simpiens.Cognition.Planning
                 }
 
                 // 5. Reconstruct plan if goal was reached
+                LastNodeCount = _nodeCount;
+
                 if (bestGoalNodeIndex != -1)
                 {
                     ReconstructPlan(bestGoalNodeIndex, outPlan);
@@ -201,6 +213,86 @@ namespace Simpiens.Cognition.Planning
 
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Marks actions that can contribute to the goal (backward relevance closure over fact masks), evaluates
+        /// IsValid/GetCost once per relevant action, and returns false if some unsatisfied goal fact has no usable
+        /// producer (the goal is impossible from here, so no search is needed).
+        /// </summary>
+        private bool PrepareRelevantActions(IReadOnlyList<GoapAction> actions, int actionCount, in WorldState currentState, in WorldState desired, AgentContext context)
+        {
+            if (_actionUsable.Length < actionCount)
+            {
+                int size = _actionUsable.Length;
+                while (size < actionCount) size <<= 1;
+                _actionUsable = new bool[size];
+                _actionStepCost = new float[size];
+            }
+
+            for (int i = 0; i < actionCount; i++) _actionUsable[i] = false;
+
+            ulong relevantFacts = desired.Mask;
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                for (int i = 0; i < actionCount; i++)
+                {
+                    if (_actionUsable[i]) continue;
+                    var action = actions[i];
+                    if ((action.Effects.Mask & relevantFacts) == 0) continue;
+
+                    _actionUsable[i] = true;
+                    ulong expanded = relevantFacts | action.Preconditions.Mask;
+                    if (expanded != relevantFacts)
+                    {
+                        relevantFacts = expanded;
+                    }
+                    changed = true;
+                }
+            }
+
+            for (int i = 0; i < actionCount; i++)
+            {
+                if (!_actionUsable[i]) continue;
+
+                var action = actions[i];
+                if (!action.IsValid(context))
+                {
+                    _actionUsable[i] = false;
+                    continue;
+                }
+
+                float stepCost = action.GetCost(context);
+                _actionStepCost[i] = stepCost > 0f ? stepCost : (action.BaseCost > 0f ? action.BaseCost : 0.01f);
+            }
+
+            // Every goal fact that is currently wrong needs at least one usable producer of the desired value
+            ulong wrong = desired.Mask & ((currentState.Values ^ desired.Values) | ~currentState.Mask);
+            for (int bit = 0; bit < 64 && wrong != 0; bit++)
+            {
+                ulong flag = 1UL << bit;
+                if ((wrong & flag) == 0) continue;
+                wrong &= ~flag;
+
+                bool desiredValue = (desired.Values & flag) != 0;
+                bool hasProducer = false;
+                for (int i = 0; i < actionCount; i++)
+                {
+                    if (!_actionUsable[i]) continue;
+                    var effects = actions[i].Effects;
+                    if ((effects.Mask & flag) != 0 && ((effects.Values & flag) != 0) == desiredValue)
+                    {
+                        hasProducer = true;
+                        break;
+                    }
+                }
+
+                if (!hasProducer) return false;
+            }
+
+            return true;
         }
 
         private void ResetSearch()

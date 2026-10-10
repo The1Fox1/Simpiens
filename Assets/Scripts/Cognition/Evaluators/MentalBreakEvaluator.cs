@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 
@@ -100,7 +101,8 @@ namespace Simpiens.Cognition.Evaluators
             foreach (var kvp in context.Memory.SpatialMemoryMap)
             {
                 var record = kvp.Value;
-                if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
+                // Salvage (ore/herb) nodes are not food: a starving agent who only knows salvage must still panic-search
+                if (record.Type == EntityType.Resource && record.ResourceKind.IsFoodYield() && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                 {
                     return true;
                 }

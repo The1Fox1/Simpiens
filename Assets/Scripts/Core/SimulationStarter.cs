@@ -6,6 +6,8 @@ using Simpiens.Testing.Environment;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Core.Bootstrapping
 {
@@ -33,16 +35,17 @@ namespace Simpiens.Core.Bootstrapping
 
         public void Start()
         {
-            Debug.Log("Simulation Started Code-First!");
+            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap)");
 
             // Initialize Spatial Partition
             Camera cam = Camera.main;
-            float worldHeight = 10f; // fallback
-            float worldWidth = 10f;  // fallback
+            float worldHeight = 36f; // Generous fallback to contain 36x28 outpost arena
+            float worldWidth = 44f;  // Generous fallback to contain 36x28 outpost arena
             if (cam != null && cam.orthographic)
             {
-                worldHeight = cam.orthographicSize * 2f;
-                worldWidth = worldHeight * cam.aspect;
+                // Ensure spatial partition comfortably covers the arena even with camera offsets
+                worldHeight = Mathf.Max(36f, (Mathf.Abs(cam.transform.position.y) + cam.orthographicSize) * 2f + 4f);
+                worldWidth = Mathf.Max(44f, (Mathf.Abs(cam.transform.position.x) + cam.orthographicSize * cam.aspect) * 2f + 4f);
             }
 
             // Initialize with the calculated bounds and a reasonable cell size
@@ -53,7 +56,48 @@ namespace Simpiens.Core.Bootstrapping
             var visualizer = visualizerGo.AddComponent<GridVisualizer>();
             _resolver.Inject(visualizer);
 
-            if (Application.isBatchMode)
+            // Instantiate Facility Dashboard UI (UI Toolkit)
+            var dashboardGo = new GameObject("[FacilityDashboard]");
+            dashboardGo.SetActive(false); // Inactive until properties are assigned so OnEnable runs properly
+
+            var uiDoc = dashboardGo.AddComponent<UnityEngine.UIElements.UIDocument>();
+
+            var panelSettings = Resources.Load<UnityEngine.UIElements.PanelSettings>("UI/DefaultPanelSettings");
+            if (panelSettings == null)
+            {
+                panelSettings = ScriptableObject.CreateInstance<UnityEngine.UIElements.PanelSettings>();
+                panelSettings.scaleMode = UnityEngine.UIElements.PanelScaleMode.ScaleWithScreenSize;
+                panelSettings.referenceResolution = new Vector2Int(1920, 1080);
+                panelSettings.match = 0.5f;
+            }
+            uiDoc.panelSettings = panelSettings;
+
+            var visualTree = Resources.Load<UnityEngine.UIElements.VisualTreeAsset>("UI/FacilityDashboard");
+            if (visualTree != null)
+            {
+                uiDoc.visualTreeAsset = visualTree;
+            }
+
+            var presenter = dashboardGo.AddComponent<Simpiens.UI.FacilityDashboardPresenter>();
+            _resolver.Inject(presenter);
+            var toggleController = dashboardGo.AddComponent<Simpiens.UI.ViewToggleController>();
+            toggleController.Initialize(presenter);
+
+            dashboardGo.SetActive(true); // Activate now with all dependencies ready
+            SimLog.Bootstrap.ZLogInformation($"Facility Dashboard initialized (PanelSettings: {uiDoc.panelSettings?.name}, VisualTree: {uiDoc.visualTreeAsset?.name})");
+
+            bool isRunningTests = false;
+            string[] args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Equals("-runTests", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    isRunningTests = true;
+                    break;
+                }
+            }
+
+            if (Application.isBatchMode && !isRunningTests)
             {
                 var batchGo = new GameObject("[BatchPlaymodeController]");
                 batchGo.AddComponent<BatchPlaymodeController>();

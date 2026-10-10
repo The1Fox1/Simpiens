@@ -1,3 +1,4 @@
+using Simpiens.Cognition.Groups;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 
@@ -19,12 +20,27 @@ namespace Simpiens.Cognition.Contracts
         public float Social => Needs.Social;
 
         public readonly SharedWorldSnapshot Snapshot;
-        public readonly Simpiens.Cognition.Memory.AgentMemory Memory;
+        public readonly Simpiens.Cognition.Memory.IAgentMemory Memory;
         public readonly uint CurrentTick;
         public readonly float Frustration;
 
-        public AgentContext(GUID agentId, Vector2 position, in AgentNeeds needs, float frustration, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory, uint currentTick)
+        // Sociopolitical & Identity standing
+        public readonly GroupMembership Membership;
+        public readonly IdentityTag Identity;
+
+        // Economic Inventory & Wallet (Epic 9)
+        public readonly Simpiens.Cognition.Inventory.IAgentInventory Inventory;
+
+        // Scout bounty id for which the agent holds a completed sector report (0 = none)
+        public readonly ushort ScoutReportBountyId;
+
+        public AgentContext(GUID agentId, Vector2 position, in AgentNeeds needs, float frustration,
+                            SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
+                            in GroupMembership membership = default, in IdentityTag identity = default,
+                            Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
+                            ushort scoutReportBountyId = 0)
         {
+            ScoutReportBountyId = scoutReportBountyId;
             AgentId = agentId;
             Position = position;
             Needs = needs;
@@ -32,11 +48,15 @@ namespace Simpiens.Cognition.Contracts
             Snapshot = snapshot;
             Memory = memory;
             CurrentTick = currentTick;
+            Membership = membership;
+            Identity = identity;
+            Inventory = inventory;
         }
 
         // Backward-compatible constructor
-        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, float frustration, SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.AgentMemory memory, uint currentTick)
-            : this(agentId, position, new AgentNeeds(hunger, energy, 50f), frustration, snapshot, memory, currentTick)
+        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, float frustration,
+                            SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick)
+            : this(agentId, position, new AgentNeeds(hunger, energy, 50f), frustration, snapshot, memory, currentTick, GroupMembership.None, IdentityTag.Default, null)
         {
         }
     }

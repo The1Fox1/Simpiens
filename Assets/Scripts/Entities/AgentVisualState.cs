@@ -14,6 +14,8 @@ namespace Simpiens.Entities
         Thinking = 5,
         Resting = 6,
         Yielding = 7,
-        Sharing = 8
+        Sharing = 8,
+        Rallying = 9,
+        Defiant = 10
     }
 }

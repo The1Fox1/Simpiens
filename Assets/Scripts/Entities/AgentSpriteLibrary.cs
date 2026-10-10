@@ -10,12 +10,16 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[9, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[11, 2];
         private static readonly Sprite _resourceSprite;
+        private static readonly Sprite _oreVeinSprite;
+        private static readonly Sprite _herbPatchSprite;
         private static readonly Sprite _wallSprite;
         private static readonly Sprite[] _campfireSprites = new Sprite[2];
 
         public static Sprite ResourceSprite => _resourceSprite;
+        public static Sprite OreVeinSprite => _oreVeinSprite;
+        public static Sprite HerbPatchSprite => _herbPatchSprite;
         public static Sprite WallSprite => _wallSprite;
         public static Sprite GetCampfireSprite(int frame) => _campfireSprites[frame & 1];
 
@@ -113,7 +117,25 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Sharing, 0] = CreateSprite(PatternShare0, sharePalette, "Agent_Share_0");
             _agentSprites[(int)AgentVisualState.Sharing, 1] = CreateSprite(PatternShare1, sharePalette, "Agent_Share_1");
 
-            // 10. Resource (Berry Bush)
+            // 10. Rallying Sprites (Gold / Amber livery + raised banner)
+            var rallyPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(234, 179, 8, 255),
+                shadow: new Color32(161, 98, 7, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Rallying, 0] = CreateSprite(PatternRally0, rallyPalette, "Agent_Rally_0");
+            _agentSprites[(int)AgentVisualState.Rallying, 1] = CreateSprite(PatternRally1, rallyPalette, "Agent_Rally_1");
+
+            // 11. Defiant Sprites (Crimson / Dark Red Outfit + crossed arms)
+            var defiantPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(185, 28, 28, 255),
+                shadow: new Color32(127, 29, 29, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Defiant, 0] = CreateSprite(PatternDefiant0, defiantPalette, "Agent_Defiant_0");
+            _agentSprites[(int)AgentVisualState.Defiant, 1] = CreateSprite(PatternDefiant1, defiantPalette, "Agent_Defiant_1");
+
+            // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
@@ -122,6 +144,25 @@ namespace Simpiens.Entities
                 { 'R', new Color32(220, 38, 28, 255) }
             };
             _resourceSprite = CreateSprite(PatternBerryBush, bushPalette, "Resource_BerryBush");
+
+            // 12b. Salvage nodes: tinted variants of the bush pattern so ore/herb nodes read distinctly
+            var orePalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { '#', new Color32(30, 41, 59, 255) },
+                { 'G', new Color32(100, 116, 139, 255) },
+                { 'R', new Color32(234, 88, 12, 255) }
+            };
+            _oreVeinSprite = CreateSprite(PatternBerryBush, orePalette, "Resource_OreVein");
+
+            var herbPalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { '#', new Color32(20, 60, 50, 255) },
+                { 'G', new Color32(45, 212, 191, 255) },
+                { 'R', new Color32(216, 180, 254, 255) }
+            };
+            _herbPatchSprite = CreateSprite(PatternBerryBush, herbPalette, "Resource_HerbPatch");
 
             // 11. Stone Wall (Impassable play pen barrier)
             var wallPalette = new Dictionary<char, Color32>
@@ -149,10 +190,23 @@ namespace Simpiens.Entities
             _campfireSprites[1] = CreateSprite(PatternCampfire1, campfirePalette, "Anchor_Campfire_1");
         }
 
+        /// <summary>
+        /// Returns the node sprite for a resource yielding the given item type.
+        /// </summary>
+        public static Sprite GetResourceSprite(Simpiens.Simulation.Economy.ItemType yieldItem)
+        {
+            switch (yieldItem)
+            {
+                case Simpiens.Simulation.Economy.ItemType.IronOre: return _oreVeinSprite;
+                case Simpiens.Simulation.Economy.ItemType.MedicinalHerb: return _herbPatchSprite;
+                default: return _resourceSprite;
+            }
+        }
+
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 9) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= 11) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -654,6 +708,86 @@ namespace Simpiens.Entities
             "..S....FF....S..",
             "...ss......ss...",
             ".....ssssss.....",
+            "................"
+        };
+
+        private static readonly string[] PatternRally0 =
+        {
+            ".......#CC#.....",
+            "......#CCCC#....",
+            "......#CCCC#....",
+            ".......#TT#.....",
+            "..#T#...##......",
+            "..#TT#.######...",
+            "...#THHHHHHH#...",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....###..###...."
+        };
+
+        private static readonly string[] PatternRally1 =
+        {
+            "......#CCCC#....",
+            ".....#CCCCCC#...",
+            "......#CCCC#....",
+            ".......#TT#.....",
+            "..#T#...##......",
+            "..#TT#.######...",
+            "...#THHHHHHH#...",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "....#SSSSSS#....",
+            "...#SS#..#SS#...",
+            "...###....###..."
+        };
+
+        private static readonly string[] PatternDefiant0 =
+        {
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#BBKKBB#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#KKKKKKKK#...",
+            "...#K######K#...",
+            "....#CCCCCC#....",
+            "....#SSSSSS#....",
+            "....#SS##SS#....",
+            "....#SS##SS#....",
+            "....###..###....",
+            "................"
+        };
+
+        private static readonly string[] PatternDefiant1 =
+        {
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#BBKKBB#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#KKKKKKKK#...",
+            "...#K######K#...",
+            "....#SSSSSS#....",
+            "....#SSSSSS#....",
+            "...#SS#..#SS#...",
+            "...#SS#..#SS#...",
+            "...###....###...",
             "................"
         };
 
