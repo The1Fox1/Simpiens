@@ -135,10 +135,11 @@ namespace Simpiens.Testing.Drives
             movingNode.transform.position = Vector2.zero;
             registry.RegisterNode(movingNode);
 
+            // The obstructed waypoint is intermediate: an occupied *final* waypoint within ArrivalTolerance counts as arrival
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(1f, 0f) },
-                Length = 1,
+                Waypoints = new Vector2[] { new Vector2(1f, 0f), new Vector2(3f, 0f) },
+                Length = 2,
                 IsValid = true
             };
 

@@ -91,8 +91,10 @@ namespace Simpiens.Cognition.Pathfinding
             }
 
             // Target walkability fallback: if exact target cell is blocked, find closest walkable adjacent neighbor
+            bool targetSnapped = false;
             if (!snapshot.IsWalkable(targetX, targetY))
             {
+                targetSnapped = true;
                 if (!TryFindNearestWalkableNeighbor(snapshot, targetX, targetY, startX, startY, out targetX, out targetY))
                 {
                     response.Length = 0;
@@ -240,9 +242,12 @@ namespace Simpiens.Cognition.Pathfinding
                 _rawWaypoints[rawLength - 1 - i] = tmp;
             }
 
-            // Anchor endpoints to exact request positions
+            // Anchor endpoints to exact request positions. A target inside a blocked cell (wall, stall, anchor) is
+            // replaced by the closest point of the walkable cell A* actually reached, so pawns never path into geometry.
             _rawWaypoints[0] = request.StartPosition;
-            _rawWaypoints[rawLength - 1] = request.TargetPosition;
+            _rawWaypoints[rawLength - 1] = targetSnapped
+                ? ClosestPointInCell(request.TargetPosition, targetX, targetY, cellSize, offsetX, offsetY)
+                : request.TargetPosition;
 
             // Apply Raycast String-Pulling Path Smoothing
             int smoothLength = ApplyPathSmoothing(snapshot, rawLength);
@@ -258,6 +263,17 @@ namespace Simpiens.Cognition.Pathfinding
             response.IsValid = copyCount > 0;
             response.IsComplete = true;
             return true;
+        }
+
+        private const float CellInset = 0.05f;
+
+        private static Vector2 ClosestPointInCell(Vector2 point, int cellX, int cellY, float cellSize, float offsetX, float offsetY)
+        {
+            float minX = cellX * cellSize - offsetX + CellInset;
+            float minY = cellY * cellSize - offsetY + CellInset;
+            float maxX = (cellX + 1) * cellSize - offsetX - CellInset;
+            float maxY = (cellY + 1) * cellSize - offsetY - CellInset;
+            return new Vector2(Mathf.Clamp(point.x, minX, maxX), Mathf.Clamp(point.y, minY, maxY));
         }
 
         private int ApplyPathSmoothing(SharedWorldSnapshot snapshot, int rawCount)
@@ -281,7 +297,8 @@ namespace Simpiens.Cognition.Pathfinding
                 int furthest = anchor + 1;
                 for (int test = rawCount - 1; test > anchor + 1; test--)
                 {
-                    if (snapshot.HasLineOfSight(_rawWaypoints[anchor], _rawWaypoints[test]))
+                    if (snapshot.IsSegmentStaticClear(_rawWaypoints[anchor], _rawWaypoints[test]) &&
+                        snapshot.HasLineOfSight(_rawWaypoints[anchor], _rawWaypoints[test]))
                     {
                         furthest = test;
                         break;

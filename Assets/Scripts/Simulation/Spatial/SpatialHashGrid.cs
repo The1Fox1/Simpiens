@@ -17,6 +17,12 @@ namespace Simpiens.Simulation.Spatial
         void UpdateFromRegistry(IWorldRegistry registry, IGroupRegistry groupRegistry, IReadOnlyList<TradeStallData> stalls, IReadOnlyList<BountyContract> bounties);
         SharedWorldSnapshot GetActiveSnapshot();
         StaticNavGrid StaticGrid { get; }
+
+        /// <summary>
+        /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
+        /// Call when the world is torn down (respawn) so stale walls don't outlive their entities.
+        /// </summary>
+        void ResetStatic();
     }
 
     public class SpatialHashGrid : ISpatialPartition
@@ -26,8 +32,17 @@ namespace Simpiens.Simulation.Spatial
         private int _height;
         private int _maxEntitiesPerCell = 16;
         private StaticNavGrid _staticGrid;
+        private int _lastWallCount;
+        private bool _staticRebuildPending;
 
         public StaticNavGrid StaticGrid => _staticGrid;
+
+        public void ResetStatic()
+        {
+            _staticGrid?.Clear();
+            _lastWallCount = 0;
+            _staticRebuildPending = false;
+        }
         
         // Use a thread-safe pool because cognitive tasks (on background threads) 
         // will be releasing snapshots back to this pool concurrently.
@@ -42,6 +57,7 @@ namespace Simpiens.Simulation.Spatial
             _width = Mathf.CeilToInt(worldWidth / cellSize);
             _height = Mathf.CeilToInt(worldHeight / cellSize);
             _staticGrid = new StaticNavGrid(_width, _height, _cellSize);
+            _staticGrid.SetPlayableHalfExtent(NavConstants.PlayAreaHalfExtent);
 
             // Pre-warm the pool with a few snapshots
             for (int i = 0; i < 3; i++)
@@ -96,6 +112,14 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.Retain();
             _currentTickSnapshot.Clear();
 
+            // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
+            if (_staticRebuildPending)
+            {
+                _staticGrid?.Clear();
+                _staticRebuildPending = false;
+            }
+            int wallCount = 0;
+
             // Populate sociopolitical groups if registry is present
             if (groupRegistry != null)
             {
@@ -147,8 +171,15 @@ namespace Simpiens.Simulation.Spatial
 
                 if (type == EntityType.Wall)
                 {
+                    wallCount++;
                     if (_staticGrid != null)
                     {
+                        // Inflate by the pawn body radius: a pawn centred in any walkable cell then clears the wall
+                        float inflated = radius + NavConstants.PawnBodyRadius;
+                        minX = Mathf.Max(0, Mathf.FloorToInt((pos.x - inflated + offsetX) / _cellSize));
+                        maxX = Mathf.Min(_width - 1, Mathf.FloorToInt((pos.x + inflated + offsetX) / _cellSize));
+                        minY = Mathf.Max(0, Mathf.FloorToInt((pos.y - inflated + offsetY) / _cellSize));
+                        maxY = Mathf.Min(_height - 1, Mathf.FloorToInt((pos.y + inflated + offsetY) / _cellSize));
                         for (int y = minY; y <= maxY; y++)
                         {
                             for (int x = minX; x <= maxX; x++)
@@ -169,6 +200,9 @@ namespace Simpiens.Simulation.Spatial
                     }
                 }
             }
+
+            if (wallCount < _lastWallCount) _staticRebuildPending = true;
+            _lastWallCount = wallCount;
 
             // Walls are rasterized above; rebuild connected regions only if walkability changed
             _staticGrid?.EnsureRegions();

@@ -105,6 +105,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<Simpiens.Testing.Drives.DriveDecayValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Navigation.MotorWatchdogValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Navigation.GridAStarValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Navigation.NavigationClearanceValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Drives.MentalBreakValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Drives.DriveSystemValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Sociopolitical.AffinityMatrixValidator>(Lifetime.Singleton).AsImplementedInterfaces();

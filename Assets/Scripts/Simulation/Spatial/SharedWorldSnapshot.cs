@@ -359,6 +359,74 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
+        /// True when the world point lies in a statically walkable cell (static walls only). Out of bounds is not walkable.
+        /// With no static grid every in-bounds point is walkable. Zero allocations, thread-safe.
+        /// </summary>
+        public bool IsStaticWalkable(Vector2 worldPos)
+        {
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+            int cellX = Mathf.FloorToInt((worldPos.x + offsetX) / CellSize);
+            int cellY = Mathf.FloorToInt((worldPos.y + offsetY) / CellSize);
+            if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
+            return StaticGrid == null || StaticGrid.IsCellWalkable(cellX, cellY);
+        }
+
+        /// <summary>
+        /// Exact static clearance of a segment: visits every cell the segment touches (grid traversal, not sampling)
+        /// and fails on any statically blocked cell. Passing exactly through a cell corner requires both orthogonal
+        /// cells to be walkable, matching A*'s no-corner-cutting rule. Zero allocations, thread-safe.
+        /// </summary>
+        public bool IsSegmentStaticClear(Vector2 start, Vector2 end)
+        {
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+            float sx = (start.x + offsetX) / CellSize, sy = (start.y + offsetY) / CellSize;
+            float ex = (end.x + offsetX) / CellSize, ey = (end.y + offsetY) / CellSize;
+
+            int x = Mathf.FloorToInt(sx), y = Mathf.FloorToInt(sy);
+            int endX = Mathf.FloorToInt(ex), endY = Mathf.FloorToInt(ey);
+            if (!IsStaticCellWalkable(x, y) || !IsStaticCellWalkable(endX, endY)) return false;
+
+            float dx = ex - sx, dy = ey - sy;
+            int stepX = dx > 0f ? 1 : (dx < 0f ? -1 : 0);
+            int stepY = dy > 0f ? 1 : (dy < 0f ? -1 : 0);
+            float tDeltaX = stepX != 0 ? Mathf.Abs(1f / dx) : float.PositiveInfinity;
+            float tDeltaY = stepY != 0 ? Mathf.Abs(1f / dy) : float.PositiveInfinity;
+            float tMaxX = stepX > 0 ? (x + 1 - sx) * tDeltaX : (stepX < 0 ? (sx - x) * tDeltaX : float.PositiveInfinity);
+            float tMaxY = stepY > 0 ? (y + 1 - sy) * tDeltaY : (stepY < 0 ? (sy - y) * tDeltaY : float.PositiveInfinity);
+
+            int guard = Width + Height + 2;
+            while ((x != endX || y != endY) && guard-- > 0)
+            {
+                if (Mathf.Abs(tMaxX - tMaxY) < 1e-5f)
+                {
+                    // Exact corner crossing: both orthogonal neighbours must be open
+                    if (!IsStaticCellWalkable(x + stepX, y) || !IsStaticCellWalkable(x, y + stepY)) return false;
+                    x += stepX; y += stepY;
+                    tMaxX += tDeltaX; tMaxY += tDeltaY;
+                }
+                else if (tMaxX < tMaxY)
+                {
+                    x += stepX; tMaxX += tDeltaX;
+                }
+                else
+                {
+                    y += stepY; tMaxY += tDeltaY;
+                }
+
+                if (!IsStaticCellWalkable(x, y)) return false;
+            }
+            return true;
+        }
+
+        private bool IsStaticCellWalkable(int cellX, int cellY)
+        {
+            if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
+            return StaticGrid == null || StaticGrid.IsCellWalkable(cellX, cellY);
+        }
+
+        /// <summary>
         /// Thread-safe query method for cognitive agents to find entities in a radius.
         /// </summary>
         public void GetEntitiesInRange(Vector2 position, float radius, List<EntitySnapshot> results)

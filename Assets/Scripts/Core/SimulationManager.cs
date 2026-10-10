@@ -565,6 +565,9 @@ namespace Simpiens.Simulation
             {
                 _groupRegistry.Clear();
             }
+
+            // Walls from the torn-down world (including injected chaos walls) must not outlive it
+            _spatialPartition?.ResetStatic();
         }
 
         public void Tick()
@@ -985,10 +988,14 @@ namespace Simpiens.Simulation
 
             Vector2 targetPos = path.Waypoints[currentIndex];
 
-            // Ignore IsPositionBlocked entirely to physically break free from any deadlock!
+            // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
             float step = speed * FixedTickDeltaTime;
-            node.SetLogicalPosition(Vector2.MoveTowards(node.Position, targetPos, step));
+            if (!TryDisplacePawn(node, Vector2.MoveTowards(node.Position, targetPos, step)))
+            {
+                currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
+                return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
+            }
 
             // Check if reached the current waypoint
             if (Vector2.Distance(node.Position, targetPos) < 0.05f)
@@ -1038,20 +1045,35 @@ namespace Simpiens.Simulation
                 }
             }
 
+            bool isFinalWaypoint = state.CurrentWaypointIndex == path.Length - 1;
+            bool nearFinal = isFinalWaypoint && Vector2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance;
+
             // 2. Path Invalidation: Check if next step is blocked
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
             if (IsPositionBlocked(targetPos, node.Id, clearance))
             {
+                // Someone already stands on our destination and we're close: arrive here rather than stack on them
+                if (nearFinal) return IntentResult.Success;
+
                 // Do not advance position into the obstructed target this tick.
                 // Stationary state will accumulate TimeSinceLastProgress in Section 1.
                 // If blocked continuously for >= 1.0s, the progressive watchdog reflex will handle unsticking cleanly.
                 return IntentResult.InProgress;
             }
 
-            // 3. Move the pawn visually and logically
+            // 3. Move the pawn visually and logically, keeping clear of walls and other pawns
             float speed = node != null ? node.BaseSpeed : 2f;
             float step = speed * FixedTickDeltaTime;
-            node.SetLogicalPosition(Vector2.MoveTowards(node.Position, targetPos, step));
+            Vector2 candidate = Vector2.MoveTowards(node.Position, targetPos, step);
+            if (IsCrowdedMove(node, candidate))
+            {
+                if (nearFinal) return IntentResult.Success;
+                return IntentResult.InProgress; // watchdog resolves persistent face-offs
+            }
+            if (!TryDisplacePawn(node, candidate, respectPawns: false))
+            {
+                return IntentResult.InProgress; // static wall ahead; watchdog takes over
+            }
 
             // Check if reached the current waypoint
             if (Vector2.Distance(node.Position, targetPos) < 0.05f)
@@ -1087,9 +1109,13 @@ namespace Simpiens.Simulation
                 Vector2 perpendicular = new Vector2(-dir.y, dir.x) * displacement;
                 if (SimLog.Traces(SimLog.Navigation, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
-                    SimLog.Navigation.ZLogDebug($"Watchdog tier 1 ({state.StallCount}): {SimLog.Agent(node.Id)} stalled at {node.Position} toward {targetPos}; nudging {perpendicular} (unchecked against walls)");
+                    SimLog.Navigation.ZLogDebug($"Watchdog tier 1 ({state.StallCount}): {SimLog.Agent(node.Id)} stalled at {node.Position} toward {targetPos}; nudging {perpendicular}");
                 }
-                node.SetLogicalPosition(node.Position + perpendicular);
+                // Wall-checked: try the chosen flank, then the mirrored one, else stay put and escalate next stall
+                if (!TryDisplacePawn(node, node.Position + perpendicular))
+                {
+                    TryDisplacePawn(node, (Vector2)node.Position - perpendicular);
+                }
                 state.LastSampledPosition = node.Position;
                 return IntentResult.InProgress;
             }
@@ -1106,8 +1132,8 @@ namespace Simpiens.Simulation
             else
             {
                 // Tier 3: Target Disengage & Blacklist Back-Off (StallCount >= 4)
-                SimLog.Navigation.ZLogDebug($"Watchdog tier 3: {SimLog.Agent(node.Id)} disengaging from {targetPos} at {node.Position} ({state.Intent?.GetType().Name}); backing off 0.5m (unchecked against walls)");
-                node.SetLogicalPosition(node.Position - (dir * 0.5f));
+                SimLog.Navigation.ZLogDebug($"Watchdog tier 3: {SimLog.Agent(node.Id)} disengaging from {targetPos} at {node.Position} ({state.Intent?.GetType().Name}); backing off 0.5m");
+                TryDisplacePawn(node, (Vector2)node.Position - (dir * 0.5f));
 
                 if (state.Intent is HarvestResourceIntent harvest)
                 {
@@ -1120,6 +1146,76 @@ namespace Simpiens.Simulation
 
                 return IntentResult.PathBlocked;
             }
+        }
+
+        /// <summary>
+        /// Moves a pawn to <paramref name="candidate"/> only if the straight move stays in statically walkable cells
+        /// (exact segment traversal, no corner cutting) and, unless <paramref name="respectPawns"/> is false, does not
+        /// crowd another pawn (see <see cref="IsCrowdedMove"/>). A pawn already inside a blocked cell may always move,
+        /// so it can escape. Every simulation-side pawn displacement (path steps, panic, watchdog, yielding) goes through here.
+        /// </summary>
+        public bool TryDisplacePawn(Simpiens.Entities.NodeController node, Vector2 candidate, bool respectPawns = true)
+        {
+            if (node == null) return false;
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            if (snapshot != null && snapshot.IsStaticWalkable(node.Position) && !snapshot.IsSegmentStaticClear(node.Position, candidate))
+            {
+                return false;
+            }
+            if (respectPawns && IsCrowdedMove(node, candidate))
+            {
+                return false;
+            }
+            node.SetLogicalPosition(candidate);
+            return true;
+        }
+
+        // Snapshot positions are one tick old and every pawn moves at most ~0.3m per tick, so widen the candidate search
+        private const float CrowdSearchMargin = 0.5f;
+
+        /// <summary>
+        /// True when moving <paramref name="node"/> to <paramref name="candidate"/> would bring it closer than
+        /// <see cref="NavConstants.PawnSeparation"/> to another pawn without increasing the distance to it (stepping apart
+        /// is always allowed). Nearby pawns come from the snapshot; their positions are read live from the registry,
+        /// so pawns already moved earlier this tick are seen where they are now, not where they were.
+        /// </summary>
+        internal bool IsCrowdedMove(Simpiens.Entities.NodeController node, Vector2 candidate)
+        {
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            if (snapshot == null || node == null) return false;
+
+            float search = NavConstants.PawnSeparation + CrowdSearchMargin;
+            float offsetX = (snapshot.Width * snapshot.CellSize) * 0.5f;
+            float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
+            int minX = Mathf.Max(0, Mathf.FloorToInt((candidate.x - search + offsetX) / snapshot.CellSize));
+            int maxX = Mathf.Min(snapshot.Width - 1, Mathf.FloorToInt((candidate.x + search + offsetX) / snapshot.CellSize));
+            int minY = Mathf.Max(0, Mathf.FloorToInt((candidate.y - search + offsetY) / snapshot.CellSize));
+            int maxY = Mathf.Min(snapshot.Height - 1, Mathf.FloorToInt((candidate.y + search + offsetY) / snapshot.CellSize));
+            float sepSqr = NavConstants.PawnSeparation * NavConstants.PawnSeparation;
+            Vector2 current = node.Position;
+
+            for (int y = minY; y <= maxY; y++)
+            {
+                for (int x = minX; x <= maxX; x++)
+                {
+                    int index = y * snapshot.Width + x;
+                    int count = snapshot.CellCounts[index];
+                    var cellArray = snapshot.Grid[index];
+                    for (int i = 0; i < count; i++)
+                    {
+                        var entity = cellArray[i];
+                        if (entity.Type != EntityType.Pawn || entity.Id == node.Id) continue;
+
+                        var otherNode = _worldRegistry != null ? _worldRegistry.GetNode(entity.Id) : null;
+                        Vector2 other = otherNode != null ? otherNode.Position : entity.Position;
+                        float candSqr = (candidate - other).sqrMagnitude;
+                        if (candSqr >= sepSqr) continue;
+                        if (candSqr > (current - other).sqrMagnitude) continue; // stepping apart is always allowed
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         internal bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId, float pawnClearanceRadius = 0.4f)

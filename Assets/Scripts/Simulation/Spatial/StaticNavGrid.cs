@@ -16,6 +16,7 @@ namespace Simpiens.Simulation.Spatial
         public readonly float OffsetY;
 
         private readonly bool[] _walkable;
+        private float _playableHalfExtent = float.PositiveInfinity;
 
         // Connected-region labels (4-connected walkable cells; matches A*'s no-corner-cutting rule).
         // Rebuilt on the main thread into a fresh array and published by reference, so background readers
@@ -91,7 +92,37 @@ namespace Simpiens.Simulation.Spatial
             {
                 _walkable[i] = true;
             }
+            ApplyPlayableBounds();
             _walkabilityVersion++;
+        }
+
+        /// <summary>
+        /// Permanently blocks every cell lying entirely outside [-halfExtent, halfExtent] on either axis.
+        /// Survives <see cref="Clear"/>, since the play area is not a wall that can be removed.
+        /// </summary>
+        public void SetPlayableHalfExtent(float halfExtent)
+        {
+            _playableHalfExtent = halfExtent;
+            ApplyPlayableBounds();
+            _walkabilityVersion++;
+        }
+
+        private void ApplyPlayableBounds()
+        {
+            if (float.IsPositiveInfinity(_playableHalfExtent)) return;
+            for (int y = 0; y < Height; y++)
+            {
+                float minY = y * CellSize - OffsetY;
+                bool rowOutside = minY >= _playableHalfExtent || minY + CellSize <= -_playableHalfExtent;
+                for (int x = 0; x < Width; x++)
+                {
+                    float minX = x * CellSize - OffsetX;
+                    if (rowOutside || minX >= _playableHalfExtent || minX + CellSize <= -_playableHalfExtent)
+                    {
+                        _walkable[y * Width + x] = false;
+                    }
+                }
+            }
         }
 
         /// <summary>

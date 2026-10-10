@@ -125,7 +125,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                         // Step back 0.5 units away from competitor
                         Vector2 awayDir = ((Vector2)node.Position - (Vector2)competitorNode.Position).normalized;
                         if (awayDir == Vector2.zero) awayDir = Vector2.down;
-                        node.SetLogicalPosition(node.Position + awayDir * 0.5f);
+                        context.TryDisplacePawn(node, (Vector2)node.Position + awayDir * 0.5f);
 
                         // Blacklist node for 150 ticks
                         agent?.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);

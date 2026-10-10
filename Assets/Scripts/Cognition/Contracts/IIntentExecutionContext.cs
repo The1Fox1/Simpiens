@@ -25,6 +25,9 @@ namespace Simpiens.Cognition.Contracts
 
         IntentResult ExecutePathMovement(NodeController node, PathResponse path, ActiveIntentState state);
         IntentResult ExecutePanicMovement(NodeController node, PathResponse path, ref int currentIndex);
+
+        /// <summary>Moves a pawn only if the move stays clear of static walls and (by default) other pawns; returns false (no move) otherwise.</summary>
+        bool TryDisplacePawn(NodeController node, Vector2 candidate, bool respectPawns = true);
         void CheckGossipOpportunity(NodeController node);
         int GetSectorForPosition(Vector2 position);
 
