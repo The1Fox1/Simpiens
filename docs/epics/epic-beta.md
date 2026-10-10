@@ -1,6 +1,6 @@
 # Epic Beta: Concrete World Mechanics & Physical Interdependence
 
-- **Status**: ACTIVE
+- **Status**: COMPLETED
 - **Preceding Epic**: Epic 7: The Social Affinity Matrix & Relational Dynamics
 - **Following Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Architectural Layer**: Core Simulation (`SimulationManager`, `SpatialHashGrid`, `SharedWorldSnapshot`) & Cognition (`AgentMemory`, Dyadic Matrix Integration, GOAP Goals/Actions)
