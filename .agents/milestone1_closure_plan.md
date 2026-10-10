@@ -139,48 +139,145 @@ Commit: `fix(simulation): seeded SimRandom and deterministic intent ordering`. U
 
 ---
 
-## Phase 3 — Economy model (review §3.3)
+## Phase 3 — Economy observation soak (§3.3 design deferred)
 
-### Current flows (verified)
+> **Status: planned 2026-10-10.** The producer deferred economy *design* decisions until the game is functional (2026-10-09). This phase only **measures**: no new faucets, sinks, prices or pace targets.
 
-| Flow | Direction | Numbers (SwarmSpawner / SupplyTuning) |
-| :--- | :--- | :--- |
-| `InitialSeed` faucet | → stall treasury 250g + agents 10g each | the **only** faucet |
-| Agent sells ore / herb | stall → agent | 20g / 25g per unit |
-| Agent buys ration | agent → stall | 15g |
-| Bounty escrow / payout | stall → escrow → agent | per bounty |
-| Supply caravan restock | stall → **sink** | 2g/unit up to cap 50, every 600 ticks |
-| Ore / herb stock at stall | — | **accumulates; nothing consumes it** |
-| Free food bushes (regrowth) | — | hunger met without spending gold |
+### Goal
 
-**Diagnosis:** the stall pays out for salvage it can never resell, agents can feed themselves for free, and the caravan only removes gold. So the treasury drains to zero, and the loop then stalls (affordability gating stops all salvage sales). This is structural, not a tuning problem.
+Give the producer the data to make the deferred economy decisions:
+- A repeatable, long, uninstrumented run of the real session that records how gold, stock and needs move over time.
+- The same run with and without the provisional export, so the stopgap's effect is visible.
 
-### Deferred (producer decision 2026-10-09)
+**Assertions are integrity only:**
+- Ledger conservation at every sample.
+- The run reaches its tick horizon.
+- The CSV is written.
 
-The producer wants the game functional before making economy decisions. For now, Phase 3 delivers only:
-- **Observation soak:** `EconomySoakScenario` records treasury, agent gold, stock and faucet/sink totals to `Logs/economy-soak.csv`. It asserts only ledger conservation, with **no** pace band. Its data informs the deferred decisions.
-- **Provisional stopgap, only if needed:** if the treasury drain stalls the loop inside a PlayMode scenario's horizon, add the smallest reversible fix (e.g. a caravan export at placeholder prices), named `Provisional*` in `SupplyTuning`. It is not a design commitment.
+There are no economic bands. Phase 3 delivers part of Epic Test-2's "zero-allocation high-frequency market soak runner".
 
-Everything below this heading waits for the producer.
+**Non-goals:**
+- `docs/economy-model.md`, new faucets/sinks, retuning `SupplyTuning`, and food-pressure changes. These all wait for the producer.
+- Making the run bit-reproducible. Arrival ticks of async cognition still vary (§1A.2 #6), so same-seed runs are close but not identical. The CSV records the seed anyway.
 
-### Producer decisions needed (deferred)
+### Current flows (verified 2026-10-10)
 
-1. **Salvage outlet (faucet):** the caravan *buys* salvage from the stall at an export price (e.g. ore 28g, herb 34g). Proposed default: **yes**. It gives the player a margin to manage, the core trading-post fantasy.
-2. **Agent sinks:** which of these? (a) free bushes yield less/regrow slower so rations matter; (b) daily lodging/upkeep fee; (c) gear wear (defer to Epic 10). Proposed default: **(a) only** for Milestone 1.
-3. **Scarcity lever:** material scarcity (node regrowth) vs. agent willingness to spend. Proposed: **both**, with personality (Phase 4) driving willingness.
-4. **Target pace:** e.g. "a competent player's treasury roughly doubles in 30 sim-minutes at 1x; a careless one hits zero". These targets become soak assertions.
+| Flow | Direction | Numbers | Ledger today |
+| :--- | :--- | :--- | :--- |
+| `InitialSeed` | faucet → stall 250g + agents 10g each | once, at spawn | named faucet (total only) |
+| `ProvisionalCaravanExport` | faucet → stall | ore 24g, herb 30g above a 10-unit reserve, every 600 ticks | named faucet (total only) |
+| `SupplyCaravan` restock | stall → sink | 2g/ration up to cap 50, every 600 ticks; skipped if unaffordable | named sink (total only) |
+| Agent buys ration | agent → stall | 15g | conserved transfer, **not counted** |
+| Agent sells ore / herb | stall → agent | 20g / 25g | conserved transfer, **not counted** |
+| Bounty escrow → payout / refund | stall → escrow → agent / stall | per bounty | `TotalEscrowGold` only |
+| Free food (bush regrowth) | — | hunger met without gold | `SupplyService.RegrowthCount` |
+
+`IEconomyLedger` keeps only `TotalFaucetedGold` and `TotalSinkedGold`, with no per-name breakdown and no transfer volumes. That is not enough to explain a treasury curve, so step 3A adds read-only counters.
+
+### Questions the soak must answer
+
+These feed the deferred decisions listed at the end of this phase.
+1. **Treasury trajectory**, with and without the provisional export: does it drain, plateau or grow, and how fast?
+2. **Where gold sits:** stall, crawlers or escrow. Does it pool in crawler wallets?
+3. **Flow volumes per sim-minute:** rations bought, salvage sold, bounty payouts, caravan sink, export faucet.
+4. **Free food vs. bought food:** do crawlers ever *need* to buy rations, or do bushes cover hunger (the missing agent sink)?
+5. **Supply health:** skipped restocks, stall stock levels, node regrowth rate.
 
 ### Changes
-- **`docs/economy-model.md`** (new, one page): faucets, sinks, scarcity lever, tuning table, target pace. ROADMAP §1A gains a one-line invariant: *every gold flow is a named ledger faucet/sink or a conserved transfer*.
-- **`SupplyService`:** caravan export. Sell stall salvage above a reserve at `SupplyTuning.ExportPrice*`, recorded as a ledger faucet `CaravanExport`. Move tuning into `SupplyTuning` (no magic numbers in `SwarmSpawner`).
-- **Food pressure:** apply decision 2(a) via `ResourceData` regrowth/yield tuning for Commons bushes. Leave the pens alone unless the producer says otherwise.
-- **Economy soak (Epic Test-2 item):** a headless or PlayMode `EconomySoakScenario` that runs for 30 sim-minutes at 10x with no player input. It samples treasury, agent gold, stock, faucet and sink totals every 600 ticks to `Logs/economy-soak.csv`, and asserts ledger conservation plus the decision-4 band. This also delivers part of Epic Test-2's "market soak runner".
+
+**3A. Read-only economy counters** (`Simulation/Economy/`)
+- **`EconomyFlowTotals`:** a new `readonly struct` snapshot of cumulative values since `Reset()`:
+  - Stall purchases: count, gold (agent → stall).
+  - Stall sales: count, gold (stall → agent).
+  - Escrow locked, released and refunded gold.
+- **`IEconomyLedger`:**
+  - `EconomyFlowTotals Flows { get; }`, updated inside the existing `TryExecuteStallPurchase/Sale`, `TryLockEscrow`, `TryReleaseEscrowToClaimant` and `TryRefundEscrow` on success. These are main-thread only (single writer).
+  - `uint GetFaucetTotal(string name)` / `uint GetSinkTotal(string name)`, backed by small `Dictionary<string, uint>`s keyed by the constant names already passed to `RecordFaucet/RecordSink`. Lookups with constant strings don't allocate; a new name allocates once.
+  - `Reset()` clears all of them.
+- **`ISupplyService`:** `SkippedRestockCount`, incremented where the "Supply caravan skipped" warning is logged today.
+- **Nothing here changes behaviour.** The counters are written where gold already moves and are read by the soak.
+
+**3B. Provisional export toggle** (for the A/B comparison)
+- `SimulationSettings.ProvisionalExportEnabled`, from `SIMPIENS_PROVISIONAL_EXPORT` (`0` disables) or `-simprovisional-export 0`. Default on, the current behaviour.
+- `AppBootstrapper` registers `SupplyService` with `SupplyTuning.Default` or `SupplyTuning.DefaultWithoutExport`. The latter is a new factory with export prices 0, the same as the 3-argument constructor.
+- Logged at boot next to the seed.
+
+**3C. `EconomySoakScenario`** (`Assets/Tests/PlayMode/Scenarios/`)
+- **Runtime:** real session via `SwarmSpawner.Respawn`, 10× (the speed the supply loop is validated at), **18,000 ticks = 30 sim-minutes**, about 3 wall-clock minutes. Wall-clock timeout 600s. No injection and no player commands. It only observes, like `OutpostSupplyLoopScenario`.
+- **Sampling:** every 600 ticks (one caravan cycle, one sim-minute), plus a final sample. Rows are buffered in a preallocated array and written once at the end, so file I/O stays out of the observed run.
+- **Agent groups:** crawlers and pen agents are summarized separately. Agents at index ≥ `SwarmSpawner.ScriptedPenAgentCount` are crawlers; pen agents are walled off from the stall and would only dilute the numbers.
+- **Integrity assertions:**
+  - Ledger conservation holds at every sample.
+  - `observedTicks ≥ 18000`.
+  - The CSV exists and has the expected number of rows.
+- **Not asserted:** anomaly counts (the supply-loop scenario already guards those), plus every economic value.
+- **Output:**
+  - `Logs/economy-soak-seed<seed>-export<on|off>.csv`.
+  - One Info summary line: start → end treasury, total faucets/sinks, transfer volumes, skipped restocks.
+- **Opt-in:** `[UnityTest, Explicit, Category("Soak")]` in `SwarmPlayModeTests`, so the regular suite stays around 2 minutes and doesn't pick up a 3-minute run.
+
+**3D. Runner script** (`scripts/run-economy-soak.sh`)
+- Runs the soak test filter for each `(seed, export)` pair. Default: seeds `20261009 1 2`, export on and off, so 6 runs (about 20 minutes).
+- Accepts `--seeds` and `--export on|off|both`.
+- Uses the same Unity binary and lockfile checks as `run-playmode-tests.sh`.
+- Exits non-zero if any integrity assertion fails, and prints the CSV paths.
+
+**3E. Findings note**
+- After the runs, append an **Observations** subsection to this phase. It answers the five questions with numbers from the CSVs, and states facts only, without recommendations.
+- Optionally, publish a chart artifact of treasury, crawler gold and flows over time, so the producer can read it at a glance.
+
+### CSV schema (one row per sample)
+
+| Column group | Columns |
+| :--- | :--- |
+| Run | `seed`, `export_enabled`, `tick`, `sim_minute` |
+| Stall | `treasury`, `ration_stock`, `ore_stock`, `herb_stock`, `ration_price`, `ore_buy_price`, `herb_buy_price` |
+| Ledger totals | `fauceted_total`, `sunk_total`, `escrow`, `faucet_initial_seed`, `faucet_provisional_export`, `sink_supply_caravan` |
+| Transfers (cumulative) | `purchases`, `purchase_gold`, `sales`, `sale_gold`, `escrow_locked`, `escrow_released`, `escrow_refunded` |
+| Crawlers (6) | `crawler_gold_total`, `crawler_gold_min`, `crawler_gold_max`, `crawler_hunger_mean`, `crawlers_hungry` (hunger ≥ 60), `crawlers_starving` (≥ 85) |
+| Pens (24) | `pen_gold_total`, `pen_hunger_mean` |
+| Supply | `restocks`, `skipped_restocks`, `exports`, `regrowths`, `dormant_nodes` |
+| Bounties | `active_bounties`, `completed_bounties` |
+| Integrity | `conservation_ok`, `discrepancy` |
+
+Per-minute rates come from differencing the cumulative columns. The scenario doesn't compute them.
 
 ### Verification
-- `SupplyLoopValidator` extended: export faucet, conservation over a restock cycle.
-- `EconomySoakScenario` passes its band. `OutpostSupplyLoopScenario` still passes.
+- New `EconomyCountersValidator` (headless, 4 tests):
+  - A purchase, a sale and an escrow lock/release/refund each move exactly their counters.
+  - The per-name faucet/sink breakdown sums to `TotalFaucetedGold` / `TotalSinkedGold`.
+  - `Reset` clears everything.
+  - Zero allocation across 1,000 counter updates with constant names.
+- `SupplyLoopValidator`: a skipped restock increments `SkippedRestockCount`.
+- Regular PlayMode suite still passes (16/16 plus the new validator wrapper). The soak is explicit, so it isn't counted.
+- `scripts/run-economy-soak.sh` completes all 6 runs with integrity assertions passing. Report the results in the commit/docs, failures included.
 
-Commits: `docs(economy): one-page economy model` · `feat(economy): caravan salvage export faucet and food pressure` · `test(economy): economy soak scenario`.
+### Commits
+- `feat(economy): read-only flow counters for ledger and supply`
+- `feat(simulation): provisional export toggle in SimulationSettings`
+- `test(economy): economy observation soak scenario and runner`
+- `docs(economy): soak observations`
+
+### Risks
+
+| Risk | Mitigation |
+| :--- | :--- |
+| A 30 sim-minute run exposes a late failure (crash, conservation break, frozen loop) | That is a finding: record it and fix it if it's a bug. Integrity failures fail the soak. |
+| Counters drift from the gold they describe | Counters are updated only inside the existing ledger transfer methods, and the validator cross-checks them against totals. |
+| 10× wall-clock throughput drops on long runs | 600s timeout plus the `observedTicks` assertion. A shortfall is reported, not hidden. |
+| Same-seed runs differ (arrival-tick nondeterminism) | Run 3 seeds and compare trends, not exact values. Seed recorded per CSV. |
+
+### Producer decisions (deferred; the soak informs them)
+
+1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.
+2. **Agent sinks:**
+   - (a) Free bushes yield less or regrow slower, so rations matter.
+   - (b) Daily lodging/upkeep fee.
+   - (c) Gear wear (defer to Epic 10).
+3. **Scarcity lever:** material scarcity (node regrowth) vs. agent willingness to spend (Phase 4 personality).
+4. **Target pace:** e.g. "a competent player's treasury roughly doubles in 30 sim-minutes; a careless one hits zero". Once set, it becomes a soak assertion.
+
+Once decided: write `docs/economy-model.md`, implement it, and turn the soak's agreed bands into assertions. That is the deferred half of §3.3.
 
 ---
 
