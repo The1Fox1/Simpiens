@@ -71,19 +71,23 @@ Epic 9: The Outpost Economy & Public Bounties [MECHANISM COMPLETE - live loop no
   - Section 2.6: High-Performance Zero-Allocation Grid A* Navigation Engine (StaticNavGrid, GridAStarSearcher, worker pool in AsyncPathfinder, corner-cutting guards, raycast smoothing) [COMPLETED]
 - DEFERRED (specified but not delivered): MemoryPack serialization,
   EconomyZeroAllocValidator, EconomySerializationValidator
-- Review Section 3.1: Close the Milestone 1 Supply Side [IMPLEMENTED 2026-10-09 - live run pending]
+- Review Section 3.1: Close the Milestone 1 Supply Side [IMPLEMENTED 2026-10-09 - loop emerges live]
   - Root cause fixed: Tier-1 SurvivalUtilityEvaluator never returned null, so GOAP never ran live
     (now a hunger reflex; idle/wander is the Tier-3 AmbientWanderEvaluator fallback)
   - Typed resources (IronOre / MedicinalHerb / Ration), salvage harvesting, multi-unit gather
   - Scout bounty fulfilment (ScoutIntentHandler, report at stall, sector explored)
   - Escrow-only bounty payout; SupplyService caravan restock + dormant node regrowth
   - Outpost Commons arena (stall (0,9), Ore Ridge, Herb Hollow, 6 free crawlers)
-  - SupplyLoopValidator (8 tests) + OutpostSupplyLoopScenario written, NOT YET RUN
-- OPEN: live-loop demonstration (run OutpostSupplyLoopScenario + anomaly scenarios).
+  - SupplyLoopValidator (8 tests) + OutpostSupplyLoopScenario: both seeded bounties fulfilled with no injection
+- OPEN: PlayMode 10/14; OutpostSupplyLoopScenario + 3 anomaly scenarios fail on demo-pen
+  stacking/penetration/thrashing.
   Epic 9 stays MECHANISM COMPLETE until Sections 3.2/3.3 land (producer decision 2026-10-09).
   (see ROADMAP "Milestone 1 Status")
 
-Current Focus (Track A): next engine focus is a PRODUCER DECISION (see ROADMAP "Milestone 1 Status").
+Review remediation progress: see ROADMAP §3A (done: 2.1, 2.2, 2.3, 2.4, 2.6, 3.1, 4.2, 4.3;
+open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspector, determinism).
+
+Current Focus (Track A): next engine focus is a PRODUCER DECISION (proposed sequence: ROADMAP §3A).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
 
@@ -123,4 +127,4 @@ Epic MAP: The Utilitarian Outpost Map & Agent Lifecycle Topology [PAUSED]
 (See docs/epics/epic-map.md for the pause record; 9 sectors is incomplete WIP towards 12-sector target)
 - Exists: OutpostMapBuilder + OutpostMapBuilderValidator (not wired into the live session).
 - Not done: live wiring, FacilityZoneService sector refactor (Phase 2), entity population (Phase 3),
-  lifecycle scenarios (Phase 4). Depends on real navigation (Grid A*), which is deferred from Epic 9.
+  lifecycle scenarios (Phase 4). Its navigation prerequisite (Grid A*) was delivered 2026-10-09.

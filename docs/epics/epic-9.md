@@ -1,6 +1,6 @@
 # Epic 9: The Outpost Economy & Public Bounties
 
-- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md); the live-loop criterion of its Definition of Done (§1B) is not yet demonstrated. The review §3.1 supply side was implemented on 2026-10-09; its PlayMode scenario has not been run yet, and promotion is held until §3.2/§3.3 land.
+- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md); the live-loop criterion of its Definition of Done (§1B) is not yet demonstrated. The review §3.1 supply side was implemented on 2026-10-09. Its PlayMode scenario (`OutpostSupplyLoopScenario`) shows the loop emerging without injection, but still fails on demo-pen anomalies. Promotion is held until §3.2/§3.3 land (see [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker)).
 - **Track**: Track A: Core Simulation & Cognition Engine
 - **Preceding Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Following Epic**: Epic 10: Sector Hazards & Dungeon Descent
@@ -10,7 +10,7 @@
 ---
 
 > [!IMPORTANT]
-> **Status Reconciliation (2026-10-08).** Slices 1–3 (inventory/currency primitives, trade stall, bounty board and intervention pipeline) are delivered and validator-tested. The items below were specified in this document but **not delivered**, and the live gameplay loop is **not yet demonstrated** (see [ROADMAP Milestone 1 Status](../ROADMAP.md#milestone-1-status-verified-against-the-code-2026-10-08-not-yet-closed)).
+> **Status Reconciliation (2026-10-08).** Slices 1–3 (inventory/currency primitives, trade stall, bounty board and intervention pipeline) are delivered and validator-tested. The items below were specified in this document but **not delivered**, and the live gameplay loop is **not yet demonstrated** (see [ROADMAP Milestone 1 Status](../ROADMAP.md#milestone-1-status-verified-against-the-code-2026-10-09-not-yet-closed)).
 >
 > **Deferred / not delivered:**
 > - `MemoryPack` state serialization (package not installed; `ItemInstance`/`BountyContract` were *laid out* to be blittable, but nothing serializes them).

@@ -105,10 +105,11 @@ These violate §1A.1 or the project architecture rules today. They are recorded 
 | 7 | ~~`AsyncPathfinder` is a straight-line stress-test placeholder, not Grid A*.~~ **RESOLVED (2026-10-09):** Upgraded `AsyncPathfinder` into a zero-allocation 8-directional Grid A* engine with preallocated binary min-heap, $O(1)$ epoch visited tracking, diagonal corner-cutting prevention, raycast string-pulling path smoothing, and concurrent searcher worker pooling. Separated static map obstacles (`StaticNavGrid`) from per-frame dynamic entity snapshots. | — (Epic 9 carry-over) | [`AsyncPathfinder.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs), [`GridAStarSearcher.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/GridAStarSearcher.cs), [`StaticNavGrid.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/Spatial/StaticNavGrid.cs) |
 | 8 | `GoapPlanner` is a DI singleton guarded by a `lock`, so all agents' planning is serialized. | Dual-loop scaling intent | [`GoapPlanner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs) |
 | 9 | The production GOAP domain (action graph, goals) and session population live under `Testing/` in `SwarmSpawner`; validators are registered as boot-time `IStartable`s and ship in the single `Simpiens.asmdef`. | Test isolation | [`SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs), [`AppBootstrapper.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/AppBootstrapper.cs) |
-| 10 | ~~`CognitiveEngine`, `IContextBuilder` and `IToolExecutionRegistry` are registered/declared but unused; the real cognition loop is `AutonomousAgent.EvaluateCognitionAsync`.~~ **RESOLVED (2026-10-09):** `IToolExecutionRegistry` implemented via `ToolExecutionRegistry` mapping cognitive tool execution to typed intents, backed by `IIntentHandlerRegistry` with 8 modular intent handlers (`WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, etc.). `SimulationManager` implements `IIntentExecutionContext` and delegates execution to modular handlers. Authoritative `IEconomyLedger` introduced to govern all gold flows and fix escrow minting leaks. | — | [`ToolExecutionRegistry.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/ToolExecutionRegistry.cs), [`IntentHandlerRegistry.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Handlers/IntentHandlerRegistry.cs), [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs), [`EconomyLedger.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/Economy/EconomyLedger.cs) |
+| 10 | ~~`CognitiveEngine`, `IContextBuilder` and `IToolExecutionRegistry` are registered/declared but unused; the real cognition loop is `AutonomousAgent.EvaluateCognitionAsync`.~~ **RESOLVED (2026-10-09):** `IToolExecutionRegistry` implemented via `ToolExecutionRegistry` mapping cognitive tool execution to typed intents, backed by `IIntentHandlerRegistry` with 8 modular intent handlers (`WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, etc.). `SimulationManager` implements `IIntentExecutionContext` and delegates execution to modular handlers. Authoritative `IEconomyLedger` introduced to govern all gold flows and fix escrow minting leaks. **Still open:** the `CognitiveEngine` stub is still registered in `AppBootstrapper` (review §2.8). | — | [`ToolExecutionRegistry.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/ToolExecutionRegistry.cs), [`IntentHandlerRegistry.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Handlers/IntentHandlerRegistry.cs), [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs), [`EconomyLedger.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/Economy/EconomyLedger.cs) |
 | 11 | ~~Tier-1 `SurvivalUtilityEvaluator` returned a non-null intent (Idle/Wander/Harvest) on every path, so Tier-2 GOAP never ran in the live session; every GOAP goal from Epics 6–9 only worked under validator injection.~~ **RESOLVED in code (2026-10-09, review §3.1):** the evaluator is now a pure hunger reflex (Hunger ≥ 60 + reachable known food, else `null`); idle/wander moved to the Tier-3 `AmbientWanderEvaluator` fallback; `HarvestResourceAction`, `TravelToResourceAction` and `SearchResourceAction` emit real intents. Regression covered by `SupplyLoopValidator` Test 7. Live verification pending the first `OutpostSupplyLoopScenario` run. | §1B (status accuracy) | [`SurvivalUtilityEvaluator.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Evaluators/SurvivalUtilityEvaluator.cs), [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs) |
 | 12 | ~~No live population could run the Milestone 1 loop: all session agents were scripted into walled demo pens, the trade stall sat inside Pen 3, and the seeded Scout bounty targeted walled Pen 7.~~ **RESOLVED in code (2026-10-09, review §3.1):** the open yard north of the pens is now the *Outpost Commons* (stall, Ore Ridge, Herb Hollow, food bushes) with 6 free crawler agents (`SpawnCount` 24 → 30). | §1B | [`SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs) |
 | 13 | ~~Seeded bounties bypassed escrow (`RegisterBounty` locked nothing), so delivery minted gold via a direct `AddGold`.~~ **RESOLVED in code (2026-10-09, review §3.1):** `RegisterBounty` routes through the same escrow lock as `PostBountyCommand` and rejects un-escrowable bounties; delivery pays only by releasing escrow. Session gold enters through a single `InitialSeed` ledger faucet. | Ledger conservation | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs), [`DeliverBountyIntentHandler.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Handlers/DeliverBountyIntentHandler.cs) |
+| 14 | `SimulationManager` executes active intents by enumerating the `_activeIntents` `Dictionary` (and stalls, bounties and anchors the same way), so contention and other order-sensitive outcomes depend on hash order. Together with #6 this makes a tick non-reproducible. (Recorded 2026-10-09.) | 3 | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
 
 ### 1A.3 Logging (Producer decision, 2026-10-09)
 
@@ -199,7 +200,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 
 ### Milestone 1 Status (verified against the code, 2026-10-09): NOT YET CLOSED
 
-Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09; its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) exists but **has not been run yet**. Gaps:
+Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) has been run: the loop emerges, but the scenario still fails on its zero-anomaly assertion (see below). Latest PlayMode run (2026-10-09): **10/14 pass**. Gaps:
 
 - ~~**No salvage supply.**~~ **Implemented (2026-10-09, §3.1):** resources are typed (`ResourceData.YieldItem`, `EntitySnapshot`/`SpatialMemoryRecord.ResourceKind`); harvesting ore/herb nodes yields items; `SearchSalvage → GatherSalvage → TravelToStall → DeliverBounty/SellSalvage` chains are plannable; `EarnIncomeGoal` drives no-bounty salvage sales. Root cause also fixed: GOAP never ran live (§1A.2 #11).
 - ~~**Scout bounties have no fulfilment behaviour.**~~ **Implemented (2026-10-09, §3.1):** typed claims (`ClaimGatherBountyAction` / `ClaimScoutBountyAction`), `ScoutSectorAction` + `ScoutIntentHandler` (enter the sector), `ReportScoutBountyAction` (report at a stall, sector marked explored).
@@ -210,7 +211,43 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - **`MemoryPack` serialization is not delivered** (package not installed).
 - **Epic MAP is `PAUSED`**, so the live session still runs in the isolated play-pen test arena rather than the outpost map (initial 9 sectors built as WIP towards the 12-sector target).
 
-*Closure plan: pending producer approval. Epic 10 remains `QUEUED`.*
+*Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
+
+---
+
+## 3A. Architecture Review Remediation Tracker
+
+Progress against the consultant review [`docs/reviews/architecture_review.md`](reviews/architecture_review.md) (2026-10-08), §5 *Prioritised Recommendations*. Verified against the code on 2026-10-09. The review itself is a dated snapshot; **this table is the live status**.
+
+| Review # | Recommendation (section) | Status | Evidence / what remains |
+| :-: | :--- | :--- | :--- |
+| 1 | Fixed-tick simulation; durations in ticks; views interpolate (§2.1) | ✅ Done | §1A.2 #1. `SimulationManager` runs on `OnSimulationTick`; frame time remains only in views (`AgentMotor`, `AgentView`, `CampfireView`) and UI refresh. |
+| 2 | Close the Milestone 1 supply side (§3.1) | ✅ Done in code; loop emerges live | §1A.2 #11–13, *Milestone 1 Status*. `OutpostSupplyLoopScenario` still fails on demo-pen anomalies, not on the loop. |
+| 3 | Single-writer threading; fix `Retain` ordering (§2.3) | ✅ Done | §1A.2 #3. |
+| 4 | Grid A* + static walkability, gating MAP (§2.6) | ✅ Done | §1A.2 #7, plus static reachability regions. Remaining: `StaticNavGrid` is not cleared on respawn; watchdog nudges/back-offs are not wall-checked. |
+| 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ⬜ Not started | No trait struct exists. `ResourceTargeting` / `BountyQueries` give deterministic selection, not scored considerations. **Blocks Epic 9 promotion** (producer decision 2026-10-09). |
+| 6 | Intent-handler registry, typed `InfluenceEvent`, gold ledger (§2.4) | ✅ Done | §1A.2 #4, #10, #13. `SimulationManager` down from ~1,500 to ~1,190 lines. The legacy string `InfluenceEvent` constructor still exists. |
+| 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load still needs `MemoryPack` (not installed). |
+| 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. No soak runner (Epic Test-2). No measured agent budget. |
+| 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ⬜ Not started | About 30 validators are still registered in `AppBootstrapper` and run at boot; single `Simpiens.asmdef`; `CognitiveEngine` stub still registered; production domain in `SwarmSpawner` (§1A.2 #9). |
+| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | 🟨 Partial | Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation). No written model; treasury drain observed in live runs. **Blocks Epic 9 promotion.** |
+| 10b | "Why?" agent inspector (§3.4) | ⬜ Not started | SimLog decision traces (§1A.3) cover developers only. |
+| 10c | Live-scenario Definition of Done (§4.2) | ✅ Done | §1B. |
+| 10d | Docs single source of truth (§4.3) | ✅ Done | §0. |
+
+Other review items still open:
+- **GOAP fact budget (§2.7):** 36 of 64 facts used (`StateFact` 0–35).
+- **Determinism (§2.1 note):** §1A.2 #5 (unseeded RNG), #6 (cognition completion order), #14 (dictionary-ordered intent execution). These are required for multiplayer (§1A.1) and cheap to fix now.
+
+### Proposed Milestone 1 closure sequence (pending producer approval)
+
+1. **Green PlayMode.** Fix the demo-pen anomalies (wall-checked watchdog nudges, `StaticNavGrid` reset, pen stacking) so `OutpostSupplyLoopScenario` and the 3 anomaly scenarios pass. This meets §1B for the supply loop.
+2. **Economy model (§3.3).** Write the one-pager and tune the treasury drain.
+3. **Personality + considerations (§3.2).** → Epic 9 can then be promoted to `COMPLETED`.
+4. **Remaining Milestone 1 scope:** resume Epic MAP (live outpost map), deliver `MemoryPack` serialization.
+5. **Before Epic 10:** soak test and scaling work (#8).
+
+Can run in parallel at low cost: test-scope/asmdef separation (#9) and determinism fixes (#5, #6, #14).
 
 ---
 
@@ -288,7 +325,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 | Epic | Name | Status | Key Deliverables |
 | :--- | :--- | :--- | :--- |
 | **Epic Test-1** | Visual Anomaly Detection & Automated Scenarios | **COMPLETED** | `VisualAnomalyDetector`, `SwarmPlayModeTests`, `BatchPlaymodeController`, rate-limited screenshot recorder. |
-| **Epic Test-2** | Outpost Economy & Bounty Contract Harness | **ACTIVE** | Headless `BountyFulfillmentValidator`, `TradeTransactionValidator` *(delivered)*; zero-allocation high-frequency market soak runner *(not yet built)*; live-loop PlayMode scenarios required by §1B *(not yet written)*. |
+| **Epic Test-2** | Outpost Economy & Bounty Contract Harness | **ACTIVE** | Headless `BountyFulfillmentValidator`, `TradeTransactionValidator` *(delivered)*; `OutpostSupplyLoopScenario` live-loop PlayMode scenario required by §1B *(delivered; fails on demo-pen anomalies)*; zero-allocation high-frequency market soak runner *(not yet built; also needed for review §2.5/§3.3 tuning)*. |
 
 ---
 
@@ -325,7 +362,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; next engine focus is a producer decision, see *Milestone 1 Status*). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; next engine focus is a producer decision, see the proposed sequence in §3A). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
 3. **Testing Work**: Reference **Track C** (current: **Epic Test-2**, `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
 4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `PAUSED`; resume requires a producer decision). Code lives in `Simpiens.Environment`, `Simpiens.UI.Zones`, and spawner infrastructure.

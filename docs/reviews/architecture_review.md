@@ -1,5 +1,6 @@
 # Simpiens — Architecture, Scaling & Game Design Review
 
+*This review is a dated snapshot. Live remediation status is tracked in [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker).*  
 *Documentation drift flagged in §4.3 was reconciled on 2026-10-08 (ROADMAP.md is now the top source of truth; multiplayer confirmed as required post-MVP; the "Done means emerges in the live sim" rule from §4.2 is in ROADMAP §1B and AGENTS.md).*  
 *Reviewer: Consulting Lead Developer · Scope: `Assets/Scripts/` (~21k LOC), `docs/ROADMAP.md`, `docs/Game Design Proposal.md`, epic specs, `.agents/` history · Date: 2026-10-08*
 
