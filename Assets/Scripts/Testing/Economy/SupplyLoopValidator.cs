@@ -291,6 +291,15 @@ namespace Simpiens.Testing.Economy
             Assert(claim >= 0 && search >= 0 && gather >= 0 && travel >= 0 && deliver >= 0, "Plan contains ClaimGather, SearchSalvage, GatherSalvage, TravelToStall, DeliverBounty.");
             Assert(search < gather && gather < deliver && claim < deliver && travel < deliver, "Plan steps are causally ordered.");
             Assert(IndexOf<ClaimScoutBountyAction>(plan) < 0, "No Scout claim without an open Scout bounty (F5).");
+            Assert(gather < travel, "TravelToStall comes after GatherSalvage (gathering walks away from the stall).");
+
+            // Starting at the stall must not let the planner skip the walk back: gathering clears AtTradeStall
+            var atStall = new GoapPlan();
+            Assert(new GoapPlanner().Plan(state.With(StateFact.AtTradeStall, true), new FulfillBountyGoal(), graph, context, atStall),
+                "Planner resolved FulfillBountyGoal from the stall.");
+            int gatherAt = IndexOf<GatherSalvageAction>(atStall), travelAt = IndexOf<TravelToStallAction>(atStall), deliverAt = IndexOf<DeliverBountyAction>(atStall);
+            Assert(gatherAt >= 0 && travelAt > gatherAt && deliverAt > travelAt,
+                $"From the stall the plan still returns after gathering (gather {gatherAt}, travel {travelAt}, deliver {deliverAt}).");
 
             Debug.Log("[SupplyLoopValidator] Test 6 Passed: Salvage bounty plan resolved from a clean world state.");
         }

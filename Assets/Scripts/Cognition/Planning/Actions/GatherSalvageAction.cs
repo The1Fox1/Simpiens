@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Planning.Actions
     /// <summary>
     /// Action: Harvests salvage (IronOre / MedicinalHerb) from the best known salvage node.
     /// Preconditions: KnowsSalvageLocation = true.
-    /// Effects: HasSalvageInInventory = true, HasBountyItem = true.
+    /// Effects: HasSalvageInInventory = true, HasBountyItem = true, AtTradeStall = false (walks to the node).
     /// With a claimed Gather bounty, only its TargetItemType is considered and enough units are harvested in place
     /// to cover the remaining quantity; otherwise the node is chosen by stall buy price ÷ distance.
     /// </summary>
@@ -23,7 +23,8 @@ namespace Simpiens.Cognition.Planning.Actions
             Preconditions = WorldState.Empty.With(StateFact.KnowsSalvageLocation, true);
             Effects = WorldState.Empty
                 .With(StateFact.HasSalvageInInventory, true)
-                .With(StateFact.HasBountyItem, true);
+                .With(StateFact.HasBountyItem, true)
+                .With(StateFact.AtTradeStall, false);
         }
 
         public override AgentIntent CreateIntent(AgentContext context)

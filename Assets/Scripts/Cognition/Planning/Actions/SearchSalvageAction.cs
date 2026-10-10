@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Actions
     /// <summary>
     /// Action: Explores to discover salvage (ore/herb) nodes.
     /// Preconditions: None.
-    /// Effects: KnowsSalvageLocation = true.
+    /// Effects: KnowsSalvageLocation = true, AtTradeStall = false (walks away to explore).
     /// Heads for the claimed (or first open) Gather bounty's target location when one is known, since the
     /// board advertises where the salvage is; otherwise walks to a deterministic exploration waypoint.
     /// </summary>
@@ -25,7 +25,7 @@ namespace Simpiens.Cognition.Planning.Actions
         {
             _pathfinder = pathfinder;
             Preconditions = WorldState.Empty;
-            Effects = WorldState.Empty.With(StateFact.KnowsSalvageLocation, true);
+            Effects = WorldState.Empty.With(StateFact.KnowsSalvageLocation, true).With(StateFact.AtTradeStall, false);
         }
 
         public override AgentIntent CreateIntent(AgentContext context)

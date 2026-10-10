@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Planning.Actions
     /// <summary>
     /// Action: Travels into the claimed Scout bounty's target sector.
     /// Preconditions: HasScoutBounty = true.
-    /// Effects: HasScoutReport = true.
+    /// Effects: HasScoutReport = true, AtTradeStall = false (walks into the sector).
     /// Emits a ScoutIntent pathed to the bounty's TargetLocation; the handler completes on sector entry.
     /// </summary>
     public class ScoutSectorAction : GoapAction
@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Planning.Actions
         {
             _pathfinder = pathfinder;
             Preconditions = WorldState.Empty.With(StateFact.HasScoutBounty, true);
-            Effects = WorldState.Empty.With(StateFact.HasScoutReport, true);
+            Effects = WorldState.Empty.With(StateFact.HasScoutReport, true).With(StateFact.AtTradeStall, false);
         }
 
         public override bool IsValid(AgentContext context)
