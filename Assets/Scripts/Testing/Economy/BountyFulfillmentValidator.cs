@@ -135,8 +135,12 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
+            // Live bounties must be escrowed by a stall (§3.1), so register one that can cover the reward
+            var stall = new TradeStallData(GUID.Generate(), Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            simManager.RegisterTradeStall(stall);
+
             var contract = new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 30, 0, 1000);
-            simManager.RegisterBounty(contract);
+            Assert(simManager.TryRegisterBounty(contract), "Escrowed bounty registered.");
 
             var go1 = new GameObject("[Test_Claimant1]");
             var node1 = go1.AddComponent<NodeController>();
