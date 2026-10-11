@@ -4,6 +4,7 @@ using Simpiens.Cognition;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.World;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -72,6 +73,7 @@ namespace Simpiens.Testing.Diagnostics
         private readonly IWorldRegistry _worldRegistry;
         private readonly ISimulationClock _clock;
         private readonly ISpatialPartition _spatialPartition;
+        private readonly IWorldMap _worldMap;
 
         private readonly Dictionary<GUID, AgentTelemetryHistory> _histories = new Dictionary<GUID, AgentTelemetryHistory>(128);
         private readonly List<VisualAnomalyRecord> _recentAnomalies = new List<VisualAnomalyRecord>(128);
@@ -95,11 +97,13 @@ namespace Simpiens.Testing.Diagnostics
         public VisualAnomalyDetector(
             IWorldRegistry worldRegistry = null,
             ISimulationClock clock = null,
-            ISpatialPartition spatialPartition = null)
+            ISpatialPartition spatialPartition = null,
+            IWorldMap worldMap = null)
         {
             _worldRegistry = worldRegistry;
             _clock = clock;
             _spatialPartition = spatialPartition;
+            _worldMap = worldMap;
 
             _obstacleFilter = ContactFilter2D.noFilter;
             _obstacleFilter.useTriggers = false;
@@ -362,8 +366,8 @@ namespace Simpiens.Testing.Diagnostics
 
                 Vector2 pos = node.Position;
 
-                // 1. Boundary breach check (+- 20 units)
-                if (Mathf.Abs(pos.x) > NavConstants.PlayAreaHalfExtent || Mathf.Abs(pos.y) > NavConstants.PlayAreaHalfExtent)
+                // 1. Boundary breach check: the loaded map's playable bounds (±20 before any map is loaded)
+                if (IsOutsidePlayArea(pos))
                 {
                     if (_histories.TryGetValue(node.Id, out var h) && (currentTime - h.LastBreachAlertTime >= 1.0f))
                     {
@@ -381,44 +385,64 @@ namespace Simpiens.Testing.Diagnostics
                     }
                 }
 
-                // 2. Obstacle penetration check via Physics2D non-allocating circle cast
-                int hitCount = Physics2D.OverlapCircle(pos, node.Radius * 0.7f, _obstacleFilter, _overlapBuffer);
+                // 2. Obstacle penetration: static map walls by exact geometry; injected dynamic walls (wall entities
+                // with colliders) via a non-allocating physics overlap
+                float probeRadius = node.Radius * 0.7f;
+                var map = _worldMap?.Current;
+                if (map != null && WallRasterizer.CircleOverlapsWall(map, pos, probeRadius))
+                {
+                    ReportPenetration(node, pos, tick, currentTime, "static map wall");
+                    continue;
+                }
+
+                int hitCount = Physics2D.OverlapCircle(pos, probeRadius, _obstacleFilter, _overlapBuffer);
                 for (int h = 0; h < hitCount; h++)
                 {
                     var col = _overlapBuffer[h];
-                    if (col != null && col.gameObject != node.gameObject && !col.isTrigger)
-                    {
-                        bool isWall = false;
-                        var hitNode = col.GetComponent<NodeController>();
-                        if (hitNode != null && hitNode.Type == EntityType.Wall)
-                        {
-                            isWall = true;
-                        }
-                        else if (col.gameObject.name.Contains("Wall") || col.gameObject.name.Contains("Bounds") || col.gameObject.name.Contains("Obstacle"))
-                        {
-                            isWall = true;
-                        }
+                    if (col == null || col.gameObject == node.gameObject || col.isTrigger) continue;
 
-                        if (isWall)
-                        {
-                            if (_histories.TryGetValue(node.Id, out var hist) && (currentTime - hist.LastPenetrationAlertTime >= 1.0f))
-                            {
-                                hist.LastPenetrationAlertTime = currentTime;
-                                PenetrationCount++;
-                                EmitAnomaly(new VisualAnomalyRecord(
-                                    tick,
-                                    currentTime,
-                                    VisualAnomalyType.ObstaclePenetration,
-                                    node.Id,
-                                    default,
-                                    pos,
-                                    $"Agent penetrated obstacle geometry '{col.gameObject.name}'"
-                                ));
-                            }
-                            break;
-                        }
+                    var hitNode = col.GetComponent<NodeController>();
+                    if (hitNode != null && hitNode.Type == EntityType.Wall)
+                    {
+                        ReportPenetration(node, pos, tick, currentTime, col.gameObject.name);
+                        break;
                     }
                 }
+            }
+        }
+
+        private bool IsOutsidePlayArea(Vector2 pos)
+        {
+            var grid = _spatialPartition?.StaticGrid;
+            if (grid != null && grid.HasPlayableBounds)
+            {
+                var b = grid.PlayableBounds;
+                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+            }
+            var mapBounds = _worldMap?.Current;
+            if (mapBounds != null)
+            {
+                var b = mapBounds.PlayableBounds;
+                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+            }
+            return Mathf.Abs(pos.x) > NavConstants.PlayAreaHalfExtent || Mathf.Abs(pos.y) > NavConstants.PlayAreaHalfExtent;
+        }
+
+        private void ReportPenetration(NodeController node, Vector2 pos, long tick, float currentTime, string obstacle)
+        {
+            if (_histories.TryGetValue(node.Id, out var hist) && (currentTime - hist.LastPenetrationAlertTime >= 1.0f))
+            {
+                hist.LastPenetrationAlertTime = currentTime;
+                PenetrationCount++;
+                EmitAnomaly(new VisualAnomalyRecord(
+                    tick,
+                    currentTime,
+                    VisualAnomalyType.ObstaclePenetration,
+                    node.Id,
+                    default,
+                    pos,
+                    $"Agent penetrated obstacle geometry '{obstacle}'"
+                ));
             }
         }
 

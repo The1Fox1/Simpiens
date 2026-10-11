@@ -2,6 +2,7 @@ using System;
 using Simpiens.Cognition;
 using Simpiens.Entities;
 using Simpiens.Simulation;
+using Simpiens.Simulation.World;
 using UnityEngine;
 using VContainer.Unity;
 using Debug = UnityEngine.Debug;
@@ -22,8 +23,9 @@ namespace Simpiens.Testing.Diagnostics
             ValidateStackingDetection();
             ValidateStateThrashingDetection();
             ValidateZeroAllocation();
+            ValidateMapWallPenetration();
 
-            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateJitterDetection()
@@ -167,6 +169,41 @@ namespace Simpiens.Testing.Diagnostics
             }
 
             Debug.Log("[PASS] Test 4: Zero allocation guarantee verified (0 bytes across 500 continuous evaluation frames).");
+        }
+
+        private void ValidateMapWallPenetration()
+        {
+            // Static map walls are data (no colliders): penetration is checked against the loaded map's wall geometry
+            var registry = new WorldRegistry();
+            var map = new MapDefinitionBuilder("PenetrationProbe", new Rect(-10f, -10f, 20f, 20f))
+                .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
+                .Build();
+            var worldMap = new WorldMap(null, null);
+            worldMap.Load(map);
+            var detector = new VisualAnomalyDetector(registry, null, null, worldMap);
+
+            var go = new GameObject("[TestNode_Penetration]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = Vector2.zero;
+            registry.RegisterNode(node);
+
+            for (int f = 0; f < 20; f++)
+            {
+                detector.Tick(0.05f, f * 0.05f);
+            }
+            Assert(detector.PenetrationCount == 0, $"A pawn clear of the wall must not be flagged (actual: {detector.PenetrationCount})");
+
+            node.transform.position = new Vector2(3f, 0f);
+            for (int f = 20; f < 40; f++)
+            {
+                detector.Tick(0.05f, f * 0.05f);
+            }
+            Assert(detector.PenetrationCount >= 1, $"A pawn inside a map wall must be flagged (actual: {detector.PenetrationCount})");
+            Assert(detector.BoundaryBreachCount == 0, "A pawn inside the playable bounds must not breach them.");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[PASS] Test 5: Penetration of static map walls is detected from map geometry.");
         }
 
         private static void Assert(bool condition, string message)

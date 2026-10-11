@@ -16,18 +16,16 @@ namespace Simpiens.Core.Bootstrapping
     public class SimulationStarter : IStartable
     {
         private readonly NodeFactory _nodeFactory;
-        private readonly ISpatialPartition _spatialPartition;
         private readonly ISimulationManager _simulationManager;
         private readonly IObjectResolver _resolver;
         private readonly IWorldRegistry _registry;
         private readonly SimulationSettings _settings;
 
         [Inject]
-        public SimulationStarter(NodeFactory nodeFactory, ISpatialPartition spatialPartition, IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager, SimulationSettings settings)
+        public SimulationStarter(NodeFactory nodeFactory, IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager, SimulationSettings settings)
         {
             _settings = settings;
             _nodeFactory = nodeFactory;
-            _spatialPartition = spatialPartition;
             _resolver = resolver;
             _registry = registry;
             _simulationManager = simulationManager;
@@ -37,19 +35,7 @@ namespace Simpiens.Core.Bootstrapping
         {
             SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}, provisional export {(_settings == null || _settings.ProvisionalExportEnabled ? "on" : "off")}");
 
-            // Initialize Spatial Partition
-            Camera cam = Camera.main;
-            float worldHeight = 36f; // Generous fallback to contain 36x28 outpost arena
-            float worldWidth = 44f;  // Generous fallback to contain 36x28 outpost arena
-            if (cam != null && cam.orthographic)
-            {
-                // Ensure spatial partition comfortably covers the arena even with camera offsets
-                worldHeight = Mathf.Max(36f, (Mathf.Abs(cam.transform.position.y) + cam.orthographicSize) * 2f + 4f);
-                worldWidth = Mathf.Max(44f, (Mathf.Abs(cam.transform.position.x) + cam.orthographicSize * cam.aspect) * 2f + 4f);
-            }
-
-            // Initialize with the calculated bounds and a reasonable cell size
-            _spatialPartition.Initialize(worldWidth, worldHeight, 1.0f);
+            // The spatial partition is sized from the loaded map (IWorldMap.Load in SwarmSpawner.Respawn), not the camera
 
             // Attach GridVisualizer for Validation Testing
             var visualizerGo = new GameObject("[GridVisualizer]");

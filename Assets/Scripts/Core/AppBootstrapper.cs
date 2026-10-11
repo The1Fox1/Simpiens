@@ -60,9 +60,8 @@ namespace Simpiens.Core.Bootstrapping
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // 1. Core Services
-            builder.RegisterEntryPoint<ScreenBoundsGenerator>();
-            
+            // 1. Core Services (camera framing is done by MapView when a map loads)
+
             // 2. Factories
             builder.Register<NodeFactory>(Lifetime.Singleton);
 

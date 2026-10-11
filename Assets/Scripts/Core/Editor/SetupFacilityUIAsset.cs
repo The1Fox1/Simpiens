@@ -37,6 +37,8 @@ namespace Simpiens.Core.Editor
             var builder = new VContainer.ContainerBuilder();
             builder.Register<Simpiens.Simulation.WorldRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.Spatial.SpatialHashGrid>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.SectorRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.WorldMap>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Cognition.Pathfinding.AsyncPathfinder>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Cognition.Planning.GoapPlanner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.SimulationClock>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();

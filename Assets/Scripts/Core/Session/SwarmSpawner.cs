@@ -6,6 +6,8 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.World;
+using Simpiens.Core.Session.Layouts;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -29,18 +31,18 @@ namespace Simpiens.Core.Session
         public int SpawnCount = 30;
         public const int ScriptedPenAgentCount = 24;
 
-        // Outpost Commons layout (open yard north of the pens)
-        public static readonly Vector2 OutpostStallPosition = new Vector2(0f, 9f);
+        // Geography (walls, sectors, nodes, campfires, stall) comes from the map definition (Epic MAP Phase 1)
+        public static Vector2 OutpostStallPosition => DevMapLayout.OutpostStallPosition;
         public const ushort SeedGatherBountyId = 1;
         public const ushort SeedScoutBountyId = 2;
 
-        // Regrowth is on everywhere (pens included); durations in logical ticks
-        public const uint FoodRegrowTicks = 450;
-        public const uint HerbRegrowTicks = 600;
-        public const uint OreRegrowTicks = 900;
-
         private readonly IEntityIdAllocator _idAllocator;
         private readonly SimulationSettings _settings;
+        private readonly IWorldMap _worldMap;
+        private LoadedWorld _world;
+
+        /// <summary>The map loaded by the last respawn, with its spawned entity ids.</summary>
+        public LoadedWorld World => _world;
 
         private UnityEngine.GUID NextEntityId() => _idAllocator != null ? _idAllocator.Next() : UnityEngine.GUID.Generate();
 
@@ -53,9 +55,11 @@ namespace Simpiens.Core.Session
             ISimulationClock clock,
             Simpiens.Cognition.Planning.IGoapPlanner planner,
             SimulationSettings settings,
-            IEntityIdAllocator idAllocator)
+            IEntityIdAllocator idAllocator,
+            IWorldMap worldMap)
         {
             _idAllocator = idAllocator;
+            _worldMap = worldMap ?? new WorldMap(spatialPartition, null);
             _settings = settings;
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
@@ -103,40 +107,39 @@ namespace Simpiens.Core.Session
             SimLog.ClearAgentNames();
             _simulationManager?.ResetState();
 
+            // 1. Static geography: partition, walls, sectors (simulation) and the map view
+            var map = DevMapLayout.Definition;
+            _world = _worldMap.Load(map);
+            MapView.Show(map);
+
             // Create roots for organization
             GameObject root = new GameObject("[SwarmAgents]");
-            GameObject bushRoot = new GameObject("[DemoContestedBushes]");
-            GameObject campfireRoot = new GameObject("[DemoCampfires]");
-            GameObject pensRoot = new GameObject("[PlayPens]");
-            GameObject commonsRoot = new GameObject("[OutpostCommons]");
+            GameObject propsRoot = new GameObject("[MapEntities]");
 
-            // 1. Construct the 5 bordered Play Pens
-            SpawnPlayPens(pensRoot);
+            // 2. Resource nodes and campfires from the map definition (keys resolve to ids for the pen scripts)
+            for (int n = 0; n < map.ResourceNodes.Count; n++)
+            {
+                var node = map.ResourceNodes[n];
+                SpawnResourceNode(propsRoot, node.Position, node.Yield, node.Item, node.RegrowTicks, out var nodeId);
+                _world.RegisterEntity(node.Key, nodeId);
+            }
+            for (int p = 0; p < map.Pois.Count; p++)
+            {
+                var poi = map.Pois[p];
+                if (poi.Kind != PoiKind.Hearth) continue;
+                SpawnDemoCampfire(propsRoot, poi.Position, poi.Radius, out var anchorId);
+                _world.RegisterEntity(poi.Key, anchorId);
+            }
 
-            // 2. Pre-spawn demonstration bushes inside each pen
-            // Pen 1 (Fear Yield): Center bush (1 yield) and secondary foraging bush (3 yields)
-            SpawnResourceNode(bushRoot, new Vector2(-8f, 0f), 1, ItemType.Ration, FoodRegrowTicks, out var bushFearId);
-            SpawnResourceNode(bushRoot, new Vector2(-8f, -2.2f), 3, ItemType.Ration, FoodRegrowTicks, out _);
-
-            // Pen 2 (Respect Defer): Center bush (1 yield) and secondary foraging bush (3 yields)
-            SpawnResourceNode(bushRoot, new Vector2(-4f, 0f), 1, ItemType.Ration, FoodRegrowTicks, out var bushRespectId);
-            SpawnResourceNode(bushRoot, new Vector2(-4f, -2.2f), 3, ItemType.Ration, FoodRegrowTicks, out _);
-
-            // Pen 3 (Rivalry Contest): Center contested bush (1 yield, no secondary bush)
-            SpawnResourceNode(bushRoot, new Vector2(0f, 0f), 1, ItemType.Ration, FoodRegrowTicks, out var bushRivalryId);
-
-            // 3. Pre-spawn demonstration campfires inside Pens 4 and 5
-            SpawnDemoCampfire(campfireRoot, new Vector2(4f, 0f), out var campfirePen4Id);
-            SpawnDemoCampfire(campfireRoot, new Vector2(8f, 0f), out var campfirePen5Id);
-
-            // 4. Pre-spawn demonstration props inside Pens 7, 8, 9, 10 (Row 2: Epic 8)
-            SpawnResourceNode(bushRoot, new Vector2(-4f, -11.0f), 3, ItemType.Ration, FoodRegrowTicks, out var bushPen7Id);
-            SpawnDemoCampfire(campfireRoot, new Vector2(0f, -9.0f), out var campfirePen8Id);
-            SpawnResourceNode(bushRoot, new Vector2(4f, -11.0f), 5, ItemType.Ration, FoodRegrowTicks, out var bushPen9Id);
-            SpawnResourceNode(bushRoot, new Vector2(8f, -11.0f), 5, ItemType.Ration, FoodRegrowTicks, out var bushPen10Id);
-
-            // 5. Outpost Commons (open yard north of the pens): the live Milestone 1 supply loop arena
-            SpawnOutpostCommons(commonsRoot);
+            var bushFearId = _world.GetEntityId(DevMapLayout.Pen1ContestedBush);
+            var bushRespectId = _world.GetEntityId(DevMapLayout.Pen2ContestedBush);
+            var bushRivalryId = _world.GetEntityId(DevMapLayout.Pen3ContestedBush);
+            var campfirePen4Id = _world.GetEntityId(DevMapLayout.Pen4Campfire);
+            var campfirePen5Id = _world.GetEntityId(DevMapLayout.Pen5Campfire);
+            var bushPen7Id = _world.GetEntityId(DevMapLayout.Pen7Bush);
+            var campfirePen8Id = _world.GetEntityId(DevMapLayout.Pen8Campfire);
+            var bushPen9Id = _world.GetEntityId(DevMapLayout.Pen9Bush);
+            var bushPen10Id = _world.GetEntityId(DevMapLayout.Pen10Bush);
 
             for (int i = 0; i < SpawnCount; i++)
             {
@@ -395,9 +398,11 @@ namespace Simpiens.Core.Session
             if (_simulationManager != null)
             {
                 var stallId = NextEntityId();
+                map.TryGetPoi(DevMapLayout.OutpostStall, out var stallPoi);
+                _world.RegisterEntity(DevMapLayout.OutpostStall, stallId);
                 var outpostStall = new TradeStallData(
                     stallId,
-                    position: OutpostStallPosition,
+                    position: stallPoi.Position,
                     rationSellPrice: 15,
                     rationStock: 50,
                     oreBuyPrice: 20,
@@ -405,7 +410,7 @@ namespace Simpiens.Core.Session
                     herbBuyPrice: 25,
                     herbStock: 10,
                     treasuryGold: 250,
-                    interactionRadius: 3.0f);
+                    interactionRadius: stallPoi.Radius);
                 _simulationManager.RegisterTradeStall(outpostStall);
 
                 // Ledger baseline: all gold present at session start enters through one named faucet,
@@ -423,7 +428,7 @@ namespace Simpiens.Core.Session
                 var gatherBounty = new BountyContract(
                     bountyId: SeedGatherBountyId,
                     type: BountyType.GatherResource,
-                    targetSectorId: (byte)Simpiens.UI.Zones.FacilityZoneService.OreRidgeZoneId,
+                    targetSectorId: DevMapLayout.OreRidgeSectorId,
                     targetItemType: ItemType.IronOre,
                     targetQuantity: 1,
                     rewardGold: 25,
@@ -436,7 +441,7 @@ namespace Simpiens.Core.Session
                 var scoutBounty = new BountyContract(
                     bountyId: SeedScoutBountyId,
                     type: BountyType.ScoutSector,
-                    targetSectorId: (byte)Simpiens.UI.Zones.FacilityZoneService.HerbHollowZoneId,
+                    targetSectorId: DevMapLayout.HerbHollowSectorId,
                     targetItemType: ItemType.None,
                     targetQuantity: 1,
                     rewardGold: 15,
@@ -447,7 +452,7 @@ namespace Simpiens.Core.Session
                 _simulationManager.RegisterBounty(scoutBounty);
 
                 SimLog.RegisterAgentName(stallId, "OutpostStall");
-                SimLog.Bootstrap.ZLogInformation($"Session spawned: {_agents.Count} agents ({Mathf.Max(0, _agents.Count - ScriptedPenAgentCount)} free crawlers), stall at {OutpostStallPosition}, seeded gold {seededGold}g, bounties #{SeedGatherBountyId} (Gather) and #{SeedScoutBountyId} (Scout)");
+                SimLog.Bootstrap.ZLogInformation($"Session spawned: {_agents.Count} agents ({Mathf.Max(0, _agents.Count - ScriptedPenAgentCount)} free crawlers), map '{map.Name}', stall at {stallPoi.Position}, seeded gold {seededGold}g, bounties #{SeedGatherBountyId} (Gather) and #{SeedScoutBountyId} (Scout)");
             }
         }
 
@@ -463,136 +468,6 @@ namespace Simpiens.Core.Session
                 : index < 20 ? 9
                 : 10;
             return $"Pen{pen}.Agent{index}";
-        }
-
-        private void SpawnOutpostCommons(GameObject root)
-        {
-            // Ore Ridge (west): iron veins
-            SpawnResourceNode(root, new Vector2(-9f, 12f), 3, ItemType.IronOre, OreRegrowTicks, out _);
-            SpawnResourceNode(root, new Vector2(-8f, 9.5f), 3, ItemType.IronOre, OreRegrowTicks, out _);
-            SpawnResourceNode(root, new Vector2(-10f, 8f), 3, ItemType.IronOre, OreRegrowTicks, out _);
-
-            // Herb Hollow (east): medicinal herb patches
-            SpawnResourceNode(root, new Vector2(9f, 12f), 3, ItemType.MedicinalHerb, HerbRegrowTicks, out _);
-            SpawnResourceNode(root, new Vector2(8f, 9.5f), 3, ItemType.MedicinalHerb, HerbRegrowTicks, out _);
-            SpawnResourceNode(root, new Vector2(10f, 8f), 3, ItemType.MedicinalHerb, HerbRegrowTicks, out _);
-
-            // Food bushes beside the market stall
-            SpawnResourceNode(root, new Vector2(-2f, 6.5f), 3, ItemType.Ration, FoodRegrowTicks, out _);
-            SpawnResourceNode(root, new Vector2(2f, 6.5f), 3, ItemType.Ration, FoodRegrowTicks, out _);
-
-            SpawnPenTitle(root, -8.5f, 14.5f, "Ore Ridge", new Color(0.95f, 0.55f, 0.2f));
-            SpawnPenTitle(root, 0f, 14.5f, "Outpost Market", new Color(0.95f, 0.85f, 0.4f));
-            SpawnPenTitle(root, 8.5f, 14.5f, "Herb Hollow", new Color(0.45f, 0.9f, 0.8f));
-        }
-
-        private void SpawnPlayPens(GameObject root)
-        {
-            float[] dividerX = new float[] { -10f, -6f, -2f, 2f, 6f, 10f };
-
-            // --- Row 1 (Pens 1–5: Epics 7 & Beta) ---
-            float minY1 = -3.5f;
-            float maxY1 = 3.5f;
-
-            // Spawn top and bottom horizontal perimeter walls from -10.0 to +10.0 (step 1.0)
-            for (float x = -10.0f; x <= 10.05f; x += 1.0f)
-            {
-                SpawnWallNode(root, new Vector2(x, maxY1));
-                SpawnWallNode(root, new Vector2(x, minY1));
-            }
-
-            // Spawn vertical divider walls (interior Y from -2.5 to +2.5 step 1.0)
-            for (int d = 0; d < dividerX.Length; d++)
-            {
-                float x = dividerX[d];
-                for (float y = minY1 + 1.0f; y < maxY1 - 0.5f; y += 1.0f)
-                {
-                    SpawnWallNode(root, new Vector2(x, y));
-                }
-            }
-
-            // Spawn distinct titles above Row 1 play pens
-            SpawnPenTitle(root, -8.0f, 4.2f, "1. Fear Yield", new Color(1f, 0.75f, 0.2f));
-            SpawnPenTitle(root, -4.0f, 4.2f, "2. Respect Defer", new Color(0.35f, 0.8f, 1f));
-            SpawnPenTitle(root, 0.0f, 4.2f, "3. Rivalry Contest", new Color(1f, 0.4f, 0.4f));
-            SpawnPenTitle(root, 4.0f, 4.2f, "4. Altruism & Hearth", new Color(0.3f, 0.95f, 0.5f));
-            SpawnPenTitle(root, 8.0f, 4.2f, "5. Selfish Peer", new Color(0.75f, 0.8f, 0.85f));
-
-            // --- Row 2 (Pens 6–10: Epic 8) ---
-            float minY2 = -12.5f;
-            float maxY2 = -5.5f;
-
-            // Spawn top and bottom horizontal perimeter walls for Row 2 from -10.0 to +10.0 (step 1.0)
-            for (float x = -10.0f; x <= 10.05f; x += 1.0f)
-            {
-                SpawnWallNode(root, new Vector2(x, maxY2));
-                SpawnWallNode(root, new Vector2(x, minY2));
-            }
-
-            // Spawn vertical divider walls for Row 2 (interior Y from -11.5 to -6.5 step 1.0)
-            for (int d = 0; d < dividerX.Length; d++)
-            {
-                float x = dividerX[d];
-                for (float y = minY2 + 1.0f; y < maxY2 - 0.5f; y += 1.0f)
-                {
-                    SpawnWallNode(root, new Vector2(x, y));
-                }
-            }
-
-            // Spawn distinct titles above Row 2 play pens
-            SpawnPenTitle(root, -8.0f, -4.8f, "6. Directive Rally", new Color(1f, 0.85f, 0.25f));
-            SpawnPenTitle(root, -4.0f, -4.8f, "7. Passive Defiance", new Color(0.95f, 0.3f, 0.3f));
-            SpawnPenTitle(root, 0.0f, -4.8f, "8. Hearth Emergence", new Color(1f, 0.6f, 0.2f));
-            SpawnPenTitle(root, 4.0f, -4.8f, "9. Dominance Trial", new Color(0.8f, 0.4f, 0.9f));
-            SpawnPenTitle(root, 8.0f, -4.8f, "10. Factional Schism", new Color(0.2f, 0.85f, 0.85f));
-        }
-
-        private void SpawnWallNode(GameObject root, Vector2 pos)
-        {
-            var wallGo = new GameObject($"Wall_{pos.x:F1}_{pos.y:F1}");
-            wallGo.transform.SetParent(root.transform);
-            wallGo.transform.position = pos;
-
-            var sr = wallGo.AddComponent<SpriteRenderer>();
-            sr.sprite = AgentSpriteLibrary.WallSprite;
-            sr.sortingOrder = 0;
-
-            var rb = wallGo.AddComponent<Rigidbody2D>();
-            rb.gravityScale = 0f;
-            rb.bodyType = RigidbodyType2D.Static;
-
-            var col = wallGo.AddComponent<CircleCollider2D>();
-            col.radius = 0.55f;
-
-            var box = wallGo.AddComponent<BoxCollider2D>();
-            box.size = new Vector2(1.02f, 1.02f);
-
-            var controller = wallGo.AddComponent<NodeController>();
-            controller.Type = EntityType.Wall;
-            controller.Initialize(NextEntityId(), new NodeConfiguration(speed: 0f));
-
-            _registry.RegisterNode(controller);
-        }
-
-        private void SpawnPenTitle(GameObject root, float x, float y, string title, Color color)
-        {
-            var textGo = new GameObject($"PenTitle_{title}");
-            textGo.transform.SetParent(root.transform);
-            textGo.transform.position = new Vector3(x, y, 0f);
-
-            var textMesh = textGo.AddComponent<TextMesh>();
-            textMesh.text = title;
-            textMesh.fontSize = 28;
-            textMesh.characterSize = 0.08f;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = color;
-
-            var mr = textGo.GetComponent<MeshRenderer>();
-            if (mr != null)
-            {
-                mr.sortingOrder = 10;
-            }
         }
 
         private void SpawnResourceNode(GameObject root, Vector2 pos, int yield, ItemType yieldItem, uint regrowTicks, out UnityEngine.GUID resId)
@@ -630,7 +505,7 @@ namespace Simpiens.Core.Session
             });
         }
 
-        private void SpawnDemoCampfire(GameObject root, Vector2 pos, out UnityEngine.GUID anchorId)
+        private void SpawnDemoCampfire(GameObject root, Vector2 pos, float radius, out UnityEngine.GUID anchorId)
         {
             var campfireGo = new GameObject($"DemoCampfire_{pos.x}_{pos.y}");
             campfireGo.transform.SetParent(root.transform);
@@ -655,12 +530,12 @@ namespace Simpiens.Core.Session
             campfireGo.AddComponent<CampfireView>();
 
             _registry.RegisterNode(controller);
-            _simulationManager.RegisterAnchor(anchorId, pos, radius: 3.0f);
+            _simulationManager.RegisterAnchor(anchorId, pos, radius: radius);
         }
 
         private void CleanupExistingWorld()
         {
-            string[] rootNames = new[] { "[SwarmAgents]", "[DemoContestedBushes]", "[DemoCampfires]", "[PlayPens]", "[OutpostCommons]", "[DynamicObstacles]" };
+            string[] rootNames = new[] { "[SwarmAgents]", "[MapEntities]", "[DynamicObstacles]" };
             for (int i = 0; i < rootNames.Length; i++)
             {
                 var existing = GameObject.Find(rootNames[i]);
@@ -669,6 +544,7 @@ namespace Simpiens.Core.Session
                     Object.DestroyImmediate(existing);
                 }
             }
+            MapView.Clear();
         }
 
         public void Dispose()
