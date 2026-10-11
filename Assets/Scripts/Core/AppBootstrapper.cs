@@ -71,6 +71,8 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<EntityIdAllocator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<WorldRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.SectorRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.WorldMap>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<FacilityZoneService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
