@@ -168,6 +168,16 @@ namespace Simpiens.Simulation.World
             return new Vector2Int(cellsX, cellsY);
         }
 
+        /// <summary>First sector (in definition order) containing the point, otherwise the fallback sector.</summary>
+        public SectorDefinition FindSector(Vector2 pos)
+        {
+            for (int i = 0; i < Sectors.Count; i++)
+            {
+                if (Sectors[i].Contains(pos)) return Sectors[i];
+            }
+            return FallbackSector;
+        }
+
         public bool TryGetSector(byte id, out SectorDefinition sector)
         {
             if (id == FallbackSector.Id)
