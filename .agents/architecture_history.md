@@ -350,3 +350,14 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Not addressed:** the tick on which an async cognition result arrives (§1A.2 #6 remainder), and `foreach` over memory maps inside GOAP actions.
 - **Verification:** `DeterminismValidator`, 4 tests including a mutation check of the ordering test. PlayMode 16/16.
 
+## Architectural Decision: Personality & Utility Considerations (Milestone 1 closure, Phase 4, 2026-10-11)
+- **Problem:** every agent ran identical utility curves, so the price lever was effectively binary (review §3.2), and bounty choice was "lowest id" (review §2.7).
+- **Decision:**
+  - **Representation:** five traits stored as signed deviations, so `default` is neutral.
+  - **Considerations layer:** a static, allocation-free `Considerations` folds traits into goal priorities, a ration reservation price, a minimum sale price and a bounty score. Every trait enters as `1 + trait × strength`, which preserves the invariant that **a neutral personality changes nothing**. Existing validators and demos therefore stay valid, and variety comes only from non-neutral agents.
+  - **Who gets personalities:** crawlers get seeded personalities; scripted pen agents stay neutral (producer).
+  - **GOAP fact budget:** untouched. Personality acts through priorities and selection, not facts.
+  - **"Why?" groundwork:** `DecisionSummary` is carried on the intent and copied to `AgentState` on the main thread.
+- **Verification:** `PersonalityValidator` (5 tests). Live `PriceResponseScenario`: buyers per price step 6/5/5/1/1/0 for 10–60g.
+- **Open:** trait strengths are provisional and should be tuned alongside the deferred §3.3 economy decisions. Risk tolerance is unused until Epic 10.
+

@@ -320,6 +320,20 @@ Once decided: write `docs/economy-model.md`, implement it, and turn the soak's a
 
 ## Phase 4 — Personality + considerations (review §3.2, §2.7)
 
+> **Status: DONE 2026-10-11** (`f595ff9`, `6b1e0e9`). PlayMode 19/19 (soak explicit). `PriceResponseScenario` run twice more alone with the final price steps.
+>
+> **Minor design decisions** (autonomous directive):
+> - **Traits** are signed deviations in [-1, 1], neutral 0, so `default` is neutral. Every trait enters as `1 + trait × strength`, which means **a neutral agent is unchanged** and existing validators and pen demos keep their behaviour.
+> - **Trait strengths:** greed on prices 0.5, on reward 0.5, on income 0.3; diligence on work 0.3, on distance 0.5; sociability 0.4; loyalty 0.4. All are constants in `Considerations`.
+> - **Reservation price** = 20g × (0.5 + hunger/100) × (1 − 0.5·greed), so 5–45g. It gates the purchase goal and action and is sent as the trade's max price.
+> - **Minimum sale price** = base value × (1 + 0.5·greed). Neutral equals the item base value, below the seeded stall prices, so neutral behaviour is unchanged.
+> - **Bounty score** = reward·(1 + 0.5·greed) / (10 + distance·(1 − 0.5·diligence)). The distance runs agent → target → redemption stall.
+> - **Risk tolerance** is generated but unused until Epic 10 hazards.
+> - **`DecisionSummary`** rides on the intent (the cognition task owns it before enqueue) and is copied to `AgentState.LastDecision` on the main thread, which avoids adding to §1A.2 #15.
+> - **Price steps** are 10/15/20/25/30/60g at 1,500 ticks each, chosen to span the crawlers' reservation range. The gradualness assertion is at least 3 distinct buyer levels.
+>
+> **Observed demand curve:** buyers 6/5/5/1/1/0 and 6/5/5/1/0/0; purchases 27→19→14→6→1→0.
+
 ### Design
 - **`AgentPersonality`** (`Cognition/Contracts/`): blittable 5-byte struct (`Greed`, `RiskTolerance`, `Sociability`, `Loyalty`, `Diligence`, each `byte` 0–255, accessed as 0..1 floats). Stored on `AgentState`, copied into `AgentContext` (it's immutable, so no single-writer issue).
 - **Generation:** deterministic from `SimRandom(seed, agentId, 0, salt: Personality)` (Phase 2). Pen demo agents get **fixed neutral personalities** so the Epics 7/Beta/8 demos stay as tuned.

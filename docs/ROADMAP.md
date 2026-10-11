@@ -201,7 +201,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 
 ### Milestone 1 Status (verified against the code, 2026-10-09): NOT YET CLOSED
 
-Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) **passes** (2026-10-10, closure plan Phase 1): no injection, zero anomalies. Latest PlayMode runs (2026-10-10): **14/14 pass, 3 consecutive runs**. The supply-loop part of §1B is therefore demonstrated; Epic 9 stays `MECHANISM COMPLETE` by producer decision until §3.2/§3.3 land. Gaps:
+Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. **Update 2026-10-11:** §3.2 (personality) has landed. Epic 9 promotion now waits only on the deferred §3.3 economy model (producer decision). The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) **passes** (2026-10-10, closure plan Phase 1): no injection, zero anomalies. Latest PlayMode runs (2026-10-10): **14/14 pass, 3 consecutive runs**. The supply-loop part of §1B is therefore demonstrated; Epic 9 stays `MECHANISM COMPLETE` by producer decision until §3.2/§3.3 land. Gaps:
 
 - ~~**No salvage supply.**~~ **Implemented (2026-10-09, §3.1):** resources are typed (`ResourceData.YieldItem`, `EntitySnapshot`/`SpatialMemoryRecord.ResourceKind`); harvesting ore/herb nodes yields items; `SearchSalvage → GatherSalvage → TravelToStall → DeliverBounty/SellSalvage` chains are plannable; `EarnIncomeGoal` drives no-bounty salvage sales. Root cause also fixed: GOAP never ran live (§1A.2 #11).
 - ~~**Scout bounties have no fulfilment behaviour.**~~ **Implemented (2026-10-09, §3.1):** typed claims (`ClaimGatherBountyAction` / `ClaimScoutBountyAction`), `ScoutSectorAction` + `ScoutIntentHandler` (enter the sector), `ReportScoutBountyAction` (report at a stall, sector marked explored).
@@ -227,13 +227,13 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 | 2 | Close the Milestone 1 supply side (§3.1) | ✅ Done; live scenario passes | §1A.2 #11–13, *Milestone 1 Status*. `OutpostSupplyLoopScenario` passes with zero anomalies (2026-10-10). |
 | 3 | Single-writer threading; fix `Retain` ordering (§2.3) | ✅ Done | §1A.2 #3. |
 | 4 | Grid A* + static walkability, gating MAP (§2.6) | ✅ Done | §1A.2 #7, plus static reachability regions. Navigation clearance follow-ups (grid reset, wall-checked watchdog, body clearance) done 2026-10-10. |
-| 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ⬜ Not started | No trait struct exists. `ResourceTargeting` / `BountyQueries` give deterministic selection, not scored considerations. **Blocks Epic 9 promotion** (producer decision 2026-10-09). |
+| 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ✅ Done (2026-10-11) | `AgentPersonality` (5 traits, seeded; pen agents neutral), `Considerations` (reservation/minimum prices, bounty score, trait factors on goal priorities; neutral = unchanged). Live: `PriceResponseScenario` shows gradual demand (e.g. 6/5/5/1/1/0 buyers at 10–60g). Risk tolerance is reserved for Epic 10. |
 | 6 | Intent-handler registry, typed `InfluenceEvent`, gold ledger (§2.4) | ✅ Done | §1A.2 #4, #10, #13. `SimulationManager` down from ~1,500 to ~1,190 lines. The legacy string `InfluenceEvent` constructor still exists. |
 | 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load still needs `MemoryPack` (not installed). |
 | 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. No soak runner (Epic Test-2). No measured agent budget. |
 | 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ⬜ Not started | About 30 validators are still registered in `AppBootstrapper` and run at boot; single `Simpiens.asmdef`; `CognitiveEngine` stub still registered; production domain in `SwarmSpawner` (§1A.2 #9). |
 | 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ⏸ Deferred | Producer decision 2026-10-09: decide once the game is functional. Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation, provisional `ProvisionalCaravanExport` faucet). **Blocks Epic 9 promotion.** |
-| 10b | "Why?" agent inspector (§3.4) | ⬜ Not started | SimLog decision traces (§1A.3) cover developers only. |
+| 10b | "Why?" agent inspector (§3.4) | 🟨 Groundwork | `DecisionSummary` (source tier + top 3 goal priorities) recorded on every intent and copied to `AgentState.LastDecision` on the main thread (2026-10-11). The inspector UI is not started (Track B). |
 | 10c | Live-scenario Definition of Done (§4.2) | ✅ Done | §1B. |
 | 10d | Docs single source of truth (§4.3) | ✅ Done | §0. |
 
@@ -249,7 +249,7 @@ Implementation plan: [`.agents/milestone1_closure_plan.md`](../.agents/milestone
 1. ~~**Green PlayMode.**~~ **Done 2026-10-10:** 14/14, `OutpostSupplyLoopScenario` meets §1B for the supply loop.
 2. ~~**Determinism**~~ **Done 2026-10-10:** seeded `SimRandom`, reproducible entity ids, ordered intent application and iteration. PlayMode 16/16.
 3. ~~**Economy observation soak**~~ **Done 2026-10-11.** `EconomySoakScenario` and `scripts/run-economy-soak.sh` ran 6 runs: integrity holds. Findings are in the [plan](../.agents/milestone1_closure_plan.md) Phase 3 *Observations*. Without the provisional export the economy freezes within about 10 sim-minutes; with it, the treasury grows about 145g per sim-minute. The economy model (§3.3) stays **deferred**.
-4. **Personality + considerations (§3.2).** Pen demo agents stay neutral.
+4. ~~**Personality + considerations (§3.2).**~~ **Done 2026-10-11.** Pen demo agents stay neutral. PlayMode 19/19 plus the explicit soak.
 5. **Test-scope separation** (#9, review §2.8).
 6. **Docs + promotion.** Epic 9 → `COMPLETED` once §3.2 and the deferred §3.3 land.
 
