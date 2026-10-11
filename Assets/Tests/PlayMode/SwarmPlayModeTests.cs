@@ -234,6 +234,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_MapDefinition_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.World.MapDefinitionValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_OutpostMapBuilder_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Environment.OutpostMapBuilderValidator();

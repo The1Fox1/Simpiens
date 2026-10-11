@@ -16,7 +16,11 @@ namespace Simpiens.Simulation.Spatial
         public readonly float OffsetY;
 
         private readonly bool[] _walkable;
-        private float _playableHalfExtent = float.PositiveInfinity;
+        private Rect _playableBounds = new Rect(float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        private bool _hasPlayableBounds;
+
+        // Static map walls (from the map definition). Survive Clear(), unlike dynamically rasterized walls.
+        private bool[] _baseBlocked;
 
         // Connected-region labels (4-connected walkable cells; matches A*'s no-corner-cutting rule).
         // Rebuilt on the main thread into a fresh array and published by reference, so background readers
@@ -86,15 +90,45 @@ namespace Simpiens.Simulation.Spatial
             SetCellWalkable(cellX, cellY, false);
         }
 
+        /// <summary>
+        /// Resets dynamic walls. Static map walls (<see cref="SetBaseWall"/>) and the playable bounds are kept.
+        /// </summary>
         public void Clear()
         {
             for (int i = 0; i < _walkable.Length; i++)
             {
-                _walkable[i] = true;
+                _walkable[i] = _baseBlocked == null || !_baseBlocked[i];
             }
             ApplyPlayableBounds();
             _walkabilityVersion++;
         }
+
+        /// <summary>
+        /// Marks a cell as a static map wall: blocked now and after every <see cref="Clear"/>. Main thread only.
+        /// </summary>
+        public void SetBaseWall(int cellX, int cellY)
+        {
+            if (!InBounds(cellX, cellY)) return;
+            if (_baseBlocked == null) _baseBlocked = new bool[_walkable.Length];
+            _baseBlocked[cellY * Width + cellX] = true;
+            SetCellWalkable(cellX, cellY, false);
+        }
+
+        /// <summary>True when the cell is a static map wall (not a dynamic wall or the play-area border).</summary>
+        public bool IsBaseWall(int cellX, int cellY)
+        {
+            return _baseBlocked != null && InBounds(cellX, cellY) && _baseBlocked[cellY * Width + cellX];
+        }
+
+        /// <summary>Drops all static map walls (the next <see cref="Clear"/> reopens their cells).</summary>
+        public void ClearBaseLayer()
+        {
+            if (_baseBlocked != null) Array.Clear(_baseBlocked, 0, _baseBlocked.Length);
+        }
+
+        /// <summary>World-space playable area. Unbounded until set.</summary>
+        public Rect PlayableBounds => _playableBounds;
+        public bool HasPlayableBounds => _hasPlayableBounds;
 
         /// <summary>
         /// Permanently blocks every cell lying entirely outside [-halfExtent, halfExtent] on either axis.
@@ -102,22 +136,31 @@ namespace Simpiens.Simulation.Spatial
         /// </summary>
         public void SetPlayableHalfExtent(float halfExtent)
         {
-            _playableHalfExtent = halfExtent;
+            SetPlayableBounds(new Rect(-halfExtent, -halfExtent, halfExtent * 2f, halfExtent * 2f));
+        }
+
+        /// <summary>
+        /// Permanently blocks every cell lying entirely outside <paramref name="bounds"/>. Survives <see cref="Clear"/>.
+        /// </summary>
+        public void SetPlayableBounds(Rect bounds)
+        {
+            _playableBounds = bounds;
+            _hasPlayableBounds = true;
             ApplyPlayableBounds();
             _walkabilityVersion++;
         }
 
         private void ApplyPlayableBounds()
         {
-            if (float.IsPositiveInfinity(_playableHalfExtent)) return;
+            if (!_hasPlayableBounds) return;
             for (int y = 0; y < Height; y++)
             {
                 float minY = y * CellSize - OffsetY;
-                bool rowOutside = minY >= _playableHalfExtent || minY + CellSize <= -_playableHalfExtent;
+                bool rowOutside = minY >= _playableBounds.yMax || minY + CellSize <= _playableBounds.yMin;
                 for (int x = 0; x < Width; x++)
                 {
                     float minX = x * CellSize - OffsetX;
-                    if (rowOutside || minX >= _playableHalfExtent || minX + CellSize <= -_playableHalfExtent)
+                    if (rowOutside || minX >= _playableBounds.xMax || minX + CellSize <= _playableBounds.xMin)
                     {
                         _walkable[y * Width + x] = false;
                     }
