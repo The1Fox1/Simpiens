@@ -38,6 +38,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(200000)]
+        public IEnumerator Scenario_PenCanary_TenPenOutcomesHold()
+        {
+            yield return ExecuteScenario(new PenCanaryScenario());
+        }
+
+        [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
         {
