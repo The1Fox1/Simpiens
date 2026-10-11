@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-08.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-11.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -251,7 +251,7 @@ Implementation plan: [`.agents/milestone1_closure_plan.md`](../.agents/milestone
 3. ~~**Economy observation soak**~~ **Done 2026-10-11.** `EconomySoakScenario` and `scripts/run-economy-soak.sh` ran 6 runs: integrity holds. Findings are in the [plan](../.agents/milestone1_closure_plan.md) Phase 3 *Observations*. Without the provisional export the economy freezes within about 10 sim-minutes; with it, the treasury grows about 145g per sim-minute. The economy model (§3.3) stays **deferred**.
 4. ~~**Personality + considerations (§3.2).**~~ **Done 2026-10-11.** Pen demo agents stay neutral. PlayMode 19/19 plus the explicit soak.
 5. ~~**Test-scope separation**~~ **Done 2026-10-11** (#9, review §2.8). PlayMode 40/40.
-6. **Docs + promotion.** Epic 9 → `COMPLETED` once §3.2 and the deferred §3.3 land.
+6. ~~**Docs + promotion.**~~ **Docs reconciled 2026-10-11.** Epic 9 promotion is **not** done: it waits on the deferred §3.3 economy model (producer).
 
 Later Milestone 1 scope: resume Epic MAP (live outpost map), deliver `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
 
@@ -273,7 +273,7 @@ Later Milestone 1 scope: resume Epic MAP (live outpost map), deliver `MemoryPack
 | **Epic 7** | Social Affinity & Relational Dynamics | **COMPLETED** | 4-Axis Dyadic Matrix (`Warmth`, `Trust`, `Fear`, `Respect`), selective gossip filtering. |
 | **Epic Beta** | Concrete World Mechanics & Interdependence | **COMPLETED** | Dominance contention/yielding, altruistic food sharing, campfire gathering anchors. |
 | **Epic 8** | [Socio-Political Structures & Groups](epics/epic-8.md) | **COMPLETED** | 4-layer taxonomy, parameter-driven `Group` primitive (`GroupData`, `GroupDirective`, `GroupMembership`), compliance/defiance dynamics, and organic hearth succession. |
-| **Epic 9** | [The Outpost Economy & Public Bounties](epics/epic-9.md) | **MECHANISM COMPLETE** | **Delivered (Slices 1–3 + Modernization):** unmanaged item/inventory structs, gold currency, trade stall entity, public bounty board with escrow/refund, `PlayerInterventionService` drained in `Tick()`, trade-to-affinity pipeline, GOAP economic actions/goals, zero-alloc Grid A* in `AsyncPathfinder`, 3 headless validators. **Deferred (not delivered):** `MemoryPack` state serialization, `EconomyZeroAllocValidator`, `EconomySerializationValidator`. **§3.1 supply side (2026-10-09, implemented, live run pending):** typed resources, salvage harvesting, Scout fulfilment, escrow-only bounty payout, supply caravan & regrowth, Outpost Commons arena, `SupplyLoopValidator`, `OutpostSupplyLoopScenario`. Stays `MECHANISM COMPLETE` until §3.2/§3.3 land (producer decision 2026-10-09). **Open:** see *Milestone 1 Status*. |
+| **Epic 9** | [The Outpost Economy & Public Bounties](epics/epic-9.md) | **MECHANISM COMPLETE** | **Delivered (Slices 1–3 + Modernization):** unmanaged item/inventory structs, gold currency, trade stall entity, public bounty board with escrow/refund, `PlayerInterventionService` drained in `Tick()`, trade-to-affinity pipeline, GOAP economic actions/goals, zero-alloc Grid A* in `AsyncPathfinder`, 3 headless validators. **Deferred (not delivered):** `MemoryPack` state serialization, `EconomyZeroAllocValidator`, `EconomySerializationValidator`. **§3.1 supply side (2026-10-09, implemented, live run pending):** typed resources, salvage harvesting, Scout fulfilment, escrow-only bounty payout, supply caravan & regrowth, Outpost Commons arena, `SupplyLoopValidator`, `OutpostSupplyLoopScenario`. §3.2 personality landed 2026-10-11 (`PriceResponseScenario` passes). Stays `MECHANISM COMPLETE` until the deferred §3.3 economy model lands (producer decision 2026-10-09). **Open:** see *Milestone 1 Status*. |
 | **Epic 10** | Sector Hazards & Dungeon Descent | **QUEUED** | Environmental sector hazards, gear-gated survival checks, sector descent gate clearance, floor relocation migration loop, `Unity.Collections` + Burst hazard spatial checks. |
 | **Epic 11** | Agentic Narrative Engine (MCP Integration) | **QUEUED** | External Model Context Protocol integration via lean pure-C# UniTask JSON-RPC/SSE client (`ILlmNarrativeEnricher`), dynamic tavern rumors. |
 

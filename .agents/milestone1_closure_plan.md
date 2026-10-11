@@ -385,6 +385,47 @@ Commits: `refactor(planning): extract production GOAP domain from SwarmSpawner` 
 
 ## Phase 6 — Docs & promotion
 
+> **Status: DONE (docs) 2026-10-11.** Roadmap, `epic-9.md`, AGENTS.md, focus mirror and history are reconciled.
+>
+> **Epic 9 is NOT promoted.** The live criteria are met (`OutpostSupplyLoopScenario`, `PriceResponseScenario`) and §3.2 has landed. The producer's gate also requires §3.3, which they have deferred, and promoting past it is outside the autonomous directive.
+>
+> **Final verification:**
+> - PlayMode 40/40 in 3 consecutive full runs (the economy soak is explicit and skipped).
+> - Regression soak (seed 20261009, export on/off) with personality active: integrity holds. Export on: treasury 210→4,115g, 240 purchases, crawler gold 305g. Export off: frozen at 7g, as before.
+> - Phase 3 CSVs are preserved in `Logs/phase3-soak/`.
+
+### Overnight summary (autonomous run, 2026-10-11)
+
+**Done**
+- Phase 3 (economy observation soak, with the ledger fix for trades).
+- Phase 4 (personality + considerations + price-response DoD scenario).
+- Phase 5 (domain/session out of `Testing/`, test assembly, validators as PlayMode tests, stub deleted).
+- Phase 6 docs.
+- 17 commits on `feat/milestone1-supply-loop-zlogger`. Nothing pushed.
+
+**Minor decisions taken.** Each is listed under its phase:
+- Trait representation and strengths, the reservation/minimum price formulas, and the bounty score.
+- `PriceResponseScenario` steps and its gradualness assertion.
+- AgentView display dwell raised to 3 ticks.
+- `SwarmSpawner` moved whole to `Core/Session`, keeping its name.
+- The `BootstrapExtensions` hook instead of a child lifetime scope.
+- `IContextBuilder` kept.
+
+**Issues found and fixed along the way**
+- Trade gold bypassed the ledger.
+- Visual-thrash flakiness at 10× (frame pacing).
+- 21 validators previously ran only at boot. They all pass now that they're wrapped.
+
+**Mistake, caught and corrected:** I edited Phase 4 source while soak runs were launching Unity. Each run compiles the source on disk, so the affected runs were killed and rerun on committed Phase 3 code. Only clean data is reported.
+
+**Open, for the producer**
+1. Economy decisions (§3.3). The Phase 3 observations are the input. The key fact: without the provisional export the economy freezes within about 10 sim-minutes; with it, the treasury grows about 145g per sim-minute, unbounded.
+2. Whether to keep the provisional export on by default until then.
+3. Epic 9 promotion once §3.3 lands.
+4. Deviation #15 (off-thread plan/intent bookkeeping) is still open.
+5. A player build was not run to confirm test code is excluded.
+6. Personality trait strengths are provisional and should be tuned with the economy.
+
 Following the ROADMAP §0 order:
 1. **ROADMAP.** Update the §3A rows (#5, #9, #10a; determinism). Update *Milestone 1 Status*. Set Epic 9 → `COMPLETED` only if §1B holds: validators pass, `OutpostSupplyLoopScenario` + `PriceResponseScenario` pass with no injection, and the checklist is reconciled.
 2. **`epic-9.md`.** Update the Status header and acceptance checklist. MemoryPack and the two economy validators stay under **Deferred** (owner: Milestone 1 / MemoryPack slice).
