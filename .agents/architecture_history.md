@@ -410,3 +410,18 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - PlayMode 42/42 in 3 consecutive runs.
   - The live supply loop passes with 0 anomalies, with identical milestone ticks in every run.
   - The seeded entity-id shift caused no regressions.
+
+## Architectural Decision: Epic MAP Phase 2, Session Split (2026-10-11)
+- **Decision:**
+  - A session is an `ISessionDefinition`: a `MapDefinition` plus `Populate(SessionBuilder)` for agents, relationships, groups, stalls and seeded bounties. `SwarmSpawner` builds any session: it loads the map, spawns the map's nodes and hearths, calls `Populate`, records the ledger baseline, then registers the staged seed bounties (baseline before escrow, as before).
+  - Sessions are injected as `IReadOnlyList<ISessionDefinition>`. **The default is chosen by id (`OutpostSession`), never by registration order**, so boot can never pick a test session.
+  - The live session is `OutpostSession` on `OutpostCommonsLayout` (an interim yard; Floor 1 replaces it in Phase 3). The pens are `CanaryPenSession` + `DevMapLayout` in `Simpiens.Testing`, registered by `TestHarnessInstaller`.
+  - **Respawn rewinds the clock to tick 0 and clears the chronicle.** Seeded expiries (bounties t6000, directives t5000) were absolute and expired after ~10 minutes of uptime; seeded randomness is keyed on the tick, so outcomes depended on uptime and PlayMode test order; chronicle events outlived the GUIDs the reset allocator reissues.
+  - **The session switch is generic production UI**, shown only when more than one session is registered (only the test harness adds one). This differs from the epic's wording (the harness installs the button); the effect is the same and test code does not reach into production UXML.
+  - **Hearths and stalls block only the grid cell holding their centre.** They are listed in every cell their radius overlaps; treating all of those as blocked let a hearth on a cell corner seal a 2-cell room (Pen 4). Movement already keeps pawns off the prop (`IsPositionBlocked`).
+  - Every PlayMode scenario names its session (`ISimulationScenario.SessionId`).
+- **Consequences:**
+  - Production code holds no pen coordinates, keys, sector ids or agent indices.
+  - Seeded ids and milestone ticks shifted twice (clock rewind, then the split); outcomes were re-verified, not compared.
+  - The pens finally have assertions (`PenCanaryScenario`); the first run exposed the Pen 4 regression.
+- **Verification:** PlayMode 43/43; the split was green 3 runs in a row; `OutpostSupplyLoopScenario` passes with 0 anomalies on the pen-free yard; `SessionSwitchScenario` presses the real button and gets back a world structurally identical to a fresh boot.

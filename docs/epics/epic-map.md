@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); next: Phase 2 ([implementation plan](../../.agents/epic_map_phase2_plan.md), awaiting producer approval).
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); next: Phase 3.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -181,7 +181,15 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - walls are data, drawn by `MapView`; bounds independent of the camera;
   - geometric wall-penetration check;
   - `OutpostMapBuilder` retired.
-- [ ] Phase 2: session split, pens test-only, Dev Map toggle, `PenCanaryScenario`
+- [x] Phase 2: session split, pens test-only (done 2026-10-11; PlayMode 43/43; `OutpostSupplyLoopScenario` passes on the pen-free live map with 0 anomalies):
+  - `ISessionDefinition`, `SessionBuilder`, `ISessionSwitcher`; `SwarmSpawner` builds any session, and the default is chosen by id;
+  - live boot is `OutpostSession` on `OutpostCommonsLayout` (the Commons yard; Floor 1 follows in Phase 3);
+  - `CanaryPenSession` + pens-only `DevMapLayout` in `Simpiens.Testing`; production code holds no pen coordinates, keys, ids or agent indices;
+  - respawn rewinds the clock and clears the chronicle, so seeded expiries are session-relative and results no longer depend on uptime or test order;
+  - Dev Map toggle: a session switch on the dashboard (both views), shown only when the harness registers the Dev Map; `SessionSwitchScenario` presses it and proves a clean round trip;
+  - `PenCanaryScenario` asserts all ten pen outcomes within 600 ticks;
+  - fix found by the canary: hearths and stalls block only their centre cell (Pen 4's altruism was sealed off since Grid A*);
+  - every scenario names its session (`ISimulationScenario.SessionId`); `DevMapParityValidator` retired.
 - [ ] Phase 3: outpost populated, scenarios migrated, soak re-run
 - [ ] Phase 4: map rendering, shroud, camera, sector-aware UI
 - [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
@@ -212,3 +220,5 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 - **2026-10-08: Revision 1 paused.** It was partially started (`OutpostMapBuilder` with 10 doors and `OutpostMapBuilderValidator`), then paused for the architecture review. It was never wired into the live session. Its 9-sector versus 12-sector target is superseded: the producer considers sector count unimportant (2026-10-11).
 - **2026-10-11: Revision 2 proposed** (this document). It reframes the epic around the live loop, map-as-data and the pens as a test-only canary session.
 - **2026-10-11: Revision 2 approved; epic `ACTIVE`.** Producer added the Dev Map toggle and deferred drifter churn.
+- **2026-10-11: Phase 1 done** (world as data).
+- **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are listed in the [Phase 2 plan](../../.agents/epic_map_phase2_plan.md) §8.

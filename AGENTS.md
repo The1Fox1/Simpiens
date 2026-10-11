@@ -24,8 +24,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
   - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
-  - `Session/`: `SwarmSpawner` builds the live session: loads a map through `IWorldMap`, spawns its keyed nodes/campfires/stall, then agents (crawler personalities, seeded entity ids).
-  - `Session/Layouts/`: map definitions as code. `DevMapLayout` (the legacy pens + Outpost Commons, the live map until Epic MAP Phase 3) and `Floor1Layout` (the outpost floor).
+  - `Session/`: sessions as code. An `ISessionDefinition` is a map plus `Populate(SessionBuilder)` (agents, relationships, groups, stalls, seeded bounties). `OutpostSession` is the live game. `SwarmSpawner` builds any session (loads the map through `IWorldMap`, spawns its keyed nodes and hearths, calls `Populate`, records the ledger baseline, registers seeded bounties) and is the `ISessionSwitcher`. Every respawn rewinds the clock to tick 0: express seeded expiries relative to the session start. Boot always picks the default (outpost) session by id.
+  - `Session/Layouts/`: map definitions as code. `OutpostCommonsLayout` (the live yard until Epic MAP Phase 3) and `Floor1Layout` (the outpost floor).
   - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
   - `Editor/`: Editor-only batch/setup utilities.
 
@@ -60,13 +60,14 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
   Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
   - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators.
-  - `World/`: map validators (`MapDefinitionValidator` incl. Floor1 connectivity/doors, `WorldMapValidator`, temporary `DevMapParityValidator`) and `TestWorlds` fixtures.
+  - `Sessions/`: the test-only **Dev Map**: `CanaryPenSession` (the 10 scripted demonstration pens) on `DevMapLayout`, registered by `TestHarnessInstaller` and reachable in the Editor through the dashboard's session switch. Pen code never goes back into production.
+  - `World/`: map validators (`MapDefinitionValidator` incl. Floor1, Commons and Dev Map checks, `WorldMapValidator`) and `TestWorlds` fixtures.
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
   - `Planning/`: GOAP domain, A* graph search, and plan preemption validation (`GoapDomainValidator.cs`, `GoapPlannerValidator.cs`, `PlanExecutionValidator.cs`).
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
 
 - **`Assets/Tests/PlayMode/`**
-  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
+  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD scenarios use `OutpostSession`; `PenCanaryScenario` and the anomaly scenarios use the Dev Map. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
 
 ---
 

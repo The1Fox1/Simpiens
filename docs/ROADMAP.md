@@ -211,7 +211,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
-- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Until its Phase 3 lands, the live session still runs in the play-pen arena plus Outpost Commons.
+- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Since Phase 2 (2026-10-11) the live session is the Outpost Commons yard with no pens; the pens are the test-only Dev Map. Until Phase 3 lands, the live map is that yard, not the Floor 1 outpost.
 
 *Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
 
@@ -340,7 +340,10 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
 *Status: Foundational spatial and environmental architectures that operate orthogonally to the specific feature tracks, providing the physical substrate for all agent lifecycles.*
 
 ### Epic MAP: [The Outpost Floor & Living Simulation Loop](epics/epic-map.md)
-- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11). **Phase 1, world as data: done 2026-10-11** (PlayMode 42/42 ×3; live supply loop unchanged with 0 anomalies) ([plan](../.agents/epic_map_phase1_plan.md)). Next: **Phase 2** (session split + Dev Map toggle).
+- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11).
+  - **Phase 1, world as data: done 2026-10-11** (PlayMode 42/42 ×3; live supply loop unchanged with 0 anomalies) ([plan](../.agents/epic_map_phase1_plan.md)).
+  - **Phase 2, session split: done 2026-10-11** (PlayMode 43/43; live supply loop passes on the pen-free yard with 0 anomalies; `PenCanaryScenario` and `SessionSwitchScenario` pass; producer visual check of the Dev Map button pending) ([plan](../.agents/epic_map_phase2_plan.md)). The canary found and fixed a real regression: Pen 4's altruism had never worked since Grid A* (a hearth on a cell corner sealed the 2-cell pen).
+  - Next: **Phase 3** (populate Floor 1, rest anchor, scenario migration, soak re-run).
 - **Producer intent (2026-10-11):** the live game shows one connected outpost floor where crawlers physically work, sell, eat, socialize and sleep. **Sector count is unimportant** and is data, not design; the earlier 9- versus 12-sector target is superseded. The play pens leave the live map and become test-only canaries.
 - **Producer decisions (2026-10-11):**
   - Revision 2 approved.

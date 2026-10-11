@@ -2,7 +2,12 @@
 
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 2. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 1, `84164d3`; not yet merged).
-- **Written:** 2026-10-11.
+- **Written:** 2026-10-11. **Approved** by the producer 2026-10-11.
+- **Implementation status (2026-10-11): steps 1–6 done** (`843e165`..). PlayMode **43/43** (the split itself green in 3 consecutive runs). Explicit economy soak: 6/6 runs pass their integrity checks (seeds 20261009, 1, 2 × provisional export on/off; ledger conserved, 18,000-tick horizon reached). Same picture as before the split: with the export off the stall treasury drains to under 20g and restocks stop; with it on, the treasury grows to about 4,700–5,100g (§3.3, deferred).
+  - `OutpostSupplyLoopScenario` passes on the pen-free yard with 0 anomalies: scout t124, gather t155 (trust +15), first sale t199, regrowth t846, restock t1200 (identical ×3).
+  - `PenCanaryScenario`: 1@22 2@4 3@21 4@200 6@67 7@24 8@100 9@50 10@50 (5: never fed); bound 600.
+  - `SessionSwitchScenario` presses the real button both ways and gets back a world identical to a fresh boot.
+  - **Pending:** the producer's visual check in the Editor (Play shows the yard, no pens; SWITCH TO DEV MAP shows the pens; SWITCH TO MAIN MAP returns).
 - **Goal:** the live game boots into the outpost and never shows the pens. The pens become a test-only **Dev Map** session that a button switches to and back. A new `PenCanaryScenario` turns the pens from visual demos into real assertions.
 - **What the producer sees after Phase 2:**
   - Pressing Play shows the **Outpost Commons** yard: 6 crawlers harvesting ore and herbs, selling at the stall, and taking the seeded Scout and Gather bounties.
@@ -202,6 +207,18 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - The Dev Map in development player builds (a `DEVELOPMENT_BUILD` install path for the harness): a small follow-up, only on request (epic §2.4).
 - Renaming `SwarmSpawner`.
 
+## 6A. Deviations from this plan during implementation
+- **An extra fix in step 3** (`a3fb09c`). The canary's first run showed Pen 4 never happens: the campfire at (4, 0) sits on a cell corner and `SharedWorldSnapshot.IsWalkable` blocked every cell its radius overlapped, sealing the 2-cell pen in two. The donor replanned `ShareFood` every tick with no path. Hearths and stalls now block only the cell holding their centre (GridAStarValidator test 8; it fails without the fix). Likely broken since Grid A* landed; nothing asserted it until now.
+- **Canary bound 600 ticks**, not "slowest × 1.5" (300). Pen 4's campfire companionship is only recorded every 200 ticks, so the bound allows three windows.
+- **Canary predicates refined against what the mechanics really do:**
+  - Pen 1: the fearful agent usually avoids the contested bush altogether, which produces no yield event. The check accepts either the yield event or the feared agent taking the bush first (its hunger drops the frame the bush is depleted), and fails if the fearful agent ever wins a contest against it.
+  - Pen 4: both agents start inside the hearth radius, so "together at the campfire" was trivially true. It now requires a campfire-companionship event after the feeding.
+  - Pen 10: a schism makes the top-scoring contender lead the original group and the runner-up found a splinter group. The check is "the band ends up in two groups", not a fixed loyalist/dissident split.
+- **Switch labels are plain text from `DisplayName`:** "SWITCH TO DEV MAP" / "SWITCH TO MAIN MAP" (instead of emoji, whose rendering in the runtime font is unverified); the banner reads "DEV MAP: TEST SESSION (NOT THE GAME)". `ISessionSwitcher` gained `Default`.
+- **Chronicle after a switch** holds the new session's own tick-0 setup events (groups, directives), so the switch scenario checks "no event from the previous session", not "empty".
+- **`SimulationStarter.CreateDashboard` extracted.** Loading the test scene destroys the boot-time dashboard, so no PlayMode test had ever exercised the dashboard UI. `SessionSwitchScenario` builds a real one the same way boot does, presses the button through UI Toolkit and destroys it afterwards.
+- **Small additions:** the log tick stamp (`SimLog.CurrentTick`) is rewound with the clock; the anomaly detector drops per-agent motion histories on a session change; `DynamicChaosScenario` injects beside the layout's contested bushes; the soak CSV lost its pen columns; the Dev Map's bounds were tightened to the pens.
+
 ## 7. Minor decisions taken in this plan (producer may override)
 1. **The interim live map is the Outpost Commons yard, not Floor 1.** Floor 1 needs scenario migration and the bunk/hearth lifecycle, which are Phase 3 scope. Moving it into Phase 2 would merge two phases and lose the "pens out, loop unchanged" checkpoint.
 2. **The Dev Map is the pens only.** The Commons and its crawlers are not duplicated there, so the toggle switches between "the game" and "the canaries".
@@ -209,3 +226,11 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 4. **The switch is a generic production UI element, shown only when more than one session is registered** (§2.3 deviation note).
 5. The Commons keeps sector ids 11–13 and its names: no churn for a map that Phase 3 retires.
 6. `SwarmSpawner` keeps its name.
+
+## 8. Open findings (not fixed in Phase 2)
+The new canary and switch scenario surfaced these. None fails a test; each is reported for a decision rather than fixed silently.
+1. **Pen 7 hands leadership to the defiant follower at t50.** Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
+2. **Duplicate `LeadershipAssumed` chronicle events.** In the Dev Map, succession re-resolves two groups every 50 ticks with an unchanged leader and records an event each time. On long runs this noise pushes real events out of the 1,024-event chronicle buffer.
+3. **Smoothed paths can run straight through a hearth.** Path smoothing's line of sight checks static walls only, so after the step 3 fix a pawn may walk over a campfire on a straight segment. Visual only.
+4. **Jitter in Pen 6 on long Dev Map runs** (around t2775), outside the canary's 600-tick window and the 4-second anomaly scenarios. Worth a look when Phase 3 moves the anomaly scenarios onto Floor 1.
+
