@@ -139,8 +139,8 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [ACTIVE] (Revision 2, appro
 (See docs/epics/epic-map.md; sector count is data, not a target - producer)
 - Phase 1 - world as data: DONE 2026-10-11 (MapDefinition, WallRasterizer, ISectorRegistry, IWorldMap,
   DevMapLayout live with legacy parity, Floor1Layout validated). PlayMode 42/42 x3.
-- Next: Phase 2 - session split, pens move to the Dev Map, "Dev Map" toggle button, PenCanaryScenario.
   Plan: .agents/epic_map_phase1_plan.md
-- Next: Phase 2 session split + "Dev Map" toggle button (pens leave the live map), Phase 3 populate the floor,
-  Phase 4 player view, Phase 5 OutpostLifecycleScenario (DoD).
+- Next: Phase 2 - session split, pens move to the Dev Map, "Dev Map" toggle button, PenCanaryScenario.
+  Plan: .agents/epic_map_phase2_plan.md (written 2026-10-11, awaiting producer approval).
+- Then: Phase 3 populate the floor, Phase 4 player view, Phase 5 OutpostLifecycleScenario (DoD).
 - Deferred: drifter arrival/departure (economy, Section 3.3).
