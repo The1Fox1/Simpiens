@@ -7,7 +7,7 @@ namespace Simpiens.Entities
     /// <summary>
     /// Dumb view component attached to an Agent.
     /// Executes continuous physical/visual routines on the main thread 
-    /// while the CognitiveEngine handles the background reasoning.
+    /// while AgentCognitionService handles the background reasoning.
     /// </summary>
     public class AgentMotor : MonoBehaviour
     {

@@ -1,0 +1,19 @@
+{
+    "name": "Simpiens",
+    "rootNamespace": "Simpiens",
+    "references": [
+        "VContainer",
+        "UniTask",
+        "Unity.InputSystem",
+        "ZLogger.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

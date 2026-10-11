@@ -1,0 +1,832 @@
+/* ==========================================================================
+   Simpiens Facility OS Dashboard Stylesheet
+   Dark Slate Theme with Emerald / Cyan / Amber Accents
+   ========================================================================== */
+
+.dashboard-root {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    background-color: #090d16;
+    color: #e2e8f0;
+    font-size: 13px;
+    padding: 0;
+    margin: 0;
+}
+
+/* --- Header Navigation Bar --- */
+.header-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0d1322;
+    border-bottom-width: 1px;
+    border-bottom-color: #1e293b;
+    padding: 10px 16px;
+    height: 52px;
+}
+
+.header-left {
+    flex-direction: row;
+    align-items: center;
+}
+
+.header-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+    letter-spacing: 1px;
+    margin-right: 12px;
+}
+
+.status-pill {
+    font-size: 11px;
+    -unity-font-style: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border-width: 1px;
+}
+
+.status-pill-green {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.header-right {
+    flex-direction: row;
+    align-items: center;
+}
+
+.header-metric {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-right: 16px;
+    -unity-font-style: bold;
+}
+
+.view-toggle-button {
+    background-color: #1e293b;
+    border-color: #334155;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #cbd5e1;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 6px 12px;
+    transition-duration: 0.15s;
+}
+
+.view-toggle-button:hover {
+    background-color: #334155;
+    color: #ffffff;
+    border-color: #38bdf8;
+}
+
+/* --- Main 3-Column Layout --- */
+.main-container {
+    flex-direction: row;
+    flex-grow: 1;
+    padding: 12px;
+}
+
+.panel {
+    background-color: #0f172a;
+    border-width: 1px;
+    border-color: #1e293b;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 4px;
+}
+
+.sectors-panel {
+    width: 260px;
+    min-width: 220px;
+}
+
+.sector-detail-panel {
+    flex-grow: 1;
+    flex-basis: 360px;
+}
+
+.agent-dossier-panel {
+    width: 380px;
+    min-width: 320px;
+}
+
+/* --- Headers and Text --- */
+.panel-header {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: #1e293b;
+    padding-bottom: 6px;
+}
+
+.sub-header {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #64748b;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.sector-description-text {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+/* --- Scrollable Lists --- */
+.scroll-list {
+    flex-grow: 1;
+}
+
+.sectors-scroll-list {
+    margin-top: 4px;
+}
+
+.agents-scroll-list {
+    max-height: 240px;
+    min-height: 120px;
+    margin-bottom: 8px;
+}
+
+.events-scroll-list {
+    flex-grow: 1;
+    min-height: 140px;
+}
+
+/* --- Sector Item Cards --- */
+.sector-card {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #162032;
+    border-width: 1px;
+    border-color: #233149;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    transition-duration: 0.15s;
+}
+
+.sector-card:hover {
+    background-color: #1e293b;
+    border-color: #38bdf8;
+}
+
+.sector-card-selected {
+    background-color: #1e293b;
+    border-color: #38bdf8;
+    border-left-width: 4px;
+    border-left-color: #38bdf8;
+}
+
+.sector-name-label {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+}
+
+.occupancy-badge {
+    background-color: #0b1322;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+}
+
+/* --- Agent Row Cards --- */
+.agent-card {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #162032;
+    border-width: 1px;
+    border-color: #233149;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    transition-duration: 0.15s;
+}
+
+.agent-card:hover {
+    background-color: #1e293b;
+    border-color: #10b981;
+}
+
+.agent-card-selected {
+    background-color: #1e293b;
+    border-color: #10b981;
+    border-left-width: 4px;
+    border-left-color: #10b981;
+}
+
+.agent-card-name {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #f8fafc;
+}
+
+.agent-card-desc {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* --- State Badges --- */
+.state-badge {
+    font-size: 10px;
+    -unity-font-style: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #ffffff;
+}
+
+.badge-idle { background-color: #64748b; }
+.badge-walking { background-color: #3b82f6; }
+.badge-harvesting { background-color: #f59e0b; }
+.badge-resting { background-color: #6366f1; }
+.badge-gossiping { background-color: #06b6d4; }
+.badge-sharing { background-color: #10b981; }
+.badge-panicking { background-color: #ef4444; }
+.badge-yielding { background-color: #eab308; }
+
+/* --- Event Items --- */
+.event-item {
+    padding: 6px 8px;
+    background-color: #0b1322;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: #cbd5e1;
+    border-left-width: 2px;
+    border-left-color: #3b82f6;
+}
+
+/* --- Dossier Details --- */
+.agent-title-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dossier-name-text {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #f8fafc;
+}
+
+.empty-state-text {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.drive-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.drive-label {
+    width: 75px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.drive-bar {
+    flex-grow: 1;
+    height: 14px;
+    margin-right: 8px;
+}
+
+.drive-bar .unity-progress-bar__background {
+    background-color: #1e293b;
+    border-radius: 3px;
+    border-width: 0;
+}
+
+.bar-hunger .unity-progress-bar__progress { background-color: #f59e0b; border-radius: 3px; }
+.bar-energy .unity-progress-bar__progress { background-color: #3b82f6; border-radius: 3px; }
+.bar-social .unity-progress-bar__progress { background-color: #06b6d4; border-radius: 3px; }
+.bar-frustration .unity-progress-bar__progress { background-color: #ef4444; border-radius: 3px; }
+
+.drive-val {
+    width: 38px;
+    font-size: 11px;
+    color: #cbd5e1;
+    -unity-text-align: middle-right;
+}
+
+.intent-box {
+    background-color: #162032;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+}
+
+.intent-row {
+    flex-direction: row;
+    margin-bottom: 3px;
+}
+
+.intent-key {
+    width: 55px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.intent-val {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+}
+
+.affinities-list {
+    max-height: 120px;
+    background-color: #0b1322;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+.affinity-row {
+    font-size: 11px;
+    color: #cbd5e1;
+    margin-bottom: 3px;
+}
+
+.intervention-row {
+    flex-direction: row;
+    margin-top: 8px;
+}
+
+.action-btn {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border-width: 1px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin: 2px;
+}
+
+.btn-feed {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.btn-feed:hover {
+    background-color: #10b981;
+    color: #ffffff;
+}
+
+.btn-calm {
+    background-color: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+.btn-calm:hover {
+    background-color: #38bdf8;
+    color: #0f172a;
+}
+
+/* --- Economic HUD Metrics --- */
+.header-center {
+    flex-direction: row;
+    align-items: center;
+}
+
+.hud-metric-pill {
+    font-size: 11px;
+    -unity-font-style: bold;
+    padding: 3px 8px;
+    border-radius: 12px;
+    border-width: 1px;
+    margin-right: 8px;
+}
+
+.hud-gold {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.hud-stock {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
+.hud-bounties {
+    background-color: rgba(168, 85, 247, 0.15);
+    border-color: #a855f7;
+    color: #c084fc;
+}
+
+.hud-nav-button {
+    background-color: #1e293b;
+    border-color: #475569;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 11px;
+    -unity-font-style: bold;
+    padding: 5px 10px;
+    margin-right: 10px;
+    transition-duration: 0.15s;
+}
+
+.hud-nav-button:hover {
+    background-color: #334155;
+    border-color: #f59e0b;
+    color: #ffffff;
+}
+
+/* --- Sector Shroud Styling --- */
+.sector-card-shrouded {
+    opacity: 0.65;
+    border-color: #334155;
+    background-color: #0b111e;
+}
+
+.sector-card-shrouded:hover {
+    border-color: #64748b;
+    opacity: 0.85;
+}
+
+.shroud-badge {
+    background-color: rgba(100, 116, 139, 0.25);
+    border-color: #64748b;
+    border-width: 1px;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: #94a3b8;
+}
+
+/* --- Modal Overlays & Windows --- */
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    top: 52px;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(9, 13, 22, 0.82);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-window {
+    background-color: #0f172a;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.merchant-modal-window {
+    width: 600px;
+    border-color: #38bdf8;
+}
+
+.bounty-modal-window {
+    width: 820px;
+    border-color: #f59e0b;
+}
+
+.modal-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom-width: 1px;
+    border-bottom-color: #1e293b;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.modal-title-box {
+    flex-grow: 1;
+}
+
+.modal-title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+}
+
+.modal-subtitle {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.modal-close-button {
+    background-color: #1e293b;
+    border-width: 1px;
+    border-color: #334155;
+    border-radius: 4px;
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 2px 8px;
+}
+
+.modal-close-button:hover {
+    background-color: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* --- Terminal Status Bar --- */
+.terminal-status-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: #0b1322;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    border-width: 1px;
+    border-color: #1e293b;
+}
+
+.terminal-status-text {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #e2e8f0;
+}
+
+.terminal-status-gold {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #fbbf24;
+}
+
+.terminal-status-stock {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* --- Pricing Sliders --- */
+.pricing-container {
+    margin-bottom: 14px;
+}
+
+.slider-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: #162032;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
+.slider-label-box {
+    width: 220px;
+}
+
+.slider-title {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+}
+
+.slider-desc {
+    font-size: 10px;
+    color: #64748b;
+}
+
+.custom-slider {
+    flex-grow: 1;
+    margin-right: 12px;
+}
+
+.slider-value-display {
+    width: 70px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #38bdf8;
+    -unity-text-align: middle-right;
+}
+
+/* --- Modal Footer & Action Buttons --- */
+.modal-footer-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top-width: 1px;
+    border-top-color: #1e293b;
+}
+
+.modal-feedback-text {
+    font-size: 11px;
+    color: #10b981;
+    flex-grow: 1;
+}
+
+.action-btn-primary {
+    background-color: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #38bdf8;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 8px 16px;
+}
+
+.action-btn-primary:hover {
+    background-color: #38bdf8;
+    color: #0f172a;
+}
+
+.action-btn-gold {
+    background-color: rgba(245, 158, 11, 0.2);
+    border-color: #f59e0b;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #fbbf24;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 8px 16px;
+}
+
+.action-btn-gold:hover {
+    background-color: #f59e0b;
+    color: #0f172a;
+}
+
+/* --- Bounty Modal Layout --- */
+.bounty-modal-body {
+    flex-direction: row;
+    flex-grow: 1;
+    max-height: 520px;
+}
+
+.bounty-list-column {
+    flex: 1.1;
+    border-right-width: 1px;
+    border-right-color: #1e293b;
+    padding-right: 14px;
+    margin-right: 14px;
+}
+
+.bounty-form-column {
+    flex: 0.9;
+    padding-left: 2px;
+}
+
+.bounty-list-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bounty-count-badge {
+    font-size: 10px;
+    -unity-font-style: bold;
+    background-color: #1e293b;
+    border-radius: 10px;
+    padding: 2px 8px;
+    color: #94a3b8;
+}
+
+.bounties-scroll-list {
+    flex-grow: 1;
+    max-height: 440px;
+    margin-top: 6px;
+}
+
+/* --- Bounty Form Controls --- */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-label-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.form-label {
+    font-size: 11px;
+    color: #94a3b8;
+    -unity-font-style: bold;
+}
+
+.form-val-label {
+    font-size: 11px;
+    color: #f59e0b;
+    -unity-font-style: bold;
+}
+
+.form-dropdown {
+    margin-top: 2px;
+}
+
+.form-dropdown .unity-base-field__input {
+    background-color: #162032;
+    border-color: #334155;
+    border-radius: 4px;
+    color: #f8fafc;
+    padding: 4px 8px;
+}
+
+.form-submit-row {
+    margin-top: 14px;
+}
+
+/* --- Bounty Card Items --- */
+.bounty-card {
+    background-color: #162032;
+    border-width: 1px;
+    border-color: #233149;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+}
+
+.bounty-card-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.bounty-card-id {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+}
+
+.bounty-badge {
+    font-size: 10px;
+    -unity-font-style: bold;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.bounty-badge-open {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.bounty-badge-claimed {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.bounty-badge-cancelled {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #f87171;
+}
+
+.bounty-card-details {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.bounty-card-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bounty-card-reward {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #fbbf24;
+}
+
+.bounty-btn-cancel {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    border-width: 1px;
+    border-radius: 4px;
+    color: #f87171;
+    font-size: 10px;
+    -unity-font-style: bold;
+    padding: 3px 8px;
+}
+
+.bounty-btn-cancel:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+}

@@ -14,8 +14,11 @@ namespace Simpiens.Testing.Environment
         private readonly IWorldRegistry _registry;
 
         [Inject]
-        public EdgeCaseInjector(ISpatialPartition spatialPartition, NodeFactory nodeFactory, IWorldRegistry registry)
+        private readonly IEntityIdAllocator _idAllocator;
+
+        public EdgeCaseInjector(ISpatialPartition spatialPartition, NodeFactory nodeFactory, IWorldRegistry registry, IEntityIdAllocator idAllocator = null)
         {
+            _idAllocator = idAllocator;
             _spatialPartition = spatialPartition;
             _nodeFactory = nodeFactory;
             _registry = registry;
@@ -31,20 +34,37 @@ namespace Simpiens.Testing.Environment
             }
         }
 
-        private void InjectWall()
+        public void InjectWall(Vector2? position = null)
         {
-            var snapshot = _spatialPartition.GetActiveSnapshot();
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
             if (snapshot == null) return;
 
-            // Pick a random spot near the center
-            Vector2 randomPos = Random.insideUnitCircle * 4f;
+            // Pick a random spot near the center if not specified
+            Vector2 targetPos = position ?? (Random.insideUnitCircle * 4f);
 
-            Debug.Log($"[EdgeCaseInjector] Spawning Wall at {randomPos} to invalidate paths!");
+            // Defensive clearance: Ensure we don't spawn a wall directly on top of an existing entity
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                var hit = Physics2D.OverlapCircle(targetPos, 0.7f);
+                if (hit != null && hit.GetComponent<NodeController>() != null)
+                {
+                    targetPos += new Vector2(0.5f, 0.5f);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            Debug.Log($"[EdgeCaseInjector] Spawning Wall at {targetPos} to invalidate paths!");
 
             // Create a Node that acts as a Wall
             var config = new NodeConfiguration(speed: 0f);
+            var root = GameObject.Find("[DynamicObstacles]");
+            if (root == null) root = new GameObject("[DynamicObstacles]");
             var nodeGo = new GameObject("InjectedWall");
-            nodeGo.transform.position = randomPos;
+            nodeGo.transform.SetParent(root.transform);
+            nodeGo.transform.position = targetPos;
 
             var sr = nodeGo.AddComponent<SpriteRenderer>();
             var tex = new Texture2D(1, 1);
@@ -60,7 +80,7 @@ namespace Simpiens.Testing.Environment
 
             var controller = nodeGo.AddComponent<NodeController>();
             controller.Type = EntityType.Wall;
-            controller.Initialize(GUID.Generate(), config);
+            controller.Initialize(_idAllocator != null ? _idAllocator.Next() : GUID.Generate(), config);
 
             _registry.RegisterNode(controller);
         }

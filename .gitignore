@@ -109,3 +109,12 @@ InitTestScene*.unity*
 #Recovery
 Assets/_Recovery/
 Assets/_Recovery.meta
+# ------------------------------------------------------------------
+# Simpiens project-specific ignores
+# ------------------------------------------------------------------
+# Visual anomaly recorder output (PlayMode harness screenshots, can be tens of MB)
+/[Ss]creenshots/
+# Unity Profiler captures
+/[Pp]rofilerCaptures/
+# Generated .NET solution format (Rider / VS 2022 17.13+); Unity regenerates it
+*.slnx

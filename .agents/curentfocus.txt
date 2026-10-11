@@ -1,69 +1,142 @@
-You are crossing the threshold from a basic state machine into the territory of a deeply systemic narrative engine. To get agents to coordinate attacks, hold grudges, and execute long-term goals without melting your CPU, you have to fundamentally change how they process time and context.
+# Simpiens Active Development Tracks & Focus
+# ------------------------------------------------------------------------------
+# INFORMATIONAL MIRROR. docs/ROADMAP.md is the highest source of truth for status,
+# scope and sequencing. If this file disagrees with the roadmap, the roadmap wins.
+# Update the roadmap FIRST, then the epic doc header, then this file.
+# Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
+# "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
+# Last reconciled: 2026-10-09
+# ------------------------------------------------------------------------------
 
-Utility AI is great for immediate biological drives (Hunger, Sleep), but "build a tribe and wage war" requires multi-step planning and retained knowledge.
+To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
+- Track A: Core Simulation & Cognition Engine (Original Linear Sequence: Epics 1-11)
+- Track B: UI / UX & Player Interface (Branching Track: Epic UI-X)
+- Track C: Harness, Tooling & Diagnostics (Branching Track: Epic Test-X)
 
-Here are the architectural epics required to build this out, ordered by structural dependency, along with estimated phases for fleshing them out.
+================================================================================
+TRACK A: CORE SIMULATION & COGNITION (Original Sequence)
+================================================================================
 
 Epic 5: The Memory & Knowledge Matrix [COMPLETED]
-An agent cannot plot revenge or form a tribe if it operates purely in the present tense. Agents now remember the past and store it efficiently with decaying spatial maps, event ledgers, and peer gossip.
-
-Feature 1: Local Knowledge Grids (Completed). Agents have personal Fog of War memory maps, temporal decay (Pawns: 400 ticks, Resources: 1500 ticks), and line-of-sight pruning.
-
-Feature 2: Event Ledgers & Gossip (Completed). Agents maintain ring-buffer event ledgers, track social interaction cooldowns, exchange spatial/event memories during IdleIntents when within 2.5 units, and relieve frustration.
+- Feature 1: Local Knowledge Grids (Fog of war memory maps, temporal decay, line-of-sight pruning).
+- Feature 2: Event Ledgers & Gossip (Ring-buffer event ledgers, interaction cooldowns, 2.5m idle gossip).
 
 Epic 6: Multi-Step Reasoning (GOAP / HTN) [COMPLETED]
-Basic utility AI only solves one step at a time. To craft a weapon, an agent must first find wood, then find stone, then find a workbench.
+- Phase 1: Zero-allocation bitmask WorldState, GoapAction preconditions/effects, ActionGraph.
+- Phase 2: A* search engine (GoapPlanner) with pre-allocated node pools and 0-allocation reconstruction.
+- Phase 3: Background UniTask pipeline integration, reflexive preemption (AbortIntent), WorldStateBuilder.
 
-Feature 1: Goal-Oriented Action Planning (GOAP).
-- Phase 1 (Completed): Zero-allocation bitmask WorldState, GoapAction definitions with preconditions & effects, GoapGoal structures, and ActionGraph prerequisite dependency resolution.
-- Phase 2 (Completed): High-performance A* search through the action graph (GoapPlanner) with pre-allocated node pools, binary min-heap, open-addressing closed table, branch cost optimization, and 0-allocation plan reconstruction.
-- Phase 3 (Completed): Integration of the GOAP planner into the background UniTask pipeline with reflexive utility AI interruption, in-flight intent preemption (ISimulationManager.AbortIntent), WorldStateBuilder, and sequential plan step execution.
-
-Epic Alpha: Biological Needs, Mental Breaks & Autonomous Motor Watchdog [COMPLETED]
-Before agents can form tribes or wage wars (Epic 7), their individual autonomy must be resilient and biologically grounded. This epic decouples physical navigational stalls from internal biological drives, introduces a multifaceted needs hierarchy, and establishes critical mental breaks (panic/starvation) that override deliberate planning.
-
-Feature 1: Multifaceted Biological Drives & GOAP Goal Dynamic Priority.
-- Phase 1 (Completed): Structured AgentNeeds (Hunger, Energy, Social) with continuous decay, WorldState bitmask extensions, dynamic GOAP goal priorities (SatiateHungerGoal, RestGoal, SocializeGoal), and clean drive replenishment.
-
-Feature 2: Autonomous Motor Watchdog (Unstuck Failsafe).
-- Phase 2 (Completed): Navigation watchdog in SimulationManager/NodeController detecting physical deadlocks, zero positional progress, and repeated path obstruction; implements progressive multi-tiered unstuck reflexes (local clearance nudge, relaxed repath, target disengage) without corrupting biological or emotional state.
-
-Feature 3: Mental Breaks & Emergency Reflexes (Starvation Panic & Exhaustion Collapse).
-- Phase 3 (Completed): Critical drive thresholds in Tier 1 Reflexive Evaluators (MentalBreakEvaluator). Starvation Panic (Hunger >= 85f and no known food) wipes stale resource memory, triggers red panic pose, and launches 1.5x exploratory sprint; Exhaustion Collapse (Energy <= 5f) forces emergency rest until Energy >= 30f.
-
-Feature 4: Visual Feedback & Domain Validation Suite.
-- Phase 4 (Completed): Integration of distinct visual states (Harvesting, Panicking, Resting, Gossiping, Walking, Thinking, Idle) with procedural micro-animations in AgentView, and master domain validation suite DriveSystemValidator in Assets/Scripts/Testing/Drives/ verifying 0 GC allocations, watchdog recovery, and panic/collapse transitions.
+Epic Alpha: Biological Needs, Mental Breaks & Motor Watchdog [COMPLETED]
+- Phase 1: Multifaceted AgentNeeds (Hunger, Energy, Social) with continuous metabolic decay.
+- Phase 2: Autonomous Motor Watchdog in SimulationManager with 3-tier progressive unstuck reflexes.
+- Phase 3: Mental Breaks & Emergency Reflexes (Starvation Panic and Exhaustion Collapse).
+- Phase 4: Visual states in AgentView and DriveSystemValidator master test suite.
 
 Epic 7: The Social Affinity Matrix & Relational Dynamics [COMPLETED]
-- Phase 1 (Completed): Sparse, zero-allocation relationship records in AgentMemory tracking Warmth (-100 to +100), Trust (-100 to +100), Fear (0 to 100), and Respect (-100 to +100). Interpersonal gossip increases Warmth/Trust/Respect and relieves Fear, while distrust/fear suppresses gossip. GOAP WorldState integration with relational facts (HasWarmCompanion, HasTrustedPeer, HasFearedThreat, HasRespectedLeader).
-- Phase 2 (Cancelled & Pivoted): Macro tribal hierarchies paused to avoid the "simulation void trap". Pivoted to physical interdependence in Epic Beta; macro-structures deferred to Epic 8 using the generic Group primitive.
+- Phase 1: 4-Axis Dyadic Matrix (Warmth, Trust, Fear, Respect) with temporal decay and GOAP facts.
+- Phase 2: Pivoted to physical interdependence in Epic Beta; macro-structures deferred to Epic 8.
 
-Current Focus: Epic Beta: Concrete World Mechanics & Physical Interdependence
-Before agents organize into high-level sociopolitical structures, the Dyadic matrix (Warmth, Trust, Fear, Respect) must have concrete, observable physical consequences on the map across existing survival loops.
+Epic Beta: Concrete World Mechanics & Physical Interdependence [COMPLETED]
+- Phase 1: Resource Contention & Social Yielding (Dominance delta calculations, yielding vs rivalry).
+- Phase 2: Altruistic Sharing & Food Transfer (Warmth/Trust aid evaluation, hunger transfer, collapse relief).
+- Phase 3: Gathering Anchors & Organic Social Bonding (Campfires/Hearths, 3x gossip acceleration, +2 Warmth / +1 Trust passive propinquity bonding).
 
-Feature 1: Resource Contention & Social Yielding.
-- Phase 1 (Completed): When two pawns approach the same finite resource node, evaluate a deterministic social dominance delta (Fear & Respect). Submissive pawns yield, repath without frustration, and blacklist the node for 150 ticks; symmetrical rivalry triggers simultaneous harvesting, loser frustration (+25), and negative memory logging (Warmth -15, Respect -10).
+Epic 8: Socio-Political Structures & The Generic Group Primitive [COMPLETED]
+(See docs/epics/epic-8.md for full technical specification)
+- Phase 1: Identity Tags & Generic Group Primitive [COMPLETED]
+- Phase 2: Collective Directives & Compliance/Defiance Dynamics [COMPLETED]
+- Phase 3: Organic Emergence, Leadership Succession & Schisms [COMPLETED]
+- Demonstration Arena: Expanded to 10 Pens (Row 1: Epics 7 & Beta; Row 2: Epic 8 live scenarios) [COMPLETED]
 
-Feature 2: Altruistic Sharing & Food Transfer.
-- Phase 2 (Completed): Sated pawns (Hunger < 40) near critically starving or collapsed peers evaluate ShareResourceIntent based on Warmth and Trust. Main-thread execution transfers food, relieves collapse, and logs positive memory events (Warmth +25, Trust +30, Respect +15).
+Epic 9: The Outpost Economy & Public Bounties [MECHANISM COMPLETE - live loop not yet demonstrated]
+(See docs/epics/epic-9.md for full technical specification)
+- Slice 1: Unmanaged Inventory, Currency & Item Primitives [COMPLETED]
+- Slice 2: The Trade Stall & Commercial Exchange [COMPLETED]
+  - TradeStallData (44-byte unmanaged struct) & SharedWorldSnapshot buffer
+  - Atomic buy/sell execution & wallet underflow guards in SimulationManager
+  - Trade-to-Affinity pipeline (+10 Trust, +5 Warmth, +5 Respect / Price Gouging penalties)
+  - GOAP Commercial Actions (TravelToStallAction, BuyProvisionsAction, SellSalvageAction) & Goals
+  - Headless TradeTransactionValidator (8/8 domain tests passing)
+- Slice 3: The Public Bounty Board & Player Intervention Pipeline [COMPLETED]
+  - Drained PlayerInterventionService influence queue in SimulationManager.Tick()
+  - BountyContract (64-byte unmanaged struct) & SharedWorldSnapshot BountyBuffer[16]
+  - Atomic ClaimBountyIntent and DeliverBountyIntent execution with escrow & refund protection
+  - GOAP ClaimBountyAction, DeliverBountyAction, FulfillBountyGoal
+  - Headless BountyFulfillmentValidator (8/8 domain tests passing)
+- Architectural Modernization (Sections 2.1 - 2.6) [MECHANISM COMPLETE]:
+  - Section 2.1: Fixed-Tick Simulation Architecture (SimulationClock, visual interpolation) [COMPLETED]
+  - Section 2.2: Decoupled Agent State & Cognition Architecture (AgentState, AgentRegistry, AgentCognitionService) [COMPLETED]
+  - Section 2.3: Single-Writer Threading Architecture & Snapshot Memory Isolation (double-buffered AgentMemorySnapshot/AgentInventorySnapshot) [COMPLETED]
+  - Section 2.4: Modular Intent Handlers, Typed Commands & Authoritative Economy Ledger (IntentHandlerRegistry, IEconomyLedger, typed InfluenceEvent union) [COMPLETED]
+  - Section 2.6: High-Performance Zero-Allocation Grid A* Navigation Engine (StaticNavGrid, GridAStarSearcher, worker pool in AsyncPathfinder, corner-cutting guards, raycast smoothing) [COMPLETED]
+- DEFERRED (specified but not delivered): MemoryPack serialization,
+  EconomyZeroAllocValidator, EconomySerializationValidator
+- Review Section 3.1: Close the Milestone 1 Supply Side [IMPLEMENTED 2026-10-09 - loop emerges live]
+  - Root cause fixed: Tier-1 SurvivalUtilityEvaluator never returned null, so GOAP never ran live
+    (now a hunger reflex; idle/wander is the Tier-3 AmbientWanderEvaluator fallback)
+  - Typed resources (IronOre / MedicinalHerb / Ration), salvage harvesting, multi-unit gather
+  - Scout bounty fulfilment (ScoutIntentHandler, report at stall, sector explored)
+  - Escrow-only bounty payout; SupplyService caravan restock + dormant node regrowth
+  - Outpost Commons arena (stall (0,9), Ore Ridge, Herb Hollow, 6 free crawlers)
+  - SupplyLoopValidator (8 tests) + OutpostSupplyLoopScenario: both seeded bounties fulfilled with no injection
+- Closure plan Phase 1 DONE 2026-10-10: PlayMode 14/14 (3 runs); OutpostSupplyLoopScenario passes
+  (no injection, zero anomalies). Provisional caravan salvage export keeps the treasury solvent
+  (NOT an economy decision; Section 3.3 deferred by producer).
+  Epic 9 stays MECHANISM COMPLETE until Sections 3.2/3.3 land (producer decision 2026-10-09).
+  (see ROADMAP "Milestone 1 Status")
 
-Feature 3: Gathering Anchors & Organic Social Familiarity.
-- Phase 3 (Completed): World entities (Campfires / Hearths) serve as spatial anchors for idle/sated pawns. Sitting in proximity accelerates gossip cooldowns (3x) and steadily accumulates Warmth and Trust, fostering organic social cliques and shared hearth bonding. Verified with 6 domain tests and zero allocations.
+Review remediation progress: see ROADMAP §3A (done: 2.1, 2.2, 2.3, 2.4, 2.6, 3.1, 4.2, 4.3;
+open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspector, determinism).
 
-Current Focus: Epic 8: Socio-Political Structures & The Generic Group Primitive
-With physical interdependence proven, agents organize into collective structures using the 4-layer sociological taxonomy and a parameter-driven Group primitive (avoiding rigid class monoliths).
+- Closure plan Phase 2 DONE 2026-10-10: seeded SimRandom + SimulationSettings (SIMPIENS_SEED / -simseed),
+  EntityIdAllocator, ordered intent application/iteration. PlayMode 16/16.
+- Closure plan Phase 3 DONE 2026-10-11: economy observation soak (6 runs, integrity OK); trades now go
+  through the ledger. Findings in the plan. Economy design still DEFERRED (producer).
+- Closure plan Phase 4 DONE 2026-10-11: AgentPersonality + Considerations (neutral = unchanged; pens neutral),
+  DecisionSummary groundwork, PriceResponseScenario (gradual demand). PlayMode 19/19.
+- Closure plan Phase 5 DONE 2026-10-11: OutpostGoapDomain, Core/Session/SwarmSpawner, Simpiens.Testing asmdef
+  (UNITY_INCLUDE_TESTS), validators run as PlayMode tests (40/40), stub engine deleted.
+- Closure plan Phase 6 DONE (docs) 2026-10-11. Epic 9 NOT promoted: waits on deferred Section 3.3 (producer).
+Current Focus (Track A): PRODUCER DECISIONS - economy model (Section 3.3), provisional export default, Epic 9
+promotion. See the plan's "Overnight summary". Later Milestone 1 scope: Epic MAP resume, MemoryPack.
+Autonomous mode: producer directive 2026-10-11 (see plan header) - minor decisions only, this branch.
+- Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
+- Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
 
-Feature 1: Identity Tags & The Generic Group Primitive.
-- Phase 1: Identity tags (race, profession, origin) injecting baseline Dyadic modifiers. Implementation of the generic Group primitive (GroupData, GroupMembership, GroupDirective) supporting transient parties and persistent guilds.
+================================================================================
+TRACK B: UI / UX & PLAYER INTERFACE (Branching Track)
+================================================================================
 
-Feature 2: Hierarchical Authority, Collective Directives & Succession.
-- Phase 2: Role ranks, command priority, and directive scoring in ICognitiveEvaluator (compliance vs defiance).
+Epic UI-1: The Flat "Facility Dashboard" Menu UI [COMPLETED]
+- Fullscreen 3-column UI Toolkit dashboard, sector mapping, view toggling.
 
-Epic 9: Personal Inventories, Economy & World Construction
-Agents manipulate the world permanently to build civilizations. Stack-allocated personal inventories, item hauling, shared group stockpiles, and structural placement in SpatialHashGrid.
+Epic UI-Alpha: The Humanized Narrative Chronicle & Story Feed [COMPLETED]
+- Circular event buffer, relative timestamps, natural language templates.
 
-Epic 10: Martial Engagement & Tactical Reasoning
-Combat state machines, ranged/melee damage resolution, cover evaluation, and background tactical pathfinding (fleeing, flanking).
+Epic UI-2: Merchant Terminal & Bounty Board UI [COMPLETED] (no UI epic currently ACTIVE)
+- Phase 1: Trade Stall Buy/Sell Price Sliders (Rations & Raw Salvage)
+- Phase 2: Public Bounty Posting Modal (Scout & Gather Contracts)
+- Phase 3: Outpost Treasury & Renown HUD Widget
 
-Epic 11: The Agentic Narrative Engine (MCP Integration)
-External model context protocol integration. DTO serialization of AgentContext, PersonalityProfile, Memory Ledgers, and Group directives to an LLM evaluator for asynchronous narrative direction, dialogue, and high-level goal injection.
+Queued (Track B):
+- Epic UI-3: Guild Roster & Expedition Dispatch
+
+================================================================================
+TRACK C: HARNESS, TOOLING & DIAGNOSTICS (Branching Track)
+================================================================================
+
+Epic Test-1: Visual Anomaly Detection & Automated Scenarios [COMPLETED]
+- VisualAnomalyDetector, SwarmPlayModeTests, BatchPlaymodeController, rate-limited screenshot recorder.
+
+Current Focus (Track C): Epic Test-2: Outpost Economy & Bounty Contract Harness [ACTIVE]
+- Headless BountyFulfillmentValidator, TradeTransactionValidator, and zero-allocation market soak runner.
+
+================================================================================
+INDEPENDENT EPICS
+================================================================================
+
+Epic MAP: The Utilitarian Outpost Map & Agent Lifecycle Topology [PAUSED]
+(See docs/epics/epic-map.md for the pause record; 9 sectors is incomplete WIP towards 12-sector target)
+- Exists: OutpostMapBuilder + OutpostMapBuilderValidator (not wired into the live session).
+- Not done: live wiring, FacilityZoneService sector refactor (Phase 2), entity population (Phase 3),
+  lifecycle scenarios (Phase 4). Its navigation prerequisite (Grid A*) was delivered 2026-10-09.

@@ -92,9 +92,9 @@ namespace Simpiens.Testing.Sociopolitical
             agentA.Memory.RecordInteraction(nodeB.Id, deltaWarmth: 70, deltaTrust: 60, deltaFear: 0, deltaRespect: 10, 0);
             agentB.Memory.RecordInteraction(nodeA.Id, deltaWarmth: 70, deltaTrust: 60, deltaFear: 0, deltaRespect: 10, 0);
 
-            // Dispatch ShareResourceIntent from A to B with short transfer duration
+            // Dispatch ShareResourceIntent from A to B with transfer duration (1.0s = 10 ticks)
             var path = new PathResponse { Length = 0, IsValid = true };
-            simManager.EnqueueIntent(new ShareResourceIntent(nodeA.Id, nodeB.Id, path, transferDuration: 0.05f, foodAmount: 40f));
+            simManager.EnqueueIntent(new ShareResourceIntent(nodeA.Id, nodeB.Id, path, transferDuration: 1.0f, foodAmount: 40f));
 
             // Tick 1: Proximity reached, transfer begins
             simManager.Tick();
@@ -105,7 +105,7 @@ namespace Simpiens.Testing.Sociopolitical
             var activeIntents = simManager.ActiveIntents;
             if (activeIntents.TryGetValue(nodeA.Id, out var state))
             {
-                state.ElapsedTime = 0.1f; // Force duration completion
+                state.ElapsedTime = 1.0f; // Force duration completion
             }
             simManager.Tick();
 

@@ -1,0 +1,22 @@
+{
+    "name": "Simpiens.Testing",
+    "rootNamespace": "Simpiens.Testing",
+    "references": [
+        "Simpiens",
+        "VContainer",
+        "UniTask",
+        "Unity.InputSystem",
+        "ZLogger.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

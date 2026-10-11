@@ -2,7 +2,7 @@ using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 
-namespace Simpiens.Testing
+namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
     /// Visualizes the Buffer A (SharedWorldSnapshot) data state directly without referencing GameObjects.
@@ -63,6 +63,11 @@ namespace Simpiens.Testing
                             if (type == EntityType.Pawn) hasPawn = true;
                             if (type == EntityType.Resource) hasResource = true;
                             if (type == EntityType.Wall) hasWall = true;
+                        }
+
+                        if (snapshot.StaticGrid != null && !snapshot.StaticGrid.IsCellWalkable(x, y))
+                        {
+                            hasWall = true;
                         }
 
                         if (hasWall)

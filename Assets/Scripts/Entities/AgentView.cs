@@ -15,6 +15,18 @@ namespace Simpiens.Entities
         private AutonomousAgent _agent;
         private Vector3 _baseScale = Vector3.one;
 
+        /// <summary>
+        /// Minimum logical ticks a displayed state is held before switching. Sub-tick simulation flashes
+        /// (Thinking > Idle > Walking on instant intents) are real but unreadable; the view smooths them out.
+        /// 3 ticks keeps at most 3 switches per 0.9 sim-seconds, well below the thrashing threshold (4 per 0.5 s) even
+        /// when uneven frame pacing bunches several ticks into one rendered frame (2 ticks proved too tight at 10x).
+        /// </summary>
+        public const int MinDisplayTicks = 3;
+
+        /// <summary>The state currently rendered (after overrides and the display dwell).</summary>
+        public AgentVisualState DisplayedState { get; private set; } = AgentVisualState.Idle;
+        private long _displayedSinceTick = long.MinValue;
+
         private void Awake()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -59,6 +71,8 @@ namespace Simpiens.Entities
                 state = AgentVisualState.Gossiping;
             }
 
+            state = ApplyDisplayDwell(state);
+
             // Calculate animation frame
             float animSpeed = (state == AgentVisualState.Panicking) ? 8f : 4f;
             int frame = (int)(Time.time * animSpeed) & 1;
@@ -72,6 +86,21 @@ namespace Simpiens.Entities
 
             // Apply zero-allocation procedural micro-animations
             ApplyMicroAnimation(state);
+        }
+
+        private AgentVisualState ApplyDisplayDwell(AgentVisualState desired)
+        {
+            if (desired == DisplayedState) return desired;
+
+            long tick = _agent.CurrentSimTick;
+            if (tick >= 0 && _displayedSinceTick != long.MinValue && tick - _displayedSinceTick < MinDisplayTicks)
+            {
+                return DisplayedState; // hold the current state until the dwell elapses
+            }
+
+            DisplayedState = desired;
+            _displayedSinceTick = tick;
+            return desired;
         }
 
         private void ApplyMicroAnimation(AgentVisualState state)
@@ -136,6 +165,22 @@ namespace Simpiens.Entities
                     float sharePulse = 1f + (Mathf.Abs(Mathf.Sin(t * 6f)) * 0.08f);
                     transform.localRotation = Quaternion.Euler(0f, 0f, -3f);
                     transform.localScale = _baseScale * sharePulse;
+                    break;
+
+                case AgentVisualState.Rallying:
+                    // Disciplined marching bob & upright posture
+                    float rallyBob = 1f + Mathf.Abs(Mathf.Sin(t * 8f)) * 0.08f;
+                    float rallyTilt = Mathf.Sin(t * 6f) * 2f;
+                    transform.localRotation = Quaternion.Euler(0f, 0f, rallyTilt);
+                    transform.localScale = _baseScale * rallyBob;
+                    break;
+
+                case AgentVisualState.Defiant:
+                    // Rebellious rigid stance with defiant jitter
+                    float defiantTilt = Mathf.Sin(t * 14f) * 4f;
+                    float defiantScale = 1f + (Mathf.Sin(t * 12f) * 0.05f);
+                    transform.localRotation = Quaternion.Euler(0f, 0f, defiantTilt);
+                    transform.localScale = _baseScale * defiantScale;
                     break;
 
                 case AgentVisualState.Idle:

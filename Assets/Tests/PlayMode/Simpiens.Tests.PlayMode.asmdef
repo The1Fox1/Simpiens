@@ -1,0 +1,27 @@
+{
+    "name": "Simpiens.Tests.PlayMode",
+    "rootNamespace": "Simpiens.Tests.PlayMode",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Simpiens",
+        "VContainer",
+        "UniTask",
+        "Unity.InputSystem",
+        "Simpiens.Testing"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

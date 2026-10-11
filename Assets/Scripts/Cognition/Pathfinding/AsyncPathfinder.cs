@@ -7,6 +7,8 @@ using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Cognition.Pathfinding
 {
@@ -16,15 +18,17 @@ namespace Simpiens.Cognition.Pathfinding
     }
 
     /// <summary>
-    /// A naive, background-threaded pathfinder that queries the SharedWorldSnapshot.
-    /// Operates entirely off the main thread.
+    /// High-performance, background-threaded 2D Grid A* pathfinder.
+    /// Operates entirely off the main thread with zero heap allocations in hot paths.
     /// </summary>
     public class AsyncPathfinder : IAsyncPathfinder, IStartable
     {
         private readonly ConcurrentQueue<PathResponse> _responsePool = new ConcurrentQueue<PathResponse>();
+        private readonly ConcurrentQueue<GridAStarSearcher> _searcherPool = new ConcurrentQueue<GridAStarSearcher>();
 
         private const int MaxPathLength = 200;
         private const int InitialPoolSize = 2000;
+        private const int InitialSearcherPoolSize = 8;
 
         public void Start()
         {
@@ -33,6 +37,11 @@ namespace Simpiens.Cognition.Pathfinding
                 var response = new PathResponse();
                 response.Initialize(MaxPathLength, ReturnToPool);
                 _responsePool.Enqueue(response);
+            }
+
+            for (int i = 0; i < InitialSearcherPoolSize; i++)
+            {
+                _searcherPool.Enqueue(new GridAStarSearcher());
             }
         }
 
@@ -44,6 +53,15 @@ namespace Simpiens.Cognition.Pathfinding
 
         public async UniTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot)
         {
+            if (snapshot == null)
+            {
+                var emptyResponse = GetOrCreateResponse();
+                emptyResponse.Length = 0;
+                emptyResponse.IsValid = false;
+                emptyResponse.IsComplete = true;
+                return emptyResponse;
+            }
+
             // Retain snapshot before sending to worker thread to ensure it stays alive.
             snapshot.Retain();
 
@@ -51,7 +69,12 @@ namespace Simpiens.Cognition.Pathfinding
             {
                 // Jumps off the main thread cleanly for zero-allocation background work
                 await UniTask.SwitchToThreadPool();
-                return ProcessRequest(request, snapshot);
+                var response = ProcessRequest(request, snapshot);
+                if (!response.IsValid && SimLog.Traces(SimLog.Navigation, Microsoft.Extensions.Logging.LogLevel.Trace, request.RequesterId))
+                {
+                    SimLog.Navigation.ZLogTrace($"No path for {SimLog.Agent(request.RequesterId)} from {request.StartPosition} to {request.TargetPosition}");
+                }
+                return response;
             }
             finally
             {
@@ -60,70 +83,48 @@ namespace Simpiens.Cognition.Pathfinding
             }
         }
 
-        private PathResponse ProcessRequest(PathRequest request, SharedWorldSnapshot snapshot)
+        public PathResponse CalculatePathImmediate(PathRequest request, SharedWorldSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                var emptyResponse = GetOrCreateResponse();
+                emptyResponse.Length = 0;
+                emptyResponse.IsValid = false;
+                emptyResponse.IsComplete = true;
+                return emptyResponse;
+            }
+
+            return ProcessRequest(request, snapshot);
+        }
+
+        private PathResponse GetOrCreateResponse()
         {
             if (!_responsePool.TryDequeue(out var response))
             {
                 response = new PathResponse();
                 response.Initialize(MaxPathLength, ReturnToPool);
             }
+            return response;
+        }
 
-            // A VERY naive "straight line" or "random walk" pathfinder for stress testing.
-            // A real A* would allocate too much unless heavily optimized.
-            // Since this is for validation testing, we'll generate a direct path, 
-            // checking IsWalkable along the way. If blocked, we stop.
+        private PathResponse ProcessRequest(PathRequest request, SharedWorldSnapshot snapshot)
+        {
+            var response = GetOrCreateResponse();
 
-            Vector2 currentPos = request.StartPosition;
-            Vector2 targetPos = request.TargetPosition;
-            float distance = Vector2.Distance(currentPos, targetPos);
-
-            response.Length = 0;
-
-            if (distance <= 0.05f)
+            if (!_searcherPool.TryDequeue(out var searcher))
             {
-                response.IsValid = true;
-                response.IsComplete = true;
+                searcher = new GridAStarSearcher();
+            }
+
+            try
+            {
+                searcher.Search(in request, snapshot, response);
                 return response;
             }
-
-            Vector2 direction = (targetPos - currentPos).normalized;
-            float stepSize = 0.5f;
-            int steps = Mathf.Min(Mathf.CeilToInt(distance / stepSize), MaxPathLength);
-
-            float offsetX = (snapshot.Width * snapshot.CellSize) * 0.5f;
-            float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
-
-            for (int i = 1; i <= steps; i++)
+            finally
             {
-                float stepDist = i * stepSize;
-                Vector2 nextPos = (stepDist >= distance) ? targetPos : currentPos + direction * stepDist;
-
-                int cellX = Mathf.FloorToInt((nextPos.x + offsetX) / snapshot.CellSize);
-                int cellY = Mathf.FloorToInt((nextPos.y + offsetY) / snapshot.CellSize);
-
-                if (cellX < 0 || cellX >= snapshot.Width || cellY < 0 || cellY >= snapshot.Height)
-                {
-                    break;
-                }
-
-                if (snapshot.IsWalkable(cellX, cellY))
-                {
-                    response.Waypoints[response.Length] = nextPos;
-                    response.Length++;
-                    if (nextPos == targetPos)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
+                _searcherPool.Enqueue(searcher);
             }
-
-            response.IsValid = response.Length > 0;
-            response.IsComplete = true;
-            return response;
         }
     }
 }

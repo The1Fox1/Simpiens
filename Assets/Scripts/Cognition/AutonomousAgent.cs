@@ -3,16 +3,22 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
+using Simpiens.Cognition.Groups;
+using Simpiens.Cognition.Inventory;
+using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Actions;
+using Simpiens.Cognition.Social;
 using Simpiens.Entities;
+using Simpiens.Narrative;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 
 namespace Simpiens.Cognition
 {
-    public class AutonomousAgent : MonoBehaviour
+    public class AutonomousAgent : MonoBehaviour, ISocialAgent
     {
         public const int DefaultVisionRadius = 6;
 
@@ -21,70 +27,123 @@ namespace Simpiens.Cognition
         private ICognitiveEvaluator[] _evaluators;
         private ISimulationManager _simulationManager;
         private ISimulationClock _clock;
-
-        // GOAP Planning Dependencies
         private IGoapPlanner _planner;
         private ActionGraph _actionGraph;
         private List<GoapGoal> _goals;
-
-        // Plan Execution State (Zero Allocation)
-        private readonly GoapPlan _activePlan = new GoapPlan(16);
-        private readonly GoapPlan _scratchPlan = new GoapPlan(16);
-        private GoapGoal _activeGoal;
-
-        // Private fields
-        private Simpiens.Cognition.Memory.AgentMemory _memory;
-        private bool _isEvaluating;
+        private IAgentCognitionService _cognitionService;
         private CancellationTokenSource _cts;
 
-        // Public properties
-        public UnityEngine.GUID AgentId { get; private set; }
-        public Simpiens.Cognition.Memory.AgentMemory Memory => _memory;
-        public GoapPlan ActivePlan => _activePlan;
-        public GoapGoal ActiveGoal => _activeGoal;
-        public bool HasActivePlan => !_activePlan.IsEmpty && !_activePlan.IsFinished;
+        // Authoritative Pure C# Agent State
+        private AgentState _state;
+        public AgentState State
+        {
+            get
+            {
+                if (_state == null)
+                {
+                    _state = new AgentState();
+                    if (transform != null) _state.Position = transform.position;
+                }
+                return _state;
+            }
+            internal set => _state = value;
+        }
 
-        // State
-        public AgentNeeds Needs { get; set; } = AgentNeeds.Default;
+        // Forwarded ISocialAgent & State Properties
+        public UnityEngine.GUID AgentId => State.AgentId;
+        public AgentMemory Memory => State.Memory;
+        public GoapPlan ActivePlan => State.ActivePlan;
+        public GoapGoal ActiveGoal => State.ActiveGoal;
+        public bool HasActivePlan => State.HasActivePlan;
+
+        public AgentNeeds Needs
+        {
+            get => State.Needs;
+            set => State.Needs = value;
+        }
+
         public float Hunger
         {
-            get => Needs.Hunger;
-            set => Needs = new AgentNeeds(value, Needs.Energy, Needs.Social);
+            get => State.Hunger;
+            set => State.Hunger = value;
         }
+
         public float Energy
         {
-            get => Needs.Energy;
-            set => Needs = new AgentNeeds(Needs.Hunger, value, Needs.Social);
+            get => State.Energy;
+            set => State.Energy = value;
         }
+
         public float Social
         {
-            get => Needs.Social;
-            set => Needs = new AgentNeeds(Needs.Hunger, Needs.Energy, value);
+            get => State.Social;
+            set => State.Social = value;
         }
-        public float Frustration { get; set; } = 0f;
-        public bool HasFoodInInventory { get; set; } = false;
-        public int NavigationalStalls { get; set; } = 0;
-        public bool IsExhaustionCollapsed { get; private set; } = false;
 
-        public bool HasActiveIntent { get; internal set; }
-        private AgentIntent _currentIntent;
+        public float Frustration
+        {
+            get => State.Frustration;
+            set => State.Frustration = value;
+        }
 
-        // Visual State
-        private float _tantrumTimer = 0f;
-        private float _yieldingTimer = 0f;
-        private float _gossipTimer = 0f;
-        private float _sharingTimer = 0f;
+        public AgentInventory Inventory => State.Inventory;
 
-        public bool IsInTantrum => _tantrumTimer > 0f;
-        public bool IsYielding => _yieldingTimer > 0f;
-        public bool IsGossiping => _gossipTimer > 0f;
-        public bool IsSharing => _sharingTimer > 0f;
-        public bool IsStarvationPanicking => Needs.Hunger >= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.StarvationThreshold && !HasFoodInInventory && !HasKnownFood();
+        public bool HasFoodInInventory
+        {
+            get => State.HasFoodInInventory;
+            set => State.HasFoodInInventory = value;
+        }
 
-        public AgentVisualState VisualState { get; set; } = AgentVisualState.Idle;
-        public float LastGossipTimestamp { get; private set; } = -10f;
-        public float LastYieldTimestamp { get; private set; } = -10f;
-        public float LastTantrumTimestamp { get; private set; } = -10f;
+        public int NavigationalStalls
+        {
+            get => State.NavigationalStalls;
+            set => State.NavigationalStalls = value;
+        }
+
+        public bool IsExhaustionCollapsed
+        {
+            get => State.IsExhaustionCollapsed;
+            set => State.IsExhaustionCollapsed = value;
+        }
+
+        public GroupMembership Membership
+        {
+            get => State.Membership;
+            set => State.Membership = value;
+        }
+
+        public IdentityTag Identity
+        {
+            get => State.Identity;
+            set => State.Identity = value;
+        }
+
+        public bool HasActiveIntent
+        {
+            get => State.HasActiveIntent;
+            set => State.HasActiveIntent = value;
+        }
+
+        public bool IsInTantrum => State.IsInTantrum;
+        public bool IsYielding => State.IsYielding;
+        public bool IsGossiping => State.IsGossiping;
+        public bool IsSharing => State.IsSharing;
+        public bool IsRallying => State.IsRallying;
+        public bool IsDefiant => State.IsDefiant;
+        public bool IsStarvationPanicking => State.IsStarvationPanicking;
+
+        public AgentVisualState VisualState
+        {
+            get => State.VisualState;
+            set => State.VisualState = value;
+        }
+
+        /// <summary>Current logical tick, or -1 without a clock (headless). Read-only, for views.</summary>
+        public long CurrentSimTick => _clock != null ? _clock.CurrentTick : -1;
+
+        public float LastGossipTimestamp => State.LastGossipTimestamp;
+        public float LastYieldTimestamp => State.LastYieldTimestamp;
+        public float LastTantrumTimestamp => State.LastTantrumTimestamp;
 
 #if UNITY_EDITOR
         [Header("Runtime Telemetry (Editor Debug)")]
@@ -95,64 +154,95 @@ namespace Simpiens.Cognition
         [SerializeField] private float _inspectorSocial;
         [SerializeField] private string _inspectorActiveGoal;
         [SerializeField] private string _inspectorActiveAction;
+        [SerializeField] private int _inspectorGold;
+        [SerializeField] [TextArea(2, 5)] private string _inspectorInventory;
         [SerializeField] [TextArea(3, 6)] private string _inspectorRecentEvents;
         [SerializeField] [TextArea(3, 6)] private string _inspectorDyadicAffinities;
 #endif
 
+        private void Awake()
+        {
+            if (_state == null)
+            {
+                _state = new AgentState();
+                if (transform != null) _state.Position = transform.position;
+            }
+            if (_cts == null)
+            {
+                _cts = new CancellationTokenSource();
+            }
+            if (_cognitionService == null)
+            {
+                _cognitionService = new AgentCognitionService();
+            }
+        }
+
         public void TriggerGossipVisual(float timestamp = 0f)
         {
-            LastGossipTimestamp = timestamp;
-            _gossipTimer = 1.5f;
-            VisualState = AgentVisualState.Gossiping;
+            State.TriggerGossipVisual(timestamp);
         }
 
         public void TriggerYieldVisual(float timestamp = 0f)
         {
-            LastYieldTimestamp = timestamp;
-            _yieldingTimer = 1.2f;
-            VisualState = AgentVisualState.Yielding;
+            State.TriggerYieldVisual(timestamp);
         }
 
         public void TriggerTantrumVisual(float timestamp = 0f)
         {
-            LastTantrumTimestamp = timestamp;
-            _tantrumTimer = 2.5f;
-            VisualState = AgentVisualState.Panicking;
+            State.TriggerTantrumVisual(timestamp);
+
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
+            _simulationManager?.RecordStoryEvent(new ChronicleEvent(
+                ChronicleEventType.TantrumStarted,
+                AgentId,
+                default,
+                0,
+                tick,
+                ChronicleIntensity.Dramatic));
         }
 
-        public void TriggerSharingVisual(float timestamp = 0f)
+        public void TriggerSharingVisual(float duration = 1.2f)
         {
-            _sharingTimer = 1.2f;
-            VisualState = AgentVisualState.Sharing;
+            State.TriggerSharingVisual(duration);
+        }
+
+        public void TriggerRallyVisual(float duration = 2.0f)
+        {
+            State.TriggerRallyVisual(duration);
+        }
+
+        public void TriggerDefiantVisual(float duration = 1.5f)
+        {
+            State.TriggerDefiantVisual(duration);
         }
 
         public void TriggerReliefVisual()
         {
-            if (IsExhaustionCollapsed)
-            {
-                IsExhaustionCollapsed = false;
-            }
-            if (_tantrumTimer > 0f)
-            {
-                _tantrumTimer = 0f;
-            }
-            VisualState = AgentVisualState.Idle;
+            State.TriggerReliefVisual();
+        }
+
+        public void CollapseFromExhaustion()
+        {
+            State.CollapseFromExhaustion();
+
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
+            _simulationManager?.RecordStoryEvent(new ChronicleEvent(
+                ChronicleEventType.ExhaustionCollapsed,
+                AgentId,
+                default,
+                0,
+                tick,
+                ChronicleIntensity.Crisis));
         }
 
         public void RelieveFrustration(float amount)
         {
-            Frustration = Mathf.Max(0f, Frustration - amount);
+            State.RelieveFrustration(amount);
         }
 
         public void AbortActivePlan()
         {
-            _activePlan.Clear();
-            _activeGoal = null;
-            _currentIntent = null;
-            if (!IsExhaustionCollapsed && _tantrumTimer <= 0f && _sharingTimer <= 0f && !IsStarvationPanicking)
-            {
-                VisualState = AgentVisualState.Idle;
-            }
+            State.AbortActivePlan();
         }
 
         public void Initialize(
@@ -163,9 +253,15 @@ namespace Simpiens.Cognition
             ISimulationClock clock,
             IGoapPlanner planner = null,
             ActionGraph actionGraph = null,
-            List<GoapGoal> goals = null)
+            List<GoapGoal> goals = null,
+            IAgentCognitionService cognitionService = null)
         {
-            AgentId = id;
+            State.AgentId = id;
+            if (transform != null)
+            {
+                State.Position = transform.position;
+            }
+
             _spatialPartition = spatialPartition;
             _evaluators = evaluators;
             _simulationManager = simulationManager;
@@ -173,381 +269,165 @@ namespace Simpiens.Cognition
             _planner = planner;
             _actionGraph = actionGraph;
             _goals = goals;
+            _cognitionService = cognitionService ?? new AgentCognitionService();
 
-            _memory = new Simpiens.Cognition.Memory.AgentMemory();
-            _cts = new CancellationTokenSource();
+            if (_cts == null)
+            {
+                _cts = new CancellationTokenSource();
+            }
+
+            _simulationManager?.Agents?.RegisterAgent(State);
         }
 
-        public void ManualUpdate() // Called by SwarmSpawner to avoid MonoBehaviour Update overhead
+        public const float FixedTickDeltaTime = 0.1f;
+
+        public void ManualUpdate() // Backward compatibility alias for tests and runners
         {
+            ManualTick(_clock != null ? _clock.CurrentTick : 0);
+        }
+
+        public void ManualTick(long currentTick)
+        {
+            if (this == null || gameObject == null || State == null) return;
+            if (_simulationManager != null && _simulationManager.IsPaused) return;
+            if (_clock != null && _clock.IsPaused) return;
+
+            if (transform != null)
+            {
+                State.Position = transform.position;
+            }
+
 #if UNITY_EDITOR
             UpdateEditorTelemetry();
 #endif
 
-            if (_yieldingTimer > 0f)
-            {
-                _yieldingTimer -= Time.deltaTime;
-            }
+            // Advance biological drives and emotion timers on fixed logical tick dt
+            State.Tick(FixedTickDeltaTime);
 
-            if (_sharingTimer > 0f)
+            // Keep membership synced with authoritative main-thread group registry
+            if (_simulationManager?.Groups != null && State.Membership.HasGroup)
             {
-                _sharingTimer -= Time.deltaTime;
-            }
-
-            if (_gossipTimer > 0f)
-            {
-                _gossipTimer -= Time.deltaTime;
-            }
-
-            if (_tantrumTimer > 0f)
-            {
-                _tantrumTimer -= Time.deltaTime;
-                VisualState = AgentVisualState.Panicking;
-                return;
-            }
-
-            // Multifaceted biological drive simulation
-            float hunger = Mathf.Min(100f, Needs.Hunger + Time.deltaTime * 1.5f);
-
-            float energy = Needs.Energy;
-            if (IsExhaustionCollapsed || (HasActivePlan && _activePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
-            {
-                // Rapidly replenish energy while actively resting or recovering from exhaustion collapse
-                energy = Mathf.Min(100f, energy + Time.deltaTime * 15f);
-                if (IsExhaustionCollapsed && energy >= 30f)
+                if (_simulationManager.Groups.TryGetMembership(State.AgentId, out var currentMem))
                 {
-                    IsExhaustionCollapsed = false;
-                    VisualState = AgentVisualState.Idle;
+                    State.Membership = currentMem;
+                }
+                else
+                {
+                    State.Membership = GroupMembership.None;
                 }
             }
-            else if (VisualState == AgentVisualState.Walking)
-            {
-                // Walking drains energy faster
-                energy = Mathf.Max(0f, energy - Time.deltaTime * 1.0f);
-            }
-            else
-            {
-                // Baseline metabolic energy drain
-                energy = Mathf.Max(0f, energy - Time.deltaTime * 0.2f);
-            }
 
-            float social = Mathf.Max(0f, Needs.Social - Time.deltaTime * 0.5f);
-
-            Needs = new AgentNeeds(hunger, energy, social);
-            Frustration = Mathf.Max(0f, Frustration - Time.deltaTime * 1f); // Decays slowly
-
-            // Tier 1 Reflexive Preemption Check:
-            // If an agent is executing an active intent and an emergency condition occurs:
-            // 1. Exhaustion Collapse (Energy <= 5f)
-            // 2. Starvation Panic (Hunger >= 85f and no known food in inventory or memory)
-            // Preempt the active intent on the main thread and cancel the long-term plan!
-            bool emergencyExhaustion = energy <= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.ExhaustionThreshold;
-            bool emergencyStarvation = hunger >= Simpiens.Cognition.Evaluators.MentalBreakEvaluator.StarvationThreshold && !HasFoodInInventory && !HasKnownFood();
+            // Reflexive preemption check
+            bool emergencyExhaustion = State.Energy <= MentalBreakEvaluator.ExhaustionThreshold;
+            bool emergencyStarvation = State.Hunger >= MentalBreakEvaluator.StarvationThreshold && !State.HasFoodInInventory && !State.HasKnownFood();
 
             if (emergencyExhaustion)
             {
-                IsExhaustionCollapsed = true;
-            }
-
-            if (IsExhaustionCollapsed)
-            {
-                VisualState = AgentVisualState.Resting;
+                State.IsExhaustionCollapsed = true;
+                State.VisualState = AgentVisualState.Resting;
             }
 
             bool shouldPreempt = false;
-            if (emergencyExhaustion && !(_currentIntent is IdleIntent))
+            if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
             {
                 shouldPreempt = true;
             }
-            else if (emergencyStarvation && !(_currentIntent is PanicIntent))
+            else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent))
             {
                 shouldPreempt = true;
             }
 
-            if (HasActiveIntent && shouldPreempt)
+            if (State.HasActiveIntent && shouldPreempt)
             {
                 if (_simulationManager != null)
                 {
-                    _simulationManager.AbortIntent(AgentId);
+                    _simulationManager.AbortIntent(State.AgentId);
                 }
-                AbortActivePlan();
-                _currentIntent = null;
-                HasActiveIntent = false;
+                State.AbortActivePlan();
+                State.CurrentIntent = null;
+                State.HasActiveIntent = false;
 
-                if (IsExhaustionCollapsed)
+                if (State.IsExhaustionCollapsed)
                 {
-                    VisualState = AgentVisualState.Resting;
+                    State.VisualState = AgentVisualState.Resting;
                 }
-                else if (emergencyStarvation && _tantrumTimer <= 0f)
+                else if (emergencyStarvation && State.TantrumTimer <= 0f)
                 {
-                    VisualState = AgentVisualState.Panicking;
+                    State.VisualState = AgentVisualState.Panicking;
                 }
 
-                if (!_isEvaluating)
+                if (!State.IsEvaluating && _cognitionService != null)
                 {
-                    EvaluateCognitionAsync().Forget();
+                    _cognitionService.EvaluateAgentCognitionAsync(
+                        State,
+                        _spatialPartition,
+                        _simulationManager,
+                        _clock,
+                        _planner,
+                        _actionGraph,
+                        _goals,
+                        _evaluators,
+                        _cts.Token).Forget();
                 }
                 return;
             }
 
-            if (_isEvaluating || HasActiveIntent) return;
+            if (State.IsEvaluating || State.HasActiveIntent) return;
 
-            EvaluateCognitionAsync().Forget();
-        }
-
-        private async UniTaskVoid EvaluateCognitionAsync()
-        {
-            if (_spatialPartition == null) return;
-            var snapshot = _spatialPartition.GetActiveSnapshot();
-            if (snapshot == null) return;
-
-            _isEvaluating = true;
-            if (IsExhaustionCollapsed)
+            if (_cognitionService != null)
             {
-                VisualState = AgentVisualState.Resting;
-            }
-            else if (IsStarvationPanicking)
-            {
-                VisualState = AgentVisualState.Panicking;
-            }
-            else
-            {
-                VisualState = AgentVisualState.Thinking;
-            }
-
-            Vector2Int currentPosInt = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
-            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
-            _memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick);
-
-            var context = new AgentContext(AgentId, transform.position, Needs, Frustration, snapshot, _memory, tick);
-
-            try
-            {
-                // Explicitly jump off the main thread for cognitive evaluation
-                await UniTask.SwitchToThreadPool();
-
-                // Ensure the snapshot stays alive while we process in background
-                snapshot.Retain();
-
-                AgentIntent intent = null;
-
-                // If agent is in exhaustion collapse, suppress normal planning and force rest
-                if (IsExhaustionCollapsed)
-                {
-                    intent = new IdleIntent(context.AgentId, 2.0f);
-                }
-
-                // Tier 1: Check Reflexive Evaluators (Panic, Emergency Drives)
-                if (intent == null && _evaluators != null)
-                {
-                    for (int i = 0; i < _evaluators.Length; i++)
-                    {
-                        intent = await _evaluators[i].EvaluateAsync(context, _cts.Token);
-                        if (intent != null)
-                        {
-                            // Reflexive drive triggered; abort long-term plan
-                            AbortActivePlan();
-                            break;
-                        }
-                    }
-                }
-
-                // Tier 2: Deliberative GOAP Plan Execution & Generation
-                if (intent == null && _planner != null && _actionGraph != null)
-                {
-                    // A. If an active plan is already in progress, execute its current step
-                    if (HasActivePlan)
-                    {
-                        var currentAction = _activePlan.CurrentAction;
-                        if (currentAction != null && currentAction.IsValid(context))
-                        {
-                            intent = await currentAction.CreateIntentAsync(context, _cts.Token);
-                        }
-                        else
-                        {
-                            // Action is no longer valid in this context; invalidate plan
-                            AbortActivePlan();
-                        }
-                    }
-
-                    // B. If no active plan, select highest priority goal and formulate a new plan
-                    if (intent == null && !HasActivePlan && _goals != null && _goals.Count > 0)
-                    {
-                        var currentState = WorldStateBuilder.BuildWorldState(context, HasFoodInInventory);
-                        GoapGoal bestGoal = null;
-                        float highestPriority = -1f;
-
-                        int goalCount = _goals.Count;
-                        for (int i = 0; i < goalCount; i++)
-                        {
-                            var goal = _goals[i];
-                            if (!goal.IsValid(context)) continue;
-                            if (goal.IsSatisfied(currentState)) continue;
-
-                            float priority = goal.CalculatePriority(context);
-                            if (priority > highestPriority)
-                            {
-                                highestPriority = priority;
-                                bestGoal = goal;
-                            }
-                        }
-
-                        if (bestGoal != null)
-                        {
-                            bool planFound = _planner.Plan(currentState, bestGoal, _actionGraph, context, _scratchPlan);
-                            if (planFound && !_scratchPlan.IsEmpty)
-                            {
-                                _activePlan.CopyFrom(_scratchPlan);
-                                _activeGoal = bestGoal;
-
-                                var firstAction = _activePlan.CurrentAction;
-                                if (firstAction != null && firstAction.IsValid(context))
-                                {
-                                    intent = await firstAction.CreateIntentAsync(context, _cts.Token);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Tier 3: Fallback Idle
-                if (intent == null)
-                {
-                    intent = new IdleIntent(context.AgentId);
-                }
-
-                // Set intent tracking so agent waits until it completes
-                _currentIntent = intent;
-                HasActiveIntent = true;
-                intent.OnComplete = (result) =>
-                {
-                    _currentIntent = null;
-                    HasActiveIntent = false;
-                    if (_tantrumTimer > 0f || IsStarvationPanicking)
-                    {
-                        VisualState = AgentVisualState.Panicking;
-                    }
-                    else if (_yieldingTimer > 0f)
-                    {
-                        VisualState = AgentVisualState.Yielding;
-                    }
-                    else if (_sharingTimer > 0f)
-                    {
-                        VisualState = AgentVisualState.Sharing;
-                    }
-                    else
-                    {
-                        VisualState = AgentVisualState.Idle;
-                    }
-                    uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
-
-                    if (intent is PanicIntent)
-                    {
-                        Frustration = 0f;
-                    }
-                    else if (result == IntentResult.Success)
-                    {
-                        NavigationalStalls = 0;
-
-                        // If the completed intent was part of our active plan, advance the step
-                        if (HasActivePlan)
-                        {
-                            var completedAction = _activePlan.CurrentAction;
-                            if (completedAction is HarvestResourceAction)
-                            {
-                                Hunger = Mathf.Max(0f, Hunger - 50f);
-                                HasFoodInInventory = true;
-                            }
-                            else if (completedAction is EatCarriedFoodAction)
-                            {
-                                Hunger = Mathf.Max(0f, Hunger - 40f);
-                                HasFoodInInventory = false;
-                            }
-                            else if (completedAction is Simpiens.Cognition.Planning.Actions.RestAction)
-                            {
-                                Energy = Mathf.Min(100f, Energy + 30f);
-                            }
-                            else if (completedAction is Simpiens.Cognition.Planning.Actions.TravelToPeerAction)
-                            {
-                                Social = Mathf.Min(100f, Social + 25f);
-                            }
-                            else if (completedAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction)
-                            {
-                                Social = Mathf.Min(100f, Social + 20f);
-                                Energy = Mathf.Min(100f, Energy + 10f);
-                            }
-
-                            _activePlan.AdvanceStep();
-                            if (_activePlan.IsFinished)
-                            {
-                                AbortActivePlan();
-                            }
-                        }
-                    }
-                    else if (result == IntentResult.TargetMissing || result == IntentResult.PathBlocked || result == IntentResult.Aborted)
-                    {
-                        NavigationalStalls++;
-                        AbortActivePlan();
-                    }
-
-                    if (intent is HarvestResourceIntent harvestIntent)
-                    {
-                        if (result == IntentResult.TargetMissing)
-                        {
-                            _memory.RemoveMemory(harvestIntent.TargetEntityId);
-                        }
-                        else if (result == IntentResult.PathBlocked || result == IntentResult.Aborted)
-                        {
-                            _memory.BlacklistEntity(harvestIntent.TargetEntityId, currentTick + 100);
-                        }
-                    }
-                };
-
-                // Pass back to simulation manager queue
-                _simulationManager.EnqueueIntent(intent);
-            }
-            catch (System.OperationCanceledException)
-            {
-                // Task was cleanly canceled
-            }
-            finally
-            {
-                snapshot.Release();
-                _isEvaluating = false;
+                _cognitionService.EvaluateAgentCognitionAsync(
+                    State,
+                    _spatialPartition,
+                    _simulationManager,
+                    _clock,
+                    _planner,
+                    _actionGraph,
+                    _goals,
+                    _evaluators,
+                    _cts.Token).Forget();
             }
         }
 
         public bool HasKnownFood()
         {
-            if (HasFoodInInventory) return true;
-            if (_memory == null || _memory.SpatialMemoryMap == null) return false;
-
-            uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
-            foreach (var kvp in _memory.SpatialMemoryMap)
-            {
-                var record = kvp.Value;
-                if (record.Type == Simpiens.Simulation.Spatial.EntityType.Resource && !_memory.IsBlacklisted(record.EntityId, currentTick))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return State.HasKnownFood(_clock != null ? (uint)_clock.CurrentTick : 0);
         }
 
 #if UNITY_EDITOR
         private void UpdateEditorTelemetry()
         {
-            _inspectorVisualState = _tantrumTimer > 0f ? AgentVisualState.Panicking :
-                                    _yieldingTimer > 0f ? AgentVisualState.Yielding :
-                                    _sharingTimer > 0f ? AgentVisualState.Sharing :
-                                    _gossipTimer > 0f ? AgentVisualState.Gossiping :
-                                    VisualState;
+            _inspectorVisualState = VisualState;
             _inspectorFrustration = Frustration;
             _inspectorHunger = Needs.Hunger;
             _inspectorEnergy = Needs.Energy;
             _inspectorSocial = Needs.Social;
-            _inspectorActiveGoal = _activeGoal != null ? _activeGoal.GetType().Name : "(None)";
-            _inspectorActiveAction = (HasActivePlan && _activePlan.CurrentAction != null) ? _activePlan.CurrentAction.GetType().Name : "(None)";
+            _inspectorActiveGoal = ActiveGoal != null ? ActiveGoal.GetType().Name : "(None)";
+            _inspectorActiveAction = (HasActivePlan && ActivePlan.CurrentAction != null) ? ActivePlan.CurrentAction.GetType().Name : "(None)";
+
+            if (Inventory != null)
+            {
+                _inspectorGold = Inventory.Gold;
+                var sbInv = new System.Text.StringBuilder();
+                for (int i = 0; i < Inventory.Capacity; i++)
+                {
+                    var slot = Inventory.GetSlot(i);
+                    if (!slot.IsEmpty)
+                    {
+                        sbInv.AppendLine($"[{i}] {slot.Type} x{slot.Quantity} (Q:{slot.Quality}, Val:{slot.BaseValue}g)");
+                    }
+                    else
+                    {
+                        sbInv.AppendLine($"[{i}] (Empty)");
+                    }
+                }
+                _inspectorInventory = sbInv.ToString();
+            }
+            else
+            {
+                _inspectorGold = 0;
+                _inspectorInventory = "(No inventory)";
+            }
 
             IWorldRegistry registry = null;
             if (_simulationManager is SimulationManager sm)
@@ -555,9 +435,9 @@ namespace Simpiens.Cognition
                 registry = sm.WorldRegistry;
             }
 
-            if (_memory != null)
+            if (Memory != null)
             {
-                var ledger = _memory.EventLedger;
+                var ledger = Memory.EventLedger;
                 if (ledger != null && ledger.Count > 0)
                 {
                     var sb = new System.Text.StringBuilder();
@@ -580,10 +460,10 @@ namespace Simpiens.Cognition
                     _inspectorRecentEvents = "(No events recorded yet)";
                 }
 
-                if (_memory.AffinityMap != null && _memory.AffinityMap.Count > 0)
+                if (Memory.AffinityMap != null && Memory.AffinityMap.Count > 0)
                 {
                     var sb = new System.Text.StringBuilder();
-                    foreach (var kvp in _memory.AffinityMap)
+                    foreach (var kvp in Memory.AffinityMap)
                     {
                         var peerNode = registry?.GetNode(kvp.Key);
                         string peerName = peerNode != null ? peerNode.name : kvp.Key.ToString().Substring(0, 8);
@@ -604,6 +484,10 @@ namespace Simpiens.Cognition
         {
             _cts?.Cancel();
             _cts?.Dispose();
+            if (_simulationManager != null && State != null)
+            {
+                _simulationManager.Agents?.UnregisterAgent(State.AgentId);
+            }
         }
     }
 }

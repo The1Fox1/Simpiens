@@ -1,4 +1,6 @@
 using Simpiens.Cognition.Contracts;
+using Simpiens.Cognition.Groups;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 
@@ -18,6 +20,24 @@ namespace Simpiens.Cognition.Planning
         public const float ThreatFrustrationThreshold = 60f;
 
         /// <summary>
+        /// Builds the current WorldState bitmask from the agent context and inventory.
+        /// </summary>
+        public static WorldState BuildWorldState(in AgentContext context, Simpiens.Cognition.Inventory.IAgentInventory inventory)
+        {
+            var inv = inventory ?? context.Inventory;
+            bool hasFood = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.Ration);
+            bool hasTool = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.ToolPickaxe);
+            bool hasSalvage = inv != null && (inv.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb));
+            bool hasWeapon = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.BasicWeapon);
+
+            var state = BuildWorldState(context, hasFood, hasTool);
+            state = state.With(StateFact.HasProvisions, hasFood);
+            state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
+            state = state.With(StateFact.HasWeapon, hasWeapon);
+            return state;
+        }
+
+        /// <summary>
         /// Builds the current WorldState bitmask from the agent context.
         /// </summary>
         public static WorldState BuildWorldState(in AgentContext context, bool hasFoodInInventory = false, bool hasTool = false)
@@ -32,7 +52,24 @@ namespace Simpiens.Cognition.Planning
             state = state.With(StateFact.IsResting, isResting);
 
             // 2. Inventory / Equipment
+            if (context.Inventory != null)
+            {
+                if (!hasFoodInInventory && context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.Ration))
+                {
+                    hasFoodInInventory = true;
+                }
+                if (!hasTool && context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.ToolPickaxe))
+                {
+                    hasTool = true;
+                }
+                bool hasSalvage = context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb);
+                bool hasWeapon = context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.BasicWeapon);
+                state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
+                state = state.With(StateFact.HasWeapon, hasWeapon);
+            }
+
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);
+            state = state.With(StateFact.HasProvisions, hasFoodInInventory);
             state = state.With(StateFact.HasTool, hasTool);
 
             // 3. Psychological / Threat
@@ -44,6 +81,7 @@ namespace Simpiens.Cognition.Planning
             {
                 bool knowsResource = false;
                 bool atResource = false;
+                bool knowsSalvage = false;
                 bool isNearPeer = false;
                 bool knowsAnchor = false;
                 bool atAnchor = false;
@@ -55,7 +93,15 @@ namespace Simpiens.Cognition.Planning
                 foreach (var kvp in context.Memory.SpatialMemoryMap)
                 {
                     var record = kvp.Value;
-                    if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
+                    if (record.Type == EntityType.Resource && record.ResourceKind.IsSalvage())
+                    {
+                        // Salvage nodes never satisfy the food facts below
+                        if (!context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
+                        {
+                            knowsSalvage = true;
+                        }
+                    }
+                    else if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                     {
                         knowsResource = true;
                         Vector2 loc = record.LastKnownLocation;
@@ -88,6 +134,7 @@ namespace Simpiens.Cognition.Planning
 
                 state = state.With(StateFact.KnowsResourceLocation, knowsResource);
                 state = state.With(StateFact.AtResourceLocation, atResource);
+                state = state.With(StateFact.KnowsSalvageLocation, knowsSalvage);
                 state = state.With(StateFact.IsNearPeer, isNearPeer);
                 state = state.With(StateFact.KnowsAnchorLocation, knowsAnchor);
                 state = state.With(StateFact.AtAnchorLocation, atAnchor);
@@ -114,6 +161,88 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.HasTrustedPeer, hasTrustedPeer);
                 state = state.With(StateFact.HasFearedThreat, hasFearedThreat);
                 state = state.With(StateFact.HasRespectedLeader, hasRespectedLeader);
+            }
+
+            // 6. Sociopolitical & Group Directives (Epic 8)
+            bool hasActiveDirective = false;
+            bool atDirectiveLocation = false;
+            bool isGroupLeader = false;
+
+            if (context.Membership.HasGroup)
+            {
+                isGroupLeader = context.Membership.Role == RoleRank.Leader;
+
+                if (context.Snapshot != null && context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData))
+                {
+                    if (groupData.ActiveDirective.IsActive(context.CurrentTick))
+                    {
+                        hasActiveDirective = true;
+                        float radius = groupData.ActiveDirective.TargetRadius > 0.1f ? groupData.ActiveDirective.TargetRadius : 2.5f;
+                        float distSqr = (groupData.ActiveDirective.TargetLocation - context.Position).sqrMagnitude;
+                        if (distSqr <= radius * radius)
+                        {
+                            atDirectiveLocation = true;
+                        }
+                    }
+                }
+            }
+
+            state = state.With(StateFact.HasActiveDirective, hasActiveDirective);
+            state = state.With(StateFact.AtDirectiveLocation, atDirectiveLocation);
+            state = state.With(StateFact.IsGroupLeader, isGroupLeader);
+
+            // 7. Outpost Economy & Trade Stall State (Epic 9 Slice 2)
+            bool atTradeStall = false;
+            if (context.Snapshot != null && context.Snapshot.ActiveStallCount > 0)
+            {
+                int stallCount = context.Snapshot.ActiveStallCount;
+                for (int i = 0; i < stallCount; i++)
+                {
+                    var stall = context.Snapshot.StallBuffer[i];
+                    float r = stall.InteractionRadius > 0.1f ? stall.InteractionRadius : 2.5f;
+                    if ((stall.Position - context.Position).sqrMagnitude <= r * r)
+                    {
+                        atTradeStall = true;
+                        break;
+                    }
+                }
+            }
+            else if (context.Memory != null && context.Memory.SpatialMemoryMap != null)
+            {
+                foreach (var kvp in context.Memory.SpatialMemoryMap)
+                {
+                    if (kvp.Value.Type == EntityType.Stall)
+                    {
+                        if (((Vector2)kvp.Value.LastKnownLocation - context.Position).sqrMagnitude <= 2.5f * 2.5f)
+                        {
+                            atTradeStall = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            state = state.With(StateFact.AtTradeStall, atTradeStall);
+
+            // 8. Public Bounties & Contracts (Epic 9 Slice 3, §3.1 typed bounties)
+            bool hasActiveBounty = BountyQueries.TryGetClaimedBounty(context, out var claimed);
+            bool hasGatherBounty = hasActiveBounty && claimed.Type == BountyType.GatherResource;
+            bool hasScoutBounty = hasActiveBounty && claimed.Type == BountyType.ScoutSector;
+            bool hasBountyItem = hasGatherBounty && BountyQueries.HasBountyItems(context, claimed);
+            bool hasScoutReport = hasScoutBounty && context.ScoutReportBountyId == claimed.BountyId;
+
+            state = state.With(StateFact.HasActiveBounty, hasActiveBounty);
+            state = state.With(StateFact.HasGatherBounty, hasGatherBounty);
+            state = state.With(StateFact.HasScoutBounty, hasScoutBounty);
+            state = state.With(StateFact.HasBountyItem, hasBountyItem);
+            state = state.With(StateFact.HasScoutReport, hasScoutReport);
+            state = state.With(StateFact.HasSoldSalvage, false);
+
+            // A claimed Gather bounty narrows salvage knowledge to its target item, so an agent that only
+            // knows herb patches still plans a search when the contract asks for iron ore.
+            if (hasGatherBounty && claimed.TargetItemType.IsSalvage())
+            {
+                state = state.With(StateFact.KnowsSalvageLocation, ResourceTargeting.KnowsSalvage(context, claimed.TargetItemType));
             }
 
             return state;

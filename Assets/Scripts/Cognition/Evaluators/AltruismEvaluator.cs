@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
+using Simpiens.Cognition.Planning;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 
@@ -14,15 +15,12 @@ namespace Simpiens.Cognition.Evaluators
     /// </summary>
     public class AltruismEvaluator : ICognitiveEvaluator
     {
-        public const float AltruismThreshold = 25f;
-        public const float SatedHungerThreshold = 50f;
-        public const float DistressHungerThreshold = 85f;
-        public const float PerceptionRadius = 6.0f;
+        public const float AltruismThreshold = AltruismTargeting.AltruismThreshold;
+        public const float SatedHungerThreshold = AltruismTargeting.SatedHungerThreshold;
+        public const float DistressHungerThreshold = AltruismTargeting.DistressHungerThreshold;
+        public const float PerceptionRadius = AltruismTargeting.PerceptionRadius;
 
         private readonly IAsyncPathfinder _pathfinder;
-
-        [System.ThreadStatic]
-        private static List<EntitySnapshot> _peerResults;
 
         public AltruismEvaluator(IAsyncPathfinder pathfinder)
         {
@@ -31,52 +29,11 @@ namespace Simpiens.Cognition.Evaluators
 
         public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
-            // Self-preservation: an agent with Hunger >= 50 will not share food
-            if (context.Hunger >= SatedHungerThreshold)
+            // Self-preservation (Hunger >= 50), perception, line of sight and the altruism threshold are
+            // applied by the shared selector so the GOAP AidCompanion goal agrees with this reflex
+            if (!AltruismTargeting.TrySelectDistressedPeer(context, out var bestTargetId, out var bestTargetPos, out _))
             {
                 return null;
-            }
-
-            if (context.Snapshot == null || context.Memory == null)
-            {
-                return null;
-            }
-
-            if (_peerResults == null)
-            {
-                _peerResults = new List<EntitySnapshot>(16);
-            }
-            _peerResults.Clear();
-
-            context.Snapshot.GetEntitiesInRange(context.Position, PerceptionRadius, _peerResults);
-
-            GUID bestTargetId = default;
-            Vector2 bestTargetPos = Vector2.zero;
-            float highestUtility = -1f;
-
-            int count = _peerResults.Count;
-            for (int i = 0; i < count; i++)
-            {
-                var peer = _peerResults[i];
-                if (peer.Id == context.AgentId || peer.Type != EntityType.Pawn) continue;
-
-                // Line-of-sight check: agents cannot perceive distressed peers through walls
-                if (context.Snapshot != null && !context.Snapshot.HasLineOfSight(context.Position, peer.Position))
-                {
-                    continue;
-                }
-
-                // Check if peer is in distress (critically starving or collapsed)
-                bool isDistressed = peer.Hunger >= DistressHungerThreshold || peer.IsCollapsed;
-                if (!isDistressed) continue;
-
-                float utility = context.Memory.CalculateAltruismScore(peer.Id, context.CurrentTick, context.Hunger, peer.IsCollapsed);
-                if (utility >= AltruismThreshold && utility > highestUtility)
-                {
-                    highestUtility = utility;
-                    bestTargetId = peer.Id;
-                    bestTargetPos = peer.Position;
-                }
             }
 
             if (bestTargetId != default)

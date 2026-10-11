@@ -9,6 +9,9 @@ namespace Simpiens.Cognition.Contracts
         public readonly UnityEngine.GUID AgentId;
         public System.Action<IntentResult> OnComplete { get; set; }
 
+        /// <summary>Why this intent was chosen; set by the cognition task before the intent is enqueued.</summary>
+        public DecisionSummary Decision { get; set; }
+
         protected AgentIntent(UnityEngine.GUID agentId)
         {
             AgentId = agentId;

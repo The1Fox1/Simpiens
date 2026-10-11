@@ -26,6 +26,21 @@ namespace Simpiens.Cognition.Planning
         HasAidedPeer = 17,
         KnowsAnchorLocation = 18,
         AtAnchorLocation = 19,
-        IsGatheredAtAnchor = 20
+        IsGatheredAtAnchor = 20,
+        HasActiveDirective = 21,
+        AtDirectiveLocation = 22,
+        DirectiveFulfilled = 23,
+        IsGroupLeader = 24,
+        HasActiveBounty = 25,
+        AtTradeStall = 26,
+        BountyDelivered = 27,
+        HasProvisions = 28,
+        HasSalvageInInventory = 29,
+        KnowsSalvageLocation = 30,
+        HasGatherBounty = 31,
+        HasScoutBounty = 32,
+        HasBountyItem = 33,
+        HasScoutReport = 34,
+        HasSoldSalvage = 35
     }
 }

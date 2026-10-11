@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "a9e27c03d411d2fca01cc7410c24c97cd77cb539"
     },
+    "com.cysharp.zlogger": {
+      "version": "https://github.com/Cysharp/ZLogger.git?path=src/ZLogger.Unity/Assets/ZLogger.Unity#2.5.10",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e03df464106e2ca192eefe43c6a2785a587aa862"
+    },
     "com.unity.2d.animation": {
       "version": "14.0.3",
       "depth": 1,

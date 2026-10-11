@@ -9,6 +9,11 @@ namespace Simpiens.Simulation
         public long CurrentTick { get; private set; }
         public float TimeMultiplier { get; private set; } = 1f;
 
+        public const float FixedTickDeltaTime = 0.1f;
+        public float TickDeltaTime => FixedTickDeltaTime;
+        public float InterpolationAlpha => Mathf.Clamp01(_accumulator / TimePerTick);
+        public bool IsPaused => TimeMultiplier <= 0f || Mathf.Approximately(TimeMultiplier, 0f);
+
         public event Action<long> OnSimulationTick;
         public event Action<float> OnTimeMultiplierChanged;
 
@@ -35,6 +40,19 @@ namespace Simpiens.Simulation
             while (_accumulator >= TimePerTick)
             {
                 _accumulator -= TimePerTick;
+                CurrentTick++;
+                OnSimulationTick?.Invoke(CurrentTick);
+            }
+        }
+
+        /// <summary>
+        /// Explicitly advances the simulation by a fixed number of ticks.
+        /// Primarily used for deterministic testing, headless simulations, and fast-forward catchup.
+        /// </summary>
+        public void AdvanceTicks(long ticks)
+        {
+            for (long i = 0; i < ticks; i++)
+            {
                 CurrentTick++;
                 OnSimulationTick?.Invoke(CurrentTick);
             }

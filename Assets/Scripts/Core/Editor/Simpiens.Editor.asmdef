@@ -1,0 +1,20 @@
+{
+    "name": "Simpiens.Editor",
+    "rootNamespace": "Simpiens.Core.Editor",
+    "references": [
+        "Simpiens",
+        "VContainer",
+        "Simpiens.Testing"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
