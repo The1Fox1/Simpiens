@@ -45,6 +45,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(200000)]
+        public IEnumerator Scenario_SessionSwitch_DevMapRoundTripResetsCleanly()
+        {
+            yield return ExecuteScenario(new SessionSwitchScenario());
+        }
+
+        [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
         {

@@ -42,6 +42,18 @@ namespace Simpiens.Core.Bootstrapping
             var visualizer = visualizerGo.AddComponent<GridVisualizer>();
             _resolver.Inject(visualizer);
 
+            CreateDashboard(_resolver);
+
+            // The headless batch controller is added by the test harness (Simpiens.Testing.BatchPlaymodeBootstrap)
+        }
+
+        /// <summary>
+        /// Builds the Facility Dashboard (UI Toolkit document, presenter, view toggle) and injects it. Called once at
+        /// boot; PlayMode scenarios that exercise the UI call it too, because loading the test scene destroys the
+        /// boot-time dashboard.
+        /// </summary>
+        internal static GameObject CreateDashboard(IObjectResolver resolver)
+        {
             // Instantiate Facility Dashboard UI (UI Toolkit)
             var dashboardGo = new GameObject("[FacilityDashboard]");
             dashboardGo.SetActive(false); // Inactive until properties are assigned so OnEnable runs properly
@@ -65,14 +77,14 @@ namespace Simpiens.Core.Bootstrapping
             }
 
             var presenter = dashboardGo.AddComponent<Simpiens.UI.FacilityDashboardPresenter>();
-            _resolver.Inject(presenter);
+            resolver.Inject(presenter);
             var toggleController = dashboardGo.AddComponent<Simpiens.UI.ViewToggleController>();
             toggleController.Initialize(presenter);
 
             dashboardGo.SetActive(true); // Activate now with all dependencies ready
             SimLog.Bootstrap.ZLogInformation($"Facility Dashboard initialized (PanelSettings: {uiDoc.panelSettings?.name}, VisualTree: {uiDoc.visualTreeAsset?.name})");
 
-            // The headless batch controller is added by the test harness (Simpiens.Testing.BatchPlaymodeBootstrap)
+            return dashboardGo;
         }
     }
 }

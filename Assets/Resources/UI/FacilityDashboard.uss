@@ -830,3 +830,42 @@
     background-color: #ef4444;
     color: #ffffff;
 }
+
+/* --- Session switch (Dev Map toggle; test builds only) --- */
+.session-switch-overlay {
+    position: absolute;
+    top: 60px;
+    right: 16px;
+    flex-direction: row;
+    align-items: center;
+    display: none;
+}
+
+.session-banner {
+    background-color: #7c2d12;
+    border-color: #f97316;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #ffedd5;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 6px 12px;
+    margin-right: 8px;
+    display: none;
+}
+
+.session-switch-button {
+    background-color: #1e293b;
+    border-color: #f97316;
+    border-width: 1px;
+    border-radius: 6px;
+    color: #fed7aa;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 6px 12px;
+}
+
+.session-switch-button:hover {
+    background-color: #334155;
+    color: #ffffff;
+}

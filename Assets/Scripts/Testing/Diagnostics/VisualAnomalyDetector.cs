@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Core.Session;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
@@ -98,12 +99,17 @@ namespace Simpiens.Testing.Diagnostics
             IWorldRegistry worldRegistry = null,
             ISimulationClock clock = null,
             ISpatialPartition spatialPartition = null,
-            IWorldMap worldMap = null)
+            IWorldMap worldMap = null,
+            ISessionSwitcher sessionSwitcher = null)
         {
             _worldRegistry = worldRegistry;
             _clock = clock;
             _spatialPartition = spatialPartition;
             _worldMap = worldMap;
+
+            // A respawn reissues every entity id at new positions: per-agent motion histories must not span it
+            // (anomaly counts are kept; scenarios reset those themselves)
+            if (sessionSwitcher != null) sessionSwitcher.SessionChanged += _ => _histories.Clear();
 
             _obstacleFilter = ContactFilter2D.noFilter;
             _obstacleFilter.useTriggers = false;

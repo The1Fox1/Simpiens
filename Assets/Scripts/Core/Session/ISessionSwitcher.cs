@@ -11,6 +11,9 @@ namespace Simpiens.Core.Session
     {
         IReadOnlyList<ISessionDefinition> Sessions { get; }
 
+        /// <summary>The live game's session (what boot spawns); every other session is a test session.</summary>
+        ISessionDefinition Default { get; }
+
         /// <summary>The session spawned by the last respawn (the default session before the first one).</summary>
         ISessionDefinition Current { get; }
 

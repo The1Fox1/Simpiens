@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Core.Session;
 using Simpiens.Entities;
 using Simpiens.Intervention;
 using Simpiens.Narrative;
@@ -41,6 +42,12 @@ namespace Simpiens.UI
         private Label _clockTickLabel;
         private Label _clockMultiplierLabel;
         private Button _btnViewToggle;
+
+        // Session switch (Dev Map toggle): only shown when a test session is registered
+        private ISessionSwitcher _sessionSwitcher;
+        private VisualElement _sessionSwitchOverlay;
+        private Label _sessionBanner;
+        private Button _btnSessionSwitch;
 
         // Header Economic HUD Metrics
         private Label _treasuryGoldLabel;
@@ -164,7 +171,8 @@ namespace Simpiens.UI
             IPlayerInterventionService interventionService = null,
             INarrativeChronicleService chronicleService = null,
             IAgentIdentityService identityService = null,
-            INarrativeFormatter narrativeFormatter = null)
+            INarrativeFormatter narrativeFormatter = null,
+            ISessionSwitcher sessionSwitcher = null)
         {
             _zoneService = zoneService;
             _worldRegistry = worldRegistry;
@@ -174,6 +182,15 @@ namespace Simpiens.UI
             _chronicleService = chronicleService ?? simulationManager?.Chronicle;
             _identityService = identityService ?? new AgentIdentityService();
             _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _zoneService);
+
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
+            _sessionSwitcher = sessionSwitcher;
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged += HandleSessionChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
         }
 
         private void Awake()
@@ -187,6 +204,57 @@ namespace Simpiens.UI
         {
             BuildSectorList();
             RefreshAllViews();
+            RefreshSessionSwitch();
+        }
+
+        /// <summary>The session the switch button leads to: the next registered one after the current session.</summary>
+        private ISessionDefinition NextSession()
+        {
+            var sessions = _sessionSwitcher.Sessions;
+            int current = 0;
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                if (sessions[i] == _sessionSwitcher.Current) current = i;
+            }
+            return sessions[(current + 1) % sessions.Count];
+        }
+
+        private void HandleSessionSwitchClicked()
+        {
+            if (_sessionSwitcher == null || _sessionSwitcher.Sessions.Count < 2) return;
+            var next = NextSession();
+            SimLog.Bootstrap.ZLogInformation($"Session switch: {_sessionSwitcher.Current.DisplayName} -> {next.DisplayName}");
+            _sessionSwitcher.SwitchTo(next);
+        }
+
+        /// <summary>A respawn replaced every entity (ids are reissued): drop selections and rebuild from the new map.</summary>
+        private void HandleSessionChanged(ISessionDefinition session)
+        {
+            _selectedAgentId = default;
+            CloseMerchantTerminal();
+            CloseBountyBoard();
+            BuildSectorList();
+            RefreshAllViews();
+            RefreshSessionSwitch();
+        }
+
+        private void RefreshSessionSwitch()
+        {
+            if (_sessionSwitchOverlay == null) return;
+
+            bool switchable = _sessionSwitcher != null && _sessionSwitcher.Sessions.Count > 1;
+            _sessionSwitchOverlay.style.display = switchable ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!switchable) return;
+
+            if (_btnSessionSwitch != null) _btnSessionSwitch.text = $"SWITCH TO {NextSession().DisplayName.ToUpperInvariant()}";
+
+            var current = _sessionSwitcher.Current;
+            bool testSession = current != _sessionSwitcher.Default;
+            if (_sessionBanner != null)
+            {
+                _sessionBanner.style.display = testSession ? DisplayStyle.Flex : DisplayStyle.None;
+                _sessionBanner.text = $"{current.DisplayName.ToUpperInvariant()}: TEST SESSION (NOT THE GAME)";
+            }
         }
 
         private void EnsureVisualTreeLoaded()
@@ -258,6 +326,14 @@ namespace Simpiens.UI
             if (_btnViewToggle != null)
             {
                 _btnViewToggle.clicked += ToggleVisibility;
+            }
+
+            _sessionSwitchOverlay = _root.Q<VisualElement>("session-switch-overlay");
+            _sessionBanner = _root.Q<Label>("session-banner");
+            _btnSessionSwitch = _root.Q<Button>("btn-session-switch");
+            if (_btnSessionSwitch != null)
+            {
+                _btnSessionSwitch.clicked += HandleSessionSwitchClicked;
             }
 
             // Economic HUD

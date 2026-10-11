@@ -252,4 +252,10 @@
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
+    <!-- Session switch: outside dashboard-root so it stays reachable in the 2D view. Shown only when a test
+         session (the Dev Map) is registered, i.e. never in player builds. -->
+    <ui:VisualElement name="session-switch-overlay" class="session-switch-overlay" picking-mode="Ignore">
+        <ui:Label name="session-banner" text="DEV MAP: TEST CANARIES (NOT THE GAME)" class="session-banner" picking-mode="Ignore" />
+        <ui:Button name="btn-session-switch" text="SWITCH TO DEV MAP" class="session-switch-button" />
+    </ui:VisualElement>
 </ui:UXML>

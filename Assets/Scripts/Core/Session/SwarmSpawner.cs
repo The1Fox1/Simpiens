@@ -44,6 +44,7 @@ namespace Simpiens.Core.Session
         public LoadedWorld World => _world;
 
         public IReadOnlyList<ISessionDefinition> Sessions => _sessions;
+        public ISessionDefinition Default => _defaultSession;
         public ISessionDefinition Current => _current ?? _defaultSession;
         public event System.Action<ISessionDefinition> SessionChanged;
 
