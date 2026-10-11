@@ -74,22 +74,27 @@ namespace Simpiens.Testing.World
 
         private void ValidateSectorParity()
         {
+            // The former FacilityZoneService table was proven identical to DevMapLayout's sectors (0 differing lookups
+            // on a 0.25 lattice) before it was deleted (commit 7b610cb). Since the table moved into the simulation,
+            // this checks that the UI adapter reproduces the registry exactly.
             var def = DevMapLayout.Definition;
-            var legacy = new FacilityZoneService();
+            var sectors = TestWorlds.DevMapSectors();
+            var zones = new FacilityZoneService(sectors);
 
-            // Same ids, names, descriptions and default exploration as the former zone table
-            var zones = legacy.GetAllZones();
-            Assert(zones.Count == def.Sectors.Count, $"Sector count {def.Sectors.Count} differs from legacy zone count {zones.Count}.");
-            for (int i = 0; i < zones.Count; i++)
+            var all = zones.GetAllZones();
+            Assert(all.Count == def.Sectors.Count, $"Adapter lists {all.Count} zones, map has {def.Sectors.Count} sectors.");
+            for (int i = 0; i < all.Count; i++)
             {
-                var zone = zones[i];
-                Assert(def.TryGetSector((byte)zone.ZoneId, out var sector), $"Sector {zone.ZoneId} missing.");
-                Assert(sector.Name == zone.Name && sector.Description == zone.Description, $"Sector {zone.ZoneId} text differs.");
-                Assert(sector.StartsExplored == legacy.IsSectorExplored(zone.ZoneId), $"Sector {zone.ZoneId} default exploration differs.");
+                var zone = all[i];
+                Assert(def.TryGetSector((byte)zone.ZoneId, out var sector), $"Zone {zone.ZoneId} has no sector.");
+                Assert(sector.Name == zone.Name && sector.Description == zone.Description && sector.Bounds == zone.Bounds
+                    && sector.Anchor == zone.AnchorPosition && Mathf.Approximately(sector.AnchorRadius, zone.AnchorRadius),
+                    $"Zone {zone.ZoneId} differs from its sector definition.");
+                Assert(zone.IsExplored == sector.StartsExplored && zones.IsSectorExplored(zone.ZoneId) == sector.StartsExplored,
+                    $"Zone {zone.ZoneId} default exploration differs.");
             }
-            Assert(def.FallbackSector.Name == legacy.GetZoneById(0).Name, "Fallback sector name differs from the legacy transit zone.");
+            Assert(zones.GetZoneById(0).Name == "Transit / Open Yard" && zones.GetZoneById(999).ZoneId == 0, "Fallback transit zone.");
 
-            // Point lookups over the whole world on a quarter-unit lattice (hits rect edges and anchor rims)
             int mismatches = 0;
             string first = null;
             for (float y = -20f; y <= 20f; y += 0.25f)
@@ -97,17 +102,24 @@ namespace Simpiens.Testing.World
                 for (float x = -22f; x <= 22f; x += 0.25f)
                 {
                     var p = new Vector2(x, y);
-                    int expected = legacy.GetZoneForPosition(p).ZoneId;
-                    int actual = def.FindSector(p).Id;
+                    int expected = def.FindSector(p).Id;
+                    int actual = zones.GetZoneForPosition(p).ZoneId;
                     if (expected != actual)
                     {
                         mismatches++;
-                        first ??= $"{p}: legacy {expected}, data {actual}";
+                        first ??= $"{p}: map {expected}, adapter {actual}";
                     }
                 }
             }
-            Assert(mismatches == 0, $"{mismatches} sector lookups differ; first: {first}");
-            Debug.Log("[PASS] Test 2: Sector table and point lookups match FacilityZoneService exactly.");
+            Assert(mismatches == 0, $"{mismatches} adapter lookups differ; first: {first}");
+
+            // Exploration written through either side is visible on the other
+            zones.SetSectorExplored(DevMapLayout.HerbHollowSectorId, true);
+            Assert(sectors.IsExplored(DevMapLayout.HerbHollowSectorId), "Adapter writes reach the registry.");
+            sectors.SetExplored(DevMapLayout.OreRidgeSectorId, true);
+            Assert(zones.IsSectorExplored(DevMapLayout.OreRidgeSectorId) && zones.GetZoneById(DevMapLayout.OreRidgeSectorId).IsExplored, "Registry writes reach the adapter.");
+
+            Debug.Log("[PASS] Test 2: The zone adapter reproduces the map's sectors, lookups and exploration exactly.");
         }
 
         private void ValidateEntityPlacements()

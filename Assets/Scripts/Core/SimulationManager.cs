@@ -10,7 +10,7 @@ using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using Simpiens.UI.Zones;
+using Simpiens.Simulation.World;
 using UnityEngine;
 using VContainer.Unity;
 using ZLogger;
@@ -62,7 +62,7 @@ namespace Simpiens.Simulation
         private readonly ISimulationClock _clock;
         private readonly IGroupRegistry _groupRegistry;
         private readonly INarrativeChronicleService _chronicleService;
-        private readonly IFacilityZoneService _zoneService;
+        private readonly ISectorRegistry _sectors;
         private readonly IPlayerInterventionService _interventionService;
         private readonly IAgentRegistry _agentRegistry;
         private readonly IAgentConsequenceService _consequenceService;
@@ -159,7 +159,7 @@ namespace Simpiens.Simulation
 
         public void MarkSectorExplored(int sectorId)
         {
-            _zoneService?.SetSectorExplored(sectorId, true);
+            _sectors?.SetExplored(sectorId, true);
             SimLog.Economy.ZLogInformation($"Sector {sectorId} marked explored");
         }
         public bool TryGetStall(UnityEngine.GUID stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
@@ -181,7 +181,7 @@ namespace Simpiens.Simulation
             ISimulationClock clock = null,
             IGroupRegistry groupRegistry = null,
             INarrativeChronicleService chronicleService = null,
-            IFacilityZoneService zoneService = null,
+            ISectorRegistry sectors = null,
             IPlayerInterventionService interventionService = null,
             IAgentRegistry agentRegistry = null,
             IAgentConsequenceService consequenceService = null,
@@ -194,7 +194,7 @@ namespace Simpiens.Simulation
             _clock = clock;
             _groupRegistry = groupRegistry;
             _chronicleService = chronicleService;
-            _zoneService = zoneService;
+            _sectors = sectors;
             _interventionService = interventionService;
             _agentRegistry = agentRegistry ?? new Simpiens.Simulation.AgentRegistry();
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);
@@ -228,7 +228,7 @@ namespace Simpiens.Simulation
 
         private int GetSectorForPosition(Vector2 position)
         {
-            return _zoneService != null ? _zoneService.GetZoneForPosition(position).ZoneId : 0;
+            return _sectors != null ? _sectors.GetSectorAt(position).Id : 0;
         }
 
         public void Pause()
@@ -430,9 +430,9 @@ namespace Simpiens.Simulation
         /// </summary>
         private Vector2 ResolveSectorTarget(byte sectorId)
         {
-            if (_zoneService != null && sectorId != 0 && _zoneService.TryGetZone(sectorId, out var zone))
+            if (_sectors != null && sectorId != 0 && _sectors.TryGetSector(sectorId, out var sector))
             {
-                return zone.AnchorRadius > 0f ? zone.AnchorPosition : zone.Bounds.center;
+                return sector.TargetPoint;
             }
             return default;
         }

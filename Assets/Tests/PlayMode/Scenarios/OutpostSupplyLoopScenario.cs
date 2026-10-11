@@ -121,7 +121,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_scoutTick < 0 && sim.TryGetBounty(SwarmSpawner.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
             {
                 _scoutTick = rel;
-                _scoutZoneExplored = zones.IsSectorExplored(FacilityZoneService.HerbHollowZoneId);
+                _scoutZoneExplored = zones.IsSectorExplored(Simpiens.Core.Session.Layouts.DevMapLayout.HerbHollowSectorId);
             }
 
             // Supply faucets

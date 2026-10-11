@@ -208,11 +208,11 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var zones = new FacilityZoneService();
-            var sim = new SimulationManager(registry, null, zoneService: zones, economyLedger: ledger);
+            var zones = Simpiens.Testing.World.TestWorlds.DevMapSectors();
+            var sim = new SimulationManager(registry, null, sectors: zones, economyLedger: ledger);
 
-            int sector = FacilityZoneService.HerbHollowZoneId;
-            Assert(!zones.IsSectorExplored(sector), "Herb Hollow starts unexplored.");
+            int sector = Simpiens.Core.Session.Layouts.DevMapLayout.HerbHollowSectorId;
+            Assert(!zones.IsExplored(sector), "Herb Hollow starts unexplored.");
 
             var stallId = NextGuid();
             var stallPos = new Vector2(0f, 9f);
@@ -245,7 +245,7 @@ namespace Simpiens.Testing.Economy
             Assert(result == IntentResult.Success, $"Scout report delivery returned {result} instead of Success.");
             Assert(agent.Inventory.Gold == goldBefore + 15, $"Reward paid (gold {agent.Inventory.Gold}, expected {goldBefore + 15}).");
             Assert(!ledger.HasEscrow(42) && ledger.TotalEscrowGold == 0, "Escrow released.");
-            Assert(zones.IsSectorExplored(sector), "Herb Hollow marked explored.");
+            Assert(zones.IsExplored(sector), "Herb Hollow marked explored.");
             Assert(agent.State.ScoutReportBountyId == 0, "Scout report consumed.");
             Assert(sim.TryGetBounty(42, out var done) && done.Status == BountyStatus.Completed, "Scout bounty Completed.");
 

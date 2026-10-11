@@ -65,7 +65,7 @@ namespace Simpiens.Testing.UI
                 clock: null,
                 groupRegistry: null,
                 chronicleService: null,
-                zoneService: null,
+                sectors: null,
                 interventionService: interventionService);
 
             var stallId = UnityEngine.GUID.Generate();
@@ -123,7 +123,7 @@ namespace Simpiens.Testing.UI
                 clock: null,
                 groupRegistry: null,
                 chronicleService: chronicle,
-                zoneService: null,
+                sectors: null,
                 interventionService: interventionService);
 
             var stallId = UnityEngine.GUID.Generate();
@@ -215,7 +215,7 @@ namespace Simpiens.Testing.UI
                 clock: null,
                 groupRegistry: null,
                 chronicleService: chronicle,
-                zoneService: null,
+                sectors: null,
                 interventionService: interventionService);
 
             var stallId = UnityEngine.GUID.Generate();
@@ -278,7 +278,7 @@ namespace Simpiens.Testing.UI
 
         public void ValidateSectorShroudTracking()
         {
-            var zoneService = new FacilityZoneService();
+            var zoneService = Simpiens.Testing.World.TestWorlds.DevMapZones();
 
             // Core sectors 0..5 are explored by default
             if (!zoneService.IsSectorExplored(0)) throw new Exception("Sector 0 should be explored by default");
