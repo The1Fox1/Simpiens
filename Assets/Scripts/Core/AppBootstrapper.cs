@@ -134,6 +134,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<SingleWriterMemoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Economy.SupplyLoopValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Economy.EconomyCountersValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Planning.PersonalityValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.RegisterComponent(gameObject.AddComponent<VisualAnomalyRecorderView>());
 
             // 5. Entry Points (App Logic)

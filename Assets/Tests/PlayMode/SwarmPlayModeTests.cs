@@ -56,6 +56,20 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new EconomySoakScenario());
         }
 
+        [UnityTest]
+        [Timeout(400000)]
+        public IEnumerator Scenario_PriceResponse_DemandFallsGradually()
+        {
+            yield return ExecuteScenario(new PriceResponseScenario());
+        }
+
+        [Test]
+        public void Scenario_Personality_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Planning.PersonalityValidator();
+            validator.RunAllValidationTests();
+        }
+
         [Test]
         public void Scenario_EconomyCounters_AllDomainValidationTestsPass()
         {
