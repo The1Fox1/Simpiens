@@ -90,7 +90,10 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
 
 - Closure plan Phase 2 DONE 2026-10-10: seeded SimRandom + SimulationSettings (SIMPIENS_SEED / -simseed),
   EntityIdAllocator, ordered intent application/iteration. PlayMode 16/16.
-Current Focus (Track A): Milestone 1 closure plan (.agents/milestone1_closure_plan.md), next = Phase 3 (economy observation soak).
+- Closure plan Phase 3 DONE 2026-10-11: economy observation soak (6 runs, integrity OK); trades now go
+  through the ledger. Findings in the plan. Economy design still DEFERRED (producer).
+Current Focus (Track A): Milestone 1 closure plan, next = Phase 4 (personality + considerations).
+Autonomous mode: producer directive 2026-10-11 (see plan header) - minor decisions only, this branch.
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
 

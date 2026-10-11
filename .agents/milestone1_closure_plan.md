@@ -149,7 +149,11 @@ Commit: `fix(simulation): seeded SimRandom and deterministic intent ordering`. U
 
 ## Phase 3 — Economy observation soak (§3.3 design deferred)
 
-> **Status: planned 2026-10-10.** The producer deferred economy *design* decisions until the game is functional (2026-10-09). This phase only **measures**: no new faucets, sinks, prices or pace targets.
+> **Status: DONE 2026-10-11.** The producer deferred economy *design* decisions until the game is functional (2026-10-09). This phase only **measures**: no new faucets, sinks, prices or pace targets.
+>
+> - Commits: `c5c2240`, `67cc1d2`, `44183e5`.
+> - Six soak runs (3 seeds × export on/off) passed all integrity assertions. Observations are at the end of this phase.
+> - **Found and fixed:** `TradeIntentHandler` moved trade gold directly instead of through the ledger (`44183e5`). Conservation held, but trades were invisible to the ledger, which contradicted §1A.2 #10.
 
 ### Goal
 
@@ -274,6 +278,31 @@ Per-minute rates come from differencing the cumulative columns. The scenario doe
 | Counters drift from the gold they describe | Counters are updated only inside the existing ledger transfer methods, and the validator cross-checks them against totals. |
 | 10× wall-clock throughput drops on long runs | 600s timeout plus the `observedTicks` assertion. A shortfall is reported, not hidden. |
 | Same-seed runs differ (arrival-tick nondeterminism) | Run 3 seeds and compare trends, not exact values. Seed recorded per CSV. |
+
+### Observations (2026-10-11; facts only, no recommendations)
+
+Six runs: 18,000 ticks (30 sim-minutes) at 10×, seeds 20261009 / 1 / 2, provisional export on and off. CSVs are in `Logs/economy-soak-seed<seed>-export<on|off>.csv`.
+
+| Export | Seed | Treasury end (start 210g) | Crawler gold (6 crawlers, start 60g) | Rations bought | Salvage sold | Export faucet | Caravan sink | Skipped restocks | Trading stops at | Max crawlers starving | Mean crawler hunger |
+| :-: | :-: | --: | --: | --: | --: | --: | --: | --: | :-: | :-: | --: |
+| on | 20261009 | 4,709g | 235g | 278 (4,170g) | 186 (4,305g) | 5,190g | 556g | 0 | never | 0 | 37.0 |
+| on | 1 | 4,488g | 250g | 264 (3,960g) | 177 (4,110g) | 4,956g | 528g | 0 | never | 2 | 40.3 |
+| on | 2 | 4,260g | 230g | 250 (3,750g) | 166 (3,880g) | 4,680g | 500g | 0 | never | 3 | 40.1 |
+| off | 20261009 | 17g (min 2g) | 235g | 79 (1,185g) | 59 (1,320g) | — | 58g | 25 of 29 | min 10 | 4 | 49.3 |
+| off | 1 | 1g | 215g | 97 (1,455g) | 69 (1,570g) | — | 94g | 23 of 29 | min 12 | 3 | 50.0 |
+| off | 2 | 3g | 245g | 81 (1,215g) | 60 (1,360g) | — | 62g | 25 of 29 | min 11 | 3 | 54.5 |
+
+1. **Treasury trajectory.**
+   - *Export off:* the treasury drains to 1–17g within 10–12 sim-minutes. After that, every trade stops: the stall can't pay for salvage and can't afford restocks, and ration stock hits 0. The economy stays frozen for the rest of the run.
+   - *Export on:* the treasury grows almost linearly, about +140–150g per sim-minute, to roughly 4,300–4,700g. Growth ≈ export faucet − caravan sink (net flow from crawlers ≈ 0, see 2).
+2. **Where gold sits.** Crawler wallets plateau at about 215–250g in total (≈ 35–42g each), with or without the export. Crawlers spend almost exactly what they earn: ration spend is 96–97% of sale income with export on, and 87–93% with it off. Gold doesn't pool in crawler wallets; it pools in the stall treasury (export on) or nowhere (export off, economy frozen). Pen agents hold a constant 240g, since they're walled off from the stall.
+3. **Flow volumes.** With export on: about 8–9 ration purchases per sim-minute (15g each) and about 6 salvage sales per sim-minute (20–25g each). Bounty payouts total 40g per run: only the two seeded bounties exist, and no player posts any.
+4. **Free vs. bought food.** Crawlers buy rations heavily whenever they can (250–278 purchases per run), even though bushes regrow (≈ 230–250 regrowths per run). With the export off and the stall unable to restock, crawler hunger rises (mean 49–55 vs 37–40) and 3–4 crawlers reach starvation. Free food doesn't fully replace the stall in the current setup.
+5. **Supply health.** With export on, the caravan never skips (29/29 restocks) and the export runs every visit (30/30). With export off, 23–25 of 29 restocks are skipped. Salvage then piles up unsold in the stall (39–48 units each of ore and herb), because nothing removes it.
+
+**Measurement notes:**
+- Samples are taken every 600 ticks, which coincides with caravan visits. Stall stock columns therefore show post-visit values: ration stock 50, salvage at the 10-unit reserve. Use transfer counters, not stock columns, for rates.
+- Same-seed runs aren't bit-identical, because the arrival tick of async cognition still varies (§1A.2 #6). The trends agree across seeds.
 
 ### Producer decisions (deferred; the soak informs them)
 
