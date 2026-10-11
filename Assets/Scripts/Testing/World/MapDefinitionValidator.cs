@@ -1,4 +1,5 @@
 using System;
+using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
@@ -22,8 +23,9 @@ namespace Simpiens.Testing.World
             ValidateBaseLayerSurvivesClear();
             ValidatePlayableBounds();
             ValidatePartitionSizing();
+            ValidateFloor1Layout();
 
-            Debug.Log("<color=green>[MapDefinitionValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[MapDefinitionValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBuilderInvariants()
@@ -160,6 +162,121 @@ namespace Simpiens.Testing.World
             Assert(cells.x % 2 == 0 && cells.y % 2 == 0, "Partition cell counts must be even so cell edges stay on whole units.");
 
             Debug.Log("[PASS] Test 6: Partition size covers the bounds symmetrically, independent of the camera.");
+        }
+
+        private void ValidateFloor1Layout()
+        {
+            var def = Floor1Layout.Definition;
+            var grid = Rasterized(def);
+            Assert(def.TryGetSector(Floor1Layout.HubSectorId, out var hub), "Floor1 has a Hub sector.");
+            Assert(grid.TryGetRegion(hub.TargetPoint, out int hubRegion), "Hub centre is walkable.");
+
+            // (a) one connected floor, (c) every walkable cell belongs to a real sector
+            var sectorCells = new int[256];
+            for (int y = 0; y < grid.Height; y++)
+            {
+                for (int x = 0; x < grid.Width; x++)
+                {
+                    if (!grid.IsCellWalkable(x, y)) continue;
+                    var world = grid.CellToWorld(x, y);
+                    byte sectorId = def.FindSector(world).Id;
+                    Assert(grid.TryGetRegion(world, out int region) && region == hubRegion, $"(a) Walkable cell at {world} (sector {sectorId}) is not connected to the Hub.");
+                    Assert(sectorId != 0, $"(c) Walkable cell at {world} lies in no sector.");
+                    sectorCells[sectorId]++;
+                }
+            }
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var sector = def.Sectors[i];
+                Assert(sectorCells[sector.Id] > 0, $"(a) Sector {sector.Name} has no walkable cells.");
+                for (int j = i + 1; j < def.Sectors.Count; j++)
+                {
+                    Assert(!sector.Bounds.Overlaps(def.Sectors[j].Bounds), $"(c) Sectors {sector.Name} and {def.Sectors[j].Name} overlap.");
+                }
+            }
+
+            // (b) every node and POI is reachable from the Hub
+            for (int i = 0; i < def.ResourceNodes.Count; i++)
+            {
+                var n = def.ResourceNodes[i];
+                Assert(grid.TryGetRegion(n.Position, out int r) && r == hubRegion, $"(b) Node '{n.Key}' at {n.Position} is not reachable from the Hub.");
+            }
+            for (int i = 0; i < def.Pois.Count; i++)
+            {
+                var p = def.Pois[i];
+                Assert(grid.TryGetRegion(p.Position, out int r) && r == hubRegion, $"(b) POI '{p.Key}' at {p.Position} is not reachable from the Hub.");
+            }
+
+            // (d) doorways: every connected pair of neighbouring sectors shares a door at least 3 cells wide;
+            // the frontier sectors are reached only through the near work sectors
+            int doors = 0;
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                for (int j = i + 1; j < def.Sectors.Count; j++)
+                {
+                    int width = DoorWidth(grid, def.Sectors[i].Bounds, def.Sectors[j].Bounds);
+                    if (width == 0) continue;
+                    Assert(width >= 3, $"(d) Door between {def.Sectors[i].Name} and {def.Sectors[j].Name} is only {width} cells wide.");
+                    doors++;
+                }
+            }
+            Assert(doors == 7, $"(d) Expected 7 doorways, found {doors}.");
+            def.TryGetSector(Floor1Layout.GardenSectorId, out var garden);
+            def.TryGetSector(Floor1Layout.DeepSeamSectorId, out var seam);
+            def.TryGetSector(Floor1Layout.OvergrowthSectorId, out var overgrowth);
+            Assert(DoorWidth(grid, seam.Bounds, garden.Bounds) == 0 && DoorWidth(grid, garden.Bounds, overgrowth.Bounds) == 0, "(d) The Garden must not open onto a frontier sector.");
+            Assert(!seam.StartsExplored && !overgrowth.StartsExplored && garden.StartsExplored && hub.StartsExplored, "Frontier sectors start shrouded; near sectors explored.");
+
+            // (e) building twice gives identical walkability and region labels
+            var again = Rasterized(def);
+            for (int y = 0; y < grid.Height; y++)
+            {
+                for (int x = 0; x < grid.Width; x++)
+                {
+                    Assert(grid.IsCellWalkable(x, y) == again.IsCellWalkable(x, y), $"(e) Walkability differs at cell ({x},{y}) between builds.");
+                    var world = grid.CellToWorld(x, y);
+                    bool a = grid.TryGetRegion(world, out int ra);
+                    bool b = again.TryGetRegion(world, out int rb);
+                    Assert(a == b && ra == rb, $"(e) Region label differs at cell ({x},{y}) between builds.");
+                }
+            }
+
+            var cells = def.PartitionCells(1f);
+            Debug.Log($"[PASS] Test 7: Floor1 ({cells.x}x{cells.y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
+        }
+
+        private static StaticNavGrid Rasterized(MapDefinition def)
+        {
+            var cells = def.PartitionCells(1f);
+            var grid = new StaticNavGrid(cells.x, cells.y, 1f);
+            WallRasterizer.Rasterize(def, grid);
+            grid.EnsureRegions();
+            return grid;
+        }
+
+        /// <summary>Walkable cell pairs straddling the shared edge of two sectors (0 when they don't touch or no door).</summary>
+        private static int DoorWidth(StaticNavGrid grid, Rect a, Rect b)
+        {
+            int width = 0;
+            if (Mathf.Approximately(a.xMax, b.xMin) || Mathf.Approximately(b.xMax, a.xMin))
+            {
+                float edge = Mathf.Approximately(a.xMax, b.xMin) ? a.xMax : a.xMin;
+                float yMin = Mathf.Max(a.yMin, b.yMin), yMax = Mathf.Min(a.yMax, b.yMax);
+                for (float y = yMin + 0.5f; y < yMax; y += 1f)
+                {
+                    if (IsWalkable(grid, new Vector2(edge - 0.5f, y)) && IsWalkable(grid, new Vector2(edge + 0.5f, y))) width++;
+                }
+            }
+            else if (Mathf.Approximately(a.yMax, b.yMin) || Mathf.Approximately(b.yMax, a.yMin))
+            {
+                float edge = Mathf.Approximately(a.yMax, b.yMin) ? a.yMax : a.yMin;
+                float xMin = Mathf.Max(a.xMin, b.xMin), xMax = Mathf.Min(a.xMax, b.xMax);
+                for (float x = xMin + 0.5f; x < xMax; x += 1f)
+                {
+                    if (IsWalkable(grid, new Vector2(x, edge - 0.5f)) && IsWalkable(grid, new Vector2(x, edge + 0.5f))) width++;
+                }
+            }
+            return width;
         }
 
         private static bool IsWalkable(StaticNavGrid grid, Vector2 world)

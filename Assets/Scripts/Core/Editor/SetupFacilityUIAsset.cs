@@ -12,14 +12,14 @@ namespace Simpiens.Core.Editor
         static SetupFacilityUIAsset()
         {
             EditorApplication.delayCall += VerifyAndSetupPanelSettings;
-            EditorApplication.delayCall += RunOutpostMapBuilderValidator;
+            EditorApplication.delayCall += RunMapValidators;
         }
 
-        [MenuItem("Simpiens/Map/Run Outpost Map Builder Validator")]
-        public static void RunOutpostMapBuilderValidator()
+        [MenuItem("Simpiens/Map/Run Map Validators")]
+        public static void RunMapValidators()
         {
-            var validator = new Simpiens.Testing.Environment.OutpostMapBuilderValidator();
-            validator.RunAllValidationTests();
+            new Simpiens.Testing.World.MapDefinitionValidator().RunAllValidationTests();
+            new Simpiens.Testing.World.WorldMapValidator().RunAllValidationTests();
 
             var zoneValidator = new Simpiens.Testing.UI.FacilityZoneServiceValidator();
             zoneValidator.RunAllValidationTests();

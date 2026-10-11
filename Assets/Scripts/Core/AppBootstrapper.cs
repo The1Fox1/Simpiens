@@ -84,7 +84,6 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<AgentConsequenceService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentCognitionService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Environment.OutpostMapBuilder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

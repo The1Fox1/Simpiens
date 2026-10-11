@@ -255,13 +255,6 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
-        public void Scenario_OutpostMapBuilder_AllDomainValidationTestsPass()
-        {
-            var validator = new Simpiens.Testing.Environment.OutpostMapBuilderValidator();
-            validator.RunAllValidationTests();
-        }
-
-        [Test]
         public void Scenario_SimulationClock_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Environment.SimulationClockValidator();

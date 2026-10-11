@@ -58,8 +58,23 @@ namespace Simpiens.Entities
 
         private static void DrawWall(Transform parent, Rect solid)
         {
-            // Walls are authored as runs of unit cells (MapDefinitionBuilder.WallRun): one sprite per cell centre
             float inset = MapDefinitionBuilder.WallHalfExtent;
+            float unit = 2f * inset + 0.01f;
+            if (solid.width > unit && solid.height > unit)
+            {
+                // A solid fill (rock outside the floor): one stretched, darkened sprite
+                var block = new GameObject($"Rock_{solid.center.x:F0}_{solid.center.y:F0}");
+                block.transform.SetParent(parent);
+                block.transform.position = solid.center;
+                block.transform.localScale = new Vector3(solid.width, solid.height, 1f);
+                var blockSr = block.AddComponent<SpriteRenderer>();
+                blockSr.sprite = AgentSpriteLibrary.WallSprite;
+                blockSr.color = new Color(0.45f, 0.45f, 0.5f);
+                blockSr.sortingOrder = -1;
+                return;
+            }
+
+            // Wall runs (MapDefinitionBuilder.WallRun): one sprite per unit cell centre
             float startX = solid.xMin + inset;
             float startY = solid.yMin + inset;
             int countX = Mathf.Max(1, Mathf.RoundToInt(solid.width - 2f * inset) + 1);
