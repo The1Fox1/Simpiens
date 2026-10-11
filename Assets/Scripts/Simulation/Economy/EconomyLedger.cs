@@ -104,13 +104,17 @@ namespace Simpiens.Simulation.Economy
             {
                 return false;
             }
+            return TryExecuteStallPurchase(stallId, ref stall, agent.Inventory, totalCost);
+        }
 
-            if (agent.Inventory == null || agent.Inventory.Gold < totalCost)
+        public bool TryExecuteStallPurchase(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory buyer, uint totalCost)
+        {
+            if (buyer == null || buyer.Gold < totalCost)
             {
                 return false;
             }
 
-            agent.Inventory.Gold -= (int)totalCost;
+            buyer.Gold -= (int)totalCost;
             stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
             _purchases++;
             _purchaseGold += totalCost;
@@ -128,9 +132,18 @@ namespace Simpiens.Simulation.Economy
             {
                 return false;
             }
+            return TryExecuteStallSale(stallId, ref stall, agent.Inventory, totalPayout);
+        }
+
+        public bool TryExecuteStallSale(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout)
+        {
+            if (seller == null || stall.TreasuryGold < totalPayout)
+            {
+                return false;
+            }
 
             stall = stall.WithTreasury(stall.TreasuryGold - totalPayout);
-            agent.Inventory?.AddGold((int)totalPayout);
+            seller.AddGold((int)totalPayout);
             _sales++;
             _saleGold += totalPayout;
             return true;

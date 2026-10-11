@@ -62,10 +62,21 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "inventory full");
                 }
 
-                // Atomic transfer
-                agent.Inventory.Gold -= (int)totalCost;
-                stall = stall.WithTreasury(stall.TreasuryGold + totalCost)
-                             .WithRationStock((ushort)(stall.RationStock - trade.Quantity));
+                // Atomic transfer: gold moves through the authoritative ledger (direct fallback for headless validators)
+                if (context.EconomyLedger != null)
+                {
+                    if (!context.EconomyLedger.TryExecuteStallPurchase(stall.StallEntityId, ref stall, agent.Inventory, totalCost))
+                    {
+                        agent.Inventory.TryRemoveItem(ItemType.Ration, trade.Quantity); // roll back the added rations
+                        return Reject(node, trade, "ledger refused the purchase");
+                    }
+                }
+                else
+                {
+                    agent.Inventory.Gold -= (int)totalCost;
+                    stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
+                }
+                stall = stall.WithRationStock((ushort)(stall.RationStock - trade.Quantity));
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
@@ -130,11 +141,23 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "inventory removal failed");
                 }
 
-                // Atomic transfer
-                agent.Inventory.Gold += (int)totalPayout;
+                // Atomic transfer: gold moves through the authoritative ledger (direct fallback for headless validators)
+                if (context.EconomyLedger != null)
+                {
+                    if (!context.EconomyLedger.TryExecuteStallSale(stall.StallEntityId, ref stall, agent.Inventory, totalPayout))
+                    {
+                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, trade.ItemType.BaseValue()), out _); // roll back
+                        return Reject(node, trade, "ledger refused the sale");
+                    }
+                }
+                else
+                {
+                    agent.Inventory.Gold += (int)totalPayout;
+                    stall = stall.WithTreasury(stall.TreasuryGold - totalPayout);
+                }
                 ushort newOre = trade.ItemType == ItemType.IronOre ? (ushort)(stall.OreStock + trade.Quantity) : stall.OreStock;
                 ushort newHerb = trade.ItemType == ItemType.MedicinalHerb ? (ushort)(stall.HerbStock + trade.Quantity) : stall.HerbStock;
-                stall = stall.WithTreasury(stall.TreasuryGold - totalPayout).WithStock(stall.RationStock, newOre, newHerb);
+                stall = stall.WithStock(stall.RationStock, newOre, newHerb);
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
