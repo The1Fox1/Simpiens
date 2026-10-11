@@ -3,6 +3,7 @@
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 1. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp`
 - **Written:** 2026-10-11, against `main` @ `c21e91e` (PR #1 merged).
+- **Implementation status (2026-10-11):** steps 1–7 committed (`3cd4a95`..). All assemblies compile; every validator that can run outside Unity passes. **The PlayMode suite has not been run yet** (the Unity Editor held the project lock all session). Running it ×3 is the remaining Phase 1 gate (§5 id-shift risk).
 - **Goal:** every piece of static world geography comes from one plain-data `MapDefinition`. Walls are written straight into the nav grid, sectors are owned by the simulation, and world bounds no longer depend on the camera.
 - **Behaviour-preserving.** The live game still shows the current pen arena plus Outpost Commons, now expressed as `DevMapLayout`. The new outpost floor (`Floor1Layout`) is authored and validated headlessly but not spawned. It goes live in Phase 3; the Dev Map button arrives in Phase 2.
 
@@ -170,6 +171,16 @@ Each step must compile and keep PlayMode green (run `scripts/run-playmode-tests.
 - Spawning `Floor1Layout`, the bunk rest anchor, 12 crawlers, migrating scenarios to Floor 1: Phase 3.
 - Tilemap rendering, shroud overlay, pan and zoom, sector-aware bounty picker: Phase 4.
 - A non-centred grid origin, ScriptableObject-authored maps, map serialization.
+
+## 6A. Deviations from this plan during implementation
+- **No separate `MapCameraFramer`.** Camera framing lives in `MapView.FrameCamera`, because the camera is part of the map's view. `ScreenBoundsGenerator` was deleted with its viewport colliders.
+- **Narrative stays on `IFacilityZoneService`.** The narrative formatter reads sector names through the UI adapter. It is presentation, not authoritative state, and switching it would have meant presenter churn for no gain.
+- **`DevMapParityValidator` test 2.** It compared against the legacy zone table until step 5 deleted that table (proven identical at `7b610cb`). It now checks that the adapter reproduces the registry exactly.
+- **Resource nodes sit inside inflated wall cells.** Some pen bushes (e.g. `pen1.forage` at y −2.2) lie within body reach of a pen wall, exactly as before. Validators assert snap-reachability (`TryGetRegion`), not cell walkability.
+- **Dev Map playable bounds are x ±20, y ±18.** That is the former effective walkable area: the old 44×36 grid already cut y at ±18, inside the ±20 border.
+- **No wall raster margin.** The rasterizer inflates by `PawnBodyRadius` only, and `WallHalfExtent = 0.55` reproduces legacy coverage exactly.
+- **Solid fill rects.** `MapView` draws non-unit wall rects (Floor1's rock either side of the lower wing) as one stretched, darkened sprite.
+- **Verification tooling.** I added a standalone compile check and an outside-Unity validator runner (scratch only, not committed). They run pure validators with a managed `ILogHandler`. Validators that create GameObjects or call native `GUID.Generate()` still need Unity.
 
 ## 7. Minor decisions taken in this plan (producer may override)
 1. The definition is authored in code (`Floor1Layout`); ScriptableObjects can come later.

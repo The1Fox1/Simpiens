@@ -137,7 +137,8 @@ INDEPENDENT EPICS
 
 Epic MAP: The Outpost Floor & Living Simulation Loop [ACTIVE] (Revision 2, approved 2026-10-11)
 (See docs/epics/epic-map.md; sector count is data, not a target - producer)
-- Current: Phase 1 - world as data (MapDefinition, WorldBuilder, ISectorRegistry, camera-independent bounds).
+- Phase 1 - world as data: IMPLEMENTED 2026-10-11 (MapDefinition, WallRasterizer, ISectorRegistry, IWorldMap,
+  DevMapLayout live with legacy parity, Floor1Layout validated). PlayMode verification PENDING.
   Plan: .agents/epic_map_phase1_plan.md
 - Next: Phase 2 session split + "Dev Map" toggle button (pens leave the live map), Phase 3 populate the floor,
   Phase 4 player view, Phase 5 OutpostLifecycleScenario (DoD).

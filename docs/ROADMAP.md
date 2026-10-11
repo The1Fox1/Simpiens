@@ -340,7 +340,7 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
 *Status: Foundational spatial and environmental architectures that operate orthogonally to the specific feature tracks, providing the physical substrate for all agent lifecycles.*
 
 ### Epic MAP: [The Outpost Floor & Living Simulation Loop](epics/epic-map.md)
-- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11). Current phase: **Phase 1, world as data** ([plan](../.agents/epic_map_phase1_plan.md)).
+- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11). Current phase: **Phase 1, world as data**: implemented 2026-10-11, PlayMode verification pending ([plan](../.agents/epic_map_phase1_plan.md)). Next: Phase 2 (session split + Dev Map toggle).
 - **Producer intent (2026-10-11):** the live game shows one connected outpost floor where crawlers physically work, sell, eat, socialize and sleep. **Sector count is unimportant** and is data, not design; the earlier 9- versus 12-sector target is superseded. The play pens leave the live map and become test-only canaries.
 - **Producer decisions (2026-10-11):**
   - Revision 2 approved.

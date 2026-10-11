@@ -23,8 +23,9 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
-  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics), `ScreenBoundsGenerator.cs`.
-  - `Session/`: `SwarmSpawner` builds the live session (demo pens + Outpost Commons, crawler personalities, seeded entity ids).
+  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
+  - `Session/`: `SwarmSpawner` builds the live session: loads a map through `IWorldMap`, spawns its keyed nodes/campfires/stall, then agents (crawler personalities, seeded entity ids).
+  - `Session/Layouts/`: map definitions as code. `DevMapLayout` (the legacy pens + Outpost Commons, the live map until Epic MAP Phase 3) and `Floor1Layout` (the outpost floor).
   - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
   - `Editor/`: Editor-only batch/setup utilities.
 
@@ -34,7 +35,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Entities/`**
   Contains strictly `MonoBehaviour` views that hold state or rendering instructions.
   - **Rules**: Zero logic! Only basic view management, motor controls, and configurations.
-  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`.
+  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's walls and labels, frames the camera; walls are sprites only, never entities).
 
 - **`Intervention/`**
   Player intervention system acting as an influence queue.
@@ -42,7 +43,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Simulation/`**
   The simulation environment, registries, and spatial representations.
-  - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid`).
+  - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid` with a static base layer for map walls).
+  - `World/`: static geography as plain data. `MapDefinition` (+ `MapDefinitionBuilder`) is the single source of truth for walls, sectors, resource nodes, POIs and labels; `WallRasterizer` writes walls into the nav grid; `IWorldMap.Load` sizes the partition from the map (never the camera) and loads `ISectorRegistry` (authoritative sectors + exploration). Never hard-code coordinates or sector ids elsewhere: read them from the layout.
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), supply faucets (`ISupplyService`, `SupplyService`: dormant-node regrowth + stall supply caravan, ticked by `SimulationManager` via `ISupplyHost`).
   - **Key Files**: `WorldRegistry.cs`, `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
 
@@ -53,14 +55,12 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Chronicle pipeline: `NarrativeChronicleService`, `TemplateNarrativeFormatter`, `ILlmNarrativeEnricher` (LLM hook; passthrough by default).
 
 - **`UI/`**
-  UI Toolkit presenters (dumb views over simulation state): `FacilityDashboardPresenter`, `Pooling/VisualElementPool`, `Zones/FacilityZoneService`.
-
-- **`Environment/`**
-  World construction (`OutpostMapBuilder`). **Epic MAP is paused**; the builder is not wired into the live session.
+  UI Toolkit presenters (dumb views over simulation state): `FacilityDashboardPresenter`, `Pooling/VisualElementPool`, `Zones/FacilityZoneService` (UI adapter over `ISectorRegistry`; owns no sector data).
 
 - **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
   Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
   - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators.
+  - `World/`: map validators (`MapDefinitionValidator` incl. Floor1 connectivity/doors, `WorldMapValidator`, temporary `DevMapParityValidator`) and `TestWorlds` fixtures.
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
   - `Planning/`: GOAP domain, A* graph search, and plan preemption validation (`GoapDomainValidator.cs`, `GoapPlannerValidator.cs`, `PlanExecutionValidator.cs`).
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `UI/`, `Diagnostics/`: Domain validators per feature area.

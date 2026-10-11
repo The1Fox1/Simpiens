@@ -387,3 +387,22 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Sector count is data (producer: unimportant).
   - Drifter churn is deferred to the §3.3 economy decision.
 - **Consequences:** `OutpostMapBuilder` is retired. Removing wall entities shifts seeded entity ids, so seeded outcomes are re-verified rather than compared to old runs.
+
+## Architectural Decision: Epic MAP Phase 1, the World as Data (2026-10-11)
+- **Decision:**
+  - Static geography lives in `Simulation/World`.
+    - An immutable `MapDefinition` holds walls as rects, sectors plus a fallback, keyed nodes, POIs and labels.
+    - `IWorldMap.Load` is the only world-building entry point.
+  - Walls go into a `StaticNavGrid` **base layer** that survives the dynamic-wall `Clear()`. Dynamic walls (`EdgeCaseInjector`) keep the registry rasterization path.
+  - **Rasterization constant:** wall runs have half-extent 0.55 and are inflated by `PawnBodyRadius` (0.25). This is cell-for-cell identical to the legacy per-cell wall entities, proven over the whole Dev Map grid.
+  - **Grid origin stays centred.** The partition covers the bounds symmetrically, with an even cell count so cell edges stay on whole units. A non-centred origin was rejected: it touches every cell computation.
+  - **Partition re-sizing (`ISpatialPartition.Configure`):** a resize builds a new grid. Snapshots with a different `StaticGrid` are dropped on release and skipped on dequeue. Background readers keep their consistent old world. This is groundwork for the Phase 2 map switch.
+  - **Sectors:** `ISectorRegistry` (simulation) owns them and their exploration state, reset per load. `FacilityZoneService` is a UI adapter.
+  - **Spawn ordering:** world bounds come from the map, never the camera (the old grid size depended on screen aspect). The spawner loads the map before spawning (fixes the latent spawn-before-partition-init ordering).
+- **Consequences:**
+  - About 156 fewer GameObjects with physics.
+  - Walls no longer consume entity ids, so all seeded ids shift (accepted; outcomes are re-verified, not padded).
+  - The anomaly detector checks map wall geometry.
+- **Verification:**
+  - Map, world, parity and zone validators pass outside Unity.
+  - PlayMode was pending at the time of writing.
