@@ -30,7 +30,9 @@ namespace Simpiens.Cognition.Planning.Goals
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {
                 case ResourceTargeting.StallAccess.Reachable:
-                    return stall.RationStock > 0 && context.Inventory.Gold >= stall.RationSellPrice;
+                    // Personal reservation price: hunger raises it, greed lowers it (review §3.2: no binary price switch)
+                    return stall.RationStock > 0 && context.Inventory.Gold >= stall.RationSellPrice
+                        && stall.RationSellPrice <= Considerations.RationReservationPrice(context);
                 case ResourceTargeting.StallAccess.Unreachable:
                     return false; // Walled off from every stall
                 default:

@@ -273,8 +273,11 @@ namespace Simpiens.Cognition.Planning
         public static ItemType AffordableHeldSalvage(in AgentContext context, in TradeStallData stall)
         {
             if (context.Inventory == null) return ItemType.None;
-            bool herb = context.Inventory.HasItem(ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice;
-            bool ore = context.Inventory.HasItem(ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice;
+            // Payable by the treasury and at or above the agent's personal minimum sale price
+            bool herb = context.Inventory.HasItem(ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
+                && stall.HerbBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.MedicinalHerb);
+            bool ore = context.Inventory.HasItem(ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
+                && stall.OreBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.IronOre);
             if (herb && ore) return stall.HerbBuyPrice >= stall.OreBuyPrice ? ItemType.MedicinalHerb : ItemType.IronOre;
             if (herb) return ItemType.MedicinalHerb;
             if (ore) return ItemType.IronOre;
@@ -291,7 +294,8 @@ namespace Simpiens.Cognition.Planning
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            return stall.RationStock > 0 && gold >= stall.RationSellPrice;
+            return stall.RationStock > 0 && gold >= stall.RationSellPrice
+                && stall.RationSellPrice <= Considerations.RationReservationPrice(context);
         }
 
         /// <summary>Nearest stall the agent can walk to.</summary>

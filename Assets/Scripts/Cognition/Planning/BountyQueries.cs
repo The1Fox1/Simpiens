@@ -1,5 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
+using UnityEngine;
 
 namespace Simpiens.Cognition.Planning
 {
@@ -39,7 +40,9 @@ namespace Simpiens.Cognition.Planning
             open = default;
             if (context.Snapshot == null || context.Snapshot.ActiveBountyCount == 0) return false;
 
+            // Best by personality-weighted reward over distance (Considerations.BountyScore); ties go to the lowest id
             bool found = false;
+            float bestScore = 0f;
             var bounties = context.Snapshot.Bounties;
             for (int i = 0; i < bounties.Length; i++)
             {
@@ -48,13 +51,25 @@ namespace Simpiens.Cognition.Planning
                 if (type != BountyType.None && b.Type != type) continue;
                 if (!IsFulfillableFrom(context, b)) continue;
 
-                if (!found || b.BountyId < open.BountyId)
+                float score = Considerations.BountyScore(context, b, RedemptionStallPosition(context, b));
+                if (!found || score > bestScore || (score == bestScore && b.BountyId < open.BountyId))
                 {
                     open = b;
+                    bestScore = score;
                     found = true;
                 }
             }
             return found;
+        }
+
+        /// <summary>Where the bounty is redeemed: its creator stall, else the nearest reachable stall, else the agent's position.</summary>
+        private static Vector2 RedemptionStallPosition(in AgentContext context, in BountyContract bounty)
+        {
+            if (context.Snapshot != null && bounty.CreatorStallId != default && context.Snapshot.TryGetStall(bounty.CreatorStallId, out var creator))
+            {
+                return creator.Position;
+            }
+            return ResourceTargeting.TryGetNearestStall(context, out var nearest) ? nearest.Position : context.Position;
         }
 
         /// <summary>

@@ -271,6 +271,12 @@ namespace Simpiens.Simulation
                     if (node != null) initialPos = node.Position;
                 }
 
+                // Main-thread copy of why this intent was chosen (single writer for AgentState)
+                if (_agentRegistry != null && _agentRegistry.TryGetAgent(intent.AgentId, out var decidingAgent))
+                {
+                    decidingAgent.LastDecision = intent.Decision;
+                }
+
                 // Register as the current active intent for this agent
                 if (!_activeIntents.ContainsKey(intent.AgentId)) InsertSorted(_activeIntentOrder, intent.AgentId);
                 _activeIntents[intent.AgentId] = new ActiveIntentState

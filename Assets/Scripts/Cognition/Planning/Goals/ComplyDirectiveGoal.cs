@@ -65,7 +65,7 @@ namespace Simpiens.Cognition.Planning.Goals
             }
 
             // Normal compliance priority: Base 50 + U_comply (ranges typically 70 to 120)
-            return 50f + utility;
+            return (50f + utility) * Considerations.TraitFactor(context.Personality.Loyalty, Considerations.LoyaltyOnCompliance);
         }
     }
 }

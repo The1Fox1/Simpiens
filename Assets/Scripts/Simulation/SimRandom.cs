@@ -58,5 +58,6 @@ namespace Simpiens.Simulation
         public const uint AmbientWander = 1;
         public const uint PanicDirection = 2;
         public const uint EntityId = 3;
+        public const uint Personality = 4;
     }
 }

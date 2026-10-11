@@ -32,7 +32,7 @@ namespace Simpiens.Cognition.Planning.Goals
                 }
             }
 
-            return priority;
+            return priority * Considerations.TraitFactor(context.Personality.Sociability, Considerations.SociabilityOnSocial);
         }
 
         public override bool IsValid(AgentContext context)

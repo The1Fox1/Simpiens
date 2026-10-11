@@ -40,6 +40,7 @@ namespace Simpiens.Testing.Environment
         public const uint OreRegrowTicks = 900;
 
         private readonly IEntityIdAllocator _idAllocator;
+        private readonly SimulationSettings _settings;
 
         private UnityEngine.GUID NextEntityId() => _idAllocator != null ? _idAllocator.Next() : UnityEngine.GUID.Generate();
 
@@ -55,6 +56,7 @@ namespace Simpiens.Testing.Environment
             IEntityIdAllocator idAllocator)
         {
             _idAllocator = idAllocator;
+            _settings = settings;
             _spatialPartition = spatialPartition;
             _pathfinder = pathfinder;
             _registry = registry;
@@ -227,6 +229,15 @@ namespace Simpiens.Testing.Environment
 
                 var agent = agentGo.AddComponent<AutonomousAgent>();
                 agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
+
+                // Free crawlers get seeded personalities (review §3.2); scripted pen agents stay neutral so the
+                // Epic 7 / Beta / 8 demonstrations keep the behaviour they were tuned with (producer decision 2026-10-09)
+                if (i >= ScriptedPenAgentCount && agent.State != null)
+                {
+                    ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
+                    agent.State.Personality = Simpiens.Cognition.Contracts.AgentPersonality.Generate(seed, controller.Id);
+                    SimLog.Cognition.ZLogInformation($"{SimLog.Agent(controller.Id)} personality: {agent.State.Personality.ToString()}");
+                }
 
                 // Attach AgentView for animated visual feedback
                 agentGo.AddComponent<AgentView>();

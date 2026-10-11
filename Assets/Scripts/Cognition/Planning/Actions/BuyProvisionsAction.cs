@@ -55,7 +55,9 @@ namespace Simpiens.Cognition.Planning.Actions
                 }
             }
 
-            return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1);
+            // The stall re-checks this at execution, so a price raised after planning is refused, not paid
+            return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1,
+                maxExpectedPricePerUnit: Considerations.RationReservationPrice(context));
         }
     }
 }

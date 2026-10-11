@@ -135,6 +135,9 @@ namespace Simpiens.Cognition
 
                 AgentIntent intent = null;
                 string source = null;
+                // Top three goals considered this evaluation ("Why?" groundwork); names are cached strings, no allocation
+                string topGoal1 = null, topGoal2 = null, topGoal3 = null;
+                float topPriority1 = -1f, topPriority2 = -1f, topPriority3 = -1f;
                 bool trace = SimLog.Traces(context.AgentId);
 
                 // Emergency rest if in exhaustion collapse
@@ -213,6 +216,21 @@ namespace Simpiens.Cognition
 
                             float priority = goal.CalculatePriority(context);
                             if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1}");
+                            if (priority > topPriority1)
+                            {
+                                topGoal3 = topGoal2; topPriority3 = topPriority2;
+                                topGoal2 = topGoal1; topPriority2 = topPriority1;
+                                topGoal1 = goal.Name; topPriority1 = priority;
+                            }
+                            else if (priority > topPriority2)
+                            {
+                                topGoal3 = topGoal2; topPriority3 = topPriority2;
+                                topGoal2 = goal.Name; topPriority2 = priority;
+                            }
+                            else if (priority > topPriority3)
+                            {
+                                topGoal3 = goal.Name; topPriority3 = priority;
+                            }
                             if (priority > highestPriority)
                             {
                                 highestPriority = priority;
@@ -265,6 +283,9 @@ namespace Simpiens.Cognition
                 {
                     SimLog.Cognition.ZLogDebug($"{SimLog.Agent(context.AgentId)} -> {intent.GetType().Name} from {source} at {context.Position}");
                 }
+
+                intent.Decision = new DecisionSummary(source, context.CurrentTick,
+                    topGoal1, topPriority1, topGoal2, topPriority2, topGoal3, topPriority3);
 
                 // Set intent tracking so agent waits until it completes
                 agent.CurrentIntent = intent;

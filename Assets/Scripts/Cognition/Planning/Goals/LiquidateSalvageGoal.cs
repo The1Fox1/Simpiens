@@ -22,7 +22,7 @@ namespace Simpiens.Cognition.Planning.Goals
                 if (context.Inventory.HasItem(ItemType.IronOre)) occupiedSlots++;
                 if (context.Inventory.HasItem(ItemType.MedicinalHerb)) occupiedSlots++;
             }
-            return 30f + (occupiedSlots * 15f);
+            return (30f + (occupiedSlots * 15f)) * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome);
         }
 
         public override bool IsValid(AgentContext context)

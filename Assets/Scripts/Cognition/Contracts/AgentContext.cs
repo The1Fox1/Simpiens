@@ -34,13 +34,18 @@ namespace Simpiens.Cognition.Contracts
         // Scout bounty id for which the agent holds a completed sector report (0 = none)
         public readonly ushort ScoutReportBountyId;
 
+        // Stable traits (review §3.2); default is neutral
+        public readonly AgentPersonality Personality;
+
         public AgentContext(GUID agentId, Vector2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership membership = default, in IdentityTag identity = default,
                             Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
-                            ushort scoutReportBountyId = 0)
+                            ushort scoutReportBountyId = 0,
+                            in AgentPersonality personality = default)
         {
             ScoutReportBountyId = scoutReportBountyId;
+            Personality = personality;
             AgentId = agentId;
             Position = position;
             Needs = needs;

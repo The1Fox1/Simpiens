@@ -79,6 +79,12 @@ namespace Simpiens.Cognition
         public GroupMembership Membership { get; set; } = GroupMembership.None;
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
+        /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>
+        public Simpiens.Cognition.Contracts.AgentPersonality Personality { get; set; }
+
+        /// <summary>Why the current intent was chosen (main-thread copy of AgentIntent.Decision).</summary>
+        public Simpiens.Cognition.Contracts.DecisionSummary LastDecision { get; set; }
+
         // GOAP Deliberative Planning State
         public GoapPlan ActivePlan { get; } = new GoapPlan(16);
         public GoapPlan ScratchPlan { get; } = new GoapPlan(16);
@@ -327,7 +333,8 @@ namespace Simpiens.Cognition
                 Membership,
                 Identity,
                 inventorySnapshot,
-                ScoutReportBountyId);
+                ScoutReportBountyId,
+                Personality);
         }
     }
 }
