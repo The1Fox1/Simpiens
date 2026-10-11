@@ -18,9 +18,10 @@ namespace Simpiens.Entities
         /// <summary>
         /// Minimum logical ticks a displayed state is held before switching. Sub-tick simulation flashes
         /// (Thinking > Idle > Walking on instant intents) are real but unreadable; the view smooths them out.
-        /// 2 ticks keeps at most 3 switches per 0.6 sim-seconds, below the thrashing threshold (4 per 0.5 s).
+        /// 3 ticks keeps at most 3 switches per 0.9 sim-seconds, well below the thrashing threshold (4 per 0.5 s) even
+        /// when uneven frame pacing bunches several ticks into one rendered frame (2 ticks proved too tight at 10x).
         /// </summary>
-        public const int MinDisplayTicks = 2;
+        public const int MinDisplayTicks = 3;
 
         /// <summary>The state currently rendered (after overrides and the display dwell).</summary>
         public AgentVisualState DisplayedState { get; private set; } = AgentVisualState.Idle;
