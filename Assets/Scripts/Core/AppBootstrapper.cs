@@ -92,7 +92,9 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register(resolver => Simpiens.Cognition.Contracts.IntentHandlerRegistry.CreateDefault(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<ToolExecutionRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
-            // 4. Session population (pens + Outpost Commons)
+            // 4. Sessions and the spawner that builds them. Optional assemblies may register further sessions
+            // (the test harness adds the Dev Map); the default is chosen by id, never by registration order.
+            builder.Register<LegacySession>(Lifetime.Singleton).As<ISessionDefinition>();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.

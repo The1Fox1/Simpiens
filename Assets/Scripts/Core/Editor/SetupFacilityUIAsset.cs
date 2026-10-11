@@ -49,6 +49,7 @@ namespace Simpiens.Core.Editor
             builder.Register<Simpiens.Narrative.PassthroughNarrativeEnricher>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.GroupRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.SimulationManager>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Core.Session.LegacySession>(VContainer.Lifetime.Singleton).As<Simpiens.Core.Session.ISessionDefinition>();
             builder.Register<Simpiens.Core.Session.SwarmSpawner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             var container = builder.Build();
