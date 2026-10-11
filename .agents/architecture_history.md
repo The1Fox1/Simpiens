@@ -406,3 +406,7 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Verification:**
   - Map, world, parity and zone validators pass outside Unity.
   - PlayMode was pending at the time of writing.
+- **Verification (follow-up, 2026-10-11):**
+  - PlayMode 42/42 in 3 consecutive runs.
+  - The live supply loop passes with 0 anomalies, with identical milestone ticks in every run.
+  - The seeded entity-id shift caused no regressions.

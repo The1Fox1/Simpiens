@@ -3,7 +3,7 @@
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 1. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp`
 - **Written:** 2026-10-11, against `main` @ `c21e91e` (PR #1 merged).
-- **Implementation status (2026-10-11):** steps 1–7 committed (`3cd4a95`..). All assemblies compile; every validator that can run outside Unity passes. **The PlayMode suite has not been run yet** (the Unity Editor held the project lock all session). Running it ×3 is the remaining Phase 1 gate (§5 id-shift risk).
+- **Implementation status (2026-10-11):** steps 1–7 committed (`3cd4a95`..). All assemblies compile; every validator that can run outside Unity passes. **PlayMode verified 2026-10-11:** 42/42 in 3 consecutive runs (plus the explicit soak, skipped). `OutpostSupplyLoopScenario` passes with 0 anomalies, and its milestones are identical in every run: scout fulfilled at tick 103, first sale at 181, gather at 184 (player trust +15), regrowth at 471, restock at 1037. The §5 id-shift risk did not materialise. Correction to the step-2 commit message (`7b610cb`): `DevMapLayout` has **16** wall runs, not 20.
 - **Goal:** every piece of static world geography comes from one plain-data `MapDefinition`. Walls are written straight into the nav grid, sectors are owned by the simulation, and world bounds no longer depend on the camera.
 - **Behaviour-preserving.** The live game still shows the current pen arena plus Outpost Commons, now expressed as `DevMapLayout`. The new outpost floor (`Floor1Layout`) is authored and validated headlessly but not spawned. It goes live in Phase 3; the Dev Map button arrives in Phase 2.
 

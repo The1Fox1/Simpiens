@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Current phase: Phase 1 implemented, PlayMode verification pending ([implementation plan](../../.agents/epic_map_phase1_plan.md)); next Phase 2.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); next: Phase 2.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -174,7 +174,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 
 ## 4. Acceptance checklist (delivered work only; filled in as phases land)
 
-- [x] Phase 1: world as data (implemented 2026-10-11; **PlayMode verification pending**):
+- [x] Phase 1: world as data (done 2026-10-11; PlayMode 42/42 in 3 consecutive runs; `OutpostSupplyLoopScenario` passes with 0 anomalies):
   - `MapDefinition` + builder, `WallRasterizer`, `StaticNavGrid` base layer and rect bounds;
   - `ISectorRegistry`, `IWorldMap.Load`, reconfigurable partition with stale-snapshot guard;
   - `DevMapLayout` (live; cell-for-cell parity with the legacy pens) and `Floor1Layout` (validated, not live);
