@@ -265,8 +265,10 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
-        /// Checks if a given cell is walkable (does not contain a Static Wall, Dynamic Wall, Anchor, or Stall).
-        /// Returns false if out of bounds.
+        /// Checks if a given cell is walkable: no static or dynamic wall, and no anchor (hearth) or stall centred in it.
+        /// Anchors and stalls are small props listed in every cell their radius overlaps; they block only the cell
+        /// holding their centre, so a hearth on a cell corner cannot seal off a narrow room. Movement keeps pawns off
+        /// the prop itself (SimulationManager.IsPositionBlocked). Returns false if out of bounds.
         /// </summary>
         public bool IsWalkable(int cellX, int cellY)
         {
@@ -283,12 +285,25 @@ namespace Simpiens.Simulation.Spatial
 
             for (int i = 0; i < count; i++)
             {
-                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Anchor || cellArray[i].Type == EntityType.Stall)
+                var type = cellArray[i].Type;
+                if (type == EntityType.Wall)
+                {
+                    return false;
+                }
+                if ((type == EntityType.Anchor || type == EntityType.Stall) && IsCentredInCell(cellArray[i].Position, cellX, cellY))
                 {
                     return false;
                 }
             }
             return true;
+        }
+
+        private bool IsCentredInCell(Vector2 position, int cellX, int cellY)
+        {
+            float offsetX = Width * CellSize * 0.5f;
+            float offsetY = Height * CellSize * 0.5f;
+            return Mathf.FloorToInt((position.x + offsetX) / CellSize) == cellX &&
+                   Mathf.FloorToInt((position.y + offsetY) / CellSize) == cellY;
         }
 
         /// <summary>

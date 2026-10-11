@@ -29,8 +29,9 @@ namespace Simpiens.Testing.Navigation
             ValidateEnclosedUnreachableTarget();
             ValidatePathSmoothing();
             ValidateZeroAllocationAndConcurrency();
+            ValidateHearthOnCellCornerKeepsCorridorOpen();
 
-            Debug.Log("<color=green>[GridAStarValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[GridAStarValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private SharedWorldSnapshot CreateTestSnapshot(int width = 30, int height = 30, float cellSize = 1.0f)
@@ -229,6 +230,55 @@ namespace Simpiens.Testing.Navigation
             Assert(response.Length == 0, "Failed path must have 0 length.");
 
             Debug.Log("[PASS] Test 5: Fully enclosed target terminated safely without errors.");
+        }
+
+        /// <summary>
+        /// A hearth lies in every cell its radius overlaps, but blocks only the cell holding its centre. Regression
+        /// (Epic MAP Phase 2, PenCanaryScenario): the Pen 4 campfire on a cell corner blocked all four cells around it,
+        /// sealing the 2-cell-wide pen in two, so the donor could never reach the starving companion.
+        /// </summary>
+        private void ValidateHearthOnCellCornerKeepsCorridorOpen()
+        {
+            var snapshot = CreateTestSnapshot(30, 30, 1.0f);
+            var staticGrid = snapshot.StaticGrid;
+
+            // A corridor two cells wide: walls in world columns [2,3) and [5,6), walkable columns [3,5)
+            for (int y = -10; y <= 10; y++)
+            {
+                if (staticGrid.WorldToCell(new Vector2(2.5f, y + 0.5f), out int lx, out int ly)) staticGrid.SetWall(lx, ly);
+                if (staticGrid.WorldToCell(new Vector2(5.5f, y + 0.5f), out int rx, out int ry)) staticGrid.SetWall(rx, ry);
+            }
+
+            // Hearth on the corner (4, 0), listed in every overlapped cell exactly as SpatialHashGrid inserts entities
+            var hearthPos = new Vector2(4f, 0f);
+            const float hearthRadius = 0.35f;
+            var hearth = new EntitySnapshot(default, hearthPos, Vector2.zero, hearthRadius, EntityType.Anchor);
+            float offset = 15f;
+            for (int cy = Mathf.FloorToInt(hearthPos.y - hearthRadius + offset); cy <= Mathf.FloorToInt(hearthPos.y + hearthRadius + offset); cy++)
+            {
+                for (int cx = Mathf.FloorToInt(hearthPos.x - hearthRadius + offset); cx <= Mathf.FloorToInt(hearthPos.x + hearthRadius + offset); cx++)
+                {
+                    snapshot.AddEntity(cx, cy, in hearth);
+                }
+            }
+
+            Assert(!snapshot.IsWalkable(19, 15), "The cell holding the hearth's centre must stay blocked.");
+            Assert(snapshot.IsWalkable(18, 15) && snapshot.IsWalkable(18, 14) && snapshot.IsWalkable(19, 14), "Cells the hearth only overlaps must stay walkable.");
+
+            var searcher = new GridAStarSearcher();
+            var response = new PathResponse();
+            response.Initialize(200, null);
+            var request = new PathRequest
+            {
+                StartPosition = new Vector2(4f, 3f),
+                TargetPosition = new Vector2(4f, -3f)
+            };
+
+            bool success = searcher.Search(in request, snapshot, response);
+            Assert(success && response.IsValid, "A hearth on a cell corner must not seal a two-cell corridor.");
+            Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach the far side of the hearth.");
+
+            Debug.Log("[PASS] Test 8: Hearth on a cell corner blocks only its own cell; the corridor stays open.");
         }
 
         private void ValidatePathSmoothing()
