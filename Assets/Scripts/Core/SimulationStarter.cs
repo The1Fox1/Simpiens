@@ -1,8 +1,6 @@
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using Simpiens.Testing;
-using Simpiens.Testing.Environment;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -88,22 +86,7 @@ namespace Simpiens.Core.Bootstrapping
             dashboardGo.SetActive(true); // Activate now with all dependencies ready
             SimLog.Bootstrap.ZLogInformation($"Facility Dashboard initialized (PanelSettings: {uiDoc.panelSettings?.name}, VisualTree: {uiDoc.visualTreeAsset?.name})");
 
-            bool isRunningTests = false;
-            string[] args = System.Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i].Equals("-runTests", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    isRunningTests = true;
-                    break;
-                }
-            }
-
-            if (Application.isBatchMode && !isRunningTests)
-            {
-                var batchGo = new GameObject("[BatchPlaymodeController]");
-                batchGo.AddComponent<BatchPlaymodeController>();
-            }
+            // The headless batch controller is added by the test harness (Simpiens.Testing.BatchPlaymodeBootstrap)
         }
     }
 }

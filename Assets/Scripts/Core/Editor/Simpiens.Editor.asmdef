@@ -3,7 +3,8 @@
     "rootNamespace": "Simpiens.Core.Editor",
     "references": [
         "Simpiens",
-        "VContainer"
+        "VContainer",
+        "Simpiens.Testing"
     ],
     "includePlatforms": [
         "Editor"

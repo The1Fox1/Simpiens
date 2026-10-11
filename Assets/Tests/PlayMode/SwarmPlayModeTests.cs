@@ -71,6 +71,133 @@ namespace Simpiens.Tests.PlayMode
             validator.RunAllValidationTests();
         }
 
+        // Domain validators that previously ran only as boot-time IStartables (failures were only logged)
+        [Test]
+        public void Scenario_AffinityMatrix_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.AffinityMatrixValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_AgentMemory_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Memory.AgentMemoryValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_AltruisticSharing_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.AltruisticSharingValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_BountyFulfillment_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.BountyFulfillmentValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_DirectiveCompliance_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.DirectiveComplianceValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_DriveDecay_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Drives.DriveDecayValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_DriveSystem_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Drives.DriveSystemValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_FacilityZoneService_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.UI.FacilityZoneServiceValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_GatheringAnchor_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.GatheringAnchorValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_GoapDomain_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Planning.GoapDomainValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_GoapPlanner_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Planning.GoapPlannerValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_GroupPrimitive_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.GroupPrimitiveValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_Inventory_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.InventoryValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_MentalBreak_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Drives.MentalBreakValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_MotorWatchdog_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Navigation.MotorWatchdogValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_NarrativeChronicle_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.UI.NarrativeChronicleValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_PlanExecution_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Planning.PlanExecutionValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_ResourceContention_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.ResourceContentionValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_Succession_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Sociopolitical.SuccessionValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_TradeTransaction_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.TradeTransactionValidator().Start();
+        }
+
+        [Test]
+        public void Scenario_VisualAnomalyDetector_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Diagnostics.VisualAnomalyDetectorValidator().Start();
+        }
+
         [Test]
         public void Scenario_EconomyCounters_AllDomainValidationTestsPass()
         {

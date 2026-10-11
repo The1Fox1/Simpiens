@@ -2,7 +2,7 @@ using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
 
-namespace Simpiens.Testing
+namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
     /// Visualizes the Buffer A (SharedWorldSnapshot) data state directly without referencing GameObjects.

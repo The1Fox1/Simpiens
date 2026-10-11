@@ -11,11 +11,6 @@ using Simpiens.Cognition;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
 using Simpiens.Intervention;
-using Simpiens.Testing.Environment;
-using Simpiens.Testing.Memory;
-using Simpiens.Testing.Planning;
-using Simpiens.Testing.Diagnostics;
-using Simpiens.Testing.UI;
 using Simpiens.UI.Zones;
 
 namespace Simpiens.Core.Bootstrapping
@@ -97,44 +92,12 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register(resolver => Simpiens.Cognition.Contracts.IntentHandlerRegistry.CreateDefault(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<ToolExecutionRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
-            // 4. Testing & Validation Harness
+            // 4. Session population (pens + Outpost Commons)
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<AgentMemoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<GoapDomainValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<GoapPlannerValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<PlanExecutionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Drives.DriveDecayValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Navigation.MotorWatchdogValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Navigation.GridAStarValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Navigation.NavigationClearanceValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Environment.DeterminismValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Drives.MentalBreakValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Drives.DriveSystemValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.AffinityMatrixValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.ResourceContentionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.AltruisticSharingValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.GatheringAnchorValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.GroupPrimitiveValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.DirectiveComplianceValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Sociopolitical.SuccessionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<VisualAnomalyDetector>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<VisualAnomalyDetectorValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<FacilityZoneServiceValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<NarrativeChronicleValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<BountyTerminalValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Economy.InventoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Economy.TradeTransactionValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Economy.BountyFulfillmentValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Environment.OutpostMapBuilderValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Environment.SimulationClockValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<SimulationManagerModularizationValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<AgentStateValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<SingleWriterMemoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Economy.SupplyLoopValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Economy.EconomyCountersValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Planning.PersonalityValidator>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.RegisterComponent(gameObject.AddComponent<VisualAnomalyRecorderView>());
+
+            // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.
+            // Domain validators no longer run at boot; they run as PlayMode tests (SwarmPlayModeTests).
+            BootstrapExtensions.InstallAll(builder, gameObject);
 
             // 5. Entry Points (App Logic)
             builder.RegisterEntryPoint<SimulationStarter>();
