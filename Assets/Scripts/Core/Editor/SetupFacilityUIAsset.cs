@@ -47,10 +47,10 @@ namespace Simpiens.Core.Editor
             builder.Register<Simpiens.Narrative.PassthroughNarrativeEnricher>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.GroupRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.SimulationManager>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Testing.Environment.SwarmSpawner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register<Simpiens.Core.Session.SwarmSpawner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             var container = builder.Build();
-            var spawner = container.Resolve<Simpiens.Testing.Environment.SwarmSpawner>();
+            var spawner = container.Resolve<Simpiens.Core.Session.SwarmSpawner>();
             var simMgr = container.Resolve<Simpiens.Simulation.ISimulationManager>();
             var chronicle = container.Resolve<Simpiens.Narrative.INarrativeChronicleService>();
             Debug.Log($"<color=#10b981>[TestContainerResolution] SUCCESS! Spawner: {spawner != null}, SimMgr: {simMgr != null}, Chronicle: {chronicle != null}</color>");

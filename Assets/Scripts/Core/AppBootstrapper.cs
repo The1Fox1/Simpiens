@@ -1,3 +1,4 @@
+using Simpiens.Core.Session;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -88,8 +89,6 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<AgentCognitionService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Environment.OutpostMapBuilder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<ContextValidator>(Lifetime.Singleton);
-            builder.Register<ICognitiveEngine, CognitiveEngine>(Lifetime.Singleton);
             builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

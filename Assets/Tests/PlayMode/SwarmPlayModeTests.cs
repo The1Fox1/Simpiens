@@ -1,3 +1,4 @@
+using Simpiens.Core.Session;
 using System.Collections;
 using System.Text;
 using NUnit.Framework;

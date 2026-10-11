@@ -11,7 +11,7 @@ using VContainer;
 using VContainer.Unity;
 using ZLogger;
 
-namespace Simpiens.Testing.Environment
+namespace Simpiens.Core.Session
 {
     public class SwarmSpawner : IStartable, System.IDisposable
     {
@@ -74,42 +74,9 @@ namespace Simpiens.Testing.Environment
             _mentalBreakEvaluator = new Simpiens.Cognition.Evaluators.MentalBreakEvaluator(_pathfinder, settings);
             _altruismEvaluator = new Simpiens.Cognition.Evaluators.AltruismEvaluator(_pathfinder);
 
-            _actionGraph = new Simpiens.Cognition.Planning.ActionGraph();
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SearchResourceAction(pathfinder: _pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToResourceAction(pathfinder: _pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.HarvestResourceAction(pathfinder: _pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.EatCarriedFoodAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RestAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToPeerAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ShareFoodAction(pathfinder: _pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToAnchorAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToDirectiveAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ExecuteDirectiveAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.TravelToStallAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.BuyProvisionsAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SellSalvageAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ClaimGatherBountyAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ClaimScoutBountyAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.DeliverBountyAction());
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.SearchSalvageAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.GatherSalvageAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ScoutSectorAction(_pathfinder));
-            _actionGraph.RegisterAction(new Simpiens.Cognition.Planning.Actions.ReportScoutBountyAction());
-
-            _goals = new List<Simpiens.Cognition.Planning.GoapGoal>
-            {
-                new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal(),
-                new Simpiens.Cognition.Planning.Goals.RestGoal(),
-                new Simpiens.Cognition.Planning.Goals.SocializeGoal(),
-                new Simpiens.Cognition.Planning.Goals.AidCompanionGoal(),
-                new Simpiens.Cognition.Planning.Goals.GatherAtAnchorGoal(),
-                new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal(),
-                new Simpiens.Cognition.Planning.Goals.PurchaseProvisionsGoal(),
-                new Simpiens.Cognition.Planning.Goals.LiquidateSalvageGoal(),
-                new Simpiens.Cognition.Planning.Goals.FulfillBountyGoal(),
-                new Simpiens.Cognition.Planning.Goals.EarnIncomeGoal()
-            };
+            // Production GOAP domain (Cognition/Planning/Domain), no longer assembled here
+            _actionGraph = Simpiens.Cognition.Planning.Domain.OutpostGoapDomain.BuildActionGraph(_pathfinder);
+            _goals = Simpiens.Cognition.Planning.Domain.OutpostGoapDomain.BuildGoals();
         }
 
         private readonly Simpiens.Cognition.Evaluators.ICognitiveEvaluator _evaluator;
