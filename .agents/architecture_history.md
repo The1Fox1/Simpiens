@@ -361,3 +361,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Verification:** `PersonalityValidator` (5 tests). Live `PriceResponseScenario`: buyers per price step 6/5/5/1/1/0 for 10–60g.
 - **Open:** trait strengths are provisional and should be tuned alongside the deferred §3.3 economy decisions. Risk tolerance is unused until Epic 10.
 
+## Architectural Decision: Test Assembly Separation (Milestone 1 closure, Phase 5, 2026-10-11)
+- **Problem:**
+  - The production GOAP domain and session lived in `Testing/SwarmSpawner`.
+  - About 33 validators ran as `IStartable`s on every boot; 21 of them only there, where failures were just logged.
+  - Test code shipped in the single `Simpiens` assembly.
+- **Decision:**
+  - `OutpostGoapDomain` holds the production action graph and goals. `SwarmSpawner` moves to `Core/Session` as the live session.
+  - Separate `Simpiens.Testing` assembly constrained to `UNITY_INCLUDE_TESTS`.
+  - Production exposes `BootstrapExtensions` (installer list). The test assembly registers its harness services from a `RuntimeInitializeOnLoadMethod`, so the dependency points one way only.
+  - Validators are PlayMode tests only.
+  - `InternalsVisibleTo` for the test assemblies.
+  - Unused cognition stub deleted.
+- **Verification:** PlayMode 40/40. A player build was not run.
+

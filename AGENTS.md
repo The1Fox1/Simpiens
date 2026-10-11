@@ -13,7 +13,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Houses the asynchronous cognitive reasoning engine for agents.
   - `Contracts/`: Interfaces and data structures for Agent Intents (`AgentIntent`, `WanderIntent`, `TradeIntent`, `ClaimBountyIntent`, …), Intent Execution (`IIntentHandler`, `IIntentExecutionContext`, `IIntentHandlerRegistry`), and Context (`AgentContext`, `AgentNeeds`, `IntentResult`).
   - `Evaluators/`: Tier-1 reflexive/utility evaluators (`SurvivalUtilityEvaluator` — hunger reflex only, returns `null` otherwise; `MentalBreakEvaluator`, `AltruismEvaluator`, `FrustrationEvaluator`) and the Tier-3 ambient fallback `AmbientWanderEvaluator` (passed to `AgentCognitionService`).
-  - `Planning/`: GOAP domain — zero-allocation bitmask `WorldState`/`StateFact`, `GoapPlanner` (A*), `ActionGraph`, `Actions/`, `Goals/`, `WorldStateBuilder`, and modular intent handlers under `Handlers/` (`IntentHandlerRegistry`, `WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, `ShareResourceIntentHandler`, `IdleIntentHandler`, `TradeIntentHandler`, `ClaimBountyIntentHandler`, `DeliverBountyIntentHandler` (Gather + Scout, escrow-only payout), `ScoutIntentHandler`), plus shared `ResourceTargeting` / `BountyQueries` helpers.
+  - `Planning/`: GOAP domain — zero-allocation bitmask `WorldState`/`StateFact`, `GoapPlanner` (A*), `ActionGraph`, `Actions/`, `Goals/`, `WorldStateBuilder`, and modular intent handlers under `Handlers/` (`IntentHandlerRegistry`, `WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, `ShareResourceIntentHandler`, `IdleIntentHandler`, `TradeIntentHandler`, `ClaimBountyIntentHandler`, `DeliverBountyIntentHandler` (Gather + Scout, escrow-only payout), `ScoutIntentHandler`), plus shared `ResourceTargeting` / `BountyQueries` helpers, the utility `Considerations` (personality-weighted priorities, reservation/minimum prices, bounty score) and `Domain/OutpostGoapDomain` (the production action graph and goal list).
   - `Memory/`, `Social/`: Fog-of-war spatial memory, double-buffered snapshots (`IAgentMemory`, `AgentMemorySnapshot`), event ledger, gossip, 4-axis affinity (`AgentMemory`, `AffinityRecord`).
   - `Groups/`: Generic group primitive, directives, compliance, succession (`SuccessionEngine`, `ComplianceUtility`).
   - `Inventory/`: `AgentInventory` (fixed-capacity item slots + gold, double-buffered `AgentInventorySnapshot`).
@@ -24,6 +24,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
   - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics), `ScreenBoundsGenerator.cs`.
+  - `Session/`: `SwarmSpawner` builds the live session (demo pens + Outpost Commons, crawler personalities, seeded entity ids).
+  - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
   - `Editor/`: Editor-only batch/setup utilities.
 
 - **`Routines/`**
@@ -56,16 +58,15 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Environment/`**
   World construction (`OutpostMapBuilder`). **Epic MAP is paused**; the builder is not wired into the live session.
 
-- **`Testing/`**
-  Isolated debug and domain-driven validation tools.
-  - `Environment/`: Spawners, chaos injectors, and batch runners (`SwarmSpawner.cs`, `EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`).
+- **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
+  Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
+  - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators.
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
   - `Planning/`: GOAP domain, A* graph search, and plan preemption validation (`GoapDomainValidator.cs`, `GoapPlannerValidator.cs`, `PlanExecutionValidator.cs`).
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
-  - ⚠️ `SwarmSpawner` currently also hosts the production GOAP action graph/goals and session population (known deviation).
 
 - **`Assets/Tests/PlayMode/`**
-  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Run via `scripts/run-playmode-tests.sh`.
+  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
 
 ---
 
@@ -102,7 +103,7 @@ Multiplayer is a **required post-MVP feature**. The MVP is single-player, but do
 - **Single writer:** background threads read immutable snapshots/copies; all mutation happens on the simulation thread.
 
 ## Known Deviations (do not copy these patterns)
-The code currently violates some of the rules above and below in places (unseeded RNG, singleton `GoapPlanner` behind a lock, production domain under `Testing/`). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
+The code currently violates some of the rules above and below in places (singleton `GoapPlanner` behind a lock, off-thread plan/intent bookkeeping in cognition, cognition result arrival tick depends on thread timing). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
 
 ---
 
@@ -122,6 +123,6 @@ The code currently violates some of the rules above and below in places (unseede
 - **Composition over Inheritance**: Utilize C# Interfaces and VContainer DI.
 - **No MonoBehaviours for Logic**: Game objects are dumb views.
 - **Zero Allocations in Hot Paths**: Use Structs, object pooling, and standard `for` loops in tick-critical areas.
-- **Dual-Loop System**: Use `SimulationManager` for Unity's tick, and `CognitiveEngine` for asynchronous background tasks.
-- **Defensive Null-Safety for Test Isolation**: Core domain services (`SimulationManager`, `AutonomousAgent`, `CognitiveEngine`) must be null-safe regarding their injected interfaces (`ISpatialPartition`, `IWorldRegistry`, `ISimulationClock`). Domain validators in `Assets/Scripts/Testing/` instantiate these services directly in isolation with `null` dependencies. Never dereference an injected dependency without a null guard or fallback (e.g., `_spatialPartition == null` returns unblocked/empty, `_clock == null` defaults to tick 0).
+- **Dual-Loop System**: Use `SimulationManager` for the fixed logical tick, and `AgentCognitionService` for asynchronous background cognition.
+- **Defensive Null-Safety for Test Isolation**: Core domain services (`SimulationManager`, `AutonomousAgent`, `AgentCognitionService`) must be null-safe regarding their injected interfaces (`ISpatialPartition`, `IWorldRegistry`, `ISimulationClock`). Domain validators in `Assets/Scripts/Testing/` instantiate these services directly in isolation with `null` dependencies. Never dereference an injected dependency without a null guard or fallback (e.g., `_spatialPartition == null` returns unblocked/empty, `_clock == null` defaults to tick 0).
 

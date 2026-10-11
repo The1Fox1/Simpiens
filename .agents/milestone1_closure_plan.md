@@ -358,6 +358,16 @@ Commits: `feat(cognition): agent personality` · `feat(planning): utility consid
 
 ## Phase 5 — Test-scope separation (review §2.8, §1A.2 #9, #10 remainder)
 
+> **Status: DONE 2026-10-11** (`0169a68`, `1166455`). PlayMode 40/40 (soak explicit).
+>
+> **Minor decisions / differences from the plan:**
+> - **`SwarmSpawner` was moved whole to `Core/Session`, keeping its name**, rather than split into `SessionBootstrap` plus demo scripting. The demo pens are part of the live session, and a rename would churn every scenario.
+> - **No child `ValidationLifetimeScope`.** Validators are plain PlayMode tests. The 21 that only ran at boot got wrappers, and all pass.
+> - **Harness services are injected through `BootstrapExtensions`** (production) + `TestHarnessInstaller` (`[RuntimeInitializeOnLoadMethod]`, test assembly), so production has zero references to `Simpiens.Testing`.
+> - **`Simpiens.Testing`** uses `defineConstraints: UNITY_INCLUDE_TESTS` and its own `csc.rsp` (C# 10 for ZLogger).
+> - **`IContextBuilder` kept** as the Epic 11 seam. The `CognitiveEngine`, `ICognitiveEngine`, `ContextValidator` and `AgentDecision` stub was deleted.
+> - **Not verified:** a player build.
+
 Order matters, because `AppBootstrapper` (production assembly) currently references validators, and the production domain lives in `Testing/SwarmSpawner`.
 
 1. **Extract the production domain.** Move the GOAP action graph and goal list out of `SwarmSpawner` into `Cognition/Planning/Domain/OutpostGoapDomain.cs` (a static builder, or a DI-registered `IGoapDomain`). Move session population and world seeding (stall, bounties, Commons nodes) into `Core/Session/SessionBootstrap.cs`. `SwarmSpawner` keeps only the demo-pen scripting and calls into these.
