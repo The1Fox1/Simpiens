@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: PAUSED. Status is owned by [ROADMAP.md](../ROADMAP.md). **Revision 2 of this plan was proposed on 2026-10-11 and is pending producer approval.** Once it is approved, update the roadmap first, then set this header to `ACTIVE`.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Current phase: Phase 1 ([implementation plan](../../.agents/epic_map_phase1_plan.md)).
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -16,6 +16,11 @@ This revision is built around that intent:
 1. **The live game boots into one connected outpost floor.** Crawlers physically work, sell, eat, socialize and sleep there.
 2. **The sector count is data, not design.** We start with a small layout and add sectors by editing data.
 3. **The pens move into a test-only session.** They no longer appear in the live game, and they keep earning their place by asserting outcomes in PlayMode.
+
+**Producer decisions (2026-10-11):**
+- Revision 2 approved.
+- Drifter arrival and departure is deferred (see Deferred).
+- A **"Dev Map" button** switches from the main map to the pen arena (§2.4).
 
 ---
 
@@ -105,7 +110,8 @@ The one new mechanic is a **rest anchor**. Today `RestAction` recovers energy wh
   - `OutpostSession` (production, `Core/Session`);
   - `CanaryPenSession` (the `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only).
 - `SwarmSpawner` becomes a generic "spawn this session" service. The pen layout, the 24 scripted agents and the seeded relationships and groups move into `CanaryPenSession`.
-- **The live game never spawns pens.** Pens run only in PlayMode tests. They can be loaded manually through a test-harness dev command if wanted.
+- **The live game boots into the main map, never the pens.** A **"Dev Map" toggle button** in the dashboard tears the session down and respawns it as the pen arena; pressing it again returns to the main map. Switching resets the simulation (same seed), so nothing carries across.
+- The button and the pen session are installed by the `Simpiens.Testing` harness through `BootstrapExtensions`. They are present in Editor play and test builds, and absent from shipping player builds. If the producer later wants the Dev Map in development player builds, the harness gets a `DEVELOPMENT_BUILD` install path; that is a small follow-up, not a redesign.
 - A new **`PenCanaryScenario`** asserts each pen's intended outcome within a bounded tick count (fear yield, respect deferral, contested-bush rivalry, altruistic sharing, hearth emergence, succession, schism). Today the pens are only visual demos with no PlayMode assertions; this is what turns them into real canaries.
 
 ---
@@ -128,6 +134,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 
 ### Phase 2: Session split; pens out of the live game
 - `ISessionDefinition`, `OutpostSession` and `CanaryPenSession`, with `SwarmSpawner` made generic (§2.4).
+- **Dev Map toggle:** a dashboard button that respawns the running game as the pen arena and back (§2.4). This needs re-initialisable world bounds, which Phase 1 provides.
 - Live boot is `OutpostSession` only. The default test harness session is also `OutpostSession`. Scenarios opt into the pens explicitly.
 - Add `PenCanaryScenario`. `DynamicChaosScenario` keeps running on the pens only if it truly needs them; otherwise it is retargeted to outpost coordinates taken from the definition.
 - Exit criteria:
@@ -168,7 +175,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 ## 4. Acceptance checklist (delivered work only; filled in as phases land)
 
 - [ ] Phase 1: world as data
-- [ ] Phase 2: session split, pens test-only, `PenCanaryScenario`
+- [ ] Phase 2: session split, pens test-only, Dev Map toggle, `PenCanaryScenario`
 - [ ] Phase 3: outpost populated, scenarios migrated, soak re-run
 - [ ] Phase 4: map rendering, shroud, camera, sector-aware UI
 - [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
@@ -198,3 +205,4 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 ## History
 - **2026-10-08: Revision 1 paused.** It was partially started (`OutpostMapBuilder` with 10 doors and `OutpostMapBuilderValidator`), then paused for the architecture review. It was never wired into the live session. Its 9-sector versus 12-sector target is superseded: the producer considers sector count unimportant (2026-10-11).
 - **2026-10-11: Revision 2 proposed** (this document). It reframes the epic around the live loop, map-as-data and the pens as a test-only canary session.
+- **2026-10-11: Revision 2 approved; epic `ACTIVE`.** Producer added the Dev Map toggle and deferred drifter churn.

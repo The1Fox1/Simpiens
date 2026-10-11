@@ -36,7 +36,7 @@ This allows core simulation logic, player interface layers, and verification har
 ```mermaid
 flowchart LR
     subgraph Independent: Spatial & World Topology
-        MAP["Epic MAP\nUtilitarian Outpost Map\n& Lifecycle Topology\n(PAUSED)"]
+        MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(ACTIVE)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -194,7 +194,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 
 | Milestone | Target Scope | Aligned Epics | Target Release State |
 | :--- | :--- | :--- | :--- |
-| **Milestone 1** | **The Outpost Loop (MVP)** | Track A: Epic 9<br>Track B: Epic UI-2<br>Track C: Epic Test-2 | Single-floor outpost with **12 interconnected sectors** (target design; Epic MAP currently laid out an initial 9 sectors as incomplete WIP before being paused). Player manages a roadside trading post: sets buy/sell prices for salvaged materials and provisions, posts public bounties (Scout, Gather), and builds dyadic trust with visiting crawlers. Integrates MemoryPack serialization for unmanaged inventory/contracts and zero-alloc Grid A* navigation (Grid A* delivered 2026-10-09, MemoryPack not delivered yet). |
+| **Milestone 1** | **The Outpost Loop (MVP)** | Track A: Epic 9<br>Track B: Epic UI-2<br>Track C: Epic Test-2 | Single connected outpost floor (Epic MAP; sector count is data, not a target: producer 2026-10-11). Player manages a roadside trading post: sets buy/sell prices for salvaged materials and provisions, posts public bounties (Scout, Gather), and builds dyadic trust with visiting crawlers. Integrates MemoryPack serialization for unmanaged inventory/contracts and zero-alloc Grid A* navigation (Grid A* delivered 2026-10-09, MemoryPack not delivered yet). |
 | **Milestone 2** | **Guild Roster & Expeditions** | Track A: Epic 10 (Part 1)<br>Track B: Epic UI-3 | High-affinity adventurers convert into the player's permanent Guild. Player organizes 4-man parties and issues expedition directives to high-hazard sectors. `Unity.Collections` + Burst broadphase for multi-agent party coordination. |
 | **Milestone 3** | **Facility Workshops & Crafting** | Track A: Epic 10 (Part 2)<br>Track B: Epic UI-4 | Fixed outpost expansion stations (Forge, Alchemy Still). Hired non-combat artisans refine raw salvage into weapons, armor, and potions. |
 | **Milestone 4** | **Gatekeeper Descent & Floor Relocation** | Track A: Epic 10 (Part 3) & Epic 11<br>Track B: Epic UI-5 | Boss-guarded descent gate breach, roguelike forward operating base relocation loop (via MemoryPack state snapshotting), and LLM-powered MCP tavern chronicles. |
@@ -211,7 +211,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
-- **Epic MAP is `PAUSED`**, so the live session still runs in the isolated play-pen test arena rather than the outpost map (initial 9 sectors built as WIP towards the 12-sector target).
+- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Until its Phase 3 lands, the live session still runs in the play-pen arena plus Outpost Commons.
 
 *Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
 
@@ -253,7 +253,7 @@ Implementation plan: [`.agents/milestone1_closure_plan.md`](../.agents/milestone
 5. ~~**Test-scope separation**~~ **Done 2026-10-11** (#9, review §2.8). PlayMode 40/40.
 6. ~~**Docs + promotion.**~~ **Docs reconciled 2026-10-11.** Epic 9 promotion is **not** done: it waits on the deferred §3.3 economy model (producer).
 
-Later Milestone 1 scope: resume Epic MAP (live outpost map), deliver `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
+Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), then the §3.3 economy decision on the real map, then `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
 
 ---
 
@@ -339,29 +339,21 @@ Later Milestone 1 scope: resume Epic MAP (live outpost map), deliver `MemoryPack
 
 *Status: Foundational spatial and environmental architectures that operate orthogonally to the specific feature tracks, providing the physical substrate for all agent lifecycles.*
 
-### Epic MAP: [The Utilitarian Outpost Map & Agent Lifecycle Topology](epics/epic-map.md)
-- **Status**: PAUSED (Independent Foundation) — partially started, then halted to prioritise the architecture review and documentation reconciliation
-- **Architectural Scope**: Environmental Architecture, Spatial Sector Partitioning, Simulation Topology
-- **Progress at pause (verified against the code, 2026-10-08)**:
-  - *Exists:* `OutpostMapBuilder` / `IOutpostMapBuilder` (wall and doorway geometry, 10 canonical doors) with `OutpostMapBuilderValidator`, registered in DI.
-  - *Not done:* `BuildMap()` is not invoked by the live session (`SwarmSpawner` still builds the isolated play-pen arena); `SimulationStarter` still initialises the 44×36 fallback spatial bounds; `FacilityZoneService` still defines the legacy play-pen zones (Phase 2); entity/resource population and lifecycle scenarios (Phases 3–4) not started.
-- **Outpost Sector Scope**: The target design specifies **12 interconnected sectors** for the full outpost. The 9-sector layout in this epic represents the initial core topology constructed as incomplete work-in-progress (WIP) before being paused; it does not supersede the 12-sector design target.
-- **Preceding Epic**: None (Replaces isolated test playpens from Epics 7 & 8)
-- **Downstream Beneficiaries**: Track A (Epic 9 Outpost Economy, Epic 10 Descent), Track B (Epic UI-1 Facility Dashboard, Epic UI-2 Merchant Terminal), Track C (PlayMode Scenarios)
-- **Goal**: Replace the isolated 10-pen test arena with a unified, utilitarian 9-sector outpost map featuring clean rectangular geometry and 2.5m open doorways. Accurately supports the complete agent survival and economic lifecycle:
-  1. **Sector 1 (Central Outpost Hub)**: Central market nexus housing the Merchant Trade Stall, public Bounty Board, and Common Hearth Campfire ($r=3.5\text{m}$).
-  2. **Sector 2 (Bunkhouse / Rest Quarters)**: Quiet residential retreat for low-stimuli sleep and energy recovery.
-  3. **Sector 3 (Foraging Orchard)**: Hydroponic berry grove with renewable food bushes for foraging and altruistic feeding.
-  4. **Sector 4 (Directive Yard)**: Open drill square with rally standard for group directives, training, and succession dominance contests.
-  5. **Sector 5 (Deep Quarry)**: Industrial mine with Iron Ore resource nodes for gather bounties and salvage liquidation.
-  6. **Sector 6 (Herbal Conservatory)**: Overgrown botanical sector with Medicinal Herb nodes for harvesting and scouting.
-  7. **Sector 7 (Forward Descent Gate)**: Fortified airlock threshold for dungeon descent preparation and expedition staging (Epic 10).
-  8. **Sectors 8 & 9 (West & East Transit Perimeters)**: Auxiliary bypass corridors connecting outer sectors and staging future artisan workshops (Milestone 3).
-- **Key Deliverables**:
-  - `OutpostMapBuilder`: Procedural, deterministic construction of grid-aligned walls, open doorways, and sector anchors.
-  - `FacilityZoneService` expansion: Registration of 9 continuous non-overlapping sectors with shroud tracking.
-  - Dual-ring connectivity: Cardinal hub doors and perimeter bypass corridors preventing pathfinding bottlenecks.
-  - Headless test alignment: `FacilityZoneServiceValidator` and `SwarmPlayModeTests` updated for the unified outpost topology.
+### Epic MAP: [The Outpost Floor & Living Simulation Loop](epics/epic-map.md)
+- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11). Current phase: **Phase 1, world as data** ([plan](../.agents/epic_map_phase1_plan.md)).
+- **Producer intent (2026-10-11):** the live game shows one connected outpost floor where crawlers physically work, sell, eat, socialize and sleep. **Sector count is unimportant** and is data, not design; the earlier 9- versus 12-sector target is superseded. The play pens leave the live map and become test-only canaries.
+- **Producer decisions (2026-10-11):**
+  - Revision 2 approved.
+  - Drifter arrival and departure through the Road Gate is **deferred** to the §3.3 economy decision; crawlers stay resident.
+  - A **"Dev Map" button** switches the running game from the main map to the legacy pen arena (Phase 2).
+- **Phases:**
+  1. World as data: `MapDefinition`, `WorldBuilder`, `ISectorRegistry`, world bounds independent of the camera.
+  2. Session split: pens become the Dev Map, plus the Dev Map toggle and `PenCanaryScenario`.
+  3. Populate the outpost floor: rest anchor, 12 crawlers, scenario migration, economy soak re-run.
+  4. Player view: rendering, shroud, camera, sector-aware UI.
+  5. DoD: `OutpostLifecycleScenario`.
+- **Superseded:** Revision 1's `OutpostMapBuilder` (never wired into the live session) is replaced in Phase 1. See the epic's review (§1).
+- **Deferred:** drifter churn (§3.3 / Epic 9), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8).
 
 ---
 
@@ -371,5 +363,5 @@ When working in parallel agent sessions:
 1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; next engine focus is a producer decision, see the proposed sequence in §3A). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
 3. **Testing Work**: Reference **Track C** (current: **Epic Test-2**, `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `PAUSED`; resume requires a producer decision). Code lives in `Simpiens.Environment`, `Simpiens.UI.Zones`, and spawner infrastructure.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `ACTIVE`, Revision 2). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

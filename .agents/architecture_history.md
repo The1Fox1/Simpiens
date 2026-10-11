@@ -375,3 +375,15 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Unused cognition stub deleted.
 - **Verification:** PlayMode 40/40. A player build was not run.
 
+
+## Architectural Decision: Epic MAP Revision 2, Map as Data and Pens as Canaries (2026-10-11)
+- **Problem:** Revision 1 drew rooms to house legacy mechanics. It built walls as about 300 physics GameObjects with random ids, kept geography in three hard-coded places, put sectors in the UI layer, and derived world bounds from the camera. It was never wired in.
+- **Decision (producer-approved):**
+  - One plain-data `MapDefinition` per layout drives the nav grid, sectors, POIs, spawns and scenarios.
+  - Walls are written into `StaticNavGrid` as a base layer and drawn by a view.
+  - Sectors move to a simulation-owned `ISectorRegistry`.
+  - World bounds come from the definition.
+  - The pen arena becomes a "Dev Map" session reachable by a toggle button from the test harness; the live game boots into the outpost floor.
+  - Sector count is data (producer: unimportant).
+  - Drifter churn is deferred to the §3.3 economy decision.
+- **Consequences:** `OutpostMapBuilder` is retired. Removing wall entities shifts seeded entity ids, so seeded outcomes are re-verified rather than compared to old runs.
