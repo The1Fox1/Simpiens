@@ -30,6 +30,15 @@ namespace Simpiens.Simulation.Economy
 
         bool ValidateConservation(uint currentTotalStallGold, uint currentTotalAgentGold, out int discrepancy);
 
+        /// <summary>Cumulative conserved transfers (purchases, sales, escrow) since the last Reset. Observation only.</summary>
+        EconomyFlowTotals Flows { get; }
+
+        /// <summary>Gold recorded under one faucet name since the last Reset (0 if never recorded).</summary>
+        uint GetFaucetTotal(string faucetName);
+
+        /// <summary>Gold recorded under one sink name since the last Reset (0 if never recorded).</summary>
+        uint GetSinkTotal(string sinkName);
+
         /// <summary>Clears all escrows and faucet/sink totals (session respawn).</summary>
         void Reset();
     }

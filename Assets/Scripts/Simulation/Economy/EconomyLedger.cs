@@ -15,6 +15,21 @@ namespace Simpiens.Simulation.Economy
     {
         private readonly Dictionary<ushort, uint> _bountyEscrows = new Dictionary<ushort, uint>(32);
 
+        // Observation counters (economy soak). Written only where gold already moves; never read by the simulation.
+        private readonly Dictionary<string, uint> _faucetTotals = new Dictionary<string, uint>(8);
+        private readonly Dictionary<string, uint> _sinkTotals = new Dictionary<string, uint>(8);
+        private uint _purchases, _purchaseGold, _sales, _saleGold;
+        private uint _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold;
+
+        public EconomyFlowTotals Flows => new EconomyFlowTotals(
+            _purchases, _purchaseGold, _sales, _saleGold, _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold);
+
+        public uint GetFaucetTotal(string faucetName) =>
+            faucetName != null && _faucetTotals.TryGetValue(faucetName, out var total) ? total : 0u;
+
+        public uint GetSinkTotal(string sinkName) =>
+            sinkName != null && _sinkTotals.TryGetValue(sinkName, out var total) ? total : 0u;
+
         public uint TotalEscrowGold { get; private set; }
         public uint TotalFaucetedGold { get; private set; }
         public uint TotalSinkedGold { get; private set; }
@@ -40,6 +55,7 @@ namespace Simpiens.Simulation.Economy
             stall = stall.WithTreasury(stall.TreasuryGold - amount);
             _bountyEscrows[bountyId] = amount;
             TotalEscrowGold += amount;
+            _escrowLockedGold += amount;
             SimLog.Economy.ZLogDebug($"Ledger: locked {amount}g escrow for bounty #{bountyId} from {SimLog.Agent(stallId)} (total escrow {TotalEscrowGold}g)");
             return true;
         }
@@ -50,6 +66,7 @@ namespace Simpiens.Simulation.Economy
             {
                 _bountyEscrows.Remove(bountyId);
                 TotalEscrowGold -= releasedAmount;
+                _escrowReleasedGold += releasedAmount;
                 SimLog.Economy.ZLogDebug($"Ledger: released {releasedAmount}g escrow of bounty #{bountyId} to {SimLog.Agent(claimantId)}");
 
                 if (agentRegistry != null && agentRegistry.TryGetAgent(claimantId, out var agent))
@@ -70,6 +87,7 @@ namespace Simpiens.Simulation.Economy
             {
                 _bountyEscrows.Remove(bountyId);
                 TotalEscrowGold -= refundedAmount;
+                _escrowRefundedGold += refundedAmount;
 
                 stall = stall.WithTreasury(stall.TreasuryGold + refundedAmount);
                 SimLog.Economy.ZLogDebug($"Ledger: refunded {refundedAmount}g escrow of bounty #{bountyId} to {SimLog.Agent(stallId)}");
@@ -94,6 +112,8 @@ namespace Simpiens.Simulation.Economy
 
             agent.Inventory.Gold -= (int)totalCost;
             stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
+            _purchases++;
+            _purchaseGold += totalCost;
             return true;
         }
 
@@ -111,18 +131,22 @@ namespace Simpiens.Simulation.Economy
 
             stall = stall.WithTreasury(stall.TreasuryGold - totalPayout);
             agent.Inventory?.AddGold((int)totalPayout);
+            _sales++;
+            _saleGold += totalPayout;
             return true;
         }
 
         public void RecordFaucet(uint amount, string faucetName)
         {
             TotalFaucetedGold += amount;
+            AddNamed(_faucetTotals, faucetName, amount);
             SimLog.Economy.ZLogDebug($"Ledger: faucet {faucetName} +{amount}g (total fauceted {TotalFaucetedGold}g)");
         }
 
         public void RecordSink(uint amount, string sinkName)
         {
             TotalSinkedGold += amount;
+            AddNamed(_sinkTotals, sinkName, amount);
             SimLog.Economy.ZLogDebug($"Ledger: sink {sinkName} -{amount}g (total sunk {TotalSinkedGold}g)");
         }
 
@@ -132,6 +156,17 @@ namespace Simpiens.Simulation.Economy
             TotalEscrowGold = 0;
             TotalFaucetedGold = 0;
             TotalSinkedGold = 0;
+            _faucetTotals.Clear();
+            _sinkTotals.Clear();
+            _purchases = _purchaseGold = _sales = _saleGold = 0;
+            _escrowLockedGold = _escrowReleasedGold = _escrowRefundedGold = 0;
+        }
+
+        private static void AddNamed(Dictionary<string, uint> totals, string name, uint amount)
+        {
+            string key = name ?? string.Empty;
+            totals.TryGetValue(key, out var current);
+            totals[key] = current + amount;
         }
 
         public bool ValidateConservation(uint currentTotalStallGold, uint currentTotalAgentGold, out int discrepancy)

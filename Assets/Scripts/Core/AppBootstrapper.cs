@@ -93,7 +93,8 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<Simpiens.Simulation.Economy.ISupplyService>(_ => new Simpiens.Simulation.Economy.SupplyService(Simpiens.Simulation.Economy.SupplyTuning.Default), Lifetime.Singleton);
+            builder.Register<Simpiens.Simulation.Economy.ISupplyService>(resolver => new Simpiens.Simulation.Economy.SupplyService(
+                Simpiens.Simulation.Economy.SupplyTuning.For(resolver.Resolve<SimulationSettings>())), Lifetime.Singleton);
             builder.Register(resolver => Simpiens.Cognition.Contracts.IntentHandlerRegistry.CreateDefault(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<ToolExecutionRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
@@ -132,6 +133,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<AgentStateValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SingleWriterMemoryValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Testing.Economy.SupplyLoopValidator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Testing.Economy.EconomyCountersValidator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.RegisterComponent(gameObject.AddComponent<VisualAnomalyRecorderView>());
 
             // 5. Entry Points (App Logic)

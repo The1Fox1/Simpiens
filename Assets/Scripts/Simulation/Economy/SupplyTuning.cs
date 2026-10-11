@@ -48,5 +48,11 @@ namespace Simpiens.Simulation.Economy
         // Placeholder export prices sit ~20% above the seeded stall buy prices (ore 20g, herb 25g)
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2,
             provisionalOreExportPrice: 24, provisionalHerbExportPrice: 30, provisionalExportReserve: 10);
+
+        /// <summary>Default tuning with the provisional export disabled (economy A/B soaks).</summary>
+        public static SupplyTuning DefaultWithoutExport => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2);
+
+        public static SupplyTuning For(SimulationSettings settings) =>
+            settings == null || settings.ProvisionalExportEnabled ? Default : DefaultWithoutExport;
     }
 }

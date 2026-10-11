@@ -42,6 +42,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Provisional salvage export visits (see SupplyTuning.ProvisionalOreExportPrice).</summary>
         public int ExportCount { get; private set; }
 
+        /// <summary>Caravan restocks skipped because the stall couldn't pay.</summary>
+        public int SkippedRestockCount { get; private set; }
+
         public SupplyService() : this(SupplyTuning.Default)
         {
         }
@@ -91,6 +94,7 @@ namespace Simpiens.Simulation.Economy
             RegrowthCount = 0;
             RestockCount = 0;
             ExportCount = 0;
+            SkippedRestockCount = 0;
         }
 
         private void TickRegrowth(uint currentTick, ISupplyHost host)
@@ -151,6 +155,7 @@ namespace Simpiens.Simulation.Economy
                 // The caravan only delivers what the stall can pay for in full
                 if (stall.TreasuryGold < cost)
                 {
+                    SkippedRestockCount++;
                     SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g < {cost}g for {units} rations (stock {stall.RationStock})");
                     continue;
                 }

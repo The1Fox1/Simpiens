@@ -40,6 +40,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Provisional salvage export visits since the last reset.</summary>
         int ExportCount { get; }
 
+        /// <summary>Caravan restocks skipped because the stall couldn't pay, since the last Reset.</summary>
+        int SkippedRestockCount { get; }
+
         /// <summary>Schedules a depleted node to regrow at readyTick.</summary>
         void RegisterDormant(GUID resourceId, uint readyTick);
 

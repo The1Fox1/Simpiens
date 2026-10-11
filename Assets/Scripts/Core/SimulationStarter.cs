@@ -37,7 +37,7 @@ namespace Simpiens.Core.Bootstrapping
 
         public void Start()
         {
-            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}");
+            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}, provisional export {(_settings == null || _settings.ProvisionalExportEnabled ? "on" : "off")}");
 
             // Initialize Spatial Partition
             Camera cam = Camera.main;

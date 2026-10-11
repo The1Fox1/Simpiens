@@ -159,6 +159,7 @@ namespace Simpiens.Testing.Economy
             Assert(rich.TreasuryGold == 420, $"Rich stall paid 40 × 2g = 80g (treasury {rich.TreasuryGold}).");
             Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 0 && poor.TreasuryGold == 10, "Unaffordable restock skipped.");
             Assert(supply.RestockCount == 1, $"RestockCount is {supply.RestockCount} instead of 1.");
+            Assert(supply.SkippedRestockCount == 1, $"SkippedRestockCount is {supply.SkippedRestockCount} instead of 1 (poor stall).");
             Assert(ledger.TotalSinkedGold == 80, $"SupplyCaravan sink recorded 80g (got {ledger.TotalSinkedGold}).");
             Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
