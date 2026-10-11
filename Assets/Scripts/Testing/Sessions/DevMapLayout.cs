@@ -2,24 +2,17 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
 using UnityEngine;
 
-namespace Simpiens.Core.Session.Layouts
+namespace Simpiens.Testing.Sessions
 {
     /// <summary>
-    /// The legacy live geography as data: the 10 demonstration play pens (Epics 7, Beta, 8) plus the Outpost Commons
-    /// supply-loop yard. Transcribed exactly from the former SwarmSpawner / FacilityZoneService code (Epic MAP Phase 1).
-    /// Becomes the "Dev Map" canary session in Phase 2.
+    /// The Dev Map: the 10 demonstration play pens (Epics 7, Beta, 8), test-only since Epic MAP Phase 2. Walls,
+    /// sectors and props are transcribed cell for cell from the former live pen arena (parity proven in Phase 1);
+    /// the Outpost Commons yard moved to the production OutpostCommonsLayout.
     /// </summary>
     public static class DevMapLayout
     {
-        // Sector ids (bounty targets and scenarios refer to these)
-        public const byte OutpostMarketSectorId = 11;
-        public const byte OreRidgeSectorId = 12;
-        public const byte HerbHollowSectorId = 13;
-
         // Regrowth durations in logical ticks
         public const uint FoodRegrowTicks = 450;
-        public const uint HerbRegrowTicks = 600;
-        public const uint OreRegrowTicks = 900;
 
         // Entity keys the pen scripts look up
         public const string Pen1ContestedBush = "pen1.contested";
@@ -31,9 +24,6 @@ namespace Simpiens.Core.Session.Layouts
         public const string Pen8Campfire = "pen8.campfire";
         public const string Pen9Bush = "pen9.bush";
         public const string Pen10Bush = "pen10.bush";
-        public const string OutpostStall = "outpost.stall";
-
-        public static readonly Vector2 OutpostStallPosition = new Vector2(0f, 9f);
 
         // Pen grid: dividers between and around the 5 pens of each row
         private static readonly float[] DividerX = { -10f, -6f, -2f, 2f, 6f, 10f };
@@ -45,10 +35,10 @@ namespace Simpiens.Core.Session.Layouts
 
         private static MapDefinition Build()
         {
-            // The former 44x36 world with the ±20 play-area border: walkable x in [-20, 20], y in [-18, 18].
-            // The camera frame keeps the former orthographic size 14.5 at the origin.
-            var b = new MapDefinitionBuilder("DevMap", new Rect(-20f, -18f, 40f, 36f))
-                .CameraFrame(new Rect(-12f, -14.5f, 24f, 29f));
+            // The two pen rows (walls span x -10.55..10.55, y -13.05..4.05) plus a margin. The pens are closed, so the
+            // bounds only frame the camera and size the partition.
+            var arena = new Rect(-12f, -14.5f, 24f, 20f);
+            var b = new MapDefinitionBuilder("DevMap", arena).CameraFrame(arena);
 
             // --- Row 1 (Pens 1-5: Epics 7 & Beta), walls on y = ±3.5 ---
             b.WallRun(new Vector2(-10f, 3.5f), new Vector2(10f, 3.5f));
@@ -87,12 +77,6 @@ namespace Simpiens.Core.Session.Layouts
                 new Rect(2f, -12.5f, 4f, 7f), new Vector2(4f, -9f), 2.0f, startsExplored: false);
             b.Sector(10, "Schism Ward", "Crisis of legitimacy, factional fracture, and splinter bands.",
                 new Rect(6f, -12.5f, 4f, 7f), new Vector2(8f, -9f), 2.0f, startsExplored: false);
-            b.Sector(OutpostMarketSectorId, "Outpost Market", "Trade stall, bounty board, and the commons where crawlers gather between runs.",
-                new Rect(-3f, 5f, 6f, 10f), new Vector2(0f, 9f), 3.0f);
-            b.Sector(OreRidgeSectorId, "Ore Ridge", "Exposed iron veins along the western ridge; regrow slowly after mining.",
-                new Rect(-12f, 5f, 7f, 10f), new Vector2(-8.5f, 10f), 2.5f, startsExplored: false);
-            b.Sector(HerbHollowSectorId, "Herb Hollow", "Sheltered eastern hollow where medicinal herbs grow back between harvests.",
-                new Rect(5f, 5f, 7f, 10f), new Vector2(8.5f, 10f), 2.5f, startsExplored: false);
 
             // --- Pen demonstration props ---
             b.Node(Pen1ContestedBush, new Vector2(-8f, 0f), ItemType.Ration, 1, FoodRegrowTicks);
@@ -107,17 +91,6 @@ namespace Simpiens.Core.Session.Layouts
             b.Poi(Pen5Campfire, PoiKind.Hearth, new Vector2(8f, 0f), 3.0f);
             b.Poi(Pen8Campfire, PoiKind.Hearth, new Vector2(0f, -9.0f), 3.0f);
 
-            // --- Outpost Commons (open yard north of the pens) ---
-            b.Node("ore.1", new Vector2(-9f, 12f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("ore.2", new Vector2(-8f, 9.5f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("ore.3", new Vector2(-10f, 8f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("herb.1", new Vector2(9f, 12f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("herb.2", new Vector2(8f, 9.5f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("herb.3", new Vector2(10f, 8f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("food.1", new Vector2(-2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Node("food.2", new Vector2(2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Poi(OutpostStall, PoiKind.Stall, OutpostStallPosition, 3.0f);
-
             // --- Labels ---
             b.Label("1. Fear Yield", new Vector2(-8.0f, 4.2f), new Color(1f, 0.75f, 0.2f));
             b.Label("2. Respect Defer", new Vector2(-4.0f, 4.2f), new Color(0.35f, 0.8f, 1f));
@@ -129,9 +102,6 @@ namespace Simpiens.Core.Session.Layouts
             b.Label("8. Hearth Emergence", new Vector2(0.0f, -4.8f), new Color(1f, 0.6f, 0.2f));
             b.Label("9. Dominance Trial", new Vector2(4.0f, -4.8f), new Color(0.8f, 0.4f, 0.9f));
             b.Label("10. Factional Schism", new Vector2(8.0f, -4.8f), new Color(0.2f, 0.85f, 0.85f));
-            b.Label("Ore Ridge", new Vector2(-8.5f, 14.5f), new Color(0.95f, 0.55f, 0.2f));
-            b.Label("Outpost Market", new Vector2(0f, 14.5f), new Color(0.95f, 0.85f, 0.4f));
-            b.Label("Herb Hollow", new Vector2(8.5f, 14.5f), new Color(0.45f, 0.9f, 0.8f));
 
             return b.Build();
         }

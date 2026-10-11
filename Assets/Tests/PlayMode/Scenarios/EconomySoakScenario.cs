@@ -16,7 +16,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// <summary>
     /// Milestone 1 closure, Phase 3: economy OBSERVATION soak. Runs the real session (SwarmSpawner.Respawn) for
     /// 30 sim-minutes at 10x with no injection and no player commands. Every sim-minute it records stall, ledger,
-    /// transfer, crawler, pen and supply figures to a CSV. It asserts integrity only (ledger conservation,
+    /// transfer, crawler and supply figures to a CSV. It asserts integrity only (ledger conservation,
     /// horizon reached, CSV written), never economic values: economy design is deferred by the producer.
     /// Seed and provisional-export switch come from SimulationSettings (SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
     /// </summary>
@@ -28,6 +28,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const int MaxRows = (int)(HorizonTicks / SampleIntervalTicks) + 2;
 
         public string Name => "EconomySoakScenario";
+        public string SessionId => OutpostSession.SessionId;
         public float DurationSeconds => 0f; // SetupAsync observes until the horizon
         public float TimeMultiplier => 10f;
 
@@ -41,8 +42,6 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             public EconomyFlowTotals Flows;
             public int CrawlerGoldTotal, CrawlerGoldMin, CrawlerGoldMax, CrawlersHungry, CrawlersStarving;
             public float CrawlerHungerMean;
-            public int PenGoldTotal;
-            public float PenHungerMean;
             public int Restocks, SkippedRestocks, Exports, Regrowths, DormantNodes, ActiveBounties;
             public bool ConservationOk;
             public int Discrepancy;
@@ -168,9 +167,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 row.HerbBuyPrice = stall.HerbBuyPrice;
             }
 
-            // Crawlers (index >= ScriptedPenAgentCount) can reach the stall; walled pen agents would only dilute them
-            int crawlers = 0, pens = 0;
-            float crawlerHunger = 0f, penHunger = 0f;
+            // Every agent of the outpost session is a free crawler
+            int crawlers = 0;
+            float crawlerHunger = 0f;
             var agents = spawner.Agents;
             for (int i = 0; i < agents.Count; i++)
             {
@@ -179,26 +178,16 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 int gold = state.Inventory != null ? state.Inventory.Gold : 0;
                 float hunger = state.Needs.Hunger;
 
-                if (i >= SwarmSpawner.ScriptedPenAgentCount)
-                {
-                    crawlers++;
-                    row.CrawlerGoldTotal += gold;
-                    if (gold < row.CrawlerGoldMin) row.CrawlerGoldMin = gold;
-                    if (gold > row.CrawlerGoldMax) row.CrawlerGoldMax = gold;
-                    crawlerHunger += hunger;
-                    if (hunger >= 60f) row.CrawlersHungry++;
-                    if (hunger >= 85f) row.CrawlersStarving++;
-                }
-                else
-                {
-                    pens++;
-                    row.PenGoldTotal += gold;
-                    penHunger += hunger;
-                }
+                crawlers++;
+                row.CrawlerGoldTotal += gold;
+                if (gold < row.CrawlerGoldMin) row.CrawlerGoldMin = gold;
+                if (gold > row.CrawlerGoldMax) row.CrawlerGoldMax = gold;
+                crawlerHunger += hunger;
+                if (hunger >= 60f) row.CrawlersHungry++;
+                if (hunger >= 85f) row.CrawlersStarving++;
             }
             if (crawlers == 0) { row.CrawlerGoldMin = 0; row.CrawlerGoldMax = 0; }
             row.CrawlerHungerMean = crawlers > 0 ? crawlerHunger / crawlers : 0f;
-            row.PenHungerMean = pens > 0 ? penHunger / pens : 0f;
 
             _rows[_rowCount++] = row;
         }
@@ -209,7 +198,6 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             "fauceted_total,sunk_total,escrow,faucet_initial_seed,faucet_provisional_export,sink_supply_caravan," +
             "purchases,purchase_gold,sales,sale_gold,escrow_locked,escrow_released,escrow_refunded," +
             "crawler_gold_total,crawler_gold_min,crawler_gold_max,crawler_hunger_mean,crawlers_hungry,crawlers_starving," +
-            "pen_gold_total,pen_hunger_mean," +
             "restocks,skipped_restocks,exports,regrowths,dormant_nodes,active_bounties," +
             "conservation_ok,discrepancy";
 
@@ -232,7 +220,6 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                   .Append(f.EscrowLockedGold).Append(',').Append(f.EscrowReleasedGold).Append(',').Append(f.EscrowRefundedGold).Append(',')
                   .Append(r.CrawlerGoldTotal).Append(',').Append(r.CrawlerGoldMin).Append(',').Append(r.CrawlerGoldMax).Append(',')
                   .Append(r.CrawlerHungerMean.ToString("F1", inv)).Append(',').Append(r.CrawlersHungry).Append(',').Append(r.CrawlersStarving).Append(',')
-                  .Append(r.PenGoldTotal).Append(',').Append(r.PenHungerMean.ToString("F1", inv)).Append(',')
                   .Append(r.Restocks).Append(',').Append(r.SkippedRestocks).Append(',').Append(r.Exports).Append(',')
                   .Append(r.Regrowths).Append(',').Append(r.DormantNodes).Append(',').Append(r.ActiveBounties).Append(',')
                   .Append(r.ConservationOk ? 1 : 0).Append(',').Append(r.Discrepancy)

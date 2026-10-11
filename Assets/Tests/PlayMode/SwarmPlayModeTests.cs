@@ -248,13 +248,6 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
-        public void Scenario_DevMapParity_AllDomainValidationTestsPass()
-        {
-            var validator = new Simpiens.Testing.World.DevMapParityValidator();
-            validator.RunAllValidationTests();
-        }
-
-        [Test]
         public void Scenario_WorldMap_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.World.WorldMapValidator();
@@ -336,10 +329,12 @@ namespace Simpiens.Tests.PlayMode
             var container = AppBootstrapper.Instance.Container;
             Assert.IsNotNull(container, "VContainer resolver failed to build.");
 
-            // 3. Cleanly reset simulation world and respawn fresh entities for this scenario
+            // 3. Cleanly reset simulation world and respawn the scenario's session (never whatever was loaded last)
             var spawner = container.Resolve<SwarmSpawner>();
             Assert.IsNotNull(spawner, "SwarmSpawner service is not registered.");
-            spawner.Respawn();
+            var session = spawner.Find(scenario.SessionId);
+            Assert.IsNotNull(session, $"Session '{scenario.SessionId}' is not registered.");
+            spawner.Respawn(session);
 
             // Allow 1 frame for physics and spatial grid to settle
             yield return null;

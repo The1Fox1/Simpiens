@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using Simpiens.Simulation;
 using Simpiens.Testing.Diagnostics;
+using Simpiens.Testing.Sessions;
 using UnityEngine;
 using VContainer;
 
@@ -14,6 +15,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     public class ResourceContentionScenario : ISimulationScenario
     {
         public string Name => "ResourceContentionScenario";
+        public string SessionId => CanaryPenSession.SessionId; // 24 pen agents crowd the narrow pens
         public float DurationSeconds => 4.0f;
         public float TimeMultiplier => 2.5f;
 

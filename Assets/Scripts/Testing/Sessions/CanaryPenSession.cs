@@ -1,27 +1,21 @@
-using Simpiens.Core.Session.Layouts;
-using Simpiens.Simulation.Economy;
+using Simpiens.Core.Session;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using UnityEngine;
 
-namespace Simpiens.Core.Session
+namespace Simpiens.Testing.Sessions
 {
     /// <summary>
-    /// TEMPORARY (Epic MAP Phase 2, step 2; deleted in step 4). The pre-Phase-2 live session moved verbatim out of
-    /// <see cref="SwarmSpawner"/>: the 10 scripted demonstration pens plus 6 free crawlers, the stall and the seeded
-    /// bounties in the Outpost Commons, all on <see cref="DevMapLayout"/>. Spawn order (and so every entity id) is
-    /// unchanged. Step 4 splits it into the live outpost session and the test-only pen canary session.
+    /// The Dev Map session (test-only since Epic MAP Phase 2): the 10 scripted demonstration pens, each seeded with
+    /// the relationships, hunger, memories and groups its demonstration needs. No stall, bounties or crawlers.
+    /// Installed by <see cref="TestHarnessInstaller"/>, reachable through the session switch and asserted by
+    /// PenCanaryScenario. Never part of a player build.
     /// </summary>
-    public sealed class LegacySession : ISessionDefinition
+    public sealed class CanaryPenSession : ISessionDefinition
     {
-        public const string SessionId = "legacy";
+        public const string SessionId = "devmap";
 
-        // 24 scripted pen agents + 6 free "crawlers" in the Outpost Commons (no seeded relationships or memory)
         public const int ScriptedPenAgentCount = 24;
-        public const int CrawlerCount = 6;
-
-        public const ushort SeedGatherBountyId = 1;
-        public const ushort SeedScoutBountyId = 2;
 
         // Predetermined positions for the 10 demonstration scenarios within their respective play pens
         private static readonly Vector2[] PenAgentPositions =
@@ -53,7 +47,7 @@ namespace Simpiens.Core.Session
         };
 
         public string Id => SessionId;
-        public string DisplayName => "Legacy Arena";
+        public string DisplayName => "Dev Map";
         public MapDefinition Map => DevMapLayout.Definition;
 
         public void Populate(SessionBuilder session)
@@ -75,12 +69,6 @@ namespace Simpiens.Core.Session
                 // were tuned with (producer decision 2026-10-09)
                 session.SpawnAgent(PenAgentPositions[i], AgentLabel(i), seededPersonality: false);
             }
-            for (int c = 0; c < CrawlerCount; c++)
-            {
-                // Free crawlers: spread across the north edge of the Outpost Commons, with seeded personalities (review §3.2)
-                session.SpawnAgent(new Vector2(-3f + (c % 4) * 2f, 13f + (c / 4) * 1.5f), $"Crawler{c}", seededPersonality: true);
-            }
-
             var a = session.Agents;
 
             // Seed relational dyads for visual demonstration
@@ -261,47 +249,13 @@ namespace Simpiens.Core.Session
                 a[22].Memory.RecordInteraction(a[23].AgentId, deltaWarmth: 80, deltaTrust: 80, deltaFear: 0, deltaRespect: 60, 0);
                 a[23].Memory.RecordInteraction(a[22].AgentId, deltaWarmth: 80, deltaTrust: 80, deltaFear: 0, deltaRespect: 60, 0);
             }
-
-            // Outpost Commons trade stall and initial bounties (Epic UI-2 / §3.1 supply loop)
-            var stallId = session.OpenStall(DevMapLayout.OutpostStall, new StallTerms(
-                rationSellPrice: 15, rationStock: 50,
-                oreBuyPrice: 20, oreStock: 10,
-                herbBuyPrice: 25, herbStock: 10,
-                treasuryGold: 250));
-
-            // Both seeded bounties go through the same escrow path as player-posted ones.
-            // TargetLocation is left default so the simulation derives it from the target sector.
-            session.SeedBounty(new BountyContract(
-                bountyId: SeedGatherBountyId,
-                type: BountyType.GatherResource,
-                targetSectorId: DevMapLayout.OreRidgeSectorId,
-                targetItemType: ItemType.IronOre,
-                targetQuantity: 1,
-                rewardGold: 25,
-                issuedTick: 0,
-                expirationTick: 6000,
-                creatorStallId: stallId,
-                status: BountyStatus.Open));
-
-            session.SeedBounty(new BountyContract(
-                bountyId: SeedScoutBountyId,
-                type: BountyType.ScoutSector,
-                targetSectorId: DevMapLayout.HerbHollowSectorId,
-                targetItemType: ItemType.None,
-                targetQuantity: 1,
-                rewardGold: 15,
-                issuedTick: 0,
-                expirationTick: 6000,
-                creatorStallId: stallId,
-                status: BountyStatus.Open));
         }
 
         /// <summary>
-        /// Readable log label: scripted pen agents are "PenN.AgentI", free agents are "CrawlerC".
+        /// Readable log label: "PenN.AgentI".
         /// </summary>
         public static string AgentLabel(int index)
         {
-            if (index >= ScriptedPenAgentCount) return $"Crawler{index - ScriptedPenAgentCount}";
             int pen = index < 10 ? index / 2 + 1
                 : index < 14 ? (index - 10) / 2 + 6
                 : index < 17 ? 8

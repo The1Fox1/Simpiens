@@ -1,6 +1,8 @@
 using Simpiens.Core.Bootstrapping;
+using Simpiens.Core.Session;
 using Simpiens.Testing.Diagnostics;
 using Simpiens.Testing.Environment;
+using Simpiens.Testing.Sessions;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -21,6 +23,9 @@ namespace Simpiens.Testing
 
         private static void Install(IContainerBuilder builder, GameObject scopeObject)
         {
+            // The Dev Map: the pen canaries, reachable through the session switch (never the boot session)
+            builder.Register<CanaryPenSession>(Lifetime.Singleton).As<ISessionDefinition>();
+
             builder.Register<EdgeCaseInjector>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<VisualAnomalyDetector>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.RegisterComponent(scopeObject.AddComponent<VisualAnomalyRecorderView>());

@@ -5,10 +5,10 @@ using NUnit.Framework;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Groups;
 using Simpiens.Core.Session;
-using Simpiens.Core.Session.Layouts;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Testing.Diagnostics;
+using Simpiens.Testing.Sessions;
 using UnityEngine;
 using VContainer;
 
@@ -34,6 +34,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const float WallClockTimeoutSeconds = 60f;
 
         public string Name => "PenCanaryScenario";
+        public string SessionId => CanaryPenSession.SessionId;
         public float DurationSeconds => 0f; // SetupAsync observes until the deadline
         public float TimeMultiplier => 10f;
 
@@ -87,7 +88,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Assert.IsNotNull(spawner, "SwarmSpawner not registered.");
 
             _agents = spawner.Agents;
-            Assert.GreaterOrEqual(_agents.Count, 24, "The pen session must spawn the 24 scripted pen agents.");
+            Assert.AreEqual(CanaryPenSession.ScriptedPenAgentCount, _agents.Count, "The pen session must spawn exactly the 24 scripted pen agents.");
             for (int i = 0; i < _outcomeTick.Length; i++) _outcomeTick[i] = -1;
 
             var simManager = sim as SimulationManager;

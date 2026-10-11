@@ -94,7 +94,7 @@ namespace Simpiens.Core.Bootstrapping
 
             // 4. Sessions and the spawner that builds them. Optional assemblies may register further sessions
             // (the test harness adds the Dev Map); the default is chosen by id, never by registration order.
-            builder.Register<LegacySession>(Lifetime.Singleton).As<ISessionDefinition>();
+            builder.Register<OutpostSession>(Lifetime.Singleton).As<ISessionDefinition>();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.

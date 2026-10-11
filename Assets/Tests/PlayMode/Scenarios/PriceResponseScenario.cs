@@ -28,6 +28,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         public const string ResultsPath = "Logs/price-response.csv";
 
         public string Name => "PriceResponseScenario";
+        public string SessionId => OutpostSession.SessionId;
         public float DurationSeconds => 0f;
         public float TimeMultiplier => 10f;
 
@@ -51,7 +52,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (clock is SimulationClock simClock) simClock.SetTimeMultiplier(TimeMultiplier);
 
             var agents = spawner.Agents;
-            int crawlerCount = agents.Count - SwarmSpawner.ScriptedPenAgentCount;
+            int crawlerCount = agents.Count; // every outpost agent is a free crawler
             Assert.Greater(crawlerCount, 1, "Need several crawlers to observe a demand curve.");
             var lastGold = new int[crawlerCount];
             var boughtThisStep = new bool[crawlerCount];
@@ -101,7 +102,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
         private static int CrawlerGold(System.Collections.Generic.IReadOnlyList<Simpiens.Cognition.AutonomousAgent> agents, int crawler)
         {
-            var agent = agents[SwarmSpawner.ScriptedPenAgentCount + crawler];
+            var agent = agents[crawler];
             return agent != null && agent.State?.Inventory != null ? agent.State.Inventory.Gold : 0;
         }
 

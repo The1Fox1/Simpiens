@@ -27,6 +27,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const float WallClockTimeoutSeconds = 240f;
 
         public string Name => "OutpostSupplyLoopScenario";
+        public string SessionId => OutpostSession.SessionId;
         public float DurationSeconds => 0f; // SetupAsync observes until every deadline has passed
         public float TimeMultiplier => 10f;
 
@@ -98,7 +99,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             // Gather bounty fulfilled, and the claimant's trust toward the player rose
             int deliveredSalvage = 0;
-            if (sim.TryGetBounty(SwarmSpawner.SeedGatherBountyId, out var gather) && gather.Status == BountyStatus.Completed)
+            if (sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out var gather) && gather.Status == BountyStatus.Completed)
             {
                 deliveredSalvage = gather.TargetQuantity;
                 if (_gatherTick < 0)
@@ -118,10 +119,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
 
             // Scout bounty fulfilled and its sector explored
-            if (_scoutTick < 0 && sim.TryGetBounty(SwarmSpawner.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
+            if (_scoutTick < 0 && sim.TryGetBounty(OutpostSession.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
             {
                 _scoutTick = rel;
-                _scoutZoneExplored = zones.IsSectorExplored(Simpiens.Core.Session.Layouts.DevMapLayout.HerbHollowSectorId);
+                _scoutZoneExplored = zones.IsSectorExplored(Simpiens.Core.Session.Layouts.OutpostCommonsLayout.HerbHollowSectorId);
             }
 
             // Supply faucets

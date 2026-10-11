@@ -9,7 +9,7 @@ namespace Simpiens.Simulation.World
 {
     /// <summary>
     /// Entity ids the session assigned to a loaded map's keyed entries (resource nodes, POIs), so session scripts
-    /// can refer to "pen1.contested" instead of capturing ids at spawn time.
+    /// can refer to "outpost.stall" instead of capturing ids at spawn time.
     /// </summary>
     public sealed class LoadedWorld
     {

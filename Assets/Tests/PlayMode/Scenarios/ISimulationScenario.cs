@@ -10,6 +10,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     public interface ISimulationScenario
     {
         string Name { get; }
+
+        /// <summary>Id of the session the harness respawns before the scenario (OutpostSession, CanaryPenSession).</summary>
+        string SessionId { get; }
         float DurationSeconds { get; }
         float TimeMultiplier { get; }
 

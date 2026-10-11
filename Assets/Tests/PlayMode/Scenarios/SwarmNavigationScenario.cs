@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using Simpiens.Simulation;
 using Simpiens.Testing.Diagnostics;
+using Simpiens.Testing.Sessions;
 using Simpiens.Testing.Environment;
 using UnityEngine;
 using VContainer;
@@ -15,6 +16,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     public class SwarmNavigationScenario : ISimulationScenario
     {
         public string Name => "SwarmNavigationScenario";
+        public string SessionId => CanaryPenSession.SessionId; // 24 pen agents crowd the narrow pens
         public float DurationSeconds => 4.0f;
         public float TimeMultiplier => 2.5f;
 

@@ -7,7 +7,6 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using Simpiens.Core.Session.Layouts;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -31,12 +30,6 @@ namespace Simpiens.Core.Session
         private readonly Simpiens.Cognition.Planning.IGoapPlanner _planner;
         private readonly Simpiens.Cognition.Planning.ActionGraph _actionGraph;
         private readonly List<Simpiens.Cognition.Planning.GoapGoal> _goals;
-
-        // TEMPORARY forwarders to the legacy session (Epic MAP Phase 2 step 2; removed with it in step 4)
-        public const int ScriptedPenAgentCount = LegacySession.ScriptedPenAgentCount;
-        public static Vector2 OutpostStallPosition => DevMapLayout.OutpostStallPosition;
-        public const ushort SeedGatherBountyId = LegacySession.SeedGatherBountyId;
-        public const ushort SeedScoutBountyId = LegacySession.SeedScoutBountyId;
 
         private readonly IEntityIdAllocator _idAllocator;
         private readonly SimulationSettings _settings;
@@ -86,8 +79,10 @@ namespace Simpiens.Core.Session
                     if (sessions[i] != null) _sessions.Add(sessions[i]);
                 }
             }
-            if (_sessions.Count == 0) _sessions.Add(new LegacySession());
-            _defaultSession = Find(LegacySession.SessionId) ?? _sessions[0];
+            if (_sessions.Count == 0) _sessions.Add(new OutpostSession());
+
+            // The live game always boots the outpost; test sessions are only ever selected explicitly
+            _defaultSession = Find(OutpostSession.SessionId) ?? _sessions[0];
 
             if (_clock != null)
             {

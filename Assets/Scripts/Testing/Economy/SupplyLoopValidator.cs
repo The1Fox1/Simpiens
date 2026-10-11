@@ -208,10 +208,10 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var zones = Simpiens.Testing.World.TestWorlds.DevMapSectors();
+            var zones = Simpiens.Testing.World.TestWorlds.OutpostSectors();
             var sim = new SimulationManager(registry, null, sectors: zones, economyLedger: ledger);
 
-            int sector = Simpiens.Core.Session.Layouts.DevMapLayout.HerbHollowSectorId;
+            int sector = Simpiens.Core.Session.Layouts.OutpostCommonsLayout.HerbHollowSectorId;
             Assert(!zones.IsExplored(sector), "Herb Hollow starts unexplored.");
 
             var stallId = NextGuid();

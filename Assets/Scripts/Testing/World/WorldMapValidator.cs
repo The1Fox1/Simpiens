@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Core.Session.Layouts;
+using Simpiens.Testing.Sessions;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
@@ -13,6 +14,9 @@ namespace Simpiens.Testing.World
     /// </summary>
     public class WorldMapValidator
     {
+        // Dev Map pen sector 6 starts shrouded
+        private const byte DirectiveSectorId = 6;
+
         public void RunAllValidationTests()
         {
             Debug.Log("[WorldMapValidator] Beginning world map validation...");
@@ -68,7 +72,7 @@ namespace Simpiens.Testing.World
             Assert(grid.PlayableBounds == dev.PlayableBounds, "Static grid carries the map's playable bounds.");
             Assert(!IsWalkable(grid, new Vector2(0f, 3.5f)), "Pen wall at (0, 3.5) must be blocked after load.");
             Assert(ReferenceEquals(worldMap.Current, dev) && worldMap.Version == 1, "Current map and version after the first load.");
-            Assert(ReferenceEquals(sectors.Map, dev) && !sectors.IsExplored(DevMapLayout.HerbHollowSectorId), "Sectors loaded with default exploration.");
+            Assert(ReferenceEquals(sectors.Map, dev) && !sectors.IsExplored(DirectiveSectorId), "Sectors loaded with default exploration.");
 
             loaded.RegisterEntity("probe", new GUID(1u, 2u, 3u, 4u));
             Assert(loaded.TryGetEntityId("probe", out _) && !loaded.TryGetEntityId("missing", out _), "LoadedWorld key lookup.");
@@ -78,14 +82,14 @@ namespace Simpiens.Testing.World
                 .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
                 .Sector(1, "Only", "", new Rect(-12f, -12f, 24f, 24f), startsExplored: false)
                 .Build();
-            sectors.SetExplored(DevMapLayout.HerbHollowSectorId, true);
+            sectors.SetExplored(DirectiveSectorId, true);
             worldMap.Load(other);
             grid = partition.StaticGrid;
             var otherCells = other.PartitionCells(1f);
             Assert(grid.Width == otherCells.x && grid.Height == otherCells.y, "Partition resized for the second map.");
             Assert(IsWalkable(grid, new Vector2(0f, 3.5f)) && !IsWalkable(grid, new Vector2(3f, 0f)), "Second map's walls replace the first map's.");
             Assert(worldMap.Version == 2 && sectors.GetSectorAt(Vector2.zero).Id == 1, "Second load bumps the version and swaps the sector table.");
-            Assert(!sectors.IsExplored(DevMapLayout.HerbHollowSectorId), "Loading a map resets exploration.");
+            Assert(!sectors.IsExplored(DirectiveSectorId), "Loading a map resets exploration.");
 
             Debug.Log("[PASS] Test 2: WorldMap.Load sizes the partition, writes walls, loads sectors and replaces the previous map.");
         }
@@ -95,18 +99,18 @@ namespace Simpiens.Testing.World
             var sectors = new SectorRegistry();
             Assert(sectors.GetSectorAt(Vector2.zero).Id == 0 && sectors.IsExplored(0), "Before a load, everything is the explored fallback.");
 
-            sectors.Load(DevMapLayout.Definition);
-            Assert(sectors.GetSectorAt(new Vector2(-8f, 0f)).Id == 1, "Pen 1 centre is sector 1.");
-            Assert(sectors.GetSectorAt(new Vector2(0f, 9f)).Id == DevMapLayout.OutpostMarketSectorId, "Stall is in the Outpost Market.");
-            Assert(sectors.GetSectorAt(new Vector2(18f, 17f)).Id == 0, "Open yard corner falls back to sector 0.");
+            sectors.Load(OutpostCommonsLayout.Definition);
+            Assert(sectors.GetSectorAt(new Vector2(-8.5f, 10f)).Id == OutpostCommonsLayout.OreRidgeSectorId, "Ore Ridge anchor is in Ore Ridge.");
+            Assert(sectors.GetSectorAt(OutpostCommonsLayout.OutpostStallPosition).Id == OutpostCommonsLayout.OutpostMarketSectorId, "Stall is in the Outpost Market.");
+            Assert(sectors.GetSectorAt(new Vector2(13f, 16f)).Id == 0, "Open yard corner falls back to sector 0.");
             Assert(sectors.TryGetSector(0, out var fallback) && fallback.Name == "Transit / Open Yard", "Id 0 resolves to the fallback.");
             Assert(!sectors.TryGetSector(99, out _), "Unknown id is not found.");
 
-            Assert(sectors.IsExplored(DevMapLayout.OutpostMarketSectorId) && !sectors.IsExplored(DevMapLayout.OreRidgeSectorId), "Default exploration from the definition.");
-            sectors.SetExplored(DevMapLayout.OreRidgeSectorId, true);
-            Assert(sectors.IsExplored(DevMapLayout.OreRidgeSectorId), "SetExplored marks a sector.");
+            Assert(sectors.IsExplored(OutpostCommonsLayout.OutpostMarketSectorId) && !sectors.IsExplored(OutpostCommonsLayout.OreRidgeSectorId), "Default exploration from the definition.");
+            sectors.SetExplored(OutpostCommonsLayout.OreRidgeSectorId, true);
+            Assert(sectors.IsExplored(OutpostCommonsLayout.OreRidgeSectorId), "SetExplored marks a sector.");
             sectors.SetAllExplored(false);
-            Assert(!sectors.IsExplored(0) && !sectors.IsExplored(DevMapLayout.OutpostMarketSectorId), "SetAllExplored(false) clears everything.");
+            Assert(!sectors.IsExplored(0) && !sectors.IsExplored(OutpostCommonsLayout.OutpostMarketSectorId), "SetAllExplored(false) clears everything.");
             sectors.SetAllExplored(true);
             for (int i = 0; i < sectors.All.Count; i++)
             {

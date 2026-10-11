@@ -126,7 +126,7 @@ namespace Simpiens.UI
         }
 
         // State & Pre-allocated Buffers
-        private int _selectedZoneId = 4; // Default to Common Hearth
+        private int _selectedZoneId = -1; // Chosen from the loaded map by BuildSectorList
         private UnityEngine.GUID _selectedAgentId = default;
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
@@ -583,6 +583,20 @@ namespace Simpiens.UI
 
                 _sectorsScrollList.Add(card);
                 _sectorCardsPool.Add(card);
+            }
+
+            // Keep the selection while it exists on this map; otherwise select the map's first real sector
+            if (!_zoneService.TryGetZone(_selectedZoneId, out _))
+            {
+                _selectedZoneId = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    if (zones[i].ZoneId != 0)
+                    {
+                        _selectedZoneId = zones[i].ZoneId;
+                        break;
+                    }
+                }
             }
         }
 

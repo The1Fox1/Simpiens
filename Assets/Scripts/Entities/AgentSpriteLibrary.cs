@@ -164,7 +164,7 @@ namespace Simpiens.Entities
             };
             _herbPatchSprite = CreateSprite(PatternBerryBush, herbPalette, "Resource_HerbPatch");
 
-            // 11. Stone Wall (Impassable play pen barrier)
+            // 11. Stone Wall (impassable map wall)
             var wallPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
