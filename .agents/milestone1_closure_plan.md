@@ -401,7 +401,7 @@ Commits: `refactor(planning): extract production GOAP domain from SwarmSpawner` 
 - Phase 4 (personality + considerations + price-response DoD scenario).
 - Phase 5 (domain/session out of `Testing/`, test assembly, validators as PlayMode tests, stub deleted).
 - Phase 6 docs.
-- 17 commits on `feat/milestone1-supply-loop-zlogger`. Nothing pushed.
+- 10 commits on `feat/milestone1-supply-loop-zlogger` (`65b3363`..HEAD). Nothing pushed.
 
 **Minor decisions taken.** Each is listed under its phase:
 - Trait representation and strengths, the reservation/minimum price formulas, and the bounty score.
