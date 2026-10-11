@@ -107,6 +107,12 @@ namespace Simpiens.Core.Session
             SimLog.ClearAgentNames();
             _simulationManager?.ResetState();
 
+            // A session starts at tick 0 with no history: seeded expiries (bounties, directives) are session-relative,
+            // seeded randomness (keyed on the tick) does not depend on uptime, and chronicle events never point at
+            // GUIDs the reset allocator hands out again
+            _clock?.Reset();
+            _simulationManager?.Chronicle?.Clear();
+
             // 1. Static geography: partition, walls, sectors (simulation) and the map view
             var map = DevMapLayout.Definition;
             _world = _worldMap.Load(map);
