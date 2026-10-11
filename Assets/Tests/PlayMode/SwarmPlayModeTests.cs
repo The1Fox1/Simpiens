@@ -43,6 +43,26 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new OutpostSupplyLoopScenario());
         }
 
+        /// <summary>
+        /// Economy observation soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
+        /// Run with scripts/run-economy-soak.sh (seed / provisional-export via SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
+        /// </summary>
+        [UnityTest]
+        [Explicit("Long-running economy soak; run via scripts/run-economy-soak.sh")]
+        [Category("Soak")]
+        [Timeout(900000)]
+        public IEnumerator Scenario_EconomySoak_ObservationOnly()
+        {
+            yield return ExecuteScenario(new EconomySoakScenario());
+        }
+
+        [Test]
+        public void Scenario_EconomyCounters_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Economy.EconomyCountersValidator();
+            validator.RunAllValidationTests();
+        }
+
         [Test]
         public void Scenario_GoapLiveLoopFixes_AllDomainValidationTestsPass()
         {
