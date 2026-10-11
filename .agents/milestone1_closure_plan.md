@@ -5,6 +5,14 @@
 > **Source:** [ROADMAP §3A](../docs/ROADMAP.md#3a-architecture-review-remediation-tracker) proposed sequence, consultant review [`architecture_review.md`](../docs/reviews/architecture_review.md) §2.5, §2.7, §2.8, §3.2, §3.3.
 >
 > **Branch:** `feat/milestone1-supply-loop-zlogger` (producer decision). Commit after every phase (AGENTS.md *Version Control*).
+>
+> **Standing directive (producer, 2026-10-11):** complete the remaining phases autonomously on this branch, with authority to make **minor design decisions** only (tuning constants, structure, naming, test design). Each one is recorded under its phase. Commit every working state with an honest test status; never push, merge or rewrite history.
+
+**Out of scope for autonomous work** (left for the producer):
+- Economy design (§3.3).
+- Promoting Epic 9 while §3.3 is deferred.
+- Dropping scope.
+- New product features.
 
 ## Goal
 
