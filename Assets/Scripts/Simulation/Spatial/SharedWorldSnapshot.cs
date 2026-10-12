@@ -435,6 +435,59 @@ namespace Simpiens.Simulation.Spatial
             return true;
         }
 
+        /// <summary>
+        /// True when a straight segment keeps at least <paramref name="clearance"/> from every hearth (anchor) and stall
+        /// centre. Line of sight ignores these props (agents see over a campfire), so path smoothing checks this as
+        /// well, or a smoothed segment could run straight through a fire. A prop within clearance of either endpoint
+        /// is ignored: the path is leaving or approaching it. Clearance must not exceed one cell. Zero allocations.
+        /// </summary>
+        public bool IsSegmentPropClear(Vector2 start, Vector2 end, float clearance)
+        {
+            float distance = Vector2.Distance(start, end);
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+            float sqrClearance = clearance * clearance;
+
+            // Samples at most half a cell apart; props within clearance of the segment lie within one cell of a sample
+            int steps = Mathf.Max(1, Mathf.CeilToInt(distance / (CellSize * 0.5f)));
+            for (int i = 0; i <= steps; i++)
+            {
+                Vector2 sample = Vector2.Lerp(start, end, (float)i / steps);
+                int sampleX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
+                int sampleY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
+
+                for (int cy = sampleY - 1; cy <= sampleY + 1; cy++)
+                {
+                    if (cy < 0 || cy >= Height) continue;
+                    for (int cx = sampleX - 1; cx <= sampleX + 1; cx++)
+                    {
+                        if (cx < 0 || cx >= Width) continue;
+                        int index = cy * Width + cx;
+                        int count = CellCounts[index];
+                        var cellArray = Grid[index];
+                        for (int c = 0; c < count; c++)
+                        {
+                            var type = cellArray[c].Type;
+                            if (type != EntityType.Anchor && type != EntityType.Stall) continue;
+
+                            Vector2 prop = cellArray[c].Position;
+                            if ((prop - start).sqrMagnitude < sqrClearance || (prop - end).sqrMagnitude < sqrClearance) continue;
+                            if (SqrDistanceToSegment(prop, start, end) < sqrClearance) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static float SqrDistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float lengthSqr = ab.sqrMagnitude;
+            float t = lengthSqr > 0f ? Mathf.Clamp01(Vector2.Dot(point - a, ab) / lengthSqr) : 0f;
+            return (point - (a + ab * t)).sqrMagnitude;
+        }
+
         private bool IsStaticCellWalkable(int cellX, int cellY)
         {
             if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;

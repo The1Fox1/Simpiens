@@ -30,8 +30,9 @@ namespace Simpiens.Testing.Navigation
             ValidatePathSmoothing();
             ValidateZeroAllocationAndConcurrency();
             ValidateHearthOnCellCornerKeepsCorridorOpen();
+            ValidateSmoothedPathKeepsClearOfHearth();
 
-            Debug.Log("<color=green>[GridAStarValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[GridAStarValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private SharedWorldSnapshot CreateTestSnapshot(int width = 30, int height = 30, float cellSize = 1.0f)
@@ -279,6 +280,46 @@ namespace Simpiens.Testing.Navigation
             Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach the far side of the hearth.");
 
             Debug.Log("[PASS] Test 8: Hearth on a cell corner blocks only its own cell; the corridor stays open.");
+        }
+
+        /// <summary>
+        /// Line of sight ignores hearths (agents see over a campfire), so smoothing used to pull a path that A* had
+        /// routed around a hearth's cell straight back through the fire (Epic MAP Phase 2 finding #3).
+        /// </summary>
+        private void ValidateSmoothedPathKeepsClearOfHearth()
+        {
+            var snapshot = CreateTestSnapshot(30, 30, 1.0f);
+
+            var hearthPos = new Vector2(0.5f, 0.5f);
+            const float hearthRadius = 0.35f;
+            var hearth = new EntitySnapshot(default, hearthPos, Vector2.zero, hearthRadius, EntityType.Anchor);
+            snapshot.AddEntity(15, 15, in hearth);
+
+            var searcher = new GridAStarSearcher();
+            var response = new PathResponse();
+            response.Initialize(200, null);
+            var request = new PathRequest
+            {
+                StartPosition = new Vector2(-6f, 0.5f),
+                TargetPosition = new Vector2(7f, 0.5f)
+            };
+
+            bool success = searcher.Search(in request, snapshot, response);
+            Assert(success && response.IsValid, "An open field with one hearth must be routable.");
+
+            float closest = float.MaxValue;
+            for (int i = 1; i < response.Length; i++)
+            {
+                Vector2 a = response.Waypoints[i - 1], b = response.Waypoints[i];
+                Vector2 ab = b - a;
+                float t = ab.sqrMagnitude > 0f ? Mathf.Clamp01(Vector2.Dot(hearthPos - a, ab) / ab.sqrMagnitude) : 0f;
+                closest = Mathf.Min(closest, Vector2.Distance(hearthPos, a + ab * t));
+            }
+            Assert(closest >= GridAStarSearcher.PropClearance - 0.01f,
+                $"Smoothed path must keep {GridAStarSearcher.PropClearance} from the hearth (closest {closest:F2}).");
+            Assert(snapshot.HasLineOfSight(request.StartPosition, request.TargetPosition), "Agents still see over the hearth.");
+
+            Debug.Log($"[PASS] Test 9: Smoothed path keeps clear of a hearth (closest approach {closest:F2}, {response.Length} waypoints).");
         }
 
         private void ValidatePathSmoothing()
