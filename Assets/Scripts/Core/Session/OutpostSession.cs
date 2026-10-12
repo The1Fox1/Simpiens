@@ -26,6 +26,13 @@ namespace Simpiens.Core.Session
         /// <summary>Seeded bounties expire this many ticks after the session starts (every session starts at 0).</summary>
         public const uint SeedBountyDurationTicks = 6000;
 
+        /// <summary>
+        /// Crawlers arrive fed from the road. At the default 50 every crawler reached starvation panic together about
+        /// 23 s in, two rooms from the Garden and too poor to buy a ration (10 gold, rations 15g): an opening wave of
+        /// starvation on Floor 1 (Epic MAP Phase 3). Fed, they earn their first gold before they need to eat.
+        /// </summary>
+        public const float ArrivalHunger = 20f;
+
         /// <summary>Extra crawlers beyond the gate's spawn points start this far east of a spawn point, between two.</summary>
         private const float OverflowOffset = 1f;
 
@@ -58,7 +65,8 @@ namespace Simpiens.Core.Session
             for (int c = 0; c < CrawlerCount; c++)
             {
                 var position = spawns[c % spawns.Count] + Vector2.right * (OverflowOffset * (c / spawns.Count));
-                session.SpawnAgent(position, $"Crawler{c}", seededPersonality: true);
+                var crawler = session.SpawnAgent(position, $"Crawler{c}", seededPersonality: true);
+                crawler.Hunger = ArrivalHunger;
             }
 
             var stallId = session.OpenStall(Floor1Layout.Stall, new StallTerms(
