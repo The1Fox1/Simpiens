@@ -1015,6 +1015,7 @@ namespace Simpiens.UI
                 AgentVisualState.Walking => "badge-walking",
                 AgentVisualState.Harvesting => "badge-harvesting",
                 AgentVisualState.Resting => "badge-resting",
+                AgentVisualState.Sleeping => "badge-resting",
                 AgentVisualState.Gossiping => "badge-gossiping",
                 AgentVisualState.Sharing => "badge-sharing",
                 AgentVisualState.Panicking => "badge-panicking",
