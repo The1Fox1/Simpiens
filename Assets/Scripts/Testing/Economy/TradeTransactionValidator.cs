@@ -36,8 +36,9 @@ namespace Simpiens.Testing.Economy
             ValidateTradeToAffinityFairPrice();
             ValidateTradeToAffinityPriceGouging();
             ValidateGOAPCommercialPlanResolution();
+            ValidateBountyItemsAreNotSold();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[TradeTransactionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -334,6 +335,50 @@ namespace Simpiens.Testing.Economy
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[TradeTransactionValidator] Test 7 Passed: Price gouging imposes negative Trust and Warmth penalties.");
+        }
+
+        /// <summary>
+        /// Units owed to a claimed Gather bounty are not for sale (Epic MAP Phase 3: on Floor 1 the claimant kept
+        /// selling the ore it had gathered for the bounty, delaying the contract by about 3,000 ticks).
+        /// </summary>
+        private void ValidateBountyItemsAreNotSold()
+        {
+            var agentId = new GUID(41u, 1u, 1u, 1u);
+            var stall = new TradeStallData(new GUID(42u, 2u, 2u, 2u), Vector2.zero, oreBuyPrice: 20, herbBuyPrice: 25, treasuryGold: 500);
+            var claimed = new BountyContract(7, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 6000,
+                claimantId: agentId, creatorStallId: stall.StallEntityId, status: BountyStatus.Claimed);
+
+            AgentContext Context(int ore, int herb, bool withClaim)
+            {
+                var snapshot = new SharedWorldSnapshot(16, 16, 1f, 8, null);
+                snapshot.SetStalls(new[] { stall }, 1);
+                if (withClaim) snapshot.SetBounties(new[] { claimed }, 1);
+                var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 10);
+                for (int i = 0; i < ore; i++) inventory.TryAddItem(new ItemInstance((ushort)(100 + i), ItemType.IronOre, 1, 8), out _);
+                for (int i = 0; i < herb; i++) inventory.TryAddItem(new ItemInstance((ushort)(200 + i), ItemType.MedicinalHerb, 1, 12), out _);
+                return new AgentContext(agentId, new Vector2(1f, 0f), new AgentNeeds(20f, 80f, 60f), 0f, snapshot,
+                    new Simpiens.Cognition.Memory.AgentMemory(), 10, inventory: inventory.GetSnapshot());
+            }
+
+            var goal = new LiquidateSalvageGoal();
+            var sell = new SellSalvageAction();
+
+            var owed = Context(1, 0, withClaim: true);
+            Assert(!ResourceTargeting.HoldsSellable(owed, ItemType.IronOre), "The one ore owed to the bounty is not sellable.");
+            Assert(!goal.IsValid(owed), "LiquidateSalvage is not valid when every unit held is owed to a bounty.");
+            Assert(ResourceTargeting.AffordableHeldSalvage(owed, stall) == ItemType.None, "No held salvage is offered for sale.");
+            Assert(sell.CreateIntent(owed) is IdleIntent, "SellSalvage sells nothing when everything held is owed.");
+
+            var spare = Context(2, 0, withClaim: true);
+            Assert(goal.IsValid(spare) && ResourceTargeting.AffordableHeldSalvage(spare, stall) == ItemType.IronOre, "A second ore beyond the bounty may be sold.");
+
+            var herbToo = Context(1, 1, withClaim: true);
+            Assert(sell.CreateIntent(herbToo) is TradeIntent trade && trade.ItemType == ItemType.MedicinalHerb, "With owed ore and a herb, the herb is sold.");
+
+            var noClaim = Context(1, 0, withClaim: false);
+            Assert(goal.IsValid(noClaim) && ResourceTargeting.HoldsSellable(noClaim, ItemType.IronOre), "Without a claim the ore is for sale as before.");
+
+            Debug.Log("[TradeTransactionValidator] Test 9 Passed: units owed to a claimed Gather bounty are never sold.");
         }
 
         private void ValidateGOAPCommercialPlanResolution()

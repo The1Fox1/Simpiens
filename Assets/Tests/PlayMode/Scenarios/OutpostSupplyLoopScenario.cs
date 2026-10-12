@@ -20,8 +20,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// </summary>
     public class OutpostSupplyLoopScenario : ISimulationScenario
     {
-        // Floor 1 (Epic MAP Phase 3), slowest of 3 observation runs x 1.5: gather t3373, sale t468, scout t487
-        public const uint GatherDeadlineTicks = 5100;
+        // Floor 1 (Epic MAP Phase 3), slowest observation x 1.5: gather t560, sale t468, scout t487
+        public const uint GatherDeadlineTicks = 900;
         public const uint SaleDeadlineTicks = 750;
         public const uint ScoutDeadlineTicks = 750;
         public const uint SupplyDeadlineTicks = 6000;

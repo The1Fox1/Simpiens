@@ -19,8 +19,8 @@ namespace Simpiens.Cognition.Planning.Goals
             int occupiedSlots = 0;
             if (context.Inventory != null)
             {
-                if (context.Inventory.HasItem(ItemType.IronOre)) occupiedSlots++;
-                if (context.Inventory.HasItem(ItemType.MedicinalHerb)) occupiedSlots++;
+                if (ResourceTargeting.HoldsSellable(context, ItemType.IronOre)) occupiedSlots++;
+                if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb)) occupiedSlots++;
             }
             return (30f + (occupiedSlots * 15f)) * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome);
         }
@@ -28,7 +28,8 @@ namespace Simpiens.Cognition.Planning.Goals
         public override bool IsValid(AgentContext context)
         {
             if (context.Inventory == null) return false;
-            if (!context.Inventory.HasItem(ItemType.IronOre) && !context.Inventory.HasItem(ItemType.MedicinalHerb)) return false;
+            // Units owed to a claimed Gather bounty are not for sale
+            if (!ResourceTargeting.HoldsSellable(context, ItemType.IronOre) && !ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb)) return false;
 
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {

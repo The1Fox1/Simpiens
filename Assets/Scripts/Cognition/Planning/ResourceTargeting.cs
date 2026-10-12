@@ -324,13 +324,28 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// The held salvage type the stall can pay for (highest price first), or None if nothing held is affordable.
         /// </summary>
+        /// <summary>
+        /// True when the agent holds a unit of this salvage it may sell: more than its claimed Gather bounty still
+        /// needs. Units owed to a contract are never sold at the stall (the bounty pays better and was promised).
+        /// </summary>
+        public static bool HoldsSellable(in AgentContext context, ItemType item)
+        {
+            if (context.Inventory == null) return false;
+            int reserved = 0;
+            if (BountyQueries.TryGetClaimedBounty(context, out var claimed) && claimed.Type == BountyType.GatherResource && claimed.TargetItemType == item)
+            {
+                reserved = claimed.TargetQuantity;
+            }
+            return context.Inventory.HasItem(item, reserved + 1);
+        }
+
         public static ItemType AffordableHeldSalvage(in AgentContext context, in TradeStallData stall)
         {
             if (context.Inventory == null) return ItemType.None;
-            // Payable by the treasury and at or above the agent's personal minimum sale price
-            bool herb = context.Inventory.HasItem(ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
+            // Payable by the treasury, at or above the agent's personal minimum sale price, and not owed to a bounty
+            bool herb = HoldsSellable(context, ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
                 && stall.HerbBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.MedicinalHerb);
-            bool ore = context.Inventory.HasItem(ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
+            bool ore = HoldsSellable(context, ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
                 && stall.OreBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.IronOre);
             if (herb && ore) return stall.HerbBuyPrice >= stall.OreBuyPrice ? ItemType.MedicinalHerb : ItemType.IronOre;
             if (herb) return ItemType.MedicinalHerb;
