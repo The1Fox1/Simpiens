@@ -46,6 +46,10 @@ namespace Simpiens.Simulation.Spatial
         public StaticNavGrid StaticGrid { get; private set; }
         public void SetStaticGrid(StaticNavGrid staticGrid) => StaticGrid = staticGrid;
 
+        /// <summary>The loaded map (immutable; null in headless tests that build no map). Sectors, POIs, layout.</summary>
+        public Simpiens.Simulation.World.MapDefinition Map { get; private set; }
+        public void SetMap(Simpiens.Simulation.World.MapDefinition map) => Map = map;
+
         public SharedWorldSnapshot(int width, int height, float cellSize, int maxEntitiesPerCell, Action<SharedWorldSnapshot> returnAction)
         {
             Width = width;

@@ -297,6 +297,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_Exploration_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Navigation.ExplorationValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_NavigationClearance_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Navigation.NavigationClearanceValidator();

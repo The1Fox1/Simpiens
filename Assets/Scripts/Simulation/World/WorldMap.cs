@@ -9,7 +9,7 @@ namespace Simpiens.Simulation.World
 {
     /// <summary>
     /// Entity ids the session assigned to a loaded map's keyed entries (resource nodes, POIs), so session scripts
-    /// can refer to "outpost.stall" instead of capturing ids at spawn time.
+    /// can refer to "hub.stall" instead of capturing ids at spawn time.
     /// </summary>
     public sealed class LoadedWorld
     {
@@ -86,6 +86,7 @@ namespace Simpiens.Simulation.World
                     WallRasterizer.Rasterize(map, grid);
                     grid.EnsureRegions();
                 }
+                _partition.SetMap(map);
                 SimLog.Bootstrap.ZLogInformation($"Map '{map.Name}' loaded: {map.Walls.Count} wall rects, {map.Sectors.Count} sectors, partition {cells.x}x{cells.y}{(resized ? " (resized)" : "")}");
             }
 

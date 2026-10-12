@@ -26,6 +26,12 @@ namespace Simpiens.Simulation.Spatial
         StaticNavGrid StaticGrid { get; }
 
         /// <summary>
+        /// The loaded map, published by reference in every snapshot so background cognition can reason about sectors.
+        /// Map definitions are immutable, so sharing them across threads is safe. Main thread only.
+        /// </summary>
+        void SetMap(Simpiens.Simulation.World.MapDefinition map);
+
+        /// <summary>
         /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
         /// Call when the world is torn down (respawn) so stale walls don't outlive their entities.
         /// </summary>
@@ -41,8 +47,11 @@ namespace Simpiens.Simulation.Spatial
         private StaticNavGrid _staticGrid;
         private int _lastWallCount;
         private bool _staticRebuildPending;
+        private Simpiens.Simulation.World.MapDefinition _map;
 
         public StaticNavGrid StaticGrid => _staticGrid;
+
+        public void SetMap(Simpiens.Simulation.World.MapDefinition map) => _map = map;
 
         public void ResetStatic()
         {
@@ -156,6 +165,7 @@ namespace Simpiens.Simulation.Spatial
             // The main thread now "owns" one reference to it.
             _currentTickSnapshot.Retain();
             _currentTickSnapshot.Clear();
+            _currentTickSnapshot.SetMap(_map);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
             if (_staticRebuildPending)

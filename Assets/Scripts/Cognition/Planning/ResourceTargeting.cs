@@ -166,19 +166,73 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// Deterministic exploration waypoint: a point 5–9m from the agent whose bearing is derived from the
-        /// agent id and a 50-tick time bucket (no RNG), so the same inputs always produce the same waypoint.
+        /// Deterministic exploration waypoint (no RNG; derived from the agent id and a time bucket). With a map, a
+        /// point in another sector (TryPickSectorWaypoint); without one, a point 5–9m away on a hashed bearing.
         /// </summary>
         public static Vector2 PickExplorationPoint(in AgentContext context, float minDistance = 5f, float maxDistance = 9f)
         {
-            uint h = unchecked((uint)context.AgentId.GetHashCode() * 2654435761u ^ (context.CurrentTick / 50u) * 2246822519u);
-            h ^= h >> 15;
-            h = unchecked(h * 2654435761u);
-            h ^= h >> 13;
+            // On a map with rooms, head for another sector: a random point a few units away mostly lands in a wall
+            // or the same room, so finding a door would be luck (Epic MAP Phase 3)
+            var map = context.Snapshot?.Map;
+            if (map != null && TryPickSectorWaypoint(context, map, out var waypoint))
+            {
+                return waypoint;
+            }
+
+            uint h = ExplorationHash(context, 50u);
 
             float angle = (h % 3600u) / 3600f * Mathf.PI * 2f;
             float distance = minDistance + ((h >> 12) % 1000u) / 1000f * (maxDistance - minDistance);
             return context.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+        }
+
+        /// <summary>Ticks per exploration choice: long enough to cross the map, so a choice isn't abandoned midway.</summary>
+        public const uint SectorChoiceTicks = 200;
+
+        /// <summary>
+        /// Picks a sector other than the one the agent stands in (deterministic per agent and SectorChoiceTicks
+        /// window) and a point inside it, kept two units clear of the sector's walls. Arriving there changes the
+        /// candidate set, so the next search moves on. False when the map offers no other sector.
+        /// </summary>
+        public static bool TryPickSectorWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 waypoint)
+        {
+            waypoint = default;
+            var sectors = map.Sectors;
+            byte current = map.FindSector(context.Position).Id;
+
+            int candidates = 0;
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                if (sectors[i].Id != current) candidates++;
+            }
+            if (candidates == 0) return false;
+
+            uint h = ExplorationHash(context, SectorChoiceTicks);
+            int pick = (int)(h % (uint)candidates);
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                var sector = sectors[i];
+                if (sector.Id == current) continue;
+                if (pick-- > 0) continue;
+
+                var bounds = sector.Bounds;
+                float jitterX = Mathf.Max(0f, bounds.width * 0.5f - 2f);
+                float jitterY = Mathf.Max(0f, bounds.height * 0.5f - 2f);
+                float fx = ((h >> 8) % 1000u) / 1000f * 2f - 1f;
+                float fy = ((h >> 18) % 1000u) / 1000f * 2f - 1f;
+                waypoint = bounds.center + new Vector2(fx * jitterX, fy * jitterY);
+                return true;
+            }
+            return false;
+        }
+
+        private static uint ExplorationHash(in AgentContext context, uint windowTicks)
+        {
+            uint h = unchecked((uint)context.AgentId.GetHashCode() * 2654435761u ^ (context.CurrentTick / windowTicks) * 2246822519u);
+            h ^= h >> 15;
+            h = unchecked(h * 2654435761u);
+            h ^= h >> 13;
+            return h;
         }
 
         /// <summary>
