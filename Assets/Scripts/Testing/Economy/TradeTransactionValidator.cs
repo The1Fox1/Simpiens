@@ -37,8 +37,9 @@ namespace Simpiens.Testing.Economy
             ValidateTradeToAffinityPriceGouging();
             ValidateGOAPCommercialPlanResolution();
             ValidateBountyItemsAreNotSold();
+            ValidateStallRationsAreKnownFood();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[TradeTransactionValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -379,6 +380,34 @@ namespace Simpiens.Testing.Economy
             Assert(goal.IsValid(noClaim) && ResourceTargeting.HoldsSellable(noClaim, ItemType.IronOre), "Without a claim the ore is for sale as before.");
 
             Debug.Log("[TradeTransactionValidator] Test 9 Passed: units owed to a claimed Gather bounty are never sold.");
+        }
+
+        /// <summary>
+        /// A stall selling a ration the agent can afford is known food: a starving crawler standing at the stall with
+        /// 20 gold panicked instead of buying (Epic MAP Phase 3, BunkRestScenario).
+        /// </summary>
+        private void ValidateStallRationsAreKnownFood()
+        {
+            var stall = new TradeStallData(new GUID(43u, 3u, 3u, 3u), Vector2.zero, rationSellPrice: 15, rationStock: 10, treasuryGold: 100);
+            AgentContext Starving(int gold, bool withStall, ushort stock = 10)
+            {
+                var snapshot = new SharedWorldSnapshot(16, 16, 1f, 8, null);
+                if (withStall) snapshot.SetStalls(new[] { new TradeStallData(stall.StallEntityId, Vector2.zero, rationSellPrice: 15, rationStock: stock, treasuryGold: 100) }, 1);
+                var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: gold);
+                return new AgentContext(new GUID(44u, 4u, 4u, 4u), new Vector2(1f, 0f), new AgentNeeds(95f, 60f, 60f), 0f, snapshot,
+                    new Simpiens.Cognition.Memory.AgentMemory(), 10, inventory: inventory.GetSnapshot());
+            }
+
+            Assert(Simpiens.Cognition.Evaluators.MentalBreakEvaluator.HasKnownFood(Starving(20, withStall: true)),
+                "Starving with 20 gold at a stall selling 15g rations: food is known, no panic.");
+            Assert(!Simpiens.Cognition.Evaluators.MentalBreakEvaluator.HasKnownFood(Starving(5, withStall: true)),
+                "With 5 gold the stall is no food: panic-search as before.");
+            Assert(!Simpiens.Cognition.Evaluators.MentalBreakEvaluator.HasKnownFood(Starving(20, withStall: true, stock: 0)),
+                "A sold-out stall is no food.");
+            Assert(!Simpiens.Cognition.Evaluators.MentalBreakEvaluator.HasKnownFood(Starving(20, withStall: false)),
+                "No stall at all is no food (headless contexts keep the old behaviour).");
+
+            Debug.Log("[TradeTransactionValidator] Test 10 Passed: an affordable stall ration counts as known food for the starvation reflex.");
         }
 
         private void ValidateGOAPCommercialPlanResolution()

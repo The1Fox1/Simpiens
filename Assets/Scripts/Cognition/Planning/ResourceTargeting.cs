@@ -379,6 +379,15 @@ namespace Simpiens.Cognition.Planning
         /// True when the agent can buy a ration right now: reachable stall with stock and an affordable price.
         /// Without any visible stall (headless contexts) this returns true; behind walls, false.
         /// </summary>
+        /// <summary>
+        /// True when a reachable stall has a ration this agent can and will buy. Unlike CanBuyRation, false when no
+        /// stall is visible at all (headless contexts): for the starvation reflex a missing stall is no food.
+        /// </summary>
+        public static bool HasStallFood(in AgentContext context)
+        {
+            return GetStallAccess(context, out _) == StallAccess.Reachable && CanBuyRation(context);
+        }
+
         public static bool CanBuyRation(in AgentContext context)
         {
             var access = GetStallAccess(context, out var stall);

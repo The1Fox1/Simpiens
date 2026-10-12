@@ -115,6 +115,9 @@ namespace Simpiens.Cognition.Evaluators
 
         public static bool HasKnownFood(in AgentContext context)
         {
+            // A stall selling an affordable ration is known food too: buy instead of panicking
+            if (Simpiens.Cognition.Planning.ResourceTargeting.HasStallFood(context)) return true;
+
             if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return false;
 
             foreach (var kvp in context.Memory.SpatialMemoryMap)

@@ -126,6 +126,9 @@ namespace Simpiens.Cognition
 
             var context = agent.CreateContext(snapshot, tick);
 
+            // Main thread: whether a ration could be bought right now (a stall is food a crawler knows about too)
+            agent.CanBuyFoodAtStall = ResourceTargeting.HasStallFood(context);
+
             // Retain snapshot immediately on main thread before switching threads
             snapshot.Retain();
 

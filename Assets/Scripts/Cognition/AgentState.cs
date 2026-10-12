@@ -304,9 +304,17 @@ namespace Simpiens.Cognition
             }
         }
 
+        /// <summary>
+        /// Whether a ration could be bought at a reachable stall at the last evaluation (main thread). A starving
+        /// crawler standing at the stall with the gold for a ration used to panic instead of buying one, because
+        /// only remembered food plots counted as known food (Epic MAP Phase 3).
+        /// </summary>
+        public bool CanBuyFoodAtStall { get; set; }
+
         public bool HasKnownFood(uint currentTick = 0)
         {
             if (HasFoodInInventory) return true;
+            if (CanBuyFoodAtStall) return true;
             if (Memory == null || Memory.SpatialMemoryMap == null) return false;
 
             foreach (var kvp in Memory.SpatialMemoryMap)

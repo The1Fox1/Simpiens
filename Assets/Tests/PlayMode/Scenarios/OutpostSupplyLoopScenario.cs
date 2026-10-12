@@ -20,9 +20,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// </summary>
     public class OutpostSupplyLoopScenario : ISimulationScenario
     {
-        // Floor 1 with fog of war and bunks (Epic MAP Phase 3), slowest of 3 runs x 1.5: first sale t234, scout t349,
-        // gather t910 (only after the Deep Seam is charted)
-        public const uint GatherDeadlineTicks = 1400;
+        // Floor 1 with fog of war and bunks (Epic MAP Phase 3), slowest of 3 runs x 1.5: first sale t234, scout t357,
+        // gather t569 (only after the Deep Seam is charted)
+        public const uint GatherDeadlineTicks = 900;
         public const uint SaleDeadlineTicks = 400;
         public const uint ScoutDeadlineTicks = 550;
         public const uint SupplyDeadlineTicks = 6000;

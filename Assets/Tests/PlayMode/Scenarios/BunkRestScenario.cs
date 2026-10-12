@@ -23,8 +23,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         /// <summary>Starvation and single occupancy are watched this long.</summary>
         public const uint HorizonTicks = 4000;
 
-        /// <summary>The third distinct crawler has slept in a bunk by now: t993 in 3 of 3 runs, x 1.5.</summary>
-        public const uint SleepersDeadlineTicks = 1500;
+        /// <summary>The third distinct crawler has slept in a bunk by now: t1375 in 3 of 3 runs, x 1.5.</summary>
+        public const uint SleepersDeadlineTicks = 2100;
         public const int RequiredSleepers = 3;
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300; // 30 s without getting food
@@ -46,6 +46,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private long _observedTicks;
         private int _fieldRests;
         private float _peakHunger;
+        private string _firstStarving;
         private long _longestHungry;
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
@@ -103,7 +104,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                     {
                         if (!hungrySince.TryGetValue(state.AgentId, out long since)) hungrySince[state.AgentId] = since = rel;
                         if (rel - since > _longestHungry) _longestHungry = rel - since;
-                        if (rel - since >= StarvingTicks && starving.Add(state.AgentId)) _starving++;
+                        if (rel - since >= StarvingTicks && starving.Add(state.AgentId))
+                        {
+                            _starving++;
+                            _firstStarving ??= Describe(agents[i], state, rel);
+                        }
                     }
                     else
                     {
@@ -119,8 +124,25 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
         }
 
+        private static string Describe(Simpiens.Cognition.AutonomousAgent agent, Simpiens.Cognition.AgentState state, long rel)
+        {
+            int knownFood = 0;
+            if (state.Memory != null)
+            {
+                foreach (var kvp in state.Memory.SpatialMemoryMap)
+                {
+                    if (kvp.Value.Type == Simpiens.Simulation.Spatial.EntityType.Resource && kvp.Value.ResourceKind == Simpiens.Simulation.Economy.ItemType.Ration) knownFood++;
+                }
+            }
+            string goal = state.HasActivePlan ? state.ActivePlan.ToString() : "no plan";
+            return $"t{rel} {agent.name} at {state.Position}: hunger {state.Hunger:F0}, energy {state.Energy:F0}, gold {state.Inventory?.Gold}, " +
+                   $"visual {state.VisualState}, intent {state.CurrentIntent?.GetType().Name ?? "none"}, collapsed {state.IsExhaustionCollapsed}, " +
+                   $"knows {knownFood} ration nodes, plan {goal}";
+        }
+
         public void AssertResults(IVisualAnomalyDetector detector)
         {
+            if (_firstStarving != null) Debug.Log($"[BunkRestScenario] first starving crawler: {_firstStarving}");
             Debug.Log($"[BunkRestScenario] first sleep@{_firstSleepTick}, {RequiredSleepers} sleepers@{_thirdSleeperTick}, {_sleepers.Count} distinct sleepers, {_fieldRests} crawlers rested in place, {_collapses} collapsed, {_starving} starving (peak hunger {_peakHunger:F0}, longest at >= {StarvingHunger:F0}: {_longestHungry} ticks), observed {_observedTicks}");
 
             Assert.GreaterOrEqual(_observedTicks, (long)HorizonTicks, $"Observation ended early at tick {_observedTicks} (wall-clock timeout).");
