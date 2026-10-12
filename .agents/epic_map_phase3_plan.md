@@ -2,7 +2,7 @@
 
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 3. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 2, `a646989`; not yet merged).
-- **Written:** 2026-10-11. **Awaiting producer approval.** Phase 2's visual check passed 2026-10-11.
+- **Written:** 2026-10-11. **Approved** by the producer 2026-10-11, with D1 = fog of war (§2.3). Phase 2's visual check passed 2026-10-11.
 - **Goal:** the live game runs on `Floor1Layout`. Crawlers walk in from the Road Gate, work the quarry, grove and garden, sell at the stall, gather at the hearth and sleep in the bunkhouse. Scouting the frontier has a real payoff. Every economy and anomaly scenario runs on that floor, and the soak produces the numbers for the §3.3 economy decision.
 - **What the producer sees after Phase 3:**
   - Pressing Play shows the whole outpost floor: 8 rooms and their walls.
@@ -60,15 +60,24 @@
 - Null-safe: with no map, as in headless validators, today's behaviour is unchanged.
 - `SearchSalvage` keeps heading for an advertised bounty location first.
 
-### 2.3 Shroud charts the frontier (decision D1, recommended)
-- The snapshot carries an **explored-sector mask**: a `ulong` with bit *i* set when sector *i* is explored. The main thread writes it when it builds the snapshot; cognition only reads it. A validator check keeps sector ids below 64.
+### 2.3 Shroud is fog of war (decision D1, producer 2026-10-11)
+> "Shroud is a fog of war. An adventurer should not know what is inside an uncharted room until a scout visits then successfully reports back."
+
+- The snapshot carries an **explored-sector mask**: a `ulong` with bit *i* set when sector *i* is charted. The main thread writes it when it builds the snapshot; cognition only reads it. A validator check keeps sector ids below 64.
 - **Rules:**
-  1. Exploration never picks an unexplored sector.
-  2. Resource and salvage targeting ignores remembered nodes inside unexplored sectors.
-  3. A Gather bounty whose target sector is unexplored is not fulfillable, so nobody claims it.
-  4. **The Scout claimant is exempt.** It walks into its target sector and remembers what it sees there. Once it delivers, the sector is charted for everyone, and rules 1–3 lift.
-- **Effect:** the yield-6 frontier veins sit idle until someone scouts them. Scouting then visibly pays off: crawlers start making the longer trip for richer nodes, and the seeded Gather bounty becomes claimable. This is the chain the epic §2.1.3 intends.
-- **If the producer declines D1:** shroud stays UI-only. The Deep Seam Gather bounty is claimable from tick 0, crawlers wander into the frontier by chance, and the Scout bounty only changes the dashboard.
+  1. **Perception:** an agent records nothing static (resource nodes, anchors, bunks, stalls) that lies inside an uncharted sector, even when it is in line of sight through a door. Pawns stay visible: a crawler can see a colleague walk into the fog.
+  2. **The scout is the exception.** The claimant of a Scout bounty records what it sees inside *its* target sector. That knowledge is private:
+     - gossip never passes on memories of nodes inside an uncharted sector;
+     - the scout's own targeting ignores them until the sector is charted, so it doesn't stop to mine on the way out.
+  3. **Charting happens only on a successful report.** When the scout delivers at the stall:
+     - the sector is marked charted;
+     - the **chart is published**: every crawler's spatial memory receives the scout's remembered nodes in that sector. This is a main-thread write in the delivery handler, ordered by entity id.
+     - Rules 1, 2, 4 and 5 lift for that sector.
+  4. Exploration never picks an uncharted sector.
+  5. A Gather bounty whose target sector is uncharted is not fulfillable, so nobody claims it.
+- **If the scout never reports** (it abandons the claim, the bounty expires, or the agent is removed), the sector stays uncharted, and what the scout saw stays in its memory only, unused.
+- **Effect:** nobody knows about the yield-6 frontier veins until a scout comes back. Then the whole outpost learns of them at once, crawlers start making the longer trip, and the seeded Gather bounty becomes claimable. This is the chain the epic §2.1.3 intends.
+- **Dev Map:** pen sectors 6–10 start uncharted in `DevMapLayout`. Rule 1 would blind the pen agents, and nobody scouts there, so those pens become `startsExplored: true`. Tests that use a Dev Map sector as their "shrouded" example (`BountyTerminalValidator` via `TestWorlds.DevMapZones`) switch to a fixture with an uncharted sector. The canary must still pass unchanged.
 
 ### 2.4 Bunks and the rest anchor (epic §2.3)
 - **Entity:** `EntityType.Bunk` (appended to the enum). A bunk is walkable, not an obstacle: the sleeper stands on it. It gets a placeholder sprite until Phase 4.
@@ -141,7 +150,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 | 3 | **Floor 1 data for live use** (§2.1). 12 spawn points, 8 bunks, the hearth off the door lanes, `Doors`, camera frame. New `MapDefinitionValidator` checks: the hearth ring clears every door lane; spawn points and bunks are walkable and sit in their sectors; sector ids < 64. Not live yet. | `MapDefinitionValidator`; ASCII probe of gate → hub → each sector paths, none crossing the hearth ring | `feat(world): Floor 1 layout ready for the live session` |
 | 4 | **Sector-directed exploration** (§2.2). | New `ExplorationValidator` (destinations lie in other sectors and are routable through doors; deterministic; null map = old behaviour); full suite with the Commons still live, and the supply loop still passes | `feat(cognition): exploration heads for sectors, not random points` |
 | 5 | **Floor 1 goes live** (§2.1, §2.6). `OutpostSession` on Floor 1 with 12 crawlers; bunk entities spawned (no bunk behaviour yet); the Commons retired; validators re-pointed; scenarios migrated. Observation run first, then the supply-loop and price-response bounds. | PlayMode full suite **×3**; `OutpostSupplyLoopScenario` passes with 0 anomalies (new milestones recorded); grep: no `OutpostCommonsLayout` anywhere | `feat(session): the live game runs on the outpost floor` |
-| 6 | **Shroud charts the frontier** (§2.3; only if D1 is approved). Explored mask in the snapshot; rules 1–4. | New `SectorChartingValidator`; the supply loop asserts scout-before-gather ×3 | `feat(cognition): uncharted sectors stay off-limits until scouted` |
+| 6 | **Fog of war** (§2.3). Explored mask in the snapshot; rules 1–5; chart publication on report; Dev Map pens explored. | New `SectorChartingValidator`: no perception through the fog; the scout's knowledge is private (no gossip, no targeting); a report publishes the chart; an abandoned scout charts nothing; uncharted Gather bounties can't be claimed. The supply loop asserts that **no crawler knows a Deep Seam node before the scout's report** and that the gather comes after it, ×3. The canary still passes. | `feat(cognition): fog of war over uncharted sectors until a scout reports back` |
 | 7 | **Bunks and the rest anchor** (§2.4). Observation run to tune recovery and price. | `RestAnchorValidator`; `BunkRestScenario` ×3; full suite | `feat(cognition): tired crawlers sleep in the bunkhouse` |
 | 8 | **Anomaly scenarios on Floor 1** (§2.6). | Navigation and chaos pass ×3 with 0 anomalies. A long-run jitter check (Phase 2 §8 #4) on Floor 1 is reported either way. | `test(navigation): anomaly scenarios run on the outpost floor` |
 | 9 | **`PopulationScalingProbe`** (§2.5). | Numbers recorded in §9 of this plan; escalation rule applied | `test(perf): population scaling probe at 12, 16 and 24 crawlers` |
@@ -154,7 +163,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 
 - **New:**
   - `ExplorationValidator`;
-  - `SectorChartingValidator` (if D1);
+  - `SectorChartingValidator`;
   - `RestAnchorValidator`;
   - `BunkRestScenario`;
   - `PopulationScalingProbe` (`[Explicit]`).
@@ -167,7 +176,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
   - `SwarmNavigationScenario` and `DynamicChaosScenario` move from the Dev Map to Floor 1;
   - `PenCanaryScenario`'s rally points come from the layout;
   - `SupplyLoopValidator`, `WorldMapValidator` and `TestWorlds` drop the Commons.
-- **Expected count:** 43 + 4 = **47** PlayMode tests (46 if D1 is declined), plus the two explicit runs (soak, probe).
+- **Expected count:** 43 + 4 = **47** PlayMode tests, plus the two explicit runs (soak, probe).
 
 ---
 
@@ -194,7 +203,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 
 ## 7. Decisions
 
-**D1 (changes game feel; producer to confirm). Recommended: shroud gates knowledge (§2.3).** Uncharted sectors are off-limits to everyone except the scout, until a Scout bounty charts them. Without D1, scouting changes only the dashboard, and the frontier is reached by chance.
+**D1 (decided by the producer 2026-10-11): shroud is fog of war (§2.3).** Nobody knows what is inside an uncharted room until a scout visits it and successfully reports back. The successful report publishes the chart to every crawler.
 
 **Minor decisions (producer may override):**
 2. **The Commons is retired**, not kept as a second production map. One live map, one source of truth.
