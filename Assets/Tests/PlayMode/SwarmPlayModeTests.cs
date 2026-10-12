@@ -76,6 +76,19 @@ namespace Simpiens.Tests.PlayMode
         /// Economy observation soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
         /// Run with scripts/run-economy-soak.sh (seed / provisional-export via SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
         /// </summary>
+        /// <summary>
+        /// Population scaling measurement (Epic MAP Phase 3): 12, 16 and 24 crawlers on Floor 1, cognition latency and
+        /// throughput to Logs/population-scaling.csv. Explicit: measurement, not a regression test.
+        /// </summary>
+        [UnityTest]
+        [Explicit("Measurement only; run on its own (-testFilter Scenario_PopulationScaling_Measure)")]
+        [Category("Probe")]
+        [Timeout(900000)]
+        public IEnumerator Scenario_PopulationScaling_Measure()
+        {
+            yield return ExecuteScenario(new PopulationScalingProbe());
+        }
+
         [UnityTest]
         [Explicit("Long-running economy soak; run via scripts/run-economy-soak.sh")]
         [Category("Soak")]
