@@ -2,7 +2,7 @@
 
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 4. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 3, `bfb6793`; not yet merged).
-- **Written:** 2026-10-12, after the producer's Phase 3 visual check passed (including bunk sleeping, `847e432`). **Awaiting approval** and decisions D1 and D2 (§7).
+- **Written:** 2026-10-12, after the producer's Phase 3 visual check passed (including bunk sleeping, `847e432`). **Approved** by the producer 2026-10-12 with D1 = A (contents hidden under the fog, crawlers stay visible) and D2 = yes (the HUD works over the map).
 - **Goal:** the 2D view becomes the place the game is played. The player sees the floor as rooms, sees the fog where the crawlers know nothing, moves the camera freely, follows a crawler with a click, and posts bounties over the map by room name, without switching to the full-screen dashboard.
 - **What the producer sees after Phase 4:**
   - Each room has its own floor. Walls and rock are continuous tiles instead of hundreds of separate squares.
@@ -40,7 +40,7 @@
   - **Walls:** wall runs.
 - Tiles are made at runtime (`Tile` instances) from procedural sprites in `AgentSpriteLibrary`, as all current art is. No asset files.
 - **The tiles come from the same rasterisation as the nav grid** (`WallRasterizer`), so what the player sees and what the pathfinder treats as walls cannot disagree. A validator checks this cell for cell.
-- **`RenderOrder`**, one table: Floor −30, Rock −20, Walls −10, Props 0 (bunks, hearth, stall, resource nodes), Fog 10, Crawlers 20, Selection 25, Labels 30. With D1 option B, crawlers go below the fog.
+- **`RenderOrder`**, one table: Floor −30, Rock −20, Walls −10, Props 0 (bunks, hearth, stall, resource nodes), Fog 10, Crawlers 20, Selection 25, Labels 30.
 - Labels stay `TextMesh`. Uncharted sectors add an *Uncharted* line under the name.
 
 ### 2.2 Fog of war on the map (V2, decision D1)
@@ -49,7 +49,7 @@
 - **When a sector is charted,** its overlay fades out over 1.5 s of real time (unscaled, so the fade is visible at 10× too), then is destroyed.
 - Rebuilt with the map on every session load. The Dev Map has no uncharted sectors, so it shows no fog.
 - The view owns no state: a respawn or a future save/load gives the right fog from the registry alone.
-- **D1** decides what shows through. The recommendation is that the fog is opaque over the room's contents and crawlers walking inside are drawn above it.
+- **D1 = A:** the fog is opaque over the room's contents (props sort below it) and crawlers walking inside are drawn above it.
 
 ### 2.3 Camera rig (V3)
 - **`CameraRig`**: plain C# camera maths, so it can be tested headless:
@@ -69,7 +69,7 @@
 - **A left click (no drag):**
   - on a crawler: `SelectAgent(id)`, and the camera follows it;
   - on empty floor: `SelectZone(sector at the point)`, and the camera stops following;
-  - in fog: selects the sector, never a crawler inside it if D1 = B.
+  - in fog: crawlers are visible (D1 = A), so a click on one selects it like anywhere else.
 - **Selection view:** a ring under the selected crawler and its name above, at `RenderOrder.Selection`.
 - **Follow stops** on Esc, on a pan input, or when the crawler is removed (session switch).
 - Selection is view state in the presenter, as now. Nothing enters the simulation.
@@ -105,7 +105,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 | 1 | **`RenderOrder` and the Tilemap map** (§2.1). Floors per sector, rock, walls; uncharted label line. | New `MapViewValidator` (PlayMode wrapper; it needs GameObjects): every static-blocked nav cell has a wall or rock tile, every walkable sector cell has a floor tile, and no tile sits on a cell the nav grid disagrees with; the map root has under 20 GameObjects (about 270 today); the Dev Map passes too. Full suite. | `feat(view): the map is drawn on a tilemap with floors per room` |
 | 2 | **`ShroudView`** (§2.2), per D1. | New `ShroudViewScenario` (live, no injection): at start both frontier sectors are covered; the Deep Seam overlay is gone within 2 s (real time) of the seeded scout's report, while the Overgrowth's stays; the Dev Map shows no overlay. Full suite. | `feat(view): fog of war over uncharted rooms on the map` |
 | 3 | **`CameraRig` and `CameraController`** (§2.3). | New `CameraRigValidator` (headless): clamping at every edge and zoom level; zoom keeps the cursor point fixed; reframe fits the map; follow converges. Full suite. | `feat(view): pan, zoom and reframe the camera` |
-| 4 | **Picking, selection and follow** (§2.4). | `CameraRigValidator` adds `WorldPicker` checks: nearest within the radius, ties by id, nothing beyond the radius, fog rule per D1. `ShroudViewScenario` adds: selecting a crawler makes the camera centre stay within 0.25 units of it for 200 frames. | `feat(view): click a crawler to follow it, click a room to select it` |
+| 4 | **Picking, selection and follow** (§2.4). | `CameraRigValidator` adds `WorldPicker` checks: nearest within the radius, ties by id, nothing beyond the radius. `ShroudViewScenario` adds: selecting a crawler makes the camera centre stay within 0.25 units of it for 200 frames. | `feat(view): click a crawler to follow it, click a room to select it` |
 | 5 | **HUD over the map** (§2.5), per D2. | The existing UI validators; the presenter refreshes the header with the dashboard hidden (new check in `BountyTerminalValidator`); full suite. | `feat(ui): header, bounty board and merchant work over the map` |
 | 6 | **Sector-aware bounties** (§2.6). Picker plus authoritative validation. | `BountyTerminalValidator`: the Scout picker lists exactly the uncharted sectors; rejected posts take no escrow and log a reason. New **`PlayerScoutScenario`** (live): post *Scout Overgrowth* through the presenter's picker at the default reward, with no other help. Within its bound the bounty is claimed and reported, the Overgrowth is charted, and its fog lifts. The bound comes from observation, slowest of 3 × 1.5. Full suite ×3. | `feat(ui): bounties target rooms by name; the simulation rejects impossible ones` |
 | 7 | **Docs and the producer's visual check.** ROADMAP, the epic checklist, `curentfocus.txt`, `architecture_history.md` (map on a tilemap, view-side fog, HUD over the map, authoritative bounty validation), AGENTS.md (`Entities/` view files). **Producer check in the Editor:** §0's list. | Docs agree with each other; producer confirms | `docs: Epic MAP Phase 4 complete` |
@@ -148,7 +148,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 
 ## 7. Decisions
 
-**D1 (producer): what the player sees inside an uncharted room.** The crawlers' rule is settled (Phase 3 D1). This is the player's.
+**D1 (decided by the producer 2026-10-12: A): what the player sees inside an uncharted room.** The crawlers' rule is settled (Phase 3 D1). This is the player's.
 
 | Option | The player sees | Trade-off |
 | :--- | :--- | :--- |
@@ -156,7 +156,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 | B | Walls and the name only. Crawlers inside are hidden too, so the scout vanishes into the fog until it comes back. | The most honest; it adds suspense but loses sight of the scout. Clicking into the fog selects the room, never a crawler. |
 | C | Everything, dimmed. | The player knows more than any crawler, which undercuts the Phase 3 decision. |
 
-**D2 (producer): HUD over the map.** The recommendation is **yes** (§2.5): the header and the Bounty and Merchant windows work over the map, and the full dashboard stays behind Tab. The alternative is the current flow: Tab to the full-screen dashboard to post anything.
+**D2 (decided by the producer 2026-10-12: yes, "control over map would be nice"): HUD over the map.** The recommendation was **yes** (§2.5): the header and the Bounty and Merchant windows work over the map, and the full dashboard stays behind Tab. The alternative is the current flow: Tab to the full-screen dashboard to post anything.
 
 **Minor decisions (producer may override):**
 3. **Unity Tilemap**, not a hand-built mesh. It is already installed, batches the drawing, and is the standard 2D grid renderer.
