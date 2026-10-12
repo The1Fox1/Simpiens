@@ -7,6 +7,7 @@ using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.World;
 using Simpiens.UI.Pooling;
 using Simpiens.UI.Zones;
 using UnityEngine;
@@ -78,8 +79,19 @@ namespace Simpiens.UI
         private Label _bountyCountBadge;
         private ScrollView _bountiesScrollList;
         private DropdownField _dropdownBountyType;
-        private SliderInt _sliderBountySector;
+        private DropdownField _dropdownBountySector;
         private Label _labelBountySector;
+
+        // The sector picker's choices, rebuilt when the map, the type or the charted sectors change
+        private readonly List<int> _bountySectorIds = new List<int>(16);
+        private readonly List<string> _bountySectorChoices = new List<string>(16);
+        private BountyType _bountySectorType = BountyType.None;
+        private ulong _bountySectorMask;
+        private int _bountySectorZoneCount = -1;
+        private ISectorRegistry _sectorRegistry;
+
+        public const string AllChartedText = "Every sector is charted: there is nothing left to scout.";
+        public const string AwaitsChartSuffix = " (claimable once charted)";
         private VisualElement _groupBountyItem;
         private DropdownField _dropdownBountyItem;
         private VisualElement _groupBountyQty;
@@ -175,8 +187,10 @@ namespace Simpiens.UI
             IAgentIdentityService identityService = null,
             INarrativeFormatter narrativeFormatter = null,
             ISessionSwitcher sessionSwitcher = null,
-            Simpiens.Entities.WorldSelection worldSelection = null)
+            Simpiens.Entities.WorldSelection worldSelection = null,
+            ISectorRegistry sectorRegistry = null)
         {
+            _sectorRegistry = sectorRegistry;
             _zoneService = zoneService;
             _worldRegistry = worldRegistry;
             _simulationClock = simulationClock;
@@ -259,6 +273,7 @@ namespace Simpiens.UI
             CloseMerchantTerminal();
             CloseBountyBoard();
             BuildSectorList();
+            RebuildBountySectorChoices(force: true);
             RefreshAllViews();
             RefreshSessionSwitch();
         }
@@ -432,18 +447,11 @@ namespace Simpiens.UI
             _bountyCountBadge = _root.Q<Label>("bounty-count-badge");
             _bountiesScrollList = _root.Q<ScrollView>("bounties-scroll-list");
             _dropdownBountyType = _root.Q<DropdownField>("dropdown-bounty-type");
-            _sliderBountySector = _root.Q<SliderInt>("slider-bounty-sector");
+            _dropdownBountySector = _root.Q<DropdownField>("dropdown-bounty-sector");
             _labelBountySector = _root.Q<Label>("label-bounty-sector");
-            if (_sliderBountySector != null)
+            if (_dropdownBountySector != null)
             {
-                _sliderBountySector.RegisterValueChangedCallback(evt =>
-                {
-                    if (_labelBountySector != null)
-                    {
-                        string secName = _zoneService != null && _zoneService.TryGetZone(evt.newValue, out var z) ? z.Name : $"Sector {evt.newValue}";
-                        _labelBountySector.text = $"{secName} (ID {evt.newValue})";
-                    }
-                });
+                _dropdownBountySector.RegisterValueChangedCallback(_ => UpdateBountySectorLabel());
             }
             _groupBountyItem = _root.Q<VisualElement>("group-bounty-item");
             _dropdownBountyItem = _root.Q<DropdownField>("dropdown-bounty-item");
@@ -482,6 +490,7 @@ namespace Simpiens.UI
                     bool isGather = evt.newValue == "GatherResource";
                     if (_groupBountyItem != null) _groupBountyItem.style.display = isGather ? DisplayStyle.Flex : DisplayStyle.None;
                     if (_groupBountyQty != null) _groupBountyQty.style.display = isGather ? DisplayStyle.Flex : DisplayStyle.None;
+                    RebuildBountySectorChoices();
                 });
             }
             _bountyFeedbackLabel = _root.Q<Label>("bounty-feedback-label");
@@ -815,7 +824,7 @@ namespace Simpiens.UI
                 bool isExplored = _zoneService.IsSectorExplored(_selectedZoneId);
                 _activeSectorDesc.text = isExplored
                     ? zone.Description
-                    : $"{zone.Description} [UNEXPLORED / SHROUDED SECTOR - Dispatch a scout bounty to map this area]";
+                    : $"{zone.Description} [UNCHARTED: post a Scout bounty to have it mapped]";
             }
 
             // 1. Populate resident agents in this sector with stable pooled elements
@@ -1195,6 +1204,7 @@ namespace Simpiens.UI
             {
                 _merchantTerminalOverlay.style.display = DisplayStyle.None;
             }
+            RebuildBountySectorChoices(force: true);
             RefreshBountyBoardView();
         }
 
@@ -1230,6 +1240,8 @@ namespace Simpiens.UI
         {
             if (!IsShown(_bountyBoardOverlay))
                 return;
+
+            RebuildBountySectorChoices(); // a scout's report may have charted a sector while the board is open
 
             var activeBounties = _simulationManager != null ? _simulationManager.ActiveBounties : null;
             int count = activeBounties != null ? activeBounties.Count : 0;
@@ -1395,6 +1407,95 @@ namespace Simpiens.UI
             }
         }
 
+        private void ShowBountyFeedback(string text, bool ok)
+        {
+            if (_bountyFeedbackLabel == null) return;
+            _bountyFeedbackLabel.text = text;
+            _bountyFeedbackLabel.style.color = new StyleColor(ok ? new Color(0.1f, 0.8f, 0.4f) : new Color(0.95f, 0.3f, 0.3f));
+        }
+
+        private BountyType SelectedBountyType()
+        {
+            return _dropdownBountyType != null && System.Enum.TryParse<BountyType>(_dropdownBountyType.value, out var parsed) && parsed != BountyType.None
+                ? parsed
+                : BountyType.GatherResource;
+        }
+
+        /// <summary>The ids behind the sector picker's choices (in order), for the current bounty type.</summary>
+        public IReadOnlyList<int> BountySectorChoiceIds
+        {
+            get
+            {
+                RebuildBountySectorChoices();
+                return _bountySectorIds;
+            }
+        }
+
+        /// <summary>Selects a sector in the picker; false when the current type doesn't offer it.</summary>
+        public bool SelectBountySector(int sectorId)
+        {
+            RebuildBountySectorChoices();
+            int index = _bountySectorIds.IndexOf(sectorId);
+            if (index < 0 || _dropdownBountySector == null) return false;
+            _dropdownBountySector.index = index;
+            return true;
+        }
+
+        /// <summary>
+        /// Fills the sector picker from the loaded map. Scout offers only uncharted sectors; Gather offers every sector,
+        /// marking uncharted ones as claimable once charted. Rebuilt only when the map, the bounty type or the charted
+        /// sectors change, keeping the current choice when it is still offered.
+        /// </summary>
+        private void RebuildBountySectorChoices(bool force = false)
+        {
+            if (_dropdownBountySector == null || _zoneService == null) return;
+
+            var type = SelectedBountyType();
+            var zones = _zoneService.GetAllZones();
+            ulong mask = 0UL;
+            for (int i = 0; i < zones.Count; i++)
+            {
+                if (zones[i].IsExplored && zones[i].ZoneId < 64) mask |= 1UL << zones[i].ZoneId;
+            }
+            if (!force && type == _bountySectorType && mask == _bountySectorMask && zones.Count == _bountySectorZoneCount) return;
+            _bountySectorType = type;
+            _bountySectorMask = mask;
+            _bountySectorZoneCount = zones.Count;
+
+            int previous = _dropdownBountySector.index >= 0 && _dropdownBountySector.index < _bountySectorIds.Count ? _bountySectorIds[_dropdownBountySector.index] : -1;
+            _bountySectorIds.Clear();
+            _bountySectorChoices.Clear();
+            for (int i = 0; i < zones.Count; i++)
+            {
+                var zone = zones[i];
+                if (type == BountyType.ScoutSector && zone.IsExplored) continue;
+                _bountySectorIds.Add(zone.ZoneId);
+                _bountySectorChoices.Add(zone.IsExplored || type == BountyType.ScoutSector ? zone.Name : zone.Name + AwaitsChartSuffix);
+            }
+
+            _dropdownBountySector.choices = new List<string>(_bountySectorChoices);
+            int keep = previous >= 0 ? _bountySectorIds.IndexOf(previous) : -1;
+            if (_bountySectorIds.Count == 0) _dropdownBountySector.SetValueWithoutNotify(string.Empty);
+            else _dropdownBountySector.index = keep >= 0 ? keep : 0;
+
+            bool canPost = _bountySectorIds.Count > 0;
+            _btnPostBounty?.SetEnabled(canPost);
+            if (!canPost && type == BountyType.ScoutSector) ShowBountyFeedback(AllChartedText, false);
+            UpdateBountySectorLabel();
+        }
+
+        private void UpdateBountySectorLabel()
+        {
+            if (_labelBountySector == null || _dropdownBountySector == null) return;
+            int i = _dropdownBountySector.index;
+            if (i < 0 || i >= _bountySectorIds.Count || _zoneService == null || !_zoneService.TryGetZone(_bountySectorIds[i], out var zone))
+            {
+                _labelBountySector.text = string.Empty;
+                return;
+            }
+            _labelBountySector.text = zone.IsExplored ? "Charted" : "Uncharted";
+        }
+
         public void HandlePostBounty()
         {
             var type = BountyType.GatherResource;
@@ -1403,7 +1504,22 @@ namespace Simpiens.UI
                 type = parsedType;
             }
 
-            byte sectorId = (byte)(_sliderBountySector != null ? _sliderBountySector.value : 2);
+            RebuildBountySectorChoices();
+            int choice = _dropdownBountySector != null ? _dropdownBountySector.index : -1;
+            if (choice < 0 || choice >= _bountySectorIds.Count)
+            {
+                ShowBountyFeedback(type == BountyType.ScoutSector && _bountySectorIds.Count == 0 ? AllChartedText : "Pick a target sector.", false);
+                return;
+            }
+            byte sectorId = (byte)_bountySectorIds[choice];
+
+            // The simulation enforces the same rule; checking here gives the player the reason
+            var target = BountyRules.CheckTarget(type, sectorId, _sectorRegistry);
+            if (target != BountyRules.TargetCheck.Ok)
+            {
+                ShowBountyFeedback(BountyRules.Describe(target, sectorId, _sectorRegistry), false);
+                return;
+            }
 
             var itemType = ItemType.IronOre;
             if (_dropdownBountyItem != null && System.Enum.TryParse<ItemType>(_dropdownBountyItem.value, out var parsedItem))

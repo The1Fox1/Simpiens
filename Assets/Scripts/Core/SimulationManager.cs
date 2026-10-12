@@ -532,6 +532,14 @@ namespace Simpiens.Simulation
         public bool TryRegisterBounty(BountyContract bounty)
         {
             bool isLive = bounty.Status == BountyStatus.Open || bounty.Status == BountyStatus.Claimed;
+
+            // The target must make sense on the loaded map (unknown sectors, scouting a charted one), before any escrow
+            var target = isLive ? BountyRules.CheckTarget(bounty.Type, bounty.TargetSectorId, _sectors) : BountyRules.TargetCheck.Ok;
+            if (target != BountyRules.TargetCheck.Ok)
+            {
+                SimLog.Intervention.ZLogWarning($"Bounty #{bounty.BountyId} rejected: {BountyRules.Describe(target, bounty.TargetSectorId, _sectors)}");
+                return false;
+            }
             if (isLive && bounty.RewardGold > 0 && _economyLedger != null && !_economyLedger.HasEscrow(bounty.BountyId))
             {
                 var stallId = bounty.CreatorStallId;

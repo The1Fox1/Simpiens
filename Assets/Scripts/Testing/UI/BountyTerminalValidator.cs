@@ -52,8 +52,9 @@ namespace Simpiens.Testing.UI
             ValidateSectorShroudTracking();
             ValidateZeroAllocationElementPool();
             ValidateDefensiveNullSafety();
+            ValidateBountyTargetRules();
 
-            Debug.Log("<color=#10b981><b>[BountyTerminalValidator]</b> >>> ALL 6 BOUNTY TERMINAL TESTS PASSED CLEANLY! <<<</color>");
+            Debug.Log("<color=#10b981><b>[BountyTerminalValidator]</b> >>> ALL 7 BOUNTY TERMINAL TESTS PASSED CLEANLY! <<<</color>");
         }
 
         public void ValidatePriceUpdateInfluenceDispatch()
@@ -203,6 +204,56 @@ namespace Simpiens.Testing.UI
             }
 
             Debug.Log("  ✔ ValidateBountyPostingAndEscrow passed: Bounty #101 registered with gold escrow deducted from outpost treasury.");
+        }
+
+        /// <summary>
+        /// Epic MAP Phase 4: on a loaded map the simulation refuses a Scout bounty on a charted sector and any bounty on
+        /// an unknown sector, before escrow; a Gather bounty may wait on an uncharted sector.
+        /// </summary>
+        public void ValidateBountyTargetRules()
+        {
+            var interventionService = new PlayerInterventionService();
+            var sectors = new Simpiens.Simulation.World.SectorRegistry();
+            sectors.Load(Simpiens.Core.Session.Layouts.Floor1Layout.Definition);
+            var simManager = new SimulationManager(
+                worldRegistry: null,
+                spatialPartition: null,
+                clock: null,
+                groupRegistry: null,
+                chronicleService: null,
+                sectors: sectors,
+                interventionService: interventionService);
+
+            var stallId = new UnityEngine.GUID(9u, 9u, 9u, 9u);
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
+
+            byte hub = Simpiens.Core.Session.Layouts.Floor1Layout.HubSectorId;
+            byte deepSeam = Simpiens.Core.Session.Layouts.Floor1Layout.DeepSeamSectorId;
+            // Payload format: "{bountyId},{type},{sectorId},{itemType},{qty},{rewardGold},{durationTicks}"
+            interventionService.QueueInfluence(new InfluenceEvent("Player", "PostBounty", $"201,ScoutSector,{hub},None,1,30,1500"));
+            interventionService.QueueInfluence(new InfluenceEvent("Player", "PostBounty", "202,ScoutSector,99,None,1,30,1500"));
+            interventionService.QueueInfluence(new InfluenceEvent("Player", "PostBounty", "203,GatherResource,99,IronOre,1,30,1500"));
+            simManager.Tick();
+            if (simManager.TryGetBounty(201, out _)) throw new Exception("A Scout bounty on the charted Hub was accepted.");
+            if (simManager.TryGetBounty(202, out _) || simManager.TryGetBounty(203, out _)) throw new Exception("A bounty on an unknown sector was accepted.");
+            if (!simManager.TryGetTradeStall(stallId, out var stall) || stall.TreasuryGold != 250) throw new Exception($"Refused bounties took escrow (treasury {stall.TreasuryGold}g, expected 250g).");
+            if (BountyRules.CheckTarget(BountyType.ScoutSector, hub, sectors) != BountyRules.TargetCheck.AlreadyCharted
+                || BountyRules.CheckTarget(BountyType.GatherResource, 99, sectors) != BountyRules.TargetCheck.UnknownSector)
+            {
+                throw new Exception("BountyRules does not report the refusal reasons the board shows.");
+            }
+
+            interventionService.QueueInfluence(new InfluenceEvent("Player", "PostBounty", $"204,ScoutSector,{deepSeam},None,1,30,1500"));
+            interventionService.QueueInfluence(new InfluenceEvent("Player", "PostBounty", $"205,GatherResource,{deepSeam},IronOre,1,20,1500"));
+            simManager.Tick();
+            if (!simManager.TryGetBounty(204, out _)) throw new Exception("A Scout bounty on the uncharted Deep Seam was refused.");
+            if (!simManager.TryGetBounty(205, out _)) throw new Exception("A Gather bounty waiting on the uncharted Deep Seam was refused.");
+
+            sectors.SetExplored(deepSeam, true);
+            if (BountyRules.CheckTarget(BountyType.ScoutSector, deepSeam, sectors) != BountyRules.TargetCheck.AlreadyCharted) throw new Exception("Once charted, the Deep Seam can't be scouted again.");
+            if (BountyRules.CheckTarget(BountyType.ScoutSector, hub, null) != BountyRules.TargetCheck.Ok) throw new Exception("Without a registry nothing is checked (headless validators).");
+
+            Debug.Log("  ✔ ValidateBountyTargetRules passed: impossible targets refused before escrow; Scout and Gather on an uncharted sector accepted.");
         }
 
         public void ValidateBountyCancellationAndRefund()

@@ -209,9 +209,10 @@
                         <ui:VisualElement class="form-group">
                             <ui:VisualElement class="form-label-row">
                                 <ui:Label text="Target Sector:" class="form-label" />
-                                <ui:Label name="label-bounty-sector" text="Sector 2" class="form-val-label" />
+                                <ui:Label name="label-bounty-sector" text="" class="form-val-label" />
                             </ui:VisualElement>
-                            <ui:SliderInt name="slider-bounty-sector" low-value="1" high-value="10" value="2" class="custom-slider" />
+                            <!-- Filled from the loaded map: Scout lists only uncharted sectors (Epic MAP Phase 4) -->
+                            <ui:DropdownField name="dropdown-bounty-sector" class="form-dropdown" />
                         </ui:VisualElement>
 
                         <!-- Item Type Selector -->

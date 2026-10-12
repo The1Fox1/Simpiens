@@ -67,6 +67,13 @@ namespace Simpiens.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator Scenario_PlayerScout_ChartsTheOvergrowthFromTheMap()
+        {
+            yield return ExecuteScenario(new PlayerScoutScenario());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Scenario_MapHud_WorksOverTheMap()
         {
             yield return ExecuteScenario(new MapHudScenario());
