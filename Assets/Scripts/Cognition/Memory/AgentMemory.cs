@@ -58,6 +58,7 @@ namespace Simpiens.Cognition.Memory
                 case EntityType.Pawn: return PawnDecayTicks;
                 case EntityType.Resource: return ResourceDecayTicks;
                 case EntityType.Anchor: return AnchorDecayTicks;
+                case EntityType.Bunk: return AnchorDecayTicks; // fixtures: remembered as long as a hearth
                 default: return DefaultDecayTicks;
             }
         }
@@ -115,7 +116,7 @@ namespace Simpiens.Cognition.Memory
         /// <summary>Static landmarks are hidden by the fog of war; pawns stay visible.</summary>
         public static bool IsLandmark(EntityType type)
         {
-            return type == EntityType.Resource || type == EntityType.Anchor || type == EntityType.Stall;
+            return type == EntityType.Resource || type == EntityType.Anchor || type == EntityType.Stall || type == EntityType.Bunk;
         }
 
         /// <summary>Moves this agent's survey notes for one sector into <paramref name="into"/>.</summary>

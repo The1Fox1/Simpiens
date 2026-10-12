@@ -19,6 +19,8 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new HarvestResourceAction(pathfinder: pathfinder));
             graph.RegisterAction(new EatCarriedFoodAction());
             graph.RegisterAction(new RestAction());
+            graph.RegisterAction(new TravelToBunkAction(pathfinder));
+            graph.RegisterAction(new SleepAtBunkAction());
             graph.RegisterAction(new TravelToPeerAction());
             graph.RegisterAction(new ShareFoodAction(pathfinder: pathfinder));
             graph.RegisterAction(new TravelToAnchorAction(pathfinder));

@@ -193,9 +193,12 @@ namespace Simpiens.Cognition
             float hunger = Mathf.Min(100f, Needs.Hunger + dt * 1.5f);
             float energy = Needs.Energy;
 
-            if (IsExhaustionCollapsed || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
+            bool inBunk = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.SleepAtBunkAction;
+            if (IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
             {
-                energy = Mathf.Min(100f, energy + dt * 15f);
+                // A bunk restores energy faster than resting where you stand (Epic MAP Phase 3 rest anchor)
+                float rate = inBunk && !IsExhaustionCollapsed ? Simpiens.Cognition.Planning.Considerations.BunkRecoveryPerSecond : 15f;
+                energy = Mathf.Min(100f, energy + dt * rate);
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
                     SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} recovered from exhaustion collapse (energy {energy:F0})");

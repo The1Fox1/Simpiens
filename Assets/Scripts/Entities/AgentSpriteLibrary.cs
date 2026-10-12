@@ -22,6 +22,8 @@ namespace Simpiens.Entities
         public static Sprite HerbPatchSprite => _herbPatchSprite;
         public static Sprite WallSprite => _wallSprite;
         public static Sprite GetCampfireSprite(int frame) => _campfireSprites[frame & 1];
+        private static readonly Sprite _bunkSprite;
+        public static Sprite BunkSprite => _bunkSprite;
 
         static AgentSpriteLibrary()
         {
@@ -188,6 +190,18 @@ namespace Simpiens.Entities
             };
             _campfireSprites[0] = CreateSprite(PatternCampfire0, campfirePalette, "Anchor_Campfire_0");
             _campfireSprites[1] = CreateSprite(PatternCampfire1, campfirePalette, "Anchor_Campfire_1");
+
+            // 13. Bunk (rest anchor: wooden frame, pillow, blanket)
+            var bunkPalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { 'W', new Color32(120, 72, 32, 255) },   // Wooden frame
+                { 'w', new Color32(78, 45, 18, 255) },    // Frame shadow
+                { 'P', new Color32(241, 245, 249, 255) }, // Pillow
+                { 'B', new Color32(79, 110, 196, 255) },  // Blanket
+                { 'b', new Color32(55, 79, 150, 255) }    // Blanket fold
+            };
+            _bunkSprite = CreateSprite(PatternBunk, bunkPalette, "Anchor_Bunk");
         }
 
         /// <summary>
@@ -669,6 +683,26 @@ namespace Simpiens.Entities
             "################",
             "#SBBBB#SBBBBBBB#",
             "################"
+        };
+
+        private static readonly string[] PatternBunk =
+        {
+            "................",
+            "..WWWWWWWWWWWW..",
+            "..WPPPPPPPPPPW..",
+            "..WPPPPPPPPPPW..",
+            "..WWWWWWWWWWWW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WbbbbbbbbbbW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WbbbbbbbbbbW..",
+            "..WWWWWWWWWWWW..",
+            "..ww........ww..",
+            "................"
         };
 
         private static readonly string[] PatternCampfire0 =

@@ -200,6 +200,88 @@ namespace Simpiens.Simulation
             return _surveyBuffer.Count;
         }
 
+        // --- Rest anchor: bunks (Epic MAP Phase 3) ---
+        /// <summary>Slack on top of BunkTargeting.ReachDistance for a sleeper's final step onto the bunk.</summary>
+        public const float BunkClaimTolerance = 0.25f;
+
+        private readonly Dictionary<UnityEngine.GUID, Vector2> _bunks = new Dictionary<UnityEngine.GUID, Vector2>(16);
+        private readonly Dictionary<UnityEngine.GUID, UnityEngine.GUID> _bunkOccupants = new Dictionary<UnityEngine.GUID, UnityEngine.GUID>(16);
+        private readonly List<UnityEngine.GUID> _occupiedBunks = new List<UnityEngine.GUID>(16);
+        private readonly Dictionary<UnityEngine.GUID, int> _bunkSleeps = new Dictionary<UnityEngine.GUID, int>(16);
+        private readonly List<UnityEngine.GUID> _bunkScratch = new List<UnityEngine.GUID>(16);
+
+        public void RegisterBunk(UnityEngine.GUID id, Vector2 position) => _bunks[id] = position;
+
+        /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
+        public IReadOnlyDictionary<UnityEngine.GUID, UnityEngine.GUID> BunkOccupants => _bunkOccupants;
+
+        /// <summary>Completed bunk sleeps per agent this session.</summary>
+        public IReadOnlyDictionary<UnityEngine.GUID, int> BunkSleeps => _bunkSleeps;
+
+        public bool TryClaimBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId, Vector2 agentPosition)
+        {
+            if (!_bunks.TryGetValue(bunkId, out var bunkPosition)) return false;
+            float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance + BunkClaimTolerance;
+            if ((bunkPosition - agentPosition).sqrMagnitude > reach * reach) return false;
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != agentId) return false;
+            _bunkOccupants[bunkId] = agentId;
+            RebuildOccupiedBunks();
+            return true;
+        }
+
+        public IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId)
+        {
+            if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
+
+            float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance;
+            if ((bunkPosition - (Vector2)node.Position).sqrMagnitude <= reach * reach) return IntentResult.Success;
+
+            Vector2 candidate = Vector2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
+            if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
+            return (bunkPosition - candidate).sqrMagnitude <= reach * reach ? IntentResult.Success : IntentResult.InProgress;
+        }
+
+        public void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId)
+        {
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant == agentId)
+            {
+                _bunkOccupants.Remove(bunkId);
+                RebuildOccupiedBunks();
+            }
+        }
+
+        public void RecordBunkSleep(UnityEngine.GUID agentId)
+        {
+            _bunkSleeps.TryGetValue(agentId, out int n);
+            _bunkSleeps[agentId] = n + 1;
+        }
+
+        /// <summary>
+        /// Drops every claim whose sleeper is no longer sleeping in that bunk (preempted, cancelled or removed), so a
+        /// bunk can never stay taken by someone who left it. Runs every tick before the snapshot.
+        /// </summary>
+        internal void ValidateBunkOccupancy()
+        {
+            if (_bunkOccupants.Count == 0) return;
+            _bunkScratch.Clear();
+            foreach (var kvp in _bunkOccupants)
+            {
+                bool sleeping = _activeIntents.TryGetValue(kvp.Value, out var state)
+                    && state.Intent is SleepAtBunkIntent sleep && sleep.BunkId == kvp.Key;
+                if (!sleeping) _bunkScratch.Add(kvp.Key);
+            }
+            if (_bunkScratch.Count == 0) return;
+            for (int i = 0; i < _bunkScratch.Count; i++) _bunkOccupants.Remove(_bunkScratch[i]);
+            RebuildOccupiedBunks();
+        }
+
+        private void RebuildOccupiedBunks()
+        {
+            _occupiedBunks.Clear();
+            foreach (var kvp in _bunkOccupants) _occupiedBunks.Add(kvp.Key);
+        }
+
         private Simpiens.Cognition.Memory.AgentMemory FindMemory(UnityEngine.GUID agentId)
         {
             if (_agentRegistry != null && _agentRegistry.TryGetAgent(agentId, out var state)) return state.Memory;
@@ -658,6 +740,10 @@ namespace Simpiens.Simulation
             _supplyService?.Reset();
             _economyLedger?.Reset();
             _anchors.Clear();
+            _bunks.Clear();
+            _bunkOccupants.Clear();
+            _occupiedBunks.Clear();
+            _bunkSleeps.Clear();
             _stalls.Clear();
             _activeStallsBuffer.Clear();
             _bounties.Clear();
@@ -819,6 +905,8 @@ namespace Simpiens.Simulation
             if (_spatialPartition != null && _worldRegistry != null)
             {
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
+                ValidateBunkOccupancy();
+                _spatialPartition.SetOccupiedBunks(_occupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);
             }
         }

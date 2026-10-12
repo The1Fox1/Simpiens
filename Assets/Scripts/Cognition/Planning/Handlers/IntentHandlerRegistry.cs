@@ -55,6 +55,7 @@ namespace Simpiens.Cognition.Contracts
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ClaimBountyIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.DeliverBountyIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ScoutIntentHandler());
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.SleepAtBunkIntentHandler());
             return registry;
         }
     }

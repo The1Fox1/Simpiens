@@ -53,6 +53,20 @@ namespace Simpiens.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator Scenario_BunkRest_TiredCrawlersSleepInTheBunkhouse()
+        {
+            yield return ExecuteScenario(new BunkRestScenario());
+        }
+
+        [Test]
+        public void Scenario_RestAnchor_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Drives.RestAnchorValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
         {
             yield return ExecuteScenario(new OutpostSupplyLoopScenario());

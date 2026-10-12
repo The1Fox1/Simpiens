@@ -15,6 +15,15 @@ namespace Simpiens.Cognition.Planning.Actions
             Effects = WorldState.Empty.With(StateFact.IsResting, true);
         }
 
+        /// <summary>
+        /// Resting where you stand is the fallback: dearer than a walk to a free bunk the agent knows, unless it is too
+        /// tired to walk (Considerations.FieldRestCost).
+        /// </summary>
+        public override float GetCost(AgentContext context)
+        {
+            return Considerations.FieldRestCost(context, BaseCost);
+        }
+
         public override AgentIntent CreateIntent(AgentContext context)
         {
             // Produces an IdleIntent with a 2-second recovery duration

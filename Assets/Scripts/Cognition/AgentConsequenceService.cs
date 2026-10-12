@@ -77,6 +77,10 @@ namespace Simpiens.Cognition
                     {
                         agent.Energy = Mathf.Min(100f, agent.Energy + 30f);
                     }
+                    else if (completedAction is SleepAtBunkAction && intent is SleepAtBunkIntent)
+                    {
+                        agent.Energy = Mathf.Min(100f, agent.Energy + Simpiens.Cognition.Planning.Considerations.BunkSleepBonus);
+                    }
                     else if (completedAction is TravelToPeerAction)
                     {
                         agent.Social = Mathf.Min(100f, agent.Social + 25f);

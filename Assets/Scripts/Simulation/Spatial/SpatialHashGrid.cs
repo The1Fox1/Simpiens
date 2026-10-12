@@ -34,6 +34,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which sectors are charted (bit i = sector i), published in every following snapshot. Main thread only.</summary>
         void SetExploredSectors(ulong mask);
 
+        /// <summary>Bunks with a sleeper, copied into every following snapshot. Main thread only.</summary>
+        void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied);
+
         /// <summary>
         /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
         /// Call when the world is torn down (respawn) so stale walls don't outlive their entities.
@@ -58,6 +61,9 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _exploredSectors = ulong.MaxValue;
         public void SetExploredSectors(ulong mask) => _exploredSectors = mask;
+
+        private IReadOnlyList<UnityEngine.GUID> _occupiedBunks;
+        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied) => _occupiedBunks = occupied;
 
         public void ResetStatic()
         {
@@ -173,6 +179,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.Clear();
             _currentTickSnapshot.SetMap(_map);
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
+            _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
             if (_staticRebuildPending)

@@ -11,6 +11,7 @@ namespace Simpiens.Simulation
         bool AbortIntent(UnityEngine.GUID agentId);
         void RegisterResource(ResourceData data);
         void RegisterAnchor(UnityEngine.GUID id, UnityEngine.Vector2 position, float radius = 3.0f);
+        void RegisterBunk(UnityEngine.GUID id, UnityEngine.Vector2 position);
         void RegisterTradeStall(Simpiens.Simulation.Economy.TradeStallData stallData);
         bool TryGetTradeStall(UnityEngine.GUID stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
         System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> ActiveStalls { get; }

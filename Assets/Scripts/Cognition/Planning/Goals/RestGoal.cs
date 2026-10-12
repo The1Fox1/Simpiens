@@ -22,7 +22,7 @@ namespace Simpiens.Cognition.Planning.Goals
         public override bool IsValid(AgentContext context)
         {
             // Only consider resting when energy falls below tired threshold
-            return context.Energy < 40f;
+            return context.Energy < Considerations.TiredEnergy;
         }
     }
 }

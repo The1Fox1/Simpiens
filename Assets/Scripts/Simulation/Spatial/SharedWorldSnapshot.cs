@@ -55,6 +55,27 @@ namespace Simpiens.Simulation.Spatial
         /// started explored. Nobody perceives what is inside an uncharted sector. Defaults to everything charted.
         /// </summary>
         public ulong ExploredSectorMask { get; private set; } = ulong.MaxValue;
+
+        // Rest anchor (Epic MAP Phase 3): bunks with a sleeper this tick
+        public const int MaxBunks = 32;
+        private readonly UnityEngine.GUID[] _occupiedBunks = new UnityEngine.GUID[MaxBunks];
+        public int OccupiedBunkCount { get; private set; }
+
+        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied)
+        {
+            int count = occupied != null ? Mathf.Min(occupied.Count, MaxBunks) : 0;
+            for (int i = 0; i < count; i++) _occupiedBunks[i] = occupied[i];
+            OccupiedBunkCount = count;
+        }
+
+        public bool IsBunkOccupied(UnityEngine.GUID bunkId)
+        {
+            for (int i = 0; i < OccupiedBunkCount; i++)
+            {
+                if (_occupiedBunks[i] == bunkId) return true;
+            }
+            return false;
+        }
         public void SetExploredSectors(ulong mask) => ExploredSectorMask = mask;
 
         public bool IsSectorCharted(int sectorId)

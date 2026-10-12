@@ -139,6 +139,11 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.KnowsAnchorLocation, knowsAnchor);
                 state = state.With(StateFact.AtAnchorLocation, atAnchor);
 
+                // Rest anchor: a remembered bunk that is free right now
+                bool knowsBunk = BunkTargeting.TryGetNearestFreeBunk(context, out _, out var bunkPosition);
+                state = state.With(StateFact.KnowsBunkLocation, knowsBunk);
+                state = state.With(StateFact.AtBunk, knowsBunk && (bunkPosition - context.Position).sqrMagnitude <= BunkTargeting.ReachDistance * BunkTargeting.ReachDistance);
+
                 // 5. Relational / Social Matrix
                 bool hasWarmCompanion = false;
                 bool hasTrustedPeer = false;

@@ -20,11 +20,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// </summary>
     public class OutpostSupplyLoopScenario : ISimulationScenario
     {
-        // Floor 1 under the fog of war (Epic MAP Phase 3), slowest of 3 runs x 1.5: scout t518, gather t705 (only
-        // after the Deep Seam is charted), first sale t377
-        public const uint GatherDeadlineTicks = 1100;
-        public const uint SaleDeadlineTicks = 750;
-        public const uint ScoutDeadlineTicks = 800;
+        // Floor 1 with fog of war and bunks (Epic MAP Phase 3), slowest of 3 runs x 1.5: first sale t234, scout t349,
+        // gather t910 (only after the Deep Seam is charted)
+        public const uint GatherDeadlineTicks = 1400;
+        public const uint SaleDeadlineTicks = 400;
+        public const uint ScoutDeadlineTicks = 550;
         public const uint SupplyDeadlineTicks = 6000;
         private const float WallClockTimeoutSeconds = 240f;
 
@@ -69,7 +69,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             // Crawler-focused decision trace to a file; the console only receives warnings and errors
             var previousLogSettings = SimLog.Settings;
             var traceSettings = SimLogSettings.FromEnvironment();
-            SimLogSettings.ApplySpec(traceSettings, "Planning=Trace;Cognition=Debug;Economy=Debug;Supply=Debug;Navigation=Debug;Intervention=Debug;Drives=Info;Console=Warn");
+            SimLogSettings.ApplySpec(traceSettings, "Planning=Trace;Cognition=Debug;Economy=Debug;Supply=Debug;Navigation=Debug;Intervention=Debug;Drives=Debug;Console=Warn");
             traceSettings.FilePath = TraceLogPath;
             traceSettings.FocusAgentPrefixes.Add("Crawler");
             SimLog.Configure(traceSettings);

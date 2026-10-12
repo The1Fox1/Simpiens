@@ -174,6 +174,12 @@ namespace Simpiens.Core.Session
             for (int p = 0; p < map.Pois.Count; p++)
             {
                 var poi = map.Pois[p];
+                if (poi.Kind == PoiKind.Bunk)
+                {
+                    SpawnBunk(propsRoot, poi.Position, out var bunkId);
+                    _world.RegisterEntity(poi.Key, bunkId);
+                    continue;
+                }
                 if (poi.Kind != PoiKind.Hearth) continue;
                 SpawnDemoCampfire(propsRoot, poi.Position, poi.Radius, out var anchorId);
                 _world.RegisterEntity(poi.Key, anchorId);
@@ -312,6 +318,27 @@ namespace Simpiens.Core.Session
 
             _registry.RegisterNode(controller);
             _simulationManager.RegisterAnchor(anchorId, pos, radius: radius);
+        }
+
+        /// <summary>A bunk: walkable (no collider), one sleeper at a time (Epic MAP Phase 3 rest anchor).</summary>
+        private void SpawnBunk(GameObject root, Vector2 pos, out GUID bunkId)
+        {
+            var bunkGo = new GameObject($"Bunk_{pos.x}_{pos.y}");
+            bunkGo.transform.SetParent(root.transform);
+            bunkGo.transform.position = pos;
+
+            var sr = bunkGo.AddComponent<SpriteRenderer>();
+            sr.sprite = AgentSpriteLibrary.BunkSprite;
+            sr.sortingOrder = -1; // under the sleeper
+            bunkGo.transform.localScale = Vector3.one * 0.9f;
+
+            var controller = bunkGo.AddComponent<NodeController>();
+            controller.Type = EntityType.Bunk;
+            bunkId = NextEntityId();
+            controller.Initialize(bunkId, new NodeConfiguration(speed: 0f));
+
+            _registry.RegisterNode(controller);
+            _simulationManager?.RegisterBunk(bunkId, pos);
         }
 
         private void CleanupExistingWorld()
