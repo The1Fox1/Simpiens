@@ -131,6 +131,8 @@ namespace Simpiens.Cognition
             {
                 if (IsExhaustionCollapsed) return AgentVisualState.Resting;
                 if (TantrumTimer > 0f || IsStarvationPanicking) return AgentVisualState.Panicking;
+                // Asleep in a bunk: the brief social looks below don't sit the sleeper up
+                if (_baseVisualState == AgentVisualState.Sleeping) return AgentVisualState.Sleeping;
                 if (DefiantTimer > 0f) return AgentVisualState.Defiant;
                 if (YieldingTimer > 0f) return AgentVisualState.Yielding;
                 if (SharingTimer > 0f) return AgentVisualState.Sharing;
@@ -232,18 +234,24 @@ namespace Simpiens.Cognition
             }
         }
 
+        // A social look replaces the base look, except a bunk sleeper's (only waking ends that)
+        private void SetSocialVisual(AgentVisualState state)
+        {
+            if (_baseVisualState != AgentVisualState.Sleeping) _baseVisualState = state;
+        }
+
         public void TriggerGossipVisual(float timestamp = 0f, float duration = 1.5f)
         {
             LastGossipTimestamp = timestamp;
             GossipTimer = duration > 0f ? duration : 1.5f;
-            VisualState = AgentVisualState.Gossiping;
+            SetSocialVisual(AgentVisualState.Gossiping);
         }
 
         public void TriggerYieldVisual(float timestamp = 0f, float duration = 1.2f)
         {
             LastYieldTimestamp = timestamp;
             YieldingTimer = duration > 0f ? duration : 1.2f;
-            VisualState = AgentVisualState.Yielding;
+            SetSocialVisual(AgentVisualState.Yielding);
         }
 
         public void TriggerTantrumVisual(float timestamp = 0f, float duration = 2.5f)
@@ -257,19 +265,19 @@ namespace Simpiens.Cognition
         public void TriggerSharingVisual(float duration = 1.2f)
         {
             SharingTimer = duration > 0f ? duration : 1.2f;
-            VisualState = AgentVisualState.Sharing;
+            SetSocialVisual(AgentVisualState.Sharing);
         }
 
         public void TriggerRallyVisual(float duration = 2.0f)
         {
             RallyTimer = duration;
-            VisualState = AgentVisualState.Rallying;
+            SetSocialVisual(AgentVisualState.Rallying);
         }
 
         public void TriggerDefiantVisual(float duration = 1.5f)
         {
             DefiantTimer = duration;
-            VisualState = AgentVisualState.Defiant;
+            SetSocialVisual(AgentVisualState.Defiant);
         }
 
         public void TriggerReliefVisual()

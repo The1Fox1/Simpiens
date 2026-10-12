@@ -42,12 +42,13 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             state.ElapsedTime += context.FixedTickDeltaTime;
             var agent = node.Agent;
-            if (agent != null && !agent.IsGossiping) agent.VisualState = AgentVisualState.Resting;
+            if (agent != null) agent.VisualState = AgentVisualState.Sleeping;
 
             if (state.ElapsedTime >= sleep.Duration)
             {
                 context.ReleaseBunk(sleep.BunkId, node.Id);
                 context.RecordBunkSleep(node.Id);
+                if (agent != null) agent.VisualState = AgentVisualState.Idle; // up and out of the bunk
                 SimLog.Drives.ZLogDebug($"{SimLog.Agent(node.Id)} slept in bunk {SimLog.Agent(sleep.BunkId)}");
                 return IntentResult.Success;
             }

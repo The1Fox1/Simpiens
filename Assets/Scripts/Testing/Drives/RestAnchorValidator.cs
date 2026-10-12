@@ -149,8 +149,8 @@ namespace Simpiens.Testing.Drives
                 {
                     result = sim.StepOntoBunk(node, BunkId);
                 }
-                Assert(result == IntentResult.Success && Vector2.Distance(node.Position, bunkPos) <= BunkTargeting.ReachDistance,
-                    $"From 1.3 units away the sleeper steps onto the bunk ({result} after {ticks} ticks, at {node.Position}).");
+                Assert(result == IntentResult.Success && Vector2.Distance(node.Position, bunkPos) <= SimulationManager.BunkSettleDistance,
+                    $"From 1.3 units away the sleeper steps onto the bunk's exact position ({result} after {ticks} ticks, at {node.Position}).");
                 Assert(sim.TryClaimBunk(BunkId, AgentId, node.Position), "And can then claim it.");
 
                 sim.ReleaseBunk(BunkId, AgentId);

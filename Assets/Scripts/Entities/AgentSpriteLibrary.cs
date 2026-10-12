@@ -10,7 +10,7 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[11, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[12, 2];
         private static readonly Sprite _resourceSprite;
         private static readonly Sprite _oreVeinSprite;
         private static readonly Sprite _herbPatchSprite;
@@ -137,6 +137,16 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Defiant, 0] = CreateSprite(PatternDefiant0, defiantPalette, "Agent_Defiant_0");
             _agentSprites[(int)AgentVisualState.Defiant, 1] = CreateSprite(PatternDefiant1, defiantPalette, "Agent_Defiant_1");
 
+            // 11b. Sleeping Sprites (head on the bunk's pillow, under a blanket in the bunk's colours). Drawn over the
+            // bunk sprite (agent scale 0.7, bunk 0.9): the blanket covers the bunk's blanket and leaves its frame showing.
+            var sleepPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(79, 110, 196, 255),
+                shadow: new Color32(55, 79, 150, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Sleeping, 0] = CreateSprite(PatternSleep0, sleepPalette, "Agent_Sleep_0");
+            _agentSprites[(int)AgentVisualState.Sleeping, 1] = CreateSprite(PatternSleep1, sleepPalette, "Agent_Sleep_1");
+
             // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
@@ -220,7 +230,7 @@ namespace Simpiens.Entities
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 11) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= _agentSprites.GetLength(0)) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -683,6 +693,46 @@ namespace Simpiens.Entities
             "################",
             "#SBBBB#SBBBBBBB#",
             "################"
+        };
+
+        private static readonly string[] PatternSleep0 =
+        {
+            "................",
+            ".....######.ZZ..",
+            "....#HHHHHH#.Z..",
+            "....#K#KK#K#ZZ..",
+            "....#KKKKKK#....",
+            "..############..",
+            "..#CCCCCCCCCC#..",
+            "..#CCSSSSSSCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCSSSSSSCC#..",
+            "..#CCCCCCCCCC#..",
+            "..############..",
+            "................",
+            "................"
+        };
+
+        private static readonly string[] PatternSleep1 =
+        {
+            ".............ZZ.",
+            ".....######...Z.",
+            "....#HHHHHH#.ZZ.",
+            "....#K#KK#K#....",
+            "....#KKKKKK#....",
+            "..############..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCSSSSCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCSSSSCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..############..",
+            "................",
+            "................"
         };
 
         private static readonly string[] PatternBunk =

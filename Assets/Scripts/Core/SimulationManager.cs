@@ -204,6 +204,9 @@ namespace Simpiens.Simulation
         /// <summary>Slack on top of BunkTargeting.ReachDistance for a sleeper's final step onto the bunk.</summary>
         public const float BunkClaimTolerance = 0.25f;
 
+        /// <summary>A sleeper this close to the bunk's position is lying in it.</summary>
+        public const float BunkSettleDistance = 0.02f;
+
         private readonly Dictionary<UnityEngine.GUID, Vector2> _bunks = new Dictionary<UnityEngine.GUID, Vector2>(16);
         private readonly Dictionary<UnityEngine.GUID, UnityEngine.GUID> _bunkOccupants = new Dictionary<UnityEngine.GUID, UnityEngine.GUID>(16);
         private readonly List<UnityEngine.GUID> _occupiedBunks = new List<UnityEngine.GUID>(16);
@@ -234,12 +237,12 @@ namespace Simpiens.Simulation
             if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
 
-            float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance;
-            if ((bunkPosition - (Vector2)node.Position).sqrMagnitude <= reach * reach) return IntentResult.Success;
+            // Walk to the bunk's exact position (at walking speed, so the view never sees a jump): the sleeper lies in it
+            if ((bunkPosition - (Vector2)node.Position).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
 
             Vector2 candidate = Vector2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
             if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
-            return (bunkPosition - candidate).sqrMagnitude <= reach * reach ? IntentResult.Success : IntentResult.InProgress;
+            return (bunkPosition - candidate).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
         }
 
         public void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId)
@@ -283,7 +286,16 @@ namespace Simpiens.Simulation
                 if (!sleeping) _bunkScratch.Add(kvp.Key);
             }
             if (_bunkScratch.Count == 0) return;
-            for (int i = 0; i < _bunkScratch.Count; i++) _bunkOccupants.Remove(_bunkScratch[i]);
+            for (int i = 0; i < _bunkScratch.Count; i++)
+            {
+                // A sleeper pulled out of bed (preempted) gets up, unless its new intent already set its own look
+                if (_agentRegistry != null && _agentRegistry.TryGetAgent(_bunkOccupants[_bunkScratch[i]], out var sleeper)
+                    && sleeper.VisualState == Simpiens.Entities.AgentVisualState.Sleeping)
+                {
+                    sleeper.VisualState = Simpiens.Entities.AgentVisualState.Idle;
+                }
+                _bunkOccupants.Remove(_bunkScratch[i]);
+            }
             RebuildOccupiedBunks();
         }
 

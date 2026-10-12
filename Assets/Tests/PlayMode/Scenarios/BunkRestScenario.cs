@@ -15,7 +15,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// Definition-of-Done scenario for the rest anchor (Epic MAP Phase 3, epic §2.3). Runs the real outpost session
     /// on Floor 1 at 10x and injects nothing: crawlers start rested at the Road Gate and discover the Bunkhouse on
     /// their own. Within the bound, at least 3 distinct crawlers complete a sleep in a bunk; no bunk ever holds two
-    /// sleepers; no crawler starves. Hunger rises 1.5 per second, so brief peaks at the cap are routine; starving
+    /// sleepers; every sleeper lies on its bunk and is shown asleep; no crawler starves. Hunger rises 1.5 per second, so brief peaks at the cap are routine; starving
     /// means going without food: hunger at or above StarvingHunger for StarvingTicks in a row.
     /// </summary>
     public class BunkRestScenario : ISimulationScenario
@@ -41,6 +41,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private long _firstSleepTick = -1;
         private int _doubleOccupancy;
         private string _firstDoubleOccupancy;
+        private int _misplacedSleepers;
+        private string _firstMisplacedSleeper;
         private int _starving;
         private int _collapses;
         private long _observedTicks;
@@ -53,6 +55,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             var clock = resolver.Resolve<ISimulationClock>();
             var sim = resolver.Resolve<ISimulationManager>() as SimulationManager;
+            var world = resolver.Resolve<IWorldRegistry>();
+            var agentRegistry = resolver.Resolve<IAgentRegistry>();
             var spawner = resolver.Resolve<SwarmSpawner>();
             Assert.IsNotNull(sim, "SimulationManager not registered.");
             Assert.IsNotNull(spawner, "SwarmSpawner not registered.");
@@ -91,6 +95,16 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                     {
                         _doubleOccupancy++;
                         _firstDoubleOccupancy ??= $"t{rel}: bunk {sleep.BunkId}";
+                    }
+
+                    // The sleeper lies in the bunk and is shown asleep
+                    var bunk = world?.GetNode(sleep.BunkId);
+                    if (bunk != null && agentRegistry != null && agentRegistry.TryGetAgent(kvp.Key, out var sleeper)
+                        && (Vector2.Distance(sleeper.Position, bunk.Position) > SimulationManager.BunkSettleDistance
+                            || sleeper.VisualState != Simpiens.Entities.AgentVisualState.Sleeping))
+                    {
+                        _misplacedSleepers++;
+                        _firstMisplacedSleeper ??= $"t{rel}: {sleeper.Position} for bunk {bunk.Position}, shown {sleeper.VisualState}";
                     }
                 }
 
@@ -150,6 +164,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Assert.IsTrue(_thirdSleeperTick >= 0 && _thirdSleeperTick <= SleepersDeadlineTicks,
                 $"The third crawler slept in a bunk at {_thirdSleeperTick}, after the {SleepersDeadlineTicks}-tick deadline.");
             Assert.AreEqual(0, _doubleOccupancy, $"A bunk held two sleepers ({_doubleOccupancy} observations; first {_firstDoubleOccupancy}).");
+            Assert.AreEqual(0, _misplacedSleepers, $"A sleeper was off its bunk or not shown asleep ({_misplacedSleepers} observations; first {_firstMisplacedSleeper}).");
             Assert.AreEqual(0, _starving, $"{_starving} crawlers starved (hunger >= {StarvingHunger} for {StarvingTicks} ticks).");
             Assert.AreEqual(0, detector.StackingCount, $"Pawn stacking detected ({detector.StackingCount}).");
         }

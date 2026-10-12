@@ -53,7 +53,8 @@ namespace Simpiens.Cognition.Contracts
 
         /// <summary>
         /// Moves the agent one tick toward the bunk's exact position, ignoring pawn clearance (the bunk is free; stepping
-        /// onto it is the point). Success once within reach; TargetMissing when unknown or taken by someone else.
+        /// onto it is the point). Success once on the bunk's exact position, so the sleeper lies in it; PathBlocked when a
+        /// wall is in the way; TargetMissing when unknown or taken by someone else.
         /// </summary>
         IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId);
 
