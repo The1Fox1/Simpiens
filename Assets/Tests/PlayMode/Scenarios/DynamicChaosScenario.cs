@@ -2,7 +2,6 @@ using System.Collections;
 using NUnit.Framework;
 using Simpiens.Simulation;
 using Simpiens.Testing.Diagnostics;
-using Simpiens.Testing.Sessions;
 using Simpiens.Testing.Environment;
 using UnityEngine;
 using VContainer;
@@ -12,15 +11,34 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// <summary>
     /// Scenario testing dynamic obstacle injection directly in front of moving agents.
     /// Verifies that the progressive unstuck reflex resolves cleanly without persistent jitter loops or clipping.
+    /// Runs on the outpost floor (Epic MAP Phase 3): walls drop into doors the crawlers stream through on their way
+    /// out of the Road Gate, first the Hub - Bunkhouse door, then the Ore Quarry - Hub door. (The gate door itself
+    /// sits beside the 12 spawn points and is never clear enough to drop a wall in front of, not onto, a crawler.)
     /// </summary>
     public class DynamicChaosScenario : ISimulationScenario
     {
         public string Name => "DynamicChaosScenario";
-        public string SessionId => CanaryPenSession.SessionId; // 24 pen agents crowd the narrow pens
+        public string SessionId => Simpiens.Core.Session.OutpostSession.SessionId;
         public float DurationSeconds => 4.0f;
         public float TimeMultiplier => 2.5f;
 
-        private static readonly Vector2 InjectionOffset = new Vector2(0.8f, 0f);
+        // Spots across a doorway (offsets along the door from its centre, half a cell either side of the wall line):
+        // the door narrows from four cells to three. The wall must drop in front of the crawlers, never onto one: the injector's own
+        // clearance check uses physics colliders, which do not see pawns (it shifted the walls off the doors and
+        // onto standing pawns), so the scenario picks a spot clear of every pawn from their logical positions.
+        private static readonly Vector2[] DoorSpots =
+        {
+            new Vector2(-0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-1.5f, 0.5f), new Vector2(1.5f, 0.5f),
+            new Vector2(-0.5f, -0.5f), new Vector2(0.5f, -0.5f), new Vector2(-1.5f, -0.5f), new Vector2(1.5f, -0.5f)
+        };
+
+        /// <summary>
+        /// An injected wall blocks the 3x3 cells around it (radius 0.5 plus body inflation), reaching up to 1.5 units
+        /// from its centre along an axis; a pawn inside those cells is inside the wall the moment it appears (seen
+        /// at 1.01 units). Outside them, plus one step of travel, the wall really drops in front of the pawn.
+        /// </summary>
+        private const float PawnClearance = 2.0f;
+        private const int MaxWaitFrames = 300;
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
         {
@@ -33,18 +51,64 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             // Allow initial navigation to establish
             yield return new WaitForSeconds(1.0f);
 
-            // Inject an unexpected wall beside the contested bush in Pen 3, where the rivals path
+            // Inject an unexpected wall into the Hub - Bunkhouse door while the crawlers file through it
             var map = resolver.Resolve<Simpiens.Core.Session.SwarmSpawner>().World.Map;
-            Assert.IsTrue(map.TryGetResourceNode(DevMapLayout.Pen3ContestedBush, out var pen3Bush), "Pen 3 contested bush missing.");
-            Assert.IsTrue(map.TryGetResourceNode(DevMapLayout.Pen2ContestedBush, out var pen2Bush), "Pen 2 contested bush missing.");
+            Assert.AreEqual("Floor1", map.Name, "Dynamic chaos runs on the outpost floor.");
+            var hubDoor = Simpiens.Core.Session.Layouts.Floor1Layout.HubBunkhouseDoor;
+            var quarryDoor = Simpiens.Core.Session.Layouts.Floor1Layout.Doors[3];
             var injector = resolver.Resolve<EdgeCaseInjector>();
-            injector?.InjectWall(pen3Bush.Position + InjectionOffset);
+            var spawner = resolver.Resolve<Simpiens.Core.Session.SwarmSpawner>();
+            yield return InjectClearOfPawns(injector, spawner, hubDoor, verticalWall: false);
 
             // Allow unstuck reflexes to engage and recover
             yield return new WaitForSeconds(1.0f);
 
-            // Inject a second obstacle in Pen 2 to test cascading clearance
-            injector?.InjectWall(pen2Bush.Position + InjectionOffset);
+            // Inject a second obstacle into the Ore Quarry - Hub door to test cascading clearance
+            yield return InjectClearOfPawns(injector, spawner, quarryDoor, verticalWall: true);
+        }
+
+        private static IEnumerator InjectClearOfPawns(EdgeCaseInjector injector, Simpiens.Core.Session.SwarmSpawner spawner, Vector2 door, bool verticalWall)
+        {
+            if (injector == null) yield break;
+            for (int frame = 0; frame < MaxWaitFrames; frame++)
+            {
+                for (int s = 0; s < DoorSpots.Length; s++)
+                {
+                    var offset = DoorSpots[s];
+                    var spot = door + (verticalWall ? new Vector2(offset.y, offset.x) : offset);
+                    if (IsClearOfPawns(spawner, spot))
+                    {
+                        injector.InjectWall(spot);
+                        Debug.Log($"[DynamicChaosScenario] wall at {spot} (door {door}); nearest pawn {NearestPawnDistance(spawner, spot):F2} away");
+                        yield break;
+                    }
+                }
+                yield return null;
+            }
+            Assert.Fail($"No spot in the door at {door} was clear of pawns for {MaxWaitFrames} frames.");
+        }
+
+        private static float NearestPawnDistance(Simpiens.Core.Session.SwarmSpawner spawner, Vector2 spot)
+        {
+            float best = float.MaxValue;
+            var agents = spawner.Agents;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var state = agents[i] != null ? agents[i].State : null;
+                if (state != null) best = Mathf.Min(best, Vector2.Distance(state.Position, spot));
+            }
+            return best;
+        }
+
+        private static bool IsClearOfPawns(Simpiens.Core.Session.SwarmSpawner spawner, Vector2 spot)
+        {
+            var agents = spawner.Agents;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var state = agents[i] != null ? agents[i].State : null;
+                if (state != null && Vector2.Distance(state.Position, spot) < PawnClearance) return false;
+            }
+            return true;
         }
 
         public void AssertResults(IVisualAnomalyDetector detector)
