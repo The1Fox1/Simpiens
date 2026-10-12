@@ -53,6 +53,9 @@ namespace Simpiens.Simulation.World
         /// and loads its sectors. Main thread only; call before spawning the map's entities.
         /// </summary>
         LoadedWorld Load(MapDefinition map);
+
+        /// <summary>The sector registry loaded with each map (null in headless setups without one).</summary>
+        ISectorRegistry Sectors { get; }
     }
 
     public sealed class WorldMap : IWorldMap
@@ -64,6 +67,8 @@ namespace Simpiens.Simulation.World
 
         public MapDefinition Current { get; private set; }
         public int Version { get; private set; }
+
+        public ISectorRegistry Sectors => _sectors;
 
         [Inject]
         public WorldMap(ISpatialPartition partition = null, ISectorRegistry sectors = null)

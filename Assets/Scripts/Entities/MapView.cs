@@ -20,13 +20,17 @@ namespace Simpiens.Entities
         private static Tile _rockTile;
         private static Tile _wallTile;
 
-        /// <summary>Destroys any previous map view, draws <paramref name="map"/> and frames the main camera on it.</summary>
-        public static GameObject Show(MapDefinition map)
+        /// <summary>
+        /// Destroys any previous map view, draws <paramref name="map"/> with fog over its uncharted sectors (read from
+        /// <paramref name="sectors"/>; the definition's defaults without one) and frames the main camera on it.
+        /// </summary>
+        public static GameObject Show(MapDefinition map, ISectorRegistry sectors = null)
         {
             Clear();
             if (map == null) return null;
 
             var root = Build(map, RootName);
+            root.AddComponent<ShroudView>().Initialize(map, sectors);
             FrameCamera(map.CameraFrame);
             return root;
         }

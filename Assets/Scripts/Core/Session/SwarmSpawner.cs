@@ -158,7 +158,7 @@ namespace Simpiens.Core.Session
             // 1. Static geography: partition, walls, sectors (simulation) and the map view
             var map = session.Map;
             _world = _worldMap.Load(map);
-            MapView.Show(map);
+            MapView.Show(map, _worldMap.Sectors);
 
             // Create roots for organization
             _agentsRoot = new GameObject("[SwarmAgents]");

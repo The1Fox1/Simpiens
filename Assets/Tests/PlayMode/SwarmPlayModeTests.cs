@@ -67,6 +67,13 @@ namespace Simpiens.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator Scenario_ShroudView_FogFollowsTheChart()
+        {
+            yield return ExecuteScenario(new ShroudViewScenario());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
         {
             yield return ExecuteScenario(new OutpostSupplyLoopScenario());
