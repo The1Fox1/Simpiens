@@ -332,6 +332,15 @@ namespace Simpiens.Core.Session
             sr.sortingOrder = -1; // under the sleeper
             bunkGo.transform.localScale = Vector3.one * 0.9f;
 
+            // NodeController requires a body and a collider; without these lines it gets a dynamic body that crawlers
+            // shove around. Static, and a trigger so the bunk stays walkable
+            var rb = bunkGo.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Static;
+
+            var col = bunkGo.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+
             var controller = bunkGo.AddComponent<NodeController>();
             controller.Type = EntityType.Bunk;
             bunkId = NextEntityId();
