@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
@@ -26,10 +27,11 @@ namespace Simpiens.Testing.World
             ValidatePlayableBounds();
             ValidatePartitionSizing();
             ValidateFloor1Layout();
+            ValidateFloor1LiveUse();
             ValidateOutpostCommonsLayout();
             ValidateDevMapLayout();
 
-            Debug.Log("<color=green>[MapDefinitionValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[MapDefinitionValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBuilderInvariants()
@@ -249,6 +251,111 @@ namespace Simpiens.Testing.World
             Debug.Log($"[PASS] Test 7: Floor1 ({cells.x}x{cells.y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
         }
 
+        /// <summary>
+        /// Floor 1 as the live map (Epic MAP Phase 3): enough spawn points and bunks, named doors that really are
+        /// doors, and a hearth whose gathering ring keeps clear of every doorway and of the stall, so a crowd at
+        /// the fire never jams a door. Bunks sit clear of the gate-to-hub lane through the Bunkhouse.
+        /// </summary>
+        private void ValidateFloor1LiveUse()
+        {
+            const float HearthGatherRing = 2.0f;   // TravelToAnchorAction's perimeter distance
+            const float DoorApron = 3.0f;          // room in front of a door that must stay clear
+            const float LaneClearance = 1.5f;
+
+            var def = Floor1Layout.Definition;
+            var grid = Rasterized(def);
+
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                Assert(def.Sectors[i].Id < 64, $"Sector {def.Sectors[i].Name} id {def.Sectors[i].Id} must fit the 64-bit explored mask.");
+            }
+
+            for (int i = 0; i < Floor1Layout.Doors.Count; i++)
+            {
+                var door = Floor1Layout.Doors[i];
+                Assert(grid.WorldToCell(door, out int dx, out int dy) && grid.IsCellWalkable(dx, dy), $"Door {i} at {door} is open.");
+                bool joinsX = def.FindSector(door + Vector2.left).Id != def.FindSector(door + Vector2.right).Id;
+                bool joinsY = def.FindSector(door + Vector2.down).Id != def.FindSector(door + Vector2.up).Id;
+                Assert(joinsX || joinsY, $"Door {i} at {door} joins two sectors.");
+            }
+
+            int spawns = CountPois(def, PoiKind.SpawnPoint, Floor1Layout.RoadGateSectorId, grid);
+            Assert(spawns == Floor1Layout.SpawnPointCount, $"Floor1 has {Floor1Layout.SpawnPointCount} spawn points in the Road Gate (found {spawns}).");
+            int bunks = CountPois(def, PoiKind.Bunk, Floor1Layout.BunkhouseSectorId, grid);
+            Assert(bunks == Floor1Layout.BunkCount, $"Floor1 has {Floor1Layout.BunkCount} bunks in the Bunkhouse (found {bunks}).");
+
+            Assert(def.TryGetPoi(Floor1Layout.Hearth, out var hearth) && def.FindSector(hearth.Position).Id == Floor1Layout.HubSectorId, "The hearth is in the Hub.");
+            Assert(def.TryGetPoi(Floor1Layout.Stall, out var stall), "Floor1 has the stall.");
+            float keepOut = HearthGatherRing + DoorApron;
+            for (int i = 0; i < Floor1Layout.Doors.Count; i++)
+            {
+                float d = Vector2.Distance(hearth.Position, Floor1Layout.Doors[i]);
+                Assert(d >= keepOut, $"The hearth's gathering ring must keep clear of door {i} at {Floor1Layout.Doors[i]} ({d:F1} < {keepOut:F1}).");
+            }
+            Assert(Vector2.Distance(hearth.Position, stall.Position) >= keepOut, "The hearth's gathering ring keeps clear of the stall.");
+
+            // Walking lanes across the Hub: every pair of Hub doors, and every Hub door to the stall
+            var hubDoors = new List<Vector2>();
+            for (int i = 0; i < Floor1Layout.Doors.Count; i++)
+            {
+                var door = Floor1Layout.Doors[i];
+                if (def.FindSector(door + new Vector2(-1f, -1f)).Id == Floor1Layout.HubSectorId || def.FindSector(door + new Vector2(1f, 1f)).Id == Floor1Layout.HubSectorId)
+                {
+                    hubDoors.Add(door);
+                }
+            }
+            Assert(hubDoors.Count == 4, $"The Hub has 4 doors (found {hubDoors.Count}).");
+            float laneKeepOut = HearthGatherRing + 1.0f;
+            for (int i = 0; i < hubDoors.Count; i++)
+            {
+                float toStall = DistanceToSegment(hearth.Position, hubDoors[i], stall.Position);
+                Assert(toStall >= laneKeepOut, $"The hearth ring keeps clear of the lane from {hubDoors[i]} to the stall ({toStall:F1} < {laneKeepOut:F1}).");
+                for (int j = i + 1; j < hubDoors.Count; j++)
+                {
+                    float d = DistanceToSegment(hearth.Position, hubDoors[i], hubDoors[j]);
+                    Assert(d >= laneKeepOut, $"The hearth ring keeps clear of the lane from {hubDoors[i]} to {hubDoors[j]} ({d:F1} < {laneKeepOut:F1}).");
+                }
+            }
+
+            var laneFrom = Floor1Layout.Doors[6];   // Bunkhouse - Road Gate
+            var laneTo = Floor1Layout.HubBunkhouseDoor;
+            for (int i = 0; i < def.Pois.Count; i++)
+            {
+                var p = def.Pois[i];
+                if (p.Kind != PoiKind.Bunk) continue;
+                float d = DistanceToSegment(p.Position, laneFrom, laneTo);
+                Assert(d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+            }
+
+            Debug.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
+        }
+
+        private static int CountPois(MapDefinition def, PoiKind kind, byte sectorId, StaticNavGrid grid)
+        {
+            int count = 0;
+            for (int i = 0; i < def.Pois.Count; i++)
+            {
+                var p = def.Pois[i];
+                if (p.Kind != kind) continue;
+                Assert(def.FindSector(p.Position).Id == sectorId, $"POI '{p.Key}' at {p.Position} lies in sector {sectorId}.");
+                Assert(grid.WorldToCell(p.Position, out int x, out int y) && grid.IsCellWalkable(x, y), $"POI '{p.Key}' at {p.Position} is walkable.");
+                for (int j = 0; j < i; j++)
+                {
+                    var q = def.Pois[j];
+                    if (q.Kind == kind) Assert(Vector2.Distance(p.Position, q.Position) >= 1.5f, $"POIs '{q.Key}' and '{p.Key}' are at least 1.5 apart.");
+                }
+                count++;
+            }
+            return count;
+        }
+
+        private static float DistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float t = ab.sqrMagnitude > 0f ? Mathf.Clamp01(Vector2.Dot(point - a, ab) / ab.sqrMagnitude) : 0f;
+            return Vector2.Distance(point, a + ab * t);
+        }
+
         /// <summary>The live interim yard: one open region; the stall, every node and every crawler spawn row reachable.</summary>
         private void ValidateOutpostCommonsLayout()
         {
@@ -284,7 +391,7 @@ namespace Simpiens.Testing.World
             Assert(def.TryGetSector(OutpostCommonsLayout.HerbHollowSectorId, out var herb) && !herb.StartsExplored, "Herb Hollow starts shrouded (Scout bounty target).");
 
             var cells = def.PartitionCells(1f);
-            Debug.Log($"[PASS] Test 8: Outpost Commons ({cells.x}x{cells.y}): stall, {def.ResourceNodes.Count} nodes, {def.Sectors.Count} sectors and the crawler spawns share one region.");
+            Debug.Log($"[PASS] Test 9: Outpost Commons ({cells.x}x{cells.y}): stall, {def.ResourceNodes.Count} nodes, {def.Sectors.Count} sectors and the crawler spawns share one region.");
         }
 
         /// <summary>The pens-only Dev Map: each of the 10 pens is a closed room holding its props.</summary>
@@ -312,7 +419,7 @@ namespace Simpiens.Testing.World
                 Assert(grid.TryGetRegion(n.Position, out int r) && r == penRegions[sectorId - 1], $"Node '{n.Key}' is not reachable inside its pen.");
             }
 
-            Debug.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
+            Debug.Log("[PASS] Test 10: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
         }
 
         private static StaticNavGrid Rasterized(MapDefinition def)

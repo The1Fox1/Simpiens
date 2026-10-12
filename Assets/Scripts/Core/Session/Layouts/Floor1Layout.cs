@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
 using UnityEngine;
@@ -13,15 +14,16 @@ namespace Simpiens.Core.Session.Layouts
     ///   y 18   +----------+----------+----------+
     ///          | Deep Seam|  Garden  |Overgrowth|   frontier sectors start shrouded
     ///   y  6   +---D------+----D-----+------D---+
-    ///          |  Ore     D   Hub    D   Herb   |
-    ///          |  Quarry  |stall+fire|   Grove  |
-    ///   y -6   +----------+----D-----+----------+
-    ///          |   rock   | Bunkhouse|   rock   |
-    ///   y-12   |          +----D-----+          |
+    ///          |  Ore     D  stall   D   Herb   |   quarry and grove doors sit beside the stall
+    ///          |  Quarry  |fire      |   Grove  |   the hearth has the hub's quiet south-west corner
+    ///   y -6   +----------+-------D--+----------+
+    ///          |   rock   |bunks    D|   rock   |   one straight lane, gate to hub, along the east side
+    ///   y-12   |          +-------D--+          |
     ///          |          | Road Gate|          |
     ///   y-18   +----------+----------+----------+
     ///
-    /// Wall centre lines sit on whole units; every doorway leaves 4 walkable cells after body inflation.
+    /// Wall centre lines sit on whole units; every doorway leaves 4 walkable cells after body inflation. Doors are
+    /// placed so that no through-route crosses the hearth's gathering ring or the bunks (Epic MAP Phase 3).
     /// </summary>
     public static class Floor1Layout
     {
@@ -40,6 +42,23 @@ namespace Simpiens.Core.Session.Layouts
 
         public const string Stall = "hub.stall";
         public const string Hearth = "hub.hearth";
+
+        public const int SpawnPointCount = 12;
+        public const int BunkCount = 8;
+
+        /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
+        public static readonly IReadOnlyList<Vector2> Doors = new[]
+        {
+            new Vector2(-16f, 6f),  // Deep Seam - Ore Quarry
+            new Vector2(0f, 6f),    // Garden - Hub
+            new Vector2(16f, 6f),   // Overgrowth - Herb Grove
+            new Vector2(-8f, 3f),   // Ore Quarry - Hub
+            new Vector2(8f, 3f),    // Hub - Herb Grove
+            new Vector2(4f, -6f),   // Hub - Bunkhouse
+            new Vector2(4f, -12f),  // Bunkhouse - Road Gate
+        };
+
+        public static Vector2 HubBunkhouseDoor => Doors[5];
 
         private static MapDefinition _definition;
 
@@ -61,23 +80,23 @@ namespace Simpiens.Core.Session.Layouts
             b.WallRun(new Vector2(3f, 6f), new Vector2(13f, 6f));
             b.WallRun(new Vector2(19f, 6f), new Vector2(24f, 6f));
 
-            // x = ±8 column walls in the upper block. Doors only Ore Quarry-Hub and Hub-Herb Grove (y 0):
-            // the frontier sectors are reached through the near work sectors, never directly from the Garden
-            b.WallRun(new Vector2(-8f, -6f), new Vector2(-8f, -3f));
-            b.WallRun(new Vector2(-8f, 3f), new Vector2(-8f, 17f));
-            b.WallRun(new Vector2(8f, -6f), new Vector2(8f, -3f));
-            b.WallRun(new Vector2(8f, 3f), new Vector2(8f, 17f));
+            // x = ±8 column walls in the upper block. Doors only Ore Quarry-Hub and Hub-Herb Grove (y 0..6, beside
+            // the stall): the frontier sectors are reached through the near work sectors, never from the Garden
+            b.WallRun(new Vector2(-8f, -6f), new Vector2(-8f, 0f));
+            b.WallRun(new Vector2(-8f, 6f), new Vector2(-8f, 17f));
+            b.WallRun(new Vector2(8f, -6f), new Vector2(8f, 0f));
+            b.WallRun(new Vector2(8f, 6f), new Vector2(8f, 17f));
 
-            // y = -6: bottom of the upper block. Door: Hub-Bunkhouse (x 0)
-            b.WallRun(new Vector2(-24f, -6f), new Vector2(-3f, -6f));
-            b.WallRun(new Vector2(3f, -6f), new Vector2(24f, -6f));
+            // y = -6: bottom of the upper block. Door: Hub-Bunkhouse (x 1..7, east of the hearth)
+            b.WallRun(new Vector2(-24f, -6f), new Vector2(1f, -6f));
+            b.WallRun(new Vector2(7f, -6f), new Vector2(24f, -6f));
 
-            // Lower wing (Bunkhouse over Road Gate). Door: Bunkhouse-Road Gate (x 0)
+            // Lower wing (Bunkhouse over Road Gate). Door: Bunkhouse-Road Gate (x 1..7, in line with the hub door)
             b.WallRun(new Vector2(-8f, -18f), new Vector2(-8f, -7f));
             b.WallRun(new Vector2(8f, -18f), new Vector2(8f, -7f));
             b.WallRun(new Vector2(-8f, -18f), new Vector2(8f, -18f));
-            b.WallRun(new Vector2(-8f, -12f), new Vector2(-3f, -12f));
-            b.WallRun(new Vector2(3f, -12f), new Vector2(8f, -12f));
+            b.WallRun(new Vector2(-8f, -12f), new Vector2(1f, -12f));
+            b.WallRun(new Vector2(7f, -12f), new Vector2(8f, -12f));
 
             // Solid rock either side of the lower wing (inside the playable rect, outside the floor)
             b.Wall(Rect.MinMaxRect(-24.5f, -18.5f, -8.5f, -6.5f));
@@ -103,18 +122,18 @@ namespace Simpiens.Core.Session.Layouts
 
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vector2(0f, 2.5f), 3.0f);
-            b.Poi(Hearth, PoiKind.Hearth, new Vector2(0f, -3f), 3.0f);
+            b.Poi(Hearth, PoiKind.Hearth, new Vector2(-4.5f, -3.5f), 3.0f);
 
-            // --- Bunkhouse ---
-            b.Poi("bunk.1", PoiKind.Bunk, new Vector2(-5f, -9f), 1.0f);
-            b.Poi("bunk.2", PoiKind.Bunk, new Vector2(-2f, -9f), 1.0f);
-            b.Poi("bunk.3", PoiKind.Bunk, new Vector2(2f, -9f), 1.0f);
-            b.Poi("bunk.4", PoiKind.Bunk, new Vector2(5f, -9f), 1.0f);
-
-            // --- Road Gate spawn points ---
-            for (int i = 0; i < 6; i++)
+            // --- Bunkhouse: two rows of four in the west half, clear of the gate-to-hub lane (x 2..6) ---
+            for (int i = 0; i < BunkCount; i++)
             {
-                b.Poi($"gate.spawn.{i + 1}", PoiKind.SpawnPoint, new Vector2(-5f + i * 2f, -15f));
+                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vector2(-6f + (i % 4) * 2f, i < 4 ? -8f : -10f), 1.0f);
+            }
+
+            // --- Road Gate spawn points: two rows of six ---
+            for (int i = 0; i < SpawnPointCount; i++)
+            {
+                b.Poi($"gate.spawn.{i + 1}", PoiKind.SpawnPoint, new Vector2(-5f + (i % 6) * 2f, i < 6 ? -14f : -16f));
             }
 
             // --- Resources: near sectors (explored) ---
