@@ -296,6 +296,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_CameraRig_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.UI.CameraRigValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_MapView_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.World.MapViewValidator();

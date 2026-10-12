@@ -6,7 +6,7 @@ namespace Simpiens.Entities
 {
     /// <summary>
     /// View of a map definition: floors, rock and walls on three tilemaps (no colliders, no simulation entities), text
-    /// labels, and camera framing. Rebuilt whenever a map is loaded. Holds no simulation state.
+    /// labels, fog over uncharted sectors (<see cref="ShroudView"/>) and the camera (<see cref="CameraController"/>). Rebuilt whenever a map is loaded. Holds no simulation state.
     ///
     /// Tiles are unit cells aligned with the map's wall cells (<see cref="CellOrigin"/>): Floor 1's walls are centred on
     /// whole numbers, the Dev Map's on half numbers in y. A wall or rock tile marks a cell whose centre lies inside a
@@ -22,7 +22,8 @@ namespace Simpiens.Entities
 
         /// <summary>
         /// Destroys any previous map view, draws <paramref name="map"/> with fog over its uncharted sectors (read from
-        /// <paramref name="sectors"/>; the definition's defaults without one) and frames the main camera on it.
+        /// <paramref name="sectors"/>; the definition's defaults without one) and gives the main camera a
+        /// <see cref="CameraController"/> framing the whole map.
         /// </summary>
         public static GameObject Show(MapDefinition map, ISectorRegistry sectors = null)
         {
@@ -31,7 +32,7 @@ namespace Simpiens.Entities
 
             var root = Build(map, RootName);
             root.AddComponent<ShroudView>().Initialize(map, sectors);
-            FrameCamera(map.CameraFrame);
+            if (CameraController.AttachToMain(map.CameraFrame) == null) FrameCamera(map.CameraFrame);
             return root;
         }
 
