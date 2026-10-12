@@ -157,7 +157,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             var stalls = sim.ActiveStalls;
             if (stalls.Count > 0)
             {
-                var stall = stalls[0]; // the session has one stall (Outpost Commons)
+                var stall = stalls[0]; // the session has one stall (the hub stall)
                 row.Treasury = stall.TreasuryGold;
                 row.RationStock = stall.RationStock;
                 row.OreStock = stall.OreStock;

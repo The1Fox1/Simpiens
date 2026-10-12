@@ -2,12 +2,12 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
 using UnityEngine;
 
-namespace Simpiens.Core.Session.Layouts
+namespace Simpiens.Testing.World
 {
     /// <summary>
-    /// The Outpost Commons supply-loop yard: the live map until Floor 1 goes live (Epic MAP Phase 3). The Commons
-    /// slice of the former combined pen + Commons map, unchanged except for its bounds, which now fit the yard
-    /// (the pens moved to the test-only Dev Map in Phase 2).
+    /// Test fixture: the open Outpost Commons yard, the live map of Epic MAP Phase 2 (retired from production when
+    /// Floor 1 went live in Phase 3). Validators that hand-place agents and need sectors with no walls between
+    /// them use it: three sectors (one explored, two shrouded) and a stall in an open field.
     ///
     ///          x: -12      -5  -3    3  5       12
     ///   y 15   +--------+   +------+   +--------+
@@ -15,7 +15,7 @@ namespace Simpiens.Core.Session.Layouts
     ///          |  Ridge |   | stall|   | Hollow |   Ore Ridge and Herb Hollow start shrouded
     ///   y  5   +--------+   +------+   +--------+
     /// </summary>
-    public static class OutpostCommonsLayout
+    public static class CommonsYardFixture
     {
         // Sector ids (bounty targets and scenarios refer to these)
         public const byte OutpostMarketSectorId = 11;

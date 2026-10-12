@@ -99,18 +99,18 @@ namespace Simpiens.Testing.World
             var sectors = new SectorRegistry();
             Assert(sectors.GetSectorAt(Vector2.zero).Id == 0 && sectors.IsExplored(0), "Before a load, everything is the explored fallback.");
 
-            sectors.Load(OutpostCommonsLayout.Definition);
-            Assert(sectors.GetSectorAt(new Vector2(-8.5f, 10f)).Id == OutpostCommonsLayout.OreRidgeSectorId, "Ore Ridge anchor is in Ore Ridge.");
-            Assert(sectors.GetSectorAt(OutpostCommonsLayout.OutpostStallPosition).Id == OutpostCommonsLayout.OutpostMarketSectorId, "Stall is in the Outpost Market.");
+            sectors.Load(CommonsYardFixture.Definition);
+            Assert(sectors.GetSectorAt(new Vector2(-8.5f, 10f)).Id == CommonsYardFixture.OreRidgeSectorId, "Ore Ridge anchor is in Ore Ridge.");
+            Assert(sectors.GetSectorAt(CommonsYardFixture.OutpostStallPosition).Id == CommonsYardFixture.OutpostMarketSectorId, "Stall is in the Outpost Market.");
             Assert(sectors.GetSectorAt(new Vector2(13f, 16f)).Id == 0, "Open yard corner falls back to sector 0.");
             Assert(sectors.TryGetSector(0, out var fallback) && fallback.Name == "Transit / Open Yard", "Id 0 resolves to the fallback.");
             Assert(!sectors.TryGetSector(99, out _), "Unknown id is not found.");
 
-            Assert(sectors.IsExplored(OutpostCommonsLayout.OutpostMarketSectorId) && !sectors.IsExplored(OutpostCommonsLayout.OreRidgeSectorId), "Default exploration from the definition.");
-            sectors.SetExplored(OutpostCommonsLayout.OreRidgeSectorId, true);
-            Assert(sectors.IsExplored(OutpostCommonsLayout.OreRidgeSectorId), "SetExplored marks a sector.");
+            Assert(sectors.IsExplored(CommonsYardFixture.OutpostMarketSectorId) && !sectors.IsExplored(CommonsYardFixture.OreRidgeSectorId), "Default exploration from the definition.");
+            sectors.SetExplored(CommonsYardFixture.OreRidgeSectorId, true);
+            Assert(sectors.IsExplored(CommonsYardFixture.OreRidgeSectorId), "SetExplored marks a sector.");
             sectors.SetAllExplored(false);
-            Assert(!sectors.IsExplored(0) && !sectors.IsExplored(OutpostCommonsLayout.OutpostMarketSectorId), "SetAllExplored(false) clears everything.");
+            Assert(!sectors.IsExplored(0) && !sectors.IsExplored(CommonsYardFixture.OutpostMarketSectorId), "SetAllExplored(false) clears everything.");
             sectors.SetAllExplored(true);
             for (int i = 0; i < sectors.All.Count; i++)
             {

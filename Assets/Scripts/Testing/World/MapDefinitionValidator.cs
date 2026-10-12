@@ -28,10 +28,9 @@ namespace Simpiens.Testing.World
             ValidatePartitionSizing();
             ValidateFloor1Layout();
             ValidateFloor1LiveUse();
-            ValidateOutpostCommonsLayout();
             ValidateDevMapLayout();
 
-            Debug.Log("<color=green>[MapDefinitionValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[MapDefinitionValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBuilderInvariants()
@@ -356,44 +355,6 @@ namespace Simpiens.Testing.World
             return Vector2.Distance(point, a + ab * t);
         }
 
-        /// <summary>The live interim yard: one open region; the stall, every node and every crawler spawn row reachable.</summary>
-        private void ValidateOutpostCommonsLayout()
-        {
-            var def = OutpostCommonsLayout.Definition;
-            var grid = Rasterized(def);
-            Assert(def.TryGetPoi(OutpostCommonsLayout.OutpostStall, out var stall) && stall.Kind == PoiKind.Stall, "The Commons has the outpost stall.");
-            Assert(grid.TryGetRegion(stall.Position, out int stallRegion), "Stall is walkable.");
-
-            for (int i = 0; i < def.ResourceNodes.Count; i++)
-            {
-                var n = def.ResourceNodes[i];
-                Assert(grid.TryGetRegion(n.Position, out int r) && r == stallRegion, $"Node '{n.Key}' at {n.Position} is not reachable from the stall.");
-            }
-            for (int i = 0; i < def.Sectors.Count; i++)
-            {
-                var sector = def.Sectors[i];
-                Assert(def.PlayableBounds.Contains(sector.Bounds.min) && def.PlayableBounds.Contains(sector.Bounds.max), $"Sector {sector.Name} lies inside the yard bounds.");
-                Assert(grid.TryGetRegion(sector.TargetPoint, out int r) && r == stallRegion, $"Sector {sector.Name} is not reachable from the stall.");
-                for (int j = i + 1; j < def.Sectors.Count; j++)
-                {
-                    Assert(!sector.Bounds.Overlaps(def.Sectors[j].Bounds), $"Sectors {sector.Name} and {def.Sectors[j].Name} overlap.");
-                }
-            }
-
-            // Crawler spawn rows (OutpostSession): north edge of the yard
-            for (int c = 0; c < OutpostSession.CrawlerCount; c++)
-            {
-                var spawn = new Vector2(-3f + (c % 4) * 2f, 13f + (c / 4) * 1.5f);
-                Assert(grid.TryGetRegion(spawn, out int r) && r == stallRegion, $"Crawler spawn {spawn} is not reachable from the stall.");
-            }
-
-            Assert(def.TryGetSector(OutpostCommonsLayout.OreRidgeSectorId, out var ore) && !ore.StartsExplored, "Ore Ridge starts shrouded (Gather bounty target).");
-            Assert(def.TryGetSector(OutpostCommonsLayout.HerbHollowSectorId, out var herb) && !herb.StartsExplored, "Herb Hollow starts shrouded (Scout bounty target).");
-
-            var cells = def.PartitionCells(1f);
-            Debug.Log($"[PASS] Test 9: Outpost Commons ({cells.x}x{cells.y}): stall, {def.ResourceNodes.Count} nodes, {def.Sectors.Count} sectors and the crawler spawns share one region.");
-        }
-
         /// <summary>The pens-only Dev Map: each of the 10 pens is a closed room holding its props.</summary>
         private void ValidateDevMapLayout()
         {
@@ -419,7 +380,7 @@ namespace Simpiens.Testing.World
                 Assert(grid.TryGetRegion(n.Position, out int r) && r == penRegions[sectorId - 1], $"Node '{n.Key}' is not reachable inside its pen.");
             }
 
-            Debug.Log("[PASS] Test 10: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
+            Debug.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
         }
 
         private static StaticNavGrid Rasterized(MapDefinition def)

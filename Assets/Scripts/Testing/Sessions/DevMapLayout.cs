@@ -7,7 +7,7 @@ namespace Simpiens.Testing.Sessions
     /// <summary>
     /// The Dev Map: the 10 demonstration play pens (Epics 7, Beta, 8), test-only since Epic MAP Phase 2. Walls,
     /// sectors and props are transcribed cell for cell from the former live pen arena (parity proven in Phase 1);
-    /// the Outpost Commons yard moved to the production OutpostCommonsLayout.
+    /// the Outpost Commons yard became the open-yard test fixture CommonsYardFixture.
     /// </summary>
     public static class DevMapLayout
     {

@@ -20,9 +20,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// </summary>
     public class OutpostSupplyLoopScenario : ISimulationScenario
     {
-        public const uint GatherDeadlineTicks = 3000;
-        public const uint SaleDeadlineTicks = 3000;
-        public const uint ScoutDeadlineTicks = 4000;
+        // Floor 1 (Epic MAP Phase 3), slowest of 3 observation runs x 1.5: gather t3373, sale t468, scout t487
+        public const uint GatherDeadlineTicks = 5100;
+        public const uint SaleDeadlineTicks = 750;
+        public const uint ScoutDeadlineTicks = 750;
         public const uint SupplyDeadlineTicks = 6000;
         private const float WallClockTimeoutSeconds = 240f;
 
@@ -122,7 +123,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_scoutTick < 0 && sim.TryGetBounty(OutpostSession.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
             {
                 _scoutTick = rel;
-                _scoutZoneExplored = zones.IsSectorExplored(Simpiens.Core.Session.Layouts.OutpostCommonsLayout.HerbHollowSectorId);
+                _scoutZoneExplored = zones.IsSectorExplored(OutpostSession.SeedBountySectorId);
             }
 
             // Supply faucets
@@ -177,7 +178,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
             Assert.IsTrue(_scoutTick >= 0 && _scoutTick <= ScoutDeadlineTicks,
                 $"Scout bounty not completed within {ScoutDeadlineTicks} ticks (completed at {_scoutTick}).");
-            Assert.IsTrue(_scoutZoneExplored, "Scout bounty completed but Herb Hollow was not marked explored.");
+            Assert.IsTrue(_scoutZoneExplored, "Scout bounty completed but the Deep Seam was not marked explored.");
 
             Assert.IsTrue(_restockTick >= 0 && _restockTick <= SupplyDeadlineTicks,
                 $"No supply caravan restock within {SupplyDeadlineTicks} ticks.");

@@ -76,8 +76,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             switcher.SwitchTo(outpost);
             var fresh = Capture(spawner, clock, sim, sectors);
             Check(fresh.Tick == 0, $"Respawn rewinds the clock to 0 (got {fresh.Tick}).");
-            Check(fresh.MapName == "OutpostCommons", $"Outpost map loaded (got {fresh.MapName}).");
-            Check(fresh.AgentCount == OutpostSession.CrawlerCount, $"Outpost spawns {OutpostSession.CrawlerCount} crawlers (got {fresh.AgentCount}).");
+            Check(fresh.MapName == "Floor1", $"Outpost map loaded (got {fresh.MapName}).");
+            Check(fresh.AgentCount == OutpostSession.DefaultCrawlerCount, $"Outpost spawns {OutpostSession.DefaultCrawlerCount} crawlers (got {fresh.AgentCount}).");
             yield return RunFor(clock, RunTicks);
 
             // 2. Press the switch: Dev Map, pens only, nothing from the outpost survives
@@ -107,7 +107,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             var again = Capture(spawner, clock, sim, sectors);
             Check(!IsShown(ui?.Q<Label>("session-banner")), "Banner hidden again on the main map.");
             Check(ActiveIntentCount(sim) == 0, "No intent from the Dev Map survives the switch back.");
-            Check(RootChildCount("[SwarmAgents]") == OutpostSession.CrawlerCount, $"Scene holds only the outpost's agents (got {RootChildCount("[SwarmAgents]")}).");
+            Check(RootChildCount("[SwarmAgents]") == OutpostSession.DefaultCrawlerCount, $"Scene holds only the outpost's agents (got {RootChildCount("[SwarmAgents]")}).");
             fresh.CompareTo(again, _failures);
             if (clock is SimulationClock resume) resume.SetTimeMultiplier(TimeMultiplier);
             yield return RunFor(clock, RunTicks);

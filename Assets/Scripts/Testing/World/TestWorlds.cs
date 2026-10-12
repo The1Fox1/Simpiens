@@ -21,11 +21,11 @@ namespace Simpiens.Testing.World
             return new FacilityZoneService(DevMapSectors());
         }
 
-        /// <summary>The live Outpost Commons yard (Outpost Market, Ore Ridge, Herb Hollow).</summary>
-        public static SectorRegistry OutpostSectors()
+        /// <summary>The open Commons yard fixture (Outpost Market, Ore Ridge, Herb Hollow).</summary>
+        public static SectorRegistry CommonsYardSectors()
         {
             var sectors = new SectorRegistry();
-            sectors.Load(OutpostCommonsLayout.Definition);
+            sectors.Load(CommonsYardFixture.Definition);
             return sectors;
         }
     }
