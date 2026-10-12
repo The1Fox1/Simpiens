@@ -189,6 +189,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 resourceData.RemainingYield--;
                 harvest.YieldedItem = yieldItem == ItemType.None ? ItemType.Ration : yieldItem;
                 harvest.UnitsHarvested++;
+                context.RecordHarvest(harvest.YieldedItem);
                 if (SimLog.Traces(SimLog.Economy, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
                     SimLog.Economy.ZLogDebug($"{SimLog.Agent(node.Id)} harvested {harvest.YieldedItem} from {SimLog.Agent(harvest.TargetEntityId)} (unit {harvest.UnitsHarvested}/{harvest.TargetUnits}, {resourceData.RemainingYield} left)");

@@ -63,6 +63,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Counts a completed bunk sleep (observed by scenarios).</summary>
         void RecordBunkSleep(UnityEngine.GUID agentId);
 
+        /// <summary>Counts one harvested unit (observed by the economy soak).</summary>
+        void RecordHarvest(Simpiens.Simulation.Economy.ItemType item);
+
         bool TryGetStall(GUID stallId, out TradeStallData stall);
         void UpdateStall(TradeStallData stall);
         IReadOnlyList<TradeStallData> ActiveStalls { get; }

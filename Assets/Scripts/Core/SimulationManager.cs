@@ -251,6 +251,17 @@ namespace Simpiens.Simulation
             }
         }
 
+        private readonly Dictionary<ItemType, int> _harvested = new Dictionary<ItemType, int>(4);
+
+        public void RecordHarvest(ItemType item)
+        {
+            _harvested.TryGetValue(item, out int n);
+            _harvested[item] = n + 1;
+        }
+
+        /// <summary>Units of the item harvested this session.</summary>
+        public int HarvestedUnits(ItemType item) => _harvested.TryGetValue(item, out int n) ? n : 0;
+
         public void RecordBunkSleep(UnityEngine.GUID agentId)
         {
             _bunkSleeps.TryGetValue(agentId, out int n);
@@ -744,6 +755,7 @@ namespace Simpiens.Simulation
             _bunkOccupants.Clear();
             _occupiedBunks.Clear();
             _bunkSleeps.Clear();
+            _harvested.Clear();
             _stalls.Clear();
             _activeStallsBuffer.Clear();
             _bounties.Clear();
