@@ -16,8 +16,12 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// </summary>
     public class ScoutIntentHandler : IntentHandlerBase<ScoutIntent>
     {
-        /// <summary>The scout has visited once this close to the sector's target location (its anchor or centre).</summary>
-        public const float SurveyRadius = 2.0f;
+        /// <summary>
+        /// The scout has visited once this close to the sector's target location (its anchor or centre). Tight enough
+        /// that vision (6) from there covers a Floor 1 room: at 2.0 a scout counted its visit near the doorway side and
+        /// charted only 2 of the Deep Seam's 3 veins.
+        /// </summary>
+        public const float SurveyRadius = 1.25f;
 
         protected override IntentResult Execute(NodeController node, ScoutIntent scout, ActiveIntentState state, IIntentExecutionContext context)
         {
