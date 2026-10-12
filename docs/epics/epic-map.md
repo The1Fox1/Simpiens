@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); next: Phase 4.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); Phase 4 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase4_plan.md)); next: Phase 5.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -22,6 +22,8 @@ This revision is built around that intent:
 - Drifter arrival and departure is deferred (see Deferred).
 - A **"Dev Map" button** switches from the main map to the pen arena (§2.4).
 - **Shroud is fog of war** (2026-10-11, Phase 3 decision D1): "An adventurer should not know what is inside an uncharted room until a scout visits then successfully reports back."
+- **The player's fog** (2026-10-12, Phase 4 decision D1 = A): inside an uncharted room the player sees the walls and the name; its contents are hidden under fog; crawlers walking in stay visible.
+- **Controls over the map** (2026-10-12, Phase 4 decision D2): "Yes control over map would be nice." The header and the Bounty and Merchant windows work over the 2D view.
 
 ---
 
@@ -202,7 +204,15 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - `PopulationScalingProbe`: 24 crawlers run at 54x real time unthrottled (no escalation);
   - economy soak re-run on Floor 1 (plan §9);
   - fixes found on the way: claimants no longer sell ore owed to a bounty; an affordable stall ration counts as known food (no panic at the stall); the scout surveys from the middle of the room; path smoothing keeps clear of hearths and stalls; leadership is chronicled only when it changes.
-- [ ] Phase 4: map rendering, shroud, camera, sector-aware UI
+- [x] Phase 4: the player's view (done 2026-10-12; PlayMode 52/52 in 3 consecutive runs; producer visual check pending):
+  - the map on a tilemap (floor per room, rock, walls) aligned with each map's wall cells; `MapViewValidator` checks it cell for cell against the definition and the nav grid; 14 GameObjects for Floor 1 instead of about 270; one `RenderOrder` table;
+  - **fog of war on the map** (`ShroudView`, D1 = A): opaque over an uncharted room's interior with "UNCHARTED" under its name, props below it, crawlers above; it fades over 1.5 s when the room is charted; `ShroudViewScenario` (live);
+  - camera (`CameraRig` + `CameraController`): pan (drag, WASD), zoom toward the cursor, Home to reframe, clamped to the map; `CameraRigValidator` (headless);
+  - selection (`WorldSelection`, `WorldPicker`): click a crawler to follow it (ring and name), click a room to select it; mirrored in the dashboard;
+  - the header and the Bounty and Merchant windows in a HUD layer over the map (D2); `MapHudScenario` (live);
+  - the bounty board's sector picker lists rooms by name (Scout: uncharted only); `BountyRules` refuses impossible targets in the simulation before escrow; `PlayerScoutScenario` (live): the player posts Scout Overgrowth from the map and the fog lifts;
+  - fixes found on the way: bunks were shoved around by crawlers (dynamic physics body); the Bounties and Merchant buttons needed two presses the first time;
+  - crawlers lie down in their bunk while they sleep (producer request after the Phase 3 check).
 - [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
 
 ### Deferred (owned elsewhere)
@@ -235,3 +245,5 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 - **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are listed in the [Phase 2 plan](../../.agents/epic_map_phase2_plan.md) §8.
 - **2026-10-11: Phase 3 plan approved** with decision D1: shroud is fog of war.
 - **2026-10-12: Phase 3 done** (the outpost floor goes live). The live game runs on Floor 1 with fog of war and bunks. Open findings are in the [Phase 3 plan](../../.agents/epic_map_phase3_plan.md) §8.
+- **2026-10-12: Phase 3 visual check passed; Phase 4 plan approved** with D1 = A (crawlers visible in the fog) and D2 = yes (HUD over the map).
+- **2026-10-12: Phase 4 done** (the player's view). The player plays from the map. Deviations are in the [Phase 4 plan](../../.agents/epic_map_phase4_plan.md) §6A.

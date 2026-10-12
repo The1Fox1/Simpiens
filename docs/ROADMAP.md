@@ -211,7 +211,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
-- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only).
+- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. Since Phase 4 (2026-10-12) the player plays from the map: fog drawn over uncharted rooms, a free camera that can follow a crawler, and the bounty board and merchant over the map. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only).
 
 *Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
 
@@ -343,13 +343,20 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
 - **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11).
   - **Phase 1, world as data: done 2026-10-11** (PlayMode 42/42 ×3; live supply loop unchanged with 0 anomalies) ([plan](../.agents/epic_map_phase1_plan.md)).
   - **Phase 2, session split: done 2026-10-11** (PlayMode 43/43; live supply loop passes on the pen-free yard with 0 anomalies; `PenCanaryScenario` and `SessionSwitchScenario` pass; producer visual check of the Dev Map button pending) ([plan](../.agents/epic_map_phase2_plan.md)). The canary found and fixed a real regression: Pen 4's altruism had never worked since Grid A* (a hearth on a cell corner sealed the 2-cell pen).
-  - **Phase 3, the outpost floor goes live: done 2026-10-12** (PlayMode 47/47 ×3; producer visual check in the Editor pending) ([plan](../.agents/epic_map_phase3_plan.md)):
+  - **Phase 3, the outpost floor goes live: done 2026-10-12** (PlayMode 47/47 ×3; producer visual check passed 2026-10-12, with crawlers lying down in their bunks added on request) ([plan](../.agents/epic_map_phase3_plan.md)):
     - Floor 1 is the live map with 12 crawlers walking in from the Road Gate; the Commons yard is retired.
     - **Fog of war** (producer decision D1): nobody knows what is inside an uncharted sector until a scout visits it and successfully reports back; the report publishes the chart to every crawler.
     - **Bunks** (the rest anchor): tired crawlers walk to the Bunkhouse and sleep, one per bunk.
     - Fixes found by the new live scenarios: crawlers kept selling ore owed to a claimed bounty; agents were blind while walking; starvation panic never left the room; the whole population reached starvation panic together at the start (crawlers now arrive fed); a starving crawler at the stall with gold panicked instead of buying; the scout charted only part of its room. Phase 2 findings #2 (duplicate leadership events) and #3 (paths through hearths) fixed.
     - The economy soak re-ran on Floor 1: the numbers for the §3.3 decision are in the plan's §9.
-  - Next: **Phase 4** (player view: rendering, shroud overlay, camera, sector-aware UI).
+  - **Phase 4, the player's view: done 2026-10-12** (PlayMode 52/52 ×3; producer visual check in the Editor pending) ([plan](../.agents/epic_map_phase4_plan.md)):
+    - The map is drawn on a tilemap with a floor per room (14 GameObjects instead of about 270), checked cell for cell against the walls the pathfinder uses.
+    - **Fog of war on the map** (producer decision D1 = A): an uncharted room's contents are hidden, crawlers walking in stay visible; a scout's report fades the fog out.
+    - Camera: pan, zoom toward the cursor, reframe; click a crawler to follow it, click a room to select it in the dashboard.
+    - **The header and the Bounty and Merchant windows work over the map** (producer decision D2); Tab still opens the full dashboard.
+    - Bounties target rooms by name; the simulation refuses a Scout bounty on a charted room or any bounty on an unknown sector, before escrow.
+    - Fixes found on the way: bunks had a dynamic physics body and were shoved around by crawlers; the Bounties and Merchant buttons needed two presses the first time.
+  - Next: **Phase 5** (Definition of Done: `OutpostLifecycleScenario`, determinism check, zero anomalies).
 - **Producer intent (2026-10-11):** the live game shows one connected outpost floor where crawlers physically work, sell, eat, socialize and sleep. **Sector count is unimportant** and is data, not design; the earlier 9- versus 12-sector target is superseded. The play pens leave the live map and become test-only canaries.
 - **Producer decisions (2026-10-11):**
   - Revision 2 approved.
@@ -359,7 +366,7 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
   1. World as data: `MapDefinition`, `WorldBuilder`, `ISectorRegistry`, world bounds independent of the camera.
   2. Session split: pens become the Dev Map, plus the Dev Map toggle and `PenCanaryScenario`.
   3. Populate the outpost floor: rest anchor, 12 crawlers, fog of war, scenario migration, economy soak re-run.
-  4. Player view: rendering, shroud, camera, sector-aware UI.
+  4. Player view: rendering, shroud, camera, sector-aware UI (D1 = A: crawlers visible in the fog; D2: the HUD works over the map).
   5. DoD: `OutpostLifecycleScenario`.
 - **Superseded:** Revision 1's `OutpostMapBuilder` (never wired into the live session) is replaced in Phase 1. See the epic's review (§1).
 - **Deferred:** drifter churn (§3.3 / Epic 9), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8).

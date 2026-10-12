@@ -450,3 +450,19 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - `BunkRestScenario`: 10 distinct sleepers, 0 starving.
   - `OutpostSupplyLoopScenario`: no fog leak, the Gather bounty fulfilled after the charting, 0 anomalies.
   - The economy soak re-ran on Floor 1 (Phase 3 plan §9).
+
+## Architectural Decision: Epic MAP Phase 4, the Player's View (2026-10-12)
+- **Decision:**
+  - **The map is drawn on a Tilemap** (`MapView`): Floor, Rock and Walls tilemaps built from the `MapDefinition`, aligned with the map's wall cells (whole-number centres on Floor 1, half-number rows on the Dev Map). Each room's floor is a muted tint of its label colour. One `RenderOrder` table orders every layer.
+  - **The player's fog is a view of the charted state** (`ShroudView`, producer decision D1 = A). It reads `ISectorRegistry.ExploredMask`, the same state cognition sees, and owns none, so a respawn or a future save/load gives the right fog for free. Props sort below the fog and crawlers above it: the player knows no more about a room than the crawlers do, but can watch a scout walk in.
+  - **The camera is plain maths plus a thin input layer:** `CameraRig` (clamp, zoom about the cursor, follow, reframe; headless-testable) and `CameraController` (Input System, unscaled time, ignores pointer input over UI Toolkit elements). Follow moves with the target and closes the remaining gap, so it keeps up at 10×.
+  - **Selection is shared view state** (`WorldSelection`, a DI singleton): the map and the dashboard read and write it; nothing enters the simulation. Clicks pick the nearest crawler where it is drawn (ties to the lower id), with no physics raycast.
+  - **The HUD is a layer over everything** (producer decision D2): the header and the Bounty and Merchant windows sit in a pass-through `hud-root`, and Tab shows or hides only the three dashboard panels.
+  - **Bounty targets are validated by the simulation** (`BountyRules`, in `TryRegisterBounty`, before escrow): an unknown sector, or a Scout bounty on a charted one, is refused. The bounty board uses the same rule to explain the refusal. A Gather bounty may wait on an uncharted sector.
+- **Why:** the map gave the fog of war away, the fixed camera made crawlers a few pixels tall, posting anything meant switching to a full-screen dashboard that hid the map, and the pen-era sector slider accepted any id. Validation in the authoritative layer is what a multiplayer server will need; a picker alone is not.
+- **Consequences:**
+  - The map view is 14 GameObjects for Floor 1 instead of about 270.
+  - `IWorldMap` exposes its sector registry; `MapView.Show` takes the registry and the selection.
+  - A UXML `display: none` reads as Flex through `style.display` until code sets it; the presenter's `IsShown` falls back to the resolved style. That bug made the Bounties and Merchant buttons need two presses the first time.
+  - `NodeController` requires a body and a collider: every entity that uses it must set its own (bunks had silently got a dynamic body that crawlers shoved).
+- **Verification:** PlayMode 52/52 in 3 consecutive runs with identical milestones. `MapViewValidator` matches the tiles to the definition and the nav grid; `ShroudViewScenario`, `MapHudScenario` and `PlayerScoutScenario` run on the live session. Supply-loop and bunk milestones are unchanged from Phase 3.

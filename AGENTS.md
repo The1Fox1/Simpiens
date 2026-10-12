@@ -35,7 +35,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Entities/`**
   Contains strictly `MonoBehaviour` views that hold state or rendering instructions.
   - **Rules**: Zero logic! Only basic view management, motor controls, and configurations.
-  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's walls and labels, frames the camera; walls are sprites only, never entities).
+  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's floors, rock and walls on tilemaps plus its labels; walls are tiles only, never entities), `ShroudView.cs` (fog over uncharted sectors, read from `ISectorRegistry.ExploredMask`), `CameraRig.cs` / `CameraController.cs` (camera maths and its Input System layer), `WorldSelection.cs` (the player's selected crawler and sector, shared with the dashboard), `RenderOrder.cs` (the one sorting-order table: use it for anything drawn).
+  - A `NodeController` requires a `Rigidbody2D` and a collider: set your own (static, trigger if walkable), or Unity adds a dynamic body that pawns shove around.
 
 - **`Intervention/`**
   Player intervention system acting as an influence queue.
@@ -67,7 +68,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
 
 - **`Assets/Tests/PlayMode/`**
-  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD and anomaly scenarios use `OutpostSession` (Floor 1); `PenCanaryScenario` and `ResourceContentionScenario` use the Dev Map. `PopulationScalingProbe` is an `[Explicit]` measurement. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
+  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD and anomaly scenarios use `OutpostSession` (Floor 1); `PenCanaryScenario` and `ResourceContentionScenario` use the Dev Map. Scenarios that drive the dashboard (`SessionSwitchScenario`, `MapHudScenario`, `PlayerScoutScenario`) create it themselves, because loading the test scene destroys the boot one; they assert view state, never pixels (batch mode has no display). `PopulationScalingProbe` is an `[Explicit]` measurement. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
 
 ---
 

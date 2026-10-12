@@ -3,6 +3,11 @@
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 4. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 3, `bfb6793`; not yet merged).
 - **Written:** 2026-10-12, after the producer's Phase 3 visual check passed (including bunk sleeping, `847e432`). **Approved** by the producer 2026-10-12 with D1 = A (contents hidden under the fog, crawlers stay visible) and D2 = yes (the HUD works over the map).
+- **Implementation status (2026-10-12): steps 1–6 done** (`e352964`..`e2f5b01`). PlayMode **52/52** in 3 consecutive full runs, identical milestones each time (54 total; soak and probe explicit).
+  - `ShroudViewScenario`: both frontier rooms covered at start; the Deep Seam charted at t356 and its fog gone 1.50 s later; the Overgrowth stays covered; the camera holds a followed crawler within 0.171 units at 10×.
+  - `PlayerScoutScenario`: the player's Scout Overgrowth (default 25g) is claimed at t60 and charted at t344 (bound 520); its fog is gone 1.50 s later.
+  - `OutpostSupplyLoopScenario` and `BunkRestScenario` milestones are unchanged from Phase 3 (sale t233–234, scout t356–357, gather t568–569; third sleeper t1010).
+  - **Pending:** the producer's visual check in the Editor (§3 step 7).
 - **Goal:** the 2D view becomes the place the game is played. The player sees the floor as rooms, sees the fog where the crawlers know nothing, moves the camera freely, follows a crawler with a click, and posts bounties over the map by room name, without switching to the full-screen dashboard.
 - **What the producer sees after Phase 4:**
   - Each room has its own floor. Walls and rock are continuous tiles instead of hundreds of separate squares.
@@ -145,6 +150,17 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - **UI-3 (Milestone 2):** an in-view crawler card, roster and expedition panels.
 - **Time controls** (pause and speed keys) unless the producer adds them (§7 #8).
 - **Phase 2 §8 #1** (Pen 7) and the Phase 3 open findings (§8 of the Phase 3 plan): unchanged.
+
+## 6A. Deviations from this plan during implementation
+- **Tile alignment per map:** the Dev Map's walls are centred on half-number rows, so `MapView` takes its cell alignment from each map's walls instead of assuming whole numbers. Floor is drawn on every non-wall cell in the playable bounds (neutral where no room is), because the Dev Map has walkable cells outside its pens.
+- **Follow moves with the target**, then closes the remaining gap: plain exponential follow trailed a crawler walking at 10× by about 3 units. The follow test settles for a second of real time first (batch-mode frames are very short).
+- **`MapHudScenario` is a fifth new test** (the plan expected 4): checking the HUD needs the real dashboard, so it is a live scenario rather than a `BountyTerminalValidator` check. Scenarios that use the dashboard create it, as `SessionSwitchScenario` does.
+- **The "pointer over UI" rule** counts any pickable element except the document's own root and template container, which fill the screen without drawing anything.
+- **Extra fixes, each found on the way** (one commit each, or folded into the step that found it):
+  - `629f3f9` (before this phase): bunks had a dynamic physics body (`NodeController` requires one) and were shoved around by crawlers.
+  - step 5: the Bounties and Merchant buttons needed two presses the first time (a UXML `display: none` reads as Flex through `style.display`).
+- **`PlayerScoutScenario` bound:** t344 in the full suite (t284 when run alone), × 1.5 = 520.
+- **Not automated, as planned:** the Input System bindings themselves (a key or a drag reaching `CameraRig`).
 
 ## 7. Decisions
 
