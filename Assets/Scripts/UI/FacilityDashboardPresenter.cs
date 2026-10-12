@@ -153,13 +153,14 @@ namespace Simpiens.UI
 
         public bool IsVisible
         {
-            get => _dashboardRoot != null && _dashboardRoot.style.display != DisplayStyle.None;
+            get => IsShown(_dashboardRoot);
             set
             {
                 if (_dashboardRoot != null)
                 {
                     _dashboardRoot.style.display = value ? DisplayStyle.Flex : DisplayStyle.None;
                 }
+                UpdateViewToggleLabel();
             }
         }
 
@@ -350,6 +351,7 @@ namespace Simpiens.UI
             if (_btnViewToggle != null)
             {
                 _btnViewToggle.clicked += ToggleVisibility;
+                UpdateViewToggleLabel();
             }
 
             _sessionSwitchOverlay = _root.Q<VisualElement>("session-switch-overlay");
@@ -608,20 +610,39 @@ namespace Simpiens.UI
             return item;
         }
 
+        /// <summary>
+        /// Whether an element is displayed. A "display: none" written in the UXML is not an inline style here: until
+        /// code sets <c>style.display</c>, it reads as the default (Flex, keyword Null), so the resolved style decides.
+        /// </summary>
+        private static bool IsShown(VisualElement element)
+        {
+            if (element == null) return false;
+            var display = element.style.display;
+            return display.keyword == StyleKeyword.Null ? element.resolvedStyle.display != DisplayStyle.None : display.value != DisplayStyle.None;
+        }
+
         public void ToggleVisibility()
         {
             IsVisible = !IsVisible;
         }
 
+        /// <summary>The Tab button names where it leads.</summary>
+        private void UpdateViewToggleLabel()
+        {
+            if (_btnViewToggle != null) _btnViewToggle.text = IsVisible ? "[TAB] MAP VIEW" : "[TAB] DASHBOARD";
+        }
+
         private void Update()
         {
-            if (_root == null || !IsVisible) return;
+            if (_root == null) return;
 
             _refreshTimer += Time.deltaTime;
             if (_refreshTimer >= RefreshInterval)
             {
                 _refreshTimer = 0f;
-                RefreshAllViews();
+                // The header and the windows live in the HUD layer and show over the map too (Epic MAP Phase 4, D2)
+                if (IsVisible) RefreshAllViews();
+                else RefreshHud();
             }
         }
 
@@ -700,6 +721,15 @@ namespace Simpiens.UI
                     }
                 }
             }
+        }
+
+        /// <summary>What shows over the map: the header and any open window.</summary>
+        private void RefreshHud()
+        {
+            UpdateClockMetrics();
+            UpdateEconomicHUDMetrics();
+            RefreshMerchantTerminalView();
+            RefreshBountyBoardView();
         }
 
         private void RefreshAllViews()
@@ -1109,7 +1139,7 @@ namespace Simpiens.UI
         public void ToggleMerchantTerminal()
         {
             if (_merchantTerminalOverlay == null) return;
-            bool isOpen = _merchantTerminalOverlay.style.display != DisplayStyle.None;
+            bool isOpen = IsShown(_merchantTerminalOverlay);
             if (isOpen) CloseMerchantTerminal();
             else OpenMerchantTerminal();
         }
@@ -1150,7 +1180,7 @@ namespace Simpiens.UI
         public void ToggleBountyBoard()
         {
             if (_bountyBoardOverlay == null) return;
-            bool isOpen = _bountyBoardOverlay.style.display != DisplayStyle.None;
+            bool isOpen = IsShown(_bountyBoardOverlay);
             if (isOpen) CloseBountyBoard();
             else OpenBountyBoard();
         }
@@ -1178,7 +1208,7 @@ namespace Simpiens.UI
 
         private void RefreshMerchantTerminalView()
         {
-            if (_merchantTerminalOverlay == null || _merchantTerminalOverlay.style.display == DisplayStyle.None)
+            if (!IsShown(_merchantTerminalOverlay))
                 return;
 
             if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
@@ -1198,7 +1228,7 @@ namespace Simpiens.UI
 
         private void RefreshBountyBoardView()
         {
-            if (_bountyBoardOverlay == null || _bountyBoardOverlay.style.display == DisplayStyle.None)
+            if (!IsShown(_bountyBoardOverlay))
                 return;
 
             var activeBounties = _simulationManager != null ? _simulationManager.ActiveBounties : null;

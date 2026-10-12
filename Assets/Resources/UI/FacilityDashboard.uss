@@ -3,15 +3,30 @@
    Dark Slate Theme with Emerald / Cyan / Amber Accents
    ========================================================================== */
 
+/* The full dashboard (Tab): the three panels, under the HUD's header */
 .dashboard-root {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     background-color: #090d16;
     color: #e2e8f0;
     font-size: 13px;
-    padding: 0;
+    padding: 52px 0 0 0;
     margin: 0;
+}
+
+/* The HUD layer (Epic MAP Phase 4): the header and the windows over the map and the dashboard alike. It lets
+   clicks through (picking-mode Ignore in the UXML); its children are pickable. */
+.hud-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    color: #e2e8f0;
+    font-size: 13px;
 }
 
 /* --- Header Navigation Bar --- */
