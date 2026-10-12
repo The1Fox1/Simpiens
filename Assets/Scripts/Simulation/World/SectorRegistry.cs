@@ -23,6 +23,9 @@ namespace Simpiens.Simulation.World
 
         bool IsExplored(int sectorId);
         void SetExplored(int sectorId, bool explored);
+
+        /// <summary>Bit i set when sector i (ids below 64) is explored: what cognition sees as charted.</summary>
+        ulong ExploredMask { get; }
         void SetAllExplored(bool explored);
 
         /// <summary>Replaces the sector table with the map's and resets exploration to each sector's default.</summary>
@@ -43,6 +46,19 @@ namespace Simpiens.Simulation.World
         }
 
         public MapDefinition Map => _map;
+
+        public ulong ExploredMask
+        {
+            get
+            {
+                ulong mask = 0;
+                for (int i = 0; i < 64; i++)
+                {
+                    if (_explored[i]) mask |= 1UL << i;
+                }
+                return mask;
+            }
+        }
         public IReadOnlyList<SectorDefinition> All => _map != null ? _map.Sectors : NoSectors;
         public SectorDefinition Fallback => _fallback;
 

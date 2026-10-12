@@ -71,7 +71,8 @@ namespace Simpiens.Cognition
             uint tick = clock != null ? (uint)clock.CurrentTick : 0;
 
             // 1. Pre-cognition sync on main thread
-            agent.Memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick);
+            agent.Memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick,
+                surveySectorId: BountyQueries.SurveyingSector(snapshot, agent.AgentId));
 
             // Group directives & compliance evaluation
             if (agent.Membership.HasGroup && agent.Membership.Role != RoleRank.Leader)

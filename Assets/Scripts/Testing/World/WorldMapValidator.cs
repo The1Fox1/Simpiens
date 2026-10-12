@@ -72,7 +72,7 @@ namespace Simpiens.Testing.World
             Assert(grid.PlayableBounds == dev.PlayableBounds, "Static grid carries the map's playable bounds.");
             Assert(!IsWalkable(grid, new Vector2(0f, 3.5f)), "Pen wall at (0, 3.5) must be blocked after load.");
             Assert(ReferenceEquals(worldMap.Current, dev) && worldMap.Version == 1, "Current map and version after the first load.");
-            Assert(ReferenceEquals(sectors.Map, dev) && !sectors.IsExplored(DirectiveSectorId), "Sectors loaded with default exploration.");
+            Assert(ReferenceEquals(sectors.Map, dev) && sectors.IsExplored(DirectiveSectorId), "Sectors loaded with default exploration (the Dev Map pens start charted).");
 
             loaded.RegisterEntity("probe", new GUID(1u, 2u, 3u, 4u));
             Assert(loaded.TryGetEntityId("probe", out _) && !loaded.TryGetEntityId("missing", out _), "LoadedWorld key lookup.");
@@ -82,14 +82,16 @@ namespace Simpiens.Testing.World
                 .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
                 .Sector(1, "Only", "", new Rect(-12f, -12f, 24f, 24f), startsExplored: false)
                 .Build();
-            sectors.SetExplored(DirectiveSectorId, true);
             worldMap.Load(other);
             grid = partition.StaticGrid;
             var otherCells = other.PartitionCells(1f);
             Assert(grid.Width == otherCells.x && grid.Height == otherCells.y, "Partition resized for the second map.");
             Assert(IsWalkable(grid, new Vector2(0f, 3.5f)) && !IsWalkable(grid, new Vector2(3f, 0f)), "Second map's walls replace the first map's.");
             Assert(worldMap.Version == 2 && sectors.GetSectorAt(Vector2.zero).Id == 1, "Second load bumps the version and swaps the sector table.");
-            Assert(!sectors.IsExplored(DirectiveSectorId), "Loading a map resets exploration.");
+            Assert(!sectors.IsExplored(1), "Loading a map resets exploration to the new map's defaults.");
+            sectors.SetExplored(DirectiveSectorId, false);
+            worldMap.Load(dev);
+            Assert(sectors.IsExplored(DirectiveSectorId), "Reloading a map restores its default exploration.");
 
             Debug.Log("[PASS] Test 2: WorldMap.Load sizes the partition, writes walls, loads sectors and replaces the previous map.");
         }

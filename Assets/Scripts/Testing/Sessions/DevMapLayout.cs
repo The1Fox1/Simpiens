@@ -67,16 +67,18 @@ namespace Simpiens.Testing.Sessions
                 new Rect(2f, -3.5f, 4f, 7f), new Vector2(4f, 0f), 3.0f);
             b.Sector(5, "East Quarters", "Living bunks, private retreat chambers, and resting quarters.",
                 new Rect(6f, -3.5f, 4f, 7f), new Vector2(8f, 0f), 3.0f);
+            // Every pen starts charted: the Dev Map has no scouts, and under the fog of war (Epic MAP Phase 3) an
+            // uncharted pen would hide its own props from the agents inside it
             b.Sector(6, "Directive Sector", "Collective rallying point, military standard, and discipline drills.",
-                new Rect(-10f, -12.5f, 4f, 7f), new Vector2(-8f, -9f), 2.0f, startsExplored: false);
+                new Rect(-10f, -12.5f, 4f, 7f), new Vector2(-8f, -9f), 2.0f);
             b.Sector(7, "Defiance Sector", "Starvation defiance, passive desertion, and grievance post.",
-                new Rect(-6f, -12.5f, 4f, 7f), new Vector2(-4f, -9f), 2.0f, startsExplored: false);
+                new Rect(-6f, -12.5f, 4f, 7f), new Vector2(-4f, -9f), 2.0f);
             b.Sector(8, "Emergence Hearth", "Organic hearth emergence, campfire consensus, and settlement founding.",
-                new Rect(-2f, -12.5f, 4f, 7f), new Vector2(0f, -9f), 2.0f, startsExplored: false);
+                new Rect(-2f, -12.5f, 4f, 7f), new Vector2(0f, -9f), 2.0f);
             b.Sector(9, "Succession Arena", "Leadership succession contest, dominance trial, and power transition.",
-                new Rect(2f, -12.5f, 4f, 7f), new Vector2(4f, -9f), 2.0f, startsExplored: false);
+                new Rect(2f, -12.5f, 4f, 7f), new Vector2(4f, -9f), 2.0f);
             b.Sector(10, "Schism Ward", "Crisis of legitimacy, factional fracture, and splinter bands.",
-                new Rect(6f, -12.5f, 4f, 7f), new Vector2(8f, -9f), 2.0f, startsExplored: false);
+                new Rect(6f, -12.5f, 4f, 7f), new Vector2(8f, -9f), 2.0f);
 
             // --- Pen demonstration props ---
             b.Node(Pen1ContestedBush, new Vector2(-8f, 0f), ItemType.Ration, 1, FoodRegrowTicks);

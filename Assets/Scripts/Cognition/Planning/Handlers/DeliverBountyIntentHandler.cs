@@ -83,6 +83,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             {
                 agentState.ScoutReportBountyId = 0;
                 context.MarkSectorExplored(delBounty.TargetSectorId);
+                context.PublishSurvey(node.Id, delBounty.TargetSectorId);
             }
             else
             {

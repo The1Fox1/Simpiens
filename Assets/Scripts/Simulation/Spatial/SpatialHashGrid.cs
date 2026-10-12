@@ -31,6 +31,9 @@ namespace Simpiens.Simulation.Spatial
         /// </summary>
         void SetMap(Simpiens.Simulation.World.MapDefinition map);
 
+        /// <summary>Which sectors are charted (bit i = sector i), published in every following snapshot. Main thread only.</summary>
+        void SetExploredSectors(ulong mask);
+
         /// <summary>
         /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
         /// Call when the world is torn down (respawn) so stale walls don't outlive their entities.
@@ -52,6 +55,9 @@ namespace Simpiens.Simulation.Spatial
         public StaticNavGrid StaticGrid => _staticGrid;
 
         public void SetMap(Simpiens.Simulation.World.MapDefinition map) => _map = map;
+
+        private ulong _exploredSectors = ulong.MaxValue;
+        public void SetExploredSectors(ulong mask) => _exploredSectors = mask;
 
         public void ResetStatic()
         {
@@ -166,6 +172,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.Retain();
             _currentTickSnapshot.Clear();
             _currentTickSnapshot.SetMap(_map);
+            _currentTickSnapshot.SetExploredSectors(_exploredSectors);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
             if (_staticRebuildPending)

@@ -43,6 +43,11 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Marks a facility sector explored (e.g. on Scout bounty delivery), lifting its UI shroud.</summary>
         void MarkSectorExplored(int sectorId);
 
+        /// <summary>
+        /// Publishes a scout's survey of a sector it just reported on to every agent. Returns the landmark count.
+        /// </summary>
+        int PublishSurvey(UnityEngine.GUID scoutId, int sectorId);
+
         bool TryGetStall(GUID stallId, out TradeStallData stall);
         void UpdateStall(TradeStallData stall);
         IReadOnlyList<TradeStallData> ActiveStalls { get; }

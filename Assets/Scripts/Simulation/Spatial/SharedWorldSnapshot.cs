@@ -50,6 +50,25 @@ namespace Simpiens.Simulation.Spatial
         public Simpiens.Simulation.World.MapDefinition Map { get; private set; }
         public void SetMap(Simpiens.Simulation.World.MapDefinition map) => Map = map;
 
+        /// <summary>
+        /// Fog of war (Epic MAP Phase 3): bit i set when sector i is charted, meaning a scout has reported on it or it
+        /// started explored. Nobody perceives what is inside an uncharted sector. Defaults to everything charted.
+        /// </summary>
+        public ulong ExploredSectorMask { get; private set; } = ulong.MaxValue;
+        public void SetExploredSectors(ulong mask) => ExploredSectorMask = mask;
+
+        public bool IsSectorCharted(int sectorId)
+        {
+            if (sectorId < 0 || sectorId >= 64) return true;
+            return (ExploredSectorMask & (1UL << sectorId)) != 0;
+        }
+
+        /// <summary>True when the point lies in a charted sector, or when no map is loaded.</summary>
+        public bool IsCharted(Vector2 position)
+        {
+            return Map == null || IsSectorCharted(Map.FindSector(position).Id);
+        }
+
         public SharedWorldSnapshot(int width, int height, float cellSize, int maxEntitiesPerCell, Action<SharedWorldSnapshot> returnAction)
         {
             Width = width;

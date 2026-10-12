@@ -190,7 +190,7 @@ namespace Simpiens.Cognition.Planning
         public const uint SectorChoiceTicks = 200;
 
         /// <summary>
-        /// Picks a sector other than the one the agent stands in (deterministic per agent and SectorChoiceTicks
+        /// Picks a charted sector other than the one the agent stands in (deterministic per agent and SectorChoiceTicks
         /// window) and a point inside it, kept two units clear of the sector's walls. Arriving there changes the
         /// candidate set, so the next search moves on. False when the map offers no other sector.
         /// </summary>
@@ -200,10 +200,11 @@ namespace Simpiens.Cognition.Planning
             var sectors = map.Sectors;
             byte current = map.FindSector(context.Position).Id;
 
+            var snapshot = context.Snapshot;
             int candidates = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
-                if (sectors[i].Id != current) candidates++;
+                if (IsExplorable(snapshot, sectors[i].Id, current)) candidates++;
             }
             if (candidates == 0) return false;
 
@@ -212,7 +213,7 @@ namespace Simpiens.Cognition.Planning
             for (int i = 0; i < sectors.Count; i++)
             {
                 var sector = sectors[i];
-                if (sector.Id == current) continue;
+                if (!IsExplorable(snapshot, sector.Id, current)) continue;
                 if (pick-- > 0) continue;
 
                 var bounds = sector.Bounds;
@@ -224,6 +225,12 @@ namespace Simpiens.Cognition.Planning
                 return true;
             }
             return false;
+        }
+
+        /// <summary>Another sector, and a charted one: uncharted sectors are a scout's job (fog of war).</summary>
+        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, byte sectorId, byte current)
+        {
+            return sectorId != current && (snapshot == null || snapshot.IsSectorCharted(sectorId));
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)

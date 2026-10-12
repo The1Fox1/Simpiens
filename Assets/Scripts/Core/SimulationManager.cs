@@ -162,6 +162,52 @@ namespace Simpiens.Simulation
             _sectors?.SetExplored(sectorId, true);
             SimLog.Economy.ZLogInformation($"Sector {sectorId} marked explored");
         }
+
+        private readonly List<Simpiens.Cognition.Memory.SpatialMemoryRecord> _surveyBuffer = new List<Simpiens.Cognition.Memory.SpatialMemoryRecord>(16);
+
+        /// <summary>
+        /// A scout's successful report publishes its survey of the sector: everything it noted inside the fog goes
+        /// into every agent's spatial memory (a newer record is kept), in entity id order. Main thread.
+        /// </summary>
+        public int PublishSurvey(UnityEngine.GUID scoutId, int sectorId)
+        {
+            var scoutMemory = FindMemory(scoutId);
+            if (scoutMemory == null) return 0;
+
+            _surveyBuffer.Clear();
+            scoutMemory.TakeSurveyNotes((byte)sectorId, _surveyBuffer);
+            if (_surveyBuffer.Count == 0) return 0;
+            SortStable(_surveyBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
+
+            int recipients = 0;
+            if (_agentRegistry != null)
+            {
+                var agents = _agentRegistry.AllAgents;
+                for (int i = 0; i < agents.Count; i++)
+                {
+                    if (agents[i]?.Memory == null) continue;
+                    agents[i].Memory.ReceiveSurvey(_surveyBuffer);
+                    recipients++;
+                }
+            }
+            else
+            {
+                scoutMemory.ReceiveSurvey(_surveyBuffer);
+                recipients = 1;
+            }
+
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(scoutId)} charted sector {sectorId}: {_surveyBuffer.Count} landmarks shared with {recipients} agents");
+            return _surveyBuffer.Count;
+        }
+
+        private Simpiens.Cognition.Memory.AgentMemory FindMemory(UnityEngine.GUID agentId)
+        {
+            if (_agentRegistry != null && _agentRegistry.TryGetAgent(agentId, out var state)) return state.Memory;
+            var node = _worldRegistry?.GetNode(agentId);
+            if (node == null) return null;
+            if (node.AgentState != null) return node.AgentState.Memory;
+            return node.Agent != null ? node.Agent.Memory : null;
+        }
         public bool TryGetStall(UnityEngine.GUID stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
         public void UpdateStall(TradeStallData stall)
         {
@@ -772,6 +818,7 @@ namespace Simpiens.Simulation
             // Generate the thread-safe global snapshot for any cognitive agents that poll this frame
             if (_spatialPartition != null && _worldRegistry != null)
             {
+                if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);
             }
         }

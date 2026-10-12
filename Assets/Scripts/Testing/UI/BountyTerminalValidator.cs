@@ -278,30 +278,32 @@ namespace Simpiens.Testing.UI
 
         public void ValidateSectorShroudTracking()
         {
-            var zoneService = Simpiens.Testing.World.TestWorlds.DevMapZones();
+            var zoneService = new FacilityZoneService(Simpiens.Testing.World.TestWorlds.CommonsYardSectors());
+            int market = Simpiens.Testing.World.CommonsYardFixture.OutpostMarketSectorId;
+            int shrouded = Simpiens.Testing.World.CommonsYardFixture.OreRidgeSectorId;
 
-            // Core sectors 0..5 are explored by default
+            // The fallback and the market are explored by default
             if (!zoneService.IsSectorExplored(0)) throw new Exception("Sector 0 should be explored by default");
-            if (!zoneService.IsSectorExplored(4)) throw new Exception("Sector 4 should be explored by default");
+            if (!zoneService.IsSectorExplored(market)) throw new Exception($"Sector {market} should be explored by default");
 
-            // Sector 6 (Unexplored wilderness) should start shrouded
-            if (zoneService.IsSectorExplored(6))
+            // Ore Ridge should start shrouded
+            if (zoneService.IsSectorExplored(shrouded))
             {
-                throw new Exception("Sector 6 should start shrouded/unexplored by default!");
+                throw new Exception($"Sector {shrouded} should start shrouded/unexplored by default!");
             }
 
-            // Explore Sector 6
-            zoneService.SetSectorExplored(6, true);
-            if (!zoneService.IsSectorExplored(6))
+            // Explore it
+            zoneService.SetSectorExplored(shrouded, true);
+            if (!zoneService.IsSectorExplored(shrouded))
             {
-                throw new Exception("Sector 6 was not marked as explored!");
+                throw new Exception($"Sector {shrouded} was not marked as explored!");
             }
 
-            // Shroud Sector 6 again
-            zoneService.SetSectorExplored(6, false);
-            if (zoneService.IsSectorExplored(6))
+            // Shroud it again
+            zoneService.SetSectorExplored(shrouded, false);
+            if (zoneService.IsSectorExplored(shrouded))
             {
-                throw new Exception("Sector 6 should be shrouded after being set to false!");
+                throw new Exception($"Sector {shrouded} should be shrouded after being set to false!");
             }
 
             // Test bulk exploration
