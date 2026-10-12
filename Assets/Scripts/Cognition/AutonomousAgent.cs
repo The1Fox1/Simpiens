@@ -27,6 +27,10 @@ namespace Simpiens.Cognition
         private ICognitiveEvaluator[] _evaluators;
         private ISimulationManager _simulationManager;
         private ISimulationClock _clock;
+
+        /// <summary>Ticks between looks around while carrying out an intent (walking, harvesting, sleeping).</summary>
+        public const uint BusyPerceptionIntervalTicks = 5;
+        private long _lastBusyPerceptionTick = -BusyPerceptionIntervalTicks;
         private IGoapPlanner _planner;
         private ActionGraph _actionGraph;
         private List<GoapGoal> _goals;
@@ -372,7 +376,12 @@ namespace Simpiens.Cognition
                 return;
             }
 
-            if (State.IsEvaluating || State.HasActiveIntent) return;
+            if (!State.IsEvaluating && State.HasActiveIntent)
+            {
+                PerceiveWhileBusy();
+                return;
+            }
+            if (State.IsEvaluating) return;
 
             if (_cognitionService != null)
             {
@@ -488,6 +497,24 @@ namespace Simpiens.Cognition
             {
                 _simulationManager.Agents?.UnregisterAgent(State.AgentId);
             }
+        }
+
+        /// <summary>
+        /// Agents also see while they walk, not only between intents: on a walled floor a long walk would otherwise
+        /// pass food, bunks and doors unseen (Epic MAP Phase 3). Main thread, never while a background evaluation
+        /// is reading the memory; every BusyPerceptionIntervalTicks.
+        /// </summary>
+        private void PerceiveWhileBusy()
+        {
+            if (_spatialPartition == null || _clock == null || State.Memory == null) return;
+            long tick = _clock.CurrentTick;
+            // (a clock rewound by a respawn starts a new agent anyway; tick < last only after a rewind)
+            if (tick >= _lastBusyPerceptionTick && tick - _lastBusyPerceptionTick < BusyPerceptionIntervalTicks) return;
+            var snapshot = _spatialPartition.GetActiveSnapshot();
+            if (snapshot == null) return;
+            _lastBusyPerceptionTick = tick;
+            State.Memory.UpdateMemory(snapshot, Vector2Int.RoundToInt(State.Position), DefaultVisionRadius, (uint)tick,
+                surveySectorId: BountyQueries.SurveyingSector(snapshot, State.AgentId));
         }
     }
 }

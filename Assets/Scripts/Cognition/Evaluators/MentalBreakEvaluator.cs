@@ -57,6 +57,25 @@ namespace Simpiens.Cognition.Evaluators
                         return new PanicIntent(context.AgentId, default);
                     }
 
+                    // On a map with rooms, search another charted sector: a few units in a random direction never
+                    // leaves the room, so a starving crawler who has not yet seen the Garden would never find food
+                    // (Epic MAP Phase 3, Floor 1)
+                    var map = context.Snapshot?.Map;
+                    if (map != null && Simpiens.Cognition.Planning.ResourceTargeting.TryPickSectorWaypoint(context, map, out var sectorTarget))
+                    {
+                        var sectorRequest = new PathRequest
+                        {
+                            StartPosition = context.Position,
+                            TargetPosition = sectorTarget
+                        };
+                        var sectorPath = await _pathfinder.CalculatePathAsync(sectorRequest, context.Snapshot);
+                        if (sectorPath.IsValid && sectorPath.Length > 0)
+                        {
+                            return new PanicIntent(context.AgentId, sectorPath);
+                        }
+                        sectorPath.ReturnToPool();
+                    }
+
                     var rng = SimRandom.For(_seed, context.AgentId, context.CurrentTick, SimRandomSalt.PanicDirection);
                     float baseAngle = rng.NextFloat() * Mathf.PI * 2f;
 

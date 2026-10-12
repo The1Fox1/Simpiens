@@ -29,8 +29,9 @@ namespace Simpiens.Testing.Navigation
             ValidateDeterministicPerWindow();
             ValidateWaypointsAreRoutable();
             ValidateSingleSectorMapFallsBack();
+            ValidateSearchTriesTheLeastRecentlyVisitedSector();
 
-            Debug.Log("<color=green>[ExplorationValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[ExplorationValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateNoMapKeepsRandomBearing()
@@ -136,6 +137,39 @@ namespace Simpiens.Testing.Navigation
             float d = Vector2.Distance(ResourceTargeting.PickExplorationPoint(ctx), Vector2.zero);
             Assert(d >= 4.99f && d <= 9.01f, $"It falls back to the random bearing (got {d:F2}).");
             Debug.Log("[PASS] Test 5: A single-sector map falls back to the random bearing.");
+        }
+
+        /// <summary>
+        /// A search is systematic: the agent heads for the charted sector it stood in least recently, so a starving
+        /// crawler does not keep circling the rooms it has just searched (Epic MAP Phase 3).
+        /// </summary>
+        private void ValidateSearchTriesTheLeastRecentlyVisitedSector()
+        {
+            var def = Floor1Layout.Definition;
+            var snapshot = Floor1Snapshot(def, out _);
+            var memory = new AgentMemory();
+            uint tick = 10;
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                byte id = def.Sectors[i].Id;
+                if (id != Floor1Layout.GardenSectorId) memory.NoteSectorVisit(id, tick++);
+            }
+
+            var id1 = new UnityEngine.GUID(5u, 0x5eed5eedu, 7u, 11u);
+            for (uint w = 0; w < 10; w++)
+            {
+                var ctx = new AgentContext(id1, Vector2.zero, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 500 + w * ResourceTargeting.SectorChoiceTicks);
+                Assert(def.FindSector(ResourceTargeting.PickExplorationPoint(ctx)).Id == Floor1Layout.GardenSectorId,
+                    "Having searched every other room, the agent heads for the one it never saw: the Garden.");
+            }
+
+            memory.NoteSectorVisit(Floor1Layout.GardenSectorId, tick++);
+            def.TryGetSector(Floor1Layout.HubSectorId, out var hub);
+            var after = new AgentContext(id1, hub.Bounds.center, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 900);
+            byte next = def.FindSector(ResourceTargeting.PickExplorationPoint(after)).Id;
+            Assert(next == def.Sectors[0].Id || next == def.Sectors[1].Id,
+                $"Then the room seen longest ago (first visited) comes next, the Hub excluded (got sector {next}).");
+            Debug.Log("[PASS] Test 6: Searches try the sector visited least recently.");
         }
 
         private static SharedWorldSnapshot Floor1Snapshot(MapDefinition def, out StaticNavGrid grid)

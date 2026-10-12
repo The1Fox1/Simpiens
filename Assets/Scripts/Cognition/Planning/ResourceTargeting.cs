@@ -190,8 +190,9 @@ namespace Simpiens.Cognition.Planning
         public const uint SectorChoiceTicks = 200;
 
         /// <summary>
-        /// Picks a charted sector other than the one the agent stands in (deterministic per agent and SectorChoiceTicks
-        /// window) and a point inside it, kept two units clear of the sector's walls. Arriving there changes the
+        /// Picks a charted sector other than the one the agent stands in, the one it visited least recently (ties are
+        /// deterministic per agent and SectorChoiceTicks window), and a point inside it, kept two units clear of the
+        /// sector's walls. Arriving there changes the
         /// candidate set, so the next search moves on. False when the map offers no other sector.
         /// </summary>
         public static bool TryPickSectorWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 waypoint)
@@ -208,12 +209,26 @@ namespace Simpiens.Cognition.Planning
             }
             if (candidates == 0) return false;
 
+            // Systematic search: the candidate sector this agent stood in least recently (never first); ties go to a
+            // deterministic per-agent pick
+            uint oldest = uint.MaxValue;
+            int tied = 0;
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                if (!IsExplorable(snapshot, sectors[i].Id, current)) continue;
+                uint visit = context.Memory != null ? context.Memory.LastSectorVisit(sectors[i].Id) : 0u;
+                if (visit < oldest) { oldest = visit; tied = 1; }
+                else if (visit == oldest) tied++;
+            }
+
             uint h = ExplorationHash(context, SectorChoiceTicks);
-            int pick = (int)(h % (uint)candidates);
+            int pick = (int)(h % (uint)tied);
             for (int i = 0; i < sectors.Count; i++)
             {
                 var sector = sectors[i];
                 if (!IsExplorable(snapshot, sector.Id, current)) continue;
+                uint lastVisit = context.Memory != null ? context.Memory.LastSectorVisit(sector.Id) : 0u;
+                if (lastVisit != oldest) continue;
                 if (pick-- > 0) continue;
 
                 var bounds = sector.Bounds;

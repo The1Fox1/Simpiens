@@ -101,6 +101,17 @@ namespace Simpiens.Cognition.Memory
 
         public int SurveyNoteCount => _surveyNotes.Count;
 
+        // Last tick this agent stood in each sector (ids below 64), so searches try the room it saw least recently
+        private readonly uint[] _sectorLastVisit = new uint[64];
+
+        public uint LastSectorVisit(byte sectorId) => sectorId < _sectorLastVisit.Length ? _sectorLastVisit[sectorId] : 0u;
+
+        public void NoteSectorVisit(byte sectorId, uint tick)
+        {
+            // Stored +1 so tick 0 still counts as a visit
+            if (sectorId < _sectorLastVisit.Length) _sectorLastVisit[sectorId] = tick + 1;
+        }
+
         /// <summary>Static landmarks are hidden by the fog of war; pawns stay visible.</summary>
         public static bool IsLandmark(EntityType type)
         {
@@ -149,6 +160,7 @@ namespace Simpiens.Cognition.Memory
             _queryResults.Clear();
 
             Vector2 queryPos = new Vector2(currentPos.x, currentPos.y);
+            if (snapshot?.Map != null) NoteSectorVisit(snapshot.Map.FindSector(queryPos).Id, currentTick);
             
             // Query the global snapshot strictly within the agent's visionRadius
             // This populates our thread-local _queryResults without allocating memory

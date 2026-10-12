@@ -34,6 +34,7 @@ namespace Simpiens.Cognition.Memory
             _spatialMap.Clear();
             _blacklistedEntities.Clear();
             _affinityMap.Clear();
+            System.Array.Clear(_sectorLastVisit, 0, _sectorLastVisit.Length);
 
             if (source == null) return;
 
@@ -51,7 +52,16 @@ namespace Simpiens.Cognition.Memory
             {
                 _affinityMap[kvp.Key] = kvp.Value;
             }
+
+            for (int i = 0; i < _sectorLastVisit.Length; i++)
+            {
+                _sectorLastVisit[i] = source.LastSectorVisit((byte)i);
+            }
         }
+
+        private readonly uint[] _sectorLastVisit = new uint[64];
+
+        public uint LastSectorVisit(byte sectorId) => sectorId < _sectorLastVisit.Length ? _sectorLastVisit[sectorId] : 0u;
 
         public bool IsBlacklisted(GUID entityId, uint currentTick)
         {

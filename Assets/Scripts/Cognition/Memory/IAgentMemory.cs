@@ -25,5 +25,8 @@ namespace Simpiens.Cognition.Memory
         bool IsRespected(GUID peerId, uint currentTick, sbyte threshold = 30);
 
         bool TryGetSpatialRecord(GUID entityId, out SpatialMemoryRecord record);
+
+        /// <summary>Tick this agent last stood in the sector (0 = never), for systematic searching (Epic MAP Phase 3).</summary>
+        uint LastSectorVisit(byte sectorId);
     }
 }
