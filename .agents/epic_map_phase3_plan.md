@@ -3,6 +3,12 @@
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 3. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 2, `a646989`; not yet merged).
 - **Written:** 2026-10-11. **Approved** by the producer 2026-10-11, with D1 = fog of war (§2.3). Phase 2's visual check passed 2026-10-11.
+- **Implementation status (2026-10-12): steps 1–11 done** (`10c321f`..). PlayMode **47/47** in 3 consecutive runs, identical milestones each time (48 total with the explicit soak skipped; the population probe is explicit too).
+  - `OutpostSupplyLoopScenario` on Floor 1: first sale t234, scout reports t357 (all 3 Deep Seam veins charted for all 12 crawlers), gather t569 (after the charting), regrowth t852, restock t600; 0 fog leaks, 0 anomalies.
+  - `BunkRestScenario`: first bunk sleep t811, third sleeper t1375, 10 distinct sleepers, 0 starving (longest stretch at 95+ hunger 275 ticks), 6 collapses.
+  - `PopulationScalingProbe`: 12 / 16 / 24 crawlers at 1465 / 977 / 535 ticks per second unthrottled (146× / 98× / 54× real time). No escalation (§2.5).
+  - Economy soak on Floor 1: §9.
+  - **Pending:** the producer's visual check in the Editor (§3 step 11).
 - **Goal:** the live game runs on `Floor1Layout`. Crawlers walk in from the Road Gate, work the quarry, grove and garden, sell at the stall, gather at the hearth and sleep in the bunkhouse. Scouting the frontier has a real payoff. Every economy and anomaly scenario runs on that floor, and the soak produces the numbers for the §3.3 economy decision.
 - **What the producer sees after Phase 3:**
   - Pressing Play shows the whole outpost floor: 8 rooms and their walls.
@@ -214,8 +220,59 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 7. **Crawlers start with empty memory** and discover the outpost by walking in. Nothing is seeded, which keeps the Phase 5 "no injection" story clean.
 8. **Seeded bounties keep their 6,000-tick expiry**, unless observation shows the scout → gather chain can't fit; then the expiry is raised as data and reported.
 
+## 6A. Deviations from this plan during implementation
+- **Extra fixes, each found by a live scenario on Floor 1** (one commit each):
+  - `8203394` **bounty reservation:** the Gather bounty claimant kept selling the ore it owed the bounty (`LiquidateSalvage` outranks `FulfillBounty`); delivery took 3,373 ticks instead of 560.
+  - `201750b` **finding things on a walled floor:**
+    - agents now also perceive while walking (they were blind between intents);
+    - starvation panic heads for another charted sector instead of 2.5–4.5 units in a random direction;
+    - searches take the sector visited least recently. Before this, a crawler panicked for 2,000+ ticks without finding the Garden.
+  - `ba17023` **crawlers arrive fed** (hunger 20 instead of 50): all 12 used to hit starvation panic together about 23 s in, before earning the gold for a ration.
+  - `c315ee8` **the scout surveys from the middle of the room** (survey radius 2.0 → 1.25): it used to chart 2 of the Deep Seam's 3 veins.
+  - `0ceb890` **an affordable stall ration counts as known food:** a starving crawler stood at the stall with 20 gold and panicked instead of buying, because only remembered food plots counted.
+- **Fog of war design (D1):** the scout's private knowledge is a separate store of survey notes, not filtered memory, so gossip and targeting need no fog checks. A scout's visit means reaching the sector's survey point (it used to succeed at the threshold and saw only the doorway).
+- **Bunks** were spawned in step 7, not step 5. Relaxing at the hearth while tired is priced like resting in place, because a tired crawler at the fire otherwise never went to bed. The sleeper makes the last step onto the bunk itself: walks end up to 1 unit short (`NavConstants.ArrivalTolerance`). A bunk that could not be taken is blacklisted for 10 s; without that, one crawler retried 405 times.
+- **`BunkRestScenario` "starving"** means 95+ hunger for 300 ticks in a row. Hunger rises 1.5/s, so brief peaks at the cap (100) are routine and not starvation; the scenario logs the peak.
+- **`DynamicChaosScenario`** drops its walls in the Hub–Bunkhouse door and the Ore Quarry–Hub door, at least 2 units from every pawn. The gate door is never that clear. The injector's own clearance check (physics colliders) does not see pawns.
+- **Supply-loop bounds** (slowest of 3 × 1.5): sale 400, scout 550, gather 900. `BunkRestScenario` third sleeper: 2100.
+- **Seeded bounty expiry** stayed 6000 (§7 #8): the chain finishes by t569.
+- **Floor 1 doors moved** more than the candidate in §2.1: the quarry and grove doors went up beside the stall, the Hub–Bunkhouse and gate doors moved east (x 1..7), and the hearth sits at (−4.5, −3.5).
+
 ## 8. Carried findings
 - Phase 2 §8 #2 (duplicate leadership events): **fixed** in step 2.
 - Phase 2 §8 #3 (paths through hearths): **fixed** in step 1.
-- Phase 2 §8 #4 (Pen 6 jitter): rechecked on Floor 1 in step 8.
+- Phase 2 §8 #4 (Pen 6 jitter): rechecked on Floor 1 in step 8. See open finding 1 below.
 - Phase 2 §8 #1: open (§6).
+
+**Open findings from Phase 3** (none fails a test):
+1. **Jitter at the stall queue and the bunks.** Over 4,000 ticks the detector reports 6–8 `OscillationJitter` events across 6 crawlers, with 0 stacking. Nothing asserts on jitter on Floor 1 yet; Phase 5's zero-anomaly bar will.
+2. **The starvation margin is thin.** The longest stretch at 95+ hunger in `BunkRestScenario` is 275 ticks, against the 300-tick bar. Hunger rises 1.5/s, and a crawler without gold must reach the Garden. This is economy pacing (§9), not navigation.
+3. **About 1 in 3 bunk claims miss** (bunk taken by arrival). The crawler picks another bunk. Churn only.
+4. **Cognition cost grows faster than linearly** with population (2× crawlers, 2.7× slower). Input for §3A #8.
+5. **A succession re-confirmation still applies the peaceful-succession cohesion bonus** and memory events for the leader (step 2 fixed only the chronicle). That is behaviour, left for a decision.
+6. Gather fulfilment does not check provenance (H6, accepted).
+
+## 9. Economy soak on Floor 1: input for the §3.3 decision (2026-10-12)
+`scripts/run-economy-soak.sh`: 30 sim-minutes (18,000 ticks) at 10×, with 3 seeds (20261009, 1, 2) × the provisional caravan export on and off. All 6 runs pass their integrity checks: the ledger is conserved and the horizon is reached. No economy values are asserted, and none were tuned: prices, stocks and starting gold are exactly as in Phase 2. Phase 2 measured the Commons yard with 6 crawlers; Phase 3 measures Floor 1 with 12. The CSVs are in `Logs/economy-soak-seed<seed>-export<on|off>.csv`.
+
+| | Phase 2 yard, export off | **Floor 1, export off** | Phase 2 yard, export on | **Floor 1, export on** |
+| :--- | :-: | :-: | :-: | :-: |
+| Stall treasury, start → 30 min | 210 → 2–19g | **210 → 6–17g** (under 20g by minute 3) | 210 → 4,747–5,105g | **210 → 7,616–8,178g** |
+| Rations sold out | minute 9–11 | **minute 6–9**, never restocked | never | **never** |
+| Caravan restocks | 2–3 of 30 | **2–4 of 30** | 29 of 30 | **30 of 30** |
+| Rations bought (purchases) | 78–85 | **72–99** | 280–303 | **458–494** |
+| Salvage sold (sales) | 57–62 | **56–71** | 186–201 | **317–342** |
+| Rations harvested from the Garden | not measured | **234–283** | not measured | **133–152** |
+| Ore / herbs harvested | not measured | **32–42 / 27–34** | not measured | **165–189 / 153–156** |
+| Crawler gold total | 60 → 230–250 | **120 → 255–320** | 60 → 215–265 | **120 → 360–430** |
+| Mean hunger at 30 min | 36–55 | **55–71** | 35–42 | **41–52** |
+| Bunk sleeps | (no bunks) | **52–73** | (no bunks) | **91–117** |
+| Exhaustion collapses | not measured | **24–31** | not measured | **9–13** |
+| Starving episodes (95+ hunger for 30 s) | not measured | **7–26** | not measured | **0** |
+
+What the numbers say (observations, not decisions):
+1. **Without the provisional export the economy still fails,** and faster on Floor 1. The stall can't afford salvage after about 3 minutes, so it stops buying and stops restocking. Rations sell out by minute 6–9. Crawlers fall back on the Garden (234–283 rations harvested, against 133–152 with the export), stop working salvage (ore and herbs fall from about 160 to about 35), go hungrier, collapse two to three times as often, and starve 7–26 times in 30 minutes.
+2. **With the export, the treasury grows about 60% faster than on the yard** (about 7,600–8,200g against about 4,700–5,100g). Twice the crawlers means about 60% more purchases and sales. The export is a faucet with no matching sink, so this growth is the stopgap's side effect, not a working economy.
+3. **Crawler wealth barely moves either way:** crawlers end with about 20–35g each after 30 minutes (from 10g). Gold flows through the stall and the export, not into the crawlers' pockets.
+4. **Hunger dominates the crawlers' day.** Hunger rises 1.5/s (a meal about every 40 s), so food is most of what they do. With the export, 0 starvation; without it, food runs out.
+5. **The Phase 2 conclusion stands, now on the real map:** §3.3 has to close the stall's money loop. A sink for the export gold, or a source of income for the stall that isn't a free faucet, is the decision the producer deferred. Floor 1 adds a time constraint: distance and 12 mouths make the stall's failure show within 3–6 minutes.

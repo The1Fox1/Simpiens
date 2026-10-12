@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); next: Phase 3.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); next: Phase 4.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -21,6 +21,7 @@ This revision is built around that intent:
 - Revision 2 approved.
 - Drifter arrival and departure is deferred (see Deferred).
 - A **"Dev Map" button** switches from the main map to the pen arena (§2.4).
+- **Shroud is fog of war** (2026-10-11, Phase 3 decision D1): "An adventurer should not know what is inside an uncharted room until a scout visits then successfully reports back."
 
 ---
 
@@ -190,7 +191,17 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - `PenCanaryScenario` asserts all ten pen outcomes within 600 ticks;
   - fix found by the canary: hearths and stalls block only their centre cell (Pen 4's altruism was sealed off since Grid A*);
   - every scenario names its session (`ISimulationScenario.SessionId`); `DevMapParityValidator` retired.
-- [ ] Phase 3: outpost populated, scenarios migrated, soak re-run
+- [x] Phase 3: the outpost floor goes live (done 2026-10-12; PlayMode 47/47 in 3 consecutive runs; producer visual check pending):
+  - `OutpostSession` on `Floor1Layout`: 12 crawlers walk in from the Road Gate; the hub stall; seeded Scout and Gather bounties both on the Deep Seam; crawlers arrive fed (hunger 20);
+  - Floor 1 made ready for live use: the hearth moved off the door lanes (doors re-placed), 8 bunks, 12 spawn points, named doors; a validator keeps the hearth ring clear of every door, lane and the stall;
+  - the Commons yard retired (`CommonsYardFixture`, test-only);
+  - **fog of war** (D1): landmarks in uncharted sectors are not perceived; the scout's survey is private until its successful report, which charts the sector and publishes the survey to every crawler; nobody explores into, or claims a Gather bounty in, an uncharted sector;
+  - **the rest anchor**: bunks (one sleeper each, claimed on the main thread), `TravelToBunk -> SleepAtBunk`, priced in `Considerations`; resting in place stays the fallback;
+  - map-aware searching: exploration and starvation panic head for the charted sector visited least recently; agents also perceive while they walk;
+  - `BunkRestScenario` (live, no injection); `OutpostSupplyLoopScenario` asserts no fog leak and scout-before-gather; navigation and dynamic-chaos scenarios run on Floor 1;
+  - `PopulationScalingProbe`: 24 crawlers run at 54x real time unthrottled (no escalation);
+  - economy soak re-run on Floor 1 (plan §9);
+  - fixes found on the way: claimants no longer sell ore owed to a bounty; an affordable stall ration counts as known food (no panic at the stall); the scout surveys from the middle of the room; path smoothing keeps clear of hearths and stalls; leadership is chronicled only when it changes.
 - [ ] Phase 4: map rendering, shroud, camera, sector-aware UI
 - [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
 
@@ -222,3 +233,5 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 - **2026-10-11: Revision 2 approved; epic `ACTIVE`.** Producer added the Dev Map toggle and deferred drifter churn.
 - **2026-10-11: Phase 1 done** (world as data).
 - **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are listed in the [Phase 2 plan](../../.agents/epic_map_phase2_plan.md) §8.
+- **2026-10-11: Phase 3 plan approved** with decision D1: shroud is fog of war.
+- **2026-10-12: Phase 3 done** (the outpost floor goes live). The live game runs on Floor 1 with fog of war and bunks. Open findings are in the [Phase 3 plan](../../.agents/epic_map_phase3_plan.md) §8.

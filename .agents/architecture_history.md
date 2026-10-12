@@ -425,3 +425,28 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Seeded ids and milestone ticks shifted twice (clock rewind, then the split); outcomes were re-verified, not compared.
   - The pens finally have assertions (`PenCanaryScenario`); the first run exposed the Pen 4 regression.
 - **Verification:** PlayMode 43/43; the split was green 3 runs in a row; `OutpostSupplyLoopScenario` passes with 0 anomalies on the pen-free yard; `SessionSwitchScenario` presses the real button and gets back a world structurally identical to a fresh boot.
+
+## Architectural Decision: Epic MAP Phase 3, the Outpost Floor Goes Live (2026-10-12)
+- **Decision:**
+  - The live session is `OutpostSession` on `Floor1Layout`: 12 crawlers spawn at the Road Gate and discover the outpost by walking in (no seeded knowledge). The Commons yard is retired from production and kept only as the test fixture `CommonsYardFixture`.
+  - **Fog of war** (producer decision D1): nobody knows what is inside an uncharted sector until a scout visits it and successfully reports back.
+    - The charted state reaches cognition through the snapshot (`ExploredSectorMask`, written by the main thread each tick). Cognition also reads the immutable `MapDefinition` from the snapshot.
+    - Landmarks (resources, hearths, stalls, bunks) inside uncharted sectors are not perceived. A scout claimant keeps what it sees in its own target sector as private survey notes. A successful report charts the sector and publishes the survey to every agent's spatial memory, in entity id order, on the main thread. An abandoned survey charts nothing.
+    - A scout's visit means reaching the sector's survey point (within 1.25), not crossing the threshold.
+  - **The rest anchor:** bunks are entities with one sleeper each. Occupancy is claimed and validated on the main thread; a claim is dropped every tick unless its holder is still sleeping there. Preferring bunks is a price in `Considerations`, not a rule. Resting in place and collapse remain the fallbacks.
+  - **Map-aware searching:** exploration and starvation panic pick the charted sector the agent stood in least recently (`AgentMemory.LastSectorVisit`, copied into the memory snapshot), not a random point a few units away.
+  - **Perception while busy:** agents also perceive every 5 ticks while carrying out an intent, on the main thread and never during a background evaluation. Before this they were blind for the whole of a walk.
+  - **Bounty reservation:** units a claimed Gather bounty is owed are never sold at the stall.
+  - **Crawlers arrive fed** (hunger 20, session data). Prices, stocks and starting gold are unchanged; economy design stays deferred.
+  - **An affordable stall ration is known food** for the starvation reflex (`ResourceTargeting.HasStallFood`, cached on `AgentState` at each evaluation), so a starving crawler with the gold buys instead of panicking.
+- **Why:** each of these surfaced when a live scenario ran on a walled floor. The open yard had hidden them: short trips, everything in sight.
+- **Consequences:**
+  - The Dev Map pens start charted (no scouts there).
+  - `NavConstants.ArrivalTolerance` (1.0) lets walks end up to a unit short, so precise interactions (bunks) make their own last step.
+  - Injected walls block the 3×3 cells around them; tests must drop them clear of pawns.
+  - Population cost grows faster than linearly: 24 crawlers run at about 54× real time unthrottled, against 146× for 12. That is input for §3A #8.
+- **Verification:**
+  - PlayMode 47/47 in 3 consecutive runs, with identical milestones each time.
+  - `BunkRestScenario`: 10 distinct sleepers, 0 starving.
+  - `OutpostSupplyLoopScenario`: no fog leak, the Gather bounty fulfilled after the charting, 0 anomalies.
+  - The economy soak re-ran on Floor 1 (Phase 3 plan §9).

@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-11
+# Last reconciled: 2026-10-12
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -142,8 +142,13 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [ACTIVE] (Revision 2, appro
   Plan: .agents/epic_map_phase1_plan.md
 - Phase 2 - session split: DONE 2026-10-11. Live boot = OutpostSession on the Outpost Commons yard (no pens);
   pens = test-only Dev Map (CanaryPenSession), reachable by the SWITCH TO DEV MAP button; PenCanaryScenario
-  and SessionSwitchScenario pass. PlayMode 43/43. Producer visual check of the button pending.
+  and SessionSwitchScenario pass. PlayMode 43/43. Producer visual check passed 2026-10-11.
   Plan: .agents/epic_map_phase2_plan.md
-- Next: Phase 3 populate Floor 1 (rest anchor, 12 crawlers, scenario migration, soak re-run).
-- Then: Phase 4 player view, Phase 5 OutpostLifecycleScenario (DoD).
+- Phase 3 - the outpost floor goes live: DONE 2026-10-12. Live boot = OutpostSession on Floor1Layout, 12 crawlers
+  from the Road Gate; fog of war (nothing inside an uncharted sector is known until a scout reports back);
+  bunks (rest anchor); BunkRestScenario; anomaly scenarios on Floor 1; population probe; soak on Floor 1
+  (plan Section 9). PlayMode 47/47 x3. Producer visual check pending.
+  Plan: .agents/epic_map_phase3_plan.md
+- Next: Phase 4 player view (rendering, shroud overlay, camera, sector-aware UI).
+- Then: Phase 5 OutpostLifecycleScenario (DoD).
 - Deferred: drifter arrival/departure (economy, Section 3.3).
