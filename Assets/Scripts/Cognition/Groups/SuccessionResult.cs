@@ -39,6 +39,12 @@ namespace Simpiens.Cognition.Groups
             NewCohesion = newCohesion;
         }
 
+        /// <summary>
+        /// True when the group's leadership actually changed: a new leader, or a schism (which always founds a
+        /// splinter group). A succession check that re-confirms the sitting leader changes nothing worth chronicling.
+        /// </summary>
+        public bool ChangesLeadership => Succeeded && (Mode == SuccessionMode.FactionalSchism || NewLeaderId != PreviousLeaderId);
+
         public static readonly SuccessionResult Failed = new SuccessionResult(
             0, SuccessionMode.Peaceful, false, false, default, default, default, 0, 0);
 

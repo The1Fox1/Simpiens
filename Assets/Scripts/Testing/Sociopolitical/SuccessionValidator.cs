@@ -46,8 +46,9 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateIncapacitationAndLegitimacyWatchdog();
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
+            ValidateOnlyRealChangesAreChronicled();
 
-            Debug.Log("<color=green>[SuccessionValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SuccessionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateOrganicHearthEmergence()
@@ -96,6 +97,25 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(agentC.Membership.Allegiance == 70, "Agent C allegiance is 70.");
 
             Debug.Log("[PASS] Test 1: Organic hearth emergence verified.");
+        }
+
+        /// <summary>
+        /// A succession check that re-confirms the sitting leader must not be chronicled (Epic MAP Phase 2 finding #2:
+        /// the Dev Map recorded a LeadershipAssumed event for two unchanged groups every 50 ticks).
+        /// </summary>
+        private void ValidateOnlyRealChangesAreChronicled()
+        {
+            var leader = CreateGuid();
+            var challenger = CreateGuid();
+
+            Assert(SuccessionResult.Peaceful(1, challenger, leader, 90).ChangesLeadership, "A new leader is a change.");
+            Assert(!SuccessionResult.Peaceful(1, leader, leader, 90).ChangesLeadership, "Re-confirming the leader is not a change.");
+            Assert(!SuccessionResult.Failed.ChangesLeadership, "A failed succession is not a change.");
+
+            var schism = new SuccessionResult(1, SuccessionMode.FactionalSchism, true, false, leader, leader, challenger, 2, 40);
+            Assert(schism.ChangesLeadership, "A schism always changes the group, even when the original leader keeps it.");
+
+            Debug.Log("[PASS] Test 9: Only real leadership changes are chronicled.");
         }
 
         private void ValidatePeacefulSuccession()

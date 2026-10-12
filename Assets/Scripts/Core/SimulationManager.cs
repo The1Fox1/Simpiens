@@ -1013,7 +1013,7 @@ namespace Simpiens.Simulation
                 if (SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(groupData.LeaderId, g, _worldRegistry, _groupRegistry, currentTick))
                 {
                     var result = SuccessionEngine.ResolveSuccession(g, _groupRegistry, _worldRegistry, currentTick);
-                    if (result.Succeeded)
+                    if (result.ChangesLeadership)
                     {
                         var eventType = result.Mode == SuccessionMode.FactionalSchism 
                             ? ChronicleEventType.GroupSchism 
@@ -1027,14 +1027,12 @@ namespace Simpiens.Simulation
                             currentTick,
                             ChronicleIntensity.Crisis));
 
-                        if (result.NewLeaderId != result.PreviousLeaderId)
-                        {
-                            SimLog.Groups.ZLogInformation($"Group {g} succession via {result.Mode}: {SimLog.Agent(result.PreviousLeaderId)} -> {SimLog.Agent(result.NewLeaderId)}");
-                        }
-                        else
-                        {
-                            SimLog.Groups.ZLogDebug($"Group {g} succession check via {result.Mode} re-confirmed leader {SimLog.Agent(result.NewLeaderId)}");
-                        }
+                        SimLog.Groups.ZLogInformation($"Group {g} succession via {result.Mode}: {SimLog.Agent(result.PreviousLeaderId)} -> {SimLog.Agent(result.NewLeaderId)}");
+                    }
+                    else if (result.Succeeded)
+                    {
+                        // Re-confirming the sitting leader is not news; chronicling it every 50 ticks flooded the buffer
+                        SimLog.Groups.ZLogDebug($"Group {g} succession check via {result.Mode} re-confirmed leader {SimLog.Agent(result.NewLeaderId)}");
                     }
                 }
             }
