@@ -73,9 +73,21 @@ namespace Simpiens.Entities
             Clamp();
         }
 
-        /// <summary>Moves the view toward <paramref name="target"/> over <paramref name="deltaSeconds"/>.</summary>
+        private Vector2 _lastTarget;
+        private bool _hasLastTarget;
+
+        /// <summary>Starts following afresh (a new target): the next <see cref="Follow"/> doesn't carry the old one's motion.</summary>
+        public void ResetFollow() => _hasLastTarget = false;
+
+        /// <summary>
+        /// Moves the view with <paramref name="target"/> (by its motion since the last call) and closes the remaining
+        /// gap exponentially over <paramref name="deltaSeconds"/>, so a crawler walking at 10x never pulls ahead.
+        /// </summary>
         public void Follow(Vector2 target, float deltaSeconds)
         {
+            if (_hasLastTarget) Position += target - _lastTarget;
+            _lastTarget = target;
+            _hasLastTarget = true;
             float k = 1f - Mathf.Exp(-FollowSharpness * Mathf.Max(0f, deltaSeconds));
             Position = Vector2.Lerp(Position, target, k);
             Clamp();

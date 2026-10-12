@@ -24,8 +24,9 @@ namespace Simpiens.Testing.UI
             ValidateZoom();
             ValidateFollow();
             ValidateAspectChange();
+            ValidatePicker();
 
-            Debug.Log("<color=green>[CameraRigValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[CameraRigValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static CameraRig Floor1Rig()
@@ -120,7 +121,19 @@ namespace Simpiens.Testing.UI
             a.Follow(target, 0.5f);
             for (int i = 0; i < 30; i++) b.Follow(target, 1f / 60f);
             Assert(Vector2.Distance(a.Position, b.Position) < 0.01f, $"Follow is frame-rate independent ({a.Position} vs {b.Position}).");
-            Debug.Log("[PASS] Test 4: Follow converges on its target, independent of frame rate.");
+
+            // A crawler walking at 10x (20 units/s) never pulls ahead: the gap still closes
+            var m = Floor1Rig();
+            m.ZoomAt(m.Frame.center, 0.2f);
+            m.ResetFollow();
+            var walker = new Vector2(-10f, 0f);
+            for (int i = 0; i < 60; i++)
+            {
+                walker += new Vector2(20f / 60f, 0f);
+                m.Follow(walker, 1f / 60f);
+            }
+            Assert(Vector2.Distance(m.Position, walker) < 0.05f, $"Follow keeps up with a target moving 20 units/s ({Vector2.Distance(m.Position, walker)} behind).");
+            Debug.Log("[PASS] Test 4: Follow converges on its target, keeps up with a fast one, independent of frame rate.");
         }
 
         private void ValidateAspectChange()
@@ -133,6 +146,42 @@ namespace Simpiens.Testing.UI
             rig.SetAspect(3f);
             Assert(rig.Size <= rig.MaxSize + Eps && rig.Size >= CameraRig.MinSize - Eps, "A wider screen keeps the size within the new limits.");
             Debug.Log("[PASS] Test 5: A new screen shape keeps the view within the limits.");
+        }
+
+        private void ValidatePicker()
+        {
+            var a = new GUID(1u, 0u, 0u, 1u);
+            var b = new GUID(1u, 0u, 0u, 2u);
+            var c = new GUID(1u, 0u, 0u, 3u);
+            var crowd = new[]
+            {
+                new PickCandidate(c, new Vector2(0.4f, 0f)),
+                new PickCandidate(b, new Vector2(0f, 0.3f)),
+                new PickCandidate(a, new Vector2(0f, -0.3f)),
+            };
+            float r = WorldSelection.PickRadius;
+            Assert(WorldPicker.TryPickNearest(new Vector2(0f, 0.25f), crowd, r, out var id) && id == b, "The nearest crawler is picked.");
+            Assert(WorldPicker.TryPickNearest(Vector2.zero, crowd, r, out id) && id == a, "Equal distances go to the lower id.");
+            Assert(!WorldPicker.TryPickNearest(new Vector2(5f, 5f), crowd, r, out _), "Nothing beyond the radius is picked.");
+            Assert(!WorldPicker.TryPickNearest(Vector2.zero, new PickCandidate[0], r, out _) && !WorldPicker.TryPickNearest(Vector2.zero, null, r, out _), "An empty map picks nothing.");
+            Assert(WorldPicker.TryPickNearest(new Vector2(0.4f + r - 0.01f, 0f), crowd, r, out id) && id == c, "A click just inside the radius picks.");
+
+            // Selection state: a crawler and its following, a sector, clearing
+            var selection = new WorldSelection();
+            int changes = 0;
+            selection.Changed += () => changes++;
+            selection.SelectCrawler(b, follow: true);
+            Assert(selection.SelectedCrawler == b && selection.Following && changes == 1, "Selecting a crawler follows it.");
+            selection.StopFollowing();
+            Assert(selection.SelectedCrawler == b && !selection.Following && changes == 2, "Stopping keeps the crawler selected.");
+            selection.SelectSector(3);
+            selection.SelectSector(3);
+            Assert(selection.SelectedSector == 3 && changes == 3, "A sector selection changes once.");
+            selection.ClickAt(Vector2.zero); // no registry: no crawlers, no sectors
+            Assert(selection.SelectedCrawler == default && !selection.Following, "A click on empty floor drops the crawler.");
+            selection.Clear();
+            Assert(selection.SelectedSector == -1 && selection.SelectedCrawler == default, "Clear drops everything.");
+            Debug.Log("[PASS] Test 6: Clicks pick the nearest crawler within reach (ties by id); selection state follows the rules.");
         }
 
         private static bool Near(Vector2 a, Vector2 b) => Vector2.Distance(a, b) < 1e-3f;

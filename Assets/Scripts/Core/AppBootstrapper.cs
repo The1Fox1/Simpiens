@@ -75,6 +75,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<FacilityZoneService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register<Simpiens.Entities.WorldSelection>(Lifetime.Singleton);
             builder.Register<AgentIdentityService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<NarrativeChronicleService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<TemplateNarrativeFormatter>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

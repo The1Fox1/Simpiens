@@ -25,14 +25,14 @@ namespace Simpiens.Entities
         /// <paramref name="sectors"/>; the definition's defaults without one) and gives the main camera a
         /// <see cref="CameraController"/> framing the whole map.
         /// </summary>
-        public static GameObject Show(MapDefinition map, ISectorRegistry sectors = null)
+        public static GameObject Show(MapDefinition map, ISectorRegistry sectors = null, WorldSelection selection = null)
         {
             Clear();
             if (map == null) return null;
 
             var root = Build(map, RootName);
             root.AddComponent<ShroudView>().Initialize(map, sectors);
-            if (CameraController.AttachToMain(map.CameraFrame) == null) FrameCamera(map.CameraFrame);
+            if (CameraController.AttachToMain(map.CameraFrame, selection) == null) FrameCamera(map.CameraFrame);
             return root;
         }
 

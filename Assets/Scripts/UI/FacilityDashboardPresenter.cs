@@ -135,6 +135,7 @@ namespace Simpiens.UI
         // State & Pre-allocated Buffers
         private int _selectedZoneId = -1; // Chosen from the loaded map by BuildSectorList
         private UnityEngine.GUID _selectedAgentId = default;
+        private Simpiens.Entities.WorldSelection _worldSelection;
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
 
@@ -172,7 +173,8 @@ namespace Simpiens.UI
             INarrativeChronicleService chronicleService = null,
             IAgentIdentityService identityService = null,
             INarrativeFormatter narrativeFormatter = null,
-            ISessionSwitcher sessionSwitcher = null)
+            ISessionSwitcher sessionSwitcher = null,
+            Simpiens.Entities.WorldSelection worldSelection = null)
         {
             _zoneService = zoneService;
             _worldRegistry = worldRegistry;
@@ -186,11 +188,33 @@ namespace Simpiens.UI
             if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
             _sessionSwitcher = sessionSwitcher;
             if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged += HandleSessionChanged;
+
+            if (_worldSelection != null) _worldSelection.Changed -= HandleWorldSelectionChanged;
+            _worldSelection = worldSelection;
+            if (_worldSelection != null) _worldSelection.Changed += HandleWorldSelectionChanged;
         }
 
         private void OnDestroy()
         {
             if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
+            if (_worldSelection != null) _worldSelection.Changed -= HandleWorldSelectionChanged;
+        }
+
+        /// <summary>A click on the map (or a session reset) changed the selection: show the same crawler and room here.</summary>
+        private void HandleWorldSelectionChanged()
+        {
+            if (_selectedAgentId != _worldSelection.SelectedCrawler)
+            {
+                _selectedAgentId = _worldSelection.SelectedCrawler;
+                RefreshDossierView();
+                UpdateAgentCardsSelection();
+            }
+            int sector = _worldSelection.SelectedSector;
+            if (sector > 0 && sector != _selectedZoneId && _zoneService != null && _zoneService.TryGetZone(sector, out _))
+            {
+                _selectedZoneId = sector;
+                if (IsVisible) RefreshAllViews();
+            }
         }
 
         private void Awake()
@@ -604,12 +628,14 @@ namespace Simpiens.UI
         public void SelectZone(int zoneId)
         {
             _selectedZoneId = zoneId;
+            _worldSelection?.SelectSector(zoneId);
             RefreshAllViews();
         }
 
         public void SelectAgent(UnityEngine.GUID agentId)
         {
             _selectedAgentId = agentId;
+            _worldSelection?.SelectCrawler(agentId, follow: true); // back on the map, the camera follows the dossier's crawler
             RefreshDossierView();
             UpdateAgentCardsSelection();
         }

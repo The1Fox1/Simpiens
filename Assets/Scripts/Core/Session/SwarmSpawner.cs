@@ -39,6 +39,7 @@ namespace Simpiens.Core.Session
         private ISessionDefinition _current;
         private LoadedWorld _world;
         private GameObject _agentsRoot;
+        private readonly WorldSelection _selection;
 
         /// <summary>The map loaded by the last respawn, with its spawned entity ids.</summary>
         public LoadedWorld World => _world;
@@ -61,8 +62,10 @@ namespace Simpiens.Core.Session
             SimulationSettings settings,
             IEntityIdAllocator idAllocator,
             IWorldMap worldMap,
-            IReadOnlyList<ISessionDefinition> sessions)
+            IReadOnlyList<ISessionDefinition> sessions,
+            WorldSelection selection)
         {
+            _selection = selection;
             _idAllocator = idAllocator;
             _worldMap = worldMap ?? new WorldMap(spatialPartition, null);
             _settings = settings;
@@ -158,7 +161,8 @@ namespace Simpiens.Core.Session
             // 1. Static geography: partition, walls, sectors (simulation) and the map view
             var map = session.Map;
             _world = _worldMap.Load(map);
-            MapView.Show(map, _worldMap.Sectors);
+            _selection?.Clear(); // the selected crawler belonged to the old world
+            MapView.Show(map, _worldMap.Sectors, _selection);
 
             // Create roots for organization
             _agentsRoot = new GameObject("[SwarmAgents]");
