@@ -224,6 +224,7 @@ namespace Simpiens.Core.Session
 
             var sr = agentGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.GetAgentSprite(AgentVisualState.Idle, 0);
+            sr.sortingOrder = RenderOrder.Crawlers;
             agentGo.transform.localScale = Vector3.one * 0.7f; // Clear, readable icon size
 
             // Register them as pawns so they appear in the GridVisualizer
@@ -265,6 +266,7 @@ namespace Simpiens.Core.Session
 
             var sr = resourceGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.GetResourceSprite(yieldItem);
+            sr.sortingOrder = RenderOrder.Props;
             resourceGo.transform.localScale = Vector3.one * 0.8f;
 
             var rb = resourceGo.AddComponent<Rigidbody2D>();
@@ -329,7 +331,7 @@ namespace Simpiens.Core.Session
 
             var sr = bunkGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.BunkSprite;
-            sr.sortingOrder = -1; // under the sleeper
+            sr.sortingOrder = RenderOrder.Props; // under the sleeper
             bunkGo.transform.localScale = Vector3.one * 0.9f;
 
             // NodeController requires a body and a collider; without these lines it gets a dynamic body that crawlers

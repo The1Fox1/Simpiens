@@ -24,6 +24,12 @@ namespace Simpiens.Entities
         public static Sprite GetCampfireSprite(int frame) => _campfireSprites[frame & 1];
         private static readonly Sprite _bunkSprite;
         public static Sprite BunkSprite => _bunkSprite;
+        private static readonly Sprite _floorSprite;
+        private static readonly Sprite _rockSprite;
+        /// <summary>Light grey flagstone, tinted per sector by the map view's floor tiles.</summary>
+        public static Sprite FloorSprite => _floorSprite;
+        /// <summary>Solid rock outside the floor.</summary>
+        public static Sprite RockSprite => _rockSprite;
 
         static AgentSpriteLibrary()
         {
@@ -212,6 +218,22 @@ namespace Simpiens.Entities
                 { 'b', new Color32(55, 79, 150, 255) }    // Blanket fold
             };
             _bunkSprite = CreateSprite(PatternBunk, bunkPalette, "Anchor_Bunk");
+
+            // 14. Map tiles (Epic MAP Phase 4): a neutral floor the map view tints per sector, and rough rock
+            var floorPalette = new Dictionary<char, Color32>
+            {
+                { 'F', new Color32(232, 232, 232, 255) }, // Flagstone
+                { 'f', new Color32(212, 212, 212, 255) }, // Speckle
+                { 'g', new Color32(190, 190, 190, 255) }  // Joint
+            };
+            _floorSprite = CreateSprite(PatternFloor, floorPalette, "Map_Floor");
+            var rockPalette = new Dictionary<char, Color32>
+            {
+                { 'R', new Color32(58, 56, 64, 255) },
+                { 'r', new Color32(46, 44, 52, 255) },
+                { 'k', new Color32(74, 72, 82, 255) }
+            };
+            _rockSprite = CreateSprite(PatternRock, rockPalette, "Map_Rock");
         }
 
         /// <summary>
@@ -733,6 +755,46 @@ namespace Simpiens.Entities
             "..############..",
             "................",
             "................"
+        };
+
+        private static readonly string[] PatternFloor =
+        {
+            "fFFFFFFFFFFFFFFg",
+            "FFFFFFFFfFFFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FfFFFFFFFFFFFFFg",
+            "FFFFFFFFFfFFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFfFFFFFFFFFFFFg",
+            "FFFFFFFFFFfFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFFfFFFFFFFFFFFg",
+            "FFFFFFFFFFFfFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFFFfFFFFFFFFFFg",
+            "FFFFFFFFFFFFfFFg",
+            "FFFFFFFFFFFFFFFg",
+            "gggggggggggggggg"
+        };
+
+        private static readonly string[] PatternRock =
+        {
+            "kRRRRrRkRRrRRRkr",
+            "RrkRRRrRRkRrRRRR",
+            "RRrRkRRrRRRkrRRR",
+            "RRRrRRkRrRRRRkRR",
+            "RkRRrRRRkrRRRRrk",
+            "rRRkRrRRRRkRRRRr",
+            "RrRRRkrRRRRrkRRR",
+            "kRrRRRRkRRRRrRkR",
+            "RRkrRRRRrkRRRrRR",
+            "RRRRkRRRRrRkRRrR",
+            "rRRRRrkRRRrRRkRr",
+            "RkRRRRrRkRRrRRRk",
+            "RRrkRRRrRRkRrRRR",
+            "RRRrRkRRrRRRkrRR",
+            "kRRRrRRkRrRRRRkR",
+            "rRkRRrRRRkrRRRRr"
         };
 
         private static readonly string[] PatternBunk =

@@ -289,6 +289,13 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_MapView_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.World.MapViewValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_WorldMap_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.World.WorldMapValidator();
