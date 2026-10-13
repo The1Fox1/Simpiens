@@ -18,17 +18,32 @@ namespace Simpiens.Testing.Diagnostics
     /// </summary>
     public class VisualAnomalyDetector : IVisualAnomalyDetector, ITickable
     {
+        /// <summary>Jitter is this many heading reversals of more than 120°...</summary>
+        public const int JitterReversals = 3;
+
+        /// <summary>...within this many simulation ticks (0.5 s at play speed), at any clock multiplier.</summary>
+        public const int JitterWindowTicks = 5;
+
+        /// <summary>At most one jitter alert per pawn per this many ticks (1 s at play speed).</summary>
+        public const int JitterAlertCooldownTicks = 10;
+
+        /// <summary>Logical positions kept per pawn for the jitter alert's description.</summary>
+        public const int JitterTrailLength = 10;
+
         private class AgentTelemetryHistory
         {
-            public Vector2 LastPosition;
-            public readonly Vector2[] HeadingBuffer = new Vector2[8];
-            public readonly float[] HeadingTimestamps = new float[8];
-            public int HeadingIndex;
-            public int HeadingCount;
-
-            public readonly float[] ReversalTimestamps = new float[4];
+            // Jitter, sampled once per simulation tick from logical positions
+            public Vector2 LastTickPosition;
+            public bool HasTickPosition;
+            public Vector2 LastTickHeading;
+            public bool HasTickHeading;
+            public readonly long[] ReversalTicks = new long[4];
             public int ReversalIndex;
             public int ReversalCount;
+            public long LastJitterAlertTick = long.MinValue / 2;
+            public readonly Vector2[] Trail = new Vector2[JitterTrailLength];
+            public int TrailIndex;
+            public int TrailCount;
 
             public AgentVisualState LastVisualState;
             public AgentView View;
@@ -41,25 +56,23 @@ namespace Simpiens.Testing.Diagnostics
             public float StackingDuration;
             public GUID StackingPartner;
 
-            public float LastJitterAlertTime = -10f;
             public float LastStackingAlertTime = -10f;
             public float LastPenetrationAlertTime = -10f;
             public float LastThrashingAlertTime = -10f;
             public float LastBreachAlertTime = -10f;
 
-            public void RecordHeading(Vector2 currentDir, float timestamp)
+            public void RecordReversal(long tick)
             {
-                HeadingBuffer[HeadingIndex] = currentDir;
-                HeadingTimestamps[HeadingIndex] = timestamp;
-                HeadingIndex = (HeadingIndex + 1) % HeadingBuffer.Length;
-                if (HeadingCount < HeadingBuffer.Length) HeadingCount++;
+                ReversalTicks[ReversalIndex] = tick;
+                ReversalIndex = (ReversalIndex + 1) % ReversalTicks.Length;
+                if (ReversalCount < ReversalTicks.Length) ReversalCount++;
             }
 
-            public void RecordReversal(float timestamp)
+            public void RecordTrail(Vector2 position)
             {
-                ReversalTimestamps[ReversalIndex] = timestamp;
-                ReversalIndex = (ReversalIndex + 1) % ReversalTimestamps.Length;
-                if (ReversalCount < ReversalTimestamps.Length) ReversalCount++;
+                Trail[TrailIndex] = position;
+                TrailIndex = (TrailIndex + 1) % Trail.Length;
+                if (TrailCount < Trail.Length) TrailCount++;
             }
 
             public void RecordStateTransition(float timestamp, AgentVisualState newState)
@@ -111,6 +124,9 @@ namespace Simpiens.Testing.Diagnostics
             // (anomaly counts are kept; scenarios reset those themselves)
             if (sessionSwitcher != null) sessionSwitcher.SessionChanged += _ => _histories.Clear();
 
+            // Jitter is judged per simulation tick, so a test at 10x sees what the player sees at 1x
+            if (_clock != null) _clock.OnSimulationTick += EvaluateJitterTick;
+
             _obstacleFilter = ContactFilter2D.noFilter;
             _obstacleFilter.useTriggers = false;
         }
@@ -159,14 +175,13 @@ namespace Simpiens.Testing.Diagnostics
             float dt = customDeltaTime >= 0f ? customDeltaTime : (Time.deltaTime > 0f ? Time.deltaTime : 0.02f);
             long currentTick = _clock != null ? _clock.CurrentTick : 0;
 
-            // 1. Per-frame Evaluation: Jitter, Heading Changes, and Visual State Thrashing
+            // 1. Per-frame Evaluation: Visual State Thrashing (jitter is per simulation tick: EvaluateJitterTick)
             for (int i = 0; i < activeNodes.Count; i++)
             {
                 var node = activeNodes[i];
                 if (node == null || node.Type != EntityType.Pawn) continue;
 
-                var history = GetOrCreateHistory(node.Id, node.Position);
-                EvaluateJitter(node, history, currentTick, currentTime);
+                var history = GetOrCreateHistory(node.Id);
                 EvaluateStateThrashing(node, history, currentTick, currentTime);
             }
 
@@ -184,69 +199,88 @@ namespace Simpiens.Testing.Diagnostics
             }
         }
 
-        private AgentTelemetryHistory GetOrCreateHistory(GUID id, Vector2 currentPos)
+        private AgentTelemetryHistory GetOrCreateHistory(GUID id)
         {
             if (!_histories.TryGetValue(id, out var history))
             {
-                history = new AgentTelemetryHistory
-                {
-                    LastPosition = currentPos,
-                    LastVisualState = AgentVisualState.Idle
-                };
+                history = new AgentTelemetryHistory { LastVisualState = AgentVisualState.Idle };
                 _histories[id] = history;
             }
             return history;
         }
 
-        private void EvaluateJitter(NodeController node, AgentTelemetryHistory history, long tick, float currentTime)
+        /// <summary>
+        /// Jitter, judged once per simulation tick from each pawn's logical position: <see cref="JitterReversals"/>
+        /// heading reversals of more than 120° within <see cref="JitterWindowTicks"/> ticks. Subscribed to the clock;
+        /// validators call it directly.
+        /// </summary>
+        public void EvaluateJitterTick(long tick)
         {
-            Vector2 currentPos = node.Position;
-            Vector2 delta = currentPos - history.LastPosition;
-            float sqrDist = delta.sqrMagnitude;
+            if (_worldRegistry == null) return;
+            var activeNodes = _worldRegistry.ActiveNodes;
+            if (activeNodes == null) return;
 
-            // Only track headings when actual translation occurred
-            if (sqrDist > 0.0001f)
+            for (int i = 0; i < activeNodes.Count; i++)
             {
-                Vector2 currentHeading = delta.normalized;
+                var node = activeNodes[i];
+                if (node == null || node.Type != EntityType.Pawn) continue;
+                var history = GetOrCreateHistory(node.Id);
 
-                if (history.HeadingCount > 0)
+                Vector2 position = node.Position;
+                history.RecordTrail(position);
+                if (!history.HasTickPosition)
                 {
-                    int prevIndex = (history.HeadingIndex - 1 + history.HeadingBuffer.Length) % history.HeadingBuffer.Length;
-                    Vector2 prevHeading = history.HeadingBuffer[prevIndex];
+                    history.LastTickPosition = position;
+                    history.HasTickPosition = true;
+                    continue;
+                }
 
-                    // Angle > 120 degrees indicates directional reversal
-                    float dot = Vector2.Dot(currentHeading, prevHeading);
-                    if (dot < -0.5f)
+                Vector2 delta = position - history.LastTickPosition;
+                if (delta.sqrMagnitude <= 0.0001f) continue; // headings only from real movement
+                Vector2 heading = delta.normalized;
+                history.LastTickPosition = position;
+
+                if (history.HasTickHeading && Vector2.Dot(heading, history.LastTickHeading) < -0.5f)
+                {
+                    history.RecordReversal(tick);
+                    if (history.ReversalCount >= JitterReversals)
                     {
-                        history.RecordReversal(currentTime);
-
-                        // Check if 3 reversals occurred in <= 0.5s window
-                        if (history.ReversalCount >= 3)
+                        int oldest = (history.ReversalIndex - JitterReversals + history.ReversalTicks.Length) % history.ReversalTicks.Length;
+                        long window = tick - history.ReversalTicks[oldest];
+                        if (window <= JitterWindowTicks && tick - history.LastJitterAlertTick >= JitterAlertCooldownTicks)
                         {
-                            int oldestIndex = (history.ReversalIndex - 3 + history.ReversalTimestamps.Length) % history.ReversalTimestamps.Length;
-                            float windowDuration = currentTime - history.ReversalTimestamps[oldestIndex];
-
-                            if (windowDuration <= 0.5f && (currentTime - history.LastJitterAlertTime >= 1.0f))
-                            {
-                                history.LastJitterAlertTime = currentTime;
-                                JitterCount++;
-                                EmitAnomaly(new VisualAnomalyRecord(
-                                    tick,
-                                    currentTime,
-                                    VisualAnomalyType.OscillationJitter,
-                                    node.Id,
-                                    default,
-                                    currentPos,
-                                    $"Rapid directional reversal ({history.ReversalCount} flips in {windowDuration:F2}s, dot: {dot:F2})"
-                                ));
-                            }
+                            history.LastJitterAlertTick = tick;
+                            JitterCount++;
+                            float tickSeconds = _clock != null && _clock.TickDeltaTime > 0f ? _clock.TickDeltaTime : 0.1f;
+                            EmitAnomaly(new VisualAnomalyRecord(
+                                tick,
+                                tick * tickSeconds,
+                                VisualAnomalyType.OscillationJitter,
+                                node.Id,
+                                default,
+                                position,
+                                $"Rapid directional reversal ({JitterReversals} flips in {window} ticks); last positions {DescribeTrail(history)}"
+                            ));
                         }
                     }
                 }
-
-                history.RecordHeading(currentHeading, currentTime);
-                history.LastPosition = currentPos;
+                history.LastTickHeading = heading;
+                history.HasTickHeading = true;
             }
+        }
+
+        /// <summary>The pawn's last logical positions, oldest first (built only when an anomaly fires).</summary>
+        private static string DescribeTrail(AgentTelemetryHistory history)
+        {
+            var sb = new System.Text.StringBuilder();
+            int len = history.Trail.Length;
+            for (int k = history.TrailCount; k >= 1; k--)
+            {
+                var p = history.Trail[(history.TrailIndex - k + len) % len];
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append('(').Append(p.x.ToString("F2")).Append(',').Append(p.y.ToString("F2")).Append(')');
+            }
+            return sb.ToString();
         }
 
         private void EvaluateStateThrashing(NodeController node, AgentTelemetryHistory history, long tick, float currentTime)

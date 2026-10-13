@@ -24,44 +24,114 @@ namespace Simpiens.Testing.Diagnostics
             ValidateStateThrashingDetection();
             ValidateZeroAllocation();
             ValidateMapWallPenetration();
+            ValidateJitterIsSpeedIndependent();
+            ValidateJitterIgnoresNormalTurns();
 
-            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateJitterDetection()
         {
             var registry = new WorldRegistry();
             var detector = new VisualAnomalyDetector(registry);
+            var go = CreatePawn(registry, "[TestNode_Jitter]", out var node);
 
-            var go = new GameObject("[TestNode_Jitter]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
-            registry.RegisterNode(node);
-
-            // Establish initial position
-            detector.Tick(0.05f, 0.0f);
-
-            // Forward movement
-            node.transform.position = new Vector2(0.5f, 0f);
-            detector.Tick(0.05f, 0.1f);
-
-            // Reversal 1 (backward)
-            node.transform.position = new Vector2(0.0f, 0f);
-            detector.Tick(0.05f, 0.2f);
-
-            // Reversal 2 (forward)
-            node.transform.position = new Vector2(0.5f, 0f);
-            detector.Tick(0.05f, 0.3f);
-
-            // Reversal 3 (backward - 3 reversals in 0.3s)
-            node.transform.position = new Vector2(0.0f, 0f);
-            detector.Tick(0.05f, 0.4f);
-
-            Assert(detector.JitterCount >= 1, $"Jitter was detected (actual JitterCount: {detector.JitterCount})");
+            // Back and forth every tick: 3 reversals within 4 ticks
+            float[] xs = { 0f, 0.5f, 0f, 0.5f, 0f };
+            for (int t = 0; t < xs.Length; t++)
+            {
+                node.transform.position = new Vector2(xs[t], 0f);
+                detector.EvaluateJitterTick(t);
+            }
+            Assert(detector.JitterCount == 1, $"Jitter was detected once (actual JitterCount: {detector.JitterCount})");
+            var record = detector.GetRecentAnomalies(1)[0];
+            Assert(record.Type == VisualAnomalyType.OscillationJitter && record.Description.Contains("last positions"), $"The alert names the type and the pawn's last positions ({record.Description}).");
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 1: Rapid heading jitter/oscillation detection verified.");
+        }
+
+        /// <summary>
+        /// Epic MAP Phase 5 (producer decision D1 = A): jitter is judged in simulation ticks, so the same motion gives
+        /// the same verdict at 1x and 10x, however the frames fall. The frame-based Tick no longer judges jitter.
+        /// </summary>
+        private void ValidateJitterIsSpeedIndependent()
+        {
+            int Run(float multiplier, float frameSeconds)
+            {
+                var registry = new WorldRegistry();
+                var clock = new SimulationClock();
+                clock.SetTimeMultiplier(multiplier);
+                var detector = new VisualAnomalyDetector(registry, clock);
+                var go = CreatePawn(registry, "[TestNode_JitterSpeed]", out var node);
+                float now = 0f;
+                for (int t = 0; t < 12; t++)
+                {
+                    node.transform.position = new Vector2(t % 2 == 0 ? 0f : 0.5f, 0f);
+                    clock.AdvanceTicks(1);
+                    // At 10x a frame covers ten times the sim time: the frame clock must not change the verdict
+                    now += frameSeconds;
+                    detector.Tick(frameSeconds, now);
+                }
+                GameObject.DestroyImmediate(go);
+                return detector.JitterCount;
+            }
+
+            int atPlaySpeed = Run(1f, 0.1f);
+            int atTestSpeed = Run(10f, 0.01f);
+            Assert(atPlaySpeed >= 1 && atPlaySpeed == atTestSpeed, $"The same twitch is flagged the same at 1x and 10x ({atPlaySpeed} vs {atTestSpeed}).");
+
+            // Frames alone (no simulation ticks) never judge jitter, however fast the pawn moves between them
+            var reg = new WorldRegistry();
+            var frameOnly = new VisualAnomalyDetector(reg);
+            var g = CreatePawn(reg, "[TestNode_FrameOnly]", out var n);
+            for (int f = 0; f < 12; f++)
+            {
+                n.transform.position = new Vector2(f % 2 == 0 ? 0f : 0.5f, 0f);
+                frameOnly.Tick(0.016f, f * 0.016f);
+            }
+            Assert(frameOnly.JitterCount == 0, $"Frame ticks judge no jitter ({frameOnly.JitterCount}).");
+            GameObject.DestroyImmediate(g);
+            Debug.Log("[PASS] Test 6: Jitter is judged in simulation ticks: the same twitch gives the same verdict at 1x and 10x.");
+        }
+
+        /// <summary>Normal movement is not jitter: turning back once, or slow back-and-forth beyond the window.</summary>
+        private void ValidateJitterIgnoresNormalTurns()
+        {
+            var registry = new WorldRegistry();
+            var detector = new VisualAnomalyDetector(registry);
+            var go = CreatePawn(registry, "[TestNode_Turns]", out var node);
+
+            // Walk east 5 ticks, turn back once, walk west 5 ticks (arrive at a stall, then leave)
+            long t = 0;
+            for (int k = 0; k <= 5; k++, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
+            for (int k = 4; k >= 0; k--, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
+            Assert(detector.JitterCount == 0, $"Turning back once is not jitter ({detector.JitterCount}).");
+
+            // Back and forth every 3 ticks: 3 reversals span 6 ticks, beyond the 5-tick window
+            float x = 0f;
+            int dir = 1;
+            for (int k = 0; k < 18; k++, t++)
+            {
+                if (k % 3 == 0) dir = -dir;
+                x += dir * 0.2f;
+                node.transform.position = new Vector2(x, 5f);
+                detector.EvaluateJitterTick(t);
+            }
+            Assert(detector.JitterCount == 0, $"Back and forth every 3 ticks is not jitter ({detector.JitterCount}).");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[PASS] Test 7: Turning back once, or slow back-and-forth, is not jitter.");
+        }
+
+        private static GameObject CreatePawn(WorldRegistry registry, string name, out NodeController node)
+        {
+            var go = new GameObject(name);
+            node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = Vector2.zero;
+            registry.RegisterNode(node);
+            return go;
         }
 
         private void ValidateStackingDetection()
@@ -147,6 +217,7 @@ namespace Simpiens.Testing.Diagnostics
             for (int i = 0; i < 50; i++)
             {
                 detector.Tick(0.02f, i * 0.02f);
+                detector.EvaluateJitterTick(i);
             }
 
             GC.Collect();
@@ -158,10 +229,11 @@ namespace Simpiens.Testing.Diagnostics
             for (int i = 0; i < 500; i++)
             {
                 detector.Tick(0.02f, 10f + i * 0.02f);
+                detector.EvaluateJitterTick(50 + i);
             }
 
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
-            Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 500 frames.");
+            Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 500 frames and ticks.");
 
             for (int i = 0; i < 5; i++)
             {
