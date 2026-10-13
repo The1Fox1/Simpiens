@@ -53,6 +53,8 @@ namespace Simpiens.Cognition
             var snapshot = spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return;
 
+            // The session this decision belongs to (main thread, before any await)
+            uint sessionEpoch = simulationManager.SessionEpoch;
             agent.IsEvaluating = true;
             if (agent.IsExhaustionCollapsed)
             {
@@ -303,7 +305,8 @@ namespace Simpiens.Cognition
                     }
                 };
 
-                // Enqueue intent to simulation manager
+                // Enqueue intent to simulation manager, stamped with its session (a respawn may have happened meanwhile)
+                intent.SessionEpoch = sessionEpoch;
                 simulationManager.EnqueueIntent(intent);
             }
             catch (OperationCanceledException)

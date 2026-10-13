@@ -35,8 +35,9 @@ namespace Simpiens.Testing.Environment
             ValidateEntityIdsAreReproducible();
             ValidateIntentArrivalOrderDoesNotMatter();
             ValidateSimRandomIsZeroAlloc();
+            ValidateStaleSessionIntentsAreDropped();
 
-            Debug.Log("<color=green>[DeterminismValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[DeterminismValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateSimRandomIsReproducible()
@@ -123,6 +124,52 @@ namespace Simpiens.Testing.Environment
             Assert(crowded, "Scenario must actually be contended (not every pawn reached the centre).");
 
             Debug.Log("[PASS] Test 3: Final positions are identical regardless of intent arrival or registration order.");
+        }
+
+        /// <summary>
+        /// Epic MAP Phase 5: a respawn reissues the same entity ids, so an intent decided before it must not move the
+        /// new agent that took the id. The simulation drops intents stamped with an earlier session.
+        /// </summary>
+        private void ValidateStaleSessionIntentsAreDropped()
+        {
+            var registry = new WorldRegistry();
+            var grid = new SpatialHashGrid();
+            grid.Initialize(20f, 20f, 1f);
+            var sim = new SimulationManager(registry, grid);
+
+            var go = new GameObject("[Determinism_Respawned]");
+            go.transform.position = Vector2.zero;
+            go.AddComponent<CircleCollider2D>().radius = 0.35f;
+            var node = go.AddComponent<NodeController>();
+            node.Type = EntityType.Pawn;
+            node.Initialize(new EntityIdAllocator(new SimulationSettings(7)).Next(), new NodeConfiguration(2f));
+            registry.RegisterNode(node);
+            grid.UpdateFromRegistry(registry);
+
+            WanderIntent WalkEast() => new WanderIntent(node.Id, new PathResponse { Waypoints = new[] { new Vector2(3f, 0f) }, Length = 1, IsValid = true });
+
+            uint before = sim.SessionEpoch;
+            var stale = WalkEast();
+            stale.SessionEpoch = before;
+            sim.ResetState(); // a respawn
+            Assert(sim.SessionEpoch == before + 1, $"A reset starts a new session ({before} -> {sim.SessionEpoch}).");
+            sim.EnqueueIntent(stale);
+            for (int t = 0; t < 10; t++) sim.Tick();
+            Assert(node.Position.x == 0f, $"An intent from the previous session is dropped (pawn moved to {node.Position}).");
+
+            var current = WalkEast();
+            current.SessionEpoch = sim.SessionEpoch;
+            sim.EnqueueIntent(current);
+            for (int t = 0; t < 5; t++) sim.Tick();
+            float afterCurrent = node.Position.x;
+            Assert(afterCurrent > 0.5f, $"An intent from the current session runs (pawn at {node.Position}).");
+
+            sim.EnqueueIntent(WalkEast()); // unstamped: built directly, always accepted
+            for (int t = 0; t < 5; t++) sim.Tick();
+            Assert(node.Position.x > afterCurrent, $"An unstamped intent runs (pawn at {node.Position}).");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[PASS] Test 5: Intents decided before a respawn are dropped; current and unstamped intents run.");
         }
 
         private Vector2[] RunConvergence(bool reverseEnqueue, bool reverseRegistration)

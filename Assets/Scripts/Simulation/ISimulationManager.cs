@@ -25,5 +25,8 @@ namespace Simpiens.Simulation
         Simpiens.Simulation.Economy.ISupplyService Supply { get; }
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);
         void ResetState();
+
+        /// <summary>The current session's number: starts at 1, and every ResetState (respawn) starts a new one.</summary>
+        uint SessionEpoch { get; }
     }
 }

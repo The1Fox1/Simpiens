@@ -402,13 +402,22 @@ namespace Simpiens.Simulation
             _intentQueue.Enqueue(intent);
         }
 
+        public uint SessionEpoch { get; private set; } = 1;
+
         public void ProcessQueuedIntents()
         {
             // Cognition finishes in thread-pool order; apply this tick's arrivals in agent-id order instead
             _pendingIntents.Clear();
             while (_intentQueue.TryDequeue(out var queued))
             {
-                if (queued != null) _pendingIntents.Add(queued);
+                if (queued == null) continue;
+                if (queued.SessionEpoch != 0 && queued.SessionEpoch != SessionEpoch)
+                {
+                    // Decided before the last respawn: its agent is gone, and the id now belongs to a new one
+                    SimLog.Cognition.ZLogDebug($"Dropped a {queued.GetType().Name} decided in session {queued.SessionEpoch} (now {SessionEpoch}) for {SimLog.Agent(queued.AgentId)}");
+                    continue;
+                }
+                _pendingIntents.Add(queued);
             }
             SortStable(_pendingIntents, (a, b) => a.AgentId.CompareTo(b.AgentId));
 
@@ -763,6 +772,7 @@ namespace Simpiens.Simulation
 
         public void ResetState()
         {
+            SessionEpoch++;
             while (_intentQueue.TryDequeue(out _)) { }
             _activeIntents.Clear();
             _activeIntentOrder.Clear();
