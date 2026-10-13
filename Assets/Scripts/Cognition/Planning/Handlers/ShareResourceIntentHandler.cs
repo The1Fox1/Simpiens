@@ -64,6 +64,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if (receiverAgent != null)
                 {
                     receiverAgent.Hunger = Mathf.Max(0f, receiverAgent.Hunger - share.FoodAmount);
+                    if (receiverAgent.State != null) receiverAgent.State.Activity.RecordMeal(context.CurrentTick);
                     if (receiverAgent.Hunger < 85f)
                     {
                         receiverAgent.TriggerReliefVisual();

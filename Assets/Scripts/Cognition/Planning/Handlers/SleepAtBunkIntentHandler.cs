@@ -48,6 +48,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             {
                 context.ReleaseBunk(sleep.BunkId, node.Id);
                 context.RecordBunkSleep(node.Id);
+                if (agent != null && agent.State != null) agent.State.Activity.RecordBunkSleep(context.CurrentTick);
                 if (agent != null) agent.VisualState = AgentVisualState.Idle; // up and out of the bunk
                 SimLog.Drives.ZLogDebug($"{SimLog.Agent(node.Id)} slept in bunk {SimLog.Agent(sleep.BunkId)}");
                 return IntentResult.Success;

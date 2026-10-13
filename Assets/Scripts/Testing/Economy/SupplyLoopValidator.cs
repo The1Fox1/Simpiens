@@ -45,8 +45,9 @@ namespace Simpiens.Testing.Economy
             ValidateSalvageBountyPlan();
             ValidateWellFedAgentReachesGoap();
             ValidateZeroAllocSupplyTicks();
+            ValidateActivityTally();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SupplyLoopValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -396,6 +397,60 @@ namespace Simpiens.Testing.Economy
             Assert(after - before == 0, $"Supply ticking allocated {after - before} bytes over 1,000 ticks.");
 
             Debug.Log("[SupplyLoopValidator] Test 8 Passed: Zero GC allocations over 1,000 supply ticks.");
+        }
+
+        // ---------------------------------------------------------------------------------------------
+        // 10. The activity tally (Epic MAP Phase 5): each act counts once for the crawler that did it;
+        //     a harvest → sell cycle closes only when the sale follows a harvest
+        // ---------------------------------------------------------------------------------------------
+        private void ValidateActivityTally()
+        {
+            var registry = new WorldRegistry();
+            var sim = new SimulationManager(registry, null);
+
+            var stallId = NextGuid();
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, treasuryGold: 200, interactionRadius: 3f));
+            var oreId = CreateResourceNode(registry, sim, new Vector2(6f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
+            var foodId = CreateResourceNode(registry, sim, new Vector2(-6f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
+            var agentGo = CreateAgent(registry, sim, new Vector2(1f, 0f), out var node, out var agent);
+            var otherGo = CreateAgent(registry, sim, new Vector2(1f, 2f), out _, out var other);
+            agent.Inventory.Gold = 50;
+            agent.Hunger = 70f;
+            var empty = agent.State.Activity;
+            Assert(empty.Cycles == 0 && empty.Meals == 0 && empty.FirstCycleTick == -1 && empty.FirstMealTick == -1, "A new crawler starts with an empty tally.");
+
+            // A sale of salvage the crawler did not harvest counts as a sale, not a cycle
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, ItemType.IronOre.BaseValue()), out _);
+            var result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
+            Assert(result == IntentResult.Success, $"Sale returned {result}.");
+            Assert(agent.State.Activity.SalvageSales == 1 && agent.State.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.State.Activity}).");
+
+            // Harvest, then sell: one cycle
+            node.SetLogicalPosition(new Vector2(6.5f, 0f));
+            result = RunIntent(sim, new HarvestResourceIntent(node.Id, oreId, null));
+            Assert(result == IntentResult.Success, $"Ore harvest returned {result}.");
+            Assert(agent.State.Activity.SalvageHarvests == 1 && agent.State.Activity.FirstHarvestTick >= 0 && agent.State.Activity.Meals == 0, $"The ore harvest counts once and is no meal ({agent.State.Activity}).");
+            node.SetLogicalPosition(new Vector2(1f, 0f));
+            result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
+            Assert(result == IntentResult.Success, $"Second sale returned {result}.");
+            var a = agent.State.Activity;
+            Assert(a.SalvageSales == 2 && a.Cycles == 1 && a.FirstCycleTick >= a.FirstHarvestTick, $"Harvest then sale closes one cycle ({a}).");
+
+            // A purchase counts, and eating harvested food is a meal
+            result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration));
+            Assert(result == IntentResult.Success && agent.State.Activity.RationPurchases == 1, $"The ration purchase counts ({result}, {agent.State.Activity}).");
+            node.SetLogicalPosition(new Vector2(-5.5f, 0f));
+            result = RunIntent(sim, new HarvestResourceIntent(node.Id, foodId, null));
+            Assert(result == IntentResult.Success, $"Food harvest returned {result}.");
+            a = agent.State.Activity;
+            Assert(a.Meals == 1 && a.FirstMealTick >= 0 && a.SalvageHarvests == 1, $"Harvested food is one meal and no salvage harvest ({a}).");
+
+            // Nothing leaks to another crawler
+            var o = other.State.Activity;
+            Assert(o.SalvageHarvests == 0 && o.SalvageSales == 0 && o.Meals == 0 && o.RationPurchases == 0, $"Another crawler's tally is untouched ({o}).");
+
+            Destroy(oreGo, foodGo, agentGo, otherGo);
+            Debug.Log("[SupplyLoopValidator] Test 10 Passed: The activity tally counts each act once for its crawler; a cycle needs a harvest before the sale.");
         }
 
         // ---------------------------------------------------------------------------------------------

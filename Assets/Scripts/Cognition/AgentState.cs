@@ -49,6 +49,9 @@ namespace Simpiens.Cognition
         }
         public float Frustration { get; set; } = 0f;
 
+        /// <summary>What this agent has done this session (a field, so the simulation records into it in place).</summary>
+        public AgentActivity Activity = AgentActivity.Empty;
+
         // Inventory & Economic Primitives
         public AgentInventory Inventory { get; set; }
 

@@ -67,11 +67,13 @@ namespace Simpiens.Cognition
                     {
                         agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
                         agent.HasFoodInInventory = true;
+                        agent.Activity.RecordMeal(currentTick);
                     }
                     else if (completedAction is EatCarriedFoodAction)
                     {
                         agent.Hunger = Mathf.Max(0f, agent.Hunger - 40f);
                         agent.HasFoodInInventory = false;
+                        agent.Activity.RecordMeal(currentTick);
                     }
                     else if (completedAction is RestAction)
                     {
@@ -152,6 +154,7 @@ namespace Simpiens.Cognition
                 {
                     agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
                     agent.HasFoodInInventory = true;
+                    agent.Activity.RecordMeal(currentTick);
                 }
             }
             else if (result == IntentResult.TargetMissing || result == IntentResult.PathBlocked || result == IntentResult.Aborted)

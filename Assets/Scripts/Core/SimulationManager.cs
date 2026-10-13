@@ -1064,6 +1064,7 @@ namespace Simpiens.Simulation
                     if (pawnCount >= 2)
                     {
                         agent.Social = Mathf.Min(100f, agent.Social + 1.0f);
+                        if (agent.State != null) agent.State.Activity.RecordHearthGathering(currentTick);
                     }
                 }
 

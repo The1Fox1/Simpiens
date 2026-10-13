@@ -113,6 +113,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             delBounty = delBounty.WithStatus(BountyStatus.Completed);
             context.UpdateBounty(delBounty);
+            if (!isScout && agentState != null) agentState.Activity.RecordBountyDelivery(currentDeliverTick);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} fulfilled bounty #{delBounty.BountyId} ({delBounty.Type}) for {reward}g at {SimLog.Agent(delStall.StallEntityId)}; player trust +15");
 
             // Trade-to-Affinity boost toward Player (+15 Trust, +10 Warmth, +10 Respect)
