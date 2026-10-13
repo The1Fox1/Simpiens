@@ -86,6 +86,14 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new ShroudViewScenario());
         }
 
+        /// <summary>Epic MAP Definition of Done: the outpost's whole day over 9,000 ticks, nothing injected.</summary>
+        [UnityTest]
+        [Timeout(500000)]
+        public IEnumerator Scenario_OutpostLifecycle_TheOutpostsDayEmerges()
+        {
+            yield return ExecuteScenario(new OutpostLifecycleScenario());
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
