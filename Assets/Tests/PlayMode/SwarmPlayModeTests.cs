@@ -94,6 +94,14 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new OutpostLifecycleScenario());
         }
 
+        /// <summary>Epic MAP determinism check: two same-seed runs of the outpost to t3,000, hashed every 100 ticks.</summary>
+        [UnityTest]
+        [Timeout(400000)]
+        public IEnumerator Scenario_Determinism_SameSeedSameWorld()
+        {
+            yield return ExecuteScenario(new DeterminismScenario());
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
