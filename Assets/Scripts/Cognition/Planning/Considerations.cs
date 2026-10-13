@@ -46,6 +46,43 @@ namespace Simpiens.Cognition.Planning
         /// Lowest price per unit this agent accepts when selling salvage: the item's base value, raised by greed.
         /// Neutral: ore 8g, herb 12g (seeded stall buy prices are 20g / 25g, so neutral behaviour is unchanged).
         /// </summary>
+        // --- Rest anchor (Epic MAP Phase 3) ---
+        /// <summary>Energy per second while asleep in a bunk (resting in place: 15).</summary>
+        public const float BunkRecoveryPerSecond = 30f;
+
+        /// <summary>Energy added when a bunk sleep completes (resting in place: 30).</summary>
+        public const float BunkSleepBonus = 40f;
+
+        /// <summary>Below this energy a crawler rests where it stands rather than walking to a bunk.</summary>
+        public const float TooTiredToWalkEnergy = 15f;
+
+        /// <summary>Extra cost of resting in place while a free bunk is known and the agent can still walk.</summary>
+        public const float FieldRestPenalty = 6f;
+
+        /// <summary>Distance (units) that adds one to the cost of walking to a bunk.</summary>
+        public const float BunkDistancePerCost = 25f;
+
+        /// <summary>Walking to a bunk: cheap nearby, dearer far away, but under resting in place across one floor.</summary>
+        public static float BunkTravelCost(float baseCost, float distance)
+        {
+            return baseCost * 0.5f + distance / BunkDistancePerCost;
+        }
+
+        /// <summary>Below this energy a crawler is tired and wants rest (RestGoal).</summary>
+        public const float TiredEnergy = 40f;
+
+        public static float FieldRestCost(in AgentContext context, float baseCost)
+        {
+            if (context.Energy <= TooTiredToWalkEnergy) return baseCost;
+            return BunkTargeting.TryGetNearestFreeBunk(context, out _, out _) ? baseCost + FieldRestPenalty : baseCost;
+        }
+
+        /// <summary>Relaxing at the hearth: priced like resting in place while tired, at base cost otherwise.</summary>
+        public static float HearthRestCost(in AgentContext context, float baseCost)
+        {
+            return context.Energy < TiredEnergy ? FieldRestCost(context, baseCost) : baseCost;
+        }
+
         public static ushort MinimumSalePrice(in AgentContext context, ItemType item)
         {
             float price = item.BaseValue() * TraitFactor(context.Personality.Greed, GreedOnPrice);

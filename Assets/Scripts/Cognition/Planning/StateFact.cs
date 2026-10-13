@@ -41,6 +41,8 @@ namespace Simpiens.Cognition.Planning
         HasScoutBounty = 32,
         HasBountyItem = 33,
         HasScoutReport = 34,
-        HasSoldSalvage = 35
+        HasSoldSalvage = 35,
+        KnowsBunkLocation = 36,
+        AtBunk = 37
     }
 }

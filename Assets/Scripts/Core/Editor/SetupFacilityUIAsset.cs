@@ -12,14 +12,14 @@ namespace Simpiens.Core.Editor
         static SetupFacilityUIAsset()
         {
             EditorApplication.delayCall += VerifyAndSetupPanelSettings;
-            EditorApplication.delayCall += RunOutpostMapBuilderValidator;
+            EditorApplication.delayCall += RunMapValidators;
         }
 
-        [MenuItem("Simpiens/Map/Run Outpost Map Builder Validator")]
-        public static void RunOutpostMapBuilderValidator()
+        [MenuItem("Simpiens/Map/Run Map Validators")]
+        public static void RunMapValidators()
         {
-            var validator = new Simpiens.Testing.Environment.OutpostMapBuilderValidator();
-            validator.RunAllValidationTests();
+            new Simpiens.Testing.World.MapDefinitionValidator().RunAllValidationTests();
+            new Simpiens.Testing.World.WorldMapValidator().RunAllValidationTests();
 
             var zoneValidator = new Simpiens.Testing.UI.FacilityZoneServiceValidator();
             zoneValidator.RunAllValidationTests();
@@ -37,6 +37,8 @@ namespace Simpiens.Core.Editor
             var builder = new VContainer.ContainerBuilder();
             builder.Register<Simpiens.Simulation.WorldRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.Spatial.SpatialHashGrid>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.SectorRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.WorldMap>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Cognition.Pathfinding.AsyncPathfinder>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Cognition.Planning.GoapPlanner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.SimulationClock>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
@@ -47,6 +49,8 @@ namespace Simpiens.Core.Editor
             builder.Register<Simpiens.Narrative.PassthroughNarrativeEnricher>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.GroupRegistry>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Simulation.SimulationManager>(VContainer.Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Core.Session.OutpostSession>(VContainer.Lifetime.Singleton).As<Simpiens.Core.Session.ISessionDefinition>();
+            builder.Register<Simpiens.Entities.WorldSelection>(VContainer.Lifetime.Singleton);
             builder.Register<Simpiens.Core.Session.SwarmSpawner>(VContainer.Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             var container = builder.Build();

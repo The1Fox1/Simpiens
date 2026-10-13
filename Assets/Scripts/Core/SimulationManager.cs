@@ -10,7 +10,7 @@ using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using Simpiens.UI.Zones;
+using Simpiens.Simulation.World;
 using UnityEngine;
 using VContainer.Unity;
 using ZLogger;
@@ -62,7 +62,7 @@ namespace Simpiens.Simulation
         private readonly ISimulationClock _clock;
         private readonly IGroupRegistry _groupRegistry;
         private readonly INarrativeChronicleService _chronicleService;
-        private readonly IFacilityZoneService _zoneService;
+        private readonly ISectorRegistry _sectors;
         private readonly IPlayerInterventionService _interventionService;
         private readonly IAgentRegistry _agentRegistry;
         private readonly IAgentConsequenceService _consequenceService;
@@ -159,8 +159,159 @@ namespace Simpiens.Simulation
 
         public void MarkSectorExplored(int sectorId)
         {
-            _zoneService?.SetSectorExplored(sectorId, true);
+            _sectors?.SetExplored(sectorId, true);
             SimLog.Economy.ZLogInformation($"Sector {sectorId} marked explored");
+        }
+
+        private readonly List<Simpiens.Cognition.Memory.SpatialMemoryRecord> _surveyBuffer = new List<Simpiens.Cognition.Memory.SpatialMemoryRecord>(16);
+
+        /// <summary>
+        /// A scout's successful report publishes its survey of the sector: everything it noted inside the fog goes
+        /// into every agent's spatial memory (a newer record is kept), in entity id order. Main thread.
+        /// </summary>
+        public int PublishSurvey(UnityEngine.GUID scoutId, int sectorId)
+        {
+            var scoutMemory = FindMemory(scoutId);
+            if (scoutMemory == null) return 0;
+
+            _surveyBuffer.Clear();
+            scoutMemory.TakeSurveyNotes((byte)sectorId, _surveyBuffer);
+            if (_surveyBuffer.Count == 0) return 0;
+            SortStable(_surveyBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
+
+            int recipients = 0;
+            if (_agentRegistry != null)
+            {
+                var agents = _agentRegistry.AllAgents;
+                for (int i = 0; i < agents.Count; i++)
+                {
+                    if (agents[i]?.Memory == null) continue;
+                    agents[i].Memory.ReceiveSurvey(_surveyBuffer);
+                    recipients++;
+                }
+            }
+            else
+            {
+                scoutMemory.ReceiveSurvey(_surveyBuffer);
+                recipients = 1;
+            }
+
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(scoutId)} charted sector {sectorId}: {_surveyBuffer.Count} landmarks shared with {recipients} agents");
+            return _surveyBuffer.Count;
+        }
+
+        // --- Rest anchor: bunks (Epic MAP Phase 3) ---
+        /// <summary>Slack on top of BunkTargeting.ReachDistance for a sleeper's final step onto the bunk.</summary>
+        public const float BunkClaimTolerance = 0.25f;
+
+        /// <summary>A sleeper this close to the bunk's position is lying in it.</summary>
+        public const float BunkSettleDistance = 0.02f;
+
+        private readonly Dictionary<UnityEngine.GUID, Vector2> _bunks = new Dictionary<UnityEngine.GUID, Vector2>(16);
+        private readonly Dictionary<UnityEngine.GUID, UnityEngine.GUID> _bunkOccupants = new Dictionary<UnityEngine.GUID, UnityEngine.GUID>(16);
+        private readonly List<UnityEngine.GUID> _occupiedBunks = new List<UnityEngine.GUID>(16);
+        private readonly Dictionary<UnityEngine.GUID, int> _bunkSleeps = new Dictionary<UnityEngine.GUID, int>(16);
+        private readonly List<UnityEngine.GUID> _bunkScratch = new List<UnityEngine.GUID>(16);
+
+        public void RegisterBunk(UnityEngine.GUID id, Vector2 position) => _bunks[id] = position;
+
+        /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
+        public IReadOnlyDictionary<UnityEngine.GUID, UnityEngine.GUID> BunkOccupants => _bunkOccupants;
+
+        /// <summary>Completed bunk sleeps per agent this session.</summary>
+        public IReadOnlyDictionary<UnityEngine.GUID, int> BunkSleeps => _bunkSleeps;
+
+        public bool TryClaimBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId, Vector2 agentPosition)
+        {
+            if (!_bunks.TryGetValue(bunkId, out var bunkPosition)) return false;
+            float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance + BunkClaimTolerance;
+            if ((bunkPosition - agentPosition).sqrMagnitude > reach * reach) return false;
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != agentId) return false;
+            _bunkOccupants[bunkId] = agentId;
+            RebuildOccupiedBunks();
+            return true;
+        }
+
+        public IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId)
+        {
+            if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
+
+            // Walk to the bunk's exact position (at walking speed, so the view never sees a jump): the sleeper lies in it
+            if ((bunkPosition - (Vector2)node.Position).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
+
+            Vector2 candidate = Vector2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
+            if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
+            return (bunkPosition - candidate).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
+        }
+
+        public void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId)
+        {
+            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant == agentId)
+            {
+                _bunkOccupants.Remove(bunkId);
+                RebuildOccupiedBunks();
+            }
+        }
+
+        private readonly Dictionary<ItemType, int> _harvested = new Dictionary<ItemType, int>(4);
+
+        public void RecordHarvest(ItemType item)
+        {
+            _harvested.TryGetValue(item, out int n);
+            _harvested[item] = n + 1;
+        }
+
+        /// <summary>Units of the item harvested this session.</summary>
+        public int HarvestedUnits(ItemType item) => _harvested.TryGetValue(item, out int n) ? n : 0;
+
+        public void RecordBunkSleep(UnityEngine.GUID agentId)
+        {
+            _bunkSleeps.TryGetValue(agentId, out int n);
+            _bunkSleeps[agentId] = n + 1;
+        }
+
+        /// <summary>
+        /// Drops every claim whose sleeper is no longer sleeping in that bunk (preempted, cancelled or removed), so a
+        /// bunk can never stay taken by someone who left it. Runs every tick before the snapshot.
+        /// </summary>
+        internal void ValidateBunkOccupancy()
+        {
+            if (_bunkOccupants.Count == 0) return;
+            _bunkScratch.Clear();
+            foreach (var kvp in _bunkOccupants)
+            {
+                bool sleeping = _activeIntents.TryGetValue(kvp.Value, out var state)
+                    && state.Intent is SleepAtBunkIntent sleep && sleep.BunkId == kvp.Key;
+                if (!sleeping) _bunkScratch.Add(kvp.Key);
+            }
+            if (_bunkScratch.Count == 0) return;
+            for (int i = 0; i < _bunkScratch.Count; i++)
+            {
+                // A sleeper pulled out of bed (preempted) gets up, unless its new intent already set its own look
+                if (_agentRegistry != null && _agentRegistry.TryGetAgent(_bunkOccupants[_bunkScratch[i]], out var sleeper)
+                    && sleeper.VisualState == Simpiens.Entities.AgentVisualState.Sleeping)
+                {
+                    sleeper.VisualState = Simpiens.Entities.AgentVisualState.Idle;
+                }
+                _bunkOccupants.Remove(_bunkScratch[i]);
+            }
+            RebuildOccupiedBunks();
+        }
+
+        private void RebuildOccupiedBunks()
+        {
+            _occupiedBunks.Clear();
+            foreach (var kvp in _bunkOccupants) _occupiedBunks.Add(kvp.Key);
+        }
+
+        private Simpiens.Cognition.Memory.AgentMemory FindMemory(UnityEngine.GUID agentId)
+        {
+            if (_agentRegistry != null && _agentRegistry.TryGetAgent(agentId, out var state)) return state.Memory;
+            var node = _worldRegistry?.GetNode(agentId);
+            if (node == null) return null;
+            if (node.AgentState != null) return node.AgentState.Memory;
+            return node.Agent != null ? node.Agent.Memory : null;
         }
         public bool TryGetStall(UnityEngine.GUID stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
         public void UpdateStall(TradeStallData stall)
@@ -181,7 +332,7 @@ namespace Simpiens.Simulation
             ISimulationClock clock = null,
             IGroupRegistry groupRegistry = null,
             INarrativeChronicleService chronicleService = null,
-            IFacilityZoneService zoneService = null,
+            ISectorRegistry sectors = null,
             IPlayerInterventionService interventionService = null,
             IAgentRegistry agentRegistry = null,
             IAgentConsequenceService consequenceService = null,
@@ -194,7 +345,7 @@ namespace Simpiens.Simulation
             _clock = clock;
             _groupRegistry = groupRegistry;
             _chronicleService = chronicleService;
-            _zoneService = zoneService;
+            _sectors = sectors;
             _interventionService = interventionService;
             _agentRegistry = agentRegistry ?? new Simpiens.Simulation.AgentRegistry();
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);
@@ -228,7 +379,7 @@ namespace Simpiens.Simulation
 
         private int GetSectorForPosition(Vector2 position)
         {
-            return _zoneService != null ? _zoneService.GetZoneForPosition(position).ZoneId : 0;
+            return _sectors != null ? _sectors.GetSectorAt(position).Id : 0;
         }
 
         public void Pause()
@@ -251,13 +402,22 @@ namespace Simpiens.Simulation
             _intentQueue.Enqueue(intent);
         }
 
+        public uint SessionEpoch { get; private set; } = 1;
+
         public void ProcessQueuedIntents()
         {
             // Cognition finishes in thread-pool order; apply this tick's arrivals in agent-id order instead
             _pendingIntents.Clear();
             while (_intentQueue.TryDequeue(out var queued))
             {
-                if (queued != null) _pendingIntents.Add(queued);
+                if (queued == null) continue;
+                if (queued.SessionEpoch != 0 && queued.SessionEpoch != SessionEpoch)
+                {
+                    // Decided before the last respawn: its agent is gone, and the id now belongs to a new one
+                    SimLog.Cognition.ZLogDebug($"Dropped a {queued.GetType().Name} decided in session {queued.SessionEpoch} (now {SessionEpoch}) for {SimLog.Agent(queued.AgentId)}");
+                    continue;
+                }
+                _pendingIntents.Add(queued);
             }
             SortStable(_pendingIntents, (a, b) => a.AgentId.CompareTo(b.AgentId));
 
@@ -381,6 +541,14 @@ namespace Simpiens.Simulation
         public bool TryRegisterBounty(BountyContract bounty)
         {
             bool isLive = bounty.Status == BountyStatus.Open || bounty.Status == BountyStatus.Claimed;
+
+            // The target must make sense on the loaded map (unknown sectors, scouting a charted one), before any escrow
+            var target = isLive ? BountyRules.CheckTarget(bounty.Type, bounty.TargetSectorId, _sectors) : BountyRules.TargetCheck.Ok;
+            if (target != BountyRules.TargetCheck.Ok)
+            {
+                SimLog.Intervention.ZLogWarning($"Bounty #{bounty.BountyId} rejected: {BountyRules.Describe(target, bounty.TargetSectorId, _sectors)}");
+                return false;
+            }
             if (isLive && bounty.RewardGold > 0 && _economyLedger != null && !_economyLedger.HasEscrow(bounty.BountyId))
             {
                 var stallId = bounty.CreatorStallId;
@@ -430,9 +598,9 @@ namespace Simpiens.Simulation
         /// </summary>
         private Vector2 ResolveSectorTarget(byte sectorId)
         {
-            if (_zoneService != null && sectorId != 0 && _zoneService.TryGetZone(sectorId, out var zone))
+            if (_sectors != null && sectorId != 0 && _sectors.TryGetSector(sectorId, out var sector))
             {
-                return zone.AnchorRadius > 0f ? zone.AnchorPosition : zone.Bounds.center;
+                return sector.TargetPoint;
             }
             return default;
         }
@@ -604,6 +772,7 @@ namespace Simpiens.Simulation
 
         public void ResetState()
         {
+            SessionEpoch++;
             while (_intentQueue.TryDequeue(out _)) { }
             _activeIntents.Clear();
             _activeIntentOrder.Clear();
@@ -612,6 +781,11 @@ namespace Simpiens.Simulation
             _supplyService?.Reset();
             _economyLedger?.Reset();
             _anchors.Clear();
+            _bunks.Clear();
+            _bunkOccupants.Clear();
+            _occupiedBunks.Clear();
+            _bunkSleeps.Clear();
+            _harvested.Clear();
             _stalls.Clear();
             _activeStallsBuffer.Clear();
             _bounties.Clear();
@@ -772,6 +946,9 @@ namespace Simpiens.Simulation
             // Generate the thread-safe global snapshot for any cognitive agents that poll this frame
             if (_spatialPartition != null && _worldRegistry != null)
             {
+                if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
+                ValidateBunkOccupancy();
+                _spatialPartition.SetOccupiedBunks(_occupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);
             }
         }
@@ -897,6 +1074,7 @@ namespace Simpiens.Simulation
                     if (pawnCount >= 2)
                     {
                         agent.Social = Mathf.Min(100f, agent.Social + 1.0f);
+                        if (agent.State != null) agent.State.Activity.RecordHearthGathering(currentTick);
                     }
                 }
 
@@ -1013,7 +1191,7 @@ namespace Simpiens.Simulation
                 if (SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(groupData.LeaderId, g, _worldRegistry, _groupRegistry, currentTick))
                 {
                     var result = SuccessionEngine.ResolveSuccession(g, _groupRegistry, _worldRegistry, currentTick);
-                    if (result.Succeeded)
+                    if (result.ChangesLeadership)
                     {
                         var eventType = result.Mode == SuccessionMode.FactionalSchism 
                             ? ChronicleEventType.GroupSchism 
@@ -1027,14 +1205,12 @@ namespace Simpiens.Simulation
                             currentTick,
                             ChronicleIntensity.Crisis));
 
-                        if (result.NewLeaderId != result.PreviousLeaderId)
-                        {
-                            SimLog.Groups.ZLogInformation($"Group {g} succession via {result.Mode}: {SimLog.Agent(result.PreviousLeaderId)} -> {SimLog.Agent(result.NewLeaderId)}");
-                        }
-                        else
-                        {
-                            SimLog.Groups.ZLogDebug($"Group {g} succession check via {result.Mode} re-confirmed leader {SimLog.Agent(result.NewLeaderId)}");
-                        }
+                        SimLog.Groups.ZLogInformation($"Group {g} succession via {result.Mode}: {SimLog.Agent(result.PreviousLeaderId)} -> {SimLog.Agent(result.NewLeaderId)}");
+                    }
+                    else if (result.Succeeded)
+                    {
+                        // Re-confirming the sitting leader is not news; chronicling it every 50 ticks flooded the buffer
+                        SimLog.Groups.ZLogDebug($"Group {g} succession check via {result.Mode} re-confirmed leader {SimLog.Agent(result.NewLeaderId)}");
                     }
                 }
             }

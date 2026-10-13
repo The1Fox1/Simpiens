@@ -13,7 +13,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Houses the asynchronous cognitive reasoning engine for agents.
   - `Contracts/`: Interfaces and data structures for Agent Intents (`AgentIntent`, `WanderIntent`, `TradeIntent`, `ClaimBountyIntent`, …), Intent Execution (`IIntentHandler`, `IIntentExecutionContext`, `IIntentHandlerRegistry`), and Context (`AgentContext`, `AgentNeeds`, `IntentResult`).
   - `Evaluators/`: Tier-1 reflexive/utility evaluators (`SurvivalUtilityEvaluator` — hunger reflex only, returns `null` otherwise; `MentalBreakEvaluator`, `AltruismEvaluator`, `FrustrationEvaluator`) and the Tier-3 ambient fallback `AmbientWanderEvaluator` (passed to `AgentCognitionService`).
-  - `Planning/`: GOAP domain — zero-allocation bitmask `WorldState`/`StateFact`, `GoapPlanner` (A*), `ActionGraph`, `Actions/`, `Goals/`, `WorldStateBuilder`, and modular intent handlers under `Handlers/` (`IntentHandlerRegistry`, `WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, `ShareResourceIntentHandler`, `IdleIntentHandler`, `TradeIntentHandler`, `ClaimBountyIntentHandler`, `DeliverBountyIntentHandler` (Gather + Scout, escrow-only payout), `ScoutIntentHandler`), plus shared `ResourceTargeting` / `BountyQueries` helpers, the utility `Considerations` (personality-weighted priorities, reservation/minimum prices, bounty score) and `Domain/OutpostGoapDomain` (the production action graph and goal list).
+  - `Planning/`: GOAP domain — zero-allocation bitmask `WorldState`/`StateFact`, `GoapPlanner` (A*), `ActionGraph`, `Actions/`, `Goals/`, `WorldStateBuilder`, and modular intent handlers under `Handlers/` (`IntentHandlerRegistry`, `WanderIntentHandler`, `PanicIntentHandler`, `HarvestResourceIntentHandler`, `ShareResourceIntentHandler`, `IdleIntentHandler`, `TradeIntentHandler`, `ClaimBountyIntentHandler`, `DeliverBountyIntentHandler` (Gather + Scout, escrow-only payout; a scout's report publishes its survey), `ScoutIntentHandler`, `SleepAtBunkIntentHandler`), plus shared `ResourceTargeting` / `BountyQueries` / `BunkTargeting` helpers, the utility `Considerations` (personality-weighted priorities, reservation/minimum prices, bounty score) and `Domain/OutpostGoapDomain` (the production action graph and goal list).
   - `Memory/`, `Social/`: Fog-of-war spatial memory, double-buffered snapshots (`IAgentMemory`, `AgentMemorySnapshot`), event ledger, gossip, 4-axis affinity (`AgentMemory`, `AffinityRecord`).
   - `Groups/`: Generic group primitive, directives, compliance, succession (`SuccessionEngine`, `ComplianceUtility`).
   - `Inventory/`: `AgentInventory` (fixed-capacity item slots + gold, double-buffered `AgentInventorySnapshot`).
@@ -23,8 +23,9 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
-  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics), `ScreenBoundsGenerator.cs`.
-  - `Session/`: `SwarmSpawner` builds the live session (demo pens + Outpost Commons, crawler personalities, seeded entity ids).
+  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
+  - `Session/`: sessions as code. An `ISessionDefinition` is a map plus `Populate(SessionBuilder)` (agents, relationships, groups, stalls, seeded bounties). `OutpostSession` is the live game. `SwarmSpawner` builds any session (loads the map through `IWorldMap`, spawns its keyed nodes and hearths, calls `Populate`, records the ledger baseline, registers seeded bounties) and is the `ISessionSwitcher`. Every respawn rewinds the clock to tick 0: express seeded expiries relative to the session start. Boot always picks the default (outpost) session by id.
+  - `Session/Layouts/`: map definitions as code. `Floor1Layout` is the live outpost floor (sectors, doors, POIs, nodes, spawn points, bunks).
   - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
   - `Editor/`: Editor-only batch/setup utilities.
 
@@ -34,7 +35,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 - **`Entities/`**
   Contains strictly `MonoBehaviour` views that hold state or rendering instructions.
   - **Rules**: Zero logic! Only basic view management, motor controls, and configurations.
-  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`.
+  - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's floors, rock and walls on tilemaps plus its labels; walls are tiles only, never entities), `ShroudView.cs` (fog over uncharted sectors, read from `ISectorRegistry.ExploredMask`), `CameraRig.cs` / `CameraController.cs` (camera maths and its Input System layer), `WorldSelection.cs` (the player's selected crawler and sector, shared with the dashboard), `RenderOrder.cs` (the one sorting-order table: use it for anything drawn).
+  - A `NodeController` requires a `Rigidbody2D` and a collider: set your own (static, trigger if walkable), or Unity adds a dynamic body that pawns shove around.
 
 - **`Intervention/`**
   Player intervention system acting as an influence queue.
@@ -42,7 +44,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Simulation/`**
   The simulation environment, registries, and spatial representations.
-  - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid`).
+  - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid` with a static base layer for map walls).
+  - `World/`: static geography as plain data. `MapDefinition` (+ `MapDefinitionBuilder`) is the single source of truth for walls, sectors, resource nodes, POIs and labels; `WallRasterizer` writes walls into the nav grid; `IWorldMap.Load` sizes the partition from the map (never the camera) and loads `ISectorRegistry` (authoritative sectors + exploration). The snapshot carries the map and the charted-sector mask: **fog of war**, nothing inside an uncharted sector is perceived until a scout's report charts it. Never hard-code coordinates or sector ids elsewhere: read them from the layout.
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), supply faucets (`ISupplyService`, `SupplyService`: dormant-node regrowth + stall supply caravan, ticked by `SimulationManager` via `ISupplyHost`).
   - **Key Files**: `WorldRegistry.cs`, `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
 
@@ -53,20 +56,19 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Chronicle pipeline: `NarrativeChronicleService`, `TemplateNarrativeFormatter`, `ILlmNarrativeEnricher` (LLM hook; passthrough by default).
 
 - **`UI/`**
-  UI Toolkit presenters (dumb views over simulation state): `FacilityDashboardPresenter`, `Pooling/VisualElementPool`, `Zones/FacilityZoneService`.
-
-- **`Environment/`**
-  World construction (`OutpostMapBuilder`). **Epic MAP is paused**; the builder is not wired into the live session.
+  UI Toolkit presenters (dumb views over simulation state): `FacilityDashboardPresenter`, `Pooling/VisualElementPool`, `Zones/FacilityZoneService` (UI adapter over `ISectorRegistry`; owns no sector data).
 
 - **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
   Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
   - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators.
+  - `Sessions/`: the test-only **Dev Map**: `CanaryPenSession` (the 10 scripted demonstration pens) on `DevMapLayout`, registered by `TestHarnessInstaller` and reachable in the Editor through the dashboard's session switch. Pen code never goes back into production.
+  - `World/`: map validators (`MapDefinitionValidator` incl. Floor1 and Dev Map checks, `WorldMapValidator`, `SectorChartingValidator` for the fog of war), `TestWorlds` fixtures and `CommonsYardFixture` (an open yard for validators that hand-place agents with no walls between sectors).
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
   - `Planning/`: GOAP domain, A* graph search, and plan preemption validation (`GoapDomainValidator.cs`, `GoapPlannerValidator.cs`, `PlanExecutionValidator.cs`).
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
 
 - **`Assets/Tests/PlayMode/`**
-  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
+  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD and anomaly scenarios use `OutpostSession` (Floor 1); `PenCanaryScenario` and `ResourceContentionScenario` use the Dev Map. Scenarios that drive the dashboard (`SessionSwitchScenario`, `MapHudScenario`, `PlayerScoutScenario`) create it themselves, because loading the test scene destroys the boot one; they assert view state, never pixels (batch mode has no display). `PopulationScalingProbe` is an `[Explicit]` measurement. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]`; run it with `scripts/run-economy-soak.sh`. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
 
 ---
 
@@ -85,6 +87,11 @@ Work is saved through regular, reviewable commits. Uncommitted progress spanning
 3. **Never restate status in this file or in code comments.** Link to the roadmap.
 4. **Acceptance checklists list only delivered work.** Anything dropped or postponed goes under an explicit **Deferred** heading naming the epic that owns it.
 5. `.agents/architecture_history.md` is an append-only decision log. Add entries; don't rewrite history.
+6. **Plans in `.agents/*_plan.md` are working documents.** Keep only the plans for work in progress. When a plan's work is complete and its docs are reconciled:
+   - move its open findings to the epic doc;
+   - move data still needed for a decision (soak numbers, measurements) to `docs/`;
+   - summarise its decisions and deviations in `architecture_history.md`;
+   - then delete the plan, and link nothing to it. Git keeps it (`git log --diff-filter=D -- .agents/`).
 
 ## Definition of Done
 **"Done" means the feature *emerges in the live simulation*, not only that a validator passes.**

@@ -20,13 +20,16 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// </summary>
     public class OutpostSupplyLoopScenario : ISimulationScenario
     {
-        public const uint GatherDeadlineTicks = 3000;
-        public const uint SaleDeadlineTicks = 3000;
-        public const uint ScoutDeadlineTicks = 4000;
+        // Floor 1 with fog of war and bunks (Epic MAP Phase 3), slowest of 3 runs x 1.5: first sale t234, scout t357,
+        // gather t569 (only after the Deep Seam is charted)
+        public const uint GatherDeadlineTicks = 900;
+        public const uint SaleDeadlineTicks = 400;
+        public const uint ScoutDeadlineTicks = 550;
         public const uint SupplyDeadlineTicks = 6000;
         private const float WallClockTimeoutSeconds = 240f;
 
         public string Name => "OutpostSupplyLoopScenario";
+        public string SessionId => OutpostSession.SessionId;
         public float DurationSeconds => 0f; // SetupAsync observes until every deadline has passed
         public float TimeMultiplier => 10f;
 
@@ -41,6 +44,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private long _restockTick = -1;
         private long _regrowthTick = -1;
         private int _conservationViolations;
+        private int _fogLeaks;
+        private string _firstFogLeak;
         private int _worstDiscrepancy;
         private long _observedTicks;
 
@@ -64,7 +69,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             // Crawler-focused decision trace to a file; the console only receives warnings and errors
             var previousLogSettings = SimLog.Settings;
             var traceSettings = SimLogSettings.FromEnvironment();
-            SimLogSettings.ApplySpec(traceSettings, "Planning=Trace;Cognition=Debug;Economy=Debug;Supply=Debug;Navigation=Debug;Intervention=Debug;Drives=Info;Console=Warn");
+            SimLogSettings.ApplySpec(traceSettings, "Planning=Trace;Cognition=Debug;Economy=Debug;Supply=Debug;Navigation=Debug;Intervention=Debug;Drives=Debug;Console=Warn");
             traceSettings.FilePath = TraceLogPath;
             traceSettings.FocusAgentPrefixes.Add("Crawler");
             SimLog.Configure(traceSettings);
@@ -98,7 +103,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             // Gather bounty fulfilled, and the claimant's trust toward the player rose
             int deliveredSalvage = 0;
-            if (sim.TryGetBounty(SwarmSpawner.SeedGatherBountyId, out var gather) && gather.Status == BountyStatus.Completed)
+            if (sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out var gather) && gather.Status == BountyStatus.Completed)
             {
                 deliveredSalvage = gather.TargetQuantity;
                 if (_gatherTick < 0)
@@ -118,11 +123,14 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
 
             // Scout bounty fulfilled and its sector explored
-            if (_scoutTick < 0 && sim.TryGetBounty(SwarmSpawner.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
+            if (_scoutTick < 0 && sim.TryGetBounty(OutpostSession.SeedScoutBountyId, out var scout) && scout.Status == BountyStatus.Completed)
             {
                 _scoutTick = rel;
-                _scoutZoneExplored = zones.IsSectorExplored(FacilityZoneService.HerbHollowZoneId);
+                _scoutZoneExplored = zones.IsSectorExplored(OutpostSession.SeedBountySectorId);
             }
+
+            // Fog of war: before the scout's report nobody may know a landmark inside the Deep Seam
+            if (_scoutTick < 0) CheckFog(spawner, rel);
 
             // Supply faucets
             if (_restockTick < 0 && sim.Supply.RestockCount > 0) _restockTick = rel;
@@ -147,6 +155,26 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 {
                     _conservationViolations++;
                     if (Mathf.Abs(discrepancy) > Mathf.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
+                }
+            }
+        }
+
+        private void CheckFog(SwarmSpawner spawner, long rel)
+        {
+            var map = spawner.World?.Map;
+            if (map == null) return;
+            var agents = spawner.Agents;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var memory = agents[i] != null ? agents[i].Memory : null;
+                if (memory == null) continue;
+                foreach (var kvp in memory.SpatialMemoryMap)
+                {
+                    var record = kvp.Value;
+                    if (!Simpiens.Cognition.Memory.AgentMemory.IsLandmark(record.Type)) continue;
+                    if (map.FindSector(record.LastKnownLocation).Id != OutpostSession.SeedBountySectorId) continue;
+                    _fogLeaks++;
+                    _firstFogLeak ??= $"t{rel}: {agents[i].name} knew {record.Type} at {record.LastKnownLocation}";
                 }
             }
         }
@@ -176,7 +204,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
             Assert.IsTrue(_scoutTick >= 0 && _scoutTick <= ScoutDeadlineTicks,
                 $"Scout bounty not completed within {ScoutDeadlineTicks} ticks (completed at {_scoutTick}).");
-            Assert.IsTrue(_scoutZoneExplored, "Scout bounty completed but Herb Hollow was not marked explored.");
+            Assert.IsTrue(_scoutZoneExplored, "Scout bounty completed but the Deep Seam was not marked explored.");
+            Assert.AreEqual(0, _fogLeaks, $"Crawlers knew Deep Seam landmarks before the scout reported ({_fogLeaks} observations; first {_firstFogLeak}).");
+            Assert.Greater(_gatherTick, _scoutTick, "The Deep Seam Gather bounty was fulfilled before the sector was charted.");
 
             Assert.IsTrue(_restockTick >= 0 && _restockTick <= SupplyDeadlineTicks,
                 $"No supply caravan restock within {SupplyDeadlineTicks} ticks.");

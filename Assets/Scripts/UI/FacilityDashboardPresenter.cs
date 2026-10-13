@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Core.Session;
 using Simpiens.Entities;
 using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.World;
 using Simpiens.UI.Pooling;
 using Simpiens.UI.Zones;
 using UnityEngine;
@@ -42,6 +44,12 @@ namespace Simpiens.UI
         private Label _clockMultiplierLabel;
         private Button _btnViewToggle;
 
+        // Session switch (Dev Map toggle): only shown when a test session is registered
+        private ISessionSwitcher _sessionSwitcher;
+        private VisualElement _sessionSwitchOverlay;
+        private Label _sessionBanner;
+        private Button _btnSessionSwitch;
+
         // Header Economic HUD Metrics
         private Label _treasuryGoldLabel;
         private Label _provisionsStockLabel;
@@ -71,8 +79,19 @@ namespace Simpiens.UI
         private Label _bountyCountBadge;
         private ScrollView _bountiesScrollList;
         private DropdownField _dropdownBountyType;
-        private SliderInt _sliderBountySector;
+        private DropdownField _dropdownBountySector;
         private Label _labelBountySector;
+
+        // The sector picker's choices, rebuilt when the map, the type or the charted sectors change
+        private readonly List<int> _bountySectorIds = new List<int>(16);
+        private readonly List<string> _bountySectorChoices = new List<string>(16);
+        private BountyType _bountySectorType = BountyType.None;
+        private ulong _bountySectorMask;
+        private int _bountySectorZoneCount = -1;
+        private ISectorRegistry _sectorRegistry;
+
+        public const string AllChartedText = "Every sector is charted: there is nothing left to scout.";
+        public const string AwaitsChartSuffix = " (claimable once charted)";
         private VisualElement _groupBountyItem;
         private DropdownField _dropdownBountyItem;
         private VisualElement _groupBountyQty;
@@ -126,8 +145,9 @@ namespace Simpiens.UI
         }
 
         // State & Pre-allocated Buffers
-        private int _selectedZoneId = 4; // Default to Common Hearth
+        private int _selectedZoneId = -1; // Chosen from the loaded map by BuildSectorList
         private UnityEngine.GUID _selectedAgentId = default;
+        private Simpiens.Entities.WorldSelection _worldSelection;
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
 
@@ -145,13 +165,14 @@ namespace Simpiens.UI
 
         public bool IsVisible
         {
-            get => _dashboardRoot != null && _dashboardRoot.style.display != DisplayStyle.None;
+            get => IsShown(_dashboardRoot);
             set
             {
                 if (_dashboardRoot != null)
                 {
                     _dashboardRoot.style.display = value ? DisplayStyle.Flex : DisplayStyle.None;
                 }
+                UpdateViewToggleLabel();
             }
         }
 
@@ -164,8 +185,12 @@ namespace Simpiens.UI
             IPlayerInterventionService interventionService = null,
             INarrativeChronicleService chronicleService = null,
             IAgentIdentityService identityService = null,
-            INarrativeFormatter narrativeFormatter = null)
+            INarrativeFormatter narrativeFormatter = null,
+            ISessionSwitcher sessionSwitcher = null,
+            Simpiens.Entities.WorldSelection worldSelection = null,
+            ISectorRegistry sectorRegistry = null)
         {
+            _sectorRegistry = sectorRegistry;
             _zoneService = zoneService;
             _worldRegistry = worldRegistry;
             _simulationClock = simulationClock;
@@ -174,6 +199,37 @@ namespace Simpiens.UI
             _chronicleService = chronicleService ?? simulationManager?.Chronicle;
             _identityService = identityService ?? new AgentIdentityService();
             _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _zoneService);
+
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
+            _sessionSwitcher = sessionSwitcher;
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged += HandleSessionChanged;
+
+            if (_worldSelection != null) _worldSelection.Changed -= HandleWorldSelectionChanged;
+            _worldSelection = worldSelection;
+            if (_worldSelection != null) _worldSelection.Changed += HandleWorldSelectionChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
+            if (_worldSelection != null) _worldSelection.Changed -= HandleWorldSelectionChanged;
+        }
+
+        /// <summary>A click on the map (or a session reset) changed the selection: show the same crawler and room here.</summary>
+        private void HandleWorldSelectionChanged()
+        {
+            if (_selectedAgentId != _worldSelection.SelectedCrawler)
+            {
+                _selectedAgentId = _worldSelection.SelectedCrawler;
+                RefreshDossierView();
+                UpdateAgentCardsSelection();
+            }
+            int sector = _worldSelection.SelectedSector;
+            if (sector > 0 && sector != _selectedZoneId && _zoneService != null && _zoneService.TryGetZone(sector, out _))
+            {
+                _selectedZoneId = sector;
+                if (IsVisible) RefreshAllViews();
+            }
         }
 
         private void Awake()
@@ -187,6 +243,58 @@ namespace Simpiens.UI
         {
             BuildSectorList();
             RefreshAllViews();
+            RefreshSessionSwitch();
+        }
+
+        /// <summary>The session the switch button leads to: the next registered one after the current session.</summary>
+        private ISessionDefinition NextSession()
+        {
+            var sessions = _sessionSwitcher.Sessions;
+            int current = 0;
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                if (sessions[i] == _sessionSwitcher.Current) current = i;
+            }
+            return sessions[(current + 1) % sessions.Count];
+        }
+
+        private void HandleSessionSwitchClicked()
+        {
+            if (_sessionSwitcher == null || _sessionSwitcher.Sessions.Count < 2) return;
+            var next = NextSession();
+            SimLog.Bootstrap.ZLogInformation($"Session switch: {_sessionSwitcher.Current.DisplayName} -> {next.DisplayName}");
+            _sessionSwitcher.SwitchTo(next);
+        }
+
+        /// <summary>A respawn replaced every entity (ids are reissued): drop selections and rebuild from the new map.</summary>
+        private void HandleSessionChanged(ISessionDefinition session)
+        {
+            _selectedAgentId = default;
+            CloseMerchantTerminal();
+            CloseBountyBoard();
+            BuildSectorList();
+            RebuildBountySectorChoices(force: true);
+            RefreshAllViews();
+            RefreshSessionSwitch();
+        }
+
+        private void RefreshSessionSwitch()
+        {
+            if (_sessionSwitchOverlay == null) return;
+
+            bool switchable = _sessionSwitcher != null && _sessionSwitcher.Sessions.Count > 1;
+            _sessionSwitchOverlay.style.display = switchable ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!switchable) return;
+
+            if (_btnSessionSwitch != null) _btnSessionSwitch.text = $"SWITCH TO {NextSession().DisplayName.ToUpperInvariant()}";
+
+            var current = _sessionSwitcher.Current;
+            bool testSession = current != _sessionSwitcher.Default;
+            if (_sessionBanner != null)
+            {
+                _sessionBanner.style.display = testSession ? DisplayStyle.Flex : DisplayStyle.None;
+                _sessionBanner.text = $"{current.DisplayName.ToUpperInvariant()}: TEST SESSION (NOT THE GAME)";
+            }
         }
 
         private void EnsureVisualTreeLoaded()
@@ -258,6 +366,15 @@ namespace Simpiens.UI
             if (_btnViewToggle != null)
             {
                 _btnViewToggle.clicked += ToggleVisibility;
+                UpdateViewToggleLabel();
+            }
+
+            _sessionSwitchOverlay = _root.Q<VisualElement>("session-switch-overlay");
+            _sessionBanner = _root.Q<Label>("session-banner");
+            _btnSessionSwitch = _root.Q<Button>("btn-session-switch");
+            if (_btnSessionSwitch != null)
+            {
+                _btnSessionSwitch.clicked += HandleSessionSwitchClicked;
             }
 
             // Economic HUD
@@ -330,18 +447,11 @@ namespace Simpiens.UI
             _bountyCountBadge = _root.Q<Label>("bounty-count-badge");
             _bountiesScrollList = _root.Q<ScrollView>("bounties-scroll-list");
             _dropdownBountyType = _root.Q<DropdownField>("dropdown-bounty-type");
-            _sliderBountySector = _root.Q<SliderInt>("slider-bounty-sector");
+            _dropdownBountySector = _root.Q<DropdownField>("dropdown-bounty-sector");
             _labelBountySector = _root.Q<Label>("label-bounty-sector");
-            if (_sliderBountySector != null)
+            if (_dropdownBountySector != null)
             {
-                _sliderBountySector.RegisterValueChangedCallback(evt =>
-                {
-                    if (_labelBountySector != null)
-                    {
-                        string secName = _zoneService != null && _zoneService.TryGetZone(evt.newValue, out var z) ? z.Name : $"Sector {evt.newValue}";
-                        _labelBountySector.text = $"{secName} (ID {evt.newValue})";
-                    }
-                });
+                _dropdownBountySector.RegisterValueChangedCallback(_ => UpdateBountySectorLabel());
             }
             _groupBountyItem = _root.Q<VisualElement>("group-bounty-item");
             _dropdownBountyItem = _root.Q<DropdownField>("dropdown-bounty-item");
@@ -380,6 +490,7 @@ namespace Simpiens.UI
                     bool isGather = evt.newValue == "GatherResource";
                     if (_groupBountyItem != null) _groupBountyItem.style.display = isGather ? DisplayStyle.Flex : DisplayStyle.None;
                     if (_groupBountyQty != null) _groupBountyQty.style.display = isGather ? DisplayStyle.Flex : DisplayStyle.None;
+                    RebuildBountySectorChoices();
                 });
             }
             _bountyFeedbackLabel = _root.Q<Label>("bounty-feedback-label");
@@ -508,32 +619,53 @@ namespace Simpiens.UI
             return item;
         }
 
+        /// <summary>
+        /// Whether an element is displayed. A "display: none" written in the UXML is not an inline style here: until
+        /// code sets <c>style.display</c>, it reads as the default (Flex, keyword Null), so the resolved style decides.
+        /// </summary>
+        private static bool IsShown(VisualElement element)
+        {
+            if (element == null) return false;
+            var display = element.style.display;
+            return display.keyword == StyleKeyword.Null ? element.resolvedStyle.display != DisplayStyle.None : display.value != DisplayStyle.None;
+        }
+
         public void ToggleVisibility()
         {
             IsVisible = !IsVisible;
         }
 
+        /// <summary>The Tab button names where it leads.</summary>
+        private void UpdateViewToggleLabel()
+        {
+            if (_btnViewToggle != null) _btnViewToggle.text = IsVisible ? "[TAB] MAP VIEW" : "[TAB] DASHBOARD";
+        }
+
         private void Update()
         {
-            if (_root == null || !IsVisible) return;
+            if (_root == null) return;
 
             _refreshTimer += Time.deltaTime;
             if (_refreshTimer >= RefreshInterval)
             {
                 _refreshTimer = 0f;
-                RefreshAllViews();
+                // The header and the windows live in the HUD layer and show over the map too (Epic MAP Phase 4, D2)
+                if (IsVisible) RefreshAllViews();
+                else RefreshHud();
             }
         }
 
         public void SelectZone(int zoneId)
         {
             _selectedZoneId = zoneId;
+            _worldSelection?.SelectSector(zoneId);
             RefreshAllViews();
         }
 
         public void SelectAgent(UnityEngine.GUID agentId)
         {
             _selectedAgentId = agentId;
+            _worldSelection?.SelectCrawler(agentId, follow: true); // back on the map, the camera follows the dossier's crawler
             RefreshDossierView();
             UpdateAgentCardsSelection();
         }
@@ -584,6 +716,29 @@ namespace Simpiens.UI
                 _sectorsScrollList.Add(card);
                 _sectorCardsPool.Add(card);
             }
+
+            // Keep the selection while it exists on this map; otherwise select the map's first real sector
+            if (!_zoneService.TryGetZone(_selectedZoneId, out _))
+            {
+                _selectedZoneId = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    if (zones[i].ZoneId != 0)
+                    {
+                        _selectedZoneId = zones[i].ZoneId;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>What shows over the map: the header and any open window.</summary>
+        private void RefreshHud()
+        {
+            UpdateClockMetrics();
+            UpdateEconomicHUDMetrics();
+            RefreshMerchantTerminalView();
+            RefreshBountyBoardView();
         }
 
         private void RefreshAllViews()
@@ -669,7 +824,7 @@ namespace Simpiens.UI
                 bool isExplored = _zoneService.IsSectorExplored(_selectedZoneId);
                 _activeSectorDesc.text = isExplored
                     ? zone.Description
-                    : $"{zone.Description} [UNEXPLORED / SHROUDED SECTOR - Dispatch a scout bounty to map this area]";
+                    : $"{zone.Description} [UNCHARTED: post a Scout bounty to have it mapped]";
             }
 
             // 1. Populate resident agents in this sector with stable pooled elements
@@ -925,6 +1080,7 @@ namespace Simpiens.UI
                 AgentVisualState.Walking => "badge-walking",
                 AgentVisualState.Harvesting => "badge-harvesting",
                 AgentVisualState.Resting => "badge-resting",
+                AgentVisualState.Sleeping => "badge-resting",
                 AgentVisualState.Gossiping => "badge-gossiping",
                 AgentVisualState.Sharing => "badge-sharing",
                 AgentVisualState.Panicking => "badge-panicking",
@@ -992,7 +1148,7 @@ namespace Simpiens.UI
         public void ToggleMerchantTerminal()
         {
             if (_merchantTerminalOverlay == null) return;
-            bool isOpen = _merchantTerminalOverlay.style.display != DisplayStyle.None;
+            bool isOpen = IsShown(_merchantTerminalOverlay);
             if (isOpen) CloseMerchantTerminal();
             else OpenMerchantTerminal();
         }
@@ -1033,7 +1189,7 @@ namespace Simpiens.UI
         public void ToggleBountyBoard()
         {
             if (_bountyBoardOverlay == null) return;
-            bool isOpen = _bountyBoardOverlay.style.display != DisplayStyle.None;
+            bool isOpen = IsShown(_bountyBoardOverlay);
             if (isOpen) CloseBountyBoard();
             else OpenBountyBoard();
         }
@@ -1048,6 +1204,7 @@ namespace Simpiens.UI
             {
                 _merchantTerminalOverlay.style.display = DisplayStyle.None;
             }
+            RebuildBountySectorChoices(force: true);
             RefreshBountyBoardView();
         }
 
@@ -1061,7 +1218,7 @@ namespace Simpiens.UI
 
         private void RefreshMerchantTerminalView()
         {
-            if (_merchantTerminalOverlay == null || _merchantTerminalOverlay.style.display == DisplayStyle.None)
+            if (!IsShown(_merchantTerminalOverlay))
                 return;
 
             if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
@@ -1081,8 +1238,10 @@ namespace Simpiens.UI
 
         private void RefreshBountyBoardView()
         {
-            if (_bountyBoardOverlay == null || _bountyBoardOverlay.style.display == DisplayStyle.None)
+            if (!IsShown(_bountyBoardOverlay))
                 return;
+
+            RebuildBountySectorChoices(); // a scout's report may have charted a sector while the board is open
 
             var activeBounties = _simulationManager != null ? _simulationManager.ActiveBounties : null;
             int count = activeBounties != null ? activeBounties.Count : 0;
@@ -1248,6 +1407,95 @@ namespace Simpiens.UI
             }
         }
 
+        private void ShowBountyFeedback(string text, bool ok)
+        {
+            if (_bountyFeedbackLabel == null) return;
+            _bountyFeedbackLabel.text = text;
+            _bountyFeedbackLabel.style.color = new StyleColor(ok ? new Color(0.1f, 0.8f, 0.4f) : new Color(0.95f, 0.3f, 0.3f));
+        }
+
+        private BountyType SelectedBountyType()
+        {
+            return _dropdownBountyType != null && System.Enum.TryParse<BountyType>(_dropdownBountyType.value, out var parsed) && parsed != BountyType.None
+                ? parsed
+                : BountyType.GatherResource;
+        }
+
+        /// <summary>The ids behind the sector picker's choices (in order), for the current bounty type.</summary>
+        public IReadOnlyList<int> BountySectorChoiceIds
+        {
+            get
+            {
+                RebuildBountySectorChoices();
+                return _bountySectorIds;
+            }
+        }
+
+        /// <summary>Selects a sector in the picker; false when the current type doesn't offer it.</summary>
+        public bool SelectBountySector(int sectorId)
+        {
+            RebuildBountySectorChoices();
+            int index = _bountySectorIds.IndexOf(sectorId);
+            if (index < 0 || _dropdownBountySector == null) return false;
+            _dropdownBountySector.index = index;
+            return true;
+        }
+
+        /// <summary>
+        /// Fills the sector picker from the loaded map. Scout offers only uncharted sectors; Gather offers every sector,
+        /// marking uncharted ones as claimable once charted. Rebuilt only when the map, the bounty type or the charted
+        /// sectors change, keeping the current choice when it is still offered.
+        /// </summary>
+        private void RebuildBountySectorChoices(bool force = false)
+        {
+            if (_dropdownBountySector == null || _zoneService == null) return;
+
+            var type = SelectedBountyType();
+            var zones = _zoneService.GetAllZones();
+            ulong mask = 0UL;
+            for (int i = 0; i < zones.Count; i++)
+            {
+                if (zones[i].IsExplored && zones[i].ZoneId < 64) mask |= 1UL << zones[i].ZoneId;
+            }
+            if (!force && type == _bountySectorType && mask == _bountySectorMask && zones.Count == _bountySectorZoneCount) return;
+            _bountySectorType = type;
+            _bountySectorMask = mask;
+            _bountySectorZoneCount = zones.Count;
+
+            int previous = _dropdownBountySector.index >= 0 && _dropdownBountySector.index < _bountySectorIds.Count ? _bountySectorIds[_dropdownBountySector.index] : -1;
+            _bountySectorIds.Clear();
+            _bountySectorChoices.Clear();
+            for (int i = 0; i < zones.Count; i++)
+            {
+                var zone = zones[i];
+                if (type == BountyType.ScoutSector && zone.IsExplored) continue;
+                _bountySectorIds.Add(zone.ZoneId);
+                _bountySectorChoices.Add(zone.IsExplored || type == BountyType.ScoutSector ? zone.Name : zone.Name + AwaitsChartSuffix);
+            }
+
+            _dropdownBountySector.choices = new List<string>(_bountySectorChoices);
+            int keep = previous >= 0 ? _bountySectorIds.IndexOf(previous) : -1;
+            if (_bountySectorIds.Count == 0) _dropdownBountySector.SetValueWithoutNotify(string.Empty);
+            else _dropdownBountySector.index = keep >= 0 ? keep : 0;
+
+            bool canPost = _bountySectorIds.Count > 0;
+            _btnPostBounty?.SetEnabled(canPost);
+            if (!canPost && type == BountyType.ScoutSector) ShowBountyFeedback(AllChartedText, false);
+            UpdateBountySectorLabel();
+        }
+
+        private void UpdateBountySectorLabel()
+        {
+            if (_labelBountySector == null || _dropdownBountySector == null) return;
+            int i = _dropdownBountySector.index;
+            if (i < 0 || i >= _bountySectorIds.Count || _zoneService == null || !_zoneService.TryGetZone(_bountySectorIds[i], out var zone))
+            {
+                _labelBountySector.text = string.Empty;
+                return;
+            }
+            _labelBountySector.text = zone.IsExplored ? "Charted" : "Uncharted";
+        }
+
         public void HandlePostBounty()
         {
             var type = BountyType.GatherResource;
@@ -1256,7 +1504,22 @@ namespace Simpiens.UI
                 type = parsedType;
             }
 
-            byte sectorId = (byte)(_sliderBountySector != null ? _sliderBountySector.value : 2);
+            RebuildBountySectorChoices();
+            int choice = _dropdownBountySector != null ? _dropdownBountySector.index : -1;
+            if (choice < 0 || choice >= _bountySectorIds.Count)
+            {
+                ShowBountyFeedback(type == BountyType.ScoutSector && _bountySectorIds.Count == 0 ? AllChartedText : "Pick a target sector.", false);
+                return;
+            }
+            byte sectorId = (byte)_bountySectorIds[choice];
+
+            // The simulation enforces the same rule; checking here gives the player the reason
+            var target = BountyRules.CheckTarget(type, sectorId, _sectorRegistry);
+            if (target != BountyRules.TargetCheck.Ok)
+            {
+                ShowBountyFeedback(BountyRules.Describe(target, sectorId, _sectorRegistry), false);
+                return;
+            }
 
             var itemType = ItemType.IronOre;
             if (_dropdownBountyItem != null && System.Enum.TryParse<ItemType>(_dropdownBountyItem.value, out var parsedItem))

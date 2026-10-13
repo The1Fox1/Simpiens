@@ -10,7 +10,7 @@ namespace Simpiens.Entities
     /// </summary>
     public static class AgentSpriteLibrary
     {
-        private static readonly Sprite[,] _agentSprites = new Sprite[11, 2];
+        private static readonly Sprite[,] _agentSprites = new Sprite[12, 2];
         private static readonly Sprite _resourceSprite;
         private static readonly Sprite _oreVeinSprite;
         private static readonly Sprite _herbPatchSprite;
@@ -22,6 +22,14 @@ namespace Simpiens.Entities
         public static Sprite HerbPatchSprite => _herbPatchSprite;
         public static Sprite WallSprite => _wallSprite;
         public static Sprite GetCampfireSprite(int frame) => _campfireSprites[frame & 1];
+        private static readonly Sprite _bunkSprite;
+        public static Sprite BunkSprite => _bunkSprite;
+        private static readonly Sprite _floorSprite;
+        private static readonly Sprite _rockSprite;
+        /// <summary>Light grey flagstone, tinted per sector by the map view's floor tiles.</summary>
+        public static Sprite FloorSprite => _floorSprite;
+        /// <summary>Solid rock outside the floor.</summary>
+        public static Sprite RockSprite => _rockSprite;
 
         static AgentSpriteLibrary()
         {
@@ -135,6 +143,16 @@ namespace Simpiens.Entities
             _agentSprites[(int)AgentVisualState.Defiant, 0] = CreateSprite(PatternDefiant0, defiantPalette, "Agent_Defiant_0");
             _agentSprites[(int)AgentVisualState.Defiant, 1] = CreateSprite(PatternDefiant1, defiantPalette, "Agent_Defiant_1");
 
+            // 11b. Sleeping Sprites (head on the bunk's pillow, under a blanket in the bunk's colours). Drawn over the
+            // bunk sprite (agent scale 0.7, bunk 0.9): the blanket covers the bunk's blanket and leaves its frame showing.
+            var sleepPalette = CreatePalette(clear, outline, skin, white, black, hair,
+                primary: new Color32(79, 110, 196, 255),
+                shadow: new Color32(55, 79, 150, 255),
+                tool: tool, ex: exclamation, q: question);
+
+            _agentSprites[(int)AgentVisualState.Sleeping, 0] = CreateSprite(PatternSleep0, sleepPalette, "Agent_Sleep_0");
+            _agentSprites[(int)AgentVisualState.Sleeping, 1] = CreateSprite(PatternSleep1, sleepPalette, "Agent_Sleep_1");
+
             // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Color32>
             {
@@ -164,7 +182,7 @@ namespace Simpiens.Entities
             };
             _herbPatchSprite = CreateSprite(PatternBerryBush, herbPalette, "Resource_HerbPatch");
 
-            // 11. Stone Wall (Impassable play pen barrier)
+            // 11. Stone Wall (impassable map wall)
             var wallPalette = new Dictionary<char, Color32>
             {
                 { '.', Color.clear },
@@ -188,6 +206,34 @@ namespace Simpiens.Entities
             };
             _campfireSprites[0] = CreateSprite(PatternCampfire0, campfirePalette, "Anchor_Campfire_0");
             _campfireSprites[1] = CreateSprite(PatternCampfire1, campfirePalette, "Anchor_Campfire_1");
+
+            // 13. Bunk (rest anchor: wooden frame, pillow, blanket)
+            var bunkPalette = new Dictionary<char, Color32>
+            {
+                { '.', Color.clear },
+                { 'W', new Color32(120, 72, 32, 255) },   // Wooden frame
+                { 'w', new Color32(78, 45, 18, 255) },    // Frame shadow
+                { 'P', new Color32(241, 245, 249, 255) }, // Pillow
+                { 'B', new Color32(79, 110, 196, 255) },  // Blanket
+                { 'b', new Color32(55, 79, 150, 255) }    // Blanket fold
+            };
+            _bunkSprite = CreateSprite(PatternBunk, bunkPalette, "Anchor_Bunk");
+
+            // 14. Map tiles (Epic MAP Phase 4): a neutral floor the map view tints per sector, and rough rock
+            var floorPalette = new Dictionary<char, Color32>
+            {
+                { 'F', new Color32(232, 232, 232, 255) }, // Flagstone
+                { 'f', new Color32(212, 212, 212, 255) }, // Speckle
+                { 'g', new Color32(190, 190, 190, 255) }  // Joint
+            };
+            _floorSprite = CreateSprite(PatternFloor, floorPalette, "Map_Floor");
+            var rockPalette = new Dictionary<char, Color32>
+            {
+                { 'R', new Color32(58, 56, 64, 255) },
+                { 'r', new Color32(46, 44, 52, 255) },
+                { 'k', new Color32(74, 72, 82, 255) }
+            };
+            _rockSprite = CreateSprite(PatternRock, rockPalette, "Map_Rock");
         }
 
         /// <summary>
@@ -206,7 +252,7 @@ namespace Simpiens.Entities
         public static Sprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
-            if (stateIdx < 0 || stateIdx >= 11) stateIdx = 0;
+            if (stateIdx < 0 || stateIdx >= _agentSprites.GetLength(0)) stateIdx = 0;
             return _agentSprites[stateIdx, frame & 1];
         }
 
@@ -669,6 +715,106 @@ namespace Simpiens.Entities
             "################",
             "#SBBBB#SBBBBBBB#",
             "################"
+        };
+
+        private static readonly string[] PatternSleep0 =
+        {
+            "................",
+            ".....######.ZZ..",
+            "....#HHHHHH#.Z..",
+            "....#K#KK#K#ZZ..",
+            "....#KKKKKK#....",
+            "..############..",
+            "..#CCCCCCCCCC#..",
+            "..#CCSSSSSSCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCSSSSSSCC#..",
+            "..#CCCCCCCCCC#..",
+            "..############..",
+            "................",
+            "................"
+        };
+
+        private static readonly string[] PatternSleep1 =
+        {
+            ".............ZZ.",
+            ".....######...Z.",
+            "....#HHHHHH#.ZZ.",
+            "....#K#KK#K#....",
+            "....#KKKKKK#....",
+            "..############..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCSSSSCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..#CCCSSSSCCC#..",
+            "..#CCCCCCCCCC#..",
+            "..############..",
+            "................",
+            "................"
+        };
+
+        private static readonly string[] PatternFloor =
+        {
+            "fFFFFFFFFFFFFFFg",
+            "FFFFFFFFfFFFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FfFFFFFFFFFFFFFg",
+            "FFFFFFFFFfFFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFfFFFFFFFFFFFFg",
+            "FFFFFFFFFFfFFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFFfFFFFFFFFFFFg",
+            "FFFFFFFFFFFfFFFg",
+            "FFFFFFFFFFFFFFFg",
+            "FFFFfFFFFFFFFFFg",
+            "FFFFFFFFFFFFfFFg",
+            "FFFFFFFFFFFFFFFg",
+            "gggggggggggggggg"
+        };
+
+        private static readonly string[] PatternRock =
+        {
+            "kRRRRrRkRRrRRRkr",
+            "RrkRRRrRRkRrRRRR",
+            "RRrRkRRrRRRkrRRR",
+            "RRRrRRkRrRRRRkRR",
+            "RkRRrRRRkrRRRRrk",
+            "rRRkRrRRRRkRRRRr",
+            "RrRRRkrRRRRrkRRR",
+            "kRrRRRRkRRRRrRkR",
+            "RRkrRRRRrkRRRrRR",
+            "RRRRkRRRRrRkRRrR",
+            "rRRRRrkRRRrRRkRr",
+            "RkRRRRrRkRRrRRRk",
+            "RRrkRRRrRRkRrRRR",
+            "RRRrRkRRrRRRkrRR",
+            "kRRRrRRkRrRRRRkR",
+            "rRkRRrRRRkrRRRRr"
+        };
+
+        private static readonly string[] PatternBunk =
+        {
+            "................",
+            "..WWWWWWWWWWWW..",
+            "..WPPPPPPPPPPW..",
+            "..WPPPPPPPPPPW..",
+            "..WWWWWWWWWWWW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WbbbbbbbbbbW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WBBBBBBBBBBW..",
+            "..WbbbbbbbbbbW..",
+            "..WWWWWWWWWWWW..",
+            "..ww........ww..",
+            "................"
         };
 
         private static readonly string[] PatternCampfire0 =

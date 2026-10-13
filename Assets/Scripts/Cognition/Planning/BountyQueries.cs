@@ -31,6 +31,19 @@ namespace Simpiens.Cognition.Planning
             return false;
         }
 
+        /// <summary>The sector this agent holds a claimed Scout bounty for (it may see inside the fog there), or 0.</summary>
+        public static byte SurveyingSector(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, UnityEngine.GUID agentId)
+        {
+            if (snapshot == null || snapshot.ActiveBountyCount == 0) return 0;
+            var bounties = snapshot.Bounties;
+            for (int i = 0; i < bounties.Length; i++)
+            {
+                ref readonly var b = ref bounties[i];
+                if (b.Type == BountyType.ScoutSector && b.Status == BountyStatus.Claimed && b.ClaimantId == agentId) return b.TargetSectorId;
+            }
+            return 0;
+        }
+
         /// <summary>
         /// Finds the open, unexpired bounty of the given type with the lowest id that this agent can fulfil (reachable).
         /// BountyType.None matches any type.
@@ -78,6 +91,10 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public static bool IsFulfillableFrom(in AgentContext context, in BountyContract bounty)
         {
+            // Fog of war: nobody can gather in a sector no scout has charted
+            if (bounty.Type == BountyType.GatherResource && bounty.TargetSectorId != 0 && context.Snapshot != null
+                && !context.Snapshot.IsSectorCharted(bounty.TargetSectorId)) return false;
+
             if (bounty.TargetLocation != default && !Reachability.IsReachable(context, bounty.TargetLocation)) return false;
 
             if (context.Snapshot != null && bounty.CreatorStallId != default && context.Snapshot.TryGetStall(bounty.CreatorStallId, out var creator))

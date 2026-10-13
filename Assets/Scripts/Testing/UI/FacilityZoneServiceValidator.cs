@@ -23,7 +23,7 @@ namespace Simpiens.Testing.UI
         [Inject]
         public FacilityZoneServiceValidator(IFacilityZoneService zoneService = null, IWorldRegistry registry = null)
         {
-            _zoneService = zoneService ?? new FacilityZoneService();
+            _zoneService = zoneService ?? Simpiens.Testing.World.TestWorlds.DevMapZones();
             _registry = registry;
         }
 

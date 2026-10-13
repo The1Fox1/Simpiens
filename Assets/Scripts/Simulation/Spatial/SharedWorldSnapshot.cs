@@ -46,6 +46,50 @@ namespace Simpiens.Simulation.Spatial
         public StaticNavGrid StaticGrid { get; private set; }
         public void SetStaticGrid(StaticNavGrid staticGrid) => StaticGrid = staticGrid;
 
+        /// <summary>The loaded map (immutable; null in headless tests that build no map). Sectors, POIs, layout.</summary>
+        public Simpiens.Simulation.World.MapDefinition Map { get; private set; }
+        public void SetMap(Simpiens.Simulation.World.MapDefinition map) => Map = map;
+
+        /// <summary>
+        /// Fog of war (Epic MAP Phase 3): bit i set when sector i is charted, meaning a scout has reported on it or it
+        /// started explored. Nobody perceives what is inside an uncharted sector. Defaults to everything charted.
+        /// </summary>
+        public ulong ExploredSectorMask { get; private set; } = ulong.MaxValue;
+
+        // Rest anchor (Epic MAP Phase 3): bunks with a sleeper this tick
+        public const int MaxBunks = 32;
+        private readonly UnityEngine.GUID[] _occupiedBunks = new UnityEngine.GUID[MaxBunks];
+        public int OccupiedBunkCount { get; private set; }
+
+        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied)
+        {
+            int count = occupied != null ? Mathf.Min(occupied.Count, MaxBunks) : 0;
+            for (int i = 0; i < count; i++) _occupiedBunks[i] = occupied[i];
+            OccupiedBunkCount = count;
+        }
+
+        public bool IsBunkOccupied(UnityEngine.GUID bunkId)
+        {
+            for (int i = 0; i < OccupiedBunkCount; i++)
+            {
+                if (_occupiedBunks[i] == bunkId) return true;
+            }
+            return false;
+        }
+        public void SetExploredSectors(ulong mask) => ExploredSectorMask = mask;
+
+        public bool IsSectorCharted(int sectorId)
+        {
+            if (sectorId < 0 || sectorId >= 64) return true;
+            return (ExploredSectorMask & (1UL << sectorId)) != 0;
+        }
+
+        /// <summary>True when the point lies in a charted sector, or when no map is loaded.</summary>
+        public bool IsCharted(Vector2 position)
+        {
+            return Map == null || IsSectorCharted(Map.FindSector(position).Id);
+        }
+
         public SharedWorldSnapshot(int width, int height, float cellSize, int maxEntitiesPerCell, Action<SharedWorldSnapshot> returnAction)
         {
             Width = width;
@@ -265,8 +309,10 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>
-        /// Checks if a given cell is walkable (does not contain a Static Wall, Dynamic Wall, Anchor, or Stall).
-        /// Returns false if out of bounds.
+        /// Checks if a given cell is walkable: no static or dynamic wall, and no anchor (hearth) or stall centred in it.
+        /// Anchors and stalls are small props listed in every cell their radius overlaps; they block only the cell
+        /// holding their centre, so a hearth on a cell corner cannot seal off a narrow room. Movement keeps pawns off
+        /// the prop itself (SimulationManager.IsPositionBlocked). Returns false if out of bounds.
         /// </summary>
         public bool IsWalkable(int cellX, int cellY)
         {
@@ -283,12 +329,25 @@ namespace Simpiens.Simulation.Spatial
 
             for (int i = 0; i < count; i++)
             {
-                if (cellArray[i].Type == EntityType.Wall || cellArray[i].Type == EntityType.Anchor || cellArray[i].Type == EntityType.Stall)
+                var type = cellArray[i].Type;
+                if (type == EntityType.Wall)
+                {
+                    return false;
+                }
+                if ((type == EntityType.Anchor || type == EntityType.Stall) && IsCentredInCell(cellArray[i].Position, cellX, cellY))
                 {
                     return false;
                 }
             }
             return true;
+        }
+
+        private bool IsCentredInCell(Vector2 position, int cellX, int cellY)
+        {
+            float offsetX = Width * CellSize * 0.5f;
+            float offsetY = Height * CellSize * 0.5f;
+            return Mathf.FloorToInt((position.x + offsetX) / CellSize) == cellX &&
+                   Mathf.FloorToInt((position.y + offsetY) / CellSize) == cellY;
         }
 
         /// <summary>
@@ -418,6 +477,59 @@ namespace Simpiens.Simulation.Spatial
                 if (!IsStaticCellWalkable(x, y)) return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// True when a straight segment keeps at least <paramref name="clearance"/> from every hearth (anchor) and stall
+        /// centre. Line of sight ignores these props (agents see over a campfire), so path smoothing checks this as
+        /// well, or a smoothed segment could run straight through a fire. A prop within clearance of either endpoint
+        /// is ignored: the path is leaving or approaching it. Clearance must not exceed one cell. Zero allocations.
+        /// </summary>
+        public bool IsSegmentPropClear(Vector2 start, Vector2 end, float clearance)
+        {
+            float distance = Vector2.Distance(start, end);
+            float offsetX = (Width * CellSize) * 0.5f;
+            float offsetY = (Height * CellSize) * 0.5f;
+            float sqrClearance = clearance * clearance;
+
+            // Samples at most half a cell apart; props within clearance of the segment lie within one cell of a sample
+            int steps = Mathf.Max(1, Mathf.CeilToInt(distance / (CellSize * 0.5f)));
+            for (int i = 0; i <= steps; i++)
+            {
+                Vector2 sample = Vector2.Lerp(start, end, (float)i / steps);
+                int sampleX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
+                int sampleY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
+
+                for (int cy = sampleY - 1; cy <= sampleY + 1; cy++)
+                {
+                    if (cy < 0 || cy >= Height) continue;
+                    for (int cx = sampleX - 1; cx <= sampleX + 1; cx++)
+                    {
+                        if (cx < 0 || cx >= Width) continue;
+                        int index = cy * Width + cx;
+                        int count = CellCounts[index];
+                        var cellArray = Grid[index];
+                        for (int c = 0; c < count; c++)
+                        {
+                            var type = cellArray[c].Type;
+                            if (type != EntityType.Anchor && type != EntityType.Stall) continue;
+
+                            Vector2 prop = cellArray[c].Position;
+                            if ((prop - start).sqrMagnitude < sqrClearance || (prop - end).sqrMagnitude < sqrClearance) continue;
+                            if (SqrDistanceToSegment(prop, start, end) < sqrClearance) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static float SqrDistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float lengthSqr = ab.sqrMagnitude;
+            float t = lengthSqr > 0f ? Mathf.Clamp01(Vector2.Dot(point - a, ab) / lengthSqr) : 0f;
+            return (point - (a + ab * t)).sqrMagnitude;
         }
 
         private bool IsStaticCellWalkable(int cellX, int cellY)

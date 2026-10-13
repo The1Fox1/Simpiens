@@ -11,12 +11,31 @@ namespace Simpiens.Simulation.Spatial
     public interface ISpatialPartition
     {
         void Initialize(float worldWidth, float worldHeight, float cellSize);
+
+        /// <summary>
+        /// Sizes the partition for a (new) world. No-op returning false when the dimensions are unchanged; otherwise
+        /// builds a fresh static grid and snapshot pool. Snapshots still held by background readers keep their old,
+        /// consistent grid and are dropped when released. Main thread only.
+        /// </summary>
+        bool Configure(float worldWidth, float worldHeight, float cellSize);
         void UpdateFromRegistry(IWorldRegistry registry);
         void UpdateFromRegistry(IWorldRegistry registry, IGroupRegistry groupRegistry);
         void UpdateFromRegistry(IWorldRegistry registry, IGroupRegistry groupRegistry, IReadOnlyList<TradeStallData> stalls);
         void UpdateFromRegistry(IWorldRegistry registry, IGroupRegistry groupRegistry, IReadOnlyList<TradeStallData> stalls, IReadOnlyList<BountyContract> bounties);
         SharedWorldSnapshot GetActiveSnapshot();
         StaticNavGrid StaticGrid { get; }
+
+        /// <summary>
+        /// The loaded map, published by reference in every snapshot so background cognition can reason about sectors.
+        /// Map definitions are immutable, so sharing them across threads is safe. Main thread only.
+        /// </summary>
+        void SetMap(Simpiens.Simulation.World.MapDefinition map);
+
+        /// <summary>Which sectors are charted (bit i = sector i), published in every following snapshot. Main thread only.</summary>
+        void SetExploredSectors(ulong mask);
+
+        /// <summary>Bunks with a sleeper, copied into every following snapshot. Main thread only.</summary>
+        void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied);
 
         /// <summary>
         /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
@@ -34,8 +53,17 @@ namespace Simpiens.Simulation.Spatial
         private StaticNavGrid _staticGrid;
         private int _lastWallCount;
         private bool _staticRebuildPending;
+        private Simpiens.Simulation.World.MapDefinition _map;
 
         public StaticNavGrid StaticGrid => _staticGrid;
+
+        public void SetMap(Simpiens.Simulation.World.MapDefinition map) => _map = map;
+
+        private ulong _exploredSectors = ulong.MaxValue;
+        public void SetExploredSectors(ulong mask) => _exploredSectors = mask;
+
+        private IReadOnlyList<UnityEngine.GUID> _occupiedBunks;
+        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied) => _occupiedBunks = occupied;
 
         public void ResetStatic()
         {
@@ -53,17 +81,44 @@ namespace Simpiens.Simulation.Spatial
 
         public void Initialize(float worldWidth, float worldHeight, float cellSize)
         {
+            Build(worldWidth, worldHeight, cellSize);
+        }
+
+        public bool Configure(float worldWidth, float worldHeight, float cellSize)
+        {
+            int width = Mathf.CeilToInt(worldWidth / cellSize);
+            int height = Mathf.CeilToInt(worldHeight / cellSize);
+            if (_staticGrid != null && width == _width && height == _height && Mathf.Approximately(cellSize, _cellSize))
+            {
+                return false;
+            }
+            Build(worldWidth, worldHeight, cellSize);
+            return true;
+        }
+
+        private void Build(float worldWidth, float worldHeight, float cellSize)
+        {
             _cellSize = cellSize;
             _width = Mathf.CeilToInt(worldWidth / cellSize);
             _height = Mathf.CeilToInt(worldHeight / cellSize);
             _staticGrid = new StaticNavGrid(_width, _height, _cellSize);
             _staticGrid.SetPlayableHalfExtent(NavConstants.PlayAreaHalfExtent);
+            _lastWallCount = 0;
+            _staticRebuildPending = false;
+
+            // Drop snapshots sized for a previous world; the main thread's current one is released on the next update
+            while (_snapshotPool.TryDequeue(out _)) { }
 
             // Pre-warm the pool with a few snapshots
             for (int i = 0; i < 3; i++)
             {
                 _snapshotPool.Enqueue(CreateSnapshot());
             }
+        }
+
+        private bool IsCurrent(SharedWorldSnapshot snapshot)
+        {
+            return ReferenceEquals(snapshot.StaticGrid, _staticGrid);
         }
 
         private SharedWorldSnapshot CreateSnapshot()
@@ -75,6 +130,8 @@ namespace Simpiens.Simulation.Spatial
 
         private void ReturnSnapshotToPool(SharedWorldSnapshot snapshot)
         {
+            // A snapshot from before the last Configure() belongs to a world that no longer exists
+            if (!IsCurrent(snapshot)) return;
             _snapshotPool.Enqueue(snapshot);
         }
 
@@ -101,8 +158,17 @@ namespace Simpiens.Simulation.Spatial
                 _currentTickSnapshot.Release();
             }
 
-            // Get a new snapshot from the pool
-            if (!_snapshotPool.TryDequeue(out _currentTickSnapshot))
+            // Get a new snapshot from the pool (skipping any stale one that raced a Configure())
+            _currentTickSnapshot = null;
+            while (_snapshotPool.TryDequeue(out var pooled))
+            {
+                if (IsCurrent(pooled))
+                {
+                    _currentTickSnapshot = pooled;
+                    break;
+                }
+            }
+            if (_currentTickSnapshot == null)
             {
                 // Pool empty, create a new one. This is a fallback allocation.
                 _currentTickSnapshot = CreateSnapshot();
@@ -111,6 +177,9 @@ namespace Simpiens.Simulation.Spatial
             // The main thread now "owns" one reference to it.
             _currentTickSnapshot.Retain();
             _currentTickSnapshot.Clear();
+            _currentTickSnapshot.SetMap(_map);
+            _currentTickSnapshot.SetExploredSectors(_exploredSectors);
+            _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
             if (_staticRebuildPending)

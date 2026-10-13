@@ -16,7 +16,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// <summary>
     /// Milestone 1 closure, Phase 3: economy OBSERVATION soak. Runs the real session (SwarmSpawner.Respawn) for
     /// 30 sim-minutes at 10x with no injection and no player commands. Every sim-minute it records stall, ledger,
-    /// transfer, crawler, pen and supply figures to a CSV. It asserts integrity only (ledger conservation,
+    /// transfer, crawler and supply figures to a CSV. It asserts integrity only (ledger conservation,
     /// horizon reached, CSV written), never economic values: economy design is deferred by the producer.
     /// Seed and provisional-export switch come from SimulationSettings (SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
     /// </summary>
@@ -28,6 +28,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const int MaxRows = (int)(HorizonTicks / SampleIntervalTicks) + 2;
 
         public string Name => "EconomySoakScenario";
+        public string SessionId => OutpostSession.SessionId;
         public float DurationSeconds => 0f; // SetupAsync observes until the horizon
         public float TimeMultiplier => 10f;
 
@@ -41,9 +42,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             public EconomyFlowTotals Flows;
             public int CrawlerGoldTotal, CrawlerGoldMin, CrawlerGoldMax, CrawlersHungry, CrawlersStarving;
             public float CrawlerHungerMean;
-            public int PenGoldTotal;
-            public float PenHungerMean;
             public int Restocks, SkippedRestocks, Exports, Regrowths, DormantNodes, ActiveBounties;
+            // Lifecycle on Floor 1 (Epic MAP Phase 3): cumulative except the "now" counts
+            public int RationsHarvested, OreHarvested, HerbsHarvested, BunkSleeps, RestingInPlaceNow, SleepingInBunkNow;
+            public int Collapses, StarvingEpisodes;
             public bool ConservationOk;
             public int Discrepancy;
         }
@@ -56,6 +58,15 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private int _conservationViolations;
         private int _worstDiscrepancy;
         private bool _csvWritten;
+
+        // Per-frame lifecycle tracking (a collapse or starving episode counts once when it begins)
+        public const float StarvingHunger = 95f;
+        public const uint StarvingTicks = 300;
+        private readonly System.Collections.Generic.HashSet<UnityEngine.GUID> _collapsedNow = new System.Collections.Generic.HashSet<UnityEngine.GUID>();
+        private readonly System.Collections.Generic.Dictionary<UnityEngine.GUID, long> _hungrySince = new System.Collections.Generic.Dictionary<UnityEngine.GUID, long>();
+        private readonly System.Collections.Generic.HashSet<UnityEngine.GUID> _starvingNow = new System.Collections.Generic.HashSet<UnityEngine.GUID>();
+        private int _collapses;
+        private int _starvingEpisodes;
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
         {
@@ -88,6 +99,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 _observedTicks = rel;
 
                 bool ok = CheckConservation(sim, spawner, out int discrepancy);
+                TrackLifecycle(spawner, rel);
                 if (rel >= nextSample)
                 {
                     Sample(sim, spawner, rel, ok, discrepancy);
@@ -127,6 +139,29 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             return ok;
         }
 
+        private void TrackLifecycle(SwarmSpawner spawner, long rel)
+        {
+            var agents = spawner.Agents;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var state = agents[i] != null ? agents[i].State : null;
+                if (state == null) continue;
+                if (state.IsExhaustionCollapsed) { if (_collapsedNow.Add(state.AgentId)) _collapses++; }
+                else _collapsedNow.Remove(state.AgentId);
+
+                if (state.Needs.Hunger >= StarvingHunger)
+                {
+                    if (!_hungrySince.TryGetValue(state.AgentId, out long since)) _hungrySince[state.AgentId] = since = rel;
+                    if (rel - since >= StarvingTicks && _starvingNow.Add(state.AgentId)) _starvingEpisodes++;
+                }
+                else
+                {
+                    _hungrySince.Remove(state.AgentId);
+                    _starvingNow.Remove(state.AgentId);
+                }
+            }
+        }
+
         private void Sample(ISimulationManager sim, SwarmSpawner spawner, long rel, bool conservationOk, int discrepancy)
         {
             if (_rowCount >= _rows.Length) return;
@@ -158,7 +193,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             var stalls = sim.ActiveStalls;
             if (stalls.Count > 0)
             {
-                var stall = stalls[0]; // the session has one stall (Outpost Commons)
+                var stall = stalls[0]; // the session has one stall (the hub stall)
                 row.Treasury = stall.TreasuryGold;
                 row.RationStock = stall.RationStock;
                 row.OreStock = stall.OreStock;
@@ -168,9 +203,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 row.HerbBuyPrice = stall.HerbBuyPrice;
             }
 
-            // Crawlers (index >= ScriptedPenAgentCount) can reach the stall; walled pen agents would only dilute them
-            int crawlers = 0, pens = 0;
-            float crawlerHunger = 0f, penHunger = 0f;
+            // Every agent of the outpost session is a free crawler
+            int crawlers = 0;
+            float crawlerHunger = 0f;
             var agents = spawner.Agents;
             for (int i = 0; i < agents.Count; i++)
             {
@@ -179,26 +214,32 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 int gold = state.Inventory != null ? state.Inventory.Gold : 0;
                 float hunger = state.Needs.Hunger;
 
-                if (i >= SwarmSpawner.ScriptedPenAgentCount)
-                {
-                    crawlers++;
-                    row.CrawlerGoldTotal += gold;
-                    if (gold < row.CrawlerGoldMin) row.CrawlerGoldMin = gold;
-                    if (gold > row.CrawlerGoldMax) row.CrawlerGoldMax = gold;
-                    crawlerHunger += hunger;
-                    if (hunger >= 60f) row.CrawlersHungry++;
-                    if (hunger >= 85f) row.CrawlersStarving++;
-                }
-                else
-                {
-                    pens++;
-                    row.PenGoldTotal += gold;
-                    penHunger += hunger;
-                }
+                crawlers++;
+                row.CrawlerGoldTotal += gold;
+                if (gold < row.CrawlerGoldMin) row.CrawlerGoldMin = gold;
+                if (gold > row.CrawlerGoldMax) row.CrawlerGoldMax = gold;
+                crawlerHunger += hunger;
+                if (hunger >= 60f) row.CrawlersHungry++;
+                if (hunger >= 85f) row.CrawlersStarving++;
             }
             if (crawlers == 0) { row.CrawlerGoldMin = 0; row.CrawlerGoldMax = 0; }
+
+            if (sim is SimulationManager manager)
+            {
+                row.RationsHarvested = manager.HarvestedUnits(ItemType.Ration);
+                row.OreHarvested = manager.HarvestedUnits(ItemType.IronOre);
+                row.HerbsHarvested = manager.HarvestedUnits(ItemType.MedicinalHerb);
+                foreach (var kvp in manager.BunkSleeps) row.BunkSleeps += kvp.Value;
+                row.SleepingInBunkNow = manager.BunkOccupants.Count;
+            }
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var state = agents[i] != null ? agents[i].State : null;
+                if (state != null && state.HasActivePlan && state.ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction) row.RestingInPlaceNow++;
+            }
+            row.Collapses = _collapses;
+            row.StarvingEpisodes = _starvingEpisodes;
             row.CrawlerHungerMean = crawlers > 0 ? crawlerHunger / crawlers : 0f;
-            row.PenHungerMean = pens > 0 ? penHunger / pens : 0f;
 
             _rows[_rowCount++] = row;
         }
@@ -209,8 +250,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             "fauceted_total,sunk_total,escrow,faucet_initial_seed,faucet_provisional_export,sink_supply_caravan," +
             "purchases,purchase_gold,sales,sale_gold,escrow_locked,escrow_released,escrow_refunded," +
             "crawler_gold_total,crawler_gold_min,crawler_gold_max,crawler_hunger_mean,crawlers_hungry,crawlers_starving," +
-            "pen_gold_total,pen_hunger_mean," +
             "restocks,skipped_restocks,exports,regrowths,dormant_nodes,active_bounties," +
+            "rations_harvested,ore_harvested,herbs_harvested,bunk_sleeps,sleeping_in_bunk_now,resting_in_place_now,collapses,starving_episodes," +
             "conservation_ok,discrepancy";
 
         private void WriteCsv()
@@ -232,9 +273,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                   .Append(f.EscrowLockedGold).Append(',').Append(f.EscrowReleasedGold).Append(',').Append(f.EscrowRefundedGold).Append(',')
                   .Append(r.CrawlerGoldTotal).Append(',').Append(r.CrawlerGoldMin).Append(',').Append(r.CrawlerGoldMax).Append(',')
                   .Append(r.CrawlerHungerMean.ToString("F1", inv)).Append(',').Append(r.CrawlersHungry).Append(',').Append(r.CrawlersStarving).Append(',')
-                  .Append(r.PenGoldTotal).Append(',').Append(r.PenHungerMean.ToString("F1", inv)).Append(',')
                   .Append(r.Restocks).Append(',').Append(r.SkippedRestocks).Append(',').Append(r.Exports).Append(',')
                   .Append(r.Regrowths).Append(',').Append(r.DormantNodes).Append(',').Append(r.ActiveBounties).Append(',')
+                  .Append(r.RationsHarvested).Append(',').Append(r.OreHarvested).Append(',').Append(r.HerbsHarvested).Append(',')
+                  .Append(r.BunkSleeps).Append(',').Append(r.SleepingInBunkNow).Append(',').Append(r.RestingInPlaceNow).Append(',')
+                  .Append(r.Collapses).Append(',').Append(r.StarvingEpisodes).Append(',')
                   .Append(r.ConservationOk ? 1 : 0).Append(',').Append(r.Discrepancy)
                   .AppendLine();
             }
@@ -253,7 +296,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                       $"treasury {first.Treasury}g -> {last.Treasury}g, crawler gold {first.CrawlerGoldTotal}g -> {last.CrawlerGoldTotal}g, " +
                       $"faucets {last.Fauceted}g, sinks {last.Sunk}g, purchases {last.Flows.Purchases} ({last.Flows.PurchaseGold}g), " +
                       $"sales {last.Flows.Sales} ({last.Flows.SaleGold}g), bounty payouts {last.Flows.EscrowReleasedGold}g, " +
-                      $"restocks {last.Restocks} (skipped {last.SkippedRestocks}), exports {last.Exports}, regrowths {last.Regrowths}. CSV: {CsvPath}");
+                      $"restocks {last.Restocks} (skipped {last.SkippedRestocks}), exports {last.Exports}, regrowths {last.Regrowths}; " +
+                      $"harvested rations {last.RationsHarvested} / ore {last.OreHarvested} / herbs {last.HerbsHarvested}, bunk sleeps {last.BunkSleeps}, " +
+                      $"collapses {last.Collapses}, starving episodes {last.StarvingEpisodes}. CSV: {CsvPath}");
         }
 
         public void AssertResults(IVisualAnomalyDetector detector)

@@ -45,6 +45,12 @@ namespace Simpiens.Simulation
             }
         }
 
+        public void Reset()
+        {
+            CurrentTick = 0;
+            _accumulator = 0f;
+        }
+
         /// <summary>
         /// Explicitly advances the simulation by a fixed number of ticks.
         /// Primarily used for deterministic testing, headless simulations, and fast-forward catchup.

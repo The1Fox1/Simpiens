@@ -71,13 +71,18 @@ namespace Simpiens.Cognition.Planning.Actions
                 {
                     salvageType = affordable;
                 }
-                else if (context.Inventory.HasItem(ItemType.IronOre))
+                else if (ResourceTargeting.HoldsSellable(context, ItemType.IronOre))
                 {
                     salvageType = ItemType.IronOre;
                 }
-                else if (context.Inventory.HasItem(ItemType.MedicinalHerb))
+                else if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
                 {
                     salvageType = ItemType.MedicinalHerb;
+                }
+                else
+                {
+                    // Everything held is owed to a claimed bounty: nothing to sell
+                    return new IdleIntent(context.AgentId, 0.5f);
                 }
             }
 

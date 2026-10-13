@@ -1,3 +1,4 @@
+using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -8,12 +9,20 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Cognition.Planning.Handlers
 {
     /// <summary>
-    /// Executes a ScoutIntent: follows the path toward the bounty's target sector and succeeds the moment
-    /// the agent physically stands inside it, recording a scout report on the agent (main thread, single writer).
-    /// The report is redeemed at a stall by the DeliverBountyIntentHandler.
+    /// Executes a ScoutIntent: follows the path toward the bounty's target sector and succeeds once the agent stands
+    /// inside it at its survey point (or at the end of its route inside it), recording a scout report on the agent
+    /// (main thread, single writer). The report is redeemed at a stall by the DeliverBountyIntentHandler, which also
+    /// publishes what the scout saw there (fog of war).
     /// </summary>
     public class ScoutIntentHandler : IntentHandlerBase<ScoutIntent>
     {
+        /// <summary>
+        /// The scout has visited once this close to the sector's target location (its anchor or centre). Tight enough
+        /// that vision (6) from there covers a Floor 1 room: at 2.0 a scout counted its visit near the doorway side and
+        /// charted only 2 of the Deep Seam's 3 veins.
+        /// </summary>
+        public const float SurveyRadius = 1.25f;
+
         protected override IntentResult Execute(NodeController node, ScoutIntent scout, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (!context.TryGetBounty(scout.BountyId, out var bounty))
@@ -30,7 +39,12 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             var agent = node.AgentState;
 
-            if (context.GetSectorForPosition(node.Position) == scout.TargetSectorId)
+            // A visit means reaching the sector's survey point, from where the scout can see the room, not just
+            // crossing its threshold (fog of war: what it sees there is the survey it reports, Epic MAP Phase 3)
+            bool inSector = context.GetSectorForPosition(node.Position) == scout.TargetSectorId;
+            bool hasRoute = scout.Path != null && scout.Path.IsValid;
+            bool atSurveyPoint = bounty.TargetLocation == default || Vector2.Distance(node.Position, bounty.TargetLocation) <= SurveyRadius;
+            if (inSector && (!hasRoute || atSurveyPoint))
             {
                 if (agent != null)
                 {

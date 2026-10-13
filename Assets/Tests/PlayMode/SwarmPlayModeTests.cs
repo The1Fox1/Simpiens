@@ -38,6 +38,71 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(200000)]
+        public IEnumerator Scenario_PenCanary_TenPenOutcomesHold()
+        {
+            yield return ExecuteScenario(new PenCanaryScenario());
+        }
+
+        [UnityTest]
+        [Timeout(200000)]
+        public IEnumerator Scenario_SessionSwitch_DevMapRoundTripResetsCleanly()
+        {
+            yield return ExecuteScenario(new SessionSwitchScenario());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_BunkRest_TiredCrawlersSleepInTheBunkhouse()
+        {
+            yield return ExecuteScenario(new BunkRestScenario());
+        }
+
+        [Test]
+        public void Scenario_RestAnchor_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Drives.RestAnchorValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_PlayerScout_ChartsTheOvergrowthFromTheMap()
+        {
+            yield return ExecuteScenario(new PlayerScoutScenario());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_MapHud_WorksOverTheMap()
+        {
+            yield return ExecuteScenario(new MapHudScenario());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_ShroudView_FogFollowsTheChart()
+        {
+            yield return ExecuteScenario(new ShroudViewScenario());
+        }
+
+        /// <summary>Epic MAP Definition of Done: the outpost's whole day over 9,000 ticks, nothing injected.</summary>
+        [UnityTest]
+        [Timeout(500000)]
+        public IEnumerator Scenario_OutpostLifecycle_TheOutpostsDayEmerges()
+        {
+            yield return ExecuteScenario(new OutpostLifecycleScenario());
+        }
+
+        /// <summary>Epic MAP determinism check: two same-seed runs of the outpost to t3,000, hashed every 100 ticks.</summary>
+        [UnityTest]
+        [Timeout(400000)]
+        public IEnumerator Scenario_Determinism_SameSeedSameWorld()
+        {
+            yield return ExecuteScenario(new DeterminismScenario());
+        }
+
+        [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
         {
@@ -48,6 +113,19 @@ namespace Simpiens.Tests.PlayMode
         /// Economy observation soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
         /// Run with scripts/run-economy-soak.sh (seed / provisional-export via SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
         /// </summary>
+        /// <summary>
+        /// Population scaling measurement (Epic MAP Phase 3): 12, 16 and 24 crawlers on Floor 1, cognition latency and
+        /// throughput to Logs/population-scaling.csv. Explicit: measurement, not a regression test.
+        /// </summary>
+        [UnityTest]
+        [Explicit("Measurement only; run on its own (-testFilter Scenario_PopulationScaling_Measure)")]
+        [Category("Probe")]
+        [Timeout(900000)]
+        public IEnumerator Scenario_PopulationScaling_Measure()
+        {
+            yield return ExecuteScenario(new PopulationScalingProbe());
+        }
+
         [UnityTest]
         [Explicit("Long-running economy soak; run via scripts/run-economy-soak.sh")]
         [Category("Soak")]
@@ -234,9 +312,37 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
-        public void Scenario_OutpostMapBuilder_AllDomainValidationTestsPass()
+        public void Scenario_MapDefinition_AllDomainValidationTestsPass()
         {
-            var validator = new Simpiens.Testing.Environment.OutpostMapBuilderValidator();
+            var validator = new Simpiens.Testing.World.MapDefinitionValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_SectorCharting_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.World.SectorChartingValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_CameraRig_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.UI.CameraRigValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_MapView_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.World.MapViewValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_WorldMap_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.World.WorldMapValidator();
             validator.RunAllValidationTests();
         }
 
@@ -272,6 +378,13 @@ namespace Simpiens.Tests.PlayMode
         public void Scenario_GridAStar_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Navigation.GridAStarValidator();
+            validator.RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_Exploration_AllDomainValidationTestsPass()
+        {
+            var validator = new Simpiens.Testing.Navigation.ExplorationValidator();
             validator.RunAllValidationTests();
         }
 
@@ -315,10 +428,12 @@ namespace Simpiens.Tests.PlayMode
             var container = AppBootstrapper.Instance.Container;
             Assert.IsNotNull(container, "VContainer resolver failed to build.");
 
-            // 3. Cleanly reset simulation world and respawn fresh entities for this scenario
+            // 3. Cleanly reset simulation world and respawn the scenario's session (never whatever was loaded last)
             var spawner = container.Resolve<SwarmSpawner>();
             Assert.IsNotNull(spawner, "SwarmSpawner service is not registered.");
-            spawner.Respawn();
+            var session = spawner.Find(scenario.SessionId);
+            Assert.IsNotNull(session, $"Session '{scenario.SessionId}' is not registered.");
+            spawner.Respawn(session);
 
             // Allow 1 frame for physics and spatial grid to settle
             yield return null;

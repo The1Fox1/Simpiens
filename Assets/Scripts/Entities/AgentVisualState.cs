@@ -16,6 +16,7 @@ namespace Simpiens.Entities
         Yielding = 7,
         Sharing = 8,
         Rallying = 9,
-        Defiant = 10
+        Defiant = 10,
+        Sleeping = 11 // lying in a bunk, under the blanket (Epic MAP Phase 3 rest anchor)
     }
 }

@@ -375,3 +375,102 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Unused cognition stub deleted.
 - **Verification:** PlayMode 40/40. A player build was not run.
 
+
+## Architectural Decision: Epic MAP Revision 2, Map as Data and Pens as Canaries (2026-10-11)
+- **Problem:** Revision 1 drew rooms to house legacy mechanics. It built walls as about 300 physics GameObjects with random ids, kept geography in three hard-coded places, put sectors in the UI layer, and derived world bounds from the camera. It was never wired in.
+- **Decision (producer-approved):**
+  - One plain-data `MapDefinition` per layout drives the nav grid, sectors, POIs, spawns and scenarios.
+  - Walls are written into `StaticNavGrid` as a base layer and drawn by a view.
+  - Sectors move to a simulation-owned `ISectorRegistry`.
+  - World bounds come from the definition.
+  - The pen arena becomes a "Dev Map" session reachable by a toggle button from the test harness; the live game boots into the outpost floor.
+  - Sector count is data (producer: unimportant).
+  - Drifter churn is deferred to the §3.3 economy decision.
+- **Consequences:** `OutpostMapBuilder` is retired. Removing wall entities shifts seeded entity ids, so seeded outcomes are re-verified rather than compared to old runs.
+
+## Architectural Decision: Epic MAP Phase 1, the World as Data (2026-10-11)
+- **Decision:**
+  - Static geography lives in `Simulation/World`.
+    - An immutable `MapDefinition` holds walls as rects, sectors plus a fallback, keyed nodes, POIs and labels.
+    - `IWorldMap.Load` is the only world-building entry point.
+  - Walls go into a `StaticNavGrid` **base layer** that survives the dynamic-wall `Clear()`. Dynamic walls (`EdgeCaseInjector`) keep the registry rasterization path.
+  - **Rasterization constant:** wall runs have half-extent 0.55 and are inflated by `PawnBodyRadius` (0.25). This is cell-for-cell identical to the legacy per-cell wall entities, proven over the whole Dev Map grid.
+  - **Grid origin stays centred.** The partition covers the bounds symmetrically, with an even cell count so cell edges stay on whole units. A non-centred origin was rejected: it touches every cell computation.
+  - **Partition re-sizing (`ISpatialPartition.Configure`):** a resize builds a new grid. Snapshots with a different `StaticGrid` are dropped on release and skipped on dequeue. Background readers keep their consistent old world. This is groundwork for the Phase 2 map switch.
+  - **Sectors:** `ISectorRegistry` (simulation) owns them and their exploration state, reset per load. `FacilityZoneService` is a UI adapter.
+  - **Spawn ordering:** world bounds come from the map, never the camera (the old grid size depended on screen aspect). The spawner loads the map before spawning (fixes the latent spawn-before-partition-init ordering).
+- **Consequences:**
+  - About 156 fewer GameObjects with physics.
+  - Walls no longer consume entity ids, so all seeded ids shift (accepted; outcomes are re-verified, not padded).
+  - The anomaly detector checks map wall geometry.
+- **Verification:**
+  - Map, world, parity and zone validators pass outside Unity.
+  - PlayMode was pending at the time of writing.
+- **Verification (follow-up, 2026-10-11):**
+  - PlayMode 42/42 in 3 consecutive runs.
+  - The live supply loop passes with 0 anomalies, with identical milestone ticks in every run.
+  - The seeded entity-id shift caused no regressions.
+
+## Architectural Decision: Epic MAP Phase 2, Session Split (2026-10-11)
+- **Decision:**
+  - A session is an `ISessionDefinition`: a `MapDefinition` plus `Populate(SessionBuilder)` for agents, relationships, groups, stalls and seeded bounties. `SwarmSpawner` builds any session: it loads the map, spawns the map's nodes and hearths, calls `Populate`, records the ledger baseline, then registers the staged seed bounties (baseline before escrow, as before).
+  - Sessions are injected as `IReadOnlyList<ISessionDefinition>`. **The default is chosen by id (`OutpostSession`), never by registration order**, so boot can never pick a test session.
+  - The live session is `OutpostSession` on `OutpostCommonsLayout` (an interim yard; Floor 1 replaces it in Phase 3). The pens are `CanaryPenSession` + `DevMapLayout` in `Simpiens.Testing`, registered by `TestHarnessInstaller`.
+  - **Respawn rewinds the clock to tick 0 and clears the chronicle.** Seeded expiries (bounties t6000, directives t5000) were absolute and expired after ~10 minutes of uptime; seeded randomness is keyed on the tick, so outcomes depended on uptime and PlayMode test order; chronicle events outlived the GUIDs the reset allocator reissues.
+  - **The session switch is generic production UI**, shown only when more than one session is registered (only the test harness adds one). This differs from the epic's wording (the harness installs the button); the effect is the same and test code does not reach into production UXML.
+  - **Hearths and stalls block only the grid cell holding their centre.** They are listed in every cell their radius overlaps; treating all of those as blocked let a hearth on a cell corner seal a 2-cell room (Pen 4). Movement already keeps pawns off the prop (`IsPositionBlocked`).
+  - Every PlayMode scenario names its session (`ISimulationScenario.SessionId`).
+- **Consequences:**
+  - Production code holds no pen coordinates, keys, sector ids or agent indices.
+  - Seeded ids and milestone ticks shifted twice (clock rewind, then the split); outcomes were re-verified, not compared.
+  - The pens finally have assertions (`PenCanaryScenario`); the first run exposed the Pen 4 regression.
+- **Verification:** PlayMode 43/43; the split was green 3 runs in a row; `OutpostSupplyLoopScenario` passes with 0 anomalies on the pen-free yard; `SessionSwitchScenario` presses the real button and gets back a world structurally identical to a fresh boot.
+
+## Architectural Decision: Epic MAP Phase 3, the Outpost Floor Goes Live (2026-10-12)
+- **Decision:**
+  - The live session is `OutpostSession` on `Floor1Layout`: 12 crawlers spawn at the Road Gate and discover the outpost by walking in (no seeded knowledge). The Commons yard is retired from production and kept only as the test fixture `CommonsYardFixture`.
+  - **Fog of war** (producer decision D1): nobody knows what is inside an uncharted sector until a scout visits it and successfully reports back.
+    - The charted state reaches cognition through the snapshot (`ExploredSectorMask`, written by the main thread each tick). Cognition also reads the immutable `MapDefinition` from the snapshot.
+    - Landmarks (resources, hearths, stalls, bunks) inside uncharted sectors are not perceived. A scout claimant keeps what it sees in its own target sector as private survey notes. A successful report charts the sector and publishes the survey to every agent's spatial memory, in entity id order, on the main thread. An abandoned survey charts nothing.
+    - A scout's visit means reaching the sector's survey point (within 1.25), not crossing the threshold.
+  - **The rest anchor:** bunks are entities with one sleeper each. Occupancy is claimed and validated on the main thread; a claim is dropped every tick unless its holder is still sleeping there. Preferring bunks is a price in `Considerations`, not a rule. Resting in place and collapse remain the fallbacks.
+  - **Map-aware searching:** exploration and starvation panic pick the charted sector the agent stood in least recently (`AgentMemory.LastSectorVisit`, copied into the memory snapshot), not a random point a few units away.
+  - **Perception while busy:** agents also perceive every 5 ticks while carrying out an intent, on the main thread and never during a background evaluation. Before this they were blind for the whole of a walk.
+  - **Bounty reservation:** units a claimed Gather bounty is owed are never sold at the stall.
+  - **Crawlers arrive fed** (hunger 20, session data). Prices, stocks and starting gold are unchanged; economy design stays deferred.
+  - **An affordable stall ration is known food** for the starvation reflex (`ResourceTargeting.HasStallFood`, cached on `AgentState` at each evaluation), so a starving crawler with the gold buys instead of panicking.
+- **Why:** each of these surfaced when a live scenario ran on a walled floor. The open yard had hidden them: short trips, everything in sight.
+- **Consequences:**
+  - The Dev Map pens start charted (no scouts there).
+  - `NavConstants.ArrivalTolerance` (1.0) lets walks end up to a unit short, so precise interactions (bunks) make their own last step.
+  - Injected walls block the 3×3 cells around them; tests must drop them clear of pawns.
+  - Population cost grows faster than linearly: 24 crawlers run at about 54× real time unthrottled, against 146× for 12. That is input for §3A #8.
+- **Verification:**
+  - PlayMode 47/47 in 3 consecutive runs, with identical milestones each time.
+  - `BunkRestScenario`: 10 distinct sleepers, 0 starving.
+  - `OutpostSupplyLoopScenario`: no fog leak, the Gather bounty fulfilled after the charting, 0 anomalies.
+  - The economy soak re-ran on Floor 1 (Phase 3 plan §9).
+
+## Architectural Decision: Epic MAP Phase 4, the Player's View (2026-10-12)
+- **Decision:**
+  - **The map is drawn on a Tilemap** (`MapView`): Floor, Rock and Walls tilemaps built from the `MapDefinition`, aligned with the map's wall cells (whole-number centres on Floor 1, half-number rows on the Dev Map). Each room's floor is a muted tint of its label colour. One `RenderOrder` table orders every layer.
+  - **The player's fog is a view of the charted state** (`ShroudView`, producer decision D1 = A). It reads `ISectorRegistry.ExploredMask`, the same state cognition sees, and owns none, so a respawn or a future save/load gives the right fog for free. Props sort below the fog and crawlers above it: the player knows no more about a room than the crawlers do, but can watch a scout walk in.
+  - **The camera is plain maths plus a thin input layer:** `CameraRig` (clamp, zoom about the cursor, follow, reframe; headless-testable) and `CameraController` (Input System, unscaled time, ignores pointer input over UI Toolkit elements). Follow moves with the target and closes the remaining gap, so it keeps up at 10×.
+  - **Selection is shared view state** (`WorldSelection`, a DI singleton): the map and the dashboard read and write it; nothing enters the simulation. Clicks pick the nearest crawler where it is drawn (ties to the lower id), with no physics raycast.
+  - **The HUD is a layer over everything** (producer decision D2): the header and the Bounty and Merchant windows sit in a pass-through `hud-root`, and Tab shows or hides only the three dashboard panels.
+  - **Bounty targets are validated by the simulation** (`BountyRules`, in `TryRegisterBounty`, before escrow): an unknown sector, or a Scout bounty on a charted one, is refused. The bounty board uses the same rule to explain the refusal. A Gather bounty may wait on an uncharted sector.
+- **Why:** the map gave the fog of war away, the fixed camera made crawlers a few pixels tall, posting anything meant switching to a full-screen dashboard that hid the map, and the pen-era sector slider accepted any id. Validation in the authoritative layer is what a multiplayer server will need; a picker alone is not.
+- **Consequences:**
+  - The map view is 14 GameObjects for Floor 1 instead of about 270.
+  - `IWorldMap` exposes its sector registry; `MapView.Show` takes the registry and the selection.
+  - A UXML `display: none` reads as Flex through `style.display` until code sets it; the presenter's `IsShown` falls back to the resolved style. That bug made the Bounties and Merchant buttons need two presses the first time.
+  - `NodeController` requires a body and a collider: every entity that uses it must set its own (bunks had silently got a dynamic body that crawlers shoved).
+- **Verification:** PlayMode 52/52 in 3 consecutive runs with identical milestones. `MapViewValidator` matches the tiles to the definition and the nav grid; `ShroudViewScenario`, `MapHudScenario` and `PlayerScoutScenario` run on the live session. Supply-loop and bunk milestones are unchanged from Phase 3.
+
+## Process Decision: Completed Plans Leave `.agents/` (2026-10-12)
+- **Decision (producer request):** plans in `.agents/*_plan.md` are working documents, kept only while their work is in progress (AGENTS.md, Documentation Protocol #6). Removed: `epic_map_phase1_plan.md` to `epic_map_phase4_plan.md`, `milestone1_closure_plan.md`, `implementation_plan.md` (§3.1), `goap_fixes_plan.md` and `logging_implementation_plan.md`.
+- **Where their live content went:**
+  - the economy soak data and the deferred §3.3 decisions: `docs/epics/epic-9.md` §8;
+  - the open findings from Epic MAP Phases 2–3: `docs/epics/epic-map.md` §6.
+- **Earlier entries** that cite a plan section (for example "Phase 3 plan §9") resolve through git: `git show f679a0c:.agents/<plan>.md`. The decisions themselves are already recorded in this log.
+- **Why:** finished plans duplicate this log and the epic docs, go stale, and bury the one plan that matters.

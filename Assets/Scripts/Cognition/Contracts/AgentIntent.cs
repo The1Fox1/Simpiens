@@ -12,6 +12,14 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Why this intent was chosen; set by the cognition task before the intent is enqueued.</summary>
         public DecisionSummary Decision { get; set; }
 
+        /// <summary>
+        /// The session the decision was made in (<c>ISimulationManager.SessionEpoch</c> when cognition started), set by
+        /// the cognition task. The simulation drops an intent from an earlier session: a respawn reissues the same
+        /// entity ids, so a late result would otherwise move the new agent that took the old one's id. 0 = unstamped
+        /// (intents built directly, e.g. by validators), always accepted.
+        /// </summary>
+        public uint SessionEpoch { get; set; }
+
         protected AgentIntent(UnityEngine.GUID agentId)
         {
             AgentId = agentId;

@@ -58,6 +58,7 @@ namespace Simpiens.Cognition.Memory
                 case EntityType.Pawn: return PawnDecayTicks;
                 case EntityType.Resource: return ResourceDecayTicks;
                 case EntityType.Anchor: return AnchorDecayTicks;
+                case EntityType.Bunk: return AnchorDecayTicks; // fixtures: remembered as long as a hearth
                 default: return DefaultDecayTicks;
             }
         }
@@ -82,7 +83,76 @@ namespace Simpiens.Cognition.Memory
             _blacklistedEntities.Remove(entityId);
         }
 
-        public void UpdateMemory(SharedWorldSnapshot snapshot, Vector2Int currentPos, int visionRadius, uint currentTick)
+        private readonly struct SurveyNote
+        {
+            public readonly SpatialMemoryRecord Record;
+            public readonly byte SectorId;
+
+            public SurveyNote(in SpatialMemoryRecord record, byte sectorId)
+            {
+                Record = record;
+                SectorId = sectorId;
+            }
+        }
+
+        // What a scout has seen inside the uncharted sector it was hired to survey. Private: never gossiped, never
+        // planned on, until a successful report publishes it to everyone (SimulationManager.PublishSurvey).
+        private readonly Dictionary<GUID, SurveyNote> _surveyNotes = new Dictionary<GUID, SurveyNote>(8);
+        private List<GUID> _surveyKeys;
+
+        public int SurveyNoteCount => _surveyNotes.Count;
+
+        // Last tick this agent stood in each sector (ids below 64), so searches try the room it saw least recently
+        private readonly uint[] _sectorLastVisit = new uint[64];
+
+        public uint LastSectorVisit(byte sectorId) => sectorId < _sectorLastVisit.Length ? _sectorLastVisit[sectorId] : 0u;
+
+        public void NoteSectorVisit(byte sectorId, uint tick)
+        {
+            // Stored +1 so tick 0 still counts as a visit
+            if (sectorId < _sectorLastVisit.Length) _sectorLastVisit[sectorId] = tick + 1;
+        }
+
+        /// <summary>Static landmarks are hidden by the fog of war; pawns stay visible.</summary>
+        public static bool IsLandmark(EntityType type)
+        {
+            return type == EntityType.Resource || type == EntityType.Anchor || type == EntityType.Stall || type == EntityType.Bunk;
+        }
+
+        /// <summary>Moves this agent's survey notes for one sector into <paramref name="into"/>.</summary>
+        public void TakeSurveyNotes(byte sectorId, List<SpatialMemoryRecord> into)
+        {
+            if (_surveyNotes.Count == 0) return;
+            _surveyKeys ??= new List<GUID>(8);
+            _surveyKeys.Clear();
+            foreach (var kvp in _surveyNotes)
+            {
+                if (kvp.Value.SectorId == sectorId) _surveyKeys.Add(kvp.Key);
+            }
+            for (int i = 0; i < _surveyKeys.Count; i++)
+            {
+                into.Add(_surveyNotes[_surveyKeys[i]].Record);
+                _surveyNotes.Remove(_surveyKeys[i]);
+            }
+        }
+
+        /// <summary>Learns a published survey; a fresher record already held is kept.</summary>
+        public void ReceiveSurvey(List<SpatialMemoryRecord> survey)
+        {
+            for (int i = 0; i < survey.Count; i++)
+            {
+                var record = survey[i];
+                if (SpatialMemoryMap.TryGetValue(record.EntityId, out var mine) && mine.LastSeenTick >= record.LastSeenTick) continue;
+                SpatialMemoryMap[record.EntityId] = record;
+            }
+        }
+
+        /// <summary>
+        /// Perceives what is in range and in line of sight. Landmarks inside an uncharted sector are not perceived
+        /// (fog of war), except by the scout surveying that sector (<paramref name="surveySectorId"/>), whose
+        /// sightings become private survey notes.
+        /// </summary>
+        public void UpdateMemory(SharedWorldSnapshot snapshot, Vector2Int currentPos, int visionRadius, uint currentTick, byte surveySectorId = 0)
         {
             if (_queryResults == null)
             {
@@ -91,6 +161,7 @@ namespace Simpiens.Cognition.Memory
             _queryResults.Clear();
 
             Vector2 queryPos = new Vector2(currentPos.x, currentPos.y);
+            if (snapshot?.Map != null) NoteSectorVisit(snapshot.Map.FindSector(queryPos).Id, currentTick);
             
             // Query the global snapshot strictly within the agent's visionRadius
             // This populates our thread-local _queryResults without allocating memory
@@ -108,6 +179,17 @@ namespace Simpiens.Cognition.Memory
                 }
 
                 Vector2Int entityPosInt = new Vector2Int(Mathf.RoundToInt(entity.Position.x), Mathf.RoundToInt(entity.Position.y));
+
+                // Fog of war: nobody knows what is inside an uncharted sector until a scout reports back
+                if (snapshot != null && IsLandmark(entity.Type) && !snapshot.IsCharted(entity.Position))
+                {
+                    if (surveySectorId != 0 && snapshot.Map.FindSector(entity.Position).Id == surveySectorId)
+                    {
+                        _surveyNotes[entity.Id] = new SurveyNote(
+                            new SpatialMemoryRecord(entity.Id, entity.Type, entityPosInt, currentTick, entity.ResourceKind), surveySectorId);
+                    }
+                    continue;
+                }
 
                 if (SpatialMemoryMap.TryGetValue(entity.Id, out var record))
                 {

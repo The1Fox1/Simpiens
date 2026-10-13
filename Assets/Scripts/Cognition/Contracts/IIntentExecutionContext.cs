@@ -43,6 +43,30 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Marks a facility sector explored (e.g. on Scout bounty delivery), lifting its UI shroud.</summary>
         void MarkSectorExplored(int sectorId);
 
+        /// <summary>
+        /// Publishes a scout's survey of a sector it just reported on to every agent. Returns the landmark count.
+        /// </summary>
+        int PublishSurvey(UnityEngine.GUID scoutId, int sectorId);
+
+        /// <summary>Claims a free bunk for an agent standing at it (one sleeper per bunk). Main thread.</summary>
+        bool TryClaimBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId, UnityEngine.Vector2 agentPosition);
+
+        /// <summary>
+        /// Moves the agent one tick toward the bunk's exact position, ignoring pawn clearance (the bunk is free; stepping
+        /// onto it is the point). Success once on the bunk's exact position, so the sleeper lies in it; PathBlocked when a
+        /// wall is in the way; TargetMissing when unknown or taken by someone else.
+        /// </summary>
+        IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId);
+
+        /// <summary>Frees the bunk if this agent holds it.</summary>
+        void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId);
+
+        /// <summary>Counts a completed bunk sleep (observed by scenarios).</summary>
+        void RecordBunkSleep(UnityEngine.GUID agentId);
+
+        /// <summary>Counts one harvested unit (observed by the economy soak).</summary>
+        void RecordHarvest(Simpiens.Simulation.Economy.ItemType item);
+
         bool TryGetStall(GUID stallId, out TradeStallData stall);
         void UpdateStall(TradeStallData stall);
         IReadOnlyList<TradeStallData> ActiveStalls { get; }

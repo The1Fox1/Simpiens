@@ -1,156 +1,264 @@
-# Epic MAP: The Utilitarian Outpost Map & Agent Lifecycle Topology
+# Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: PAUSED (Independent Foundation). Status is owned by [ROADMAP.md](../ROADMAP.md).
-- **Track**: Independent (Cross-Cutting World Architecture)
-- **Preceding Epic**: None (Replaces isolated test playpens from Epics 7 & 8)
-- **Downstream Beneficiaries**: Track A (Epic 9 Outpost Economy, Epic 10 Descent), Track B (Epic UI-1 Facility Dashboard, Epic UI-2 Merchant Terminal), Track C (PlayMode Scenarios)
-- **Architectural Layer**: World Architecture (`Simpiens.Environment`), Spatial Partitioning (`Simpiens.Simulation.Spatial`), Sector Topology (`Simpiens.UI.Zones`)
-
----
-
-> [!NOTE]
-> **Pause Record (2026-10-08).** This epic was partially started, then paused to prioritise an architecture review and documentation reconciliation.
->
-> **Exists (Phase 1, partial):** `OutpostMapBuilder` / `IOutpostMapBuilder` (perimeter and interior walls, 10 canonical doorway positions) and `OutpostMapBuilderValidator`, registered in `AppBootstrapper`.
->
-> **Not done:** `BuildMap()` is not called by the live session (`SwarmSpawner` still builds the isolated play-pen arena); `SimulationStarter` still initialises the 44×36 fallback bounds instead of 40×32; `FacilityZoneService` still defines legacy play-pen zones (Phase 2); entity/resource population (Phase 3) and lifecycle scenarios (Phase 4) have not started.
->
-> **Outpost Sector Scope Note (2026-10-08):** The game design specifies 12 interconnected sectors for the complete outpost. This epic's 9-sector topology represents incomplete work-in-progress (WIP) that established the initial core foundation before being paused. It does not supersede the 12-sector target, but represents the current partial state of map construction.
->
-> **Dependency note:** Phases 3–4 depend on real navigation (Grid A*), which is deferred from Epic 9; straight-line pathing cannot traverse doorways between sectors.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phases 1–4 done 2026-10-11 to 2026-10-12; next: Phase 5 ([implementation plan](../../.agents/epic_map_phase5_plan.md), approved 2026-10-12). Completed phase plans were removed from `.agents/`; read them with `git show f679a0c:.agents/epic_map_phase<N>_plan.md`.
+- **Track**: Independent (cross-cutting world architecture)
+- **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
+- **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
+- **Layers**: `Simpiens.Simulation.World` (new: map definition, sector registry), `Simpiens.Core.Session` (session definitions), `Simpiens.Entities` / `Simpiens.UI` (views only).
 
 ---
 
-## 1. Executive Summary & Problem Statement
+## 0. Producer intent (2026-10-11)
 
-During earlier milestones (Epics 7 & 8), our simulation environment relied on **10 isolated, walled playpens** (two rows of five $4 \times 7$ pens). While effective for verifying isolated behavioral dyads in headless tests (e.g. fear yielding, altruistic food sharing), this playpen topology fundamentally fractures the continuous agent lifecycle:
+> "Sector numbers are unimportant to me. I simply want to see a full simulation loop physically, not play pens. Ideally play pens would be moved out of my immediate line of sight. They are legacy tests that are more like canaries."
 
-1. **Physical Isolation**: Solid perimeter and divider walls prevent agents from navigating between sectors.
-2. **Artificial Economic Placement**: The Merchant Trade Stall from Epic 9 was artificially placed at `(0, 0)` inside Pen 3 (the Rivalry Contest pen). Agents in other pens have no physical path to reach the stall.
-3. **Broken Lifecycle Feedback Loops**: Agents cannot take a bounty from the Central Hub, travel through corridors to an extraction sector (Quarry or Wilderness), harvest nodes, return to the Trade Stall, sell salvage, buy food rations, and rest by the campfire.
-4. **Disconnected UI Presentation**: The UI Facility Dashboard and Bounty Board track sectors that have no real physical connection in the world.
+This revision is built around that intent:
+1. **The live game boots into one connected outpost floor.** Crawlers physically work, sell, eat, socialize and sleep there.
+2. **The sector count is data, not design.** We start with a small layout and add sectors by editing data.
+3. **The pens move into a test-only session.** They no longer appear in the live game, and they keep earning their place by asserting outcomes in PlayMode.
 
-### The Epic MAP Solution
-Replace the isolated 10-pen test arena with a **unified, utilitarian 9-sector outpost map** featuring:
-- **Central Outpost Hub**: Houses the Merchant Trade Stall, public Bounty Board, and Common Hearth Campfire ($r=3.5\text{m}$).
-- **Surrounding Functional Zones**: Dedicated sectors for sleeping/energy recovery (Bunkhouse), food foraging (Berry Orchard), group directives and succession (Directive Yard), iron ore mining (Deep Quarry), medicinal herbs and scouting (Herbal Conservatory), and dungeon descent staging (Forward Descent Gate).
-- **Dual-Ring Doorway Topology**: 4 wide cardinal doors ($2.5\text{m}$ to $3.0\text{m}$) connecting the Central Hub to cardinal wings, plus 6 outer perimeter bypass corridors allowing agents to transit between work and sleep sectors without causing congestion at the market stall.
-- **Pure Utilitarian Geometry**: Strictly rectangular rooms and orthogonal corridors aligned to $1.0\text{m}$ grid units, ensuring zero raycast snags, deterministic line-of-sight checks (`HasLineOfSight`), and zero-allocation Grid A* pathfinding.
+**Producer decisions (2026-10-11):**
+- Revision 2 approved.
+- Drifter arrival and departure is deferred (see Deferred).
+- A **"Dev Map" button** switches from the main map to the pen arena (§2.4).
+- **Shroud is fog of war** (2026-10-11, Phase 3 decision D1): "An adventurer should not know what is inside an uncharted room until a scout visits then successfully reports back."
+- **The player's fog** (2026-10-12, Phase 4 decision D1 = A): inside an uncharted room the player sees the walls and the name; its contents are hidden under fog; crawlers walking in stay visible.
+- **Controls over the map** (2026-10-12, Phase 4 decision D2): "Yes control over map would be nice." The header and the Bounty and Merchant windows work over the 2D view.
 
 ---
 
-## 2. Visual & ASCII Outpost Topology (36 x 28 World Units)
+## 1. Review of Revision 1 (lead developer, 2026-10-11)
+
+### What Revision 1 got right
+- It identified the core problem: the pens break the agent lifecycle, and the stall can only be reached from one pen.
+- It used grid-aligned rectangular geometry with wide doorways. That still suits the Grid A\* engine and its body-clearance rules.
+- Its Phase 4 aimed at a lifecycle verified in PlayMode.
+
+### Problems
+
+| # | Problem | Why it matters |
+| :-: | :--- | :--- |
+| R1 | **Sectors were chosen to house legacy mechanics, not to serve the game loop.** The Directive Yard and Rally Standard exist to give Epic 8 a room; the Descent Gate is Epic 10 scope; the two "Transit Perimeters" have no function. | Rooms are cheap to draw and expensive to keep alive: each needs entities, behaviour and tests. Groups and directives should emerge wherever agents are, not in a drill square. |
+| R2 | **Every sector is one door from the hub.** Shroud and scouting mean nothing when everything is adjacent and visible. | Scout bounties are half of the Milestone 1 bounty loop. Travel distance is what gives Gather bounties a price. |
+| R3 | **The map is built from GameObjects, not data.** `OutpostMapBuilder` spawns about 300 wall `GameObject`s, each with a `Rigidbody2D`, two colliders and a `NodeController`. Walkability is re-rasterized from registered wall nodes inside `SpatialHashGrid`. | This violates the §1A.1 rule that authoritative state is plain data that exists without a scene. It cannot run headless and cannot be sent to a future client. It costs one GameObject per wall cell. |
+| R4 | **Wall ids are not deterministic.** `OutpostMapBuilder` calls `GUID.Generate()`, while `SwarmSpawner` already uses `IEntityIdAllocator`. | This breaks the determinism guarantee from closure Phase 2 the moment the map is wired in. |
+| R5 | **The geography has three sources of truth.** Coordinates are hard-coded separately in `SwarmSpawner` (`OutpostStallPosition`, node positions, agent spawns), `FacilityZoneService` (zone rects, ids 11–13) and `OutpostMapBuilder` (walls, doors). The scenarios also hard-code positions. | Every layout change touches all of them, and they can silently disagree. |
+| R6 | **Sectors are a UI type, but the simulation depends on them.** `FacilityZone` lives in `Simpiens.UI.Zones`, yet `SimulationManager` (scout fulfilment) and the bounties (`targetSectorId`) depend on it. | Layering is inverted: the authoritative simulation reads a UI service. |
+| R7 | **World bounds come from the camera.** `SimulationStarter` sizes the spatial partition from `Camera.main`, and `ScreenBoundsGenerator` adds viewport collider walls. | The simulation's extent depends on the display, so headless runs and a larger map get different worlds. |
+| R8 | **Revision 1 had no plan for the pens or the existing scenarios.** It placed the map over the same coordinates as the pens and the Commons (y −14..14) and gave no migration for `OutpostSupplyLoopScenario`, `PriceResponseScenario`, `EconomySoakScenario` or the anomaly scenarios. | Wiring in the map would have broken most of PlayMode with no plan to fix it. |
+| R9 | **The Definition of Done was vague.** "Agents navigate doors, claim bounties … without clumping" gives no bounded tick count and no concrete outcomes. | It does not meet ROADMAP §1B. |
+
+### What we keep from Revision 1
+- The grid-aligned, rectangular, wide-door geometry style.
+- `OutpostMapBuilderValidator`'s connectivity and door checks. They are re-pointed at the data definition.
+- The idea of a central hub.
+
+The `OutpostMapBuilder` class itself is replaced. Its geometry is small and easy to re-express as data.
+
+---
+
+## 2. Design (Revision 2)
+
+### 2.1 Principles
+1. **One source of truth.** A plain C# `OutpostMapDefinition` describes bounds, walls, doors, sectors, points of interest (POIs), resource nodes and spawn points. The nav grid, sector registry, entity spawning, views and scenarios are all derived from it.
+2. **The simulation owns the world; views render it.** Walls are written straight into `StaticNavGrid`. Walls are drawn by a view (tiles or batched sprites), never by one GameObject per cell.
+3. **Distance and shroud carry meaning.** Near work sectors start explored. Frontier sectors start shrouded, sit behind the near sectors, and hold richer nodes. This gives Scout bounties a reason to exist and makes Gather bounties for frontier resources pay more.
+4. **Every sector earns its place through the loop.** No rooms for features that aren't built (descent, workshops, guild drill). Those epics add their own sectors to the definition when they arrive.
+5. **The layout is data.** Adding a sector means adding a definition entry plus its validator checks. No code paths are keyed to sector count or ids.
+
+### 2.2 Starter layout (illustrative; exact geometry is settled in Phase 1)
 
 ```
-========================================================================================================
-                                      SIMPIENS OUTPOST MAP TOPOLOGY
-                                  World Bounds: [-18..+18] x [-14..+14]
-========================================================================================================
-
- [-18, 14]                                      [0, 14]                                       [18, 14]
-  #==================================#============================#==================================#
-  #  SECTOR 2: BUNKHOUSE             #  SECTOR 3: FORAGING        #  SECTOR 4: DIRECTIVE YARD        #
-  #  (Quiet Quarters / Sleep)        #  ORCHARD (Hydroponics)     #  (Guild Drill / Succession)      #
-  #  Bounds: [-18..-7] x [5..14]     #  Bounds: [-6..+6] x [5..14]#  Bounds: [+7..+18] x [5..14]     #
-  #                                  #                            #                                  #
-  #       [===] Rest Bunk            #    (*) Berry Bush 1        #          [|] Rally Standard      #
-  #       Pos: (-12.5, 9.5)          #    Pos: (-3.0, 9.5)        #          Pos: (12.5, 9.5)        #
-  #                                  #                            #                                  #
-  #       [===] Rest Bunk            #    (*) Berry Bush 2        #          (Drill Square /         #
-  #       Pos: (-12.5, 7.0)          #    Pos: (0.0, 11.5)        #           Succession Arena)      #
-  #                                  #                            #                                  #
-  #                                  #    (*) Berry Bush 3        #                                  #
-  #                                  #    Pos: (3.0, 9.5)         #                                  #
-  #===#      #=======================#====#                  #====#=======================#      #===#
-      #  D   #                            #   DOOR NORTH     #                            #  D   #
-      #  O   #                            #   [-1.5 .. +1.5] #                            #  O   #
-      #  O   #                            #   Pos: (0, 4.5)  #                            #  O   #
-      #  R   #                            #                  #                            #  R   #
-  #===#      #=======================#====#                  #====#=======================#      #===#
-  #  W1: (-12, 4.5)                  #                            #                  E1: (12, 4.5)   #
-  #                                  #  SECTOR 1: CENTRAL HUB     #                                  #
-  #  SECTOR 5: DEEP QUARRY           #  (Marketplace & Hearth)    #  SECTOR 6: HERBAL CONSERVATORY   #
-  #  (Iron Extraction & Salvage)     #  Bounds: [-6..+6] x [-4..4]#  (Medicinal Herbs / Salvage)     #
-  #  Bounds: [-18..-7] x [-4..4]     #                            #  Bounds: [+7..+18] x [-4..4]     #
-  #                                  #     [$$$] TRADE STALL      #                                  #
-  #     (O) Iron Vein 1              #     Pos: (0.0, 2.0)        #     (&) Herb Patch 1             #
-  #     Pos: (-14.0, 1.5)       D    #     Merchant & Bounties    # D   Pos: (14.0, 1.5)             #
-  #                             O    #                            # O                                #
-  #     (O) Iron Vein 2         O W  #                            # O E                              #
-  #     Pos: (-10.5, -1.5)      R    #      (o) COMMON HEARTH     # R   (&) Herb Patch 2             #
-  #                             :    #      Pos: (0.0, -2.0)      # :   Pos: (10.5, -1.5)            #
-  #     (O) Iron Vein 3         (-6,0)      Campfire Anchor       # (6,0)                            #
-  #     Pos: (-15.0, -2.5)           #      Social Consensus      #     (&) Herb Patch 3             #
-  #                                  #      Relaxation (r=3.5m)   #     Pos: (15.0, -2.5)            #
-  #===#      #=======================#====#                  #====#=======================#      #===#
-  #  W2: (-12, -4.5)                 #    #   DOOR SOUTH     #    #                  E2: (12, -4.5)  #
-      #  D   #                            #   [-1.5 .. +1.5] #                            #  D   #
-      #  O   #                            #   Pos: (0, -4.5) #                            #  O   #
-      #  O   #                            #                  #                            #  O   #
-      #  R   #                            #                  #                            #  R   #
-  #===#      #=======================#====#                  #====#=======================#      #===#
-  #                                  #                            #                                  #
-  #  SECTOR 8: WEST PERIMETER        #  SECTOR 7: DESCENT GATE    #  SECTOR 9: EAST PERIMETER        #
-  #  (Transit & Security Post)       #  (Dungeon Airlock/Staging) #  (Workshop Reserve & Transit)    #
-  #  Bounds: [-18..-7] x [-14..-5]   #  Bounds: [-6..+6] x[-14..-5#  Bounds: [+7..+18] x [-14..-5]   #
-  #                                  #                            #                                  #
-  #       [>] Outer West Gate        #     [===] DESCENT GATE     #       [>] Outer East Gate        #
-  #       Pos: (-12.5, -9.5)         #     Pos: (0.0, -11.0)      #       Pos: (12.5, -9.5)          #
-  #                                  #     Boss Barrier Threshold #                                  #
-  #                                  #     Forward Expedition     #       (Future Artisan            #
-  #             DOOR S-W             #                            #        Workshops - Phase 3)      #
-  #             [-6.5, -9.5]         #                            #        DOOR S-E                  #
-  #========#                    #====#                            #====#                    #========#
-           #                    #                                      #                    #
- [-18, -14]#====================#======================================#====================# [18, -14]
+              +--------------+--------------+--------------+
+              |  FRONTIER W  |    GARDEN    |  FRONTIER E  |
+              |  Deep Seam   |  food plots  |  Overgrowth  |
+              |  rich ore    |              |  rich herbs  |
+              |  (shrouded)  |              |  (shrouded)  |
+              +------D-------+------D-------+-------D------+
+              |              |     HUB      |              |
+              |  ORE QUARRY  D  Stall+Board D  HERB GROVE  |
+              |  iron veins  |  Hearth      |  herb patches|
+              +--------------+------D-------+--------------+
+                             |  BUNKHOUSE   |
+                             |  rest bunks  |
+                             +------D-------+
+                             |  ROAD GATE   |
+                             |  arrivals    |
+                             +--------------+
 ```
 
+| Sector | Starts | Loop role | Contents |
+| :--- | :--- | :--- | :--- |
+| Hub | explored | Commerce, contracts, social life | Trade stall + bounty board, common hearth |
+| Bunkhouse | explored | Energy recovery | Rest bunks (rest anchor) |
+| Garden | explored | Baseline food | Ration plots (regrowing) |
+| Ore Quarry | explored | Near salvage | Iron veins (regrowing) |
+| Herb Grove | explored | Near salvage | Herb patches (regrowing) |
+| Frontier W (Deep Seam) | **shrouded** | Scout target, then rich ore | Higher-yield iron veins |
+| Frontier E (Overgrowth) | **shrouded** | Scout target, then rich herbs | Higher-yield herb patches |
+| Road Gate | explored | Spawn and entry point; future drifter arrivals | Spawn points |
+
+Doorways are at least 3 cells wide (the agent body diameter plus clearance on both sides). Hub doors are 4 cells wide because hub traffic is heaviest. The world is about 48 × 36 units, which fits the current camera with modest pan and zoom.
+
+### 2.3 The visible lifecycle (what the producer should see)
+
+Each crawler cycles through the following by need and opportunity. All of these behaviours already exist; this epic gives them places.
+
+**work** (harvest in a quarry or grove, or scout the frontier for a bounty) → **sell** at the stall → **buy and eat** (stall rations or garden) → **socialize** at the hearth (gossip, bonding) → **sleep** in the bunkhouse → repeat.
+
+The one new mechanic is a **rest anchor**. Today `RestAction` recovers energy wherever the agent stands, which is invisible. A bunk anchor gives a recovery bonus, so tired agents walk to the bunkhouse and the loop shows on screen. This is a small GOAP change: `TravelToAnchor(Bunk) → Rest`, priced by `Considerations`. Resting anywhere stays possible as the collapse fallback.
+
+### 2.4 Pens become a test-only canary session
+- `ISessionDefinition` gains two implementations:
+  - `OutpostSession` (production, `Core/Session`);
+  - `CanaryPenSession` (the `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only).
+- `SwarmSpawner` becomes a generic "spawn this session" service. The pen layout, the 24 scripted agents and the seeded relationships and groups move into `CanaryPenSession`.
+- **The live game boots into the main map, never the pens.** A **"Dev Map" toggle button** in the dashboard tears the session down and respawns it as the pen arena; pressing it again returns to the main map. Switching resets the simulation (same seed), so nothing carries across.
+- The button and the pen session are installed by the `Simpiens.Testing` harness through `BootstrapExtensions`. They are present in Editor play and test builds, and absent from shipping player builds. If the producer later wants the Dev Map in development player builds, the harness gets a `DEVELOPMENT_BUILD` install path; that is a small follow-up, not a redesign.
+- A new **`PenCanaryScenario`** asserts each pen's intended outcome within a bounded tick count (fear yield, respect deferral, contested-bush rivalry, altruistic sharing, hearth emergence, succession, schism). Today the pens are only visual demos with no PlayMode assertions; this is what turns them into real canaries.
+
 ---
 
-## 3. Sector Topology & Functional Roles
+## 3. Work Phases
 
-| Sector ID | Sector Name | Bounds $[X_{\min}, Y_{\min}, W, H]$ | Anchor / Primary Entities | Primary Functional Role in Simulation |
-| :---: | :--- | :--- | :--- | :--- |
-| **Zone 1** | **Central Outpost Hub** | `[-6, -4, 12, 8]` | Trade Stall `(0, 2)`, Campfire `(0, -2)` | Commerce, contracts, communal hearth gossip, and social bonding. High-traffic crossroads. |
-| **Zone 2** | **Bunkhouse / Quarters** | `[-18, 5, 11, 9]` | Rest Bunks `(-12.5, 8.5)` | Secluded sleeping wing for energy recovery ($\text{Energy} \le 30$) without foot-traffic disruption. |
-| **Zone 3** | **Foraging Orchard** | `[-6, 5, 12, 9]` | 3x Berry Bushes `(-3, 9.5)`, `(0, 11.5)`, `(3, 9.5)` | Hydroponic food foraging, altruistic feeding, and baseline food harvesting. |
-| **Zone 4** | **Directive Yard** | `[7, 5, 11, 9]` | Rally Standard `(12.5, 9.5)` | Open drill square for group directives, military compliance, and succession dominance trials. |
-| **Zone 5** | **Deep Quarry** | `[-18, -4, 11, 8]` | 3x Iron Ore Veins `(-14, 1.5)`, `(-10.5, -1.5)`, `(-15, -2.5)` | Heavy salvage extraction. Target for `GatherResource` (Iron Ore) bounties. Resource rivalry. |
-| **Zone 6** | **Herbal Conservatory** | `[7, -4, 11, 8]` | 3x Medicinal Herb Nodes `(14, 1.5)`, `(10.5, -1.5)`, `(15, -2.5)` | Botanical gathering. Target for `GatherResource` (Medicinal Herbs) and scouting contracts. |
-| **Zone 7** | **Forward Descent Gate** | `[-6, -14, 12, 9]` | Descent Gate `(0, -11)` | Fortified airlock threshold leading to deeper megadungeon floors. Staging for party expeditions. |
-| **Zone 8** | **West Transit Perimeter** | `[-18, -14, 11, 9]`| Patrol Post `(-12.5, -9.5)` | Auxiliary transit corridor connecting Quarry and Gate; outer defense perimeter. |
-| **Zone 9** | **East Transit Perimeter** | `[7, -14, 11, 9]`| Workshop Reserve `(12.5, -9.5)` | Auxiliary corridor; staging area for Milestone 3 Artisan Workshops. |
+Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md commit discipline.
+
+### Phase 1: The world as data
+- **`OutpostMapDefinition`** (`Simulation/World`, plain C#, no `UnityEngine.Object`): bounds, wall rects, door rects, `SectorDefinition`s (id, name, rect, starts explored), POIs (stall, hearth, bunks), resource nodes (item, yield, regrow ticks) and spawn points. Floor 1 is authored in code as `Floor1Layout`. A ScriptableObject can come later and is not needed now.
+- **`WorldBuilder`**: definition → `StaticNavGrid` walls (written once and versioned, not re-rasterized from wall nodes) and the spatial partition sized from the definition's bounds. All ids come from `IEntityIdAllocator`.
+- **`ISectorRegistry`** (`Simulation/World`): the authoritative sector lookup, point-to-sector mapping and explored state. Ownership moves out of `FacilityZoneService`, which becomes a read-only UI adapter over the registry, or is folded into it.
+- **Camera decoupling**: `SimulationStarter` stops sizing the world from the camera. `ScreenBoundsGenerator` viewport walls are removed; the map's perimeter is the world edge.
+- **`MapDefinitionValidator`** (it replaces `OutpostMapBuilderValidator`) checks:
+  - every sector is reachable from the Hub through doors wide enough for an agent body;
+  - every POI, node and spawn point sits on a walkable cell in the Hub's region;
+  - no two sectors overlap;
+  - every walkable cell belongs to exactly one sector;
+  - the same seed gives the same ids.
+
+### Phase 2: Session split; pens out of the live game
+- `ISessionDefinition`, `OutpostSession` and `CanaryPenSession`, with `SwarmSpawner` made generic (§2.4).
+- **Dev Map toggle:** a dashboard button that respawns the running game as the pen arena and back (§2.4). This needs re-initialisable world bounds, which Phase 1 provides.
+- Live boot is `OutpostSession` only. The default test harness session is also `OutpostSession`. Scenarios opt into the pens explicitly.
+- Add `PenCanaryScenario`. `DynamicChaosScenario` keeps running on the pens only if it truly needs them; otherwise it is retargeted to outpost coordinates taken from the definition.
+- Exit criteria:
+  - nothing in production code references pen coordinates or the pen agent indices (`ScriptedPenAgentCount`);
+  - `PenCanaryScenario` passes.
+
+### Phase 3: Populate the outpost and its physical lifecycle
+- `OutpostSession` spawns everything from `Floor1Layout`: stall and board, hearth, bunks, garden, near and frontier nodes, and crawlers at spawn points.
+- **Population: 12 crawlers to start** (6 today), with seeded personalities. Measure ticks/sec at 12, 16 and 24. Scaling work (§3A #8, the locked `GoapPlanner`) is *not* in scope; the measurement tells us when it becomes urgent.
+- Rest anchor and bunk preference (§2.3).
+- Seeded bounties: Scout a frontier sector, and Gather frontier ore once it is scouted.
+- **Scenario migration**: `OutpostSupplyLoopScenario`, `PriceResponseScenario`, `EconomySoakScenario` and the three anomaly scenarios read positions, sector ids and stall ids from the definition. No hard-coded coordinates remain in `Tests/`.
+- Re-run the economy observation soak on the map. Travel distances change the economy's pace, and **these numbers are the input the producer needs for the §3.3 economy decision**.
+
+### Phase 4: The player's view
+- Wall and floor rendering from the definition (tilemap or batched sprites). Sector labels.
+- **Fog-of-war shroud overlay** on unexplored sectors, lifted when a Scout bounty is fulfilled or a sector is explored.
+- Camera that frames the floor, with pan, zoom and a "follow agent" option on click.
+- The Facility Dashboard sector list and the Bounty modal's sector picker read from `ISectorRegistry`, so the Scout bounty dropdown lists real, still-shrouded sectors.
+
+### Phase 5: Definition of Done
+- **`OutpostLifecycleScenario`**: real `OutpostSession`, seeded, **no injection**, within **9,000 ticks (15 sim-minutes)**. The run passes when:
+  - every crawler has completed at least one *harvest → sell* cycle;
+  - at least 3 crawlers have rested at a bunk;
+  - at least 3 have eaten (bought or harvested food);
+  - at least one hearth gathering has happened (2 or more agents within the anchor radius together);
+  - the seeded Scout bounty is fulfilled and its frontier sector is unshrouded;
+  - the seeded Gather bounty is fulfilled and paid from escrow;
+  - player trust has risen for at least one crawler;
+  - the visual anomaly detector reports zero anomalies;
+  - the ledger is conserved;
+  - no crawler starves.
+- **Determinism check**: two runs with the same seed produce an identical world-state hash at tick 3,000. This holds only as far as the known cognition-arrival deviation (§1A.2 #6) allows; if it doesn't, document the tolerance.
+- Docs: ROADMAP, this epic's checklist, `curentfocus.txt` and `architecture_history.md` (the map-as-data decision and the session split).
 
 ---
 
-## 4. Work Phasing & Incremental Slices
+## 4. Acceptance checklist (delivered work only; filled in as phases land)
 
-To deliver this world architecture safely without breaking existing test harnesses or regression testing, the work is divided into **4 discrete phases**:
+- [x] Phase 1: world as data (done 2026-10-11; PlayMode 42/42 in 3 consecutive runs; `OutpostSupplyLoopScenario` passes with 0 anomalies):
+  - `MapDefinition` + builder, `WallRasterizer`, `StaticNavGrid` base layer and rect bounds;
+  - `ISectorRegistry`, `IWorldMap.Load`, reconfigurable partition with stale-snapshot guard;
+  - `DevMapLayout` (live; cell-for-cell parity with the legacy pens) and `Floor1Layout` (validated, not live);
+  - walls are data, drawn by `MapView`; bounds independent of the camera;
+  - geometric wall-penetration check;
+  - `OutpostMapBuilder` retired.
+- [x] Phase 2: session split, pens test-only (done 2026-10-11; PlayMode 43/43; `OutpostSupplyLoopScenario` passes on the pen-free live map with 0 anomalies):
+  - `ISessionDefinition`, `SessionBuilder`, `ISessionSwitcher`; `SwarmSpawner` builds any session, and the default is chosen by id;
+  - live boot is `OutpostSession` on `OutpostCommonsLayout` (the Commons yard; Floor 1 follows in Phase 3);
+  - `CanaryPenSession` + pens-only `DevMapLayout` in `Simpiens.Testing`; production code holds no pen coordinates, keys, ids or agent indices;
+  - respawn rewinds the clock and clears the chronicle, so seeded expiries are session-relative and results no longer depend on uptime or test order;
+  - Dev Map toggle: a session switch on the dashboard (both views), shown only when the harness registers the Dev Map; `SessionSwitchScenario` presses it and proves a clean round trip;
+  - `PenCanaryScenario` asserts all ten pen outcomes within 600 ticks;
+  - fix found by the canary: hearths and stalls block only their centre cell (Pen 4's altruism was sealed off since Grid A*);
+  - every scenario names its session (`ISimulationScenario.SessionId`); `DevMapParityValidator` retired.
+- [x] Phase 3: the outpost floor goes live (done 2026-10-12; PlayMode 47/47 in 3 consecutive runs; producer visual check passed 2026-10-12):
+  - `OutpostSession` on `Floor1Layout`: 12 crawlers walk in from the Road Gate; the hub stall; seeded Scout and Gather bounties both on the Deep Seam; crawlers arrive fed (hunger 20);
+  - Floor 1 made ready for live use: the hearth moved off the door lanes (doors re-placed), 8 bunks, 12 spawn points, named doors; a validator keeps the hearth ring clear of every door, lane and the stall;
+  - the Commons yard retired (`CommonsYardFixture`, test-only);
+  - **fog of war** (D1): landmarks in uncharted sectors are not perceived; the scout's survey is private until its successful report, which charts the sector and publishes the survey to every crawler; nobody explores into, or claims a Gather bounty in, an uncharted sector;
+  - **the rest anchor**: bunks (one sleeper each, claimed on the main thread), `TravelToBunk -> SleepAtBunk`, priced in `Considerations`; resting in place stays the fallback;
+  - map-aware searching: exploration and starvation panic head for the charted sector visited least recently; agents also perceive while they walk;
+  - `BunkRestScenario` (live, no injection); `OutpostSupplyLoopScenario` asserts no fog leak and scout-before-gather; navigation and dynamic-chaos scenarios run on Floor 1;
+  - `PopulationScalingProbe`: 24 crawlers run at 54x real time unthrottled (no escalation);
+  - economy soak re-run on Floor 1 ([Epic 9 §8.2](epic-9.md));
+  - fixes found on the way: claimants no longer sell ore owed to a bounty; an affordable stall ration counts as known food (no panic at the stall); the scout surveys from the middle of the room; path smoothing keeps clear of hearths and stalls; leadership is chronicled only when it changes.
+- [x] Phase 4: the player's view (done 2026-10-12; PlayMode 52/52 in 3 consecutive runs; producer visual check passed 2026-10-12, including the mouse and keyboard controls):
+  - the map on a tilemap (floor per room, rock, walls) aligned with each map's wall cells; `MapViewValidator` checks it cell for cell against the definition and the nav grid; 14 GameObjects for Floor 1 instead of about 270; one `RenderOrder` table;
+  - **fog of war on the map** (`ShroudView`, D1 = A): opaque over an uncharted room's interior with "UNCHARTED" under its name, props below it, crawlers above; it fades over 1.5 s when the room is charted; `ShroudViewScenario` (live);
+  - camera (`CameraRig` + `CameraController`): pan (drag, WASD), zoom toward the cursor, Home to reframe, clamped to the map; `CameraRigValidator` (headless);
+  - selection (`WorldSelection`, `WorldPicker`): click a crawler to follow it (ring and name), click a room to select it; mirrored in the dashboard;
+  - the header and the Bounty and Merchant windows in a HUD layer over the map (D2); `MapHudScenario` (live);
+  - the bounty board's sector picker lists rooms by name (Scout: uncharted only); `BountyRules` refuses impossible targets in the simulation before escrow; `PlayerScoutScenario` (live): the player posts Scout Overgrowth from the map and the fog lifts;
+  - fixes found on the way: bunks were shoved around by crawlers (dynamic physics body); the Bounties and Merchant buttons needed two presses the first time;
+  - crawlers lie down in their bunk while they sleep (producer request after the Phase 3 check).
+- [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
 
-### Phase 1: Physical Environment & Procedural Map Construction
-- **Goal**: Implement `OutpostMapBuilder.cs` to construct the static utilitarian wall grid, 2.5m open doorways, camera view bounds, and spatial partition dimensions centered at `(0, 0)`.
-- **Deliverables**:
-  - `OutpostMapBuilder.cs` (Programmatic spawning of walls, door gaps, and entity anchors).
-  - `ScreenBoundsGenerator.cs` updated to center orthographic camera at `(0, 0)` with size $14.5\text{f}$.
-  - `SimulationStarter.cs` updated to initialize `ISpatialPartition` with $40 \times 32$ world bounds.
-  - Verification of static physics colliders and unobstructed raycasts across doorways.
+### Deferred (owned elsewhere)
+- **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out): this is an economy decision, owned by §3.3 / Epic 9.
+- **Descent gate sector and hazards**: Epic 10.
+- **Workshop sectors**: Milestone 3.
+- **Map serialization and save/load**: the MemoryPack slice. The definition is plain data, so it is ready for that.
+- **Cognition scaling for larger populations**: §3A #8.
 
-### Phase 2: Spatial Sector Mapping & UI Shroud Synchronization
-- **Goal**: Refactor `FacilityZoneService.cs` to represent the 9 interconnected outpost sectors, replacing the legacy playpen zone IDs.
-- **Deliverables**:
-  - `FacilityZoneService.cs` updated with exact `Rect Bounds`, anchor positions, and default exploration flags.
-  - `FacilityZoneServiceValidator.cs` updated to mathematically assert containment across all 9 new sectors.
-  - UI Toolkit `FacilityDashboardPresenter` and `BountyTerminalPresenter` dynamically reflecting the new sector layout.
+---
 
-### Phase 3: Entity Spawning, Resource Nodes & Dynamic Daily Routines
-- **Goal**: Connect `SwarmSpawner.cs` to populate the new outpost with renewable berry bushes, iron ore veins, medicinal herb patches, rest bunks, and trade anchors.
-- **Deliverables**:
-  - `SwarmSpawner.cs` refactored to spawn agents with varied initial routines (foraging, mining, resting, trading).
-  - Relational dyads and group structures mapped to appropriate functional rooms (Directive Yard, Quarry, Hearth).
-  - Outpost Trade Stall anchored at `(0, 2)` and Common Hearth at `(0, -2)`.
+## 5. Risks
 
-### Phase 4: Full Lifecycle Integration & PlayMode Scenario Verification
-- **Goal**: Run automated scenarios ensuring agents navigate doors, claim bounties, mine ore, trade at the stall, and rest without path stalls or clumping.
-- **Deliverables**:
-  - `SwarmPlayModeTests` executing clean across the new outpost layout.
-  - `VisualAnomalyDetector` asserting 0 pawn stacking, 0 watchdog stalls, and 0 state thrashing through door portals.
+| Risk | Mitigation |
+| :--- | :--- |
+| Longer travel starves agents between the frontier and the stall | Garden in the hub's neighbourhood; the soak and lifecycle scenario assert "no crawler starves"; tune with regrow and yield data in the definition, not with code |
+| Crowding at hub doors (pawn stacking) | 4-cell hub doors; anomaly scenarios now run on the real map; the existing body-clearance navigation |
+| Scenario migration breaks green PlayMode | Phase 2 keeps the old session reachable until Phase 3 migrates each scenario; one scenario per commit |
+| A data-driven map invites layout bikeshedding | The layout changes only to fix a failing lifecycle assertion or validator, or when a new epic needs a sector |
+| Pens rot once out of sight | `PenCanaryScenario` in the regular PlayMode suite is the guard |
+| 12+ agents expose the locked `GoapPlanner` | Measured in Phase 3; escalated as §3A #8 with numbers, not guessed |
+
+---
+
+## 6. Open findings
+
+Found by the live scenarios during Phases 2–3. None fails a test. Each stays here until it is fixed or handed to the epic that owns it. Phase 5 takes on #1 and #2 (Definition of Done: zero anomalies, no crawler starves).
+
+1. **Jitter at the stall queue and the bunks** (Phase 3). Over 4,000 ticks the detector reports 6–8 `OscillationJitter` events across 6 crawlers, with 0 stacking. The jitter check runs on real time while the tests run at 10×, so how many of these the player would see at 1× is not yet known. **Phase 5.**
+2. **The starvation margin is thin** (Phase 3). The longest stretch at 95+ hunger in `BunkRestScenario` is 275 ticks, against the 300-tick bar. Hunger rises 1.5/s, and a crawler without gold must reach the Garden. This is economy pacing (§3.3), not navigation. **Phase 5** measures it over 9,000 ticks.
+3. **About 1 in 3 bunk claims miss** because the bunk is taken by arrival (Phase 3). The crawler picks another bunk. Churn only.
+4. **Cognition cost grows faster than linearly** with population: 2× crawlers, 2.7× slower (Phase 3, `PopulationScalingProbe`). Input for ROADMAP §3A #8.
+5. **A succession re-confirmation still applies the peaceful-succession cohesion bonus** and memory events for the leader (Phase 3; only the chronicle was fixed). Behaviour, left for a decision. Owner: Epic 8.
+6. **Gather fulfilment does not check provenance** (H6, accepted): ore bought or found counts the same as ore mined.
+7. **Pen 7 hands leadership to the defiant follower at t50** (Phase 2, Dev Map only). Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
+
+---
+
+## History
+- **2026-10-08: Revision 1 paused.** It was partially started (`OutpostMapBuilder` with 10 doors and `OutpostMapBuilderValidator`), then paused for the architecture review. It was never wired into the live session. Its 9-sector versus 12-sector target is superseded: the producer considers sector count unimportant (2026-10-11).
+- **2026-10-11: Revision 2 proposed** (this document). It reframes the epic around the live loop, map-as-data and the pens as a test-only canary session.
+- **2026-10-11: Revision 2 approved; epic `ACTIVE`.** Producer added the Dev Map toggle and deferred drifter churn.
+- **2026-10-11: Phase 1 done** (world as data).
+- **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are in §6.
+- **2026-10-11: Phase 3 plan approved** with decision D1: shroud is fog of war.
+- **2026-10-12: Phase 3 done** (the outpost floor goes live). The live game runs on Floor 1 with fog of war and bunks. Open findings are in §6; the Floor 1 economy soak is in [Epic 9 §8.2](epic-9.md).
+- **2026-10-12: Phase 3 visual check passed; Phase 4 plan approved** with D1 = A (crawlers visible in the fog) and D2 = yes (HUD over the map).
+- **2026-10-12: Phase 4 done** (the player's view). The player plays from the map. Its deviations are recorded in the Phase 4 plan (git history, `f679a0c`).
+- **2026-10-12: Phase 4 visual check passed** (including the mouse and keyboard controls); **Phase 5 plan approved** with D1 = A (jitter measured in sim time) and D2 = A (assert the strongest determinism that holds, record the tolerance). Completed phase plans removed from `.agents/`; open findings moved to §6.

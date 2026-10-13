@@ -17,6 +17,15 @@ namespace Simpiens.Cognition.Planning.Actions
                 .With(StateFact.IsResting, true);
         }
 
+        /// <summary>
+        /// A tired crawler who knows a free bunk sleeps there rather than dozing by the fire (Considerations.HearthRestCost);
+        /// otherwise relaxing at the hearth keeps its base cost.
+        /// </summary>
+        public override float GetCost(AgentContext context)
+        {
+            return Considerations.HearthRestCost(context, BaseCost);
+        }
+
         public override AgentIntent CreateIntent(AgentContext context)
         {
             return new IdleIntent(context.AgentId, 3.0f);

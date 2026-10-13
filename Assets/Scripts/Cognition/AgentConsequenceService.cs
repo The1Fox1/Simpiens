@@ -60,6 +60,14 @@ namespace Simpiens.Cognition
             {
                 agent.NavigationalStalls = 0;
 
+                // Eating carried food, whoever chose it: a plan step or a hunger reflex
+                if (intent is EatCarriedFoodIntent && agent.HasFoodInInventory)
+                {
+                    agent.Hunger = Mathf.Max(0f, agent.Hunger - 40f);
+                    agent.HasFoodInInventory = false;
+                    agent.Activity.RecordMeal(currentTick);
+                }
+
                 if (agent.HasActivePlan)
                 {
                     var completedAction = agent.ActivePlan.CurrentAction;
@@ -67,15 +75,15 @@ namespace Simpiens.Cognition
                     {
                         agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
                         agent.HasFoodInInventory = true;
-                    }
-                    else if (completedAction is EatCarriedFoodAction)
-                    {
-                        agent.Hunger = Mathf.Max(0f, agent.Hunger - 40f);
-                        agent.HasFoodInInventory = false;
+                        agent.Activity.RecordMeal(currentTick);
                     }
                     else if (completedAction is RestAction)
                     {
                         agent.Energy = Mathf.Min(100f, agent.Energy + 30f);
+                    }
+                    else if (completedAction is SleepAtBunkAction && intent is SleepAtBunkIntent)
+                    {
+                        agent.Energy = Mathf.Min(100f, agent.Energy + Simpiens.Cognition.Planning.Considerations.BunkSleepBonus);
                     }
                     else if (completedAction is TravelToPeerAction)
                     {
@@ -148,6 +156,7 @@ namespace Simpiens.Cognition
                 {
                     agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
                     agent.HasFoodInInventory = true;
+                    agent.Activity.RecordMeal(currentTick);
                 }
             }
             else if (result == IntentResult.TargetMissing || result == IntentResult.PathBlocked || result == IntentResult.Aborted)

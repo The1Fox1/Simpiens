@@ -20,7 +20,7 @@ namespace Simpiens.Entities
             if (_baseScale == Vector3.zero) _baseScale = Vector3.one;
 
             _spriteRenderer.sprite = AgentSpriteLibrary.GetCampfireSprite(0);
-            _spriteRenderer.sortingOrder = 1;
+            _spriteRenderer.sortingOrder = RenderOrder.Props;
         }
 
         private void Update()

@@ -51,10 +51,12 @@ namespace Simpiens.Cognition.Contracts
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ShareResourceIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.IdleIntentHandler());
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.EatCarriedFoodIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.TradeIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ClaimBountyIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.DeliverBountyIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ScoutIntentHandler());
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.SleepAtBunkIntentHandler());
             return registry;
         }
     }

@@ -24,5 +24,11 @@ namespace Simpiens.Simulation
         /// Useful for headless testing, deterministic simulation stepping, and catch-up ticks.
         /// </summary>
         void AdvanceTicks(long ticks);
+
+        /// <summary>
+        /// Rewinds the clock to tick 0 for a fresh session (respawn). The time multiplier is kept, so a paused game
+        /// stays paused and a scenario's speed is untouched.
+        /// </summary>
+        void Reset();
     }
 }

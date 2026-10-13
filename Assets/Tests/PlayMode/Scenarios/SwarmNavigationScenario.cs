@@ -15,6 +15,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     public class SwarmNavigationScenario : ISimulationScenario
     {
         public string Name => "SwarmNavigationScenario";
+        // 12 crawlers leave the Road Gate together through 4-cell doors (Epic MAP Phase 3; was the pen arena)
+        public string SessionId => Simpiens.Core.Session.OutpostSession.SessionId;
         public float DurationSeconds => 4.0f;
         public float TimeMultiplier => 2.5f;
 

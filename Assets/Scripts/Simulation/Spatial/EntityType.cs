@@ -7,6 +7,7 @@ namespace Simpiens.Simulation.Spatial
         Resource,
         Wall,
         Anchor,
-        Stall
+        Stall,
+        Bunk // a bed: walkable, one sleeper (Epic MAP Phase 3)
     }
 }

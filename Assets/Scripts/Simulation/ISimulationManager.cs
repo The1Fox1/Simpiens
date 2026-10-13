@@ -11,6 +11,7 @@ namespace Simpiens.Simulation
         bool AbortIntent(UnityEngine.GUID agentId);
         void RegisterResource(ResourceData data);
         void RegisterAnchor(UnityEngine.GUID id, UnityEngine.Vector2 position, float radius = 3.0f);
+        void RegisterBunk(UnityEngine.GUID id, UnityEngine.Vector2 position);
         void RegisterTradeStall(Simpiens.Simulation.Economy.TradeStallData stallData);
         bool TryGetTradeStall(UnityEngine.GUID stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
         System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> ActiveStalls { get; }
@@ -24,5 +25,8 @@ namespace Simpiens.Simulation
         Simpiens.Simulation.Economy.ISupplyService Supply { get; }
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);
         void ResetState();
+
+        /// <summary>The current session's number: starts at 1, and every ResetState (respawn) starts a new one.</summary>
+        uint SessionEpoch { get; }
     }
 }

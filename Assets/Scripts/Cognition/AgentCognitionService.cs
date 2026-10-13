@@ -53,6 +53,8 @@ namespace Simpiens.Cognition
             var snapshot = spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return;
 
+            // The session this decision belongs to (main thread, before any await)
+            uint sessionEpoch = simulationManager.SessionEpoch;
             agent.IsEvaluating = true;
             if (agent.IsExhaustionCollapsed)
             {
@@ -71,7 +73,8 @@ namespace Simpiens.Cognition
             uint tick = clock != null ? (uint)clock.CurrentTick : 0;
 
             // 1. Pre-cognition sync on main thread
-            agent.Memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick);
+            agent.Memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick,
+                surveySectorId: BountyQueries.SurveyingSector(snapshot, agent.AgentId));
 
             // Group directives & compliance evaluation
             if (agent.Membership.HasGroup && agent.Membership.Role != RoleRank.Leader)
@@ -124,6 +127,9 @@ namespace Simpiens.Cognition
             }
 
             var context = agent.CreateContext(snapshot, tick);
+
+            // Main thread: whether a ration could be bought right now (a stall is food a crawler knows about too)
+            agent.CanBuyFoodAtStall = ResourceTargeting.HasStallFood(context);
 
             // Retain snapshot immediately on main thread before switching threads
             snapshot.Retain();
@@ -299,7 +305,8 @@ namespace Simpiens.Cognition
                     }
                 };
 
-                // Enqueue intent to simulation manager
+                // Enqueue intent to simulation manager, stamped with its session (a respawn may have happened meanwhile)
+                intent.SessionEpoch = sessionEpoch;
                 simulationManager.EnqueueIntent(intent);
             }
             catch (OperationCanceledException)

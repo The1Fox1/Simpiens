@@ -27,6 +27,9 @@ namespace Simpiens.Cognition.Evaluators
         {
             if (context.Hunger < HighHungerThreshold) return null;
 
+            // A carried ration comes first: eat it on the spot instead of walking to a plot
+            if (CarriesFood(context)) return new EatCarriedFoodIntent(context.AgentId);
+
             // Only food nodes qualify: a starving agent must never path to an ore vein to "eat" it.
             if (!ResourceTargeting.TrySelectFood(context, MaxResourceEngagementDistance, out var food)) return null;
 
@@ -55,5 +58,8 @@ namespace Simpiens.Cognition.Evaluators
             pathResponse?.ReturnToPool();
             return null;
         }
+
+        public static bool CarriesFood(in AgentContext context) =>
+            context.Inventory != null && context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.Ration);
     }
 }

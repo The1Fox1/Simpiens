@@ -60,9 +60,8 @@ namespace Simpiens.Core.Bootstrapping
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // 1. Core Services
-            builder.RegisterEntryPoint<ScreenBoundsGenerator>();
-            
+            // 1. Core Services (camera framing is done by MapView when a map loads)
+
             // 2. Factories
             builder.Register<NodeFactory>(Lifetime.Singleton);
 
@@ -71,9 +70,12 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<EntityIdAllocator>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<WorldRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.SectorRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<Simpiens.Simulation.World.WorldMap>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<FacilityZoneService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register<Simpiens.Entities.WorldSelection>(Lifetime.Singleton);
             builder.Register<AgentIdentityService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<NarrativeChronicleService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<TemplateNarrativeFormatter>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
@@ -83,7 +85,6 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<AgentConsequenceService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentCognitionService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<Simpiens.Environment.OutpostMapBuilder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
@@ -92,7 +93,9 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register(resolver => Simpiens.Cognition.Contracts.IntentHandlerRegistry.CreateDefault(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<ToolExecutionRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
-            // 4. Session population (pens + Outpost Commons)
+            // 4. Sessions and the spawner that builds them. Optional assemblies may register further sessions
+            // (the test harness adds the Dev Map); the default is chosen by id, never by registration order.
+            builder.Register<OutpostSession>(Lifetime.Singleton).As<ISessionDefinition>();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.

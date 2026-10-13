@@ -105,6 +105,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth, deltaTrust, 0, deltaRespect, currentTradeTick);
+                if (agent.State != null) agent.State.Activity.RecordRationPurchase();
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, player trust delta {deltaTrust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
@@ -162,6 +163,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 // Trade-to-Affinity valuation
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth: 5, deltaTrust: 10, deltaFear: 0, deltaRespect: 5, currentTradeTick);
+                if (agent.State != null) agent.State.Activity.RecordSalvageSale(currentTradeTick);
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g)");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(

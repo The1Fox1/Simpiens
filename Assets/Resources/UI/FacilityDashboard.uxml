@@ -1,27 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Style src="FacilityDashboard.uss" />
     <ui:VisualElement name="dashboard-root" class="dashboard-root">
-        <!-- Top Navigation Bar -->
-        <ui:VisualElement name="header-bar" class="header-bar">
-            <ui:VisualElement class="header-left">
-                <ui:Label text="SIMPIENS FACILITY OS" class="header-title" />
-                <ui:Label name="facility-status-badge" text="OPERATIONAL" class="status-pill status-pill-green" />
-            </ui:VisualElement>
-            <ui:VisualElement class="header-center">
-                <ui:Label name="treasury-gold-label" text="💰 250 GOLD" class="hud-metric-pill hud-gold" />
-                <ui:Label name="provisions-stock-label" text="🍞 50 RATIONS" class="hud-metric-pill hud-stock" />
-                <ui:Label name="salvage-stock-label" text="⛏️ 10 ORE | 🌿 10 HERB" class="hud-metric-pill hud-stock" />
-                <ui:Label name="bounties-active-label" text="📜 0 BOUNTIES" class="hud-metric-pill hud-bounties" />
-            </ui:VisualElement>
-            <ui:VisualElement class="header-right">
-                <ui:Button name="btn-merchant-terminal" text="⚖️ MERCHANT" class="hud-nav-button" />
-                <ui:Button name="btn-bounty-board" text="📜 BOUNTIES" class="hud-nav-button" />
-                <ui:Label name="clock-tick-label" text="TICK: 0000" class="header-metric" />
-                <ui:Label name="clock-multiplier-label" text="SPEED: 1.0x" class="header-metric" />
-                <ui:Button name="btn-view-toggle" text="[TAB] TOGGLE 2D VIEW" class="view-toggle-button" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-
         <!-- Main 3-Column Content Container -->
         <ui:VisualElement name="main-container" class="main-container">
             <!-- Column 1: Facility Sectors -->
@@ -105,6 +84,32 @@
                         <ui:Button name="btn-calm-tantrum" text="🕊️ Calm Frustration" class="action-btn btn-calm" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- HUD: the header and the Merchant and Bounty windows sit over everything, the 2D map included (Epic MAP
+         Phase 4, D2). The layer itself lets clicks through to the map; only its children are pickable. Tab
+         shows or hides dashboard-root (the three panels) underneath. -->
+    <ui:VisualElement name="hud-root" class="hud-root" picking-mode="Ignore">
+        <!-- Top Navigation Bar -->
+        <ui:VisualElement name="header-bar" class="header-bar">
+            <ui:VisualElement class="header-left">
+                <ui:Label text="SIMPIENS FACILITY OS" class="header-title" />
+                <ui:Label name="facility-status-badge" text="OPERATIONAL" class="status-pill status-pill-green" />
+            </ui:VisualElement>
+            <ui:VisualElement class="header-center">
+                <ui:Label name="treasury-gold-label" text="💰 250 GOLD" class="hud-metric-pill hud-gold" />
+                <ui:Label name="provisions-stock-label" text="🍞 50 RATIONS" class="hud-metric-pill hud-stock" />
+                <ui:Label name="salvage-stock-label" text="⛏️ 10 ORE | 🌿 10 HERB" class="hud-metric-pill hud-stock" />
+                <ui:Label name="bounties-active-label" text="📜 0 BOUNTIES" class="hud-metric-pill hud-bounties" />
+            </ui:VisualElement>
+            <ui:VisualElement class="header-right">
+                <ui:Button name="btn-merchant-terminal" text="⚖️ MERCHANT" class="hud-nav-button" />
+                <ui:Button name="btn-bounty-board" text="📜 BOUNTIES" class="hud-nav-button" />
+                <ui:Label name="clock-tick-label" text="TICK: 0000" class="header-metric" />
+                <ui:Label name="clock-multiplier-label" text="SPEED: 1.0x" class="header-metric" />
+                <ui:Button name="btn-view-toggle" text="[TAB] TOGGLE 2D VIEW" class="view-toggle-button" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -204,9 +209,10 @@
                         <ui:VisualElement class="form-group">
                             <ui:VisualElement class="form-label-row">
                                 <ui:Label text="Target Sector:" class="form-label" />
-                                <ui:Label name="label-bounty-sector" text="Sector 2" class="form-val-label" />
+                                <ui:Label name="label-bounty-sector" text="" class="form-val-label" />
                             </ui:VisualElement>
-                            <ui:SliderInt name="slider-bounty-sector" low-value="1" high-value="10" value="2" class="custom-slider" />
+                            <!-- Filled from the loaded map: Scout lists only uncharted sectors (Epic MAP Phase 4) -->
+                            <ui:DropdownField name="dropdown-bounty-sector" class="form-dropdown" />
                         </ui:VisualElement>
 
                         <!-- Item Type Selector -->
@@ -251,5 +257,12 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- Session switch: outside dashboard-root so it stays reachable in the 2D view. Shown only when a test
+         session (the Dev Map) is registered, i.e. never in player builds. -->
+    <ui:VisualElement name="session-switch-overlay" class="session-switch-overlay" picking-mode="Ignore">
+        <ui:Label name="session-banner" text="DEV MAP: TEST CANARIES (NOT THE GAME)" class="session-banner" picking-mode="Ignore" />
+        <ui:Button name="btn-session-switch" text="SWITCH TO DEV MAP" class="session-switch-button" />
     </ui:VisualElement>
 </ui:UXML>

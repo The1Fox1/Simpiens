@@ -267,6 +267,9 @@ namespace Simpiens.Cognition.Pathfinding
 
         private const float CellInset = 0.05f;
 
+        /// <summary>Smoothed segments keep this far from hearth and stall centres (movement stops pawns at 0.45).</summary>
+        public const float PropClearance = 0.75f;
+
         private static Vector2 ClosestPointInCell(Vector2 point, int cellX, int cellY, float cellSize, float offsetX, float offsetY)
         {
             float minX = cellX * cellSize - offsetX + CellInset;
@@ -298,7 +301,8 @@ namespace Simpiens.Cognition.Pathfinding
                 for (int test = rawCount - 1; test > anchor + 1; test--)
                 {
                     if (snapshot.IsSegmentStaticClear(_rawWaypoints[anchor], _rawWaypoints[test]) &&
-                        snapshot.HasLineOfSight(_rawWaypoints[anchor], _rawWaypoints[test]))
+                        snapshot.HasLineOfSight(_rawWaypoints[anchor], _rawWaypoints[test]) &&
+                        snapshot.IsSegmentPropClear(_rawWaypoints[anchor], _rawWaypoints[test], PropClearance))
                     {
                         furthest = test;
                         break;

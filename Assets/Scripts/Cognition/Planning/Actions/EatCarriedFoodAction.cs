@@ -20,8 +20,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override AgentIntent CreateIntent(AgentContext context)
         {
-            // Resting/eating takes 1.0s of idle time
-            return new IdleIntent(context.AgentId, duration: 1.0f);
+            return new EatCarriedFoodIntent(context.AgentId);
         }
     }
 }

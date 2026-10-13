@@ -55,6 +55,10 @@ namespace Simpiens.Entities
             {
                 state = AgentVisualState.Panicking;
             }
+            // Asleep in a bunk: brief social looks don't sit the sleeper up
+            else if (state == AgentVisualState.Sleeping)
+            {
+            }
             // Yielding visual persistence: keep showing yielding for 1.2s after yielding
             else if (_agent.IsYielding)
             {
@@ -74,7 +78,7 @@ namespace Simpiens.Entities
             state = ApplyDisplayDwell(state);
 
             // Calculate animation frame
-            float animSpeed = (state == AgentVisualState.Panicking) ? 8f : 4f;
+            float animSpeed = state == AgentVisualState.Panicking ? 8f : state == AgentVisualState.Sleeping ? 1.5f : 4f;
             int frame = (int)(Time.time * animSpeed) & 1;
 
             // Update sprite if changed
@@ -150,6 +154,13 @@ namespace Simpiens.Entities
                     float restBreath = 1f + Mathf.Sin(t * 1.5f) * 0.04f;
                     transform.localScale = new Vector3(_baseScale.x * restBreath, _baseScale.y * (2f - restBreath), _baseScale.z);
                     transform.localRotation = Quaternion.Euler(0f, 0f, 2f);
+                    break;
+
+                case AgentVisualState.Sleeping:
+                    // Slow breathing under the blanket; width held so the blanket stays inside the bunk frame
+                    float sleepBreath = 1f + Mathf.Sin(t * 1.2f) * 0.03f;
+                    transform.localScale = new Vector3(_baseScale.x, _baseScale.y * sleepBreath, _baseScale.z);
+                    transform.localRotation = Quaternion.identity;
                     break;
 
                 case AgentVisualState.Yielding:

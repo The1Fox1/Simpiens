@@ -166,19 +166,95 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// Deterministic exploration waypoint: a point 5–9m from the agent whose bearing is derived from the
-        /// agent id and a 50-tick time bucket (no RNG), so the same inputs always produce the same waypoint.
+        /// Deterministic exploration waypoint (no RNG; derived from the agent id and a time bucket). With a map, a
+        /// point in another sector (TryPickSectorWaypoint); without one, a point 5–9m away on a hashed bearing.
         /// </summary>
         public static Vector2 PickExplorationPoint(in AgentContext context, float minDistance = 5f, float maxDistance = 9f)
         {
-            uint h = unchecked((uint)context.AgentId.GetHashCode() * 2654435761u ^ (context.CurrentTick / 50u) * 2246822519u);
-            h ^= h >> 15;
-            h = unchecked(h * 2654435761u);
-            h ^= h >> 13;
+            // On a map with rooms, head for another sector: a random point a few units away mostly lands in a wall
+            // or the same room, so finding a door would be luck (Epic MAP Phase 3)
+            var map = context.Snapshot?.Map;
+            if (map != null && TryPickSectorWaypoint(context, map, out var waypoint))
+            {
+                return waypoint;
+            }
+
+            uint h = ExplorationHash(context, 50u);
 
             float angle = (h % 3600u) / 3600f * Mathf.PI * 2f;
             float distance = minDistance + ((h >> 12) % 1000u) / 1000f * (maxDistance - minDistance);
             return context.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+        }
+
+        /// <summary>Ticks per exploration choice: long enough to cross the map, so a choice isn't abandoned midway.</summary>
+        public const uint SectorChoiceTicks = 200;
+
+        /// <summary>
+        /// Picks a charted sector other than the one the agent stands in, the one it visited least recently (ties are
+        /// deterministic per agent and SectorChoiceTicks window), and a point inside it, kept two units clear of the
+        /// sector's walls. Arriving there changes the
+        /// candidate set, so the next search moves on. False when the map offers no other sector.
+        /// </summary>
+        public static bool TryPickSectorWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 waypoint)
+        {
+            waypoint = default;
+            var sectors = map.Sectors;
+            byte current = map.FindSector(context.Position).Id;
+
+            var snapshot = context.Snapshot;
+            int candidates = 0;
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                if (IsExplorable(snapshot, sectors[i].Id, current)) candidates++;
+            }
+            if (candidates == 0) return false;
+
+            // Systematic search: the candidate sector this agent stood in least recently (never first); ties go to a
+            // deterministic per-agent pick
+            uint oldest = uint.MaxValue;
+            int tied = 0;
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                if (!IsExplorable(snapshot, sectors[i].Id, current)) continue;
+                uint visit = context.Memory != null ? context.Memory.LastSectorVisit(sectors[i].Id) : 0u;
+                if (visit < oldest) { oldest = visit; tied = 1; }
+                else if (visit == oldest) tied++;
+            }
+
+            uint h = ExplorationHash(context, SectorChoiceTicks);
+            int pick = (int)(h % (uint)tied);
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                var sector = sectors[i];
+                if (!IsExplorable(snapshot, sector.Id, current)) continue;
+                uint lastVisit = context.Memory != null ? context.Memory.LastSectorVisit(sector.Id) : 0u;
+                if (lastVisit != oldest) continue;
+                if (pick-- > 0) continue;
+
+                var bounds = sector.Bounds;
+                float jitterX = Mathf.Max(0f, bounds.width * 0.5f - 2f);
+                float jitterY = Mathf.Max(0f, bounds.height * 0.5f - 2f);
+                float fx = ((h >> 8) % 1000u) / 1000f * 2f - 1f;
+                float fy = ((h >> 18) % 1000u) / 1000f * 2f - 1f;
+                waypoint = bounds.center + new Vector2(fx * jitterX, fy * jitterY);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Another sector, and a charted one: uncharted sectors are a scout's job (fog of war).</summary>
+        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, byte sectorId, byte current)
+        {
+            return sectorId != current && (snapshot == null || snapshot.IsSectorCharted(sectorId));
+        }
+
+        private static uint ExplorationHash(in AgentContext context, uint windowTicks)
+        {
+            uint h = unchecked((uint)context.AgentId.GetHashCode() * 2654435761u ^ (context.CurrentTick / windowTicks) * 2246822519u);
+            h ^= h >> 15;
+            h = unchecked(h * 2654435761u);
+            h ^= h >> 13;
+            return h;
         }
 
         /// <summary>
@@ -270,13 +346,28 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// The held salvage type the stall can pay for (highest price first), or None if nothing held is affordable.
         /// </summary>
+        /// <summary>
+        /// True when the agent holds a unit of this salvage it may sell: more than its claimed Gather bounty still
+        /// needs. Units owed to a contract are never sold at the stall (the bounty pays better and was promised).
+        /// </summary>
+        public static bool HoldsSellable(in AgentContext context, ItemType item)
+        {
+            if (context.Inventory == null) return false;
+            int reserved = 0;
+            if (BountyQueries.TryGetClaimedBounty(context, out var claimed) && claimed.Type == BountyType.GatherResource && claimed.TargetItemType == item)
+            {
+                reserved = claimed.TargetQuantity;
+            }
+            return context.Inventory.HasItem(item, reserved + 1);
+        }
+
         public static ItemType AffordableHeldSalvage(in AgentContext context, in TradeStallData stall)
         {
             if (context.Inventory == null) return ItemType.None;
-            // Payable by the treasury and at or above the agent's personal minimum sale price
-            bool herb = context.Inventory.HasItem(ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
+            // Payable by the treasury, at or above the agent's personal minimum sale price, and not owed to a bounty
+            bool herb = HoldsSellable(context, ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
                 && stall.HerbBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.MedicinalHerb);
-            bool ore = context.Inventory.HasItem(ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
+            bool ore = HoldsSellable(context, ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
                 && stall.OreBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.IronOre);
             if (herb && ore) return stall.HerbBuyPrice >= stall.OreBuyPrice ? ItemType.MedicinalHerb : ItemType.IronOre;
             if (herb) return ItemType.MedicinalHerb;
@@ -288,6 +379,15 @@ namespace Simpiens.Cognition.Planning
         /// True when the agent can buy a ration right now: reachable stall with stock and an affordable price.
         /// Without any visible stall (headless contexts) this returns true; behind walls, false.
         /// </summary>
+        /// <summary>
+        /// True when a reachable stall has a ration this agent can and will buy. Unlike CanBuyRation, false when no
+        /// stall is visible at all (headless contexts): for the starvation reflex a missing stall is no food.
+        /// </summary>
+        public static bool HasStallFood(in AgentContext context)
+        {
+            return GetStallAccess(context, out _) == StallAccess.Reachable && CanBuyRation(context);
+        }
+
         public static bool CanBuyRation(in AgentContext context)
         {
             var access = GetStallAccess(context, out var stall);
