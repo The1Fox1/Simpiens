@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Evaluators
     /// <summary>
     /// Tier 1 Reflexive Evaluator that handles severe biological emergencies and mental breaks:
     /// 1. Exhaustion Collapse (Energy <= 5f): Forces emergency resting recovery.
-    /// 2. Starvation Panic (Hunger >= 85f and no known food): Clears stale memory and triggers exploratory sprint.
+    /// 2. Starvation Panic (Hunger >= 85f and no known food, carried rations included): Clears stale memory and triggers exploratory sprint.
     /// </summary>
     public class MentalBreakEvaluator : ICognitiveEvaluator
     {
@@ -115,6 +115,9 @@ namespace Simpiens.Cognition.Evaluators
 
         public static bool HasKnownFood(in AgentContext context)
         {
+            // A carried ration is known food: eat it instead of panicking (Epic MAP Phase 5)
+            if (SurvivalUtilityEvaluator.CarriesFood(context)) return true;
+
             // A stall selling an affordable ration is known food too: buy instead of panicking
             if (Simpiens.Cognition.Planning.ResourceTargeting.HasStallFood(context)) return true;
 

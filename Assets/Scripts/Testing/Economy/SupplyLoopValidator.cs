@@ -46,8 +46,9 @@ namespace Simpiens.Testing.Economy
             ValidateWellFedAgentReachesGoap();
             ValidateZeroAllocSupplyTicks();
             ValidateActivityTally();
+            ValidateCarriedFoodIsEaten();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SupplyLoopValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -451,6 +452,45 @@ namespace Simpiens.Testing.Economy
 
             Destroy(oreGo, foodGo, agentGo, otherGo);
             Debug.Log("[SupplyLoopValidator] Test 10 Passed: The activity tally counts each act once for its crawler; a cycle needs a harvest before the sale.");
+        }
+
+        // ---------------------------------------------------------------------------------------------
+        // 11. A hungry crawler eats the ration it carries (Epic MAP Phase 5): the hunger reflex eats it, starvation
+        //     panic counts it as known food, and the meal applies without a plan
+        // ---------------------------------------------------------------------------------------------
+        private void ValidateCarriedFoodIsEaten()
+        {
+            var id = NextGuid();
+            var carrying = new AgentInventory();
+            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, ItemType.Ration.BaseValue()), out _);
+            var starving = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
+            var empty = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
+
+            var reflex = new SurvivalUtilityEvaluator(null).EvaluateAsync(starving, default).GetAwaiter().GetResult();
+            Assert(reflex is EatCarriedFoodIntent, $"The hunger reflex eats a carried ration (got {reflex?.GetType().Name ?? "null"}).");
+            var panic = new MentalBreakEvaluator(null).EvaluateAsync(starving, default).GetAwaiter().GetResult();
+            Assert(panic == null, $"A starving crawler with a ration does not panic (got {panic?.GetType().Name}).");
+            panic = new MentalBreakEvaluator(null).EvaluateAsync(empty, default).GetAwaiter().GetResult();
+            Assert(panic is PanicIntent, $"Without food anywhere it still panics (got {panic?.GetType().Name ?? "null"}).");
+            Assert(new EatCarriedFoodAction().CreateIntent(starving) is EatCarriedFoodIntent, "The GOAP eat step emits the same intent.");
+
+            // The meal applies with no plan at all
+            var registry = new WorldRegistry();
+            var sim = new SimulationManager(registry, null);
+            var agentGo = CreateAgent(registry, sim, Vector2.zero, out var node, out var agent);
+            agent.Hunger = 90f;
+            agent.HasFoodInInventory = true;
+            var result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
+            Assert(result == IntentResult.Success, $"Eating returned {result}.");
+            Assert(Mathf.Approximately(agent.Hunger, 50f) && !agent.HasFoodInInventory && agent.State.Activity.Meals == 1,
+                $"The ration relieved 40 hunger and was used up (hunger {agent.Hunger}, carries {agent.HasFoodInInventory}, meals {agent.State.Activity.Meals}).");
+
+            result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
+            Assert(result == IntentResult.TargetMissing && Mathf.Approximately(agent.Hunger, 50f) && agent.State.Activity.Meals == 1,
+                $"With nothing left to eat the intent fails and changes nothing ({result}, hunger {agent.Hunger}).");
+
+            Destroy(agentGo);
+            Debug.Log("[SupplyLoopValidator] Test 11 Passed: A hungry crawler eats the ration it carries, by reflex or plan, instead of panicking.");
         }
 
         // ---------------------------------------------------------------------------------------------
