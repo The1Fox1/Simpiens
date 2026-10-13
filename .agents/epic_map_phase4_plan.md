@@ -7,7 +7,7 @@
   - `ShroudViewScenario`: both frontier rooms covered at start; the Deep Seam charted at t356 and its fog gone 1.50 s later; the Overgrowth stays covered; the camera holds a followed crawler within 0.171 units at 10×.
   - `PlayerScoutScenario`: the player's Scout Overgrowth (default 25g) is claimed at t60 and charted at t344 (bound 520); its fog is gone 1.50 s later.
   - `OutpostSupplyLoopScenario` and `BunkRestScenario` milestones are unchanged from Phase 3 (sale t233–234, scout t356–357, gather t568–569; third sleeper t1010).
-  - **Pending:** the producer's visual check in the Editor (§3 step 7).
+  - **Producer visual check passed** 2026-10-12, including the mouse and keyboard controls (§3 step 7).
 - **Goal:** the 2D view becomes the place the game is played. The player sees the floor as rooms, sees the fog where the crawlers know nothing, moves the camera freely, follows a crawler with a click, and posts bounties over the map by room name, without switching to the full-screen dashboard.
 - **What the producer sees after Phase 4:**
   - Each room has its own floor. Walls and rock are continuous tiles instead of hundreds of separate squares.

@@ -153,7 +153,7 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [ACTIVE] (Revision 2, appro
   (D1 = A: contents hidden, crawlers visible); pan/zoom/follow camera; click a crawler or a room; header, bounty
   board and merchant over the map (D2); sector picker by name; BountyRules refuses impossible bounties before
   escrow. New: MapViewValidator, CameraRigValidator, ShroudViewScenario, MapHudScenario, PlayerScoutScenario.
-  PlayMode 52/52 x3. Producer visual check pending.
+  PlayMode 52/52 x3. Producer visual check passed 2026-10-12 (incl. mouse and keyboard controls).
   Plan: .agents/epic_map_phase4_plan.md
-- Next: Phase 5 OutpostLifecycleScenario (DoD), determinism check, zero anomalies (the open jitter finding).
+- Next: Phase 5 (DoD): OutpostLifecycleScenario, determinism check, zero anomalies. Plan: .agents/epic_map_phase5_plan.md (awaiting approval).
 - Deferred: drifter arrival/departure (economy, Section 3.3).

@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); Phase 4 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase4_plan.md)); next: Phase 5.
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); Phase 4 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase4_plan.md)); next: Phase 5 ([implementation plan](../../.agents/epic_map_phase5_plan.md), awaiting approval).
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -193,7 +193,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - `PenCanaryScenario` asserts all ten pen outcomes within 600 ticks;
   - fix found by the canary: hearths and stalls block only their centre cell (Pen 4's altruism was sealed off since Grid A*);
   - every scenario names its session (`ISimulationScenario.SessionId`); `DevMapParityValidator` retired.
-- [x] Phase 3: the outpost floor goes live (done 2026-10-12; PlayMode 47/47 in 3 consecutive runs; producer visual check pending):
+- [x] Phase 3: the outpost floor goes live (done 2026-10-12; PlayMode 47/47 in 3 consecutive runs; producer visual check passed 2026-10-12):
   - `OutpostSession` on `Floor1Layout`: 12 crawlers walk in from the Road Gate; the hub stall; seeded Scout and Gather bounties both on the Deep Seam; crawlers arrive fed (hunger 20);
   - Floor 1 made ready for live use: the hearth moved off the door lanes (doors re-placed), 8 bunks, 12 spawn points, named doors; a validator keeps the hearth ring clear of every door, lane and the stall;
   - the Commons yard retired (`CommonsYardFixture`, test-only);
@@ -204,7 +204,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - `PopulationScalingProbe`: 24 crawlers run at 54x real time unthrottled (no escalation);
   - economy soak re-run on Floor 1 (plan §9);
   - fixes found on the way: claimants no longer sell ore owed to a bounty; an affordable stall ration counts as known food (no panic at the stall); the scout surveys from the middle of the room; path smoothing keeps clear of hearths and stalls; leadership is chronicled only when it changes.
-- [x] Phase 4: the player's view (done 2026-10-12; PlayMode 52/52 in 3 consecutive runs; producer visual check pending):
+- [x] Phase 4: the player's view (done 2026-10-12; PlayMode 52/52 in 3 consecutive runs; producer visual check passed 2026-10-12, including the mouse and keyboard controls):
   - the map on a tilemap (floor per room, rock, walls) aligned with each map's wall cells; `MapViewValidator` checks it cell for cell against the definition and the nav grid; 14 GameObjects for Floor 1 instead of about 270; one `RenderOrder` table;
   - **fog of war on the map** (`ShroudView`, D1 = A): opaque over an uncharted room's interior with "UNCHARTED" under its name, props below it, crawlers above; it fades over 1.5 s when the room is charted; `ShroudViewScenario` (live);
   - camera (`CameraRig` + `CameraController`): pan (drag, WASD), zoom toward the cursor, Home to reframe, clamped to the map; `CameraRigValidator` (headless);
