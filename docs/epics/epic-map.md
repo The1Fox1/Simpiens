@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phase 1 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase1_plan.md)); Phase 2 done 2026-10-11 ([implementation plan](../../.agents/epic_map_phase2_plan.md)); Phase 3 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase3_plan.md)); Phase 4 done 2026-10-12 ([implementation plan](../../.agents/epic_map_phase4_plan.md)); next: Phase 5 ([implementation plan](../../.agents/epic_map_phase5_plan.md), awaiting approval).
+- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phases 1–4 done 2026-10-11 to 2026-10-12; next: Phase 5 ([implementation plan](../../.agents/epic_map_phase5_plan.md), approved 2026-10-12). Completed phase plans were removed from `.agents/`; read them with `git show f679a0c:.agents/epic_map_phase<N>_plan.md`.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -202,7 +202,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - map-aware searching: exploration and starvation panic head for the charted sector visited least recently; agents also perceive while they walk;
   - `BunkRestScenario` (live, no injection); `OutpostSupplyLoopScenario` asserts no fog leak and scout-before-gather; navigation and dynamic-chaos scenarios run on Floor 1;
   - `PopulationScalingProbe`: 24 crawlers run at 54x real time unthrottled (no escalation);
-  - economy soak re-run on Floor 1 (plan §9);
+  - economy soak re-run on Floor 1 ([Epic 9 §8.2](epic-9.md));
   - fixes found on the way: claimants no longer sell ore owed to a bounty; an affordable stall ration counts as known food (no panic at the stall); the scout surveys from the middle of the room; path smoothing keeps clear of hearths and stalls; leadership is chronicled only when it changes.
 - [x] Phase 4: the player's view (done 2026-10-12; PlayMode 52/52 in 3 consecutive runs; producer visual check passed 2026-10-12, including the mouse and keyboard controls):
   - the map on a tilemap (floor per room, rock, walls) aligned with each map's wall cells; `MapViewValidator` checks it cell for cell against the definition and the nav grid; 14 GameObjects for Floor 1 instead of about 270; one `RenderOrder` table;
@@ -237,13 +237,28 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 
 ---
 
+## 6. Open findings
+
+Found by the live scenarios during Phases 2–3. None fails a test. Each stays here until it is fixed or handed to the epic that owns it. Phase 5 takes on #1 and #2 (Definition of Done: zero anomalies, no crawler starves).
+
+1. **Jitter at the stall queue and the bunks** (Phase 3). Over 4,000 ticks the detector reports 6–8 `OscillationJitter` events across 6 crawlers, with 0 stacking. The jitter check runs on real time while the tests run at 10×, so how many of these the player would see at 1× is not yet known. **Phase 5.**
+2. **The starvation margin is thin** (Phase 3). The longest stretch at 95+ hunger in `BunkRestScenario` is 275 ticks, against the 300-tick bar. Hunger rises 1.5/s, and a crawler without gold must reach the Garden. This is economy pacing (§3.3), not navigation. **Phase 5** measures it over 9,000 ticks.
+3. **About 1 in 3 bunk claims miss** because the bunk is taken by arrival (Phase 3). The crawler picks another bunk. Churn only.
+4. **Cognition cost grows faster than linearly** with population: 2× crawlers, 2.7× slower (Phase 3, `PopulationScalingProbe`). Input for ROADMAP §3A #8.
+5. **A succession re-confirmation still applies the peaceful-succession cohesion bonus** and memory events for the leader (Phase 3; only the chronicle was fixed). Behaviour, left for a decision. Owner: Epic 8.
+6. **Gather fulfilment does not check provenance** (H6, accepted): ore bought or found counts the same as ore mined.
+7. **Pen 7 hands leadership to the defiant follower at t50** (Phase 2, Dev Map only). Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
+
+---
+
 ## History
 - **2026-10-08: Revision 1 paused.** It was partially started (`OutpostMapBuilder` with 10 doors and `OutpostMapBuilderValidator`), then paused for the architecture review. It was never wired into the live session. Its 9-sector versus 12-sector target is superseded: the producer considers sector count unimportant (2026-10-11).
 - **2026-10-11: Revision 2 proposed** (this document). It reframes the epic around the live loop, map-as-data and the pens as a test-only canary session.
 - **2026-10-11: Revision 2 approved; epic `ACTIVE`.** Producer added the Dev Map toggle and deferred drifter churn.
 - **2026-10-11: Phase 1 done** (world as data).
-- **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are listed in the [Phase 2 plan](../../.agents/epic_map_phase2_plan.md) §8.
+- **2026-10-11: Phase 2 done** (session split). The live game no longer shows the pens. Open findings from the new pen canary are in §6.
 - **2026-10-11: Phase 3 plan approved** with decision D1: shroud is fog of war.
-- **2026-10-12: Phase 3 done** (the outpost floor goes live). The live game runs on Floor 1 with fog of war and bunks. Open findings are in the [Phase 3 plan](../../.agents/epic_map_phase3_plan.md) §8.
+- **2026-10-12: Phase 3 done** (the outpost floor goes live). The live game runs on Floor 1 with fog of war and bunks. Open findings are in §6; the Floor 1 economy soak is in [Epic 9 §8.2](epic-9.md).
 - **2026-10-12: Phase 3 visual check passed; Phase 4 plan approved** with D1 = A (crawlers visible in the fog) and D2 = yes (HUD over the map).
-- **2026-10-12: Phase 4 done** (the player's view). The player plays from the map. Deviations are in the [Phase 4 plan](../../.agents/epic_map_phase4_plan.md) §6A.
+- **2026-10-12: Phase 4 done** (the player's view). The player plays from the map. Its deviations are recorded in the Phase 4 plan (git history, `f679a0c`).
+- **2026-10-12: Phase 4 visual check passed** (including the mouse and keyboard controls); **Phase 5 plan approved** with D1 = A (jitter measured in sim time) and D2 = A (assert the strongest determinism that holds, record the tolerance). Completed phase plans removed from `.agents/`; open findings moved to §6.

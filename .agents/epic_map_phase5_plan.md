@@ -2,7 +2,7 @@
 
 - **Epic:** [Epic MAP Revision 2](../docs/epics/epic-map.md), Phase 5. Status is owned by `docs/ROADMAP.md`.
 - **Branch:** `feat/epic-map-revamp` (continues from Phase 4, `ae58859`). The Phase 1–4 PR is open; at the producer's request Phase 5 lands on the same branch so that the PR completes the epic.
-- **Written:** 2026-10-12, after the producer's Phase 4 visual check passed (the mouse and keyboard controls). **Status: awaiting the producer's approval** (§7).
+- **Written:** 2026-10-12, after the producer's Phase 4 visual check passed (the mouse and keyboard controls). **Approved** by the producer 2026-10-12 with D1 = A (jitter measured in sim time) and D2 = A (assert the strongest determinism that holds in 3 of 3 runs; record the tolerance).
 - **Goal:** prove the epic's promise in one live run. On the real outpost, with nothing injected, every crawler works, trades, eats, socialises and sleeps; both seeded bounties are fulfilled; and nothing looks wrong on screen. Two runs with the same seed tell the same story. Then Epic MAP is `COMPLETED`.
 - **What the producer sees after Phase 5:**
   - **No visible change in normal play,** apart from the jitter fixes: crawlers no longer twitch back and forth at the stall or beside the bunks.
@@ -21,7 +21,7 @@
 | L3 | **Trust toward the player rises on every fair trade** (+10) and on a Gather delivery. | `TradeIntentHandler.cs:107` | The scenario compares each crawler's trust toward the player at the start and the end. |
 | L4 | **No live Floor 1 scenario asserts every anomaly type.** The supply loop checks stacking and thrashing; the bunk scenario checks stacking only; nothing on Floor 1 checks jitter, wall penetration or boundary breaches over a long run. `DynamicChaosScenario` allows up to 2 jitter events. | `OutpostSupplyLoopScenario.cs:219-220`, `BunkRestScenario.cs:169`, `DynamicChaosScenario.cs:117` | The lifecycle scenario asserts all five at zero (`TotalAnomalies == 0`) over 9,000 ticks. |
 | L5 | **The jitter check runs on real time, the thrashing check on sim time.** Jitter is "3 reversals of more than 120° within 0.5 s of `Time.time`". The thrashing check divides its window by the clock multiplier; the jitter check doesn't. Tests run at 10×, so the jitter check really looks at 5 sim-seconds (50 ticks), ten times more sensitive than at 1×. The player plays at 1×: the game has no speed control, only pause and resume. The detector also samples once per rendered frame, so in the Editor at 10× it skips ticks, and in batch mode it sees each one. **We don't know how many of Phase 3's 6–8 jitter events the player would ever see.** | `VisualAnomalyDetector.cs:201-245, 262-268`; `SimulationManager.cs:388-396` | The jitter check is measured in ticks (D1), then the jitter that remains is diagnosed and fixed (§2.3). |
-| L6 | **The starvation margin is thin, but only in one scenario.** `BunkRestScenario`'s worst case is 275 ticks at 95+ hunger, against its 300-tick limit. The Floor 1 soak (export on, the live setting) had 0 starving episodes in 18,000 ticks on each of 3 seeds. | Phase 3 plan §8 #2 and §9 | Assert "no crawler starves" with the soak's definition (95+ for 300 ticks in a row); if it fails, tune food data in the layout, not code (§2.4). |
+| L6 | **The starvation margin is thin, but only in one scenario.** `BunkRestScenario`'s worst case is 275 ticks at 95+ hunger, against its 300-tick limit. The Floor 1 soak (export on, the live setting) had 0 starving episodes in 18,000 ticks on each of 3 seeds. | [Epic §6](../docs/epics/epic-map.md) #2; [Epic 9 §8.2](../docs/epics/epic-9.md) | Assert "no crawler starves" with the soak's definition (95+ for 300 ticks in a row); if it fails, tune food data in the layout, not code (§2.4). |
 | L7 | **No whole-world determinism check exists.** `DeterminismValidator` covers seeded randomness, ids and same-tick intent order: 8 pawns, 60 ticks. Cognition and path results still arrive on a tick that depends on thread timing (ROADMAP §1A.2 #6), so two live runs may drift apart. How early is unknown. One hint: the Phase 3 and 4 full runs produced identical milestone ticks three times in a row. | `DeterminismValidator.cs`; ROADMAP §1A.2 #6 | Hash the world and compare two runs (§2.5); what to assert is D2. |
 | L8 | **A respawn rewinds the clock and resets the session** (Phase 2), and `SessionSwitchScenario` already respawns inside a test. | `SwarmSpawner` | Two same-seed runs fit in one test. |
 
@@ -86,7 +86,7 @@
   - **otherwise:** an identical world up to the first divergence, and the four milestones (first sale, scout, gather, third sleeper) within ±10% between the runs.
 
 ### 2.6 Completion
-- Once §2.2 and §2.5 pass three full runs in a row: Epic MAP → `COMPLETED` (ROADMAP first, then the epic header and checklist, then `curentfocus.txt`); `architecture_history.md` gets the Phase 5 entry (the activity tally, jitter in sim time, the determinism result).
+- Once §2.2 and §2.5 pass three full runs in a row: the epic's §6 open findings are updated (fixed ones struck, the rest handed to their owners), then Epic MAP → `COMPLETED` (ROADMAP first, then the epic header and checklist, then `curentfocus.txt`); `architecture_history.md` gets the Phase 5 entry (the activity tally, jitter in sim time, the determinism result).
 
 ---
 
@@ -103,7 +103,7 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 | 4 | **Fix what step 3 found** (§2.3 item 3, §2.4), one commit per cause. | The lifecycle scenario passes; the full suite stays green. | `fix(navigation): …` / `fix(map): …` per cause |
 | 5 | **`WorldStateHash` and `DeterminismScenario`** (§2.5), asserting per D2. | Holds in 3 of 3 full runs. | `test(simulation): same seed, same world` |
 | 6 | **Full suite ×3,** identical milestones; the lifecycle report goes into §6A. | 54/54 three times | (no code; numbers go into step 7) |
-| 7 | **Docs and the producer's visual check.** ROADMAP (Epic MAP `COMPLETED`, §1A.2 #6 tolerance), the epic header, checklist and History, `curentfocus.txt`, `architecture_history.md`, AGENTS.md (the new scenarios). **Producer check:** a few minutes at 1× in the Editor, watching the stall and the bunks for twitching. | Docs agree with each other; producer confirms | `docs: Epic MAP complete` |
+| 7 | **Docs and the producer's visual check.** Epic §6 findings updated; this plan deleted (its deviations summarised in `architecture_history.md`). ROADMAP (Epic MAP `COMPLETED`, §1A.2 #6 tolerance), the epic header, checklist and History, `curentfocus.txt`, `architecture_history.md`, AGENTS.md (the new scenarios). **Producer check:** a few minutes at 1× in the Editor, watching the stall and the bunks for twitching. | Docs agree with each other; producer confirms | `docs: Epic MAP complete` |
 
 ---
 
@@ -138,11 +138,11 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - **Fixing §1A.2 #6** (fixed-latency cognition): only if the producer picks D2 = B.
 - **The economy (§3.3)**, the provisional export, drifters: deferred by the producer.
 - **Carried findings** that the Definition of Done doesn't need:
-  - bunk-claim churn (Phase 3 §8 #3);
-  - cognition scaling (#4, ROADMAP §3A #8);
-  - the succession cohesion bonus (#5);
-  - Gather provenance (#6);
-  - Pen 7 (Phase 2 §8 #1).
+  - bunk-claim churn (epic §6 #3);
+  - cognition scaling (epic §6 #4, ROADMAP §3A #8);
+  - the succession cohesion bonus (epic §6 #5);
+  - Gather provenance (epic §6 #6);
+  - Pen 7 (epic §6 #7).
 - **Noticed while reading, not fixed:** the dossier's *Feed ration* button writes a crawler's hunger directly from the UI (`FacilityDashboardPresenter.cs:1092-1098`, since 2026-10-09). That bypasses typed commands (§1A.1). The lifecycle scenario never presses it. It should become a command or be removed; that's a separate decision.
 
 ## 6A. Deviations from this plan during implementation
@@ -150,14 +150,14 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 
 ## 7. Decisions
 
-**D1: how jitter is measured.** This decides what "zero anomalies" means.
+**D1 (decided by the producer 2026-10-12: A): how jitter is measured.** This decides what "zero anomalies" means.
 
 | Option | Meaning | Trade-off |
 | :--- | :--- | :--- |
 | **A (recommended)** | The check runs per sim tick with its window in ticks: twitching the player would see at play speed (1×), caught identically at any test speed. Same thresholds. | Matches the thrashing check and the game's actual speed. Some of today's 10× events may disappear; the rest are real and get fixed. |
 | B | Keep the real-time window and fix everything it flags in the 10× tests. | Stricter than anything the player can see; we may spend the phase chasing back-and-forth over 5 sim-seconds that looks normal at 1×. |
 
-**D2: what the determinism check asserts** (§2.5). The epic already allows recording a tolerance if exact equality doesn't hold.
+**D2 (decided by the producer 2026-10-12: A): what the determinism check asserts** (§2.5). The epic already allows recording a tolerance if exact equality doesn't hold.
 
 | Option | Work | Trade-off |
 | :--- | :--- | :--- |

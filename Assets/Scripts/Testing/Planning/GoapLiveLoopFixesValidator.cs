@@ -13,7 +13,7 @@ using Debug = UnityEngine.Debug;
 namespace Simpiens.Testing.Planning
 {
     /// <summary>
-    /// Mechanism validation for the fixes derived from the SimLog crawler trace (.agents/goap_fixes_plan.md):
+    /// Mechanism validation for the fixes derived from the SimLog crawler trace (architecture_history.md, "GOAP Live-Loop Fixes from the SimLog Trace"):
     /// need-driven companion aid, static reachability regions, reachability-aware stall/bounty planning,
     /// and GOAP relevance pruning.
     /// </summary>

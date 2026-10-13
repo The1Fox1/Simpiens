@@ -90,8 +90,8 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
 
 - Closure plan Phase 2 DONE 2026-10-10: seeded SimRandom + SimulationSettings (SIMPIENS_SEED / -simseed),
   EntityIdAllocator, ordered intent application/iteration. PlayMode 16/16.
-- Closure plan Phase 3 DONE 2026-10-11: economy observation soak (6 runs, integrity OK); trades now go
-  through the ledger. Findings in the plan. Economy design still DEFERRED (producer).
+- Closure plan Phase 3 DONE 2026-10-11: economy observation soak (6 runs, integrity OK; data in docs/epics/epic-9.md §8); trades now go
+  through the ledger. Economy design still DEFERRED (producer).
 - Closure plan Phase 4 DONE 2026-10-11: AgentPersonality + Considerations (neutral = unchanged; pens neutral),
   DecisionSummary groundwork, PriceResponseScenario (gradual demand). PlayMode 19/19.
 - Closure plan Phase 5 DONE 2026-10-11: OutpostGoapDomain, Core/Session/SwarmSpawner, Simpiens.Testing asmdef
@@ -139,21 +139,17 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [ACTIVE] (Revision 2, appro
 (See docs/epics/epic-map.md; sector count is data, not a target - producer)
 - Phase 1 - world as data: DONE 2026-10-11 (MapDefinition, WallRasterizer, ISectorRegistry, IWorldMap,
   DevMapLayout live with legacy parity, Floor1Layout validated). PlayMode 42/42 x3.
-  Plan: .agents/epic_map_phase1_plan.md
 - Phase 2 - session split: DONE 2026-10-11. Live boot = OutpostSession on the Outpost Commons yard (no pens);
   pens = test-only Dev Map (CanaryPenSession), reachable by the SWITCH TO DEV MAP button; PenCanaryScenario
   and SessionSwitchScenario pass. PlayMode 43/43. Producer visual check passed 2026-10-11.
-  Plan: .agents/epic_map_phase2_plan.md
 - Phase 3 - the outpost floor goes live: DONE 2026-10-12. Live boot = OutpostSession on Floor1Layout, 12 crawlers
   from the Road Gate; fog of war (nothing inside an uncharted sector is known until a scout reports back);
   bunks (rest anchor); BunkRestScenario; anomaly scenarios on Floor 1; population probe; soak on Floor 1
-  (plan Section 9). PlayMode 47/47 x3. Producer visual check passed 2026-10-12 (plus crawlers lying in their bunks).
-  Plan: .agents/epic_map_phase3_plan.md
+  (Floor 1 soak: docs/epics/epic-9.md §8.2). PlayMode 47/47 x3. Producer visual check passed 2026-10-12 (plus crawlers lying in their bunks).
 - Phase 4 - the player's view: DONE 2026-10-12. Tilemap map with a floor per room; fog drawn over uncharted rooms
   (D1 = A: contents hidden, crawlers visible); pan/zoom/follow camera; click a crawler or a room; header, bounty
   board and merchant over the map (D2); sector picker by name; BountyRules refuses impossible bounties before
   escrow. New: MapViewValidator, CameraRigValidator, ShroudViewScenario, MapHudScenario, PlayerScoutScenario.
   PlayMode 52/52 x3. Producer visual check passed 2026-10-12 (incl. mouse and keyboard controls).
-  Plan: .agents/epic_map_phase4_plan.md
-- Next: Phase 5 (DoD): OutpostLifecycleScenario, determinism check, zero anomalies. Plan: .agents/epic_map_phase5_plan.md (awaiting approval).
+- Next: Phase 5 (DoD): OutpostLifecycleScenario, determinism check, zero anomalies. Plan: .agents/epic_map_phase5_plan.md (approved 2026-10-12: D1 = A, D2 = A).
 - Deferred: drifter arrival/departure (economy, Section 3.3).

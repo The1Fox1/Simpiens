@@ -87,6 +87,11 @@ Work is saved through regular, reviewable commits. Uncommitted progress spanning
 3. **Never restate status in this file or in code comments.** Link to the roadmap.
 4. **Acceptance checklists list only delivered work.** Anything dropped or postponed goes under an explicit **Deferred** heading naming the epic that owns it.
 5. `.agents/architecture_history.md` is an append-only decision log. Add entries; don't rewrite history.
+6. **Plans in `.agents/*_plan.md` are working documents.** Keep only the plans for work in progress. When a plan's work is complete and its docs are reconciled:
+   - move its open findings to the epic doc;
+   - move data still needed for a decision (soak numbers, measurements) to `docs/`;
+   - summarise its decisions and deviations in `architecture_history.md`;
+   - then delete the plan, and link nothing to it. Git keeps it (`git log --diff-filter=D -- .agents/`).
 
 ## Definition of Done
 **"Done" means the feature *emerges in the live simulation*, not only that a validator passes.**

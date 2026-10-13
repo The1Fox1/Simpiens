@@ -466,3 +466,11 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - A UXML `display: none` reads as Flex through `style.display` until code sets it; the presenter's `IsShown` falls back to the resolved style. That bug made the Bounties and Merchant buttons need two presses the first time.
   - `NodeController` requires a body and a collider: every entity that uses it must set its own (bunks had silently got a dynamic body that crawlers shoved).
 - **Verification:** PlayMode 52/52 in 3 consecutive runs with identical milestones. `MapViewValidator` matches the tiles to the definition and the nav grid; `ShroudViewScenario`, `MapHudScenario` and `PlayerScoutScenario` run on the live session. Supply-loop and bunk milestones are unchanged from Phase 3.
+
+## Process Decision: Completed Plans Leave `.agents/` (2026-10-12)
+- **Decision (producer request):** plans in `.agents/*_plan.md` are working documents, kept only while their work is in progress (AGENTS.md, Documentation Protocol #6). Removed: `epic_map_phase1_plan.md` to `epic_map_phase4_plan.md`, `milestone1_closure_plan.md`, `implementation_plan.md` (§3.1), `goap_fixes_plan.md` and `logging_implementation_plan.md`.
+- **Where their live content went:**
+  - the economy soak data and the deferred §3.3 decisions: `docs/epics/epic-9.md` §8;
+  - the open findings from Epic MAP Phases 2–3: `docs/epics/epic-map.md` §6.
+- **Earlier entries** that cite a plan section (for example "Phase 3 plan §9") resolve through git: `git show f679a0c:.agents/<plan>.md`. The decisions themselves are already recorded in this log.
+- **Why:** finished plans duplicate this log and the epic docs, go stale, and bury the one plan that matters.
