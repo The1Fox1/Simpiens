@@ -474,3 +474,28 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - the open findings from Epic MAP Phases 2–3: `docs/epics/epic-map.md` §6.
 - **Earlier entries** that cite a plan section (for example "Phase 3 plan §9") resolve through git: `git show f679a0c:.agents/<plan>.md`. The decisions themselves are already recorded in this log.
 - **Why:** finished plans duplicate this log and the epic docs, go stale, and bury the one plan that matters.
+
+## Architectural Decision: Epic MAP Phase 5, the Definition of Done (2026-10-13)
+- **Decision:**
+  - **What each crawler did is recorded by the simulation** (`AgentState.Activity`, an `AgentActivity` struct): harvests, sales, Gather deliveries, ration purchases, meals, bunk sleeps, hearth gatherings, harvest → sell cycles and the tick each first happened. Each is counted where the act is applied, on the main thread. Diagnostic only: nothing decides on it. A later crawler card (UI-3) can read it.
+  - **The jitter check measures sim time** (producer decision D1 = A): it runs once per simulation tick from logical positions, with a window of 5 ticks (0.5 s at play speed) and the same thresholds. It judged 5 sim-seconds at the tests' 10× before, ten times stricter than anything the player sees at 1×, the game's only speed. Jitter fell to 0 in every scenario.
+  - **Eating is a typed intent** (`EatCarriedFoodIntent` + handler): the meal applies when the intent succeeds, whoever chose it (the hunger reflex or a plan step), and the starvation reflex counts a carried ration as known food.
+  - **Intents carry their session** (`AgentIntent.SessionEpoch`, stamped on the main thread before cognition awaits). A respawn starts a new session and `ProcessQueuedIntents` drops older intents; 0 means unstamped and is accepted.
+  - **Determinism is asserted exactly** (producer decision D2 = A, strongest branch): `DeterminismScenario` requires same-seed runs to match `WorldStateHash` at every 100-tick sample to t3,000.
+  - **Every economic decision is folded into §3.3** (producer decision 2026-10-13), including trust toward the player. `OutpostLifecycleScenario` reports trust and does not assert it.
+- **Why:**
+  - Nothing recorded meals or per-crawler sales, so "every crawler works, eats and sleeps" could not be asserted.
+  - Traced starvation: a crawler bought a ration and then panicked for about 300 ticks with it in its pocket.
+  - The determinism check found that the run after a respawn differed from t100: `Destroy` is deferred to the end of the frame, a cognition task finishing in between still enqueued its intent, and the allocator reissues the same ids per seed, so the new agent executed the dead agent's decision. This also happened at boot and on every Dev Map toggle.
+  - Trust fell on the default prices (rations at 15g, gouging above 7.5g; 10 of 12 crawlers ended at −80 to −100). Fixing it means choosing prices or a fairness rule, which is economy design the producer deferred.
+- **Deviations from the plan** (`git show 4e83ecd:.agents/epic_map_phase5_plan.md`):
+  - The tally lives on `AgentState`, not in a `SimulationManager` dictionary, so each handler records into the agent it already holds. `SimulationManager.BunkSleeps` is kept for the existing scenarios.
+  - Criterion 7 (trust rose for at least one crawler) is reported only, by producer decision, instead of asserted.
+  - `BunkRestScenario`'s "no crawler starves" is reported only, by producer decision. In the close-out runs it starved one crawler in 3 of 6 close-out runs: a crawler with 10g (rations 15g) whose known Garden plots were all empty and blacklisted panicked away from the Garden while they regrew. This is food pacing, owned by §3.3; `OutpostLifecycleScenario` keeps the assertion and passed 3 of 3.
+  - Step 4 found two causes, not navigation: the uneaten ration and the stale intent after a respawn. No navigation change was needed for zero anomalies.
+- **Consequences:**
+  - Epic MAP is `COMPLETED`. The player-trust half of the Milestone 1 loop is not demonstrated yet; it waits on §3.3 ([Epic 9 §8.4](../docs/epics/epic-9.md)).
+  - `BunkRestScenario` still follows different trajectories between runs (first sleep t885 vs t839), while `DeterminismScenario` and `OutpostLifecycleScenario` were identical in all three: cognition timing (§1A.2 #6) still shows up in some scenarios.
+  - `DeterminismScenario` rests on cognition results arriving on the same tick in both runs (ROADMAP §1A.2 #6). It may flake on a slower or busier machine; the fix is fixed-latency cognition with the multiplayer work.
+  - Gather was fulfilled sooner once crawlers ate what they carried (t568 → t511).
+- **Verification:** PlayMode 54/54 in 3 consecutive runs (56 with the 2 explicit runs, skipped), identical milestones (sale t233, scout t356, gather t511, third sleeper t983). `OutpostLifecycleScenario`: 12 of 12 crawlers close 2–18 cycles, 0 anomalies, 0 starving (worst stretch about 230 ticks). `DeterminismScenario`: 3 of 3 runs identical at every sample, and across two Unity processes.

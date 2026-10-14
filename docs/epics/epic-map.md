@@ -1,6 +1,6 @@
 # Epic MAP: The Outpost Floor & Living Simulation Loop
 
-- **Status**: ACTIVE (Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phases 1–4 done 2026-10-11 to 2026-10-12; next: Phase 5 ([implementation plan](../../.agents/epic_map_phase5_plan.md), approved 2026-10-12). Completed phase plans were removed from `.agents/`; read them with `git show f679a0c:.agents/epic_map_phase<N>_plan.md`.
+- **Status**: COMPLETED (2026-10-13; Revision 2, approved by the producer 2026-10-11). Status is owned by [ROADMAP.md](../ROADMAP.md). Phases 1–5 done 2026-10-11 to 2026-10-13. The phase plans were removed from `.agents/`; read Phases 1–4 with `git show f679a0c:.agents/epic_map_phase<N>_plan.md` and Phase 5 with `git show 4e83ecd:.agents/epic_map_phase5_plan.md`.
 - **Track**: Independent (cross-cutting world architecture)
 - **Replaces**: the isolated 10-pen demo arena and the Outpost Commons yard as the **live** session. The pens are kept as test-only canaries.
 - **Downstream beneficiaries**: Epic 9 (the economy loop runs on a real map), Epic 10 (hazards and descent need sectors), Epic UI-2/UI-3 (sector-aware UI), Track C (scenarios run on the shipped session).
@@ -166,11 +166,11 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - at least one hearth gathering has happened (2 or more agents within the anchor radius together);
   - the seeded Scout bounty is fulfilled and its frontier sector is unshrouded;
   - the seeded Gather bounty is fulfilled and paid from escrow;
-  - player trust has risen for at least one crawler;
+  - player trust has risen for at least one crawler (**reported, not asserted:** the producer moved it to the economy model, §3.3, on 2026-10-13; see [Epic 9 §8.3](epic-9.md));
   - the visual anomaly detector reports zero anomalies;
   - the ledger is conserved;
   - no crawler starves.
-- **Determinism check**: two runs with the same seed produce an identical world-state hash at tick 3,000. This holds only as far as the known cognition-arrival deviation (§1A.2 #6) allows; if it doesn't, document the tolerance.
+- **Determinism check**: two runs with the same seed produce an identical world-state hash at tick 3,000. This holds only as far as the known cognition-arrival deviation (§1A.2 #6) allows; if it doesn't, document the tolerance. (Result: identical at every 100-tick sample to t3,000, so no tolerance was needed.)
 - Docs: ROADMAP, this epic's checklist, `curentfocus.txt` and `architecture_history.md` (the map-as-data decision and the session split).
 
 ---
@@ -213,10 +213,18 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
   - the bounty board's sector picker lists rooms by name (Scout: uncharted only); `BountyRules` refuses impossible targets in the simulation before escrow; `PlayerScoutScenario` (live): the player posts Scout Overgrowth from the map and the fog lifts;
   - fixes found on the way: bunks were shoved around by crawlers (dynamic physics body); the Bounties and Merchant buttons needed two presses the first time;
   - crawlers lie down in their bunk while they sleep (producer request after the Phase 3 check).
-- [ ] Phase 5: `OutpostLifecycleScenario` passes; docs reconciled
+- [x] Phase 5: Definition of Done (done 2026-10-13; PlayMode 54/54 in 3 consecutive runs):
+  - `AgentActivity`: a per-crawler tally of harvests, sales, Gather deliveries, ration purchases, meals, bunk sleeps, hearth gatherings and harvest → sell cycles, recorded where each act is applied; diagnostic only;
+  - the jitter check measures sim time (producer decision D1 = A): 3 reversals of more than 120° within 5 ticks, evaluated once per tick from logical positions; thresholds unchanged; jitter fell to 0 in every scenario;
+  - **`OutpostLifecycleScenario`** (live, no injection, 9,000 ticks): every crawler closes a harvest → sell cycle, 3+ sleep in a bunk, 3+ eat, the hearth gathers, both seeded bounties are fulfilled (scout first, no fog leak, Gather paid from escrow), 0 anomalies of every type, the ledger balances, nobody starves; a per-crawler report; trust toward the player reported only (§3.3);
+  - **`DeterminismScenario`** with `WorldStateHash` (producer decision D2 = A): same-seed runs identical at every 100-tick sample to t3,000;
+  - `BunkRestScenario` reports starvation instead of asserting it (producer decision 2026-10-13: food pacing belongs to §3.3; §6 #2);
+  - fixes found on the way: a hungry crawler eats the ration it carries (`EatCarriedFoodIntent`; the starvation reflex counts a carried ration as food); an intent decided before a respawn is dropped instead of moving the new agent with the same id (`AgentIntent.SessionEpoch`).
 
 ### Deferred (owned elsewhere)
 - **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out): this is an economy decision, owned by §3.3 / Epic 9.
+- **Trust toward the player as a pass criterion** of `OutpostLifecycleScenario`: it depends on prices and the gouging rule, so it waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #5).
+- **"No crawler starves" as a pass criterion of `BunkRestScenario`**: a broke crawler can starve while the Garden regrows; food pacing waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6). `OutpostLifecycleScenario` keeps the assertion.
 - **Descent gate sector and hazards**: Epic 10.
 - **Workshop sectors**: Milestone 3.
 - **Map serialization and save/load**: the MemoryPack slice. The definition is plain data, so it is ready for that.
@@ -239,15 +247,17 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 
 ## 6. Open findings
 
-Found by the live scenarios during Phases 2–3. None fails a test. Each stays here until it is fixed or handed to the epic that owns it. Phase 5 takes on #1 and #2 (Definition of Done: zero anomalies, no crawler starves).
+Found by the live scenarios during Phases 2–5. None fails a test. The epic is complete, so each open item names the owner it was handed to.
 
-1. **Jitter at the stall queue and the bunks** (Phase 3). Over 4,000 ticks the detector reports 6–8 `OscillationJitter` events across 6 crawlers, with 0 stacking. The jitter check runs on real time while the tests run at 10×, so how many of these the player would see at 1× is not yet known. **Phase 5.**
-2. **The starvation margin is thin** (Phase 3). The longest stretch at 95+ hunger in `BunkRestScenario` is 275 ticks, against the 300-tick bar. Hunger rises 1.5/s, and a crawler without gold must reach the Garden. This is economy pacing (§3.3), not navigation. **Phase 5** measures it over 9,000 ticks.
-3. **About 1 in 3 bunk claims miss** because the bunk is taken by arrival (Phase 3). The crawler picks another bunk. Churn only.
-4. **Cognition cost grows faster than linearly** with population: 2× crawlers, 2.7× slower (Phase 3, `PopulationScalingProbe`). Input for ROADMAP §3A #8.
+1. ~~**Jitter at the stall queue and the bunks** (Phase 3).~~ **Resolved in Phase 5:** measured in sim time (D1 = A), jitter is 0 in every scenario. At the old 10× window (50 ticks) the remaining events were small single steps (about 0.3 units) at the stall and the bunks, plus a few 3–5 unit walk-and-return turns near the bunks and the Garden door: fidgeting and indecision, not vibration. Left for the producer's eye at 1×.
+2. **The starvation margin is thin** (Phase 3). **Partly fixed in Phase 5:** one cause was a crawler panicking with a ration in its pocket; it now eats it. `OutpostLifecycleScenario`: 0 starving over 9,000 ticks in 3 of 3 runs, worst stretch 233 ticks at 95+ hunger. **Still open:** in the close-out runs `BunkRestScenario` starved one crawler in 3 of 6 close-out runs (t3117, 445 ticks at 95+): with 10g it can't buy a 15g ration, every Garden plot it knows is empty and blacklisted, so starvation panic sends it exploring away from the Garden while the plots regrow. The producer handed it to §3.3 as food pacing (2026-10-13); `BunkRestScenario` now reports starvation instead of asserting it. Owner: §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6).
+3. **About 1 in 3 bunk claims miss** because the bunk is taken by arrival (Phase 3). The crawler picks another bunk. Churn only. Owner: none scheduled (fix if it becomes visible).
+4. **Cognition cost grows faster than linearly** with population: 2× crawlers, 2.7× slower (Phase 3, `PopulationScalingProbe`). Owner: ROADMAP §3A #8.
 5. **A succession re-confirmation still applies the peaceful-succession cohesion bonus** and memory events for the leader (Phase 3; only the chronicle was fixed). Behaviour, left for a decision. Owner: Epic 8.
 6. **Gather fulfilment does not check provenance** (H6, accepted): ore bought or found counts the same as ore mined.
 7. **Pen 7 hands leadership to the defiant follower at t50** (Phase 2, Dev Map only). Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
+8. **Trust toward the player falls on the default prices** (Phase 5): 10 of 12 crawlers end at −80 to −100. Owner: §3.3 / Epic 9 ([Epic 9 §8.3](epic-9.md)).
+9. **The dossier's *Feed ration* button writes a crawler's hunger directly from the UI** (`FacilityDashboardPresenter`, since 2026-10-09), bypassing typed commands (§1A.1 #7). No scenario presses it. It should become a command or be removed. Owner: Track B.
 
 ---
 
@@ -262,3 +272,4 @@ Found by the live scenarios during Phases 2–3. None fails a test. Each stays h
 - **2026-10-12: Phase 3 visual check passed; Phase 4 plan approved** with D1 = A (crawlers visible in the fog) and D2 = yes (HUD over the map).
 - **2026-10-12: Phase 4 done** (the player's view). The player plays from the map. Its deviations are recorded in the Phase 4 plan (git history, `f679a0c`).
 - **2026-10-12: Phase 4 visual check passed** (including the mouse and keyboard controls); **Phase 5 plan approved** with D1 = A (jitter measured in sim time) and D2 = A (assert the strongest determinism that holds, record the tolerance). Completed phase plans removed from `.agents/`; open findings moved to §6.
+- **2026-10-13: Phase 5 done; epic `COMPLETED`.** The live outpost runs its whole day with nothing injected and zero anomalies, and two same-seed runs tell the same story. The producer folded every economic decision into §3.3, including trust toward the player, which the lifecycle scenario now reports instead of asserting, and the bunk scenario's intermittent starvation (food pacing), which it now reports instead of asserting.

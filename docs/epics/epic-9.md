@@ -468,7 +468,15 @@ What the numbers say (observations, not decisions):
 4. **Hunger dominates the crawlers' day.** Hunger rises 1.5/s (a meal about every 40 s), so food is most of what they do. With the export, 0 starvation; without it, food runs out.
 5. **The yard's conclusion stands, now on the real map:** §3.3 has to close the stall's money loop. A sink for the export gold, or a source of income for the stall that isn't a free faucet, is the decision the producer deferred. Floor 1 adds a time constraint: distance and 12 mouths make the stall's failure show within 3–6 minutes.
 
-### 8.3 The decisions this evidence informs (deferred)
+### 8.3 Floor 1 lifecycle, trust toward the player (Epic MAP Phase 5, 2026-10-13)
+`OutpostLifecycleScenario`: 9,000 ticks (15 sim-minutes) at 10×, default seed, nothing injected, the live setting (provisional export on). Prices, stocks and starting gold are unchanged.
+
+- **Trust toward the player falls for almost everyone:** 10 of 12 crawlers end at −80 to −100, the other 2 at 0. None rises.
+- **Why:** the stall sells rations at 15g, three times their base value (5g). `TradeIntentHandler` counts any ration price above 1.5× base (7.5g) as gouging: −15 trust per purchase. A fair sale to the stall gives +10. Crawlers buy food more often than they sell salvage (hunger rises 1.5/s), so trust only goes down.
+- **Consequence:** the scenario reports trust and does not assert it (producer decision 2026-10-13). Milestone 1 promises "dyadic trust with visiting crawlers", so the economy model has to make fair trade possible at the prices it sets.
+
+### 8.4 The decisions this evidence informs (deferred)
+**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.
 2. **Agent sinks:**
    - (a) Free bushes yield less or regrow slower, so rations matter.
@@ -476,6 +484,9 @@ What the numbers say (observations, not decisions):
    - (c) Gear wear (defer to Epic 10).
 3. **Scarcity lever:** material scarcity (node regrowth) vs. agent willingness to spend (`AgentPersonality`, closure Phase 4).
 4. **Target pace:** e.g. "a competent player's treasury roughly doubles in 30 sim-minutes; a careless one hits zero". Once set, it becomes a soak assertion.
+5. **Prices and fairness (§8.3):** the default stall prices, and what counts as gouging: a fixed multiple of base value (today), the stall's going rate, or the crawler's own reservation price (`Considerations`). Then trust toward the player becomes an assertion again in `OutpostLifecycleScenario`.
+6. **Hunger pacing and food supply:** hunger rises 1.5/s (a meal about every 40 s), so food is most of a crawler's day (§8.2 #4). The Garden (4 plots × 3 rations, regrowing 450 ticks after they empty) can't feed 12 crawlers alone, and a crawler starts with 10g against a 15g ration. Evidence (Epic MAP close-out, 2026-10-13): `OutpostLifecycleScenario` had 0 starving over 9,000 ticks in 3 of 3 runs, but `BunkRestScenario` starved one crawler in 3 of 6 close-out runs. That crawler was broke, every Garden plot it knew was empty, and starvation panic sent it exploring away from the Garden while the plots regrew. `BunkRestScenario` reports starvation instead of asserting it until this is decided.
+7. **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out), deferred from Epic MAP.
 
 Once decided: write `docs/economy-model.md`, implement it, and turn the soak's agreed bands into assertions. That is the deferred half of §3.3.
 

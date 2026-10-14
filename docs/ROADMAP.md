@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-11.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-13.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -36,7 +36,7 @@ This allows core simulation logic, player interface layers, and verification har
 ```mermaid
 flowchart LR
     subgraph Independent: Spatial & World Topology
-        MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(ACTIVE)"]
+        MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(COMPLETED)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -101,7 +101,7 @@ These violate §1A.1 or the project architecture rules today. They are recorded 
 | 3 | ~~Background planners read live `AgentMemory` / `AgentInventory` (non-thread-safe dictionaries) while the main thread mutates them (gossip, trade affinity). The snapshot is `Retain()`ed only after `SwitchToThreadPool()`.~~ **RESOLVED (2026-10-09):** Single-Writer Threading Architecture enforced. `SharedWorldSnapshot.Retain()` invoked on main thread before thread pool dispatch; `IAgentMemory` and `IAgentInventory` provide preallocated double-buffered zero-allocation snapshots (`AgentMemorySnapshot`, `AgentInventorySnapshot`) for off-thread cognition; `GetAffinity` refactored to be pure side-effect-free calculation (no dictionary writes on read); and panic memory pruning moved authoritatively to main thread in `AgentConsequenceService`. | 6 | [`AgentMemory.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Memory/AgentMemory.cs), [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs), [`AgentInventory.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Inventory/AgentInventory.cs) |
 | 4 | ~~`InfluenceEvent` carries a string command name and a comma-separated string payload parsed with `Split`.~~ **RESOLVED (2026-10-09):** `InfluenceEvent` converted to a typed zero-allocation command union (`PostBountyCommand`, `CancelBountyCommand`, `UpdateStallPricesCommand`) with static factory methods; UI presenters dispatch typed commands directly; legacy string constructor preserved for backward compatibility. | 2 | [`InfluenceEvent.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Intervention/InfluenceEvent.cs), [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
 | 5 | ~~Unseeded RNG in simulation paths (`[ThreadStatic] System.Random` in evaluators).~~ **RESOLVED (2026-10-10, closure Phase 2):** `SimRandom` gives stateless, seeded streams keyed by (seed, entity, tick, salt). The seed comes from `SimulationSettings` (`SIMPIENS_SEED` / `-simseed`), and `EntityIdAllocator` makes entity ids reproducible per seed. Remaining `UnityEngine.Random` calls are view-only (`NodeController` bounce direction, `NodeFactory` sprite colour). `OutpostMapBuilder` (not live) and `NodeFactory` still call `GUID.Generate()`. | 4 | [`SimRandom.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/SimRandom.cs), [`EntityIdAllocator.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/EntityIdAllocator.cs) |
-| 6 | Completion order of background cognition determines the order intents are enqueued. **PARTIALLY RESOLVED (2026-10-10):** intents arriving in the same tick are applied in agent-id order. **Still open:** *which tick* a result arrives on depends on thread timing; a fixed-latency or barrier scheme belongs to the multiplayer work. | 3 | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
+| 6 | Completion order of background cognition determines the order intents are enqueued. **PARTIALLY RESOLVED (2026-10-10):** intents arriving in the same tick are applied in agent-id order. **Still open:** *which tick* a result arrives on depends on thread timing; a fixed-latency or barrier scheme belongs to the multiplayer work. **Measured tolerance (2026-10-13, Epic MAP Phase 5):** `DeterminismScenario` finds same-seed runs of the outpost identical at every 100-tick sample to t3,000 (10×, this machine, 3 of 3 runs and across processes), so no tolerance is recorded. The test rests on cognition timing and may flake on a slower or busier machine. Intents now carry their session (`AgentIntent.SessionEpoch`), and a respawn drops older ones. | 3 | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
 | 7 | ~~`AsyncPathfinder` is a straight-line stress-test placeholder, not Grid A*.~~ **RESOLVED (2026-10-09):** Upgraded `AsyncPathfinder` into a zero-allocation 8-directional Grid A* engine with preallocated binary min-heap, $O(1)$ epoch visited tracking, diagonal corner-cutting prevention, raycast string-pulling path smoothing, and concurrent searcher worker pooling. Separated static map obstacles (`StaticNavGrid`) from per-frame dynamic entity snapshots. | — (Epic 9 carry-over) | [`AsyncPathfinder.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs), [`GridAStarSearcher.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/GridAStarSearcher.cs), [`StaticNavGrid.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/Spatial/StaticNavGrid.cs) |
 | 8 | `GoapPlanner` is a DI singleton guarded by a `lock`, so all agents' planning is serialized. | Dual-loop scaling intent | [`GoapPlanner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs) |
 | 9 | ~~The production GOAP domain (action graph, goals) and session population live under `Testing/` in `SwarmSpawner`; validators are registered as boot-time `IStartable`s and ship in the single `Simpiens.asmdef`.~~ **RESOLVED (2026-10-11, closure Phase 5):** domain in `Cognition/Planning/Domain/OutpostGoapDomain`, session in `Core/Session/SwarmSpawner`. Test code is in a separate `Simpiens.Testing` assembly (`UNITY_INCLUDE_TESTS` only), wired in through `BootstrapExtensions`. Validators run as PlayMode tests, not at boot. | Test isolation | [`OutpostGoapDomain.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Domain/OutpostGoapDomain.cs), [`AppBootstrapper.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/AppBootstrapper.cs) |
@@ -211,7 +211,7 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
-- **Epic MAP is `ACTIVE`** (Revision 2, 2026-10-11). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. Since Phase 4 (2026-10-12) the player plays from the map: fog drawn over uncharted rooms, a free camera that can follow a crawler, and the bounty board and merchant over the map. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only).
+- **Epic MAP is `COMPLETED`** (2026-10-13). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. Since Phase 4 (2026-10-12) the player plays from the map: fog drawn over uncharted rooms, a free camera that can follow a crawler, and the bounty board and merchant over the map. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only). Phase 5 (2026-10-13): `OutpostLifecycleScenario` runs the outpost's whole day (15 sim-minutes, nothing injected, zero anomalies, nobody starves), and same-seed runs are identical. **Trust toward the player falls on the default prices** (10 of 12 crawlers end at −80 to −100: rations at 15g read as gouging), so the player-trust half of the Milestone 1 loop is not yet demonstrated; it waits on §3.3.
 
 *Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
 
@@ -232,14 +232,14 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 | 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load still needs `MemoryPack` (not installed). |
 | 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. No soak runner (Epic Test-2). No measured agent budget. |
 | 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ✅ Done (2026-10-11) | §1A.2 #9. All 40 PlayMode tests pass with the new assembly layout. Not verified: a player build (relies on the standard `UNITY_INCLUDE_TESTS` constraint). A dedicated `GameplayLifetimeScope` / ScriptableObject-driven session definition was not done (`AppBootstrapper` stays the single scope). |
-| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ⏸ Deferred | Producer decision 2026-10-09: decide once the game is functional. Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation, provisional `ProvisionalCaravanExport` faucet). **Blocks Epic 9 promotion.** |
+| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ⏸ Deferred; **next** | Producer decision 2026-10-09: decide once the game is functional. Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation, provisional `ProvisionalCaravanExport` faucet). **Producer decision 2026-10-13: every economic decision is folded into §3.3**, including prices and the gouging rule (trust toward the player), hunger pacing and drifter churn. The full list: [Epic 9 §8.4](epics/epic-9.md). **Blocks Epic 9 promotion and Milestone 1.** |
 | 10b | "Why?" agent inspector (§3.4) | 🟨 Groundwork | `DecisionSummary` (source tier + top 3 goal priorities) recorded on every intent and copied to `AgentState.LastDecision` on the main thread (2026-10-11). The inspector UI is not started (Track B). |
 | 10c | Live-scenario Definition of Done (§4.2) | ✅ Done | §1B. |
 | 10d | Docs single source of truth (§4.3) | ✅ Done | §0. |
 
 Other review items still open:
 - **GOAP fact budget (§2.7):** 36 of 64 facts used (`StateFact` 0–35).
-- **Determinism (§2.1 note):** #5 and #14 resolved 2026-10-10. #6 is partially resolved; the arrival tick of async cognition results is still timing-dependent.
+- **Determinism (§2.1 note):** #5 and #14 resolved 2026-10-10. #6 is partially resolved; the arrival tick of async cognition results is still timing-dependent (measured 2026-10-13: no divergence to t3,000 on this machine).
 - **Single writer:** §1A.2 #15 (cognition writes plan/intent bookkeeping off-thread).
 
 ### Milestone 1 closure sequence (approved 2026-10-09)
@@ -253,7 +253,7 @@ Implementation plan: `.agents/milestone1_closure_plan.md` (completed and removed
 5. ~~**Test-scope separation**~~ **Done 2026-10-11** (#9, review §2.8). PlayMode 40/40.
 6. ~~**Docs + promotion.**~~ **Docs reconciled 2026-10-11.** Epic 9 promotion is **not** done: it waits on the deferred §3.3 economy model (producer).
 
-Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), then the §3.3 economy decision on the real map, then `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
+Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3 economy decision on the real map (next)**, then `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
 
 ---
 
@@ -340,7 +340,7 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
 *Status: Foundational spatial and environmental architectures that operate orthogonally to the specific feature tracks, providing the physical substrate for all agent lifecycles.*
 
 ### Epic MAP: [The Outpost Floor & Living Simulation Loop](epics/epic-map.md)
-- **Status**: ACTIVE (Revision 2 approved by the producer, 2026-10-11).
+- **Status**: COMPLETED (2026-10-13; Revision 2 approved by the producer, 2026-10-11).
   - **Phase 1, world as data: done 2026-10-11** (PlayMode 42/42 ×3; live supply loop unchanged with 0 anomalies).
   - **Phase 2, session split: done 2026-10-11** (PlayMode 43/43; live supply loop passes on the pen-free yard with 0 anomalies; `PenCanaryScenario` and `SessionSwitchScenario` pass; producer visual check of the Dev Map button passed 2026-10-11). The canary found and fixed a real regression: Pen 4's altruism had never worked since Grid A* (a hearth on a cell corner sealed the 2-cell pen).
   - **Phase 3, the outpost floor goes live: done 2026-10-12** (PlayMode 47/47 ×3; producer visual check passed 2026-10-12, with crawlers lying down in their bunks added on request):
@@ -356,7 +356,13 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
     - **The header and the Bounty and Merchant windows work over the map** (producer decision D2); Tab still opens the full dashboard.
     - Bounties target rooms by name; the simulation refuses a Scout bounty on a charted room or any bounty on an unknown sector, before escrow.
     - Fixes found on the way: bunks had a dynamic physics body and were shoved around by crawlers; the Bounties and Merchant buttons needed two presses the first time.
-  - Next: **Phase 5** (Definition of Done: `OutpostLifecycleScenario`, determinism check, zero anomalies) ([plan](../.agents/epic_map_phase5_plan.md), approved 2026-10-12: D1 = A, D2 = A).
+  - **Phase 5, Definition of Done: done 2026-10-13** (PlayMode 54/54 in 3 consecutive runs; plan approved 2026-10-12 with D1 = A, D2 = A; removed, `git show 4e83ecd:.agents/epic_map_phase5_plan.md`):
+    - `OutpostLifecycleScenario`: the real outpost for 9,000 ticks, nothing injected. Every crawler closes a harvest → sell cycle; crawlers eat, sleep in bunks and gather at the hearth; both seeded bounties are fulfilled; zero anomalies of every type; the ledger balances; nobody starves.
+    - **Trust toward the player is reported, not asserted** (producer decision 2026-10-13): on the default prices it falls for almost every crawler, and every economic decision belongs to §3.3.
+    - **`BunkRestScenario` reports starvation instead of asserting it** (producer decision 2026-10-13): in 3 of 6 close-out runs a broke crawler starved while the Garden regrew. That is food pacing, owned by §3.3. The lifecycle scenario still asserts that nobody starves.
+    - `DeterminismScenario`: same-seed runs identical at every 100-tick sample to t3,000 (§1A.2 #6).
+    - The jitter check measures sim time (D1 = A); jitter is 0 in every scenario. A per-crawler activity tally (`AgentActivity`) feeds the report.
+    - Fixes found on the way: a hungry crawler eats the ration it carries; an intent decided before a respawn no longer moves the new agent with the same id.
 - **Producer intent (2026-10-11):** the live game shows one connected outpost floor where crawlers physically work, sell, eat, socialize and sleep. **Sector count is unimportant** and is data, not design; the earlier 9- versus 12-sector target is superseded. The play pens leave the live map and become test-only canaries.
 - **Producer decisions (2026-10-11):**
   - Revision 2 approved.
@@ -369,15 +375,15 @@ Later Milestone 1 scope: Epic MAP (`ACTIVE` 2026-10-11, live outpost floor), the
   4. Player view: rendering, shroud, camera, sector-aware UI (D1 = A: crawlers visible in the fog; D2: the HUD works over the map).
   5. DoD: `OutpostLifecycleScenario`.
 - **Superseded:** Revision 1's `OutpostMapBuilder` (never wired into the live session) is replaced in Phase 1. See the epic's review (§1).
-- **Deferred:** drifter churn (§3.3 / Epic 9), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8).
+- **Deferred:** drifter churn, trust toward the player and the bunk scenario's no-starvation check as pass criteria (§3.3 / Epic 9), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8). Open findings and their owners: [epic §6](epics/epic-map.md).
 
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; next engine focus is a producer decision, see the proposed sequence in §3A). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; the next engine focus is the §3.3 economy model, §3A #10a). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
 3. **Testing Work**: Reference **Track C** (current: **Epic Test-2**, `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `ACTIVE`, Revision 2). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; no independent epic is `ACTIVE`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).
