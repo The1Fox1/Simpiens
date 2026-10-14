@@ -15,8 +15,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// Definition-of-Done scenario for the rest anchor (Epic MAP Phase 3, epic §2.3). Runs the real outpost session
     /// on Floor 1 at 10x and injects nothing: crawlers start rested at the Road Gate and discover the Bunkhouse on
     /// their own. Within the bound, at least 3 distinct crawlers complete a sleep in a bunk; no bunk ever holds two
-    /// sleepers; every sleeper lies on its bunk and is shown asleep; no crawler starves. Hunger rises 1.5 per second, so brief peaks at the cap are routine; starving
+    /// sleepers; every sleeper lies on its bunk and is shown asleep. Hunger rises 1.5 per second, so brief peaks at the cap are routine; starving
     /// means going without food: hunger at or above StarvingHunger for StarvingTicks in a row.
+    /// Starvation is reported, not asserted: a crawler too poor for a stall ration can still starve while the Garden
+    /// regrows, which is food pacing, owned by the economy model (ROADMAP §3A #10a, producer decision 2026-10-13).
+    /// <c>OutpostLifecycleScenario</c> still asserts that nobody starves.
     /// </summary>
     public class BunkRestScenario : ISimulationScenario
     {
@@ -165,7 +168,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 $"The third crawler slept in a bunk at {_thirdSleeperTick}, after the {SleepersDeadlineTicks}-tick deadline.");
             Assert.AreEqual(0, _doubleOccupancy, $"A bunk held two sleepers ({_doubleOccupancy} observations; first {_firstDoubleOccupancy}).");
             Assert.AreEqual(0, _misplacedSleepers, $"A sleeper was off its bunk or not shown asleep ({_misplacedSleepers} observations; first {_firstMisplacedSleeper}).");
-            Assert.AreEqual(0, _starving, $"{_starving} crawlers starved (hunger >= {StarvingHunger} for {StarvingTicks} ticks).");
+            if (_starving > 0) Debug.Log($"[BunkRestScenario] {_starving} crawlers starved (hunger >= {StarvingHunger} for {StarvingTicks} ticks): reported only, economy model (ROADMAP §3A #10a)");
             Assert.AreEqual(0, detector.StackingCount, $"Pawn stacking detected ({detector.StackingCount}).");
         }
     }
