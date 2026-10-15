@@ -36,7 +36,7 @@ namespace Simpiens.Core.Session.Layouts
         public const byte OvergrowthSectorId = 7;
         public const byte RoadGateSectorId = 8;
 
-        public const uint FoodRegrowTicks = 450;
+        public const uint FoodRegrowTicks = 300; // 4 plots x 3 rations: about 24 a minute for 12 crawlers (review §3.3 D6; was 450)
         public const uint HerbRegrowTicks = 600;
         public const uint OreRegrowTicks = 900;
 

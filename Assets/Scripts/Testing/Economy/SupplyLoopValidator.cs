@@ -152,25 +152,29 @@ namespace Simpiens.Testing.Economy
             var richId = NextGuid();
             var poorId = NextGuid();
             sim.RegisterTradeStall(new TradeStallData(richId, new Vector2(0f, 0f), rationStock: 10, treasuryGold: 500));
+            var brokeId = NextGuid();
             sim.RegisterTradeStall(new TradeStallData(poorId, new Vector2(20f, 0f), rationStock: 0, treasuryGold: 10));
-            ledger.RecordFaucet(510, "InitialSeed");
+            sim.RegisterTradeStall(new TradeStallData(brokeId, new Vector2(40f, 0f), rationStock: 0, treasuryGold: 1));
+            ledger.RecordFaucet(511, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
 
             Assert(sim.TryGetTradeStall(richId, out var rich), "Rich stall retrieved.");
             Assert(rich.RationStock == 50, $"Rich stall restocked to cap (stock {rich.RationStock}).");
             Assert(rich.TreasuryGold == 420, $"Rich stall paid 40 × 2g = 80g (treasury {rich.TreasuryGold}).");
-            Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 0 && poor.TreasuryGold == 10, "Unaffordable restock skipped.");
-            Assert(supply.RestockCount == 1, $"RestockCount is {supply.RestockCount} instead of 1.");
-            Assert(supply.SkippedRestockCount == 1, $"SkippedRestockCount is {supply.SkippedRestockCount} instead of 1 (poor stall).");
-            Assert(ledger.TotalSinkedGold == 80, $"SupplyCaravan sink recorded 80g (got {ledger.TotalSinkedGold}).");
-            Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+            // A poor stall gets what it can pay for (review §3.3 D6); one that can't pay for a single ration is skipped
+            Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 5 && poor.TreasuryGold == 0, $"Poor stall got a partial restock of 5 for 10g (stock {poor.RationStock}, treasury {poor.TreasuryGold}).");
+            Assert(sim.TryGetTradeStall(brokeId, out var broke) && broke.RationStock == 0 && broke.TreasuryGold == 1, "A stall that can't pay for one ration is skipped.");
+            Assert(supply.RestockCount == 2 && supply.PartialRestockCount == 1, $"RestockCount {supply.RestockCount} (expected 2), partial {supply.PartialRestockCount} (expected 1).");
+            Assert(supply.SkippedRestockCount == 1, $"SkippedRestockCount is {supply.SkippedRestockCount} instead of 1 (broke stall).");
+            Assert(ledger.TotalSinkedGold == 90, $"SupplyCaravan sink recorded 80g + 10g (got {ledger.TotalSinkedGold}).");
+            Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold + broke.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
-            // Already at cap: next visit is a no-op
+            // Already at cap: next visit is a no-op for the rich stall (the poor and broke stalls have no gold left)
             while (sim.CurrentTick < 40) sim.Tick();
-            Assert(supply.RestockCount == 1, "Full stall not restocked again.");
+            Assert(supply.RestockCount == 2, "Full stall not restocked again.");
 
-            Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, treasury and ledger conservation.");
+            Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, delivers what a stall can pay for, and conserves the ledger.");
         }
 
         // ---------------------------------------------------------------------------------------------

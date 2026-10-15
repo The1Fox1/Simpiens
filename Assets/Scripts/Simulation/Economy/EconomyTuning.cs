@@ -66,8 +66,8 @@ namespace Simpiens.Simulation.Economy
     /// </summary>
     public sealed class EconomyTuning
     {
-        /// <summary>Gold a crawler arrives with (also AgentInventory's default).</summary>
-        public const int DefaultStartingGold = 10;
+        /// <summary>AgentInventory's default gold, for agents no session spawned (validators). Sessions use StartingGold.</summary>
+        public const int InventoryDefaultGold = 10;
 
         public static readonly EconomyTuning Default = new EconomyTuning();
 
@@ -78,7 +78,8 @@ namespace Simpiens.Simulation.Economy
         public ushort PickaxeBaseValue { get; private set; } = 30;
         public ushort WeaponBaseValue { get; private set; } = 40;
 
-        public int StartingGold { get; private set; } = DefaultStartingGold;
+        /// <summary>Gold a crawler arrives with: one ration at the stall's default price (review §3.3 D6).</summary>
+        public int StartingGold { get; private set; } = 15;
 
         /// <summary>What a neutral crawler at hunger 50 will pay for a ration (Considerations.RationReservationPrice).</summary>
         public float RationReferencePrice { get; private set; } = 20f;

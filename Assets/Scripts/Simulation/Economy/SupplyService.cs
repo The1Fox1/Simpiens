@@ -49,6 +49,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Visits where a stall couldn't pay its upkeep in full (it went or stayed in arrears).</summary>
         public int UpkeepShortCount { get; private set; }
 
+        /// <summary>Caravan restocks that delivered fewer rations than the cap because the stall couldn't pay for all.</summary>
+        public int PartialRestockCount { get; private set; }
+
         /// <summary>Caravan restocks skipped because the stall couldn't pay.</summary>
         public int SkippedRestockCount { get; private set; }
 
@@ -109,6 +112,7 @@ namespace Simpiens.Simulation.Economy
             SalvageSaleVisits = 0;
             UpkeepPaidCount = 0;
             UpkeepShortCount = 0;
+            PartialRestockCount = 0;
             SkippedRestockCount = 0;
         }
 
@@ -165,19 +169,22 @@ namespace Simpiens.Simulation.Economy
                 stall = PayUpkeep(stall, currentTick, host);
                 if (stall.RationStock >= _tuning.RationStockCap) continue;
 
-                uint units = (uint)(_tuning.RationStockCap - stall.RationStock);
-                uint cost = units * _tuning.WholesaleRationCost;
+                uint missing = (uint)(_tuning.RationStockCap - stall.RationStock);
+                uint affordable = _tuning.WholesaleRationCost > 0 ? stall.TreasuryGold / _tuning.WholesaleRationCost : missing;
+                uint units = missing < affordable ? missing : affordable;
 
-                // The caravan only delivers what the stall can pay for in full
-                if (stall.TreasuryGold < cost)
+                // The caravan delivers what the stall can pay for (review §3.3 D6: a poor stall still gets some food)
+                if (units == 0)
                 {
                     SkippedRestockCount++;
-                    SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g < {cost}g for {units} rations (stock {stall.RationStock})");
+                    SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g can't pay {_tuning.WholesaleRationCost}g for one ration (stock {stall.RationStock})");
                     continue;
                 }
 
-                host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost).WithRationStock(_tuning.RationStockCap));
+                uint cost = units * _tuning.WholesaleRationCost;
+                host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost).WithRationStock((ushort)(stall.RationStock + units)));
                 host.EconomyLedger?.RecordSink(cost, CaravanSinkName);
+                if (units < missing) PartialRestockCount++;
                 RestockCount++;
                 SimLog.Supply.ZLogInformation($"Supply caravan restocked {SimLog.Agent(stall.StallEntityId)} with {units} rations for {cost}g (treasury now {stall.TreasuryGold - cost}g)");
 

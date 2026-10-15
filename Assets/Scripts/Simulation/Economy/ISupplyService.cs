@@ -49,6 +49,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Visits where a stall couldn't pay its upkeep in full, since the last reset.</summary>
         int UpkeepShortCount { get; }
 
+        /// <summary>Caravan restocks that delivered fewer rations than the cap (the stall couldn't pay for all), since the last reset.</summary>
+        int PartialRestockCount { get; }
+
         /// <summary>Caravan restocks skipped because the stall couldn't pay, since the last Reset.</summary>
         int SkippedRestockCount { get; }
 

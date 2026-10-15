@@ -408,7 +408,7 @@ namespace Simpiens.Testing.Economy
 
             var stingy = EconomyTuning.Default.TradeTrust.StingySale;
             var affinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
-            Assert(agent.Inventory.Gold == EconomyTuning.DefaultStartingGold + 10, $"The sale completed (gold {agent.Inventory.Gold}).");
+            Assert(agent.Inventory.Gold == EconomyTuning.InventoryDefaultGold + 10, $"The sale completed (gold {agent.Inventory.Gold}).");
             Assert(affinity.Trust == stingy.Trust && affinity.Warmth == stingy.Warmth, $"Stingy sale: trust {affinity.Trust} (expected {stingy.Trust}), warmth {affinity.Warmth} (expected {stingy.Warmth}).");
 
             GameObject.DestroyImmediate(go);
