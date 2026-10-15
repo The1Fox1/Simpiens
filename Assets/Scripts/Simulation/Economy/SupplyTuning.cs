@@ -52,7 +52,7 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2,
-            oreQuota: 2, herbQuota: 2, oreMarketPrice: 24, herbMarketPrice: 30, upkeepPerVisit: 75);
+            oreQuota: 2, herbQuota: 2, oreMarketPrice: 24, herbMarketPrice: 30, upkeepPerVisit: 80);
 
         /// <summary>The most gold the caravan can pay a stall for salvage in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit => (uint)OreQuota * OreMarketPrice + (uint)HerbQuota * HerbMarketPrice;

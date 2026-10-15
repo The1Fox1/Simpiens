@@ -18,8 +18,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// Economy soak (Milestone 1 closure, Phase 3; review §3.3 step 2). Runs the real session for 30 sim-minutes at 10x
     /// with no injection. It plays one kind of player (SIMPIENS_SOAK_PROFILE: fair, greedy or generous), whose stall
     /// prices are set at tick 0 through the same typed command the dashboard sliders send. Every sim-minute it records
-    /// stall, ledger, transfer, crawler, trust and supply figures to a CSV. It asserts integrity only (ledger
-    /// conservation, horizon reached, prices applied, CSV written); the pace bands become assertions in §3.3 step 7.
+    /// stall, ledger, transfer, crawler, trust and supply figures to a CSV. It asserts integrity (ledger conservation,
+    /// horizon reached, prices applied, CSV written) and the profile's pace band (docs/economy-model.md §7).
     /// The seed comes from SimulationSettings (SIMPIENS_SEED).
     /// </summary>
     public class EconomySoakScenario : ISimulationScenario
@@ -68,6 +68,13 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         }
 
         public SoakProfile Profile { get; private set; }
+
+        // Pace bands per profile (docs/economy-model.md §7; review §3.3 D5), asserted per run at the horizon
+        public const uint FairTreasuryMin = 375;   // 1.5x the 250g start
+        public const uint FairTreasuryMax = 875;   // 3.5x
+        public const int FairTrustUpMin = 8;       // of 12 crawlers
+        public const int GreedyTrustUpMax = 2;
+        public const int GenerousTrustUpPeakMin = 8; // at its best, before bankruptcy erodes trade
 
         private struct Row
         {
@@ -399,7 +406,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
         public void AssertResults(IVisualAnomalyDetector detector)
         {
-            // Integrity only; the pace bands become assertions in review §3.3 step 7.
+            // Integrity, then the profile's pace band (review §3.3 D5)
             Assert.GreaterOrEqual(_observedTicks, (long)HorizonTicks,
                 $"Soak ended early at tick {_observedTicks} (wall-clock timeout); simulation ran too slowly.");
             Assert.AreEqual(0, _conservationViolations,
@@ -407,6 +414,40 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Assert.IsTrue(_csvWritten && File.Exists(CsvPath), $"Soak CSV was not written ({CsvPath}).");
             Assert.IsTrue(_pricesApplied, $"Profile {Profile.Name} prices {Profile.RationPrice}/{Profile.OreBuyPrice}/{Profile.HerbBuyPrice} not applied (stall {_pricesSeen}).");
             Assert.AreEqual(MaxRows - 1, _rowCount, $"Expected {MaxRows - 1} samples (every {SampleIntervalTicks} ticks incl. tick 0 and the horizon), got {_rowCount}.");
+            AssertPace();
+        }
+
+        /// <summary>The profile's pace band (docs/economy-model.md §7).</summary>
+        private void AssertPace()
+        {
+            var last = _rows[_rowCount - 1];
+            uint minTreasury = uint.MaxValue;
+            int peakTrustUp = 0;
+            bool everInArrears = false;
+            for (int i = 0; i < _rowCount; i++)
+            {
+                if (_rows[i].Treasury < minTreasury) minTreasury = _rows[i].Treasury;
+                if (_rows[i].TrustUp > peakTrustUp) peakTrustUp = _rows[i].TrustUp;
+                if (_rows[i].InArrearsNow != 0) everInArrears = true;
+            }
+
+            switch (Profile.Name)
+            {
+                case "fair":
+                    Assert.That(last.Treasury, Is.InRange(FairTreasuryMin, FairTreasuryMax),
+                        $"Fair: treasury {last.Treasury}g at 30 min, outside {FairTreasuryMin}-{FairTreasuryMax}g.");
+                    Assert.GreaterOrEqual(last.TrustUp, FairTrustUpMin, $"Fair: trust rose for only {last.TrustUp} crawlers (need {FairTrustUpMin}).");
+                    Assert.AreEqual(0, last.StarvingEpisodes, $"Fair: {last.StarvingEpisodes} starving episodes (need 0).");
+                    break;
+                case "greedy":
+                    Assert.LessOrEqual(last.TrustUp, GreedyTrustUpMax, $"Greedy: trust rose for {last.TrustUp} crawlers (at most {GreedyTrustUpMax}).");
+                    Assert.Less(last.TrustMean, 0f, $"Greedy: trust mean {last.TrustMean:F1} is not below 0.");
+                    break;
+                case "generous":
+                    Assert.IsTrue(minTreasury == 0 || everInArrears, $"Generous: the stall never went broke (lowest treasury {minTreasury}g).");
+                    Assert.GreaterOrEqual(peakTrustUp, GenerousTrustUpPeakMin, $"Generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak).");
+                    break;
+            }
         }
     }
 }

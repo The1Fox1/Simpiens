@@ -58,7 +58,7 @@ namespace Simpiens.Testing.Economy
             var s = e.Supply;
             Assert(s.RestockIntervalTicks == 600 && s.RationStockCap == 50 && s.WholesaleRationCost == 2, "Caravan: every 600 ticks, cap 50, 2g wholesale.");
             Assert(s.OreQuota == 2 && s.HerbQuota == 2 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 2 ore at 24g + 2 herbs at 30g per visit (§3.3 tuning).");
-            Assert(s.UpkeepPerVisit == 75, "Upkeep 75g per visit (§3.3 tuning).");
+            Assert(s.UpkeepPerVisit == 80, "Upkeep 80g per visit (§3.3 tuning).");
             Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
             var full = new TradeStallData(new GUID(1u, 1u, 1u, 1u), Vector2.zero, oreStock: 20, herbStock: 19);
             Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),

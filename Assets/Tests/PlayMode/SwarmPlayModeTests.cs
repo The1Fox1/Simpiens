@@ -130,7 +130,7 @@ namespace Simpiens.Tests.PlayMode
         [Explicit("Long-running economy soak; run via scripts/run-economy-soak.sh")]
         [Category("Soak")]
         [Timeout(900000)]
-        public IEnumerator Scenario_EconomySoak_ObservationOnly()
+        public IEnumerator Scenario_EconomySoak_PaceBands()
         {
             yield return ExecuteScenario(new EconomySoakScenario());
         }

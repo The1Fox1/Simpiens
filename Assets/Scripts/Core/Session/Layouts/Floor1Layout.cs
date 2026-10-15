@@ -36,7 +36,8 @@ namespace Simpiens.Core.Session.Layouts
         public const byte OvergrowthSectorId = 7;
         public const byte RoadGateSectorId = 8;
 
-        public const uint FoodRegrowTicks = 300; // 4 plots x 3 rations: about 24 a minute for 12 crawlers (review §3.3 D6; was 450)
+        public const uint FoodRegrowTicks = 300; // review §3.3 D6 (was 450)
+        public const int FoodPlotYield = 4;      // rations per plot between regrowths (review §3.3 D6; was 3): 4 plots, about 32 a minute at most
         public const uint HerbRegrowTicks = 600;
         public const uint OreRegrowTicks = 900;
 
@@ -137,10 +138,10 @@ namespace Simpiens.Core.Session.Layouts
             }
 
             // --- Resources: near sectors (explored) ---
-            b.Node("garden.1", new Vector2(-5f, 12f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Node("garden.2", new Vector2(-2f, 10f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Node("garden.3", new Vector2(2f, 10f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Node("garden.4", new Vector2(5f, 12f), ItemType.Ration, 3, FoodRegrowTicks);
+            b.Node("garden.1", new Vector2(-5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.2", new Vector2(-2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.3", new Vector2(2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.4", new Vector2(5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
             b.Node("quarry.1", new Vector2(-20f, 2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.2", new Vector2(-16f, -2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.3", new Vector2(-12f, 2f), ItemType.IronOre, 3, OreRegrowTicks);

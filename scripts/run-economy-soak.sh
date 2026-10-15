@@ -7,7 +7,8 @@ set -eo pipefail
 # (profile, seed) and writes one CSV per run:
 #   Logs/economy-soak-<profile>-seed<seed>.csv
 # A profile is a kind of player (fair, greedy, generous): the stall prices it sets at tick 0.
-# Integrity assertions only (ledger conservation, horizon reached, prices applied, CSV written).
+# Asserts integrity (ledger conservation, horizon reached, prices applied, CSV written) and each
+# profile's pace band (docs/economy-model.md §7).
 #
 # Usage: scripts/run-economy-soak.sh [--profiles "fair greedy generous"] [--seeds "20261009 1 2"]
 # -----------------------------------------------------------------------------
@@ -15,7 +16,7 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 LOGS_DIR="${PROJECT_DIR}/Logs"
-TEST_NAME="Scenario_EconomySoak_ObservationOnly"
+TEST_NAME="Scenario_EconomySoak_PaceBands"
 
 SEEDS="20261009 1 2"
 PROFILES="fair greedy generous"
