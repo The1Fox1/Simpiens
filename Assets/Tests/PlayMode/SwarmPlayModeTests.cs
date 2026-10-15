@@ -155,6 +155,18 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_EconomySerialization_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomySerializationValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_EconomyZeroAlloc_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomyZeroAllocValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_Personality_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Planning.PersonalityValidator();

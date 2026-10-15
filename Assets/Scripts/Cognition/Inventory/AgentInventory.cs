@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Persistence;
 
 namespace Simpiens.Cognition.Inventory
 {
@@ -194,6 +195,27 @@ namespace Simpiens.Cognition.Inventory
         public void Clear()
         {
             Array.Clear(_slots, 0, _capacity);
+        }
+
+        /// <summary>Writes the purse and every slot into a save, reusing its slot array when the capacity matches.</summary>
+        public void CaptureTo(InventorySave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+            if (save.Slots == null || save.Slots.Length != _capacity) save.Slots = new ItemInstance[_capacity];
+            Array.Copy(_slots, save.Slots, _capacity);
+            save.Gold = Gold;
+        }
+
+        /// <summary>Replaces the purse and the slots with a save's. The save must have this inventory's capacity.</summary>
+        public void RestoreFrom(InventorySave save)
+        {
+            if (save?.Slots == null) throw new ArgumentNullException(nameof(save));
+            if (save.Slots.Length != _capacity)
+            {
+                throw new ArgumentException($"The saved pack has {save.Slots.Length} slots; this inventory has {_capacity}.", nameof(save));
+            }
+            Array.Copy(save.Slots, _slots, _capacity);
+            Gold = save.Gold;
         }
     }
 }

@@ -3,7 +3,7 @@
 - **Owner:** Milestone 1 (ROADMAP §3, *Milestone 1 Status*). Status is owned by `docs/ROADMAP.md`.
 - **Written:** 2026-10-15, after §3.3 shipped (PR #3) and both producer checks passed.
 - **Status:** approved 2026-10-15 by the producer, with D1–D6 as recommended.
-- **Progress:** step 0 done 2026-10-15 (§8). Next: step 1.
+- **Progress:** steps 0–1 done 2026-10-15 (§8). Next: step 2.
 - **Branch:** `feat/save-load`, from `main`.
 - **Goal:** close Milestone 1.
   - Everything in it is delivered except one clause of the ROADMAP's milestone definition: "Integrates MemoryPack serialization for unmanaged inventory/contracts".
@@ -200,4 +200,20 @@ Each step is its own commit, and the full PlayMode suite gates every step.
   - `Builds/` is now git-ignored.
 - **Gate:** PlayMode 56/56 (58 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
 - **Deviations from the plan:** none.
+
+### Step 1: the economy's data (done 2026-10-15)
+- **Code:**
+  - `SaveSerializer` gained the reused-buffer path. `Serialize(ArrayBufferWriter<byte>, in T)` appends to a kept buffer. `Deserialize(ReadOnlySpan<byte>, ref T)` reads over kept objects and reuses arrays of the same length.
+  - `InventorySave` (the purse and every slot), written and read by `AgentInventory.CaptureTo` / `RestoreFrom`. A pack of another capacity is refused.
+- **`EconomySerializationValidator`** (4 tests):
+  - the saved sizes are pinned: `ItemInstance` 16, `BountyContract` 64, `TradeStallData` 48 bytes;
+  - items, bounties and stalls round-trip field for field;
+  - an inventory round-trips its purse and slots;
+  - 1,000 round trips into kept buffers allocate 0 bytes.
+- **`EconomyZeroAllocValidator`** (2 tests):
+  - 1,000 main-thread ticks allocate 0 bytes. Each tick: a claim, a delivery paid from escrow, a purchase, a sale, an untaken bounty that expires and is refunded, the player's price, post and cancel commands, and the supply service.
+  - 1,000 rounds of the off-thread trade and bounty evaluation allocate 0 bytes on a worker thread: world-state facts, bounty choice and score, reservation and minimum prices, the 4 economic goals and the 7 economic actions.
+  - Log channels are silenced while measuring: an enabled log line formats text for its sinks.
+- **Gate:** PlayMode 58/58 (60 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
+- **Finding (corrects F7's position note):** the copy of `transform.position` into `AgentState.Position` in `ManualTick` is a latent breach, not a live one. `SwarmSpawner` never injects the clock into a crawler's `NodeController`, so the view never interpolates: `SetLogicalPosition` moves the transform at once, and the transform, the logical position and `AgentState.Position` are equal at every tick boundary. That is also why `DeterminismScenario` holds. A save captures `AgentState.Position`, and a restore spawns the view there.
 
