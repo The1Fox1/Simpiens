@@ -41,6 +41,7 @@ namespace Simpiens.Testing.Economy
             ValidateDeterministicRegrowth();
             ValidateSupplyCaravan();
             ValidateCaravanSalvageQuota();
+            ValidateOutpostUpkeep();
             ValidateScoutBountyFulfilment();
             ValidateSalvageBountyPlan();
             ValidateWellFedAgentReachesGoap();
@@ -48,7 +49,7 @@ namespace Simpiens.Testing.Economy
             ValidateActivityTally();
             ValidateCarriedFoodIsEaten();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SupplyLoopValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -209,6 +210,41 @@ namespace Simpiens.Testing.Economy
             Assert(supply.SalvageSaleVisits == 3, $"No salvage, no purchase: {supply.SalvageSaleVisits} visits bought salvage (expected 3).");
 
             Debug.Log("[SupplyLoopValidator] Test 4b Passed: The caravan buys salvage up to its quota per visit, as a named faucet.");
+        }
+
+        // ---------------------------------------------------------------------------------------------
+        // 4c. Outpost upkeep (review §3.3 D2): paid each visit as a named sink; a stall that can't pay in full pays what
+        // it has and is in arrears until a visit finds the upkeep paid in full
+        // ---------------------------------------------------------------------------------------------
+        private void ValidateOutpostUpkeep()
+        {
+            var registry = new WorldRegistry();
+            var ledger = new EconomyLedger();
+            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                oreQuota: 0, herbQuota: 0, oreMarketPrice: 0, herbMarketPrice: 0, upkeepPerVisit: 100));
+            var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+
+            var stallId = NextGuid();
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 50, treasuryGold: 150));
+            ledger.RecordFaucet(150, "InitialSeed");
+
+            while (sim.CurrentTick < 20) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out var stall) && stall.TreasuryGold == 50 && !stall.InArrears, $"First visit paid 100g upkeep (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(supply.UpkeepPaidCount == 1 && ledger.GetSinkTotal(SupplyService.UpkeepSinkName) == 100, "Upkeep recorded as the OutpostUpkeep sink.");
+
+            while (sim.CurrentTick < 40) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.TreasuryGold == 0 && stall.InArrears, $"Second visit: paid the last 50g and went into arrears (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(supply.UpkeepShortCount == 1 && ledger.GetSinkTotal(SupplyService.UpkeepSinkName) == 150, "A short payment records only what was paid (no debt).");
+            Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+
+            // Rations sold in arrears refill the treasury; the next visit pays in full and clears arrears
+            sim.UpdateStall(stall.WithTreasury(300));
+            ledger.RecordFaucet(300, "TestIncome");
+            while (sim.CurrentTick < 60) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.TreasuryGold == 200 && !stall.InArrears, $"Third visit paid in full and cleared arrears (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out disc), $"Ledger conservation holds after recovery (discrepancy {disc}).");
+
+            Debug.Log("[SupplyLoopValidator] Test 4c Passed: Upkeep is a named sink; a stall that can't pay goes into arrears and recovers.");
         }
 
         // ---------------------------------------------------------------------------------------------

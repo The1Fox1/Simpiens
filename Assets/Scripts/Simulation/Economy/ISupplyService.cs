@@ -43,6 +43,12 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Caravan visits that bought salvage from a stall, since the last reset.</summary>
         int SalvageSaleVisits { get; }
 
+        /// <summary>Visits where a stall paid its upkeep in full, since the last reset.</summary>
+        int UpkeepPaidCount { get; }
+
+        /// <summary>Visits where a stall couldn't pay its upkeep in full, since the last reset.</summary>
+        int UpkeepShortCount { get; }
+
         /// <summary>Caravan restocks skipped because the stall couldn't pay, since the last Reset.</summary>
         int SkippedRestockCount { get; }
 

@@ -331,7 +331,7 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// True when the nearest reachable stall has room for salvage and its treasury can pay for at least one unit, so a sale won't
+        /// True when the nearest reachable stall has room for salvage, isn't in arrears and its treasury can pay for at least one unit, so a sale won't
         /// fail on arrival. Without any visible stall this returns true (headless contexts); behind walls, false.
         /// </summary>
         public static bool NearestStallCanBuySalvage(in AgentContext context)
@@ -342,7 +342,7 @@ namespace Simpiens.Cognition.Planning
             uint cheapest = stall.OreBuyPrice < stall.HerbBuyPrice ? stall.OreBuyPrice : stall.HerbBuyPrice;
             var economy = Considerations.Economy(context);
             bool room = economy.StallHasRoom(stall, ItemType.IronOre) || economy.StallHasRoom(stall, ItemType.MedicinalHerb);
-            return room && stall.TreasuryGold >= cheapest;
+            return room && !stall.InArrears && stall.TreasuryGold >= cheapest;
         }
 
         /// <summary>
@@ -368,6 +368,7 @@ namespace Simpiens.Cognition.Planning
             if (context.Inventory == null) return ItemType.None;
             // Payable by the treasury, with room in the stall, at or above the agent's personal minimum sale price, and
             // not owed to a bounty
+            if (stall.InArrears) return ItemType.None; // a stall in arrears buys no salvage (review §3.3 D2)
             var economy = Considerations.Economy(context);
             bool herb = HoldsSellable(context, ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
                 && economy.StallHasRoom(stall, ItemType.MedicinalHerb)

@@ -1225,7 +1225,9 @@ namespace Simpiens.UI
             {
                 var stall = _simulationManager.ActiveStalls[0];
                 if (_merchantStallStatus != null) _merchantStallStatus.text = "Outpost Stall @ Central Corridor";
-                if (_merchantStallTreasury != null) _merchantStallTreasury.text = $"Treasury: {stall.TreasuryGold} Gold";
+                if (_merchantStallTreasury != null) _merchantStallTreasury.text = stall.InArrears
+                    ? $"Treasury: {stall.TreasuryGold} Gold (in arrears: not buying salvage)"
+                    : $"Treasury: {stall.TreasuryGold} Gold";
                 if (_merchantStallInventory != null) _merchantStallInventory.text = $"Stock: {stall.RationStock} Rations | {stall.OreStock} Ore | {stall.HerbStock} Herb";
             }
             else

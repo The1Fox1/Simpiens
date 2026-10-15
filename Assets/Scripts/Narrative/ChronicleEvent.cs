@@ -29,7 +29,8 @@ namespace Simpiens.Narrative
         BountyFulfilled = 17,
         BountyExpired = 18,
         SupplyCaravanArrived = 19,
-        ResourceRegrown = 20
+        ResourceRegrown = 20,
+        UpkeepUnpaid = 21
     }
 
     /// <summary>

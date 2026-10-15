@@ -520,6 +520,22 @@ The trust ordering is now right (generous > fair > greedy). The treasury still c
 - The treasury still grows for every profile. Upkeep (step 5) supplies the sink, and the quota and upkeep are tuned together in step 7.
 - `BunkRestScenario` reported 3 starving crawlers in the suite run (reported only until step 6).
 
+**After §3.3 step 5 (outpost upkeep, 2026-10-14):** the stall pays 100g per caravan visit as the `OutpostUpkeep` sink. A stall that can't pay goes into arrears: it buys no salvage but still sells rations.
+
+| Profile | Treasury at 10 / 20 / 30 min | Upkeep paid | Visits short | Starving episodes | Trust mean |
+| :--- | :-: | :-: | :-: | :-: | :-: |
+| Fair | 1,449–1,524 / 2,827–2,960 / 4,124–4,333g | 3,000g | 0 | 0–1 | +67 to +90 |
+| Greedy | 414–1,002 / 0–640 / 0–192g | 1,606–3,000g | 0–15 | 14–28 | −3 to −18 |
+| Generous | 5–16 / 0 / 0g | about 1,230g | 18–19 | 15–26 | +49 |
+
+What it says (input for tuning):
+1. **The stall's net is set by volume, not margin.** Net treasury per visit ≈ caravan salvage faucet − wholesale rations − upkeep − growth in crawler wallets. Crawlers spend almost all their salvage income on stall rations, so gold passes through them.
+   - At fair prices crawlers sell the most, so the faucet binds at the quota and the stall clears about 130g a visit after upkeep.
+   - Greedy prices cut what crawlers will sell, so the faucet falls: greed can't out-earn fair in a closed economy.
+   - Generous prices leave the stall paying more for salvage than the caravan pays it.
+2. **A bankrupt stall stops feeding the outpost.** In arrears, the caravan's ration restock is skipped for lack of gold. Once stock runs out, crawlers depend on the Garden and starve.
+3. **Fair still grows about 20×.** The quota is barely below what fair-priced crawlers sell; quota and upkeep are tuned together next.
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.

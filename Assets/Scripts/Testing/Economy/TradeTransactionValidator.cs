@@ -38,11 +38,12 @@ namespace Simpiens.Testing.Economy
             ValidateFairnessJudgedByTheCrawler();
             ValidateSaleTrustFollowsTheSellersMinimum();
             ValidateFullStallRefusesSalvage();
+            ValidateStallInArrearsBuysNoSalvageButSellsRations();
             ValidateGOAPCommercialPlanResolution();
             ValidateBountyItemsAreNotSold();
             ValidateStallRationsAreKnownFood();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 13 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[TradeTransactionValidator] ALL 14 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -450,6 +451,46 @@ namespace Simpiens.Testing.Economy
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
+        }
+
+        /// <summary>A stall in arrears (review §3.3 D2) refuses salvage but still sells rations.</summary>
+        private void ValidateStallInArrearsBuysNoSalvageButSellsRations()
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+
+            var stallId = GUID.Generate();
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
+
+            var go = new GameObject("[Test_Arrears]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = new Vector2(0f, 0.5f);
+            var agent = go.AddComponent<AutonomousAgent>();
+            agent.Initialize(node.Id, null, null, simManager, clock);
+            agent.Inventory.Gold = 30;
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            registry.RegisterNode(node);
+
+            simManager.ExecuteIntent(node, new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
+                LastSampledPosition = node.Position
+            });
+            Assert(agent.Inventory.HasItem(ItemType.IronOre, 1) && agent.Inventory.Gold == 30, "A stall in arrears bought no salvage.");
+
+            simManager.ExecuteIntent(node, new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1),
+                LastSampledPosition = node.Position
+            });
+            simManager.TryGetTradeStall(stallId, out var stall);
+            Assert(agent.Inventory.HasItem(ItemType.Ration, 1) && agent.Inventory.Gold == 15 && stall.TreasuryGold == 15, $"A stall in arrears still sold a ration (treasury {stall.TreasuryGold}).");
+            Assert(stall.InArrears, "Selling rations doesn't clear arrears; only a full upkeep payment does.");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[TradeTransactionValidator] Test 14 Passed: A stall in arrears buys no salvage but sells rations.");
         }
 
         private void AssertDeltaEquals(in TrustDelta actual, in TrustDelta expected, string what)

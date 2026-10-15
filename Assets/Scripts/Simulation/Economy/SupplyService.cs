@@ -15,6 +15,7 @@ namespace Simpiens.Simulation.Economy
     {
         public const string CaravanSinkName = "SupplyCaravan";
         public const string SalvageSalesFaucetName = "CaravanSalvageSales";
+        public const string UpkeepSinkName = "OutpostUpkeep";
 
         private readonly struct DormantEntry
         {
@@ -41,6 +42,12 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Caravan visits that bought salvage from a stall.</summary>
         public int SalvageSaleVisits { get; private set; }
+
+        /// <summary>Visits where a stall paid its upkeep in full.</summary>
+        public int UpkeepPaidCount { get; private set; }
+
+        /// <summary>Visits where a stall couldn't pay its upkeep in full (it went or stayed in arrears).</summary>
+        public int UpkeepShortCount { get; private set; }
 
         /// <summary>Caravan restocks skipped because the stall couldn't pay.</summary>
         public int SkippedRestockCount { get; private set; }
@@ -100,6 +107,8 @@ namespace Simpiens.Simulation.Economy
             RegrowthCount = 0;
             RestockCount = 0;
             SalvageSaleVisits = 0;
+            UpkeepPaidCount = 0;
+            UpkeepShortCount = 0;
             SkippedRestockCount = 0;
         }
 
@@ -153,6 +162,7 @@ namespace Simpiens.Simulation.Economy
             for (int i = 0; i < _stallScratch.Count; i++)
             {
                 var stall = BuySalvage(_stallScratch[i], host);
+                stall = PayUpkeep(stall, currentTick, host);
                 if (stall.RationStock >= _tuning.RationStockCap) continue;
 
                 uint units = (uint)(_tuning.RationStockCap - stall.RationStock);
@@ -202,6 +212,53 @@ namespace Simpiens.Simulation.Economy
             host.EconomyLedger?.RecordFaucet(revenue, SalvageSalesFaucetName);
             SalvageSaleVisits++;
             SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
+            return updated;
+        }
+
+        /// <summary>
+        /// The outpost's running cost (review §3.3 D2), paid after the caravan's salvage purchase and before the restock.
+        /// A stall that can't pay in full pays what it has (no debt) and is in arrears: it buys no salvage, but still sells
+        /// rations, until a visit finds the upkeep paid in full.
+        /// </summary>
+        private TradeStallData PayUpkeep(TradeStallData stall, uint currentTick, ISupplyHost host)
+        {
+            uint due = _tuning.UpkeepPerVisit;
+            if (due == 0)
+            {
+                if (!stall.InArrears) return stall;
+                stall = stall.WithArrears(false);
+                host.UpdateStall(stall);
+                return stall;
+            }
+
+            uint paid = stall.TreasuryGold < due ? stall.TreasuryGold : due;
+            bool inArrears = paid < due;
+            var updated = stall.WithTreasury(stall.TreasuryGold - paid).WithArrears(inArrears);
+            host.UpdateStall(updated);
+            if (paid > 0) host.EconomyLedger?.RecordSink(paid, UpkeepSinkName);
+
+            if (inArrears)
+            {
+                UpkeepShortCount++;
+                if (!stall.InArrears)
+                {
+                    SimLog.Supply.ZLogWarning($"{SimLog.Agent(stall.StallEntityId)} paid {paid}g of {due}g upkeep and is in arrears: it buys no salvage until the upkeep is paid");
+                    host.ChronicleService?.RecordEvent(new ChronicleEvent(
+                        ChronicleEventType.UpkeepUnpaid,
+                        stall.StallEntityId,
+                        default,
+                        0,
+                        currentTick,
+                        ChronicleIntensity.Notable,
+                        due - paid));
+                }
+            }
+            else
+            {
+                UpkeepPaidCount++;
+                if (stall.InArrears) SimLog.Supply.ZLogInformation($"{SimLog.Agent(stall.StallEntityId)} paid its {due}g upkeep and is out of arrears (treasury now {updated.TreasuryGold}g)");
+                else SimLog.Supply.ZLogDebug($"{SimLog.Agent(stall.StallEntityId)} paid {due}g upkeep (treasury now {updated.TreasuryGold}g)");
+            }
             return updated;
         }
 
