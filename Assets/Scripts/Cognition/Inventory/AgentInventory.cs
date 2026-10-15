@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Inventory
         public int Capacity => _capacity;
         public int Gold { get; set; }
 
-        public AgentInventory(int capacity = DefaultCapacity, int startingGold = 10)
+        public AgentInventory(int capacity = DefaultCapacity, int startingGold = Simpiens.Simulation.Economy.EconomyTuning.DefaultStartingGold)
         {
             _capacity = capacity > 0 ? capacity : DefaultCapacity;
             _slots = new ItemInstance[_capacity];

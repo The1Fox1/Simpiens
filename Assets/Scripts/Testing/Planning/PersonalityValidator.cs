@@ -108,11 +108,11 @@ namespace Simpiens.Testing.Planning
         {
             var neutral = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null);
             var greedy = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null);
-            Assert(Considerations.MinimumSalePrice(neutral, ItemType.IronOre) == ItemType.IronOre.BaseValue(), "Neutral minimum sale price is the item's base value.");
-            Assert(Considerations.MinimumSalePrice(greedy, ItemType.IronOre) > ItemType.IronOre.BaseValue(), "Greedy agents ask more.");
+            Assert(Considerations.MinimumSalePrice(neutral, ItemType.IronOre) == EconomyTuning.Default.BaseValue(ItemType.IronOre), "Neutral minimum sale price is the item's base value.");
+            Assert(Considerations.MinimumSalePrice(greedy, ItemType.IronOre) > EconomyTuning.Default.BaseValue(ItemType.IronOre), "Greedy agents ask more.");
 
             var inventory = new AgentInventory();
-            inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, ItemType.IronOre.BaseValue()), out _);
+            inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var holder = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, inventory: inventory);
             var cheapStall = new TradeStallData(new GUID(4u, 4u, 4u, 4u), Vector2.zero, oreBuyPrice: 9, treasuryGold: 500);
             var fairStall = new TradeStallData(new GUID(5u, 5u, 5u, 5u), Vector2.zero, oreBuyPrice: 20, treasuryGold: 500);

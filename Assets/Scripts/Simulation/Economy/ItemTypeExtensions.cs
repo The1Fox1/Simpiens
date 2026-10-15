@@ -10,20 +10,6 @@ namespace Simpiens.Simulation.Economy
 
         public static bool IsSalvage(this ItemType type) => type == ItemType.IronOre || type == ItemType.MedicinalHerb;
 
-        /// <summary>
-        /// Nominal per-unit value stamped onto harvested item instances.
-        /// </summary>
-        public static ushort BaseValue(this ItemType type)
-        {
-            switch (type)
-            {
-                case ItemType.Ration: return 5;
-                case ItemType.IronOre: return 8;
-                case ItemType.MedicinalHerb: return 12;
-                case ItemType.ToolPickaxe: return 30;
-                case ItemType.BasicWeapon: return 40;
-                default: return 0;
-            }
-        }
+        // Item base values live in EconomyTuning.BaseValue (one economy tuning per session)
     }
 }

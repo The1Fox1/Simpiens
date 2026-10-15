@@ -143,6 +143,12 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_EconomyTuning_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomyTuningValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_Personality_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Planning.PersonalityValidator();

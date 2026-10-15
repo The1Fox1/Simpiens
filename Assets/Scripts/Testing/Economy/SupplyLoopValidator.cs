@@ -421,7 +421,7 @@ namespace Simpiens.Testing.Economy
             Assert(empty.Cycles == 0 && empty.Meals == 0 && empty.FirstCycleTick == -1 && empty.FirstMealTick == -1, "A new crawler starts with an empty tally.");
 
             // A sale of salvage the crawler did not harvest counts as a sale, not a cycle
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, ItemType.IronOre.BaseValue()), out _);
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Sale returned {result}.");
             Assert(agent.State.Activity.SalvageSales == 1 && agent.State.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.State.Activity}).");
@@ -462,7 +462,7 @@ namespace Simpiens.Testing.Economy
         {
             var id = NextGuid();
             var carrying = new AgentInventory();
-            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, ItemType.Ration.BaseValue()), out _);
+            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, EconomyTuning.Default.BaseValue(ItemType.Ration)), out _);
             var starving = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
             var empty = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
 

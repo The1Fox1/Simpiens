@@ -13,8 +13,11 @@ namespace Simpiens.Cognition.Planning
     /// </summary>
     public static class Considerations
     {
-        /// <summary>Reference ration value a neutral agent at hunger 50 will pay (seeded stall price is 15g).</summary>
-        public const float RationReferencePrice = 20f;
+        /// <summary>The session's economy tuning as seen by cognition (published on the world snapshot).</summary>
+        public static EconomyTuning Economy(in AgentContext context)
+        {
+            return context.Snapshot?.Economy ?? EconomyTuning.Default;
+        }
 
         // Trait strengths (minor design decisions, 2026-10-11; tune with the economy decisions)
         public const float GreedOnPrice = 0.5f;        // greedy pays up to 50% less / asks up to 50% more
@@ -32,13 +35,14 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// Highest price per ration this agent will pay right now. Hunger raises willingness (×0.5 when sated up to
-        /// ×1.5 when starving); greed lowers it. Neutral at hunger 50: 20g; range across personalities and hunger: 5g–45g.
+        /// Highest price per ration this agent will pay right now: the session's reference price (EconomyTuning, 20g by
+        /// default), raised by hunger (×0.5 when sated up to ×1.5 when starving) and lowered by greed. Neutral at hunger
+        /// 50 with the default tuning: 20g; range across personalities and hunger: 5g–45g.
         /// </summary>
         public static ushort RationReservationPrice(in AgentContext context)
         {
             float urgency = 0.5f + Mathf.Clamp(context.Hunger, 0f, 100f) / 100f;
-            float price = RationReferencePrice * urgency * TraitFactor(context.Personality.Greed, -GreedOnPrice);
+            float price = Economy(context).RationReferencePrice * urgency * TraitFactor(context.Personality.Greed, -GreedOnPrice);
             return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
         }
 
@@ -85,7 +89,7 @@ namespace Simpiens.Cognition.Planning
 
         public static ushort MinimumSalePrice(in AgentContext context, ItemType item)
         {
-            float price = item.BaseValue() * TraitFactor(context.Personality.Greed, GreedOnPrice);
+            float price = Economy(context).BaseValue(item) * TraitFactor(context.Personality.Greed, GreedOnPrice);
             return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
         }
 

@@ -178,7 +178,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if (yieldItem.IsSalvage())
                 {
                     var inventory = agent != null ? agent.Inventory : null;
-                    if (inventory == null || !inventory.TryAddItem(new ItemInstance((ushort)yieldItem, yieldItem, 1, yieldItem.BaseValue()), out _))
+                    if (inventory == null || !inventory.TryAddItem(new ItemInstance((ushort)yieldItem, yieldItem, 1, (context.Economy ?? EconomyTuning.Default).BaseValue(yieldItem)), out _))
                     {
                         SimLog.Economy.ZLogDebug($"{SimLog.Agent(node.Id)} cannot store {yieldItem} from {SimLog.Agent(harvest.TargetEntityId)}: inventory full ({harvest.UnitsHarvested} units kept)");
                         return harvest.UnitsHarvested > 0 ? IntentResult.Success : IntentResult.Failed;

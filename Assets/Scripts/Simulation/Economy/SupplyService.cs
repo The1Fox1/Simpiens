@@ -28,7 +28,7 @@ namespace Simpiens.Simulation.Economy
             }
         }
 
-        private readonly SupplyTuning _tuning;
+        private SupplyTuning _tuning;
         private readonly List<DormantEntry> _dormant = new List<DormantEntry>(32);
         private readonly List<TradeStallData> _stallScratch = new List<TradeStallData>(StallScratchCapacity);
 
@@ -50,6 +50,12 @@ namespace Simpiens.Simulation.Economy
         }
 
         public SupplyService(SupplyTuning tuning)
+        {
+            _tuning = tuning;
+        }
+
+        /// <summary>Replaces the tuning (the session's EconomyTuning, applied on every respawn).</summary>
+        public void Configure(in SupplyTuning tuning)
         {
             _tuning = tuning;
         }

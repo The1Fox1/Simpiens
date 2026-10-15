@@ -1,7 +1,7 @@
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
-    /// Tunables for the minimal supply faucets that keep the Milestone 1 loop running.
+    /// Tunables for the minimal supply faucets that keep the Milestone 1 loop running (part of EconomyTuning).
     /// All durations are in logical simulation ticks (10 Hz). Faucet/sink retuning is owned by §3.3.
     /// </summary>
     public readonly struct SupplyTuning
@@ -52,7 +52,7 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Default tuning with the provisional export disabled (economy A/B soaks).</summary>
         public static SupplyTuning DefaultWithoutExport => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2);
 
-        public static SupplyTuning For(SimulationSettings settings) =>
-            settings == null || settings.ProvisionalExportEnabled ? Default : DefaultWithoutExport;
+        /// <summary>This tuning with the provisional export disabled (SimulationSettings.ProvisionalExportEnabled off).</summary>
+        public SupplyTuning WithoutProvisionalExport() => new SupplyTuning(RestockIntervalTicks, RationStockCap, WholesaleRationCost);
     }
 }

@@ -21,6 +21,9 @@ namespace Simpiens.Cognition.Contracts
         INarrativeChronicleService ChronicleService { get; }
         IEconomyLedger EconomyLedger { get; }
 
+        /// <summary>The session's economy tuning (never null; EconomyTuning.Default until a session applies one).</summary>
+        EconomyTuning Economy { get; }
+
         IReadOnlyDictionary<GUID, ActiveIntentState> ActiveIntents { get; }
 
         IntentResult ExecutePathMovement(NodeController node, PathResponse path, ActiveIntentState state);

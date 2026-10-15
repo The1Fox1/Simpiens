@@ -1,7 +1,9 @@
 # §3.3 The Economy Model (Implementation Plan)
 
 - **Owner:** review §3.3 / ROADMAP §3A #10a. Promotes [Epic 9](../docs/epics/epic-9.md) and closes Epic Test-2's remaining scope. Status is owned by `docs/ROADMAP.md`.
-- **Written:** 2026-10-13, after Epic MAP's Definition of Done. **DRAFT: not approved.** Decisions D1–D7 (§7) are the producer's.
+- **Written:** 2026-10-13, after Epic MAP's Definition of Done.
+- **Approved 2026-10-14 under provisional authority:** the producer, going AFK, delegated §3.3 to the agent. D1–D7 were taken as recommended (A; D5 bands set from the step 2 baseline). The producer reviews on return.
+- **Progress:** step 1 done.
 - **Branch:** `feat/economy-model`, from `main` once the Epic MAP close-out (`feat/epic-map-closeout`) is merged.
 - **Input:** every economic decision was folded into §3.3 by the producer on 2026-10-13. The evidence and the list are in [Epic 9 §8](../docs/epics/epic-9.md) (§8.4 is the list).
 - **Goal:** one economy that holds on its own, where the player's price sliders are a real choice between profit and trust:
@@ -123,7 +125,10 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - The dossier's *Feed ration* button (Epic MAP §6 #9, Track B).
 
 ## 6A. Deviations from this plan during implementation
-(Filled in during implementation.)
+- **Step 1:** fairness thresholds, upkeep and the caravan quota are added to `EconomyTuning` in steps 3–5, where they get a reader, not in step 1.
+- **Step 1:** Garden yields and regrowth stay map data in `Floor1Layout` (`MapDefinition` is the single source of truth for nodes).
+- **Step 1:** the hunger rate stays in `AgentState` (a drive, not an economy number).
+- **Step 1:** personality trait strengths stay in `Considerations`.
 
 ## 7. Decisions
 

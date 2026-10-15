@@ -31,6 +31,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
 
             uint currentTradeTick = context.CurrentTick;
+            var economy = context.Economy ?? EconomyTuning.Default;
 
             if (trade.ActionType == TradeActionType.BuyItem)
             {
@@ -80,33 +81,15 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
-                const ushort BaseRationCost = 5;
-                sbyte deltaTrust, deltaWarmth, deltaRespect;
-                if (unitPrice > (BaseRationCost * 1.5f))
-                {
-                    // Price gouging penalty
-                    deltaTrust = -15;
-                    deltaWarmth = -10;
-                    deltaRespect = 0;
-                }
-                else if (unitPrice <= BaseRationCost)
-                {
-                    // Fair / Generous reward
-                    deltaTrust = 10;
-                    deltaWarmth = 5;
-                    deltaRespect = 5;
-                }
-                else
-                {
-                    // Moderate trade
-                    deltaTrust = 3;
-                    deltaWarmth = 2;
-                    deltaRespect = 2;
-                }
+                var trust = economy.TradeTrust;
+                TrustDelta delta;
+                if (unitPrice > trust.FairRationPrice * trust.GougingMultiplier) delta = trust.GougingPurchase; // price gouging
+                else if (unitPrice <= trust.FairRationPrice) delta = trust.GenerousPurchase;                    // fair / generous
+                else delta = trust.ModeratePurchase;
 
-                agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth, deltaTrust, 0, deltaRespect, currentTradeTick);
+                agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
                 if (agent.State != null) agent.State.Activity.RecordRationPurchase();
-                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, player trust delta {deltaTrust})");
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, player trust delta {delta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
                     ChronicleEventType.TradeTransaction,
@@ -147,7 +130,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     if (!context.EconomyLedger.TryExecuteStallSale(stall.StallEntityId, ref stall, agent.Inventory, totalPayout))
                     {
-                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, trade.ItemType.BaseValue()), out _); // roll back
+                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
                         return Reject(node, trade, "ledger refused the sale");
                     }
                 }
@@ -162,7 +145,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
-                agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth: 5, deltaTrust: 10, deltaFear: 0, deltaRespect: 5, currentTradeTick);
+                var saleDelta = economy.TradeTrust.SalvageSale;
+                agent.Memory?.RecordInteraction(context.PlayerEntityId, saleDelta.Warmth, saleDelta.Trust, 0, saleDelta.Respect, currentTradeTick);
                 if (agent.State != null) agent.State.Activity.RecordSalvageSale(currentTradeTick);
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g)");
 

@@ -157,14 +157,14 @@ namespace Simpiens.Cognition
                 AgentId = default;
             }
 
-            Inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 10);
+            Inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: Simpiens.Simulation.Economy.EconomyTuning.DefaultStartingGold);
             Memory = new AgentMemory();
         }
 
         public AgentState(GUID id, AgentInventory inventory = null, AgentMemory memory = null)
         {
             AgentId = id;
-            Inventory = inventory ?? new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 10);
+            Inventory = inventory ?? new AgentInventory(AgentInventory.DefaultCapacity, startingGold: Simpiens.Simulation.Economy.EconomyTuning.DefaultStartingGold);
             Memory = memory ?? new AgentMemory();
         }
 

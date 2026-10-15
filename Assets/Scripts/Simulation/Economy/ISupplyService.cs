@@ -29,6 +29,9 @@ namespace Simpiens.Simulation.Economy
     {
         SupplyTuning Tuning { get; }
 
+        /// <summary>Replaces the tuning (the session's EconomyTuning, applied on every respawn).</summary>
+        void Configure(in SupplyTuning tuning);
+
         int DormantCount { get; }
 
         /// <summary>Cumulative number of nodes regrown since the last Reset.</summary>
