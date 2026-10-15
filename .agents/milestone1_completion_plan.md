@@ -2,8 +2,9 @@
 
 - **Owner:** Milestone 1 (ROADMAP §3, *Milestone 1 Status*). Status is owned by `docs/ROADMAP.md`.
 - **Written:** 2026-10-15, after §3.3 shipped (PR #3) and both producer checks passed.
-- **Status:** proposed. Nothing is implemented; the decisions in §6 come first.
-- **Branch (proposed):** `feat/save-load`, from `main`.
+- **Status:** approved 2026-10-15 by the producer, with D1–D6 as recommended.
+- **Progress:** step 0 (the MemoryPack spike) in progress.
+- **Branch:** `feat/save-load`, from `main`.
 - **Goal:** close Milestone 1.
   - Everything in it is delivered except one clause of the ROADMAP's milestone definition: "Integrates MemoryPack serialization for unmanaged inventory/contracts".
   - Epic 9 also lists two validators as deferred: `EconomySerializationValidator` and `EconomyZeroAllocValidator`.

@@ -104,7 +104,8 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
   restocks, starving crawler waits at known plots); soak plays fair/greedy/generous and asserts each pace band (9/9).
   Epic 9 PROMOTED to COMPLETED. Producer checks passed 2026-10-15: a play session in the Unity editor; the Epic MAP
   visual check at 1x.
-Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1).
+Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1), read as a whole-session save and load
+(producer 2026-10-15; plan .agents/milestone1_completion_plan.md, D1-D6 as recommended; branch feat/save-load).
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]

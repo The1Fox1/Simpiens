@@ -204,7 +204,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 **Update 2026-10-15: the §3.3 economy model has landed** ([docs/economy-model.md](economy-model.md); evidence in [Epic 9 §8.5](epics/epic-9.md)).
 - Epic 9 and Epic Test-2 are `COMPLETED`. The player-trust half of the live loop is demonstrated: `OutpostLifecycleScenario` asserts trust toward the player rising for ⅔ of crawlers at the default prices, and the economy soak asserts a pace band for a fair, a greedy and a generous player.
 - Decided under the producer's provisional authority while the producer was AFK. The producer reviewed and merged it (PR #3), and **both producer checks passed on 2026-10-15**: a play session in the Unity editor and the Epic MAP visual check at 1×.
-- What remains for Milestone 1 is **`MemoryPack` serialization**.
+- What remains for Milestone 1 is **`MemoryPack` serialization**. The producer decided on 2026-10-15 to read it as a whole-session save and load, with one quick-save slot for the player. Plan: `.agents/milestone1_completion_plan.md`, approved with D1–D6 as recommended.
 - The bullets below are the 2026-10-09 to 2026-10-13 record.
 
 Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. **Update 2026-10-11:** §3.2 (personality) has landed. Epic 9 promotion now waits only on the deferred §3.3 economy model (producer decision). The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) **passes** (2026-10-10, closure plan Phase 1): no injection, zero anomalies. Latest PlayMode runs (2026-10-10): **14/14 pass, 3 consecutive runs**. The supply-loop part of §1B is therefore demonstrated; Epic 9 stays `MECHANISM COMPLETE` by producer decision until §3.2/§3.3 land. Gaps:
@@ -262,7 +262,7 @@ Implementation plan: `.agents/milestone1_closure_plan.md` (completed and removed
 Later Milestone 1 scope:
 - ~~Epic MAP~~ (`COMPLETED` 2026-10-13);
 - ~~the §3.3 economy decision on the real map~~ (done 2026-10-15, [docs/economy-model.md](economy-model.md));
-- then **`MemoryPack` (next)**.
+- then **`MemoryPack`**: a whole-session save and load (`.agents/milestone1_completion_plan.md`, branch `feat/save-load`).
 
 Before Epic 10: soak test and scaling work (#8).
 
