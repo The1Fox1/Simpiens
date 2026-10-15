@@ -3,7 +3,7 @@
 - **Owner:** review §3.3 / [ROADMAP §3A #10a](ROADMAP.md#3a-architecture-review-remediation-tracker). Status is owned by the roadmap.
 - **Evidence:** [Epic 9 §8](epics/epic-9.md).
 - **Numbers:** one `EconomyTuning` per session (`Assets/Scripts/Simulation/Economy/EconomyTuning.cs`, with `SupplyTuning` nested). The Garden is map data (`Floor1Layout`).
-- **Decided 2026-10-14** by the agent under the producer's provisional authority. Pending the producer's review and one play session at 1×.
+- **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15.
 
 ## 1. The loop in one paragraph
 Crawlers harvest ore and herbs and sell them to the player's stall. They spend that gold on stall rations or eat free from the Garden. The caravan visits every minute:

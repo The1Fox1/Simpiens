@@ -48,7 +48,7 @@ Epic 8: Socio-Political Structures & The Generic Group Primitive [COMPLETED]
 - Phase 3: Organic Emergence, Leadership Succession & Schisms [COMPLETED]
 - Demonstration Arena: Expanded to 10 Pens (Row 1: Epics 7 & Beta; Row 2: Epic 8 live scenarios) [COMPLETED]
 
-Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15 - producer play session pending]
+Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15]
 (See docs/epics/epic-9.md for full technical specification)
 - Slice 1: Unmanaged Inventory, Currency & Item Primitives [COMPLETED]
 - Slice 2: The Trade Stall & Commercial Exchange [COMPLETED]
@@ -97,15 +97,14 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
 - Closure plan Phase 5 DONE 2026-10-11: OutpostGoapDomain, Core/Session/SwarmSpawner, Simpiens.Testing asmdef
   (UNITY_INCLUDE_TESTS), validators run as PlayMode tests (40/40), stub engine deleted.
 - Closure plan Phase 6 DONE (docs) 2026-10-11. Epic 9 NOT promoted: waits on deferred Section 3.3 (producer).
-- Section 3.3 economy model DONE 2026-10-15 (branch feat/economy-model; decided under the producer's provisional
-  authority while AFK, D1-D7 as recommended): docs/economy-model.md. EconomyTuning per session; fairness judged by
+- Section 3.3 economy model DONE 2026-10-15 (decided under the producer's provisional authority while AFK, D1-D7 as
+  recommended; reviewed and merged by the producer as PR #3): docs/economy-model.md. EconomyTuning per session; fairness judged by
   each crawler's own valuation (trust asserted again); caravan salvage quota (CaravanSalvageSales) + stall salvage
   capacity; outpost upkeep (OutpostUpkeep) + arrears; food pacing (starting gold 15, Garden 300 ticks x4, partial
   restocks, starving crawler waits at known plots); soak plays fair/greedy/generous and asserts each pace band (9/9).
-  Epic 9 PROMOTED to COMPLETED. PENDING PRODUCER CHECKS: a play session at 1x with the price sliders; the Epic MAP
+  Epic 9 PROMOTED to COMPLETED. Producer checks passed 2026-10-15: a play session in the Unity editor; the Epic MAP
   visual check at 1x.
-Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1), after the producer's review of
-feat/economy-model.
+Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1).
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
@@ -163,6 +162,7 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
 - Phase 5 - Definition of Done: DONE 2026-10-13. OutpostLifecycleScenario (9,000 ticks, nothing injected: every crawler
   harvests and sells, eats, sleeps; both bounties; 0 anomalies; nobody starves), DeterminismScenario (same seed, identical
   to t3,000), jitter measured in sim time, AgentActivity tally. Trust toward the player, and starvation in BunkRestScenario (3 of 6 runs: a broke crawler while the Garden regrows), reported only (Section 3.3).
-  PlayMode 54/54 in 3 consecutive runs. Plan removed (git show 4e83ecd:.agents/epic_map_phase5_plan.md).
+  PlayMode 54/54 in 3 consecutive runs. Producer visual check at 1x passed 2026-10-15. Plan removed
+  (git show 4e83ecd:.agents/epic_map_phase5_plan.md).
 - Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
   since Section 3.3 (2026-10-15).

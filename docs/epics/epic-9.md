@@ -3,7 +3,7 @@
 - **Status**: COMPLETED (2026-10-15; Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md).
   - **Live criterion (§1B) demonstrated:** `OutpostSupplyLoopScenario` (supply loop, 2026-10-10), `PriceResponseScenario` (gradual demand, 2026-10-11) and `OutpostLifecycleScenario` (trust toward the player rises at fair prices, §3.3, 2026-10-15) all pass without injection. The economy soak asserts a fair, a greedy and a generous player's pace band.
   - **§3.2 (personality) landed 2026-10-11; §3.3 (the economy model) landed 2026-10-15:** [docs/economy-model.md](../economy-model.md).
-  - **Pending producer check:** §3.3 was decided under the producer's provisional authority, while the producer was AFK. A play session at 1× with the price sliders is still owed. If it fails, the epic goes back to `ACTIVE`.
+  - **Producer check passed 2026-10-15:** §3.3 was decided under the producer's provisional authority, while the producer was AFK. The producer reviewed and merged it (PR #3) and played it in the Unity editor.
 - **Track**: Track A: Core Simulation & Cognition Engine
 - **Preceding Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Following Epic**: Epic 10: Sector Hazards & Dungeon Descent
@@ -430,6 +430,7 @@ Decisions D1–D7 are in §8.4; the model is in [docs/economy-model.md](../econo
   - `OutpostLifecycleScenario` asserts trust toward the player rising for ⅔ of crawlers;
   - `BunkRestScenario` asserts "no crawler starves" again;
   - the economy soak asserts each profile's pace band (`Scenario_EconomySoak_PaceBands`, 9/9).
+- [x] The producer's play session in the Unity editor passed (2026-10-15).
 
 **Deferred:** `MemoryPack` serialization (rest of Milestone 1); drifters, bounty fairness and Guild recruitment thresholds (Milestone 2); gear wear and gear-gated scarcity (Epic 10).
 
@@ -588,7 +589,7 @@ What it says (input for tuning):
 | Generous | 0–16 / 0 / 0g | 12 (12) | +54 to +63 | 0 |
 
 ### 8.4 The decisions this evidence informed (decided 2026-10-15)
-**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. **Decided 2026-10-15** under the producer's provisional authority (pending the producer's review):
+**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. **Decided 2026-10-15** under the producer's provisional authority, then reviewed and merged by the producer the same day (PR #3):
 1. → **D1:** the caravan buys salvage up to a quota per visit.
 2. → **D2:** outpost upkeep; no crawler sink while crawler wallets stay flat; gear wear goes to Epic 10.
 3. → **D4:** crawlers' willingness to trade is the scarcity lever.
