@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-13.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-15.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -44,7 +44,7 @@ flowchart LR
         A2 --> A3["Epic 7\nSocial Affinity"]
         A3 --> A4["Epic Beta\nInterdependence"]
         A4 --> A5["Epic 8\nGroups & Directives\n(COMPLETED)"]
-        A5 --> A6["Epic 9\nOutpost Economy\n& Public Bounties\n(MECHANISM COMPLETE)"]
+        A5 --> A6["Epic 9\nOutpost Economy\n& Public Bounties\n(COMPLETED)"]
         A6 --> A7["Epic 10\nHazards & Descent\n(QUEUED)"]
         A7 --> A8["Epic 11\nMCP Narrative\n(QUEUED)"]
     end
@@ -56,7 +56,7 @@ flowchart LR
     end
 
     subgraph Track C: Harness & Diagnostics (Verification Track)
-        C1["Epic Test-1\nVisual Anomaly Detection\n& PlayMode Scenarios\n(COMPLETED)"] --> C2["Epic Test-2\nEconomy & Bounty\nStress Harness\n(ACTIVE)"]
+        C1["Epic Test-1\nVisual Anomaly Detection\n& PlayMode Scenarios\n(COMPLETED)"] --> C2["Epic Test-2\nEconomy & Bounty\nStress Harness\n(COMPLETED)"]
     end
 
     MAP ==>|Substrate for Spatial Quests & Economy| A6
@@ -201,6 +201,12 @@ To bridge low-level technical epics with high-level game design goals, developme
 
 ### Milestone 1 Status (verified against the code, 2026-10-09): NOT YET CLOSED
 
+**Update 2026-10-15: the §3.3 economy model has landed** ([docs/economy-model.md](economy-model.md); evidence in [Epic 9 §8.5](epics/epic-9.md)).
+- Epic 9 and Epic Test-2 are `COMPLETED`. The player-trust half of the live loop is demonstrated: `OutpostLifecycleScenario` asserts trust toward the player rising for ⅔ of crawlers at the default prices, and the economy soak asserts a pace band for a fair, a greedy and a generous player.
+- Decided under the producer's provisional authority (producer AFK), so two producer checks are pending: a play session at 1× with the price sliders, and the Epic MAP visual check at 1×. If either fails, the epic it belongs to goes back to `ACTIVE`.
+- What remains for Milestone 1 is **`MemoryPack` serialization**.
+- The bullets below are the 2026-10-09 to 2026-10-13 record.
+
 Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and validator-tested. **Update 2026-10-11:** §3.2 (personality) has landed. Epic 9 promotion now waits only on the deferred §3.3 economy model (producer decision). The **live loop** — *player posts a bounty → agents harvest salvage → agents sell at the stall → trust toward the player grows* — has **not** yet been demonstrated in the live simulation (§1B). The supply side (review §3.1) was implemented on 2026-10-09. Its Definition-of-Done scenario (`OutpostSupplyLoopScenario`) **passes** (2026-10-10, closure plan Phase 1): no injection, zero anomalies. Latest PlayMode runs (2026-10-10): **14/14 pass, 3 consecutive runs**. The supply-loop part of §1B is therefore demonstrated; Epic 9 stays `MECHANISM COMPLETE` by producer decision until §3.2/§3.3 land. Gaps:
 
 - ~~**No salvage supply.**~~ **Implemented (2026-10-09, §3.1):** resources are typed (`ResourceData.YieldItem`, `EntitySnapshot`/`SpatialMemoryRecord.ResourceKind`); harvesting ore/herb nodes yields items; `SearchSalvage → GatherSalvage → TravelToStall → DeliverBounty/SellSalvage` chains are plannable; `EarnIncomeGoal` drives no-bounty salvage sales. Root cause also fixed: GOAP never ran live (§1A.2 #11).
@@ -208,10 +214,10 @@ Engine mechanisms (Epic 9) and the player UI (Epic UI-2) are delivered and valid
 - ~~**Trade stall ration stock only decreases.**~~ **Implemented (2026-10-09, §3.1):** `SupplyService` supply caravan (every 600 ticks, cap 50, 2g/unit `SupplyCaravan` sink) and dormant-node regrowth (regrowth on for all nodes, pens included).
 - **Live loop emerges (2026-10-09, PlayMode, no injection):** crawlers claim and fulfil the seeded Scout bounty (about t260, Herb Hollow explored) and Gather bounty (about t720, player trust +15). They sell salvage, and the caravan restocks and nodes regrow with ledger conservation intact. This needed the trace-driven GOAP fixes (need-driven aid, static reachability regions, planner relevance pruning, affordability gating).
 - ~~**Still blocking closure (§1B):** `OutpostSupplyLoopScenario` fails on its final zero-anomaly assertion (pen stacking, wall penetration, thrashing).~~ **Resolved (2026-10-10, closure plan Phase 1):** body-aware navigation (inflated wall rasterization, snapped A* endpoints, exact segment clearance, wall- and crowd-checked displacement, live-position pawn separation, nav-grid reset, ±20 play-area border), a visual-flash fix with a 2-tick display dwell in `AgentView`, and a planner fix (salvage/scout actions clear `AtTradeStall`).
-- **Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).
+- ~~**Provisional economy stopgap (2026-10-10):** once agents navigated properly they drained the stall treasury and caravan restocks stopped. A `ProvisionalCaravanExport` faucet (caravan buys salvage above a 10-unit reserve at placeholder prices) keeps the loop running. It is **not** an economy decision: §3.3 is deferred until the game is functional (producer decision 2026-10-09). Side effect: the treasury now grows (≈830g by t3600).~~ **Superseded 2026-10-15 (§3.3):** the caravan buys salvage up to a quota per visit (`CaravanSalvageSales`), and the stall pays upkeep (`OutpostUpkeep`). The provisional export and its switch are removed.
 - ~~Navigation is straight-line~~ **RESOLVED (2026-10-09):** Zero-allocation 8-directional Grid A* delivered in `AsyncPathfinder` with `StaticNavGrid`, `GridAStarSearcher`, and worker pooling (Deviation #7).
 - **`MemoryPack` serialization is not delivered** (package not installed).
-- **Epic MAP is `COMPLETED`** (2026-10-13). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. Since Phase 4 (2026-10-12) the player plays from the map: fog drawn over uncharted rooms, a free camera that can follow a crawler, and the bounty board and merchant over the map. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only). Phase 5 (2026-10-13): `OutpostLifecycleScenario` runs the outpost's whole day (15 sim-minutes, nothing injected, zero anomalies, nobody starves), and same-seed runs are identical. **Trust toward the player falls on the default prices** (10 of 12 crawlers end at −80 to −100: rations at 15g read as gouging), so the player-trust half of the Milestone 1 loop is not yet demonstrated; it waits on §3.3.
+- **Epic MAP is `COMPLETED`** (2026-10-13). Since Phase 3 (2026-10-12) the live session is the Floor 1 outpost: 12 crawlers, fog of war over the frontier until a scout reports back, and bunks in the Bunkhouse. Since Phase 4 (2026-10-12) the player plays from the map: fog drawn over uncharted rooms, a free camera that can follow a crawler, and the bounty board and merchant over the map. The pens are the test-only Dev Map (since Phase 2); the Commons yard is retired (a test fixture only). Phase 5 (2026-10-13): `OutpostLifecycleScenario` runs the outpost's whole day (15 sim-minutes, nothing injected, zero anomalies, nobody starves), and same-seed runs are identical. ~~**Trust toward the player falls on the default prices** (10 of 12 crawlers end at −80 to −100: rations at 15g read as gouging), so the player-trust half of the Milestone 1 loop is not yet demonstrated; it waits on §3.3.~~ **Resolved 2026-10-15 (§3.3 D3):** each crawler judges a trade by its own valuation, and trust rises for 10 of 12 at the default prices.
 
 *Closure plan: proposed in §3A (pending producer approval). Epic 10 remains `QUEUED`.*
 
@@ -230,16 +236,16 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 | 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ✅ Done (2026-10-11) | `AgentPersonality` (5 traits, seeded; pen agents neutral), `Considerations` (reservation/minimum prices, bounty score, trait factors on goal priorities; neutral = unchanged). Live: `PriceResponseScenario` shows gradual demand (e.g. 6/5/5/1/1/0 buyers at 10–60g). Risk tolerance is reserved for Epic 10. |
 | 6 | Intent-handler registry, typed `InfluenceEvent`, gold ledger (§2.4) | ✅ Done | §1A.2 #4, #10, #13. `SimulationManager` down from ~1,500 to ~1,190 lines. The legacy string `InfluenceEvent` constructor still exists. |
 | 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load still needs `MemoryPack` (not installed). |
-| 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. No soak runner (Epic Test-2). No measured agent budget. |
+| 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. The economy soak exists (Epic Test-2), but there is no profiled scaling soak (`PopulationScalingProbe` is a one-off measurement). No measured agent budget. |
 | 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ✅ Done (2026-10-11) | §1A.2 #9. All 40 PlayMode tests pass with the new assembly layout. Not verified: a player build (relies on the standard `UNITY_INCLUDE_TESTS` constraint). A dedicated `GameplayLifetimeScope` / ScriptableObject-driven session definition was not done (`AppBootstrapper` stays the single scope). |
-| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ⏸ Deferred; **next** | Producer decision 2026-10-09: decide once the game is functional. Mechanisms exist (`InitialSeed` faucet, `SupplyCaravan` sink, node regrowth, ledger conservation, provisional `ProvisionalCaravanExport` faucet). **Producer decision 2026-10-13: every economic decision is folded into §3.3**, including prices and the gouging rule (trust toward the player), hunger pacing and drifter churn. The full list: [Epic 9 §8.4](epics/epic-9.md). **Blocks Epic 9 promotion and Milestone 1.** |
+| 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ✅ Done (2026-10-15); producer play session pending | [docs/economy-model.md](economy-model.md). Decided under the producer's provisional authority, D1–D7 as recommended: a caravan salvage quota (faucet), outpost upkeep (sink), fairness judged by each crawler's own valuation, crawlers' willingness to trade as the scarcity lever, food paced by data plus one behaviour fix, drifters deferred to Milestone 2. Every number is one `EconomyTuning` per session. The soak asserts a fair, a greedy and a generous player's pace band. Evidence: [Epic 9 §8.5](epics/epic-9.md). |
 | 10b | "Why?" agent inspector (§3.4) | 🟨 Groundwork | `DecisionSummary` (source tier + top 3 goal priorities) recorded on every intent and copied to `AgentState.LastDecision` on the main thread (2026-10-11). The inspector UI is not started (Track B). |
 | 10c | Live-scenario Definition of Done (§4.2) | ✅ Done | §1B. |
 | 10d | Docs single source of truth (§4.3) | ✅ Done | §0. |
 
 Other review items still open:
 - **GOAP fact budget (§2.7):** 36 of 64 facts used (`StateFact` 0–35).
-- **Determinism (§2.1 note):** #5 and #14 resolved 2026-10-10. #6 is partially resolved; the arrival tick of async cognition results is still timing-dependent (measured 2026-10-13: no divergence to t3,000 on this machine).
+- **Determinism (§2.1 note):** #5 and #14 resolved 2026-10-10. #6 is partially resolved; the arrival tick of async cognition results is still timing-dependent (measured 2026-10-13: no divergence to t3,000 on this machine). **Measured 2026-10-15:** inside the full suite, `DeterminismScenario` diverged once in 3 runs (t1800). Run alone, it diverges at t100 in 5 of 5 runs, on both `c244b1c` and the §3.3 step 6 tree: a cold first run delays cognition results by a tick. The scenario's assertion is reliable only inside the full suite, after warm-up.
 - **Single writer:** §1A.2 #15 (cognition writes plan/intent bookkeeping off-thread).
 
 ### Milestone 1 closure sequence (approved 2026-10-09)
@@ -251,9 +257,14 @@ Implementation plan: `.agents/milestone1_closure_plan.md` (completed and removed
 3. ~~**Economy observation soak**~~ **Done 2026-10-11.** `EconomySoakScenario` and `scripts/run-economy-soak.sh` ran 6 runs: integrity holds. Findings are in [Epic 9 §8](epics/epic-9.md) (with the Floor 1 re-run). Without the provisional export the economy freezes within about 10 sim-minutes; with it, the treasury grows about 145g per sim-minute. The economy model (§3.3) stays **deferred**.
 4. ~~**Personality + considerations (§3.2).**~~ **Done 2026-10-11.** Pen demo agents stay neutral. PlayMode 19/19 plus the explicit soak.
 5. ~~**Test-scope separation**~~ **Done 2026-10-11** (#9, review §2.8). PlayMode 40/40.
-6. ~~**Docs + promotion.**~~ **Docs reconciled 2026-10-11.** Epic 9 promotion is **not** done: it waits on the deferred §3.3 economy model (producer).
+6. ~~**Docs + promotion.**~~ **Docs reconciled 2026-10-11.** ~~Epic 9 promotion is **not** done: it waits on the deferred §3.3 economy model (producer).~~ **Epic 9 promoted 2026-10-15** with the §3.3 economy model (producer play session pending).
 
-Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3 economy decision on the real map (next)**, then `MemoryPack`. Before Epic 10: soak test and scaling work (#8).
+Later Milestone 1 scope:
+- ~~Epic MAP~~ (`COMPLETED` 2026-10-13);
+- ~~the §3.3 economy decision on the real map~~ (done 2026-10-15, [docs/economy-model.md](economy-model.md));
+- then **`MemoryPack` (next)**.
+
+Before Epic 10: soak test and scaling work (#8).
 
 ---
 
@@ -273,7 +284,7 @@ Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3
 | **Epic 7** | Social Affinity & Relational Dynamics | **COMPLETED** | 4-Axis Dyadic Matrix (`Warmth`, `Trust`, `Fear`, `Respect`), selective gossip filtering. |
 | **Epic Beta** | Concrete World Mechanics & Interdependence | **COMPLETED** | Dominance contention/yielding, altruistic food sharing, campfire gathering anchors. |
 | **Epic 8** | [Socio-Political Structures & Groups](epics/epic-8.md) | **COMPLETED** | 4-layer taxonomy, parameter-driven `Group` primitive (`GroupData`, `GroupDirective`, `GroupMembership`), compliance/defiance dynamics, and organic hearth succession. |
-| **Epic 9** | [The Outpost Economy & Public Bounties](epics/epic-9.md) | **MECHANISM COMPLETE** | **Delivered (Slices 1–3 + Modernization):** unmanaged item/inventory structs, gold currency, trade stall entity, public bounty board with escrow/refund, `PlayerInterventionService` drained in `Tick()`, trade-to-affinity pipeline, GOAP economic actions/goals, zero-alloc Grid A* in `AsyncPathfinder`, 3 headless validators. **Deferred (not delivered):** `MemoryPack` state serialization, `EconomyZeroAllocValidator`, `EconomySerializationValidator`. **§3.1 supply side (2026-10-09, implemented, live run pending):** typed resources, salvage harvesting, Scout fulfilment, escrow-only bounty payout, supply caravan & regrowth, Outpost Commons arena, `SupplyLoopValidator`, `OutpostSupplyLoopScenario`. §3.2 personality landed 2026-10-11 (`PriceResponseScenario` passes). Stays `MECHANISM COMPLETE` until the deferred §3.3 economy model lands (producer decision 2026-10-09). **Open:** see *Milestone 1 Status*. |
+| **Epic 9** | [The Outpost Economy & Public Bounties](epics/epic-9.md) | **COMPLETED** (2026-10-15; producer play session pending) | **Delivered (Slices 1–3 + Modernization):** unmanaged item/inventory structs, gold currency, trade stall entity, public bounty board with escrow/refund, `PlayerInterventionService` drained in `Tick()`, trade-to-affinity pipeline, GOAP economic actions/goals, zero-alloc Grid A* in `AsyncPathfinder`, 3 headless validators. **Deferred (not delivered):** `MemoryPack` state serialization, `EconomyZeroAllocValidator`, `EconomySerializationValidator`. **§3.1 supply side (2026-10-09, implemented, live run pending):** typed resources, salvage harvesting, Scout fulfilment, escrow-only bounty payout, supply caravan & regrowth, Outpost Commons arena, `SupplyLoopValidator`, `OutpostSupplyLoopScenario`. §3.2 personality landed 2026-10-11 (`PriceResponseScenario` passes). **§3.3 economy model (2026-10-15):** `EconomyTuning`, the fairness rule (trust from trade), caravan salvage quota, outpost upkeep and arrears, food pacing, and the soak's pace bands; `OutpostLifecycleScenario` asserts trust toward the player ([docs/economy-model.md](economy-model.md)). **Still deferred:** `MemoryPack` (rest of Milestone 1), drifters (Milestone 2). |
 | **Epic 10** | Sector Hazards & Dungeon Descent | **QUEUED** | Environmental sector hazards, gear-gated survival checks, sector descent gate clearance, floor relocation migration loop, `Unity.Collections` + Burst hazard spatial checks. |
 | **Epic 11** | Agentic Narrative Engine (MCP Integration) | **QUEUED** | External Model Context Protocol integration via lean pure-C# UniTask JSON-RPC/SSE client (`ILlmNarrativeEnricher`), dynamic tavern rumors. |
 
@@ -331,7 +342,7 @@ Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3
 | Epic | Name | Status | Key Deliverables |
 | :--- | :--- | :--- | :--- |
 | **Epic Test-1** | Visual Anomaly Detection & Automated Scenarios | **COMPLETED** | `VisualAnomalyDetector`, `SwarmPlayModeTests`, `BatchPlaymodeController`, rate-limited screenshot recorder. |
-| **Epic Test-2** | Outpost Economy & Bounty Contract Harness | **ACTIVE** | Headless `BountyFulfillmentValidator`, `TradeTransactionValidator`, `EconomyCountersValidator` *(delivered)*; `OutpostSupplyLoopScenario` live-loop PlayMode scenario required by §1B *(delivered, passing)*; economy observation soak `EconomySoakScenario` + `scripts/run-economy-soak.sh` *(delivered 2026-10-11; observation only, no economic bands until §3.3)*. Remaining: soak assertions once the economy decisions are made. |
+| **Epic Test-2** | Outpost Economy & Bounty Contract Harness | **COMPLETED** (2026-10-15) | Delivered:<br>• headless `BountyFulfillmentValidator`, `TradeTransactionValidator`, `EconomyCountersValidator`, `EconomyTuningValidator`;<br>• `OutpostSupplyLoopScenario`, the live-loop PlayMode scenario required by §1B (passing);<br>• the economy soak `EconomySoakScenario` and `scripts/run-economy-soak.sh` (2026-10-11). Since §3.3 (2026-10-15) the soak plays a fair, a greedy and a generous player and asserts each one's pace band (`Scenario_EconomySoak_PaceBands`, 9/9). |
 
 ---
 
@@ -358,8 +369,8 @@ Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3
     - Fixes found on the way: bunks had a dynamic physics body and were shoved around by crawlers; the Bounties and Merchant buttons needed two presses the first time.
   - **Phase 5, Definition of Done: done 2026-10-13** (PlayMode 54/54 in 3 consecutive runs; plan approved 2026-10-12 with D1 = A, D2 = A; removed, `git show 4e83ecd:.agents/epic_map_phase5_plan.md`):
     - `OutpostLifecycleScenario`: the real outpost for 9,000 ticks, nothing injected. Every crawler closes a harvest → sell cycle; crawlers eat, sleep in bunks and gather at the hearth; both seeded bounties are fulfilled; zero anomalies of every type; the ledger balances; nobody starves.
-    - **Trust toward the player is reported, not asserted** (producer decision 2026-10-13): on the default prices it falls for almost every crawler, and every economic decision belongs to §3.3.
-    - **`BunkRestScenario` reports starvation instead of asserting it** (producer decision 2026-10-13): in 3 of 6 close-out runs a broke crawler starved while the Garden regrew. That is food pacing, owned by §3.3. The lifecycle scenario still asserts that nobody starves.
+    - **Trust toward the player is reported, not asserted** (producer decision 2026-10-13): on the default prices it falls for almost every crawler, and every economic decision belongs to §3.3. **Asserted again since 2026-10-15 (§3.3).**
+    - **`BunkRestScenario` reports starvation instead of asserting it** (producer decision 2026-10-13): in 3 of 6 close-out runs a broke crawler starved while the Garden regrew. That is food pacing, owned by §3.3. The lifecycle scenario still asserts that nobody starves. **Asserted again since 2026-10-15 (§3.3 food pacing and the starving crawler's return to the Garden).**
     - `DeterminismScenario`: same-seed runs identical at every 100-tick sample to t3,000 (§1A.2 #6).
     - The jitter check measures sim time (D1 = A); jitter is 0 in every scenario. A per-crawler activity tally (`AgentActivity`) feeds the report.
     - Fixes found on the way: a hungry crawler eats the ration it carries; an intent decided before a respawn no longer moves the new agent with the same id.
@@ -375,15 +386,15 @@ Later Milestone 1 scope: ~~Epic MAP~~ (`COMPLETED` 2026-10-13), then **the §3.3
   4. Player view: rendering, shroud, camera, sector-aware UI (D1 = A: crawlers visible in the fog; D2: the HUD works over the map).
   5. DoD: `OutpostLifecycleScenario`.
 - **Superseded:** Revision 1's `OutpostMapBuilder` (never wired into the live session) is replaced in Phase 1. See the epic's review (§1).
-- **Deferred:** drifter churn, trust toward the player and the bunk scenario's no-starvation check as pass criteria (§3.3 / Epic 9), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8). Open findings and their owners: [epic §6](epics/epic-map.md).
+- **Deferred:** drifter churn (Milestone 2, §3.3 D7), descent gate (Epic 10), workshops (Milestone 3), map save/load (MemoryPack slice), cognition scaling (§3A #8). Open findings and their owners: [epic §6](epics/epic-map.md).
 
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Epic 9 is `MECHANISM COMPLETE`; Epic 10 is `QUEUED`; the next engine focus is the §3.3 economy model, §3A #10a). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+1. **Engine Work**: Reference **Track A** (Epic 9 is `COMPLETED` with a producer play session pending; Epic 10 is `QUEUED`; the next engine focus is `MemoryPack`, the rest of Milestone 1). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
-3. **Testing Work**: Reference **Track C** (current: **Epic Test-2**, `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
+3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
 4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; no independent epic is `ACTIVE`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

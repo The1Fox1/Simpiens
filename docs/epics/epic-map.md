@@ -223,8 +223,8 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 
 ### Deferred (owned elsewhere)
 - **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out): this is an economy decision, owned by §3.3 / Epic 9.
-- **Trust toward the player as a pass criterion** of `OutpostLifecycleScenario`: it depends on prices and the gouging rule, so it waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #5).
-- **"No crawler starves" as a pass criterion of `BunkRestScenario`**: a broke crawler can starve while the Garden regrows; food pacing waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6). `OutpostLifecycleScenario` keeps the assertion.
+- ~~**Trust toward the player as a pass criterion** of `OutpostLifecycleScenario`: it depends on prices and the gouging rule, so it waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #5).~~ **Delivered by §3.3 (2026-10-15):** asserted again (trust rises for ⅔ of crawlers).
+- ~~**"No crawler starves" as a pass criterion of `BunkRestScenario`**: a broke crawler can starve while the Garden regrows; food pacing waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6). `OutpostLifecycleScenario` keeps the assertion.~~ **Delivered by §3.3 (2026-10-15):** asserted again.
 - **Descent gate sector and hazards**: Epic 10.
 - **Workshop sectors**: Milestone 3.
 - **Map serialization and save/load**: the MemoryPack slice. The definition is plain data, so it is ready for that.
@@ -250,13 +250,19 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 Found by the live scenarios during Phases 2–5. None fails a test. The epic is complete, so each open item names the owner it was handed to.
 
 1. ~~**Jitter at the stall queue and the bunks** (Phase 3).~~ **Resolved in Phase 5:** measured in sim time (D1 = A), jitter is 0 in every scenario. At the old 10× window (50 ticks) the remaining events were small single steps (about 0.3 units) at the stall and the bunks, plus a few 3–5 unit walk-and-return turns near the bunks and the Garden door: fidgeting and indecision, not vibration. Left for the producer's eye at 1×.
-2. **The starvation margin is thin** (Phase 3). **Partly fixed in Phase 5:** one cause was a crawler panicking with a ration in its pocket; it now eats it. `OutpostLifecycleScenario`: 0 starving over 9,000 ticks in 3 of 3 runs, worst stretch 233 ticks at 95+ hunger. **Still open:** in the close-out runs `BunkRestScenario` starved one crawler in 3 of 6 close-out runs (t3117, 445 ticks at 95+): with 10g it can't buy a 15g ration, every Garden plot it knows is empty and blacklisted, so starvation panic sends it exploring away from the Garden while the plots regrow. The producer handed it to §3.3 as food pacing (2026-10-13); `BunkRestScenario` now reports starvation instead of asserting it. Owner: §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6).
+2. **The starvation margin is thin** (Phase 3). **Partly fixed in Phase 5:** one cause was a crawler panicking with a ration in its pocket; it now eats it. `OutpostLifecycleScenario`: 0 starving over 9,000 ticks in 3 of 3 runs, worst stretch 233 ticks at 95+ hunger. **Still open:** in the close-out runs `BunkRestScenario` starved one crawler in 3 of 6 close-out runs (t3117, 445 ticks at 95+): with 10g it can't buy a 15g ration, every Garden plot it knows is empty and blacklisted, so starvation panic sends it exploring away from the Garden while the plots regrow. The producer handed it to §3.3 as food pacing (2026-10-13); `BunkRestScenario` now reports starvation instead of asserting it. Owner: §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6). **Resolved 2026-10-15 by §3.3 (D6):**
+   - crawlers arrive with 15g;
+   - the Garden regrows faster and yields more;
+   - caravan restocks are partial;
+   - a starving crawler that has seen the Garden waits at its plots instead of exploring away.
+   
+   `BunkRestScenario` asserts no starvation again (3/3).
 3. **About 1 in 3 bunk claims miss** because the bunk is taken by arrival (Phase 3). The crawler picks another bunk. Churn only. Owner: none scheduled (fix if it becomes visible).
 4. **Cognition cost grows faster than linearly** with population: 2× crawlers, 2.7× slower (Phase 3, `PopulationScalingProbe`). Owner: ROADMAP §3A #8.
 5. **A succession re-confirmation still applies the peaceful-succession cohesion bonus** and memory events for the leader (Phase 3; only the chronicle was fixed). Behaviour, left for a decision. Owner: Epic 8.
 6. **Gather fulfilment does not check provenance** (H6, accepted): ore bought or found counts the same as ore mined.
 7. **Pen 7 hands leadership to the defiant follower at t50** (Phase 2, Dev Map only). Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
-8. **Trust toward the player falls on the default prices** (Phase 5): 10 of 12 crawlers end at −80 to −100. Owner: §3.3 / Epic 9 ([Epic 9 §8.3](epic-9.md)).
+8. **Trust toward the player falls on the default prices** (Phase 5): 10 of 12 crawlers end at −80 to −100. Owner: §3.3 / Epic 9 ([Epic 9 §8.3](epic-9.md)). **Resolved 2026-10-15 by §3.3 (D3):** each crawler judges a trade by its own valuation; trust rises for 10 of 12 at the default prices.
 9. **The dossier's *Feed ration* button writes a crawler's hunger directly from the UI** (`FacilityDashboardPresenter`, since 2026-10-09), bypassing typed commands (§1A.1 #7). No scenario presses it. It should become a command or be removed. Owner: Track B.
 
 ---

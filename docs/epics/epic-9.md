@@ -1,9 +1,9 @@
 # Epic 9: The Outpost Economy & Public Bounties
 
-- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md).
-  - **Live criterion (§1B) demonstrated:** `OutpostSupplyLoopScenario` (supply loop, 2026-10-10) and `PriceResponseScenario` (gradual demand, 2026-10-11) both pass without injection.
-  - **§3.2 (personality) landed 2026-10-11.**
-  - **Promotion to `COMPLETED` is held only by the deferred §3.3 economy model** (producer decision; see [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker)).
+- **Status**: COMPLETED (2026-10-15; Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md).
+  - **Live criterion (§1B) demonstrated:** `OutpostSupplyLoopScenario` (supply loop, 2026-10-10), `PriceResponseScenario` (gradual demand, 2026-10-11) and `OutpostLifecycleScenario` (trust toward the player rises at fair prices, §3.3, 2026-10-15) all pass without injection. The economy soak asserts a fair, a greedy and a generous player's pace band.
+  - **§3.2 (personality) landed 2026-10-11; §3.3 (the economy model) landed 2026-10-15:** [docs/economy-model.md](../economy-model.md).
+  - **Pending producer check:** §3.3 was decided under the producer's provisional authority, while the producer was AFK. A play session at 1× with the price sliders is still owed. If it fails, the epic goes back to `ACTIVE`.
 - **Track**: Track A: Core Simulation & Cognition Engine
 - **Preceding Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Following Epic**: Epic 10: Sector Hazards & Dungeon Descent
@@ -413,11 +413,31 @@ Delivered in code (compiles; `SupplyLoopValidator` and `OutpostSupplyLoopScenari
 
 **Deferred:** live-loop demonstration (first run of `OutpostSupplyLoopScenario`) — owned by Epic 9 / Milestone 1 closure; personality-driven bounty acceptance — §3.2; faucet/sink retuning — §3.3 / Epic Test-2; moving the production GOAP domain out of `Testing/` — §2.8.
 
+### Review §3.3: the economy model (landed 2026-10-15)
+
+Decisions D1–D7 are in §8.4; the model is in [docs/economy-model.md](../economy-model.md).
+
+- [x] One `EconomyTuning` per session (`ISessionDefinition.Economy`): every economy number in one immutable object, applied on respawn and read by cognition from the snapshot (`EconomyTuningValidator`).
+- [x] The fairness rule (D3): a crawler judges a completed trade by its own valuation. Generous, fair and gouged purchases; generous, fair and stingy sales (`TradeFairness`, `TradeTransactionValidator`).
+- [x] The caravan buys salvage up to a quota per visit (D1, the `CaravanSalvageSales` faucet). The stall holds at most 20 of each type. The provisional export and its switch are removed.
+- [x] Outpost upkeep (D2, the `OutpostUpkeep` sink). A stall that can't pay is in arrears and buys no salvage; it is shown on the merchant view and in the chronicle.
+- [x] Food (D6):
+  - crawlers arrive with 15g;
+  - Garden regrowth is 300 ticks and yield 4 per plot;
+  - caravan restocks are partial;
+  - a starving crawler waits at the Garden plots it has seen instead of exploring away (`MentalBreakValidator`).
+- [x] Live criteria:
+  - `OutpostLifecycleScenario` asserts trust toward the player rising for ⅔ of crawlers;
+  - `BunkRestScenario` asserts "no crawler starves" again;
+  - the economy soak asserts each profile's pace band (`Scenario_EconomySoak_PaceBands`, 9/9).
+
+**Deferred:** `MemoryPack` serialization (rest of Milestone 1); drifters, bounty fairness and Guild recruitment thresholds (Milestone 2); gear wear and gear-gated scarcity (Epic 10).
+
 ---
 
-## 8. Economy observations: input for the deferred §3.3 decision
+## 8. Economy observations: the evidence behind the §3.3 economy model
 
-The producer deferred the economy design until the game is functional (2026-10-09). This section keeps the measured evidence in one place for that decision. Facts only, no recommendations. It was collected from the working plans, which were removed once their work was done (git history keeps them).
+The producer deferred the economy design until the game was functional (2026-10-09). This section keeps the measured evidence in one place: §8.1–8.3 were the input, §8.5 records each §3.3 step, and §8.4 maps the decisions. It was collected from the working plans, which were removed once their work was done (git history keeps them).
 
 ### 8.1 The Outpost Commons yard, 6 crawlers (2026-10-11)
 Six runs: 18,000 ticks (30 sim-minutes) at 10×, seeds 20261009 / 1 / 2, provisional export on and off. CSVs are in `Logs/economy-soak-seed<seed>-export<on|off>.csv`.
@@ -567,8 +587,17 @@ What it says (input for tuning):
 | Greedy | 148–228 / 0–200 / 0–216g | 0 (2–4) | −3 to −17 | 0–4 |
 | Generous | 0–16 / 0 / 0g | 12 (12) | +54 to +63 | 0 |
 
-### 8.4 The decisions this evidence informs (deferred)
-**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
+### 8.4 The decisions this evidence informed (decided 2026-10-15)
+**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. **Decided 2026-10-15** under the producer's provisional authority (pending the producer's review):
+1. → **D1:** the caravan buys salvage up to a quota per visit.
+2. → **D2:** outpost upkeep; no crawler sink while crawler wallets stay flat; gear wear goes to Epic 10.
+3. → **D4:** crawlers' willingness to trade is the scarcity lever.
+4. → **D5:** pace bands per player profile ([economy model §7](../economy-model.md)).
+5. → **D3:** fairness judged by each crawler's own valuation; trust is asserted again.
+6. → **D6:** food by data (starting gold, Garden regrowth and yield, partial restocks) plus the starving crawler's return to the Garden.
+7. → **D7:** drifters deferred to Milestone 2.
+
+The questions as they stood:
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.
 2. **Agent sinks:**
    - (a) Free bushes yield less or regrow slower, so rations matter.
@@ -580,5 +609,5 @@ What it says (input for tuning):
 6. **Hunger pacing and food supply:** hunger rises 1.5/s (a meal about every 40 s), so food is most of a crawler's day (§8.2 #4). The Garden (4 plots × 3 rations, regrowing 450 ticks after they empty) can't feed 12 crawlers alone, and a crawler starts with 10g against a 15g ration. Evidence (Epic MAP close-out, 2026-10-13): `OutpostLifecycleScenario` had 0 starving over 9,000 ticks in 3 of 3 runs, but `BunkRestScenario` starved one crawler in 3 of 6 close-out runs. That crawler was broke, every Garden plot it knew was empty, and starvation panic sent it exploring away from the Garden while the plots regrew. `BunkRestScenario` reports starvation instead of asserting it until this is decided.
 7. **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out), deferred from Epic MAP.
 
-Once decided: write `docs/economy-model.md`, implement it, and turn the soak's agreed bands into assertions. That is the deferred half of §3.3.
+Done 2026-10-15: `docs/economy-model.md` written, implemented, and the soak's bands asserted (§8.5).
 
