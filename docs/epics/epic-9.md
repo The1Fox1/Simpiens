@@ -557,6 +557,16 @@ What it says (input for tuning):
   - `DeterminismScenario` diverged once (t1800, run 2 of 3).
   - Run alone, it diverges at t100 in 5 of 5 runs both on this tree and on the step 5 commit (`c244b1c`). That is the known cognition-timing deviation (ROADMAP §1A.2 #6), not this change.
 
+**§3.3 step 7 (the pace is asserted, 2026-10-15):**
+- Tuning: upkeep 80g (was 75) and Garden plots yield 4 (was 3).
+- The soak asserts each profile's band ([economy model §7](../economy-model.md)). 9/9 runs pass:
+
+| Profile | Treasury at 10 / 20 / 30 min | Trust up at 30 min (peak) | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 355–444 / 565–653 / 546–771g | 9–10 (10–11) | +14 to +42 | 0 |
+| Greedy | 148–228 / 0–200 / 0–216g | 0 (2–4) | −3 to −17 | 0–4 |
+| Generous | 0–16 / 0 / 0g | 12 (12) | +54 to +63 | 0 |
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.

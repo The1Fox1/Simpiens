@@ -3,7 +3,7 @@
 - **Owner:** review §3.3 / ROADMAP §3A #10a. Promotes [Epic 9](../docs/epics/epic-9.md) and closes Epic Test-2's remaining scope. Status is owned by `docs/ROADMAP.md`.
 - **Written:** 2026-10-13, after Epic MAP's Definition of Done.
 - **Approved 2026-10-14 under provisional authority:** the producer, going AFK, delegated §3.3 to the agent. D1–D7 were taken as recommended (A; D5 bands set from the step 2 baseline). The producer reviews on return.
-- **Progress:** steps 1–6 done.
+- **Progress:** steps 1–7 done; the producer play session (step 7) is pending.
 - **Branch:** `feat/economy-model`, from `main` once the Epic MAP close-out (`feat/epic-map-closeout`) is merged.
 - **Input:** every economic decision was folded into §3.3 by the producer on 2026-10-13. The evidence and the list are in [Epic 9 §8](../docs/epics/epic-9.md) (§8.4 is the list).
 - **Goal:** one economy that holds on its own, where the player's price sliders are a real choice between profit and trust:
@@ -138,6 +138,12 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - **Order:** the quota and upkeep tuning (step 7 in §3) was done before food (step 6). Crawler income, and so food, depends on the quota, so food could only be judged on the tuned numbers.
 - **Step 6:** caravan restocks are partial (as many rations as the stall can pay for), so a bankrupt outpost isn't cut off from food entirely.
 - **Step 6:** the behaviour fix: a starving crawler that knows no reachable food, but has stood in a charted sector with food plots, goes back to the nearest plot and waits for regrowth. It no longer explores the least-visited sector. Evidence: with the data changes alone, the lifecycle still starved a broke crawler (451 ticks).
+- **Step 7:** the D5 bands as asserted (economy model §7):
+  - Greedy: earns less than fair and is distrusted (not "earns faster early"); the economy is closed, so greed only shrinks trade.
+  - Generous: starvation not asserted.
+  - Fair: 375–875g.
+  - The final tuning added upkeep 80g and Garden plots yielding 4.
+  - The soak test is renamed `Scenario_EconomySoak_PaceBands`.
 - **Step 4:** the export switch (`SimulationSettings.ProvisionalExportEnabled`, `SIMPIENS_PROVISIONAL_EXPORT`, the runner's `--export`) is removed, not renamed.
 
 ## 7. Decisions
