@@ -92,6 +92,16 @@ namespace Simpiens.Simulation.Economy
         public ushort StallHerbStock { get; private set; } = 10;
         public uint StallTreasury { get; private set; } = 250;
 
+        /// <summary>Salvage units of each type the stall holds at most; full, it stops buying that type until the caravan comes.</summary>
+        public ushort StallSalvageCapacity { get; private set; } = 20;
+
+        /// <summary>True when the stall has room for <paramref name="quantity"/> more units of a salvage type.</summary>
+        public bool StallHasRoom(in TradeStallData stall, ItemType item, int quantity = 1)
+        {
+            int stock = item == ItemType.IronOre ? stall.OreStock : item == ItemType.MedicinalHerb ? stall.HerbStock : 0;
+            return stock + quantity <= StallSalvageCapacity;
+        }
+
         // Seeded bounty rewards
         public ushort SeedGatherBountyReward { get; private set; } = 25;
         public ushort SeedScoutBountyReward { get; private set; } = 15;
@@ -147,6 +157,13 @@ namespace Simpiens.Simulation.Economy
             copy.StallOreBuyPrice = oreBuyPrice;
             copy.StallHerbBuyPrice = herbBuyPrice;
             copy.StallTreasury = treasury;
+            return copy;
+        }
+
+        public EconomyTuning WithStallSalvageCapacity(ushort capacity)
+        {
+            var copy = Copy();
+            copy.StallSalvageCapacity = capacity;
             return copy;
         }
 

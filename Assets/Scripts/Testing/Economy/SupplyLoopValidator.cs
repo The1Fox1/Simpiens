@@ -40,7 +40,7 @@ namespace Simpiens.Testing.Economy
             ValidateInventoryFullHarvestFails();
             ValidateDeterministicRegrowth();
             ValidateSupplyCaravan();
-            ValidateProvisionalSalvageExport();
+            ValidateCaravanSalvageQuota();
             ValidateScoutBountyFulfilment();
             ValidateSalvageBountyPlan();
             ValidateWellFedAgentReachesGoap();
@@ -173,34 +173,42 @@ namespace Simpiens.Testing.Economy
         }
 
         // ---------------------------------------------------------------------------------------------
-        // 4b. PROVISIONAL export: caravan buys salvage above the reserve (named faucet) before restocking
+        // 4b. The caravan buys salvage up to its quota per visit (named faucet) before restocking (review §3.3 D1)
         // ---------------------------------------------------------------------------------------------
-        private void ValidateProvisionalSalvageExport()
+        private void ValidateCaravanSalvageQuota()
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
-                provisionalOreExportPrice: 24, provisionalHerbExportPrice: 30, provisionalExportReserve: 10));
+            var tuning = new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                oreQuota: 5, herbQuota: 5, oreMarketPrice: 24, herbMarketPrice: 30);
+            var supply = new SupplyService(tuning);
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+            Assert(tuning.MaxSalvagePaymentPerVisit == 270, $"Faucet ceiling 5x24 + 5x30 = 270g per visit (got {tuning.MaxSalvagePaymentPerVisit}).");
 
-            // Broke stall holding surplus salvage: export revenue (5×24 + 2×30 = 180g) must fund the 100g restock
+            // Broke stall holding salvage: the quota's revenue (5x24 + 5x30 = 270g) funds the 100g restock
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 15, herbStock: 12, treasuryGold: 0));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
 
             while (sim.CurrentTick < 20) sim.Tick();
 
             Assert(sim.TryGetTradeStall(stallId, out var stall), "Stall retrieved.");
-            Assert(stall.OreStock == 10 && stall.HerbStock == 10, $"Export leaves the reserve (ore {stall.OreStock}, herb {stall.HerbStock}).");
-            Assert(stall.RationStock == 50, $"Export revenue funded the restock (stock {stall.RationStock}).");
-            Assert(stall.TreasuryGold == 80, $"Treasury = 180g export - 100g restock (got {stall.TreasuryGold}).");
-            Assert(supply.ExportCount == 1 && ledger.TotalFaucetedGold == 180, $"Export faucet recorded 180g (got {ledger.TotalFaucetedGold}).");
+            Assert(stall.OreStock == 7 && stall.HerbStock == 2, $"The caravan bought exactly its quota (ore {stall.OreStock}, herb {stall.HerbStock}).");
+            Assert(stall.RationStock == 50, $"Salvage revenue funded the restock (stock {stall.RationStock}).");
+            Assert(stall.TreasuryGold == 170, $"Treasury = 270g salvage - 100g restock (got {stall.TreasuryGold}).");
+            Assert(supply.SalvageSaleVisits == 1 && ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName) == 270,
+                $"CaravanSalvageSales faucet recorded 270g (got {ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName)}).");
             Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
-            // Stock at reserve: no further export
+            // Second visit: 5 more ore, the last 2 herbs (120 + 60 = 180g); third: the last 2 ore (48g)
             while (sim.CurrentTick < 40) sim.Tick();
-            Assert(supply.ExportCount == 1, "Stock at reserve is not exported again.");
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.OreStock == 2 && stall.HerbStock == 0, $"Second visit bought 5 ore + 2 herbs (ore {stall.OreStock}, herb {stall.HerbStock}).");
+            while (sim.CurrentTick < 60) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.OreStock == 0, $"Third visit bought the last 2 ore (ore {stall.OreStock}).");
+            Assert(ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName) == 270 + 180 + 48, $"Faucet total 498g (got {ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName)}).");
+            while (sim.CurrentTick < 80) sim.Tick();
+            Assert(supply.SalvageSaleVisits == 3, $"No salvage, no purchase: {supply.SalvageSaleVisits} visits bought salvage (expected 3).");
 
-            Debug.Log("[SupplyLoopValidator] Test 4b Passed: Provisional caravan export is a named faucet that keeps the reserve.");
+            Debug.Log("[SupplyLoopValidator] Test 4b Passed: The caravan buys salvage up to its quota per visit, as a named faucet.");
         }
 
         // ---------------------------------------------------------------------------------------------

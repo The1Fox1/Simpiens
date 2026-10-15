@@ -508,6 +508,18 @@ What the baseline says (input for steps 3–7):
 
 The trust ordering is now right (generous > fair > greedy). The treasury still can't fail; the faucet and sink come next (steps 4–5).
 
+**After §3.3 step 4 (the caravan market, 2026-10-14):** the provisional export is replaced by a quota: the caravan buys 5 ore at 24g and 5 herbs at 30g per visit, a 270g ceiling. The stall holds at most 20 of each type.
+
+| Profile | Caravan salvage faucet | Treasury at 10 / 30 min | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 7,740–8,100g (≈ the 8,100g ceiling) | 2,449–2,552 / 6,988–7,333g | +66 to +90 | 0–1 |
+| Greedy | 1,704–3,672g | 1,414–2,170 / 1,672–3,482g | −3 to −39 | 14–27 |
+| Generous | 3,378–3,522g | 1,015–1,032 / 1,745–1,861g | +100 | 0–1 |
+
+- The faucet is now bounded. At fair prices the crawlers sell about as much as the quota takes, so it binds at the ceiling.
+- The treasury still grows for every profile. Upkeep (step 5) supplies the sink, and the quota and upkeep are tuned together in step 7.
+- `BunkRestScenario` reported 3 starving crawlers in the suite run (reported only until step 6).
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.

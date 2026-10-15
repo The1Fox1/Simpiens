@@ -1,8 +1,9 @@
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
-    /// Tunables for the minimal supply faucets that keep the Milestone 1 loop running (part of EconomyTuning).
-    /// All durations are in logical simulation ticks (10 Hz). Faucet/sink retuning is owned by §3.3.
+    /// The supply caravan's terms (part of EconomyTuning). All durations are in logical simulation ticks (10 Hz).
+    /// On each visit the caravan buys salvage from the stall up to a quota per type (the "CaravanSalvageSales" faucet,
+    /// review §3.3 D1) and tops the stall's rations up to the cap (the "SupplyCaravan" sink).
     /// </summary>
     public readonly struct SupplyTuning
     {
@@ -15,44 +16,40 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Gold per ration the stall pays the caravan; leaves the economy as the "SupplyCaravan" sink.</summary>
         public readonly ushort WholesaleRationCost;
 
-        /// <summary>
-        /// PROVISIONAL (not an economy design decision; review §3.3 is deferred by the producer, 2026-10-09).
-        /// Gold per unit the caravan pays for stall salvage above <see cref="ProvisionalExportReserve"/>; enters as the
-        /// "ProvisionalCaravanExport" faucet. Without an outlet the stall buys salvage it can never resell and the treasury
-        /// drains until the loop stalls. 0 disables the export.
-        /// </summary>
-        public readonly ushort ProvisionalOreExportPrice;
+        /// <summary>Most Iron Ore units the caravan buys from a stall per visit.</summary>
+        public readonly ushort OreQuota;
 
-        /// <summary>PROVISIONAL: export price per Medicinal Herb unit (see <see cref="ProvisionalOreExportPrice"/>).</summary>
-        public readonly ushort ProvisionalHerbExportPrice;
+        /// <summary>Most Medicinal Herb units the caravan buys from a stall per visit.</summary>
+        public readonly ushort HerbQuota;
 
-        /// <summary>PROVISIONAL: salvage units of each type the caravan leaves in the stall's stock.</summary>
-        public readonly ushort ProvisionalExportReserve;
+        /// <summary>Gold per Iron Ore unit the caravan pays; enters the economy as the "CaravanSalvageSales" faucet.</summary>
+        public readonly ushort OreMarketPrice;
+
+        /// <summary>Gold per Medicinal Herb unit the caravan pays.</summary>
+        public readonly ushort HerbMarketPrice;
 
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost)
-            : this(restockIntervalTicks, rationStockCap, wholesaleRationCost, 0, 0, 0)
+            : this(restockIntervalTicks, rationStockCap, wholesaleRationCost, 0, 0, 0, 0)
         {
         }
 
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost,
-            ushort provisionalOreExportPrice, ushort provisionalHerbExportPrice, ushort provisionalExportReserve)
+            ushort oreQuota, ushort herbQuota, ushort oreMarketPrice, ushort herbMarketPrice)
         {
             RestockIntervalTicks = restockIntervalTicks;
             RationStockCap = rationStockCap;
             WholesaleRationCost = wholesaleRationCost;
-            ProvisionalOreExportPrice = provisionalOreExportPrice;
-            ProvisionalHerbExportPrice = provisionalHerbExportPrice;
-            ProvisionalExportReserve = provisionalExportReserve;
+            OreQuota = oreQuota;
+            HerbQuota = herbQuota;
+            OreMarketPrice = oreMarketPrice;
+            HerbMarketPrice = herbMarketPrice;
         }
 
-        // Placeholder export prices sit ~20% above the seeded stall buy prices (ore 20g, herb 25g)
+        /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2,
-            provisionalOreExportPrice: 24, provisionalHerbExportPrice: 30, provisionalExportReserve: 10);
+            oreQuota: 5, herbQuota: 5, oreMarketPrice: 24, herbMarketPrice: 30);
 
-        /// <summary>Default tuning with the provisional export disabled (economy A/B soaks).</summary>
-        public static SupplyTuning DefaultWithoutExport => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2);
-
-        /// <summary>This tuning with the provisional export disabled (SimulationSettings.ProvisionalExportEnabled off).</summary>
-        public SupplyTuning WithoutProvisionalExport() => new SupplyTuning(RestockIntervalTicks, RationStockCap, WholesaleRationCost);
+        /// <summary>The most gold the caravan can pay a stall for salvage in one visit.</summary>
+        public uint MaxSalvagePaymentPerVisit => (uint)OreQuota * OreMarketPrice + (uint)HerbQuota * HerbMarketPrice;
     }
 }

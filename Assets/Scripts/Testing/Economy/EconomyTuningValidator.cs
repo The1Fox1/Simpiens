@@ -57,10 +57,11 @@ namespace Simpiens.Testing.Economy
             // Supply caravan (was SupplyTuning.Default via DI)
             var s = e.Supply;
             Assert(s.RestockIntervalTicks == 600 && s.RationStockCap == 50 && s.WholesaleRationCost == 2, "Caravan: every 600 ticks, cap 50, 2g wholesale.");
-            Assert(s.ProvisionalOreExportPrice == 24 && s.ProvisionalHerbExportPrice == 30 && s.ProvisionalExportReserve == 10, "Provisional export: ore 24, herb 30, reserve 10.");
-            var off = s.WithoutProvisionalExport();
-            Assert(off.ProvisionalOreExportPrice == 0 && off.ProvisionalHerbExportPrice == 0 && off.RationStockCap == 50 && off.RestockIntervalTicks == 600,
-                "Without the export only the export prices change.");
+            Assert(s.OreQuota == 5 && s.HerbQuota == 5 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 5 ore at 24g + 5 herbs at 30g per visit (§3.3 step 4).");
+            Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
+            var full = new TradeStallData(new GUID(1u, 1u, 1u, 1u), Vector2.zero, oreStock: 20, herbStock: 19);
+            Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),
+                "StallHasRoom compares stock plus quantity with the capacity.");
 
             // Trade-to-trust (review §3.3 step 3 replaced the fixed 7.5g gouging line with the crawler's own valuation)
             var t = e.TradeTrust;

@@ -191,7 +191,7 @@ namespace Simpiens.Core.Session
 
             // 3. Session content: the economy first (stall terms, starting gold), then agents, relationships, groups,
             // stalls, staged bounties
-            _simulationManager?.SetEconomy(EffectiveEconomy(session));
+            _simulationManager?.SetEconomy(session.Economy);
             var builder = new SessionBuilder(this, map, _world, _simulationManager, _settings);
             session.Populate(builder);
 
@@ -218,20 +218,6 @@ namespace Simpiens.Core.Session
 
             SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_agents.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
             SessionChanged?.Invoke(session);
-        }
-
-        /// <summary>
-        /// The session's economy tuning, with the provisional caravan export switched off when the settings say so
-        /// (economy A/B soaks; SimulationSettings.ProvisionalExportEnabled).
-        /// </summary>
-        private Simpiens.Simulation.Economy.EconomyTuning EffectiveEconomy(ISessionDefinition session)
-        {
-            var economy = session.Economy ?? Simpiens.Simulation.Economy.EconomyTuning.Default;
-            if (_settings != null && !_settings.ProvisionalExportEnabled)
-            {
-                economy = economy.WithSupply(economy.Supply.WithoutProvisionalExport());
-            }
-            return economy;
         }
 
         /// <summary>Spawns one agent view + simulation state (called by <see cref="SessionBuilder.SpawnAgent"/>).</summary>

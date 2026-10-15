@@ -110,8 +110,8 @@ namespace Simpiens.Tests.PlayMode
         }
 
         /// <summary>
-        /// Economy observation soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
-        /// Run with scripts/run-economy-soak.sh (seed / provisional-export via SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
+        /// Economy soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
+        /// Run with scripts/run-economy-soak.sh (profile / seed via SIMPIENS_SOAK_PROFILE / SIMPIENS_SEED).
         /// </summary>
         /// <summary>
         /// Population scaling measurement (Epic MAP Phase 3): 12, 16 and 24 crawlers on Floor 1, cognition latency and

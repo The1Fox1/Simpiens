@@ -37,11 +37,12 @@ namespace Simpiens.Testing.Economy
             ValidateTradeToAffinityPriceGouging();
             ValidateFairnessJudgedByTheCrawler();
             ValidateSaleTrustFollowsTheSellersMinimum();
+            ValidateFullStallRefusesSalvage();
             ValidateGOAPCommercialPlanResolution();
             ValidateBountyItemsAreNotSold();
             ValidateStallRationsAreKnownFood();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[TradeTransactionValidator] ALL 13 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -411,6 +412,44 @@ namespace Simpiens.Testing.Economy
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[TradeTransactionValidator] Test 12 Passed: The live handler applies the seller's verdict.");
+        }
+
+        /// <summary>A stall at its salvage capacity refuses a sale: no gold, item or trust changes (review §3.3 step 4).</summary>
+        private void ValidateFullStallRefusesSalvage()
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+
+            var stallId = GUID.Generate();
+            ushort capacity = EconomyTuning.Default.StallSalvageCapacity;
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
+
+            var go = new GameObject("[Test_FullStall]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = new Vector2(0f, 0.5f);
+            var agent = go.AddComponent<AutonomousAgent>();
+            agent.Initialize(node.Id, null, null, simManager, clock);
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            registry.RegisterNode(node);
+            int goldBefore = agent.Inventory.Gold;
+
+            var intentState = new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
+                CurrentWaypointIndex = 0,
+                LastSampledPosition = node.Position
+            };
+            simManager.ExecuteIntent(node, intentState);
+
+            simManager.TryGetTradeStall(stallId, out var stall);
+            Assert(agent.Inventory.Gold == goldBefore && agent.Inventory.HasItem(ItemType.IronOre, 1), "A full stall paid nothing and took nothing.");
+            Assert(stall.OreStock == capacity && stall.TreasuryGold == 500, $"Stall unchanged (ore {stall.OreStock}, treasury {stall.TreasuryGold}).");
+            Assert(agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust == 0, "A refused sale changes no trust.");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
         }
 
         private void AssertDeltaEquals(in TrustDelta actual, in TrustDelta expected, string what)

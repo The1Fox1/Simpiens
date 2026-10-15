@@ -40,8 +40,8 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Cumulative number of stall restocks since the last Reset.</summary>
         int RestockCount { get; }
 
-        /// <summary>Provisional salvage export visits since the last reset.</summary>
-        int ExportCount { get; }
+        /// <summary>Caravan visits that bought salvage from a stall, since the last reset.</summary>
+        int SalvageSaleVisits { get; }
 
         /// <summary>Caravan restocks skipped because the stall couldn't pay, since the last Reset.</summary>
         int SkippedRestockCount { get; }

@@ -20,7 +20,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// prices are set at tick 0 through the same typed command the dashboard sliders send. Every sim-minute it records
     /// stall, ledger, transfer, crawler, trust and supply figures to a CSV. It asserts integrity only (ledger
     /// conservation, horizon reached, prices applied, CSV written); the pace bands become assertions in §3.3 step 7.
-    /// Seed and provisional-export switch come from SimulationSettings (SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
+    /// The seed comes from SimulationSettings (SIMPIENS_SEED).
     /// </summary>
     public class EconomySoakScenario : ISimulationScenario
     {
@@ -73,11 +73,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             public long Tick;
             public uint Treasury, RationStock, OreStock, HerbStock, RationPrice, OreBuyPrice, HerbBuyPrice;
-            public uint Fauceted, Sunk, Escrow, FaucetInitialSeed, FaucetProvisionalExport, SinkSupplyCaravan;
+            public uint Fauceted, Sunk, Escrow, FaucetInitialSeed, FaucetCaravanSalvage, SinkSupplyCaravan;
             public EconomyFlowTotals Flows;
             public int CrawlerGoldTotal, CrawlerGoldMin, CrawlerGoldMax, CrawlersHungry, CrawlersStarving;
             public float CrawlerHungerMean;
-            public int Restocks, SkippedRestocks, Exports, Regrowths, DormantNodes, ActiveBounties;
+            public int Restocks, SkippedRestocks, SalvageVisits, Regrowths, DormantNodes, ActiveBounties;
             // Lifecycle on Floor 1 (Epic MAP Phase 3): cumulative except the "now" counts
             public int RationsHarvested, OreHarvested, HerbsHarvested, BunkSleeps, RestingInPlaceNow, SleepingInBunkNow;
             public int Collapses, StarvingEpisodes;
@@ -91,7 +91,6 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private readonly Row[] _rows = new Row[MaxRows];
         private int _rowCount;
         private ulong _seed;
-        private bool _exportEnabled;
         private long _observedTicks;
         private int _conservationViolations;
         private int _worstDiscrepancy;
@@ -124,9 +123,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Assert.IsNotNull(sim.Supply, "ISupplyService not wired into the SimulationManager.");
 
             _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
-            _exportEnabled = settings == null || settings.ProvisionalExportEnabled;
             Profile = ResolveProfile(System.Environment.GetEnvironmentVariable(ProfileEnvironmentVariable), sim.Economy);
-            CsvPath = $"Logs/economy-soak-{Profile.Name}-seed{_seed}-export{(_exportEnabled ? "on" : "off")}.csv";
+            CsvPath = $"Logs/economy-soak-{Profile.Name}-seed{_seed}.csv";
 
             // The player's prices, through the same typed command the dashboard sliders send
             if (Profile.SendsCommand)
@@ -244,12 +242,12 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 Sunk = ledger.TotalSinkedGold,
                 Escrow = ledger.TotalEscrowGold,
                 FaucetInitialSeed = ledger.GetFaucetTotal("InitialSeed"),
-                FaucetProvisionalExport = ledger.GetFaucetTotal(SupplyService.ProvisionalExportFaucetName),
+                FaucetCaravanSalvage = ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName),
                 SinkSupplyCaravan = ledger.GetSinkTotal(SupplyService.CaravanSinkName),
                 Flows = ledger.Flows,
                 Restocks = supply.RestockCount,
                 SkippedRestocks = supply.SkippedRestockCount,
-                Exports = supply.ExportCount,
+                SalvageVisits = supply.SalvageSaleVisits,
                 Regrowths = supply.RegrowthCount,
                 DormantNodes = supply.DormantCount,
                 ActiveBounties = sim.ActiveBounties.Count,
@@ -336,12 +334,12 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         }
 
         private const string Header =
-            "profile,seed,export_enabled,tick,sim_minute," +
+            "profile,seed,tick,sim_minute," +
             "treasury,ration_stock,ore_stock,herb_stock,ration_price,ore_buy_price,herb_buy_price," +
-            "fauceted_total,sunk_total,escrow,faucet_initial_seed,faucet_provisional_export,sink_supply_caravan," +
+            "fauceted_total,sunk_total,escrow,faucet_initial_seed,faucet_caravan_salvage,sink_supply_caravan," +
             "purchases,purchase_gold,sales,sale_gold,escrow_locked,escrow_released,escrow_refunded," +
             "crawler_gold_total,crawler_gold_min,crawler_gold_max,crawler_hunger_mean,crawlers_hungry,crawlers_starving," +
-            "restocks,skipped_restocks,exports,regrowths,dormant_nodes,active_bounties," +
+            "restocks,skipped_restocks,caravan_salvage_visits,regrowths,dormant_nodes,active_bounties," +
             "rations_harvested,ore_harvested,herbs_harvested,bunk_sleeps,sleeping_in_bunk_now,resting_in_place_now,collapses,starving_episodes," +
             "trust_mean,trust_min,trust_max,trust_up,trust_down," +
             "conservation_ok,discrepancy";
@@ -355,17 +353,17 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             {
                 var r = _rows[i];
                 var f = r.Flows;
-                sb.Append(Profile.Name).Append(',').Append(_seed).Append(',').Append(_exportEnabled ? 1 : 0).Append(',')
+                sb.Append(Profile.Name).Append(',').Append(_seed).Append(',')
                   .Append(r.Tick).Append(',').Append((r.Tick / (double)SampleIntervalTicks).ToString("F1", inv)).Append(',')
                   .Append(r.Treasury).Append(',').Append(r.RationStock).Append(',').Append(r.OreStock).Append(',').Append(r.HerbStock).Append(',')
                   .Append(r.RationPrice).Append(',').Append(r.OreBuyPrice).Append(',').Append(r.HerbBuyPrice).Append(',')
                   .Append(r.Fauceted).Append(',').Append(r.Sunk).Append(',').Append(r.Escrow).Append(',')
-                  .Append(r.FaucetInitialSeed).Append(',').Append(r.FaucetProvisionalExport).Append(',').Append(r.SinkSupplyCaravan).Append(',')
+                  .Append(r.FaucetInitialSeed).Append(',').Append(r.FaucetCaravanSalvage).Append(',').Append(r.SinkSupplyCaravan).Append(',')
                   .Append(f.Purchases).Append(',').Append(f.PurchaseGold).Append(',').Append(f.Sales).Append(',').Append(f.SaleGold).Append(',')
                   .Append(f.EscrowLockedGold).Append(',').Append(f.EscrowReleasedGold).Append(',').Append(f.EscrowRefundedGold).Append(',')
                   .Append(r.CrawlerGoldTotal).Append(',').Append(r.CrawlerGoldMin).Append(',').Append(r.CrawlerGoldMax).Append(',')
                   .Append(r.CrawlerHungerMean.ToString("F1", inv)).Append(',').Append(r.CrawlersHungry).Append(',').Append(r.CrawlersStarving).Append(',')
-                  .Append(r.Restocks).Append(',').Append(r.SkippedRestocks).Append(',').Append(r.Exports).Append(',')
+                  .Append(r.Restocks).Append(',').Append(r.SkippedRestocks).Append(',').Append(r.SalvageVisits).Append(',')
                   .Append(r.Regrowths).Append(',').Append(r.DormantNodes).Append(',').Append(r.ActiveBounties).Append(',')
                   .Append(r.RationsHarvested).Append(',').Append(r.OreHarvested).Append(',').Append(r.HerbsHarvested).Append(',')
                   .Append(r.BunkSleeps).Append(',').Append(r.SleepingInBunkNow).Append(',').Append(r.RestingInPlaceNow).Append(',')
@@ -386,11 +384,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_rowCount == 0) return;
             var first = _rows[0];
             var last = _rows[_rowCount - 1];
-            Debug.Log($"[EconomySoakScenario] profile {Profile.Name} ({Profile.RationPrice}/{Profile.OreBuyPrice}/{Profile.HerbBuyPrice}), seed {_seed}, export {(_exportEnabled ? "on" : "off")}, {_observedTicks} ticks: " +
+            Debug.Log($"[EconomySoakScenario] profile {Profile.Name} ({Profile.RationPrice}/{Profile.OreBuyPrice}/{Profile.HerbBuyPrice}), seed {_seed}, {_observedTicks} ticks: " +
                       $"treasury {first.Treasury}g -> {last.Treasury}g, crawler gold {first.CrawlerGoldTotal}g -> {last.CrawlerGoldTotal}g, " +
                       $"faucets {last.Fauceted}g, sinks {last.Sunk}g, purchases {last.Flows.Purchases} ({last.Flows.PurchaseGold}g), " +
                       $"sales {last.Flows.Sales} ({last.Flows.SaleGold}g), bounty payouts {last.Flows.EscrowReleasedGold}g, " +
-                      $"restocks {last.Restocks} (skipped {last.SkippedRestocks}), exports {last.Exports}, regrowths {last.Regrowths}; " +
+                      $"restocks {last.Restocks} (skipped {last.SkippedRestocks}), caravan salvage visits {last.SalvageVisits}, regrowths {last.Regrowths}; " +
                       $"harvested rations {last.RationsHarvested} / ore {last.OreHarvested} / herbs {last.HerbsHarvested}, bunk sleeps {last.BunkSleeps}, " +
                       $"collapses {last.Collapses}, starving episodes {last.StarvingEpisodes}; " +
                       $"trust mean {last.TrustMean:F1} (min {last.TrustMin}, max {last.TrustMax}), up {last.TrustUp} / down {last.TrustDown}. CSV: {CsvPath}");

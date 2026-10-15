@@ -113,6 +113,11 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "agent does not hold the items to sell");
                 }
 
+                if (!economy.StallHasRoom(stall, trade.ItemType, trade.Quantity))
+                {
+                    return Reject(node, trade, "stall has no room for more of this salvage");
+                }
+
                 uint totalPayout = (uint)(unitBuyPrice * trade.Quantity);
                 if (stall.TreasuryGold < totalPayout)
                 {

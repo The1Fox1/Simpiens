@@ -331,7 +331,7 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// True when the nearest reachable stall's treasury can pay for at least one unit of salvage, so a sale won't
+        /// True when the nearest reachable stall has room for salvage and its treasury can pay for at least one unit, so a sale won't
         /// fail on arrival. Without any visible stall this returns true (headless contexts); behind walls, false.
         /// </summary>
         public static bool NearestStallCanBuySalvage(in AgentContext context)
@@ -340,7 +340,9 @@ namespace Simpiens.Cognition.Planning
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
             uint cheapest = stall.OreBuyPrice < stall.HerbBuyPrice ? stall.OreBuyPrice : stall.HerbBuyPrice;
-            return stall.TreasuryGold >= cheapest;
+            var economy = Considerations.Economy(context);
+            bool room = economy.StallHasRoom(stall, ItemType.IronOre) || economy.StallHasRoom(stall, ItemType.MedicinalHerb);
+            return room && stall.TreasuryGold >= cheapest;
         }
 
         /// <summary>
@@ -364,10 +366,14 @@ namespace Simpiens.Cognition.Planning
         public static ItemType AffordableHeldSalvage(in AgentContext context, in TradeStallData stall)
         {
             if (context.Inventory == null) return ItemType.None;
-            // Payable by the treasury, at or above the agent's personal minimum sale price, and not owed to a bounty
+            // Payable by the treasury, with room in the stall, at or above the agent's personal minimum sale price, and
+            // not owed to a bounty
+            var economy = Considerations.Economy(context);
             bool herb = HoldsSellable(context, ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
+                && economy.StallHasRoom(stall, ItemType.MedicinalHerb)
                 && stall.HerbBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.MedicinalHerb);
             bool ore = HoldsSellable(context, ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
+                && economy.StallHasRoom(stall, ItemType.IronOre)
                 && stall.OreBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.IronOre);
             if (herb && ore) return stall.HerbBuyPrice >= stall.OreBuyPrice ? ItemType.MedicinalHerb : ItemType.IronOre;
             if (herb) return ItemType.MedicinalHerb;

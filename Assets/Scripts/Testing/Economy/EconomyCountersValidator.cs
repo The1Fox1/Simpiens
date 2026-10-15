@@ -61,12 +61,12 @@ namespace Simpiens.Testing.Economy
         {
             var ledger = new EconomyLedger();
             ledger.RecordFaucet(100, "InitialSeed");
-            ledger.RecordFaucet(50, SupplyService.ProvisionalExportFaucetName);
+            ledger.RecordFaucet(50, SupplyService.SalvageSalesFaucetName);
             ledger.RecordFaucet(25, "InitialSeed");
             ledger.RecordSink(30, SupplyService.CaravanSinkName);
             ledger.RecordSink(12, SupplyService.CaravanSinkName);
 
-            uint faucetSum = ledger.GetFaucetTotal("InitialSeed") + ledger.GetFaucetTotal(SupplyService.ProvisionalExportFaucetName);
+            uint faucetSum = ledger.GetFaucetTotal("InitialSeed") + ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName);
             Assert(ledger.GetFaucetTotal("InitialSeed") == 125, "InitialSeed accumulates across records.");
             Assert(faucetSum == ledger.TotalFaucetedGold, $"Faucet breakdown {faucetSum}g must equal total {ledger.TotalFaucetedGold}g.");
             Assert(ledger.GetSinkTotal(SupplyService.CaravanSinkName) == ledger.TotalSinkedGold, "Sink breakdown must equal total.");
@@ -104,7 +104,7 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 1000000);
 
             // Warm up: the first record under a name inserts its dictionary entry
-            ledger.RecordFaucet(1, SupplyService.ProvisionalExportFaucetName);
+            ledger.RecordFaucet(1, SupplyService.SalvageSalesFaucetName);
             ledger.RecordSink(1, SupplyService.CaravanSinkName);
             ledger.TryExecuteStallPurchase(stallId, ref stall, agentId, registry, 1);
             ledger.TryExecuteStallSale(stallId, ref stall, agentId, registry, 1);
@@ -113,7 +113,7 @@ namespace Simpiens.Testing.Economy
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 1000; i++)
             {
-                ledger.RecordFaucet(1, SupplyService.ProvisionalExportFaucetName);
+                ledger.RecordFaucet(1, SupplyService.SalvageSalesFaucetName);
                 ledger.RecordSink(1, SupplyService.CaravanSinkName);
                 ledger.TryExecuteStallPurchase(stallId, ref stall, agentId, registry, 1);
                 ledger.TryExecuteStallSale(stallId, ref stall, agentId, registry, 1);

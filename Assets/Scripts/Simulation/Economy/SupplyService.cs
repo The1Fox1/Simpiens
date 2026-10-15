@@ -14,7 +14,7 @@ namespace Simpiens.Simulation.Economy
     public class SupplyService : ISupplyService
     {
         public const string CaravanSinkName = "SupplyCaravan";
-        public const string ProvisionalExportFaucetName = "ProvisionalCaravanExport";
+        public const string SalvageSalesFaucetName = "CaravanSalvageSales";
 
         private readonly struct DormantEntry
         {
@@ -39,8 +39,8 @@ namespace Simpiens.Simulation.Economy
         public int RegrowthCount { get; private set; }
         public int RestockCount { get; private set; }
 
-        /// <summary>Provisional salvage export visits (see SupplyTuning.ProvisionalOreExportPrice).</summary>
-        public int ExportCount { get; private set; }
+        /// <summary>Caravan visits that bought salvage from a stall.</summary>
+        public int SalvageSaleVisits { get; private set; }
 
         /// <summary>Caravan restocks skipped because the stall couldn't pay.</summary>
         public int SkippedRestockCount { get; private set; }
@@ -99,7 +99,7 @@ namespace Simpiens.Simulation.Economy
             _stallScratch.Clear();
             RegrowthCount = 0;
             RestockCount = 0;
-            ExportCount = 0;
+            SalvageSaleVisits = 0;
             SkippedRestockCount = 0;
         }
 
@@ -152,7 +152,7 @@ namespace Simpiens.Simulation.Economy
 
             for (int i = 0; i < _stallScratch.Count; i++)
             {
-                var stall = ExportSurplusSalvage(_stallScratch[i], currentTick, host);
+                var stall = BuySalvage(_stallScratch[i], host);
                 if (stall.RationStock >= _tuning.RationStockCap) continue;
 
                 uint units = (uint)(_tuning.RationStockCap - stall.RationStock);
@@ -183,25 +183,25 @@ namespace Simpiens.Simulation.Economy
         }
 
         /// <summary>
-        /// PROVISIONAL outlet (see SupplyTuning.ProvisionalOreExportPrice): the caravan buys salvage stock above the
-        /// reserve before restocking, so salvage the stall bought from crawlers can flow back out as gold.
+        /// The caravan's market (review §3.3 D1): it buys up to its quota of each salvage type from the stall's stock at
+        /// the market price, before restocking, so salvage the stall bought from crawlers flows back out as gold. The
+        /// quota bounds the faucet: at most SupplyTuning.MaxSalvagePaymentPerVisit per stall per visit.
         /// </summary>
-        private TradeStallData ExportSurplusSalvage(TradeStallData stall, uint currentTick, ISupplyHost host)
+        private TradeStallData BuySalvage(TradeStallData stall, ISupplyHost host)
         {
-            ushort reserve = _tuning.ProvisionalExportReserve;
-            uint oreUnits = _tuning.ProvisionalOreExportPrice > 0 && stall.OreStock > reserve ? (uint)(stall.OreStock - reserve) : 0u;
-            uint herbUnits = _tuning.ProvisionalHerbExportPrice > 0 && stall.HerbStock > reserve ? (uint)(stall.HerbStock - reserve) : 0u;
+            uint oreUnits = _tuning.OreMarketPrice > 0 ? System.Math.Min(stall.OreStock, (uint)_tuning.OreQuota) : 0u;
+            uint herbUnits = _tuning.HerbMarketPrice > 0 ? System.Math.Min(stall.HerbStock, (uint)_tuning.HerbQuota) : 0u;
             if (oreUnits == 0 && herbUnits == 0) return stall;
 
-            uint revenue = oreUnits * _tuning.ProvisionalOreExportPrice + herbUnits * _tuning.ProvisionalHerbExportPrice;
+            uint revenue = oreUnits * _tuning.OreMarketPrice + herbUnits * _tuning.HerbMarketPrice;
             var updated = stall
                 .WithOreStock((ushort)(stall.OreStock - oreUnits))
                 .WithHerbStock((ushort)(stall.HerbStock - herbUnits))
                 .WithTreasury(stall.TreasuryGold + revenue);
             host.UpdateStall(updated);
-            host.EconomyLedger?.RecordFaucet(revenue, ProvisionalExportFaucetName);
-            ExportCount++;
-            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (provisional export; treasury now {updated.TreasuryGold}g)");
+            host.EconomyLedger?.RecordFaucet(revenue, SalvageSalesFaucetName);
+            SalvageSaleVisits++;
+            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
             return updated;
         }
 
