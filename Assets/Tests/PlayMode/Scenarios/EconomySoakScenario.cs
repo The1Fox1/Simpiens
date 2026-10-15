@@ -1,3 +1,4 @@
+using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using System.Collections;
 using System.Globalization;
@@ -14,10 +15,11 @@ using VContainer;
 namespace Simpiens.Tests.PlayMode.Scenarios
 {
     /// <summary>
-    /// Milestone 1 closure, Phase 3: economy OBSERVATION soak. Runs the real session (SwarmSpawner.Respawn) for
-    /// 30 sim-minutes at 10x with no injection and no player commands. Every sim-minute it records stall, ledger,
-    /// transfer, crawler and supply figures to a CSV. It asserts integrity only (ledger conservation,
-    /// horizon reached, CSV written), never economic values: economy design is deferred by the producer.
+    /// Economy soak (Milestone 1 closure, Phase 3; review §3.3 step 2). Runs the real session for 30 sim-minutes at 10x
+    /// with no injection. It plays one kind of player (SIMPIENS_SOAK_PROFILE: fair, greedy or generous), whose stall
+    /// prices are set at tick 0 through the same typed command the dashboard sliders send. Every sim-minute it records
+    /// stall, ledger, transfer, crawler, trust and supply figures to a CSV. It asserts integrity only (ledger
+    /// conservation, horizon reached, prices applied, CSV written); the pace bands become assertions in §3.3 step 7.
     /// Seed and provisional-export switch come from SimulationSettings (SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
     /// </summary>
     public class EconomySoakScenario : ISimulationScenario
@@ -34,6 +36,39 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
         public string CsvPath { get; private set; }
 
+        /// <summary>A kind of player: the stall prices it sets at tick 0 (review §3.3 §2.5).</summary>
+        public readonly struct SoakProfile
+        {
+            public readonly string Name;
+            public readonly ushort RationPrice, OreBuyPrice, HerbBuyPrice;
+            public readonly bool SendsCommand;
+
+            public SoakProfile(string name, ushort rationPrice, ushort oreBuyPrice, ushort herbBuyPrice, bool sendsCommand)
+            {
+                Name = name;
+                RationPrice = rationPrice;
+                OreBuyPrice = oreBuyPrice;
+                HerbBuyPrice = herbBuyPrice;
+                SendsCommand = sendsCommand;
+            }
+        }
+
+        public const string ProfileEnvironmentVariable = "SIMPIENS_SOAK_PROFILE";
+
+        /// <summary>Fair keeps the session's default prices (no command); the others set theirs at tick 0.</summary>
+        public static SoakProfile ResolveProfile(string name, EconomyTuning economy)
+        {
+            switch (string.IsNullOrWhiteSpace(name) ? "fair" : name.Trim().ToLowerInvariant())
+            {
+                case "fair": return new SoakProfile("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, sendsCommand: false);
+                case "greedy": return new SoakProfile("greedy", 30, 10, 12, sendsCommand: true);
+                case "generous": return new SoakProfile("generous", 5, 35, 40, sendsCommand: true);
+                default: throw new System.ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous).");
+            }
+        }
+
+        public SoakProfile Profile { get; private set; }
+
         private struct Row
         {
             public long Tick;
@@ -46,6 +81,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             // Lifecycle on Floor 1 (Epic MAP Phase 3): cumulative except the "now" counts
             public int RationsHarvested, OreHarvested, HerbsHarvested, BunkSleeps, RestingInPlaceNow, SleepingInBunkNow;
             public int Collapses, StarvingEpisodes;
+            // Trust toward the player (AffinityRecord.Trust); up/down compare each crawler with its value at tick 0
+            public float TrustMean;
+            public int TrustMin, TrustMax, TrustUp, TrustDown;
             public bool ConservationOk;
             public int Discrepancy;
         }
@@ -67,10 +105,15 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private readonly System.Collections.Generic.HashSet<UnityEngine.GUID> _starvingNow = new System.Collections.Generic.HashSet<UnityEngine.GUID>();
         private int _collapses;
         private int _starvingEpisodes;
+        private readonly System.Collections.Generic.Dictionary<UnityEngine.GUID, int> _trustAtStart = new System.Collections.Generic.Dictionary<UnityEngine.GUID, int>();
+        private ISimulationClock _clock;
+        private bool _pricesApplied;
+        private string _pricesSeen = "never sampled";
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
         {
             var clock = resolver.Resolve<ISimulationClock>();
+            _clock = clock;
             var sim = resolver.Resolve<ISimulationManager>();
             var spawner = resolver.Resolve<SwarmSpawner>();
             var settings = resolver.Resolve<SimulationSettings>();
@@ -82,7 +125,21 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
             _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
             _exportEnabled = settings == null || settings.ProvisionalExportEnabled;
-            CsvPath = $"Logs/economy-soak-seed{_seed}-export{(_exportEnabled ? "on" : "off")}.csv";
+            Profile = ResolveProfile(System.Environment.GetEnvironmentVariable(ProfileEnvironmentVariable), sim.Economy);
+            CsvPath = $"Logs/economy-soak-{Profile.Name}-seed{_seed}-export{(_exportEnabled ? "on" : "off")}.csv";
+
+            // The player's prices, through the same typed command the dashboard sliders send
+            if (Profile.SendsCommand)
+            {
+                var interventions = resolver.Resolve<Simpiens.Intervention.IPlayerInterventionService>();
+                Assert.IsNotNull(interventions, "IPlayerInterventionService not registered.");
+                Assert.Greater(sim.ActiveStalls.Count, 0, "The session has no stall to price.");
+                interventions.QueueInfluence(new Simpiens.Intervention.InfluenceEvent(
+                    "EconomySoak:" + Profile.Name,
+                    Simpiens.Intervention.InfluenceCommandType.UpdateStallPrices,
+                    updateStallPrices: new Simpiens.Intervention.UpdateStallPricesCommand(
+                        sim.ActiveStalls[0].StallEntityId, Profile.RationPrice, Profile.OreBuyPrice, Profile.HerbBuyPrice)));
+            }
 
             if (clock is SimulationClock simClock)
             {
@@ -102,6 +159,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 TrackLifecycle(spawner, rel);
                 if (rel >= nextSample)
                 {
+                    if (rel > 0 && !_pricesApplied) CheckPrices(sim);
                     Sample(sim, spawner, rel, ok, discrepancy);
                     nextSample += SampleIntervalTicks;
                 }
@@ -115,6 +173,17 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             WriteCsv();
             LogSummary();
         }
+
+        private void CheckPrices(ISimulationManager sim)
+        {
+            if (sim.ActiveStalls.Count == 0) return;
+            var stall = sim.ActiveStalls[0];
+            _pricesSeen = $"{stall.RationSellPrice}/{stall.OreBuyPrice}/{stall.HerbBuyPrice}";
+            _pricesApplied = stall.RationSellPrice == Profile.RationPrice && stall.OreBuyPrice == Profile.OreBuyPrice && stall.HerbBuyPrice == Profile.HerbBuyPrice;
+        }
+
+        private static int Trust(AutonomousAgent agent, long tick) =>
+            agent != null && agent.Memory != null ? agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, (uint)tick).Trust : 0;
 
         private bool CheckConservation(ISimulationManager sim, SwarmSpawner spawner, out int discrepancy)
         {
@@ -224,6 +293,28 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
             if (crawlers == 0) { row.CrawlerGoldMin = 0; row.CrawlerGoldMax = 0; }
 
+            // Trust toward the player, against each crawler's own value at the first sample
+            long absoluteTick = _clock != null ? _clock.CurrentTick : rel;
+            int trusted = 0;
+            float trustSum = 0f;
+            row.TrustMin = int.MaxValue;
+            row.TrustMax = int.MinValue;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var agent = agents[i];
+                if (agent == null || agent.State == null) continue;
+                int trust = Trust(agent, absoluteTick);
+                if (!_trustAtStart.TryGetValue(agent.State.AgentId, out int start)) _trustAtStart[agent.State.AgentId] = start = trust;
+                trusted++;
+                trustSum += trust;
+                if (trust < row.TrustMin) row.TrustMin = trust;
+                if (trust > row.TrustMax) row.TrustMax = trust;
+                if (trust > start) row.TrustUp++;
+                else if (trust < start) row.TrustDown++;
+            }
+            if (trusted == 0) { row.TrustMin = 0; row.TrustMax = 0; }
+            row.TrustMean = trusted > 0 ? trustSum / trusted : 0f;
+
             if (sim is SimulationManager manager)
             {
                 row.RationsHarvested = manager.HarvestedUnits(ItemType.Ration);
@@ -245,13 +336,14 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         }
 
         private const string Header =
-            "seed,export_enabled,tick,sim_minute," +
+            "profile,seed,export_enabled,tick,sim_minute," +
             "treasury,ration_stock,ore_stock,herb_stock,ration_price,ore_buy_price,herb_buy_price," +
             "fauceted_total,sunk_total,escrow,faucet_initial_seed,faucet_provisional_export,sink_supply_caravan," +
             "purchases,purchase_gold,sales,sale_gold,escrow_locked,escrow_released,escrow_refunded," +
             "crawler_gold_total,crawler_gold_min,crawler_gold_max,crawler_hunger_mean,crawlers_hungry,crawlers_starving," +
             "restocks,skipped_restocks,exports,regrowths,dormant_nodes,active_bounties," +
             "rations_harvested,ore_harvested,herbs_harvested,bunk_sleeps,sleeping_in_bunk_now,resting_in_place_now,collapses,starving_episodes," +
+            "trust_mean,trust_min,trust_max,trust_up,trust_down," +
             "conservation_ok,discrepancy";
 
         private void WriteCsv()
@@ -263,7 +355,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             {
                 var r = _rows[i];
                 var f = r.Flows;
-                sb.Append(_seed).Append(',').Append(_exportEnabled ? 1 : 0).Append(',')
+                sb.Append(Profile.Name).Append(',').Append(_seed).Append(',').Append(_exportEnabled ? 1 : 0).Append(',')
                   .Append(r.Tick).Append(',').Append((r.Tick / (double)SampleIntervalTicks).ToString("F1", inv)).Append(',')
                   .Append(r.Treasury).Append(',').Append(r.RationStock).Append(',').Append(r.OreStock).Append(',').Append(r.HerbStock).Append(',')
                   .Append(r.RationPrice).Append(',').Append(r.OreBuyPrice).Append(',').Append(r.HerbBuyPrice).Append(',')
@@ -278,6 +370,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                   .Append(r.RationsHarvested).Append(',').Append(r.OreHarvested).Append(',').Append(r.HerbsHarvested).Append(',')
                   .Append(r.BunkSleeps).Append(',').Append(r.SleepingInBunkNow).Append(',').Append(r.RestingInPlaceNow).Append(',')
                   .Append(r.Collapses).Append(',').Append(r.StarvingEpisodes).Append(',')
+                  .Append(r.TrustMean.ToString("F1", inv)).Append(',').Append(r.TrustMin).Append(',').Append(r.TrustMax).Append(',')
+                  .Append(r.TrustUp).Append(',').Append(r.TrustDown).Append(',')
                   .Append(r.ConservationOk ? 1 : 0).Append(',').Append(r.Discrepancy)
                   .AppendLine();
             }
@@ -292,23 +386,25 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_rowCount == 0) return;
             var first = _rows[0];
             var last = _rows[_rowCount - 1];
-            Debug.Log($"[EconomySoakScenario] seed {_seed}, export {(_exportEnabled ? "on" : "off")}, {_observedTicks} ticks: " +
+            Debug.Log($"[EconomySoakScenario] profile {Profile.Name} ({Profile.RationPrice}/{Profile.OreBuyPrice}/{Profile.HerbBuyPrice}), seed {_seed}, export {(_exportEnabled ? "on" : "off")}, {_observedTicks} ticks: " +
                       $"treasury {first.Treasury}g -> {last.Treasury}g, crawler gold {first.CrawlerGoldTotal}g -> {last.CrawlerGoldTotal}g, " +
                       $"faucets {last.Fauceted}g, sinks {last.Sunk}g, purchases {last.Flows.Purchases} ({last.Flows.PurchaseGold}g), " +
                       $"sales {last.Flows.Sales} ({last.Flows.SaleGold}g), bounty payouts {last.Flows.EscrowReleasedGold}g, " +
                       $"restocks {last.Restocks} (skipped {last.SkippedRestocks}), exports {last.Exports}, regrowths {last.Regrowths}; " +
                       $"harvested rations {last.RationsHarvested} / ore {last.OreHarvested} / herbs {last.HerbsHarvested}, bunk sleeps {last.BunkSleeps}, " +
-                      $"collapses {last.Collapses}, starving episodes {last.StarvingEpisodes}. CSV: {CsvPath}");
+                      $"collapses {last.Collapses}, starving episodes {last.StarvingEpisodes}; " +
+                      $"trust mean {last.TrustMean:F1} (min {last.TrustMin}, max {last.TrustMax}), up {last.TrustUp} / down {last.TrustDown}. CSV: {CsvPath}");
         }
 
         public void AssertResults(IVisualAnomalyDetector detector)
         {
-            // Integrity only. Economic values are recorded, never asserted (economy design is deferred).
+            // Integrity only; the pace bands become assertions in review §3.3 step 7.
             Assert.GreaterOrEqual(_observedTicks, (long)HorizonTicks,
                 $"Soak ended early at tick {_observedTicks} (wall-clock timeout); simulation ran too slowly.");
             Assert.AreEqual(0, _conservationViolations,
                 $"Ledger conservation violated {_conservationViolations} times (worst discrepancy {_worstDiscrepancy}g).");
             Assert.IsTrue(_csvWritten && File.Exists(CsvPath), $"Soak CSV was not written ({CsvPath}).");
+            Assert.IsTrue(_pricesApplied, $"Profile {Profile.Name} prices {Profile.RationPrice}/{Profile.OreBuyPrice}/{Profile.HerbBuyPrice} not applied (stall {_pricesSeen}).");
             Assert.AreEqual(MaxRows - 1, _rowCount, $"Expected {MaxRows - 1} samples (every {SampleIntervalTicks} ticks incl. tick 0 and the horizon), got {_rowCount}.");
         }
     }

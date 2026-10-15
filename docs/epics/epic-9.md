@@ -475,6 +475,29 @@ What the numbers say (observations, not decisions):
 - **Why:** the stall sells rations at 15g, three times their base value (5g). `TradeIntentHandler` counts any ration price above 1.5× base (7.5g) as gouging: −15 trust per purchase. A fair sale to the stall gives +10. Crawlers buy food more often than they sell salvage (hunger rises 1.5/s), so trust only goes down.
 - **Consequence:** the scenario reports trust and does not assert it (producer decision 2026-10-13). Milestone 1 promises "dyadic trust with visiting crawlers", so the economy model has to make fair trade possible at the prices it sets.
 
+### 8.5 Baseline by player profile (§3.3 step 2, 2026-10-14)
+`scripts/run-economy-soak.sh`: 30 sim-minutes at 10×, 3 seeds (20261009, 1, 2), provisional export on, model as of §3.3 step 1 (behaviour-neutral refactor).
+- Each run plays one kind of player: its stall prices (ration / ore / herb) are set at tick 0 through `UpdateStallPricesCommand`.
+- Trust is `AffinityRecord.Trust` toward the player, in the range −100 to 100.
+- All 9 runs keep the ledger conserved and reach the horizon.
+- CSVs: `Logs/economy-soak-<profile>-seed<seed>-exporton.csv`.
+
+| Profile | Treasury 0 → 10 → 30 min | Rations bought | Salvage sold | Export faucet | Trust mean at 30 min | Trust up / down (of 12) | Starving episodes | Collapses |
+| :--- | :-: | --: | --: | --: | :-: | :-: | :-: | :-: |
+| **Fair** 15/20/25 | 210 → 2,674–2,955 → 7,621–8,404g | 460–508 | 317–357 | 8,466–9,420g | −87 to −95 | 0 / 11–12 | 0–1 | 14–21 |
+| **Greedy** 30/10/12 | 210 → 1,238–1,628 → 2,084–3,296g | 21–39 | 79–125 | 2,154–3,354g | +6 to +19 | 1–5 / 0–2 | 17–40 | 10–39 |
+| **Generous** 5/35/40 | 210 → 460–484 → 1,207–1,268g | 691–708 | 104–106 | 2,832–2,874g | +100 | 12 / 0 | 0 | 1–5 |
+
+What the baseline says (input for steps 3–7):
+1. **The trust rule rewards the wrong player.**
+   - The fair player is distrusted by everyone: every 15g ration counts as gouging.
+   - The greedy player is mildly trusted. Its crawlers rarely buy food (30g is above most reservation prices), and every salvage sale gives +10 whatever the stall pays.
+   - The generous player is fully trusted.
+   - Step 3 has to make the fair player trusted and the greedy one distrusted.
+2. **The treasury can't fail.** Even the generous player, who sells rations at 5g and buys salvage above the export price, ends with about 5× its starting treasury. The provisional export buys every unit above the reserve, so faucet income tracks salvage volume with no ceiling. The fair player grows about 36×. Steps 4 (quota) and 5 (upkeep) have to bound this.
+3. **Greedy prices starve crawlers:** 17–40 starving episodes and up to 39 collapses. Crawlers can't afford 30g rations, fall back on the Garden (246–294 harvested against 124–149 at fair prices) and run out of food. At fair or generous prices, starvation is 0–1.
+4. **Generous prices move the food supply to the stall:** about 700 rations bought, only 20–29 harvested.
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.
