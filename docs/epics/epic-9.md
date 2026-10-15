@@ -536,6 +536,27 @@ What it says (input for tuning):
 2. **A bankrupt stall stops feeding the outpost.** In arrears, the caravan's ration restock is skipped for lack of gold. Once stock runs out, crawlers depend on the Garden and starve.
 3. **Fair still grows about 20×.** The quota is barely below what fair-priced crawlers sell; quota and upkeep are tuned together next.
 
+**After §3.3 step 6 (tuning and food, 2026-10-15):**
+- Tuning: quota 2 ore + 2 herbs per visit (108g ceiling) and upkeep 75g.
+- Food: crawlers arrive with 15g, the Garden regrows in 300 ticks, and caravan restocks are partial when the stall can't pay for a full load.
+- Behaviour: a starving crawler that has seen the Garden waits at its plots instead of exploring away.
+
+| Profile | Treasury at 10 / 20 / 30 min (lowest) | Trust up / down at 30 min (peak up) | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 431–470 / 654–706 / 838–880g (109–148) | 8–10 / 0–2 (10–11) | +21 to +47 | 0–1 |
+| Greedy | 200–290 / 394–576 / 4–482g (4–135) | 0 / 3–6 (2–3) | −12 to −17 | 0–3 |
+| Generous | 0–30 / 0 / 0g (0) | 12 / 0 (12) | +57 to +68 | 0 |
+
+- **The shape the model asks for now holds on every seed:**
+  - fair grows about 3.4–3.5× and is trusted;
+  - greedy earns less than fair and is distrusted;
+  - generous is loved but goes broke before minute 10.
+- **Partial restocks keep a broke outpost fed:** generous starvation fell from 15–32 episodes to 0.
+- **Suite ×3:**
+  - `OutpostLifecycleScenario` (0 starving, trust up for 10 of 12) and `BunkRestScenario` (starvation asserted again, 0 starving) both passed 3/3.
+  - `DeterminismScenario` diverged once (t1800, run 2 of 3).
+  - Run alone, it diverges at t100 in 5 of 5 runs both on this tree and on the step 5 commit (`c244b1c`). That is the known cognition-timing deviation (ROADMAP §1A.2 #6), not this change.
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.

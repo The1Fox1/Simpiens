@@ -20,6 +20,12 @@ namespace Simpiens.Cognition.Evaluators
         public const float StarvationThreshold = 85f;
         public const float ExhaustionThreshold = 5f;
 
+        /// <summary>Within this distance of a remembered food plot a starving crawler waits for it to regrow.</summary>
+        public const float WaitAtPlotRadius = 1.5f;
+
+        /// <summary>How long one wait at a plot lasts before the crawler re-evaluates (it sees the plot regrow).</summary>
+        public const float WaitAtPlotSeconds = 2f;
+
         private readonly IAsyncPathfinder _pathfinder;
         private readonly ulong _seed;
 
@@ -51,6 +57,26 @@ namespace Simpiens.Cognition.Evaluators
                     // Prune stale resource records from memory so agent explores anew
                     PruneStaleResourceMemories(context);
 
+                    // A crawler that has seen food plots goes back to them and waits for regrowth: exploring away from
+                    // the only free food it knows starved a broke crawler while the Garden regrew (review §3.3 D6)
+                    var map = context.Snapshot?.Map;
+                    if (map != null && Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(context, map, out var plot))
+                    {
+                        if ((plot - context.Position).sqrMagnitude <= WaitAtPlotRadius * WaitAtPlotRadius)
+                        {
+                            return new IdleIntent(context.AgentId, WaitAtPlotSeconds);
+                        }
+                        if (_pathfinder != null)
+                        {
+                            var plotPath = await _pathfinder.CalculatePathAsync(new PathRequest { StartPosition = context.Position, TargetPosition = plot }, context.Snapshot);
+                            if (plotPath.IsValid && plotPath.Length > 0)
+                            {
+                                return new PanicIntent(context.AgentId, plotPath);
+                            }
+                            plotPath.ReturnToPool();
+                        }
+                    }
+
                     // Defensive null safety: If pathfinder is null (e.g. isolated unit testing), return fallback PanicIntent
                     if (_pathfinder == null)
                     {
@@ -60,7 +86,6 @@ namespace Simpiens.Cognition.Evaluators
                     // On a map with rooms, search another charted sector: a few units in a random direction never
                     // leaves the room, so a starving crawler who has not yet seen the Garden would never find food
                     // (Epic MAP Phase 3, Floor 1)
-                    var map = context.Snapshot?.Map;
                     if (map != null && Simpiens.Cognition.Planning.ResourceTargeting.TryPickSectorWaypoint(context, map, out var sectorTarget))
                     {
                         var sectorRequest = new PathRequest

@@ -186,6 +186,38 @@ namespace Simpiens.Cognition.Planning
             return context.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
         }
 
+        /// <summary>
+        /// The nearest food plot of the map in a charted sector this agent has stood in (it saw the plots there). A starving
+        /// crawler that knows no food it can reach right now goes back to one and waits for it to regrow, instead of
+        /// exploring away from the only free food it knows (review §3.3 D6; the Epic MAP close-out starvation). Map data
+        /// only: the plot may be dormant, which is the point. False when the agent has seen no food sector.
+        /// </summary>
+        public static bool TryPickFoodPlotWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 plot)
+        {
+            plot = default;
+            if (map == null || context.Memory == null) return false;
+            var snapshot = context.Snapshot;
+            var nodes = map.ResourceNodes;
+            float bestSqr = float.MaxValue;
+            bool found = false;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                if (!node.Item.IsFoodYield()) continue;
+                byte sector = map.FindSector(node.Position).Id;
+                if (snapshot != null && !snapshot.IsSectorCharted(sector)) continue;
+                if (context.Memory.LastSectorVisit(sector) == 0u) continue;
+                float sqr = (node.Position - context.Position).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    plot = node.Position;
+                    found = true;
+                }
+            }
+            return found;
+        }
+
         /// <summary>Ticks per exploration choice: long enough to cross the map, so a choice isn't abandoned midway.</summary>
         public const uint SectorChoiceTicks = 200;
 
