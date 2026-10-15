@@ -3,7 +3,7 @@
 - **Owner:** Milestone 1 (ROADMAP §3, *Milestone 1 Status*). Status is owned by `docs/ROADMAP.md`.
 - **Written:** 2026-10-15, after §3.3 shipped (PR #3) and both producer checks passed.
 - **Status:** approved 2026-10-15 by the producer, with D1–D6 as recommended.
-- **Progress:** step 0 (the MemoryPack spike) in progress.
+- **Progress:** step 0 done 2026-10-15 (§8). Next: step 1.
 - **Branch:** `feat/save-load`, from `main`.
 - **Goal:** close Milestone 1.
   - Everything in it is delivered except one clause of the ROADMAP's milestone definition: "Integrates MemoryPack serialization for unmanaged inventory/contracts".
@@ -52,7 +52,7 @@
 | F4 | **Randomness keeps no state.** Every draw comes from `SimRandom.For(seed, entity, tick, salt)`. Entity ids come from `EntityIdAllocator`, which is a seed plus a counter. | `SimRandom.cs:20`; `EntityIdAllocator.cs:23-44` | A save needs the seed, the tick and the allocator's counter, and no random-number state. |
 | F5 | **A session is rebuilt, never patched.**<br>• `SwarmSpawner.Respawn` resets everything, loads the map and spawns nodes, bunks and hearths with reproducible ids ("same seed + same spawn order => same entity ids").<br>• `Populate` then adds crawlers, stalls and bounties, and the ledger records its baseline.<br>• The clock and the id allocator can only be reset to zero. | `SwarmSpawner.cs:141-221`; `SimulationClock.cs:48`; `EntityIdAllocator.cs:44` | A load runs the first half of a respawn, then restores the saved content in place of `Populate`. The clock, allocator, ledger, supply service, sector registry, chronicle and group registry each need a way to restore their state. |
 | F6 | **Work in progress is hard to save.**<br>• A crawler's current intent and plan come in a dozen types, and the cognition thread writes part of them (§1A.2 #15).<br>• Active intents carry waypoints and timers.<br>• Bunk claims and harvest contention depend on them. | `AgentState.cs:92-100`; `SimulationManager.cs:22-33, 87-90` | Don't save them. Crawlers decide afresh after a load (D3), and claims tied to that work are released. |
-| F7 | **Some state the player sees lives only in views.**<br>• Crawler names exist only in the GameObject's name and the log's name table, not in `AgentState`.<br>• A dormant node's hidden sprite is view state, though its regrowth is plain data. | `SwarmSpawner.cs:248`; `SimulationManager.cs:80` | The save carries the names, and a load re-syncs the views. Step 2 audits for the rest. |
+| F7 | **Some state the player sees lives only in views.**<br>• Crawler names exist only in the GameObject's name and the log's name table, not in `AgentState`.<br>• A dormant node's hidden sprite is view state, though its regrowth is plain data.<br>• **Position authority runs through the view:** each tick, `AutonomousAgent.ManualTick` copies `transform.position` into `AgentState.Position` (a §1A.1 #5 breach; found by the Godot migration assessment, 2026-10-15). | `SwarmSpawner.cs:248`; `SimulationManager.cs:80`; `AutonomousAgent.cs:299-302` | The save carries the names, and a load re-syncs the views. A restore must place each crawler's view at its saved position before the first tick; otherwise the view's spawn position overwrites the saved one. Step 2 audits for the rest. |
 | F8 | **`WorldStateHash` covers only part of the world:** positions, needs, gold, inventory, intent and goal; stalls; bounties; the fog; ledger totals. | `WorldStateHash.cs:11-16` | The round-trip test compares the saves themselves: capture, load, capture again, and the bytes must match. The hash is a second check. |
 | F9 | **Session-level actions already bypass the command queue.** The Dev Map button calls the session switcher directly. | `FacilityDashboardPresenter.cs:266` | Save and Load work at session level too, so they take the same path. A save is taken on the simulation thread, between ticks. |
 | F10 | **The zero-allocation check has a house pattern:** `GC.GetAllocatedBytesForCurrentThread()` around a loop, already used by several validators. | `DeterminismValidator.cs:224-236` | `EconomyZeroAllocValidator` uses the same pattern. |
@@ -172,3 +172,32 @@ Each step is its own commit, and the full PlayMode suite gates every step.
 - `SaveLoadScenario` passes in 3 consecutive full-suite runs, with nothing injected.
 - With D2 = A, the producer's check passes: save and load at 1×.
 - The docs are reconciled (step 7), and this plan is deleted.
+
+---
+
+## 8. Progress
+
+### Step 0: MemoryPack installed (done 2026-10-15)
+- **Version:** MemoryPack 1.21.4, vendored by `scripts/update-memorypack.sh` into `Assets/Plugins/MemoryPack/`.
+  - The runtime is `MemoryPack.Core.dll`.
+  - The source generator, `Analyzers/MemoryPack.Generator.dll`, has the `RoslynAnalyzer` label and no platforms.
+- **One closure:** MemoryPack was restored together with ZLogger 2.5.10. It adds only `MemoryPack.Core.dll`.
+  - Its dependencies, `System.Collections.Immutable` 8.0.0 and `System.Runtime.CompilerServices.Unsafe` 6.0.0, are ZLogger's vendored copies, at the same versions.
+  - The script stops if a shared version ever diverges.
+  - `MemoryPack.Unity` isn't needed.
+- **The generator runs:** generated formatters were confirmed in `Simpiens` (`SessionSaveHeaderFormatter`) and `Simpiens.Testing` (`ToolchainProbeFormatter`).
+  - The DLL sits outside any asmdef folder, so Unity passes the generator to every assembly, packages included. It generates only for `[MemoryPackable]` types.
+- **Code:**
+  - `Simulation/Persistence/SaveSerializer` is the only MemoryPack caller.
+  - `SessionSaveHeader` is the §3.1 header.
+  - `PersistenceToolchainValidator` has 3 tests:
+    - a production type round-trips;
+    - a test-assembly type round-trips;
+    - `ItemInstance[3]` is a 4-byte length plus 3 raw records.
+- **Linux player:** `scripts/run-persistence-smoke.sh` builds a player with `SIMPIENS_PERSISTENCE_SMOKE` (that build only) and runs it headless.
+  - The outpost boots (12 crawlers), round-trips 97 bytes at t25, and the player exits 0.
+  - The player ships `MemoryPack.Core` and its two shared dependencies, and not the generator.
+  - `Builds/` is now git-ignored.
+- **Gate:** PlayMode 56/56 (58 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
+- **Deviations from the plan:** none.
+

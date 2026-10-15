@@ -149,6 +149,12 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_PersistenceToolchain_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.PersistenceToolchainValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_Personality_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Planning.PersonalityValidator();
