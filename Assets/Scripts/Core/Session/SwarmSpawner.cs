@@ -189,7 +189,9 @@ namespace Simpiens.Core.Session
                 _world.RegisterEntity(poi.Key, anchorId);
             }
 
-            // 3. Session content: agents, relationships, groups, stalls, staged bounties
+            // 3. Session content: the economy first (stall terms, starting gold), then agents, relationships, groups,
+            // stalls, staged bounties
+            _simulationManager?.SetEconomy(session.Economy);
             var builder = new SessionBuilder(this, map, _world, _simulationManager, _settings);
             session.Populate(builder);
 
@@ -247,6 +249,11 @@ namespace Simpiens.Core.Session
 
             var agent = agentGo.AddComponent<AutonomousAgent>();
             agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
+
+            if (agent.State?.Inventory != null && _simulationManager != null)
+            {
+                agent.State.Inventory.Gold = _simulationManager.Economy.StartingGold; // before the ledger's InitialSeed baseline
+            }
 
             if (seededPersonality && agent.State != null)
             {

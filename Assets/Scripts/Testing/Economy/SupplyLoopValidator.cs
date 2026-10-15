@@ -40,7 +40,8 @@ namespace Simpiens.Testing.Economy
             ValidateInventoryFullHarvestFails();
             ValidateDeterministicRegrowth();
             ValidateSupplyCaravan();
-            ValidateProvisionalSalvageExport();
+            ValidateCaravanSalvageQuota();
+            ValidateOutpostUpkeep();
             ValidateScoutBountyFulfilment();
             ValidateSalvageBountyPlan();
             ValidateWellFedAgentReachesGoap();
@@ -48,7 +49,7 @@ namespace Simpiens.Testing.Economy
             ValidateActivityTally();
             ValidateCarriedFoodIsEaten();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[SupplyLoopValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -151,56 +152,103 @@ namespace Simpiens.Testing.Economy
             var richId = NextGuid();
             var poorId = NextGuid();
             sim.RegisterTradeStall(new TradeStallData(richId, new Vector2(0f, 0f), rationStock: 10, treasuryGold: 500));
+            var brokeId = NextGuid();
             sim.RegisterTradeStall(new TradeStallData(poorId, new Vector2(20f, 0f), rationStock: 0, treasuryGold: 10));
-            ledger.RecordFaucet(510, "InitialSeed");
+            sim.RegisterTradeStall(new TradeStallData(brokeId, new Vector2(40f, 0f), rationStock: 0, treasuryGold: 1));
+            ledger.RecordFaucet(511, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
 
             Assert(sim.TryGetTradeStall(richId, out var rich), "Rich stall retrieved.");
             Assert(rich.RationStock == 50, $"Rich stall restocked to cap (stock {rich.RationStock}).");
             Assert(rich.TreasuryGold == 420, $"Rich stall paid 40 × 2g = 80g (treasury {rich.TreasuryGold}).");
-            Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 0 && poor.TreasuryGold == 10, "Unaffordable restock skipped.");
-            Assert(supply.RestockCount == 1, $"RestockCount is {supply.RestockCount} instead of 1.");
-            Assert(supply.SkippedRestockCount == 1, $"SkippedRestockCount is {supply.SkippedRestockCount} instead of 1 (poor stall).");
-            Assert(ledger.TotalSinkedGold == 80, $"SupplyCaravan sink recorded 80g (got {ledger.TotalSinkedGold}).");
-            Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+            // A poor stall gets what it can pay for (review §3.3 D6); one that can't pay for a single ration is skipped
+            Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 5 && poor.TreasuryGold == 0, $"Poor stall got a partial restock of 5 for 10g (stock {poor.RationStock}, treasury {poor.TreasuryGold}).");
+            Assert(sim.TryGetTradeStall(brokeId, out var broke) && broke.RationStock == 0 && broke.TreasuryGold == 1, "A stall that can't pay for one ration is skipped.");
+            Assert(supply.RestockCount == 2 && supply.PartialRestockCount == 1, $"RestockCount {supply.RestockCount} (expected 2), partial {supply.PartialRestockCount} (expected 1).");
+            Assert(supply.SkippedRestockCount == 1, $"SkippedRestockCount is {supply.SkippedRestockCount} instead of 1 (broke stall).");
+            Assert(ledger.TotalSinkedGold == 90, $"SupplyCaravan sink recorded 80g + 10g (got {ledger.TotalSinkedGold}).");
+            Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold + broke.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
-            // Already at cap: next visit is a no-op
+            // Already at cap: next visit is a no-op for the rich stall (the poor and broke stalls have no gold left)
             while (sim.CurrentTick < 40) sim.Tick();
-            Assert(supply.RestockCount == 1, "Full stall not restocked again.");
+            Assert(supply.RestockCount == 2, "Full stall not restocked again.");
 
-            Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, treasury and ledger conservation.");
+            Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, delivers what a stall can pay for, and conserves the ledger.");
         }
 
         // ---------------------------------------------------------------------------------------------
-        // 4b. PROVISIONAL export: caravan buys salvage above the reserve (named faucet) before restocking
+        // 4b. The caravan buys salvage up to its quota per visit (named faucet) before restocking (review §3.3 D1)
         // ---------------------------------------------------------------------------------------------
-        private void ValidateProvisionalSalvageExport()
+        private void ValidateCaravanSalvageQuota()
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
-                provisionalOreExportPrice: 24, provisionalHerbExportPrice: 30, provisionalExportReserve: 10));
+            var tuning = new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                oreQuota: 5, herbQuota: 5, oreMarketPrice: 24, herbMarketPrice: 30);
+            var supply = new SupplyService(tuning);
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+            Assert(tuning.MaxSalvagePaymentPerVisit == 270, $"Faucet ceiling 5x24 + 5x30 = 270g per visit (got {tuning.MaxSalvagePaymentPerVisit}).");
 
-            // Broke stall holding surplus salvage: export revenue (5×24 + 2×30 = 180g) must fund the 100g restock
+            // Broke stall holding salvage: the quota's revenue (5x24 + 5x30 = 270g) funds the 100g restock
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 15, herbStock: 12, treasuryGold: 0));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
 
             while (sim.CurrentTick < 20) sim.Tick();
 
             Assert(sim.TryGetTradeStall(stallId, out var stall), "Stall retrieved.");
-            Assert(stall.OreStock == 10 && stall.HerbStock == 10, $"Export leaves the reserve (ore {stall.OreStock}, herb {stall.HerbStock}).");
-            Assert(stall.RationStock == 50, $"Export revenue funded the restock (stock {stall.RationStock}).");
-            Assert(stall.TreasuryGold == 80, $"Treasury = 180g export - 100g restock (got {stall.TreasuryGold}).");
-            Assert(supply.ExportCount == 1 && ledger.TotalFaucetedGold == 180, $"Export faucet recorded 180g (got {ledger.TotalFaucetedGold}).");
+            Assert(stall.OreStock == 7 && stall.HerbStock == 2, $"The caravan bought exactly its quota (ore {stall.OreStock}, herb {stall.HerbStock}).");
+            Assert(stall.RationStock == 50, $"Salvage revenue funded the restock (stock {stall.RationStock}).");
+            Assert(stall.TreasuryGold == 170, $"Treasury = 270g salvage - 100g restock (got {stall.TreasuryGold}).");
+            Assert(supply.SalvageSaleVisits == 1 && ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName) == 270,
+                $"CaravanSalvageSales faucet recorded 270g (got {ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName)}).");
             Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
-            // Stock at reserve: no further export
+            // Second visit: 5 more ore, the last 2 herbs (120 + 60 = 180g); third: the last 2 ore (48g)
             while (sim.CurrentTick < 40) sim.Tick();
-            Assert(supply.ExportCount == 1, "Stock at reserve is not exported again.");
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.OreStock == 2 && stall.HerbStock == 0, $"Second visit bought 5 ore + 2 herbs (ore {stall.OreStock}, herb {stall.HerbStock}).");
+            while (sim.CurrentTick < 60) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.OreStock == 0, $"Third visit bought the last 2 ore (ore {stall.OreStock}).");
+            Assert(ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName) == 270 + 180 + 48, $"Faucet total 498g (got {ledger.GetFaucetTotal(SupplyService.SalvageSalesFaucetName)}).");
+            while (sim.CurrentTick < 80) sim.Tick();
+            Assert(supply.SalvageSaleVisits == 3, $"No salvage, no purchase: {supply.SalvageSaleVisits} visits bought salvage (expected 3).");
 
-            Debug.Log("[SupplyLoopValidator] Test 4b Passed: Provisional caravan export is a named faucet that keeps the reserve.");
+            Debug.Log("[SupplyLoopValidator] Test 4b Passed: The caravan buys salvage up to its quota per visit, as a named faucet.");
+        }
+
+        // ---------------------------------------------------------------------------------------------
+        // 4c. Outpost upkeep (review §3.3 D2): paid each visit as a named sink; a stall that can't pay in full pays what
+        // it has and is in arrears until a visit finds the upkeep paid in full
+        // ---------------------------------------------------------------------------------------------
+        private void ValidateOutpostUpkeep()
+        {
+            var registry = new WorldRegistry();
+            var ledger = new EconomyLedger();
+            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                oreQuota: 0, herbQuota: 0, oreMarketPrice: 0, herbMarketPrice: 0, upkeepPerVisit: 100));
+            var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+
+            var stallId = NextGuid();
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 50, treasuryGold: 150));
+            ledger.RecordFaucet(150, "InitialSeed");
+
+            while (sim.CurrentTick < 20) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out var stall) && stall.TreasuryGold == 50 && !stall.InArrears, $"First visit paid 100g upkeep (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(supply.UpkeepPaidCount == 1 && ledger.GetSinkTotal(SupplyService.UpkeepSinkName) == 100, "Upkeep recorded as the OutpostUpkeep sink.");
+
+            while (sim.CurrentTick < 40) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.TreasuryGold == 0 && stall.InArrears, $"Second visit: paid the last 50g and went into arrears (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(supply.UpkeepShortCount == 1 && ledger.GetSinkTotal(SupplyService.UpkeepSinkName) == 150, "A short payment records only what was paid (no debt).");
+            Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+
+            // Rations sold in arrears refill the treasury; the next visit pays in full and clears arrears
+            sim.UpdateStall(stall.WithTreasury(300));
+            ledger.RecordFaucet(300, "TestIncome");
+            while (sim.CurrentTick < 60) sim.Tick();
+            Assert(sim.TryGetTradeStall(stallId, out stall) && stall.TreasuryGold == 200 && !stall.InArrears, $"Third visit paid in full and cleared arrears (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
+            Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out disc), $"Ledger conservation holds after recovery (discrepancy {disc}).");
+
+            Debug.Log("[SupplyLoopValidator] Test 4c Passed: Upkeep is a named sink; a stall that can't pay goes into arrears and recovers.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -421,7 +469,7 @@ namespace Simpiens.Testing.Economy
             Assert(empty.Cycles == 0 && empty.Meals == 0 && empty.FirstCycleTick == -1 && empty.FirstMealTick == -1, "A new crawler starts with an empty tally.");
 
             // A sale of salvage the crawler did not harvest counts as a sale, not a cycle
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, ItemType.IronOre.BaseValue()), out _);
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Sale returned {result}.");
             Assert(agent.State.Activity.SalvageSales == 1 && agent.State.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.State.Activity}).");
@@ -462,7 +510,7 @@ namespace Simpiens.Testing.Economy
         {
             var id = NextGuid();
             var carrying = new AgentInventory();
-            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, ItemType.Ration.BaseValue()), out _);
+            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, EconomyTuning.Default.BaseValue(ItemType.Ration)), out _);
             var starving = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
             var empty = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
 

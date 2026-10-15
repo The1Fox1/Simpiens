@@ -1,9 +1,9 @@
 # Epic 9: The Outpost Economy & Public Bounties
 
-- **Status**: MECHANISM COMPLETE (Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md).
-  - **Live criterion (§1B) demonstrated:** `OutpostSupplyLoopScenario` (supply loop, 2026-10-10) and `PriceResponseScenario` (gradual demand, 2026-10-11) both pass without injection.
-  - **§3.2 (personality) landed 2026-10-11.**
-  - **Promotion to `COMPLETED` is held only by the deferred §3.3 economy model** (producer decision; see [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker)).
+- **Status**: COMPLETED (2026-10-15; Track A / Production Phase 1 Engine). Status is owned by [ROADMAP.md](../ROADMAP.md).
+  - **Live criterion (§1B) demonstrated:** `OutpostSupplyLoopScenario` (supply loop, 2026-10-10), `PriceResponseScenario` (gradual demand, 2026-10-11) and `OutpostLifecycleScenario` (trust toward the player rises at fair prices, §3.3, 2026-10-15) all pass without injection. The economy soak asserts a fair, a greedy and a generous player's pace band.
+  - **§3.2 (personality) landed 2026-10-11; §3.3 (the economy model) landed 2026-10-15:** [docs/economy-model.md](../economy-model.md).
+  - **Pending producer check:** §3.3 was decided under the producer's provisional authority, while the producer was AFK. A play session at 1× with the price sliders is still owed. If it fails, the epic goes back to `ACTIVE`.
 - **Track**: Track A: Core Simulation & Cognition Engine
 - **Preceding Epic**: Epic 8: Socio-Political Structures & The Generic Group Primitive
 - **Following Epic**: Epic 10: Sector Hazards & Dungeon Descent
@@ -413,11 +413,31 @@ Delivered in code (compiles; `SupplyLoopValidator` and `OutpostSupplyLoopScenari
 
 **Deferred:** live-loop demonstration (first run of `OutpostSupplyLoopScenario`) — owned by Epic 9 / Milestone 1 closure; personality-driven bounty acceptance — §3.2; faucet/sink retuning — §3.3 / Epic Test-2; moving the production GOAP domain out of `Testing/` — §2.8.
 
+### Review §3.3: the economy model (landed 2026-10-15)
+
+Decisions D1–D7 are in §8.4; the model is in [docs/economy-model.md](../economy-model.md).
+
+- [x] One `EconomyTuning` per session (`ISessionDefinition.Economy`): every economy number in one immutable object, applied on respawn and read by cognition from the snapshot (`EconomyTuningValidator`).
+- [x] The fairness rule (D3): a crawler judges a completed trade by its own valuation. Generous, fair and gouged purchases; generous, fair and stingy sales (`TradeFairness`, `TradeTransactionValidator`).
+- [x] The caravan buys salvage up to a quota per visit (D1, the `CaravanSalvageSales` faucet). The stall holds at most 20 of each type. The provisional export and its switch are removed.
+- [x] Outpost upkeep (D2, the `OutpostUpkeep` sink). A stall that can't pay is in arrears and buys no salvage; it is shown on the merchant view and in the chronicle.
+- [x] Food (D6):
+  - crawlers arrive with 15g;
+  - Garden regrowth is 300 ticks and yield 4 per plot;
+  - caravan restocks are partial;
+  - a starving crawler waits at the Garden plots it has seen instead of exploring away (`MentalBreakValidator`).
+- [x] Live criteria:
+  - `OutpostLifecycleScenario` asserts trust toward the player rising for ⅔ of crawlers;
+  - `BunkRestScenario` asserts "no crawler starves" again;
+  - the economy soak asserts each profile's pace band (`Scenario_EconomySoak_PaceBands`, 9/9).
+
+**Deferred:** `MemoryPack` serialization (rest of Milestone 1); drifters, bounty fairness and Guild recruitment thresholds (Milestone 2); gear wear and gear-gated scarcity (Epic 10).
+
 ---
 
-## 8. Economy observations: input for the deferred §3.3 decision
+## 8. Economy observations: the evidence behind the §3.3 economy model
 
-The producer deferred the economy design until the game is functional (2026-10-09). This section keeps the measured evidence in one place for that decision. Facts only, no recommendations. It was collected from the working plans, which were removed once their work was done (git history keeps them).
+The producer deferred the economy design until the game was functional (2026-10-09). This section keeps the measured evidence in one place: §8.1–8.3 were the input, §8.5 records each §3.3 step, and §8.4 maps the decisions. It was collected from the working plans, which were removed once their work was done (git history keeps them).
 
 ### 8.1 The Outpost Commons yard, 6 crawlers (2026-10-11)
 Six runs: 18,000 ticks (30 sim-minutes) at 10×, seeds 20261009 / 1 / 2, provisional export on and off. CSVs are in `Logs/economy-soak-seed<seed>-export<on|off>.csv`.
@@ -475,8 +495,109 @@ What the numbers say (observations, not decisions):
 - **Why:** the stall sells rations at 15g, three times their base value (5g). `TradeIntentHandler` counts any ration price above 1.5× base (7.5g) as gouging: −15 trust per purchase. A fair sale to the stall gives +10. Crawlers buy food more often than they sell salvage (hunger rises 1.5/s), so trust only goes down.
 - **Consequence:** the scenario reports trust and does not assert it (producer decision 2026-10-13). Milestone 1 promises "dyadic trust with visiting crawlers", so the economy model has to make fair trade possible at the prices it sets.
 
-### 8.4 The decisions this evidence informs (deferred)
-**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
+### 8.5 Baseline by player profile (§3.3 step 2, 2026-10-14)
+`scripts/run-economy-soak.sh`: 30 sim-minutes at 10×, 3 seeds (20261009, 1, 2), provisional export on, model as of §3.3 step 1 (behaviour-neutral refactor).
+- Each run plays one kind of player: its stall prices (ration / ore / herb) are set at tick 0 through `UpdateStallPricesCommand`.
+- Trust is `AffinityRecord.Trust` toward the player, in the range −100 to 100.
+- All 9 runs keep the ledger conserved and reach the horizon.
+- CSVs: `Logs/economy-soak-<profile>-seed<seed>-exporton.csv`.
+
+| Profile | Treasury 0 → 10 → 30 min | Rations bought | Salvage sold | Export faucet | Trust mean at 30 min | Trust up / down (of 12) | Starving episodes | Collapses |
+| :--- | :-: | --: | --: | --: | :-: | :-: | :-: | :-: |
+| **Fair** 15/20/25 | 210 → 2,674–2,955 → 7,621–8,404g | 460–508 | 317–357 | 8,466–9,420g | −87 to −95 | 0 / 11–12 | 0–1 | 14–21 |
+| **Greedy** 30/10/12 | 210 → 1,238–1,628 → 2,084–3,296g | 21–39 | 79–125 | 2,154–3,354g | +6 to +19 | 1–5 / 0–2 | 17–40 | 10–39 |
+| **Generous** 5/35/40 | 210 → 460–484 → 1,207–1,268g | 691–708 | 104–106 | 2,832–2,874g | +100 | 12 / 0 | 0 | 1–5 |
+
+What the baseline says (input for steps 3–7):
+1. **The trust rule rewards the wrong player.**
+   - The fair player is distrusted by everyone: every 15g ration counts as gouging.
+   - The greedy player is mildly trusted. Its crawlers rarely buy food (30g is above most reservation prices), and every salvage sale gives +10 whatever the stall pays.
+   - The generous player is fully trusted.
+   - Step 3 has to make the fair player trusted and the greedy one distrusted.
+2. **The treasury can't fail.** Even the generous player, who sells rations at 5g and buys salvage above the export price, ends with about 5× its starting treasury. The provisional export buys every unit above the reserve, so faucet income tracks salvage volume with no ceiling. The fair player grows about 36×. Steps 4 (quota) and 5 (upkeep) have to bound this.
+3. **Greedy prices starve crawlers:** 17–40 starving episodes and up to 39 collapses. Crawlers can't afford 30g rations, fall back on the Garden (246–294 harvested against 124–149 at fair prices) and run out of food. At fair or generous prices, starvation is 0–1.
+4. **Generous prices move the food supply to the stall:** about 700 rations bought, only 20–29 harvested.
+
+**After §3.3 step 3 (the fairness rule, 2026-10-14):** same runs, with trust from trade judged by each crawler's own valuation.
+
+| Profile | Trust mean at 30 min | Trust up / down (of 12) | Treasury at 30 min | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair 15/20/25 | +67 to +92 | 10–11 / 0–2 | 7,757–8,145g | 0–1 |
+| Greedy 30/10/12 | −3 to −8 | 0 / 2–5 (the rest stop trading, so trust stays 0) | 1,026–1,924g | 13–15 |
+| Generous 5/35/40 | +100 | 12 / 0 | 1,208–1,252g | 0 |
+
+The trust ordering is now right (generous > fair > greedy). The treasury still can't fail; the faucet and sink come next (steps 4–5).
+
+**After §3.3 step 4 (the caravan market, 2026-10-14):** the provisional export is replaced by a quota: the caravan buys 5 ore at 24g and 5 herbs at 30g per visit, a 270g ceiling. The stall holds at most 20 of each type.
+
+| Profile | Caravan salvage faucet | Treasury at 10 / 30 min | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 7,740–8,100g (≈ the 8,100g ceiling) | 2,449–2,552 / 6,988–7,333g | +66 to +90 | 0–1 |
+| Greedy | 1,704–3,672g | 1,414–2,170 / 1,672–3,482g | −3 to −39 | 14–27 |
+| Generous | 3,378–3,522g | 1,015–1,032 / 1,745–1,861g | +100 | 0–1 |
+
+- The faucet is now bounded. At fair prices the crawlers sell about as much as the quota takes, so it binds at the ceiling.
+- The treasury still grows for every profile. Upkeep (step 5) supplies the sink, and the quota and upkeep are tuned together in step 7.
+- `BunkRestScenario` reported 3 starving crawlers in the suite run (reported only until step 6).
+
+**After §3.3 step 5 (outpost upkeep, 2026-10-14):** the stall pays 100g per caravan visit as the `OutpostUpkeep` sink. A stall that can't pay goes into arrears: it buys no salvage but still sells rations.
+
+| Profile | Treasury at 10 / 20 / 30 min | Upkeep paid | Visits short | Starving episodes | Trust mean |
+| :--- | :-: | :-: | :-: | :-: | :-: |
+| Fair | 1,449–1,524 / 2,827–2,960 / 4,124–4,333g | 3,000g | 0 | 0–1 | +67 to +90 |
+| Greedy | 414–1,002 / 0–640 / 0–192g | 1,606–3,000g | 0–15 | 14–28 | −3 to −18 |
+| Generous | 5–16 / 0 / 0g | about 1,230g | 18–19 | 15–26 | +49 |
+
+What it says (input for tuning):
+1. **The stall's net is set by volume, not margin.** Net treasury per visit ≈ caravan salvage faucet − wholesale rations − upkeep − growth in crawler wallets. Crawlers spend almost all their salvage income on stall rations, so gold passes through them.
+   - At fair prices crawlers sell the most, so the faucet binds at the quota and the stall clears about 130g a visit after upkeep.
+   - Greedy prices cut what crawlers will sell, so the faucet falls: greed can't out-earn fair in a closed economy.
+   - Generous prices leave the stall paying more for salvage than the caravan pays it.
+2. **A bankrupt stall stops feeding the outpost.** In arrears, the caravan's ration restock is skipped for lack of gold. Once stock runs out, crawlers depend on the Garden and starve.
+3. **Fair still grows about 20×.** The quota is barely below what fair-priced crawlers sell; quota and upkeep are tuned together next.
+
+**After §3.3 step 6 (tuning and food, 2026-10-15):**
+- Tuning: quota 2 ore + 2 herbs per visit (108g ceiling) and upkeep 75g.
+- Food: crawlers arrive with 15g, the Garden regrows in 300 ticks, and caravan restocks are partial when the stall can't pay for a full load.
+- Behaviour: a starving crawler that has seen the Garden waits at its plots instead of exploring away.
+
+| Profile | Treasury at 10 / 20 / 30 min (lowest) | Trust up / down at 30 min (peak up) | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 431–470 / 654–706 / 838–880g (109–148) | 8–10 / 0–2 (10–11) | +21 to +47 | 0–1 |
+| Greedy | 200–290 / 394–576 / 4–482g (4–135) | 0 / 3–6 (2–3) | −12 to −17 | 0–3 |
+| Generous | 0–30 / 0 / 0g (0) | 12 / 0 (12) | +57 to +68 | 0 |
+
+- **The shape the model asks for now holds on every seed:**
+  - fair grows about 3.4–3.5× and is trusted;
+  - greedy earns less than fair and is distrusted;
+  - generous is loved but goes broke before minute 10.
+- **Partial restocks keep a broke outpost fed:** generous starvation fell from 15–32 episodes to 0.
+- **Suite ×3:**
+  - `OutpostLifecycleScenario` (0 starving, trust up for 10 of 12) and `BunkRestScenario` (starvation asserted again, 0 starving) both passed 3/3.
+  - `DeterminismScenario` diverged once (t1800, run 2 of 3).
+  - Run alone, it diverges at t100 in 5 of 5 runs both on this tree and on the step 5 commit (`c244b1c`). That is the known cognition-timing deviation (ROADMAP §1A.2 #6), not this change.
+
+**§3.3 step 7 (the pace is asserted, 2026-10-15):**
+- Tuning: upkeep 80g (was 75) and Garden plots yield 4 (was 3).
+- The soak asserts each profile's band ([economy model §7](../economy-model.md)). 9/9 runs pass:
+
+| Profile | Treasury at 10 / 20 / 30 min | Trust up at 30 min (peak) | Trust mean | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair | 355–444 / 565–653 / 546–771g | 9–10 (10–11) | +14 to +42 | 0 |
+| Greedy | 148–228 / 0–200 / 0–216g | 0 (2–4) | −3 to −17 | 0–4 |
+| Generous | 0–16 / 0 / 0g | 12 (12) | +54 to +63 | 0 |
+
+### 8.4 The decisions this evidence informed (decided 2026-10-15)
+**Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. **Decided 2026-10-15** under the producer's provisional authority (pending the producer's review):
+1. → **D1:** the caravan buys salvage up to a quota per visit.
+2. → **D2:** outpost upkeep; no crawler sink while crawler wallets stay flat; gear wear goes to Epic 10.
+3. → **D4:** crawlers' willingness to trade is the scarcity lever.
+4. → **D5:** pace bands per player profile ([economy model §7](../economy-model.md)).
+5. → **D3:** fairness judged by each crawler's own valuation; trust is asserted again.
+6. → **D6:** food by data (starting gold, Garden regrowth and yield, partial restocks) plus the starving crawler's return to the Garden.
+7. → **D7:** drifters deferred to Milestone 2.
+
+The questions as they stood:
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.
 2. **Agent sinks:**
    - (a) Free bushes yield less or regrow slower, so rations matter.
@@ -488,5 +609,5 @@ What the numbers say (observations, not decisions):
 6. **Hunger pacing and food supply:** hunger rises 1.5/s (a meal about every 40 s), so food is most of a crawler's day (§8.2 #4). The Garden (4 plots × 3 rations, regrowing 450 ticks after they empty) can't feed 12 crawlers alone, and a crawler starts with 10g against a 15g ration. Evidence (Epic MAP close-out, 2026-10-13): `OutpostLifecycleScenario` had 0 starving over 9,000 ticks in 3 of 3 runs, but `BunkRestScenario` starved one crawler in 3 of 6 close-out runs. That crawler was broke, every Garden plot it knew was empty, and starvation panic sent it exploring away from the Garden while the plots regrew. `BunkRestScenario` reports starvation instead of asserting it until this is decided.
 7. **Drifter arrival and departure** through the Road Gate (population churn brings gold in and out), deferred from Epic MAP.
 
-Once decided: write `docs/economy-model.md`, implement it, and turn the soak's agreed bands into assertions. That is the deferred half of §3.3.
+Done 2026-10-15: `docs/economy-model.md` written, implemented, and the soak's bands asserted (§8.5).
 

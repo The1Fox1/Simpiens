@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-13
+# Last reconciled: 2026-10-15
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -48,7 +48,7 @@ Epic 8: Socio-Political Structures & The Generic Group Primitive [COMPLETED]
 - Phase 3: Organic Emergence, Leadership Succession & Schisms [COMPLETED]
 - Demonstration Arena: Expanded to 10 Pens (Row 1: Epics 7 & Beta; Row 2: Epic 8 live scenarios) [COMPLETED]
 
-Epic 9: The Outpost Economy & Public Bounties [MECHANISM COMPLETE - live loop not yet demonstrated]
+Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15 - producer play session pending]
 (See docs/epics/epic-9.md for full technical specification)
 - Slice 1: Unmanaged Inventory, Currency & Item Primitives [COMPLETED]
 - Slice 2: The Trade Stall & Commercial Exchange [COMPLETED]
@@ -97,10 +97,15 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
 - Closure plan Phase 5 DONE 2026-10-11: OutpostGoapDomain, Core/Session/SwarmSpawner, Simpiens.Testing asmdef
   (UNITY_INCLUDE_TESTS), validators run as PlayMode tests (40/40), stub engine deleted.
 - Closure plan Phase 6 DONE (docs) 2026-10-11. Epic 9 NOT promoted: waits on deferred Section 3.3 (producer).
-Current Focus (Track A): the economy model (Section 3.3) on the real map, now that Epic MAP is COMPLETED
-(2026-10-13); then Epic 9 promotion. Producer decision 2026-10-13: every economic decision is folded into 3.3
-(faucet/sinks, scarcity, pace, prices and the gouging rule / trust toward the player, hunger pacing, drifters);
-list in docs/epics/epic-9.md 8.4. Later Milestone 1 scope: MemoryPack.
+- Section 3.3 economy model DONE 2026-10-15 (branch feat/economy-model; decided under the producer's provisional
+  authority while AFK, D1-D7 as recommended): docs/economy-model.md. EconomyTuning per session; fairness judged by
+  each crawler's own valuation (trust asserted again); caravan salvage quota (CaravanSalvageSales) + stall salvage
+  capacity; outpost upkeep (OutpostUpkeep) + arrears; food pacing (starting gold 15, Garden 300 ticks x4, partial
+  restocks, starving crawler waits at known plots); soak plays fair/greedy/generous and asserts each pace band (9/9).
+  Epic 9 PROMOTED to COMPLETED. PENDING PRODUCER CHECKS: a play session at 1x with the price sliders; the Epic MAP
+  visual check at 1x.
+Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1), after the producer's review of
+feat/economy-model.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
@@ -130,8 +135,10 @@ TRACK C: HARNESS, TOOLING & DIAGNOSTICS (Branching Track)
 Epic Test-1: Visual Anomaly Detection & Automated Scenarios [COMPLETED]
 - VisualAnomalyDetector, SwarmPlayModeTests, BatchPlaymodeController, rate-limited screenshot recorder.
 
-Current Focus (Track C): Epic Test-2: Outpost Economy & Bounty Contract Harness [ACTIVE]
-- Headless BountyFulfillmentValidator, TradeTransactionValidator, and zero-allocation market soak runner.
+Epic Test-2: Outpost Economy & Bounty Contract Harness [COMPLETED 2026-10-15] (no Track C epic currently ACTIVE)
+- Headless BountyFulfillmentValidator, TradeTransactionValidator, EconomyCountersValidator, EconomyTuningValidator.
+- OutpostSupplyLoopScenario (live loop); EconomySoakScenario + scripts/run-economy-soak.sh: fair/greedy/generous
+  player profiles with asserted pace bands (Scenario_EconomySoak_PaceBands).
 
 ================================================================================
 INDEPENDENT EPICS
@@ -157,4 +164,5 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
   harvests and sells, eats, sleeps; both bounties; 0 anomalies; nobody starves), DeterminismScenario (same seed, identical
   to t3,000), jitter measured in sim time, AgentActivity tally. Trust toward the player, and starvation in BunkRestScenario (3 of 6 runs: a broke crawler while the Garden regrows), reported only (Section 3.3).
   PlayMode 54/54 in 3 consecutive runs. Plan removed (git show 4e83ecd:.agents/epic_map_phase5_plan.md).
-- Deferred: drifter arrival/departure, trust and BunkRest starvation as pass criteria (economy, Section 3.3).
+- Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
+  since Section 3.3 (2026-10-15).

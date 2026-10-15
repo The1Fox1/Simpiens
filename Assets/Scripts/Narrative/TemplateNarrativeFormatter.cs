@@ -93,6 +93,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.BountyExpired:
                     return $"An unfulfilled bounty contract expired in {sector}.";
 
+                case ChronicleEventType.UpkeepUnpaid:
+                    return "The outpost couldn't pay its upkeep; the stall stops buying salvage until it can.";
+
                 case ChronicleEventType.SupplyCaravanArrived:
                     return "A supply caravan restocked the outpost stall with rations.";
 

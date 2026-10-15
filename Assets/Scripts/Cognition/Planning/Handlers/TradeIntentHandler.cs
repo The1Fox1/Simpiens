@@ -31,6 +31,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
 
             uint currentTradeTick = context.CurrentTick;
+            var economy = context.Economy ?? EconomyTuning.Default;
+            var personality = agent.State != null ? agent.State.Personality : AgentPersonality.Neutral;
 
             if (trade.ActionType == TradeActionType.BuyItem)
             {
@@ -79,34 +81,14 @@ namespace Simpiens.Cognition.Planning.Handlers
                 stall = stall.WithRationStock((ushort)(stall.RationStock - trade.Quantity));
                 context.UpdateStall(stall);
 
-                // Trade-to-Affinity valuation
-                const ushort BaseRationCost = 5;
-                sbyte deltaTrust, deltaWarmth, deltaRespect;
-                if (unitPrice > (BaseRationCost * 1.5f))
-                {
-                    // Price gouging penalty
-                    deltaTrust = -15;
-                    deltaWarmth = -10;
-                    deltaRespect = 0;
-                }
-                else if (unitPrice <= BaseRationCost)
-                {
-                    // Fair / Generous reward
-                    deltaTrust = 10;
-                    deltaWarmth = 5;
-                    deltaRespect = 5;
-                }
-                else
-                {
-                    // Moderate trade
-                    deltaTrust = 3;
-                    deltaWarmth = 2;
-                    deltaRespect = 2;
-                }
+                // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
+                float calmValue = Considerations.CalmRationValue(personality, economy);
+                var verdict = TradeFairness.ClassifyPurchase(unitPrice, calmValue, economy.TradeTrust);
+                var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
-                agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth, deltaTrust, 0, deltaRespect, currentTradeTick);
+                agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
                 if (agent.State != null) agent.State.Activity.RecordRationPurchase();
-                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, player trust delta {deltaTrust})");
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, {verdict} against a calm value of {calmValue:0.#}g, player trust delta {delta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
                     ChronicleEventType.TradeTransaction,
@@ -131,6 +113,16 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "agent does not hold the items to sell");
                 }
 
+                if (stall.InArrears)
+                {
+                    return Reject(node, trade, "stall is in arrears and buys no salvage");
+                }
+
+                if (!economy.StallHasRoom(stall, trade.ItemType, trade.Quantity))
+                {
+                    return Reject(node, trade, "stall has no room for more of this salvage");
+                }
+
                 uint totalPayout = (uint)(unitBuyPrice * trade.Quantity);
                 if (stall.TreasuryGold < totalPayout)
                 {
@@ -147,7 +139,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     if (!context.EconomyLedger.TryExecuteStallSale(stall.StallEntityId, ref stall, agent.Inventory, totalPayout))
                     {
-                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, trade.ItemType.BaseValue()), out _); // roll back
+                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
                         return Reject(node, trade, "ledger refused the sale");
                     }
                 }
@@ -162,9 +154,13 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
-                agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth: 5, deltaTrust: 10, deltaFear: 0, deltaRespect: 5, currentTradeTick);
+                // Trade-to-Affinity: the seller judges the price against its own minimum (review §3.3 D3)
+                ushort minimumPrice = Considerations.MinimumSalePrice(personality, economy, trade.ItemType);
+                var saleVerdict = TradeFairness.ClassifySale(unitBuyPrice, minimumPrice, economy.TradeTrust);
+                var saleDelta = TradeFairness.SaleDelta(saleVerdict, economy.TradeTrust);
+                agent.Memory?.RecordInteraction(context.PlayerEntityId, saleDelta.Warmth, saleDelta.Trust, 0, saleDelta.Respect, currentTradeTick);
                 if (agent.State != null) agent.State.Activity.RecordSalvageSale(currentTradeTick);
-                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g)");
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g, {saleVerdict} against a minimum of {minimumPrice}g, player trust delta {saleDelta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
                     ChronicleEventType.TradeTransaction,

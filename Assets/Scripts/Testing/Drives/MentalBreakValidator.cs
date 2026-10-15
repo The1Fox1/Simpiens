@@ -31,8 +31,54 @@ namespace Simpiens.Testing.Drives
             ValidateExhaustionCollapse();
             ValidateIntentPreemptionOnBreak();
             ValidateZeroAllocationMentalBreakCheck();
+            ValidateStarvingCrawlerWaitsAtKnownPlots();
 
-            Debug.Log("<color=green>[MentalBreakValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[MentalBreakValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        /// <summary>
+        /// Review §3.3 D6 (the Epic MAP close-out starvation): a starving, broke crawler that knows no food it can reach
+        /// right now, but has stood in the charted Garden, goes back to the plots and waits for them to regrow instead of
+        /// exploring away. One that never saw the Garden still explores.
+        /// </summary>
+        private void ValidateStarvingCrawlerWaitsAtKnownPlots()
+        {
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            var snapshot = new SharedWorldSnapshot(64, 64, 1f, 8, _ => { });
+            snapshot.SetMap(map);
+            snapshot.SetExploredSectors(ulong.MaxValue);
+
+            Vector2 plot = default;
+            for (int i = 0; i < map.ResourceNodes.Count; i++)
+            {
+                if (map.ResourceNodes[i].Item == Simpiens.Simulation.Economy.ItemType.Ration) { plot = map.ResourceNodes[i].Position; break; }
+            }
+            byte garden = map.FindSector(plot).Id;
+            var needs = new AgentNeeds(hunger: 100f, energy: 50f, social: 50f);
+
+            // Never stood in the Garden: no plot to return to
+            var stranger = new AgentMemory();
+            var strangerContext = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, snapshot, stranger, 500);
+            Assert(!Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(strangerContext, map, out _), "A crawler that never saw the Garden has no plot to return to.");
+
+            // Has stood in the Garden: the nearest plot is the waypoint, and at the plot it waits
+            var regular = new AgentMemory();
+            regular.NoteSectorVisit(garden, 100);
+            var far = new AgentContext(GUID.Generate(), new Vector2(0f, -10f), needs, 0f, snapshot, regular, 500);
+            Assert(Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(far, map, out var waypoint) && map.FindSector(waypoint).Id == garden,
+                $"A crawler that saw the Garden heads back to a plot there (waypoint {waypoint}).");
+
+            var atPlot = new AgentContext(GUID.Generate(), plot + new Vector2(0.5f, 0f), needs, 0f, snapshot, regular, 500);
+            var intent = new MentalBreakEvaluator(null).EvaluateAsync(atPlot, CancellationToken.None).GetAwaiter().GetResult();
+            Assert(intent is IdleIntent, $"At a remembered plot a starving crawler waits for regrowth (got {intent?.GetType().Name ?? "null"}).");
+
+            var uncharted = new SharedWorldSnapshot(64, 64, 1f, 8, _ => { });
+            uncharted.SetMap(map);
+            uncharted.SetExploredSectors(ulong.MaxValue & ~(1UL << garden));
+            var fogged = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, uncharted, regular, 500);
+            Assert(!Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(fogged, map, out _), "An uncharted Garden is not a plot to return to.");
+
+            Debug.Log("[PASS] Test 6: A starving crawler that has seen the Garden waits at its plots instead of exploring away.");
         }
 
         private void ValidateStarvationPanicActivation()

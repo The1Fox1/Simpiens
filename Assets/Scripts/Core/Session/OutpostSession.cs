@@ -41,13 +41,19 @@ namespace Simpiens.Core.Session
         {
         }
 
-        /// <summary>A crawler count other than the default is for measurement only (PopulationScalingProbe).</summary>
-        public OutpostSession(int crawlerCount)
+        /// <summary>
+        /// A crawler count other than the default is for measurement only (PopulationScalingProbe); so is a tuning other
+        /// than <see cref="EconomyTuning.Default"/> (the economy soak).
+        /// </summary>
+        public OutpostSession(int crawlerCount, EconomyTuning economy = null)
         {
             CrawlerCount = crawlerCount;
+            Economy = economy ?? EconomyTuning.Default;
         }
 
         public int CrawlerCount { get; }
+
+        public EconomyTuning Economy { get; }
 
         public string Id => SessionId;
         public string DisplayName => "Main Map";
@@ -69,11 +75,12 @@ namespace Simpiens.Core.Session
                 crawler.Hunger = ArrivalHunger;
             }
 
+            var economy = Economy;
             var stallId = session.OpenStall(Floor1Layout.Stall, new StallTerms(
-                rationSellPrice: 15, rationStock: 50,
-                oreBuyPrice: 20, oreStock: 10,
-                herbBuyPrice: 25, herbStock: 10,
-                treasuryGold: 250));
+                rationSellPrice: economy.StallRationPrice, rationStock: economy.StallRationStock,
+                oreBuyPrice: economy.StallOreBuyPrice, oreStock: economy.StallOreStock,
+                herbBuyPrice: economy.StallHerbBuyPrice, herbStock: economy.StallHerbStock,
+                treasuryGold: economy.StallTreasury));
 
             // Both seeded bounties go through the same escrow path as player-posted ones.
             // TargetLocation is left default so the simulation derives it from the target sector.
@@ -83,7 +90,7 @@ namespace Simpiens.Core.Session
                 targetSectorId: SeedBountySectorId,
                 targetItemType: ItemType.IronOre,
                 targetQuantity: 1,
-                rewardGold: 25,
+                rewardGold: economy.SeedGatherBountyReward,
                 issuedTick: 0,
                 expirationTick: SeedBountyDurationTicks,
                 creatorStallId: stallId,
@@ -95,7 +102,7 @@ namespace Simpiens.Core.Session
                 targetSectorId: SeedBountySectorId,
                 targetItemType: ItemType.None,
                 targetQuantity: 1,
-                rewardGold: 15,
+                rewardGold: economy.SeedScoutBountyReward,
                 issuedTick: 0,
                 expirationTick: SeedBountyDurationTicks,
                 creatorStallId: stallId,

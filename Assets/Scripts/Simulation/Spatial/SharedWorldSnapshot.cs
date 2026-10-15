@@ -50,6 +50,10 @@ namespace Simpiens.Simulation.Spatial
         public Simpiens.Simulation.World.MapDefinition Map { get; private set; }
         public void SetMap(Simpiens.Simulation.World.MapDefinition map) => Map = map;
 
+        /// <summary>The session's economy tuning (immutable; null before a session applies one: read through Considerations.Economy).</summary>
+        public Simpiens.Simulation.Economy.EconomyTuning Economy { get; private set; }
+        public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => Economy = economy;
+
         /// <summary>
         /// Fog of war (Epic MAP Phase 3): bit i set when sector i is charted, meaning a scout has reported on it or it
         /// started explored. Nobody perceives what is inside an uncharted sector. Defaults to everything charted.

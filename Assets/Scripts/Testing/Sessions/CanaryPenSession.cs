@@ -49,6 +49,7 @@ namespace Simpiens.Testing.Sessions
         public string Id => SessionId;
         public string DisplayName => "Dev Map";
         public MapDefinition Map => DevMapLayout.Definition;
+        public Simpiens.Simulation.Economy.EconomyTuning Economy => Simpiens.Simulation.Economy.EconomyTuning.Default;
 
         public void Populate(SessionBuilder session)
         {

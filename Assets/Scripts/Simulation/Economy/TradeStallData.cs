@@ -22,6 +22,12 @@ namespace Simpiens.Simulation.Economy
         public readonly uint TreasuryGold;
         public readonly float InteractionRadius;
 
+        /// <summary>
+        /// The stall couldn't pay its upkeep in full (review §3.3 D2). In arrears it buys no salvage but keeps selling
+        /// rations, until a caravan visit finds the upkeep paid in full.
+        /// </summary>
+        public readonly bool InArrears;
+
         public static readonly TradeStallData Empty = default;
 
         public bool IsActive => StallEntityId != default;
@@ -36,7 +42,8 @@ namespace Simpiens.Simulation.Economy
             ushort herbBuyPrice = 12,
             ushort herbStock = 0,
             uint treasuryGold = 500,
-            float interactionRadius = 2.5f)
+            float interactionRadius = 2.5f,
+            bool inArrears = false)
         {
             StallEntityId = stallEntityId;
             Position = position;
@@ -48,6 +55,7 @@ namespace Simpiens.Simulation.Economy
             HerbStock = herbStock;
             TreasuryGold = treasuryGold;
             InteractionRadius = interactionRadius;
+            InArrears = inArrears;
         }
 
         public TradeStallData WithStock(ushort rationStock, ushort oreStock, ushort herbStock)
@@ -57,7 +65,7 @@ namespace Simpiens.Simulation.Economy
                 RationSellPrice, rationStock,
                 OreBuyPrice, oreStock,
                 HerbBuyPrice, herbStock,
-                TreasuryGold, InteractionRadius);
+                TreasuryGold, InteractionRadius, InArrears);
         }
 
         public TradeStallData WithRationStock(ushort rationStock)
@@ -67,7 +75,7 @@ namespace Simpiens.Simulation.Economy
                 RationSellPrice, rationStock,
                 OreBuyPrice, OreStock,
                 HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius);
+                TreasuryGold, InteractionRadius, InArrears);
         }
 
         public TradeStallData WithOreStock(ushort oreStock)
@@ -77,7 +85,7 @@ namespace Simpiens.Simulation.Economy
                 RationSellPrice, RationStock,
                 OreBuyPrice, oreStock,
                 HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius);
+                TreasuryGold, InteractionRadius, InArrears);
         }
 
         public TradeStallData WithHerbStock(ushort herbStock)
@@ -87,7 +95,7 @@ namespace Simpiens.Simulation.Economy
                 RationSellPrice, RationStock,
                 OreBuyPrice, OreStock,
                 HerbBuyPrice, herbStock,
-                TreasuryGold, InteractionRadius);
+                TreasuryGold, InteractionRadius, InArrears);
         }
 
         public TradeStallData WithTreasury(uint newTreasury)
@@ -97,7 +105,7 @@ namespace Simpiens.Simulation.Economy
                 RationSellPrice, RationStock,
                 OreBuyPrice, OreStock,
                 HerbBuyPrice, HerbStock,
-                newTreasury, InteractionRadius);
+                newTreasury, InteractionRadius, InArrears);
         }
 
         public TradeStallData WithPrices(ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice)
@@ -107,7 +115,17 @@ namespace Simpiens.Simulation.Economy
                 rationSellPrice, RationStock,
                 oreBuyPrice, OreStock,
                 herbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius);
+                TreasuryGold, InteractionRadius, InArrears);
+        }
+
+        public TradeStallData WithArrears(bool inArrears)
+        {
+            return new TradeStallData(
+                StallEntityId, Position,
+                RationSellPrice, RationStock,
+                OreBuyPrice, OreStock,
+                HerbBuyPrice, HerbStock,
+                TreasuryGold, InteractionRadius, inArrears);
         }
 
         public bool Equals(TradeStallData other) => StallEntityId == other.StallEntityId;

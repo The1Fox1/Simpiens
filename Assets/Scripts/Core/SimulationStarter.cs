@@ -33,7 +33,7 @@ namespace Simpiens.Core.Bootstrapping
 
         public void Start()
         {
-            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}, provisional export {(_settings == null || _settings.ProvisionalExportEnabled ? "on" : "off")}");
+            SimLog.Bootstrap.ZLogInformation($"Simulation starting (code-first bootstrap), seed {(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed)}");
 
             // The spatial partition is sized from the loaded map (IWorldMap.Load in SwarmSpawner.Respawn), not the camera
 

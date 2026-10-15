@@ -499,3 +499,43 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - `DeterminismScenario` rests on cognition results arriving on the same tick in both runs (ROADMAP §1A.2 #6). It may flake on a slower or busier machine; the fix is fixed-latency cognition with the multiplayer work.
   - Gather was fulfilled sooner once crawlers ate what they carried (t568 → t511).
 - **Verification:** PlayMode 54/54 in 3 consecutive runs (56 with the 2 explicit runs, skipped), identical milestones (sale t233, scout t356, gather t511, third sleeper t983). `OutpostLifecycleScenario`: 12 of 12 crawlers close 2–18 cycles, 0 anomalies, 0 starving (worst stretch about 230 ticks). `DeterminismScenario`: 3 of 3 runs identical at every sample, and across two Unity processes.
+
+## Architectural Decision: Review §3.3, the Outpost Economy Model (2026-10-14 to 2026-10-15)
+- **Context:** the producer went AFK and gave the agent provisional authority to finish §3.3 on `feat/economy-model`, including the design decisions (D1–D7). Every decision is reviewable and the branch is not merged. Pending producer checks: a play session at 1×, and the Epic MAP visual check.
+- **Decisions** (D1–D7 as the plan recommended; full model in `docs/economy-model.md`):
+  - **One `EconomyTuning` per session** (`ISessionDefinition.Economy`): immutable, applied by `SwarmSpawner` through `ISimulationManager.SetEconomy`, which reconfigures the supply service and publishes the tuning on the world snapshot. Cognition reads it from there (`Considerations.Economy`), with no locks. Garden yields stay map data (`Floor1Layout`), and the hunger rate stays a drive.
+  - **D3, fairness by the crawler's own valuation** (`TradeFairness`).
+    - A purchase is judged against the buyer's calm valuation, its reservation price at hunger 50: generous at ≤ 0.6×, fair at ≤ 1×, gouged above.
+    - A sale is judged against the seller's minimum price: generous at ≥ 3×, fair at ≥ 1.5×, stingy below.
+    - Refused trades change nothing.
+  - **D1, the caravan buys salvage up to a quota per visit** (`CaravanSalvageSales`; 2 ore at 24g and 2 herbs at 30g). The stall holds at most 20 of each type. The provisional export and its switch are deleted.
+  - **D2, outpost upkeep** (`OutpostUpkeep`, 80g per visit, on the caravan's rhythm). A stall that can't pay in full pays what it has and is in arrears (`TradeStallData.InArrears`): it buys no salvage but sells rations until a visit pays in full.
+  - **D6, food:**
+    - crawlers start with 15g;
+    - the Garden regrows in 300 ticks and yields 4 per plot;
+    - caravan restocks are partial;
+    - a starving crawler that has stood in a charted food sector returns to the nearest plot and waits for regrowth (`ResourceTargeting.TryPickFoodPlotWaypoint`).
+  - **D4:** crawlers' willingness to trade is the scarcity lever. **D7:** drifters deferred to Milestone 2.
+  - **D5:** the soak plays a fair, a greedy and a generous player (one `UpdateStallPricesCommand` at tick 0) and asserts a band for each.
+- **Why:**
+  - Before: trust fell for 10 of 12 crawlers at the default prices, because the 7.5g gouging line ignored the crawler's own valuation. The treasury grew without limit, since the provisional export was unbounded. A broke crawler could starve while panicking away from a regrowing Garden.
+  - The baseline by player profile (Epic 9 §8.5) showed the old rule rewarding the greedy player and punishing the fair one.
+  - The economy is closed: crawlers spend what they earn, so the stall's net income per visit is roughly salvage faucet − upkeep − wholesale. Prices matter mainly through trade volume.
+- **Deviations from the plan** (`.agents/economy_model_plan.md`, removed; `git log --diff-filter=D -- .agents/`):
+  - Fairness uses the calm valuation and adds a stingy band for sales. The generous bands were narrowed (0.6× and 3×, not 0.75× and 2×) so that default prices read as fair rather than generous.
+  - The stall got a salvage capacity, and the caravan keeps no reserve.
+  - The quota and upkeep tuning moved ahead of the food step: crawler income, and so food, depends on the quota.
+  - D5 bands changed with the evidence. Greedy earns less than fair and is distrusted, rather than earning faster early: a closed economy can't reward greed. A bankrupt generous outpost may go hungry, so generous starvation isn't asserted.
+  - Partial restocks were added, and food got one behaviour fix, on evidence. With the data changes alone, the lifecycle still starved a broke crawler.
+- **Consequences:**
+  - Epic 9 and Epic Test-2 are `COMPLETED`, pending the producer's play session. Milestone 1 now waits only on `MemoryPack`.
+  - `OutpostLifecycleScenario` asserts trust again (⅔ of crawlers), and `BunkRestScenario` asserts "no crawler starves" again.
+  - The soak test is now `Scenario_EconomySoak_PaceBands`; `SimulationSettings.ProvisionalExportEnabled` and `SIMPIENS_PROVISIONAL_EXPORT` are gone.
+  - `DeterminismScenario` is timing-sensitive (ROADMAP §1A.2 #6, measured 2026-10-15): it diverges at t100 whenever it runs alone (cold start), on the pre-§3.3 code as well, and diverged once in 3 full-suite runs.
+- **Verification:**
+  - Each step was committed with its measured test status.
+  - Final code: PlayMode 55/55 (57 total, 2 explicit skipped) in 3 consecutive runs, with identical milestones (first cycle 235, scout 382, gather 605, third sleeper 865). The lifecycle had trust up for 10 of 12 and 0 starving.
+  - Soak 9/9 with bands, all within band:
+    - fair 546–771g, trust up 9–10, 0 starving;
+    - greedy trust up 0, mean −3 to −17;
+    - generous broke by minute 10, peak trust up 12, 0 starving.

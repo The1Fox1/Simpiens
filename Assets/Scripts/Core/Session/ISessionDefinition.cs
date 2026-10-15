@@ -18,6 +18,9 @@ namespace Simpiens.Core.Session
 
         MapDefinition Map { get; }
 
+        /// <summary>Every economy number the session runs on (review §3.3); applied by the spawner on every respawn.</summary>
+        Simpiens.Simulation.Economy.EconomyTuning Economy { get; }
+
         /// <summary>Spawns the session's content. Called once per respawn, after the map's entities exist.</summary>
         void Populate(SessionBuilder session);
     }

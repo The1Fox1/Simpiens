@@ -29,6 +29,9 @@ namespace Simpiens.Simulation.Economy
     {
         SupplyTuning Tuning { get; }
 
+        /// <summary>Replaces the tuning (the session's EconomyTuning, applied on every respawn).</summary>
+        void Configure(in SupplyTuning tuning);
+
         int DormantCount { get; }
 
         /// <summary>Cumulative number of nodes regrown since the last Reset.</summary>
@@ -37,8 +40,17 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Cumulative number of stall restocks since the last Reset.</summary>
         int RestockCount { get; }
 
-        /// <summary>Provisional salvage export visits since the last reset.</summary>
-        int ExportCount { get; }
+        /// <summary>Caravan visits that bought salvage from a stall, since the last reset.</summary>
+        int SalvageSaleVisits { get; }
+
+        /// <summary>Visits where a stall paid its upkeep in full, since the last reset.</summary>
+        int UpkeepPaidCount { get; }
+
+        /// <summary>Visits where a stall couldn't pay its upkeep in full, since the last reset.</summary>
+        int UpkeepShortCount { get; }
+
+        /// <summary>Caravan restocks that delivered fewer rations than the cap (the stall couldn't pay for all), since the last reset.</summary>
+        int PartialRestockCount { get; }
 
         /// <summary>Caravan restocks skipped because the stall couldn't pay, since the last Reset.</summary>
         int SkippedRestockCount { get; }

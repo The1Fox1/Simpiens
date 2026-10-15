@@ -35,11 +35,15 @@ namespace Simpiens.Testing.Economy
             ValidateSellSalvageAtomicTransfer();
             ValidateTradeToAffinityFairPrice();
             ValidateTradeToAffinityPriceGouging();
+            ValidateFairnessJudgedByTheCrawler();
+            ValidateSaleTrustFollowsTheSellersMinimum();
+            ValidateFullStallRefusesSalvage();
+            ValidateStallInArrearsBuysNoSalvageButSellsRations();
             ValidateGOAPCommercialPlanResolution();
             ValidateBountyItemsAreNotSold();
             ValidateStallRationsAreKnownFood();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            Debug.Log("<color=green>[TradeTransactionValidator] ALL 14 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -308,8 +312,8 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = GUID.Generate();
-            // Price gouging: 10 gold for ration (> 150% of 5)
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 10, rationStock: 50, treasuryGold: 500);
+            // Price gouging: 25 gold for a ration a neutral crawler values at 20g when calm (review §3.3 D3)
+            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 25, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Affinity_Gouged]");
@@ -318,7 +322,7 @@ namespace Simpiens.Testing.Economy
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
-            agent.Inventory.Gold = 20;
+            agent.Inventory.Gold = 30;
             registry.RegisterNode(node);
 
             var intentState = new ActiveIntentState
@@ -336,6 +340,162 @@ namespace Simpiens.Testing.Economy
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[TradeTransactionValidator] Test 7 Passed: Price gouging imposes negative Trust and Warmth penalties.");
+        }
+
+        /// <summary>
+        /// Review §3.3 D3: a crawler judges a completed trade by its own valuation. A 10g ration is generous to a neutral
+        /// crawler (calm value 20g); 15g is fair to a neutral or half-greedy one (15g) and gouges a very greedy one (10g),
+        /// who only buys at that price when hunger forces it.
+        /// </summary>
+        private void ValidateFairnessJudgedByTheCrawler()
+        {
+            var e = EconomyTuning.Default;
+            var t = e.TradeTrust;
+            var neutral = AgentPersonality.Neutral;
+            var greedy = new AgentPersonality(1f, 0f, 0f, 0f, 0f);
+            var halfGreedy = new AgentPersonality(0.5f, 0f, 0f, 0f, 0f);
+            var generous = new AgentPersonality(-1f, 0f, 0f, 0f, 0f);
+
+            Assert(Mathf.Approximately(Considerations.CalmRationValue(neutral, e), 20f), "Neutral calm ration value is 20g.");
+            Assert(Mathf.Approximately(Considerations.CalmRationValue(greedy, e), 10f), "Greedy calm ration value is 10g.");
+            Assert(Mathf.Approximately(Considerations.CalmRationValue(generous, e), 30f), "Generous calm ration value is 30g.");
+
+            Assert(TradeFairness.ClassifyPurchase(10, Considerations.CalmRationValue(neutral, e), t) == TradeVerdict.Generous, "10g is generous to a neutral crawler.");
+            Assert(TradeFairness.ClassifyPurchase(15, Considerations.CalmRationValue(neutral, e), t) == TradeVerdict.Fair, "15g (the default) is fair to a neutral crawler.");
+            Assert(TradeFairness.ClassifyPurchase(15, Considerations.CalmRationValue(halfGreedy, e), t) == TradeVerdict.Fair, "15g is fair to a half-greedy crawler.");
+            Assert(TradeFairness.ClassifyPurchase(15, Considerations.CalmRationValue(greedy, e), t) == TradeVerdict.Gouged, "15g gouges a greedy crawler.");
+            Assert(TradeFairness.ClassifyPurchase(30, Considerations.CalmRationValue(neutral, e), t) == TradeVerdict.Gouged, "30g gouges a neutral crawler.");
+            Assert(TradeFairness.ClassifyPurchase(30, Considerations.CalmRationValue(generous, e), t) == TradeVerdict.Fair, "30g is fair to a generous crawler.");
+
+            // Sales against the minimum (neutral ore 8g, greedy ore 12g)
+            Assert(TradeFairness.ClassifySale(35, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Generous, "35g for ore is generous to a neutral seller.");
+            Assert(TradeFairness.ClassifySale(20, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Fair, "20g for ore (the default) is fair to a neutral seller.");
+            Assert(TradeFairness.ClassifySale(20, Considerations.MinimumSalePrice(greedy, e, ItemType.IronOre), t) == TradeVerdict.Fair, "20g for ore is fair to a greedy seller.");
+            Assert(TradeFairness.ClassifySale(10, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Stingy, "10g for ore is stingy to a neutral seller.");
+
+            AssertDeltaEquals(TradeFairness.PurchaseDelta(TradeVerdict.Gouged, t), t.GougedPurchase, "gouged purchase");
+            AssertDeltaEquals(TradeFairness.SaleDelta(TradeVerdict.Stingy, t), t.StingySale, "stingy sale");
+
+            Debug.Log("[TradeTransactionValidator] Test 11 Passed: Fairness is judged by each crawler's own valuation.");
+        }
+
+        /// <summary>The live handler applies the sale verdict: 10g for ore is stingy to a neutral seller (-5 trust).</summary>
+        private void ValidateSaleTrustFollowsTheSellersMinimum()
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+
+            var stallId = GUID.Generate();
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 10, treasuryGold: 500));
+
+            var go = new GameObject("[Test_Affinity_StingySale]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = new Vector2(0f, 0.5f);
+            var agent = go.AddComponent<AutonomousAgent>();
+            agent.Initialize(node.Id, null, null, simManager, clock);
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            registry.RegisterNode(node);
+
+            var intentState = new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
+                CurrentWaypointIndex = 0,
+                LastSampledPosition = node.Position
+            };
+            simManager.ExecuteIntent(node, intentState);
+
+            var stingy = EconomyTuning.Default.TradeTrust.StingySale;
+            var affinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
+            Assert(agent.Inventory.Gold == EconomyTuning.InventoryDefaultGold + 10, $"The sale completed (gold {agent.Inventory.Gold}).");
+            Assert(affinity.Trust == stingy.Trust && affinity.Warmth == stingy.Warmth, $"Stingy sale: trust {affinity.Trust} (expected {stingy.Trust}), warmth {affinity.Warmth} (expected {stingy.Warmth}).");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[TradeTransactionValidator] Test 12 Passed: The live handler applies the seller's verdict.");
+        }
+
+        /// <summary>A stall at its salvage capacity refuses a sale: no gold, item or trust changes (review §3.3 step 4).</summary>
+        private void ValidateFullStallRefusesSalvage()
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+
+            var stallId = GUID.Generate();
+            ushort capacity = EconomyTuning.Default.StallSalvageCapacity;
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
+
+            var go = new GameObject("[Test_FullStall]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = new Vector2(0f, 0.5f);
+            var agent = go.AddComponent<AutonomousAgent>();
+            agent.Initialize(node.Id, null, null, simManager, clock);
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            registry.RegisterNode(node);
+            int goldBefore = agent.Inventory.Gold;
+
+            var intentState = new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
+                CurrentWaypointIndex = 0,
+                LastSampledPosition = node.Position
+            };
+            simManager.ExecuteIntent(node, intentState);
+
+            simManager.TryGetTradeStall(stallId, out var stall);
+            Assert(agent.Inventory.Gold == goldBefore && agent.Inventory.HasItem(ItemType.IronOre, 1), "A full stall paid nothing and took nothing.");
+            Assert(stall.OreStock == capacity && stall.TreasuryGold == 500, $"Stall unchanged (ore {stall.OreStock}, treasury {stall.TreasuryGold}).");
+            Assert(agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust == 0, "A refused sale changes no trust.");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
+        }
+
+        /// <summary>A stall in arrears (review §3.3 D2) refuses salvage but still sells rations.</summary>
+        private void ValidateStallInArrearsBuysNoSalvageButSellsRations()
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+
+            var stallId = GUID.Generate();
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
+
+            var go = new GameObject("[Test_Arrears]");
+            var node = go.AddComponent<NodeController>();
+            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.transform.position = new Vector2(0f, 0.5f);
+            var agent = go.AddComponent<AutonomousAgent>();
+            agent.Initialize(node.Id, null, null, simManager, clock);
+            agent.Inventory.Gold = 30;
+            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            registry.RegisterNode(node);
+
+            simManager.ExecuteIntent(node, new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
+                LastSampledPosition = node.Position
+            });
+            Assert(agent.Inventory.HasItem(ItemType.IronOre, 1) && agent.Inventory.Gold == 30, "A stall in arrears bought no salvage.");
+
+            simManager.ExecuteIntent(node, new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1),
+                LastSampledPosition = node.Position
+            });
+            simManager.TryGetTradeStall(stallId, out var stall);
+            Assert(agent.Inventory.HasItem(ItemType.Ration, 1) && agent.Inventory.Gold == 15 && stall.TreasuryGold == 15, $"A stall in arrears still sold a ration (treasury {stall.TreasuryGold}).");
+            Assert(stall.InArrears, "Selling rations doesn't clear arrears; only a full upkeep payment does.");
+
+            GameObject.DestroyImmediate(go);
+            Debug.Log("[TradeTransactionValidator] Test 14 Passed: A stall in arrears buys no salvage but sells rations.");
+        }
+
+        private void AssertDeltaEquals(in TrustDelta actual, in TrustDelta expected, string what)
+        {
+            Assert(actual.Warmth == expected.Warmth && actual.Trust == expected.Trust && actual.Respect == expected.Respect, $"Delta for a {what} matches the tuning.");
         }
 
         /// <summary>

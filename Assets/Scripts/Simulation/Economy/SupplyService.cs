@@ -14,7 +14,8 @@ namespace Simpiens.Simulation.Economy
     public class SupplyService : ISupplyService
     {
         public const string CaravanSinkName = "SupplyCaravan";
-        public const string ProvisionalExportFaucetName = "ProvisionalCaravanExport";
+        public const string SalvageSalesFaucetName = "CaravanSalvageSales";
+        public const string UpkeepSinkName = "OutpostUpkeep";
 
         private readonly struct DormantEntry
         {
@@ -28,7 +29,7 @@ namespace Simpiens.Simulation.Economy
             }
         }
 
-        private readonly SupplyTuning _tuning;
+        private SupplyTuning _tuning;
         private readonly List<DormantEntry> _dormant = new List<DormantEntry>(32);
         private readonly List<TradeStallData> _stallScratch = new List<TradeStallData>(StallScratchCapacity);
 
@@ -39,8 +40,17 @@ namespace Simpiens.Simulation.Economy
         public int RegrowthCount { get; private set; }
         public int RestockCount { get; private set; }
 
-        /// <summary>Provisional salvage export visits (see SupplyTuning.ProvisionalOreExportPrice).</summary>
-        public int ExportCount { get; private set; }
+        /// <summary>Caravan visits that bought salvage from a stall.</summary>
+        public int SalvageSaleVisits { get; private set; }
+
+        /// <summary>Visits where a stall paid its upkeep in full.</summary>
+        public int UpkeepPaidCount { get; private set; }
+
+        /// <summary>Visits where a stall couldn't pay its upkeep in full (it went or stayed in arrears).</summary>
+        public int UpkeepShortCount { get; private set; }
+
+        /// <summary>Caravan restocks that delivered fewer rations than the cap because the stall couldn't pay for all.</summary>
+        public int PartialRestockCount { get; private set; }
 
         /// <summary>Caravan restocks skipped because the stall couldn't pay.</summary>
         public int SkippedRestockCount { get; private set; }
@@ -50,6 +60,12 @@ namespace Simpiens.Simulation.Economy
         }
 
         public SupplyService(SupplyTuning tuning)
+        {
+            _tuning = tuning;
+        }
+
+        /// <summary>Replaces the tuning (the session's EconomyTuning, applied on every respawn).</summary>
+        public void Configure(in SupplyTuning tuning)
         {
             _tuning = tuning;
         }
@@ -93,7 +109,10 @@ namespace Simpiens.Simulation.Economy
             _stallScratch.Clear();
             RegrowthCount = 0;
             RestockCount = 0;
-            ExportCount = 0;
+            SalvageSaleVisits = 0;
+            UpkeepPaidCount = 0;
+            UpkeepShortCount = 0;
+            PartialRestockCount = 0;
             SkippedRestockCount = 0;
         }
 
@@ -146,22 +165,26 @@ namespace Simpiens.Simulation.Economy
 
             for (int i = 0; i < _stallScratch.Count; i++)
             {
-                var stall = ExportSurplusSalvage(_stallScratch[i], currentTick, host);
+                var stall = BuySalvage(_stallScratch[i], host);
+                stall = PayUpkeep(stall, currentTick, host);
                 if (stall.RationStock >= _tuning.RationStockCap) continue;
 
-                uint units = (uint)(_tuning.RationStockCap - stall.RationStock);
-                uint cost = units * _tuning.WholesaleRationCost;
+                uint missing = (uint)(_tuning.RationStockCap - stall.RationStock);
+                uint affordable = _tuning.WholesaleRationCost > 0 ? stall.TreasuryGold / _tuning.WholesaleRationCost : missing;
+                uint units = missing < affordable ? missing : affordable;
 
-                // The caravan only delivers what the stall can pay for in full
-                if (stall.TreasuryGold < cost)
+                // The caravan delivers what the stall can pay for (review §3.3 D6: a poor stall still gets some food)
+                if (units == 0)
                 {
                     SkippedRestockCount++;
-                    SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g < {cost}g for {units} rations (stock {stall.RationStock})");
+                    SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g can't pay {_tuning.WholesaleRationCost}g for one ration (stock {stall.RationStock})");
                     continue;
                 }
 
-                host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost).WithRationStock(_tuning.RationStockCap));
+                uint cost = units * _tuning.WholesaleRationCost;
+                host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost).WithRationStock((ushort)(stall.RationStock + units)));
                 host.EconomyLedger?.RecordSink(cost, CaravanSinkName);
+                if (units < missing) PartialRestockCount++;
                 RestockCount++;
                 SimLog.Supply.ZLogInformation($"Supply caravan restocked {SimLog.Agent(stall.StallEntityId)} with {units} rations for {cost}g (treasury now {stall.TreasuryGold - cost}g)");
 
@@ -177,25 +200,72 @@ namespace Simpiens.Simulation.Economy
         }
 
         /// <summary>
-        /// PROVISIONAL outlet (see SupplyTuning.ProvisionalOreExportPrice): the caravan buys salvage stock above the
-        /// reserve before restocking, so salvage the stall bought from crawlers can flow back out as gold.
+        /// The caravan's market (review §3.3 D1): it buys up to its quota of each salvage type from the stall's stock at
+        /// the market price, before restocking, so salvage the stall bought from crawlers flows back out as gold. The
+        /// quota bounds the faucet: at most SupplyTuning.MaxSalvagePaymentPerVisit per stall per visit.
         /// </summary>
-        private TradeStallData ExportSurplusSalvage(TradeStallData stall, uint currentTick, ISupplyHost host)
+        private TradeStallData BuySalvage(TradeStallData stall, ISupplyHost host)
         {
-            ushort reserve = _tuning.ProvisionalExportReserve;
-            uint oreUnits = _tuning.ProvisionalOreExportPrice > 0 && stall.OreStock > reserve ? (uint)(stall.OreStock - reserve) : 0u;
-            uint herbUnits = _tuning.ProvisionalHerbExportPrice > 0 && stall.HerbStock > reserve ? (uint)(stall.HerbStock - reserve) : 0u;
+            uint oreUnits = _tuning.OreMarketPrice > 0 ? System.Math.Min(stall.OreStock, (uint)_tuning.OreQuota) : 0u;
+            uint herbUnits = _tuning.HerbMarketPrice > 0 ? System.Math.Min(stall.HerbStock, (uint)_tuning.HerbQuota) : 0u;
             if (oreUnits == 0 && herbUnits == 0) return stall;
 
-            uint revenue = oreUnits * _tuning.ProvisionalOreExportPrice + herbUnits * _tuning.ProvisionalHerbExportPrice;
+            uint revenue = oreUnits * _tuning.OreMarketPrice + herbUnits * _tuning.HerbMarketPrice;
             var updated = stall
                 .WithOreStock((ushort)(stall.OreStock - oreUnits))
                 .WithHerbStock((ushort)(stall.HerbStock - herbUnits))
                 .WithTreasury(stall.TreasuryGold + revenue);
             host.UpdateStall(updated);
-            host.EconomyLedger?.RecordFaucet(revenue, ProvisionalExportFaucetName);
-            ExportCount++;
-            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (provisional export; treasury now {updated.TreasuryGold}g)");
+            host.EconomyLedger?.RecordFaucet(revenue, SalvageSalesFaucetName);
+            SalvageSaleVisits++;
+            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
+            return updated;
+        }
+
+        /// <summary>
+        /// The outpost's running cost (review §3.3 D2), paid after the caravan's salvage purchase and before the restock.
+        /// A stall that can't pay in full pays what it has (no debt) and is in arrears: it buys no salvage, but still sells
+        /// rations, until a visit finds the upkeep paid in full.
+        /// </summary>
+        private TradeStallData PayUpkeep(TradeStallData stall, uint currentTick, ISupplyHost host)
+        {
+            uint due = _tuning.UpkeepPerVisit;
+            if (due == 0)
+            {
+                if (!stall.InArrears) return stall;
+                stall = stall.WithArrears(false);
+                host.UpdateStall(stall);
+                return stall;
+            }
+
+            uint paid = stall.TreasuryGold < due ? stall.TreasuryGold : due;
+            bool inArrears = paid < due;
+            var updated = stall.WithTreasury(stall.TreasuryGold - paid).WithArrears(inArrears);
+            host.UpdateStall(updated);
+            if (paid > 0) host.EconomyLedger?.RecordSink(paid, UpkeepSinkName);
+
+            if (inArrears)
+            {
+                UpkeepShortCount++;
+                if (!stall.InArrears)
+                {
+                    SimLog.Supply.ZLogWarning($"{SimLog.Agent(stall.StallEntityId)} paid {paid}g of {due}g upkeep and is in arrears: it buys no salvage until the upkeep is paid");
+                    host.ChronicleService?.RecordEvent(new ChronicleEvent(
+                        ChronicleEventType.UpkeepUnpaid,
+                        stall.StallEntityId,
+                        default,
+                        0,
+                        currentTick,
+                        ChronicleIntensity.Notable,
+                        due - paid));
+                }
+            }
+            else
+            {
+                UpkeepPaidCount++;
+                if (stall.InArrears) SimLog.Supply.ZLogInformation($"{SimLog.Agent(stall.StallEntityId)} paid its {due}g upkeep and is out of arrears (treasury now {updated.TreasuryGold}g)");
+                else SimLog.Supply.ZLogDebug($"{SimLog.Agent(stall.StallEntityId)} paid {due}g upkeep (treasury now {updated.TreasuryGold}g)");
+            }
             return updated;
         }
 

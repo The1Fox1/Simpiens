@@ -88,8 +88,8 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<Simpiens.Simulation.Economy.ISupplyService>(resolver => new Simpiens.Simulation.Economy.SupplyService(
-                Simpiens.Simulation.Economy.SupplyTuning.For(resolver.Resolve<SimulationSettings>())), Lifetime.Singleton);
+            // The supply service's tuning comes from the session (EconomyTuning), applied by SwarmSpawner on every respawn
+            builder.Register<Simpiens.Simulation.Economy.ISupplyService>(resolver => new Simpiens.Simulation.Economy.SupplyService(), Lifetime.Singleton);
             builder.Register(resolver => Simpiens.Cognition.Contracts.IntentHandlerRegistry.CreateDefault(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<ToolExecutionRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 

@@ -110,8 +110,8 @@ namespace Simpiens.Tests.PlayMode
         }
 
         /// <summary>
-        /// Economy observation soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
-        /// Run with scripts/run-economy-soak.sh (seed / provisional-export via SIMPIENS_SEED / SIMPIENS_PROVISIONAL_EXPORT).
+        /// Economy soak (30 sim-minutes, ~3 min wall clock). Explicit: not part of the regular suite.
+        /// Run with scripts/run-economy-soak.sh (profile / seed via SIMPIENS_SOAK_PROFILE / SIMPIENS_SEED).
         /// </summary>
         /// <summary>
         /// Population scaling measurement (Epic MAP Phase 3): 12, 16 and 24 crawlers on Floor 1, cognition latency and
@@ -130,7 +130,7 @@ namespace Simpiens.Tests.PlayMode
         [Explicit("Long-running economy soak; run via scripts/run-economy-soak.sh")]
         [Category("Soak")]
         [Timeout(900000)]
-        public IEnumerator Scenario_EconomySoak_ObservationOnly()
+        public IEnumerator Scenario_EconomySoak_PaceBands()
         {
             yield return ExecuteScenario(new EconomySoakScenario());
         }
@@ -140,6 +140,12 @@ namespace Simpiens.Tests.PlayMode
         public IEnumerator Scenario_PriceResponse_DemandFallsGradually()
         {
             yield return ExecuteScenario(new PriceResponseScenario());
+        }
+
+        [Test]
+        public void Scenario_EconomyTuning_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomyTuningValidator().RunAllValidationTests();
         }
 
         [Test]

@@ -69,6 +69,7 @@ namespace Simpiens.Simulation
         private readonly IEconomyLedger _economyLedger;
         private readonly IIntentHandlerRegistry _intentRegistry;
         private readonly ISupplyService _supplyService;
+        private EconomyTuning _economy = EconomyTuning.Default;
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
         
@@ -101,6 +102,7 @@ namespace Simpiens.Simulation
         public INarrativeChronicleService ChronicleService => _chronicleService;
         public IEconomyLedger EconomyLedger => _economyLedger;
         public ISupplyService Supply => _supplyService;
+        public EconomyTuning Economy => _economy;
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public IReadOnlyList<TradeStallData> ActiveStalls => _activeStallsBuffer;
         public IReadOnlyList<BountyContract> ActiveBounties => _activeBountiesBuffer;
@@ -351,7 +353,7 @@ namespace Simpiens.Simulation
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);
             _economyLedger = economyLedger ?? new EconomyLedger();
             _intentRegistry = intentRegistry ?? IntentHandlerRegistry.CreateDefault();
-            _supplyService = supplyService ?? new SupplyService();
+            _supplyService = supplyService ?? new SupplyService(); // keeps its own tuning until a session applies one
 
             if (_clock != null)
             {
@@ -768,6 +770,17 @@ namespace Simpiens.Simulation
                         ChronicleIntensity.Trivial));
                 }
             }
+        }
+
+        /// <summary>
+        /// Applies a session's economy tuning (SwarmSpawner, on every respawn). The tuning is immutable, so the snapshot
+        /// shares it by reference with background cognition. A null tuning falls back to the default.
+        /// </summary>
+        public void SetEconomy(EconomyTuning economy)
+        {
+            _economy = economy ?? EconomyTuning.Default;
+            _supplyService?.Configure(_economy.Supply);
+            _spatialPartition?.SetEconomy(_economy);
         }
 
         public void ResetState()
