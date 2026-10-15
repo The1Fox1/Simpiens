@@ -498,6 +498,16 @@ What the baseline says (input for steps 3–7):
 3. **Greedy prices starve crawlers:** 17–40 starving episodes and up to 39 collapses. Crawlers can't afford 30g rations, fall back on the Garden (246–294 harvested against 124–149 at fair prices) and run out of food. At fair or generous prices, starvation is 0–1.
 4. **Generous prices move the food supply to the stall:** about 700 rations bought, only 20–29 harvested.
 
+**After §3.3 step 3 (the fairness rule, 2026-10-14):** same runs, with trust from trade judged by each crawler's own valuation.
+
+| Profile | Trust mean at 30 min | Trust up / down (of 12) | Treasury at 30 min | Starving episodes |
+| :--- | :-: | :-: | :-: | :-: |
+| Fair 15/20/25 | +67 to +92 | 10–11 / 0–2 | 7,757–8,145g | 0–1 |
+| Greedy 30/10/12 | −3 to −8 | 0 / 2–5 (the rest stop trading, so trust stays 0) | 1,026–1,924g | 13–15 |
+| Generous 5/35/40 | +100 | 12 / 0 | 1,208–1,252g | 0 |
+
+The trust ordering is now right (generous > fair > greedy). The treasury still can't fail; the faucet and sink come next (steps 4–5).
+
 ### 8.4 The decisions this evidence informs (deferred)
 **Producer decision 2026-10-13: every economic decision is folded into §3.3,** including the ones Epic MAP surfaced. Nothing below is decided.
 1. **Salvage outlet (faucet):** keep, retune or replace the provisional caravan export.

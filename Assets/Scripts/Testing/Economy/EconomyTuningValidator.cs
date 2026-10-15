@@ -62,13 +62,16 @@ namespace Simpiens.Testing.Economy
             Assert(off.ProvisionalOreExportPrice == 0 && off.ProvisionalHerbExportPrice == 0 && off.RationStockCap == 50 && off.RestockIntervalTicks == 600,
                 "Without the export only the export prices change.");
 
-            // Trade-to-trust (were TradeIntentHandler locals)
+            // Trade-to-trust (review §3.3 step 3 replaced the fixed 7.5g gouging line with the crawler's own valuation)
             var t = e.TradeTrust;
-            Assert(t.FairRationPrice == 5 && Mathf.Approximately(t.GougingMultiplier, 1.5f), "Gouging above 5g × 1.5.");
+            Assert(Mathf.Approximately(t.GenerousBuyRatio, 0.6f) && Mathf.Approximately(t.FairBuyRatio, 1f), "Purchases: generous at <= 60% of the calm value, fair up to 100%.");
+            Assert(Mathf.Approximately(t.GenerousSaleRatio, 3f) && Mathf.Approximately(t.FairSaleRatio, 1.5f), "Sales: generous at >= 3x the minimum, fair from 1.5x.");
             AssertDelta(t.GenerousPurchase, 5, 10, 5, "generous purchase");
-            AssertDelta(t.ModeratePurchase, 2, 3, 2, "moderate purchase");
-            AssertDelta(t.GougingPurchase, -10, -15, 0, "gouging purchase");
-            AssertDelta(t.SalvageSale, 5, 10, 5, "salvage sale");
+            AssertDelta(t.FairPurchase, 2, 3, 2, "fair purchase");
+            AssertDelta(t.GougedPurchase, -10, -15, 0, "gouged purchase");
+            AssertDelta(t.GenerousSale, 5, 10, 5, "generous sale");
+            AssertDelta(t.FairSale, 2, 3, 2, "fair sale");
+            AssertDelta(t.StingySale, -3, -5, 0, "stingy sale");
 
             Debug.Log("[PASS] Test 1: The default tuning equals every constant it replaced.");
         }
@@ -139,13 +142,13 @@ namespace Simpiens.Testing.Economy
         private void ValidateCopiesLeaveTheDefaultUntouched()
         {
             var copy = EconomyTuning.Default.WithStartingGold(99).WithStallTerms(1, 2, 3, 4).WithBaseValues(7, 7, 7)
-                .WithTradeTrust(new TradeTrustTuning(1, 1f, default, default, default, default))
+                .WithTradeTrust(new TradeTrustTuning(0.1f, 0.2f, 3f, 2f, default, default, default, default, default, default))
                 .WithSupply(new SupplyTuning(1, 1, 1));
             Assert(copy.StartingGold == 99 && copy.StallTreasury == 4 && copy.BaseValue(ItemType.IronOre) == 7 && copy.Supply.RationStockCap == 1,
                 "The copy carries its changes.");
             Assert(copy.StallRationStock == 50 && Mathf.Approximately(copy.RationReferencePrice, 20f), "Fields not changed are kept.");
             var d = EconomyTuning.Default;
-            Assert(d.StartingGold == 10 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && d.TradeTrust.FairRationPrice == 5,
+            Assert(d.StartingGold == 10 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && Mathf.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
                 "The default is never mutated by a copy.");
 
             Debug.Log("[PASS] Test 5: With… copies leave the default untouched.");

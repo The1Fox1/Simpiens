@@ -3,7 +3,7 @@
 - **Owner:** review §3.3 / ROADMAP §3A #10a. Promotes [Epic 9](../docs/epics/epic-9.md) and closes Epic Test-2's remaining scope. Status is owned by `docs/ROADMAP.md`.
 - **Written:** 2026-10-13, after Epic MAP's Definition of Done.
 - **Approved 2026-10-14 under provisional authority:** the producer, going AFK, delegated §3.3 to the agent. D1–D7 were taken as recommended (A; D5 bands set from the step 2 baseline). The producer reviews on return.
-- **Progress:** steps 1–2 done.
+- **Progress:** steps 1–3 done.
 - **Branch:** `feat/economy-model`, from `main` once the Epic MAP close-out (`feat/epic-map-closeout`) is merged.
 - **Input:** every economic decision was folded into §3.3 by the producer on 2026-10-13. The evidence and the list are in [Epic 9 §8](../docs/epics/epic-9.md) (§8.4 is the list).
 - **Goal:** one economy that holds on its own, where the player's price sliders are a real choice between profit and trust:
@@ -129,6 +129,10 @@ Each step must compile and keep PlayMode green (`scripts/run-playmode-tests.sh`,
 - **Step 1:** Garden yields and regrowth stay map data in `Floor1Layout` (`MapDefinition` is the single source of truth for nodes).
 - **Step 1:** the hunger rate stays in `AgentState` (a drive, not an economy number).
 - **Step 1:** personality trait strengths stay in `Considerations`.
+- **Step 3:** a purchase is judged against the crawler's *calm* valuation (its reservation price at hunger 50), not the hunger-raised one. The hunger-raised price already decides whether it buys, so judging against it would never find gouging.
+- **Step 3:** a sale gets a third band, *stingy*: at or above the minimum but below 1.5× (−5 trust). Without it, low salvage prices still earned trust.
+- **Step 3:** the generous bands are buy ≤ 0.6× and sale ≥ 3× (§2.3 said 0.75× and 2×). With the plan's ratios, the default prices read as generous and trust saturated just as it does for the generous player.
+- **Step 3:** the lifecycle asserts trust rising for at least ⅔ of crawlers.
 
 ## 7. Decisions
 

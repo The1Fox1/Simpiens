@@ -15,29 +15,45 @@ namespace Simpiens.Simulation.Economy
         }
     }
 
-    /// <summary>How a completed trade at the player's stall moves the crawler's affinity toward the player.</summary>
+    /// <summary>
+    /// How a completed trade at the player's stall moves the crawler's affinity toward the player (review §3.3 D3).
+    /// Ratios compare the stall's price with the crawler's own valuation (see TradeFairness).
+    /// </summary>
     public readonly struct TradeTrustTuning
     {
-        /// <summary>Ration price at or below which a purchase counts as generous.</summary>
-        public readonly ushort FairRationPrice;
+        /// <summary>A ration bought at or below this share of the buyer's calm valuation is generous.</summary>
+        public readonly float GenerousBuyRatio;
 
-        /// <summary>A ration price above FairRationPrice × this counts as gouging.</summary>
-        public readonly float GougingMultiplier;
+        /// <summary>At or below this share it is fair; above it, the buyer was gouged.</summary>
+        public readonly float FairBuyRatio;
+
+        /// <summary>Salvage bought at or above this multiple of the seller's minimum is generous.</summary>
+        public readonly float GenerousSaleRatio;
+
+        /// <summary>At or above this multiple it is fair; below it (but at the minimum or more, or it wouldn't sell), stingy.</summary>
+        public readonly float FairSaleRatio;
 
         public readonly TrustDelta GenerousPurchase;
-        public readonly TrustDelta ModeratePurchase;
-        public readonly TrustDelta GougingPurchase;
-        public readonly TrustDelta SalvageSale;
+        public readonly TrustDelta FairPurchase;
+        public readonly TrustDelta GougedPurchase;
+        public readonly TrustDelta GenerousSale;
+        public readonly TrustDelta FairSale;
+        public readonly TrustDelta StingySale;
 
-        public TradeTrustTuning(ushort fairRationPrice, float gougingMultiplier, TrustDelta generousPurchase,
-            TrustDelta moderatePurchase, TrustDelta gougingPurchase, TrustDelta salvageSale)
+        public TradeTrustTuning(float generousBuyRatio, float fairBuyRatio, float generousSaleRatio, float fairSaleRatio,
+            TrustDelta generousPurchase, TrustDelta fairPurchase, TrustDelta gougedPurchase,
+            TrustDelta generousSale, TrustDelta fairSale, TrustDelta stingySale)
         {
-            FairRationPrice = fairRationPrice;
-            GougingMultiplier = gougingMultiplier;
+            GenerousBuyRatio = generousBuyRatio;
+            FairBuyRatio = fairBuyRatio;
+            GenerousSaleRatio = generousSaleRatio;
+            FairSaleRatio = fairSaleRatio;
             GenerousPurchase = generousPurchase;
-            ModeratePurchase = moderatePurchase;
-            GougingPurchase = gougingPurchase;
-            SalvageSale = salvageSale;
+            FairPurchase = fairPurchase;
+            GougedPurchase = gougedPurchase;
+            GenerousSale = generousSale;
+            FairSale = fairSale;
+            StingySale = stingySale;
         }
     }
 
@@ -83,12 +99,16 @@ namespace Simpiens.Simulation.Economy
         public SupplyTuning Supply { get; private set; } = SupplyTuning.Default;
 
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
-            fairRationPrice: 5,
-            gougingMultiplier: 1.5f,
+            generousBuyRatio: 0.6f,
+            fairBuyRatio: 1.0f,
+            generousSaleRatio: 3.0f,
+            fairSaleRatio: 1.5f,
             generousPurchase: new TrustDelta(warmth: 5, trust: 10, respect: 5),
-            moderatePurchase: new TrustDelta(warmth: 2, trust: 3, respect: 2),
-            gougingPurchase: new TrustDelta(warmth: -10, trust: -15, respect: 0),
-            salvageSale: new TrustDelta(warmth: 5, trust: 10, respect: 5));
+            fairPurchase: new TrustDelta(warmth: 2, trust: 3, respect: 2),
+            gougedPurchase: new TrustDelta(warmth: -10, trust: -15, respect: 0),
+            generousSale: new TrustDelta(warmth: 5, trust: 10, respect: 5),
+            fairSale: new TrustDelta(warmth: 2, trust: 3, respect: 2),
+            stingySale: new TrustDelta(warmth: -3, trust: -5, respect: 0));
 
         /// <summary>Nominal per-unit value of an item type.</summary>
         public ushort BaseValue(ItemType type)

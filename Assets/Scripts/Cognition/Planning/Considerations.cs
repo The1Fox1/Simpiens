@@ -42,8 +42,18 @@ namespace Simpiens.Cognition.Planning
         public static ushort RationReservationPrice(in AgentContext context)
         {
             float urgency = 0.5f + Mathf.Clamp(context.Hunger, 0f, 100f) / 100f;
-            float price = Economy(context).RationReferencePrice * urgency * TraitFactor(context.Personality.Greed, -GreedOnPrice);
+            float price = CalmRationValue(context.Personality, Economy(context)) * urgency;
             return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
+        }
+
+        /// <summary>
+        /// What this personality thinks a ration is worth when it isn't desperate: its reservation price at hunger 50
+        /// (neutral 20g with the default tuning, greedy 10g, generous 30g). The fairness rule (review §3.3 D3) judges a
+        /// purchase against it: paying more because hunger forced it is being gouged.
+        /// </summary>
+        public static float CalmRationValue(in AgentPersonality personality, EconomyTuning economy)
+        {
+            return (economy ?? EconomyTuning.Default).RationReferencePrice * TraitFactor(personality.Greed, -GreedOnPrice);
         }
 
         /// <summary>
@@ -89,7 +99,13 @@ namespace Simpiens.Cognition.Planning
 
         public static ushort MinimumSalePrice(in AgentContext context, ItemType item)
         {
-            float price = Economy(context).BaseValue(item) * TraitFactor(context.Personality.Greed, GreedOnPrice);
+            return MinimumSalePrice(context.Personality, Economy(context), item);
+        }
+
+        /// <summary>Lowest price per unit this personality accepts for salvage (the trade handler's view, without a context).</summary>
+        public static ushort MinimumSalePrice(in AgentPersonality personality, EconomyTuning economy, ItemType item)
+        {
+            float price = (economy ?? EconomyTuning.Default).BaseValue(item) * TraitFactor(personality.Greed, GreedOnPrice);
             return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
         }
 

@@ -16,17 +16,19 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// Epic MAP Definition of Done (Phase 5): one live run of the outpost's day. The real session, the default seed,
     /// nothing injected. Over <see cref="HorizonTicks"/> (15 sim-minutes) every crawler harvests salvage and sells or
     /// delivers it, crawlers eat and sleep in bunks, they gather at the hearth, both seeded bounties are fulfilled
-    /// (the scout first, with no fog leak), the ledger balances, nobody starves, and the anomaly detector sees nothing at
-    /// all. The counts come from each crawler's <c>AgentActivity</c> tally, recorded by the simulation where each act is
-    /// applied.
-    /// Trust toward the player is reported, not asserted: it depends on the stall's prices against the gouging rule,
-    /// which the deferred economy model decides (ROADMAP §3A #10a, producer decision 2026-10-13).
+    /// (the scout first, with no fog leak), trust toward the player rises for most crawlers at the default (fair) prices,
+    /// the ledger balances, nobody starves, and the anomaly detector sees nothing at all. The counts come from each
+    /// crawler's <c>AgentActivity</c> tally, recorded by the simulation where each act is applied. Trust follows the
+    /// economy model's fairness rule: each crawler judges a price by its own valuation (review §3.3 D3).
     /// </summary>
     public class OutpostLifecycleScenario : ISimulationScenario
     {
         public const uint HorizonTicks = 9000;
         public const int RequiredSleepers = 3;
         public const int RequiredEaters = 3;
+
+        /// <summary>At fair prices, trust toward the player must rise for at least two thirds of the crawlers.</summary>
+        public const float RequiredTrustRoseShare = 2f / 3f;
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300;
         private const float WallClockTimeoutSeconds = 400f;
@@ -167,6 +169,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
         }
 
+        private int RequiredTrustRose => Mathf.CeilToInt(_crawlers.Count * RequiredTrustRoseShare);
+
         private static int Trust(AutonomousAgent agent, uint tick) =>
             agent.Memory != null ? agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, tick).Trust : 0;
 
@@ -176,7 +180,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             sb.AppendLine($"[OutpostLifecycleScenario] observed {_observedTicks} ticks; scout@{_scoutTick} (charted {_scoutCharted}), gather@{_gatherTick} (escrow released {_gatherEscrowReleased}); ledger violations {_conservationViolations}; fog leaks {_fogLeaks}");
             int trustRose = 0;
             for (int i = 0; i < _crawlers.Count; i++) if (_crawlers[i].TrustEnd > _crawlers[i].TrustStart) trustRose++;
-            sb.AppendLine($"  trust toward the player rose for {trustRose} of {_crawlers.Count} crawlers (reported only: economy model, ROADMAP §3A #10a)");
+            sb.AppendLine($"  trust toward the player rose for {trustRose} of {_crawlers.Count} crawlers (need {RequiredTrustRose})");
             for (int i = 0; i < _crawlers.Count; i++)
             {
                 var c = _crawlers[i];
@@ -193,7 +197,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_observedTicks < HorizonTicks) failures.Add($"Observation ended early at tick {_observedTicks} (wall-clock timeout).");
 
             var noCycle = new List<string>();
-            int sleepers = 0, eaters = 0, gatherings = 0;
+            int sleepers = 0, eaters = 0, gatherings = 0, trustRose = 0;
             var starved = new List<string>();
             for (int i = 0; i < _crawlers.Count; i++)
             {
@@ -203,6 +207,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 if (a.BunkSleeps > 0) sleepers++;
                 if (a.Meals > 0) eaters++;
                 gatherings += a.HearthGatherings;
+                if (c.TrustEnd > c.TrustStart) trustRose++;
                 if (c.Starved) starved.Add($"{c.Agent.name} ({c.LongestHungry} ticks)");
             }
 
@@ -213,6 +218,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (_scoutTick < 0 || !_scoutCharted) failures.Add($"The seeded Scout bounty was not fulfilled with the Deep Seam charted (completed at {_scoutTick}, charted {_scoutCharted}).");
             if (_fogLeaks > 0) failures.Add($"Crawlers knew Deep Seam landmarks before the scout reported ({_fogLeaks} observations; first {_firstFogLeak}).");
             if (_gatherTick < 0 || !_gatherEscrowReleased) failures.Add($"The seeded Gather bounty was not fulfilled and paid from escrow (completed at {_gatherTick}, escrow released {_gatherEscrowReleased}).");
+            if (trustRose < RequiredTrustRose) failures.Add($"Trust toward the player rose for only {trustRose} of {_crawlers.Count} crawlers at fair prices (need {RequiredTrustRose}).");
             if (detector.TotalAnomalies > 0) failures.Add($"{detector.TotalAnomalies} anomalies (jitter {detector.JitterCount}, stacking {detector.StackingCount}, penetration {detector.PenetrationCount}, thrashing {detector.ThrashingCount}, breach {detector.BoundaryBreachCount}).");
             if (_conservationViolations > 0) failures.Add($"Ledger conservation violated on {_conservationViolations} observations (worst {_worstDiscrepancy}g).");
             if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved (hunger >= {StarvingHunger} for {StarvingTicks} ticks): {string.Join(", ", starved)}.");
