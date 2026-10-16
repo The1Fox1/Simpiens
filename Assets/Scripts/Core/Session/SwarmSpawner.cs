@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Diagnostics;
 using Simpiens.Entities;
@@ -143,6 +144,46 @@ namespace Simpiens.Core.Session
         public void Respawn(ISessionDefinition session)
         {
             session ??= _defaultSession;
+            var map = BuildStaticWorld(session);
+
+            // 3. Session content: the economy first (stall terms, starting gold), then agents, relationships, groups,
+            // stalls, staged bounties
+            _simulationManager?.SetEconomy(session.Economy);
+            var builder = new SessionBuilder(this, map, _world, _simulationManager, _settings);
+            session.Populate(builder);
+
+            // 4. Ledger baseline: all gold present at session start enters through one named faucet, so the
+            // conservation invariant (circulating == faucets - sinks) holds from tick 0. Seeded bounties escrow
+            // afterwards, moving gold the baseline already counted.
+            uint seededGold = 0;
+            if (_simulationManager != null)
+            {
+                seededGold = builder.SeededStallGold;
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    var inv = _agents[i].State?.Inventory;
+                    if (inv != null) seededGold += (uint)inv.Gold;
+                }
+                _simulationManager.EconomyLedger?.RecordFaucet(seededGold, "InitialSeed");
+
+                var bounties = builder.SeedBounties;
+                for (int b = 0; b < bounties.Count; b++)
+                {
+                    _simulationManager.RegisterBounty(bounties[b]);
+                }
+            }
+
+            SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_agents.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
+            SessionChanged?.Invoke(session);
+        }
+
+        /// <summary>
+        /// The first half of every respawn and load: tears the old world down, resets the registries, the id allocator,
+        /// the simulation and the clock, loads the map and spawns its resource nodes, bunks and hearths in definition
+        /// order, so they get the same ids every time (same seed + same spawn order).
+        /// </summary>
+        private MapDefinition BuildStaticWorld(ISessionDefinition session)
+        {
             _current = session;
 
             CleanupExistingWorld();
@@ -191,43 +232,122 @@ namespace Simpiens.Core.Session
                 SpawnDemoCampfire(propsRoot, poi.Position, poi.Radius, out var anchorId);
                 _world.RegisterEntity(poi.Key, anchorId);
             }
+            return map;
+        }
 
-            // 3. Session content: the economy first (stall terms, starting gold), then agents, relationships, groups,
-            // stalls, staged bounties
-            _simulationManager?.SetEconomy(session.Economy);
-            var builder = new SessionBuilder(this, map, _world, _simulationManager, _settings);
-            session.Populate(builder);
-
-            // 4. Ledger baseline: all gold present at session start enters through one named faucet, so the
-            // conservation invariant (circulating == faucets - sinks) holds from tick 0. Seeded bounties escrow
-            // afterwards, moving gold the baseline already counted.
-            uint seededGold = 0;
-            if (_simulationManager != null)
+        /// <summary>
+        /// Loads a captured session (Milestone 1 save/load). Rebuilds the map exactly as a respawn does, so its entities
+        /// get the same ids; then, in place of the session's Populate, puts back every crawler and the simulation's state,
+        /// and resumes the clock and the id sequence at the saved tick. Crawlers decide afresh on the next tick (D3).
+        /// A save made with another format, for another session or seed, or on another map is refused with a reason,
+        /// and nothing changes (D4). Main thread, between ticks.
+        /// </summary>
+        public bool TryRestore(SessionSave save, out string refusal)
+        {
+            refusal = CheckRestorable(save, out var session);
+            if (refusal != null)
             {
-                seededGold = builder.SeededStallGold;
-                for (int i = 0; i < _agents.Count; i++)
-                {
-                    var inv = _agents[i].State?.Inventory;
-                    if (inv != null) seededGold += (uint)inv.Gold;
-                }
-                _simulationManager.EconomyLedger?.RecordFaucet(seededGold, "InitialSeed");
-
-                var bounties = builder.SeedBounties;
-                for (int b = 0; b < bounties.Count; b++)
-                {
-                    _simulationManager.RegisterBounty(bounties[b]);
-                }
+                SimLog.Bootstrap.ZLogWarning($"Load refused: {refusal}");
+                return false;
             }
 
-            SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_agents.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
+            BuildStaticWorld(session);
+            _simulationManager?.SetEconomy(session.Economy);
+
+            for (int i = 0; i < save.Crawlers.Length; i++) SpawnRestoredAgent(save.Crawlers[i]);
+            _simulationManager?.RestoreFrom(save);
+
+            var world = save.World;
+            if (world.EntityKeys != null && world.EntityIds != null)
+            {
+                for (int i = 0; i < world.EntityKeys.Length && i < world.EntityIds.Length; i++) _world.RegisterEntity(world.EntityKeys[i], world.EntityIds[i]);
+            }
+
+            var header = save.Header;
+            _clock?.ResumeAt(header.Tick);
+            SimLog.CurrentTick = header.Tick;
+            _idAllocator?.ResumeAt(header.EntityIdCounter);
+
+            SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' loaded at t{header.Tick}: {_agents.Count} agents, map '{session.Map.Name}', saved by build {header.BuildVersion}");
             SessionChanged?.Invoke(session);
+            return true;
+        }
+
+        /// <summary>Why a save can't be loaded into this game (player-facing text), or null when it can.</summary>
+        public string CheckRestorable(SessionSave save, out ISessionDefinition session)
+        {
+            session = null;
+            var header = save?.Header;
+            if (header == null || save.Crawlers == null || save.Economy == null || save.World == null || save.Groups == null || save.Chronicle == null)
+            {
+                return "The save is incomplete or damaged.";
+            }
+            if (header.FormatVersion != SessionSaveHeader.CurrentFormatVersion)
+            {
+                return $"The save was made by another version of the game (save format {header.FormatVersion}; this game reads format {SessionSaveHeader.CurrentFormatVersion}).";
+            }
+            session = Find(header.SessionId);
+            if (session == null)
+            {
+                return $"The save is of a session this game doesn't have ('{header.SessionId}').";
+            }
+            ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
+            if (header.Seed != seed)
+            {
+                session = null;
+                return $"The save was made with world seed {header.Seed}; this game runs seed {seed}.";
+            }
+            if (header.MapFingerprint != SaveFingerprint.Of(session.Map))
+            {
+                var map = session.Map;
+                session = null;
+                return $"The save was made on a different version of the map '{map.Name}'.";
+            }
+            return null;
+        }
+
+        private void SpawnRestoredAgent(CrawlerSave saved)
+        {
+            var record = saved.Record;
+            string name = string.IsNullOrEmpty(saved.Name) ? $"SwarmAgent_{_agents.Count}" : saved.Name;
+            var agent = SpawnAgentView(record.Position, record.Id, name, saved.Label ?? name);
+            var state = agent.State;
+            state.RestoreRecord(record);
+
+            if (saved.Inventory?.Slots != null)
+            {
+                if (state.Inventory == null || state.Inventory.Capacity != saved.Inventory.Slots.Length)
+                {
+                    state.Inventory = new AgentInventory(saved.Inventory.Slots.Length, startingGold: 0);
+                }
+                state.Inventory.RestoreFrom(saved.Inventory);
+            }
+            if (saved.Memory != null) state.Memory?.RestoreFrom(saved.Memory);
         }
 
         /// <summary>Spawns one agent view + simulation state (called by <see cref="SessionBuilder.SpawnAgent"/>).</summary>
         internal AutonomousAgent SpawnAgent(Vector2 position, string label, bool seededPersonality)
         {
-            int i = _agents.Count;
-            GameObject agentGo = new GameObject($"SwarmAgent_{i}");
+            var agent = SpawnAgentView(position, NextEntityId(), $"SwarmAgent_{_agents.Count}", label);
+
+            if (agent.State?.Inventory != null && _simulationManager != null)
+            {
+                agent.State.Inventory.Gold = _simulationManager.Economy.StartingGold; // before the ledger's InitialSeed baseline
+            }
+
+            if (seededPersonality && agent.State != null)
+            {
+                ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
+                agent.State.Personality = Simpiens.Cognition.Contracts.AgentPersonality.Generate(seed, agent.AgentId);
+                SimLog.Cognition.ZLogInformation($"{SimLog.Agent(agent.AgentId)} personality: {agent.State.Personality.ToString()}");
+            }
+            return agent;
+        }
+
+        /// <summary>A crawler's view and simulation state with a given id and names: a new crawler, or a loaded one.</summary>
+        private AutonomousAgent SpawnAgentView(Vector2 position, GUID id, string name, string label)
+        {
+            GameObject agentGo = new GameObject(name);
             if (_agentsRoot != null) agentGo.transform.SetParent(_agentsRoot.transform);
             agentGo.transform.position = position;
 
@@ -246,24 +366,12 @@ namespace Simpiens.Core.Session
 
             var controller = agentGo.AddComponent<NodeController>();
             controller.Type = EntityType.Pawn;
-            controller.Initialize(NextEntityId(), new NodeConfiguration(speed: 2f));
+            controller.Initialize(id, new NodeConfiguration(speed: 2f));
             _registry.RegisterNode(controller);
             SimLog.RegisterAgentName(controller.Id, label);
 
             var agent = agentGo.AddComponent<AutonomousAgent>();
             agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
-
-            if (agent.State?.Inventory != null && _simulationManager != null)
-            {
-                agent.State.Inventory.Gold = _simulationManager.Economy.StartingGold; // before the ledger's InitialSeed baseline
-            }
-
-            if (seededPersonality && agent.State != null)
-            {
-                ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
-                agent.State.Personality = Simpiens.Cognition.Contracts.AgentPersonality.Generate(seed, controller.Id);
-                SimLog.Cognition.ZLogInformation($"{SimLog.Agent(controller.Id)} personality: {agent.State.Personality.ToString()}");
-            }
 
             // Attach AgentView for animated visual feedback
             agentGo.AddComponent<AgentView>();

@@ -50,5 +50,8 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Writes every total, escrow and named faucet and sink into a save (Milestone 1 save/load).</summary>
         void CaptureTo(Simpiens.Simulation.Persistence.LedgerSave save);
+
+        /// <summary>Replaces every total, escrow and named faucet and sink with a save's (a load). No InitialSeed is recorded.</summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.LedgerSave save);
     }
 }

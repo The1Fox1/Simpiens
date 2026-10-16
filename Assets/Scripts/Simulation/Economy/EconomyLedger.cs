@@ -208,6 +208,37 @@ namespace Simpiens.Simulation.Economy
             save.SinkTotals = sinkTotals;
         }
 
+        public void RestoreFrom(LedgerSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            Reset();
+            var t = save.Totals;
+            TotalEscrowGold = t.Escrow;
+            TotalFaucetedGold = t.Fauceted;
+            TotalSinkedGold = t.Sunk;
+            _purchases = t.Purchases;
+            _purchaseGold = t.PurchaseGold;
+            _sales = t.Sales;
+            _saleGold = t.SaleGold;
+            _escrowLockedGold = t.EscrowLocked;
+            _escrowReleasedGold = t.EscrowReleased;
+            _escrowRefundedGold = t.EscrowRefunded;
+
+            if (save.Escrows != null)
+            {
+                for (int i = 0; i < save.Escrows.Length; i++) _bountyEscrows[save.Escrows[i].BountyId] = save.Escrows[i].Amount;
+            }
+            RestoreNamed(_faucetTotals, save.FaucetNames, save.FaucetTotals);
+            RestoreNamed(_sinkTotals, save.SinkNames, save.SinkTotals);
+        }
+
+        private static void RestoreNamed(Dictionary<string, uint> totals, string[] names, uint[] amounts)
+        {
+            if (names == null || amounts == null) return;
+            for (int i = 0; i < names.Length && i < amounts.Length; i++) totals[names[i] ?? string.Empty] = amounts[i];
+        }
+
         private static void CaptureNamed(Dictionary<string, uint> totals, out string[] names, out uint[] amounts)
         {
             names = new string[totals.Count];

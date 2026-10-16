@@ -199,6 +199,32 @@ namespace Simpiens.Narrative
             }
         }
 
+        public void RestoreFrom(ChronicleSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            lock (_syncLock)
+            {
+                _globalBuffer.Clear();
+                _sectorBuffers.Clear();
+                if (save.Events != null)
+                {
+                    for (int i = 0; i < save.Events.Length; i++) _globalBuffer.Push(save.Events[i]);
+                }
+                if (save.Sectors != null)
+                {
+                    for (int s = 0; s < save.Sectors.Length; s++)
+                    {
+                        var record = save.Sectors[s];
+                        var buffer = new CircularEventBuffer(_sectorCapacity);
+                        for (int i = 0; i < record.Count; i++) buffer.Push(save.SectorEvents[record.Start + i]);
+                        _sectorBuffers[record.SectorId] = buffer;
+                    }
+                }
+                _sequence = save.Sequence;
+            }
+        }
+
         public void CaptureTo(ChronicleSave save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));

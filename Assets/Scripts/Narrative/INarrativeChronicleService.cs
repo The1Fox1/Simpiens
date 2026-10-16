@@ -53,5 +53,8 @@ namespace Simpiens.Narrative
 
         /// <summary>Writes the event sequence, the facility's history and each sector's into a save (Milestone 1 save/load).</summary>
         void CaptureTo(Simpiens.Simulation.Persistence.ChronicleSave save);
+
+        /// <summary>Replaces the event sequence and every history with a save's (a load).</summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.ChronicleSave save);
     }
 }

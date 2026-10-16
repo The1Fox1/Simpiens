@@ -166,6 +166,18 @@ namespace Simpiens.Tests.PlayMode
             new Simpiens.Testing.Persistence.SessionCaptureValidator().RunAllValidationTests();
         }
 
+        [UnityTest]
+        public IEnumerator Scenario_SessionRestore_LoadsBackExactly()
+        {
+            yield return ExecuteScenario(new SessionRestoreScenario());
+        }
+
+        [Test]
+        public void Scenario_SessionRestore_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SessionRestoreValidator().RunAllValidationTests();
+        }
+
         [Test]
         public void Scenario_EconomySerialization_AllDomainValidationTestsPass()
         {

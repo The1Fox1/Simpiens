@@ -33,6 +33,9 @@ namespace Simpiens.Simulation.World
 
         /// <summary>Whether each sector id (0-255) is charted, as a new array (a save).</summary>
         bool[] CaptureExplored();
+
+        /// <summary>Replaces which sectors are charted with a save's (a load, after the map is loaded).</summary>
+        void RestoreExplored(bool[] explored);
     }
 
     public sealed class SectorRegistry : ISectorRegistry
@@ -85,6 +88,12 @@ namespace Simpiens.Simulation.World
         }
 
         public bool[] CaptureExplored() => (bool[])_explored.Clone();
+
+        public void RestoreExplored(bool[] explored)
+        {
+            System.Array.Clear(_explored, 0, _explored.Length);
+            if (explored != null) System.Array.Copy(explored, _explored, System.Math.Min(explored.Length, _explored.Length));
+        }
 
         public SectorDefinition GetSectorAt(Vector2 position)
         {

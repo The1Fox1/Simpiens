@@ -64,5 +64,8 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Writes the regrowth queue, in its order, and the counters into a save (Milestone 1 save/load).</summary>
         void CaptureTo(Simpiens.Simulation.Persistence.SupplySave save);
+
+        /// <summary>Replaces the regrowth queue and the counters with a save's (a load).</summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.SupplySave save);
     }
 }

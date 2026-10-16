@@ -30,5 +30,8 @@ namespace Simpiens.Simulation
         /// stays paused and a scenario's speed is untouched.
         /// </summary>
         void Reset();
+
+        /// <summary>Sets the clock to a saved tick (a load). Like a reset, the time multiplier is kept.</summary>
+        void ResumeAt(long tick);
     }
 }

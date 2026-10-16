@@ -374,6 +374,50 @@ namespace Simpiens.Cognition
             };
         }
 
+        /// <summary>
+        /// Puts a saved record back (a load). The crawler must have been spawned with the record's id. Work in progress
+        /// starts empty: no intent, plan, goal or last decision, and an idle look, so the crawler decides afresh.
+        /// </summary>
+        public void RestoreRecord(in CrawlerRecord record)
+        {
+            if (record.Id != AgentId)
+            {
+                throw new ArgumentException($"The record belongs to {record.Id}, not {AgentId}: spawn the crawler with its saved id.", nameof(record));
+            }
+
+            Position = record.Position;
+            Needs = record.Needs;
+            Frustration = record.Frustration;
+            Activity = record.Activity;
+            Membership = record.Membership;
+            Identity = record.Identity;
+            Personality = record.Personality;
+            NavigationalStalls = record.NavigationalStalls;
+            TantrumTimer = record.TantrumTimer;
+            YieldingTimer = record.YieldingTimer;
+            GossipTimer = record.GossipTimer;
+            SharingTimer = record.SharingTimer;
+            RallyTimer = record.RallyTimer;
+            DefiantTimer = record.DefiantTimer;
+            LastGossipTimestamp = record.LastGossipTimestamp;
+            LastYieldTimestamp = record.LastYieldTimestamp;
+            LastTantrumTimestamp = record.LastTantrumTimestamp;
+            LastEvaluatedDirectiveTick = record.LastEvaluatedDirectiveTick;
+            ScoutReportTick = record.ScoutReportTick;
+            ScoutReportBountyId = record.ScoutReportBountyId;
+            IsExhaustionCollapsed = record.IsExhaustionCollapsed;
+            CanBuyFoodAtStall = record.CanBuyFoodAtStall;
+
+            ActivePlan.Clear();
+            ScratchPlan.Clear();
+            ActiveGoal = null;
+            CurrentIntent = null;
+            HasActiveIntent = false;
+            IsEvaluating = false;
+            LastDecision = default;
+            _baseVisualState = AgentVisualState.Idle;
+        }
+
         public AgentContext CreateContext(SharedWorldSnapshot snapshot, uint currentTick)
         {
             var memorySnapshot = Memory != null ? Memory.GetSnapshot(currentTick) : null;

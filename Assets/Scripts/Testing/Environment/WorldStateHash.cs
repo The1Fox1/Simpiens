@@ -52,7 +52,9 @@ namespace Simpiens.Testing.Environment
         private const ulong Offset = 14695981039346656037UL;
         private const ulong Prime = 1099511628211UL;
 
-        public static WorldStateSample Capture(long tick, IReadOnlyList<AutonomousAgent> agents, ISimulationManager sim, ISectorRegistry sectors)
+        /// <param name="includeWork">False leaves out each agent's intent and goal: a load drops work in progress, so a
+        /// world before a save and after its load compare equal without them (Milestone 1 save/load, D3).</param>
+        public static WorldStateSample Capture(long tick, IReadOnlyList<AutonomousAgent> agents, ISimulationManager sim, ISectorRegistry sectors, bool includeWork = true)
         {
             var sample = new WorldStateSample { Tick = tick };
 
@@ -87,8 +89,8 @@ namespace Simpiens.Testing.Environment
                     Mix(ref h, inv.GetItemCount(ItemType.IronOre));
                     Mix(ref h, inv.GetItemCount(ItemType.MedicinalHerb));
                 }
-                string intent = s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
-                string goal = s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
+                string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
+                string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);
                 Mix(ref h, goal);
 

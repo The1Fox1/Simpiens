@@ -35,5 +35,8 @@ namespace Simpiens.Simulation
 
         /// <summary>Writes the active groups, their members and every membership into a save (Milestone 1 save/load).</summary>
         void CaptureTo(Simpiens.Simulation.Persistence.GroupSave save);
+
+        /// <summary>Replaces every group and membership with a save's (a load).</summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.GroupSave save);
     }
 }

@@ -139,6 +139,26 @@ namespace Simpiens.Simulation.Economy
             };
         }
 
+        public void RestoreFrom(SupplySave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            Reset();
+            if (save.Dormant != null)
+            {
+                // Saved in queue order (ready tick, then id): append as it is
+                for (int i = 0; i < save.Dormant.Length; i++) _dormant.Add(new DormantEntry(save.Dormant[i].ResourceId, save.Dormant[i].ReadyTick));
+            }
+            var c = save.Counters;
+            RegrowthCount = c.Regrowths;
+            RestockCount = c.Restocks;
+            SalvageSaleVisits = c.SalvageSaleVisits;
+            UpkeepPaidCount = c.UpkeepPaid;
+            UpkeepShortCount = c.UpkeepShort;
+            PartialRestockCount = c.PartialRestocks;
+            SkippedRestockCount = c.SkippedRestocks;
+        }
+
         private void TickRegrowth(uint currentTick, ISupplyHost host)
         {
             while (_dormant.Count > 0 && _dormant[0].ReadyTick <= currentTick)

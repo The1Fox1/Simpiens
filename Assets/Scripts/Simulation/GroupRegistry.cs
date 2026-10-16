@@ -409,6 +409,34 @@ namespace Simpiens.Simulation
             save.Memberships = memberships;
         }
 
+        public void RestoreFrom(GroupSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            Clear();
+            if (save.Groups != null)
+            {
+                for (int g = 0; g < save.Groups.Length; g++)
+                {
+                    var record = save.Groups[g];
+                    if (record.GroupId == 0 || record.GroupId > MaxGroups) continue;
+                    ref var slot = ref _slots[record.GroupId - 1];
+                    slot.IsActive = true;
+                    slot.Type = record.Type;
+                    slot.LeaderId = record.LeaderId;
+                    slot.AnchorPosition = record.AnchorPosition;
+                    slot.ActiveDirective = record.ActiveDirective;
+                    slot.Cohesion = record.Cohesion;
+                    for (int m = 0; m < record.MemberCount; m++) slot.Members.Add(save.Members[record.MemberStart + m]);
+                    _activeGroupCount++;
+                }
+            }
+            if (save.Memberships != null)
+            {
+                for (int i = 0; i < save.Memberships.Length; i++) _memberships[save.Memberships[i].AgentId] = save.Memberships[i].Membership;
+            }
+        }
+
         public void Clear()
         {
             for (int i = 0; i < MaxGroups; i++)

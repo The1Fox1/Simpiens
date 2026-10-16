@@ -302,6 +302,50 @@ namespace Simpiens.Cognition.Memory
             save.SectorVisits = (uint[])_sectorLastVisit.Clone();
         }
 
+        /// <summary>Replaces everything this memory holds with a save's (a load).</summary>
+        public void RestoreFrom(MemorySave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            SpatialMemoryMap.Clear();
+            _surveyNotes.Clear();
+            _blacklistedEntities.Clear();
+            _lastGossipWithAgent.Clear();
+            _affinityMap.Clear();
+
+            if (save.Sightings != null)
+            {
+                for (int i = 0; i < save.Sightings.Length; i++) SpatialMemoryMap[save.Sightings[i].EntityId] = save.Sightings[i];
+            }
+            if (save.SurveyNotes != null)
+            {
+                for (int i = 0; i < save.SurveyNotes.Length; i++)
+                {
+                    var note = save.SurveyNotes[i];
+                    _surveyNotes[note.Record.EntityId] = new SurveyNote(note.Record, note.SectorId);
+                }
+            }
+            RestoreTicks(_blacklistedEntities, save.Blacklist);
+            RestoreTicks(_lastGossipWithAgent, save.GossipCooldowns);
+            if (save.Affinities != null)
+            {
+                for (int i = 0; i < save.Affinities.Length; i++) _affinityMap[save.Affinities[i].PeerId] = save.Affinities[i].Affinity;
+            }
+
+            EventLedger.Restore(save.Events);
+            System.Array.Clear(_sectorLastVisit, 0, _sectorLastVisit.Length);
+            if (save.SectorVisits != null)
+            {
+                System.Array.Copy(save.SectorVisits, _sectorLastVisit, System.Math.Min(save.SectorVisits.Length, _sectorLastVisit.Length));
+            }
+        }
+
+        private static void RestoreTicks(Dictionary<GUID, uint> into, IdTickRecord[] records)
+        {
+            if (records == null) return;
+            for (int i = 0; i < records.Length; i++) into[records[i].Id] = records[i].Tick;
+        }
+
         private static IdTickRecord[] SortedTicks(Dictionary<GUID, uint> ticks)
         {
             var records = new IdTickRecord[ticks.Count];

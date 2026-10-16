@@ -15,6 +15,9 @@ namespace Simpiens.Simulation
 
         /// <summary>Ids handed out since the last reset: with the seed, all a save needs to continue the sequence.</summary>
         long Counter { get; }
+
+        /// <summary>Continues the sequence from a saved counter (a load).</summary>
+        void ResumeAt(long counter);
     }
 
     /// <summary>
@@ -49,6 +52,11 @@ namespace Simpiens.Simulation
         public void Reset()
         {
             _counter = 0;
+        }
+
+        public void ResumeAt(long counter)
+        {
+            _counter = counter < 0 ? 0 : counter;
         }
     }
 }

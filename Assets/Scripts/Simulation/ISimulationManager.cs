@@ -38,6 +38,12 @@ namespace Simpiens.Simulation
         /// </summary>
         void CaptureTo(Simpiens.Simulation.Persistence.SessionSave save);
 
+        /// <summary>
+        /// Puts a save's economy, world, group and chronicle blocks back (a load), after the spawner has rebuilt the map
+        /// and the crawlers. Main thread.
+        /// </summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.SessionSave save);
+
         /// <summary>The current session's number: starts at 1, and every ResetState (respawn) starts a new one.</summary>
         uint SessionEpoch { get; }
     }

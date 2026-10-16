@@ -240,3 +240,17 @@ Each step is its own commit, and the full PlayMode suite gates every step.
   - First run: 59/60. `DeterminismScenario` diverged at its last sample (t3000): 3 crawlers near the hearth were about one step (0.2 units) apart, with identical milestones. Step 2 changes no simulation behaviour, so this is the known cognition-timing deviation (ROADMAP §1A.2 #6; a full-suite divergence was also seen once in 3 runs during §3.3).
   - Rerun on the same tree: PlayMode 60/60 (62 total, 2 `[Explicit]` skipped), `DeterminismScenario` identical at every sample.
 - **Side finding (Epic 8):** `GroupRegistry.CreateGroup` with a leader who is already in another group doesn't take them off the old roster (`AddMember` does). Disbanding the old group then deletes the leader's new membership. Latent; no live code path is known to hit it.
+
+### Step 3: restore (done 2026-10-15)
+- **A restore method per owner,** the counterpart of each capture: `AgentState.RestoreRecord` (the crawler must be spawned with the record's id; work in progress starts empty and the look idle), `AgentMemory`, `EconomyLedger`, `SupplyService`, `GroupRegistry` and `NarrativeChronicleService.RestoreFrom`, `SectorRegistry.RestoreExplored`, `MemoryLedger.Restore`, `ISimulationClock.ResumeAt`, `IEntityIdAllocator.ResumeAt`.
+- **`SimulationManager.RestoreFrom`** puts back the stalls, every bounty and the ledger as saved (no escrow is locked twice, no second `InitialSeed`), then the resource nodes: a dormant node's view is hidden and unregistered until it regrows, and a node missing from the save is removed, as `DepleteResource` does. Then the regrowth queue, the fog, the tallies, groups and the chronicle.
+- **`SwarmSpawner.TryRestore`:**
+  - `Respawn`'s first half is now `BuildStaticWorld`, shared by both: reset, map, and the map's entities with their reproducible ids.
+  - Crawlers are spawned with their saved ids and names (`SpawnAgentView`, shared with `SpawnAgent`), then each restores its record, pack and memory. The simulation's blocks and the keyed entities follow; the clock and the id counter resume at the save.
+  - `CheckRestorable` refuses, before anything changes, a save with another format version, an unknown session, another seed or another map, or a missing block, in player-facing words.
+- **`ResetState` drops queued player commands:** nothing carries across a respawn or a load.
+- **`WorldStateHash.Capture(includeWork: false)`** leaves out intents and goals, which a load drops (D3).
+- **Validators:**
+  - `SessionRestoreValidator` (7 tests, headless): each owner restores its capture into a fresh owner that held something else, and the re-capture is byte-identical. Covered: a wrapped event ledger, gossip cooldowns, freed group slots, a wrapped chronicle and its sequence, the regrowth queue, the fog, a crawler record without work in progress, the clock and the id sequence.
+  - `SessionRestoreScenario` (live outpost): saved at t600 (39,444 bytes); a fresh session runs 50 ticks; five broken saves are refused with reasons and change nothing; the save loads at t600 with byte-identical re-capture and an equal world hash; after 200 ticks all 12 crawlers had decided afresh.
+- **Gate:** PlayMode 62/62 (64 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
