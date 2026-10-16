@@ -166,6 +166,14 @@ namespace Simpiens.Tests.PlayMode
             new Simpiens.Testing.Persistence.SessionCaptureValidator().RunAllValidationTests();
         }
 
+        /// <summary>The save/load Definition of Done (Milestone 1): saved mid-bounty, loaded into a fresh session, played on.</summary>
+        [UnityTest]
+        [Timeout(400000)]
+        public IEnumerator Scenario_SaveLoad_LoadedOutpostPlaysOn()
+        {
+            yield return ExecuteScenario(new SaveLoadScenario());
+        }
+
         [UnityTest]
         public IEnumerator Scenario_SessionRestore_LoadsBackExactly()
         {

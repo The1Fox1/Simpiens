@@ -267,3 +267,13 @@ Each step is its own commit, and the full PlayMode suite gates every step.
 - **Player smoke test:** after its toolchain checks, the smoke player saves the running outpost to a file in memory, loads it back, and requires the reloaded session to save to the same bytes.
   - Result: the Linux player booted the outpost (12 crawlers), saved it at t25 to an 18,603-byte file, reloaded it, and re-saved the same bytes; exit 0.
 - **Gate:** PlayMode 63/63 (65 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
+
+### Step 5: the live Definition of Done (done 2026-10-15)
+- **`SaveLoadScenario`** (outpost, nothing injected), with its own quick-save slot in a temporary folder:
+  - Plays until a crawler holds the seeded Gather bounty (at most t2000) and saves there through `SaveGameService.QuickSaveAsync`. Saving mid-bounty is a deviation from "play to t3,000": the seeded bounties finish by about t605, so a later save would have no work in progress to resume.
+  - A fresh session runs 100 ticks; then the slot is loaded. The file re-encoded from the loaded session must equal the file on disk, and the world hash (without work in progress) must match.
+  - The loaded outpost plays 3,000 more ticks, observed every frame: no anomalies, the ledger balanced, nobody starving (hunger ≥ 95 for 300 ticks), every crawler eats, at least one harvest-to-sell cycle, and the bounty claimed before the save is delivered after the load and paid from escrow.
+- **First run:** saved at t394 with the Gather bounty claimed by Crawler6; loaded at t394; played to t3394. The bounty was delivered at t647, 32 cycles completed, 12 of 12 crawlers ate, 0 ledger violations, 0 anomalies.
+- **Gate (full suite ×3):**
+  - A first attempt ran while another session was busy on the machine. Run 1: 62/64, with `DeterminismScenario` diverging at t2000 and `OutpostLifecycleScenario` finding one crawler at hunger ≥ 95 for 342 ticks. Run 2: 63/64, `DeterminismScenario` diverging at t800. Run 3 was cut off when the session ended. Both failures are the known timing sensitivity (ROADMAP §1A.2 #6, and the architecture scan's H2: cognition writes a crawler's plan while the main thread reads it; one divergence was a bunk sleeper's energy recovery). `SaveLoadScenario` passed in both runs, with identical numbers.
+  - Rerun on a quiet machine, same tree: PlayMode 64/64 in 3 of 3 runs (66 total, 2 `[Explicit]` skipped), `DeterminismScenario` identical at every sample each time, and `SaveLoadScenario` identical in all three (delivered t647, 32 cycles, 12/12 ate, 0 ledger violations, 0 anomalies).
