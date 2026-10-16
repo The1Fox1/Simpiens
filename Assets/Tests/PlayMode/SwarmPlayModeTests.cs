@@ -179,6 +179,12 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_SaveFile_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SaveFileValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_EconomySerialization_AllDomainValidationTestsPass()
         {
             new Simpiens.Testing.Economy.EconomySerializationValidator().RunAllValidationTests();

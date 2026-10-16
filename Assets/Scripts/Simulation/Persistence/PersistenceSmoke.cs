@@ -12,7 +12,9 @@ namespace Simpiens.Simulation.Persistence
     /// Player-build smoke test for the save toolchain. It is compiled only into the build made by
     /// <c>scripts/run-persistence-smoke.sh</c> (define <c>SIMPIENS_PERSISTENCE_SMOKE</c>), never into a normal build.
     /// A few seconds after boot it round-trips a save header and an array of unmanaged records through
-    /// <see cref="SaveSerializer"/>, logs the result and quits: exit code 0 on a pass, 3 on a failure.
+    /// <see cref="SaveSerializer"/>, then saves the running outpost to a file and loads it back (Milestone 1 save/load):
+    /// the reloaded session must save to the same bytes. It logs the result and quits: exit code 0 on a pass, 3 on a
+    /// failure.
     /// </summary>
     internal static class PersistenceSmoke
     {
@@ -77,6 +79,29 @@ namespace Simpiens.Simulation.Persistence
             }
 
             bytes = headerBytes.Length + itemBytes.Length;
+            return SessionRoundTrip(ref bytes);
+        }
+
+        /// <summary>The running session, through a save file and back, in a real player.</summary>
+        private static string SessionRoundTrip(ref int bytes)
+        {
+            var container = Simpiens.Core.Bootstrapping.AppBootstrapper.Instance != null ? Simpiens.Core.Bootstrapping.AppBootstrapper.Instance.Container : null;
+            if (container == null) return "no container";
+            var session = VContainer.IObjectResolverExtensions.Resolve<Simpiens.Core.Session.ISessionPersistence>(container);
+
+            byte[] file = SaveFile.Encode(session.Capture());
+            if (!SaveFile.TryDecode(file, out var save, out string refusal)) return $"the save file was refused: {refusal}";
+            if (!session.TryRestore(save, out refusal)) return $"the load was refused: {refusal}";
+
+            byte[] again = SaveFile.Encode(session.Capture());
+            if (again.Length != file.Length) return $"the reloaded session saves to {again.Length} bytes, not {file.Length}";
+            for (int i = 0; i < file.Length; i++)
+            {
+                if (again[i] != file[i]) return $"the reloaded session saves differently at byte {i}";
+            }
+
+            SimLog.Bootstrap.ZLogInformation($"PERSISTENCE SMOKE: session t{save.Header.Tick}, {save.Crawlers.Length} crawlers, saved and reloaded ({file.Length} bytes)");
+            bytes += file.Length;
             return null;
         }
     }

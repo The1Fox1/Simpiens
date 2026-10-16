@@ -254,3 +254,16 @@ Each step is its own commit, and the full PlayMode suite gates every step.
   - `SessionRestoreValidator` (7 tests, headless): each owner restores its capture into a fresh owner that held something else, and the re-capture is byte-identical. Covered: a wrapped event ledger, gossip cooldowns, freed group slots, a wrapped chronicle and its sequence, the regrowth queue, the fog, a crawler record without work in progress, the clock and the id sequence.
   - `SessionRestoreScenario` (live outpost): saved at t600 (39,444 bytes); a fresh session runs 50 ticks; five broken saves are refused with reasons and change nothing; the save loads at t600 with byte-identical re-capture and an equal world hash; after 200 ticks all 12 crawlers had decided afresh.
 - **Gate:** PlayMode 62/62 (64 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
+
+### Step 4: save files (done 2026-10-15)
+- **`SaveFile`** (`Simulation/Persistence/`): a 24-byte plain header (magic `SIMPSAVE`, the save format version, the payload's length and its FNV-1a checksum, little-endian), then the serialized `SessionSave`. A load checks the format, the length and the checksum before MemoryPack reads anything, and refuses with a player-facing reason: "not a Simpiens save", "made by another version of the game", "incomplete", "damaged".
+- **`SaveGameService`** (`Core/Session/`, behind `ISaveGameService`): the quick-save slot `Saves/quicksave.simsave` under the persistent data path.
+  - The capture and encoding happen on the calling (main) thread, between ticks. `QuickSaveAsync` writes on the thread pool (the dashboard); `QuickSave` writes before returning (on quit, in tests).
+  - Writes go through a temporary file and `File.Replace`, so a crash mid-write never leaves half a save in the slot.
+  - `QuickLoad` reads and checks the file, then hands it to `ISessionPersistence.TryRestore` (implemented by `SwarmSpawner`), which refuses another session, seed or map.
+  - Registered in `AppBootstrapper`. Tests give the service their own folder, so a test never touches the player's save.
+- **`CheckRestorable`** also refuses a save with an empty crawler entry.
+- **Validator:** `SaveFileValidator` (3 tests): a file round-trips; another format, a cut-off file, a damaged file, a text file and an empty file are each refused with a reason; the slot writes, replaces and loads its save, leaves no temporary file, and refuses an empty, refused or bad slot.
+- **Player smoke test:** after its toolchain checks, the smoke player saves the running outpost to a file in memory, loads it back, and requires the reloaded session to save to the same bytes.
+  - Result: the Linux player booted the outpost (12 crawlers), saved it at t25 to an 18,603-byte file, reloaded it, and re-saved the same bytes; exit 0.
+- **Gate:** PlayMode 63/63 (65 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.

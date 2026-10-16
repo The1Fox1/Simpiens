@@ -21,7 +21,7 @@ namespace Simpiens.Core.Session
     /// and hands the rest (agents, relationships, groups, stalls, seeded bounties) to the session definition.
     /// Every respawn starts from tick 0 with a reset id allocator, so the same seed gives the same world.
     /// </summary>
-    public class SwarmSpawner : IStartable, System.IDisposable, ISessionSwitcher
+    public class SwarmSpawner : IStartable, System.IDisposable, ISessionSwitcher, ISessionPersistence
     {
         private readonly ISpatialPartition _spatialPartition;
         private readonly IAsyncPathfinder _pathfinder;
@@ -278,7 +278,7 @@ namespace Simpiens.Core.Session
         {
             session = null;
             var header = save?.Header;
-            if (header == null || save.Crawlers == null || save.Economy == null || save.World == null || save.Groups == null || save.Chronicle == null)
+            if (header == null || save.Crawlers == null || System.Array.IndexOf(save.Crawlers, null) >= 0 || save.Economy == null || save.World == null || save.Groups == null || save.Chronicle == null)
             {
                 return "The save is incomplete or damaged.";
             }
