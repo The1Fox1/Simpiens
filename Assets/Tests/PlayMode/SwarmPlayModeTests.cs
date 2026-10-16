@@ -175,6 +175,12 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Scenario_QuickSaveButtons_SaveAndLoadFromTheHeader()
+        {
+            yield return ExecuteScenario(new QuickSaveButtonsScenario());
+        }
+
+        [UnityTest]
         public IEnumerator Scenario_SessionRestore_LoadsBackExactly()
         {
             yield return ExecuteScenario(new SessionRestoreScenario());

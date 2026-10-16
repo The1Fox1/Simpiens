@@ -393,17 +393,6 @@
     margin: 2px;
 }
 
-.btn-feed {
-    background-color: rgba(16, 185, 129, 0.2);
-    border-color: #10b981;
-    color: #34d399;
-}
-
-.btn-feed:hover {
-    background-color: #10b981;
-    color: #ffffff;
-}
-
 .btn-calm {
     background-color: rgba(56, 189, 248, 0.2);
     border-color: #38bdf8;
