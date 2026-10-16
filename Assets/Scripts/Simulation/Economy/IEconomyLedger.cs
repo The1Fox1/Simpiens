@@ -47,5 +47,8 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Clears all escrows and faucet/sink totals (session respawn).</summary>
         void Reset();
+
+        /// <summary>Writes every total, escrow and named faucet and sink into a save (Milestone 1 save/load).</summary>
+        void CaptureTo(Simpiens.Simulation.Persistence.LedgerSave save);
     }
 }

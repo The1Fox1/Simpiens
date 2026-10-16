@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
+using Simpiens.Simulation.Persistence;
 using UnityEngine;
 using ZLogger;
 
@@ -114,6 +115,28 @@ namespace Simpiens.Simulation.Economy
             UpkeepShortCount = 0;
             PartialRestockCount = 0;
             SkippedRestockCount = 0;
+        }
+
+        public void CaptureTo(SupplySave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            var dormant = new DormantRecord[_dormant.Count];
+            for (int i = 0; i < _dormant.Count; i++)
+            {
+                dormant[i] = new DormantRecord { ResourceId = _dormant[i].ResourceId, ReadyTick = _dormant[i].ReadyTick };
+            }
+            save.Dormant = dormant;
+            save.Counters = new SupplyCounters
+            {
+                Regrowths = RegrowthCount,
+                Restocks = RestockCount,
+                SalvageSaleVisits = SalvageSaleVisits,
+                UpkeepPaid = UpkeepPaidCount,
+                UpkeepShort = UpkeepShortCount,
+                PartialRestocks = PartialRestockCount,
+                SkippedRestocks = SkippedRestockCount
+            };
         }
 
         private void TickRegrowth(uint currentTick, ISupplyHost host)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition.Groups;
+using Simpiens.Simulation.Persistence;
 using UnityEngine;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -378,6 +379,34 @@ namespace Simpiens.Simulation
                     }
                 }
             }
+        }
+
+        public void CaptureTo(GroupSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            var groups = new List<GroupRecord>(_activeGroupCount);
+            var members = new List<GUID>(_memberships.Count);
+            var roster = new List<GUID>(16);
+            for (int i = 0; i < MaxGroups; i++)
+            {
+                ref readonly var slot = ref _slots[i];
+                if (!slot.IsActive) continue;
+
+                roster.Clear();
+                roster.AddRange(slot.Members);
+                roster.Sort((a, b) => a.CompareTo(b));
+                groups.Add(new GroupRecord((byte)(i + 1), slot.Type, slot.LeaderId, slot.AnchorPosition, slot.ActiveDirective, slot.Cohesion, members.Count, roster.Count));
+                members.AddRange(roster);
+            }
+            save.Groups = groups.ToArray();
+            save.Members = members.ToArray();
+
+            var memberships = new MembershipRecord[_memberships.Count];
+            int n = 0;
+            foreach (var kvp in _memberships) memberships[n++] = new MembershipRecord { AgentId = kvp.Key, Membership = kvp.Value };
+            Array.Sort(memberships, (a, b) => a.AgentId.CompareTo(b.AgentId));
+            save.Memberships = memberships;
         }
 
         public void Clear()

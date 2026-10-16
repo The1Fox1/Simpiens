@@ -37,6 +37,16 @@ namespace Simpiens.Simulation.World
             if (_ids.TryGetValue(key, out var id)) return id;
             throw new KeyNotFoundException($"Map '{Map?.Name}' has no spawned entity with key '{key}'.");
         }
+
+        /// <summary>Every keyed entity, in ordinal key order (a save).</summary>
+        public void CaptureEntities(out string[] keys, out GUID[] ids)
+        {
+            keys = new string[_ids.Count];
+            _ids.Keys.CopyTo(keys, 0);
+            System.Array.Sort(keys, System.StringComparer.Ordinal);
+            ids = new GUID[keys.Length];
+            for (int i = 0; i < keys.Length; i++) ids[i] = _ids[keys[i]];
+        }
     }
 
     /// <summary>The single entry point that builds a world from a map definition.</summary>

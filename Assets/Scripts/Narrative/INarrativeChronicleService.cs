@@ -50,5 +50,8 @@ namespace Simpiens.Narrative
         /// Clears all retained chronicle events (used for test isolation and resets).
         /// </summary>
         void Clear();
+
+        /// <summary>Writes the event sequence, the facility's history and each sector's into a save (Milestone 1 save/load).</summary>
+        void CaptureTo(Simpiens.Simulation.Persistence.ChronicleSave save);
     }
 }

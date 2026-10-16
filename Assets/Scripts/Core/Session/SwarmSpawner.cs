@@ -5,6 +5,7 @@ using Simpiens.Diagnostics;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace Simpiens.Core.Session
         private readonly IWorldRegistry _registry;
 
         private readonly List<AutonomousAgent> _agents = new List<AutonomousAgent>(1000);
+        private readonly List<string> _agentLabels = new List<string>(1000); // log labels, parallel to _agents
 
         private readonly Simpiens.Cognition.Planning.IGoapPlanner _planner;
         private readonly Simpiens.Cognition.Planning.ActionGraph _actionGraph;
@@ -146,6 +148,7 @@ namespace Simpiens.Core.Session
             CleanupExistingWorld();
 
             _agents.Clear();
+            _agentLabels.Clear();
             _registry?.Clear();
             _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn
             SimLog.ClearAgentNames();
@@ -266,7 +269,61 @@ namespace Simpiens.Core.Session
             agentGo.AddComponent<AgentView>();
 
             _agents.Add(agent);
+            _agentLabels.Add(label);
             return agent;
+        }
+
+        /// <summary>
+        /// The whole session at the current tick, as plain data (Milestone 1 save/load): the header, every crawler in
+        /// spawn order, the keyed entities and the simulation's blocks. Main thread, between ticks. Nothing background
+        /// cognition writes is read: plans and intents are not saved.
+        /// </summary>
+        public SessionSave Capture()
+        {
+            var session = Current;
+            var save = new SessionSave
+            {
+                Header = new SessionSaveHeader
+                {
+                    BuildVersion = Application.version,
+                    SessionId = session.Id,
+                    MapFingerprint = SaveFingerprint.Of(session.Map),
+                    Seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed,
+                    Tick = _clock != null ? _clock.CurrentTick : 0,
+                    EntityIdCounter = _idAllocator != null ? _idAllocator.Counter : 0
+                }
+            };
+
+            var crawlers = new List<CrawlerSave>(_agents.Count);
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var agent = _agents[i];
+                if (agent == null || agent.State == null) continue; // destroyed by a test
+
+                var state = agent.State;
+                var crawler = new CrawlerSave
+                {
+                    Name = agent.gameObject.name,
+                    Label = _agentLabels[i],
+                    Record = state.CaptureRecord(),
+                    Inventory = new InventorySave(),
+                    Memory = new MemorySave()
+                };
+                state.Inventory?.CaptureTo(crawler.Inventory);
+                state.Memory?.CaptureTo(crawler.Memory);
+                crawlers.Add(crawler);
+            }
+            save.Crawlers = crawlers.ToArray();
+
+            _simulationManager?.CaptureTo(save);
+            save.World ??= new WorldSave();
+            if (_world != null)
+            {
+                _world.CaptureEntities(out var keys, out var ids);
+                save.World.EntityKeys = keys;
+                save.World.EntityIds = ids;
+            }
+            return save;
         }
 
         private void SpawnResourceNode(GameObject root, Vector2 pos, int yield, ItemType yieldItem, uint regrowTicks, out UnityEngine.GUID resId)

@@ -217,3 +217,26 @@ Each step is its own commit, and the full PlayMode suite gates every step.
 - **Gate:** PlayMode 58/58 (60 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
 - **Finding (corrects F7's position note):** the copy of `transform.position` into `AgentState.Position` in `ManualTick` is a latent breach, not a live one. `SwarmSpawner` never injects the clock into a crawler's `NodeController`, so the view never interpolates: `SetLogicalPosition` moves the transform at once, and the transform, the logical position and `AgentState.Position` are equal at every tick boundary. That is also why `DeterminismScenario` holds. A save captures `AgentState.Position`, and a restore spawns the view there.
 
+
+### Step 2: capture (done 2026-10-15)
+- **`SessionSave`** (`Simulation/Persistence/`) holds the header, then one block per owner. Only containers are `[MemoryPackable]`; records are unmanaged structs.
+  - `CrawlerSave` per crawler, in spawn order: the view name and the log label, a `CrawlerRecord`, an `InventorySave` and a `MemorySave`.
+  - `EconomySave`: stalls, every bounty (finished ones too: the next posted bounty's id counts them) and a `LedgerSave`.
+  - `WorldSave`: resource nodes, a `SupplySave` (the regrowth queue in its order, and the counters), the fog (one flag per sector id), bunk sleeps, harvest tallies and the keyed entities.
+  - `GroupSave` and `ChronicleSave`. A sector's chronicle can reach further back than the facility's, so each sector's is saved as it is.
+- **A capture method per owner:** `AgentState.CaptureRecord`, `AgentMemory`, `EconomyLedger`, `SupplyService`, `GroupRegistry` and `NarrativeChronicleService.CaptureTo`, `SectorRegistry.CaptureExplored`, `LoadedWorld.CaptureEntities`, `IEntityIdAllocator.Counter`. `SimulationManager.CaptureTo` fills the economy, world, group and chronicle blocks; `SwarmSpawner.Capture` adds the header, the crawlers and the keyed entities.
+  - Keyed records are sorted by id and named totals by ordinal name, so the bytes don't depend on dictionary order. Histories (memory events, the chronicle) keep their own order, oldest first.
+  - `SaveFingerprint.Of(map)` hashes the map's name, bounds, walls, sectors, resource nodes and points of interest; labels and the camera frame are left out.
+- **Audit of state held only in views (F7):**
+  - Crawler names live in the view's name and the log's label: both are saved. Friendly names come from the id, so they come back with it.
+  - A dormant or used-up resource node is a hidden, unregistered view. Its plain data is saved (`IsDormant`, or absence from the saved nodes), and step 3 re-applies the visibility.
+  - Positions: see the step 1 finding.
+  - Not saved, as work in progress (D3): a crawler's look (set by intent handlers), bunk occupancy, contention, and the view façade's perception throttle (`AutonomousAgent`; perception resumes at once after a load).
+  - Views only: `AgentView`'s display dwell, `CampfireView`, the camera. The dashboard drops its selection on every respawn and reads prices from the stall.
+- **Validators:**
+  - `SessionCaptureValidator` (7 tests, headless): a memory, a ledger and a group registry filled in different orders capture the same bytes; the chronicle and the regrowth queue keep their order; a crawler record copies every saved field; the map fingerprint is stable and tells Floor 1 from the Dev Map.
+  - `SessionCaptureScenario` (live outpost, nothing injected): at t600, two captures between the same two ticks are byte-identical (39,444 bytes), every part is present, and the captured gold balances (stall + crawlers + escrow = faucets − sinks).
+- **Gate:**
+  - First run: 59/60. `DeterminismScenario` diverged at its last sample (t3000): 3 crawlers near the hearth were about one step (0.2 units) apart, with identical milestones. Step 2 changes no simulation behaviour, so this is the known cognition-timing deviation (ROADMAP §1A.2 #6; a full-suite divergence was also seen once in 3 runs during §3.3).
+  - Rerun on the same tree: PlayMode 60/60 (62 total, 2 `[Explicit]` skipped), `DeterminismScenario` identical at every sample.
+- **Side finding (Epic 8):** `GroupRegistry.CreateGroup` with a leader who is already in another group doesn't take them off the old roster (`AddMember` does). Disbanding the old group then deletes the leader's new membership. Latent; no live code path is known to hit it.

@@ -783,6 +783,64 @@ namespace Simpiens.Simulation
             _spatialPartition?.SetEconomy(_economy);
         }
 
+        /// <summary>
+        /// Writes the simulation's state into a save (Milestone 1 save/load): the stalls, every bounty and the ledger;
+        /// resource nodes, the regrowth queue, the fog and the session's tallies; groups; the chronicle. Records are
+        /// sorted by id. Active intents, the bunk claims and contention that depend on them, and the snapshot are not
+        /// saved. Main thread, between ticks.
+        /// </summary>
+        public void CaptureTo(Simpiens.Simulation.Persistence.SessionSave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            var stalls = new TradeStallData[_stalls.Count];
+            int n = 0;
+            foreach (var kvp in _stalls) stalls[n++] = kvp.Value;
+            System.Array.Sort(stalls, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));
+
+            var bounties = new BountyContract[_bounties.Count];
+            n = 0;
+            foreach (var kvp in _bounties) bounties[n++] = kvp.Value;
+            System.Array.Sort(bounties, (a, b) => a.BountyId.CompareTo(b.BountyId));
+
+            var ledger = new Simpiens.Simulation.Persistence.LedgerSave();
+            _economyLedger?.CaptureTo(ledger);
+            save.Economy = new Simpiens.Simulation.Persistence.EconomySave { Stalls = stalls, Bounties = bounties, Ledger = ledger };
+
+            var resources = new Simpiens.Simulation.Persistence.ResourceRecord[_resources.Count];
+            n = 0;
+            foreach (var kvp in _resources) resources[n++] = new Simpiens.Simulation.Persistence.ResourceRecord(kvp.Value);
+            System.Array.Sort(resources, (a, b) => a.EntityId.CompareTo(b.EntityId));
+
+            var supply = new Simpiens.Simulation.Persistence.SupplySave();
+            _supplyService?.CaptureTo(supply);
+
+            var sleeps = new Simpiens.Simulation.Persistence.IdCountRecord[_bunkSleeps.Count];
+            n = 0;
+            foreach (var kvp in _bunkSleeps) sleeps[n++] = new Simpiens.Simulation.Persistence.IdCountRecord { Id = kvp.Key, Count = kvp.Value };
+            System.Array.Sort(sleeps, (a, b) => a.Id.CompareTo(b.Id));
+
+            var harvested = new Simpiens.Simulation.Persistence.ItemCountRecord[_harvested.Count];
+            n = 0;
+            foreach (var kvp in _harvested) harvested[n++] = new Simpiens.Simulation.Persistence.ItemCountRecord(kvp.Key, kvp.Value);
+            System.Array.Sort(harvested, (a, b) => ((byte)a.Item).CompareTo((byte)b.Item));
+
+            save.World ??= new Simpiens.Simulation.Persistence.WorldSave();
+            save.World.Resources = resources;
+            save.World.Supply = supply;
+            save.World.ExploredSectors = _sectors?.CaptureExplored();
+            save.World.BunkSleeps = sleeps;
+            save.World.Harvested = harvested;
+
+            var groups = new Simpiens.Simulation.Persistence.GroupSave();
+            _groupRegistry?.CaptureTo(groups);
+            save.Groups = groups;
+
+            var chronicle = new Simpiens.Simulation.Persistence.ChronicleSave();
+            _chronicleService?.CaptureTo(chronicle);
+            save.Chronicle = chronicle;
+        }
+
         public void ResetState()
         {
             SessionEpoch++;

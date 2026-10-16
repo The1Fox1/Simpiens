@@ -7,6 +7,7 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Planning;
 using Simpiens.Entities;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Diagnostics;
 using UnityEngine;
@@ -337,6 +338,40 @@ namespace Simpiens.Cognition
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// This crawler's plain state for a save (Milestone 1 save/load). The current intent, plan, goal, last decision
+        /// and look are work in progress and are left out: the crawler decides afresh after a load.
+        /// </summary>
+        public CrawlerRecord CaptureRecord()
+        {
+            return new CrawlerRecord
+            {
+                Id = AgentId,
+                Position = Position,
+                Needs = Needs,
+                Frustration = Frustration,
+                Activity = Activity,
+                Membership = Membership,
+                Identity = Identity,
+                Personality = Personality,
+                NavigationalStalls = NavigationalStalls,
+                TantrumTimer = TantrumTimer,
+                YieldingTimer = YieldingTimer,
+                GossipTimer = GossipTimer,
+                SharingTimer = SharingTimer,
+                RallyTimer = RallyTimer,
+                DefiantTimer = DefiantTimer,
+                LastGossipTimestamp = LastGossipTimestamp,
+                LastYieldTimestamp = LastYieldTimestamp,
+                LastTantrumTimestamp = LastTantrumTimestamp,
+                LastEvaluatedDirectiveTick = LastEvaluatedDirectiveTick,
+                ScoutReportTick = ScoutReportTick,
+                ScoutReportBountyId = ScoutReportBountyId,
+                IsExhaustionCollapsed = IsExhaustionCollapsed,
+                CanBuyFoodAtStall = CanBuyFoodAtStall
+            };
         }
 
         public AgentContext CreateContext(SharedWorldSnapshot snapshot, uint currentTick)

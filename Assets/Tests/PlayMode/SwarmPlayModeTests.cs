@@ -154,6 +154,18 @@ namespace Simpiens.Tests.PlayMode
             new Simpiens.Testing.Persistence.PersistenceToolchainValidator().RunAllValidationTests();
         }
 
+        [UnityTest]
+        public IEnumerator Scenario_SessionCapture_SameStateSameBytes()
+        {
+            yield return ExecuteScenario(new SessionCaptureScenario());
+        }
+
+        [Test]
+        public void Scenario_SessionCapture_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SessionCaptureValidator().RunAllValidationTests();
+        }
+
         [Test]
         public void Scenario_EconomySerialization_AllDomainValidationTestsPass()
         {

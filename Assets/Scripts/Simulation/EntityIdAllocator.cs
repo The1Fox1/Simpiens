@@ -12,6 +12,9 @@ namespace Simpiens.Simulation
 
         /// <summary>Restart the sequence (call when the world is rebuilt so a respawn reproduces the same ids).</summary>
         void Reset();
+
+        /// <summary>Ids handed out since the last reset: with the seed, all a save needs to continue the sequence.</summary>
+        long Counter { get; }
     }
 
     /// <summary>
@@ -22,6 +25,8 @@ namespace Simpiens.Simulation
     {
         private readonly ulong _seed;
         private long _counter;
+
+        public long Counter => _counter;
 
         public EntityIdAllocator(SimulationSettings settings = null)
         {

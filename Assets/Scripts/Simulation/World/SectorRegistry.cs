@@ -30,6 +30,9 @@ namespace Simpiens.Simulation.World
 
         /// <summary>Replaces the sector table with the map's and resets exploration to each sector's default.</summary>
         void Load(MapDefinition map);
+
+        /// <summary>Whether each sector id (0-255) is charted, as a new array (a save).</summary>
+        bool[] CaptureExplored();
     }
 
     public sealed class SectorRegistry : ISectorRegistry
@@ -80,6 +83,8 @@ namespace Simpiens.Simulation.World
                 _explored[sectors[i].Id] = sectors[i].StartsExplored;
             }
         }
+
+        public bool[] CaptureExplored() => (bool[])_explored.Clone();
 
         public SectorDefinition GetSectorAt(Vector2 position)
         {

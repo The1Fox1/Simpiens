@@ -24,6 +24,18 @@ namespace Simpiens.Cognition.Memory
         }
         
         public int Count => _count;
+        public int Capacity => _events.Length;
+
+        /// <summary>The events oldest first, as a new array (a save).</summary>
+        public MemoryEvent[] ToArray()
+        {
+            var events = new MemoryEvent[_count];
+            for (int i = 0; i < _count; i++)
+            {
+                events[i] = _events[(_head - _count + i + _events.Length) % _events.Length];
+            }
+            return events;
+        }
 
         public MemoryEvent GetEvent(int index)
         {

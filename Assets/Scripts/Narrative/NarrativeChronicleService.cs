@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Simpiens.Simulation.Persistence;
 using UnityEngine;
 using VContainer;
 
@@ -56,6 +57,17 @@ namespace Simpiens.Narrative
         {
             int index = (_head - 1 - offsetFromHead + _capacity * 2) % _capacity;
             return _buffer[index];
+        }
+
+        /// <summary>The events oldest first, as a new array (a save).</summary>
+        public ChronicleEvent[] ToArray()
+        {
+            var events = new ChronicleEvent[_count];
+            for (int i = 0; i < _count; i++)
+            {
+                events[i] = GetAt(_count - 1 - i);
+            }
+            return events;
         }
     }
 
@@ -184,6 +196,35 @@ namespace Simpiens.Narrative
                 {
                     buf.Clear();
                 }
+            }
+        }
+
+        public void CaptureTo(ChronicleSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            lock (_syncLock)
+            {
+                save.Sequence = _sequence;
+                save.Events = _globalBuffer.ToArray();
+
+                var sectorIds = new List<int>(_sectorBuffers.Count);
+                foreach (var kvp in _sectorBuffers)
+                {
+                    if (kvp.Value.Count > 0) sectorIds.Add(kvp.Key);
+                }
+                sectorIds.Sort();
+
+                var sectors = new ChronicleSectorRecord[sectorIds.Count];
+                var sectorEvents = new List<ChronicleEvent>(sectorIds.Count * _sectorCapacity);
+                for (int i = 0; i < sectorIds.Count; i++)
+                {
+                    var events = _sectorBuffers[sectorIds[i]].ToArray();
+                    sectors[i] = new ChronicleSectorRecord { SectorId = sectorIds[i], Start = sectorEvents.Count, Count = events.Length };
+                    sectorEvents.AddRange(events);
+                }
+                save.Sectors = sectors;
+                save.SectorEvents = sectorEvents.ToArray();
             }
         }
     }

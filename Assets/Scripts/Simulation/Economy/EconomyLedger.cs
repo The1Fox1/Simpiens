@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Diagnostics;
 using UnityEngine;
 using ZLogger;
@@ -173,6 +174,48 @@ namespace Simpiens.Simulation.Economy
             _sinkTotals.Clear();
             _purchases = _purchaseGold = _sales = _saleGold = 0;
             _escrowLockedGold = _escrowReleasedGold = _escrowRefundedGold = 0;
+        }
+
+        public void CaptureTo(LedgerSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            save.Totals = new LedgerTotals
+            {
+                Escrow = TotalEscrowGold,
+                Fauceted = TotalFaucetedGold,
+                Sunk = TotalSinkedGold,
+                Purchases = _purchases,
+                PurchaseGold = _purchaseGold,
+                Sales = _sales,
+                SaleGold = _saleGold,
+                EscrowLocked = _escrowLockedGold,
+                EscrowReleased = _escrowReleasedGold,
+                EscrowRefunded = _escrowRefundedGold
+            };
+
+            var escrows = new EscrowRecord[_bountyEscrows.Count];
+            int n = 0;
+            foreach (var kvp in _bountyEscrows) escrows[n++] = new EscrowRecord(kvp.Key, kvp.Value);
+            Array.Sort(escrows, (a, b) => a.BountyId.CompareTo(b.BountyId));
+            save.Escrows = escrows;
+
+            CaptureNamed(_faucetTotals, out var faucetNames, out var faucetTotals);
+            save.FaucetNames = faucetNames;
+            save.FaucetTotals = faucetTotals;
+            CaptureNamed(_sinkTotals, out var sinkNames, out var sinkTotals);
+            save.SinkNames = sinkNames;
+            save.SinkTotals = sinkTotals;
+        }
+
+        private static void CaptureNamed(Dictionary<string, uint> totals, out string[] names, out uint[] amounts)
+        {
+            names = new string[totals.Count];
+            int n = 0;
+            foreach (var kvp in totals) names[n++] = kvp.Key;
+            Array.Sort(names, StringComparer.Ordinal);
+            amounts = new uint[names.Length];
+            for (int i = 0; i < names.Length; i++) amounts[i] = totals[names[i]];
         }
 
         private static void AddNamed(Dictionary<string, uint> totals, string name, uint amount)
