@@ -52,7 +52,7 @@ Advancing to the next floor requires outfitting a party capable of defeating a s
 
 The initial release must strictly isolate the transaction-and-bounty loop on a single floor before expanding into complex multi-room base building.
 
-* **Phase 1: The Outpost Loop (MVP):** Single-floor map with 12 interconnected sectors. (Note: Epic MAP's current 9-sector physical layout represents incomplete WIP towards the 12-sector target; see `docs/ROADMAP.md`). The player manages a single trade stall: setting buy/sell prices for harvested materials and posting two bounty types (Scout Sector, Gather Resource).
+* **Phase 1: The Outpost Loop (MVP):** A single connected outpost floor (Floor 1). The sector count is data, not a target (producer, 2026-10-11; see `docs/ROADMAP.md`). The player manages a single trade stall: setting buy/sell prices for harvested materials and posting two bounty types (Scout Sector, Gather Resource).
 * **Phase 2: Roster & Party Formation:** Adventurers spend earnings at the player stall, generating personal affinity. Players spend accumulated gold and influence to recruit up to four persistent crawlers, dispatching them into high-hazard sectors as a cohesive `Group`.
 * **Phase 3: Base Expansion & Staffing:** Upgrading the outpost into a multi-slot facility (*Fallout Shelter* style), hiring non-combat artisans to process raw materials into weapons, armor, and potions.
 * **Phase 4: The Gatekeeper Descent:** Procedural floor boss integration, descent gate mechanics, and the persistent campaign migration loop.
