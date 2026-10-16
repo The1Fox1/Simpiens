@@ -277,3 +277,12 @@ Each step is its own commit, and the full PlayMode suite gates every step.
 - **Gate (full suite ×3):**
   - A first attempt ran while another session was busy on the machine. Run 1: 62/64, with `DeterminismScenario` diverging at t2000 and `OutpostLifecycleScenario` finding one crawler at hunger ≥ 95 for 342 ticks. Run 2: 63/64, `DeterminismScenario` diverging at t800. Run 3 was cut off when the session ended. Both failures are the known timing sensitivity (ROADMAP §1A.2 #6, and the architecture scan's H2: cognition writes a crawler's plan while the main thread reads it; one divergence was a bunk sleeper's energy recovery). `SaveLoadScenario` passed in both runs, with identical numbers.
   - Rerun on a quiet machine, same tree: PlayMode 64/64 in 3 of 3 runs (66 total, 2 `[Explicit]` skipped), `DeterminismScenario` identical at every sample each time, and `SaveLoadScenario` identical in all three (delivered t647, 32 cycles, 12/12 ate, 0 ledger violations, 0 anomalies).
+
+### Step 6: Save and Load in the dashboard header (done 2026-10-15; the producer's check at 1× is pending)
+- **Dashboard:** 💾 SAVE and 📂 LOAD buttons and a status line in the header, next to the Merchant and Bounty buttons. The presenter gets `ISaveGameService` by injection; without one the controls are hidden.
+  - Save calls `QuickSaveAsync` (captured at the press, between ticks; written off the main thread) and shows "Saved at tick N.".
+  - Load calls `QuickLoad` and shows "Loaded the save from tick N." or the refusal reason. A successful load raises `SessionChanged`, so the dashboard rebuilds as it does on a respawn.
+  - Like the session switch, Save and Load act on the session, not through simulation commands (F9).
+- **D6 a:** the dossier's *Feed ration* button, its handler and its styles are removed. *Calm Frustration* has the same breach and stays, pending a producer decision (Epic MAP §6 #10).
+- **`QuickSaveButtonsScenario`** builds the dashboard from a child container whose `ISaveGameService` uses a temporary folder, so it never touches the player's save. It asserts view state: Load with an empty slot says so; Save writes the slot at the pressed tick and says so; after 100 more ticks, Load brings that tick back, says so, and the header shows it; the game runs on. It also checks that *Feed ration* is gone. Result: saved t300, moved to t400, loaded t300.
+- **Gate:** PlayMode 65/65 (67 total, 2 `[Explicit]` skipped). `DeterminismScenario` was identical at every sample.
