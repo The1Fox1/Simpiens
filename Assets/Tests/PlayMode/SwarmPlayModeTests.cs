@@ -102,6 +102,17 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new DeterminismScenario());
         }
 
+        /// <summary>
+        /// Epic CORE C2: the outpost reproduces its golden world hashes for this process's seed (the default seed in a
+        /// full run; other seeds through scripts/golden-hashes.sh, which can also re-record them).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_GoldenWorldHash_ReproducesTheBaseline()
+        {
+            yield return ExecuteScenario(new GoldenWorldHashScenario());
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
