@@ -67,6 +67,8 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - **Why greed doesn't pay here:** the economy is closed. Without an outside buyer (drifters, Milestone 2), greedy prices only shrink the trade that fills the caravan's quota.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
 - **The regular suite** asserts the fair case over 15 minutes: `OutpostLifecycleScenario` checks that trust rises for ⅔ of crawlers and nobody starves.
+- **Headless (.NET 10, 2026-10-17):** `simpiens soak` and `dotnet test` assert the same bands without Unity, all 9 runs in about 4 s. Measured: fair 664–768g, trust up 8–10, 0 starving; greedy trust up 0, mean −4.6 to −12.6, treasury 0–342g, below fair on every seed; generous broke by minute 10, peak trust up 12. The numbers differ from Unity's because Mono rounds some float expressions differently (epic CORE §6 F1); both runtimes are inside every band.
+- **Across seeds (headless sweep, 2026-10-17):** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on 16 of 23 seeds: 5 seeds have a crawler starving (hunger ≥ 95 for 300+ ticks) and 2 a crawler that never closes a cycle. Unity agrees on seed 11 (two crawlers starve there too). Only the default seed is asserted. Open: epic CORE §6 F2.
 
 ## 8. Deferred
 - **Drifters** (outside buyers and churn): Milestone 2.

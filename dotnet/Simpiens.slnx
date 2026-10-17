@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="Simpiens.Core.Tests/Simpiens.Core.Tests.csproj" />
   <Project Path="Simpiens.Core/Simpiens.Core.csproj" />
+  <Project Path="Simpiens.Host/Simpiens.Host.csproj" />
   <Project Path="Simpiens.Hosting/Simpiens.Hosting.csproj" />
   <Project Path="Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
 </Solution>

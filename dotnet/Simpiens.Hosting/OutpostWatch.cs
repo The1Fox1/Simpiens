@@ -1,21 +1,21 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Memory;
 using Simpiens.Core.Session;
-using Simpiens.Hosting;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 
-namespace Simpiens.Core.Tests
+namespace Simpiens.Hosting
 {
     /// <summary>
     /// What the Definition-of-Done scenarios watch on the live outpost, checked every tick of a headless run (Unity's
     /// scenarios check every frame): ledger conservation, starvation, the fog of war before the scout's report, the
     /// seeded bounties, the first sale, the supply faucets and each crawler's trust toward the player. Nothing is
-    /// injected: it only reads.
+    /// injected: it only reads. Shared by the headless DoD tests and the console host's seed sweep.
     /// </summary>
-    internal sealed class OutpostWatch
+    public sealed class OutpostWatch
     {
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300;
@@ -129,6 +129,46 @@ namespace Simpiens.Core.Tests
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
             }
+        }
+
+        /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
+        public void Run(long ticks)
+        {
+            long end = _sim.Clock.CurrentTick + ticks;
+            while (_sim.Clock.CurrentTick < end)
+            {
+                _sim.Step(1);
+                Observe();
+            }
+        }
+
+        /// <summary>
+        /// What fails the outpost's day (Epic MAP's DoD, OutpostLifecycleScenario's assertions without the anomaly
+        /// detector) after a 9,000-tick run and <see cref="Finish"/>. Empty when the day emerged.
+        /// </summary>
+        public List<string> DayFailures()
+        {
+            var failures = new List<string>();
+            if (Crawlers.Count == 0) { failures.Add("no crawlers"); return failures; }
+            var noCycle = Crawlers.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
+            int sleepers = Crawlers.Count(c => c.State.Activity.BunkSleeps > 0);
+            int eaters = Crawlers.Count(c => c.State.Activity.Meals > 0);
+            int gatherings = Crawlers.Sum(c => c.State.Activity.HearthGatherings);
+            int trustRose = Crawlers.Count(c => c.TrustEnd > c.TrustStart);
+            int requiredTrustRose = SimMath.CeilToInt(Crawlers.Count * 2f / 3f);
+            var starved = Crawlers.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
+
+            if (noCycle.Count > 0) failures.Add($"{noCycle.Count} crawlers never closed a harvest -> sell cycle: {string.Join(", ", noCycle)}");
+            if (sleepers < 3) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
+            if (eaters < 3) failures.Add($"only {eaters} crawlers ate (need 3)");
+            if (gatherings == 0) failures.Add("no hearth gathering");
+            if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");
+            if (FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({FogLeaks}; first {FirstFogLeak})");
+            if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
+            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
+            if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
+            if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
+            return failures;
         }
 
         /// <summary>Records each crawler's trust toward the player at the end.</summary>

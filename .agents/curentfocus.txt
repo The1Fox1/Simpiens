@@ -199,3 +199,6 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   C9 (xUnit v3: validators, golden, determinism, headless lifecycle/supply-loop/save-load DoD) done 2026-10-17:
   dotnet test 53/53, PlayMode 68/68. Finding F1: Mono and CoreCLR round some float chains differently (golden seeds
   agree; other seeds drift; each runtime reproduces itself).
+  C10 (simpiens console host: run, sweep, soak, golden; Generic Host) done 2026-10-17: soak 9/9 in band headless in
+  ~4 s; dotnet test 62/62. Finding F2: the outpost's day passes on 16/23 seeds (starvation on 5, no cycle on 2;
+  Unity agrees on seed 11) - a pacing decision for the producer.

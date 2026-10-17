@@ -25,47 +25,17 @@ namespace Simpiens.Core.Tests
             return sim;
         }
 
-        private static void Run(HeadlessSimulation sim, OutpostWatch watch, long ticks)
-        {
-            long end = sim.Clock.CurrentTick + ticks;
-            while (sim.Clock.CurrentTick < end)
-            {
-                sim.Step(1);
-                watch.Observe();
-            }
-        }
-
         /// <summary>The outpost's whole day (Epic MAP's DoD): 9,000 ticks.</summary>
         [Fact]
         public void TheOutpostsDayEmerges()
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            Run(sim, watch, 9000);
+            watch.Run(9000);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
-            var failures = new List<string>();
-            var crawlers = watch.Crawlers;
-            Assert.NotEmpty(crawlers);
-            var noCycle = crawlers.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
-            int sleepers = crawlers.Count(c => c.State.Activity.BunkSleeps > 0);
-            int eaters = crawlers.Count(c => c.State.Activity.Meals > 0);
-            int gatherings = crawlers.Sum(c => c.State.Activity.HearthGatherings);
-            int trustRose = crawlers.Count(c => c.TrustEnd > c.TrustStart);
-            int requiredTrustRose = SimMath.CeilToInt(crawlers.Count * 2f / 3f);
-            var starved = crawlers.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
-
-            if (noCycle.Count > 0) failures.Add($"{noCycle.Count} crawlers never closed a harvest -> sell cycle: {string.Join(", ", noCycle)}");
-            if (sleepers < 3) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
-            if (eaters < 3) failures.Add($"only {eaters} crawlers ate (need 3)");
-            if (gatherings == 0) failures.Add("no hearth gathering");
-            if (watch.ScoutTick < 0 || !watch.ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{watch.ScoutTick}, charted {watch.ScoutCharted})");
-            if (watch.FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({watch.FogLeaks}; first {watch.FirstFogLeak})");
-            if (watch.GatherTick < 0 || !watch.GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{watch.GatherTick}, released {watch.GatherEscrowReleased})");
-            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {crawlers.Count} (need {requiredTrustRose})");
-            if (watch.ConservationViolations > 0) failures.Add($"ledger conservation violated {watch.ConservationViolations} times (worst {watch.WorstDiscrepancy}g)");
-            if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
+            var failures = watch.DayFailures();
             Assert.True(failures.Count == 0, "Outpost lifecycle failures:\n  " + string.Join("\n  ", failures));
         }
 
@@ -75,7 +45,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            Run(sim, watch, 6000);
+            watch.Run(6000);
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
             Assert.True(watch.GatherTick >= 0 && watch.GatherTick <= 900, $"Gather bounty not fulfilled by t900 (t{watch.GatherTick}).");
@@ -124,7 +94,7 @@ namespace Simpiens.Core.Tests
 
                 long loadTick = sim.Clock.CurrentTick;
                 var watch = new OutpostWatch(sim);
-                Run(sim, watch, 3000);
+                watch.Run(3000);
                 TestContext.Current.TestOutputHelper?.WriteLine($"saved and loaded at t{saveTick}; " + watch.Report());
 
                 Assert.Equal(0, watch.ConservationViolations);
