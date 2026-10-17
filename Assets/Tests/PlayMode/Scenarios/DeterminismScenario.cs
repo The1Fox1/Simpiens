@@ -57,14 +57,14 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             {
                 var run = _runs[r];
                 spawner.Respawn(session); // rewinds the clock to tick 0 with the same seed
-                run.Samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Agents, sim, sectors));
+                run.Samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Host, sim, sectors));
 
                 // Sample on the tick itself (after the simulation's own tick handler), never on a frame
                 void OnTick(long tick)
                 {
                     if (run.ScoutTick < 0 && sim.TryGetBounty(OutpostSession.SeedScoutBountyId, out var s) && s.Status == BountyStatus.Completed) run.ScoutTick = tick;
                     if (run.GatherTick < 0 && sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out var g) && g.Status == BountyStatus.Completed) run.GatherTick = tick;
-                    if (tick % SampleEveryTicks == 0 && tick <= HorizonTicks) run.Samples.Add(WorldStateHash.Capture(tick, spawner.Agents, sim, sectors));
+                    if (tick % SampleEveryTicks == 0 && tick <= HorizonTicks) run.Samples.Add(WorldStateHash.Capture(tick, spawner.Host, sim, sectors));
                 }
 
                 clock.OnSimulationTick += OnTick;

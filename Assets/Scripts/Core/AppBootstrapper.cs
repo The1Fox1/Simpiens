@@ -95,6 +95,8 @@ namespace Simpiens.Core.Bootstrapping
             // 4. Sessions and the spawner that builds them. Optional assemblies may register further sessions
             // (the test harness adds the Dev Map); the default is chosen by id, never by registration order.
             builder.Register<OutpostSession>(Lifetime.Singleton).As<ISessionDefinition>();
+            // The session itself is engine-free (SessionHost); SwarmSpawner draws it and keeps the session API for the UI
+            builder.Register<SessionHost>(Lifetime.Singleton).AsSelf();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // The player's quick-save slot (Milestone 1): Saves/quicksave.simsave under the persistent data path

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Simpiens.Cognition;
+using Simpiens.Core.Session;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
@@ -52,26 +53,26 @@ namespace Simpiens.Testing.Environment
 
         /// <param name="includeWork">False leaves out each agent's intent and goal: a load drops work in progress, so a
         /// world before a save and after its load compare equal without them (Milestone 1 save/load, D3).</param>
-        public static WorldStateSample Capture(long tick, IReadOnlyList<AutonomousAgent> agents, ISimulationManager sim, ISectorRegistry sectors, bool includeWork = true)
+        public static WorldStateSample Capture(long tick, SessionHost host, ISimulationManager sim, ISectorRegistry sectors, bool includeWork = true)
         {
             var sample = new WorldStateSample { Tick = tick };
 
-            // Agents in id order
-            var ordered = new List<AutonomousAgent>(agents != null ? agents.Count : 0);
-            if (agents != null)
+            // Crawlers in id order (stopped ones left out)
+            var ordered = new List<int>(host != null ? host.Crawlers.Count : 0);
+            if (host != null)
             {
-                for (int i = 0; i < agents.Count; i++)
+                for (int i = 0; i < host.Crawlers.Count; i++)
                 {
-                    if (agents[i] != null && agents[i].State != null) ordered.Add(agents[i]);
+                    if (!host.Crawlers[i].IsDisposed) ordered.Add(i);
                 }
+                ordered.Sort((a, b) => host.CrawlerStates[a].AgentId.CompareTo(host.CrawlerStates[b].AgentId));
             }
-            ordered.Sort((a, b) => a.State.AgentId.CompareTo(b.State.AgentId));
 
             ulong total = Offset;
             Mix(ref total, (ulong)tick);
             for (int i = 0; i < ordered.Count; i++)
             {
-                var s = ordered[i].State;
+                var s = host.CrawlerStates[ordered[i]];
                 ulong h = Offset;
                 Mix(ref h, s.AgentId.GetHashCode());
                 Mix(ref h, Quantize(s.Position.X, 1000f));
@@ -92,7 +93,7 @@ namespace Simpiens.Testing.Environment
                 Mix(ref h, intent);
                 Mix(ref h, goal);
 
-                sample.AgentNames.Add(ordered[i].name);
+                sample.AgentNames.Add(host.CrawlerNames[ordered[i]]);
                 sample.AgentHashes.Add(h);
                 sample.AgentLines.Add(string.Format(CultureInfo.InvariantCulture,
                     "pos ({0:F3},{1:F3}) hunger {2:F2} energy {3:F2} gold {4} intent {5} goal {6}",

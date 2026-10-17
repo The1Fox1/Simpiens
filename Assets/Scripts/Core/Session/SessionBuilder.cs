@@ -35,12 +35,12 @@ namespace Simpiens.Core.Session
     /// </summary>
     public sealed class SessionBuilder
     {
-        private readonly SwarmSpawner _spawner;
+        private readonly SessionHost _spawner;
         private readonly List<BountyContract> _seedBounties = new List<BountyContract>(4);
         private uint _seededStallGold;
         private int _stallCount;
 
-        internal SessionBuilder(SwarmSpawner spawner, MapDefinition map, LoadedWorld world, ISimulationManager simulation, SimulationSettings settings)
+        internal SessionBuilder(SessionHost spawner, MapDefinition map, LoadedWorld world, ISimulationManager simulation, SimulationSettings settings)
         {
             _spawner = spawner;
             Map = map;
@@ -62,7 +62,7 @@ namespace Simpiens.Core.Session
 
         public SimulationSettings Settings { get; }
 
-        public IReadOnlyList<AutonomousAgent> Agents => _spawner.Agents;
+        public IReadOnlyList<AgentState> Agents => _spawner.CrawlerStates;
 
         internal IReadOnlyList<BountyContract> SeedBounties => _seedBounties;
         internal uint SeededStallGold => _seededStallGold;
@@ -72,7 +72,7 @@ namespace Simpiens.Core.Session
         /// Spawns one agent at <paramref name="position"/>. Seeded personalities derive from the simulation seed and
         /// the agent's entity id; unseeded agents keep the neutral default.
         /// </summary>
-        public AutonomousAgent SpawnAgent(Vec2 position, string label, bool seededPersonality)
+        public AgentState SpawnAgent(Vec2 position, string label, bool seededPersonality)
         {
             return _spawner.SpawnAgent(position, label, seededPersonality);
         }

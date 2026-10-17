@@ -224,21 +224,13 @@ namespace Simpiens.Cognition
 
         public const float FixedTickDeltaTime = AgentRuntime.FixedTickDeltaTime;
 
-        public void ManualUpdate() // Backward compatibility alias for tests and runners
-        {
-            ManualTick(_runtime != null ? _runtime.CurrentSimTick : 0);
-        }
-
-        /// <summary>Ticks the bound crawler (the session calls this on every logical tick, after the simulation's tick).</summary>
-        public void ManualTick(long currentTick)
-        {
-            if (this == null || gameObject == null || _runtime == null) return;
-
 #if UNITY_EDITOR
-            UpdateEditorTelemetry();
-#endif
-            _runtime.Tick(currentTick);
+        // The session ticks the crawler (SessionHost); the view only mirrors it into the Inspector
+        private void Update()
+        {
+            if (_runtime != null) UpdateEditorTelemetry();
         }
+#endif
 
         public bool HasKnownFood()
         {

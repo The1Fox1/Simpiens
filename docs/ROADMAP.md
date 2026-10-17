@@ -410,6 +410,7 @@ Before Epic 10: soak test and scaling work (#8).
   - C3 (`EntityId` replaces `UnityEngine.GUID`, bit-compatible) done 2026-10-17: golden hashes identical, save format unchanged; PlayMode 68/68.
   - C4 (engine-free maths: `Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`, copying Unity's formulas) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
   - C5a (entities as data: `WorldEntity`, the engine-free `AgentRuntime`, views that only read; §1A.2 #16 resolved) done 2026-10-17: golden hashes identical, the validators build headless records; PlayMode 68/68.
+  - C5b (`SessionHost`: the engine-free session; `SwarmSpawner` only draws it) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
 
 ---
 

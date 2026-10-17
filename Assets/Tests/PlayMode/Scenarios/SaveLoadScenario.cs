@@ -90,7 +90,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
             _saveTick = clock.CurrentTick;
             sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out _gatherAtSave);
-            _savedHash = WorldStateHash.Capture(_saveTick, spawner.Agents, sim, sectors, includeWork: false);
+            _savedHash = WorldStateHash.Capture(_saveTick, spawner.Host, sim, sectors, includeWork: false);
             var saving = slot.QuickSaveAsync(); // captures now, between ticks; the file is written off the main thread
             yield return saving.ToCoroutine(outcome => _saved = outcome);
             if (!_saved.Succeeded) yield break;
@@ -101,7 +101,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             _loaded = slot.QuickLoad();
             if (!_loaded.Succeeded) yield break;
             _loadTick = clock.CurrentTick;
-            _loadedHash = WorldStateHash.Capture(_loadTick, spawner.Agents, sim, sectors, includeWork: false);
+            _loadedHash = WorldStateHash.Capture(_loadTick, spawner.Host, sim, sectors, includeWork: false);
             byte[] onDisk = File.ReadAllBytes(slot.QuickSavePath);
             byte[] reEncoded = SaveFile.Encode(spawner.Capture());
             _fileMatches = SameBytes(onDisk, reEncoded, out _fileDifference);

@@ -47,14 +47,14 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (clock is SimulationClock simClock) simClock.SetTimeMultiplier(TimeMultiplier);
 
             spawner.Respawn(session); // tick 0, this seed
-            _samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Agents, sim, sectors));
+            _samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Host, sim, sectors));
 
             // Sample on the tick itself (after the simulation's and the agents' ticks), never on a frame
             void OnTick(long tick)
             {
                 if (tick % GoldenWorldHash.SampleEveryTicks == 0 && tick <= GoldenWorldHash.HorizonTicks)
                 {
-                    _samples.Add(WorldStateHash.Capture(tick, spawner.Agents, sim, sectors));
+                    _samples.Add(WorldStateHash.Capture(tick, spawner.Host, sim, sectors));
                 }
             }
 
