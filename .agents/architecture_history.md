@@ -581,3 +581,18 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The live outpost round-trips byte for byte at t600 (39,444 bytes); the Linux player saved and reloaded it at t25 (18,603 bytes, `scripts/run-persistence-smoke.sh`).
   - 1,000 ticks of trading and bounties and 1,000 rounds of off-thread trade and bounty evaluation allocate 0 bytes.
   - Pending: the producer's check of save and load at 1×.
+
+## Epic CORE Started: Engine-Free Core and Headless .NET (2026-10-17)
+- **Context:** the 2026-10-15 migration write-up ("Simpiens: Migrating from Unity to Godot on .NET 10", Claude Docs) proposed five phases. Phases 0 (decouple inside Unity) and 1 (headless .NET 10) change no engine and pay off on any engine.
+- **Decisions (producer, 2026-10-17, the write-up's checklist):**
+  - Phases 0–1 approved as standalone work; the agent sees them through under provisional authority. Godot is decided only after the Phase 2 spike, which is outside this epic.
+  - No web build. `Microsoft.Extensions.DependencyInjection` for .NET hosts; xUnit v3 for .NET tests.
+  - ROADMAP §2: retire the VContainer, UniTask and `Unity.Collections` + Burst rows; lift the MCP SDK rejection for Epic 11 once the simulation runs on .NET.
+- **Design choices (agent, under that authority; reasons in `docs/epics/epic-core.md` §2):**
+  - Cognition results land on a fixed tick (dispatched at T, applied at T + 1 behind a barrier, in agent-id order) and are applied as data on the main thread. This closes §1A.2 #6 and #15.
+  - Golden world-hash baselines in the repo gate every mechanical chunk; behaviour changes re-record them in their own commit.
+  - `EntityId` stays bit-compatible with `UnityEngine.GUID` (128 bits) so the swap changes no behaviour; a 64-bit id is deferred to the multiplayer wire format.
+  - Engine-free maths (`Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`) copy Unity's formulas exactly, rather than `System.Numerics`, whose scalar division and exact equality would change results.
+  - The core becomes `Assets/Simpiens.Core/` (asmdef `noEngineReferences: true`); the .NET project compiles the same files at C# 10 for `netstandard2.1;net10.0`.
+- **Recorded, not scheduled:** the 2026-10-15 architecture scan's H1 (no `try`/`catch` on the tick path) and M4 (bounty ids) became §1A.2 #17 and #19; M3 became #18 and H2 joined #15 (both fixed by chunk C1); M5 was already #16.
+- **Plan:** `.agents/godot_phase01_plan.md`, chunks C0–C11, on branch `feat/godot-migration`.

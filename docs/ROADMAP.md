@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-15.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-17.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -37,6 +37,7 @@ This allows core simulation logic, player interface layers, and verification har
 flowchart LR
     subgraph Independent: Spatial & World Topology
         MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(COMPLETED)"]
+        CORE["Epic CORE\nEngine-Free Core &\nHeadless .NET\n(ACTIVE)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -66,6 +67,7 @@ flowchart LR
     A6 <==>|Production Phase 1 Convergence| B2
     A6 -.->|Validation Target| C2
     BAlpha -.->|Prepares Narrative Contracts for LLM| A8
+    CORE -.->|Engine-free simulation, headless tests| A7
 ```
 
 ### Track Rules
@@ -90,9 +92,9 @@ flowchart LR
 6. **Single writer.** Background threads read only immutable snapshots or copies. All mutation happens on the simulation thread.
 7. **Views never mutate.** UI and rendering code interacts with the simulation only through the command queue.
 
-### 1A.2 Known Deviations (as of 2026-10-09)
+### 1A.2 Known Deviations (as of 2026-10-09; #17–#19 added 2026-10-17)
 
-These violate §1A.1 or the project architecture rules today. They are recorded so that new code does not copy them. They are not scheduled work by themselves; scheduling is a producer decision.
+These violate §1A.1 or the project architecture rules today. They are recorded so that new code does not copy them. They are not scheduled work by themselves; scheduling is a producer decision. **Scheduled 2026-10-17:** Epic CORE fixes #6, #15 and its race (chunk C1) and #16 (chunk C5); #17–#19 are recorded only.
 
 | # | Deviation | Violates | Where |
 | :-: | :--- | :--- | :--- |
@@ -110,8 +112,11 @@ These violate §1A.1 or the project architecture rules today. They are recorded 
 | 12 | ~~No live population could run the Milestone 1 loop: all session agents were scripted into walled demo pens, the trade stall sat inside Pen 3, and the seeded Scout bounty targeted walled Pen 7.~~ **RESOLVED in code (2026-10-09, review §3.1):** the open yard north of the pens is now the *Outpost Commons* (stall, Ore Ridge, Herb Hollow, food bushes) with 6 free crawler agents (`SpawnCount` 24 → 30). | §1B | [`SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs) |
 | 13 | ~~Seeded bounties bypassed escrow (`RegisterBounty` locked nothing), so delivery minted gold via a direct `AddGold`.~~ **RESOLVED in code (2026-10-09, review §3.1):** `RegisterBounty` routes through the same escrow lock as `PostBountyCommand` and rejects un-escrowable bounties; delivery pays only by releasing escrow. Session gold enters through a single `InitialSeed` ledger faucet. | Ledger conservation | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs), [`DeliverBountyIntentHandler.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/Handlers/DeliverBountyIntentHandler.cs) |
 | 14 | ~~`SimulationManager` executes active intents by enumerating the `_activeIntents` `Dictionary` (and stalls, bounties and anchors the same way).~~ **RESOLVED (2026-10-10):** active intents run in agent-id order (sorted id list), the stall/bounty/expiry/anchor buffers are sorted, and harvest contention picks the lowest-id competitor. Mutation-checked by `DeterminismValidator` Test 3. Unaudited: `foreach` over agent memory maps in GOAP actions (e.g. `TravelToAnchorAction` nearest-anchor ties). | 3 | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
-| 15 | The background cognition task writes per-agent state off the main thread: plan state (`AbortActivePlan`, `ActivePlan.CopyFrom`, `ActiveGoal`), `CurrentIntent`/`HasActiveIntent` and `VisualState`. In practice this is serialized per agent by the `IsEvaluating`/`HasActiveIntent` guards, but it is not single-writer. Narrows #3's resolution: memory and inventory are snapshot-isolated; plan and intent bookkeeping are not. (Recorded 2026-10-10.) | 6 | [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs) |
+| 15 | The background cognition task writes per-agent state off the main thread: plan state (`AbortActivePlan`, `ActivePlan.CopyFrom`, `ActiveGoal`), `CurrentIntent`/`HasActiveIntent` and `VisualState`. In practice this is serialized per agent by the `IsEvaluating`/`HasActiveIntent` guards, but it is not single-writer. Narrows #3's resolution: memory and inventory are snapshot-isolated; plan and intent bookkeeping are not. (Recorded 2026-10-10.) **A real race (architecture scan H2, 2026-10-15; recorded here 2026-10-17):** `AgentState.Tick` reads `ActivePlan.CurrentAction` on the main thread while cognition `Clear()`s or `CopyFrom()`s the plan, so "in practice serialized" does not hold; it fits a divergence seen in a bunk sleeper's energy recovery (#6). | 6 | [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs) |
 | 16 | `AutonomousAgent.ManualTick` copies `transform.position` into `AgentState.Position` every tick, so the view feeds the simulation's position. **Latent (found 2026-10-15 by the Godot migration assessment and the architecture scan's M5, checked during save/load):** `SwarmSpawner` never injects the clock into a crawler's `NodeController`, so the view never interpolates and the transform always equals the logical position; same-seed runs and saves are unaffected. It becomes live the moment views interpolate. A save captures `AgentState.Position`, and a load spawns the view there. | 5 | [`AutonomousAgent.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs) |
+| 17 | No `try`/`catch` on the tick path. `SimulationManager.SimulateTick` completes intents inside its loop but removes them after it, so one handler exception leaves finished intents in place: they run again next tick and return their `PathResponse` to the pool twice. (Architecture scan H1, 2026-10-15; recorded 2026-10-17.) | Robustness | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
+| 18 | `AgentCognitionService` sets `IsEvaluating` before its `try`/`finally`, so an exception in the main-thread preparation (memory update, compliance) leaves the flag set and freezes that crawler for good. (Architecture scan M3, 2026-10-15; recorded 2026-10-17.) | Robustness | [`AgentCognitionService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AgentCognitionService.cs) |
+| 19 | A posted bounty gets the command's id, or `_bounties.Count + 1` when it has none, and nothing checks for an existing id: a bounty whose id is taken overwrites the old one. A save keeps finished bounties, so the count survives a load. (Architecture scan M4, 2026-10-15; recorded 2026-10-17.) | Robustness | [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) |
 
 ### 1A.3 Logging (Producer decision, 2026-10-09)
 
@@ -176,6 +181,12 @@ Simpiens is an **agent-first, decoupled simulation**. In this development paradi
 
 > **Install status (verified against `Packages/manifest.json` 2026-10-09; MemoryPack 2026-10-15):** `VContainer`, `UniTask`, `ZLogger` and `MemoryPack` are installed. `Unity.Collections` / Burst are **approved but not installed**; no code uses them yet.
 
+> **Producer decisions, 2026-10-17 (the migration write-up's checklist; Epic CORE):**
+> - **Retire the `VContainer`, `UniTask` and `Unity.Collections` + Burst rows.** Engine-free code drops VContainer and UniTask during Epic CORE (Phase 0). VContainer stays Unity's composition root until a cutover, if the Godot spike says go. `Unity.Collections` + Burst won't be installed; .NET's own SIMD types replace them after a cutover.
+> - **`Microsoft.Extensions.DependencyInjection`** is the container for .NET hosts (`dotnet/Simpiens.Hosting`). The engine-free core stays container-agnostic: constructor injection only.
+> - **xUnit v3** runs the .NET tests under `dotnet test`. The Unity Test Framework (NUnit) keeps running the Unity suite until a cutover.
+> - The table above stays as written until each retirement lands; Epic CORE updates it.
+
 ### 2.2 Rejected 3rd-Party Frameworks & Handroll Policies
 
 1. **2D Pathfinding & Navigation Engine**:
@@ -183,6 +194,7 @@ Simpiens is an **agent-first, decoupled simulation**. In this development paradi
    - **Handroll Policy**: Upgrade [`AsyncPathfinder.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs) into a zero-allocation 2D Grid A* / Jump Point Search (JPS) engine by porting the array-backed binary min-heap and struct node pool architecture already proven in [`GoapPlanner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs).
 2. **Model Context Protocol (MCP) Integration**:
    - **Rejected**: *Official .NET MCP C# SDK (`modelcontextprotocol/csharp-sdk`)*. Relies on ASP.NET Core Hosting and modern .NET runtime assemblies that collide with Unity's Mono/IL2CPP `netstandard2.1` target.
+   - **Rejection lifted (producer, 2026-10-17):** Epic 11 may use the official SDK (`ModelContextProtocol`, targets `net10.0`) once the simulation runs on .NET. Inside Unity the handroll policy below still applies.
    - **Handroll Policy**: Implement a lean, pure-C# UniTask JSON-RPC 2.0 / SSE client (~250 LOC) under [`ILlmNarrativeEnricher`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Narrative/ILlmNarrativeEnricher.cs) with an automatic circuit breaker falling back to [`TemplateNarrativeFormatter`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Narrative/TemplateNarrativeFormatter.cs).
 3. **UI Toolkit Reactive Data-Binding**:
    - **Policy**: Reserve Unity 6 built-in runtime data binding (`INotifyPropertyChanged`) exclusively for low-frequency modal dialogs and player input forms. For high-frequency dynamic simulation feeds (logical ticks run at 10 Hz at 1x and up to 100 Hz at 10x clock speed), standardize on throttled (10 Hz) element pooling via a reusable `VisualElementPool<TData, TElement>` utility modeled after [`FacilityDashboardPresenter.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/FacilityDashboardPresenter.cs).
@@ -384,13 +396,22 @@ Before Epic 10: soak test and scaling work (#8).
 - **Superseded:** Revision 1's `OutpostMapBuilder` (never wired into the live session) is replaced in Phase 1. See the epic's review (§1).
 - **Deferred:** drifter churn (Milestone 2, §3.3 D7), descent gate (Epic 10), workshops (Milestone 3), cognition scaling (§3A #8). Map save/load was delivered with Milestone 1's whole-session save (2026-10-15). Open findings and their owners: [epic §6](epics/epic-map.md).
 
+### Epic CORE: [Engine-Free Core and Headless .NET](epics/epic-core.md)
+- **Status**: ACTIVE (started 2026-10-17).
+- **What:** Phases 0 and 1 of the Unity-to-Godot migration write-up (Claude Docs, 2026-10-15). The simulation runs without an engine: the same source compiles in a Unity assembly that may not reference the engine and for `net10.0`, where a host steps ticks with no frames, and both produce the same world hashes. It pays off on any engine; Phases 2–4 (the Godot spike, view parity, cutover) wait on the spike's go/no-go and are not part of this epic.
+- **Producer decisions (2026-10-17):** Phases 0–1 approved as standalone work, under the agent's provisional authority; web builds are not needed; commit to Godot only after the spike; `Microsoft.Extensions.DependencyInjection` and xUnit v3 for .NET; the §2 retirements and the MCP SDK lift above.
+- **Chunks** (plan: `.agents/godot_phase01_plan.md`; branch `feat/godot-migration`):
+  - Phase 0, Decouple: C1 cognition on fixed ticks (§1A.2 #6, #15); C2 golden world-hash baselines; C3 `EntityId`; C4 engine-free maths; C5 entities as data (§1A.2 #16); C6 infrastructure out of the core; C7 the `Simpiens.Core` assembly (`noEngineReferences`). Gate: same world hash, PlayMode green.
+  - Phase 1, Headless .NET: C8 the `dotnet/` solution; C9 xUnit v3 tests and headless DoD scenarios; C10 the console host; C11 CI and close-out. Gate: Unity and .NET hashes match.
+- **Progress:** C0 (setup) done 2026-10-17.
+
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; the next engine focus is the soak and scaling work, §3A #8). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; the active engine work is **Epic CORE** (Independent Epics, 2026-10-17); the soak and scaling work, §3A #8, stays next for Track A). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; no independent epic is `ACTIVE`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `ACTIVE` and touches every layer: check its plan before large refactors). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

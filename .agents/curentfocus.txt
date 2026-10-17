@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-15
+# Last reconciled: 2026-10-17
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -111,7 +111,8 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
-Current Focus (Track A): the soak test and scaling work (ROADMAP §3A #8) before Epic 10.
+Current Focus (engine): Epic CORE (Independent Epics, below) since 2026-10-17. Track A next: the soak test and
+scaling work (ROADMAP §3A #8) before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
@@ -173,3 +174,16 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
   (git show 4e83ecd:.agents/epic_map_phase5_plan.md).
 - Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
   since Section 3.3 (2026-10-15).
+
+Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT ENGINE FOCUS)
+(See docs/epics/epic-core.md; plan .agents/godot_phase01_plan.md; branch feat/godot-migration)
+- Phases 0-1 of the Unity-to-Godot migration write-up, approved by the producer as standalone work (pays off on any
+  engine); the agent works under provisional authority. Phases 2-4 (Godot spike, view parity, cutover) are NOT in scope.
+- Producer decisions 2026-10-17: no web build; Godot only after the spike; Microsoft.Extensions.DependencyInjection and
+  xUnit v3 for .NET; retire VContainer/UniTask/Unity.Collections+Burst rows; MCP SDK rejection lifted for Epic 11.
+- Phase 0, Decouple: C1 cognition on fixed ticks (#6, #15) -> C2 golden world-hash baselines -> C3 EntityId ->
+  C4 engine-free maths -> C5 entities as data (#16) -> C6 infrastructure out of the core -> C7 Simpiens.Core asmdef
+  (noEngineReferences). Gate: same world hash, PlayMode green.
+- Phase 1, Headless .NET: C8 dotnet/ solution -> C9 xUnit v3 tests + headless DoD scenarios -> C10 console host ->
+  C11 CI + close-out. Gate: Unity and .NET hashes match.
+- Progress: C0 (setup, docs) done 2026-10-17.
