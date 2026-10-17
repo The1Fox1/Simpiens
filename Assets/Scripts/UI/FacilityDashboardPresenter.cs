@@ -206,7 +206,7 @@ namespace Simpiens.UI
             _interventionService = interventionService;
             _chronicleService = chronicleService ?? simulationManager?.Chronicle;
             _identityService = identityService ?? new AgentIdentityService();
-            _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _zoneService);
+            _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _sectorRegistry);
 
             if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
             _sessionSwitcher = sessionSwitcher;

@@ -4,7 +4,8 @@
     "references": [
         "VContainer",
         "Unity.InputSystem",
-        "ZLogger.Unity"
+        "ZLogger.Unity",
+        "Simpiens.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

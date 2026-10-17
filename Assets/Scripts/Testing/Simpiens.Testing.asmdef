@@ -5,7 +5,9 @@
         "Simpiens",
         "VContainer",
         "Unity.InputSystem",
-        "ZLogger.Unity"
+        "ZLogger.Unity",
+        "Simpiens.Core",
+        "Simpiens.Testing.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

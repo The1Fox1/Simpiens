@@ -85,7 +85,7 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<Simpiens.Entities.WorldSelection>(Lifetime.Singleton);
             builder.Register<AgentIdentityService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register(resolver => new NarrativeChronicleService(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register(resolver => new TemplateNarrativeFormatter(resolver.Resolve<IAgentIdentityService>(), resolver.Resolve<Simpiens.UI.Zones.IFacilityZoneService>()), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register(resolver => new TemplateNarrativeFormatter(resolver.Resolve<IAgentIdentityService>(), resolver.Resolve<Simpiens.Simulation.World.ISectorRegistry>()), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register(resolver => new PassthroughNarrativeEnricher(resolver.Resolve<INarrativeFormatter>()), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<GroupRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

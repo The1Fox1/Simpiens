@@ -4,7 +4,9 @@
     "references": [
         "Simpiens",
         "VContainer",
-        "Simpiens.Testing"
+        "Simpiens.Testing",
+        "Simpiens.Core",
+        "Simpiens.Testing.Core"
     ],
     "includePlatforms": [
         "Editor"

@@ -335,6 +335,7 @@ namespace Simpiens.Tests.PlayMode
         public void Scenario_ResourceContention_AllDomainValidationTestsPass()
         {
             new Simpiens.Testing.Sociopolitical.ResourceContentionValidator().Start();
+            new Simpiens.Testing.UI.AgentSpriteValidator().RunAllValidationTests(); // its sprite check, split off (Epic CORE C7)
         }
 
         [Test]

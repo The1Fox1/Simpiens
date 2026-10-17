@@ -413,6 +413,7 @@ Before Epic 10: soak test and scaling work (#8).
   - C5a (entities as data: `WorldEntity`, the engine-free `AgentRuntime`, views that only read; §1A.2 #16 resolved) done 2026-10-17: golden hashes identical, the validators build headless records; PlayMode 68/68.
   - C5b (`SessionHost`: the engine-free session; `SwarmSpawner` only draws it) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
   - C6 (no UnityEngine, VContainer, UniTask or ZLogger.Unity in engine-free code; validators framework-free) done 2026-10-17: golden hashes identical; PlayMode 68/68.
+  - C7 (`Assets/Simpiens.Core/`, asmdef `noEngineReferences`; engine-free validators in `Simpiens.Testing.Core`) done 2026-10-17. Phase 0 gate: PlayMode 68/68 in 3 consecutive runs, economy soak within its bands, golden hashes identical for 3 seeds. The persistence smoke (player build) was not run.
 
 ---
 

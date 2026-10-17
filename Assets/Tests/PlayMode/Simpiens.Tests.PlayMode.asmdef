@@ -7,7 +7,9 @@
         "Simpiens",
         "VContainer",
         "Unity.InputSystem",
-        "Simpiens.Testing"
+        "Simpiens.Testing",
+        "Simpiens.Core",
+        "Simpiens.Testing.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -73,4 +73,5 @@ Each chunk gets a local implementation plan before it starts (what changes, file
 | C4 | Done 2026-10-17 | `2144530` | PlayMode 68/68 (70, 2 explicit skipped); golden check 3/3 seeds identical |
 | C5a | Done 2026-10-17 | `e06e283` | PlayMode 68/68 (70, 2 explicit skipped) on the rerun; the first run failed 1 (a validator set a property by reflection on the old type), fixed; golden identical in both |
 | C5b | Done 2026-10-17 | `236412d` | PlayMode 68/68 (70, 2 explicit skipped); golden check 3/3 seeds identical |
-| C6 | Done 2026-10-17 | (this commit) | PlayMode 68/68 (70, 2 explicit skipped), golden identical; the final asmdef cleanup (UniTask references) and the smoke test conversion after that run were checked by compiling only |
+| C6 | Done 2026-10-17 | `3a9f97b` | PlayMode 68/68 (70, 2 explicit skipped), golden identical; the final asmdef cleanup (UniTask references) and the smoke test conversion after that run were checked by compiling only |
+| C7 | Done 2026-10-17 | (this commit) | Phase 0 gate: PlayMode 68/68 ×3, soak exit 0, golden 3/3 seeds; persistence smoke not run (script not executable) |
