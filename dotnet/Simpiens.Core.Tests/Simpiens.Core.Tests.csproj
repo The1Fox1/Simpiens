@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The simulation's tests under dotnet test (Epic CORE C9, xUnit v3: the producer's choice): the engine-free
+       validators, the golden world hashes against Unity's baseline file, and the Definition-of-Done scenarios run
+       headless on the real outpost. No Unity needed. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Core.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Hosting/Simpiens.Hosting.csproj" />
+    <ProjectReference Include="../Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
+  </ItemGroup>
+</Project>

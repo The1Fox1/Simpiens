@@ -17,9 +17,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// full runs). The live outpost runs twice from a respawn with the same seed, and the world is hashed every
     /// <see cref="SampleEveryTicks"/> ticks up to <see cref="HorizonTicks"/> (<see cref="WorldStateHash"/>). The two
     /// runs must be identical at every sample; a failure names the first tick and what differs.
-    /// This rests on cognition results arriving on the same tick in both runs. Which tick a result arrives on still
-    /// depends on thread timing (ROADMAP §1A.2 #6); on this machine, at 10x, it has not varied. A slower or busier
-    /// machine could break it before anything else changes.
+    /// Decisions land on a fixed tick (the CognitionScheduler, ROADMAP §1A.2 #6, resolved by Epic CORE C1), so this holds
+    /// alone or inside the suite, on a quiet or a busy machine.
     /// </summary>
     public class DeterminismScenario : ISimulationScenario
     {
@@ -58,14 +57,14 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             {
                 var run = _runs[r];
                 spawner.Respawn(session); // rewinds the clock to tick 0 with the same seed
-                run.Samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Agents, sim, sectors));
+                run.Samples.Add(WorldStateHash.Capture(clock.CurrentTick, spawner.Host, sim, sectors));
 
                 // Sample on the tick itself (after the simulation's own tick handler), never on a frame
                 void OnTick(long tick)
                 {
                     if (run.ScoutTick < 0 && sim.TryGetBounty(OutpostSession.SeedScoutBountyId, out var s) && s.Status == BountyStatus.Completed) run.ScoutTick = tick;
                     if (run.GatherTick < 0 && sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out var g) && g.Status == BountyStatus.Completed) run.GatherTick = tick;
-                    if (tick % SampleEveryTicks == 0 && tick <= HorizonTicks) run.Samples.Add(WorldStateHash.Capture(tick, spawner.Agents, sim, sectors));
+                    if (tick % SampleEveryTicks == 0 && tick <= HorizonTicks) run.Samples.Add(WorldStateHash.Capture(tick, spawner.Host, sim, sectors));
                 }
 
                 clock.OnSimulationTick += OnTick;
@@ -123,7 +122,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private static string Compare(Run a, Run b, out long tick)
         {
             tick = -1;
-            int n = Mathf.Min(a.Samples.Count, b.Samples.Count);
+            int n = SimMath.Min(a.Samples.Count, b.Samples.Count);
             for (int i = 0; i < n; i++)
             {
                 if (a.Samples[i].Tick != b.Samples[i].Tick) { tick = a.Samples[i].Tick; return $"sample ticks differ ({a.Samples[i].Tick} vs {b.Samples[i].Tick})"; }

@@ -1,10 +1,10 @@
+using UnityEngine;
 using System;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Entities;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using Simpiens.Testing.Sessions;
-using UnityEngine;
 using UnityEngine.Tilemaps;
 using Object = UnityEngine.Object;
 
@@ -22,12 +22,12 @@ namespace Simpiens.Testing.World
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[MapViewValidator] Beginning map view validation...");
+            TestLog.Log("[MapViewValidator] Beginning map view validation...");
 
             ValidateMap(Floor1Layout.Definition, 1);
             ValidateMap(DevMapLayout.Definition, 2);
 
-            Debug.Log("<color=green>[MapViewValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MapViewValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMap(MapDefinition map, int testNumber)
@@ -44,7 +44,7 @@ namespace Simpiens.Testing.World
                 int wallCells = 0;
                 for (int i = 0; i < map.Walls.Count; i++)
                 {
-                    var solid = map.Walls[i].Solid;
+                    var solid = map.Walls[i].Solid.ToUnity();
                     var expected = MapView.IsRock(solid) ? rock : walls;
                     MapView.CellRange(solid, origin, out int minX, out int maxX, out int minY, out int maxY);
                     for (int y = minY; y <= maxY; y++)
@@ -72,7 +72,7 @@ namespace Simpiens.Testing.World
                     {
                         if (!grid.IsCellWalkable(cx, cy)) continue;
                         walkable++;
-                        var centre = grid.CellToWorld(cx, cy);
+                        var centre = grid.CellToWorld(cx, cy).ToUnity();
                         for (int q = 0; q < 4; q++)
                         {
                             var probe = centre + new Vector2((q & 1) == 0 ? -0.25f : 0.25f, (q & 2) == 0 ? -0.25f : 0.25f);
@@ -86,7 +86,7 @@ namespace Simpiens.Testing.World
                 for (int i = 0; i < map.Sectors.Count; i++)
                 {
                     var sector = map.Sectors[i];
-                    var c = MapView.CellAt(origin, sector.TargetPoint);
+                    var c = MapView.CellAt(origin, sector.TargetPoint.ToUnity());
                     Assert(floor.HasTile(c), $"{map.Name}: sector {sector.Name} has no floor at its target point.");
                 }
                 Assert(Order(floor) == RenderOrder.Floor && Order(rock) == RenderOrder.Rock && Order(walls) == RenderOrder.Walls,
@@ -94,7 +94,7 @@ namespace Simpiens.Testing.World
                 int objects = root.GetComponentsInChildren<Transform>(true).Length;
                 Assert(objects < MaxViewObjects, $"{map.Name}: the view is {objects} GameObjects (limit {MaxViewObjects}).");
 
-                Debug.Log($"[PASS] Test {testNumber}: {map.Name} view matches the map ({wallCells} wall cells, {walkable} walkable nav cells on floor, {objects} GameObjects).");
+                TestLog.Log($"[PASS] Test {testNumber}: {map.Name} view matches the map ({wallCells} wall cells, {walkable} walkable nav cells on floor, {objects} GameObjects).");
             }
             finally
             {
@@ -112,7 +112,7 @@ namespace Simpiens.Testing.World
                 bool inWall = false;
                 for (int i = 0; i < map.Walls.Count && !inWall; i++)
                 {
-                    inWall = map.Walls[i].Solid.Contains(MapView.CellCentre(origin, cell.x, cell.y));
+                    inWall = map.Walls[i].Solid.Contains(MapView.CellCentre(origin, cell.x, cell.y).ToSim());
                 }
                 Assert(inWall, $"{map.Name}: {tilemap.name} tile at ({cell.x}, {cell.y}) is not on a wall.");
             }

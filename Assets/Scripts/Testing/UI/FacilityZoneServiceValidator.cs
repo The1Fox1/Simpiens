@@ -1,12 +1,10 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.UI.Zones;
-using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.UI
 {
@@ -15,15 +13,14 @@ namespace Simpiens.Testing.UI
     /// Asserts mathematical correctness of zone containment, fallback behavior, defensive null safety,
     /// and zero-allocation performance in hot paths.
     /// </summary>
-    public class FacilityZoneServiceValidator : IStartable
+    public class FacilityZoneServiceValidator
     {
         private readonly IFacilityZoneService _zoneService;
         private readonly IWorldRegistry _registry;
 
-        [Inject]
         public FacilityZoneServiceValidator(IFacilityZoneService zoneService = null, IWorldRegistry registry = null)
         {
-            _zoneService = zoneService ?? Simpiens.Testing.World.TestWorlds.DevMapZones();
+            _zoneService = zoneService ?? new FacilityZoneService(Simpiens.Testing.World.TestWorlds.DevMapSectors());
             _registry = registry;
         }
 
@@ -34,14 +31,14 @@ namespace Simpiens.Testing.UI
 
         public void RunAllValidationTests()
         {
-            Debug.Log("<color=#38bdf8><b>[FacilityZoneServiceValidator]</b> >>> Starting Epic UI-1 Domain Validation Suite <<<</color>");
+            TestLog.Log("<color=#38bdf8><b>[FacilityZoneServiceValidator]</b> >>> Starting Epic UI-1 Domain Validation Suite <<<</color>");
 
             ValidateZoneBoundsContainment();
             ValidateTransitFallbackZone();
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationZoneOccupancyQuery();
 
-            Debug.Log("<color=#10b981><b>[FacilityZoneServiceValidator]</b> >>> ALL 4 DOMAIN TESTS PASSED CLEANLY! <<<</color>");
+            TestLog.Log("<color=#10b981><b>[FacilityZoneServiceValidator]</b> >>> ALL 4 DOMAIN TESTS PASSED CLEANLY! <<<</color>");
         }
 
         public void ValidateZoneBoundsContainment()
@@ -87,7 +84,7 @@ namespace Simpiens.Testing.UI
             var zone10 = _zoneService.GetZoneForPosition(new Vector2(8f, -9f));
             if (zone10.ZoneId != 10) throw new Exception($"Zone containment failed for Pen 10! Expected Zone 10, got {zone10.ZoneId}");
 
-            Debug.Log("  ✔ ValidateZoneBoundsContainment passed: All 10 demonstration sectors correctly identify coordinates.");
+            TestLog.Log("  ✔ ValidateZoneBoundsContainment passed: All 10 demonstration sectors correctly identify coordinates.");
         }
 
         public void ValidateTransitFallbackZone()
@@ -100,7 +97,7 @@ namespace Simpiens.Testing.UI
             var invalidZone = _zoneService.GetZoneById(999);
             if (invalidZone.ZoneId != 0) throw new Exception($"Expected fallback Transit Zone (0) for ID 999, got {invalidZone.ZoneId}");
 
-            Debug.Log("  ✔ ValidateTransitFallbackZone passed: Out-of-bounds positions gracefully resolve to Transit Zone 0.");
+            TestLog.Log("  ✔ ValidateTransitFallbackZone passed: Out-of-bounds positions gracefully resolve to Transit Zone 0.");
         }
 
         public void ValidateDefensiveNullSafety()
@@ -112,16 +109,16 @@ namespace Simpiens.Testing.UI
             // Test null buffer
             _zoneService.GetAgentsInZone(4, null, null);
 
-            var buffer = new List<NodeController>();
+            var buffer = new List<WorldEntity>();
             _zoneService.GetAgentsInZone(4, null, buffer);
             if (buffer.Count != 0) throw new Exception("Expected empty buffer for null registry query");
 
-            Debug.Log("  ✔ ValidateDefensiveNullSafety passed: Injected null dependencies safely handled without NRE.");
+            TestLog.Log("  ✔ ValidateDefensiveNullSafety passed: Injected null dependencies safely handled without NRE.");
         }
 
         public void ValidateZeroAllocationZoneOccupancyQuery()
         {
-            var buffer = new List<NodeController>(32);
+            var buffer = new List<WorldEntity>(32);
 
             // Warmup JIT
             _zoneService.GetOccupancyCount(4, _registry);
@@ -143,7 +140,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Zero-allocation breach in zone query loop! Allocated {allocated} bytes over 1,000 queries.");
             }
 
-            Debug.Log($"  ✔ ValidateZeroAllocationZoneOccupancyQuery passed: 1,000 zone occupancy checks produced exactly 0 GC bytes.");
+            TestLog.Log($"  ✔ ValidateZeroAllocationZoneOccupancyQuery passed: 1,000 zone occupancy checks produced exactly 0 GC bytes.");
         }
     }
 }

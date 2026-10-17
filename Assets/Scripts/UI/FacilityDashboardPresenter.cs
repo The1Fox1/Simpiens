@@ -146,18 +146,18 @@ namespace Simpiens.UI
             public Label NameLabel;
             public Label DescLabel;
             public Label BadgeLabel;
-            public UnityEngine.GUID AgentId;
+            public EntityId AgentId;
             public string CurrentBadgeClass;
         }
 
         // State & Pre-allocated Buffers
         private int _selectedZoneId = -1; // Chosen from the loaded map by BuildSectorList
-        private UnityEngine.GUID _selectedAgentId = default;
+        private EntityId _selectedAgentId = default;
         private Simpiens.Entities.WorldSelection _worldSelection;
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
 
-        private readonly List<NodeController> _agentsInZoneBuffer = new List<NodeController>(32);
+        private readonly List<WorldEntity> _agentsInZoneBuffer = new List<WorldEntity>(32);
         private readonly List<VisualElement> _sectorCardsPool = new List<VisualElement>(16);
         private readonly List<AgentCardItem> _agentCardItems = new List<AgentCardItem>(32);
         private readonly List<Label> _eventItemsPool = new List<Label>(128);
@@ -206,7 +206,7 @@ namespace Simpiens.UI
             _interventionService = interventionService;
             _chronicleService = chronicleService ?? simulationManager?.Chronicle;
             _identityService = identityService ?? new AgentIdentityService();
-            _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _zoneService);
+            _narrativeFormatter = narrativeFormatter ?? new TemplateNarrativeFormatter(_identityService, _sectorRegistry);
 
             if (_sessionSwitcher != null) _sessionSwitcher.SessionChanged -= HandleSessionChanged;
             _sessionSwitcher = sessionSwitcher;
@@ -270,10 +270,11 @@ namespace Simpiens.UI
         private void HandleQuickSaveClicked()
         {
             if (_saveGame == null) return;
-            QuickSaveAsync().Forget();
+            QuickSaveAsync();
         }
 
-        private async Cysharp.Threading.Tasks.UniTaskVoid QuickSaveAsync()
+        // A UI event handler: the write runs off the main thread and Unity resumes here on the main thread
+        private async void QuickSaveAsync()
         {
             ShowSaveStatus("Saving...");
             var outcome = await _saveGame.QuickSaveAsync();
@@ -704,7 +705,7 @@ namespace Simpiens.UI
             RefreshAllViews();
         }
 
-        public void SelectAgent(UnityEngine.GUID agentId)
+        public void SelectAgent(EntityId agentId)
         {
             _selectedAgentId = agentId;
             _worldSelection?.SelectCrawler(agentId, follow: true); // back on the map, the camera follows the dossier's crawler
@@ -895,8 +896,8 @@ namespace Simpiens.UI
                     }
 
                     item.AgentId = node.Id;
-                    string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.name;
-                    item.NameLabel.text = $"{friendlyName} [{node.name}]";
+                    string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.Name;
+                    item.NameLabel.text = $"{friendlyName} [{node.Name}]";
                     item.DescLabel.text = GetAgentActivityDescription(agent);
 
                     var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
@@ -995,10 +996,10 @@ namespace Simpiens.UI
         {
             if (_worldRegistry == null) return;
 
-            NodeController node = null;
+            WorldEntity node = null;
             if (_selectedAgentId != default)
             {
-                node = _worldRegistry.GetNode(_selectedAgentId);
+                node = _worldRegistry.GetEntity(_selectedAgentId);
             }
 
             if (node == null || node.Agent == null)
@@ -1015,11 +1016,11 @@ namespace Simpiens.UI
 
             if (_dossierAgentName != null)
             {
-                string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.name;
+                string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.Name;
                 string title = _identityService != null ? _identityService.GetFriendlyTitle(node.Id) : "";
                 _dossierAgentName.text = string.IsNullOrEmpty(title)
-                    ? $"{friendlyName} [{node.name}]"
-                    : $"{friendlyName} the {title} [{node.name}]";
+                    ? $"{friendlyName} [{node.Name}]"
+                    : $"{friendlyName} the {title} [{node.Name}]";
             }
 
             var state = agent.VisualState;
@@ -1064,8 +1065,8 @@ namespace Simpiens.UI
                 {
                     foreach (var kvp in agent.Memory.AffinityMap)
                     {
-                        var peerNode = _worldRegistry.GetNode(kvp.Key);
-                        string peerName = peerNode != null ? peerNode.name : kvp.Key.ToString().Substring(0, 6);
+                        var peerNode = _worldRegistry.GetEntity(kvp.Key);
+                        string peerName = peerNode != null ? peerNode.Name : kvp.Key.ToString().Substring(0, 6);
                         var rel = kvp.Value;
 
                         Label row;
@@ -1099,7 +1100,7 @@ namespace Simpiens.UI
             }
         }
 
-        private string GetAgentActivityDescription(AutonomousAgent agent)
+        private string GetAgentActivityDescription(Simpiens.Cognition.AgentState agent)
         {
             if (agent == null) return "Unknown";
             if (agent.IsInTantrum) return "Throwing tantrum in anger";
@@ -1134,7 +1135,7 @@ namespace Simpiens.UI
         private void HandleCalmTantrum()
         {
             if (_selectedAgentId == default || _worldRegistry == null) return;
-            var node = _worldRegistry.GetNode(_selectedAgentId);
+            var node = _worldRegistry.GetEntity(_selectedAgentId);
             if (node?.Agent != null)
             {
                 node.Agent.Frustration = 0f;
@@ -1407,10 +1408,10 @@ namespace Simpiens.UI
                 stallId = _simulationManager.ActiveStalls[0].StallEntityId.ToString();
             }
 
-            GUID parsedStallId = default;
+            EntityId parsedStallId = default;
             if (!string.IsNullOrEmpty(stallId))
             {
-                GUID.TryParse(stallId, out parsedStallId);
+                EntityId.TryParse(stallId, out parsedStallId);
             }
             else if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
             {
@@ -1567,7 +1568,7 @@ namespace Simpiens.UI
             uint durationTicks = (uint)(_sliderBountyDuration != null ? _sliderBountyDuration.value : 1000);
 
             // Validate player / stall treasury gold
-            GUID creatorStallId = default;
+            EntityId creatorStallId = default;
             if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
             {
                 var stall = _simulationManager.ActiveStalls[0];
@@ -1585,7 +1586,7 @@ namespace Simpiens.UI
 
             if (_interventionService != null)
             {
-                var bountyCmd = new PostBountyCommand(0, type, sectorId, itemType, qty, rewardGold, durationTicks, Vector2.zero, creatorStallId);
+                var bountyCmd = new PostBountyCommand(0, type, sectorId, itemType, qty, rewardGold, durationTicks, Vec2.Zero, creatorStallId);
                 _interventionService.QueueInfluence(InfluenceEvent.CreatePostBounty("Player", bountyCmd));
                 if (_bountyFeedbackLabel != null)
                 {

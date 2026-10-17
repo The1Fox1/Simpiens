@@ -1,0 +1,40 @@
+# The simulation without Unity (Epic CORE): builds the engine-free core for .NET 10 and runs its tests (validators,
+# golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak). No Unity licence needed.
+# The Unity PlayMode suite still runs locally: scripts/run-playmode-tests.sh.
+name: dotnet
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dotnet-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore dotnet/Simpiens.slnx
+
+      - name: Build
+        run: dotnet build dotnet/Simpiens.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test dotnet/Simpiens.slnx -c Release --no-build
+
+      - name: Golden world hashes (console host)
+        run: dotnet run --project dotnet/Simpiens.Host -c Release --no-build -- golden check

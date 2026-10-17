@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Simpiens.Testing.Diagnostics
 {
     /// <summary>
@@ -10,9 +8,9 @@ namespace Simpiens.Testing.Diagnostics
         public readonly long Tick;
         public readonly float Timestamp;
         public readonly VisualAnomalyType Type;
-        public readonly GUID PrimaryAgentId;
-        public readonly GUID SecondaryAgentId;
-        public readonly Vector2 Position;
+        public readonly EntityId PrimaryAgentId;
+        public readonly EntityId SecondaryAgentId;
+        public readonly Vec2 Position;
         public readonly string Description;
         public readonly string ScreenshotPath;
 
@@ -20,9 +18,9 @@ namespace Simpiens.Testing.Diagnostics
             long tick,
             float timestamp,
             VisualAnomalyType type,
-            GUID primaryAgentId,
-            GUID secondaryAgentId,
-            Vector2 position,
+            EntityId primaryAgentId,
+            EntityId secondaryAgentId,
+            Vec2 position,
             string description,
             string screenshotPath = null)
         {
@@ -38,8 +36,8 @@ namespace Simpiens.Testing.Diagnostics
 
         public override string ToString()
         {
-            string partnerInfo = !SecondaryAgentId.Empty() ? $" <=> Partner: {SecondaryAgentId}" : string.Empty;
-            return $"[VISUAL_ANOMALY: {Type}] Tick {Tick} ({Timestamp:F2}s) Agent: {PrimaryAgentId}{partnerInfo} at ({Position.x:F2}, {Position.y:F2}) - {Description}";
+            string partnerInfo = !SecondaryAgentId.IsEmpty ? $" <=> Partner: {SecondaryAgentId}" : string.Empty;
+            return $"[VISUAL_ANOMALY: {Type}] Tick {Tick} ({Timestamp:F2}s) Agent: {PrimaryAgentId}{partnerInfo} at ({Position.X:F2}, {Position.Y:F2}) - {Description}";
         }
     }
 }

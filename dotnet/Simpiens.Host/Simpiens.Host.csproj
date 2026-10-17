@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The development console host (Epic CORE C10): runs sessions, soaks and golden-hash checks headless on the
+       Generic Host. A tool for developers and CI, not the game: it uses the test harness (golden hashes), which no
+       shipping host may reference. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Host</RootNamespace>
+    <AssemblyName>simpiens</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Hosting/Simpiens.Hosting.csproj" />
+    <ProjectReference Include="../Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+  </ItemGroup>
+</Project>

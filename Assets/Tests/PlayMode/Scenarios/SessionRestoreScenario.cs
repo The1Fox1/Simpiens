@@ -62,7 +62,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             _savedTick = clock.CurrentTick;
             _savedCounter = ids.Counter;
             _savedBytes = SaveSerializer.Serialize(spawner.Capture());
-            _savedHash = WorldStateHash.Capture(_savedTick, spawner.Agents, sim, sectors, includeWork: false);
+            _savedHash = WorldStateHash.Capture(_savedTick, spawner.Host, sim, sectors, includeWork: false);
 
             // A fresh session with its own short history, then the load over it
             spawner.Respawn(spawner.Find(SessionId));
@@ -75,7 +75,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             _loadedTick = clock.CurrentTick;
             _loadedCounter = ids.Counter;
             _loadedBytes = SaveSerializer.Serialize(spawner.Capture());
-            _loadedHash = WorldStateHash.Capture(_loadedTick, spawner.Agents, sim, sectors, includeWork: false);
+            _loadedHash = WorldStateHash.Capture(_loadedTick, spawner.Host, sim, sectors, includeWork: false);
 
             // The loaded outpost plays on
             yield return RunUntil(clock, _loadedTick + TicksAfterLoad);
@@ -137,7 +137,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
         private static int FirstDifference(byte[] a, byte[] b)
         {
-            int n = Mathf.Min(a.Length, b.Length);
+            int n = SimMath.Min(a.Length, b.Length);
             for (int i = 0; i < n; i++)
             {
                 if (a[i] != b[i]) return i;

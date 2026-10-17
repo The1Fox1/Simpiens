@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The engine-free validators, fixtures and test sessions: the same files as the Unity assembly
+       Simpiens.Testing.Core (Assets/Simpiens.Core.Testing). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Simpiens.Testing.Core</AssemblyName>
+    <RootNamespace>Simpiens.Testing</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(AssetsRoot)Simpiens.Core.Testing/**/*.cs" LinkBase="Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Core/Simpiens.Core.csproj" />
+  </ItemGroup>
+</Project>

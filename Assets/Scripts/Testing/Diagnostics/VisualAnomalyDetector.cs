@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -6,7 +7,6 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -33,15 +33,15 @@ namespace Simpiens.Testing.Diagnostics
         private class AgentTelemetryHistory
         {
             // Jitter, sampled once per simulation tick from logical positions
-            public Vector2 LastTickPosition;
+            public Vec2 LastTickPosition;
             public bool HasTickPosition;
-            public Vector2 LastTickHeading;
+            public Vec2 LastTickHeading;
             public bool HasTickHeading;
             public readonly long[] ReversalTicks = new long[4];
             public int ReversalIndex;
             public int ReversalCount;
             public long LastJitterAlertTick = long.MinValue / 2;
-            public readonly Vector2[] Trail = new Vector2[JitterTrailLength];
+            public readonly Vec2[] Trail = new Vec2[JitterTrailLength];
             public int TrailIndex;
             public int TrailCount;
 
@@ -54,7 +54,7 @@ namespace Simpiens.Testing.Diagnostics
             public int StateTransitionCount;
 
             public float StackingDuration;
-            public GUID StackingPartner;
+            public EntityId StackingPartner;
 
             public float LastStackingAlertTime = -10f;
             public float LastPenetrationAlertTime = -10f;
@@ -68,7 +68,7 @@ namespace Simpiens.Testing.Diagnostics
                 if (ReversalCount < ReversalTicks.Length) ReversalCount++;
             }
 
-            public void RecordTrail(Vector2 position)
+            public void RecordTrail(Vec2 position)
             {
                 Trail[TrailIndex] = position;
                 TrailIndex = (TrailIndex + 1) % Trail.Length;
@@ -89,13 +89,11 @@ namespace Simpiens.Testing.Diagnostics
         private readonly ISpatialPartition _spatialPartition;
         private readonly IWorldMap _worldMap;
 
-        private readonly Dictionary<GUID, AgentTelemetryHistory> _histories = new Dictionary<GUID, AgentTelemetryHistory>(128);
+        private readonly Dictionary<EntityId, AgentTelemetryHistory> _histories = new Dictionary<EntityId, AgentTelemetryHistory>(128);
         private readonly List<VisualAnomalyRecord> _recentAnomalies = new List<VisualAnomalyRecord>(128);
-        private readonly List<GUID> _cleanupBuffer = new List<GUID>(32);
-        private readonly Collider2D[] _overlapBuffer = new Collider2D[16];
+        private readonly List<EntityId> _cleanupBuffer = new List<EntityId>(32);
 
         private int _frameCounter;
-        private ContactFilter2D _obstacleFilter;
 
         // Metric Counters
         public int TotalAnomalies { get; private set; }
@@ -127,8 +125,6 @@ namespace Simpiens.Testing.Diagnostics
             // Jitter is judged per simulation tick, so a test at 10x sees what the player sees at 1x
             if (_clock != null) _clock.OnSimulationTick += EvaluateJitterTick;
 
-            _obstacleFilter = ContactFilter2D.noFilter;
-            _obstacleFilter.useTriggers = false;
         }
 
         public void ResetMetrics()
@@ -148,7 +144,7 @@ namespace Simpiens.Testing.Diagnostics
             if (count <= 0 || _recentAnomalies.Count == 0)
                 return Array.Empty<VisualAnomalyRecord>();
 
-            int returnCount = Mathf.Min(count, _recentAnomalies.Count);
+            int returnCount = SimMath.Min(count, _recentAnomalies.Count);
             var result = new VisualAnomalyRecord[returnCount];
             int startIndex = _recentAnomalies.Count - returnCount;
             for (int i = 0; i < returnCount; i++)
@@ -167,7 +163,7 @@ namespace Simpiens.Testing.Diagnostics
         {
             if (_worldRegistry == null) return;
 
-            var activeNodes = _worldRegistry.ActiveNodes;
+            var activeNodes = _worldRegistry.ActiveEntities;
             if (activeNodes == null || activeNodes.Count == 0) return;
 
             _frameCounter++;
@@ -199,7 +195,7 @@ namespace Simpiens.Testing.Diagnostics
             }
         }
 
-        private AgentTelemetryHistory GetOrCreateHistory(GUID id)
+        private AgentTelemetryHistory GetOrCreateHistory(EntityId id)
         {
             if (!_histories.TryGetValue(id, out var history))
             {
@@ -217,7 +213,7 @@ namespace Simpiens.Testing.Diagnostics
         public void EvaluateJitterTick(long tick)
         {
             if (_worldRegistry == null) return;
-            var activeNodes = _worldRegistry.ActiveNodes;
+            var activeNodes = _worldRegistry.ActiveEntities;
             if (activeNodes == null) return;
 
             for (int i = 0; i < activeNodes.Count; i++)
@@ -226,7 +222,7 @@ namespace Simpiens.Testing.Diagnostics
                 if (node == null || node.Type != EntityType.Pawn) continue;
                 var history = GetOrCreateHistory(node.Id);
 
-                Vector2 position = node.Position;
+                Vec2 position = node.Position;
                 history.RecordTrail(position);
                 if (!history.HasTickPosition)
                 {
@@ -235,12 +231,12 @@ namespace Simpiens.Testing.Diagnostics
                     continue;
                 }
 
-                Vector2 delta = position - history.LastTickPosition;
-                if (delta.sqrMagnitude <= 0.0001f) continue; // headings only from real movement
-                Vector2 heading = delta.normalized;
+                Vec2 delta = position - history.LastTickPosition;
+                if (delta.SqrMagnitude <= 0.0001f) continue; // headings only from real movement
+                Vec2 heading = delta.Normalized;
                 history.LastTickPosition = position;
 
-                if (history.HasTickHeading && Vector2.Dot(heading, history.LastTickHeading) < -0.5f)
+                if (history.HasTickHeading && Vec2.Dot(heading, history.LastTickHeading) < -0.5f)
                 {
                     history.RecordReversal(tick);
                     if (history.ReversalCount >= JitterReversals)
@@ -278,12 +274,12 @@ namespace Simpiens.Testing.Diagnostics
             {
                 var p = history.Trail[(history.TrailIndex - k + len) % len];
                 if (sb.Length > 0) sb.Append(' ');
-                sb.Append('(').Append(p.x.ToString("F2")).Append(',').Append(p.y.ToString("F2")).Append(')');
+                sb.Append('(').Append(p.X.ToString("F2")).Append(',').Append(p.Y.ToString("F2")).Append(')');
             }
             return sb.ToString();
         }
 
-        private void EvaluateStateThrashing(NodeController node, AgentTelemetryHistory history, long tick, float currentTime)
+        private void EvaluateStateThrashing(WorldEntity node, AgentTelemetryHistory history, long tick, float currentTime)
         {
             var agent = node.Agent;
             if (agent == null) return;
@@ -292,7 +288,7 @@ namespace Simpiens.Testing.Diagnostics
             // otherwise the raw simulation state (headless)
             if (!history.ViewResolved)
             {
-                history.View = node.GetComponent<AgentView>();
+                history.View = NodeController.ViewOf(node.Id)?.GetComponent<AgentView>();
                 history.ViewResolved = true;
             }
             var currentState = history.View != null ? history.View.DisplayedState : agent.VisualState;
@@ -341,7 +337,7 @@ namespace Simpiens.Testing.Diagnostics
             return sb.ToString();
         }
 
-        private void EvaluateStacking(IReadOnlyList<NodeController> activeNodes, long tick, float currentTime, float dt)
+        private void EvaluateStacking(IReadOnlyList<WorldEntity> activeNodes, long tick, float currentTime, float dt)
         {
             float dtStep = dt * 5f;
 
@@ -365,7 +361,7 @@ namespace Simpiens.Testing.Diagnostics
 
                     if (isSocialInteraction) continue;
 
-                    float dist = Vector2.Distance(nodeA.Position, nodeB.Position);
+                    float dist = Vec2.Distance(nodeA.Position, nodeB.Position);
                     if (dist < 0.35f)
                     {
                         isStackedWithAny = true;
@@ -392,19 +388,19 @@ namespace Simpiens.Testing.Diagnostics
 
                 if (!isStackedWithAny)
                 {
-                    historyA.StackingDuration = Mathf.Max(0f, historyA.StackingDuration - dtStep * 2f);
+                    historyA.StackingDuration = SimMath.Max(0f, historyA.StackingDuration - dtStep * 2f);
                 }
             }
         }
 
-        private void EvaluatePenetrationAndBounds(IReadOnlyList<NodeController> activeNodes, long tick, float currentTime)
+        private void EvaluatePenetrationAndBounds(IReadOnlyList<WorldEntity> activeNodes, long tick, float currentTime)
         {
             for (int i = 0; i < activeNodes.Count; i++)
             {
                 var node = activeNodes[i];
                 if (node == null || node.Type != EntityType.Pawn) continue;
 
-                Vector2 pos = node.Position;
+                Vec2 pos = node.Position;
 
                 // 1. Boundary breach check: the loaded map's playable bounds (±20 before any map is loaded)
                 if (IsOutsidePlayArea(pos))
@@ -435,40 +431,39 @@ namespace Simpiens.Testing.Diagnostics
                     continue;
                 }
 
-                int hitCount = Physics2D.OverlapCircle(pos, probeRadius, _obstacleFilter, _overlapBuffer);
-                for (int h = 0; h < hitCount; h++)
+                // Injected walls by their simulation geometry (circle against circle, as the physics overlap was)
+                for (int w = 0; w < activeNodes.Count; w++)
                 {
-                    var col = _overlapBuffer[h];
-                    if (col == null || col.gameObject == node.gameObject || col.isTrigger) continue;
-
-                    var hitNode = col.GetComponent<NodeController>();
-                    if (hitNode != null && hitNode.Type == EntityType.Wall)
+                    var wall = activeNodes[w];
+                    if (wall == null || wall == node || wall.Type != EntityType.Wall) continue;
+                    float reach = probeRadius + wall.Radius;
+                    if ((wall.Position - pos).SqrMagnitude < reach * reach)
                     {
-                        ReportPenetration(node, pos, tick, currentTime, col.gameObject.name);
+                        ReportPenetration(node, pos, tick, currentTime, wall.Name);
                         break;
                     }
                 }
             }
         }
 
-        private bool IsOutsidePlayArea(Vector2 pos)
+        private bool IsOutsidePlayArea(Vec2 pos)
         {
             var grid = _spatialPartition?.StaticGrid;
             if (grid != null && grid.HasPlayableBounds)
             {
                 var b = grid.PlayableBounds;
-                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+                return pos.X < b.XMin || pos.X > b.XMax || pos.Y < b.YMin || pos.Y > b.YMax;
             }
             var mapBounds = _worldMap?.Current;
             if (mapBounds != null)
             {
                 var b = mapBounds.PlayableBounds;
-                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+                return pos.X < b.XMin || pos.X > b.XMax || pos.Y < b.YMin || pos.Y > b.YMax;
             }
-            return Mathf.Abs(pos.x) > NavConstants.PlayAreaHalfExtent || Mathf.Abs(pos.y) > NavConstants.PlayAreaHalfExtent;
+            return SimMath.Abs(pos.X) > NavConstants.PlayAreaHalfExtent || SimMath.Abs(pos.Y) > NavConstants.PlayAreaHalfExtent;
         }
 
-        private void ReportPenetration(NodeController node, Vector2 pos, long tick, float currentTime, string obstacle)
+        private void ReportPenetration(WorldEntity node, Vec2 pos, long tick, float currentTime, string obstacle)
         {
             if (_histories.TryGetValue(node.Id, out var hist) && (currentTime - hist.LastPenetrationAlertTime >= 1.0f))
             {
@@ -486,7 +481,7 @@ namespace Simpiens.Testing.Diagnostics
             }
         }
 
-        private void PruneInactiveHistories(IReadOnlyList<NodeController> activeNodes)
+        private void PruneInactiveHistories(IReadOnlyList<WorldEntity> activeNodes)
         {
             _cleanupBuffer.Clear();
 
@@ -519,7 +514,7 @@ namespace Simpiens.Testing.Diagnostics
             }
             _recentAnomalies.Add(record);
 
-            Debug.LogWarning(record.ToString());
+            TestLog.LogWarning(record.ToString());
             OnAnomalyDetected?.Invoke(record);
         }
     }

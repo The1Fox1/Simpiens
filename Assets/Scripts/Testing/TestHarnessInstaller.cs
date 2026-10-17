@@ -1,9 +1,9 @@
+using UnityEngine;
 using Simpiens.Core.Bootstrapping;
 using Simpiens.Core.Session;
 using Simpiens.Testing.Diagnostics;
 using Simpiens.Testing.Environment;
 using Simpiens.Testing.Sessions;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -18,6 +18,11 @@ namespace Simpiens.Testing
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Hook()
         {
+            // Validator output goes to Unity's console (TestLog is framework-free, Epic CORE C6)
+            TestLog.InfoSink = message => Debug.Log(message);
+            TestLog.WarningSink = message => Debug.LogWarning(message);
+            TestLog.ErrorSink = message => Debug.LogError(message);
+
             BootstrapExtensions.Register(Install);
         }
 

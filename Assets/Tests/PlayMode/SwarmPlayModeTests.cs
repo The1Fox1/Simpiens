@@ -102,6 +102,17 @@ namespace Simpiens.Tests.PlayMode
             yield return ExecuteScenario(new DeterminismScenario());
         }
 
+        /// <summary>
+        /// Epic CORE C2: the outpost reproduces its golden world hashes for this process's seed (the default seed in a
+        /// full run; other seeds through scripts/golden-hashes.sh, which can also re-record them).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Scenario_GoldenWorldHash_ReproducesTheBaseline()
+        {
+            yield return ExecuteScenario(new GoldenWorldHashScenario());
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Scenario_OutpostSupplyLoop_EmergesWithoutInjection()
@@ -324,6 +335,7 @@ namespace Simpiens.Tests.PlayMode
         public void Scenario_ResourceContention_AllDomainValidationTestsPass()
         {
             new Simpiens.Testing.Sociopolitical.ResourceContentionValidator().Start();
+            new Simpiens.Testing.UI.AgentSpriteValidator().RunAllValidationTests(); // its sprite check, split off (Epic CORE C7)
         }
 
         [Test]
@@ -433,6 +445,29 @@ namespace Simpiens.Tests.PlayMode
         {
             var validator = new Simpiens.Testing.Environment.SingleWriterMemoryValidator();
             validator.RunAllValidationTests();
+        }
+
+        /// <summary>Epic CORE C1: decisions land at T + 1 in agent-id order, applied on the main thread.</summary>
+        [Test]
+        public void Scenario_CognitionScheduler_AllDomainValidationTestsPass()
+        {
+            // Two cases fail on purpose (a preparation and an evaluation that throw), and the scheduler logs them as errors
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
+                new Simpiens.Testing.Environment.CognitionSchedulerValidator().RunAllValidationTests();
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
+        }
+
+        /// <summary>Epic CORE C3: EntityId is bit-compatible with UnityEngine.GUID, which it replaced.</summary>
+        [Test]
+        public void Scenario_EntityIdCompatibility_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Environment.EntityIdCompatibilityValidator().RunAllValidationTests();
         }
 
         [Test]

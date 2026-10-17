@@ -3,9 +3,9 @@
     "rootNamespace": "Simpiens",
     "references": [
         "VContainer",
-        "UniTask",
         "Unity.InputSystem",
-        "ZLogger.Unity"
+        "ZLogger.Unity",
+        "Simpiens.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,7 +1,7 @@
+using UnityEngine;
 using System;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Entities;
-using UnityEngine;
 
 namespace Simpiens.Testing.UI
 {
@@ -17,7 +17,7 @@ namespace Simpiens.Testing.UI
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[CameraRigValidator] Beginning camera rig validation...");
+            TestLog.Log("[CameraRigValidator] Beginning camera rig validation...");
 
             ValidateReframe();
             ValidateClamp();
@@ -26,13 +26,13 @@ namespace Simpiens.Testing.UI
             ValidateAspectChange();
             ValidatePicker();
 
-            Debug.Log("<color=green>[CameraRigValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[CameraRigValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static CameraRig Floor1Rig()
         {
             var rig = new CameraRig();
-            rig.Configure(Floor1Layout.Definition.CameraFrame, Aspect);
+            rig.Configure(Floor1Layout.Definition.CameraFrame.ToUnity(), Aspect);
             return rig;
         }
 
@@ -48,7 +48,7 @@ namespace Simpiens.Testing.UI
             rig.Pan(new Vector2(4f, 4f));
             rig.Reframe();
             Assert(Near(rig.Position, frame.center) && Mathf.Approximately(rig.Size, rig.MaxSize), "Reframe restores the whole view after zoom and pan.");
-            Debug.Log("[PASS] Test 1: Reframe fits the whole map.");
+            TestLog.Log("[PASS] Test 1: Reframe fits the whole map.");
         }
 
         private void ValidateClamp()
@@ -72,7 +72,7 @@ namespace Simpiens.Testing.UI
             rig.Pan(new Vector2(1000f, 1000f));
             Assert(Mathf.Approximately(rig.Position.x, frame.xMax + CameraRig.Margin - rig.Size * Aspect)
                 && Mathf.Approximately(rig.Position.y, frame.yMax + CameraRig.Margin - rig.Size), $"Pushed into the corner, the view sits on it ({rig.Position}).");
-            Debug.Log("[PASS] Test 2: The view never leaves the map's frame plus the margin.");
+            TestLog.Log("[PASS] Test 2: The view never leaves the map's frame plus the margin.");
         }
 
         private void ValidateZoom()
@@ -97,7 +97,7 @@ namespace Simpiens.Testing.UI
             rig.ZoomAt(cursor, 0.5f);
             rig.ZoomAt(cursor, 2f);
             Assert(Near(rig.Position, p), "Zoom in then out about the same point returns to the same view.");
-            Debug.Log("[PASS] Test 3: Zoom keeps the cursor point fixed and stays within its limits.");
+            TestLog.Log("[PASS] Test 3: Zoom keeps the cursor point fixed and stays within its limits.");
         }
 
         private void ValidateFollow()
@@ -133,7 +133,7 @@ namespace Simpiens.Testing.UI
                 m.Follow(walker, 1f / 60f);
             }
             Assert(Vector2.Distance(m.Position, walker) < 0.05f, $"Follow keeps up with a target moving 20 units/s ({Vector2.Distance(m.Position, walker)} behind).");
-            Debug.Log("[PASS] Test 4: Follow converges on its target, keeps up with a fast one, independent of frame rate.");
+            TestLog.Log("[PASS] Test 4: Follow converges on its target, keeps up with a fast one, independent of frame rate.");
         }
 
         private void ValidateAspectChange()
@@ -145,14 +145,14 @@ namespace Simpiens.Testing.UI
             Assert(rig.Size * 2f * rig.Aspect >= rig.Frame.width - Eps, "Reframe on the new shape shows the whole width.");
             rig.SetAspect(3f);
             Assert(rig.Size <= rig.MaxSize + Eps && rig.Size >= CameraRig.MinSize - Eps, "A wider screen keeps the size within the new limits.");
-            Debug.Log("[PASS] Test 5: A new screen shape keeps the view within the limits.");
+            TestLog.Log("[PASS] Test 5: A new screen shape keeps the view within the limits.");
         }
 
         private void ValidatePicker()
         {
-            var a = new GUID(1u, 0u, 0u, 1u);
-            var b = new GUID(1u, 0u, 0u, 2u);
-            var c = new GUID(1u, 0u, 0u, 3u);
+            var a = new EntityId(1u, 0u, 0u, 1u);
+            var b = new EntityId(1u, 0u, 0u, 2u);
+            var c = new EntityId(1u, 0u, 0u, 3u);
             var crowd = new[]
             {
                 new PickCandidate(c, new Vector2(0.4f, 0f)),
@@ -181,7 +181,7 @@ namespace Simpiens.Testing.UI
             Assert(selection.SelectedCrawler == default && !selection.Following, "A click on empty floor drops the crawler.");
             selection.Clear();
             Assert(selection.SelectedSector == -1 && selection.SelectedCrawler == default, "Clear drops everything.");
-            Debug.Log("[PASS] Test 6: Clicks pick the nearest crawler within reach (ties by id); selection state follows the rules.");
+            TestLog.Log("[PASS] Test 6: Clicks pick the nearest crawler within reach (ties by id); selection state follows the rules.");
         }
 
         private static bool Near(Vector2 a, Vector2 b) => Vector2.Distance(a, b) < 1e-3f;

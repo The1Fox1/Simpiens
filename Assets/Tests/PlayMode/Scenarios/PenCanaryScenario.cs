@@ -50,8 +50,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const int P9Collapsed = 17, P9Challenger = 18;
         private const int P10Leader = 20, P10DissidentB = 23;
 
-        private static readonly Vector2 P6RallyPoint = new Vector2(-8f, -7.5f);
-        private static readonly Vector2 P7RallyPoint = new Vector2(-4f, -7.2f);
+        private static readonly Vec2 P6RallyPoint = new Vec2(-8f, -7.5f);
+        private static readonly Vec2 P7RallyPoint = new Vec2(-4f, -7.2f);
         private const float RallyRadius = 2.0f;
         private const uint DirectiveExpiryTick = 5000;
 
@@ -75,7 +75,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private int _p1BushYield = -1;
         private float _p1DominantHunger;
         private long _p1SubmissiveWonTick = -1;
-        private Vector2 _p7BushPosition;
+        private Vec2 _p7BushPosition;
         private long _observedTicks;
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
@@ -160,9 +160,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             _timeline.AppendLine($"  t{rel}: pen {_outcomeName[pen]}: {what}");
         }
 
-        private UnityEngine.GUID Id(int index) => _agents[index].AgentId;
+        private EntityId Id(int index) => _agents[index].AgentId;
 
-        private bool Is(UnityEngine.GUID id, int index) => id == Id(index);
+        private bool Is(EntityId id, int index) => id == Id(index);
 
         private void ReadNewEvents(INarrativeChronicleService chronicle, long rel)
         {
@@ -239,7 +239,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
         }
 
-        private void ObserveState(SimulationManager simManager, UnityEngine.GUID pen1Bush, UnityEngine.GUID pen7Bush, long rel, uint absoluteTick)
+        private void ObserveState(SimulationManager simManager, EntityId pen1Bush, EntityId pen7Bush, long rel, uint absoluteTick)
         {
             // Pen 1: the contested bush goes to the feared agent. The fearful agent either yields in a contest
             // (chronicled above) or avoids the bush altogether, which leaves no event: then the first harvest of the
@@ -327,11 +327,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             return sb.ToString();
         }
 
-        private bool Near(int index, Vector2 point, float radius)
+        private bool Near(int index, Vec2 point, float radius)
         {
             var agent = _agents[index];
             if (agent == null) return false;
-            return Vector2.Distance(agent.transform.position, point) <= radius;
+            return Vec2.Distance(agent.State.Position, point) <= radius;
         }
     }
 }

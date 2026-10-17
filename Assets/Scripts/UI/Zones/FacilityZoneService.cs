@@ -51,7 +51,7 @@ namespace Simpiens.UI.Zones
 
         public FacilityZone GetZoneForPosition(Vector2 worldPos)
         {
-            return ToZone(_sectors.GetSectorAt(worldPos));
+            return ToZone(_sectors.GetSectorAt(worldPos.ToSim()));
         }
 
         public int GetOccupancyCount(int zoneId, IWorldRegistry registry)
@@ -59,7 +59,7 @@ namespace Simpiens.UI.Zones
             if (registry == null) return 0;
 
             var zone = GetZoneById(zoneId);
-            var nodes = registry.ActiveNodes;
+            var nodes = registry.ActiveEntities;
             int total = nodes.Count;
             int occupancy = 0;
 
@@ -68,7 +68,7 @@ namespace Simpiens.UI.Zones
                 var node = nodes[i];
                 if (node != null && node.Type == EntityType.Pawn)
                 {
-                    if (zone.Contains(node.Position))
+                    if (zone.Contains(node.Position.ToUnity()))
                     {
                         occupancy++;
                     }
@@ -78,7 +78,7 @@ namespace Simpiens.UI.Zones
             return occupancy;
         }
 
-        public void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<NodeController> resultsBuffer)
+        public void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<WorldEntity> resultsBuffer)
         {
             if (resultsBuffer == null) return;
             resultsBuffer.Clear();
@@ -86,7 +86,7 @@ namespace Simpiens.UI.Zones
             if (registry == null) return;
 
             var zone = GetZoneById(zoneId);
-            var nodes = registry.ActiveNodes;
+            var nodes = registry.ActiveEntities;
             int total = nodes.Count;
 
             for (int i = 0; i < total; i++)
@@ -94,7 +94,7 @@ namespace Simpiens.UI.Zones
                 var node = nodes[i];
                 if (node != null && node.Type == EntityType.Pawn)
                 {
-                    if (zone.Contains(node.Position))
+                    if (zone.Contains(node.Position.ToUnity()))
                     {
                         resultsBuffer.Add(node);
                     }
@@ -119,7 +119,7 @@ namespace Simpiens.UI.Zones
 
         private FacilityZone ToZone(in SectorDefinition sector)
         {
-            return new FacilityZone(sector.Id, sector.Name, sector.Description, sector.Bounds, sector.Anchor, sector.AnchorRadius, _sectors.IsExplored(sector.Id));
+            return new FacilityZone(sector.Id, sector.Name, sector.Description, sector.Bounds.ToUnity(), sector.Anchor.ToUnity(), sector.AnchorRadius, _sectors.IsExplored(sector.Id));
         }
 
         private void RefreshZones()

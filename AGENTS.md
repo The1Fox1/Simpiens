@@ -4,8 +4,34 @@ Welcome to the **Simpiens** project! This document outlines the Unity simulation
 
 > **Source of truth:** [`docs/ROADMAP.md`](docs/ROADMAP.md) is the highest source of truth for epic/milestone **status**, scope, sequencing, engineering invariants and the Definition of Done. This file explains *how to work in the code*; it deliberately does **not** track status. If this file and the roadmap disagree, the roadmap wins — fix this file.
 
+If you are an agent then please check the .agents/ directory for rules or any current *directives* the developer has issued for your current session. 
+
 ## Current Project Structure
-The `Assets/Scripts/` directory contains the core simulation logic, strongly emphasizing a code-first, decoupled approach where heavy cognitive logic runs asynchronously off the main Unity loop.
+The simulation is engine-free and lives in its own assembly (Epic CORE):
+
+| Folder | Assembly | Holds |
+| :--- | :--- | :--- |
+| `Assets/Simpiens.Core/` | `Simpiens.Core` (`noEngineReferences: true`: Unity refuses any engine reference) | `Cognition/`, `Simulation/` (incl. `SimulationManager.cs`), `Session/` (sessions, layouts, `SessionHost`), `Intervention/`, `Narrative/`, `Diagnostics/` |
+| `Assets/Scripts/` | `Simpiens` (Unity) | the composition root (`Core/`), views (`Entities/`), the dashboard (`UI/`), `SwarmSpawner`, `AutonomousAgent`, `GridVisualizer`, the persistence smoke |
+| `Assets/Simpiens.Core.Testing/` | `Simpiens.Testing.Core` (test-only, no engine) | engine-free validators, fixtures, the Dev Map session, `WorldStateHash` |
+| `Assets/Scripts/Testing/` | `Simpiens.Testing` (test-only, Unity) | the anomaly detector and recorder, the batch controller, `EdgeCaseInjector`, view and UI validators |
+| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`, the `EconomySoak` and the DoD observer `OutpostWatch`), `Simpiens.Host` (the `simpiens` development console: `run`, `sweep`, `soak`, `golden`; it uses the test harness and never ships), and `Simpiens.Core.Tests` (xUnit v3: the engine-free validators, the golden hashes, determinism and the outpost's DoD scenarios headless; `dotnet test dotnet/Simpiens.slnx`) |
+
+Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both). Unity's Mono and .NET's CoreCLR round some scalar float expressions differently: they agree on the golden seeds, not on every seed, so compare a .NET run with .NET runs and a Unity run with Unity runs (epic CORE §6 F1).
+
+### Checking a change
+A change to the core is checked in both runtimes: `dotnet test` takes seconds; the Unity suite takes minutes.
+
+| Check | Command | Needs |
+| :--- | :--- | :--- |
+| .NET tests (validators, golden hashes, the outpost's DoD scenarios, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
+| Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
+| Unity PlayMode suite | `scripts/run-playmode-tests.sh` | Unity, with the editor closed |
+| Golden hashes in Unity, one process per seed | `scripts/golden-hashes.sh check` (`record` only for a deliberate behaviour change, in its own commit) | Unity |
+| Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |
+| Save and load in a Linux player | `scripts/run-persistence-smoke.sh` | Unity |
+
+CI (`.github/workflows/dotnet.yml`) runs the .NET tests and the golden check on pushes to `main` and on pull requests; the Unity suite runs locally.
 
 ### Directories
 
@@ -18,13 +44,13 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - `Groups/`: Generic group primitive, directives, compliance, succession (`SuccessionEngine`, `ComplianceUtility`).
   - `Inventory/`: `AgentInventory` (fixed-capacity item slots + gold, double-buffered `AgentInventorySnapshot`).
   - `Pathfinding/`: Zero-allocation 2D Grid A* navigation engine with binary min-heap, epoch tracking, diagonal corner-cutting prevention, and raycast smoothing (`AsyncPathfinder`, `GridAStarSearcher`, `PathRequest`, `PathResponse`).
-  - **Key Files**: `AgentState.cs` (pure C# state, needs & drives), `AgentCognitionService.cs` (async cognition pipeline), `AgentConsequenceService.cs` (intent consequences & rewards), `ToolExecutionRegistry.cs` (MCP tool execution bridge), `AutonomousAgent.cs` (view/façade).
-  - `AutonomousAgent` is a thin `MonoBehaviour` view delegating state to `AgentState` and cognition to `IAgentCognitionService`. Agents can be instantiated, ticked, and simulated headlessly without any `GameObject`.
+  - **Key Files**: `AgentState.cs` (pure C# state, needs & drives), `AgentCognitionService.cs` (cognition: main-thread preparation, off-thread evaluation returning a `CognitionResult`), `CognitionScheduler.cs` (decisions dispatched on tick T land at T + 1 in agent-id order, on the main thread), `AgentConsequenceService.cs` (intent consequences & rewards), `ToolExecutionRegistry.cs` (MCP tool execution bridge), `AgentRuntime.cs` (a crawler's tick), `AutonomousAgent.cs` (its view).
+  - A crawler is plain data (Epic CORE C5): its `AgentState`, its `WorldEntity` in the world and its `AgentRuntime` (the per-tick drives, pre-emption, decision dispatch and perception while busy). `AutonomousAgent` is only its view (bound with `Bind(runtime)`, editor telemetry); it never ticks or writes state. Agents can be instantiated, ticked and simulated headlessly without any `GameObject`.
 
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
-  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
-  - `Session/`: sessions as code. An `ISessionDefinition` is a map plus `Populate(SessionBuilder)` (agents, relationships, groups, stalls, seeded bounties). Its `Economy` (`EconomyTuning`) is applied on every respawn, before `Populate`. `OutpostSession` is the live game. `SwarmSpawner` builds any session (loads the map through `IWorldMap`, spawns its keyed nodes and hearths, calls `Populate`, records the ledger baseline, registers seeded bounties) and is the `ISessionSwitcher`. Every respawn rewinds the clock to tick 0: express seeded expiries relative to the session start. A respawn also starts a new session epoch: an intent stamped with an older `AgentIntent.SessionEpoch` is dropped, because entity ids repeat per seed. Boot always picks the default (outpost) session by id. `SwarmSpawner` also captures and loads whole sessions (`Capture`, `TryRestore`: see `Simulation/Persistence/`), and `SaveGameService` is the player's quick-save slot.
+  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`; engine-free classes with several constructors are registered by factory, since the core carries no container attributes), `SimulationClockDriver.cs` (advances the engine-free clock with Unity's frame time), `UnitySimLogSinks.cs`, `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
+  - `Session/`: sessions as code. An `ISessionDefinition` is a map plus `Populate(SessionBuilder)` (agents, relationships, groups, stalls, seeded bounties). Its `Economy` (`EconomyTuning`) is applied on every respawn, before `Populate`. `OutpostSession` is the live game. `SessionHost` (engine-free) builds any session (loads the map through `IWorldMap`, spawns its keyed nodes, bunks and hearths, calls `Populate`, records the ledger baseline, registers seeded bounties), ticks every crawler after the simulation's tick, and captures and restores it; `SwarmSpawner` is its Unity side: it draws what the host spawns (views follow the host's and the registry's events) and keeps the session API (`ISessionSwitcher`, `ISessionPersistence`) for the dashboard and scenarios (`spawner.Host` for the engine-free session). Every respawn rewinds the clock to tick 0: express seeded expiries relative to the session start. A respawn also starts a new session epoch: an intent stamped with an older `AgentIntent.SessionEpoch` is dropped, because entity ids repeat per seed. Boot always picks the default (outpost) session by id. `SessionHost` also captures and loads whole sessions (`Capture`, `TryRestore`: see `Simulation/Persistence/`), and `SaveGameService` is the player's quick-save slot.
   - `Session/Layouts/`: map definitions as code. `Floor1Layout` is the live outpost floor (sectors, doors, POIs, nodes, spawn points, bunks).
   - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
   - `Editor/`: Editor-only batch/setup utilities.
@@ -36,7 +62,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Contains strictly `MonoBehaviour` views that hold state or rendering instructions.
   - **Rules**: Zero logic! Only basic view management, motor controls, and configurations.
   - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's floors, rock and walls on tilemaps plus its labels; walls are tiles only, never entities), `ShroudView.cs` (fog over uncharted sectors, read from `ISectorRegistry.ExploredMask`), `CameraRig.cs` / `CameraController.cs` (camera maths and its Input System layer), `WorldSelection.cs` (the player's selected crawler and sector, shared with the dashboard), `RenderOrder.cs` (the one sorting-order table: use it for anything drawn).
-  - A `NodeController` requires a `Rigidbody2D` and a collider: set your own (static, trigger if walkable), or Unity adds a dynamic body that pawns shove around.
+  - A `NodeController` is the view of one `WorldEntity` (`Bind(entity)`): it draws the entity's logical position and never writes back. It requires a `Rigidbody2D` and a collider (for clicking): set your own (static, trigger if walkable), or Unity adds a dynamic body.
 
 - **`Intervention/`**
   Player intervention system acting as an influence queue.
@@ -44,11 +70,12 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Simulation/`**
   The simulation environment, registries, and spatial representations.
+  - `Primitives/`: engine-free value types in the root namespace `Simpiens` (found from every `Simpiens.*` namespace without a `using`, and winning over Unity's own `UnityEngine.EntityId`): `EntityId`, the id of every simulation entity, bit-compatible with the `UnityEngine.GUID` it replaced (same words, ordering, hash code and hex text); and the maths: `Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`, which copy Unity's `Vector2`, `Vector2Int`, `Rect` and `Mathf` formulas exactly (including `Vec2 ==` being approximate and rounding half to even). Simulation code never uses an engine type; views convert at the boundary with `ToUnity()` / `ToSim()` (`Entities/SimUnityConversions`).
   - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid` with a static base layer for map walls).
   - `World/`: static geography as plain data. `MapDefinition` (+ `MapDefinitionBuilder`) is the single source of truth for walls, sectors, resource nodes, POIs and labels; `WallRasterizer` writes walls into the nav grid; `IWorldMap.Load` sizes the partition from the map (never the camera) and loads `ISectorRegistry` (authoritative sectors + exploration). The snapshot carries the map and the charted-sector mask: **fog of war**, nothing inside an uncharted sector is perceived until a scout's report charts it. Never hard-code coordinates or sector ids elsewhere: read them from the layout.
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), the session's economy numbers (`EconomyTuning`, with `SupplyTuning` nested), the trade fairness rule (`TradeFairness`), and the periodic economy (`ISupplyService`, `SupplyService`). The periodic economy covers dormant-node regrowth and the caravan visit: salvage quota faucet, then upkeep sink, then ration restock. `SimulationManager` ticks it via `ISupplyHost`. The model is in [`docs/economy-model.md`](docs/economy-model.md). Economy numbers live in `EconomyTuning` only: read them from the session's tuning (`IIntentExecutionContext.Economy`, or `Considerations.Economy` in cognition), never as literals.
   - `Persistence/`: session save and load.
-    - `SessionSave` is a whole session at one tick: a header, then one block per owner (crawlers, economy, world, groups, chronicle). Each owner writes and reads its own block (`CaptureTo` / `RestoreFrom`, `AgentState.CaptureRecord` / `RestoreRecord`); `SwarmSpawner.Capture` / `TryRestore` assemble them. Keyed records are sorted by id, so a capture doesn't depend on dictionary order.
+    - `SessionSave` is a whole session at one tick: a header, then one block per owner (crawlers, economy, world, groups, chronicle). Each owner writes and reads its own block (`CaptureTo` / `RestoreFrom`, `AgentState.CaptureRecord` / `RestoreRecord`); `SessionHost.Capture` / `TryRestore` assemble them. Keyed records are sorted by id, so a capture doesn't depend on dictionary order.
     - **New authoritative state goes into its owner's block,** with a check in the round-trip validators (`SessionCaptureValidator`, `SessionRestoreValidator`). A round trip only proves what a capture contains: state left out of the save is lost on load without any test failing.
     - Not saved: work in progress (intents, plans, and the bunk claims and contention tied to them: crawlers decide afresh after a load), derived state (snapshots, grids, the agent and world registries), and what the session definition provides (the map and the economy tuning).
     - A load rebuilds the map exactly as a respawn does (same ids for the map's entities), then restores in place of `Populate`. It refuses, before changing anything, a save with another format version, session, seed or map (`SaveFingerprint`).
@@ -57,10 +84,10 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
     - `SaveSerializer` is the only code that calls MemoryPack. MemoryPack is vendored by `scripts/update-memorypack.sh`, and its source generator runs as a Roslyn analyzer.
     - Unmanaged records are saved as raw memory copies, so changing a saved struct's layout changes the save format. When that happens, bump `SessionSaveHeader.CurrentFormatVersion` (`EconomySerializationValidator` pins the economy records' sizes).
     - `scripts/run-persistence-smoke.sh` builds a Linux player with a persistence smoke test compiled in and runs it headless: the player saves the running outpost to a file and loads it back.
-  - **Key Files**: `WorldRegistry.cs`, `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
+  - **Key Files**: `WorldEntity.cs` (an entity as plain data: id, kind, position, radius, speed, resource kind, its `AgentState` for crawlers), `WorldRegistry.cs` (entities in registration order, which is the snapshot's order; `EntityRegistered`/`EntityUnregistered` let views show and hide), `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
 
 - **`Diagnostics/`**
-  Logging façade over ZLogger (`SimLog`, `SimLogSettings`, `SafeSinkLogProcessor`, `TickStampedFileLogProcessor`). One `ILogger` per channel (`SimLog.Planning`, `SimLog.Economy`, …). Configured once in `AppBootstrapper.Awake`; it is a silent `NullLogger` until then (headless validators). Rules: `docs/ROADMAP.md` §1A.3.
+  Logging façade over ZLogger (`SimLog`, `SimLogSettings`, `SafeSinkLogProcessor`, `TickStampedFileLogProcessor`). One `ILogger` per channel (`SimLog.Planning`, `SimLog.Economy`, …). Engine-free: the host plugs its console in (`SimLog.ConsoleSinkFactory`; Unity's is installed by `Core/UnitySimLogSinks` in `AppBootstrapper.Awake`, which then configures it); it is a silent `NullLogger` until configured (headless validators). Rules: `docs/ROADMAP.md` §1A.3.
 
 - **`Narrative/`**
   Chronicle pipeline: `NarrativeChronicleService`, `TemplateNarrativeFormatter`, `ILlmNarrativeEnricher` (LLM hook; passthrough by default).
@@ -70,7 +97,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
   Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
-  - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators and `WorldStateHash` (a hash of the authoritative world, with per-part descriptions that name what differs).
+  - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), `HeadlessEntities` (validators build crawlers and props as records, never GameObjects), plus environment/determinism validators, `WorldStateHash` (a hash of the authoritative world, with per-part descriptions that name what differs) and `GoldenWorldHash` (the golden baselines in `Baselines/golden-world-hash.txt`).
   - `Sessions/`: the test-only **Dev Map**: `CanaryPenSession` (the 10 scripted demonstration pens) on `DevMapLayout`, registered by `TestHarnessInstaller` and reachable in the Editor through the dashboard's session switch. Pen code never goes back into production.
   - `World/`: map validators (`MapDefinitionValidator` incl. Floor1 and Dev Map checks, `WorldMapValidator`, `SectorChartingValidator` for the fog of war), `TestWorlds` fixtures and `CommonsYardFixture` (an open yard for validators that hand-place agents with no walls between sectors).
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
@@ -78,7 +105,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `Persistence/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
 
 - **`Assets/Tests/PlayMode/`**
-  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD and anomaly scenarios use `OutpostSession` (Floor 1); `PenCanaryScenario` and `ResourceContentionScenario` use the Dev Map. Scenarios that drive the dashboard (`SessionSwitchScenario`, `MapHudScenario`, `PlayerScoutScenario`, `QuickSaveButtonsScenario`) create it themselves, because loading the test scene destroys the boot one; they assert view state, never pixels (batch mode has no display). `OutpostLifecycleScenario` is the outpost's whole day (Epic MAP DoD) and logs a per-crawler report from `AgentState.Activity`; `DeterminismScenario` compares same-seed runs with `WorldStateHash`. `SaveLoadScenario` is the save/load DoD: the outpost saved mid-bounty, loaded into a fresh session, then played on; `SessionCaptureScenario` and `SessionRestoreScenario` check a live capture and round trip byte for byte. `PopulationScalingProbe` is an `[Explicit]` measurement. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]` (`Scenario_EconomySoak_PaceBands`); run it with `scripts/run-economy-soak.sh`. It plays a fair, a greedy and a generous player (`SIMPIENS_SOAK_PROFILE`, prices set by a typed command at tick 0) and asserts each one's pace band ([`docs/economy-model.md`](docs/economy-model.md) §7). `DeterminismScenario` is reliable only inside the full suite: run alone, its cold first run diverges (ROADMAP §1A.2 #6). Simulation seed: `SIMPIENS_SEED` / `-simseed`.
+  Unity Test Framework PlayMode scenarios (`SwarmPlayModeTests`, `Scenarios/`). This is where **live-simulation** acceptance scenarios belong (see Definition of Done). Each scenario names the session it runs on (`ISimulationScenario.SessionId`): DoD and anomaly scenarios use `OutpostSession` (Floor 1); `PenCanaryScenario` and `ResourceContentionScenario` use the Dev Map. Scenarios that drive the dashboard (`SessionSwitchScenario`, `MapHudScenario`, `PlayerScoutScenario`, `QuickSaveButtonsScenario`) create it themselves, because loading the test scene destroys the boot one; they assert view state, never pixels (batch mode has no display). `OutpostLifecycleScenario` is the outpost's whole day (Epic MAP DoD) and logs a per-crawler report from `AgentState.Activity`; `DeterminismScenario` compares same-seed runs with `WorldStateHash`; `GoldenWorldHashScenario` compares a run with the committed golden baselines (Epic CORE): a change that must not alter behaviour must reproduce them, and a deliberate behaviour change re-records them in its own commit with `scripts/golden-hashes.sh record` (`check` runs the three baseline seeds, one Unity process each). `SaveLoadScenario` is the save/load DoD: the outpost saved mid-bounty, loaded into a fresh session, then played on; `SessionCaptureScenario` and `SessionRestoreScenario` check a live capture and round trip byte for byte. `PopulationScalingProbe` is an `[Explicit]` measurement. Run via `scripts/run-playmode-tests.sh`. The long economy soak is `[Explicit]` (`Scenario_EconomySoak_PaceBands`); run it with `scripts/run-economy-soak.sh`. It plays a fair, a greedy and a generous player (`SIMPIENS_SOAK_PROFILE`, prices set by a typed command at tick 0) and asserts each one's pace band ([`docs/economy-model.md`](docs/economy-model.md) §7). Cognition decisions land on a fixed tick (`CognitionScheduler`), so `DeterminismScenario` holds alone or in the suite. Simulation seed: `SIMPIENS_SEED` / `-simseed`.
 
 ---
 
@@ -120,12 +147,12 @@ Multiplayer is a **required post-MVP feature**. The MVP is single-player, but do
 - **Single writer:** background threads read immutable snapshots/copies; all mutation happens on the simulation thread.
 
 ## Known Deviations (do not copy these patterns)
-The code currently violates some of the rules above and below in places (singleton `GoapPlanner` behind a lock, off-thread plan/intent bookkeeping in cognition, cognition result arrival tick depends on thread timing). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
+The code currently violates some of the rules above and below in places (singleton `GoapPlanner` behind a lock). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
 
 ---
 
 ## Logging (binding; full rules in `docs/ROADMAP.md` §1A.3)
-- Use `SimLog.<Channel>.ZLog<Level>($"...")` and never `Debug.Log` in application code. Validators under `Testing/` may keep `Debug.Log`.
+- Use `SimLog.<Channel>.ZLog<Level>($"...")` and never `Debug.Log` in application code. Validators log through `TestLog` and fail by throwing, so any test framework can run them.
 - Build nothing outside the interpolation holes: a disabled call must allocate nothing. Gate per-agent decision traces with `SimLog.Traces(channel, level, agentId)` and label entities with `SimLog.Agent(id)`.
 - Levels:
   - **Error:** broken invariants.
@@ -140,6 +167,6 @@ The code currently violates some of the rules above and below in places (singlet
 - **Composition over Inheritance**: Utilize C# Interfaces and VContainer DI.
 - **No MonoBehaviours for Logic**: Game objects are dumb views.
 - **Zero Allocations in Hot Paths**: Use Structs, object pooling, and standard `for` loops in tick-critical areas.
-- **Dual-Loop System**: Use `SimulationManager` for the fixed logical tick, and `AgentCognitionService` for asynchronous background cognition.
+- **Dual-Loop System**: Use `SimulationManager` for the fixed logical tick, and `AgentCognitionService` for background cognition. Off-thread evaluation writes nothing on `AgentState`: it returns its decision, and the `CognitionScheduler` applies it on the main thread.
 - **Defensive Null-Safety for Test Isolation**: Core domain services (`SimulationManager`, `AutonomousAgent`, `AgentCognitionService`) must be null-safe regarding their injected interfaces (`ISpatialPartition`, `IWorldRegistry`, `ISimulationClock`). Domain validators in `Assets/Scripts/Testing/` instantiate these services directly in isolation with `null` dependencies. Never dereference an injected dependency without a null guard or fallback (e.g., `_spatialPartition == null` returns unblocked/empty, `_clock == null` defaults to tick 0).
 

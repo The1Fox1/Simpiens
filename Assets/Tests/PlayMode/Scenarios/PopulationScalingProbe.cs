@@ -56,7 +56,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
                 // 1. Latency at the normal speed
                 var spans = new List<long>(512);
-                var since = new Dictionary<UnityEngine.GUID, long>();
+                var since = new Dictionary<EntityId, long>();
                 long start = clock.CurrentTick;
                 float elapsed = 0f;
                 while (clock.CurrentTick - start < LatencyTicks && elapsed < WallClockTimeoutSeconds)
@@ -102,7 +102,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 double mean = 0;
                 for (int i = 0; i < spans.Count; i++) mean += spans[i];
                 mean = spans.Count > 0 ? mean / spans.Count : 0;
-                long p95 = spans.Count > 0 ? spans[Mathf.Min(spans.Count - 1, (int)(spans.Count * 0.95f))] : 0;
+                long p95 = spans.Count > 0 ? spans[SimMath.Min(spans.Count - 1, (int)(spans.Count * 0.95f))] : 0;
                 long max = spans.Count > 0 ? spans[spans.Count - 1] : 0;
                 _csv.Append($"{n},{spans.Count},{mean:F2},{p95},{max},{throughput:F0},{wall:F1},{ledgerOk}\n");
                 Debug.Log($"[PopulationScalingProbe] {n} crawlers: {spans.Count} evaluations caught in flight, latency mean {mean:F2} / p95 {p95} / max {max} ticks; throughput {throughput:F0} ticks/s ({advanced} ticks in {wall:F1}s)");

@@ -581,3 +581,62 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The live outpost round-trips byte for byte at t600 (39,444 bytes); the Linux player saved and reloaded it at t25 (18,603 bytes, `scripts/run-persistence-smoke.sh`).
   - 1,000 ticks of trading and bounties and 1,000 rounds of off-thread trade and bounty evaluation allocate 0 bytes.
   - Pending: the producer's check of save and load at 1×.
+
+## Epic CORE Started: Engine-Free Core and Headless .NET (2026-10-17)
+- **Context:** the 2026-10-15 migration write-up ("Simpiens: Migrating from Unity to Godot on .NET 10", Claude Docs) proposed five phases. Phases 0 (decouple inside Unity) and 1 (headless .NET 10) change no engine and pay off on any engine.
+- **Decisions (producer, 2026-10-17, the write-up's checklist):**
+  - Phases 0–1 approved as standalone work; the agent sees them through under provisional authority. Godot is decided only after the Phase 2 spike, which is outside this epic.
+  - No web build. `Microsoft.Extensions.DependencyInjection` for .NET hosts; xUnit v3 for .NET tests.
+  - ROADMAP §2: retire the VContainer, UniTask and `Unity.Collections` + Burst rows; lift the MCP SDK rejection for Epic 11 once the simulation runs on .NET.
+- **Design choices (agent, under that authority; reasons in `docs/epics/epic-core.md` §2):**
+  - Cognition results land on a fixed tick (dispatched at T, applied at T + 1 behind a barrier, in agent-id order) and are applied as data on the main thread. This closes §1A.2 #6 and #15.
+  - Golden world-hash baselines in the repo gate every mechanical chunk; behaviour changes re-record them in their own commit.
+  - `EntityId` stays bit-compatible with `UnityEngine.GUID` (128 bits) so the swap changes no behaviour; a 64-bit id is deferred to the multiplayer wire format.
+  - Engine-free maths (`Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`) copy Unity's formulas exactly, rather than `System.Numerics`, whose scalar division and exact equality would change results.
+  - The core becomes `Assets/Simpiens.Core/` (asmdef `noEngineReferences: true`); the .NET project compiles the same files at C# 10 for `netstandard2.1;net10.0`.
+- **Recorded, not scheduled:** the 2026-10-15 architecture scan's H1 (no `try`/`catch` on the tick path) and M4 (bounty ids) became §1A.2 #17 and #19; M3 became #18 and H2 joined #15 (both fixed by chunk C1); M5 was already #16.
+- **Plan:** `.agents/godot_phase01_plan.md`, chunks C0–C11, on branch `feat/godot-migration`.
+
+## Cognition on Fixed Ticks (Epic CORE C1, 2026-10-17)
+- **Context:** the tick a cognition decision landed on depended on thread timing (ROADMAP §1A.2 #6), and the evaluation wrote plan and intent state off the main thread (#15), including a real race with `AgentState.Tick` (architecture scan H2). `DeterminismScenario` held only warm, inside the full suite.
+- **Decision:** a `CognitionScheduler` owned by `SimulationManager`. The main thread prepares a due agent as before (now inside a guarded block, #18); the evaluation runs on the thread pool and returns a `CognitionResult` (intent, plan to abort or adopt, goal); at the start of tick T + 1 the main thread waits for every evaluation dispatched at T and applies them in agent-id order, before intents are registered. A respawn or load waits for and drops decisions in flight. The cognition path moved from UniTask to `ValueTask`, and the pathfinder plans on the calling worker instead of hopping threads.
+- **Why one tick:** on a quiet machine results already landed at T + 1, so the outpost's behaviour is unchanged: the same `DeterminismScenario` milestones (first cycle 235, scout 382, gather 605, third sleeper 865) and the same soak numbers as §3.3 (fair 546–771g at 30 minutes).
+- **Verification:** `CognitionSchedulerValidator` (decision lands at T + 1 with a 0 ms or 120 ms evaluation; agent-id order whatever the completion order; a failed preparation or evaluation never freezes an agent; a respawn drops decisions in flight). `DeterminismScenario` alone identical in 3 of 3 runs (it diverged at t100 in 5 of 5 cold runs before). PlayMode 66/66 (68, 2 explicit skipped); economy soak 9/9 within its pace bands.
+- **Consequence:** a run is now reproducible cold, warm and across processes, which the golden world-hash baselines (C2) rely on.
+
+## Entities as Data (Epic CORE C5a, 2026-10-17)
+- **Context:** the simulation and its 12 intent handlers moved agents through `NodeController` (a MonoBehaviour), and `AutonomousAgent.ManualTick` (a MonoBehaviour) ran each crawler's tick and copied the rendered transform into `AgentState.Position` (ROADMAP §1A.2 #16).
+- **Decision:**
+  - `WorldEntity`, a plain-data record (id, kind, position, previous position, radius, speed, resource kind, and the `AgentState` of a crawler), is what the world registry, `SimulationManager`, the handlers, the execution context and the spatial grid work with. A crawler's position *is* its `AgentState.Position`.
+  - The registry raises `EntityRegistered`/`EntityUnregistered`; views show and hide with them (a dormant resource node used to be hidden by the simulation calling `SetActive`).
+  - `AgentRuntime` (engine-free) is a crawler's tick; `AutonomousAgent` and `NodeController` are views bound to their records and never write back. `NodeFactory` (dead code) is deleted.
+- **Why the crawler tick moved now, not in C5b as planned:** once positions live in `AgentState`, the old per-tick copy from the transform would have reverted every move with last frame's position.
+- **Kept on purpose:** a crawler view's destruction still stops its crawler (`OnDestroy` disposes the runtime), as before; C5b's session host makes the session own both.
+- **Test harness:** the 18 validators that built GameObjects to set up a test build records (`HeadlessEntities`, `TestCrawler`): a prerequisite for running them under .NET. Defaults reproduce what the GameObjects gave the simulation (radius 0.5, the default circle collider; speed 2). The anomaly detector checks injected walls by simulation geometry instead of a physics overlap, and finds a crawler's view through `NodeController.ViewOf(id)`.
+- **Verification:** golden world hashes identical; `DeterminismScenario` milestones unchanged; PlayMode 68/68.
+
+## Epic CORE Completed: Engine-Free Core and Headless .NET (C2–C11, 2026-10-17)
+- **Context:** Phases 0 (decouple inside Unity) and 1 (headless .NET 10) of the migration write-up, delivered chunk by chunk on `feat/godot-migration` under the agent's provisional authority (Epic CORE Started, above). C1 and C5a have their own entries.
+- **Decisions (agent):**
+  - **C2, golden hashes:** `Baselines/golden-world-hash.txt` holds 31 `WorldStateHash` samples (t0 to t3,000) of the outpost for 3 seeds, with a readable line per crawler for diagnosis. Every later chunk had to reproduce it; a deliberate behaviour change re-records it in its own commit (none was needed).
+  - **C3, `EntityId`:** bit-compatible with `UnityEngine.GUID` (layout, order, hash code, text), so ids, `SimRandom` streams and saves didn't change. It lives in the root namespace `Simpiens` because Unity 6.4 has its own `UnityEngine.EntityId`. A 64-bit id is deferred to the multiplayer wire format.
+  - **C4, maths:** `Vec2`, `GridPoint`, `RectF`, `Rgba` and `SimMath` copy Unity's formulas (approximate `==`, `Normalized` zero below 1e-5, round half to even), not `System.Numerics`, whose scalar division and exact equality change results.
+  - **C5b, the session host:** `SessionHost` (engine-free) builds, populates, ticks, captures and restores the session; `SwarmSpawner` only draws it. Body radii became constants (crawler 0.35, resource 0.4, hearth 0.35, bunk 0.5).
+  - **C6, infrastructure:** the clock advances by the host's elapsed time; the host plugs `SimLog`'s console sink in; validators log through `TestLog` and throw, so NUnit and xUnit both run them.
+  - **C7, the assembly:** `Assets/Simpiens.Core/` with `noEngineReferences: true`; the engine-free harness is `Simpiens.Testing.Core`. Namespaces unchanged.
+  - **C8, .NET:** `dotnet/` compiles the same files by glob, `netstandard2.1` at C# 10 (Unity's level) and `net10.0` at the latest C# (MemoryPack's generator needs C# 11 there).
+  - **C9, tests:** xUnit v3, tests in sequence. The DoD scenarios run headless without the visual anomaly detector, which needs the views. The .NET core is always built optimized, so the zero-allocation validators check shipping code.
+  - **C10, the console host:** `simpiens` on the Generic Host. It references the test harness (golden hashes), so it is a development tool that never ships. `EconomySoak` and `OutpostWatch` live in `Simpiens.Hosting`, shared by the host and the tests.
+  - **C11, CI:** a GitHub Actions workflow for the .NET solution; added, not pushed.
+- **Deviations from the plan:**
+  - C5 became C5a and C5b (no C5c); the crawler tick moved in C5a (see its entry).
+  - The plan put the Phase 1 gate at the end of C10; the tests that make it up landed in C9, and it was met there. C10 added the soak and the seed sweep.
+  - C9 changed core code that the port was meant to leave alone: `BeginEvaluation`'s thread-pool lambda allocated its closure on every call, early returns included (176 bytes a tick for an idle crawler, invisible to Mono's allocation counter). Behaviour-neutral: golden hashes identical.
+  - The C7 gate's persistence smoke first failed to start (the scripts had lost their executable bit, `8e2898a`); rerun, it passed (t25, 18,603 bytes, as in Milestone 1).
+- **Findings** (epic CORE §6): **F1**, Unity's Mono keeps scalar float intermediates at double precision while CoreCLR rounds each step, so the runtimes agree on the golden seeds but not on every seed (proven on `TryPickSectorWaypoint`); recorded, not fixed. **F2**, the outpost's day passes on 16 of 23 seeds (starvation on 5, no cycle on 2; Unity agrees on seed 11); a pacing decision for the producer. ROADMAP §1A.2 #17 and #19 (scan H1, M4) stay recorded, untouched.
+- **Verification:** one commit per chunk with its measured status: C0 `7bac9ac`, C1 `cc996f2`, C2 `78c10b4`, C3 `ed62d1b`, C4 `2144530`, C5a `e06e283`, C5b `236412d`, C6 `3a9f97b`, C7 `79391ba` (+ `8e2898a`), C8 `f7cc053`, C9 `a1307fd`, C10 `72c16a2`, C11 the close-out commit. Final: PlayMode 68/68 (70, 2 explicit skipped); Unity golden check 3/3 seeds; `dotnet test` 62/62; the economy soak 9/9 within its bands in both runtimes.
+- **Consequences:**
+  - Unity is still the game. Engine-free code must stay at C# 10 and netstandard2.1 APIs, and a core change is checked in both runtimes (AGENTS.md, *Checking a change*).
+  - Compare .NET runs with .NET runs (F1). After a cutover, CoreCLR becomes the reference and its own baseline is recorded.
+  - The Godot spike (Phase 2) waits on the producer's go/no-go. The soak and scaling work (§3A #8) can now run headless, in seconds.
+  - The working plan `.agents/godot_phase01_plan.md` was deleted at close-out; its findings are in the epic's §6 and its soak data in `docs/economy-model.md` §7.

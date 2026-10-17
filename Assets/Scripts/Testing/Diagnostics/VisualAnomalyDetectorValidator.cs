@@ -1,11 +1,10 @@
+using Simpiens.Testing.Environment;
+using Simpiens.Simulation.Spatial;
 using System;
 using Simpiens.Cognition;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.World;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Diagnostics
 {
@@ -13,11 +12,11 @@ namespace Simpiens.Testing.Diagnostics
     /// Automated test harness for VisualAnomalyDetector.
     /// Validates heading jitter detection, pawn stacking, state thrashing, and zero-allocation performance.
     /// </summary>
-    public class VisualAnomalyDetectorValidator : IStartable
+    public class VisualAnomalyDetectorValidator
     {
         public void Start()
         {
-            Debug.Log("[VisualAnomalyDetectorValidator] Beginning automated validation of Visual Anomaly Detector...");
+            TestLog.Log("[VisualAnomalyDetectorValidator] Beginning automated validation of Visual Anomaly Detector...");
 
             ValidateJitterDetection();
             ValidateStackingDetection();
@@ -27,7 +26,7 @@ namespace Simpiens.Testing.Diagnostics
             ValidateJitterIsSpeedIndependent();
             ValidateJitterIgnoresNormalTurns();
 
-            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateJitterDetection()
@@ -40,15 +39,15 @@ namespace Simpiens.Testing.Diagnostics
             float[] xs = { 0f, 0.5f, 0f, 0.5f, 0f };
             for (int t = 0; t < xs.Length; t++)
             {
-                node.transform.position = new Vector2(xs[t], 0f);
+                node.SetPosition(new Vec2(xs[t], 0f));
                 detector.EvaluateJitterTick(t);
             }
             Assert(detector.JitterCount == 1, $"Jitter was detected once (actual JitterCount: {detector.JitterCount})");
             var record = detector.GetRecentAnomalies(1)[0];
             Assert(record.Type == VisualAnomalyType.OscillationJitter && record.Description.Contains("last positions"), $"The alert names the type and the pawn's last positions ({record.Description}).");
 
-            GameObject.DestroyImmediate(go);
-            Debug.Log("[PASS] Test 1: Rapid heading jitter/oscillation detection verified.");
+            registry?.Unregister(go);
+            TestLog.Log("[PASS] Test 1: Rapid heading jitter/oscillation detection verified.");
         }
 
         /// <summary>
@@ -67,13 +66,13 @@ namespace Simpiens.Testing.Diagnostics
                 float now = 0f;
                 for (int t = 0; t < 12; t++)
                 {
-                    node.transform.position = new Vector2(t % 2 == 0 ? 0f : 0.5f, 0f);
+                    node.SetPosition(new Vec2(t % 2 == 0 ? 0f : 0.5f, 0f));
                     clock.AdvanceTicks(1);
                     // At 10x a frame covers ten times the sim time: the frame clock must not change the verdict
                     now += frameSeconds;
                     detector.Tick(frameSeconds, now);
                 }
-                GameObject.DestroyImmediate(go);
+                registry?.Unregister(go);
                 return detector.JitterCount;
             }
 
@@ -87,12 +86,12 @@ namespace Simpiens.Testing.Diagnostics
             var g = CreatePawn(reg, "[TestNode_FrameOnly]", out var n);
             for (int f = 0; f < 12; f++)
             {
-                n.transform.position = new Vector2(f % 2 == 0 ? 0f : 0.5f, 0f);
+                n.SetPosition(new Vec2(f % 2 == 0 ? 0f : 0.5f, 0f));
                 frameOnly.Tick(0.016f, f * 0.016f);
             }
             Assert(frameOnly.JitterCount == 0, $"Frame ticks judge no jitter ({frameOnly.JitterCount}).");
-            GameObject.DestroyImmediate(g);
-            Debug.Log("[PASS] Test 6: Jitter is judged in simulation ticks: the same twitch gives the same verdict at 1x and 10x.");
+            reg.Unregister(g);
+            TestLog.Log("[PASS] Test 6: Jitter is judged in simulation ticks: the same twitch gives the same verdict at 1x and 10x.");
         }
 
         /// <summary>Normal movement is not jitter: turning back once, or slow back-and-forth beyond the window.</summary>
@@ -104,8 +103,8 @@ namespace Simpiens.Testing.Diagnostics
 
             // Walk east 5 ticks, turn back once, walk west 5 ticks (arrive at a stall, then leave)
             long t = 0;
-            for (int k = 0; k <= 5; k++, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
-            for (int k = 4; k >= 0; k--, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
+            for (int k = 0; k <= 5; k++, t++) { node.SetPosition(new Vec2(k * 0.2f, 0f)); detector.EvaluateJitterTick(t); }
+            for (int k = 4; k >= 0; k--, t++) { node.SetPosition(new Vec2(k * 0.2f, 0f)); detector.EvaluateJitterTick(t); }
             Assert(detector.JitterCount == 0, $"Turning back once is not jitter ({detector.JitterCount}).");
 
             // Back and forth every 3 ticks: 3 reversals span 6 ticks, beyond the 5-tick window
@@ -115,23 +114,19 @@ namespace Simpiens.Testing.Diagnostics
             {
                 if (k % 3 == 0) dir = -dir;
                 x += dir * 0.2f;
-                node.transform.position = new Vector2(x, 5f);
+                node.SetPosition(new Vec2(x, 5f));
                 detector.EvaluateJitterTick(t);
             }
             Assert(detector.JitterCount == 0, $"Back and forth every 3 ticks is not jitter ({detector.JitterCount}).");
 
-            GameObject.DestroyImmediate(go);
-            Debug.Log("[PASS] Test 7: Turning back once, or slow back-and-forth, is not jitter.");
+            registry?.Unregister(go);
+            TestLog.Log("[PASS] Test 7: Turning back once, or slow back-and-forth, is not jitter.");
         }
 
-        private static GameObject CreatePawn(WorldRegistry registry, string name, out NodeController node)
+        private static WorldEntity CreatePawn(WorldRegistry registry, string name, out WorldEntity node)
         {
-            var go = new GameObject(name);
-            node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
-            registry.RegisterNode(node);
-            return go;
+            node = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, name: name);
+            return node;
         }
 
         private void ValidateStackingDetection()
@@ -139,17 +134,9 @@ namespace Simpiens.Testing.Diagnostics
             var registry = new WorldRegistry();
             var detector = new VisualAnomalyDetector(registry);
 
-            var goA = new GameObject("[TestNode_StackA]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vector2.zero;
-            registry.RegisterNode(nodeA);
+            var nodeA = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_StackA]");
 
-            var goB = new GameObject("[TestNode_StackB]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(0.1f, 0f); // 0.1m apart (tight stacking)
-            registry.RegisterNode(nodeB);
+            var nodeB = HeadlessEntities.Prop(registry, EntityType.Pawn, new Vec2(0.1f, 0f), id: EntityId.Generate(), name: "[TestNode_StackB]");
 
             // Stacking evaluation runs every 5 frames and requires duration >= 1.0s
             // Run 30 frames with dt=0.05s (total 1.5s)
@@ -160,9 +147,9 @@ namespace Simpiens.Testing.Diagnostics
 
             Assert(detector.StackingCount >= 1, $"Stacking was detected after 1.5s proximity (actual: {detector.StackingCount})");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
-            Debug.Log("[PASS] Test 2: Unnatural pawn stacking/clumping detection verified.");
+            registry?.Unregister(nodeA);
+            registry?.Unregister(nodeB);
+            TestLog.Log("[PASS] Test 2: Unnatural pawn stacking/clumping detection verified.");
         }
 
         private void ValidateStateThrashingDetection()
@@ -170,12 +157,10 @@ namespace Simpiens.Testing.Diagnostics
             var registry = new WorldRegistry();
             var detector = new VisualAnomalyDetector(registry);
 
-            var go = new GameObject("[TestNode_Thrash]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(registry, null, null, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Thrash]");
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
             agent.VisualState = AgentVisualState.Idle;
             detector.Tick(0.05f, 0.0f);
 
@@ -194,8 +179,8 @@ namespace Simpiens.Testing.Diagnostics
 
             Assert(detector.ThrashingCount >= 1, $"Visual state thrashing was detected (actual: {detector.ThrashingCount})");
 
-            GameObject.DestroyImmediate(go);
-            Debug.Log("[PASS] Test 3: High-frequency visual state thrashing detection verified.");
+            HeadlessEntities.Remove(registry, goCrawler);
+            TestLog.Log("[PASS] Test 3: High-frequency visual state thrashing detection verified.");
         }
 
         private void ValidateZeroAllocation()
@@ -203,14 +188,10 @@ namespace Simpiens.Testing.Diagnostics
             var registry = new WorldRegistry();
             var detector = new VisualAnomalyDetector(registry);
 
-            var nodes = new GameObject[5];
+            var nodes = new WorldEntity[5];
             for (int i = 0; i < 5; i++)
             {
-                nodes[i] = new GameObject($"[TestNode_Bench_{i}]");
-                var n = nodes[i].AddComponent<NodeController>();
-                n.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-                n.transform.position = new Vector2(i * 2f, 0f);
-                registry.RegisterNode(n);
+                nodes[i] = HeadlessEntities.Prop(registry, EntityType.Pawn, new Vec2(i * 2f, 0f), name: $"[TestNode_Bench_{i}]");
             }
 
             // Warmup
@@ -237,28 +218,24 @@ namespace Simpiens.Testing.Diagnostics
 
             for (int i = 0; i < 5; i++)
             {
-                GameObject.DestroyImmediate(nodes[i]);
+                registry.Unregister(nodes[i]);
             }
 
-            Debug.Log("[PASS] Test 4: Zero allocation guarantee verified (0 bytes across 500 continuous evaluation frames).");
+            TestLog.Log("[PASS] Test 4: Zero allocation guarantee verified (0 bytes across 500 continuous evaluation frames).");
         }
 
         private void ValidateMapWallPenetration()
         {
             // Static map walls are data (no colliders): penetration is checked against the loaded map's wall geometry
             var registry = new WorldRegistry();
-            var map = new MapDefinitionBuilder("PenetrationProbe", new Rect(-10f, -10f, 20f, 20f))
-                .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
+            var map = new MapDefinitionBuilder("PenetrationProbe", new RectF(-10f, -10f, 20f, 20f))
+                .WallRun(new Vec2(3f, -2f), new Vec2(3f, 2f))
                 .Build();
             var worldMap = new WorldMap(null, null);
             worldMap.Load(map);
             var detector = new VisualAnomalyDetector(registry, null, null, worldMap);
 
-            var go = new GameObject("[TestNode_Penetration]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
-            registry.RegisterNode(node);
+            var node = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Penetration]");
 
             for (int f = 0; f < 20; f++)
             {
@@ -266,7 +243,7 @@ namespace Simpiens.Testing.Diagnostics
             }
             Assert(detector.PenetrationCount == 0, $"A pawn clear of the wall must not be flagged (actual: {detector.PenetrationCount})");
 
-            node.transform.position = new Vector2(3f, 0f);
+            node.SetPosition(new Vec2(3f, 0f));
             for (int f = 20; f < 40; f++)
             {
                 detector.Tick(0.05f, f * 0.05f);
@@ -274,8 +251,8 @@ namespace Simpiens.Testing.Diagnostics
             Assert(detector.PenetrationCount >= 1, $"A pawn inside a map wall must be flagged (actual: {detector.PenetrationCount})");
             Assert(detector.BoundaryBreachCount == 0, "A pawn inside the playable bounds must not breach them.");
 
-            GameObject.DestroyImmediate(go);
-            Debug.Log("[PASS] Test 5: Penetration of static map walls is detected from map geometry.");
+            registry?.Unregister(node);
+            TestLog.Log("[PASS] Test 5: Penetration of static map walls is detected from map geometry.");
         }
 
         private static void Assert(bool condition, string message)

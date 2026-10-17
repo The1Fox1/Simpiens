@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Simpiens.Intervention;
@@ -7,10 +8,7 @@ using Simpiens.Simulation.Economy;
 using Simpiens.UI;
 using Simpiens.UI.Pooling;
 using Simpiens.UI.Zones;
-using UnityEngine;
 using UnityEngine.UIElements;
-using VContainer;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.UI
 {
@@ -20,13 +18,12 @@ namespace Simpiens.Testing.UI
     /// bounty cancellation with escrow refund, sector exploration and shroud tracking,
     /// zero-allocation pooling guarantees, and defensive null-safety.
     /// </summary>
-    public class BountyTerminalValidator : IStartable
+    public class BountyTerminalValidator
     {
         private readonly ISimulationManager _simulationManager;
         private readonly IPlayerInterventionService _interventionService;
         private readonly IFacilityZoneService _zoneService;
 
-        [Inject]
         public BountyTerminalValidator(
             ISimulationManager simulationManager = null,
             IPlayerInterventionService interventionService = null,
@@ -44,7 +41,7 @@ namespace Simpiens.Testing.UI
 
         public void RunAllValidationTests()
         {
-            Debug.Log("<color=#38bdf8><b>[BountyTerminalValidator]</b> >>> Starting Epic UI-2 Domain Validation Suite <<<</color>");
+            TestLog.Log("<color=#38bdf8><b>[BountyTerminalValidator]</b> >>> Starting Epic UI-2 Domain Validation Suite <<<</color>");
 
             ValidatePriceUpdateInfluenceDispatch();
             ValidateBountyPostingAndEscrow();
@@ -54,7 +51,7 @@ namespace Simpiens.Testing.UI
             ValidateDefensiveNullSafety();
             ValidateBountyTargetRules();
 
-            Debug.Log("<color=#10b981><b>[BountyTerminalValidator]</b> >>> ALL 7 BOUNTY TERMINAL TESTS PASSED CLEANLY! <<<</color>");
+            TestLog.Log("<color=#10b981><b>[BountyTerminalValidator]</b> >>> ALL 7 BOUNTY TERMINAL TESTS PASSED CLEANLY! <<<</color>");
         }
 
         public void ValidatePriceUpdateInfluenceDispatch()
@@ -69,10 +66,10 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 10,
                 rationStock: 50,
                 oreBuyPrice: 15,
@@ -111,7 +108,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Expected HerbBuyPrice 45, got {updatedStall.HerbBuyPrice}");
             }
 
-            Debug.Log("  ✔ ValidatePriceUpdateInfluenceDispatch passed: Stall prices updated deterministically through InfluenceEvent pipeline.");
+            TestLog.Log("  ✔ ValidatePriceUpdateInfluenceDispatch passed: Stall prices updated deterministically through InfluenceEvent pipeline.");
         }
 
         public void ValidateBountyPostingAndEscrow()
@@ -127,10 +124,10 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 15,
                 rationStock: 50,
                 oreBuyPrice: 20,
@@ -203,7 +200,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception("Narrative chronicle did not record BountyPosted event!");
             }
 
-            Debug.Log("  ✔ ValidateBountyPostingAndEscrow passed: Bounty #101 registered with gold escrow deducted from outpost treasury.");
+            TestLog.Log("  ✔ ValidateBountyPostingAndEscrow passed: Bounty #101 registered with gold escrow deducted from outpost treasury.");
         }
 
         /// <summary>
@@ -224,8 +221,8 @@ namespace Simpiens.Testing.UI
                 sectors: sectors,
                 interventionService: interventionService);
 
-            var stallId = new UnityEngine.GUID(9u, 9u, 9u, 9u);
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
+            var stallId = new EntityId(9u, 9u, 9u, 9u);
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
 
             byte hub = Simpiens.Core.Session.Layouts.Floor1Layout.HubSectorId;
             byte deepSeam = Simpiens.Core.Session.Layouts.Floor1Layout.DeepSeamSectorId;
@@ -253,7 +250,7 @@ namespace Simpiens.Testing.UI
             if (BountyRules.CheckTarget(BountyType.ScoutSector, deepSeam, sectors) != BountyRules.TargetCheck.AlreadyCharted) throw new Exception("Once charted, the Deep Seam can't be scouted again.");
             if (BountyRules.CheckTarget(BountyType.ScoutSector, hub, null) != BountyRules.TargetCheck.Ok) throw new Exception("Without a registry nothing is checked (headless validators).");
 
-            Debug.Log("  ✔ ValidateBountyTargetRules passed: impossible targets refused before escrow; Scout and Gather on an uncharted sector accepted.");
+            TestLog.Log("  ✔ ValidateBountyTargetRules passed: impossible targets refused before escrow; Scout and Gather on an uncharted sector accepted.");
         }
 
         public void ValidateBountyCancellationAndRefund()
@@ -269,10 +266,10 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 15,
                 rationStock: 50,
                 oreBuyPrice: 20,
@@ -324,7 +321,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Expected treasury refunded to 250, got {refundedStall.TreasuryGold}");
             }
 
-            Debug.Log("  ✔ ValidateBountyCancellationAndRefund passed: Cancelled contract refunded 70 gold back to outpost treasury.");
+            TestLog.Log("  ✔ ValidateBountyCancellationAndRefund passed: Cancelled contract refunded 70 gold back to outpost treasury.");
         }
 
         public void ValidateSectorShroudTracking()
@@ -368,7 +365,7 @@ namespace Simpiens.Testing.UI
                 }
             }
 
-            Debug.Log("  ✔ ValidateSectorShroudTracking passed: Sector fog of war and exploration status track dynamically.");
+            TestLog.Log("  ✔ ValidateSectorShroudTracking passed: Sector fog of war and exploration status track dynamically.");
         }
 
         public void ValidateZeroAllocationElementPool()
@@ -420,7 +417,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Zero-allocation pool guarantee violated! Allocated {allocated} bytes across 1,000 sync passes.");
             }
 
-            Debug.Log("  ✔ ValidateZeroAllocationElementPool passed: 1,000 VisualElementPool sync cycles produced exactly 0 bytes GC heap allocation.");
+            TestLog.Log("  ✔ ValidateZeroAllocationElementPool passed: 1,000 VisualElementPool sync cycles produced exactly 0 bytes GC heap allocation.");
         }
 
         public void ValidateDefensiveNullSafety()
@@ -453,7 +450,7 @@ namespace Simpiens.Testing.UI
                 UnityEngine.Object.DestroyImmediate(go);
             }
 
-            Debug.Log("  ✔ ValidateDefensiveNullSafety passed: Headless presentation operations safely no-op under null dependencies.");
+            TestLog.Log("  ✔ ValidateDefensiveNullSafety passed: Headless presentation operations safely no-op under null dependencies.");
         }
     }
 }

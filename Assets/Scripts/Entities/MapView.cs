@@ -32,7 +32,7 @@ namespace Simpiens.Entities
 
             var root = Build(map, RootName);
             root.AddComponent<ShroudView>().Initialize(map, sectors);
-            if (CameraController.AttachToMain(map.CameraFrame, selection) == null) FrameCamera(map.CameraFrame);
+            if (CameraController.AttachToMain(map.CameraFrame.ToUnity(), selection) == null) FrameCamera(map.CameraFrame.ToUnity());
             return root;
         }
 
@@ -64,7 +64,7 @@ namespace Simpiens.Entities
 
             for (int i = 0; i < map.Walls.Count; i++)
             {
-                var solid = map.Walls[i].Solid;
+                var solid = map.Walls[i].Solid.ToUnity();
                 bool isRock = IsRock(solid);
                 CellRange(solid, origin, out int minX, out int maxX, out int minY, out int maxY);
                 for (int y = minY; y <= maxY; y++)
@@ -78,7 +78,7 @@ namespace Simpiens.Entities
                 }
             }
 
-            CellRange(map.PlayableBounds, origin, out int bMinX, out int bMaxX, out int bMinY, out int bMaxY);
+            CellRange(map.PlayableBounds.ToUnity(), origin, out int bMinX, out int bMaxX, out int bMinY, out int bMaxY);
             for (int y = bMinY; y <= bMaxY; y++)
             {
                 for (int x = bMinX; x <= bMaxX; x++)
@@ -115,7 +115,7 @@ namespace Simpiens.Entities
         internal static Vector2 CellOrigin(MapDefinition map)
         {
             if (map.Walls.Count == 0) return Vector2.zero;
-            var solid = map.Walls[0].Solid;
+            var solid = map.Walls[0].Solid.ToUnity();
             float inset = IsRock(solid) ? 0.5f : MapDefinitionBuilder.WallHalfExtent;
             return new Vector2(Fraction(solid.xMin + inset), Fraction(solid.yMin + inset));
         }
@@ -147,7 +147,7 @@ namespace Simpiens.Entities
         {
             for (int i = 0; i < map.Sectors.Count; i++)
             {
-                if (map.Sectors[i].Contains(point)) { index = i; return true; }
+                if (map.Sectors[i].Contains(point.ToSim())) { index = i; return true; }
             }
             index = -1;
             return false;
@@ -163,7 +163,7 @@ namespace Simpiens.Entities
         {
             for (int i = 0; i < map.Labels.Count; i++)
             {
-                if (sector.Contains(map.Labels[i].Position)) return Color.Lerp(NeutralFloor, map.Labels[i].Color, 0.3f);
+                if (sector.Contains(map.Labels[i].Position)) return Color.Lerp(NeutralFloor, map.Labels[i].Color.ToUnity(), 0.3f);
             }
             return NeutralFloor;
         }
@@ -212,7 +212,7 @@ namespace Simpiens.Entities
         {
             var textGo = new GameObject($"Label_{label.Text}");
             textGo.transform.SetParent(parent);
-            textGo.transform.position = new Vector3(label.Position.x, label.Position.y, 0f);
+            textGo.transform.position = new Vector3(label.Position.X, label.Position.Y, 0f);
 
             var textMesh = textGo.AddComponent<TextMesh>();
             textMesh.text = label.Text;
@@ -220,7 +220,7 @@ namespace Simpiens.Entities
             textMesh.characterSize = 0.08f;
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = label.Color;
+            textMesh.color = label.Color.ToUnity();
 
             var mr = textGo.GetComponent<MeshRenderer>();
             if (mr != null)

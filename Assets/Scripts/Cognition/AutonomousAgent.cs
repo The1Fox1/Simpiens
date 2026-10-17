@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Cognition.Groups;
@@ -20,22 +19,14 @@ namespace Simpiens.Cognition
 {
     public class AutonomousAgent : MonoBehaviour, ISocialAgent
     {
-        public const int DefaultVisionRadius = 6;
-
-        // Dependencies
-        private ISpatialPartition _spatialPartition;
-        private ICognitiveEvaluator[] _evaluators;
-        private ISimulationManager _simulationManager;
-        private ISimulationClock _clock;
+        public const int DefaultVisionRadius = AgentRuntime.DefaultVisionRadius;
 
         /// <summary>Ticks between looks around while carrying out an intent (walking, harvesting, sleeping).</summary>
-        public const uint BusyPerceptionIntervalTicks = 5;
-        private long _lastBusyPerceptionTick = -BusyPerceptionIntervalTicks;
-        private IGoapPlanner _planner;
-        private ActionGraph _actionGraph;
-        private List<GoapGoal> _goals;
-        private IAgentCognitionService _cognitionService;
-        private CancellationTokenSource _cts;
+        public const uint BusyPerceptionIntervalTicks = AgentRuntime.BusyPerceptionIntervalTicks;
+
+        // The crawler's simulation (engine-free): this component is only its view and editor telemetry (Epic CORE C5)
+        private AgentRuntime _runtime;
+        public AgentRuntime Runtime => _runtime;
 
         // Authoritative Pure C# Agent State
         private AgentState _state;
@@ -45,8 +36,8 @@ namespace Simpiens.Cognition
             {
                 if (_state == null)
                 {
+                    // Not bound to a simulation crawler yet: a placeholder, so views can read it safely
                     _state = new AgentState();
-                    if (transform != null) _state.Position = transform.position;
                 }
                 return _state;
             }
@@ -54,7 +45,7 @@ namespace Simpiens.Cognition
         }
 
         // Forwarded ISocialAgent & State Properties
-        public UnityEngine.GUID AgentId => State.AgentId;
+        public EntityId AgentId => State.AgentId;
         public AgentMemory Memory => State.Memory;
         public GoapPlan ActivePlan => State.ActivePlan;
         public GoapGoal ActiveGoal => State.ActiveGoal;
@@ -143,7 +134,7 @@ namespace Simpiens.Cognition
         }
 
         /// <summary>Current logical tick, or -1 without a clock (headless). Read-only, for views.</summary>
-        public long CurrentSimTick => _clock != null ? _clock.CurrentTick : -1;
+        public long CurrentSimTick => _runtime != null ? _runtime.CurrentSimTick : -1;
 
         public float LastGossipTimestamp => State.LastGossipTimestamp;
         public float LastYieldTimestamp => State.LastYieldTimestamp;
@@ -169,16 +160,14 @@ namespace Simpiens.Cognition
             if (_state == null)
             {
                 _state = new AgentState();
-                if (transform != null) _state.Position = transform.position;
             }
-            if (_cts == null)
-            {
-                _cts = new CancellationTokenSource();
-            }
-            if (_cognitionService == null)
-            {
-                _cognitionService = new AgentCognitionService();
-            }
+        }
+
+        /// <summary>Binds this view to its crawler. The simulation owns the runtime; this component never ticks itself.</summary>
+        public void Bind(AgentRuntime runtime)
+        {
+            _runtime = runtime;
+            _state = runtime?.State;
         }
 
         public void TriggerGossipVisual(float timestamp = 0f)
@@ -193,16 +182,8 @@ namespace Simpiens.Cognition
 
         public void TriggerTantrumVisual(float timestamp = 0f)
         {
-            State.TriggerTantrumVisual(timestamp);
-
-            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
-            _simulationManager?.RecordStoryEvent(new ChronicleEvent(
-                ChronicleEventType.TantrumStarted,
-                AgentId,
-                default,
-                0,
-                tick,
-                ChronicleIntensity.Dramatic));
+            if (_runtime != null) _runtime.TriggerTantrumVisual(timestamp);
+            else State.TriggerTantrumVisual(timestamp);
         }
 
         public void TriggerSharingVisual(float duration = 1.2f)
@@ -227,16 +208,8 @@ namespace Simpiens.Cognition
 
         public void CollapseFromExhaustion()
         {
-            State.CollapseFromExhaustion();
-
-            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
-            _simulationManager?.RecordStoryEvent(new ChronicleEvent(
-                ChronicleEventType.ExhaustionCollapsed,
-                AgentId,
-                default,
-                0,
-                tick,
-                ChronicleIntensity.Crisis));
+            if (_runtime != null) _runtime.CollapseFromExhaustion();
+            else State.CollapseFromExhaustion();
         }
 
         public void RelieveFrustration(float amount)
@@ -249,158 +222,19 @@ namespace Simpiens.Cognition
             State.AbortActivePlan();
         }
 
-        public void Initialize(
-            UnityEngine.GUID id,
-            ISpatialPartition spatialPartition,
-            ICognitiveEvaluator[] evaluators,
-            ISimulationManager simulationManager,
-            ISimulationClock clock,
-            IGoapPlanner planner = null,
-            ActionGraph actionGraph = null,
-            List<GoapGoal> goals = null,
-            IAgentCognitionService cognitionService = null)
-        {
-            State.AgentId = id;
-            if (transform != null)
-            {
-                State.Position = transform.position;
-            }
-
-            _spatialPartition = spatialPartition;
-            _evaluators = evaluators;
-            _simulationManager = simulationManager;
-            _clock = clock;
-            _planner = planner;
-            _actionGraph = actionGraph;
-            _goals = goals;
-            _cognitionService = cognitionService ?? new AgentCognitionService();
-
-            if (_cts == null)
-            {
-                _cts = new CancellationTokenSource();
-            }
-
-            _simulationManager?.Agents?.RegisterAgent(State);
-        }
-
-        public const float FixedTickDeltaTime = 0.1f;
-
-        public void ManualUpdate() // Backward compatibility alias for tests and runners
-        {
-            ManualTick(_clock != null ? _clock.CurrentTick : 0);
-        }
-
-        public void ManualTick(long currentTick)
-        {
-            if (this == null || gameObject == null || State == null) return;
-            if (_simulationManager != null && _simulationManager.IsPaused) return;
-            if (_clock != null && _clock.IsPaused) return;
-
-            if (transform != null)
-            {
-                State.Position = transform.position;
-            }
+        public const float FixedTickDeltaTime = AgentRuntime.FixedTickDeltaTime;
 
 #if UNITY_EDITOR
-            UpdateEditorTelemetry();
-#endif
-
-            // Advance biological drives and emotion timers on fixed logical tick dt
-            State.Tick(FixedTickDeltaTime);
-
-            // Keep membership synced with authoritative main-thread group registry
-            if (_simulationManager?.Groups != null && State.Membership.HasGroup)
-            {
-                if (_simulationManager.Groups.TryGetMembership(State.AgentId, out var currentMem))
-                {
-                    State.Membership = currentMem;
-                }
-                else
-                {
-                    State.Membership = GroupMembership.None;
-                }
-            }
-
-            // Reflexive preemption check
-            bool emergencyExhaustion = State.Energy <= MentalBreakEvaluator.ExhaustionThreshold;
-            bool emergencyStarvation = State.Hunger >= MentalBreakEvaluator.StarvationThreshold && !State.HasFoodInInventory && !State.HasKnownFood();
-
-            if (emergencyExhaustion)
-            {
-                State.IsExhaustionCollapsed = true;
-                State.VisualState = AgentVisualState.Resting;
-            }
-
-            bool shouldPreempt = false;
-            if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
-            {
-                shouldPreempt = true;
-            }
-            else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent))
-            {
-                shouldPreempt = true;
-            }
-
-            if (State.HasActiveIntent && shouldPreempt)
-            {
-                if (_simulationManager != null)
-                {
-                    _simulationManager.AbortIntent(State.AgentId);
-                }
-                State.AbortActivePlan();
-                State.CurrentIntent = null;
-                State.HasActiveIntent = false;
-
-                if (State.IsExhaustionCollapsed)
-                {
-                    State.VisualState = AgentVisualState.Resting;
-                }
-                else if (emergencyStarvation && State.TantrumTimer <= 0f)
-                {
-                    State.VisualState = AgentVisualState.Panicking;
-                }
-
-                if (!State.IsEvaluating && _cognitionService != null)
-                {
-                    _cognitionService.EvaluateAgentCognitionAsync(
-                        State,
-                        _spatialPartition,
-                        _simulationManager,
-                        _clock,
-                        _planner,
-                        _actionGraph,
-                        _goals,
-                        _evaluators,
-                        _cts.Token).Forget();
-                }
-                return;
-            }
-
-            if (!State.IsEvaluating && State.HasActiveIntent)
-            {
-                PerceiveWhileBusy();
-                return;
-            }
-            if (State.IsEvaluating) return;
-
-            if (_cognitionService != null)
-            {
-                _cognitionService.EvaluateAgentCognitionAsync(
-                    State,
-                    _spatialPartition,
-                    _simulationManager,
-                    _clock,
-                    _planner,
-                    _actionGraph,
-                    _goals,
-                    _evaluators,
-                    _cts.Token).Forget();
-            }
+        // The session ticks the crawler (SessionHost); the view only mirrors it into the Inspector
+        private void Update()
+        {
+            if (_runtime != null) UpdateEditorTelemetry();
         }
+#endif
 
         public bool HasKnownFood()
         {
-            return State.HasKnownFood(_clock != null ? (uint)_clock.CurrentTick : 0);
+            return _runtime != null ? _runtime.HasKnownFood() : State.HasKnownFood();
         }
 
 #if UNITY_EDITOR
@@ -438,11 +272,7 @@ namespace Simpiens.Cognition
                 _inspectorInventory = "(No inventory)";
             }
 
-            IWorldRegistry registry = null;
-            if (_simulationManager is SimulationManager sm)
-            {
-                registry = sm.WorldRegistry;
-            }
+            IWorldRegistry registry = _registry;
 
             if (Memory != null)
             {
@@ -450,15 +280,15 @@ namespace Simpiens.Cognition
                 if (ledger != null && ledger.Count > 0)
                 {
                     var sb = new System.Text.StringBuilder();
-                    int start = Mathf.Max(0, ledger.Count - 6);
+                    int start = SimMath.Max(0, ledger.Count - 6);
                     for (int i = ledger.Count - 1; i >= start; i--)
                     {
                         var evt = ledger.GetEvent(i);
                         string subjectName = "None";
                         if (evt.SubjectId != default)
                         {
-                            var targetNode = registry?.GetNode(evt.SubjectId);
-                            subjectName = targetNode != null ? targetNode.name : evt.SubjectId.ToString().Substring(0, 8);
+                            var targetNode = registry?.GetEntity(evt.SubjectId);
+                            subjectName = targetNode != null ? targetNode.Name : evt.SubjectId.ToString().Substring(0, 8);
                         }
                         sb.AppendLine($"[Tick {evt.SimulationTick}] {evt.EventType} (Subject: {subjectName}, Pos: {evt.Location})");
                     }
@@ -474,8 +304,8 @@ namespace Simpiens.Cognition
                     var sb = new System.Text.StringBuilder();
                     foreach (var kvp in Memory.AffinityMap)
                     {
-                        var peerNode = registry?.GetNode(kvp.Key);
-                        string peerName = peerNode != null ? peerNode.name : kvp.Key.ToString().Substring(0, 8);
+                        var peerNode = registry?.GetEntity(kvp.Key);
+                        string peerName = peerNode != null ? peerNode.Name : kvp.Key.ToString().Substring(0, 8);
                         var rel = kvp.Value;
                         sb.AppendLine($"{peerName}: W:{rel.Warmth:+0;-#;0} T:{rel.Trust:+0;-#;0} F:{rel.Fear:+0;-#;0} R:{rel.Respect:+0;-#;0} (Interactions: {rel.InteractionCount})");
                     }
@@ -489,32 +319,14 @@ namespace Simpiens.Cognition
         }
 #endif
 
+        /// <summary>For editor telemetry only: names of the entities this crawler remembers.</summary>
+        private IWorldRegistry _registry;
+        public void SetTelemetryRegistry(IWorldRegistry registry) => _registry = registry;
+
         private void OnDestroy()
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            if (_simulationManager != null && State != null)
-            {
-                _simulationManager.Agents?.UnregisterAgent(State.AgentId);
-            }
-        }
-
-        /// <summary>
-        /// Agents also see while they walk, not only between intents: on a walled floor a long walk would otherwise
-        /// pass food, bunks and doors unseen (Epic MAP Phase 3). Main thread, never while a background evaluation
-        /// is reading the memory; every BusyPerceptionIntervalTicks.
-        /// </summary>
-        private void PerceiveWhileBusy()
-        {
-            if (_spatialPartition == null || _clock == null || State.Memory == null) return;
-            long tick = _clock.CurrentTick;
-            // (a clock rewound by a respawn starts a new agent anyway; tick < last only after a rewind)
-            if (tick >= _lastBusyPerceptionTick && tick - _lastBusyPerceptionTick < BusyPerceptionIntervalTicks) return;
-            var snapshot = _spatialPartition.GetActiveSnapshot();
-            if (snapshot == null) return;
-            _lastBusyPerceptionTick = tick;
-            State.Memory.UpdateMemory(snapshot, Vector2Int.RoundToInt(State.Position), DefaultVisionRadius, (uint)tick,
-                surveySectorId: BountyQueries.SurveyingSector(snapshot, State.AgentId));
+            // The view going away stops its crawler, as before Epic CORE C5 (the session tears both down together)
+            _runtime?.Dispose();
         }
     }
 }

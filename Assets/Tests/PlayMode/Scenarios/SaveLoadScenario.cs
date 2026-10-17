@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using Simpiens.Core.Session;
 using Simpiens.Simulation;
@@ -90,9 +89,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
             _saveTick = clock.CurrentTick;
             sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out _gatherAtSave);
-            _savedHash = WorldStateHash.Capture(_saveTick, spawner.Agents, sim, sectors, includeWork: false);
+            _savedHash = WorldStateHash.Capture(_saveTick, spawner.Host, sim, sectors, includeWork: false);
             var saving = slot.QuickSaveAsync(); // captures now, between ticks; the file is written off the main thread
-            yield return saving.ToCoroutine(outcome => _saved = outcome);
+            while (!saving.IsCompleted) yield return null;
+            _saved = saving.Result;
             if (!_saved.Succeeded) yield break;
 
             // 2. A fresh session with its own history, then the load
@@ -101,7 +101,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             _loaded = slot.QuickLoad();
             if (!_loaded.Succeeded) yield break;
             _loadTick = clock.CurrentTick;
-            _loadedHash = WorldStateHash.Capture(_loadTick, spawner.Agents, sim, sectors, includeWork: false);
+            _loadedHash = WorldStateHash.Capture(_loadTick, spawner.Host, sim, sectors, includeWork: false);
             byte[] onDisk = File.ReadAllBytes(slot.QuickSavePath);
             byte[] reEncoded = SaveFile.Encode(spawner.Capture());
             _fileMatches = SameBytes(onDisk, reEncoded, out _fileDifference);
@@ -170,7 +170,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 if (!sim.EconomyLedger.ValidateConservation(stallGold, agentGold, out int discrepancy))
                 {
                     _conservationViolations++;
-                    if (Mathf.Abs(discrepancy) > Mathf.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
+                    if (SimMath.Abs(discrepancy) > SimMath.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
                 }
             }
         }
@@ -190,7 +190,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             difference = null;
             if (a.Length != b.Length) difference = $"{a.Length} vs {b.Length} bytes";
-            int n = Mathf.Min(a.Length, b.Length);
+            int n = SimMath.Min(a.Length, b.Length);
             for (int i = 0; i < n && difference == null; i++)
             {
                 if (a[i] != b[i]) difference = $"first difference at byte {i} of {a.Length}";

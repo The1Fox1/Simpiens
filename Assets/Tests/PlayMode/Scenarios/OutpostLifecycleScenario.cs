@@ -145,7 +145,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 if (!sim.EconomyLedger.ValidateConservation(stallGold, agentGold, out int discrepancy))
                 {
                     _conservationViolations++;
-                    if (Mathf.Abs(discrepancy) > Mathf.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
+                    if (SimMath.Abs(discrepancy) > SimMath.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
                 }
             }
         }
@@ -169,7 +169,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             }
         }
 
-        private int RequiredTrustRose => Mathf.CeilToInt(_crawlers.Count * RequiredTrustRoseShare);
+        private int RequiredTrustRose => SimMath.CeilToInt(_crawlers.Count * RequiredTrustRoseShare);
 
         private static int Trust(AutonomousAgent agent, uint tick) =>
             agent.Memory != null ? agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, tick).Trust : 0;

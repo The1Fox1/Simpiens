@@ -16,7 +16,7 @@ namespace Simpiens.UI.Zones
         bool TryGetZone(int zoneId, out FacilityZone zone);
         IReadOnlyList<FacilityZone> GetAllZones();
         int GetOccupancyCount(int zoneId, IWorldRegistry registry);
-        void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<NodeController> resultsBuffer);
+        void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<WorldEntity> resultsBuffer);
         bool IsSectorExplored(int zoneId);
         void SetSectorExplored(int zoneId, bool isExplored);
         void SetAllSectorsExplored(bool isExplored);
