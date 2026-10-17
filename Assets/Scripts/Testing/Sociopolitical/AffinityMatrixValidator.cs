@@ -69,8 +69,8 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var memA = new AgentMemory();
             var memB = new AgentMemory();
-            var idA = GUID.Generate();
-            var idB = GUID.Generate();
+            var idA = EntityId.Generate();
+            var idB = EntityId.Generate();
 
             // First gossip exchange at tick 100
             bool success = memA.TryGossip(memB, idB, idA, currentTick: 100);
@@ -103,8 +103,8 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var memA = new AgentMemory();
             var memB = new AgentMemory();
-            var idA = GUID.Generate();
-            var idB = GUID.Generate();
+            var idA = EntityId.Generate();
+            var idB = EntityId.Generate();
 
             // Scenario A: Distrust Refusal (Trust < -20)
             memA.RecordInteraction(idB, deltaWarmth: -10, deltaTrust: -25, deltaFear: 0, deltaRespect: 0, currentTick: 100);
@@ -115,7 +115,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             // Scenario B: Terror Refusal (Fear > 60)
             var memC = new AgentMemory();
-            var idC = GUID.Generate();
+            var idC = EntityId.Generate();
             memA.RecordInteraction(idC, deltaWarmth: 0, deltaTrust: 0, deltaFear: 70, deltaRespect: 0, currentTick: 100);
             Assert(memA.IsFeared(idC, 100), "Agent A actively fears Agent C.");
 
@@ -128,7 +128,7 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateWorldStateRelationalFactMapping()
         {
             var memNeutral = new AgentMemory();
-            var dummyGuid = GUID.Generate();
+            var dummyGuid = EntityId.Generate();
 
             // 1. Initial State: No relationships
             var contextNeutral = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memNeutral, 100);
@@ -141,11 +141,11 @@ namespace Simpiens.Testing.Sociopolitical
 
             // 2. Add Warm, Trusted, and Respected ally
             var memPopulated = new AgentMemory();
-            var allyId = GUID.Generate();
+            var allyId = EntityId.Generate();
             memPopulated.RecordInteraction(allyId, deltaWarmth: 35, deltaTrust: 40, deltaFear: 0, deltaRespect: 45, currentTick: 100);
 
             // 3. Add Feared threat
-            var threatId = GUID.Generate();
+            var threatId = EntityId.Generate();
             memPopulated.RecordInteraction(threatId, deltaWarmth: -20, deltaTrust: -30, deltaFear: 65, deltaRespect: 0, currentTick: 100);
 
             var contextPopulated = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memPopulated, 100);
@@ -168,9 +168,9 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateZeroAllocationAffinityBenchmark()
         {
             var mem = new AgentMemory();
-            var dummyGuid = GUID.Generate();
-            var peerA = GUID.Generate();
-            var peerB = GUID.Generate();
+            var dummyGuid = EntityId.Generate();
+            var peerA = EntityId.Generate();
+            var peerB = EntityId.Generate();
 
             mem.RecordInteraction(peerA, 30, 30, 0, 20, 100);
             mem.RecordInteraction(peerB, -20, -30, 60, 0, 100);

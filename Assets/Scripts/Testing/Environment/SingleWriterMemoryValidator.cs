@@ -240,14 +240,14 @@ namespace Simpiens.Testing.Environment
             Log("[PASS] Test 5: Zero heap allocation verified for Memory and Inventory snapshots (0 bytes across 1,000 cycles).");
         }
 
-        private static GUID CreateGuid(uint id)
+        private static EntityId CreateGuid(uint id)
         {
-            return new GUID(id, 0, 0, 0);
+            return new EntityId(id, 0, 0, 0);
         }
 
-        private static GUID CreateGuid(int id)
+        private static EntityId CreateGuid(int id)
         {
-            return new GUID((uint)id, 0, 0, 0);
+            return new EntityId((uint)id, 0, 0, 0);
         }
 
         private static void Log(string msg)

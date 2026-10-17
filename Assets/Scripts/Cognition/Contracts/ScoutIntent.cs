@@ -12,7 +12,7 @@ namespace Simpiens.Cognition.Contracts
         public readonly byte TargetSectorId;
         public readonly PathResponse Path;
 
-        public ScoutIntent(UnityEngine.GUID agentId, ushort bountyId, byte targetSectorId, PathResponse path) : base(agentId)
+        public ScoutIntent(EntityId agentId, ushort bountyId, byte targetSectorId, PathResponse path) : base(agentId)
         {
             BountyId = bountyId;
             TargetSectorId = targetSectorId;

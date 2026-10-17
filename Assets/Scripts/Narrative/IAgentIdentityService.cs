@@ -11,27 +11,27 @@ namespace Simpiens.Narrative
         /// <summary>
         /// Returns the friendly persona name for the given agent (e.g. "Burt", "Bob", "Alice").
         /// </summary>
-        string GetFriendlyName(GUID agentId);
+        string GetFriendlyName(EntityId agentId);
 
         /// <summary>
         /// Returns a narrative role or title for the agent (e.g. "Settler", "Forager", "Scout").
         /// </summary>
-        string GetFriendlyTitle(GUID agentId);
+        string GetFriendlyTitle(EntityId agentId);
 
         /// <summary>
         /// Returns a formatted name combining the friendly persona with an optional technical identifier.
         /// (e.g. "Burt [SwarmAgent_6]").
         /// </summary>
-        string GetFormattedDisplayName(GUID agentId, string fallbackName = null);
+        string GetFormattedDisplayName(EntityId agentId, string fallbackName = null);
 
         /// <summary>
         /// Allows registering or overriding an agent's name (e.g. player renamed pawn or narrative event).
         /// </summary>
-        void RegisterCustomName(GUID agentId, string name);
+        void RegisterCustomName(EntityId agentId, string name);
 
         /// <summary>
         /// Allows registering or overriding an agent's title.
         /// </summary>
-        void RegisterCustomTitle(GUID agentId, string title);
+        void RegisterCustomTitle(EntityId agentId, string title);
     }
 }

@@ -57,8 +57,8 @@ namespace Simpiens.Testing.Environment
 
         private sealed class RecordingHandler : ICognitionJobHandler
         {
-            public readonly List<GUID> Applied = new List<GUID>(8);
-            public readonly List<GUID> Released = new List<GUID>(8);
+            public readonly List<EntityId> Applied = new List<EntityId>(8);
+            public readonly List<EntityId> Released = new List<EntityId>(8);
 
             public void Apply(CognitionJob job, in CognitionResult result) { Applied.Add(job.Agent.AgentId); }
             public void Release(CognitionJob job) { Released.Add(job.Agent.AgentId); }
@@ -182,7 +182,7 @@ namespace Simpiens.Testing.Environment
             Debug.Log("[PASS] A failed evaluation is released and applies nothing.");
         }
 
-        private static GUID CreateGuid(int value) => new GUID((uint)value, 0, 0, 0);
+        private static EntityId CreateGuid(int value) => new EntityId((uint)value, 0, 0, 0);
 
         private static void Assert(bool condition, string message)
         {

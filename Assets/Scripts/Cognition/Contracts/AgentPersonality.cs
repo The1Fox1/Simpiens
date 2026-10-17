@@ -47,7 +47,7 @@ namespace Simpiens.Cognition.Contracts
         /// Deterministic personality for an entity under a session seed. Each trait is the mean of two uniform draws
         /// (triangular on [-1, 1]), so moderate personalities are common and extremes are rare.
         /// </summary>
-        public static AgentPersonality Generate(ulong seed, GUID entityId)
+        public static AgentPersonality Generate(ulong seed, EntityId entityId)
         {
             var rng = SimRandom.For(seed, entityId, 0, SimRandomSalt.Personality);
             return new AgentPersonality(Draw(ref rng), Draw(ref rng), Draw(ref rng), Draw(ref rng), Draw(ref rng));

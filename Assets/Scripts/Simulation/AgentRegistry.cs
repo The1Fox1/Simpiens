@@ -10,7 +10,7 @@ namespace Simpiens.Simulation
     /// </summary>
     public class AgentRegistry : IAgentRegistry
     {
-        private readonly Dictionary<GUID, AgentState> _agentsById = new Dictionary<GUID, AgentState>(256);
+        private readonly Dictionary<EntityId, AgentState> _agentsById = new Dictionary<EntityId, AgentState>(256);
         private readonly List<AgentState> _agentList = new List<AgentState>(256);
 
         public int Count => _agentList.Count;
@@ -37,7 +37,7 @@ namespace Simpiens.Simulation
             _agentList.Add(agent);
         }
 
-        public bool UnregisterAgent(GUID agentId)
+        public bool UnregisterAgent(EntityId agentId)
         {
             if (agentId == default) return false;
             if (_agentsById.Remove(agentId))
@@ -55,7 +55,7 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        public bool TryGetAgent(GUID agentId, out AgentState agent)
+        public bool TryGetAgent(EntityId agentId, out AgentState agent)
         {
             if (agentId == default)
             {
@@ -65,7 +65,7 @@ namespace Simpiens.Simulation
             return _agentsById.TryGetValue(agentId, out agent);
         }
 
-        public AgentState GetAgent(GUID agentId)
+        public AgentState GetAgent(EntityId agentId)
         {
             if (agentId == default) return null;
             _agentsById.TryGetValue(agentId, out var agent);

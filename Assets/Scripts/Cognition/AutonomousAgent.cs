@@ -53,7 +53,7 @@ namespace Simpiens.Cognition
         }
 
         // Forwarded ISocialAgent & State Properties
-        public UnityEngine.GUID AgentId => State.AgentId;
+        public EntityId AgentId => State.AgentId;
         public AgentMemory Memory => State.Memory;
         public GoapPlan ActivePlan => State.ActivePlan;
         public GoapGoal ActiveGoal => State.ActiveGoal;
@@ -249,7 +249,7 @@ namespace Simpiens.Cognition
         }
 
         public void Initialize(
-            UnityEngine.GUID id,
+            EntityId id,
             ISpatialPartition spatialPartition,
             ICognitiveEvaluator[] evaluators,
             ISimulationManager simulationManager,

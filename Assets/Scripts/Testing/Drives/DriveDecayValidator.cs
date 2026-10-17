@@ -67,7 +67,7 @@ namespace Simpiens.Testing.Drives
             var restGoal = new RestGoal();
             var socialGoal = new SocializeGoal();
 
-            var dummyGuid = GUID.Generate();
+            var dummyGuid = EntityId.Generate();
 
             // Scenario A: Starving agent (Hunger = 85, Energy = 90, Social = 70)
             var contextA = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
@@ -119,7 +119,7 @@ namespace Simpiens.Testing.Drives
 
         private void ValidateWorldStateRestingFactMapping()
         {
-            var dummyGuid = GUID.Generate();
+            var dummyGuid = EntityId.Generate();
 
             // Sated energy -> IsResting = true
             var contextRested = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(10f, 85f, 50f), 0f, null, null, 0);
@@ -136,7 +136,7 @@ namespace Simpiens.Testing.Drives
 
         private void ValidateZeroAllocationPerformance()
         {
-            var dummyGuid = GUID.Generate();
+            var dummyGuid = EntityId.Generate();
             var goal = new RestGoal();
 
             // Warmup

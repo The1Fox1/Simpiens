@@ -52,8 +52,8 @@ namespace Simpiens.Narrative
     {
         public readonly ulong EventId;
         public readonly ChronicleEventType EventType;
-        public readonly GUID ActorAId;
-        public readonly GUID ActorBId;
+        public readonly EntityId ActorAId;
+        public readonly EntityId ActorBId;
         public readonly int SectorId;
         public readonly uint SimulationTick;
         public readonly ChronicleIntensity Intensity;
@@ -61,8 +61,8 @@ namespace Simpiens.Narrative
 
         public ChronicleEvent(
             ChronicleEventType eventType,
-            GUID actorAId,
-            GUID actorBId,
+            EntityId actorAId,
+            EntityId actorBId,
             int sectorId,
             uint simulationTick,
             ChronicleIntensity intensity = ChronicleIntensity.Notable,

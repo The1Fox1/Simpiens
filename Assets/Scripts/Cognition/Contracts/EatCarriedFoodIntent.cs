@@ -12,7 +12,7 @@ namespace Simpiens.Cognition.Contracts
 
         public readonly float Duration;
 
-        public EatCarriedFoodIntent(UnityEngine.GUID agentId, float duration = DefaultDuration) : base(agentId)
+        public EatCarriedFoodIntent(EntityId agentId, float duration = DefaultDuration) : base(agentId)
         {
             Duration = duration;
         }

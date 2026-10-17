@@ -80,7 +80,7 @@ namespace Simpiens.Testing.Environment
 
             var controller = nodeGo.AddComponent<NodeController>();
             controller.Type = EntityType.Wall;
-            controller.Initialize(_idAllocator != null ? _idAllocator.Next() : GUID.Generate(), config);
+            controller.Initialize(_idAllocator != null ? _idAllocator.Next() : EntityId.Generate(), config);
 
             _registry.RegisterNode(controller);
         }

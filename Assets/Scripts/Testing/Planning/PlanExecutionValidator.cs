@@ -252,9 +252,9 @@ namespace Simpiens.Testing.Planning
             Debug.Log($"[PASS] Test 6: Performance benchmark passed (10,000 WorldState builds in {sw.ElapsedMilliseconds}ms, {bytesAllocated} bytes allocated).");
         }
 
-        private static UnityEngine.GUID CreateGuid()
+        private static EntityId CreateGuid()
         {
-            return UnityEngine.GUID.Generate();
+            return EntityId.Generate();
         }
 
         private void Assert(bool condition, string message)

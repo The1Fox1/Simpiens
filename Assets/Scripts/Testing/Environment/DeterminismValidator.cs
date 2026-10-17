@@ -42,8 +42,8 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateSimRandomIsReproducible()
         {
-            var agent = new GUID(11u, 22u, 33u, 44u);
-            var sameAgent = new GUID(11u, 22u, 33u, 44u);
+            var agent = new EntityId(11u, 22u, 33u, 44u);
+            var sameAgent = new EntityId(11u, 22u, 33u, 44u);
 
             var a = SimRandom.For(7, agent, 100, SimRandomSalt.AmbientWander);
             var b = SimRandom.For(7, sameAgent, 100, SimRandomSalt.AmbientWander);
@@ -78,8 +78,8 @@ namespace Simpiens.Testing.Environment
             var second = new EntityIdAllocator(new SimulationSettings(42));
             var other = new EntityIdAllocator(new SimulationSettings(43));
 
-            var seen = new HashSet<GUID>();
-            var sequence = new GUID[64];
+            var seen = new HashSet<EntityId>();
+            var sequence = new EntityId[64];
             bool anyDifferent = false;
             for (int i = 0; i < sequence.Length; i++)
             {
@@ -223,7 +223,7 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateSimRandomIsZeroAlloc()
         {
-            var agent = new GUID(5u, 6u, 7u, 8u);
+            var agent = new EntityId(5u, 6u, 7u, 8u);
             float sink = 0f;
             for (int i = 0; i < 100; i++) sink += SimRandom.For(3, agent, i, 1).NextFloat(); // warm up
 

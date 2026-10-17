@@ -19,7 +19,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public const float ApproachDistance = 1.5f;
 
-        public static bool TryGetNearestFreeBunk(in AgentContext context, out GUID bunkId, out Vector2 position)
+        public static bool TryGetNearestFreeBunk(in AgentContext context, out EntityId bunkId, out Vector2 position)
         {
             bunkId = default;
             position = default;
@@ -47,7 +47,7 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>The nearest free bunk within a last step (ApproachDistance) of the agent, if any.</summary>
-        public static bool TryGetBunkAtHand(in AgentContext context, out GUID bunkId, out Vector2 position)
+        public static bool TryGetBunkAtHand(in AgentContext context, out EntityId bunkId, out Vector2 position)
         {
             bunkId = default;
             if (!TryGetNearestFreeBunk(context, out var id, out position)) return false;

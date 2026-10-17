@@ -107,7 +107,7 @@ namespace Simpiens.Narrative
             }
         }
 
-        private string ResolveActorName(GUID actorId, string defaultName)
+        private string ResolveActorName(EntityId actorId, string defaultName)
         {
             if (actorId == default) return defaultName;
             return _identityService != null ? _identityService.GetFriendlyName(actorId) : defaultName;

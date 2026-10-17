@@ -17,7 +17,7 @@ namespace Simpiens.Simulation
             _state = state;
         }
 
-        public static SimRandom For(ulong seed, GUID entityId, long tick, uint salt)
+        public static SimRandom For(ulong seed, EntityId entityId, long tick, uint salt)
         {
             ulong h = Mix(seed ^ 0x9E3779B97F4A7C15UL);
             h = Mix(h ^ (uint)entityId.GetHashCode());

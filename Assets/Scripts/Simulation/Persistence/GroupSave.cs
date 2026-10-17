@@ -13,7 +13,7 @@ namespace Simpiens.Simulation.Persistence
         public GroupRecord[] Groups { get; set; }
 
         /// <summary>Each group's members, sorted by id.</summary>
-        public GUID[] Members { get; set; }
+        public EntityId[] Members { get; set; }
 
         /// <summary>By crawler id.</summary>
         public MembershipRecord[] Memberships { get; set; }
@@ -22,7 +22,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct GroupRecord
     {
-        public GUID LeaderId;
+        public EntityId LeaderId;
         public Vector2 AnchorPosition;
         public GroupDirective ActiveDirective;
         public int MemberStart;
@@ -32,7 +32,7 @@ namespace Simpiens.Simulation.Persistence
         public byte Cohesion;
         private byte _pad;
 
-        public GroupRecord(byte groupId, GroupType type, GUID leaderId, Vector2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount)
+        public GroupRecord(byte groupId, GroupType type, EntityId leaderId, Vector2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount)
         {
             LeaderId = leaderId;
             AnchorPosition = anchorPosition;
@@ -49,7 +49,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct MembershipRecord
     {
-        public GUID AgentId;
+        public EntityId AgentId;
         public GroupMembership Membership;
     }
 }

@@ -119,7 +119,7 @@ namespace Simpiens.Cognition
                         }
 
                         Vector2Int agentPos = Vector2Int.RoundToInt(agent.Position);
-                        GUID leaderId = default;
+                        EntityId leaderId = default;
                         if (_spatialPartition != null)
                         {
                             var snap = _spatialPartition.GetActiveSnapshot();

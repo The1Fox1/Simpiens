@@ -20,9 +20,9 @@ namespace Simpiens.Testing.Drives
     public class RestAnchorValidator
     {
         private static readonly Vector2 Agent = Vector2.zero;
-        private static readonly GUID AgentId = new GUID(61u, 1u, 1u, 1u);
-        private static readonly GUID BunkId = new GUID(62u, 2u, 2u, 2u);
-        private static readonly GUID HearthId = new GUID(63u, 3u, 3u, 3u);
+        private static readonly EntityId AgentId = new EntityId(61u, 1u, 1u, 1u);
+        private static readonly EntityId BunkId = new EntityId(62u, 2u, 2u, 2u);
+        private static readonly EntityId HearthId = new EntityId(63u, 3u, 3u, 3u);
 
         public void RunAllValidationTests()
         {
@@ -84,7 +84,7 @@ namespace Simpiens.Testing.Drives
             var sim = new SimulationManager(new WorldRegistry(), null);
             var bunkPos = new Vector2(-6f, -8f);
             sim.RegisterBunk(BunkId, bunkPos);
-            var other = new GUID(64u, 4u, 4u, 4u);
+            var other = new EntityId(64u, 4u, 4u, 4u);
 
             Assert(!sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vector2(2f, 0f)), "A bunk cannot be claimed from two units away.");
             Assert(sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vector2(0.4f, 0f)), "A bunk can be claimed by a crawler standing at it.");
@@ -94,7 +94,7 @@ namespace Simpiens.Testing.Drives
             Assert(sim.BunkOccupants.TryGetValue(BunkId, out var occupant) && occupant == AgentId, "Only the sleeper can release its bunk.");
             sim.ReleaseBunk(BunkId, AgentId);
             Assert(!sim.BunkOccupants.ContainsKey(BunkId) && sim.TryClaimBunk(BunkId, other, bunkPos), "Once released the bunk is free for the next crawler.");
-            Assert(!sim.TryClaimBunk(new GUID(65u, 5u, 5u, 5u), AgentId, bunkPos), "An unknown bunk cannot be claimed.");
+            Assert(!sim.TryClaimBunk(new EntityId(65u, 5u, 5u, 5u), AgentId, bunkPos), "An unknown bunk cannot be claimed.");
             Debug.Log("[PASS] Test 4: A bunk holds one sleeper, standing at it.");
         }
 
@@ -154,7 +154,7 @@ namespace Simpiens.Testing.Drives
                 Assert(sim.TryClaimBunk(BunkId, AgentId, node.Position), "And can then claim it.");
 
                 sim.ReleaseBunk(BunkId, AgentId);
-                Assert(sim.TryClaimBunk(BunkId, new GUID(66u, 6u, 6u, 6u), bunkPos), "Precondition: someone else takes it.");
+                Assert(sim.TryClaimBunk(BunkId, new EntityId(66u, 6u, 6u, 6u), bunkPos), "Precondition: someone else takes it.");
                 Assert(sim.StepOntoBunk(node, BunkId) == IntentResult.TargetMissing, "A bunk someone else holds is not stepped onto.");
             }
             finally

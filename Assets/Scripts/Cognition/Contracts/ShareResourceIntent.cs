@@ -8,12 +8,12 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class ShareResourceIntent : AgentIntent
     {
-        public readonly GUID TargetPawnId;
+        public readonly EntityId TargetPawnId;
         public readonly PathResponse Path;
         public readonly float TransferDuration;
         public readonly float FoodAmount;
 
-        public ShareResourceIntent(GUID agentId, GUID targetPawnId, PathResponse path, float transferDuration = 1.0f, float foodAmount = 40f) : base(agentId)
+        public ShareResourceIntent(EntityId agentId, EntityId targetPawnId, PathResponse path, float transferDuration = 1.0f, float foodAmount = 40f) : base(agentId)
         {
             TargetPawnId = targetPawnId;
             Path = path;

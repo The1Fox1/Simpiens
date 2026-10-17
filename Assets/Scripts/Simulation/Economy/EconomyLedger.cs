@@ -45,7 +45,7 @@ namespace Simpiens.Simulation.Economy
             return _bountyEscrows.TryGetValue(bountyId, out var amount) ? amount : 0;
         }
 
-        public bool TryLockEscrow(GUID stallId, ushort bountyId, uint amount, ref TradeStallData stall)
+        public bool TryLockEscrow(EntityId stallId, ushort bountyId, uint amount, ref TradeStallData stall)
         {
             if (stall.TreasuryGold < amount)
             {
@@ -61,7 +61,7 @@ namespace Simpiens.Simulation.Economy
             return true;
         }
 
-        public bool TryReleaseEscrowToClaimant(ushort bountyId, GUID claimantId, IAgentRegistry agentRegistry, out uint releasedAmount)
+        public bool TryReleaseEscrowToClaimant(ushort bountyId, EntityId claimantId, IAgentRegistry agentRegistry, out uint releasedAmount)
         {
             if (_bountyEscrows.TryGetValue(bountyId, out releasedAmount) && releasedAmount > 0)
             {
@@ -82,7 +82,7 @@ namespace Simpiens.Simulation.Economy
             return false;
         }
 
-        public bool TryRefundEscrow(ushort bountyId, GUID stallId, ref TradeStallData stall, out uint refundedAmount)
+        public bool TryRefundEscrow(ushort bountyId, EntityId stallId, ref TradeStallData stall, out uint refundedAmount)
         {
             if (_bountyEscrows.TryGetValue(bountyId, out refundedAmount) && refundedAmount > 0)
             {
@@ -99,7 +99,7 @@ namespace Simpiens.Simulation.Economy
             return false;
         }
 
-        public bool TryExecuteStallPurchase(GUID stallId, ref TradeStallData stall, GUID buyerAgentId, IAgentRegistry agentRegistry, uint totalCost)
+        public bool TryExecuteStallPurchase(EntityId stallId, ref TradeStallData stall, EntityId buyerAgentId, IAgentRegistry agentRegistry, uint totalCost)
         {
             if (agentRegistry == null || !agentRegistry.TryGetAgent(buyerAgentId, out var agent))
             {
@@ -108,7 +108,7 @@ namespace Simpiens.Simulation.Economy
             return TryExecuteStallPurchase(stallId, ref stall, agent.Inventory, totalCost);
         }
 
-        public bool TryExecuteStallPurchase(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory buyer, uint totalCost)
+        public bool TryExecuteStallPurchase(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory buyer, uint totalCost)
         {
             if (buyer == null || buyer.Gold < totalCost)
             {
@@ -122,7 +122,7 @@ namespace Simpiens.Simulation.Economy
             return true;
         }
 
-        public bool TryExecuteStallSale(GUID stallId, ref TradeStallData stall, GUID sellerAgentId, IAgentRegistry agentRegistry, uint totalPayout)
+        public bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, EntityId sellerAgentId, IAgentRegistry agentRegistry, uint totalPayout)
         {
             if (stall.TreasuryGold < totalPayout)
             {
@@ -136,7 +136,7 @@ namespace Simpiens.Simulation.Economy
             return TryExecuteStallSale(stallId, ref stall, agent.Inventory, totalPayout);
         }
 
-        public bool TryExecuteStallSale(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout)
+        public bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout)
         {
             if (seller == null || stall.TreasuryGold < totalPayout)
             {

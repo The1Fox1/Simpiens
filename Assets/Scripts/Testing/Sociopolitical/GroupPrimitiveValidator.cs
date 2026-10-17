@@ -250,10 +250,10 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!registry.TryGetGroup(0, out _), "TryGetGroup(0) handled safely.");
             Assert(!registry.TryGetGroup(255, out _), "TryGetGroup(255) handled safely.");
             Assert(!registry.AddMember(0, CreateGuid()), "AddMember with GroupId 0 returns false.");
-            Assert(!registry.AddMember(1, default), "AddMember with default GUID returns false.");
+            Assert(!registry.AddMember(1, default), "AddMember with default EntityId returns false.");
             Assert(!registry.RemoveMember(0, CreateGuid()), "RemoveMember with GroupId 0 returns false.");
             Assert(!registry.SetRole(0, CreateGuid(), RoleRank.Leader), "SetRole with GroupId 0 returns false.");
-            Assert(!registry.TryGetMembership(default, out _), "TryGetMembership with default GUID returns false.");
+            Assert(!registry.TryGetMembership(default, out _), "TryGetMembership with default EntityId returns false.");
             Assert(registry.GetMembers(0).Count == 0, "GetMembers with GroupId 0 returns empty collection.");
             Assert(!registry.SetDirective(0, GroupDirective.None), "SetDirective with GroupId 0 returns false.");
             Assert(!registry.ClearDirective(0), "ClearDirective with GroupId 0 returns false.");
@@ -317,12 +317,12 @@ namespace Simpiens.Testing.Sociopolitical
             [FieldOffset(4)] public uint v1;
             [FieldOffset(8)] public uint v2;
             [FieldOffset(12)] public uint v3;
-            [FieldOffset(0)] public GUID GuidValue;
+            [FieldOffset(0)] public EntityId GuidValue;
         }
 
         private static uint _guidCounter = 1;
 
-        private static GUID CreateGuid()
+        private static EntityId CreateGuid()
         {
             var union = new GuidUnion { v0 = _guidCounter++, v1 = 0x12345678, v2 = 0x9abcdef0, v3 = 0x55555555 };
             return union.GuidValue;

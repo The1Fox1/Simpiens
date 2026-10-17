@@ -14,35 +14,35 @@ namespace Simpiens.Cognition.Memory
         public const uint AnchorDecayTicks = 5000;
 
         public MemoryLedger EventLedger { get; }
-        public Dictionary<GUID, SpatialMemoryRecord> SpatialMemoryMap { get; }
+        public Dictionary<EntityId, SpatialMemoryRecord> SpatialMemoryMap { get; }
 
         [System.ThreadStatic]
         private static List<EntitySnapshot> _queryResults;
 
         [System.ThreadStatic]
-        private static List<GUID> _keysToRemove;
+        private static List<EntityId> _keysToRemove;
 
         [System.ThreadStatic]
         private static List<MemoryEvent> _gossipEventBuffer;
 
-        private readonly Dictionary<GUID, uint> _blacklistedEntities;
-        private readonly Dictionary<GUID, uint> _lastGossipWithAgent;
-        private readonly Dictionary<GUID, AffinityRecord> _affinityMap;
+        private readonly Dictionary<EntityId, uint> _blacklistedEntities;
+        private readonly Dictionary<EntityId, uint> _lastGossipWithAgent;
+        private readonly Dictionary<EntityId, AffinityRecord> _affinityMap;
 
         private readonly AgentMemorySnapshot[] _snapshots;
         private int _snapshotIndex;
 
-        public Dictionary<GUID, AffinityRecord> AffinityMap => _affinityMap;
-        public IReadOnlyDictionary<GUID, uint> BlacklistedEntities => _blacklistedEntities;
-        public Dictionary<GUID, uint> BlacklistMap => _blacklistedEntities;
+        public Dictionary<EntityId, AffinityRecord> AffinityMap => _affinityMap;
+        public IReadOnlyDictionary<EntityId, uint> BlacklistedEntities => _blacklistedEntities;
+        public Dictionary<EntityId, uint> BlacklistMap => _blacklistedEntities;
 
         public AgentMemory(int ledgerCapacity = 50, int initialMapCapacity = 64)
         {
             EventLedger = new MemoryLedger(ledgerCapacity);
-            SpatialMemoryMap = new Dictionary<GUID, SpatialMemoryRecord>(initialMapCapacity);
-            _blacklistedEntities = new Dictionary<GUID, uint>();
-            _lastGossipWithAgent = new Dictionary<GUID, uint>();
-            _affinityMap = new Dictionary<GUID, AffinityRecord>(16);
+            SpatialMemoryMap = new Dictionary<EntityId, SpatialMemoryRecord>(initialMapCapacity);
+            _blacklistedEntities = new Dictionary<EntityId, uint>();
+            _lastGossipWithAgent = new Dictionary<EntityId, uint>();
+            _affinityMap = new Dictionary<EntityId, AffinityRecord>(16);
 
             _snapshots = new AgentMemorySnapshot[2]
             {
@@ -64,12 +64,12 @@ namespace Simpiens.Cognition.Memory
             }
         }
 
-        public void BlacklistEntity(GUID entityId, uint untilTick)
+        public void BlacklistEntity(EntityId entityId, uint untilTick)
         {
             _blacklistedEntities[entityId] = untilTick;
         }
 
-        public bool IsBlacklisted(GUID entityId, uint currentTick)
+        public bool IsBlacklisted(EntityId entityId, uint currentTick)
         {
             if (_blacklistedEntities.TryGetValue(entityId, out var untilTick))
             {
@@ -78,7 +78,7 @@ namespace Simpiens.Cognition.Memory
             return false;
         }
 
-        public void RemoveMemory(GUID entityId)
+        public void RemoveMemory(EntityId entityId)
         {
             SpatialMemoryMap.Remove(entityId);
             _blacklistedEntities.Remove(entityId);
@@ -98,8 +98,8 @@ namespace Simpiens.Cognition.Memory
 
         // What a scout has seen inside the uncharted sector it was hired to survey. Private: never gossiped, never
         // planned on, until a successful report publishes it to everyone (SimulationManager.PublishSurvey).
-        private readonly Dictionary<GUID, SurveyNote> _surveyNotes = new Dictionary<GUID, SurveyNote>(8);
-        private List<GUID> _surveyKeys;
+        private readonly Dictionary<EntityId, SurveyNote> _surveyNotes = new Dictionary<EntityId, SurveyNote>(8);
+        private List<EntityId> _surveyKeys;
 
         public int SurveyNoteCount => _surveyNotes.Count;
 
@@ -124,7 +124,7 @@ namespace Simpiens.Cognition.Memory
         public void TakeSurveyNotes(byte sectorId, List<SpatialMemoryRecord> into)
         {
             if (_surveyNotes.Count == 0) return;
-            _surveyKeys ??= new List<GUID>(8);
+            _surveyKeys ??= new List<EntityId>(8);
             _surveyKeys.Clear();
             foreach (var kvp in _surveyNotes)
             {
@@ -214,7 +214,7 @@ namespace Simpiens.Cognition.Memory
             // Prune memory: if we remember something at a location we can currently see, but we didn't just see it, it must be gone.
             if (_keysToRemove == null)
             {
-                _keysToRemove = new List<GUID>(16);
+                _keysToRemove = new List<EntityId>(16);
             }
             _keysToRemove.Clear();
 
@@ -340,13 +340,13 @@ namespace Simpiens.Cognition.Memory
             }
         }
 
-        private static void RestoreTicks(Dictionary<GUID, uint> into, IdTickRecord[] records)
+        private static void RestoreTicks(Dictionary<EntityId, uint> into, IdTickRecord[] records)
         {
             if (records == null) return;
             for (int i = 0; i < records.Length; i++) into[records[i].Id] = records[i].Tick;
         }
 
-        private static IdTickRecord[] SortedTicks(Dictionary<GUID, uint> ticks)
+        private static IdTickRecord[] SortedTicks(Dictionary<EntityId, uint> ticks)
         {
             var records = new IdTickRecord[ticks.Count];
             int n = 0;
@@ -355,7 +355,7 @@ namespace Simpiens.Cognition.Memory
             return records;
         }
 
-        public AffinityRecord GetAffinity(GUID peerId, uint currentTick)
+        public AffinityRecord GetAffinity(EntityId peerId, uint currentTick)
         {
             if (_affinityMap.TryGetValue(peerId, out var record))
             {
@@ -372,7 +372,7 @@ namespace Simpiens.Cognition.Memory
             return snap;
         }
 
-        public bool TryGetSpatialRecord(GUID entityId, out SpatialMemoryRecord record)
+        public bool TryGetSpatialRecord(EntityId entityId, out SpatialMemoryRecord record)
         {
             return SpatialMemoryMap.TryGetValue(entityId, out record);
         }
@@ -381,7 +381,7 @@ namespace Simpiens.Cognition.Memory
         {
             if (_keysToRemove == null)
             {
-                _keysToRemove = new List<GUID>(16);
+                _keysToRemove = new List<EntityId>(16);
             }
             _keysToRemove.Clear();
 
@@ -399,33 +399,33 @@ namespace Simpiens.Cognition.Memory
             }
         }
 
-        public void RecordInteraction(GUID peerId, sbyte deltaWarmth, sbyte deltaTrust, sbyte deltaFear, sbyte deltaRespect, uint currentTick)
+        public void RecordInteraction(EntityId peerId, sbyte deltaWarmth, sbyte deltaTrust, sbyte deltaFear, sbyte deltaRespect, uint currentTick)
         {
             var current = GetAffinity(peerId, currentTick);
             _affinityMap[peerId] = current.WithInteraction(deltaWarmth, deltaTrust, deltaFear, deltaRespect, currentTick);
         }
 
-        public void SetAffinity(GUID peerId, AffinityRecord record)
+        public void SetAffinity(EntityId peerId, AffinityRecord record)
         {
             _affinityMap[peerId] = record;
         }
 
-        public void RecordEvent(MemoryEventType type, GUID subjectId, Vector2Int location, uint simulationTick)
+        public void RecordEvent(MemoryEventType type, EntityId subjectId, Vector2Int location, uint simulationTick)
         {
             EventLedger.AddEvent(new MemoryEvent(type, subjectId, location, simulationTick));
         }
 
-        public bool IsTrusted(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Trust >= threshold;
-        public bool IsDistrusted(GUID peerId, uint currentTick, sbyte threshold = -20) => GetAffinity(peerId, currentTick).Trust <= threshold;
-        public bool IsFeared(GUID peerId, uint currentTick, sbyte threshold = 40) => GetAffinity(peerId, currentTick).Fear >= threshold;
-        public bool IsWarm(GUID peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Warmth >= threshold;
-        public bool IsRespected(GUID peerId, uint currentTick, sbyte threshold = 30) => GetAffinity(peerId, currentTick).Respect >= threshold;
+        public bool IsTrusted(EntityId peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Trust >= threshold;
+        public bool IsDistrusted(EntityId peerId, uint currentTick, sbyte threshold = -20) => GetAffinity(peerId, currentTick).Trust <= threshold;
+        public bool IsFeared(EntityId peerId, uint currentTick, sbyte threshold = 40) => GetAffinity(peerId, currentTick).Fear >= threshold;
+        public bool IsWarm(EntityId peerId, uint currentTick, sbyte threshold = 20) => GetAffinity(peerId, currentTick).Warmth >= threshold;
+        public bool IsRespected(EntityId peerId, uint currentTick, sbyte threshold = 30) => GetAffinity(peerId, currentTick).Respect >= threshold;
 
         /// <summary>
         /// Calculates social submission score toward a peer: Fear + (Respect * 0.8).
         /// High submission indicates willingness to yield contested resources to this peer.
         /// </summary>
-        public float CalculateSubmissionScore(GUID peerId, uint currentTick)
+        public float CalculateSubmissionScore(EntityId peerId, uint currentTick)
         {
             var affinity = GetAffinity(peerId, currentTick);
             return affinity.Fear + (affinity.Respect * 0.8f);
@@ -436,14 +436,14 @@ namespace Simpiens.Cognition.Memory
         /// (Warmth * 0.5) + (Trust * 0.3) - (SelfHunger * 0.4) + (IsTargetCollapsed ? 30 : 0).
         /// Scores >= 25 indicate willingness to share food with this peer.
         /// </summary>
-        public float CalculateAltruismScore(GUID peerId, uint currentTick, float selfHunger, bool isTargetCollapsed)
+        public float CalculateAltruismScore(EntityId peerId, uint currentTick, float selfHunger, bool isTargetCollapsed)
         {
             var affinity = GetAffinity(peerId, currentTick);
             float collapseBonus = isTargetCollapsed ? 30f : 0f;
             return (affinity.Warmth * 0.5f) + (affinity.Trust * 0.3f) - (selfHunger * 0.4f) + collapseBonus;
         }
 
-        public bool CanGossipWith(GUID peerId, uint currentTick, uint cooldownTicks = 300)
+        public bool CanGossipWith(EntityId peerId, uint currentTick, uint cooldownTicks = 300)
         {
             if (_lastGossipWithAgent.TryGetValue(peerId, out var lastTick))
             {
@@ -452,7 +452,7 @@ namespace Simpiens.Cognition.Memory
             return true;
         }
 
-        public bool TryGossip(AgentMemory peerMemory, GUID peerId, GUID myId, uint currentTick, uint cooldownTicks = 300)
+        public bool TryGossip(AgentMemory peerMemory, EntityId peerId, EntityId myId, uint currentTick, uint cooldownTicks = 300)
         {
             if (peerMemory == null) return false;
 

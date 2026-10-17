@@ -32,7 +32,7 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>The sector this agent holds a claimed Scout bounty for (it may see inside the fog there), or 0.</summary>
-        public static byte SurveyingSector(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, UnityEngine.GUID agentId)
+        public static byte SurveyingSector(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, EntityId agentId)
         {
             if (snapshot == null || snapshot.ActiveBountyCount == 0) return 0;
             var bounties = snapshot.Bounties;

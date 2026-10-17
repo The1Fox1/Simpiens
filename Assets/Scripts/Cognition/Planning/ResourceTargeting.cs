@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning
 {
     /// <summary>
     /// Shared, allocation-free resource selection over an agent's spatial memory.
-    /// All selection is deterministic: equal scores break ties by entity GUID, never by dictionary order.
+    /// All selection is deterministic: equal scores break ties by entity EntityId, never by dictionary order.
     /// Used by the Tier-1 survival reflex and by the GOAP harvest/gather/search actions.
     /// </summary>
     public static class ResourceTargeting

@@ -153,7 +153,7 @@ namespace Simpiens.Narrative
             }
         }
 
-        public void GetActorEvents(GUID actorId, List<ChronicleEvent> resultsBuffer, int maxCount = 16)
+        public void GetActorEvents(EntityId actorId, List<ChronicleEvent> resultsBuffer, int maxCount = 16)
         {
             if (resultsBuffer == null) return;
             resultsBuffer.Clear();

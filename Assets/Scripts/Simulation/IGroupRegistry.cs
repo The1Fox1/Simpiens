@@ -12,19 +12,19 @@ namespace Simpiens.Simulation
     {
         int ActiveGroupCount { get; }
 
-        byte CreateGroup(GroupType type, GUID leaderId, Vector2 anchorPosition, byte initialCohesion = 100);
+        byte CreateGroup(GroupType type, EntityId leaderId, Vector2 anchorPosition, byte initialCohesion = 100);
         bool DisbandGroup(byte groupId);
         bool TryGetGroup(byte groupId, out GroupData groupData);
 
-        bool AddMember(byte groupId, GUID agentId, RoleRank role = RoleRank.Follower, byte initialAllegiance = 70);
-        bool RemoveMember(byte groupId, GUID agentId);
-        bool SetRole(byte groupId, GUID agentId, RoleRank newRole);
-        bool UpdateAllegiance(GUID agentId, int delta);
+        bool AddMember(byte groupId, EntityId agentId, RoleRank role = RoleRank.Follower, byte initialAllegiance = 70);
+        bool RemoveMember(byte groupId, EntityId agentId);
+        bool SetRole(byte groupId, EntityId agentId, RoleRank newRole);
+        bool UpdateAllegiance(EntityId agentId, int delta);
         bool UpdateCohesion(byte groupId, int delta);
         bool SetCohesion(byte groupId, byte cohesion);
-        bool TransferLeadership(byte groupId, GUID newLeaderId);
-        bool TryGetMembership(GUID agentId, out GroupMembership membership);
-        IReadOnlyCollection<GUID> GetMembers(byte groupId);
+        bool TransferLeadership(byte groupId, EntityId newLeaderId);
+        bool TryGetMembership(EntityId agentId, out GroupMembership membership);
+        IReadOnlyCollection<EntityId> GetMembers(byte groupId);
 
         bool SetDirective(byte groupId, in GroupDirective directive);
         bool ClearDirective(byte groupId);

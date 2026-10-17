@@ -17,7 +17,7 @@ namespace Simpiens.Entities
         private CircleCollider2D col;
         private ISimulationClock _simulationClock;
 
-        public GUID Id { get; private set; }
+        public EntityId Id { get; private set; }
         public float BaseSpeed => _baseSpeed > 0f ? _baseSpeed : 2f;
 
 #if UNITY_EDITOR
@@ -115,7 +115,7 @@ namespace Simpiens.Entities
         }
 
         // Configuration is now injected via code, completely bypassing the Unity Inspector
-        public void Initialize(GUID id, NodeConfiguration config)
+        public void Initialize(EntityId id, NodeConfiguration config)
         {
             Id = id;
             _baseSpeed = config.Speed;

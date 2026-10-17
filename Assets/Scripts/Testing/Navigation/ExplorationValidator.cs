@@ -155,7 +155,7 @@ namespace Simpiens.Testing.Navigation
                 if (id != Floor1Layout.GardenSectorId) memory.NoteSectorVisit(id, tick++);
             }
 
-            var id1 = new UnityEngine.GUID(5u, 0x5eed5eedu, 7u, 11u);
+            var id1 = new EntityId(5u, 0x5eed5eedu, 7u, 11u);
             for (uint w = 0; w < 10; w++)
             {
                 var ctx = new AgentContext(id1, Vector2.zero, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 500 + w * ResourceTargeting.SectorChoiceTicks);
@@ -186,7 +186,7 @@ namespace Simpiens.Testing.Navigation
 
         private static AgentContext Context(int agent, uint tick, Vector2 position, SharedWorldSnapshot snapshot)
         {
-            var id = new UnityEngine.GUID((uint)agent + 1u, 0x5eed5eedu, 7u, 11u);
+            var id = new EntityId((uint)agent + 1u, 0x5eed5eedu, 7u, 11u);
             return new AgentContext(id, position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);
         }
 

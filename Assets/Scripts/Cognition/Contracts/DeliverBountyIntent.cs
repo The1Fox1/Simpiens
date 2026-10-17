@@ -9,9 +9,9 @@ namespace Simpiens.Cognition.Contracts
     public class DeliverBountyIntent : AgentIntent
     {
         public readonly ushort BountyId;
-        public readonly GUID StallEntityId;
+        public readonly EntityId StallEntityId;
 
-        public DeliverBountyIntent(GUID agentId, ushort bountyId, GUID stallEntityId) : base(agentId)
+        public DeliverBountyIntent(EntityId agentId, ushort bountyId, EntityId stallEntityId) : base(agentId)
         {
             BountyId = bountyId;
             StallEntityId = stallEntityId;

@@ -5,10 +5,10 @@ namespace Simpiens.Simulation
 {
     public class WorldRegistry : IWorldRegistry
     {
-        public static readonly UnityEngine.GUID PlayerEntityId = new UnityEngine.GUID("00000000000000000000000000000001");
+        public static readonly EntityId PlayerEntityId = new EntityId("00000000000000000000000000000001");
 
         private readonly List<NodeController> _activeNodes = new List<NodeController>(128); // Pre-allocate some capacity
-        private readonly Dictionary<UnityEngine.GUID, NodeController> _nodeLookup = new Dictionary<UnityEngine.GUID, NodeController>(128);
+        private readonly Dictionary<EntityId, NodeController> _nodeLookup = new Dictionary<EntityId, NodeController>(128);
 
         public IReadOnlyList<NodeController> ActiveNodes => _activeNodes;
 
@@ -29,7 +29,7 @@ namespace Simpiens.Simulation
             if (_activeNodes.Remove(node))
             {
                 // Safely remove from lookup without accessing properties on potentially destroyed Unity object
-                UnityEngine.GUID keyToRemove = default;
+                EntityId keyToRemove = default;
                 bool found = false;
                 foreach (var kvp in _nodeLookup)
                 {
@@ -57,12 +57,12 @@ namespace Simpiens.Simulation
                 }
             }
 
-            List<UnityEngine.GUID> keysToRemove = null;
+            List<EntityId> keysToRemove = null;
             foreach (var kvp in _nodeLookup)
             {
                 if (kvp.Value == null)
                 {
-                    keysToRemove ??= new List<UnityEngine.GUID>();
+                    keysToRemove ??= new List<EntityId>();
                     keysToRemove.Add(kvp.Key);
                 }
             }
@@ -81,7 +81,7 @@ namespace Simpiens.Simulation
             _nodeLookup.Clear();
         }
 
-        public NodeController GetNode(UnityEngine.GUID id)
+        public NodeController GetNode(EntityId id)
         {
             if (_nodeLookup.TryGetValue(id, out var node))
             {

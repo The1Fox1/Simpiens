@@ -96,7 +96,7 @@ namespace Simpiens.Testing.Environment
             state.HasFoodInInventory = false;
 
             var consequenceService = new AgentConsequenceService();
-            var harvestIntent = new HarvestResourceIntent(state.AgentId, GUID.Generate(), default, 1.0f);
+            var harvestIntent = new HarvestResourceIntent(state.AgentId, EntityId.Generate(), default, 1.0f);
 
             consequenceService.ApplyConsequences(state, harvestIntent, IntentResult.Success, 50);
 
@@ -116,7 +116,7 @@ namespace Simpiens.Testing.Environment
             var go = new GameObject("[TestNode_Facade]");
             var node = go.AddComponent<NodeController>();
             var agent = go.AddComponent<AutonomousAgent>();
-            var id = GUID.Generate();
+            var id = EntityId.Generate();
             node.Initialize(id, new NodeConfiguration(speed: 3.0f));
 
             Assert(node.AgentState != null, "node.AgentState must not be null.");

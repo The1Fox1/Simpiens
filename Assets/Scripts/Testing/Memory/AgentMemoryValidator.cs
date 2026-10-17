@@ -30,8 +30,8 @@ namespace Simpiens.Testing.Memory
             var memory = new AgentMemory();
             var dummySnapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
 
-            var pawnId = GUID.Generate();
-            var resourceId = GUID.Generate();
+            var pawnId = EntityId.Generate();
+            var resourceId = EntityId.Generate();
 
             // Seed memory at tick 100
             memory.SpatialMemoryMap[pawnId] = new SpatialMemoryRecord(pawnId, EntityType.Pawn, new Vector2Int(100, 100), 100);
@@ -60,9 +60,9 @@ namespace Simpiens.Testing.Memory
             var memoryA = new AgentMemory();
             var memoryB = new AgentMemory();
 
-            var agentAId = GUID.Generate();
-            var agentBId = GUID.Generate();
-            var resourceId = GUID.Generate();
+            var agentAId = EntityId.Generate();
+            var agentBId = EntityId.Generate();
+            var resourceId = EntityId.Generate();
 
             // Agent A knows a resource
             memoryA.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new Vector2Int(15, 25), 100);
@@ -92,9 +92,9 @@ namespace Simpiens.Testing.Memory
             var memoryA = new AgentMemory();
             var memoryB = new AgentMemory();
 
-            var agentAId = GUID.Generate();
-            var agentBId = GUID.Generate();
-            var sharedResourceId = GUID.Generate();
+            var agentAId = EntityId.Generate();
+            var agentBId = EntityId.Generate();
+            var sharedResourceId = EntityId.Generate();
 
             // Agent A has stale intel: saw at (10, 10) on tick 50
             memoryA.SpatialMemoryMap[sharedResourceId] = new SpatialMemoryRecord(sharedResourceId, EntityType.Resource, new Vector2Int(10, 10), 50);
@@ -118,8 +118,8 @@ namespace Simpiens.Testing.Memory
             var memoryA = new AgentMemory();
             var memoryB = new AgentMemory();
 
-            var agentAId = GUID.Generate();
-            var agentBId = GUID.Generate();
+            var agentAId = EntityId.Generate();
+            var agentBId = EntityId.Generate();
 
             // First gossip at tick 100
             bool first = memoryA.TryGossip(memoryB, agentBId, agentAId, currentTick: 100, cooldownTicks: 300);
@@ -138,7 +138,7 @@ namespace Simpiens.Testing.Memory
 
         private void ValidateIdleDuration()
         {
-            var agentId = GUID.Generate();
+            var agentId = EntityId.Generate();
 
             var defaultIdle = new IdleIntent(agentId);
             Assert(Mathf.Approximately(defaultIdle.Duration, 2.0f), "Default IdleIntent duration is 2.0s.");

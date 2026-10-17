@@ -13,7 +13,7 @@ namespace Simpiens.Simulation.World
     /// </summary>
     public sealed class LoadedWorld
     {
-        private readonly Dictionary<string, GUID> _ids = new Dictionary<string, GUID>();
+        private readonly Dictionary<string, EntityId> _ids = new Dictionary<string, EntityId>();
 
         public LoadedWorld(MapDefinition map)
         {
@@ -22,29 +22,29 @@ namespace Simpiens.Simulation.World
 
         public MapDefinition Map { get; }
 
-        public void RegisterEntity(string key, GUID id)
+        public void RegisterEntity(string key, EntityId id)
         {
             _ids[key] = id;
         }
 
-        public bool TryGetEntityId(string key, out GUID id)
+        public bool TryGetEntityId(string key, out EntityId id)
         {
             return _ids.TryGetValue(key, out id);
         }
 
-        public GUID GetEntityId(string key)
+        public EntityId GetEntityId(string key)
         {
             if (_ids.TryGetValue(key, out var id)) return id;
             throw new KeyNotFoundException($"Map '{Map?.Name}' has no spawned entity with key '{key}'.");
         }
 
         /// <summary>Every keyed entity, in ordinal key order (a save).</summary>
-        public void CaptureEntities(out string[] keys, out GUID[] ids)
+        public void CaptureEntities(out string[] keys, out EntityId[] ids)
         {
             keys = new string[_ids.Count];
             _ids.Keys.CopyTo(keys, 0);
             System.Array.Sort(keys, System.StringComparer.Ordinal);
-            ids = new GUID[keys.Length];
+            ids = new EntityId[keys.Length];
             for (int i = 0; i < keys.Length; i++) ids[i] = _ids[keys[i]];
         }
     }

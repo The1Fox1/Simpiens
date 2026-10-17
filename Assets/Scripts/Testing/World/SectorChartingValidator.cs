@@ -187,7 +187,7 @@ namespace Simpiens.Testing.World
             {
                 for (uint w = 0; w < 40; w++)
                 {
-                    var ctx = new AgentContext(new UnityEngine.GUID((uint)a + 1u, 9u, 9u, 9u), Vector2.zero, new AgentNeeds(20f, 80f, 60f), 0f,
+                    var ctx = new AgentContext(new EntityId((uint)a + 1u, 9u, 9u, 9u), Vector2.zero, new AgentNeeds(20f, 80f, 60f), 0f,
                         snapshot, new AgentMemory(), w * ResourceTargeting.SectorChoiceTicks);
                     var p = ResourceTargeting.PickExplorationPoint(ctx);
                     byte sector = def.FindSector(p).Id;
@@ -216,7 +216,7 @@ namespace Simpiens.Testing.World
             return snapshot;
         }
 
-        private UnityEngine.GUID AddResource(SharedWorldSnapshot snapshot, Vector2 position)
+        private EntityId AddResource(SharedWorldSnapshot snapshot, Vector2 position)
         {
             var id = NextGuid();
             var entity = new EntitySnapshot(id, position, Vector2.zero, 0.35f, EntityType.Resource, false, 0f, ItemType.IronOre);
@@ -227,10 +227,10 @@ namespace Simpiens.Testing.World
 
         private AgentContext Context(SharedWorldSnapshot snapshot, Vector2 position, uint tick)
         {
-            return new AgentContext(new UnityEngine.GUID(77u, 7u, 7u, 7u), position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);
+            return new AgentContext(new EntityId(77u, 7u, 7u, 7u), position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);
         }
 
-        private UnityEngine.GUID NextGuid() => new UnityEngine.GUID(_nextId++, 0xc4a27u, 3u, 5u);
+        private EntityId NextGuid() => new EntityId(_nextId++, 0xc4a27u, 3u, 5u);
 
         private static void Assert(bool condition, string message)
         {

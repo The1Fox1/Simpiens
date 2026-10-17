@@ -9,15 +9,15 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class TradeIntent : AgentIntent
     {
-        public readonly GUID StallEntityId;
+        public readonly EntityId StallEntityId;
         public readonly TradeActionType ActionType;
         public readonly ItemType ItemType;
         public readonly ushort Quantity;
         public readonly ushort MaxExpectedPricePerUnit;
 
         public TradeIntent(
-            GUID agentId,
-            GUID stallEntityId,
+            EntityId agentId,
+            EntityId stallEntityId,
             TradeActionType actionType,
             ItemType itemType,
             ushort quantity = 1,

@@ -21,13 +21,13 @@ namespace Simpiens.Testing.Sociopolitical
     {
         public class MockSocialAgent : ISocialAgent
         {
-            public GUID AgentId { get; set; }
+            public EntityId AgentId { get; set; }
             public AgentMemory Memory { get; set; }
             public GroupMembership Membership { get; set; } = GroupMembership.None;
             public bool IsExhaustionCollapsed { get; set; }
             public bool IsStarvationPanicking { get; set; }
 
-            public MockSocialAgent(GUID id)
+            public MockSocialAgent(EntityId id)
             {
                 AgentId = id;
                 Memory = new AgentMemory();
@@ -126,7 +126,7 @@ namespace Simpiens.Testing.Sociopolitical
             var followerA = CreateTestAgent();
             var followerB = CreateTestAgent();
 
-            var agentMap = new Dictionary<GUID, ISocialAgent>
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
             {
                 { leader.AgentId, leader },
                 { officer.AgentId, officer },
@@ -176,7 +176,7 @@ namespace Simpiens.Testing.Sociopolitical
             var followerA = CreateTestAgent();
             var followerB = CreateTestAgent();
 
-            var agentMap = new Dictionary<GUID, ISocialAgent>
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
             {
                 { leader.AgentId, leader },
                 { followerA.AgentId, followerA },
@@ -219,7 +219,7 @@ namespace Simpiens.Testing.Sociopolitical
             var loser = CreateTestAgent();
             var winner = CreateTestAgent();
 
-            var agentMap = new Dictionary<GUID, ISocialAgent>
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
             {
                 { leader.AgentId, leader },
                 { loser.AgentId, loser },
@@ -257,7 +257,7 @@ namespace Simpiens.Testing.Sociopolitical
             var loyalistA = CreateTestAgent();
             var loyalistB = CreateTestAgent();
 
-            var agentMap = new Dictionary<GUID, ISocialAgent>
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
             {
                 { leader.AgentId, leader },
                 { contenderA.AgentId, contenderA },
@@ -316,7 +316,7 @@ namespace Simpiens.Testing.Sociopolitical
             var leader = CreateTestAgent();
             var follower = CreateTestAgent();
 
-            var agentMap = new Dictionary<GUID, ISocialAgent>
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
             {
                 { leader.AgentId, leader },
                 { follower.AgentId, follower }
@@ -420,10 +420,10 @@ namespace Simpiens.Testing.Sociopolitical
             [FieldOffset(4)] public uint v1;
             [FieldOffset(8)] public uint v2;
             [FieldOffset(12)] public uint v3;
-            [FieldOffset(0)] public GUID GuidValue;
+            [FieldOffset(0)] public EntityId GuidValue;
         }
 
-        private static GUID CreateGuid()
+        private static EntityId CreateGuid()
         {
             var union = new GuidUnion { v0 = _guidCounter++, v1 = 0x11223344, v2 = 0x55667788, v3 = 0x99aabbcc };
             return union.GuidValue;

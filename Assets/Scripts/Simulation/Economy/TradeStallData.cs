@@ -11,7 +11,7 @@ namespace Simpiens.Simulation.Economy
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct TradeStallData : IEquatable<TradeStallData>
     {
-        public readonly GUID StallEntityId;
+        public readonly EntityId StallEntityId;
         public readonly Vector2 Position;
         public readonly ushort RationSellPrice;
         public readonly ushort RationStock;
@@ -33,7 +33,7 @@ namespace Simpiens.Simulation.Economy
         public bool IsActive => StallEntityId != default;
 
         public TradeStallData(
-            GUID stallEntityId,
+            EntityId stallEntityId,
             Vector2 position,
             ushort rationSellPrice = 5,
             ushort rationStock = 50,

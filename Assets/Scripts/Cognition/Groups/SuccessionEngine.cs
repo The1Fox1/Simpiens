@@ -16,15 +16,15 @@ namespace Simpiens.Cognition.Groups
     {
         private struct CandidateScore
         {
-            public GUID Id;
+            public EntityId Id;
             public bool IsOfficer;
             public int TotalRespect;
             public byte Allegiance;
         }
 
-        private static readonly List<GUID> _candidateBuffer = new List<GUID>(64);
+        private static readonly List<EntityId> _candidateBuffer = new List<EntityId>(64);
         private static readonly List<CandidateScore> _scoreBuffer = new List<CandidateScore>(64);
-        private static readonly List<GUID> _followersToMove = new List<GUID>(64);
+        private static readonly List<EntityId> _followersToMove = new List<EntityId>(64);
         private static readonly List<ISocialAgent> _unalignedCluster = new List<ISocialAgent>(16);
 
         /// <summary>
@@ -45,16 +45,16 @@ namespace Simpiens.Cognition.Groups
         /// dead/missing from the world, or suffering a crisis of legitimacy (average follower respect < 0).
         /// </summary>
         public static bool IsLeaderIncapacitatedOrDiscredited(
-            GUID leaderId,
+            EntityId leaderId,
             byte groupId,
             IWorldRegistry worldRegistry,
             IGroupRegistry groupRegistry,
             uint currentTick,
-            Func<GUID, ISocialAgent> agentLookup = null)
+            Func<EntityId, ISocialAgent> agentLookup = null)
         {
             if (leaderId == default) return true;
 
-            ISocialAgent GetAgent(GUID id)
+            ISocialAgent GetAgent(EntityId id)
             {
                 if (agentLookup != null) return agentLookup(id);
                 return worldRegistry?.GetNode(id)?.Agent;
@@ -221,14 +221,14 @@ namespace Simpiens.Cognition.Groups
             IGroupRegistry groupRegistry,
             IWorldRegistry worldRegistry,
             uint currentTick,
-            Func<GUID, ISocialAgent> agentLookup = null)
+            Func<EntityId, ISocialAgent> agentLookup = null)
         {
             if (groupRegistry == null || !groupRegistry.TryGetGroup(groupId, out var groupData))
             {
                 return SuccessionResult.Failed;
             }
 
-            ISocialAgent GetAgent(GUID id)
+            ISocialAgent GetAgent(EntityId id)
             {
                 if (agentLookup != null) return agentLookup(id);
                 return worldRegistry?.GetNode(id)?.Agent;
@@ -261,7 +261,7 @@ namespace Simpiens.Cognition.Groups
             _scoreBuffer.Clear();
             for (int i = 0; i < _candidateBuffer.Count; i++)
             {
-                GUID candidateId = _candidateBuffer[i];
+                EntityId candidateId = _candidateBuffer[i];
                 groupRegistry.TryGetMembership(candidateId, out var mem);
 
                 int totalRespect = 0;
@@ -304,7 +304,7 @@ namespace Simpiens.Cognition.Groups
             {
                 case SuccessionMode.Peaceful:
                 {
-                    GUID winnerId = _scoreBuffer[0].Id;
+                    EntityId winnerId = _scoreBuffer[0].Id;
                     groupRegistry.TransferLeadership(groupId, winnerId);
                     groupRegistry.UpdateCohesion(groupId, +10);
 
@@ -332,8 +332,8 @@ namespace Simpiens.Cognition.Groups
 
                 case SuccessionMode.DominanceChallenge:
                 {
-                    GUID contenderA = _scoreBuffer[0].Id;
-                    GUID contenderB = _scoreBuffer[1].Id;
+                    EntityId contenderA = _scoreBuffer[0].Id;
+                    EntityId contenderB = _scoreBuffer[1].Id;
 
                     var agentA = GetAgent(contenderA);
                     var agentB = GetAgent(contenderB);
@@ -348,8 +348,8 @@ namespace Simpiens.Cognition.Groups
                     float domA = 100f - subAtoB;
                     float domB = 100f - subBtoA;
 
-                    GUID winnerId;
-                    GUID loserId;
+                    EntityId winnerId;
+                    EntityId loserId;
                     if (domA >= domB)
                     {
                         winnerId = contenderA;
@@ -412,8 +412,8 @@ namespace Simpiens.Cognition.Groups
 
                 case SuccessionMode.FactionalSchism:
                 {
-                    GUID contenderA = _scoreBuffer[0].Id;
-                    GUID contenderB = _scoreBuffer[1].Id;
+                    EntityId contenderA = _scoreBuffer[0].Id;
+                    EntityId contenderB = _scoreBuffer[1].Id;
 
                     // Contender A leads original group
                     groupRegistry.TransferLeadership(groupId, contenderA);
@@ -458,7 +458,7 @@ namespace Simpiens.Cognition.Groups
                     // Move followers to splinter group
                     for (int i = 0; i < _followersToMove.Count; i++)
                     {
-                        GUID followerId = _followersToMove[i];
+                        EntityId followerId = _followersToMove[i];
                         groupRegistry.TryGetMembership(followerId, out var curMem);
                         byte remainingAllegiance = (byte)Mathf.Max(0, curMem.Allegiance - 10);
 

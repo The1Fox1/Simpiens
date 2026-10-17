@@ -8,7 +8,7 @@ namespace Simpiens.Simulation
     /// </summary>
     public interface IEntityIdAllocator
     {
-        GUID Next();
+        EntityId Next();
 
         /// <summary>Restart the sequence (call when the world is rebuilt so a respawn reproduces the same ids).</summary>
         void Reset();
@@ -36,14 +36,14 @@ namespace Simpiens.Simulation
             _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
         }
 
-        public GUID Next()
+        public EntityId Next()
         {
             while (true)
             {
                 var rng = SimRandom.For(_seed, default, _counter++, SimRandomSalt.EntityId);
                 ulong hi = rng.NextULong();
                 ulong lo = rng.NextULong();
-                var id = new GUID((uint)(hi >> 32), (uint)hi, (uint)(lo >> 32), (uint)lo);
+                var id = new EntityId((uint)(hi >> 32), (uint)hi, (uint)(lo >> 32), (uint)lo);
                 // Never hand out the empty id or the reserved player id
                 if (id != default && id != WorldRegistry.PlayerEntityId) return id;
             }

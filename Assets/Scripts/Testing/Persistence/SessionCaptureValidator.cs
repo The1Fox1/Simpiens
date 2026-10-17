@@ -25,9 +25,9 @@ namespace Simpiens.Testing.Persistence
     /// </summary>
     public class SessionCaptureValidator
     {
-        private static readonly GUID A = new GUID(1u, 0u, 0u, 7u);
-        private static readonly GUID B = new GUID(2u, 0u, 0u, 3u);
-        private static readonly GUID C = new GUID(3u, 0u, 0u, 9u);
+        private static readonly EntityId A = new EntityId(1u, 0u, 0u, 7u);
+        private static readonly EntityId B = new EntityId(2u, 0u, 0u, 3u);
+        private static readonly EntityId C = new EntityId(3u, 0u, 0u, 9u);
 
         public void RunAllValidationTests()
         {
@@ -63,7 +63,7 @@ namespace Simpiens.Testing.Persistence
             Debug.Log("[PASS] Test 1: a memory captures sorted sightings, blacklist and affinities, the ledger oldest first, and sector visits; fill order doesn't matter.");
         }
 
-        private static AgentMemory BuildMemory(GUID[] order)
+        private static AgentMemory BuildMemory(EntityId[] order)
         {
             var memory = new AgentMemory();
             for (int i = 0; i < order.Length; i++)

@@ -462,6 +462,13 @@ namespace Simpiens.Tests.PlayMode
             }
         }
 
+        /// <summary>Epic CORE C3: EntityId is bit-compatible with UnityEngine.GUID, which it replaced.</summary>
+        [Test]
+        public void Scenario_EntityIdCompatibility_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Environment.EntityIdCompatibilityValidator().RunAllValidationTests();
+        }
+
         [Test]
         public void Scenario_SimulationManagerModularization_AllDomainValidationTestsPass()
         {

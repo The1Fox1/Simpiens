@@ -60,7 +60,7 @@ namespace Simpiens.Testing.Economy
             Assert(s.OreQuota == 2 && s.HerbQuota == 2 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 2 ore at 24g + 2 herbs at 30g per visit (§3.3 tuning).");
             Assert(s.UpkeepPerVisit == 80, "Upkeep 80g per visit (§3.3 tuning).");
             Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
-            var full = new TradeStallData(new GUID(1u, 1u, 1u, 1u), Vector2.zero, oreStock: 20, herbStock: 19);
+            var full = new TradeStallData(new EntityId(1u, 1u, 1u, 1u), Vector2.zero, oreStock: 20, herbStock: 19);
             Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),
                 "StallHasRoom compares stock plus quantity with the capacity.");
 
@@ -104,7 +104,7 @@ namespace Simpiens.Testing.Economy
             sim.SetEconomy(EconomyTuning.Default.WithSupply(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 30, wholesaleRationCost: 3)));
             Assert(supply.Tuning.RationStockCap == 30 && supply.Tuning.RestockIntervalTicks == 20, "SetEconomy reconfigures the supply service.");
 
-            var stallId = new GUID(5u, 5u, 5u, 5u);
+            var stallId = new EntityId(5u, 5u, 5u, 5u);
             sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 10, treasuryGold: 500));
             ledger.RecordFaucet(500, "InitialSeed");
             while (sim.CurrentTick < 20) sim.Tick();
@@ -159,7 +159,7 @@ namespace Simpiens.Testing.Economy
         private static AgentContext CreateContext(float hunger, SharedWorldSnapshot snapshot)
         {
             var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 100);
-            return new AgentContext(new GUID(77u, 1u, 1u, 1u), Vector2.zero, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot,
+            return new AgentContext(new EntityId(77u, 1u, 1u, 1u), Vector2.zero, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot,
                 new AgentMemory(), 1, inventory: inventory.GetSnapshot(), personality: AgentPersonality.Neutral);
         }
 

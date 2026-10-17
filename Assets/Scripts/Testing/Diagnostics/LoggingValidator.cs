@@ -16,7 +16,7 @@ namespace Simpiens.Testing.Diagnostics
     public class LoggingValidator
     {
         private static uint _guidSeed = 47000;
-        private static GUID NextGuid() => new GUID(_guidSeed++, 0x106A, 0x2002, 0xFEED);
+        private static EntityId NextGuid() => new EntityId(_guidSeed++, 0x106A, 0x2002, 0xFEED);
 
         public void Start()
         {

@@ -35,8 +35,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         public float DurationSeconds => 0f;
         public float TimeMultiplier => 10f;
 
-        private readonly HashSet<UnityEngine.GUID> _sleepers = new HashSet<UnityEngine.GUID>();
-        private readonly Dictionary<UnityEngine.GUID, int> _sleepersPerBunk = new Dictionary<UnityEngine.GUID, int>();
+        private readonly HashSet<EntityId> _sleepers = new HashSet<EntityId>();
+        private readonly Dictionary<EntityId, int> _sleepersPerBunk = new Dictionary<EntityId, int>();
         private long _thirdSleeperTick = -1;
         private long _firstSleepTick = -1;
         private int _doubleOccupancy;
@@ -64,10 +64,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
             long start = clock.CurrentTick;
             float elapsed = 0f;
-            var collapsed = new HashSet<UnityEngine.GUID>();
-            var starving = new HashSet<UnityEngine.GUID>();
-            var hungrySince = new Dictionary<UnityEngine.GUID, long>();
-            var resting = new HashSet<UnityEngine.GUID>();
+            var collapsed = new HashSet<EntityId>();
+            var starving = new HashSet<EntityId>();
+            var hungrySince = new Dictionary<EntityId, long>();
+            var resting = new HashSet<EntityId>();
 
             while (elapsed < WallClockTimeoutSeconds)
             {

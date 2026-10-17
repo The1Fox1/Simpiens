@@ -32,11 +32,11 @@ namespace Simpiens.Cognition.Memory
     public readonly struct MemoryEvent
     {
         public readonly MemoryEventType EventType;
-        public readonly GUID SubjectId;
+        public readonly EntityId SubjectId;
         public readonly Vector2Int Location;
         public readonly uint SimulationTick;
 
-        public MemoryEvent(MemoryEventType eventType, GUID subjectId, Vector2Int location, uint simulationTick)
+        public MemoryEvent(MemoryEventType eventType, EntityId subjectId, Vector2Int location, uint simulationTick)
         {
             EventType = eventType;
             SubjectId = subjectId;

@@ -420,12 +420,12 @@ namespace Simpiens.Testing.Sociopolitical
             [FieldOffset(4)] public uint v1;
             [FieldOffset(8)] public uint v2;
             [FieldOffset(12)] public uint v3;
-            [FieldOffset(0)] public GUID GuidValue;
+            [FieldOffset(0)] public EntityId GuidValue;
         }
 
         private static uint _guidCounter = 1;
 
-        private static GUID CreateGuid()
+        private static EntityId CreateGuid()
         {
             var union = new GuidUnion { v0 = _guidCounter++, v1 = 0x23456789, v2 = 0xabcdef01, v3 = 0x66666666 };
             return union.GuidValue;

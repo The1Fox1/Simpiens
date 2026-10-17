@@ -188,4 +188,5 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   C11 CI + close-out. Gate: Unity and .NET hashes match.
 - Progress: C0 (setup, docs) done 2026-10-17. C1 (cognition on fixed ticks: #6, #15, #18 resolved) done 2026-10-17;
   PlayMode 66/66, DeterminismScenario identical alone 3/3, soak in band. C2 (golden world-hash baselines, 3 seeds,
-  Baselines/golden-world-hash.txt, scripts/golden-hashes.sh) done 2026-10-17; PlayMode 67/67.
+  Baselines/golden-world-hash.txt, scripts/golden-hashes.sh) done 2026-10-17; PlayMode 67/67. C3 (EntityId replaces
+  UnityEngine.GUID, bit-compatible, root namespace Simpiens) done 2026-10-17; golden identical, PlayMode 68/68.

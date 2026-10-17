@@ -74,7 +74,7 @@ namespace Simpiens.Entities
             // Inject the configuration rather than relying on Inspector fields
             _resolver.Inject(controller); // If NodeController had [Inject] dependencies from VContainer
 
-            GUID nodeId = GUID.Generate();
+            EntityId nodeId = EntityId.Generate();
             controller.Initialize(nodeId, configuration);
 
             _worldRegistry.RegisterNode(controller);

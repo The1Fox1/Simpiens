@@ -34,8 +34,8 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateAltruisticUtilityCalculation()
         {
             var memory = new AgentMemory();
-            var companionId = GUID.Generate();
-            var strangerId = GUID.Generate();
+            var companionId = EntityId.Generate();
+            var strangerId = EntityId.Generate();
 
             // Companion: Warmth = 80, Trust = 75
             memory.RecordInteraction(companionId, deltaWarmth: 80, deltaTrust: 75, deltaFear: 0, deltaRespect: 20, 0);
@@ -71,7 +71,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Giver Pawn A at (0, 0), Hunger = 20
             var goA = new GameObject("[Test_Giver_A]");
             var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeA.transform.position = Vector2.zero;
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
@@ -81,7 +81,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Receiver Pawn B at (0, 0.5), Hunger = 90 (starving)
             var goB = new GameObject("[Test_Receiver_B]");
             var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeB.transform.position = new Vector2(0f, 0.5f);
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
@@ -146,7 +146,7 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateSelfishIndifference()
         {
             var memory = new AgentMemory();
-            var rivalId = GUID.Generate();
+            var rivalId = EntityId.Generate();
 
             // Negative relationship
             memory.RecordInteraction(rivalId, deltaWarmth: -30, deltaTrust: -20, deltaFear: 10, deltaRespect: -10, 0);
@@ -156,7 +156,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(score < 25f, $"Rival altruism score ({score}) is far below 25f threshold.");
 
             // Hungry pawn (Hunger = 60) assessing warm companion (Warmth = 80, Trust = 70)
-            var friendId = GUID.Generate();
+            var friendId = EntityId.Generate();
             memory.RecordInteraction(friendId, deltaWarmth: 80, deltaTrust: 70, deltaFear: 0, deltaRespect: 10, 0);
             float hungryScore = memory.CalculateAltruismScore(friendId, 0, selfHunger: 60f, isTargetCollapsed: false);
             // (80 * 0.5) + (70 * 0.3) - (60 * 0.4) = 40 + 21 - 24 = 37 (but hunger >= 50 suppresses intent in evaluator)
@@ -173,7 +173,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             var goA = new GameObject("[Test_Bonding_A]");
             var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeA.transform.position = Vector2.zero;
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
@@ -181,7 +181,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             var goB = new GameObject("[Test_Bonding_B]");
             var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeB.transform.position = new Vector2(0f, 0.5f);
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
@@ -221,7 +221,7 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateZeroAllocationAltruismBenchmark()
         {
             var memory = new AgentMemory();
-            var companionId = GUID.Generate();
+            var companionId = EntityId.Generate();
             memory.RecordInteraction(companionId, deltaWarmth: 80, deltaTrust: 75, deltaFear: 0, deltaRespect: 20, 0);
 
             // Warm-up GC

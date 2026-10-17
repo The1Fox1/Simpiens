@@ -16,7 +16,7 @@ namespace Simpiens.Cognition.Contracts
     {
         uint CurrentTick { get; }
         float FixedTickDeltaTime { get; }
-        GUID PlayerEntityId { get; }
+        EntityId PlayerEntityId { get; }
         IWorldRegistry WorldRegistry { get; }
         INarrativeChronicleService ChronicleService { get; }
         IEconomyLedger EconomyLedger { get; }
@@ -24,7 +24,7 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The session's economy tuning (never null; EconomyTuning.Default until a session applies one).</summary>
         EconomyTuning Economy { get; }
 
-        IReadOnlyDictionary<GUID, ActiveIntentState> ActiveIntents { get; }
+        IReadOnlyDictionary<EntityId, ActiveIntentState> ActiveIntents { get; }
 
         IntentResult ExecutePathMovement(NodeController node, PathResponse path, ActiveIntentState state);
         IntentResult ExecutePanicMovement(NodeController node, PathResponse path, ref int currentIndex);
@@ -34,14 +34,14 @@ namespace Simpiens.Cognition.Contracts
         void CheckGossipOpportunity(NodeController node);
         int GetSectorForPosition(Vector2 position);
 
-        bool TryGetResource(GUID resourceId, out ResourceData resource);
-        void RemoveResource(GUID resourceId);
+        bool TryGetResource(EntityId resourceId, out ResourceData resource);
+        void RemoveResource(EntityId resourceId);
 
         /// <summary>
         /// Called when a harvest empties a node. Regrowable nodes (RegrowTicks &gt; 0) go dormant and are handed to
         /// the supply service; others are removed permanently. The simulation owns the node view, never the handler.
         /// </summary>
-        void DepleteResource(GUID resourceId);
+        void DepleteResource(EntityId resourceId);
 
         /// <summary>Marks a facility sector explored (e.g. on Scout bounty delivery), lifting its UI shroud.</summary>
         void MarkSectorExplored(int sectorId);
@@ -49,28 +49,28 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>
         /// Publishes a scout's survey of a sector it just reported on to every agent. Returns the landmark count.
         /// </summary>
-        int PublishSurvey(UnityEngine.GUID scoutId, int sectorId);
+        int PublishSurvey(EntityId scoutId, int sectorId);
 
         /// <summary>Claims a free bunk for an agent standing at it (one sleeper per bunk). Main thread.</summary>
-        bool TryClaimBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId, UnityEngine.Vector2 agentPosition);
+        bool TryClaimBunk(EntityId bunkId, EntityId agentId, UnityEngine.Vector2 agentPosition);
 
         /// <summary>
         /// Moves the agent one tick toward the bunk's exact position, ignoring pawn clearance (the bunk is free; stepping
         /// onto it is the point). Success once on the bunk's exact position, so the sleeper lies in it; PathBlocked when a
         /// wall is in the way; TargetMissing when unknown or taken by someone else.
         /// </summary>
-        IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId);
+        IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, EntityId bunkId);
 
         /// <summary>Frees the bunk if this agent holds it.</summary>
-        void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId);
+        void ReleaseBunk(EntityId bunkId, EntityId agentId);
 
         /// <summary>Counts a completed bunk sleep (observed by scenarios).</summary>
-        void RecordBunkSleep(UnityEngine.GUID agentId);
+        void RecordBunkSleep(EntityId agentId);
 
         /// <summary>Counts one harvested unit (observed by the economy soak).</summary>
         void RecordHarvest(Simpiens.Simulation.Economy.ItemType item);
 
-        bool TryGetStall(GUID stallId, out TradeStallData stall);
+        bool TryGetStall(EntityId stallId, out TradeStallData stall);
         void UpdateStall(TradeStallData stall);
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
 

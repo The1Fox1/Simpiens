@@ -56,7 +56,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
                 // 1. Latency at the normal speed
                 var spans = new List<long>(512);
-                var since = new Dictionary<UnityEngine.GUID, long>();
+                var since = new Dictionary<EntityId, long>();
                 long start = clock.CurrentTick;
                 float elapsed = 0f;
                 while (clock.CurrentTick - start < LatencyTicks && elapsed < WallClockTimeoutSeconds)

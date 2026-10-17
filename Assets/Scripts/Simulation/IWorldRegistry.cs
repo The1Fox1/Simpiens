@@ -15,6 +15,6 @@ namespace Simpiens.Simulation
         void UnregisterNode(NodeController node);
         void PruneDestroyed();
         void Clear();
-        NodeController GetNode(UnityEngine.GUID id);
+        NodeController GetNode(EntityId id);
     }
 }

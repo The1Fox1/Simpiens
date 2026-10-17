@@ -146,13 +146,13 @@ namespace Simpiens.UI
             public Label NameLabel;
             public Label DescLabel;
             public Label BadgeLabel;
-            public UnityEngine.GUID AgentId;
+            public EntityId AgentId;
             public string CurrentBadgeClass;
         }
 
         // State & Pre-allocated Buffers
         private int _selectedZoneId = -1; // Chosen from the loaded map by BuildSectorList
-        private UnityEngine.GUID _selectedAgentId = default;
+        private EntityId _selectedAgentId = default;
         private Simpiens.Entities.WorldSelection _worldSelection;
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
@@ -704,7 +704,7 @@ namespace Simpiens.UI
             RefreshAllViews();
         }
 
-        public void SelectAgent(UnityEngine.GUID agentId)
+        public void SelectAgent(EntityId agentId)
         {
             _selectedAgentId = agentId;
             _worldSelection?.SelectCrawler(agentId, follow: true); // back on the map, the camera follows the dossier's crawler
@@ -1407,10 +1407,10 @@ namespace Simpiens.UI
                 stallId = _simulationManager.ActiveStalls[0].StallEntityId.ToString();
             }
 
-            GUID parsedStallId = default;
+            EntityId parsedStallId = default;
             if (!string.IsNullOrEmpty(stallId))
             {
-                GUID.TryParse(stallId, out parsedStallId);
+                EntityId.TryParse(stallId, out parsedStallId);
             }
             else if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
             {
@@ -1567,7 +1567,7 @@ namespace Simpiens.UI
             uint durationTicks = (uint)(_sliderBountyDuration != null ? _sliderBountyDuration.value : 1000);
 
             // Validate player / stall treasury gold
-            GUID creatorStallId = default;
+            EntityId creatorStallId = default;
             if (_simulationManager != null && _simulationManager.ActiveStalls != null && _simulationManager.ActiveStalls.Count > 0)
             {
                 var stall = _simulationManager.ActiveStalls[0];

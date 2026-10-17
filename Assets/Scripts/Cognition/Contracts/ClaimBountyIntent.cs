@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Contracts
     {
         public readonly ushort BountyId;
 
-        public ClaimBountyIntent(GUID agentId, ushort bountyId) : base(agentId)
+        public ClaimBountyIntent(EntityId agentId, ushort bountyId) : base(agentId)
         {
             BountyId = bountyId;
         }

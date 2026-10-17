@@ -128,7 +128,7 @@ namespace Simpiens.Testing.Diagnostics
         {
             var go = new GameObject(name);
             node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
             return go;
@@ -141,13 +141,13 @@ namespace Simpiens.Testing.Diagnostics
 
             var goA = new GameObject("[TestNode_StackA]");
             var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeA.transform.position = Vector2.zero;
             registry.RegisterNode(nodeA);
 
             var goB = new GameObject("[TestNode_StackB]");
             var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeB.transform.position = new Vector2(0.1f, 0f); // 0.1m apart (tight stacking)
             registry.RegisterNode(nodeB);
 
@@ -172,7 +172,7 @@ namespace Simpiens.Testing.Diagnostics
 
             var go = new GameObject("[TestNode_Thrash]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             registry.RegisterNode(node);
 
             var agent = go.AddComponent<AutonomousAgent>();
@@ -208,7 +208,7 @@ namespace Simpiens.Testing.Diagnostics
             {
                 nodes[i] = new GameObject($"[TestNode_Bench_{i}]");
                 var n = nodes[i].AddComponent<NodeController>();
-                n.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+                n.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
                 n.transform.position = new Vector2(i * 2f, 0f);
                 registry.RegisterNode(n);
             }
@@ -256,7 +256,7 @@ namespace Simpiens.Testing.Diagnostics
 
             var go = new GameObject("[TestNode_Penetration]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
 

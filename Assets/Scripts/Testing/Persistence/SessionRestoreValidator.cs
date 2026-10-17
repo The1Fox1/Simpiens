@@ -24,9 +24,9 @@ namespace Simpiens.Testing.Persistence
     /// </summary>
     public class SessionRestoreValidator
     {
-        private static readonly GUID A = new GUID(1u, 0u, 0u, 7u);
-        private static readonly GUID B = new GUID(2u, 0u, 0u, 3u);
-        private static readonly GUID C = new GUID(3u, 0u, 0u, 9u);
+        private static readonly EntityId A = new EntityId(1u, 0u, 0u, 7u);
+        private static readonly EntityId B = new EntityId(2u, 0u, 0u, 3u);
+        private static readonly EntityId C = new EntityId(3u, 0u, 0u, 9u);
 
         public void RunAllValidationTests()
         {
@@ -107,7 +107,7 @@ namespace Simpiens.Testing.Persistence
         private void ValidateGroupsRoundTrip()
         {
             var groups = new GroupRegistry();
-            var d = new GUID(4u, 0u, 0u, 1u);
+            var d = new EntityId(4u, 0u, 0u, 1u);
             byte first = groups.CreateGroup(GroupType.Settlement, A, new Vector2(2f, 3f), 90);
             groups.AddMember(first, d);
             byte second = groups.CreateGroup(GroupType.TemporaryParty, C, new Vector2(-1f, 0f), 40);
@@ -116,7 +116,7 @@ namespace Simpiens.Testing.Persistence
             groups.DisbandGroup(first); // slot 1 is free; groups 2 and 3 are active
 
             var fresh = new GroupRegistry();
-            fresh.CreateGroup(GroupType.Settlement, new GUID(9u, 9u, 9u, 9u), Vector2.zero);
+            fresh.CreateGroup(GroupType.Settlement, new EntityId(9u, 9u, 9u, 9u), Vector2.zero);
 
             var save = new GroupSave();
             groups.CaptureTo(save);

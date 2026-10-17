@@ -54,7 +54,7 @@ namespace Simpiens.Testing.Diagnostics
             public int StateTransitionCount;
 
             public float StackingDuration;
-            public GUID StackingPartner;
+            public EntityId StackingPartner;
 
             public float LastStackingAlertTime = -10f;
             public float LastPenetrationAlertTime = -10f;
@@ -89,9 +89,9 @@ namespace Simpiens.Testing.Diagnostics
         private readonly ISpatialPartition _spatialPartition;
         private readonly IWorldMap _worldMap;
 
-        private readonly Dictionary<GUID, AgentTelemetryHistory> _histories = new Dictionary<GUID, AgentTelemetryHistory>(128);
+        private readonly Dictionary<EntityId, AgentTelemetryHistory> _histories = new Dictionary<EntityId, AgentTelemetryHistory>(128);
         private readonly List<VisualAnomalyRecord> _recentAnomalies = new List<VisualAnomalyRecord>(128);
-        private readonly List<GUID> _cleanupBuffer = new List<GUID>(32);
+        private readonly List<EntityId> _cleanupBuffer = new List<EntityId>(32);
         private readonly Collider2D[] _overlapBuffer = new Collider2D[16];
 
         private int _frameCounter;
@@ -199,7 +199,7 @@ namespace Simpiens.Testing.Diagnostics
             }
         }
 
-        private AgentTelemetryHistory GetOrCreateHistory(GUID id)
+        private AgentTelemetryHistory GetOrCreateHistory(EntityId id)
         {
             if (!_histories.TryGetValue(id, out var history))
             {

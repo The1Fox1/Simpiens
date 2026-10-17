@@ -33,7 +33,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override AgentIntent CreateIntent(AgentContext context)
         {
-            GUID stallId = default;
+            EntityId stallId = default;
 
             if (context.Snapshot != null && context.Snapshot.ActiveStallCount > 0)
             {

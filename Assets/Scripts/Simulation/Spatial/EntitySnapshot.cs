@@ -10,7 +10,7 @@ namespace Simpiens.Simulation.Spatial
     /// </summary>
     public readonly struct EntitySnapshot
     {
-        public readonly GUID Id;
+        public readonly EntityId Id;
         public readonly Vector2 Position;
         public readonly Vector2 Velocity;
         public readonly float Radius;
@@ -19,17 +19,17 @@ namespace Simpiens.Simulation.Spatial
         public readonly float Hunger;
         public readonly ItemType ResourceKind;
 
-        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type)
+        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type)
             : this(id, position, velocity, radius, type, false, 0f)
         {
         }
 
-        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger)
+        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger)
             : this(id, position, velocity, radius, type, isCollapsed, hunger, ItemType.None)
         {
         }
 
-        public EntitySnapshot(GUID id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger, ItemType resourceKind)
+        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger, ItemType resourceKind)
         {
             ResourceKind = resourceKind;
             Id = id;

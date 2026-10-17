@@ -74,7 +74,7 @@ namespace Simpiens.Testing.World
             Assert(ReferenceEquals(worldMap.Current, dev) && worldMap.Version == 1, "Current map and version after the first load.");
             Assert(ReferenceEquals(sectors.Map, dev) && sectors.IsExplored(DirectiveSectorId), "Sectors loaded with default exploration (the Dev Map pens start charted).");
 
-            loaded.RegisterEntity("probe", new GUID(1u, 2u, 3u, 4u));
+            loaded.RegisterEntity("probe", new EntityId(1u, 2u, 3u, 4u));
             Assert(loaded.TryGetEntityId("probe", out _) && !loaded.TryGetEntityId("missing", out _), "LoadedWorld key lookup.");
 
             // A different map replaces walls, bounds and sectors

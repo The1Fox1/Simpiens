@@ -8,7 +8,7 @@ namespace Simpiens.Cognition.Planning
     /// <summary>
     /// Shared selection of a distressed companion to aid, used by the Tier-1 AltruismEvaluator and by the
     /// GOAP AidCompanionGoal / ShareFoodAction so reflex and plan agree on who (if anyone) needs help.
-    /// Allocation-free (thread-static scratch list); ties break by GUID for determinism.
+    /// Allocation-free (thread-static scratch list); ties break by EntityId for determinism.
     /// </summary>
     public static class AltruismTargeting
     {
@@ -24,7 +24,7 @@ namespace Simpiens.Cognition.Planning
         /// Selects the perceived peer (within PerceptionRadius, in line of sight) who is starving (hunger ≥ 85)
         /// or collapsed and whose altruism score clears the threshold. The helper itself must be sated (&lt; 50).
         /// </summary>
-        public static bool TrySelectDistressedPeer(in AgentContext context, out GUID peerId, out Vector2 peerPosition, out float utility)
+        public static bool TrySelectDistressedPeer(in AgentContext context, out EntityId peerId, out Vector2 peerPosition, out float utility)
         {
             peerId = default;
             peerPosition = default;

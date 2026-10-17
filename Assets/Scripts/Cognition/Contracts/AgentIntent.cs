@@ -6,7 +6,7 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public abstract class AgentIntent
     {
-        public readonly UnityEngine.GUID AgentId;
+        public readonly EntityId AgentId;
         public System.Action<IntentResult> OnComplete { get; set; }
 
         /// <summary>Why this intent was chosen; set by the cognition task before the intent is enqueued.</summary>
@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Contracts
         /// </summary>
         public uint SessionEpoch { get; set; }
 
-        protected AgentIntent(UnityEngine.GUID agentId)
+        protected AgentIntent(EntityId agentId)
         {
             AgentId = agentId;
         }

@@ -28,7 +28,7 @@ namespace Simpiens.Simulation.Persistence
 
         /// <summary>The session's keyed entities (map nodes and POIs, the stall), in ordinal key order.</summary>
         public string[] EntityKeys { get; set; }
-        public GUID[] EntityIds { get; set; }
+        public EntityId[] EntityIds { get; set; }
     }
 
     /// <summary>The supply service in a save: its regrowth queue, in its own order, and its counters.</summary>
@@ -42,7 +42,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct ResourceRecord
     {
-        public GUID EntityId;
+        public EntityId EntityId;
         public int RemainingYield;
         public int MaxYield;
         public uint RegrowTicks;
@@ -67,7 +67,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct DormantRecord
     {
-        public GUID ResourceId;
+        public EntityId ResourceId;
         public uint ReadyTick;
     }
 
@@ -86,7 +86,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct IdCountRecord
     {
-        public GUID Id;
+        public EntityId Id;
         public int Count;
     }
 

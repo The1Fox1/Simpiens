@@ -44,7 +44,7 @@ namespace Simpiens.Testing.Environment
             var go = new GameObject("[TestNode_Speed]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
-            node.Initialize(GUID.Generate(), new NodeConfiguration(speed: 2.0f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(speed: 2.0f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
 
@@ -89,7 +89,7 @@ namespace Simpiens.Testing.Environment
             var go = new GameObject("[TestNode_Pause]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2.0f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
 
@@ -131,13 +131,13 @@ namespace Simpiens.Testing.Environment
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var anchorId = GUID.Generate();
+            var anchorId = EntityId.Generate();
             simManager.RegisterAnchor(anchorId, Vector2.zero, 3.0f);
 
             var go = new GameObject("[TestNode_Periodic]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2.0f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
             node.transform.position = Vector2.zero; // Inside campfire radius
             registry.RegisterNode(node);
 
@@ -168,7 +168,7 @@ namespace Simpiens.Testing.Environment
             var go = new GameObject("[TestNode_Interpolation]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, null);
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2.0f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
             node.transform.position = Vector2.zero;
 
             Assert(node.LogicalPosition == Vector2.zero, "Initial LogicalPosition matches transform.position.");
@@ -194,7 +194,7 @@ namespace Simpiens.Testing.Environment
             var go = new GameObject("[TestNode_ZeroGC_Tick]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2.0f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
 

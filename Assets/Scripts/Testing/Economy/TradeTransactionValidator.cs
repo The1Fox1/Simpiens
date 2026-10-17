@@ -53,10 +53,10 @@ namespace Simpiens.Testing.Economy
 
             // Verify default empty state
             Assert(!TradeStallData.Empty.IsActive, "TradeStallData.Empty has IsActive == false.");
-            Assert(TradeStallData.Empty.StallEntityId == default, "TradeStallData.Empty has default GUID.");
+            Assert(TradeStallData.Empty.StallEntityId == default, "TradeStallData.Empty has default EntityId.");
 
             // Verify constructor and immutable modifiers
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, new Vector2(5f, 10f), rationSellPrice: 5, rationStock: 40, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 600, interactionRadius: 3.0f);
 
             Assert(stall.IsActive, "Stall is active.");
@@ -100,13 +100,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Buyer]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f); // within interaction radius (2.5f)
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -142,13 +142,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Poor_Buyer]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -184,13 +184,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Full_Buyer]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -227,13 +227,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 8, oreStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Seller]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -270,13 +270,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Affinity_Fair]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -311,14 +311,14 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             // Price gouging: 25 gold for a ration a neutral crawler values at 20g when calm (review §3.3 D3)
             var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 25, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Affinity_Gouged]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -386,12 +386,12 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 10, treasuryGold: 500));
 
             var go = new GameObject("[Test_Affinity_StingySale]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -422,13 +422,13 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             ushort capacity = EconomyTuning.Default.StallSalvageCapacity;
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
 
             var go = new GameObject("[Test_FullStall]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -460,12 +460,12 @@ namespace Simpiens.Testing.Economy
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var stallId = GUID.Generate();
+            var stallId = EntityId.Generate();
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
 
             var go = new GameObject("[Test_Arrears]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(0f, 0.5f);
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -504,8 +504,8 @@ namespace Simpiens.Testing.Economy
         /// </summary>
         private void ValidateBountyItemsAreNotSold()
         {
-            var agentId = new GUID(41u, 1u, 1u, 1u);
-            var stall = new TradeStallData(new GUID(42u, 2u, 2u, 2u), Vector2.zero, oreBuyPrice: 20, herbBuyPrice: 25, treasuryGold: 500);
+            var agentId = new EntityId(41u, 1u, 1u, 1u);
+            var stall = new TradeStallData(new EntityId(42u, 2u, 2u, 2u), Vector2.zero, oreBuyPrice: 20, herbBuyPrice: 25, treasuryGold: 500);
             var claimed = new BountyContract(7, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 6000,
                 claimantId: agentId, creatorStallId: stall.StallEntityId, status: BountyStatus.Claimed);
 
@@ -548,13 +548,13 @@ namespace Simpiens.Testing.Economy
         /// </summary>
         private void ValidateStallRationsAreKnownFood()
         {
-            var stall = new TradeStallData(new GUID(43u, 3u, 3u, 3u), Vector2.zero, rationSellPrice: 15, rationStock: 10, treasuryGold: 100);
+            var stall = new TradeStallData(new EntityId(43u, 3u, 3u, 3u), Vector2.zero, rationSellPrice: 15, rationStock: 10, treasuryGold: 100);
             AgentContext Starving(int gold, bool withStall, ushort stock = 10)
             {
                 var snapshot = new SharedWorldSnapshot(16, 16, 1f, 8, null);
                 if (withStall) snapshot.SetStalls(new[] { new TradeStallData(stall.StallEntityId, Vector2.zero, rationSellPrice: 15, rationStock: stock, treasuryGold: 100) }, 1);
                 var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: gold);
-                return new AgentContext(new GUID(44u, 4u, 4u, 4u), new Vector2(1f, 0f), new AgentNeeds(95f, 60f, 60f), 0f, snapshot,
+                return new AgentContext(new EntityId(44u, 4u, 4u, 4u), new Vector2(1f, 0f), new AgentNeeds(95f, 60f, 60f), 0f, snapshot,
                     new Simpiens.Cognition.Memory.AgentMemory(), 10, inventory: inventory.GetSnapshot());
             }
 

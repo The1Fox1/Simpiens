@@ -12,10 +12,10 @@ namespace Simpiens.Entities
     /// <summary>A crawler the player could click: its id and where it is drawn.</summary>
     public readonly struct PickCandidate
     {
-        public readonly GUID Id;
+        public readonly EntityId Id;
         public readonly Vector2 Position;
 
-        public PickCandidate(GUID id, Vector2 position)
+        public PickCandidate(EntityId id, Vector2 position)
         {
             Id = id;
             Position = position;
@@ -29,7 +29,7 @@ namespace Simpiens.Entities
         /// The nearest candidate within <paramref name="radius"/> of <paramref name="point"/>; equal distances go to the
         /// lower id, so a click on a crowd always picks the same crawler.
         /// </summary>
-        public static bool TryPickNearest(Vector2 point, IReadOnlyList<PickCandidate> candidates, float radius, out GUID id)
+        public static bool TryPickNearest(Vector2 point, IReadOnlyList<PickCandidate> candidates, float radius, out EntityId id)
         {
             id = default;
             if (candidates == null) return false;
@@ -62,7 +62,7 @@ namespace Simpiens.Entities
         private readonly IAgentIdentityService _identity;
         private readonly List<PickCandidate> _candidates = new List<PickCandidate>(64);
 
-        public GUID SelectedCrawler { get; private set; }
+        public EntityId SelectedCrawler { get; private set; }
 
         /// <summary>The selected sector id, or -1.</summary>
         public int SelectedSector { get; private set; } = -1;
@@ -81,7 +81,7 @@ namespace Simpiens.Entities
             _identity = identity;
         }
 
-        public void SelectCrawler(GUID id, bool follow)
+        public void SelectCrawler(EntityId id, bool follow)
         {
             if (SelectedCrawler == id && Following == follow) return;
             SelectedCrawler = id;

@@ -10,13 +10,13 @@ namespace Simpiens.Cognition.Groups
     {
         public readonly byte GroupId;
         public readonly GroupType Type;
-        public readonly GUID LeaderId;
+        public readonly EntityId LeaderId;
         public readonly Vector2 AnchorPosition;
         public readonly GroupDirective ActiveDirective;
         public readonly ushort MemberCount;
         public readonly byte Cohesion; // 0 - 100 group morale/unity
 
-        public GroupData(byte groupId, GroupType type, GUID leaderId,
+        public GroupData(byte groupId, GroupType type, EntityId leaderId,
                          Vector2 anchorPosition, in GroupDirective activeDirective,
                          ushort memberCount, byte cohesion)
         {

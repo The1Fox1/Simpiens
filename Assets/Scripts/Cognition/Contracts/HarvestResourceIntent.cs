@@ -8,7 +8,7 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class HarvestResourceIntent : AgentIntent
     {
-        public readonly UnityEngine.GUID TargetEntityId;
+        public readonly EntityId TargetEntityId;
         public readonly PathResponse Path;
         public readonly float GatherDuration;
 
@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Contracts
         public ItemType YieldedItem { get; set; }
         public int UnitsHarvested { get; set; }
 
-        public HarvestResourceIntent(UnityEngine.GUID agentId, UnityEngine.GUID targetEntityId, PathResponse path, float gatherDuration = 1.5f, int targetUnits = 1) : base(agentId)
+        public HarvestResourceIntent(EntityId agentId, EntityId targetEntityId, PathResponse path, float gatherDuration = 1.5f, int targetUnits = 1) : base(agentId)
         {
             TargetEntityId = targetEntityId;
             Path = path;

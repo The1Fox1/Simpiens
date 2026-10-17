@@ -77,7 +77,7 @@ namespace Simpiens.Testing.Drives
             var hungerGoal = new SatiateHungerGoal();
             var restGoal = new RestGoal();
             var socialGoal = new SocializeGoal();
-            var agentId = GUID.Generate();
+            var agentId = EntityId.Generate();
 
             // Scenario A: Starving agent (Hunger = 85, Energy = 90, Social = 70)
             var contextA = new AgentContext(agentId, Vector2.zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
@@ -122,7 +122,7 @@ namespace Simpiens.Testing.Drives
             // Create blocker node at target waypoint (1, 0)
             var blockerGo = new GameObject("[TestNode_Blocker]");
             var blockerNode = blockerGo.AddComponent<NodeController>();
-            blockerNode.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            blockerNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             blockerNode.transform.position = new Vector2(1f, 0f);
             registry.RegisterNode(blockerNode);
             grid.UpdateFromRegistry(registry);
@@ -130,7 +130,7 @@ namespace Simpiens.Testing.Drives
             // Create moving agent node at (0, 0)
             var movingGo = new GameObject("[TestNode_Moving]");
             var movingNode = movingGo.AddComponent<NodeController>();
-            movingNode.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            movingNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             movingNode.transform.position = Vector2.zero;
             registry.RegisterNode(movingNode);
 
@@ -178,7 +178,7 @@ namespace Simpiens.Testing.Drives
 
             var go = new GameObject("[TestAgent_Visual]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
 
@@ -238,7 +238,7 @@ namespace Simpiens.Testing.Drives
 
             var go = new GameObject("[TestNode_ZeroGC]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = Vector2.zero;
             registry.RegisterNode(node);
 

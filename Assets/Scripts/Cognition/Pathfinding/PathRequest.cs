@@ -8,6 +8,6 @@ namespace Simpiens.Cognition.Pathfinding
     {
         public Vector2 StartPosition;
         public Vector2 TargetPosition;
-        public GUID RequesterId;
+        public EntityId RequesterId;
     }
 }

@@ -6,7 +6,7 @@ namespace Simpiens.Narrative
 {
     /// <summary>
     /// Deterministic agent persona mapper.
-    /// Maps GUID hashes to friendly character names and titles with zero allocations after initial cache warmup.
+    /// Maps EntityId hashes to friendly character names and titles with zero allocations after initial cache warmup.
     /// </summary>
     public class AgentIdentityService : IAgentIdentityService
     {
@@ -26,12 +26,12 @@ namespace Simpiens.Narrative
             "Guardian", "Speaker", "Pioneer", "Laborer", "Watchman", "Pathfinder"
         };
 
-        private readonly Dictionary<GUID, string> _nameCache = new Dictionary<GUID, string>(64);
-        private readonly Dictionary<GUID, string> _titleCache = new Dictionary<GUID, string>(64);
-        private readonly Dictionary<GUID, string> _customNames = new Dictionary<GUID, string>(16);
-        private readonly Dictionary<GUID, string> _customTitles = new Dictionary<GUID, string>(16);
+        private readonly Dictionary<EntityId, string> _nameCache = new Dictionary<EntityId, string>(64);
+        private readonly Dictionary<EntityId, string> _titleCache = new Dictionary<EntityId, string>(64);
+        private readonly Dictionary<EntityId, string> _customNames = new Dictionary<EntityId, string>(16);
+        private readonly Dictionary<EntityId, string> _customTitles = new Dictionary<EntityId, string>(16);
 
-        public string GetFriendlyName(GUID agentId)
+        public string GetFriendlyName(EntityId agentId)
         {
             if (agentId == default) return "Unknown";
 
@@ -52,7 +52,7 @@ namespace Simpiens.Narrative
             return name;
         }
 
-        public string GetFriendlyTitle(GUID agentId)
+        public string GetFriendlyTitle(EntityId agentId)
         {
             if (agentId == default) return "Transient";
 
@@ -73,7 +73,7 @@ namespace Simpiens.Narrative
             return title;
         }
 
-        public string GetFormattedDisplayName(GUID agentId, string fallbackName = null)
+        public string GetFormattedDisplayName(EntityId agentId, string fallbackName = null)
         {
             string friendly = GetFriendlyName(agentId);
             if (string.IsNullOrEmpty(fallbackName))
@@ -83,21 +83,21 @@ namespace Simpiens.Narrative
             return $"{friendly} [{fallbackName}]";
         }
 
-        public void RegisterCustomName(GUID agentId, string name)
+        public void RegisterCustomName(EntityId agentId, string name)
         {
             if (agentId == default || string.IsNullOrWhiteSpace(name)) return;
             _customNames[agentId] = name;
             _nameCache[agentId] = name;
         }
 
-        public void RegisterCustomTitle(GUID agentId, string title)
+        public void RegisterCustomTitle(EntityId agentId, string title)
         {
             if (agentId == default || string.IsNullOrWhiteSpace(title)) return;
             _customTitles[agentId] = title;
             _titleCache[agentId] = title;
         }
 
-        private static uint ComputeGuidHash(GUID agentId)
+        private static uint ComputeGuidHash(EntityId agentId)
         {
             string str = agentId.ToString();
             // 32-bit FNV-1a hash

@@ -10,15 +10,15 @@ namespace Simpiens.Cognition.Groups
     {
         public readonly DirectiveType Type;
         public readonly byte GroupId;
-        public readonly GUID LeaderId;
+        public readonly EntityId LeaderId;
         public readonly Vector2 TargetLocation;
-        public readonly GUID TargetEntityId;
+        public readonly EntityId TargetEntityId;
         public readonly uint IssuedTick;
         public readonly uint ExpirationTick;
         public readonly float TargetRadius;
 
-        public GroupDirective(DirectiveType type, byte groupId, GUID leaderId,
-                              Vector2 targetLocation, GUID targetEntityId,
+        public GroupDirective(DirectiveType type, byte groupId, EntityId leaderId,
+                              Vector2 targetLocation, EntityId targetEntityId,
                               uint issuedTick, uint expirationTick, float targetRadius = 2.5f)
         {
             Type = type;

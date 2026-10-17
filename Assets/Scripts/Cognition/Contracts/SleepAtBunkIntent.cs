@@ -6,10 +6,10 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class SleepAtBunkIntent : AgentIntent
     {
-        public readonly UnityEngine.GUID BunkId;
+        public readonly EntityId BunkId;
         public readonly float Duration;
 
-        public SleepAtBunkIntent(UnityEngine.GUID agentId, UnityEngine.GUID bunkId, float duration) : base(agentId)
+        public SleepAtBunkIntent(EntityId agentId, EntityId bunkId, float duration) : base(agentId)
         {
             BunkId = bunkId;
             Duration = duration;

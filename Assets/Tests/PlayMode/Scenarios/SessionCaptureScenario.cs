@@ -33,7 +33,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private long _tickBefore = -1;
         private long _tickAfter = -1;
         private ulong _seed;
-        private readonly List<GUID> _agentIds = new List<GUID>(16);
+        private readonly List<EntityId> _agentIds = new List<EntityId>(16);
         private readonly List<Vector2> _agentPositions = new List<Vector2>(16);
         private readonly List<int> _agentGold = new List<int>(16);
 

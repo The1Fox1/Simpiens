@@ -95,6 +95,7 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 
 - [x] **C1, cognition on fixed ticks (2026-10-17).** `CognitionScheduler` lands every decision dispatched on tick T at the start of T + 1, in agent-id order, behind a barrier; the evaluation returns a `CognitionResult` and writes only its scratch plan; the main-thread preparation is guarded. The cognition path uses `ValueTask` (no UniTask), and the pathfinder plans on the calling worker. Closes ROADMAP §1A.2 #6, #15, #18. Evidence: `CognitionSchedulerValidator` (6 tests); `DeterminismScenario` identical alone in 3 of 3 runs (it diverged at t100 in 5 of 5 cold runs before), with the pre-C1 milestones; PlayMode 66/66; economy soak within every pace band, fair 546–771g at 30 minutes as in §3.3.
 - [x] **C2, golden world-hash baselines (2026-10-17).** `Baselines/golden-world-hash.txt` holds 31 `WorldStateHash` samples (t0 to t3,000) of the outpost for seeds 20261009, 20261010 and 424242: the total and part hashes, and each agent's hash with a readable line for diagnosis. `GoldenWorldHashScenario` checks the default seed in every full suite; `scripts/golden-hashes.sh check|record` runs each seed in its own Unity process. Evidence: all 3 seeds reproduce their baselines in fresh processes and inside the suite; a corrupted baseline fails at the corrupted tick and names the agent; PlayMode 67/67.
+- [x] **C3, `EntityId` (2026-10-17).** `Simpiens.EntityId` replaces `UnityEngine.GUID` in all 125 files that used it: the same four words, ordering, hash code (which keys `SimRandom`), hex text and memory layout, so the swap changes no behaviour and the save format is unchanged. It lives in the root namespace because Unity 6.4 has its own `UnityEngine.EntityId`. Evidence: `EntityIdCompatibilityValidator` (layout bytes; 5,000 values compared with `GUID` for hash, text, emptiness, ordering, equality and both parsers; the player id); golden hashes identical; save validators pass; PlayMode 68/68.
 
 ### Deferred (owned elsewhere)
 - 64-bit `EntityId` (smaller saves and network messages): changes behaviour and the save format; belongs with the multiplayer wire format.
@@ -122,3 +123,4 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 - 2026-10-17: epic created from the migration write-up's Phases 0–1; producer approval and decisions recorded (§0).
 - 2026-10-17: C1 done (cognition on fixed ticks).
 - 2026-10-17: C2 done (golden world-hash baselines).
+- 2026-10-17: C3 done (`EntityId`).

@@ -11,9 +11,9 @@ namespace Simpiens.Cognition.Groups
         public readonly SuccessionMode Mode;
         public readonly bool Succeeded;
         public readonly bool LoserDeparted;
-        public readonly GUID NewLeaderId;
-        public readonly GUID PreviousLeaderId;
-        public readonly GUID ContenderBId;
+        public readonly EntityId NewLeaderId;
+        public readonly EntityId PreviousLeaderId;
+        public readonly EntityId ContenderBId;
         public readonly byte SplinterGroupId;
         public readonly byte NewCohesion;
 
@@ -22,9 +22,9 @@ namespace Simpiens.Cognition.Groups
             SuccessionMode mode,
             bool succeeded,
             bool loserDeparted,
-            GUID newLeaderId,
-            GUID previousLeaderId,
-            GUID contenderBId,
+            EntityId newLeaderId,
+            EntityId previousLeaderId,
+            EntityId contenderBId,
             byte splinterGroupId,
             byte newCohesion)
         {
@@ -48,17 +48,17 @@ namespace Simpiens.Cognition.Groups
         public static readonly SuccessionResult Failed = new SuccessionResult(
             0, SuccessionMode.Peaceful, false, false, default, default, default, 0, 0);
 
-        public static SuccessionResult Peaceful(byte groupId, GUID newLeaderId, GUID previousLeaderId, byte newCohesion)
+        public static SuccessionResult Peaceful(byte groupId, EntityId newLeaderId, EntityId previousLeaderId, byte newCohesion)
         {
             return new SuccessionResult(groupId, SuccessionMode.Peaceful, true, false, newLeaderId, previousLeaderId, default, 0, newCohesion);
         }
 
-        public static SuccessionResult Dominance(byte groupId, GUID winnerId, GUID loserId, bool loserDeparted, GUID previousLeaderId, byte newCohesion)
+        public static SuccessionResult Dominance(byte groupId, EntityId winnerId, EntityId loserId, bool loserDeparted, EntityId previousLeaderId, byte newCohesion)
         {
             return new SuccessionResult(groupId, SuccessionMode.DominanceChallenge, true, loserDeparted, winnerId, previousLeaderId, loserId, 0, newCohesion);
         }
 
-        public static SuccessionResult Schism(byte groupId, byte splinterGroupId, GUID leaderAId, GUID leaderBId, GUID previousLeaderId, byte newCohesion)
+        public static SuccessionResult Schism(byte groupId, byte splinterGroupId, EntityId leaderAId, EntityId leaderBId, EntityId previousLeaderId, byte newCohesion)
         {
             return new SuccessionResult(groupId, SuccessionMode.FactionalSchism, true, false, leaderAId, previousLeaderId, leaderBId, splinterGroupId, newCohesion);
         }

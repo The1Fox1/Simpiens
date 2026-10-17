@@ -29,7 +29,7 @@ namespace Simpiens.Testing.Economy
     public class SupplyLoopValidator : IStartable
     {
         private static uint _guidSeed = 31000;
-        private static GUID NextGuid() => new GUID(_guidSeed++, 0x51A1, 0x3001, 0xC0DE);
+        private static EntityId NextGuid() => new EntityId(_guidSeed++, 0x51A1, 0x3001, 0xC0DE);
 
         public void Start()
         {
@@ -598,7 +598,7 @@ namespace Simpiens.Testing.Economy
             return outcome.Value;
         }
 
-        private static GUID CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vector2 pos, ItemType kind, int yield, uint regrowTicks, out GameObject go)
+        private static EntityId CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vector2 pos, ItemType kind, int yield, uint regrowTicks, out GameObject go)
         {
             go = new GameObject($"[Test_{kind}Node]");
             go.transform.position = pos;

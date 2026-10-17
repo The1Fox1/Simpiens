@@ -36,7 +36,7 @@ namespace Simpiens.Testing.Navigation
             var simManager = new SimulationManager(null, null);
             var go = new GameObject("[TestNode_Stall]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = Vector2.zero;
 
             var path = new PathResponse
@@ -70,7 +70,7 @@ namespace Simpiens.Testing.Navigation
             var simManager = new SimulationManager(null, null);
             var go = new GameObject("[TestNode_Tier1]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = Vector2.zero;
 
             var targetPos = new Vector2(1f, 0f); // Movement axis is purely horizontal (X)
@@ -97,7 +97,7 @@ namespace Simpiens.Testing.Navigation
             var simManager = new SimulationManager(null, null);
             var go = new GameObject("[TestNode_Tier2]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
 
             var state = new ActiveIntentState
             {
@@ -120,13 +120,13 @@ namespace Simpiens.Testing.Navigation
             var simManager = new SimulationManager(null, null, clock);
             var go = new GameObject("[TestNode_Tier3]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             node.transform.position = new Vector2(5f, 5f);
 
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
 
-            var resourceId = GUID.Generate();
+            var resourceId = EntityId.Generate();
             var state = new ActiveIntentState
             {
                 Intent = new HarvestResourceIntent(node.Id, resourceId, default),
@@ -149,7 +149,7 @@ namespace Simpiens.Testing.Navigation
             var simManager = new SimulationManager(null, null);
             var go = new GameObject("[TestNode_Bench]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
 
             var state = new ActiveIntentState
             {

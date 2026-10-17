@@ -7,7 +7,7 @@ namespace Simpiens.Simulation
     /// </summary>
     public class ResourceData
     {
-        public UnityEngine.GUID EntityId;
+        public EntityId EntityId;
         public int RemainingYield;
 
         /// <summary>Item produced per successful harvest. Ration nodes relieve hunger instead of filling inventory.</summary>

@@ -407,6 +407,7 @@ Before Epic 10: soak test and scaling work (#8).
   - C0 (setup) done 2026-10-17.
   - C1 (cognition on fixed ticks) done 2026-10-17: §1A.2 #6, #15 and #18 resolved; PlayMode 66/66, `DeterminismScenario` identical alone 3 of 3, economy soak within every pace band.
   - C2 (golden world-hash baselines) done 2026-10-17: 3 seeds × 31 samples in `Baselines/golden-world-hash.txt`, reproduced in fresh processes; every later chunk must reproduce them. PlayMode 67/67.
+  - C3 (`EntityId` replaces `UnityEngine.GUID`, bit-compatible) done 2026-10-17: golden hashes identical, save format unchanged; PlayMode 68/68.
 
 ---
 

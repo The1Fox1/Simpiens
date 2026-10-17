@@ -38,7 +38,7 @@ namespace Simpiens.Narrative
         /// Queries recent events involving a specific agent as Actor A or Actor B.
         /// Populates the passed resultsBuffer without heap allocations.
         /// </summary>
-        void GetActorEvents(GUID actorId, List<ChronicleEvent> resultsBuffer, int maxCount = 16);
+        void GetActorEvents(EntityId actorId, List<ChronicleEvent> resultsBuffer, int maxCount = 16);
 
         /// <summary>
         /// Queries the most recent events across the entire facility, ordered newest-to-oldest.

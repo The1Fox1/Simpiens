@@ -8,12 +8,12 @@ namespace Simpiens.Simulation
         void Tick();
         void Tick(long currentTick);
         void EnqueueIntent(Simpiens.Cognition.Contracts.AgentIntent intent);
-        bool AbortIntent(UnityEngine.GUID agentId);
+        bool AbortIntent(EntityId agentId);
         void RegisterResource(ResourceData data);
-        void RegisterAnchor(UnityEngine.GUID id, UnityEngine.Vector2 position, float radius = 3.0f);
-        void RegisterBunk(UnityEngine.GUID id, UnityEngine.Vector2 position);
+        void RegisterAnchor(EntityId id, UnityEngine.Vector2 position, float radius = 3.0f);
+        void RegisterBunk(EntityId id, UnityEngine.Vector2 position);
         void RegisterTradeStall(Simpiens.Simulation.Economy.TradeStallData stallData);
-        bool TryGetTradeStall(UnityEngine.GUID stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
+        bool TryGetTradeStall(EntityId stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
         System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> ActiveStalls { get; }
         void RegisterBounty(Simpiens.Simulation.Economy.BountyContract bounty);
         bool TryGetBounty(ushort bountyId, out Simpiens.Simulation.Economy.BountyContract bounty);

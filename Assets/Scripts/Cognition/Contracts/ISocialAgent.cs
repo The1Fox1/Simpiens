@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public interface ISocialAgent
     {
-        GUID AgentId { get; }
+        EntityId AgentId { get; }
         AgentMemory Memory { get; }
         GroupMembership Membership { get; set; }
         bool IsExhaustionCollapsed { get; }

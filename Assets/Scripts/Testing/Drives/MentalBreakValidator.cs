@@ -57,24 +57,24 @@ namespace Simpiens.Testing.Drives
 
             // Never stood in the Garden: no plot to return to
             var stranger = new AgentMemory();
-            var strangerContext = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, snapshot, stranger, 500);
+            var strangerContext = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, snapshot, stranger, 500);
             Assert(!Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(strangerContext, map, out _), "A crawler that never saw the Garden has no plot to return to.");
 
             // Has stood in the Garden: the nearest plot is the waypoint, and at the plot it waits
             var regular = new AgentMemory();
             regular.NoteSectorVisit(garden, 100);
-            var far = new AgentContext(GUID.Generate(), new Vector2(0f, -10f), needs, 0f, snapshot, regular, 500);
+            var far = new AgentContext(EntityId.Generate(), new Vector2(0f, -10f), needs, 0f, snapshot, regular, 500);
             Assert(Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(far, map, out var waypoint) && map.FindSector(waypoint).Id == garden,
                 $"A crawler that saw the Garden heads back to a plot there (waypoint {waypoint}).");
 
-            var atPlot = new AgentContext(GUID.Generate(), plot + new Vector2(0.5f, 0f), needs, 0f, snapshot, regular, 500);
+            var atPlot = new AgentContext(EntityId.Generate(), plot + new Vector2(0.5f, 0f), needs, 0f, snapshot, regular, 500);
             var intent = new MentalBreakEvaluator(null).EvaluateAsync(atPlot, CancellationToken.None).GetAwaiter().GetResult();
             Assert(intent is IdleIntent, $"At a remembered plot a starving crawler waits for regrowth (got {intent?.GetType().Name ?? "null"}).");
 
             var uncharted = new SharedWorldSnapshot(64, 64, 1f, 8, _ => { });
             uncharted.SetMap(map);
             uncharted.SetExploredSectors(ulong.MaxValue & ~(1UL << garden));
-            var fogged = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, uncharted, regular, 500);
+            var fogged = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, uncharted, regular, 500);
             Assert(!Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(fogged, map, out _), "An uncharted Garden is not a plot to return to.");
 
             Debug.Log("[PASS] Test 6: A starving crawler that has seen the Garden waits at its plots instead of exploring away.");
@@ -86,12 +86,12 @@ namespace Simpiens.Testing.Drives
             var memory = new AgentMemory();
 
             // Add a stale resource memory that should be pruned
-            var staleId = GUID.Generate();
+            var staleId = EntityId.Generate();
             memory.SpatialMemoryMap[staleId] = new SpatialMemoryRecord(staleId, EntityType.Resource, new Vector2Int(10, 10), 0);
             memory.BlacklistEntity(staleId, 9999); // Blacklisted, so not a valid food source
 
             var needs = new AgentNeeds(hunger: 90f, energy: 50f, social: 50f);
-            var context = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
+            var context = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
 
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -106,11 +106,11 @@ namespace Simpiens.Testing.Drives
             var memory = new AgentMemory();
 
             // Add an accessible food resource to memory
-            var validFoodId = GUID.Generate();
+            var validFoodId = EntityId.Generate();
             memory.SpatialMemoryMap[validFoodId] = new SpatialMemoryRecord(validFoodId, EntityType.Resource, new Vector2Int(5, 5), 100);
 
             var needs = new AgentNeeds(hunger: 90f, energy: 50f, social: 50f);
-            var context = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
+            var context = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
 
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -124,7 +124,7 @@ namespace Simpiens.Testing.Drives
             var memory = new AgentMemory();
 
             var needs = new AgentNeeds(hunger: 20f, energy: 3f, social: 50f);
-            var context = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
+            var context = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
 
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -138,7 +138,7 @@ namespace Simpiens.Testing.Drives
             var simManager = new SimulationManager(null, null, clock);
             var go = new GameObject("[TestNode_Preempt]");
             var node = go.AddComponent<NodeController>();
-            node.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
 
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -167,7 +167,7 @@ namespace Simpiens.Testing.Drives
             var evaluator = new MentalBreakEvaluator(null);
             var memory = new AgentMemory();
             var needs = new AgentNeeds(hunger: 40f, energy: 70f, social: 60f);
-            var context = new AgentContext(GUID.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
+            var context = new AgentContext(EntityId.Generate(), Vector2.zero, needs, 0f, null, memory, 100);
 
             // Warmup
             for (int i = 0; i < 50; i++)

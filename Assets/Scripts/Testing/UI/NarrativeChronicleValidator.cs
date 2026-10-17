@@ -107,9 +107,9 @@ namespace Simpiens.Testing.UI
         {
             var identityService = new AgentIdentityService();
 
-            var guidA = new GUID("11111111111111111111111111111111");
-            var guidB = new GUID("22222222222222222222222222222222");
-            var emptyGuid = default(GUID);
+            var guidA = new EntityId("11111111111111111111111111111111");
+            var guidB = new EntityId("22222222222222222222222222222222");
+            var emptyGuid = default(EntityId);
 
             string nameA1 = identityService.GetFriendlyName(guidA);
             string nameB1 = identityService.GetFriendlyName(guidB);
@@ -127,10 +127,10 @@ namespace Simpiens.Testing.UI
                 }
             }
 
-            // 2. Default GUID must return Unknown
+            // 2. Default EntityId must return Unknown
             if (identityService.GetFriendlyName(emptyGuid) != "Unknown")
             {
-                throw new Exception($"Expected 'Unknown' for default GUID, got {identityService.GetFriendlyName(emptyGuid)}");
+                throw new Exception($"Expected 'Unknown' for default EntityId, got {identityService.GetFriendlyName(emptyGuid)}");
             }
 
             // 3. Custom rename override

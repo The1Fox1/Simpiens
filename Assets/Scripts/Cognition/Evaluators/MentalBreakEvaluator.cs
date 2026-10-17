@@ -30,7 +30,7 @@ namespace Simpiens.Cognition.Evaluators
         private readonly ulong _seed;
 
         [System.ThreadStatic]
-        private static List<UnityEngine.GUID> _staleResourceKeys;
+        private static List<EntityId> _staleResourceKeys;
 
         public MentalBreakEvaluator(IAsyncPathfinder pathfinder, SimulationSettings settings = null)
         {
@@ -167,7 +167,7 @@ namespace Simpiens.Cognition.Evaluators
 
             if (_staleResourceKeys == null)
             {
-                _staleResourceKeys = new List<UnityEngine.GUID>(16);
+                _staleResourceKeys = new List<EntityId>(16);
             }
             _staleResourceKeys.Clear();
 

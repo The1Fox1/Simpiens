@@ -22,7 +22,7 @@ namespace Simpiens.Intervention
         public readonly ushort RewardGold;
         public readonly uint DurationTicks;
         public readonly Vector2 TargetLocation;
-        public readonly GUID CreatorStallId;
+        public readonly EntityId CreatorStallId;
 
         public PostBountyCommand(
             ushort bountyId,
@@ -33,7 +33,7 @@ namespace Simpiens.Intervention
             ushort rewardGold,
             uint durationTicks = 1000,
             Vector2 targetLocation = default,
-            GUID creatorStallId = default)
+            EntityId creatorStallId = default)
         {
             BountyId = bountyId;
             Type = type;
@@ -59,12 +59,12 @@ namespace Simpiens.Intervention
 
     public readonly struct UpdateStallPricesCommand
     {
-        public readonly GUID StallId;
+        public readonly EntityId StallId;
         public readonly ushort RationSellPrice;
         public readonly ushort OreBuyPrice;
         public readonly ushort HerbBuyPrice;
 
-        public UpdateStallPricesCommand(GUID stallId, ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice)
+        public UpdateStallPricesCommand(EntityId stallId, ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice)
         {
             StallId = stallId;
             RationSellPrice = rationSellPrice;
@@ -179,11 +179,11 @@ namespace Simpiens.Intervention
                     string[] parts = payload.Split(new char[] { ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length >= 3)
                     {
-                        GUID sId = default;
+                        EntityId sId = default;
                         int offset = 0;
                         if (parts.Length >= 4)
                         {
-                            GUID.TryParse(parts[0].Trim(), out sId);
+                            EntityId.TryParse(parts[0].Trim(), out sId);
                             offset = 1;
                         }
 

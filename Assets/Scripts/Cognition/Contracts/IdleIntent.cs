@@ -7,7 +7,7 @@ namespace Simpiens.Cognition.Contracts
     {
         public readonly float Duration;
 
-        public IdleIntent(UnityEngine.GUID agentId, float duration = 2.0f) : base(agentId)
+        public IdleIntent(EntityId agentId, float duration = 2.0f) : base(agentId)
         {
             Duration = duration;
         }

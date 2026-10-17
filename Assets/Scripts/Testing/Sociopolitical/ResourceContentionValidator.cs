@@ -36,13 +36,13 @@ namespace Simpiens.Testing.Sociopolitical
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var resId = GUID.Generate();
+            var resId = EntityId.Generate();
             simManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = 5 });
 
             // Dominant Pawn A at (0, 0)
             var goA = new GameObject("[Test_PawnA_Dominant]");
             var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeA.transform.position = Vector2.zero;
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
@@ -51,7 +51,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Submissive Pawn B at (0, 0.5) fearing Pawn A
             var goB = new GameObject("[Test_PawnB_Submissive]");
             var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeB.transform.position = new Vector2(0f, 0.5f);
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
@@ -110,13 +110,13 @@ namespace Simpiens.Testing.Sociopolitical
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var resId = GUID.Generate();
+            var resId = EntityId.Generate();
             simManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = 5 });
 
             // Respected Elder C at (2, 2)
             var goC = new GameObject("[Test_PawnC_Elder]");
             var nodeC = goC.AddComponent<NodeController>();
-            nodeC.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeC.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeC.transform.position = new Vector2(2f, 2f);
             var agentC = goC.AddComponent<AutonomousAgent>();
             agentC.Initialize(nodeC.Id, null, null, simManager, clock);
@@ -125,7 +125,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Follower D at (2, 2.3) respecting Elder C
             var goD = new GameObject("[Test_PawnD_Follower]");
             var nodeD = goD.AddComponent<NodeController>();
-            nodeD.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeD.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeD.transform.position = new Vector2(2f, 2.3f);
             var agentD = goD.AddComponent<AutonomousAgent>();
             agentD.Initialize(nodeD.Id, null, null, simManager, clock);
@@ -167,13 +167,13 @@ namespace Simpiens.Testing.Sociopolitical
             var simManager = new SimulationManager(registry, null, clock);
 
             // Finite single-yield node
-            var resId = GUID.Generate();
+            var resId = EntityId.Generate();
             simManager.RegisterResource(new ResourceData { EntityId = resId, RemainingYield = 1 });
 
             // Mutual rivals E and F at same node
             var goE = new GameObject("[Test_PawnE_Rival]");
             var nodeE = goE.AddComponent<NodeController>();
-            nodeE.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeE.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeE.transform.position = new Vector2(5f, 5f);
             var agentE = goE.AddComponent<AutonomousAgent>();
             agentE.Initialize(nodeE.Id, null, null, simManager, clock);
@@ -181,7 +181,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             var goF = new GameObject("[Test_PawnF_Rival]");
             var nodeF = goF.AddComponent<NodeController>();
-            nodeF.Initialize(GUID.Generate(), new NodeConfiguration(2f));
+            nodeF.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             nodeF.transform.position = new Vector2(5f, 5.2f);
             var agentF = goF.AddComponent<AutonomousAgent>();
             agentF.Initialize(nodeF.Id, null, null, simManager, clock);
@@ -250,7 +250,7 @@ namespace Simpiens.Testing.Sociopolitical
         private void ValidateZeroAllocationContentionBenchmark()
         {
             var memory = new AgentMemory();
-            var peerId = GUID.Generate();
+            var peerId = EntityId.Generate();
             memory.RecordInteraction(peerId, deltaWarmth: 10, deltaTrust: 20, deltaFear: 40, deltaRespect: 50, 0);
 
             // Warm-up to JIT compile methods

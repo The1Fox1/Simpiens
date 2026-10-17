@@ -69,7 +69,7 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
                 position: Vector2.zero,
@@ -127,7 +127,7 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
                 position: Vector2.zero,
@@ -224,7 +224,7 @@ namespace Simpiens.Testing.UI
                 sectors: sectors,
                 interventionService: interventionService);
 
-            var stallId = new UnityEngine.GUID(9u, 9u, 9u, 9u);
+            var stallId = new EntityId(9u, 9u, 9u, 9u);
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
 
             byte hub = Simpiens.Core.Session.Layouts.Floor1Layout.HubSectorId;
@@ -269,7 +269,7 @@ namespace Simpiens.Testing.UI
                 sectors: null,
                 interventionService: interventionService);
 
-            var stallId = UnityEngine.GUID.Generate();
+            var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
                 position: Vector2.zero,

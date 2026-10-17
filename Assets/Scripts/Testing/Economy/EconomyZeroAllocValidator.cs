@@ -70,7 +70,7 @@ namespace Simpiens.Testing.Economy
                 interventionService: interventions, economyLedger: ledger, supplyService: new SupplyService());
             sim.SetEconomy(EconomyTuning.Default);
 
-            var stallId = new GUID(41u, 42u, 43u, 44u);
+            var stallId = new EntityId(41u, 42u, 43u, 44u);
             sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 5000,
                 oreBuyPrice: 8, herbBuyPrice: 12, treasuryGold: 1000000));
             // A standing board, scanned for expiry on every tick
@@ -81,7 +81,7 @@ namespace Simpiens.Testing.Economy
             try
             {
                 var node = go.AddComponent<NodeController>();
-                node.Initialize(new GUID(51u, 52u, 53u, 54u), new NodeConfiguration(2f));
+                node.Initialize(new EntityId(51u, 52u, 53u, 54u), new NodeConfiguration(2f));
                 node.transform.position = new Vector2(0f, 0.5f); // within the stall's reach
                 var agent = go.AddComponent<AutonomousAgent>();
                 agent.Initialize(node.Id, null, null, sim, clock);
@@ -165,8 +165,8 @@ namespace Simpiens.Testing.Economy
         /// </summary>
         private void ValidateOffThreadEvaluationAllocatesNothing()
         {
-            var agentId = new GUID(61u, 62u, 63u, 64u);
-            var stallId = new GUID(71u, 72u, 73u, 74u);
+            var agentId = new EntityId(61u, 62u, 63u, 64u);
+            var stallId = new EntityId(71u, 72u, 73u, 74u);
 
             var snapshot = new SharedWorldSnapshot(40, 40, 1f, 8, _ => { });
             snapshot.SetEconomy(EconomyTuning.Default);

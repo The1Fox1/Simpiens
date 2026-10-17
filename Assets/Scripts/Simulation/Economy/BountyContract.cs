@@ -25,8 +25,8 @@ namespace Simpiens.Simulation.Economy
         public readonly uint ExpirationTick;      // 4 bytes (offset 16)
         public readonly Vector2 TargetLocation;   // 8 bytes (offset 20)
         private readonly uint _pad2;              // 4 bytes (offset 28)
-        public readonly GUID ClaimantId;          // 16 bytes (offset 32)
-        public readonly GUID CreatorStallId;      // 16 bytes (offset 48)
+        public readonly EntityId ClaimantId;          // 16 bytes (offset 32)
+        public readonly EntityId CreatorStallId;      // 16 bytes (offset 48)
                                                   // Total: 64 bytes
 
         public static readonly BountyContract Empty = default;
@@ -49,8 +49,8 @@ namespace Simpiens.Simulation.Economy
             uint issuedTick,
             uint expirationTick,
             Vector2 targetLocation = default,
-            GUID claimantId = default,
-            GUID creatorStallId = default,
+            EntityId claimantId = default,
+            EntityId creatorStallId = default,
             BountyStatus status = BountyStatus.Open)
         {
             BountyId = bountyId;
@@ -70,7 +70,7 @@ namespace Simpiens.Simulation.Economy
             CreatorStallId = creatorStallId;
         }
 
-        public BountyContract WithClaimant(GUID claimantId, BountyStatus status = BountyStatus.Claimed)
+        public BountyContract WithClaimant(EntityId claimantId, BountyStatus status = BountyStatus.Claimed)
         {
             return new BountyContract(
                 BountyId,

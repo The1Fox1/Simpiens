@@ -30,16 +30,16 @@ namespace Simpiens.Simulation
         public bool UseRelaxedClearance;
 
         // Contention Tracking
-        public UnityEngine.GUID ContestedCompetitorId;
+        public EntityId ContestedCompetitorId;
     }
 
     public readonly struct AnchorData
     {
-        public readonly UnityEngine.GUID EntityId;
+        public readonly EntityId EntityId;
         public readonly UnityEngine.Vector2 Position;
         public readonly float Radius;
 
-        public AnchorData(UnityEngine.GUID entityId, UnityEngine.Vector2 position, float radius = 3.0f)
+        public AnchorData(EntityId entityId, UnityEngine.Vector2 position, float radius = 3.0f)
         {
             EntityId = entityId;
             Position = position;
@@ -73,22 +73,22 @@ namespace Simpiens.Simulation
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
         
-        public static readonly UnityEngine.GUID PlayerEntityId = Simpiens.Simulation.WorldRegistry.PlayerEntityId;
+        public static readonly EntityId PlayerEntityId = Simpiens.Simulation.WorldRegistry.PlayerEntityId;
 
         // Main thread tracking stores
-        private readonly Dictionary<UnityEngine.GUID, ResourceData> _resources = new Dictionary<UnityEngine.GUID, ResourceData>();
-        private readonly Dictionary<UnityEngine.GUID, Simpiens.Entities.NodeController> _dormantNodes = new Dictionary<UnityEngine.GUID, Simpiens.Entities.NodeController>();
-        private readonly Dictionary<UnityEngine.GUID, AnchorData> _anchors = new Dictionary<UnityEngine.GUID, AnchorData>();
-        private readonly Dictionary<UnityEngine.GUID, TradeStallData> _stalls = new Dictionary<UnityEngine.GUID, TradeStallData>();
+        private readonly Dictionary<EntityId, ResourceData> _resources = new Dictionary<EntityId, ResourceData>();
+        private readonly Dictionary<EntityId, Simpiens.Entities.NodeController> _dormantNodes = new Dictionary<EntityId, Simpiens.Entities.NodeController>();
+        private readonly Dictionary<EntityId, AnchorData> _anchors = new Dictionary<EntityId, AnchorData>();
+        private readonly Dictionary<EntityId, TradeStallData> _stalls = new Dictionary<EntityId, TradeStallData>();
         private readonly List<TradeStallData> _activeStallsBuffer = new List<TradeStallData>(8);
         private readonly Dictionary<ushort, BountyContract> _bounties = new Dictionary<ushort, BountyContract>();
         private readonly List<BountyContract> _activeBountiesBuffer = new List<BountyContract>(16);
         private readonly List<ushort> _expiredBountiesBuffer = new List<ushort>(16);
-        private readonly Dictionary<UnityEngine.GUID, ActiveIntentState> _activeIntents = new Dictionary<UnityEngine.GUID, ActiveIntentState>();
+        private readonly Dictionary<EntityId, ActiveIntentState> _activeIntents = new Dictionary<EntityId, ActiveIntentState>();
         // Deterministic ordering (ROADMAP §1A.1 rule 3): active intents execute in agent-id order, never Dictionary order
-        private readonly List<UnityEngine.GUID> _activeIntentOrder = new List<UnityEngine.GUID>(64);
+        private readonly List<EntityId> _activeIntentOrder = new List<EntityId>(64);
         private readonly List<AgentIntent> _pendingIntents = new List<AgentIntent>(64);
-        private readonly List<UnityEngine.GUID> _keysToRemove = new List<UnityEngine.GUID>(64);
+        private readonly List<EntityId> _keysToRemove = new List<EntityId>(64);
         private readonly List<Simpiens.Entities.NodeController> _hearthPawnsBuffer = new List<Simpiens.Entities.NodeController>(32);
         private readonly List<ISocialAgent> _hearthAgentsBuffer = new List<ISocialAgent>(32);
         private readonly List<AnchorData> _activeAnchorsBuffer = new List<AnchorData>(16);
@@ -106,14 +106,14 @@ namespace Simpiens.Simulation
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public IReadOnlyList<TradeStallData> ActiveStalls => _activeStallsBuffer;
         public IReadOnlyList<BountyContract> ActiveBounties => _activeBountiesBuffer;
-        internal Dictionary<UnityEngine.GUID, ActiveIntentState> ActiveIntents => _activeIntents;
-        IReadOnlyDictionary<UnityEngine.GUID, ActiveIntentState> IIntentExecutionContext.ActiveIntents => _activeIntents;
-        UnityEngine.GUID IIntentExecutionContext.PlayerEntityId => PlayerEntityId;
+        internal Dictionary<EntityId, ActiveIntentState> ActiveIntents => _activeIntents;
+        IReadOnlyDictionary<EntityId, ActiveIntentState> IIntentExecutionContext.ActiveIntents => _activeIntents;
+        EntityId IIntentExecutionContext.PlayerEntityId => PlayerEntityId;
 
-        public bool TryGetResource(UnityEngine.GUID resourceId, out ResourceData resource) => _resources.TryGetValue(resourceId, out resource);
-        public void RemoveResource(UnityEngine.GUID resourceId) => _resources.Remove(resourceId);
+        public bool TryGetResource(EntityId resourceId, out ResourceData resource) => _resources.TryGetValue(resourceId, out resource);
+        public void RemoveResource(EntityId resourceId) => _resources.Remove(resourceId);
 
-        public void DepleteResource(UnityEngine.GUID resourceId)
+        public void DepleteResource(EntityId resourceId)
         {
             var node = _worldRegistry?.GetNode(resourceId);
 
@@ -145,7 +145,7 @@ namespace Simpiens.Simulation
             SimLog.Simulation.ZLogDebug($"Resource {SimLog.Agent(resourceId)} depleted and removed permanently (no regrowth)");
         }
 
-        public void ReactivateResource(UnityEngine.GUID resourceId)
+        public void ReactivateResource(EntityId resourceId)
         {
             if (_dormantNodes.TryGetValue(resourceId, out var node))
             {
@@ -171,7 +171,7 @@ namespace Simpiens.Simulation
         /// A scout's successful report publishes its survey of the sector: everything it noted inside the fog goes
         /// into every agent's spatial memory (a newer record is kept), in entity id order. Main thread.
         /// </summary>
-        public int PublishSurvey(UnityEngine.GUID scoutId, int sectorId)
+        public int PublishSurvey(EntityId scoutId, int sectorId)
         {
             var scoutMemory = FindMemory(scoutId);
             if (scoutMemory == null) return 0;
@@ -209,21 +209,21 @@ namespace Simpiens.Simulation
         /// <summary>A sleeper this close to the bunk's position is lying in it.</summary>
         public const float BunkSettleDistance = 0.02f;
 
-        private readonly Dictionary<UnityEngine.GUID, Vector2> _bunks = new Dictionary<UnityEngine.GUID, Vector2>(16);
-        private readonly Dictionary<UnityEngine.GUID, UnityEngine.GUID> _bunkOccupants = new Dictionary<UnityEngine.GUID, UnityEngine.GUID>(16);
-        private readonly List<UnityEngine.GUID> _occupiedBunks = new List<UnityEngine.GUID>(16);
-        private readonly Dictionary<UnityEngine.GUID, int> _bunkSleeps = new Dictionary<UnityEngine.GUID, int>(16);
-        private readonly List<UnityEngine.GUID> _bunkScratch = new List<UnityEngine.GUID>(16);
+        private readonly Dictionary<EntityId, Vector2> _bunks = new Dictionary<EntityId, Vector2>(16);
+        private readonly Dictionary<EntityId, EntityId> _bunkOccupants = new Dictionary<EntityId, EntityId>(16);
+        private readonly List<EntityId> _occupiedBunks = new List<EntityId>(16);
+        private readonly Dictionary<EntityId, int> _bunkSleeps = new Dictionary<EntityId, int>(16);
+        private readonly List<EntityId> _bunkScratch = new List<EntityId>(16);
 
-        public void RegisterBunk(UnityEngine.GUID id, Vector2 position) => _bunks[id] = position;
+        public void RegisterBunk(EntityId id, Vector2 position) => _bunks[id] = position;
 
         /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
-        public IReadOnlyDictionary<UnityEngine.GUID, UnityEngine.GUID> BunkOccupants => _bunkOccupants;
+        public IReadOnlyDictionary<EntityId, EntityId> BunkOccupants => _bunkOccupants;
 
         /// <summary>Completed bunk sleeps per agent this session.</summary>
-        public IReadOnlyDictionary<UnityEngine.GUID, int> BunkSleeps => _bunkSleeps;
+        public IReadOnlyDictionary<EntityId, int> BunkSleeps => _bunkSleeps;
 
-        public bool TryClaimBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId, Vector2 agentPosition)
+        public bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vector2 agentPosition)
         {
             if (!_bunks.TryGetValue(bunkId, out var bunkPosition)) return false;
             float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance + BunkClaimTolerance;
@@ -234,7 +234,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, UnityEngine.GUID bunkId)
+        public IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, EntityId bunkId)
         {
             if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
@@ -247,7 +247,7 @@ namespace Simpiens.Simulation
             return (bunkPosition - candidate).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
         }
 
-        public void ReleaseBunk(UnityEngine.GUID bunkId, UnityEngine.GUID agentId)
+        public void ReleaseBunk(EntityId bunkId, EntityId agentId)
         {
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant == agentId)
             {
@@ -267,7 +267,7 @@ namespace Simpiens.Simulation
         /// <summary>Units of the item harvested this session.</summary>
         public int HarvestedUnits(ItemType item) => _harvested.TryGetValue(item, out int n) ? n : 0;
 
-        public void RecordBunkSleep(UnityEngine.GUID agentId)
+        public void RecordBunkSleep(EntityId agentId)
         {
             _bunkSleeps.TryGetValue(agentId, out int n);
             _bunkSleeps[agentId] = n + 1;
@@ -307,7 +307,7 @@ namespace Simpiens.Simulation
             foreach (var kvp in _bunkOccupants) _occupiedBunks.Add(kvp.Key);
         }
 
-        private Simpiens.Cognition.Memory.AgentMemory FindMemory(UnityEngine.GUID agentId)
+        private Simpiens.Cognition.Memory.AgentMemory FindMemory(EntityId agentId)
         {
             if (_agentRegistry != null && _agentRegistry.TryGetAgent(agentId, out var state)) return state.Memory;
             var node = _worldRegistry?.GetNode(agentId);
@@ -315,7 +315,7 @@ namespace Simpiens.Simulation
             if (node.AgentState != null) return node.AgentState.Memory;
             return node.Agent != null ? node.Agent.Memory : null;
         }
-        public bool TryGetStall(UnityEngine.GUID stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
+        public bool TryGetStall(EntityId stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
         public void UpdateStall(TradeStallData stall)
         {
             _stalls[stall.StallEntityId] = stall;
@@ -469,25 +469,25 @@ namespace Simpiens.Simulation
             }
         }
 
-        private sealed class GuidComparer : IComparer<UnityEngine.GUID>
+        private sealed class EntityIdComparer : IComparer<EntityId>
         {
-            public static readonly GuidComparer Instance = new GuidComparer();
-            public int Compare(UnityEngine.GUID x, UnityEngine.GUID y) => x.CompareTo(y);
+            public static readonly EntityIdComparer Instance = new EntityIdComparer();
+            public int Compare(EntityId x, EntityId y) => x.CompareTo(y);
         }
 
-        private static void InsertSorted(List<UnityEngine.GUID> sorted, UnityEngine.GUID id)
+        private static void InsertSorted(List<EntityId> sorted, EntityId id)
         {
-            int index = sorted.BinarySearch(id, GuidComparer.Instance);
+            int index = sorted.BinarySearch(id, EntityIdComparer.Instance);
             if (index < 0) sorted.Insert(~index, id);
         }
 
-        private static void RemoveSorted(List<UnityEngine.GUID> sorted, UnityEngine.GUID id)
+        private static void RemoveSorted(List<EntityId> sorted, EntityId id)
         {
-            int index = sorted.BinarySearch(id, GuidComparer.Instance);
+            int index = sorted.BinarySearch(id, EntityIdComparer.Instance);
             if (index >= 0) sorted.RemoveAt(index);
         }
 
-        public bool AbortIntent(UnityEngine.GUID agentId)
+        public bool AbortIntent(EntityId agentId)
         {
             ProcessQueuedIntents();
 
@@ -507,7 +507,7 @@ namespace Simpiens.Simulation
             _resources[data.EntityId] = data;
         }
 
-        public void RegisterAnchor(UnityEngine.GUID id, Vector2 position, float radius = 3.0f)
+        public void RegisterAnchor(EntityId id, Vector2 position, float radius = 3.0f)
         {
             _anchors[id] = new AnchorData(id, position, radius);
         }
@@ -518,7 +518,7 @@ namespace Simpiens.Simulation
             UpdateActiveStallsBuffer();
         }
 
-        public bool TryGetTradeStall(UnityEngine.GUID stallId, out TradeStallData stallData)
+        public bool TryGetTradeStall(EntityId stallId, out TradeStallData stallData)
         {
             return _stalls.TryGetValue(stallId, out stallData);
         }
@@ -669,7 +669,7 @@ namespace Simpiens.Simulation
 
         private void ExecuteUpdateStallPricesCommand(in UpdateStallPricesCommand cmd)
         {
-            UnityEngine.GUID targetStallId = cmd.StallId;
+            EntityId targetStallId = cmd.StallId;
             if (targetStallId == default && _activeStallsBuffer.Count > 0)
             {
                 targetStallId = _activeStallsBuffer[0].StallEntityId;
@@ -696,7 +696,7 @@ namespace Simpiens.Simulation
             ushort rewardGold,
             uint durationTicks,
             Vector2 targetLocation,
-            UnityEngine.GUID creatorStallId,
+            EntityId creatorStallId,
             uint currentTick)
         {
             if (creatorStallId == default && _activeStallsBuffer.Count > 0)
@@ -927,7 +927,7 @@ namespace Simpiens.Simulation
             _keysToRemove.Clear();
         }
 
-        private void HideResourceNode(UnityEngine.GUID resourceId, bool dormant)
+        private void HideResourceNode(EntityId resourceId, bool dormant)
         {
             var node = _worldRegistry?.GetNode(resourceId);
             if (node == null) return;
@@ -1633,7 +1633,7 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        internal bool IsPositionBlocked(Vector2 targetPos, UnityEngine.GUID ignoreAgentId, float pawnClearanceRadius = 0.4f)
+        internal bool IsPositionBlocked(Vector2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
         {
             if (_spatialPartition == null) return false;
             var snapshot = _spatialPartition.GetActiveSnapshot();

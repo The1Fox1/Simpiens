@@ -39,9 +39,9 @@ namespace Simpiens.Testing.Planning
 
         private void ValidateGenerationIsDeterministic()
         {
-            var id = new GUID(10u, 20u, 30u, 40u);
+            var id = new EntityId(10u, 20u, 30u, 40u);
             var a = AgentPersonality.Generate(42, id);
-            var b = AgentPersonality.Generate(42, new GUID(10u, 20u, 30u, 40u));
+            var b = AgentPersonality.Generate(42, new EntityId(10u, 20u, 30u, 40u));
             Assert(a.Greed == b.Greed && a.Diligence == b.Diligence && a.Sociability == b.Sociability && a.Loyalty == b.Loyalty && a.RiskTolerance == b.RiskTolerance,
                 "Same seed and id must generate the same personality.");
             Assert(default(AgentPersonality).Greed == 0f && AgentPersonality.Neutral.Diligence == 0f, "default(AgentPersonality) must be neutral.");
@@ -51,7 +51,7 @@ namespace Simpiens.Testing.Planning
             const int count = 500;
             for (uint i = 0; i < count; i++)
             {
-                var p = AgentPersonality.Generate(42, new GUID(i + 1u, 7u, 7u, 7u));
+                var p = AgentPersonality.Generate(42, new EntityId(i + 1u, 7u, 7u, 7u));
                 Assert(p.Greed >= -1f && p.Greed <= 1f, $"Trait out of range: {p.Greed}");
                 sum += p.Greed;
                 min = Mathf.Min(min, p.Greed);
@@ -95,7 +95,7 @@ namespace Simpiens.Testing.Planning
 
             // The purchase goal respects it: a reachable stall priced at 25g is refused at hunger 50, bought when starving
             var snapshot = new SharedWorldSnapshot(20, 20, 1f, 8, _ => { });
-            snapshot.SetStalls(new[] { new TradeStallData(new GUID(3u, 3u, 3u, 3u), new Vector2(1f, 0f), rationSellPrice: 25, rationStock: 10) }, 1);
+            snapshot.SetStalls(new[] { new TradeStallData(new EntityId(3u, 3u, 3u, 3u), new Vector2(1f, 0f), rationSellPrice: 25, rationStock: 10) }, 1);
             var atHalf = CreateContext(AgentPersonality.Neutral, hunger: 50f, gold: 100, snapshot: snapshot);
             var atStarving = CreateContext(AgentPersonality.Neutral, hunger: 90f, gold: 100, snapshot: snapshot);
             Assert(!new PurchaseProvisionsGoal().IsValid(atHalf), "25g ration must be refused above the neutral reservation at hunger 50.");
@@ -114,8 +114,8 @@ namespace Simpiens.Testing.Planning
             var inventory = new AgentInventory();
             inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var holder = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, inventory: inventory);
-            var cheapStall = new TradeStallData(new GUID(4u, 4u, 4u, 4u), Vector2.zero, oreBuyPrice: 9, treasuryGold: 500);
-            var fairStall = new TradeStallData(new GUID(5u, 5u, 5u, 5u), Vector2.zero, oreBuyPrice: 20, treasuryGold: 500);
+            var cheapStall = new TradeStallData(new EntityId(4u, 4u, 4u, 4u), Vector2.zero, oreBuyPrice: 9, treasuryGold: 500);
+            var fairStall = new TradeStallData(new EntityId(5u, 5u, 5u, 5u), Vector2.zero, oreBuyPrice: 20, treasuryGold: 500);
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, cheapStall) == ItemType.None, "A greedy seller refuses 9g ore (minimum 12g).");
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, fairStall) == ItemType.IronOre, "A greedy seller accepts 20g ore.");
 
@@ -124,7 +124,7 @@ namespace Simpiens.Testing.Planning
 
         private void ValidateBountyChoiceFollowsPersonality()
         {
-            var stallId = new GUID(6u, 6u, 6u, 6u);
+            var stallId = new EntityId(6u, 6u, 6u, 6u);
             var snapshot = new SharedWorldSnapshot(40, 40, 1f, 8, _ => { });
             snapshot.SetStalls(new[] { new TradeStallData(stallId, Vector2.zero) }, 1);
             snapshot.SetBounties(new[]
@@ -152,7 +152,7 @@ namespace Simpiens.Testing.Planning
         {
             inventory ??= new AgentInventory(AgentInventory.DefaultCapacity, startingGold: gold);
             inventory.Gold = gold;
-            return new AgentContext(new GUID(99u, 1u, 1u, 1u), Vector2.zero, new AgentNeeds(hunger, 90f, social), 0f, snapshot,
+            return new AgentContext(new EntityId(99u, 1u, 1u, 1u), Vector2.zero, new AgentNeeds(hunger, 90f, social), 0f, snapshot,
                 new AgentMemory(), 1, inventory: inventory.GetSnapshot(), personality: personality);
         }
 

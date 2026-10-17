@@ -14,9 +14,9 @@ namespace Simpiens.Simulation
         IReadOnlyList<AgentState> AllAgents { get; }
 
         void RegisterAgent(AgentState agent);
-        bool UnregisterAgent(GUID agentId);
-        bool TryGetAgent(GUID agentId, out AgentState agent);
-        AgentState GetAgent(GUID agentId);
+        bool UnregisterAgent(EntityId agentId);
+        bool TryGetAgent(EntityId agentId, out AgentState agent);
+        AgentState GetAgent(EntityId agentId);
         void Clear();
     }
 }

@@ -52,7 +52,7 @@ namespace Simpiens.Core.Session
         public ISessionDefinition Current => _current ?? _defaultSession;
         public event System.Action<ISessionDefinition> SessionChanged;
 
-        internal UnityEngine.GUID NextEntityId() => _idAllocator != null ? _idAllocator.Next() : UnityEngine.GUID.Generate();
+        internal EntityId NextEntityId() => _idAllocator != null ? _idAllocator.Next() : EntityId.Generate();
 
         [Inject]
         public SwarmSpawner(
@@ -345,7 +345,7 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>A crawler's view and simulation state with a given id and names: a new crawler, or a loaded one.</summary>
-        private AutonomousAgent SpawnAgentView(Vector2 position, GUID id, string name, string label)
+        private AutonomousAgent SpawnAgentView(Vector2 position, EntityId id, string name, string label)
         {
             GameObject agentGo = new GameObject(name);
             if (_agentsRoot != null) agentGo.transform.SetParent(_agentsRoot.transform);
@@ -434,7 +434,7 @@ namespace Simpiens.Core.Session
             return save;
         }
 
-        private void SpawnResourceNode(GameObject root, Vector2 pos, int yield, ItemType yieldItem, uint regrowTicks, out UnityEngine.GUID resId)
+        private void SpawnResourceNode(GameObject root, Vector2 pos, int yield, ItemType yieldItem, uint regrowTicks, out EntityId resId)
         {
             var resourceGo = new GameObject($"{yieldItem}Node_{pos.x}_{pos.y}");
             resourceGo.transform.SetParent(root.transform);
@@ -470,7 +470,7 @@ namespace Simpiens.Core.Session
             });
         }
 
-        private void SpawnDemoCampfire(GameObject root, Vector2 pos, float radius, out UnityEngine.GUID anchorId)
+        private void SpawnDemoCampfire(GameObject root, Vector2 pos, float radius, out EntityId anchorId)
         {
             var campfireGo = new GameObject($"DemoCampfire_{pos.x}_{pos.y}");
             campfireGo.transform.SetParent(root.transform);
@@ -499,7 +499,7 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>A bunk: walkable (no collider), one sleeper at a time (Epic MAP Phase 3 rest anchor).</summary>
-        private void SpawnBunk(GameObject root, Vector2 pos, out GUID bunkId)
+        private void SpawnBunk(GameObject root, Vector2 pos, out EntityId bunkId)
         {
             var bunkGo = new GameObject($"Bunk_{pos.x}_{pos.y}");
             bunkGo.transform.SetParent(root.transform);

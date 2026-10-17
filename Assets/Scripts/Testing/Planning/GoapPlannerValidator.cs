@@ -36,7 +36,7 @@ namespace Simpiens.Testing.Planning
             var planner = new GoapPlanner();
             var plan = new GoapPlan();
             var dummyContext = new AgentContext(
-                new UnityEngine.GUID(),
+                new EntityId(),
                 Vector2.zero,
                 hunger: 80f,
                 energy: 100f,

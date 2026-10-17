@@ -70,8 +70,8 @@ namespace Simpiens.Diagnostics
 
         private static readonly object ConfigureGate = new object();
         private static ILoggerFactory _factory;
-        private static readonly ConcurrentDictionary<GUID, string> AgentNames = new ConcurrentDictionary<GUID, string>();
-        private static readonly ConcurrentDictionary<GUID, bool> FocusCache = new ConcurrentDictionary<GUID, bool>();
+        private static readonly ConcurrentDictionary<EntityId, string> AgentNames = new ConcurrentDictionary<EntityId, string>();
+        private static readonly ConcurrentDictionary<EntityId, bool> FocusCache = new ConcurrentDictionary<EntityId, bool>();
         private static string[] _focusPrefixes = Array.Empty<string>();
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace Simpiens.Diagnostics
         }
 
         /// <summary>Registers a human-readable label (e.g. "Crawler2", "Pen3.RivalA") used in log lines and focus filtering.</summary>
-        public static void RegisterAgentName(GUID id, string name)
+        public static void RegisterAgentName(EntityId id, string name)
         {
             AgentNames[id] = name;
             FocusCache.TryRemove(id, out _);
@@ -172,9 +172,9 @@ namespace Simpiens.Diagnostics
 
         /// <summary>
         /// Readable label for an entity. Only evaluated inside an enabled log hole, so unregistered ids
-        /// (which format a short GUID) never allocate when logging is off.
+        /// (which format a short EntityId) never allocate when logging is off.
         /// </summary>
-        public static string Agent(GUID id)
+        public static string Agent(EntityId id)
         {
             if (id == default) return "-";
             if (AgentNames.TryGetValue(id, out var name)) return name;
@@ -188,7 +188,7 @@ namespace Simpiens.Diagnostics
         /// registered name starts with a focus prefix. Check the channel level first:
         /// <c>if (SimLog.Planning.IsEnabled(LogLevel.Debug) &amp;&amp; SimLog.Traces(id))</c>.
         /// </summary>
-        public static bool Traces(GUID agentId)
+        public static bool Traces(EntityId agentId)
         {
             var prefixes = _focusPrefixes;
             if (prefixes.Length == 0) return true;
@@ -212,7 +212,7 @@ namespace Simpiens.Diagnostics
         }
 
         /// <summary>Convenience: channel enabled at level AND agent in focus.</summary>
-        public static bool Traces(ILogger channel, LogLevel level, GUID agentId)
+        public static bool Traces(ILogger channel, LogLevel level, EntityId agentId)
         {
             return channel.IsEnabled(level) && Traces(agentId);
         }

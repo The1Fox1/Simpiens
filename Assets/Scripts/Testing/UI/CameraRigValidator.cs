@@ -150,9 +150,9 @@ namespace Simpiens.Testing.UI
 
         private void ValidatePicker()
         {
-            var a = new GUID(1u, 0u, 0u, 1u);
-            var b = new GUID(1u, 0u, 0u, 2u);
-            var c = new GUID(1u, 0u, 0u, 3u);
+            var a = new EntityId(1u, 0u, 0u, 1u);
+            var b = new EntityId(1u, 0u, 0u, 2u);
+            var c = new EntityId(1u, 0u, 0u, 3u);
             var crowd = new[]
             {
                 new PickCandidate(c, new Vector2(0.4f, 0f)),

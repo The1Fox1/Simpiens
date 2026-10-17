@@ -37,7 +37,7 @@ namespace Simpiens.Testing.Environment
         }
 
         private static uint _guidSeed = 1000;
-        private static GUID NextTestGuid() => new GUID(_guidSeed++, 0xABCD, 0x1234, 0x5678);
+        private static EntityId NextTestGuid() => new EntityId(_guidSeed++, 0xABCD, 0x1234, 0x5678);
 
         private void ValidateTypedBountyPostingAndDraining()
         {

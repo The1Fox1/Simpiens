@@ -18,18 +18,18 @@ namespace Simpiens.Simulation.Economy
         bool HasEscrow(ushort bountyId);
         uint GetEscrowAmount(ushort bountyId);
 
-        bool TryLockEscrow(GUID stallId, ushort bountyId, uint amount, ref TradeStallData stall);
-        bool TryReleaseEscrowToClaimant(ushort bountyId, GUID claimantId, IAgentRegistry agentRegistry, out uint releasedAmount);
-        bool TryRefundEscrow(ushort bountyId, GUID stallId, ref TradeStallData stall, out uint refundedAmount);
+        bool TryLockEscrow(EntityId stallId, ushort bountyId, uint amount, ref TradeStallData stall);
+        bool TryReleaseEscrowToClaimant(ushort bountyId, EntityId claimantId, IAgentRegistry agentRegistry, out uint releasedAmount);
+        bool TryRefundEscrow(ushort bountyId, EntityId stallId, ref TradeStallData stall, out uint refundedAmount);
 
-        bool TryExecuteStallPurchase(GUID stallId, ref TradeStallData stall, GUID buyerAgentId, IAgentRegistry agentRegistry, uint totalCost);
-        bool TryExecuteStallSale(GUID stallId, ref TradeStallData stall, GUID sellerAgentId, IAgentRegistry agentRegistry, uint totalPayout);
+        bool TryExecuteStallPurchase(EntityId stallId, ref TradeStallData stall, EntityId buyerAgentId, IAgentRegistry agentRegistry, uint totalCost);
+        bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, EntityId sellerAgentId, IAgentRegistry agentRegistry, uint totalPayout);
 
         /// <summary>Stall purchase against an inventory the caller already holds (intent handlers). Agent → stall.</summary>
-        bool TryExecuteStallPurchase(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory buyer, uint totalCost);
+        bool TryExecuteStallPurchase(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory buyer, uint totalCost);
 
         /// <summary>Stall sale against an inventory the caller already holds (intent handlers). Stall → agent.</summary>
-        bool TryExecuteStallSale(GUID stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout);
+        bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout);
 
         void RecordFaucet(uint amount, string faucetName);
         void RecordSink(uint amount, string sinkName);

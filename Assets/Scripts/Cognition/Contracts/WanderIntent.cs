@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Contracts
     {
         public readonly PathResponse Path;
 
-        public WanderIntent(UnityEngine.GUID agentId, PathResponse path) : base(agentId)
+        public WanderIntent(EntityId agentId, PathResponse path) : base(agentId)
         {
             Path = path;
         }

@@ -226,7 +226,7 @@ namespace Simpiens.Testing.Navigation
             col.radius = radius;
             var node = go.AddComponent<NodeController>();
             node.Type = type;
-            node.Initialize(UnityEngine.GUID.Generate(), new NodeConfiguration(2f));
+            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
             return node;
         }
 

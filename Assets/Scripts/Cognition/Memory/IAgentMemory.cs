@@ -10,21 +10,21 @@ namespace Simpiens.Cognition.Memory
     /// </summary>
     public interface IAgentMemory
     {
-        Dictionary<GUID, SpatialMemoryRecord> SpatialMemoryMap { get; }
-        Dictionary<GUID, AffinityRecord> AffinityMap { get; }
+        Dictionary<EntityId, SpatialMemoryRecord> SpatialMemoryMap { get; }
+        Dictionary<EntityId, AffinityRecord> AffinityMap { get; }
 
-        bool IsBlacklisted(GUID entityId, uint currentTick);
-        AffinityRecord GetAffinity(GUID peerId, uint currentTick);
-        float CalculateSubmissionScore(GUID peerId, uint currentTick);
-        float CalculateAltruismScore(GUID peerId, uint currentTick, float selfHunger, bool isTargetCollapsed);
+        bool IsBlacklisted(EntityId entityId, uint currentTick);
+        AffinityRecord GetAffinity(EntityId peerId, uint currentTick);
+        float CalculateSubmissionScore(EntityId peerId, uint currentTick);
+        float CalculateAltruismScore(EntityId peerId, uint currentTick, float selfHunger, bool isTargetCollapsed);
 
-        bool IsTrusted(GUID peerId, uint currentTick, sbyte threshold = 20);
-        bool IsDistrusted(GUID peerId, uint currentTick, sbyte threshold = -20);
-        bool IsFeared(GUID peerId, uint currentTick, sbyte threshold = 40);
-        bool IsWarm(GUID peerId, uint currentTick, sbyte threshold = 20);
-        bool IsRespected(GUID peerId, uint currentTick, sbyte threshold = 30);
+        bool IsTrusted(EntityId peerId, uint currentTick, sbyte threshold = 20);
+        bool IsDistrusted(EntityId peerId, uint currentTick, sbyte threshold = -20);
+        bool IsFeared(EntityId peerId, uint currentTick, sbyte threshold = 40);
+        bool IsWarm(EntityId peerId, uint currentTick, sbyte threshold = 20);
+        bool IsRespected(EntityId peerId, uint currentTick, sbyte threshold = 30);
 
-        bool TryGetSpatialRecord(GUID entityId, out SpatialMemoryRecord record);
+        bool TryGetSpatialRecord(EntityId entityId, out SpatialMemoryRecord record);
 
         /// <summary>Tick this agent last stood in the sector (0 = never), for systematic searching (Epic MAP Phase 3).</summary>
         uint LastSectorVisit(byte sectorId);

@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public readonly struct AgentContext
     {
-        public readonly GUID AgentId;
+        public readonly EntityId AgentId;
         public readonly Vector2 Position;
         
         // Internal Drives & Needs
@@ -37,7 +37,7 @@ namespace Simpiens.Cognition.Contracts
         // Stable traits (review §3.2); default is neutral
         public readonly AgentPersonality Personality;
 
-        public AgentContext(GUID agentId, Vector2 position, in AgentNeeds needs, float frustration,
+        public AgentContext(EntityId agentId, Vector2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership membership = default, in IdentityTag identity = default,
                             Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
@@ -59,7 +59,7 @@ namespace Simpiens.Cognition.Contracts
         }
 
         // Backward-compatible constructor
-        public AgentContext(GUID agentId, Vector2 position, float hunger, float energy, float frustration,
+        public AgentContext(EntityId agentId, Vector2 position, float hunger, float energy, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick)
             : this(agentId, position, new AgentNeeds(hunger, energy, 50f), frustration, snapshot, memory, currentTick, GroupMembership.None, IdentityTag.Default, null)
         {

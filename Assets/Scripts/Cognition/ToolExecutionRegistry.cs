@@ -17,14 +17,14 @@ namespace Simpiens.Cognition
     public class ToolExecutionRegistry : IToolExecutionRegistry
     {
         private readonly ISimulationManager _simulationManager;
-        private readonly Dictionary<string, Action<GUID, string>> _customActions = new Dictionary<string, Action<GUID, string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Action<EntityId, string>> _customActions = new Dictionary<string, Action<EntityId, string>>(StringComparer.OrdinalIgnoreCase);
 
         public ToolExecutionRegistry(ISimulationManager simulationManager = null)
         {
             _simulationManager = simulationManager;
         }
 
-        public void RegisterActionHandler(string actionType, Action<GUID, string> handler)
+        public void RegisterActionHandler(string actionType, Action<EntityId, string> handler)
         {
             if (string.IsNullOrEmpty(actionType)) throw new ArgumentNullException(nameof(actionType));
             if (handler == null) throw new ArgumentNullException(nameof(handler));
@@ -35,8 +35,8 @@ namespace Simpiens.Cognition
         {
             if (string.IsNullOrEmpty(agentIdStr) || string.IsNullOrEmpty(actionType)) return;
 
-            GUID agentId;
-            if (!GUID.TryParse(agentIdStr, out agentId))
+            EntityId agentId;
+            if (!EntityId.TryParse(agentIdStr, out agentId))
             {
                 // Fallback for non-hex test identifiers
                 agentId = default;
@@ -70,14 +70,14 @@ namespace Simpiens.Cognition
 
                 case "gather":
                 case "harvest":
-                    if (!string.IsNullOrEmpty(parameters) && GUID.TryParse(parameters.Trim(), out var targetResId))
+                    if (!string.IsNullOrEmpty(parameters) && EntityId.TryParse(parameters.Trim(), out var targetResId))
                     {
                         _simulationManager.EnqueueIntent(new HarvestResourceIntent(agentId, targetResId, new PathResponse()));
                     }
                     break;
 
                 case "share_food":
-                    if (!string.IsNullOrEmpty(parameters) && GUID.TryParse(parameters.Trim(), out var targetPawnId))
+                    if (!string.IsNullOrEmpty(parameters) && EntityId.TryParse(parameters.Trim(), out var targetPawnId))
                     {
                         _simulationManager.EnqueueIntent(new ShareResourceIntent(agentId, targetPawnId, new PathResponse()));
                     }

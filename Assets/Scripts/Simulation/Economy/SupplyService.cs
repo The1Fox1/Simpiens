@@ -9,7 +9,7 @@ namespace Simpiens.Simulation.Economy
 {
     /// <summary>
     /// Pure C# implementation of ISupplyService.
-    /// Dormant nodes are kept in a list sorted by (ReadyTick, GUID) so regrowth order is deterministic and never
+    /// Dormant nodes are kept in a list sorted by (ReadyTick, EntityId) so regrowth order is deterministic and never
     /// depends on dictionary enumeration. Steady-state ticking allocates nothing.
     /// </summary>
     public class SupplyService : ISupplyService
@@ -20,10 +20,10 @@ namespace Simpiens.Simulation.Economy
 
         private readonly struct DormantEntry
         {
-            public readonly GUID ResourceId;
+            public readonly EntityId ResourceId;
             public readonly uint ReadyTick;
 
-            public DormantEntry(GUID resourceId, uint readyTick)
+            public DormantEntry(EntityId resourceId, uint readyTick)
             {
                 ResourceId = resourceId;
                 ReadyTick = readyTick;
@@ -71,7 +71,7 @@ namespace Simpiens.Simulation.Economy
             _tuning = tuning;
         }
 
-        public void RegisterDormant(GUID resourceId, uint readyTick)
+        public void RegisterDormant(EntityId resourceId, uint readyTick)
         {
             // Replace any stale entry for the same node
             for (int i = 0; i < _dormant.Count; i++)

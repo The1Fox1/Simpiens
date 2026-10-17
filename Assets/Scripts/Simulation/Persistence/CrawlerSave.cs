@@ -30,7 +30,7 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct CrawlerRecord
     {
-        public GUID Id;
+        public EntityId Id;
         public Vector2 Position;
         public AgentNeeds Needs;
         public float Frustration;
@@ -92,14 +92,14 @@ namespace Simpiens.Simulation.Persistence
     [StructLayout(LayoutKind.Sequential)]
     public struct IdTickRecord
     {
-        public GUID Id;
+        public EntityId Id;
         public uint Tick;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct PeerAffinityRecord
     {
-        public GUID PeerId;
+        public EntityId PeerId;
         public AffinityRecord Affinity;
     }
 }

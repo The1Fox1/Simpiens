@@ -20,15 +20,15 @@ namespace Simpiens.Simulation
         {
             public bool IsActive;
             public GroupType Type;
-            public GUID LeaderId;
+            public EntityId LeaderId;
             public Vector2 AnchorPosition;
             public GroupDirective ActiveDirective;
             public byte Cohesion;
-            public HashSet<GUID> Members;
+            public HashSet<EntityId> Members;
         }
 
         private readonly GroupSlot[] _slots;
-        private readonly Dictionary<GUID, GroupMembership> _memberships;
+        private readonly Dictionary<EntityId, GroupMembership> _memberships;
         private int _activeGroupCount;
 
         public int ActiveGroupCount => _activeGroupCount;
@@ -46,14 +46,14 @@ namespace Simpiens.Simulation
                     AnchorPosition = Vector2.zero,
                     ActiveDirective = GroupDirective.None,
                     Cohesion = 100,
-                    Members = new HashSet<GUID>()
+                    Members = new HashSet<EntityId>()
                 };
             }
-            _memberships = new Dictionary<GUID, GroupMembership>(256);
+            _memberships = new Dictionary<EntityId, GroupMembership>(256);
             _activeGroupCount = 0;
         }
 
-        public byte CreateGroup(GroupType type, GUID leaderId, Vector2 anchorPosition, byte initialCohesion = 100)
+        public byte CreateGroup(GroupType type, EntityId leaderId, Vector2 anchorPosition, byte initialCohesion = 100)
         {
             // Find lowest available 1-indexed group ID
             int freeIndex = -1;
@@ -146,7 +146,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public bool AddMember(byte groupId, GUID agentId, RoleRank role = RoleRank.Follower, byte initialAllegiance = 70)
+        public bool AddMember(byte groupId, EntityId agentId, RoleRank role = RoleRank.Follower, byte initialAllegiance = 70)
         {
             if (groupId == 0 || groupId > MaxGroups || agentId == default) return false;
 
@@ -174,7 +174,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public bool RemoveMember(byte groupId, GUID agentId)
+        public bool RemoveMember(byte groupId, EntityId agentId)
         {
             if (groupId == 0 || groupId > MaxGroups || agentId == default) return false;
 
@@ -193,7 +193,7 @@ namespace Simpiens.Simulation
             return removed;
         }
 
-        public bool SetRole(byte groupId, GUID agentId, RoleRank newRole)
+        public bool SetRole(byte groupId, EntityId agentId, RoleRank newRole)
         {
             if (groupId == 0 || groupId > MaxGroups || agentId == default) return false;
 
@@ -214,7 +214,7 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        public bool UpdateAllegiance(GUID agentId, int delta)
+        public bool UpdateAllegiance(EntityId agentId, int delta)
         {
             if (agentId == default) return false;
 
@@ -253,7 +253,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public bool TransferLeadership(byte groupId, GUID newLeaderId)
+        public bool TransferLeadership(byte groupId, EntityId newLeaderId)
         {
             if (groupId == 0 || groupId > MaxGroups || newLeaderId == default) return false;
 
@@ -261,7 +261,7 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive || !slot.Members.Contains(newLeaderId)) return false;
 
-            GUID oldLeaderId = slot.LeaderId;
+            EntityId oldLeaderId = slot.LeaderId;
 
             // Demote old leader to Follower if still in the group
             if (oldLeaderId != default && oldLeaderId != newLeaderId && slot.Members.Contains(oldLeaderId))
@@ -285,7 +285,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public bool TryGetMembership(GUID agentId, out GroupMembership membership)
+        public bool TryGetMembership(EntityId agentId, out GroupMembership membership)
         {
             if (agentId == default)
             {
@@ -296,13 +296,13 @@ namespace Simpiens.Simulation
             return _memberships.TryGetValue(agentId, out membership);
         }
 
-        public IReadOnlyCollection<GUID> GetMembers(byte groupId)
+        public IReadOnlyCollection<EntityId> GetMembers(byte groupId)
         {
-            if (groupId == 0 || groupId > MaxGroups) return Array.Empty<GUID>();
+            if (groupId == 0 || groupId > MaxGroups) return Array.Empty<EntityId>();
 
             int index = groupId - 1;
             ref readonly var slot = ref _slots[index];
-            if (!slot.IsActive) return Array.Empty<GUID>();
+            if (!slot.IsActive) return Array.Empty<EntityId>();
 
             return slot.Members;
         }
@@ -386,8 +386,8 @@ namespace Simpiens.Simulation
             if (save == null) throw new ArgumentNullException(nameof(save));
 
             var groups = new List<GroupRecord>(_activeGroupCount);
-            var members = new List<GUID>(_memberships.Count);
-            var roster = new List<GUID>(16);
+            var members = new List<EntityId>(_memberships.Count);
+            var roster = new List<EntityId>(16);
             for (int i = 0; i < MaxGroups; i++)
             {
                 ref readonly var slot = ref _slots[i];

@@ -26,7 +26,7 @@ namespace Simpiens.Cognition
         public const float FixedTickDeltaTime = 0.1f;
 
         // Identity & Transform
-        public GUID AgentId { get; set; }
+        public EntityId AgentId { get; set; }
         public Vector2 Position { get; set; }
         public Vector2 Velocity { get; set; }
         public float BaseSpeed { get; set; } = DefaultBaseSpeed;
@@ -151,7 +151,7 @@ namespace Simpiens.Cognition
         {
             try
             {
-                AgentId = GUID.Generate();
+                AgentId = EntityId.Generate();
             }
             catch
             {
@@ -162,7 +162,7 @@ namespace Simpiens.Cognition
             Memory = new AgentMemory();
         }
 
-        public AgentState(GUID id, AgentInventory inventory = null, AgentMemory memory = null)
+        public AgentState(EntityId id, AgentInventory inventory = null, AgentMemory memory = null)
         {
             AgentId = id;
             Inventory = inventory ?? new AgentInventory(AgentInventory.DefaultCapacity, startingGold: Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold);

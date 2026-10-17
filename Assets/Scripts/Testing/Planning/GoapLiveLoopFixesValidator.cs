@@ -23,7 +23,7 @@ namespace Simpiens.Testing.Planning
         private const int GridSize = 20;
 
         private static uint _guidSeed = 52000;
-        private static GUID NextGuid() => new GUID(_guidSeed++, 0x60A9, 0x4004, 0xF1F1);
+        private static EntityId NextGuid() => new EntityId(_guidSeed++, 0x60A9, 0x4004, 0xF1F1);
 
         public void Start()
         {
@@ -240,7 +240,7 @@ namespace Simpiens.Testing.Planning
 
         private static Vector2 CellCenter(int cx, int cy) => new Vector2(cx - GridSize * 0.5f + 0.5f, cy - GridSize * 0.5f + 0.5f);
 
-        private static SharedWorldSnapshot SnapshotWithPeer(GUID peerId, Vector2 peerPos, float peerHunger)
+        private static SharedWorldSnapshot SnapshotWithPeer(EntityId peerId, Vector2 peerPos, float peerHunger)
         {
             var snapshot = new SharedWorldSnapshot(GridSize, GridSize, 1f, 8, _ => { });
             var entity = new EntitySnapshot(peerId, peerPos, Vector2.zero, 0.35f, EntityType.Pawn, false, peerHunger);
@@ -248,7 +248,7 @@ namespace Simpiens.Testing.Planning
             return snapshot;
         }
 
-        private static AgentContext Context(GUID id, Vector2 position, float hunger, SharedWorldSnapshot snapshot, AgentMemory memory, AgentInventory inventory = null)
+        private static AgentContext Context(EntityId id, Vector2 position, float hunger, SharedWorldSnapshot snapshot, AgentMemory memory, AgentInventory inventory = null)
         {
             return new AgentContext(id, position, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot, memory, 1,
                 inventory: (inventory ?? new AgentInventory()).GetSnapshot());

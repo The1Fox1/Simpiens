@@ -10,10 +10,10 @@ namespace Simpiens.Simulation.Economy
     /// </summary>
     public interface ISupplyHost
     {
-        bool TryGetResource(GUID resourceId, out ResourceData resource);
+        bool TryGetResource(EntityId resourceId, out ResourceData resource);
 
         /// <summary>Re-registers a regrown node with the world so agents can perceive and harvest it again.</summary>
-        void ReactivateResource(GUID resourceId);
+        void ReactivateResource(EntityId resourceId);
 
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
         void UpdateStall(TradeStallData stall);
@@ -56,7 +56,7 @@ namespace Simpiens.Simulation.Economy
         int SkippedRestockCount { get; }
 
         /// <summary>Schedules a depleted node to regrow at readyTick.</summary>
-        void RegisterDormant(GUID resourceId, uint readyTick);
+        void RegisterDormant(EntityId resourceId, uint readyTick);
 
         void Tick(uint currentTick, ISupplyHost host);
 

@@ -38,7 +38,7 @@ namespace Simpiens.Simulation.Spatial
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
 
         /// <summary>Bunks with a sleeper, copied into every following snapshot. Main thread only.</summary>
-        void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied);
+        void SetOccupiedBunks(IReadOnlyList<EntityId> occupied);
 
         /// <summary>
         /// Clears all rasterized walls; registered walls are re-rasterized on the next UpdateFromRegistry.
@@ -68,8 +68,8 @@ namespace Simpiens.Simulation.Spatial
         private Simpiens.Simulation.Economy.EconomyTuning _economy;
         public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => _economy = economy;
 
-        private IReadOnlyList<UnityEngine.GUID> _occupiedBunks;
-        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied) => _occupiedBunks = occupied;
+        private IReadOnlyList<EntityId> _occupiedBunks;
+        public void SetOccupiedBunks(IReadOnlyList<EntityId> occupied) => _occupiedBunks = occupied;
 
         public void ResetStatic()
         {

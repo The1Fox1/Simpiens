@@ -62,17 +62,17 @@ namespace Simpiens.Simulation.Spatial
 
         // Rest anchor (Epic MAP Phase 3): bunks with a sleeper this tick
         public const int MaxBunks = 32;
-        private readonly UnityEngine.GUID[] _occupiedBunks = new UnityEngine.GUID[MaxBunks];
+        private readonly EntityId[] _occupiedBunks = new EntityId[MaxBunks];
         public int OccupiedBunkCount { get; private set; }
 
-        public void SetOccupiedBunks(IReadOnlyList<UnityEngine.GUID> occupied)
+        public void SetOccupiedBunks(IReadOnlyList<EntityId> occupied)
         {
             int count = occupied != null ? Mathf.Min(occupied.Count, MaxBunks) : 0;
             for (int i = 0; i < count; i++) _occupiedBunks[i] = occupied[i];
             OccupiedBunkCount = count;
         }
 
-        public bool IsBunkOccupied(UnityEngine.GUID bunkId)
+        public bool IsBunkOccupied(EntityId bunkId)
         {
             for (int i = 0; i < OccupiedBunkCount; i++)
             {
@@ -179,7 +179,7 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>
         /// Lock-free, zero-allocation lookup of a trade stall's snapshot state by entity ID.
         /// </summary>
-        public bool TryGetStall(GUID stallId, out TradeStallData stallData)
+        public bool TryGetStall(EntityId stallId, out TradeStallData stallData)
         {
             if (stallId == default)
             {

@@ -80,7 +80,7 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>Opens a trade stall at the map POI <paramref name="poiKey"/>. Returns its entity id (default without a simulation).</summary>
-        public UnityEngine.GUID OpenStall(string poiKey, in StallTerms terms)
+        public EntityId OpenStall(string poiKey, in StallTerms terms)
         {
             if (Simulation == null) return default;
             if (!Map.TryGetPoi(poiKey, out var poi))

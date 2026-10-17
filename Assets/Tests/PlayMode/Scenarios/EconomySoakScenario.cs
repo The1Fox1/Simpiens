@@ -106,12 +106,12 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         // Per-frame lifecycle tracking (a collapse or starving episode counts once when it begins)
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300;
-        private readonly System.Collections.Generic.HashSet<UnityEngine.GUID> _collapsedNow = new System.Collections.Generic.HashSet<UnityEngine.GUID>();
-        private readonly System.Collections.Generic.Dictionary<UnityEngine.GUID, long> _hungrySince = new System.Collections.Generic.Dictionary<UnityEngine.GUID, long>();
-        private readonly System.Collections.Generic.HashSet<UnityEngine.GUID> _starvingNow = new System.Collections.Generic.HashSet<UnityEngine.GUID>();
+        private readonly System.Collections.Generic.HashSet<EntityId> _collapsedNow = new System.Collections.Generic.HashSet<EntityId>();
+        private readonly System.Collections.Generic.Dictionary<EntityId, long> _hungrySince = new System.Collections.Generic.Dictionary<EntityId, long>();
+        private readonly System.Collections.Generic.HashSet<EntityId> _starvingNow = new System.Collections.Generic.HashSet<EntityId>();
         private int _collapses;
         private int _starvingEpisodes;
-        private readonly System.Collections.Generic.Dictionary<UnityEngine.GUID, int> _trustAtStart = new System.Collections.Generic.Dictionary<UnityEngine.GUID, int>();
+        private readonly System.Collections.Generic.Dictionary<EntityId, int> _trustAtStart = new System.Collections.Generic.Dictionary<EntityId, int>();
         private ISimulationClock _clock;
         private bool _pricesApplied;
         private string _pricesSeen = "never sampled";
