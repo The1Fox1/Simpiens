@@ -50,8 +50,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private const int P9Collapsed = 17, P9Challenger = 18;
         private const int P10Leader = 20, P10DissidentB = 23;
 
-        private static readonly Vector2 P6RallyPoint = new Vector2(-8f, -7.5f);
-        private static readonly Vector2 P7RallyPoint = new Vector2(-4f, -7.2f);
+        private static readonly Vec2 P6RallyPoint = new Vec2(-8f, -7.5f);
+        private static readonly Vec2 P7RallyPoint = new Vec2(-4f, -7.2f);
         private const float RallyRadius = 2.0f;
         private const uint DirectiveExpiryTick = 5000;
 
@@ -75,7 +75,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private int _p1BushYield = -1;
         private float _p1DominantHunger;
         private long _p1SubmissiveWonTick = -1;
-        private Vector2 _p7BushPosition;
+        private Vec2 _p7BushPosition;
         private long _observedTicks;
 
         public IEnumerator SetupAsync(IObjectResolver resolver)
@@ -327,11 +327,11 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             return sb.ToString();
         }
 
-        private bool Near(int index, Vector2 point, float radius)
+        private bool Near(int index, Vec2 point, float radius)
         {
             var agent = _agents[index];
             if (agent == null) return false;
-            return Vector2.Distance(agent.transform.position, point) <= radius;
+            return Vec2.Distance(agent.transform.position.ToSim(), point) <= radius;
         }
     }
 }

@@ -26,10 +26,10 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         // the door narrows from four cells to three. The wall must drop in front of the crawlers, never onto one: the injector's own
         // clearance check uses physics colliders, which do not see pawns (it shifted the walls off the doors and
         // onto standing pawns), so the scenario picks a spot clear of every pawn from their logical positions.
-        private static readonly Vector2[] DoorSpots =
+        private static readonly Vec2[] DoorSpots =
         {
-            new Vector2(-0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-1.5f, 0.5f), new Vector2(1.5f, 0.5f),
-            new Vector2(-0.5f, -0.5f), new Vector2(0.5f, -0.5f), new Vector2(-1.5f, -0.5f), new Vector2(1.5f, -0.5f)
+            new Vec2(-0.5f, 0.5f), new Vec2(0.5f, 0.5f), new Vec2(-1.5f, 0.5f), new Vec2(1.5f, 0.5f),
+            new Vec2(-0.5f, -0.5f), new Vec2(0.5f, -0.5f), new Vec2(-1.5f, -0.5f), new Vec2(1.5f, -0.5f)
         };
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             yield return InjectClearOfPawns(injector, spawner, quarryDoor, verticalWall: true);
         }
 
-        private static IEnumerator InjectClearOfPawns(EdgeCaseInjector injector, Simpiens.Core.Session.SwarmSpawner spawner, Vector2 door, bool verticalWall)
+        private static IEnumerator InjectClearOfPawns(EdgeCaseInjector injector, Simpiens.Core.Session.SwarmSpawner spawner, Vec2 door, bool verticalWall)
         {
             if (injector == null) yield break;
             for (int frame = 0; frame < MaxWaitFrames; frame++)
@@ -75,7 +75,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 for (int s = 0; s < DoorSpots.Length; s++)
                 {
                     var offset = DoorSpots[s];
-                    var spot = door + (verticalWall ? new Vector2(offset.y, offset.x) : offset);
+                    var spot = door + (verticalWall ? new Vec2(offset.Y, offset.X) : offset);
                     if (IsClearOfPawns(spawner, spot))
                     {
                         injector.InjectWall(spot);
@@ -88,25 +88,25 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Assert.Fail($"No spot in the door at {door} was clear of pawns for {MaxWaitFrames} frames.");
         }
 
-        private static float NearestPawnDistance(Simpiens.Core.Session.SwarmSpawner spawner, Vector2 spot)
+        private static float NearestPawnDistance(Simpiens.Core.Session.SwarmSpawner spawner, Vec2 spot)
         {
             float best = float.MaxValue;
             var agents = spawner.Agents;
             for (int i = 0; i < agents.Count; i++)
             {
                 var state = agents[i] != null ? agents[i].State : null;
-                if (state != null) best = Mathf.Min(best, Vector2.Distance(state.Position, spot));
+                if (state != null) best = SimMath.Min(best, Vec2.Distance(state.Position, spot));
             }
             return best;
         }
 
-        private static bool IsClearOfPawns(Simpiens.Core.Session.SwarmSpawner spawner, Vector2 spot)
+        private static bool IsClearOfPawns(Simpiens.Core.Session.SwarmSpawner spawner, Vec2 spot)
         {
             var agents = spawner.Agents;
             for (int i = 0; i < agents.Count; i++)
             {
                 var state = agents[i] != null ? agents[i].State : null;
-                if (state != null && Vector2.Distance(state.Position, spot) < PawnClearance) return false;
+                if (state != null && Vec2.Distance(state.Position, spot) < PawnClearance) return false;
             }
             return true;
         }

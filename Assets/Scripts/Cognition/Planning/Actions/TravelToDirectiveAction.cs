@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Groups;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -30,7 +28,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override async ValueTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
         {
-            Vector2 target = GetTargetLocation(context);
+            Vec2 target = GetTargetLocation(context);
             if (_pathfinder == null || context.Snapshot == null)
             {
                 return CreateIntent(context);
@@ -46,7 +44,7 @@ namespace Simpiens.Cognition.Planning.Actions
             return new WanderIntent(context.AgentId, pathResponse);
         }
 
-        private Vector2 GetTargetLocation(AgentContext context)
+        private Vec2 GetTargetLocation(AgentContext context)
         {
             if (context.Snapshot != null && context.Membership.HasGroup &&
                 context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData) &&

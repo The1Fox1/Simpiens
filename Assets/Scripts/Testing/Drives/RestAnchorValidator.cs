@@ -19,7 +19,7 @@ namespace Simpiens.Testing.Drives
     /// </summary>
     public class RestAnchorValidator
     {
-        private static readonly Vector2 Agent = Vector2.zero;
+        private static readonly Vec2 Agent = Vec2.Zero;
         private static readonly EntityId AgentId = new EntityId(61u, 1u, 1u, 1u);
         private static readonly EntityId BunkId = new EntityId(62u, 2u, 2u, 2u);
         private static readonly EntityId HearthId = new EntityId(63u, 3u, 3u, 3u);
@@ -40,20 +40,20 @@ namespace Simpiens.Testing.Drives
 
         private void ValidateTiredCrawlerWalksToAFreeBunk()
         {
-            var plan = PlanRest(energy: 30f, bunkAt: new Vector2(10f, 0f), occupied: false, hearthAt: null);
+            var plan = PlanRest(energy: 30f, bunkAt: new Vec2(10f, 0f), occupied: false, hearthAt: null);
             Assert(plan.Actions.Count == 2 && plan.Actions[0] is TravelToBunkAction && plan.Actions[1] is SleepAtBunkAction,
                 $"A tired crawler who knows a free bunk plans TravelToBunk -> SleepAtBunk (got {Describe(plan)}).");
 
-            var far = PlanRest(energy: 30f, bunkAt: new Vector2(40f, 0f), occupied: false, hearthAt: null);
+            var far = PlanRest(energy: 30f, bunkAt: new Vec2(40f, 0f), occupied: false, hearthAt: null);
             Assert(far.Actions.Count == 2 && far.Actions[0] is TravelToBunkAction, $"A bunk across the floor (40 units) still beats resting in place (got {Describe(far)}).");
 
-            var atBunk = PlanRest(energy: 30f, bunkAt: new Vector2(0.3f, 0f), occupied: false, hearthAt: null);
+            var atBunk = PlanRest(energy: 30f, bunkAt: new Vec2(0.3f, 0f), occupied: false, hearthAt: null);
             Assert(atBunk.Actions.Count == 1 && atBunk.Actions[0] is SleepAtBunkAction, $"Standing at the bunk, the crawler just sleeps (got {Describe(atBunk)}).");
             // A walk that ended a step short: the sleep makes the last step itself; further away it does not
             var sleep = new SleepAtBunkAction();
-            var oneShort = sleep.CreateIntent(Context(energy: 30f, bunkAt: new Vector2(1f, 0f), occupied: false, hearthAt: null));
+            var oneShort = sleep.CreateIntent(Context(energy: 30f, bunkAt: new Vec2(1f, 0f), occupied: false, hearthAt: null));
             Assert(oneShort is SleepAtBunkIntent s1 && s1.BunkId == BunkId, "One unit short of the bunk, the crawler still goes to sleep there (the handler makes the last step).");
-            var tooFar = sleep.CreateIntent(Context(energy: 30f, bunkAt: new Vector2(2f, 0f), occupied: false, hearthAt: null));
+            var tooFar = sleep.CreateIntent(Context(energy: 30f, bunkAt: new Vec2(2f, 0f), occupied: false, hearthAt: null));
             Assert(tooFar is IdleIntent, "Two units away is not a last step: the plan is re-evaluated instead.");
             Debug.Log("[PASS] Test 1: A tired crawler walks to a free bunk it knows and sleeps there, making the last step itself.");
         }
@@ -63,17 +63,17 @@ namespace Simpiens.Testing.Drives
             var none = PlanRest(energy: 30f, bunkAt: null, occupied: false, hearthAt: null);
             Assert(none.Actions.Count == 1 && none.Actions[0] is RestAction, $"No bunk known: rest in place (got {Describe(none)}).");
 
-            var taken = PlanRest(energy: 30f, bunkAt: new Vector2(10f, 0f), occupied: true, hearthAt: null);
+            var taken = PlanRest(energy: 30f, bunkAt: new Vec2(10f, 0f), occupied: true, hearthAt: null);
             Assert(taken.Actions.Count == 1 && taken.Actions[0] is RestAction, $"The only bunk is taken: rest in place (got {Describe(taken)}).");
 
-            var spent = PlanRest(energy: Considerations.TooTiredToWalkEnergy - 1f, bunkAt: new Vector2(10f, 0f), occupied: false, hearthAt: null);
+            var spent = PlanRest(energy: Considerations.TooTiredToWalkEnergy - 1f, bunkAt: new Vec2(10f, 0f), occupied: false, hearthAt: null);
             Assert(spent.Actions.Count == 1 && spent.Actions[0] is RestAction, $"Too tired to walk: rest in place (got {Describe(spent)}).");
             Debug.Log("[PASS] Test 2: With no free bunk, or too tired to walk, a crawler rests where it stands.");
         }
 
         private void ValidateBunkBeatsTheHearthForSleep()
         {
-            var plan = PlanRest(energy: 30f, bunkAt: new Vector2(20f, 0f), occupied: false, hearthAt: new Vector2(3f, 0f));
+            var plan = PlanRest(energy: 30f, bunkAt: new Vec2(20f, 0f), occupied: false, hearthAt: new Vec2(3f, 0f));
             Assert(plan.Actions.Count == 2 && plan.Actions[0] is TravelToBunkAction,
                 $"To sleep, a bunk 20 units away beats a nearby hearth (got {Describe(plan)}).");
             Debug.Log("[PASS] Test 3: For rest, the bunk is preferred over relaxing at a nearby hearth.");
@@ -82,12 +82,12 @@ namespace Simpiens.Testing.Drives
         private void ValidateSingleOccupancy()
         {
             var sim = new SimulationManager(new WorldRegistry(), null);
-            var bunkPos = new Vector2(-6f, -8f);
+            var bunkPos = new Vec2(-6f, -8f);
             sim.RegisterBunk(BunkId, bunkPos);
             var other = new EntityId(64u, 4u, 4u, 4u);
 
-            Assert(!sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vector2(2f, 0f)), "A bunk cannot be claimed from two units away.");
-            Assert(sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vector2(0.4f, 0f)), "A bunk can be claimed by a crawler standing at it.");
+            Assert(!sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vec2(2f, 0f)), "A bunk cannot be claimed from two units away.");
+            Assert(sim.TryClaimBunk(BunkId, AgentId, bunkPos + new Vec2(0.4f, 0f)), "A bunk can be claimed by a crawler standing at it.");
             Assert(sim.TryClaimBunk(BunkId, AgentId, bunkPos), "Re-claiming one's own bunk succeeds.");
             Assert(!sim.TryClaimBunk(BunkId, other, bunkPos), "A second crawler cannot claim a taken bunk.");
             sim.ReleaseBunk(BunkId, other);
@@ -101,7 +101,7 @@ namespace Simpiens.Testing.Drives
         private void ValidateClaimsNeverOutliveTheSleep()
         {
             var sim = new SimulationManager(new WorldRegistry(), null);
-            var bunkPos = new Vector2(-6f, -8f);
+            var bunkPos = new Vec2(-6f, -8f);
             sim.RegisterBunk(BunkId, bunkPos);
 
             Assert(sim.TryClaimBunk(BunkId, AgentId, bunkPos), "Precondition: claimed.");
@@ -132,11 +132,11 @@ namespace Simpiens.Testing.Drives
         {
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
-            var bunkPos = new Vector2(-2f, -8f);
+            var bunkPos = new Vec2(-2f, -8f);
             sim.RegisterBunk(BunkId, bunkPos);
 
             var go = new GameObject("[Test_Sleeper]");
-            go.transform.position = bunkPos + new Vector2(0.9f, 0.9f);
+            go.transform.position = (bunkPos + new Vec2(0.9f, 0.9f)).ToUnity();
             var node = go.AddComponent<Simpiens.Entities.NodeController>();
             node.Type = EntityType.Pawn;
             node.Initialize(AgentId, new Simpiens.Entities.NodeConfiguration(2f));
@@ -149,7 +149,7 @@ namespace Simpiens.Testing.Drives
                 {
                     result = sim.StepOntoBunk(node, BunkId);
                 }
-                Assert(result == IntentResult.Success && Vector2.Distance(node.Position, bunkPos) <= SimulationManager.BunkSettleDistance,
+                Assert(result == IntentResult.Success && Vec2.Distance(node.Position, bunkPos) <= SimulationManager.BunkSettleDistance,
                     $"From 1.3 units away the sleeper steps onto the bunk's exact position ({result} after {ticks} ticks, at {node.Position}).");
                 Assert(sim.TryClaimBunk(BunkId, AgentId, node.Position), "And can then claim it.");
 
@@ -164,7 +164,7 @@ namespace Simpiens.Testing.Drives
             Debug.Log("[PASS] Test 6: A sleeper a step short walks onto a free bunk, never onto a taken one.");
         }
 
-        private static GoapPlan PlanRest(float energy, Vector2? bunkAt, bool occupied, Vector2? hearthAt)
+        private static GoapPlan PlanRest(float energy, Vec2? bunkAt, bool occupied, Vec2? hearthAt)
         {
             var context = Context(energy, bunkAt, occupied, hearthAt);
             var initial = WorldStateBuilder.BuildWorldState(context);
@@ -174,16 +174,16 @@ namespace Simpiens.Testing.Drives
             return plan;
         }
 
-        private static AgentContext Context(float energy, Vector2? bunkAt, bool occupied, Vector2? hearthAt)
+        private static AgentContext Context(float energy, Vec2? bunkAt, bool occupied, Vec2? hearthAt)
         {
             var memory = new AgentMemory();
             if (bunkAt.HasValue)
             {
-                memory.SpatialMemoryMap[BunkId] = new SpatialMemoryRecord(BunkId, EntityType.Bunk, Vector2Int.RoundToInt(bunkAt.Value), 1);
+                memory.SpatialMemoryMap[BunkId] = new SpatialMemoryRecord(BunkId, EntityType.Bunk, GridPoint.RoundToInt(bunkAt.Value), 1);
             }
             if (hearthAt.HasValue)
             {
-                memory.SpatialMemoryMap[HearthId] = new SpatialMemoryRecord(HearthId, EntityType.Anchor, Vector2Int.RoundToInt(hearthAt.Value), 1);
+                memory.SpatialMemoryMap[HearthId] = new SpatialMemoryRecord(HearthId, EntityType.Anchor, GridPoint.RoundToInt(hearthAt.Value), 1);
             }
 
             var snapshot = new SharedWorldSnapshot(100, 100, 1f, 8, null);

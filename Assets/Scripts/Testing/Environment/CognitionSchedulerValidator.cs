@@ -77,7 +77,7 @@ namespace Simpiens.Testing.Environment
         private void ValidateDecisionLandsOnTheNextTick(int evaluationDelayMs)
         {
             var (clock, grid, sim) = CreateWorld();
-            var agent = new AgentState(CreateGuid(1)) { Position = new Vector2(10f, 10f) };
+            var agent = new AgentState(CreateGuid(1)) { Position = new Vec2(10f, 10f) };
             var evaluator = new DelayedIdleEvaluator(evaluationDelayMs);
             var service = new AgentCognitionService();
 

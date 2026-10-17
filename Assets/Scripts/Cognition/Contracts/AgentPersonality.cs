@@ -60,7 +60,7 @@ namespace Simpiens.Cognition.Contracts
 
         private static sbyte ToDeviation(float value)
         {
-            return (sbyte)Mathf.RoundToInt(Mathf.Clamp(value, -1f, 1f) * 100f);
+            return (sbyte)SimMath.RoundToInt(SimMath.Clamp(value, -1f, 1f) * 100f);
         }
 
         public override string ToString()

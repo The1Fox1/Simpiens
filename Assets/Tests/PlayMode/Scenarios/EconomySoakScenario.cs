@@ -208,7 +208,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             if (!ok)
             {
                 _conservationViolations++;
-                if (Mathf.Abs(discrepancy) > Mathf.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
+                if (SimMath.Abs(discrepancy) > SimMath.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
             }
             return ok;
         }

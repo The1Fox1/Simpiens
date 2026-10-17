@@ -63,7 +63,7 @@ namespace Simpiens.Cognition
                 // Eating carried food, whoever chose it: a plan step or a hunger reflex
                 if (intent is EatCarriedFoodIntent && agent.HasFoodInInventory)
                 {
-                    agent.Hunger = Mathf.Max(0f, agent.Hunger - 40f);
+                    agent.Hunger = SimMath.Max(0f, agent.Hunger - 40f);
                     agent.HasFoodInInventory = false;
                     agent.Activity.RecordMeal(currentTick);
                 }
@@ -73,26 +73,26 @@ namespace Simpiens.Cognition
                     var completedAction = agent.ActivePlan.CurrentAction;
                     if (completedAction is HarvestResourceAction && YieldedFood(intent))
                     {
-                        agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
+                        agent.Hunger = SimMath.Max(0f, agent.Hunger - 50f);
                         agent.HasFoodInInventory = true;
                         agent.Activity.RecordMeal(currentTick);
                     }
                     else if (completedAction is RestAction)
                     {
-                        agent.Energy = Mathf.Min(100f, agent.Energy + 30f);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + 30f);
                     }
                     else if (completedAction is SleepAtBunkAction && intent is SleepAtBunkIntent)
                     {
-                        agent.Energy = Mathf.Min(100f, agent.Energy + Simpiens.Cognition.Planning.Considerations.BunkSleepBonus);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + Simpiens.Cognition.Planning.Considerations.BunkSleepBonus);
                     }
                     else if (completedAction is TravelToPeerAction)
                     {
-                        agent.Social = Mathf.Min(100f, agent.Social + 25f);
+                        agent.Social = SimMath.Min(100f, agent.Social + 25f);
                     }
                     else if (completedAction is RelaxAtAnchorAction)
                     {
-                        agent.Social = Mathf.Min(100f, agent.Social + 20f);
-                        agent.Energy = Mathf.Min(100f, agent.Energy + 10f);
+                        agent.Social = SimMath.Min(100f, agent.Social + 20f);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + 10f);
                     }
                     else if (completedAction is TravelToDirectiveAction)
                     {
@@ -114,11 +114,11 @@ namespace Simpiens.Cognition
                             agent.Membership = new GroupMembership(
                                 agent.Membership.GroupId,
                                 agent.Membership.Role,
-                                (byte)Mathf.Min(100, agent.Membership.Allegiance + 3),
+                                (byte)SimMath.Min(100, agent.Membership.Allegiance + 3),
                                 agent.Membership.JoinTick);
                         }
 
-                        Vector2Int agentPos = Vector2Int.RoundToInt(agent.Position);
+                        GridPoint agentPos = GridPoint.RoundToInt(agent.Position);
                         EntityId leaderId = default;
                         if (_spatialPartition != null)
                         {
@@ -154,7 +154,7 @@ namespace Simpiens.Cognition
                 }
                 else if (intent is HarvestResourceIntent && YieldedFood(intent))
                 {
-                    agent.Hunger = Mathf.Max(0f, agent.Hunger - 50f);
+                    agent.Hunger = SimMath.Max(0f, agent.Hunger - 50f);
                     agent.HasFoodInInventory = true;
                     agent.Activity.RecordMeal(currentTick);
                 }

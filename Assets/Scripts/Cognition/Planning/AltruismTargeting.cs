@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -24,7 +22,7 @@ namespace Simpiens.Cognition.Planning
         /// Selects the perceived peer (within PerceptionRadius, in line of sight) who is starving (hunger ≥ 85)
         /// or collapsed and whose altruism score clears the threshold. The helper itself must be sated (&lt; 50).
         /// </summary>
-        public static bool TrySelectDistressedPeer(in AgentContext context, out EntityId peerId, out Vector2 peerPosition, out float utility)
+        public static bool TrySelectDistressedPeer(in AgentContext context, out EntityId peerId, out Vec2 peerPosition, out float utility)
         {
             peerId = default;
             peerPosition = default;

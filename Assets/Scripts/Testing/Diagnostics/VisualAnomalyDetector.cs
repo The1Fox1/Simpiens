@@ -33,15 +33,15 @@ namespace Simpiens.Testing.Diagnostics
         private class AgentTelemetryHistory
         {
             // Jitter, sampled once per simulation tick from logical positions
-            public Vector2 LastTickPosition;
+            public Vec2 LastTickPosition;
             public bool HasTickPosition;
-            public Vector2 LastTickHeading;
+            public Vec2 LastTickHeading;
             public bool HasTickHeading;
             public readonly long[] ReversalTicks = new long[4];
             public int ReversalIndex;
             public int ReversalCount;
             public long LastJitterAlertTick = long.MinValue / 2;
-            public readonly Vector2[] Trail = new Vector2[JitterTrailLength];
+            public readonly Vec2[] Trail = new Vec2[JitterTrailLength];
             public int TrailIndex;
             public int TrailCount;
 
@@ -68,7 +68,7 @@ namespace Simpiens.Testing.Diagnostics
                 if (ReversalCount < ReversalTicks.Length) ReversalCount++;
             }
 
-            public void RecordTrail(Vector2 position)
+            public void RecordTrail(Vec2 position)
             {
                 Trail[TrailIndex] = position;
                 TrailIndex = (TrailIndex + 1) % Trail.Length;
@@ -148,7 +148,7 @@ namespace Simpiens.Testing.Diagnostics
             if (count <= 0 || _recentAnomalies.Count == 0)
                 return Array.Empty<VisualAnomalyRecord>();
 
-            int returnCount = Mathf.Min(count, _recentAnomalies.Count);
+            int returnCount = SimMath.Min(count, _recentAnomalies.Count);
             var result = new VisualAnomalyRecord[returnCount];
             int startIndex = _recentAnomalies.Count - returnCount;
             for (int i = 0; i < returnCount; i++)
@@ -226,7 +226,7 @@ namespace Simpiens.Testing.Diagnostics
                 if (node == null || node.Type != EntityType.Pawn) continue;
                 var history = GetOrCreateHistory(node.Id);
 
-                Vector2 position = node.Position;
+                Vec2 position = node.Position;
                 history.RecordTrail(position);
                 if (!history.HasTickPosition)
                 {
@@ -235,12 +235,12 @@ namespace Simpiens.Testing.Diagnostics
                     continue;
                 }
 
-                Vector2 delta = position - history.LastTickPosition;
-                if (delta.sqrMagnitude <= 0.0001f) continue; // headings only from real movement
-                Vector2 heading = delta.normalized;
+                Vec2 delta = position - history.LastTickPosition;
+                if (delta.SqrMagnitude <= 0.0001f) continue; // headings only from real movement
+                Vec2 heading = delta.Normalized;
                 history.LastTickPosition = position;
 
-                if (history.HasTickHeading && Vector2.Dot(heading, history.LastTickHeading) < -0.5f)
+                if (history.HasTickHeading && Vec2.Dot(heading, history.LastTickHeading) < -0.5f)
                 {
                     history.RecordReversal(tick);
                     if (history.ReversalCount >= JitterReversals)
@@ -278,7 +278,7 @@ namespace Simpiens.Testing.Diagnostics
             {
                 var p = history.Trail[(history.TrailIndex - k + len) % len];
                 if (sb.Length > 0) sb.Append(' ');
-                sb.Append('(').Append(p.x.ToString("F2")).Append(',').Append(p.y.ToString("F2")).Append(')');
+                sb.Append('(').Append(p.X.ToString("F2")).Append(',').Append(p.Y.ToString("F2")).Append(')');
             }
             return sb.ToString();
         }
@@ -365,7 +365,7 @@ namespace Simpiens.Testing.Diagnostics
 
                     if (isSocialInteraction) continue;
 
-                    float dist = Vector2.Distance(nodeA.Position, nodeB.Position);
+                    float dist = Vec2.Distance(nodeA.Position, nodeB.Position);
                     if (dist < 0.35f)
                     {
                         isStackedWithAny = true;
@@ -392,7 +392,7 @@ namespace Simpiens.Testing.Diagnostics
 
                 if (!isStackedWithAny)
                 {
-                    historyA.StackingDuration = Mathf.Max(0f, historyA.StackingDuration - dtStep * 2f);
+                    historyA.StackingDuration = SimMath.Max(0f, historyA.StackingDuration - dtStep * 2f);
                 }
             }
         }
@@ -404,7 +404,7 @@ namespace Simpiens.Testing.Diagnostics
                 var node = activeNodes[i];
                 if (node == null || node.Type != EntityType.Pawn) continue;
 
-                Vector2 pos = node.Position;
+                Vec2 pos = node.Position;
 
                 // 1. Boundary breach check: the loaded map's playable bounds (±20 before any map is loaded)
                 if (IsOutsidePlayArea(pos))
@@ -435,7 +435,7 @@ namespace Simpiens.Testing.Diagnostics
                     continue;
                 }
 
-                int hitCount = Physics2D.OverlapCircle(pos, probeRadius, _obstacleFilter, _overlapBuffer);
+                int hitCount = Physics2D.OverlapCircle(pos.ToUnity(), probeRadius, _obstacleFilter, _overlapBuffer);
                 for (int h = 0; h < hitCount; h++)
                 {
                     var col = _overlapBuffer[h];
@@ -451,24 +451,24 @@ namespace Simpiens.Testing.Diagnostics
             }
         }
 
-        private bool IsOutsidePlayArea(Vector2 pos)
+        private bool IsOutsidePlayArea(Vec2 pos)
         {
             var grid = _spatialPartition?.StaticGrid;
             if (grid != null && grid.HasPlayableBounds)
             {
                 var b = grid.PlayableBounds;
-                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+                return pos.X < b.XMin || pos.X > b.XMax || pos.Y < b.YMin || pos.Y > b.YMax;
             }
             var mapBounds = _worldMap?.Current;
             if (mapBounds != null)
             {
                 var b = mapBounds.PlayableBounds;
-                return pos.x < b.xMin || pos.x > b.xMax || pos.y < b.yMin || pos.y > b.yMax;
+                return pos.X < b.XMin || pos.X > b.XMax || pos.Y < b.YMin || pos.Y > b.YMax;
             }
-            return Mathf.Abs(pos.x) > NavConstants.PlayAreaHalfExtent || Mathf.Abs(pos.y) > NavConstants.PlayAreaHalfExtent;
+            return SimMath.Abs(pos.X) > NavConstants.PlayAreaHalfExtent || SimMath.Abs(pos.Y) > NavConstants.PlayAreaHalfExtent;
         }
 
-        private void ReportPenetration(NodeController node, Vector2 pos, long tick, float currentTime, string obstacle)
+        private void ReportPenetration(NodeController node, Vec2 pos, long tick, float currentTime, string obstacle)
         {
             if (_histories.TryGetValue(node.Id, out var hist) && (currentTime - hist.LastPenetrationAlertTime >= 1.0f))
             {

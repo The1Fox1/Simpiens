@@ -69,12 +69,12 @@ namespace Simpiens.Testing.Persistence
             for (int i = 0; i < order.Length; i++)
             {
                 var id = order[i];
-                memory.SpatialMemoryMap[id] = new SpatialMemoryRecord(id, EntityType.Resource, new Vector2Int((int)id.GetHashCode() % 7, 3), 100u, ItemType.IronOre);
+                memory.SpatialMemoryMap[id] = new SpatialMemoryRecord(id, EntityType.Resource, new GridPoint((int)id.GetHashCode() % 7, 3), 100u, ItemType.IronOre);
                 memory.BlacklistEntity(id, 900u);
                 memory.SetAffinity(id, new AffinityRecord(10, 20, 5, -3, 4, 77u));
             }
-            memory.RecordEvent(MemoryEventType.ResourceSpotted, A, new Vector2Int(1, 2), 10u);
-            memory.RecordEvent(MemoryEventType.GossipShared, B, Vector2Int.zero, 20u);
+            memory.RecordEvent(MemoryEventType.ResourceSpotted, A, new GridPoint(1, 2), 10u);
+            memory.RecordEvent(MemoryEventType.GossipShared, B, GridPoint.Zero, 20u);
             memory.NoteSectorVisit(5, 40u);
             return memory;
         }
@@ -83,7 +83,7 @@ namespace Simpiens.Testing.Persistence
         {
             var first = new EconomyLedger();
             var second = new EconomyLedger();
-            var stall = new TradeStallData(A, Vector2.zero, treasuryGold: 1000);
+            var stall = new TradeStallData(A, Vec2.Zero, treasuryGold: 1000);
             var stallCopy = stall;
 
             first.RecordFaucet(500, "InitialSeed");
@@ -117,14 +117,14 @@ namespace Simpiens.Testing.Persistence
         {
             var first = new GroupRegistry();
             var second = new GroupRegistry();
-            var directive = new GroupDirective(DirectiveType.RallyAtLocation, 1, A, new Vector2(4f, 5f), default, 10u, 500u);
+            var directive = new GroupDirective(DirectiveType.RallyAtLocation, 1, A, new Vec2(4f, 5f), default, 10u, 500u);
 
-            byte g1 = first.CreateGroup(GroupType.Settlement, A, new Vector2(1f, 2f), 80);
+            byte g1 = first.CreateGroup(GroupType.Settlement, A, new Vec2(1f, 2f), 80);
             first.AddMember(g1, C);
             first.AddMember(g1, B, RoleRank.Officer, 60);
             first.SetDirective(g1, directive);
 
-            byte g2 = second.CreateGroup(GroupType.Settlement, A, new Vector2(1f, 2f), 80);
+            byte g2 = second.CreateGroup(GroupType.Settlement, A, new Vec2(1f, 2f), 80);
             second.AddMember(g2, B, RoleRank.Officer, 60);
             second.AddMember(g2, C);
             second.SetDirective(g2, directive);
@@ -192,7 +192,7 @@ namespace Simpiens.Testing.Persistence
         {
             var state = new AgentState(A)
             {
-                Position = new Vector2(3.5f, -2.25f),
+                Position = new Vec2(3.5f, -2.25f),
                 Needs = new AgentNeeds(61f, 42f, 33f),
                 Frustration = 12f,
                 Membership = new GroupMembership(3, RoleRank.Follower, 55, 400u),
@@ -219,7 +219,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.Id == A && r.Position == state.Position, "Id and position are captured.");
             Assert(r.Needs.Hunger == 61f && r.Needs.Energy == 42f && r.Needs.Social == 33f && r.Frustration == 12f, "Needs and frustration are captured.");
             Assert(r.Activity.SalvageHarvests == 1 && r.Activity.FirstMealTick == 9, "The activity tally is captured.");
-            Assert(r.Membership.GroupId == 3 && r.Identity.FaithId == 3 && Mathf.Approximately(r.Personality.Greed, 0.5f), "Membership, identity and personality are captured.");
+            Assert(r.Membership.GroupId == 3 && r.Identity.FaithId == 3 && SimMath.Approximately(r.Personality.Greed, 0.5f), "Membership, identity and personality are captured.");
             Assert(r.NavigationalStalls == 2 && r.TantrumTimer == 1.5f && r.DefiantTimer == 0.125f && r.GossipTimer == 1.5f, "Stalls and emotion timers are captured.");
             Assert(r.LastGossipTimestamp == 11f && r.LastEvaluatedDirectiveTick == 77u, "Timestamps are captured.");
             Assert(r.ScoutReportBountyId == 2 && r.ScoutReportTick == 88u, "A scout's report is captured.");

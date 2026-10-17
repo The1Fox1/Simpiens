@@ -68,9 +68,9 @@ namespace Simpiens.Testing.World
             var loaded = worldMap.Load(dev);
             var cells = dev.PartitionCells(1f);
             var grid = partition.StaticGrid;
-            Assert(grid.Width == cells.x && grid.Height == cells.y, $"Partition must be sized from the map ({cells.x}x{cells.y}), got {grid.Width}x{grid.Height}.");
+            Assert(grid.Width == cells.X && grid.Height == cells.Y, $"Partition must be sized from the map ({cells.X}x{cells.Y}), got {grid.Width}x{grid.Height}.");
             Assert(grid.PlayableBounds == dev.PlayableBounds, "Static grid carries the map's playable bounds.");
-            Assert(!IsWalkable(grid, new Vector2(0f, 3.5f)), "Pen wall at (0, 3.5) must be blocked after load.");
+            Assert(!IsWalkable(grid, new Vec2(0f, 3.5f)), "Pen wall at (0, 3.5) must be blocked after load.");
             Assert(ReferenceEquals(worldMap.Current, dev) && worldMap.Version == 1, "Current map and version after the first load.");
             Assert(ReferenceEquals(sectors.Map, dev) && sectors.IsExplored(DirectiveSectorId), "Sectors loaded with default exploration (the Dev Map pens start charted).");
 
@@ -78,16 +78,16 @@ namespace Simpiens.Testing.World
             Assert(loaded.TryGetEntityId("probe", out _) && !loaded.TryGetEntityId("missing", out _), "LoadedWorld key lookup.");
 
             // A different map replaces walls, bounds and sectors
-            var other = new MapDefinitionBuilder("Other", new Rect(-12f, -12f, 24f, 24f))
-                .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
-                .Sector(1, "Only", "", new Rect(-12f, -12f, 24f, 24f), startsExplored: false)
+            var other = new MapDefinitionBuilder("Other", new RectF(-12f, -12f, 24f, 24f))
+                .WallRun(new Vec2(3f, -2f), new Vec2(3f, 2f))
+                .Sector(1, "Only", "", new RectF(-12f, -12f, 24f, 24f), startsExplored: false)
                 .Build();
             worldMap.Load(other);
             grid = partition.StaticGrid;
             var otherCells = other.PartitionCells(1f);
-            Assert(grid.Width == otherCells.x && grid.Height == otherCells.y, "Partition resized for the second map.");
-            Assert(IsWalkable(grid, new Vector2(0f, 3.5f)) && !IsWalkable(grid, new Vector2(3f, 0f)), "Second map's walls replace the first map's.");
-            Assert(worldMap.Version == 2 && sectors.GetSectorAt(Vector2.zero).Id == 1, "Second load bumps the version and swaps the sector table.");
+            Assert(grid.Width == otherCells.X && grid.Height == otherCells.Y, "Partition resized for the second map.");
+            Assert(IsWalkable(grid, new Vec2(0f, 3.5f)) && !IsWalkable(grid, new Vec2(3f, 0f)), "Second map's walls replace the first map's.");
+            Assert(worldMap.Version == 2 && sectors.GetSectorAt(Vec2.Zero).Id == 1, "Second load bumps the version and swaps the sector table.");
             Assert(!sectors.IsExplored(1), "Loading a map resets exploration to the new map's defaults.");
             sectors.SetExplored(DirectiveSectorId, false);
             worldMap.Load(dev);
@@ -99,12 +99,12 @@ namespace Simpiens.Testing.World
         private void ValidateSectorRegistry()
         {
             var sectors = new SectorRegistry();
-            Assert(sectors.GetSectorAt(Vector2.zero).Id == 0 && sectors.IsExplored(0), "Before a load, everything is the explored fallback.");
+            Assert(sectors.GetSectorAt(Vec2.Zero).Id == 0 && sectors.IsExplored(0), "Before a load, everything is the explored fallback.");
 
             sectors.Load(CommonsYardFixture.Definition);
-            Assert(sectors.GetSectorAt(new Vector2(-8.5f, 10f)).Id == CommonsYardFixture.OreRidgeSectorId, "Ore Ridge anchor is in Ore Ridge.");
+            Assert(sectors.GetSectorAt(new Vec2(-8.5f, 10f)).Id == CommonsYardFixture.OreRidgeSectorId, "Ore Ridge anchor is in Ore Ridge.");
             Assert(sectors.GetSectorAt(CommonsYardFixture.OutpostStallPosition).Id == CommonsYardFixture.OutpostMarketSectorId, "Stall is in the Outpost Market.");
-            Assert(sectors.GetSectorAt(new Vector2(13f, 16f)).Id == 0, "Open yard corner falls back to sector 0.");
+            Assert(sectors.GetSectorAt(new Vec2(13f, 16f)).Id == 0, "Open yard corner falls back to sector 0.");
             Assert(sectors.TryGetSector(0, out var fallback) && fallback.Name == "Transit / Open Yard", "Id 0 resolves to the fallback.");
             Assert(!sectors.TryGetSector(99, out _), "Unknown id is not found.");
 
@@ -130,12 +130,12 @@ namespace Simpiens.Testing.World
 
             var registry = new SectorRegistry();
             registry.Load(null);
-            Assert(registry.GetSectorAt(Vector2.zero).Id == 0 && registry.All.Count == 0, "Loading a null map leaves only the fallback.");
+            Assert(registry.GetSectorAt(Vec2.Zero).Id == 0 && registry.All.Count == 0, "Loading a null map leaves only the fallback.");
 
             Debug.Log("[PASS] Test 4: Null-dependency isolation.");
         }
 
-        private static bool IsWalkable(StaticNavGrid grid, Vector2 world)
+        private static bool IsWalkable(StaticNavGrid grid, Vec2 world)
         {
             return grid.WorldToCell(world, out int x, out int y) && grid.IsCellWalkable(x, y);
         }

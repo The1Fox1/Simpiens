@@ -45,7 +45,7 @@ namespace Simpiens.Cognition
                 if (_state == null)
                 {
                     _state = new AgentState();
-                    if (transform != null) _state.Position = transform.position;
+                    if (transform != null) _state.Position = transform.position.ToSim();
                 }
                 return _state;
             }
@@ -168,7 +168,7 @@ namespace Simpiens.Cognition
             if (_state == null)
             {
                 _state = new AgentState();
-                if (transform != null) _state.Position = transform.position;
+                if (transform != null) _state.Position = transform.position.ToSim();
             }
             if (_cts == null)
             {
@@ -262,7 +262,7 @@ namespace Simpiens.Cognition
             State.AgentId = id;
             if (transform != null)
             {
-                State.Position = transform.position;
+                State.Position = transform.position.ToSim();
             }
 
             _spatialPartition = spatialPartition;
@@ -297,7 +297,7 @@ namespace Simpiens.Cognition
 
             if (transform != null)
             {
-                State.Position = transform.position;
+                State.Position = transform.position.ToSim();
             }
 
 #if UNITY_EDITOR
@@ -449,7 +449,7 @@ namespace Simpiens.Cognition
                 if (ledger != null && ledger.Count > 0)
                 {
                     var sb = new System.Text.StringBuilder();
-                    int start = Mathf.Max(0, ledger.Count - 6);
+                    int start = SimMath.Max(0, ledger.Count - 6);
                     for (int i = ledger.Count - 1; i >= start; i--)
                     {
                         var evt = ledger.GetEvent(i);
@@ -512,7 +512,7 @@ namespace Simpiens.Cognition
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return;
             _lastBusyPerceptionTick = tick;
-            State.Memory.UpdateMemory(snapshot, Vector2Int.RoundToInt(State.Position), DefaultVisionRadius, (uint)tick,
+            State.Memory.UpdateMemory(snapshot, GridPoint.RoundToInt(State.Position), DefaultVisionRadius, (uint)tick,
                 surveySectorId: BountyQueries.SurveyingSector(snapshot, State.AgentId));
         }
     }

@@ -1585,7 +1585,7 @@ namespace Simpiens.UI
 
             if (_interventionService != null)
             {
-                var bountyCmd = new PostBountyCommand(0, type, sectorId, itemType, qty, rewardGold, durationTicks, Vector2.zero, creatorStallId);
+                var bountyCmd = new PostBountyCommand(0, type, sectorId, itemType, qty, rewardGold, durationTicks, Vec2.Zero, creatorStallId);
                 _interventionService.QueueInfluence(InfluenceEvent.CreatePostBounty("Player", bountyCmd));
                 if (_bountyFeedbackLabel != null)
                 {

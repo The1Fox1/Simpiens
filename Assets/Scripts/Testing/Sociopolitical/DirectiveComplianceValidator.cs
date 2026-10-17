@@ -49,14 +49,14 @@ namespace Simpiens.Testing.Sociopolitical
                 DirectiveType.RallyAtLocation,
                 groupId,
                 leaderId,
-                targetLocation: new Vector2(10f, 10f),
+                targetLocation: new Vec2(10f, 10f),
                 targetEntityId: default,
                 issuedTick: 100,
                 expirationTick: 500,
                 targetRadius: 2.5f
             );
 
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, new Vector2(10f, 10f), directive, 2, 90);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, new Vec2(10f, 10f), directive, 2, 90);
             var snapshot = new SharedWorldSnapshot(20, 20, 1.0f, 16, _ => { });
             var groupBuffer = new GroupData[SharedWorldSnapshot.MaxGroups];
             groupBuffer[0] = groupData;
@@ -64,7 +64,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             // 1. Follower within directive radius (10.0, 11.0 => distance 1.0 <= 2.5)
             var memFollower = new GroupMembership(groupId, RoleRank.Follower, 80, 50);
-            var ctxWithin = new AgentContext(followerId, new Vector2(10f, 11f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memFollower, IdentityTag.Default);
+            var ctxWithin = new AgentContext(followerId, new Vec2(10f, 11f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memFollower, IdentityTag.Default);
             var stateWithin = WorldStateBuilder.BuildWorldState(ctxWithin);
 
             Assert(stateWithin.Get(StateFact.HasActiveDirective), "Follower state reflects HasActiveDirective = true.");
@@ -72,7 +72,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!stateWithin.Get(StateFact.IsGroupLeader), "Follower reflects IsGroupLeader = false.");
 
             // 2. Follower outside directive radius (0.0, 0.0 => distance ~14 > 2.5)
-            var ctxOutside = new AgentContext(followerId, new Vector2(0f, 0f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memFollower, IdentityTag.Default);
+            var ctxOutside = new AgentContext(followerId, new Vec2(0f, 0f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memFollower, IdentityTag.Default);
             var stateOutside = WorldStateBuilder.BuildWorldState(ctxOutside);
 
             Assert(stateOutside.Get(StateFact.HasActiveDirective), "Follower outside radius reflects HasActiveDirective = true.");
@@ -80,13 +80,13 @@ namespace Simpiens.Testing.Sociopolitical
 
             // 3. Leader agent
             var memLeader = new GroupMembership(groupId, RoleRank.Leader, 100, 0);
-            var ctxLeader = new AgentContext(leaderId, new Vector2(10f, 10f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memLeader, IdentityTag.Default);
+            var ctxLeader = new AgentContext(leaderId, new Vec2(10f, 10f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 200, memLeader, IdentityTag.Default);
             var stateLeader = WorldStateBuilder.BuildWorldState(ctxLeader);
 
             Assert(stateLeader.Get(StateFact.IsGroupLeader), "Leader reflects IsGroupLeader = true.");
 
             // 4. Expired directive (currentTick 600 > expirationTick 500)
-            var ctxExpired = new AgentContext(followerId, new Vector2(10f, 11f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 600, memFollower, IdentityTag.Default);
+            var ctxExpired = new AgentContext(followerId, new Vec2(10f, 11f), new AgentNeeds(10, 80, 50), 0f, snapshot, null, 600, memFollower, IdentityTag.Default);
             var stateExpired = WorldStateBuilder.BuildWorldState(ctxExpired);
 
             Assert(!stateExpired.Get(StateFact.HasActiveDirective), "Expired directive reflects HasActiveDirective = false.");
@@ -108,8 +108,8 @@ namespace Simpiens.Testing.Sociopolitical
             var leaderId = CreateGuid();
             var followerId = CreateGuid();
             byte groupId = 1;
-            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vector2(5f, 5f), default, 100, 500, 2.5f);
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vector2.zero, directive, 2, 90);
+            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vec2(5f, 5f), default, 100, 500, 2.5f);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vec2.Zero, directive, 2, 90);
 
             var snapshot = new SharedWorldSnapshot(10, 10, 1.0f, 16, _ => { });
             var buffer = new GroupData[SharedWorldSnapshot.MaxGroups];
@@ -122,7 +122,7 @@ namespace Simpiens.Testing.Sociopolitical
             memory.SetAffinity(leaderId, new AffinityRecord(warmth: 30, trust: 30, fear: 10, respect: 50, 1, 100));
 
             // Plan from remote position: Requires [TravelToDirectiveAction, ExecuteDirectiveAction]
-            var ctxRemote = new AgentContext(followerId, Vector2.zero, new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
+            var ctxRemote = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
             var stateRemote = WorldState.Empty.With(StateFact.HasActiveDirective, true).With(StateFact.AtDirectiveLocation, false);
 
             bool foundRemote = planner.Plan(stateRemote, goal, actionGraph, ctxRemote, scratchPlan);
@@ -130,7 +130,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(scratchPlan.Count == 2, $"Remote plan length must be 2 (actual: {scratchPlan.Count}).");
             Assert(scratchPlan.Actions[0] is TravelToDirectiveAction, "First action is TravelToDirectiveAction.");
             Assert(scratchPlan.Actions[1] is ExecuteDirectiveAction, "Second action is ExecuteDirectiveAction.");
-            Assert(Mathf.Approximately(scratchPlan.TotalCost, 3.0f), $"Total plan cost is 3.0 (actual: {scratchPlan.TotalCost}).");
+            Assert(SimMath.Approximately(scratchPlan.TotalCost, 3.0f), $"Total plan cost is 3.0 (actual: {scratchPlan.TotalCost}).");
 
             // Plan from target position: Requires only [ExecuteDirectiveAction]
             var stateLocal = WorldState.Empty.With(StateFact.HasActiveDirective, true).With(StateFact.AtDirectiveLocation, true);
@@ -138,7 +138,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(foundLocal, "Planner finds valid plan when already at directive location.");
             Assert(scratchPlan.Count == 1, $"Local plan length must be 1 (actual: {scratchPlan.Count}).");
             Assert(scratchPlan.Actions[0] is ExecuteDirectiveAction, "Only action is ExecuteDirectiveAction.");
-            Assert(Mathf.Approximately(scratchPlan.TotalCost, 1.0f), $"Total plan cost is 1.0 (actual: {scratchPlan.TotalCost}).");
+            Assert(SimMath.Approximately(scratchPlan.TotalCost, 1.0f), $"Total plan cost is 1.0 (actual: {scratchPlan.TotalCost}).");
 
             Debug.Log("[PASS] Test 2: GOAP backward planning for collective directives verified.");
         }
@@ -149,7 +149,7 @@ namespace Simpiens.Testing.Sociopolitical
             var followerId = CreateGuid();
             byte groupId = 1;
 
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vector2.zero, GroupDirective.None, 2, 90);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vec2.Zero, GroupDirective.None, 2, 90);
             var memory = new AgentMemory();
 
             // Setup exact values: Respect=40, Fear=10, Warmth=20
@@ -157,7 +157,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             // Allegiance = 80, Hunger = 20, Frustration = 10
             var mem = new GroupMembership(groupId, RoleRank.Follower, 80, 50);
-            var context = new AgentContext(followerId, Vector2.zero, new AgentNeeds(hunger: 20, energy: 80, social: 50), frustration: 10f, null, memory, 100, mem, IdentityTag.Default);
+            var context = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(hunger: 20, energy: 80, social: 50), frustration: 10f, null, memory, 100, mem, IdentityTag.Default);
 
             // Formula:
             // U = (Respect * 0.35) + (Fear * 0.30) + (Allegiance * 0.25) + (Warmth * 0.10) - (Hunger * 0.30) - (Frustration * 0.20)
@@ -166,7 +166,7 @@ namespace Simpiens.Testing.Sociopolitical
             float expectedU = 31.0f;
             float actualU = ComplianceUtility.CalculateUtility(context, groupData);
 
-            Assert(Mathf.Abs(actualU - expectedU) < 0.001f, $"Compliance utility calculation mismatch: expected {expectedU}, got {actualU}.");
+            Assert(SimMath.Abs(actualU - expectedU) < 0.001f, $"Compliance utility calculation mismatch: expected {expectedU}, got {actualU}.");
 
             var decision = ComplianceUtility.Evaluate(context, groupData);
             Assert(decision == ComplianceDecision.Comply, $"Decision must be Comply for U={actualU} >= 20.");
@@ -179,12 +179,12 @@ namespace Simpiens.Testing.Sociopolitical
             var leaderId = CreateGuid();
             var followerId = CreateGuid();
             byte groupId = 1;
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vector2.zero, GroupDirective.None, 2, 90);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vec2.Zero, GroupDirective.None, 2, 90);
 
             // 1. High utility -> Comply (U >= 20)
             {
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 90, 0); // 22.5 from allegiance
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(0, 100, 50), 0f, null, null, 0, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(0, 100, 50), 0f, null, null, 0, mem, IdentityTag.Default);
                 Assert(ComplianceUtility.Evaluate(ctx, groupData) == ComplianceDecision.Comply, "U >= 20 yields Comply.");
             }
 
@@ -192,7 +192,7 @@ namespace Simpiens.Testing.Sociopolitical
             {
                 // Respect=0, Fear=0, Warmth=0, Allegiance=40 (+10), Hunger=20 (-6), Frustration=10 (-2) => U = +2
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 40, 0);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(20, 80, 50), 10f, null, null, 0, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(20, 80, 50), 10f, null, null, 0, mem, IdentityTag.Default);
                 float u = ComplianceUtility.CalculateUtility(ctx, groupData);
                 Assert(u >= 0f && u < 20f, $"Utility is in passive range: {u}.");
                 Assert(ComplianceUtility.Evaluate(ctx, groupData) == ComplianceDecision.PassiveDefiance, "0 <= U < 20 yields PassiveDefiance.");
@@ -204,7 +204,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var memory = new AgentMemory();
                 memory.SetAffinity(leaderId, new AffinityRecord(warmth: -30, trust: -30, fear: 0, respect: -30, 1, 0));
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 10, 0);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(60, 50, 50), 40f, null, memory, 0, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(60, 50, 50), 40f, null, memory, 0, mem, IdentityTag.Default);
 
                 float u = ComplianceUtility.CalculateUtility(ctx, groupData);
                 Assert(u < 0f, $"Utility is negative: {u}.");
@@ -220,8 +220,8 @@ namespace Simpiens.Testing.Sociopolitical
             var followerId = CreateGuid();
             byte groupId = 1;
 
-            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vector2(5f, 5f), default, 100, 500, 2.5f);
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vector2.zero, directive, 2, 90);
+            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vec2(5f, 5f), default, 100, 500, 2.5f);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, Vec2.Zero, directive, 2, 90);
 
             var snapshot = new SharedWorldSnapshot(10, 10, 1.0f, 16, _ => { });
             var buffer = new GroupData[SharedWorldSnapshot.MaxGroups];
@@ -236,7 +236,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var memory = new AgentMemory();
                 memory.SetAffinity(leaderId, new AffinityRecord(warmth: 20, trust: 20, fear: 10, respect: 40, 1, 100));
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 80, 50);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
                 Assert(goal.IsValid(ctx), "Goal is valid for loyal follower.");
                 float priority = goal.CalculatePriority(ctx);
@@ -246,7 +246,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Scenario B: Defiant follower (U < 20)
             {
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 20, 50);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(50, 50, 50), 20f, snapshot, null, 150, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(50, 50, 50), 20f, snapshot, null, 150, mem, IdentityTag.Default);
 
                 Assert(!goal.IsValid(ctx), "Goal is invalid for defiant follower.");
                 Assert(goal.CalculatePriority(ctx) == 0f, "Goal priority is 0 for defiant follower.");
@@ -259,7 +259,7 @@ namespace Simpiens.Testing.Sociopolitical
                 // High respect/allegiance keeps U > 20 despite hunger
                 memory.SetAffinity(leaderId, new AffinityRecord(warmth: 20, trust: 20, fear: 10, respect: 60, 1, 100));
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 100, 50);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
                 float directivePriority = goal.CalculatePriority(ctx);
                 float hungerPriority = hungerGoal.CalculatePriority(ctx);
@@ -275,7 +275,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var memory = new AgentMemory();
                 memory.SetAffinity(leaderId, new AffinityRecord(warmth: 0, trust: 0, fear: 80, respect: 40, 1, 100));
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 90, 50);
-                var ctx = new AgentContext(followerId, Vector2.zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
+                var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
                 float intimidatedPriority = goal.CalculatePriority(ctx);
                 Assert(intimidatedPriority >= 70f, $"Intimidation fear maintained high directive priority ({intimidatedPriority}) despite starvation.");
@@ -289,7 +289,7 @@ namespace Simpiens.Testing.Sociopolitical
             var registry = new GroupRegistry();
             var leaderId = CreateGuid();
             var followerId = CreateGuid();
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leaderId, Vector2.zero);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leaderId, Vec2.Zero);
             registry.AddMember(groupId, followerId, RoleRank.Follower, initialAllegiance: 70);
 
             // 1. Passive defiance: -5 allegiance
@@ -310,9 +310,9 @@ namespace Simpiens.Testing.Sociopolitical
 
             // 4. Memory event types verification
             var memory = new AgentMemory();
-            memory.RecordEvent(MemoryEventType.DirectiveComplied, leaderId, Vector2Int.zero, 100);
-            memory.RecordEvent(MemoryEventType.SubordinateDefied, followerId, Vector2Int.zero, 101);
-            memory.RecordEvent(MemoryEventType.DesertedGroup, leaderId, Vector2Int.zero, 102);
+            memory.RecordEvent(MemoryEventType.DirectiveComplied, leaderId, GridPoint.Zero, 100);
+            memory.RecordEvent(MemoryEventType.SubordinateDefied, followerId, GridPoint.Zero, 101);
+            memory.RecordEvent(MemoryEventType.DesertedGroup, leaderId, GridPoint.Zero, 102);
 
             Assert(memory.EventLedger.Count == 3, "All 3 new memory events recorded without error.");
 
@@ -363,8 +363,8 @@ namespace Simpiens.Testing.Sociopolitical
             var followerId = CreateGuid();
             byte groupId = 1;
 
-            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vector2(10f, 10f), default, 100, 500, 2.5f);
-            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, new Vector2(10f, 10f), directive, 2, 90);
+            var directive = new GroupDirective(DirectiveType.RallyAtLocation, groupId, leaderId, new Vec2(10f, 10f), default, 100, 500, 2.5f);
+            var groupData = new GroupData(groupId, GroupType.Settlement, leaderId, new Vec2(10f, 10f), directive, 2, 90);
 
             var snapshot = new SharedWorldSnapshot(20, 20, 1.0f, 16, _ => { });
             var groupBuffer = new GroupData[SharedWorldSnapshot.MaxGroups];
@@ -374,7 +374,7 @@ namespace Simpiens.Testing.Sociopolitical
             var memory = new AgentMemory();
             memory.SetAffinity(leaderId, new AffinityRecord(warmth: 20, trust: 20, fear: 10, respect: 40, 1, 100));
             var mem = new GroupMembership(groupId, RoleRank.Follower, 80, 50);
-            var context = new AgentContext(followerId, new Vector2(10f, 11f), new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 200, mem, IdentityTag.Default);
+            var context = new AgentContext(followerId, new Vec2(10f, 11f), new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 200, mem, IdentityTag.Default);
             var goal = new ComplyDirectiveGoal();
 
             // Pre-warm JIT

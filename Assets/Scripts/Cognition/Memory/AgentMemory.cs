@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition.Social;
@@ -153,7 +152,7 @@ namespace Simpiens.Cognition.Memory
         /// (fog of war), except by the scout surveying that sector (<paramref name="surveySectorId"/>), whose
         /// sightings become private survey notes.
         /// </summary>
-        public void UpdateMemory(SharedWorldSnapshot snapshot, Vector2Int currentPos, int visionRadius, uint currentTick, byte surveySectorId = 0)
+        public void UpdateMemory(SharedWorldSnapshot snapshot, GridPoint currentPos, int visionRadius, uint currentTick, byte surveySectorId = 0)
         {
             if (_queryResults == null)
             {
@@ -161,7 +160,7 @@ namespace Simpiens.Cognition.Memory
             }
             _queryResults.Clear();
 
-            Vector2 queryPos = new Vector2(currentPos.x, currentPos.y);
+            Vec2 queryPos = new Vec2(currentPos.X, currentPos.Y);
             if (snapshot?.Map != null) NoteSectorVisit(snapshot.Map.FindSector(queryPos).Id, currentTick);
             
             // Query the global snapshot strictly within the agent's visionRadius
@@ -179,7 +178,7 @@ namespace Simpiens.Cognition.Memory
                     continue;
                 }
 
-                Vector2Int entityPosInt = new Vector2Int(Mathf.RoundToInt(entity.Position.x), Mathf.RoundToInt(entity.Position.y));
+                GridPoint entityPosInt = new GridPoint(SimMath.RoundToInt(entity.Position.X), SimMath.RoundToInt(entity.Position.Y));
 
                 // Fog of war: nobody knows what is inside an uncharted sector until a scout reports back
                 if (snapshot != null && IsLandmark(entity.Type) && !snapshot.IsCharted(entity.Position))
@@ -226,11 +225,11 @@ namespace Simpiens.Cognition.Memory
                 if (record.LastSeenTick == currentTick) continue;
 
                 // 1. Line-of-sight pruning: Can we see its last known location?
-                float dist = Vector2.Distance(queryPos, new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y));
+                float dist = Vec2.Distance(queryPos, new Vec2(record.LastKnownLocation.X, record.LastKnownLocation.Y));
                 if (dist <= visionRadius)
                 {
                     // If obstructed by a wall, the agent cannot verify whether the entity is gone
-                    if (snapshot != null && !snapshot.HasLineOfSight(queryPos, new Vector2(record.LastKnownLocation.x, record.LastKnownLocation.y)))
+                    if (snapshot != null && !snapshot.HasLineOfSight(queryPos, new Vec2(record.LastKnownLocation.X, record.LastKnownLocation.Y)))
                     {
                         continue;
                     }
@@ -410,7 +409,7 @@ namespace Simpiens.Cognition.Memory
             _affinityMap[peerId] = record;
         }
 
-        public void RecordEvent(MemoryEventType type, EntityId subjectId, Vector2Int location, uint simulationTick)
+        public void RecordEvent(MemoryEventType type, EntityId subjectId, GridPoint location, uint simulationTick)
         {
             EventLedger.AddEvent(new MemoryEvent(type, subjectId, location, simulationTick));
         }
@@ -506,8 +505,8 @@ namespace Simpiens.Cognition.Memory
             }
 
             // Record gossip events in ledgers
-            EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipShared, peerId, Vector2Int.zero, currentTick));
-            peerMemory.EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipReceived, myId, Vector2Int.zero, currentTick));
+            EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipShared, peerId, GridPoint.Zero, currentTick));
+            peerMemory.EventLedger.AddEvent(new MemoryEvent(MemoryEventType.GossipReceived, myId, GridPoint.Zero, currentTick));
 
             // Record relational bonding across the 4 axes:
             // Mutual knowledge sharing builds warmth (+5), trust (+10), respect (+5), and relieves fear (-5)

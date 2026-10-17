@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Diagnostics;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer;
 using ZLogger;
 
@@ -94,7 +93,7 @@ namespace Simpiens.Simulation.World
             if (_partition != null)
             {
                 var cells = map.PartitionCells(CellSize);
-                bool resized = _partition.Configure(cells.x * CellSize, cells.y * CellSize, CellSize);
+                bool resized = _partition.Configure(cells.X * CellSize, cells.Y * CellSize, CellSize);
                 var grid = _partition.StaticGrid;
                 if (grid != null)
                 {
@@ -102,7 +101,7 @@ namespace Simpiens.Simulation.World
                     grid.EnsureRegions();
                 }
                 _partition.SetMap(map);
-                SimLog.Bootstrap.ZLogInformation($"Map '{map.Name}' loaded: {map.Walls.Count} wall rects, {map.Sectors.Count} sectors, partition {cells.x}x{cells.y}{(resized ? " (resized)" : "")}");
+                SimLog.Bootstrap.ZLogInformation($"Map '{map.Name}' loaded: {map.Walls.Count} wall rects, {map.Sectors.Count} sectors, partition {cells.X}x{cells.Y}{(resized ? " (resized)" : "")}");
             }
 
             _sectors?.Load(map);

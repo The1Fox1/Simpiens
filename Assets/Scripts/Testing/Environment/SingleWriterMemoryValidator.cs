@@ -71,7 +71,7 @@ namespace Simpiens.Testing.Environment
             for (int i = 0; i < 20; i++)
             {
                 var resId = CreateGuid(100 + i);
-                memA.SpatialMemoryMap[resId] = new SpatialMemoryRecord(resId, EntityType.Resource, new Vector2Int(i, i), 10);
+                memA.SpatialMemoryMap[resId] = new SpatialMemoryRecord(resId, EntityType.Resource, new GridPoint(i, i), 10);
             }
 
             memA.RecordInteraction(agentBId, deltaWarmth: 20, deltaTrust: 15, deltaFear: 0, deltaRespect: 10, currentTick: 10);
@@ -127,7 +127,7 @@ namespace Simpiens.Testing.Environment
             {
                 uint tick = (uint)(100 + m);
                 var dynId = CreateGuid((uint)(200 + m));
-                memA.SpatialMemoryMap[dynId] = new SpatialMemoryRecord(dynId, EntityType.Pawn, new Vector2Int(m, m), tick);
+                memA.SpatialMemoryMap[dynId] = new SpatialMemoryRecord(dynId, EntityType.Pawn, new GridPoint(m, m), tick);
                 memA.BlacklistEntity(dynId, tick + 50);
 
                 memA.RecordInteraction(agentBId, deltaWarmth: 1, deltaTrust: -1, deltaFear: 0, deltaRespect: 1, tick);
@@ -211,7 +211,7 @@ namespace Simpiens.Testing.Environment
             for (int i = 0; i < 10; i++)
             {
                 var id = CreateGuid((uint)(300 + i));
-                memory.SpatialMemoryMap[id] = new SpatialMemoryRecord(id, EntityType.Resource, new Vector2Int(i, i), 10);
+                memory.SpatialMemoryMap[id] = new SpatialMemoryRecord(id, EntityType.Resource, new GridPoint(i, i), 10);
             }
             memory.RecordInteraction(CreateGuid(400), 10, 10, 0, 10, 10);
 

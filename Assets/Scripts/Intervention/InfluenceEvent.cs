@@ -1,7 +1,5 @@
 using System;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Intervention
 {
     public enum InfluenceCommandType : byte
@@ -21,7 +19,7 @@ namespace Simpiens.Intervention
         public readonly byte Quantity;
         public readonly ushort RewardGold;
         public readonly uint DurationTicks;
-        public readonly Vector2 TargetLocation;
+        public readonly Vec2 TargetLocation;
         public readonly EntityId CreatorStallId;
 
         public PostBountyCommand(
@@ -32,7 +30,7 @@ namespace Simpiens.Intervention
             byte quantity,
             ushort rewardGold,
             uint durationTicks = 1000,
-            Vector2 targetLocation = default,
+            Vec2 targetLocation = default,
             EntityId creatorStallId = default)
         {
             BountyId = bountyId;
@@ -151,12 +149,12 @@ namespace Simpiens.Intervention
                         uint duration = 1000;
                         if (parts.Length > 6) uint.TryParse(parts[6].Trim(), out duration);
 
-                        Vector2 loc = Vector2.zero;
+                        Vec2 loc = Vec2.Zero;
                         if (parts.Length > 8)
                         {
                             float.TryParse(parts[7].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x);
                             float.TryParse(parts[8].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float y);
-                            loc = new Vector2(x, y);
+                            loc = new Vec2(x, y);
                         }
 
                         PostBounty = new PostBountyCommand(bId, bType, sId, iType, qty, reward, duration, loc);

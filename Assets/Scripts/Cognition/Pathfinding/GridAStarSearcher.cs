@@ -45,8 +45,8 @@ namespace Simpiens.Cognition.Pathfinding
         private uint _currentIteration;
 
         // Scratch buffers for raw path reconstruction and string-pulling smoothing
-        private readonly Vector2[] _rawWaypoints = new Vector2[MaxPathLength];
-        private readonly Vector2[] _smoothWaypoints = new Vector2[MaxPathLength];
+        private readonly Vec2[] _rawWaypoints = new Vec2[MaxPathLength];
+        private readonly Vec2[] _smoothWaypoints = new Vec2[MaxPathLength];
 
         public bool Search(in PathRequest request, SharedWorldSnapshot snapshot, PathResponse response)
         {
@@ -66,10 +66,10 @@ namespace Simpiens.Cognition.Pathfinding
             float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
             float cellSize = snapshot.CellSize;
 
-            int startX = Mathf.FloorToInt((request.StartPosition.x + offsetX) / cellSize);
-            int startY = Mathf.FloorToInt((request.StartPosition.y + offsetY) / cellSize);
-            int targetX = Mathf.FloorToInt((request.TargetPosition.x + offsetX) / cellSize);
-            int targetY = Mathf.FloorToInt((request.TargetPosition.y + offsetY) / cellSize);
+            int startX = SimMath.FloorToInt((request.StartPosition.X + offsetX) / cellSize);
+            int startY = SimMath.FloorToInt((request.StartPosition.Y + offsetY) / cellSize);
+            int targetX = SimMath.FloorToInt((request.TargetPosition.X + offsetX) / cellSize);
+            int targetY = SimMath.FloorToInt((request.TargetPosition.Y + offsetY) / cellSize);
 
             // Clamp / In-Bounds Validation
             if (startX < 0 || startX >= snapshot.Width || startY < 0 || startY >= snapshot.Height)
@@ -230,7 +230,7 @@ namespace Simpiens.Cognition.Pathfinding
             {
                 float wx = (_nodePool[curr].X + 0.5f) * cellSize - offsetX;
                 float wy = (_nodePool[curr].Y + 0.5f) * cellSize - offsetY;
-                _rawWaypoints[rawLength++] = new Vector2(wx, wy);
+                _rawWaypoints[rawLength++] = new Vec2(wx, wy);
                 curr = _nodePool[curr].ParentIndex;
             }
 
@@ -253,7 +253,7 @@ namespace Simpiens.Cognition.Pathfinding
             int smoothLength = ApplyPathSmoothing(snapshot, rawLength);
 
             // Copy to response
-            int copyCount = Mathf.Min(smoothLength, response.Waypoints.Length);
+            int copyCount = SimMath.Min(smoothLength, response.Waypoints.Length);
             for (int i = 0; i < copyCount; i++)
             {
                 response.Waypoints[i] = _smoothWaypoints[i];
@@ -270,13 +270,13 @@ namespace Simpiens.Cognition.Pathfinding
         /// <summary>Smoothed segments keep this far from hearth and stall centres (movement stops pawns at 0.45).</summary>
         public const float PropClearance = 0.75f;
 
-        private static Vector2 ClosestPointInCell(Vector2 point, int cellX, int cellY, float cellSize, float offsetX, float offsetY)
+        private static Vec2 ClosestPointInCell(Vec2 point, int cellX, int cellY, float cellSize, float offsetX, float offsetY)
         {
             float minX = cellX * cellSize - offsetX + CellInset;
             float minY = cellY * cellSize - offsetY + CellInset;
             float maxX = (cellX + 1) * cellSize - offsetX - CellInset;
             float maxY = (cellY + 1) * cellSize - offsetY - CellInset;
-            return new Vector2(Mathf.Clamp(point.x, minX, maxX), Mathf.Clamp(point.y, minY, maxY));
+            return new Vec2(SimMath.Clamp(point.X, minX, maxX), SimMath.Clamp(point.Y, minY, maxY));
         }
 
         private int ApplyPathSmoothing(SharedWorldSnapshot snapshot, int rawCount)

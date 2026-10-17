@@ -1,7 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
@@ -21,13 +19,13 @@ namespace Simpiens.Cognition.Planning.Goals
             // Own claim first, otherwise the bounty this agent would claim (reachable, lowest id)
             if (BountyQueries.TryGetClaimedBounty(context, out var bounty) || BountyQueries.TryGetOpenBounty(context, BountyType.None, out bounty))
             {
-                priority += Mathf.Clamp((bounty.RewardGold / 50f) * 25f, 5f, 35f)
+                priority += SimMath.Clamp((bounty.RewardGold / 50f) * 25f, 5f, 35f)
                             * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnReward);
             }
 
             // Reduced priority if biological hunger is urgent
             priority *= Considerations.TraitFactor(context.Personality.Diligence, Considerations.DiligenceOnWork);
-            return Mathf.Max(5f, priority - (context.Hunger * 0.3f));
+            return SimMath.Max(5f, priority - (context.Hunger * 0.3f));
         }
 
         public override bool IsValid(AgentContext context)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Simulation.Persistence;
-using UnityEngine;
 using VContainer;
 
 namespace Simpiens.Narrative
@@ -38,7 +37,7 @@ namespace Simpiens.Narrative
         public void GetRecent(List<ChronicleEvent> resultsBuffer, int maxCount)
         {
             if (resultsBuffer == null || maxCount <= 0) return;
-            int itemsToTake = Mathf.Min(maxCount, _count);
+            int itemsToTake = SimMath.Min(maxCount, _count);
             for (int i = 0; i < itemsToTake; i++)
             {
                 int index = (_head - 1 - i + _capacity * 2) % _capacity;

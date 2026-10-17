@@ -131,7 +131,7 @@ namespace Simpiens.Testing.Sociopolitical
             var dummyGuid = EntityId.Generate();
 
             // 1. Initial State: No relationships
-            var contextNeutral = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memNeutral, 100);
+            var contextNeutral = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memNeutral, 100);
             var stateNeutral = WorldStateBuilder.BuildWorldState(contextNeutral);
 
             Assert(stateNeutral.Get(StateFact.HasWarmCompanion) == false, "HasWarmCompanion is false initially.");
@@ -148,7 +148,7 @@ namespace Simpiens.Testing.Sociopolitical
             var threatId = EntityId.Generate();
             memPopulated.RecordInteraction(threatId, deltaWarmth: -20, deltaTrust: -30, deltaFear: 65, deltaRespect: 0, currentTick: 100);
 
-            var contextPopulated = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memPopulated, 100);
+            var contextPopulated = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 100f, 50f), 0f, null, memPopulated, 100);
             var statePopulated = WorldStateBuilder.BuildWorldState(contextPopulated);
 
             Assert(statePopulated.Get(StateFact.HasWarmCompanion) == true, "HasWarmCompanion is true when Warmth >= 30.");
@@ -175,7 +175,7 @@ namespace Simpiens.Testing.Sociopolitical
             mem.RecordInteraction(peerA, 30, 30, 0, 20, 100);
             mem.RecordInteraction(peerB, -20, -30, 60, 0, 100);
 
-            var context = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 100f, 50f), 0f, null, mem, 100);
+            var context = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 100f, 50f), 0f, null, mem, 100);
 
             // Warmup
             for (int i = 0; i < 50; i++)

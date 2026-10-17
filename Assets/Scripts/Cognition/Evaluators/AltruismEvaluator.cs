@@ -5,8 +5,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Evaluators
 {
     /// <summary>
@@ -53,8 +51,8 @@ namespace Simpiens.Cognition.Evaluators
                 var pathResponse = await _pathfinder.CalculatePathAsync(pathRequest, context.Snapshot);
                 if (pathResponse.IsValid && pathResponse.Length > 0)
                 {
-                    Vector2 finalWaypoint = pathResponse.Waypoints[pathResponse.Length - 1];
-                    float distToPeer = Vector2.Distance(finalWaypoint, bestTargetPos);
+                    Vec2 finalWaypoint = pathResponse.Waypoints[pathResponse.Length - 1];
+                    float distToPeer = Vec2.Distance(finalWaypoint, bestTargetPos);
                     if (distToPeer <= 1.5f)
                     {
                         return new ShareResourceIntent(context.AgentId, bestTargetId, pathResponse);

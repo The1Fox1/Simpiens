@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Simpiens.Narrative;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>

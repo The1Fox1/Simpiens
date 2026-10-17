@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation;

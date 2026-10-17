@@ -2,8 +2,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -55,7 +53,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
             var path = await _pathfinder.CalculatePathAsync(request, context.Snapshot);
             if (path != null && path.IsValid && path.Length > 0 &&
-                Vector2.Distance(path.Waypoints[path.Length - 1], peerPosition) <= AidReach)
+                Vec2.Distance(path.Waypoints[path.Length - 1], peerPosition) <= AidReach)
             {
                 return new ShareResourceIntent(context.AgentId, peerId, path);
             }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
 
 namespace Simpiens.Simulation.World
 {
@@ -18,23 +17,23 @@ namespace Simpiens.Simulation.World
         public const float WallHalfExtent = 0.55f;
 
         private readonly string _name;
-        private Rect _playableBounds;
-        private Rect _cameraFrame;
-        private SectorDefinition _fallback = new SectorDefinition(0, "Transit / Open Yard", "Exterior grounds, open corridors, and transit routes.", new Rect(-50f, -50f, 100f, 100f));
+        private RectF _playableBounds;
+        private RectF _cameraFrame;
+        private SectorDefinition _fallback = new SectorDefinition(0, "Transit / Open Yard", "Exterior grounds, open corridors, and transit routes.", new RectF(-50f, -50f, 100f, 100f));
         private readonly List<WallRect> _walls = new List<WallRect>();
         private readonly List<SectorDefinition> _sectors = new List<SectorDefinition>();
         private readonly List<ResourceNodeDefinition> _nodes = new List<ResourceNodeDefinition>();
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
 
-        public MapDefinitionBuilder(string name, Rect playableBounds)
+        public MapDefinitionBuilder(string name, RectF playableBounds)
         {
             _name = name;
             _playableBounds = playableBounds;
             _cameraFrame = playableBounds;
         }
 
-        public MapDefinitionBuilder CameraFrame(Rect frame)
+        public MapDefinitionBuilder CameraFrame(RectF frame)
         {
             _cameraFrame = frame;
             return this;
@@ -47,7 +46,7 @@ namespace Simpiens.Simulation.World
         }
 
         /// <summary>Solid wall rect in world units.</summary>
-        public MapDefinitionBuilder Wall(Rect solid)
+        public MapDefinitionBuilder Wall(RectF solid)
         {
             _walls.Add(new WallRect(solid));
             return this;
@@ -56,39 +55,39 @@ namespace Simpiens.Simulation.World
         /// <summary>
         /// An axis-aligned run of unit wall cells centred from <paramref name="from"/> to <paramref name="to"/> (inclusive).
         /// </summary>
-        public MapDefinitionBuilder WallRun(Vector2 from, Vector2 to)
+        public MapDefinitionBuilder WallRun(Vec2 from, Vec2 to)
         {
-            if (!Mathf.Approximately(from.x, to.x) && !Mathf.Approximately(from.y, to.y))
+            if (!SimMath.Approximately(from.X, to.X) && !SimMath.Approximately(from.Y, to.Y))
             {
                 throw new ArgumentException($"Wall run {from} -> {to} in map '{_name}' is not axis-aligned.");
             }
-            float minX = Mathf.Min(from.x, to.x) - WallHalfExtent;
-            float maxX = Mathf.Max(from.x, to.x) + WallHalfExtent;
-            float minY = Mathf.Min(from.y, to.y) - WallHalfExtent;
-            float maxY = Mathf.Max(from.y, to.y) + WallHalfExtent;
-            _walls.Add(new WallRect(Rect.MinMaxRect(minX, minY, maxX, maxY)));
+            float minX = SimMath.Min(from.X, to.X) - WallHalfExtent;
+            float maxX = SimMath.Max(from.X, to.X) + WallHalfExtent;
+            float minY = SimMath.Min(from.Y, to.Y) - WallHalfExtent;
+            float maxY = SimMath.Max(from.Y, to.Y) + WallHalfExtent;
+            _walls.Add(new WallRect(RectF.MinMaxRect(minX, minY, maxX, maxY)));
             return this;
         }
 
-        public MapDefinitionBuilder Sector(byte id, string name, string description, Rect bounds, Vector2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
+        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
         {
             _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored));
             return this;
         }
 
-        public MapDefinitionBuilder Node(string key, Vector2 position, ItemType item, int yield, uint regrowTicks)
+        public MapDefinitionBuilder Node(string key, Vec2 position, ItemType item, int yield, uint regrowTicks)
         {
             _nodes.Add(new ResourceNodeDefinition(key, position, item, yield, regrowTicks));
             return this;
         }
 
-        public MapDefinitionBuilder Poi(string key, PoiKind kind, Vector2 position, float radius = 0f)
+        public MapDefinitionBuilder Poi(string key, PoiKind kind, Vec2 position, float radius = 0f)
         {
             _pois.Add(new PoiDefinition(key, kind, position, radius));
             return this;
         }
 
-        public MapDefinitionBuilder Label(string text, Vector2 position, Color color)
+        public MapDefinitionBuilder Label(string text, Vec2 position, Rgba color)
         {
             _labels.Add(new MapLabel(text, position, color));
             return this;
@@ -97,7 +96,7 @@ namespace Simpiens.Simulation.World
         public MapDefinition Build()
         {
             if (string.IsNullOrEmpty(_name)) throw new InvalidOperationException("Map definition needs a name.");
-            if (_playableBounds.width <= 0f || _playableBounds.height <= 0f)
+            if (_playableBounds.Width <= 0f || _playableBounds.Height <= 0f)
             {
                 throw new InvalidOperationException($"Map '{_name}' has empty playable bounds {_playableBounds}.");
             }
@@ -140,7 +139,7 @@ namespace Simpiens.Simulation.World
             if (!keys.Add(key)) throw new InvalidOperationException($"Map '{_name}': duplicate key '{key}'.");
         }
 
-        private void RequireInside(Vector2 pos, string key)
+        private void RequireInside(Vec2 pos, string key)
         {
             if (!_playableBounds.Contains(pos)) throw new InvalidOperationException($"Map '{_name}': '{key}' at {pos} lies outside the playable bounds {_playableBounds}.");
         }

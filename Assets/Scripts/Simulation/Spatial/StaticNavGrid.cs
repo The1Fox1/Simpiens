@@ -1,6 +1,4 @@
 using System;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
@@ -16,7 +14,7 @@ namespace Simpiens.Simulation.Spatial
         public readonly float OffsetY;
 
         private readonly bool[] _walkable;
-        private Rect _playableBounds = new Rect(float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        private RectF _playableBounds = new RectF(float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity);
         private bool _hasPlayableBounds;
 
         // Static map walls (from the map definition). Survive Clear(), unlike dynamically rasterized walls.
@@ -127,7 +125,7 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>World-space playable area. Unbounded until set.</summary>
-        public Rect PlayableBounds => _playableBounds;
+        public RectF PlayableBounds => _playableBounds;
         public bool HasPlayableBounds => _hasPlayableBounds;
 
         /// <summary>
@@ -136,13 +134,13 @@ namespace Simpiens.Simulation.Spatial
         /// </summary>
         public void SetPlayableHalfExtent(float halfExtent)
         {
-            SetPlayableBounds(new Rect(-halfExtent, -halfExtent, halfExtent * 2f, halfExtent * 2f));
+            SetPlayableBounds(new RectF(-halfExtent, -halfExtent, halfExtent * 2f, halfExtent * 2f));
         }
 
         /// <summary>
         /// Permanently blocks every cell lying entirely outside <paramref name="bounds"/>. Survives <see cref="Clear"/>.
         /// </summary>
-        public void SetPlayableBounds(Rect bounds)
+        public void SetPlayableBounds(RectF bounds)
         {
             _playableBounds = bounds;
             _hasPlayableBounds = true;
@@ -156,11 +154,11 @@ namespace Simpiens.Simulation.Spatial
             for (int y = 0; y < Height; y++)
             {
                 float minY = y * CellSize - OffsetY;
-                bool rowOutside = minY >= _playableBounds.yMax || minY + CellSize <= _playableBounds.yMin;
+                bool rowOutside = minY >= _playableBounds.YMax || minY + CellSize <= _playableBounds.YMin;
                 for (int x = 0; x < Width; x++)
                 {
                     float minX = x * CellSize - OffsetX;
-                    if (rowOutside || minX >= _playableBounds.xMax || minX + CellSize <= _playableBounds.xMin)
+                    if (rowOutside || minX >= _playableBounds.XMax || minX + CellSize <= _playableBounds.XMin)
                     {
                         _walkable[y * Width + x] = false;
                     }
@@ -225,7 +223,7 @@ namespace Simpiens.Simulation.Spatial
         /// Returns false when regions are not built, the point is out of bounds, or no walkable cell is near.
         /// Thread-safe for concurrent readers.
         /// </summary>
-        public bool TryGetRegion(Vector2 worldPos, out int region)
+        public bool TryGetRegion(Vec2 worldPos, out int region)
         {
             region = -1;
             var labels = _regionLabels;
@@ -238,7 +236,7 @@ namespace Simpiens.Simulation.Spatial
                 {
                     for (int dx = -r; dx <= r; dx++)
                     {
-                        if (r > 0 && Mathf.Abs(dx) != r && Mathf.Abs(dy) != r) continue; // ring only
+                        if (r > 0 && SimMath.Abs(dx) != r && SimMath.Abs(dy) != r) continue; // ring only
                         int x = cx + dx, y = cy + dy;
                         if (!InBounds(x, y)) continue;
                         int label = labels[y * Width + x];
@@ -257,24 +255,24 @@ namespace Simpiens.Simulation.Spatial
         /// True when both points lie in the same walkable region. Unknown (no labels, out of bounds,
         /// buried in walls) is treated as connected so callers never block on missing data.
         /// </summary>
-        public bool AreConnected(Vector2 a, Vector2 b)
+        public bool AreConnected(Vec2 a, Vec2 b)
         {
             if (!TryGetRegion(a, out int ra) || !TryGetRegion(b, out int rb)) return true;
             return ra == rb;
         }
 
-        public bool WorldToCell(Vector2 worldPos, out int cellX, out int cellY)
+        public bool WorldToCell(Vec2 worldPos, out int cellX, out int cellY)
         {
-            cellX = Mathf.FloorToInt((worldPos.x + OffsetX) / CellSize);
-            cellY = Mathf.FloorToInt((worldPos.y + OffsetY) / CellSize);
+            cellX = SimMath.FloorToInt((worldPos.X + OffsetX) / CellSize);
+            cellY = SimMath.FloorToInt((worldPos.Y + OffsetY) / CellSize);
             return InBounds(cellX, cellY);
         }
 
-        public Vector2 CellToWorld(int cellX, int cellY)
+        public Vec2 CellToWorld(int cellX, int cellY)
         {
             float wx = (cellX + 0.5f) * CellSize - OffsetX;
             float wy = (cellY + 0.5f) * CellSize - OffsetY;
-            return new Vector2(wx, wy);
+            return new Vec2(wx, wy);
         }
     }
 }

@@ -165,9 +165,9 @@ namespace Simpiens.Testing.Economy
             return new[]
             {
                 new BountyContract(1, BountyType.GatherResource, 4, ItemType.IronOre, 2, 40, 0, 6000,
-                    new Vector2(12.5f, -3.25f), creatorStallId: stallId),
+                    new Vec2(12.5f, -3.25f), creatorStallId: stallId),
                 new BountyContract(2, BountyType.ScoutSector, 5, ItemType.None, 1, 25, 120, 6120,
-                    new Vector2(-8f, 20f), new EntityId(21u, 22u, 23u, 24u), stallId, BountyStatus.Claimed),
+                    new Vec2(-8f, 20f), new EntityId(21u, 22u, 23u, 24u), stallId, BountyStatus.Claimed),
                 new BountyContract(3, BountyType.GatherResource, 4, ItemType.MedicinalHerb, 1, 30, 50, 900,
                     default, default, stallId, BountyStatus.Expired),
             };
@@ -177,9 +177,9 @@ namespace Simpiens.Testing.Economy
         {
             return new[]
             {
-                new TradeStallData(new EntityId(11u, 12u, 13u, 14u), new Vector2(0.5f, 1.5f), rationSellPrice: 17, rationStock: 33,
+                new TradeStallData(new EntityId(11u, 12u, 13u, 14u), new Vec2(0.5f, 1.5f), rationSellPrice: 17, rationStock: 33,
                     oreBuyPrice: 21, oreStock: 4, herbBuyPrice: 26, herbStock: 2, treasuryGold: 412, interactionRadius: 2.75f, inArrears: true),
-                new TradeStallData(new EntityId(31u, 32u, 33u, 34u), new Vector2(-4f, 9f), treasuryGold: 0),
+                new TradeStallData(new EntityId(31u, 32u, 33u, 34u), new Vec2(-4f, 9f), treasuryGold: 0),
             };
         }
 

@@ -137,7 +137,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
         private static int FirstDifference(byte[] a, byte[] b)
         {
-            int n = Mathf.Min(a.Length, b.Length);
+            int n = SimMath.Min(a.Length, b.Length);
             for (int i = 0; i < n; i++)
             {
                 if (a[i] != b[i]) return i;

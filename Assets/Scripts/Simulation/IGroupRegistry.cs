@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Simpiens.Cognition.Groups;
-using UnityEngine;
-
 namespace Simpiens.Simulation
 {
     /// <summary>
@@ -12,7 +10,7 @@ namespace Simpiens.Simulation
     {
         int ActiveGroupCount { get; }
 
-        byte CreateGroup(GroupType type, EntityId leaderId, Vector2 anchorPosition, byte initialCohesion = 100);
+        byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100);
         bool DisbandGroup(byte groupId);
         bool TryGetGroup(byte groupId, out GroupData groupData);
 

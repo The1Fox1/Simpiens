@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Simpiens.Cognition.Memory
 {
     public enum MemoryEventType : byte
@@ -33,10 +31,10 @@ namespace Simpiens.Cognition.Memory
     {
         public readonly MemoryEventType EventType;
         public readonly EntityId SubjectId;
-        public readonly Vector2Int Location;
+        public readonly GridPoint Location;
         public readonly uint SimulationTick;
 
-        public MemoryEvent(MemoryEventType eventType, EntityId subjectId, Vector2Int location, uint simulationTick)
+        public MemoryEvent(MemoryEventType eventType, EntityId subjectId, GridPoint location, uint simulationTick)
         {
             EventType = eventType;
             SubjectId = subjectId;

@@ -41,8 +41,8 @@ namespace Simpiens.Testing.Navigation
             {
                 for (int w = 0; w < Windows; w++)
                 {
-                    var ctx = Context(a, (uint)w * 50u, new Vector2(1f, 2f), snapshot);
-                    float d = Vector2.Distance(ResourceTargeting.PickExplorationPoint(ctx), ctx.Position);
+                    var ctx = Context(a, (uint)w * 50u, new Vec2(1f, 2f), snapshot);
+                    float d = Vec2.Distance(ResourceTargeting.PickExplorationPoint(ctx), ctx.Position);
                     Assert(d >= 4.99f && d <= 9.01f, $"Without a map the waypoint is 5-9 away (got {d:F2}).");
                 }
             }
@@ -60,7 +60,7 @@ namespace Simpiens.Testing.Navigation
             {
                 for (int w = 0; w < Windows; w++)
                 {
-                    var ctx = Context(a, (uint)w * ResourceTargeting.SectorChoiceTicks, hub.Bounds.center, snapshot);
+                    var ctx = Context(a, (uint)w * ResourceTargeting.SectorChoiceTicks, hub.Bounds.Center, snapshot);
                     var p = ResourceTargeting.PickExplorationPoint(ctx);
                     byte sector = def.FindSector(p).Id;
                     Assert(sector != 0, $"Waypoint {p} lies in a real sector.");
@@ -89,10 +89,10 @@ namespace Simpiens.Testing.Navigation
             int changed = 0;
             for (int a = 0; a < Agents; a++)
             {
-                var first = ResourceTargeting.PickExplorationPoint(Context(a, 0u, Vector2.zero, snapshot));
-                var again = ResourceTargeting.PickExplorationPoint(Context(a, ResourceTargeting.SectorChoiceTicks - 1, Vector2.zero, snapshot));
+                var first = ResourceTargeting.PickExplorationPoint(Context(a, 0u, Vec2.Zero, snapshot));
+                var again = ResourceTargeting.PickExplorationPoint(Context(a, ResourceTargeting.SectorChoiceTicks - 1, Vec2.Zero, snapshot));
                 Assert(first == again, "The same agent and window give the same waypoint.");
-                var next = ResourceTargeting.PickExplorationPoint(Context(a, ResourceTargeting.SectorChoiceTicks, Vector2.zero, snapshot));
+                var next = ResourceTargeting.PickExplorationPoint(Context(a, ResourceTargeting.SectorChoiceTicks, Vec2.Zero, snapshot));
                 if (next != first) changed++;
             }
             Assert(changed >= Agents / 2, $"A new window gives most agents a new waypoint ({changed}/{Agents}).");
@@ -104,7 +104,7 @@ namespace Simpiens.Testing.Navigation
             var def = Floor1Layout.Definition;
             var snapshot = Floor1Snapshot(def, out _);
             var searcher = new GridAStarSearcher();
-            var starts = new[] { Vector2.zero, new Vector2(-1f, -14f), new Vector2(-16f, 0f), new Vector2(16f, -2.5f) };
+            var starts = new[] { Vec2.Zero, new Vec2(-1f, -14f), new Vec2(-16f, 0f), new Vec2(16f, -2.5f) };
             int routes = 0;
             for (int s = 0; s < starts.Length; s++)
             {
@@ -127,14 +127,14 @@ namespace Simpiens.Testing.Navigation
 
         private void ValidateSingleSectorMapFallsBack()
         {
-            var def = new MapDefinitionBuilder("OneRoom", new Rect(-10f, -10f, 20f, 20f))
-                .Sector(1, "Room", "", new Rect(-10f, -10f, 20f, 20f))
+            var def = new MapDefinitionBuilder("OneRoom", new RectF(-10f, -10f, 20f, 20f))
+                .Sector(1, "Room", "", new RectF(-10f, -10f, 20f, 20f))
                 .Build();
             var snapshot = new SharedWorldSnapshot(24, 24, 1f, 8, null);
             snapshot.SetMap(def);
-            var ctx = Context(0, 0u, Vector2.zero, snapshot);
+            var ctx = Context(0, 0u, Vec2.Zero, snapshot);
             Assert(!ResourceTargeting.TryPickSectorWaypoint(ctx, def, out _), "A map with no other sector offers no sector waypoint.");
-            float d = Vector2.Distance(ResourceTargeting.PickExplorationPoint(ctx), Vector2.zero);
+            float d = Vec2.Distance(ResourceTargeting.PickExplorationPoint(ctx), Vec2.Zero);
             Assert(d >= 4.99f && d <= 9.01f, $"It falls back to the random bearing (got {d:F2}).");
             Debug.Log("[PASS] Test 5: A single-sector map falls back to the random bearing.");
         }
@@ -158,14 +158,14 @@ namespace Simpiens.Testing.Navigation
             var id1 = new EntityId(5u, 0x5eed5eedu, 7u, 11u);
             for (uint w = 0; w < 10; w++)
             {
-                var ctx = new AgentContext(id1, Vector2.zero, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 500 + w * ResourceTargeting.SectorChoiceTicks);
+                var ctx = new AgentContext(id1, Vec2.Zero, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 500 + w * ResourceTargeting.SectorChoiceTicks);
                 Assert(def.FindSector(ResourceTargeting.PickExplorationPoint(ctx)).Id == Floor1Layout.GardenSectorId,
                     "Having searched every other room, the agent heads for the one it never saw: the Garden.");
             }
 
             memory.NoteSectorVisit(Floor1Layout.GardenSectorId, tick++);
             def.TryGetSector(Floor1Layout.HubSectorId, out var hub);
-            var after = new AgentContext(id1, hub.Bounds.center, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 900);
+            var after = new AgentContext(id1, hub.Bounds.Center, new AgentNeeds(90f, 80f, 60f), 0f, snapshot, memory, 900);
             byte next = def.FindSector(ResourceTargeting.PickExplorationPoint(after)).Id;
             Assert(next == def.Sectors[0].Id || next == def.Sectors[1].Id,
                 $"Then the room seen longest ago (first visited) comes next, the Hub excluded (got sector {next}).");
@@ -175,16 +175,16 @@ namespace Simpiens.Testing.Navigation
         private static SharedWorldSnapshot Floor1Snapshot(MapDefinition def, out StaticNavGrid grid)
         {
             var cells = def.PartitionCells(1f);
-            grid = new StaticNavGrid(cells.x, cells.y, 1f);
+            grid = new StaticNavGrid(cells.X, cells.Y, 1f);
             WallRasterizer.Rasterize(def, grid);
             grid.EnsureRegions();
-            var snapshot = new SharedWorldSnapshot(cells.x, cells.y, 1f, 8, null);
+            var snapshot = new SharedWorldSnapshot(cells.X, cells.Y, 1f, 8, null);
             snapshot.SetStaticGrid(grid);
             snapshot.SetMap(def);
             return snapshot;
         }
 
-        private static AgentContext Context(int agent, uint tick, Vector2 position, SharedWorldSnapshot snapshot)
+        private static AgentContext Context(int agent, uint tick, Vec2 position, SharedWorldSnapshot snapshot)
         {
             var id = new EntityId((uint)agent + 1u, 0x5eed5eedu, 7u, 11u);
             return new AgentContext(id, position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);

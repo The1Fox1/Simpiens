@@ -32,7 +32,7 @@ namespace Simpiens.Testing.UI
         private static CameraRig Floor1Rig()
         {
             var rig = new CameraRig();
-            rig.Configure(Floor1Layout.Definition.CameraFrame, Aspect);
+            rig.Configure(Floor1Layout.Definition.CameraFrame.ToUnity(), Aspect);
             return rig;
         }
 

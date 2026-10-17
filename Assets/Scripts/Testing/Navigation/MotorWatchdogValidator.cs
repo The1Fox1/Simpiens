@@ -37,11 +37,11 @@ namespace Simpiens.Testing.Navigation
             var go = new GameObject("[TestNode_Stall]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
 
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(5f, 0f) },
+                Waypoints = new Vec2[] { new Vec2(5f, 0f) },
                 Length = 1,
                 IsValid = true
             };
@@ -50,7 +50,7 @@ namespace Simpiens.Testing.Navigation
             {
                 Intent = new WanderIntent(node.Id, path),
                 CurrentWaypointIndex = 0,
-                LastSampledPosition = Vector2.zero,
+                LastSampledPosition = Vec2.Zero,
                 TimeSinceLastProgress = 1.0f,
                 StallCount = 0
             };
@@ -71,22 +71,22 @@ namespace Simpiens.Testing.Navigation
             var go = new GameObject("[TestNode_Tier1]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
 
-            var targetPos = new Vector2(1f, 0f); // Movement axis is purely horizontal (X)
+            var targetPos = new Vec2(1f, 0f); // Movement axis is purely horizontal (X)
 
             var state = new ActiveIntentState
             {
                 StallCount = 1,
-                LastSampledPosition = Vector2.zero
+                LastSampledPosition = Vec2.Zero
             };
 
             // Apply Tier 1 unstuck reflex
             var result = simManager.ApplyProgressiveUnstuckReflex(node, targetPos, state);
 
             Assert(result == IntentResult.InProgress, "Tier 1 reflex maintains InProgress intent state.");
-            Assert(!Mathf.Approximately(node.Position.y, 0f), $"Node was orthogonally displaced along Y-axis (y: {node.Position.y})");
-            Assert(Mathf.Approximately(node.Position.x, 0f), "Node retained its position along movement axis.");
+            Assert(!SimMath.Approximately(node.Position.Y, 0f), $"Node was orthogonally displaced along Y-axis (y: {node.Position.Y})");
+            Assert(SimMath.Approximately(node.Position.X, 0f), "Node retained its position along movement axis.");
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 2: Tier 1 Orthogonal clearance nudge breaks deadlock symmetry.");
@@ -105,7 +105,7 @@ namespace Simpiens.Testing.Navigation
                 UseRelaxedClearance = false
             };
 
-            var result = simManager.ApplyProgressiveUnstuckReflex(node, new Vector2(1f, 0f), state);
+            var result = simManager.ApplyProgressiveUnstuckReflex(node, new Vec2(1f, 0f), state);
 
             Assert(result == IntentResult.InProgress, "Tier 2 reflex maintains InProgress intent state.");
             Assert(state.UseRelaxedClearance == true, "Tier 2 reflex activated UseRelaxedClearance on ActiveIntentState.");
@@ -121,7 +121,7 @@ namespace Simpiens.Testing.Navigation
             var go = new GameObject("[TestNode_Tier3]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = new Vector2(5f, 5f);
+            node.transform.position = (new Vec2(5f, 5f)).ToUnity();
 
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
@@ -133,11 +133,11 @@ namespace Simpiens.Testing.Navigation
                 StallCount = 4
             };
 
-            var targetPos = new Vector2(6f, 5f); // 1 unit to the right
+            var targetPos = new Vec2(6f, 5f); // 1 unit to the right
             var result = simManager.ApplyProgressiveUnstuckReflex(node, targetPos, state);
 
             Assert(result == IntentResult.PathBlocked, "Tier 3 reflex returns PathBlocked to terminate the stalled intent.");
-            Assert(node.Position.x < 5f, $"Node backed off away from target (actual X: {node.Position.x})");
+            Assert(node.Position.X < 5f, $"Node backed off away from target (actual X: {node.Position.X})");
             Assert(agent.Memory.IsBlacklisted(resourceId, 100), "Target resource was blacklisted in AgentMemory.");
 
             GameObject.DestroyImmediate(go);
@@ -154,10 +154,10 @@ namespace Simpiens.Testing.Navigation
             var state = new ActiveIntentState
             {
                 StallCount = 1,
-                LastSampledPosition = Vector2.zero
+                LastSampledPosition = Vec2.Zero
             };
 
-            var targetPos = new Vector2(1f, 0f);
+            var targetPos = new Vec2(1f, 0f);
 
             // Warmup
             for (int i = 0; i < 50; i++)

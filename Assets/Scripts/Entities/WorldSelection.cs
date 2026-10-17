@@ -145,7 +145,7 @@ namespace Simpiens.Entities
         private void SelectSectorAt(Vector2 world)
         {
             if (_sectors == null) return;
-            int sectorId = _sectors.GetSectorAt(world).Id;
+            int sectorId = _sectors.GetSectorAt(world.ToSim()).Id;
             if (sectorId != 0) SelectSector(sectorId);
         }
 

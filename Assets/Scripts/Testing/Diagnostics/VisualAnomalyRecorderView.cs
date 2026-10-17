@@ -49,7 +49,7 @@ namespace Simpiens.Testing.Diagnostics
             // Register visual gizmo marker (active for 2.5s)
             _activeGizmos.Add(new GizmoIncident
             {
-                Position = record.Position,
+                Position = record.Position.ToUnity(),
                 Type = record.Type,
                 ExpiryTime = Time.time + 2.5f
             });

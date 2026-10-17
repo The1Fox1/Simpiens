@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
@@ -23,7 +21,7 @@ namespace Simpiens.Simulation.Economy
         private readonly ushort _pad1;            // 2 bytes (offset 10)
         public readonly uint IssuedTick;          // 4 bytes (offset 12)
         public readonly uint ExpirationTick;      // 4 bytes (offset 16)
-        public readonly Vector2 TargetLocation;   // 8 bytes (offset 20)
+        public readonly Vec2 TargetLocation;   // 8 bytes (offset 20)
         private readonly uint _pad2;              // 4 bytes (offset 28)
         public readonly EntityId ClaimantId;          // 16 bytes (offset 32)
         public readonly EntityId CreatorStallId;      // 16 bytes (offset 48)
@@ -48,7 +46,7 @@ namespace Simpiens.Simulation.Economy
             ushort rewardGold,
             uint issuedTick,
             uint expirationTick,
-            Vector2 targetLocation = default,
+            Vec2 targetLocation = default,
             EntityId claimantId = default,
             EntityId creatorStallId = default,
             BountyStatus status = BountyStatus.Open)
@@ -104,7 +102,7 @@ namespace Simpiens.Simulation.Economy
                 status);
         }
 
-        public BountyContract WithTargetLocation(Vector2 targetLocation)
+        public BountyContract WithTargetLocation(Vec2 targetLocation)
         {
             return new BountyContract(
                 BountyId,

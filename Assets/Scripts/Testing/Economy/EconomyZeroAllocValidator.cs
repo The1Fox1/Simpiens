@@ -71,7 +71,7 @@ namespace Simpiens.Testing.Economy
             sim.SetEconomy(EconomyTuning.Default);
 
             var stallId = new EntityId(41u, 42u, 43u, 44u);
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 5000,
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 5000,
                 oreBuyPrice: 8, herbBuyPrice: 12, treasuryGold: 1000000));
             // A standing board, scanned for expiry on every tick
             sim.RegisterBounty(new BountyContract(StandingGatherId, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, uint.MaxValue - 1, creatorStallId: stallId));
@@ -82,7 +82,7 @@ namespace Simpiens.Testing.Economy
             {
                 var node = go.AddComponent<NodeController>();
                 node.Initialize(new EntityId(51u, 52u, 53u, 54u), new NodeConfiguration(2f));
-                node.transform.position = new Vector2(0f, 0.5f); // within the stall's reach
+                node.transform.position = (new Vec2(0f, 0.5f)).ToUnity(); // within the stall's reach
                 var agent = go.AddComponent<AutonomousAgent>();
                 agent.Initialize(node.Id, null, null, sim, clock);
                 agent.Inventory.Gold = 1000000;
@@ -170,15 +170,15 @@ namespace Simpiens.Testing.Economy
 
             var snapshot = new SharedWorldSnapshot(40, 40, 1f, 8, _ => { });
             snapshot.SetEconomy(EconomyTuning.Default);
-            snapshot.SetStalls(new[] { new TradeStallData(stallId, new Vector2(2f, 0f), rationSellPrice: 15, rationStock: 20, treasuryGold: 300) }, 1);
+            snapshot.SetStalls(new[] { new TradeStallData(stallId, new Vec2(2f, 0f), rationSellPrice: 15, rationStock: 20, treasuryGold: 300) }, 1);
             snapshot.SetBounties(new[]
             {
-                new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 2, 25, 0, 100000, new Vector2(5f, 5f), creatorStallId: stallId),
-                new BountyContract(2, BountyType.ScoutSector, 0, ItemType.None, 1, 15, 0, 100000, new Vector2(-5f, 5f), creatorStallId: stallId),
-                new BountyContract(3, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 30, 0, 100000, new Vector2(8f, -2f), agentId, stallId, BountyStatus.Claimed),
+                new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 2, 25, 0, 100000, new Vec2(5f, 5f), creatorStallId: stallId),
+                new BountyContract(2, BountyType.ScoutSector, 0, ItemType.None, 1, 15, 0, 100000, new Vec2(-5f, 5f), creatorStallId: stallId),
+                new BountyContract(3, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 30, 0, 100000, new Vec2(8f, -2f), agentId, stallId, BountyStatus.Claimed),
             }, 3);
 
-            var state = new AgentState(agentId) { Position = new Vector2(1f, 0f), Hunger = 65f, Personality = new AgentPersonality(0.4f, 0f, -0.2f, 0f, 0.3f) };
+            var state = new AgentState(agentId) { Position = new Vec2(1f, 0f), Hunger = 65f, Personality = new AgentPersonality(0.4f, 0f, -0.2f, 0f, 0.3f) };
             state.Inventory.Gold = 40;
             state.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 2, 8), out _);
             state.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.MedicinalHerb, ItemType.MedicinalHerb, 1, 12), out _);

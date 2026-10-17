@@ -46,18 +46,18 @@ namespace Simpiens.Testing.Persistence
         private void ValidateMemoryRoundTrips()
         {
             var memory = new AgentMemory();
-            memory.SpatialMemoryMap[A] = new SpatialMemoryRecord(A, EntityType.Resource, new Vector2Int(4, -2), 120u, ItemType.MedicinalHerb);
-            memory.SpatialMemoryMap[C] = new SpatialMemoryRecord(C, EntityType.Stall, new Vector2Int(0, 1), 130u);
+            memory.SpatialMemoryMap[A] = new SpatialMemoryRecord(A, EntityType.Resource, new GridPoint(4, -2), 120u, ItemType.MedicinalHerb);
+            memory.SpatialMemoryMap[C] = new SpatialMemoryRecord(C, EntityType.Stall, new GridPoint(0, 1), 130u);
             memory.BlacklistEntity(B, 700u);
             memory.SetAffinity(C, new AffinityRecord(-20, 35, 10, 5, 9, 222u));
             var peer = new AgentMemory();
             memory.TryGossip(peer, B, A, 300u); // a gossip cooldown, events on both sides
-            for (uint t = 0; t < 60; t++) memory.RecordEvent(MemoryEventType.AgentSpotted, B, new Vector2Int((int)t, 0), 400u + t); // wraps the 50-event ledger
+            for (uint t = 0; t < 60; t++) memory.RecordEvent(MemoryEventType.AgentSpotted, B, new GridPoint((int)t, 0), 400u + t); // wraps the 50-event ledger
             memory.NoteSectorVisit(7, 499u);
 
             var fresh = new AgentMemory();
-            fresh.SpatialMemoryMap[B] = new SpatialMemoryRecord(B, EntityType.Pawn, Vector2Int.zero, 1u);
-            fresh.RecordEvent(MemoryEventType.Attacked, C, Vector2Int.zero, 2u);
+            fresh.SpatialMemoryMap[B] = new SpatialMemoryRecord(B, EntityType.Pawn, GridPoint.Zero, 1u);
+            fresh.RecordEvent(MemoryEventType.Attacked, C, GridPoint.Zero, 2u);
 
             var save = new MemorySave();
             memory.CaptureTo(save);
@@ -78,7 +78,7 @@ namespace Simpiens.Testing.Persistence
         private void ValidateLedgerRoundTrips()
         {
             var ledger = new EconomyLedger();
-            var stall = new TradeStallData(A, Vector2.zero, treasuryGold: 900);
+            var stall = new TradeStallData(A, Vec2.Zero, treasuryGold: 900);
             ledger.RecordFaucet(800, "InitialSeed");
             ledger.RecordSink(30, SupplyService.UpkeepSinkName);
             ledger.TryLockEscrow(A, 4, 25, ref stall);
@@ -108,15 +108,15 @@ namespace Simpiens.Testing.Persistence
         {
             var groups = new GroupRegistry();
             var d = new EntityId(4u, 0u, 0u, 1u);
-            byte first = groups.CreateGroup(GroupType.Settlement, A, new Vector2(2f, 3f), 90);
+            byte first = groups.CreateGroup(GroupType.Settlement, A, new Vec2(2f, 3f), 90);
             groups.AddMember(first, d);
-            byte second = groups.CreateGroup(GroupType.TemporaryParty, C, new Vector2(-1f, 0f), 40);
-            groups.SetDirective(second, new GroupDirective(DirectiveType.DefendAnchor, second, C, new Vector2(-1f, 0f), default, 5u, 900u));
-            byte third = groups.CreateGroup(GroupType.FactionGuild, B, new Vector2(5f, 5f), 70);
+            byte second = groups.CreateGroup(GroupType.TemporaryParty, C, new Vec2(-1f, 0f), 40);
+            groups.SetDirective(second, new GroupDirective(DirectiveType.DefendAnchor, second, C, new Vec2(-1f, 0f), default, 5u, 900u));
+            byte third = groups.CreateGroup(GroupType.FactionGuild, B, new Vec2(5f, 5f), 70);
             groups.DisbandGroup(first); // slot 1 is free; groups 2 and 3 are active
 
             var fresh = new GroupRegistry();
-            fresh.CreateGroup(GroupType.Settlement, new EntityId(9u, 9u, 9u, 9u), Vector2.zero);
+            fresh.CreateGroup(GroupType.Settlement, new EntityId(9u, 9u, 9u, 9u), Vec2.Zero);
 
             var save = new GroupSave();
             groups.CaptureTo(save);
@@ -129,7 +129,7 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.ActiveGroupCount == 2, $"Two groups are active after the load ({fresh.ActiveGroupCount}).");
             Assert(fresh.TryGetGroup(second, out var g2) && g2.LeaderId == C && g2.ActiveDirective.Type == DirectiveType.DefendAnchor, "Group ids, leaders and directives came back.");
             Assert(fresh.TryGetMembership(B, out var m) && m.GroupId == third && m.Role == RoleRank.Leader, "Memberships came back.");
-            Assert(fresh.CreateGroup(GroupType.TemporaryParty, A, Vector2.zero) == first, "The free slot is still the lowest one.");
+            Assert(fresh.CreateGroup(GroupType.TemporaryParty, A, Vec2.Zero) == first, "The free slot is still the lowest one.");
 
             Debug.Log("[PASS] Test 3: a group registry restores group ids, leaders, rosters, directives and memberships.");
         }
@@ -195,7 +195,7 @@ namespace Simpiens.Testing.Persistence
         {
             var state = new AgentState(A)
             {
-                Position = new Vector2(-6.5f, 11.25f),
+                Position = new Vec2(-6.5f, 11.25f),
                 Needs = new AgentNeeds(77f, 21f, 64f),
                 Frustration = 44f,
                 Personality = new AgentPersonality(-0.3f, 0.6f, 0.2f, -0.9f, 0.1f),

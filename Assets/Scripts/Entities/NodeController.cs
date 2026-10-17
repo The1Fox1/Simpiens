@@ -28,28 +28,29 @@ namespace Simpiens.Entities
         // Expose radius for spatial hashing
         public float Radius => col != null ? col.radius : (GetComponent<CircleCollider2D>() != null ? GetComponent<CircleCollider2D>().radius : 0.5f);
 
-        public Vector2 LogicalPosition { get; private set; }
-        public Vector2 PreviousLogicalPosition { get; private set; }
+        // The simulation's view of this node is engine-free (Epic CORE C4); the transform converts at this boundary
+        public Vec2 LogicalPosition { get; private set; }
+        public Vec2 PreviousLogicalPosition { get; private set; }
         private bool _hasInitializedLogicalPos;
 
         // Expose position and velocity for the snapshot and simulation
-        public Vector2 Position
+        public Vec2 Position
         {
             get
             {
                 if (transform != null && transform.hasChanged)
                 {
-                    LogicalPosition = transform.position;
-                    PreviousLogicalPosition = transform.position;
+                    LogicalPosition = transform.position.ToSim();
+                    PreviousLogicalPosition = LogicalPosition;
                     transform.hasChanged = false;
                     _hasInitializedLogicalPos = true;
                 }
-                return _hasInitializedLogicalPos ? LogicalPosition : (transform != null ? (Vector2)transform.position : Vector2.zero);
+                return _hasInitializedLogicalPos ? LogicalPosition : (transform != null ? transform.position.ToSim() : Vec2.Zero);
             }
         }
-        public Vector2 Velocity => rb != null ? rb.linearVelocity : Vector2.zero;
+        public Vec2 Velocity => rb != null ? rb.linearVelocity.ToSim() : Vec2.Zero;
 
-        public void SetLogicalPosition(Vector2 pos)
+        public void SetLogicalPosition(Vec2 pos)
         {
             PreviousLogicalPosition = _hasInitializedLogicalPos ? LogicalPosition : pos;
             LogicalPosition = pos;
@@ -63,7 +64,7 @@ namespace Simpiens.Entities
             // In headless test mode or if clock is missing, immediately sync transform
             if (_simulationClock == null && transform != null)
             {
-                transform.position = pos;
+                transform.position = pos.ToUnity();
                 transform.hasChanged = false;
             }
         }
@@ -122,8 +123,8 @@ namespace Simpiens.Entities
 
             if (transform != null)
             {
-                LogicalPosition = transform.position;
-                PreviousLogicalPosition = transform.position;
+                LogicalPosition = transform.position.ToSim();
+                PreviousLogicalPosition = LogicalPosition;
                 transform.hasChanged = false;
                 _hasInitializedLogicalPos = true;
             }
@@ -157,8 +158,8 @@ namespace Simpiens.Entities
 
             if (transform != null)
             {
-                LogicalPosition = transform.position;
-                PreviousLogicalPosition = transform.position;
+                LogicalPosition = transform.position.ToSim();
+                PreviousLogicalPosition = LogicalPosition;
                 transform.hasChanged = false;
                 _hasInitializedLogicalPos = true;
             }
@@ -179,7 +180,7 @@ namespace Simpiens.Entities
             if (_hasInitializedLogicalPos && transform != null)
             {
                 float alpha = _simulationClock != null ? _simulationClock.InterpolationAlpha : 1f;
-                transform.position = Vector2.Lerp(PreviousLogicalPosition, LogicalPosition, alpha);
+                transform.position = Vector2.Lerp(PreviousLogicalPosition.ToUnity(), LogicalPosition.ToUnity(), alpha);
                 transform.hasChanged = false;
             }
         }

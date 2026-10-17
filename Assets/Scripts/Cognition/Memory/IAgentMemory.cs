@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 using Simpiens.Cognition.Social;
 
 namespace Simpiens.Cognition.Memory

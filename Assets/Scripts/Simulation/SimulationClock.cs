@@ -11,8 +11,8 @@ namespace Simpiens.Simulation
 
         public const float FixedTickDeltaTime = 0.1f;
         public float TickDeltaTime => FixedTickDeltaTime;
-        public float InterpolationAlpha => Mathf.Clamp01(_accumulator / TimePerTick);
-        public bool IsPaused => TimeMultiplier <= 0f || Mathf.Approximately(TimeMultiplier, 0f);
+        public float InterpolationAlpha => SimMath.Clamp01(_accumulator / TimePerTick);
+        public bool IsPaused => TimeMultiplier <= 0f || SimMath.Approximately(TimeMultiplier, 0f);
 
         public event Action<long> OnSimulationTick;
         public event Action<float> OnTimeMultiplierChanged;
@@ -25,8 +25,8 @@ namespace Simpiens.Simulation
 
         public void SetTimeMultiplier(float multiplier)
         {
-            float newMultiplier = Mathf.Max(0f, multiplier);
-            if (Mathf.Approximately(TimeMultiplier, newMultiplier)) return;
+            float newMultiplier = SimMath.Max(0f, multiplier);
+            if (SimMath.Approximately(TimeMultiplier, newMultiplier)) return;
 
             TimeMultiplier = newMultiplier;
             OnTimeMultiplierChanged?.Invoke(TimeMultiplier);

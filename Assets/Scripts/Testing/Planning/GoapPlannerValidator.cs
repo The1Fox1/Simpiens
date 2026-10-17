@@ -37,7 +37,7 @@ namespace Simpiens.Testing.Planning
             var plan = new GoapPlan();
             var dummyContext = new AgentContext(
                 new EntityId(),
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 80f,
                 energy: 100f,
                 frustration: 0f,
@@ -71,7 +71,7 @@ namespace Simpiens.Testing.Planning
             Assert(success, "Single-step planning succeeded.");
             Assert(plan.Count == 1, $"Plan count is 1 (actual: {plan.Count}).");
             Assert(plan.Actions[0] is HarvestResourceAction, "Plan contains HarvestResourceAction.");
-            Assert(Mathf.Approximately(plan.TotalCost, 1.0f), $"TotalCost is 1.0 (actual: {plan.TotalCost}).");
+            Assert(SimMath.Approximately(plan.TotalCost, 1.0f), $"TotalCost is 1.0 (actual: {plan.TotalCost}).");
 
             Debug.Log("[PASS] Test 1: Single-step plan resolution passed.");
         }
@@ -90,7 +90,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Count == 2, $"Plan count is 2 (actual: {plan.Count}).");
             Assert(plan.Actions[0] is TravelToResourceAction, "Step 1 is TravelToResourceAction.");
             Assert(plan.Actions[1] is HarvestResourceAction, "Step 2 is HarvestResourceAction.");
-            Assert(Mathf.Approximately(plan.TotalCost, 3.0f), $"TotalCost is 3.0 (actual: {plan.TotalCost}).");
+            Assert(SimMath.Approximately(plan.TotalCost, 3.0f), $"TotalCost is 3.0 (actual: {plan.TotalCost}).");
 
             Debug.Log("[PASS] Test 2: Two-step plan resolution passed.");
         }
@@ -109,7 +109,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Actions[0] is SearchResourceAction, "Step 1 is SearchResourceAction.");
             Assert(plan.Actions[1] is TravelToResourceAction, "Step 2 is TravelToResourceAction.");
             Assert(plan.Actions[2] is HarvestResourceAction, "Step 3 is HarvestResourceAction.");
-            Assert(Mathf.Approximately(plan.TotalCost, 6.0f), $"TotalCost is 6.0 (actual: {plan.TotalCost}).");
+            Assert(SimMath.Approximately(plan.TotalCost, 6.0f), $"TotalCost is 6.0 (actual: {plan.TotalCost}).");
 
             Debug.Log("[PASS] Test 3: Three-step full chain plan resolution passed.");
         }
@@ -131,7 +131,7 @@ namespace Simpiens.Testing.Planning
             Assert(success, "Branch optimization planning succeeded.");
             Assert(plan.Count == 1, $"Planner chose 1-step plan (actual: {plan.Count}).");
             Assert(plan.Actions[0] is EatCarriedFoodAction, "Planner chose lowest-cost EatCarriedFoodAction.");
-            Assert(Mathf.Approximately(plan.TotalCost, 0.5f), $"TotalCost is 0.5 (actual: {plan.TotalCost}).");
+            Assert(SimMath.Approximately(plan.TotalCost, 0.5f), $"TotalCost is 0.5 (actual: {plan.TotalCost}).");
 
             Debug.Log("[PASS] Test 4: Branch cost optimization passed.");
         }
@@ -180,7 +180,7 @@ namespace Simpiens.Testing.Planning
 
             Assert(success, "Already-satisfied goal returns true.");
             Assert(plan.IsEmpty, "Plan is empty when goal is already satisfied.");
-            Assert(Mathf.Approximately(plan.TotalCost, 0f), "TotalCost is 0.0.");
+            Assert(SimMath.Approximately(plan.TotalCost, 0f), "TotalCost is 0.0.");
 
             Debug.Log("[PASS] Test 7: Already-satisfied goal evaluation passed.");
         }

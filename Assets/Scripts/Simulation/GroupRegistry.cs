@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Cognition.Groups;
 using Simpiens.Simulation.Persistence;
-using UnityEngine;
 using Simpiens.Diagnostics;
 using ZLogger;
 
@@ -21,7 +20,7 @@ namespace Simpiens.Simulation
             public bool IsActive;
             public GroupType Type;
             public EntityId LeaderId;
-            public Vector2 AnchorPosition;
+            public Vec2 AnchorPosition;
             public GroupDirective ActiveDirective;
             public byte Cohesion;
             public HashSet<EntityId> Members;
@@ -43,7 +42,7 @@ namespace Simpiens.Simulation
                     IsActive = false,
                     Type = GroupType.TemporaryParty,
                     LeaderId = default,
-                    AnchorPosition = Vector2.zero,
+                    AnchorPosition = Vec2.Zero,
                     ActiveDirective = GroupDirective.None,
                     Cohesion = 100,
                     Members = new HashSet<EntityId>()
@@ -53,7 +52,7 @@ namespace Simpiens.Simulation
             _activeGroupCount = 0;
         }
 
-        public byte CreateGroup(GroupType type, EntityId leaderId, Vector2 anchorPosition, byte initialCohesion = 100)
+        public byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100)
         {
             // Find lowest available 1-indexed group ID
             int freeIndex = -1;
@@ -220,7 +219,7 @@ namespace Simpiens.Simulation
 
             if (_memberships.TryGetValue(agentId, out var mem))
             {
-                int newAllegiance = Mathf.Clamp(mem.Allegiance + delta, 0, 100);
+                int newAllegiance = SimMath.Clamp(mem.Allegiance + delta, 0, 100);
                 _memberships[agentId] = new GroupMembership(mem.GroupId, mem.Role, (byte)newAllegiance, mem.JoinTick);
                 return true;
             }
@@ -236,7 +235,7 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive) return false;
 
-            int newCohesion = Mathf.Clamp(slot.Cohesion + delta, 0, 100);
+            int newCohesion = SimMath.Clamp(slot.Cohesion + delta, 0, 100);
             slot.Cohesion = (byte)newCohesion;
             return true;
         }
@@ -249,7 +248,7 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive) return false;
 
-            slot.Cohesion = (byte)Mathf.Clamp(cohesion, 0, 100);
+            slot.Cohesion = (byte)SimMath.Clamp(cohesion, 0, 100);
             return true;
         }
 

@@ -34,14 +34,14 @@ namespace Simpiens.Simulation.World
             grid.Clear();
         }
 
-        private static void MarkRect(Rect solid, StaticNavGrid grid)
+        private static void MarkRect(RectF solid, StaticNavGrid grid)
         {
             float inflate = Inflation;
             float cs = grid.CellSize;
-            int minX = Mathf.Max(0, Mathf.FloorToInt((solid.xMin - inflate + grid.OffsetX) / cs));
-            int maxX = Mathf.Min(grid.Width - 1, Mathf.FloorToInt((solid.xMax + inflate + grid.OffsetX) / cs));
-            int minY = Mathf.Max(0, Mathf.FloorToInt((solid.yMin - inflate + grid.OffsetY) / cs));
-            int maxY = Mathf.Min(grid.Height - 1, Mathf.FloorToInt((solid.yMax + inflate + grid.OffsetY) / cs));
+            int minX = SimMath.Max(0, SimMath.FloorToInt((solid.XMin - inflate + grid.OffsetX) / cs));
+            int maxX = SimMath.Min(grid.Width - 1, SimMath.FloorToInt((solid.XMax + inflate + grid.OffsetX) / cs));
+            int minY = SimMath.Max(0, SimMath.FloorToInt((solid.YMin - inflate + grid.OffsetY) / cs));
+            int maxY = SimMath.Min(grid.Height - 1, SimMath.FloorToInt((solid.YMax + inflate + grid.OffsetY) / cs));
 
             for (int y = minY; y <= maxY; y++)
             {
@@ -56,7 +56,7 @@ namespace Simpiens.Simulation.World
         /// True when a circle overlaps any static wall of the definition (exact geometry, no inflation).
         /// Used by diagnostics; allocation-free.
         /// </summary>
-        public static bool CircleOverlapsWall(MapDefinition definition, Vector2 center, float radius)
+        public static bool CircleOverlapsWall(MapDefinition definition, Vec2 center, float radius)
         {
             if (definition == null) return false;
             var walls = definition.Walls;
@@ -64,10 +64,10 @@ namespace Simpiens.Simulation.World
             for (int i = 0; i < walls.Count; i++)
             {
                 var rect = walls[i].Solid;
-                float cx = Mathf.Clamp(center.x, rect.xMin, rect.xMax);
-                float cy = Mathf.Clamp(center.y, rect.yMin, rect.yMax);
-                float dx = center.x - cx;
-                float dy = center.y - cy;
+                float cx = SimMath.Clamp(center.X, rect.XMin, rect.XMax);
+                float cy = SimMath.Clamp(center.Y, rect.YMin, rect.YMax);
+                float dx = center.X - cx;
+                float dy = center.Y - cy;
                 if (dx * dx + dy * dy < r2) return true;
             }
             return false;

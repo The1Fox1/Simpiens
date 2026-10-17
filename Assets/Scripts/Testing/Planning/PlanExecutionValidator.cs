@@ -45,7 +45,7 @@ namespace Simpiens.Testing.Planning
             // 1. Initially without known resources and hunger = 40 (sated)
             var contextSated = new AgentContext(
                 agentId,
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 40f,
                 energy: 100f,
                 frustration: 10f,
@@ -61,11 +61,11 @@ namespace Simpiens.Testing.Planning
             Assert(state1.Get(StateFact.IsThreatened) == false, "State1: IsThreatened is false.");
 
             // 2. Add resource at distance 1.0 unit (within ReachResourceDistance 1.5), hunger = 80, frustration = 70
-            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new Vector2Int(1, 0), 10);
+            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new GridPoint(1, 0), 10);
 
             var contextHungry = new AgentContext(
                 agentId,
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 80f,
                 energy: 100f,
                 frustration: 70f,
@@ -185,7 +185,7 @@ namespace Simpiens.Testing.Planning
             var agentId = CreateGuid();
             var context = new AgentContext(
                 agentId,
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 80f, // Hungry
                 energy: 100f,
                 frustration: 0f,
@@ -210,11 +210,11 @@ namespace Simpiens.Testing.Planning
             var memory = new AgentMemory();
             var agentId = CreateGuid();
             var resourceId = CreateGuid();
-            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new Vector2Int(2, 2), 1);
+            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new GridPoint(2, 2), 1);
 
             var context = new AgentContext(
                 agentId,
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 75f,
                 energy: 100f,
                 frustration: 20f,

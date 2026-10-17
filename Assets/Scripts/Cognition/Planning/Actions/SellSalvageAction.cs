@@ -1,8 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>

@@ -1,8 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Social;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
@@ -61,7 +59,7 @@ namespace Simpiens.Cognition.Planning.Goals
             if (context.Hunger >= StarvationThreshold && affinity.Fear < IntimidationFearThreshold)
             {
                 // Clamped low so SatiateHungerGoal (priority 90+) takes precedence
-                return Mathf.Max(10f, utility * 0.5f);
+                return SimMath.Max(10f, utility * 0.5f);
             }
 
             // Normal compliance priority: Base 50 + U_comply (ranges typically 70 to 120)

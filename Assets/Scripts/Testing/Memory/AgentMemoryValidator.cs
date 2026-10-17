@@ -34,22 +34,22 @@ namespace Simpiens.Testing.Memory
             var resourceId = EntityId.Generate();
 
             // Seed memory at tick 100
-            memory.SpatialMemoryMap[pawnId] = new SpatialMemoryRecord(pawnId, EntityType.Pawn, new Vector2Int(100, 100), 100);
-            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new Vector2Int(200, 200), 100);
+            memory.SpatialMemoryMap[pawnId] = new SpatialMemoryRecord(pawnId, EntityType.Pawn, new GridPoint(100, 100), 100);
+            memory.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new GridPoint(200, 200), 100);
 
             // Agent is located at (0,0) with visionRadius = 10, so locations (100,100) and (200,200) are outside line of sight
             // Tick 450: Pawn age = 350 <= 400 (PawnDecayTicks)
-            memory.UpdateMemory(dummySnapshot, Vector2Int.zero, visionRadius: 10, currentTick: 450);
+            memory.UpdateMemory(dummySnapshot, GridPoint.Zero, visionRadius: 10, currentTick: 450);
             Assert(memory.SpatialMemoryMap.ContainsKey(pawnId), "Pawn memory should not decay before 400 ticks.");
             Assert(memory.SpatialMemoryMap.ContainsKey(resourceId), "Resource memory should not decay before 1500 ticks.");
 
             // Tick 550: Pawn age = 450 > 400 (PawnDecayTicks) -> Pawn should be decayed!
-            memory.UpdateMemory(dummySnapshot, Vector2Int.zero, visionRadius: 10, currentTick: 550);
+            memory.UpdateMemory(dummySnapshot, GridPoint.Zero, visionRadius: 10, currentTick: 550);
             Assert(!memory.SpatialMemoryMap.ContainsKey(pawnId), "Pawn memory should decay after 400 ticks of being unobserved.");
             Assert(memory.SpatialMemoryMap.ContainsKey(resourceId), "Resource memory should still be retained at tick 550.");
 
             // Tick 1650: Resource age = 1550 > 1500 (ResourceDecayTicks) -> Resource should be decayed!
-            memory.UpdateMemory(dummySnapshot, Vector2Int.zero, visionRadius: 10, currentTick: 1650);
+            memory.UpdateMemory(dummySnapshot, GridPoint.Zero, visionRadius: 10, currentTick: 1650);
             Assert(!memory.SpatialMemoryMap.ContainsKey(resourceId), "Resource memory should decay after 1500 ticks of being unobserved.");
 
             Debug.Log("[PASS] Test 1: Temporal memory decay & selective pruning passed.");
@@ -65,7 +65,7 @@ namespace Simpiens.Testing.Memory
             var resourceId = EntityId.Generate();
 
             // Agent A knows a resource
-            memoryA.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new Vector2Int(15, 25), 100);
+            memoryA.SpatialMemoryMap[resourceId] = new SpatialMemoryRecord(resourceId, EntityType.Resource, new GridPoint(15, 25), 100);
 
             // Agent B does not know about it
             Assert(!memoryB.SpatialMemoryMap.ContainsKey(resourceId), "Agent B initially has no knowledge.");
@@ -77,7 +77,7 @@ namespace Simpiens.Testing.Memory
             // Verify Agent B learned the resource
             Assert(memoryB.SpatialMemoryMap.ContainsKey(resourceId), "Agent B should have learned Resource through gossip.");
             var recordB = memoryB.SpatialMemoryMap[resourceId];
-            Assert(recordB.LastKnownLocation == new Vector2Int(15, 25), "Learned location matches Agent A's memory.");
+            Assert(recordB.LastKnownLocation == new GridPoint(15, 25), "Learned location matches Agent A's memory.");
             Assert(recordB.LastSeenTick == 100, "Learned timestamp matches Agent A's observation tick.");
 
             // Verify ledger entries
@@ -97,17 +97,17 @@ namespace Simpiens.Testing.Memory
             var sharedResourceId = EntityId.Generate();
 
             // Agent A has stale intel: saw at (10, 10) on tick 50
-            memoryA.SpatialMemoryMap[sharedResourceId] = new SpatialMemoryRecord(sharedResourceId, EntityType.Resource, new Vector2Int(10, 10), 50);
+            memoryA.SpatialMemoryMap[sharedResourceId] = new SpatialMemoryRecord(sharedResourceId, EntityType.Resource, new GridPoint(10, 10), 50);
 
             // Agent B has newer intel: saw at (20, 20) on tick 150
-            memoryB.SpatialMemoryMap[sharedResourceId] = new SpatialMemoryRecord(sharedResourceId, EntityType.Resource, new Vector2Int(20, 20), 150);
+            memoryB.SpatialMemoryMap[sharedResourceId] = new SpatialMemoryRecord(sharedResourceId, EntityType.Resource, new GridPoint(20, 20), 150);
 
             // Gossip exchange
             memoryB.TryGossip(memoryA, agentAId, agentBId, currentTick: 200);
 
             // Agent A's memory should have updated to Agent B's newer intel
             var updatedRecordA = memoryA.SpatialMemoryMap[sharedResourceId];
-            Assert(updatedRecordA.LastKnownLocation == new Vector2Int(20, 20), "Agent A should adopt the newer coordinates.");
+            Assert(updatedRecordA.LastKnownLocation == new GridPoint(20, 20), "Agent A should adopt the newer coordinates.");
             Assert(updatedRecordA.LastSeenTick == 150, "Agent A should adopt the newer timestamp.");
 
             Debug.Log("[PASS] Test 3: Gossip intel freshness update passed.");
@@ -141,10 +141,10 @@ namespace Simpiens.Testing.Memory
             var agentId = EntityId.Generate();
 
             var defaultIdle = new IdleIntent(agentId);
-            Assert(Mathf.Approximately(defaultIdle.Duration, 2.0f), "Default IdleIntent duration is 2.0s.");
+            Assert(SimMath.Approximately(defaultIdle.Duration, 2.0f), "Default IdleIntent duration is 2.0s.");
 
             var customIdle = new IdleIntent(agentId, 4.5f);
-            Assert(Mathf.Approximately(customIdle.Duration, 4.5f), "Custom IdleIntent duration is 4.5s.");
+            Assert(SimMath.Approximately(customIdle.Duration, 4.5f), "Custom IdleIntent duration is 4.5s.");
 
             Debug.Log("[PASS] Test 5: IdleIntent duration retention passed.");
         }

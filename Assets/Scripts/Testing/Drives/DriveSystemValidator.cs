@@ -44,30 +44,30 @@ namespace Simpiens.Testing.Drives
 
             // 1. Hunger accumulation over time (1.5/s) and relief from eating (-50)
             float deltaSeconds = 10f;
-            needs.Hunger = Mathf.Min(100f, needs.Hunger + deltaSeconds * 1.5f);
-            Assert(Mathf.Approximately(needs.Hunger, 65f), $"Hunger accumulated to 65 after 10s (actual: {needs.Hunger})");
+            needs.Hunger = SimMath.Min(100f, needs.Hunger + deltaSeconds * 1.5f);
+            Assert(SimMath.Approximately(needs.Hunger, 65f), $"Hunger accumulated to 65 after 10s (actual: {needs.Hunger})");
 
-            needs.Hunger = Mathf.Max(0f, needs.Hunger - 50f);
-            Assert(Mathf.Approximately(needs.Hunger, 15f), $"Hunger relieved to 15 after eating (actual: {needs.Hunger})");
+            needs.Hunger = SimMath.Max(0f, needs.Hunger - 50f);
+            Assert(SimMath.Approximately(needs.Hunger, 15f), $"Hunger relieved to 15 after eating (actual: {needs.Hunger})");
 
             // 2. Energy drain while walking (1.0/s) vs resting recovery (15/s)
-            needs.Energy = Mathf.Max(0f, needs.Energy - deltaSeconds * 1.0f);
-            Assert(Mathf.Approximately(needs.Energy, 90f), $"Energy drained to 90 after 10s walking (actual: {needs.Energy})");
+            needs.Energy = SimMath.Max(0f, needs.Energy - deltaSeconds * 1.0f);
+            Assert(SimMath.Approximately(needs.Energy, 90f), $"Energy drained to 90 after 10s walking (actual: {needs.Energy})");
 
             float restSeconds = 2f;
-            needs.Energy = Mathf.Min(100f, needs.Energy + restSeconds * 15f);
-            Assert(Mathf.Approximately(needs.Energy, 100f), $"Energy recovered to 100 after 2s resting (actual: {needs.Energy})");
+            needs.Energy = SimMath.Min(100f, needs.Energy + restSeconds * 15f);
+            Assert(SimMath.Approximately(needs.Energy, 100f), $"Energy recovered to 100 after 2s resting (actual: {needs.Energy})");
 
             // Baseline metabolic drain (0.2/s)
-            needs.Energy = Mathf.Max(0f, needs.Energy - deltaSeconds * 0.2f);
-            Assert(Mathf.Approximately(needs.Energy, 98f), $"Energy drained to 98 after 10s baseline metabolic cost (actual: {needs.Energy})");
+            needs.Energy = SimMath.Max(0f, needs.Energy - deltaSeconds * 0.2f);
+            Assert(SimMath.Approximately(needs.Energy, 98f), $"Energy drained to 98 after 10s baseline metabolic cost (actual: {needs.Energy})");
 
             // 3. Social isolation decay (0.5/s) and gossip replenishment (+25)
-            needs.Social = Mathf.Max(0f, needs.Social - deltaSeconds * 0.5f);
-            Assert(Mathf.Approximately(needs.Social, 45f), $"Social drained to 45 after 10s isolation (actual: {needs.Social})");
+            needs.Social = SimMath.Max(0f, needs.Social - deltaSeconds * 0.5f);
+            Assert(SimMath.Approximately(needs.Social, 45f), $"Social drained to 45 after 10s isolation (actual: {needs.Social})");
 
-            needs.Social = Mathf.Min(100f, needs.Social + 25f);
-            Assert(Mathf.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
+            needs.Social = SimMath.Min(100f, needs.Social + 25f);
+            Assert(SimMath.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
 
             Debug.Log("[PASS] Test 1: Continuous biological drive dynamics verified.");
         }
@@ -80,7 +80,7 @@ namespace Simpiens.Testing.Drives
             var agentId = EntityId.Generate();
 
             // Scenario A: Starving agent (Hunger = 85, Energy = 90, Social = 70)
-            var contextA = new AgentContext(agentId, Vector2.zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
+            var contextA = new AgentContext(agentId, Vec2.Zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
             float hungerPriA = hungerGoal.CalculatePriority(contextA);
             float restPriA = restGoal.CalculatePriority(contextA);
             float socialPriA = socialGoal.CalculatePriority(contextA);
@@ -91,7 +91,7 @@ namespace Simpiens.Testing.Drives
             Assert(hungerPriA > restPriA && hungerPriA > socialPriA, "SatiateHungerGoal dominates when starving.");
 
             // Scenario B: Exhausted agent (Hunger = 30, Energy = 10, Social = 80)
-            var contextB = new AgentContext(agentId, Vector2.zero, new AgentNeeds(30f, 10f, 80f), 0f, null, null, 0);
+            var contextB = new AgentContext(agentId, Vec2.Zero, new AgentNeeds(30f, 10f, 80f), 0f, null, null, 0);
             float hungerPriB = hungerGoal.CalculatePriority(contextB);
             float restPriB = restGoal.CalculatePriority(contextB);
             float socialPriB = socialGoal.CalculatePriority(contextB);
@@ -100,7 +100,7 @@ namespace Simpiens.Testing.Drives
             Assert(restPriB > hungerPriB && restPriB > socialPriB, "RestGoal dominates when exhausted.");
 
             // Scenario C: Isolated agent (Hunger = 20, Energy = 85, Social = 5)
-            var contextC = new AgentContext(agentId, Vector2.zero, new AgentNeeds(20f, 85f, 5f), 0f, null, null, 0);
+            var contextC = new AgentContext(agentId, Vec2.Zero, new AgentNeeds(20f, 85f, 5f), 0f, null, null, 0);
             float hungerPriC = hungerGoal.CalculatePriority(contextC);
             float restPriC = restGoal.CalculatePriority(contextC);
             float socialPriC = socialGoal.CalculatePriority(contextC);
@@ -123,7 +123,7 @@ namespace Simpiens.Testing.Drives
             var blockerGo = new GameObject("[TestNode_Blocker]");
             var blockerNode = blockerGo.AddComponent<NodeController>();
             blockerNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            blockerNode.transform.position = new Vector2(1f, 0f);
+            blockerNode.transform.position = (new Vec2(1f, 0f)).ToUnity();
             registry.RegisterNode(blockerNode);
             grid.UpdateFromRegistry(registry);
 
@@ -131,13 +131,13 @@ namespace Simpiens.Testing.Drives
             var movingGo = new GameObject("[TestNode_Moving]");
             var movingNode = movingGo.AddComponent<NodeController>();
             movingNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            movingNode.transform.position = Vector2.zero;
+            movingNode.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(movingNode);
 
             // The obstructed waypoint is intermediate: an occupied *final* waypoint within ArrivalTolerance counts as arrival
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(1f, 0f), new Vector2(3f, 0f) },
+                Waypoints = new Vec2[] { new Vec2(1f, 0f), new Vec2(3f, 0f) },
                 Length = 2,
                 IsValid = true
             };
@@ -148,7 +148,7 @@ namespace Simpiens.Testing.Drives
             {
                 Intent = new WanderIntent(movingNode.Id, path),
                 CurrentWaypointIndex = 0,
-                LastSampledPosition = Vector2.zero,
+                LastSampledPosition = Vec2.Zero,
                 TimeSinceLastProgress = 0.5f,
                 StallCount = 0
             };
@@ -156,7 +156,7 @@ namespace Simpiens.Testing.Drives
             var resA = simManager.ExecutePathMovement(movingNode, path, state);
             Assert(resA == IntentResult.InProgress, "Pawn yields InProgress when path waypoint is obstructed.");
             Assert(state.StallCount == 0, "Watchdog does not increment StallCount before 1.0s threshold.");
-            Assert(Vector2.Distance(movingNode.Position, Vector2.zero) < 0.001f, "No lateral position twitch while waiting on obstructed path.");
+            Assert(Vec2.Distance(movingNode.Position, Vec2.Zero) < 0.001f, "No lateral position twitch while waiting on obstructed path.");
 
             // Part B: Watchdog trigger at >= 1.0s stall threshold
             state.TimeSinceLastProgress = 1.0f;
@@ -164,7 +164,7 @@ namespace Simpiens.Testing.Drives
 
             Assert(state.StallCount == 1, "Watchdog increments StallCount to 1 on 1.0s physical stall cadence.");
             Assert(state.TimeSinceLastProgress == 0f, "Watchdog resets progress timer after firing unstuck reflex.");
-            Assert(!Mathf.Approximately(movingNode.Position.y, 0f), "Tier 1 unstuck reflex applied orthogonal evasion.");
+            Assert(!SimMath.Approximately(movingNode.Position.Y, 0f), "Tier 1 unstuck reflex applied orthogonal evasion.");
 
             GameObject.DestroyImmediate(blockerGo);
             GameObject.DestroyImmediate(movingGo);
@@ -185,7 +185,7 @@ namespace Simpiens.Testing.Drives
             // Part A: Starvation Panic evaluation
             var evaluator = new MentalBreakEvaluator(null);
             var starvingNeeds = new AgentNeeds(hunger: 90f, energy: 50f, social: 50f);
-            var starvingContext = new AgentContext(agent.AgentId, Vector2.zero, starvingNeeds, 0f, null, agent.Memory, 100);
+            var starvingContext = new AgentContext(agent.AgentId, Vec2.Zero, starvingNeeds, 0f, null, agent.Memory, 100);
 
             var panicIntent = evaluator.EvaluateAsync(starvingContext, CancellationToken.None).GetAwaiter().GetResult();
             Assert(panicIntent is PanicIntent, "MentalBreakEvaluator generates PanicIntent when starving without food.");
@@ -239,7 +239,7 @@ namespace Simpiens.Testing.Drives
             var go = new GameObject("[TestNode_ZeroGC]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
 
             var agent = go.AddComponent<AutonomousAgent>();

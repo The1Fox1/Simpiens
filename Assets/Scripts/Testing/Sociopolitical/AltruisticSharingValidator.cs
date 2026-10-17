@@ -46,18 +46,18 @@ namespace Simpiens.Testing.Sociopolitical
             // Test 1: Sated agent (Hunger = 20) assessing companion
             // Utility = (80 * 0.5) + (75 * 0.3) - (20 * 0.4) + 0 = 40 + 22.5 - 8 = 54.5
             float compUtility = memory.CalculateAltruismScore(companionId, 0, selfHunger: 20f, isTargetCollapsed: false);
-            Assert(Mathf.Approximately(compUtility, 54.5f), $"Altruism score for companion is 54.5 (actual: {compUtility})");
+            Assert(SimMath.Approximately(compUtility, 54.5f), $"Altruism score for companion is 54.5 (actual: {compUtility})");
             Assert(compUtility >= 25f, "Companion utility exceeds sharing threshold (>= 25).");
 
             // Test 2: Sated agent assessing stranger
             // Utility = (-20 * 0.5) + (-10 * 0.3) - (20 * 0.4) + 0 = -10 - 3 - 8 = -21
             float strangerUtility = memory.CalculateAltruismScore(strangerId, 0, selfHunger: 20f, isTargetCollapsed: false);
-            Assert(Mathf.Approximately(strangerUtility, -21f), $"Altruism score for stranger is -21 (actual: {strangerUtility})");
+            Assert(SimMath.Approximately(strangerUtility, -21f), $"Altruism score for stranger is -21 (actual: {strangerUtility})");
             Assert(strangerUtility < 25f, "Stranger utility is below sharing threshold (< 25).");
 
             // Test 3: Collapsed companion bonus (+30)
             float collapsedCompUtility = memory.CalculateAltruismScore(companionId, 0, selfHunger: 20f, isTargetCollapsed: true);
-            Assert(Mathf.Approximately(collapsedCompUtility, 84.5f), $"Collapsed companion utility includes +30 bonus (actual: {collapsedCompUtility})");
+            Assert(SimMath.Approximately(collapsedCompUtility, 84.5f), $"Collapsed companion utility includes +30 bonus (actual: {collapsedCompUtility})");
 
             Debug.Log("[AltruisticSharingValidator] Test 1 Passed: Altruistic utility calculation mathematically verified.");
         }
@@ -72,7 +72,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goA = new GameObject("[Test_Giver_A]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vector2.zero;
+            nodeA.transform.position = Vec2.Zero.ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             agentA.Hunger = 20f;
@@ -82,7 +82,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[Test_Receiver_B]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(0f, 0.5f);
+            nodeB.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             agentB.Hunger = 90f;
@@ -174,7 +174,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goA = new GameObject("[Test_Bonding_A]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vector2.zero;
+            nodeA.transform.position = Vec2.Zero.ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeA);
@@ -182,7 +182,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[Test_Bonding_B]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(0f, 0.5f);
+            nodeB.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeB);

@@ -190,3 +190,4 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   PlayMode 66/66, DeterminismScenario identical alone 3/3, soak in band. C2 (golden world-hash baselines, 3 seeds,
   Baselines/golden-world-hash.txt, scripts/golden-hashes.sh) done 2026-10-17; PlayMode 67/67. C3 (EntityId replaces
   UnityEngine.GUID, bit-compatible, root namespace Simpiens) done 2026-10-17; golden identical, PlayMode 68/68.
+  C4 (engine-free maths Vec2/GridPoint/RectF/Rgba/SimMath copying Unity's formulas) done 2026-10-17; golden 3/3 seeds.

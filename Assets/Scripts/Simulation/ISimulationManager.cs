@@ -10,8 +10,8 @@ namespace Simpiens.Simulation
         void EnqueueIntent(Simpiens.Cognition.Contracts.AgentIntent intent);
         bool AbortIntent(EntityId agentId);
         void RegisterResource(ResourceData data);
-        void RegisterAnchor(EntityId id, UnityEngine.Vector2 position, float radius = 3.0f);
-        void RegisterBunk(EntityId id, UnityEngine.Vector2 position);
+        void RegisterAnchor(EntityId id, Vec2 position, float radius = 3.0f);
+        void RegisterBunk(EntityId id, Vec2 position);
         void RegisterTradeStall(Simpiens.Simulation.Economy.TradeStallData stallData);
         bool TryGetTradeStall(EntityId stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
         System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> ActiveStalls { get; }

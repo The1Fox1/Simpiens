@@ -70,12 +70,12 @@ namespace Simpiens.Testing.Environment
         private void ValidateHeadlessContextAndCognition()
         {
             var state = new AgentState();
-            state.Position = new Vector2(10f, 20f);
+            state.Position = new Vec2(10f, 20f);
             var snapshot = new SharedWorldSnapshot(10, 10, 1.0f, 4, null);
             var context = state.CreateContext(snapshot, 100);
 
             Assert(context.AgentId == state.AgentId, "Context AgentId mismatch.");
-            Assert(context.Position == new Vector2(10f, 20f), "Context position mismatch.");
+            Assert(context.Position == new Vec2(10f, 20f), "Context position mismatch.");
             Assert(context.CurrentTick == 100, "Context tick mismatch.");
 
             var consequenceService = new AgentConsequenceService();
@@ -125,8 +125,8 @@ namespace Simpiens.Testing.Environment
             agent.Hunger = 42f;
             Assert(agent.State.Hunger == 42f, "Mutating agent.Hunger must reflect on agent.State.Hunger.");
 
-            node.SetLogicalPosition(new Vector2(33f, 44f));
-            Assert(agent.State.Position == new Vector2(33f, 44f), "SetLogicalPosition must synchronize agent.State.Position.");
+            node.SetLogicalPosition(new Vec2(33f, 44f));
+            Assert(agent.State.Position == new Vec2(33f, 44f), "SetLogicalPosition must synchronize agent.State.Position.");
 
             UnityEngine.Object.DestroyImmediate(go);
             Debug.Log("[PASS] Test 4: Backward-compatible AutonomousAgent MonoBehaviour façade integration verified.");

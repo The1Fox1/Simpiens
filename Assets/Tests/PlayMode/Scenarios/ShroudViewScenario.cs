@@ -76,7 +76,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             Vector2 at = crawler.transform.position;
             selection.ClickAt(at);
             if (selection.SelectedCrawler != crawler.AgentId || !selection.Following) _clickProblem = $"click on {crawler.name} selected {selection.SelectedCrawler} (following {selection.Following})";
-            else if (selection.SelectedSector != sectors.GetSectorAt(at).Id) _clickProblem = $"crawler click selected sector {selection.SelectedSector}, not {sectors.GetSectorAt(at).Id}";
+            else if (selection.SelectedSector != sectors.GetSectorAt(at.ToSim()).Id) _clickProblem = $"crawler click selected sector {selection.SelectedSector}, not {sectors.GetSectorAt(at.ToSim()).Id}";
             var rig = cameraController.Rig;
             rig.ZoomAt(rig.Position, 0.01f);
 
@@ -95,7 +95,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
 
             // A click on empty floor in the Garden (away from every crawler) drops the crawler and selects the room
             sectors.TryGetSector(Floor1Layout.GardenSectorId, out var garden);
-            selection.ClickAt(EmptyFloor(garden.Bounds, spawner));
+            selection.ClickAt(EmptyFloor(garden.Bounds.ToUnity(), spawner));
             if (_clickProblem == null && (selection.SelectedCrawler != default || selection.Following || selection.SelectedSector != Floor1Layout.GardenSectorId))
             {
                 _clickProblem = $"floor click left crawler {selection.SelectedCrawler} (following {selection.Following}), sector {selection.SelectedSector}";

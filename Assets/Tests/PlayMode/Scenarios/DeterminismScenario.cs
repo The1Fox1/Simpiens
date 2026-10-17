@@ -122,7 +122,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         private static string Compare(Run a, Run b, out long tick)
         {
             tick = -1;
-            int n = Mathf.Min(a.Samples.Count, b.Samples.Count);
+            int n = SimMath.Min(a.Samples.Count, b.Samples.Count);
             for (int i = 0; i < n; i++)
             {
                 if (a.Samples[i].Tick != b.Samples[i].Tick) { tick = a.Samples[i].Tick; return $"sample ticks differ ({a.Samples[i].Tick} vs {b.Samples[i].Tick})"; }

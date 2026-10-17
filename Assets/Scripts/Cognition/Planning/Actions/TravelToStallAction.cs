@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -44,7 +42,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 return CreateIntent(context);
             }
 
-            Vector2 stallPos = Vector2.zero;
+            Vec2 stallPos = Vec2.Zero;
             bool found = false;
 
             if (context.Snapshot != null && context.Snapshot.ActiveStallCount > 0)
@@ -63,7 +61,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 {
                     if (kvp.Value.Type == EntityType.Stall && !context.Memory.IsBlacklisted(kvp.Key, context.CurrentTick))
                     {
-                        float distSqr = ((Vector2)kvp.Value.LastKnownLocation - context.Position).sqrMagnitude;
+                        float distSqr = ((Vec2)kvp.Value.LastKnownLocation - context.Position).SqrMagnitude;
                         if (distSqr < closestDistSqr)
                         {
                             closestDistSqr = distSqr;
@@ -80,9 +78,9 @@ namespace Simpiens.Cognition.Planning.Actions
             }
 
             // Stand 1.5m away from stall counter
-            Vector2 toAgent = (context.Position - stallPos).normalized;
-            if (toAgent == Vector2.zero) toAgent = Vector2.up;
-            Vector2 targetPos = stallPos + toAgent * 1.5f;
+            Vec2 toAgent = (context.Position - stallPos).Normalized;
+            if (toAgent == Vec2.Zero) toAgent = Vec2.Up;
+            Vec2 targetPos = stallPos + toAgent * 1.5f;
 
             var req = new PathRequest
             {

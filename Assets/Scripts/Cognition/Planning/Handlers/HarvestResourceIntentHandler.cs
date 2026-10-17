@@ -36,7 +36,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     for (int i = 0; i < activeNodes.Count; i++)
                     {
                         var other = activeNodes[i];
-                        if (other.Id != node.Id && other.Type == EntityType.Pawn && Vector2.Distance(other.Position, node.Position) <= 2.5f)
+                        if (other.Id != node.Id && other.Type == EntityType.Pawn && Vec2.Distance(other.Position, node.Position) <= 2.5f)
                         {
                             state.ContestedCompetitorId = other.Id;
                             break;
@@ -48,7 +48,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if (state.ContestedCompetitorId != default && agent != null)
                 {
                     // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
-                    agent.Frustration = Mathf.Min(100f, agent.Frustration + 25f);
+                    agent.Frustration = SimMath.Min(100f, agent.Frustration + 25f);
                     agent.VisualState = AgentVisualState.Panicking;
                     agent.TriggerTantrumVisual();
                     agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
@@ -56,7 +56,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                         MemoryEventType.ContentionFaced,
                         state.ContestedCompetitorId,
-                        Vector2Int.RoundToInt(node.Position),
+                        GridPoint.RoundToInt(node.Position),
                         currentTick));
 
                     agent.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 5, deltaRespect: -10, currentTick);
@@ -70,7 +70,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             bool withinHarvestReach = state.ElapsedTime > 0f || harvest.UnitsHarvested > 0;
             if (!withinHarvestReach && targetResourceNode != null)
             {
-                float distToResource = Vector2.Distance(node.Position, targetResourceNode.Position);
+                float distToResource = Vec2.Distance(node.Position, targetResourceNode.Position);
                 if (distToResource <= 0.8f)
                 {
                     withinHarvestReach = true;
@@ -81,11 +81,11 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (reachResult == IntentResult.Success)
             {
                 // Ensure the agent is genuinely within physical harvest proximity of the target resource
-                if (targetResourceNode != null && Vector2.Distance(node.Position, targetResourceNode.Position) > 1.2f)
+                if (targetResourceNode != null && Vec2.Distance(node.Position, targetResourceNode.Position) > 1.2f)
                 {
                     if (SimLog.Traces(SimLog.Navigation, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                     {
-                        SimLog.Navigation.ZLogDebug($"{SimLog.Agent(node.Id)} path ended {Vector2.Distance(node.Position, targetResourceNode.Position):F2}m from {SimLog.Agent(harvest.TargetEntityId)} (needs <= 1.2m); harvest PathBlocked");
+                        SimLog.Navigation.ZLogDebug($"{SimLog.Agent(node.Id)} path ended {Vec2.Distance(node.Position, targetResourceNode.Position):F2}m from {SimLog.Agent(harvest.TargetEntityId)} (needs <= 1.2m); harvest PathBlocked");
                     }
                     return IntentResult.PathBlocked;
                 }
@@ -102,7 +102,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                             {
                                 // Lowest id wins ties so the outcome never depends on Dictionary order
                                 var otherNode = context.WorldRegistry.GetNode(kvp.Key);
-                                if (otherNode != null && Vector2.Distance(otherNode.Position, node.Position) <= 2.5f &&
+                                if (otherNode != null && Vec2.Distance(otherNode.Position, node.Position) <= 2.5f &&
                                     (competitorNode == null || otherNode.Id.CompareTo(competitorNode.Id) < 0))
                                 {
                                     competitorNode = otherNode;
@@ -124,9 +124,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                         agent?.TriggerYieldVisual(currentTick);
 
                         // Step back 0.5 units away from competitor
-                        Vector2 awayDir = ((Vector2)node.Position - (Vector2)competitorNode.Position).normalized;
-                        if (awayDir == Vector2.zero) awayDir = Vector2.down;
-                        context.TryDisplacePawn(node, (Vector2)node.Position + awayDir * 0.5f);
+                        Vec2 awayDir = ((Vec2)node.Position - (Vec2)competitorNode.Position).Normalized;
+                        if (awayDir == Vec2.Zero) awayDir = Vec2.Down;
+                        context.TryDisplacePawn(node, (Vec2)node.Position + awayDir * 0.5f);
 
                         // Blacklist node for 150 ticks
                         agent?.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
@@ -135,12 +135,12 @@ namespace Simpiens.Cognition.Planning.Handlers
                         agent?.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                             MemoryEventType.ResourceYielded,
                             competitorNode.Id,
-                            Vector2Int.RoundToInt(node.Position),
+                            GridPoint.RoundToInt(node.Position),
                             currentTick));
                         competitorNode.Agent?.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                             MemoryEventType.ResourceClaimed,
                             node.Id,
-                            Vector2Int.RoundToInt(competitorNode.Position),
+                            GridPoint.RoundToInt(competitorNode.Position),
                             currentTick));
 
                         context.ChronicleService?.RecordEvent(new ChronicleEvent(
@@ -203,7 +203,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent?.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                         MemoryEventType.ContentionFaced,
                         state.ContestedCompetitorId,
-                        Vector2Int.RoundToInt(node.Position),
+                        GridPoint.RoundToInt(node.Position),
                         currentTick));
                     agent?.Memory?.RecordInteraction(state.ContestedCompetitorId, deltaWarmth: -15, deltaTrust: -10, deltaFear: 0, deltaRespect: -10, currentTick);
 

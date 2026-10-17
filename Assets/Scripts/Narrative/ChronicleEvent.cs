@@ -1,6 +1,4 @@
 using System;
-using UnityEngine;
-
 namespace Simpiens.Narrative
 {
     /// <summary>
@@ -101,7 +99,7 @@ namespace Simpiens.Narrative
                    SectorId == other.SectorId &&
                    SimulationTick == other.SimulationTick &&
                    Intensity == other.Intensity &&
-                   Mathf.Approximately(ExtraData, other.ExtraData);
+                   SimMath.Approximately(ExtraData, other.ExtraData);
         }
 
         public override bool Equals(object obj)

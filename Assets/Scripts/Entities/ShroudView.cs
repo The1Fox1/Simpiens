@@ -118,7 +118,7 @@ namespace Simpiens.Entities
         {
             // Sector bounds meet on wall centre lines: inset by the wall's half-thickness so the room's walls show
             float inset = MapDefinitionBuilder.WallHalfExtent;
-            var b = sector.Bounds;
+            var b = sector.Bounds.ToUnity();
             var fogGo = new GameObject($"Fog_{sector.Name}");
             fogGo.transform.SetParent(transform, false);
             fogGo.transform.position = new Vector3(b.center.x, b.center.y, 0f);
@@ -132,7 +132,7 @@ namespace Simpiens.Entities
             Vector2 at = b.center;
             for (int i = 0; i < map.Labels.Count; i++)
             {
-                if (sector.Contains(map.Labels[i].Position)) { at = map.Labels[i].Position + new Vector2(0f, -0.9f); break; }
+                if (sector.Contains(map.Labels[i].Position)) { at = map.Labels[i].Position.ToUnity() + new Vector2(0f, -0.9f); break; }
             }
             var labelGo = new GameObject($"Uncharted_{sector.Name}");
             labelGo.transform.SetParent(transform, false);

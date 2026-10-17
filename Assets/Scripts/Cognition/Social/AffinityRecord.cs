@@ -1,6 +1,4 @@
 using System;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Social
 {
     /// <summary>
@@ -28,10 +26,10 @@ namespace Simpiens.Cognition.Social
 
         public AffinityRecord(sbyte warmth, sbyte trust, sbyte fear, sbyte respect, byte interactionCount, uint lastInteractionTick)
         {
-            Warmth = (sbyte)Mathf.Clamp(warmth, -100, 100);
-            Trust = (sbyte)Mathf.Clamp(trust, -100, 100);
-            Fear = (sbyte)Mathf.Clamp(fear, 0, 100);
-            Respect = (sbyte)Mathf.Clamp(respect, -100, 100);
+            Warmth = (sbyte)SimMath.Clamp(warmth, -100, 100);
+            Trust = (sbyte)SimMath.Clamp(trust, -100, 100);
+            Fear = (sbyte)SimMath.Clamp(fear, 0, 100);
+            Respect = (sbyte)SimMath.Clamp(respect, -100, 100);
             InteractionCount = interactionCount;
             _padding0 = 0;
             _padding1 = 0;
@@ -52,10 +50,10 @@ namespace Simpiens.Cognition.Social
         /// </summary>
         public AffinityRecord WithInteraction(sbyte deltaWarmth, sbyte deltaTrust, sbyte deltaFear, sbyte deltaRespect, uint currentTick)
         {
-            int newWarmth = Mathf.Clamp(Warmth + deltaWarmth, -100, 100);
-            int newTrust = Mathf.Clamp(Trust + deltaTrust, -100, 100);
-            int newFear = Mathf.Clamp(Fear + deltaFear, 0, 100);
-            int newRespect = Mathf.Clamp(Respect + deltaRespect, -100, 100);
+            int newWarmth = SimMath.Clamp(Warmth + deltaWarmth, -100, 100);
+            int newTrust = SimMath.Clamp(Trust + deltaTrust, -100, 100);
+            int newFear = SimMath.Clamp(Fear + deltaFear, 0, 100);
+            int newRespect = SimMath.Clamp(Respect + deltaRespect, -100, 100);
             byte newCount = InteractionCount < byte.MaxValue ? (byte)(InteractionCount + 1) : byte.MaxValue;
 
             return new AffinityRecord((sbyte)newWarmth, (sbyte)newTrust, (sbyte)newFear, (sbyte)newRespect, newCount, currentTick);
@@ -82,7 +80,7 @@ namespace Simpiens.Cognition.Social
 
             int newWarmth = RegressValue(Warmth, decayAmount);
             int newTrust = RegressValue(Trust, decayAmount);
-            int newFear = Mathf.Max(0, Fear - decayAmount);
+            int newFear = SimMath.Max(0, Fear - decayAmount);
             int newRespect = RegressValue(Respect, decayAmount);
 
             uint remainder = elapsedTicks % regressionPeriod;
@@ -95,11 +93,11 @@ namespace Simpiens.Cognition.Social
         {
             if (value > 0)
             {
-                return Mathf.Max(0, value - amount);
+                return SimMath.Max(0, value - amount);
             }
             if (value < 0)
             {
-                return Mathf.Min(0, value + amount);
+                return SimMath.Min(0, value + amount);
             }
             return 0;
         }

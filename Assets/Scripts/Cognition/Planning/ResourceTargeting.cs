@@ -39,7 +39,7 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsFoodYield()) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
 
-                float distSqr = ((Vector2)record.LastKnownLocation - context.Position).sqrMagnitude;
+                float distSqr = ((Vec2)record.LastKnownLocation - context.Position).SqrMagnitude;
                 if (distSqr > maxDistSqr) continue;
 
                 if (!found || distSqr < bestDistSqr || (distSqr == bestDistSqr && record.EntityId.CompareTo(best.EntityId) < 0))
@@ -101,7 +101,7 @@ namespace Simpiens.Cognition.Planning
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
 
-                float dist = Mathf.Max(1f, Vector2.Distance(record.LastKnownLocation, context.Position));
+                float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
                 if (requiredType != ItemType.None)
                 {
@@ -138,7 +138,7 @@ namespace Simpiens.Cognition.Planning
                 return new HarvestResourceIntent(context.AgentId, target.EntityId, default, targetUnits: targetUnits);
             }
 
-            Vector2 targetPos = target.LastKnownLocation;
+            Vec2 targetPos = target.LastKnownLocation;
             var request = new PathRequest
             {
                 StartPosition = context.Position,
@@ -169,7 +169,7 @@ namespace Simpiens.Cognition.Planning
         /// Deterministic exploration waypoint (no RNG; derived from the agent id and a time bucket). With a map, a
         /// point in another sector (TryPickSectorWaypoint); without one, a point 5–9m away on a hashed bearing.
         /// </summary>
-        public static Vector2 PickExplorationPoint(in AgentContext context, float minDistance = 5f, float maxDistance = 9f)
+        public static Vec2 PickExplorationPoint(in AgentContext context, float minDistance = 5f, float maxDistance = 9f)
         {
             // On a map with rooms, head for another sector: a random point a few units away mostly lands in a wall
             // or the same room, so finding a door would be luck (Epic MAP Phase 3)
@@ -181,9 +181,9 @@ namespace Simpiens.Cognition.Planning
 
             uint h = ExplorationHash(context, 50u);
 
-            float angle = (h % 3600u) / 3600f * Mathf.PI * 2f;
+            float angle = (h % 3600u) / 3600f * SimMath.PI * 2f;
             float distance = minDistance + ((h >> 12) % 1000u) / 1000f * (maxDistance - minDistance);
-            return context.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+            return context.Position + new Vec2(SimMath.Cos(angle), SimMath.Sin(angle)) * distance;
         }
 
         /// <summary>
@@ -192,7 +192,7 @@ namespace Simpiens.Cognition.Planning
         /// exploring away from the only free food it knows (review §3.3 D6; the Epic MAP close-out starvation). Map data
         /// only: the plot may be dormant, which is the point. False when the agent has seen no food sector.
         /// </summary>
-        public static bool TryPickFoodPlotWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 plot)
+        public static bool TryPickFoodPlotWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vec2 plot)
         {
             plot = default;
             if (map == null || context.Memory == null) return false;
@@ -207,7 +207,7 @@ namespace Simpiens.Cognition.Planning
                 byte sector = map.FindSector(node.Position).Id;
                 if (snapshot != null && !snapshot.IsSectorCharted(sector)) continue;
                 if (context.Memory.LastSectorVisit(sector) == 0u) continue;
-                float sqr = (node.Position - context.Position).sqrMagnitude;
+                float sqr = (node.Position - context.Position).SqrMagnitude;
                 if (sqr < bestSqr)
                 {
                     bestSqr = sqr;
@@ -227,7 +227,7 @@ namespace Simpiens.Cognition.Planning
         /// sector's walls. Arriving there changes the
         /// candidate set, so the next search moves on. False when the map offers no other sector.
         /// </summary>
-        public static bool TryPickSectorWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vector2 waypoint)
+        public static bool TryPickSectorWaypoint(in AgentContext context, Simpiens.Simulation.World.MapDefinition map, out Vec2 waypoint)
         {
             waypoint = default;
             var sectors = map.Sectors;
@@ -264,11 +264,11 @@ namespace Simpiens.Cognition.Planning
                 if (pick-- > 0) continue;
 
                 var bounds = sector.Bounds;
-                float jitterX = Mathf.Max(0f, bounds.width * 0.5f - 2f);
-                float jitterY = Mathf.Max(0f, bounds.height * 0.5f - 2f);
+                float jitterX = SimMath.Max(0f, bounds.Width * 0.5f - 2f);
+                float jitterY = SimMath.Max(0f, bounds.Height * 0.5f - 2f);
                 float fx = ((h >> 8) % 1000u) / 1000f * 2f - 1f;
                 float fy = ((h >> 18) % 1000u) / 1000f * 2f - 1f;
-                waypoint = bounds.center + new Vector2(fx * jitterX, fy * jitterY);
+                waypoint = bounds.Center + new Vec2(fx * jitterX, fy * jitterY);
                 return true;
             }
             return false;
@@ -292,7 +292,7 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// Paths toward a destination and wraps it in a WanderIntent; falls back to a short Idle when unroutable.
         /// </summary>
-        public static async ValueTask<AgentIntent> BuildTravelIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, Vector2 destination)
+        public static async ValueTask<AgentIntent> BuildTravelIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, Vec2 destination)
         {
             if (pathfinder == null)
             {
@@ -319,11 +319,11 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// A path is reachable when it is valid and its final waypoint lies within harvest reach of the target.
         /// </summary>
-        public static bool IsReachable(PathResponse path, Vector2 targetPos)
+        public static bool IsReachable(PathResponse path, Vec2 targetPos)
         {
             if (path == null || !path.IsValid || path.Length <= 0) return false;
-            Vector2 finalWaypoint = path.Waypoints[path.Length - 1];
-            return Vector2.Distance(finalWaypoint, targetPos) <= HarvestReach;
+            Vec2 finalWaypoint = path.Waypoints[path.Length - 1];
+            return Vec2.Distance(finalWaypoint, targetPos) <= HarvestReach;
         }
 
         public enum StallAccess
@@ -351,7 +351,7 @@ namespace Simpiens.Cognition.Planning
                 var stall = context.Snapshot.StallBuffer[i];
                 if (!Reachability.IsReachable(context, stall.Position)) continue;
 
-                float distSqr = (stall.Position - context.Position).sqrMagnitude;
+                float distSqr = (stall.Position - context.Position).SqrMagnitude;
                 if (!found || distSqr < bestDistSqr || (distSqr == bestDistSqr && stall.StallEntityId.CompareTo(nearest.StallEntityId) < 0))
                 {
                     found = true;

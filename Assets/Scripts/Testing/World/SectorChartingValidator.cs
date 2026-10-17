@@ -21,9 +21,9 @@ namespace Simpiens.Testing.World
     /// </summary>
     public class SectorChartingValidator
     {
-        private static readonly Vector2 QuarryBelowSeamDoor = new Vector2(-16f, 4f);
-        private static readonly Vector2 SeamNode = new Vector2(-16f, 10f);
-        private static readonly Vector2 OvergrowthNode = new Vector2(16f, 10f);
+        private static readonly Vec2 QuarryBelowSeamDoor = new Vec2(-16f, 4f);
+        private static readonly Vec2 SeamNode = new Vec2(-16f, 10f);
+        private static readonly Vec2 OvergrowthNode = new Vec2(16f, 10f);
 
         private const byte Seam = Floor1Layout.DeepSeamSectorId;
 
@@ -71,13 +71,13 @@ namespace Simpiens.Testing.World
             Assert(snapshot.HasLineOfSight(QuarryBelowSeamDoor, SeamNode), "Precondition: the seam node is in line of sight through the door.");
 
             var memory = new AgentMemory();
-            memory.UpdateMemory(snapshot, Vector2Int.RoundToInt(QuarryBelowSeamDoor), 6, 10);
+            memory.UpdateMemory(snapshot, GridPoint.RoundToInt(QuarryBelowSeamDoor), 6, 10);
             Assert(!memory.SpatialMemoryMap.ContainsKey(node), "A crawler looking through the door learns nothing inside the uncharted Deep Seam.");
             Assert(memory.SurveyNoteCount == 0, "And keeps no survey notes either.");
 
             var charted = Floor1Snapshot(uncharted: false);
             var sameNode = AddResource(charted, SeamNode);
-            memory.UpdateMemory(charted, Vector2Int.RoundToInt(QuarryBelowSeamDoor), 6, 11);
+            memory.UpdateMemory(charted, GridPoint.RoundToInt(QuarryBelowSeamDoor), 6, 11);
             Assert(memory.SpatialMemoryMap.ContainsKey(sameNode), "Once charted, the same view reveals the node.");
             Debug.Log("[PASS] Test 2: Nothing inside an uncharted sector is perceived, even in line of sight.");
         }
@@ -89,12 +89,12 @@ namespace Simpiens.Testing.World
             var overgrowth = AddResource(snapshot, OvergrowthNode);
 
             var scout = new AgentMemory();
-            scout.UpdateMemory(snapshot, new Vector2Int(-16, 12), 6, 20, surveySectorId: Seam);
+            scout.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 20, surveySectorId: Seam);
             Assert(!scout.SpatialMemoryMap.ContainsKey(seam), "The scout does not plan on what it surveys before reporting.");
             Assert(scout.SurveyNoteCount == 1, $"The scout notes the seam node (notes {scout.SurveyNoteCount}).");
 
             var far = new AgentMemory();
-            far.UpdateMemory(snapshot, new Vector2Int(16, 12), 6, 20, surveySectorId: Seam);
+            far.UpdateMemory(snapshot, new GridPoint(16, 12), 6, 20, surveySectorId: Seam);
             Assert(far.SurveyNoteCount == 0 && !far.SpatialMemoryMap.ContainsKey(overgrowth), "A Deep Seam survey notes nothing in the Overgrowth.");
 
             var taken = new List<SpatialMemoryRecord>();
@@ -111,7 +111,7 @@ namespace Simpiens.Testing.World
             var peerId = NextGuid();
             var scout = new AgentMemory();
             var peer = new AgentMemory();
-            scout.UpdateMemory(snapshot, new Vector2Int(-16, 12), 6, 30, surveySectorId: Seam);
+            scout.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 30, surveySectorId: Seam);
 
             Assert(scout.TryGossip(peer, peerId, scoutId, 400), "Precondition: the two gossip.");
             Assert(peer.SpatialMemoryMap.Count == 0, $"Gossip passes on nothing from the survey (peer learned {peer.SpatialMemoryMap.Count}).");
@@ -134,7 +134,7 @@ namespace Simpiens.Testing.World
             var sim = new SimulationManager(new WorldRegistry(), null, agentRegistry: agents);
 
             var scout = states[1];
-            scout.Memory.UpdateMemory(snapshot, new Vector2Int(-16, 12), 6, 40, surveySectorId: Seam);
+            scout.Memory.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 40, surveySectorId: Seam);
             Assert(scout.Memory.SurveyNoteCount == 1, "Precondition: the scout surveyed the seam node.");
 
             Assert(sim.PublishSurvey(states[0].AgentId, Seam) == 0, "Only the scout's own notes are published.");
@@ -150,8 +150,8 @@ namespace Simpiens.Testing.World
 
             // An abandoned survey stays private and unused
             var quitter = new AgentMemory();
-            quitter.UpdateMemory(snapshot, new Vector2Int(-16, 12), 6, 50, surveySectorId: Seam);
-            quitter.UpdateMemory(snapshot, new Vector2Int(-16, 12), 6, 51);
+            quitter.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 50, surveySectorId: Seam);
+            quitter.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 51);
             Assert(quitter.SurveyNoteCount == 1 && !quitter.SpatialMemoryMap.ContainsKey(seam), "Without a report the survey stays private notes.");
             Debug.Log("[PASS] Test 5: A successful report publishes the chart to every agent; an abandoned survey charts nothing.");
         }
@@ -163,14 +163,14 @@ namespace Simpiens.Testing.World
 
             var uncharted = Floor1Snapshot(uncharted: true);
             uncharted.SetBounties(new[] { gather, scout }, 2);
-            var ctx = Context(uncharted, Vector2.zero, 100);
+            var ctx = Context(uncharted, Vec2.Zero, 100);
             Assert(!BountyQueries.IsFulfillableFrom(ctx, gather), "A Gather bounty in the uncharted Deep Seam cannot be claimed.");
             Assert(BountyQueries.IsFulfillableFrom(ctx, scout), "The Scout bounty for it can.");
             Assert(BountyQueries.TryGetOpenBounty(ctx, BountyType.GatherResource, out _) == false, "No open Gather bounty is offered.");
 
             var charted = Floor1Snapshot(uncharted: false);
             charted.SetBounties(new[] { gather, scout }, 2);
-            Assert(BountyQueries.IsFulfillableFrom(Context(charted, Vector2.zero, 100), gather), "Once charted, the Gather bounty can be claimed.");
+            Assert(BountyQueries.IsFulfillableFrom(Context(charted, Vec2.Zero, 100), gather), "Once charted, the Gather bounty can be claimed.");
 
             var claimedScout = new BountyContract(2, BountyType.ScoutSector, Seam, ItemType.None, 1, 15, 0, 6000, claimantId: ctx.AgentId, status: BountyStatus.Claimed);
             uncharted.SetBounties(new[] { claimedScout }, 1);
@@ -187,7 +187,7 @@ namespace Simpiens.Testing.World
             {
                 for (uint w = 0; w < 40; w++)
                 {
-                    var ctx = new AgentContext(new EntityId((uint)a + 1u, 9u, 9u, 9u), Vector2.zero, new AgentNeeds(20f, 80f, 60f), 0f,
+                    var ctx = new AgentContext(new EntityId((uint)a + 1u, 9u, 9u, 9u), Vec2.Zero, new AgentNeeds(20f, 80f, 60f), 0f,
                         snapshot, new AgentMemory(), w * ResourceTargeting.SectorChoiceTicks);
                     var p = ResourceTargeting.PickExplorationPoint(ctx);
                     byte sector = def.FindSector(p).Id;
@@ -202,10 +202,10 @@ namespace Simpiens.Testing.World
         {
             var def = Floor1Layout.Definition;
             var cells = def.PartitionCells(1f);
-            var grid = new StaticNavGrid(cells.x, cells.y, 1f);
+            var grid = new StaticNavGrid(cells.X, cells.Y, 1f);
             WallRasterizer.Rasterize(def, grid);
             grid.EnsureRegions();
-            var snapshot = new SharedWorldSnapshot(cells.x, cells.y, 1f, 8, null);
+            var snapshot = new SharedWorldSnapshot(cells.X, cells.Y, 1f, 8, null);
             snapshot.SetStaticGrid(grid);
             snapshot.SetMap(def);
 
@@ -216,16 +216,16 @@ namespace Simpiens.Testing.World
             return snapshot;
         }
 
-        private EntityId AddResource(SharedWorldSnapshot snapshot, Vector2 position)
+        private EntityId AddResource(SharedWorldSnapshot snapshot, Vec2 position)
         {
             var id = NextGuid();
-            var entity = new EntitySnapshot(id, position, Vector2.zero, 0.35f, EntityType.Resource, false, 0f, ItemType.IronOre);
+            var entity = new EntitySnapshot(id, position, Vec2.Zero, 0.35f, EntityType.Resource, false, 0f, ItemType.IronOre);
             float offset = snapshot.Width * snapshot.CellSize * 0.5f;
-            snapshot.AddEntity(Mathf.FloorToInt(position.x + offset), Mathf.FloorToInt(position.y + snapshot.Height * snapshot.CellSize * 0.5f), in entity);
+            snapshot.AddEntity(SimMath.FloorToInt(position.X + offset), SimMath.FloorToInt(position.Y + snapshot.Height * snapshot.CellSize * 0.5f), in entity);
             return id;
         }
 
-        private AgentContext Context(SharedWorldSnapshot snapshot, Vector2 position, uint tick)
+        private AgentContext Context(SharedWorldSnapshot snapshot, Vec2 position, uint tick)
         {
             return new AgentContext(new EntityId(77u, 7u, 7u, 7u), position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);
         }

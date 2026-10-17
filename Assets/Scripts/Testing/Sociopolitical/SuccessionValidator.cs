@@ -76,7 +76,7 @@ namespace Simpiens.Testing.Sociopolitical
             // For C: from A (30 - 0 = 30) + from B (30 - 0 = 30) => Net = 60
 
             var agents = new ISocialAgent[] { agentA, agentB, agentC };
-            Vector2 hearthPos = new Vector2(12f, 18f);
+            Vec2 hearthPos = new Vec2(12f, 18f);
 
             bool formed = SuccessionEngine.TryFormEmergentGroup(hearthPos, agents, registry, currentTick, out byte newGroupId);
             Assert(formed, "Emergent group formed successfully around hearth.");
@@ -134,7 +134,7 @@ namespace Simpiens.Testing.Sociopolitical
                 { followerB.AgentId, followerB }
             };
 
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vector2.zero, initialCohesion: 80);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vec2.Zero, initialCohesion: 80);
             registry.AddMember(groupId, officer.AgentId, RoleRank.Officer, initialAllegiance: 85);
             registry.AddMember(groupId, followerA.AgentId, RoleRank.Follower, initialAllegiance: 75);
             registry.AddMember(groupId, followerB.AgentId, RoleRank.Follower, initialAllegiance: 70);
@@ -184,7 +184,7 @@ namespace Simpiens.Testing.Sociopolitical
             };
 
             // Cohesion 40 => triggers Dominance Challenge (25 <= C < 50)
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vector2.zero, initialCohesion: 40);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vec2.Zero, initialCohesion: 40);
             registry.AddMember(groupId, followerA.AgentId, RoleRank.Follower, initialAllegiance: 70);
             registry.AddMember(groupId, followerB.AgentId, RoleRank.Follower, initialAllegiance: 70);
 
@@ -227,7 +227,7 @@ namespace Simpiens.Testing.Sociopolitical
             };
 
             // Loser enters challenge with only 10 allegiance!
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vector2.zero, initialCohesion: 35);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vec2.Zero, initialCohesion: 35);
             registry.AddMember(groupId, loser.AgentId, RoleRank.Follower, initialAllegiance: 10);
             registry.AddMember(groupId, winner.AgentId, RoleRank.Follower, initialAllegiance: 80);
 
@@ -267,7 +267,7 @@ namespace Simpiens.Testing.Sociopolitical
             };
 
             // Cohesion 15 => triggers Factional Schism (< 25)
-            byte originalGroupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, new Vector2(5f, 5f), initialCohesion: 15);
+            byte originalGroupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, new Vec2(5f, 5f), initialCohesion: 15);
             registry.AddMember(originalGroupId, contenderA.AgentId, RoleRank.Follower, initialAllegiance: 80);
             registry.AddMember(originalGroupId, contenderB.AgentId, RoleRank.Follower, initialAllegiance: 80);
             registry.AddMember(originalGroupId, loyalistA.AgentId, RoleRank.Follower, initialAllegiance: 70);
@@ -322,7 +322,7 @@ namespace Simpiens.Testing.Sociopolitical
                 { follower.AgentId, follower }
             };
 
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vector2.zero, initialCohesion: 80);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leader.AgentId, Vec2.Zero, initialCohesion: 80);
             registry.AddMember(groupId, follower.AgentId, RoleRank.Follower, initialAllegiance: 70);
 
             // 1. Healthy respected leader => NOT incapacitated or discredited
@@ -363,7 +363,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             Assert(SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(default, 0, null, null, 0), "Null refs return true for leader check.");
 
-            bool formed = SuccessionEngine.TryFormEmergentGroup(Vector2.zero, null, null, 0, out byte newGid);
+            bool formed = SuccessionEngine.TryFormEmergentGroup(Vec2.Zero, null, null, 0, out byte newGid);
             Assert(!formed && newGid == 0, "TryFormEmergentGroup with null agents returns false.");
 
             var res = SuccessionEngine.ResolveSuccession(0, null, null, 0);

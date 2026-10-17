@@ -63,18 +63,18 @@ namespace Simpiens.Simulation.Persistence
             Mix(ref h, sector.StartsExplored ? 1 : 0);
         }
 
-        private static void Mix(ref ulong h, Rect rect)
+        private static void Mix(ref ulong h, RectF rect)
         {
-            Mix(ref h, rect.x);
-            Mix(ref h, rect.y);
-            Mix(ref h, rect.width);
-            Mix(ref h, rect.height);
+            Mix(ref h, rect.X);
+            Mix(ref h, rect.Y);
+            Mix(ref h, rect.Width);
+            Mix(ref h, rect.Height);
         }
 
-        private static void Mix(ref ulong h, Vector2 v)
+        private static void Mix(ref ulong h, Vec2 v)
         {
-            Mix(ref h, v.x);
-            Mix(ref h, v.y);
+            Mix(ref h, v.X);
+            Mix(ref h, v.Y);
         }
 
         private static void Mix(ref ulong h, float value) => Mix(ref h, BitConverter.SingleToInt32Bits(value));

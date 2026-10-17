@@ -49,19 +49,19 @@ namespace Simpiens.Testing.Planning
             var goal = new AidCompanionGoal();
             var share = new ShareFoodAction();
 
-            var calm = SnapshotWithPeer(peerId, new Vector2(2f, 0f), peerHunger: 30f);
-            var calmContext = Context(helperId, Vector2.zero, hunger: 20f, calm, memory);
+            var calm = SnapshotWithPeer(peerId, new Vec2(2f, 0f), peerHunger: 30f);
+            var calmContext = Context(helperId, Vec2.Zero, hunger: 20f, calm, memory);
             Assert(!goal.IsValid(calmContext), "AidCompanion invalid when no companion is in distress (the 16k-loop root cause).");
             Assert(!share.IsValid(calmContext), "ShareFood invalid without a distressed companion.");
 
-            var starving = SnapshotWithPeer(peerId, new Vector2(2f, 0f), peerHunger: 92f);
-            var needContext = Context(helperId, Vector2.zero, hunger: 20f, starving, memory);
+            var starving = SnapshotWithPeer(peerId, new Vec2(2f, 0f), peerHunger: 92f);
+            var needContext = Context(helperId, Vec2.Zero, hunger: 20f, starving, memory);
             Assert(goal.IsValid(needContext), "AidCompanion valid for a sated helper with a starving warm companion in view.");
             Assert(goal.CalculatePriority(needContext) >= AltruismTargeting.AltruismThreshold, "Priority is the companion's altruism score.");
             var intent = share.CreateIntent(needContext) as ShareResourceIntent;
             Assert(intent != null && intent.TargetPawnId == peerId, "ShareFood targets the distressed companion.");
 
-            var hungryHelper = Context(helperId, Vector2.zero, hunger: 55f, starving, memory);
+            var hungryHelper = Context(helperId, Vec2.Zero, hunger: 55f, starving, memory);
             Assert(!goal.IsValid(hungryHelper), "A hungry helper (>= 50) does not pursue AidCompanion.");
 
             Debug.Log("[GoapLiveLoopFixesValidator] Test 1 Passed: need-driven AidCompanion/ShareFood.");
@@ -80,7 +80,7 @@ namespace Simpiens.Testing.Planning
             Assert(!grid.AreConnected(CellCenter(1, 1), CellCenter(7, 7)), "Inside a walled pen is disconnected from outside.");
             Assert(grid.AreConnected(CellCenter(1, 1), CellCenter(18, 15)), "Two open-yard points are connected.");
             Assert(grid.AreConnected(CellCenter(6, 6), CellCenter(8, 8)), "Two points inside the pen are connected.");
-            Assert(grid.AreConnected(new Vector2(500f, 0f), CellCenter(7, 7)), "Out-of-bounds queries are treated as connected (unknown).");
+            Assert(grid.AreConnected(new Vec2(500f, 0f), CellCenter(7, 7)), "Out-of-bounds queries are treated as connected (unknown).");
 
             grid.SetWall(5, 5); // already a wall: walkability unchanged
             grid.EnsureRegions();
@@ -141,7 +141,7 @@ namespace Simpiens.Testing.Planning
             var planner = new GoapPlanner();
 
             var empty = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
-            var noBounty = Context(NextGuid(), Vector2.zero, hunger: 10f, empty, new AgentMemory());
+            var noBounty = Context(NextGuid(), Vec2.Zero, hunger: 10f, empty, new AgentMemory());
             var state = WorldStateBuilder.BuildWorldState(noBounty, noBounty.Inventory);
             var plan = new GoapPlan();
 
@@ -150,9 +150,9 @@ namespace Simpiens.Testing.Planning
             Assert(planner.LastNodeCount == 0, $"Impossible goal rejected before search (allocated {planner.LastNodeCount} nodes).");
 
             var withBounty = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
-            withBounty.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vector2(-8f, 10f)) }, 1);
-            withBounty.SetStalls(new[] { new TradeStallData(NextGuid(), new Vector2(20f, 20f)) }, 1);
-            var solvable = Context(NextGuid(), Vector2.zero, hunger: 10f, withBounty, new AgentMemory());
+            withBounty.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
+            withBounty.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            var solvable = Context(NextGuid(), Vec2.Zero, hunger: 10f, withBounty, new AgentMemory());
             state = WorldStateBuilder.BuildWorldState(solvable, solvable.Inventory);
 
             bool resolved = planner.Plan(state, new FulfillBountyGoal(), graph, solvable, plan);
@@ -172,9 +172,9 @@ namespace Simpiens.Testing.Planning
             var graph = BuildWideGraph();
             var planner = new GoapPlanner();
             var snapshot = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
-            snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vector2(-8f, 10f)) }, 1);
-            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vector2(20f, 20f)) }, 1);
-            var context = Context(NextGuid(), Vector2.zero, hunger: 10f, snapshot, new AgentMemory());
+            snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
+            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            var context = Context(NextGuid(), Vec2.Zero, hunger: 10f, snapshot, new AgentMemory());
             var state = WorldStateBuilder.BuildWorldState(context, context.Inventory);
             var goal = new FulfillBountyGoal();
             var plan = new GoapPlan();
@@ -238,17 +238,17 @@ namespace Simpiens.Testing.Planning
             }
         }
 
-        private static Vector2 CellCenter(int cx, int cy) => new Vector2(cx - GridSize * 0.5f + 0.5f, cy - GridSize * 0.5f + 0.5f);
+        private static Vec2 CellCenter(int cx, int cy) => new Vec2(cx - GridSize * 0.5f + 0.5f, cy - GridSize * 0.5f + 0.5f);
 
-        private static SharedWorldSnapshot SnapshotWithPeer(EntityId peerId, Vector2 peerPos, float peerHunger)
+        private static SharedWorldSnapshot SnapshotWithPeer(EntityId peerId, Vec2 peerPos, float peerHunger)
         {
             var snapshot = new SharedWorldSnapshot(GridSize, GridSize, 1f, 8, _ => { });
-            var entity = new EntitySnapshot(peerId, peerPos, Vector2.zero, 0.35f, EntityType.Pawn, false, peerHunger);
-            snapshot.AddEntity(Mathf.FloorToInt(peerPos.x + GridSize * 0.5f), Mathf.FloorToInt(peerPos.y + GridSize * 0.5f), in entity);
+            var entity = new EntitySnapshot(peerId, peerPos, Vec2.Zero, 0.35f, EntityType.Pawn, false, peerHunger);
+            snapshot.AddEntity(SimMath.FloorToInt(peerPos.X + GridSize * 0.5f), SimMath.FloorToInt(peerPos.Y + GridSize * 0.5f), in entity);
             return snapshot;
         }
 
-        private static AgentContext Context(EntityId id, Vector2 position, float hunger, SharedWorldSnapshot snapshot, AgentMemory memory, AgentInventory inventory = null)
+        private static AgentContext Context(EntityId id, Vec2 position, float hunger, SharedWorldSnapshot snapshot, AgentMemory memory, AgentInventory inventory = null)
         {
             return new AgentContext(id, position, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot, memory, 1,
                 inventory: (inventory ?? new AgentInventory()).GetSnapshot());

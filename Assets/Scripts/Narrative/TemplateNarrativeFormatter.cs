@@ -1,7 +1,5 @@
 using System;
 using Simpiens.UI.Zones;
-using UnityEngine;
-
 namespace Simpiens.Narrative
 {
     /// <summary>

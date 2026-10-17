@@ -35,32 +35,32 @@ namespace Simpiens.Testing.World
 
         private void ValidateBuilderInvariants()
         {
-            var bounds = new Rect(-10f, -10f, 20f, 20f);
+            var bounds = new RectF(-10f, -10f, 20f, 20f);
 
             ExpectThrows(() => new MapDefinitionBuilder("Dup", bounds)
-                .Sector(1, "A", "", new Rect(0f, 0f, 1f, 1f))
-                .Sector(1, "B", "", new Rect(2f, 2f, 1f, 1f))
+                .Sector(1, "A", "", new RectF(0f, 0f, 1f, 1f))
+                .Sector(1, "B", "", new RectF(2f, 2f, 1f, 1f))
                 .Build(), "duplicate sector ids");
 
             ExpectThrows(() => new MapDefinitionBuilder("Zero", bounds)
-                .Sector(0, "A", "", new Rect(0f, 0f, 1f, 1f))
+                .Sector(0, "A", "", new RectF(0f, 0f, 1f, 1f))
                 .Build(), "sector id 0 (reserved for the fallback)");
 
             ExpectThrows(() => new MapDefinitionBuilder("Keys", bounds)
-                .Node("n", Vector2.zero, ItemType.Ration, 1, 10)
-                .Poi("n", PoiKind.Hearth, Vector2.one)
+                .Node("n", Vec2.Zero, ItemType.Ration, 1, 10)
+                .Poi("n", PoiKind.Hearth, Vec2.One)
                 .Build(), "duplicate keys across nodes and POIs");
 
             ExpectThrows(() => new MapDefinitionBuilder("Outside", bounds)
-                .Node("far", new Vector2(50f, 0f), ItemType.Ration, 1, 10)
+                .Node("far", new Vec2(50f, 0f), ItemType.Ration, 1, 10)
                 .Build(), "a node outside the playable bounds");
 
             ExpectThrows(() => new MapDefinitionBuilder("Diagonal", bounds)
-                .WallRun(new Vector2(0f, 0f), new Vector2(3f, 3f)), "a diagonal wall run");
+                .WallRun(new Vec2(0f, 0f), new Vec2(3f, 3f)), "a diagonal wall run");
 
             var def = new MapDefinitionBuilder("Ok", bounds)
-                .Sector(3, "Three", "", new Rect(0f, 0f, 2f, 2f), new Vector2(1f, 1f), 0.5f, startsExplored: false)
-                .Poi("stall", PoiKind.Stall, new Vector2(1f, 1f), 3f)
+                .Sector(3, "Three", "", new RectF(0f, 0f, 2f, 2f), new Vec2(1f, 1f), 0.5f, startsExplored: false)
+                .Poi("stall", PoiKind.Stall, new Vec2(1f, 1f), 3f)
                 .Build();
             Assert(def.TryGetSector(3, out var s) && !s.StartsExplored, "Sector 3 must be found and start shrouded.");
             Assert(def.TryGetSector(0, out var fallback) && fallback.Id == 0, "Id 0 resolves to the fallback sector.");
@@ -72,23 +72,23 @@ namespace Simpiens.Testing.World
         private void ValidateWallRunInflation()
         {
             // Vertical run at x = 0 from y = -2 to 2 on a 20x20 grid (cell edges on whole units)
-            var def = new MapDefinitionBuilder("Run", new Rect(-10f, -10f, 20f, 20f))
-                .WallRun(new Vector2(0f, -2f), new Vector2(0f, 2f))
+            var def = new MapDefinitionBuilder("Run", new RectF(-10f, -10f, 20f, 20f))
+                .WallRun(new Vec2(0f, -2f), new Vec2(0f, 2f))
                 .Build();
             var grid = new StaticNavGrid(20, 20, 1f);
             WallRasterizer.Rasterize(def, grid);
 
             // Solid half extent 0.55 + body 0.25 = 0.8: cells [-1, 0) and [0, 1) blocked, [-2,-1) and [1,2) open
-            Assert(!IsWalkable(grid, new Vector2(-0.5f, 0f)) && !IsWalkable(grid, new Vector2(0.5f, 0f)), "Cells either side of the wall centre line must be blocked.");
-            Assert(IsWalkable(grid, new Vector2(-1.5f, 0f)) && IsWalkable(grid, new Vector2(1.5f, 0f)), "Cells beyond the inflated wall must stay open.");
-            Assert(!IsWalkable(grid, new Vector2(0.5f, 2.5f)) && IsWalkable(grid, new Vector2(0.5f, 3.5f)), "The run's end cap is inflated by exactly one cell.");
+            Assert(!IsWalkable(grid, new Vec2(-0.5f, 0f)) && !IsWalkable(grid, new Vec2(0.5f, 0f)), "Cells either side of the wall centre line must be blocked.");
+            Assert(IsWalkable(grid, new Vec2(-1.5f, 0f)) && IsWalkable(grid, new Vec2(1.5f, 0f)), "Cells beyond the inflated wall must stay open.");
+            Assert(!IsWalkable(grid, new Vec2(0.5f, 2.5f)) && IsWalkable(grid, new Vec2(0.5f, 3.5f)), "The run's end cap is inflated by exactly one cell.");
 
             // Any pawn centre within solid + body radius of the wall must be blocked
             float reach = MapDefinitionBuilder.WallHalfExtent + NavConstants.PawnBodyRadius - 0.01f;
             for (int i = 0; i < 16; i++)
             {
-                float a = i * Mathf.PI * 2f / 16f;
-                var p = new Vector2(0f, 0f) + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * reach;
+                float a = i * SimMath.PI * 2f / 16f;
+                var p = new Vec2(0f, 0f) + new Vec2(SimMath.Cos(a), SimMath.Sin(a)) * reach;
                 Assert(!IsWalkable(grid, p), $"Point {p} within body reach of the wall must be blocked.");
             }
 
@@ -98,73 +98,73 @@ namespace Simpiens.Testing.World
         private void ValidateHalfIntegerWallRows()
         {
             // Legacy pen rows sit on half-integer y (3.5): one unit wall row must block three cell rows
-            var def = new MapDefinitionBuilder("HalfRow", new Rect(-10f, -10f, 20f, 20f))
-                .WallRun(new Vector2(-3f, 3.5f), new Vector2(3f, 3.5f))
+            var def = new MapDefinitionBuilder("HalfRow", new RectF(-10f, -10f, 20f, 20f))
+                .WallRun(new Vec2(-3f, 3.5f), new Vec2(3f, 3.5f))
                 .Build();
             var grid = new StaticNavGrid(20, 20, 1f);
             WallRasterizer.Rasterize(def, grid);
 
-            Assert(!IsWalkable(grid, new Vector2(0f, 2.5f)), "Row y in [2,3) blocked (3.5 - 0.8 = 2.7).");
-            Assert(!IsWalkable(grid, new Vector2(0f, 3.5f)), "Row y in [3,4) blocked.");
-            Assert(!IsWalkable(grid, new Vector2(0f, 4.5f)), "Row y in [4,5) blocked (3.5 + 0.8 = 4.3).");
-            Assert(IsWalkable(grid, new Vector2(0f, 1.5f)) && IsWalkable(grid, new Vector2(0f, 5.5f)), "Rows beyond the inflated wall stay open.");
+            Assert(!IsWalkable(grid, new Vec2(0f, 2.5f)), "Row y in [2,3) blocked (3.5 - 0.8 = 2.7).");
+            Assert(!IsWalkable(grid, new Vec2(0f, 3.5f)), "Row y in [3,4) blocked.");
+            Assert(!IsWalkable(grid, new Vec2(0f, 4.5f)), "Row y in [4,5) blocked (3.5 + 0.8 = 4.3).");
+            Assert(IsWalkable(grid, new Vec2(0f, 1.5f)) && IsWalkable(grid, new Vec2(0f, 5.5f)), "Rows beyond the inflated wall stay open.");
 
             Debug.Log("[PASS] Test 3: Half-integer wall rows block the same three cell rows as legacy wall nodes.");
         }
 
         private void ValidateBaseLayerSurvivesClear()
         {
-            var def = new MapDefinitionBuilder("Base", new Rect(-10f, -10f, 20f, 20f))
-                .WallRun(new Vector2(2f, 0f), new Vector2(2f, 0f))
+            var def = new MapDefinitionBuilder("Base", new RectF(-10f, -10f, 20f, 20f))
+                .WallRun(new Vec2(2f, 0f), new Vec2(2f, 0f))
                 .Build();
             var grid = new StaticNavGrid(20, 20, 1f);
             WallRasterizer.Rasterize(def, grid);
 
             // A dynamic wall elsewhere, then the dynamic reset that SpatialHashGrid performs when a wall disappears
-            grid.WorldToCell(new Vector2(-4.5f, -4.5f), out int dx, out int dy);
+            grid.WorldToCell(new Vec2(-4.5f, -4.5f), out int dx, out int dy);
             grid.SetWall(dx, dy);
             Assert(!grid.IsCellWalkable(dx, dy), "Dynamic wall must block its cell.");
             grid.Clear();
 
             Assert(grid.IsCellWalkable(dx, dy), "Clear() must remove dynamic walls.");
-            Assert(!IsWalkable(grid, new Vector2(2.5f, 0f)), "Clear() must keep static map walls.");
-            grid.WorldToCell(new Vector2(2.5f, 0f), out int bx, out int by);
+            Assert(!IsWalkable(grid, new Vec2(2.5f, 0f)), "Clear() must keep static map walls.");
+            grid.WorldToCell(new Vec2(2.5f, 0f), out int bx, out int by);
             Assert(grid.IsBaseWall(bx, by) && !grid.IsBaseWall(dx, dy), "Base-wall query distinguishes map walls from dynamic walls.");
 
             // Re-rasterizing a different map replaces the base layer
-            var empty = new MapDefinitionBuilder("Empty", new Rect(-10f, -10f, 20f, 20f)).Build();
+            var empty = new MapDefinitionBuilder("Empty", new RectF(-10f, -10f, 20f, 20f)).Build();
             WallRasterizer.Rasterize(empty, grid);
-            Assert(IsWalkable(grid, new Vector2(2.5f, 0f)), "Loading another map must drop the previous map's walls.");
+            Assert(IsWalkable(grid, new Vec2(2.5f, 0f)), "Loading another map must drop the previous map's walls.");
 
             Debug.Log("[PASS] Test 4: Static map walls survive dynamic resets; reloading replaces them.");
         }
 
         private void ValidatePlayableBounds()
         {
-            var def = new MapDefinitionBuilder("Bounds", new Rect(-6f, -4f, 12f, 8f)).Build();
+            var def = new MapDefinitionBuilder("Bounds", new RectF(-6f, -4f, 12f, 8f)).Build();
             var grid = new StaticNavGrid(20, 20, 1f);
             WallRasterizer.Rasterize(def, grid);
 
-            Assert(IsWalkable(grid, new Vector2(5.5f, 3.5f)), "Cell inside the bounds stays open.");
-            Assert(!IsWalkable(grid, new Vector2(6.5f, 0f)), "Cell right of the bounds is blocked.");
-            Assert(!IsWalkable(grid, new Vector2(0f, -4.5f)), "Cell below the bounds is blocked.");
+            Assert(IsWalkable(grid, new Vec2(5.5f, 3.5f)), "Cell inside the bounds stays open.");
+            Assert(!IsWalkable(grid, new Vec2(6.5f, 0f)), "Cell right of the bounds is blocked.");
+            Assert(!IsWalkable(grid, new Vec2(0f, -4.5f)), "Cell below the bounds is blocked.");
             Assert(grid.HasPlayableBounds && grid.PlayableBounds == def.PlayableBounds, "Grid reports the map's playable bounds.");
 
             // Wider bounds on reload must reopen cells the old bounds blocked
-            var wide = new MapDefinitionBuilder("Wide", new Rect(-9f, -9f, 18f, 18f)).Build();
+            var wide = new MapDefinitionBuilder("Wide", new RectF(-9f, -9f, 18f, 18f)).Build();
             WallRasterizer.Rasterize(wide, grid);
-            Assert(IsWalkable(grid, new Vector2(6.5f, 0f)), "Reloading with wider bounds reopens cells.");
+            Assert(IsWalkable(grid, new Vec2(6.5f, 0f)), "Reloading with wider bounds reopens cells.");
 
             Debug.Log("[PASS] Test 5: Playable bounds block outside cells and are replaced on reload.");
         }
 
         private void ValidatePartitionSizing()
         {
-            var asymmetric = new MapDefinitionBuilder("Asym", new Rect(-20f, -18f, 44f, 36f)).Build();
+            var asymmetric = new MapDefinitionBuilder("Asym", new RectF(-20f, -18f, 44f, 36f)).Build();
             var cells = asymmetric.PartitionCells(1f);
             // |x| up to 24 -> 2 * (24 + 2) = 52; |y| up to 18 -> 2 * (18 + 2) = 40
-            Assert(cells.x == 52 && cells.y == 40, $"Partition cells expected 52x40, got {cells.x}x{cells.y}.");
-            Assert(cells.x % 2 == 0 && cells.y % 2 == 0, "Partition cell counts must be even so cell edges stay on whole units.");
+            Assert(cells.X == 52 && cells.Y == 40, $"Partition cells expected 52x40, got {cells.X}x{cells.Y}.");
+            Assert(cells.X % 2 == 0 && cells.Y % 2 == 0, "Partition cell counts must be even so cell edges stay on whole units.");
 
             Debug.Log("[PASS] Test 6: Partition size covers the bounds symmetrically, independent of the camera.");
         }
@@ -247,7 +247,7 @@ namespace Simpiens.Testing.World
             }
 
             var cells = def.PartitionCells(1f);
-            Debug.Log($"[PASS] Test 7: Floor1 ({cells.x}x{cells.y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
+            Debug.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
         }
 
         /// <summary>
@@ -273,8 +273,8 @@ namespace Simpiens.Testing.World
             {
                 var door = Floor1Layout.Doors[i];
                 Assert(grid.WorldToCell(door, out int dx, out int dy) && grid.IsCellWalkable(dx, dy), $"Door {i} at {door} is open.");
-                bool joinsX = def.FindSector(door + Vector2.left).Id != def.FindSector(door + Vector2.right).Id;
-                bool joinsY = def.FindSector(door + Vector2.down).Id != def.FindSector(door + Vector2.up).Id;
+                bool joinsX = def.FindSector(door + Vec2.Left).Id != def.FindSector(door + Vec2.Right).Id;
+                bool joinsY = def.FindSector(door + Vec2.Down).Id != def.FindSector(door + Vec2.Up).Id;
                 Assert(joinsX || joinsY, $"Door {i} at {door} joins two sectors.");
             }
 
@@ -288,17 +288,17 @@ namespace Simpiens.Testing.World
             float keepOut = HearthGatherRing + DoorApron;
             for (int i = 0; i < Floor1Layout.Doors.Count; i++)
             {
-                float d = Vector2.Distance(hearth.Position, Floor1Layout.Doors[i]);
+                float d = Vec2.Distance(hearth.Position, Floor1Layout.Doors[i]);
                 Assert(d >= keepOut, $"The hearth's gathering ring must keep clear of door {i} at {Floor1Layout.Doors[i]} ({d:F1} < {keepOut:F1}).");
             }
-            Assert(Vector2.Distance(hearth.Position, stall.Position) >= keepOut, "The hearth's gathering ring keeps clear of the stall.");
+            Assert(Vec2.Distance(hearth.Position, stall.Position) >= keepOut, "The hearth's gathering ring keeps clear of the stall.");
 
             // Walking lanes across the Hub: every pair of Hub doors, and every Hub door to the stall
-            var hubDoors = new List<Vector2>();
+            var hubDoors = new List<Vec2>();
             for (int i = 0; i < Floor1Layout.Doors.Count; i++)
             {
                 var door = Floor1Layout.Doors[i];
-                if (def.FindSector(door + new Vector2(-1f, -1f)).Id == Floor1Layout.HubSectorId || def.FindSector(door + new Vector2(1f, 1f)).Id == Floor1Layout.HubSectorId)
+                if (def.FindSector(door + new Vec2(-1f, -1f)).Id == Floor1Layout.HubSectorId || def.FindSector(door + new Vec2(1f, 1f)).Id == Floor1Layout.HubSectorId)
                 {
                     hubDoors.Add(door);
                 }
@@ -341,18 +341,18 @@ namespace Simpiens.Testing.World
                 for (int j = 0; j < i; j++)
                 {
                     var q = def.Pois[j];
-                    if (q.Kind == kind) Assert(Vector2.Distance(p.Position, q.Position) >= 1.5f, $"POIs '{q.Key}' and '{p.Key}' are at least 1.5 apart.");
+                    if (q.Kind == kind) Assert(Vec2.Distance(p.Position, q.Position) >= 1.5f, $"POIs '{q.Key}' and '{p.Key}' are at least 1.5 apart.");
                 }
                 count++;
             }
             return count;
         }
 
-        private static float DistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+        private static float DistanceToSegment(Vec2 point, Vec2 a, Vec2 b)
         {
-            Vector2 ab = b - a;
-            float t = ab.sqrMagnitude > 0f ? Mathf.Clamp01(Vector2.Dot(point - a, ab) / ab.sqrMagnitude) : 0f;
-            return Vector2.Distance(point, a + ab * t);
+            Vec2 ab = b - a;
+            float t = ab.SqrMagnitude > 0f ? SimMath.Clamp01(Vec2.Dot(point - a, ab) / ab.SqrMagnitude) : 0f;
+            return Vec2.Distance(point, a + ab * t);
         }
 
         /// <summary>The pens-only Dev Map: each of the 10 pens is a closed room holding its props.</summary>
@@ -366,7 +366,7 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Sectors.Count; i++)
             {
                 var pen = def.Sectors[i];
-                Assert(grid.TryGetRegion(pen.TargetPoint + new Vector2(0f, 1.5f), out penRegions[i]), $"Pen {pen.Name} interior is walkable.");
+                Assert(grid.TryGetRegion(pen.TargetPoint + new Vec2(0f, 1.5f), out penRegions[i]), $"Pen {pen.Name} interior is walkable.");
                 for (int j = 0; j < i; j++)
                 {
                     Assert(penRegions[i] != penRegions[j], $"Pens {def.Sectors[j].Name} and {pen.Name} must be sealed from each other.");
@@ -386,38 +386,38 @@ namespace Simpiens.Testing.World
         private static StaticNavGrid Rasterized(MapDefinition def)
         {
             var cells = def.PartitionCells(1f);
-            var grid = new StaticNavGrid(cells.x, cells.y, 1f);
+            var grid = new StaticNavGrid(cells.X, cells.Y, 1f);
             WallRasterizer.Rasterize(def, grid);
             grid.EnsureRegions();
             return grid;
         }
 
         /// <summary>Walkable cell pairs straddling the shared edge of two sectors (0 when they don't touch or no door).</summary>
-        private static int DoorWidth(StaticNavGrid grid, Rect a, Rect b)
+        private static int DoorWidth(StaticNavGrid grid, RectF a, RectF b)
         {
             int width = 0;
-            if (Mathf.Approximately(a.xMax, b.xMin) || Mathf.Approximately(b.xMax, a.xMin))
+            if (SimMath.Approximately(a.XMax, b.XMin) || SimMath.Approximately(b.XMax, a.XMin))
             {
-                float edge = Mathf.Approximately(a.xMax, b.xMin) ? a.xMax : a.xMin;
-                float yMin = Mathf.Max(a.yMin, b.yMin), yMax = Mathf.Min(a.yMax, b.yMax);
+                float edge = SimMath.Approximately(a.XMax, b.XMin) ? a.XMax : a.XMin;
+                float yMin = SimMath.Max(a.YMin, b.YMin), yMax = SimMath.Min(a.YMax, b.YMax);
                 for (float y = yMin + 0.5f; y < yMax; y += 1f)
                 {
-                    if (IsWalkable(grid, new Vector2(edge - 0.5f, y)) && IsWalkable(grid, new Vector2(edge + 0.5f, y))) width++;
+                    if (IsWalkable(grid, new Vec2(edge - 0.5f, y)) && IsWalkable(grid, new Vec2(edge + 0.5f, y))) width++;
                 }
             }
-            else if (Mathf.Approximately(a.yMax, b.yMin) || Mathf.Approximately(b.yMax, a.yMin))
+            else if (SimMath.Approximately(a.YMax, b.YMin) || SimMath.Approximately(b.YMax, a.YMin))
             {
-                float edge = Mathf.Approximately(a.yMax, b.yMin) ? a.yMax : a.yMin;
-                float xMin = Mathf.Max(a.xMin, b.xMin), xMax = Mathf.Min(a.xMax, b.xMax);
+                float edge = SimMath.Approximately(a.YMax, b.YMin) ? a.YMax : a.YMin;
+                float xMin = SimMath.Max(a.XMin, b.XMin), xMax = SimMath.Min(a.XMax, b.XMax);
                 for (float x = xMin + 0.5f; x < xMax; x += 1f)
                 {
-                    if (IsWalkable(grid, new Vector2(x, edge - 0.5f)) && IsWalkable(grid, new Vector2(x, edge + 0.5f))) width++;
+                    if (IsWalkable(grid, new Vec2(x, edge - 0.5f)) && IsWalkable(grid, new Vec2(x, edge + 0.5f))) width++;
                 }
             }
             return width;
         }
 
-        private static bool IsWalkable(StaticNavGrid grid, Vector2 world)
+        private static bool IsWalkable(StaticNavGrid grid, Vec2 world)
         {
             return grid.WorldToCell(world, out int x, out int y) && grid.IsCellWalkable(x, y);
         }

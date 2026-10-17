@@ -37,7 +37,7 @@ namespace Simpiens.Testing.Economy
             var ledger = new EconomyLedger();
             var registry = CreateRegistryWithAgent(out var agentId, gold: 10);
             var stallId = new EntityId(7u, 7u, 7u, 7u);
-            var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 100);
+            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 100);
 
             Assert(ledger.TryExecuteStallPurchase(stallId, ref stall, agentId, registry, 5), "Purchase succeeded.");
             Assert(!ledger.TryExecuteStallPurchase(stallId, ref stall, agentId, registry, 500), "Unaffordable purchase refused.");
@@ -80,7 +80,7 @@ namespace Simpiens.Testing.Economy
             var ledger = new EconomyLedger();
             var registry = CreateRegistryWithAgent(out var agentId, gold: 10);
             var stallId = new EntityId(8u, 8u, 8u, 8u);
-            var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 100);
+            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 100);
             ledger.RecordFaucet(100, "InitialSeed");
             ledger.RecordSink(10, SupplyService.CaravanSinkName);
             ledger.TryExecuteStallPurchase(stallId, ref stall, agentId, registry, 5);
@@ -101,7 +101,7 @@ namespace Simpiens.Testing.Economy
             var ledger = new EconomyLedger();
             var registry = CreateRegistryWithAgent(out var agentId, gold: 1000000);
             var stallId = new EntityId(9u, 9u, 9u, 9u);
-            var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 1000000);
+            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000000);
 
             // Warm up: the first record under a name inserts its dictionary entry
             ledger.RecordFaucet(1, SupplyService.SalvageSalesFaucetName);

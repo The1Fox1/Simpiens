@@ -1,4 +1,3 @@
-using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -43,7 +42,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             // crossing its threshold (fog of war: what it sees there is the survey it reports, Epic MAP Phase 3)
             bool inSector = context.GetSectorForPosition(node.Position) == scout.TargetSectorId;
             bool hasRoute = scout.Path != null && scout.Path.IsValid;
-            bool atSurveyPoint = bounty.TargetLocation == default || Vector2.Distance(node.Position, bounty.TargetLocation) <= SurveyRadius;
+            bool atSurveyPoint = bounty.TargetLocation == default || Vec2.Distance(node.Position, bounty.TargetLocation) <= SurveyRadius;
             if (inSector && (!hasRoute || atSurveyPoint))
             {
                 if (agent != null)

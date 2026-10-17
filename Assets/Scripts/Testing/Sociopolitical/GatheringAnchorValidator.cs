@@ -40,20 +40,20 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var memory = new AgentMemory();
             var anchorId = EntityId.Generate();
-            var anchorPos = new Vector2Int(5, 5);
+            var anchorPos = new GridPoint(5, 5);
 
             // Record anchor in spatial memory
             memory.SpatialMemoryMap[anchorId] = new SpatialMemoryRecord(anchorId, EntityType.Anchor, anchorPos, 0);
 
             // Context A: Close to anchor (dist <= 3.0m)
-            var contextA = new AgentContext(EntityId.Generate(), new Vector2(5.5f, 5.0f), new AgentNeeds(20, 80, 50), 0f, null, memory, 10);
+            var contextA = new AgentContext(EntityId.Generate(), new Vec2(5.5f, 5.0f), new AgentNeeds(20, 80, 50), 0f, null, memory, 10);
             var stateA = WorldStateBuilder.BuildWorldState(contextA);
 
             Assert(stateA.Get(StateFact.KnowsAnchorLocation), "WorldState has KnowsAnchorLocation when anchor is recorded in memory.");
             Assert(stateA.Get(StateFact.AtAnchorLocation), "WorldState has AtAnchorLocation when agent is within 3.0m of anchor.");
 
             // Context B: Far from anchor (dist > 3.0m)
-            var contextB = new AgentContext(EntityId.Generate(), new Vector2(15.0f, 15.0f), new AgentNeeds(20, 80, 50), 0f, null, memory, 10);
+            var contextB = new AgentContext(EntityId.Generate(), new Vec2(15.0f, 15.0f), new AgentNeeds(20, 80, 50), 0f, null, memory, 10);
             var stateB = WorldStateBuilder.BuildWorldState(contextB);
 
             Assert(stateB.Get(StateFact.KnowsAnchorLocation), "WorldState has KnowsAnchorLocation when far away.");
@@ -72,35 +72,35 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var memory = new AgentMemory();
             var anchorId = EntityId.Generate();
-            memory.SpatialMemoryMap[anchorId] = new SpatialMemoryRecord(anchorId, EntityType.Anchor, new Vector2Int(0, 0), 0);
+            memory.SpatialMemoryMap[anchorId] = new SpatialMemoryRecord(anchorId, EntityType.Anchor, new GridPoint(0, 0), 0);
 
             var goal = new GatherAtAnchorGoal();
 
             // Scenario 1: Sated, healthy, low social need (Social = 25)
             // Priority = max(0, 75 - 25) + 15 = 65
             var healthyNeeds = new AgentNeeds(hunger: 20f, energy: 80f, social: 25f);
-            var contextHealthy = new AgentContext(EntityId.Generate(), Vector2.zero, healthyNeeds, 0f, null, memory, 0);
+            var contextHealthy = new AgentContext(EntityId.Generate(), Vec2.Zero, healthyNeeds, 0f, null, memory, 0);
 
             Assert(goal.IsValid(contextHealthy), "GatherAtAnchorGoal is valid when agent is sated and healthy.");
             float healthyPriority = goal.CalculatePriority(contextHealthy);
-            Assert(Mathf.Approximately(healthyPriority, 65f), $"GatherAtAnchorGoal priority is 65 when Social = 25 (actual: {healthyPriority})");
+            Assert(SimMath.Approximately(healthyPriority, 65f), $"GatherAtAnchorGoal priority is 65 when Social = 25 (actual: {healthyPriority})");
             Assert(healthyPriority > 10f, "GatherAtAnchorGoal dominates generic wander priority (~10f).");
 
             // Scenario 2: Starvation crisis (Hunger = 70 >= 60)
             var starvingNeeds = new AgentNeeds(hunger: 70f, energy: 80f, social: 25f);
-            var contextStarving = new AgentContext(EntityId.Generate(), Vector2.zero, starvingNeeds, 0f, null, memory, 0);
+            var contextStarving = new AgentContext(EntityId.Generate(), Vec2.Zero, starvingNeeds, 0f, null, memory, 0);
 
             Assert(!goal.IsValid(contextStarving), "GatherAtAnchorGoal is invalid during starvation crisis (Hunger >= 60).");
             float starvingPriority = goal.CalculatePriority(contextStarving);
-            Assert(Mathf.Approximately(starvingPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during starvation (actual: {starvingPriority})");
+            Assert(SimMath.Approximately(starvingPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during starvation (actual: {starvingPriority})");
 
             // Scenario 3: Exhaustion crisis (Energy = 15 <= 20)
             var exhaustedNeeds = new AgentNeeds(hunger: 20f, energy: 15f, social: 25f);
-            var contextExhausted = new AgentContext(EntityId.Generate(), Vector2.zero, exhaustedNeeds, 0f, null, memory, 0);
+            var contextExhausted = new AgentContext(EntityId.Generate(), Vec2.Zero, exhaustedNeeds, 0f, null, memory, 0);
 
             Assert(!goal.IsValid(contextExhausted), "GatherAtAnchorGoal is invalid during exhaustion crisis (Energy <= 20).");
             float exhaustedPriority = goal.CalculatePriority(contextExhausted);
-            Assert(Mathf.Approximately(exhaustedPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during exhaustion (actual: {exhaustedPriority})");
+            Assert(SimMath.Approximately(exhaustedPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during exhaustion (actual: {exhaustedPriority})");
 
             Debug.Log("[PASS] Test 2: GatherAtAnchorGoal priority dominance switching verified.");
         }
@@ -109,9 +109,9 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var memory = new AgentMemory();
             var anchorId = EntityId.Generate();
-            memory.SpatialMemoryMap[anchorId] = new SpatialMemoryRecord(anchorId, EntityType.Anchor, new Vector2Int(5, 5), 0);
+            memory.SpatialMemoryMap[anchorId] = new SpatialMemoryRecord(anchorId, EntityType.Anchor, new GridPoint(5, 5), 0);
 
-            var context = new AgentContext(EntityId.Generate(), Vector2.zero, new AgentNeeds(20, 80, 30), 0f, null, memory, 0);
+            var context = new AgentContext(EntityId.Generate(), Vec2.Zero, new AgentNeeds(20, 80, 30), 0f, null, memory, 0);
             var currentState = WorldStateBuilder.BuildWorldState(context);
 
             var travelAction = new TravelToAnchorAction(null, cost: 2.0f);
@@ -142,13 +142,13 @@ namespace Simpiens.Testing.Sociopolitical
 
             // Anchor at origin
             var anchorId = EntityId.Generate();
-            simManager.RegisterAnchor(anchorId, Vector2.zero, radius: 3.0f);
+            simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
             // Spawn 2 pawns around anchor within 3.0m
             var goA = new GameObject("[PawnA]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = new Vector2(1.0f, 0f);
+            nodeA.transform.position = (new Vec2(1.0f, 0f)).ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             worldRegistry.RegisterNode(nodeA);
@@ -156,7 +156,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[PawnB]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(-1.0f, 0f);
+            nodeB.transform.position = (new Vec2(-1.0f, 0f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             worldRegistry.RegisterNode(nodeB);
@@ -215,12 +215,12 @@ namespace Simpiens.Testing.Sociopolitical
             var simManager = new SimulationManager(worldRegistry, null, clock);
 
             var anchorId = EntityId.Generate();
-            simManager.RegisterAnchor(anchorId, Vector2.zero, radius: 3.0f);
+            simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
             var goA = new GameObject("[PawnComfortA]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = new Vector2(0.5f, 0.5f);
+            nodeA.transform.position = (new Vec2(0.5f, 0.5f)).ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             agentA.Frustration = 20f;
@@ -230,7 +230,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[PawnComfortB]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(-0.5f, -0.5f);
+            nodeB.transform.position = (new Vec2(-0.5f, -0.5f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             worldRegistry.RegisterNode(nodeB);
@@ -253,12 +253,12 @@ namespace Simpiens.Testing.Sociopolitical
             var simManager = new SimulationManager(worldRegistry, null, clock);
 
             var anchorId = EntityId.Generate();
-            simManager.RegisterAnchor(anchorId, Vector2.zero, radius: 3.0f);
+            simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
             var goA = new GameObject("[PawnBenchA]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = new Vector2(0.5f, 0f);
+            nodeA.transform.position = (new Vec2(0.5f, 0f)).ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             worldRegistry.RegisterNode(nodeA);
@@ -266,7 +266,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[PawnBenchB]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(-0.5f, 0f);
+            nodeB.transform.position = (new Vec2(-0.5f, 0f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             worldRegistry.RegisterNode(nodeB);

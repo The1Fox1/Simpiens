@@ -1,6 +1,4 @@
 using Simpiens.Cognition.Pathfinding;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Contracts
 {
     /// <summary>

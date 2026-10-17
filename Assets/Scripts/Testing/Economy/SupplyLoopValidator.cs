@@ -59,21 +59,21 @@ namespace Simpiens.Testing.Economy
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
 
-            var oreId = CreateResourceNode(registry, sim, new Vector2(0f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
-            var foodId = CreateResourceNode(registry, sim, new Vector2(4f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
-            var agentGo = CreateAgent(registry, sim, new Vector2(0.5f, 0f), out var node, out var agent);
+            var oreId = CreateResourceNode(registry, sim, new Vec2(0f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
+            var foodId = CreateResourceNode(registry, sim, new Vec2(4f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
+            var agentGo = CreateAgent(registry, sim, new Vec2(0.5f, 0f), out var node, out var agent);
             agent.Hunger = 70f;
 
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, oreId, null));
             Assert(result == IntentResult.Success, $"Ore harvest returned {result} instead of Success.");
             Assert(agent.Inventory.GetItemCount(ItemType.IronOre) == 1, "Ore harvest placed 1 IronOre in inventory.");
-            Assert(Mathf.Approximately(agent.Hunger, 70f), $"Ore harvest left hunger unchanged (hunger {agent.Hunger}).");
+            Assert(SimMath.Approximately(agent.Hunger, 70f), $"Ore harvest left hunger unchanged (hunger {agent.Hunger}).");
             Assert(sim.TryGetResource(oreId, out var ore) && ore.RemainingYield == 2, "Ore node yield decremented to 2.");
 
-            node.SetLogicalPosition(new Vector2(4.5f, 0f));
+            node.SetLogicalPosition(new Vec2(4.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, foodId, null));
             Assert(result == IntentResult.Success, $"Food harvest returned {result} instead of Success.");
-            Assert(Mathf.Approximately(agent.Hunger, 20f), $"Food harvest relieved 50 hunger (hunger {agent.Hunger}).");
+            Assert(SimMath.Approximately(agent.Hunger, 20f), $"Food harvest relieved 50 hunger (hunger {agent.Hunger}).");
             Assert(agent.Inventory.GetItemCount(ItemType.IronOre) == 1, "Food harvest did not add salvage.");
 
             Destroy(oreGo, foodGo, agentGo);
@@ -88,8 +88,8 @@ namespace Simpiens.Testing.Economy
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
 
-            var herbId = CreateResourceNode(registry, sim, Vector2.zero, ItemType.MedicinalHerb, yield: 2, regrowTicks: 0, out var herbGo);
-            var agentGo = CreateAgent(registry, sim, new Vector2(0.5f, 0f), out var node, out var agent);
+            var herbId = CreateResourceNode(registry, sim, Vec2.Zero, ItemType.MedicinalHerb, yield: 2, regrowTicks: 0, out var herbGo);
+            var agentGo = CreateAgent(registry, sim, new Vec2(0.5f, 0f), out var node, out var agent);
 
             // Fill all slots with item types that cannot stack with MedicinalHerb
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
@@ -115,8 +115,8 @@ namespace Simpiens.Testing.Economy
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
 
-            var bushId = CreateResourceNode(registry, sim, Vector2.zero, ItemType.Ration, yield: 1, regrowTicks: 50, out var bushGo);
-            var agentGo = CreateAgent(registry, sim, new Vector2(0.5f, 0f), out var node, out var agent);
+            var bushId = CreateResourceNode(registry, sim, Vec2.Zero, ItemType.Ration, yield: 1, regrowTicks: 50, out var bushGo);
+            var agentGo = CreateAgent(registry, sim, new Vec2(0.5f, 0f), out var node, out var agent);
 
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, bushId, null));
             Assert(result == IntentResult.Success, $"Depleting harvest returned {result}.");
@@ -150,10 +150,10 @@ namespace Simpiens.Testing.Economy
 
             var richId = NextGuid();
             var poorId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(richId, new Vector2(0f, 0f), rationStock: 10, treasuryGold: 500));
+            sim.RegisterTradeStall(new TradeStallData(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500));
             var brokeId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(poorId, new Vector2(20f, 0f), rationStock: 0, treasuryGold: 10));
-            sim.RegisterTradeStall(new TradeStallData(brokeId, new Vector2(40f, 0f), rationStock: 0, treasuryGold: 1));
+            sim.RegisterTradeStall(new TradeStallData(poorId, new Vec2(20f, 0f), rationStock: 0, treasuryGold: 10));
+            sim.RegisterTradeStall(new TradeStallData(brokeId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 1));
             ledger.RecordFaucet(511, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
@@ -191,7 +191,7 @@ namespace Simpiens.Testing.Economy
 
             // Broke stall holding salvage: the quota's revenue (5x24 + 5x30 = 270g) funds the 100g restock
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
 
             while (sim.CurrentTick < 20) sim.Tick();
 
@@ -228,7 +228,7 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 50, treasuryGold: 150));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 50, treasuryGold: 150));
             ledger.RecordFaucet(150, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
@@ -264,12 +264,12 @@ namespace Simpiens.Testing.Economy
             Assert(!zones.IsExplored(sector), "Herb Hollow starts unexplored.");
 
             var stallId = NextGuid();
-            var stallPos = new Vector2(0f, 9f);
+            var stallPos = new Vec2(0f, 9f);
             sim.RegisterTradeStall(new TradeStallData(stallId, stallPos, treasuryGold: 200, interactionRadius: 3f));
             ledger.RecordFaucet(200 + 10, "InitialSeed");
 
             // Agent stands just west of Herb Hollow's bounds (x = 5)
-            var agentGo = CreateAgent(registry, sim, new Vector2(4.5f, 10f), out var node, out var agent);
+            var agentGo = CreateAgent(registry, sim, new Vec2(4.5f, 10f), out var node, out var agent);
 
             var bounty = new BountyContract(42, BountyType.ScoutSector, (byte)sector, ItemType.None, 1, 15, 0, 5000,
                 claimantId: node.Id, creatorStallId: stallId, status: BountyStatus.Claimed);
@@ -279,7 +279,7 @@ namespace Simpiens.Testing.Economy
 
             var path = new PathResponse();
             path.Initialize(4, null);
-            path.Waypoints[0] = new Vector2(6.5f, 10f);
+            path.Waypoints[0] = new Vec2(6.5f, 10f);
             path.Length = 1;
             path.IsValid = true;
 
@@ -288,7 +288,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.State.ScoutReportBountyId == 42, "Scout report recorded on entering the sector.");
 
             // Report at the stall
-            node.SetLogicalPosition(stallPos + new Vector2(1f, 0f));
+            node.SetLogicalPosition(stallPos + new Vec2(1f, 0f));
             int goldBefore = agent.Inventory.Gold;
             result = RunIntent(sim, new DeliverBountyIntent(node.Id, 42, stallId));
             Assert(result == IntentResult.Success, $"Scout report delivery returned {result} instead of Success.");
@@ -302,7 +302,7 @@ namespace Simpiens.Testing.Economy
             Assert(ledger.ValidateConservation(stall.TreasuryGold, (uint)agent.Inventory.Gold, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
             // F8: a bounty that cannot be escrowed is rejected instead of minting gold on delivery
-            var broke = new TradeStallData(NextGuid(), Vector2.zero, treasuryGold: 5);
+            var broke = new TradeStallData(NextGuid(), Vec2.Zero, treasuryGold: 5);
             sim.RegisterTradeStall(broke);
             bool accepted = sim.TryRegisterBounty(new BountyContract(43, BountyType.GatherResource, 0, ItemType.IronOre, 1, 50, 0, 5000, creatorStallId: broke.StallEntityId));
             Assert(!accepted && !sim.TryGetBounty(43, out _), "Un-escrowable bounty rejected at registration.");
@@ -317,12 +317,12 @@ namespace Simpiens.Testing.Economy
         private void ValidateSalvageBountyPlan()
         {
             var snapshot = new SharedWorldSnapshot(10, 10, 2.0f, 8, _ => { });
-            snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vector2(-8f, 10f)) }, 1);
-            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vector2(20f, 20f)) }, 1);
+            snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
+            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
 
             var memory = new AgentMemory();
             var inventory = new AgentInventory();
-            var context = new AgentContext(NextGuid(), Vector2.zero, new AgentNeeds(10f, 90f, 80f), 0f, snapshot, memory, 1,
+            var context = new AgentContext(NextGuid(), Vec2.Zero, new AgentNeeds(10f, 90f, 80f), 0f, snapshot, memory, 1,
                 inventory: inventory.GetSnapshot());
             var state = WorldStateBuilder.BuildWorldState(context, context.Inventory);
 
@@ -365,12 +365,12 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, grid);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, new Vector2(10f, 0f), treasuryGold: 300));
-            sim.RegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 5000, new Vector2(3f, 0f), creatorStallId: stallId));
+            sim.RegisterTradeStall(new TradeStallData(stallId, new Vec2(10f, 0f), treasuryGold: 300));
+            sim.RegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(3f, 0f), creatorStallId: stallId));
 
             // A perceivable ore vein: knowledge comes from vision through the typed snapshot, not injection
-            CreateResourceNode(registry, sim, new Vector2(3f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
-            var agentGo = CreateAgent(registry, sim, Vector2.zero, out var node, out var agent);
+            CreateResourceNode(registry, sim, new Vec2(3f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
+            var agentGo = CreateAgent(registry, sim, Vec2.Zero, out var node, out var agent);
             agent.Hunger = 10f;
             sim.Tick(); // publish the snapshot (stall, bounty, typed ore node)
 
@@ -412,7 +412,7 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 0, treasuryGold: 100000));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 0, treasuryGold: 100000));
 
             // One dormant node regrows during warm-up; 16 more regrow inside the measured window
             RegisterDormantNode(sim, supply, 50);
@@ -458,11 +458,11 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, null);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, treasuryGold: 200, interactionRadius: 3f));
-            var oreId = CreateResourceNode(registry, sim, new Vector2(6f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
-            var foodId = CreateResourceNode(registry, sim, new Vector2(-6f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
-            var agentGo = CreateAgent(registry, sim, new Vector2(1f, 0f), out var node, out var agent);
-            var otherGo = CreateAgent(registry, sim, new Vector2(1f, 2f), out _, out var other);
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 200, interactionRadius: 3f));
+            var oreId = CreateResourceNode(registry, sim, new Vec2(6f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
+            var foodId = CreateResourceNode(registry, sim, new Vec2(-6f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
+            var agentGo = CreateAgent(registry, sim, new Vec2(1f, 0f), out var node, out var agent);
+            var otherGo = CreateAgent(registry, sim, new Vec2(1f, 2f), out _, out var other);
             agent.Inventory.Gold = 50;
             agent.Hunger = 70f;
             var empty = agent.State.Activity;
@@ -475,11 +475,11 @@ namespace Simpiens.Testing.Economy
             Assert(agent.State.Activity.SalvageSales == 1 && agent.State.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.State.Activity}).");
 
             // Harvest, then sell: one cycle
-            node.SetLogicalPosition(new Vector2(6.5f, 0f));
+            node.SetLogicalPosition(new Vec2(6.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, oreId, null));
             Assert(result == IntentResult.Success, $"Ore harvest returned {result}.");
             Assert(agent.State.Activity.SalvageHarvests == 1 && agent.State.Activity.FirstHarvestTick >= 0 && agent.State.Activity.Meals == 0, $"The ore harvest counts once and is no meal ({agent.State.Activity}).");
-            node.SetLogicalPosition(new Vector2(1f, 0f));
+            node.SetLogicalPosition(new Vec2(1f, 0f));
             result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Second sale returned {result}.");
             var a = agent.State.Activity;
@@ -488,7 +488,7 @@ namespace Simpiens.Testing.Economy
             // A purchase counts, and eating harvested food is a meal
             result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration));
             Assert(result == IntentResult.Success && agent.State.Activity.RationPurchases == 1, $"The ration purchase counts ({result}, {agent.State.Activity}).");
-            node.SetLogicalPosition(new Vector2(-5.5f, 0f));
+            node.SetLogicalPosition(new Vec2(-5.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, foodId, null));
             Assert(result == IntentResult.Success, $"Food harvest returned {result}.");
             a = agent.State.Activity;
@@ -511,8 +511,8 @@ namespace Simpiens.Testing.Economy
             var id = NextGuid();
             var carrying = new AgentInventory();
             carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, EconomyTuning.Default.BaseValue(ItemType.Ration)), out _);
-            var starving = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
-            var empty = new AgentContext(id, Vector2.zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
+            var starving = new AgentContext(id, Vec2.Zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
+            var empty = new AgentContext(id, Vec2.Zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
 
             var reflex = new SurvivalUtilityEvaluator(null).EvaluateAsync(starving, default).GetAwaiter().GetResult();
             Assert(reflex is EatCarriedFoodIntent, $"The hunger reflex eats a carried ration (got {reflex?.GetType().Name ?? "null"}).");
@@ -525,16 +525,16 @@ namespace Simpiens.Testing.Economy
             // The meal applies with no plan at all
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
-            var agentGo = CreateAgent(registry, sim, Vector2.zero, out var node, out var agent);
+            var agentGo = CreateAgent(registry, sim, Vec2.Zero, out var node, out var agent);
             agent.Hunger = 90f;
             agent.HasFoodInInventory = true;
             var result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
             Assert(result == IntentResult.Success, $"Eating returned {result}.");
-            Assert(Mathf.Approximately(agent.Hunger, 50f) && !agent.HasFoodInInventory && agent.State.Activity.Meals == 1,
+            Assert(SimMath.Approximately(agent.Hunger, 50f) && !agent.HasFoodInInventory && agent.State.Activity.Meals == 1,
                 $"The ration relieved 40 hunger and was used up (hunger {agent.Hunger}, carries {agent.HasFoodInInventory}, meals {agent.State.Activity.Meals}).");
 
             result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
-            Assert(result == IntentResult.TargetMissing && Mathf.Approximately(agent.Hunger, 50f) && agent.State.Activity.Meals == 1,
+            Assert(result == IntentResult.TargetMissing && SimMath.Approximately(agent.Hunger, 50f) && agent.State.Activity.Meals == 1,
                 $"With nothing left to eat the intent fails and changes nothing ({result}, hunger {agent.Hunger}).");
 
             Destroy(agentGo);
@@ -598,10 +598,10 @@ namespace Simpiens.Testing.Economy
             return outcome.Value;
         }
 
-        private static EntityId CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vector2 pos, ItemType kind, int yield, uint regrowTicks, out GameObject go)
+        private static EntityId CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vec2 pos, ItemType kind, int yield, uint regrowTicks, out GameObject go)
         {
             go = new GameObject($"[Test_{kind}Node]");
-            go.transform.position = pos;
+            go.transform.position = pos.ToUnity();
             var node = go.AddComponent<NodeController>();
             node.Type = EntityType.Resource;
             node.ConfigureResourceKind(kind);
@@ -612,10 +612,10 @@ namespace Simpiens.Testing.Economy
             return id;
         }
 
-        private static GameObject CreateAgent(WorldRegistry registry, SimulationManager sim, Vector2 pos, out NodeController node, out AutonomousAgent agent)
+        private static GameObject CreateAgent(WorldRegistry registry, SimulationManager sim, Vec2 pos, out NodeController node, out AutonomousAgent agent)
         {
             var go = new GameObject("[Test_SupplyAgent]");
-            go.transform.position = pos;
+            go.transform.position = pos.ToUnity();
             node = go.AddComponent<NodeController>();
             node.Type = EntityType.Pawn;
             node.Initialize(NextGuid(), new NodeConfiguration(2f));

@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
 using MemoryPack;
 using Simpiens.Cognition.Groups;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Persistence
 {
     /// <summary>The group registry in a save, written and read by <see cref="GroupRegistry"/>.</summary>
@@ -23,7 +21,7 @@ namespace Simpiens.Simulation.Persistence
     public struct GroupRecord
     {
         public EntityId LeaderId;
-        public Vector2 AnchorPosition;
+        public Vec2 AnchorPosition;
         public GroupDirective ActiveDirective;
         public int MemberStart;
         public int MemberCount;
@@ -32,7 +30,7 @@ namespace Simpiens.Simulation.Persistence
         public byte Cohesion;
         private byte _pad;
 
-        public GroupRecord(byte groupId, GroupType type, EntityId leaderId, Vector2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount)
+        public GroupRecord(byte groupId, GroupType type, EntityId leaderId, Vec2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount)
         {
             LeaderId = leaderId;
             AnchorPosition = anchorPosition;

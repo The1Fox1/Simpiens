@@ -1,4 +1,3 @@
-using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using Simpiens.Entities;
@@ -18,7 +17,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return Reject(node, trade, "stall not found", IntentResult.TargetMissing);
             }
 
-            float distToStall = Vector2.Distance(node.Position, stall.Position);
+            float distToStall = Vec2.Distance(node.Position, stall.Position);
             if (distToStall > stall.InteractionRadius)
             {
                 return Reject(node, trade, "out of stall interaction range");

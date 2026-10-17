@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -35,7 +33,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 return CreateIntent(context);
             }
 
-            Vector2 anchorPos = Vector2.zero;
+            Vec2 anchorPos = Vec2.Zero;
             float closestDistSqr = float.MaxValue;
             bool found = false;
 
@@ -44,7 +42,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 var record = kvp.Value;
                 if (record.Type == EntityType.Anchor && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                 {
-                    float distSqr = ((Vector2)record.LastKnownLocation - context.Position).sqrMagnitude;
+                    float distSqr = ((Vec2)record.LastKnownLocation - context.Position).SqrMagnitude;
                     if (distSqr < closestDistSqr)
                     {
                         closestDistSqr = distSqr;
@@ -57,9 +55,9 @@ namespace Simpiens.Cognition.Planning.Actions
             if (!found) return CreateIntent(context);
 
             // Compute perimeter position around anchor (2.0m away)
-            Vector2 toAgent = (context.Position - anchorPos).normalized;
-            if (toAgent == Vector2.zero) toAgent = Vector2.up;
-            Vector2 targetPos = anchorPos + toAgent * 2.0f;
+            Vec2 toAgent = (context.Position - anchorPos).Normalized;
+            if (toAgent == Vec2.Zero) toAgent = Vec2.Up;
+            Vec2 targetPos = anchorPos + toAgent * 2.0f;
 
             var req = new PathRequest
             {

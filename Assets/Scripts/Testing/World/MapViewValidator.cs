@@ -44,7 +44,7 @@ namespace Simpiens.Testing.World
                 int wallCells = 0;
                 for (int i = 0; i < map.Walls.Count; i++)
                 {
-                    var solid = map.Walls[i].Solid;
+                    var solid = map.Walls[i].Solid.ToUnity();
                     var expected = MapView.IsRock(solid) ? rock : walls;
                     MapView.CellRange(solid, origin, out int minX, out int maxX, out int minY, out int maxY);
                     for (int y = minY; y <= maxY; y++)
@@ -72,7 +72,7 @@ namespace Simpiens.Testing.World
                     {
                         if (!grid.IsCellWalkable(cx, cy)) continue;
                         walkable++;
-                        var centre = grid.CellToWorld(cx, cy);
+                        var centre = grid.CellToWorld(cx, cy).ToUnity();
                         for (int q = 0; q < 4; q++)
                         {
                             var probe = centre + new Vector2((q & 1) == 0 ? -0.25f : 0.25f, (q & 2) == 0 ? -0.25f : 0.25f);
@@ -86,7 +86,7 @@ namespace Simpiens.Testing.World
                 for (int i = 0; i < map.Sectors.Count; i++)
                 {
                     var sector = map.Sectors[i];
-                    var c = MapView.CellAt(origin, sector.TargetPoint);
+                    var c = MapView.CellAt(origin, sector.TargetPoint.ToUnity());
                     Assert(floor.HasTile(c), $"{map.Name}: sector {sector.Name} has no floor at its target point.");
                 }
                 Assert(Order(floor) == RenderOrder.Floor && Order(rock) == RenderOrder.Rock && Order(walls) == RenderOrder.Walls,
@@ -112,7 +112,7 @@ namespace Simpiens.Testing.World
                 bool inWall = false;
                 for (int i = 0; i < map.Walls.Count && !inWall; i++)
                 {
-                    inWall = map.Walls[i].Solid.Contains(MapView.CellCentre(origin, cell.x, cell.y));
+                    inWall = map.Walls[i].Solid.Contains(MapView.CellCentre(origin, cell.x, cell.y).ToSim());
                 }
                 Assert(inWall, $"{map.Name}: {tilemap.name} tile at ({cell.x}, {cell.y}) is not on a wall.");
             }

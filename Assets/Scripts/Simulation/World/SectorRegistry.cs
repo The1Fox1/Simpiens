@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
-
 namespace Simpiens.Simulation.World
 {
     /// <summary>
@@ -16,7 +14,7 @@ namespace Simpiens.Simulation.World
         SectorDefinition Fallback { get; }
 
         /// <summary>Sector containing the point (first match in definition order), otherwise the fallback.</summary>
-        SectorDefinition GetSectorAt(Vector2 position);
+        SectorDefinition GetSectorAt(Vec2 position);
 
         /// <summary>Looks up a sector by id; id 0 is the fallback sector.</summary>
         bool TryGetSector(int sectorId, out SectorDefinition sector);
@@ -44,7 +42,7 @@ namespace Simpiens.Simulation.World
 
         private readonly bool[] _explored = new bool[256];
         private MapDefinition _map;
-        private SectorDefinition _fallback = new SectorDefinition(0, "Transit / Open Yard", "Exterior grounds, open corridors, and transit routes.", new Rect(-50f, -50f, 100f, 100f));
+        private SectorDefinition _fallback = new SectorDefinition(0, "Transit / Open Yard", "Exterior grounds, open corridors, and transit routes.", new RectF(-50f, -50f, 100f, 100f));
 
         public SectorRegistry()
         {
@@ -95,7 +93,7 @@ namespace Simpiens.Simulation.World
             if (explored != null) System.Array.Copy(explored, _explored, System.Math.Min(explored.Length, _explored.Length));
         }
 
-        public SectorDefinition GetSectorAt(Vector2 position)
+        public SectorDefinition GetSectorAt(Vec2 position)
         {
             return _map != null ? _map.FindSector(position) : _fallback;
         }

@@ -1,4 +1,3 @@
-using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -41,7 +40,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
             }
 
-            float distToDelStall = Vector2.Distance(node.Position, delStall.Position);
+            float distToDelStall = Vec2.Distance(node.Position, delStall.Position);
             if (distToDelStall > delStall.InteractionRadius)
             {
                 return Reject(node, deliver, "out of stall interaction range");

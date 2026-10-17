@@ -24,7 +24,7 @@ namespace Simpiens.Simulation
         public float ElapsedTime;
 
         // Motor Watchdog Tracking
-        public Vector2 LastSampledPosition;
+        public Vec2 LastSampledPosition;
         public float TimeSinceLastProgress;
         public int StallCount;
         public bool UseRelaxedClearance;
@@ -36,10 +36,10 @@ namespace Simpiens.Simulation
     public readonly struct AnchorData
     {
         public readonly EntityId EntityId;
-        public readonly UnityEngine.Vector2 Position;
+        public readonly Vec2 Position;
         public readonly float Radius;
 
-        public AnchorData(EntityId entityId, UnityEngine.Vector2 position, float radius = 3.0f)
+        public AnchorData(EntityId entityId, Vec2 position, float radius = 3.0f)
         {
             EntityId = entityId;
             Position = position;
@@ -209,13 +209,13 @@ namespace Simpiens.Simulation
         /// <summary>A sleeper this close to the bunk's position is lying in it.</summary>
         public const float BunkSettleDistance = 0.02f;
 
-        private readonly Dictionary<EntityId, Vector2> _bunks = new Dictionary<EntityId, Vector2>(16);
+        private readonly Dictionary<EntityId, Vec2> _bunks = new Dictionary<EntityId, Vec2>(16);
         private readonly Dictionary<EntityId, EntityId> _bunkOccupants = new Dictionary<EntityId, EntityId>(16);
         private readonly List<EntityId> _occupiedBunks = new List<EntityId>(16);
         private readonly Dictionary<EntityId, int> _bunkSleeps = new Dictionary<EntityId, int>(16);
         private readonly List<EntityId> _bunkScratch = new List<EntityId>(16);
 
-        public void RegisterBunk(EntityId id, Vector2 position) => _bunks[id] = position;
+        public void RegisterBunk(EntityId id, Vec2 position) => _bunks[id] = position;
 
         /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
         public IReadOnlyDictionary<EntityId, EntityId> BunkOccupants => _bunkOccupants;
@@ -223,11 +223,11 @@ namespace Simpiens.Simulation
         /// <summary>Completed bunk sleeps per agent this session.</summary>
         public IReadOnlyDictionary<EntityId, int> BunkSleeps => _bunkSleeps;
 
-        public bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vector2 agentPosition)
+        public bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vec2 agentPosition)
         {
             if (!_bunks.TryGetValue(bunkId, out var bunkPosition)) return false;
             float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance + BunkClaimTolerance;
-            if ((bunkPosition - agentPosition).sqrMagnitude > reach * reach) return false;
+            if ((bunkPosition - agentPosition).SqrMagnitude > reach * reach) return false;
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != agentId) return false;
             _bunkOccupants[bunkId] = agentId;
             RebuildOccupiedBunks();
@@ -240,11 +240,11 @@ namespace Simpiens.Simulation
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
 
             // Walk to the bunk's exact position (at walking speed, so the view never sees a jump): the sleeper lies in it
-            if ((bunkPosition - (Vector2)node.Position).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
+            if ((bunkPosition - (Vec2)node.Position).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
 
-            Vector2 candidate = Vector2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
+            Vec2 candidate = Vec2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
             if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
-            return (bunkPosition - candidate).sqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
+            return (bunkPosition - candidate).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
         }
 
         public void ReleaseBunk(EntityId bunkId, EntityId agentId)
@@ -326,7 +326,7 @@ namespace Simpiens.Simulation
             _bounties[bounty.BountyId] = bounty;
             UpdateActiveBountiesBuffer();
         }
-        int IIntentExecutionContext.GetSectorForPosition(Vector2 position) => GetSectorForPosition(position);
+        int IIntentExecutionContext.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
 
         public SimulationManager(
             IWorldRegistry worldRegistry,
@@ -379,7 +379,7 @@ namespace Simpiens.Simulation
             _chronicleService?.RecordEvent(evt);
         }
 
-        private int GetSectorForPosition(Vector2 position)
+        private int GetSectorForPosition(Vec2 position)
         {
             return _sectors != null ? _sectors.GetSectorAt(position).Id : 0;
         }
@@ -428,7 +428,7 @@ namespace Simpiens.Simulation
             for (int p = 0; p < _pendingIntents.Count; p++)
             {
                 var intent = _pendingIntents[p];
-                Vector2 initialPos = Vector2.zero;
+                Vec2 initialPos = Vec2.Zero;
                 if (_worldRegistry != null)
                 {
                     var node = _worldRegistry.GetNode(intent.AgentId);
@@ -507,7 +507,7 @@ namespace Simpiens.Simulation
             _resources[data.EntityId] = data;
         }
 
-        public void RegisterAnchor(EntityId id, Vector2 position, float radius = 3.0f)
+        public void RegisterAnchor(EntityId id, Vec2 position, float radius = 3.0f)
         {
             _anchors[id] = new AnchorData(id, position, radius);
         }
@@ -600,7 +600,7 @@ namespace Simpiens.Simulation
         /// Walkable target point for a sector: its anchor when defined, otherwise its bounds centre.
         /// The A* pathfinder falls back to the nearest walkable cell if the point is obstructed.
         /// </summary>
-        private Vector2 ResolveSectorTarget(byte sectorId)
+        private Vec2 ResolveSectorTarget(byte sectorId)
         {
             if (_sectors != null && sectorId != 0 && _sectors.TryGetSector(sectorId, out var sector))
             {
@@ -695,7 +695,7 @@ namespace Simpiens.Simulation
             byte qty,
             ushort rewardGold,
             uint durationTicks,
-            Vector2 targetLocation,
+            Vec2 targetLocation,
             EntityId creatorStallId,
             uint currentTick)
         {
@@ -1157,7 +1157,7 @@ namespace Simpiens.Simulation
                 var otherNode = activeNodes[i];
                 if (otherNode == node || otherNode.Type != EntityType.Pawn) continue;
 
-                float distSqr = (otherNode.Position - node.Position).sqrMagnitude;
+                float distSqr = (otherNode.Position - node.Position).SqrMagnitude;
                 if (distSqr <= GossipRadius * GossipRadius)
                 {
                     var agentB = otherNode.Agent;
@@ -1171,8 +1171,8 @@ namespace Simpiens.Simulation
                                 agentB.RelieveFrustration(15f);
 
                                 // Fulfill biological social need
-                                agentA.Social = Mathf.Min(100f, agentA.Social + 25f);
-                                agentB.Social = Mathf.Min(100f, agentB.Social + 25f);
+                                agentA.Social = SimMath.Min(100f, agentA.Social + 25f);
+                                agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
 
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
@@ -1231,7 +1231,7 @@ namespace Simpiens.Simulation
                     var node = activeNodes[n];
                     if (node.Type == EntityType.Pawn && node.Agent != null)
                     {
-                        if (Vector2.Distance(node.Position, anchor.Position) <= anchor.Radius)
+                        if (Vec2.Distance(node.Position, anchor.Position) <= anchor.Radius)
                         {
                             _hearthPawnsBuffer.Add(node);
                         }
@@ -1251,7 +1251,7 @@ namespace Simpiens.Simulation
                     // When 2 or more pawns are gathered, replenish social drive (+1.0/sec => ~1.0 per 50 ticks)
                     if (pawnCount >= 2)
                     {
-                        agent.Social = Mathf.Min(100f, agent.Social + 1.0f);
+                        agent.Social = SimMath.Min(100f, agent.Social + 1.0f);
                         if (agent.State != null) agent.State.Activity.RecordHearthGathering(currentTick);
                     }
                 }
@@ -1276,8 +1276,8 @@ namespace Simpiens.Simulation
                             {
                                 agentA.RelieveFrustration(15f);
                                 agentB.RelieveFrustration(15f);
-                                agentA.Social = Mathf.Min(100f, agentA.Social + 25f);
-                                agentB.Social = Mathf.Min(100f, agentB.Social + 25f);
+                                agentA.Social = SimMath.Min(100f, agentA.Social + 25f);
+                                agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
 
@@ -1302,13 +1302,13 @@ namespace Simpiens.Simulation
                             agentA.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
                                 Simpiens.Cognition.Memory.MemoryEventType.CampfireCompanionship,
                                 agentB.AgentId,
-                                Vector2Int.RoundToInt(nodeA.Position),
+                                GridPoint.RoundToInt(nodeA.Position),
                                 currentTick));
 
                             agentB.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(
                                 Simpiens.Cognition.Memory.MemoryEventType.CampfireCompanionship,
                                 agentA.AgentId,
-                                Vector2Int.RoundToInt(nodeB.Position),
+                                GridPoint.RoundToInt(nodeB.Position),
                                 currentTick));
 
                             if (currentTick % 200 == 0)
@@ -1401,19 +1401,19 @@ namespace Simpiens.Simulation
                 return IntentResult.Success; // Reached end or empty
             }
 
-            Vector2 targetPos = path.Waypoints[currentIndex];
+            Vec2 targetPos = path.Waypoints[currentIndex];
 
             // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
             float step = speed * FixedTickDeltaTime;
-            if (!TryDisplacePawn(node, Vector2.MoveTowards(node.Position, targetPos, step)))
+            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)))
             {
                 currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
                 return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
             }
 
             // Check if reached the current waypoint
-            if (Vector2.Distance(node.Position, targetPos) < 0.05f)
+            if (Vec2.Distance(node.Position, targetPos) < 0.05f)
             {
                 currentIndex++;
                 // If this was the last waypoint, return true indicating completion
@@ -1433,10 +1433,10 @@ namespace Simpiens.Simulation
                 return IntentResult.Success; // Reached end or empty
             }
 
-            Vector2 targetPos = path.Waypoints[state.CurrentWaypointIndex];
+            Vec2 targetPos = path.Waypoints[state.CurrentWaypointIndex];
 
             // 1. Motor Watchdog Progress Tracking
-            float distMoved = Vector2.Distance(node.Position, state.LastSampledPosition);
+            float distMoved = Vec2.Distance(node.Position, state.LastSampledPosition);
             if (distMoved >= 0.05f)
             {
                 state.LastSampledPosition = node.Position;
@@ -1461,7 +1461,7 @@ namespace Simpiens.Simulation
             }
 
             bool isFinalWaypoint = state.CurrentWaypointIndex == path.Length - 1;
-            bool nearFinal = isFinalWaypoint && Vector2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance;
+            bool nearFinal = isFinalWaypoint && Vec2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance;
 
             // 2. Path Invalidation: Check if next step is blocked
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
@@ -1479,7 +1479,7 @@ namespace Simpiens.Simulation
             // 3. Move the pawn visually and logically, keeping clear of walls and other pawns
             float speed = node != null ? node.BaseSpeed : 2f;
             float step = speed * FixedTickDeltaTime;
-            Vector2 candidate = Vector2.MoveTowards(node.Position, targetPos, step);
+            Vec2 candidate = Vec2.MoveTowards(node.Position, targetPos, step);
             if (IsCrowdedMove(node, candidate))
             {
                 if (nearFinal) return IntentResult.Success;
@@ -1491,7 +1491,7 @@ namespace Simpiens.Simulation
             }
 
             // Check if reached the current waypoint
-            if (Vector2.Distance(node.Position, targetPos) < 0.05f)
+            if (Vec2.Distance(node.Position, targetPos) < 0.05f)
             {
                 state.CurrentWaypointIndex++;
                 state.LastSampledPosition = node.Position;
@@ -1509,11 +1509,11 @@ namespace Simpiens.Simulation
             return IntentResult.InProgress;
         }
 
-        internal IntentResult ApplyProgressiveUnstuckReflex(Simpiens.Entities.NodeController node, Vector2 targetPos, ActiveIntentState state)
+        internal IntentResult ApplyProgressiveUnstuckReflex(Simpiens.Entities.NodeController node, Vec2 targetPos, ActiveIntentState state)
         {
-            Vector2 toTarget = targetPos - (Vector2)node.Position;
-            float dist = toTarget.magnitude;
-            Vector2 dir = dist > 0.001f ? toTarget / dist : Vector2.up;
+            Vec2 toTarget = targetPos - (Vec2)node.Position;
+            float dist = toTarget.Magnitude;
+            Vec2 dir = dist > 0.001f ? toTarget / dist : Vec2.Up;
 
             if (state.StallCount <= 2)
             {
@@ -1521,7 +1521,7 @@ namespace Simpiens.Simulation
                 // StallCount 1: shifts +0.2f along perpendicular.
                 // StallCount 2: shifts -0.4f to test the opposite flank (-0.2f relative to original centerline).
                 float displacement = (state.StallCount == 1) ? 0.2f : -0.4f;
-                Vector2 perpendicular = new Vector2(-dir.y, dir.x) * displacement;
+                Vec2 perpendicular = new Vec2(-dir.Y, dir.X) * displacement;
                 if (SimLog.Traces(SimLog.Navigation, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
                     SimLog.Navigation.ZLogDebug($"Watchdog tier 1 ({state.StallCount}): {SimLog.Agent(node.Id)} stalled at {node.Position} toward {targetPos}; nudging {perpendicular}");
@@ -1529,7 +1529,7 @@ namespace Simpiens.Simulation
                 // Wall-checked: try the chosen flank, then the mirrored one, else stay put and escalate next stall
                 if (!TryDisplacePawn(node, node.Position + perpendicular))
                 {
-                    TryDisplacePawn(node, (Vector2)node.Position - perpendicular);
+                    TryDisplacePawn(node, (Vec2)node.Position - perpendicular);
                 }
                 state.LastSampledPosition = node.Position;
                 return IntentResult.InProgress;
@@ -1548,7 +1548,7 @@ namespace Simpiens.Simulation
             {
                 // Tier 3: Target Disengage & Blacklist Back-Off (StallCount >= 4)
                 SimLog.Navigation.ZLogDebug($"Watchdog tier 3: {SimLog.Agent(node.Id)} disengaging from {targetPos} at {node.Position} ({state.Intent?.GetType().Name}); backing off 0.5m");
-                TryDisplacePawn(node, (Vector2)node.Position - (dir * 0.5f));
+                TryDisplacePawn(node, (Vec2)node.Position - (dir * 0.5f));
 
                 if (state.Intent is HarvestResourceIntent harvest)
                 {
@@ -1569,7 +1569,7 @@ namespace Simpiens.Simulation
         /// crowd another pawn (see <see cref="IsCrowdedMove"/>). A pawn already inside a blocked cell may always move,
         /// so it can escape. Every simulation-side pawn displacement (path steps, panic, watchdog, yielding) goes through here.
         /// </summary>
-        public bool TryDisplacePawn(Simpiens.Entities.NodeController node, Vector2 candidate, bool respectPawns = true)
+        public bool TryDisplacePawn(Simpiens.Entities.NodeController node, Vec2 candidate, bool respectPawns = true)
         {
             if (node == null) return false;
             var snapshot = _spatialPartition?.GetActiveSnapshot();
@@ -1594,7 +1594,7 @@ namespace Simpiens.Simulation
         /// is always allowed). Nearby pawns come from the snapshot; their positions are read live from the registry,
         /// so pawns already moved earlier this tick are seen where they are now, not where they were.
         /// </summary>
-        internal bool IsCrowdedMove(Simpiens.Entities.NodeController node, Vector2 candidate)
+        internal bool IsCrowdedMove(Simpiens.Entities.NodeController node, Vec2 candidate)
         {
             var snapshot = _spatialPartition?.GetActiveSnapshot();
             if (snapshot == null || node == null) return false;
@@ -1602,12 +1602,12 @@ namespace Simpiens.Simulation
             float search = NavConstants.PawnSeparation + CrowdSearchMargin;
             float offsetX = (snapshot.Width * snapshot.CellSize) * 0.5f;
             float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
-            int minX = Mathf.Max(0, Mathf.FloorToInt((candidate.x - search + offsetX) / snapshot.CellSize));
-            int maxX = Mathf.Min(snapshot.Width - 1, Mathf.FloorToInt((candidate.x + search + offsetX) / snapshot.CellSize));
-            int minY = Mathf.Max(0, Mathf.FloorToInt((candidate.y - search + offsetY) / snapshot.CellSize));
-            int maxY = Mathf.Min(snapshot.Height - 1, Mathf.FloorToInt((candidate.y + search + offsetY) / snapshot.CellSize));
+            int minX = SimMath.Max(0, SimMath.FloorToInt((candidate.X - search + offsetX) / snapshot.CellSize));
+            int maxX = SimMath.Min(snapshot.Width - 1, SimMath.FloorToInt((candidate.X + search + offsetX) / snapshot.CellSize));
+            int minY = SimMath.Max(0, SimMath.FloorToInt((candidate.Y - search + offsetY) / snapshot.CellSize));
+            int maxY = SimMath.Min(snapshot.Height - 1, SimMath.FloorToInt((candidate.Y + search + offsetY) / snapshot.CellSize));
             float sepSqr = NavConstants.PawnSeparation * NavConstants.PawnSeparation;
-            Vector2 current = node.Position;
+            Vec2 current = node.Position;
 
             for (int y = minY; y <= maxY; y++)
             {
@@ -1622,10 +1622,10 @@ namespace Simpiens.Simulation
                         if (entity.Type != EntityType.Pawn || entity.Id == node.Id) continue;
 
                         var otherNode = _worldRegistry != null ? _worldRegistry.GetNode(entity.Id) : null;
-                        Vector2 other = otherNode != null ? otherNode.Position : entity.Position;
-                        float candSqr = (candidate - other).sqrMagnitude;
+                        Vec2 other = otherNode != null ? otherNode.Position : entity.Position;
+                        float candSqr = (candidate - other).SqrMagnitude;
                         if (candSqr >= sepSqr) continue;
-                        if (candSqr > (current - other).sqrMagnitude) continue; // stepping apart is always allowed
+                        if (candSqr > (current - other).SqrMagnitude) continue; // stepping apart is always allowed
                         return true;
                     }
                 }
@@ -1633,14 +1633,14 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        internal bool IsPositionBlocked(Vector2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
+        internal bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
         {
             if (_spatialPartition == null) return false;
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return false;
 
-            int cellX = Mathf.FloorToInt((targetPos.x + snapshot.Width * snapshot.CellSize * 0.5f) / snapshot.CellSize);
-            int cellY = Mathf.FloorToInt((targetPos.y + snapshot.Height * snapshot.CellSize * 0.5f) / snapshot.CellSize);
+            int cellX = SimMath.FloorToInt((targetPos.X + snapshot.Width * snapshot.CellSize * 0.5f) / snapshot.CellSize);
+            int cellY = SimMath.FloorToInt((targetPos.Y + snapshot.Height * snapshot.CellSize * 0.5f) / snapshot.CellSize);
 
             if (cellX < 0 || cellX >= snapshot.Width || cellY < 0 || cellY >= snapshot.Height) return true; // Out of bounds
 
@@ -1656,11 +1656,11 @@ namespace Simpiens.Simulation
                 if (entity.Id != ignoreAgentId)
                 {
                     if (entity.Type == EntityType.Wall) return true;
-                    if (entity.Type == EntityType.Anchor && Vector2.Distance(entity.Position, targetPos) < 0.45f) return true;
+                    if (entity.Type == EntityType.Anchor && Vec2.Distance(entity.Position, targetPos) < 0.45f) return true;
                     if (entity.Type == EntityType.Pawn)
                     {
                         // Dynamic validation: if another pawn is currently standing within clearance radius
-                        if (Vector2.Distance(entity.Position, targetPos) < pawnClearanceRadius) return true;
+                        if (Vec2.Distance(entity.Position, targetPos) < pawnClearanceRadius) return true;
                     }
                 }
             }

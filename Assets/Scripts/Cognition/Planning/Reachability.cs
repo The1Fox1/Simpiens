@@ -1,6 +1,4 @@
 using Simpiens.Cognition.Contracts;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -10,7 +8,7 @@ namespace Simpiens.Cognition.Planning
     /// </summary>
     public static class Reachability
     {
-        public static bool IsReachable(in AgentContext context, Vector2 target)
+        public static bool IsReachable(in AgentContext context, Vec2 target)
         {
             var grid = context.Snapshot != null ? context.Snapshot.StaticGrid : null;
             return grid == null || grid.AreConnected(context.Position, target);

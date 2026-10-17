@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
-using UnityEngine;
-
 namespace Simpiens.Core.Session
 {
     /// <summary>
@@ -61,7 +59,7 @@ namespace Simpiens.Core.Session
 
         public void Populate(SessionBuilder session)
         {
-            var spawns = new List<Vector2>(Floor1Layout.SpawnPointCount);
+            var spawns = new List<Vec2>(Floor1Layout.SpawnPointCount);
             for (int i = 0; i < session.Map.Pois.Count; i++)
             {
                 var poi = session.Map.Pois[i];
@@ -70,7 +68,7 @@ namespace Simpiens.Core.Session
 
             for (int c = 0; c < CrawlerCount; c++)
             {
-                var position = spawns[c % spawns.Count] + Vector2.right * (OverflowOffset * (c / spawns.Count));
+                var position = spawns[c % spawns.Count] + Vec2.Right * (OverflowOffset * (c / spawns.Count));
                 var crawler = session.SpawnAgent(position, $"Crawler{c}", seededPersonality: true);
                 crawler.Hunger = ArrivalHunger;
             }

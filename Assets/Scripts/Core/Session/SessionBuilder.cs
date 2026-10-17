@@ -3,8 +3,6 @@ using Simpiens.Cognition;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
-using UnityEngine;
-
 namespace Simpiens.Core.Session
 {
     /// <summary>Trading terms for a stall opened by a session; position and radius come from the stall's POI.</summary>
@@ -74,7 +72,7 @@ namespace Simpiens.Core.Session
         /// Spawns one agent at <paramref name="position"/>. Seeded personalities derive from the simulation seed and
         /// the agent's entity id; unseeded agents keep the neutral default.
         /// </summary>
-        public AutonomousAgent SpawnAgent(Vector2 position, string label, bool seededPersonality)
+        public AutonomousAgent SpawnAgent(Vec2 position, string label, bool seededPersonality)
         {
             return _spawner.SpawnAgent(position, label, seededPersonality);
         }

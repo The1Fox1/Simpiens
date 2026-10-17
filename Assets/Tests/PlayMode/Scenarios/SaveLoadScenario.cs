@@ -170,7 +170,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                 if (!sim.EconomyLedger.ValidateConservation(stallGold, agentGold, out int discrepancy))
                 {
                     _conservationViolations++;
-                    if (Mathf.Abs(discrepancy) > Mathf.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
+                    if (SimMath.Abs(discrepancy) > SimMath.Abs(_worstDiscrepancy)) _worstDiscrepancy = discrepancy;
                 }
             }
         }
@@ -190,7 +190,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             difference = null;
             if (a.Length != b.Length) difference = $"{a.Length} vs {b.Length} bytes";
-            int n = Mathf.Min(a.Length, b.Length);
+            int n = SimMath.Min(a.Length, b.Length);
             for (int i = 0; i < n && difference == null; i++)
             {
                 if (a[i] != b[i]) difference = $"first difference at byte {i} of {a.Length}";

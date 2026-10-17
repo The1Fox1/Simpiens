@@ -326,7 +326,7 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>Spawns one agent view + simulation state (called by <see cref="SessionBuilder.SpawnAgent"/>).</summary>
-        internal AutonomousAgent SpawnAgent(Vector2 position, string label, bool seededPersonality)
+        internal AutonomousAgent SpawnAgent(Vec2 position, string label, bool seededPersonality)
         {
             var agent = SpawnAgentView(position, NextEntityId(), $"SwarmAgent_{_agents.Count}", label);
 
@@ -345,11 +345,11 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>A crawler's view and simulation state with a given id and names: a new crawler, or a loaded one.</summary>
-        private AutonomousAgent SpawnAgentView(Vector2 position, EntityId id, string name, string label)
+        private AutonomousAgent SpawnAgentView(Vec2 position, EntityId id, string name, string label)
         {
             GameObject agentGo = new GameObject(name);
             if (_agentsRoot != null) agentGo.transform.SetParent(_agentsRoot.transform);
-            agentGo.transform.position = position;
+            agentGo.transform.position = position.ToUnity();
 
             var sr = agentGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.GetAgentSprite(AgentVisualState.Idle, 0);
@@ -434,11 +434,11 @@ namespace Simpiens.Core.Session
             return save;
         }
 
-        private void SpawnResourceNode(GameObject root, Vector2 pos, int yield, ItemType yieldItem, uint regrowTicks, out EntityId resId)
+        private void SpawnResourceNode(GameObject root, Vec2 pos, int yield, ItemType yieldItem, uint regrowTicks, out EntityId resId)
         {
-            var resourceGo = new GameObject($"{yieldItem}Node_{pos.x}_{pos.y}");
+            var resourceGo = new GameObject($"{yieldItem}Node_{pos.X}_{pos.Y}");
             resourceGo.transform.SetParent(root.transform);
-            resourceGo.transform.position = pos;
+            resourceGo.transform.position = pos.ToUnity();
 
             var sr = resourceGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.GetResourceSprite(yieldItem);
@@ -459,7 +459,7 @@ namespace Simpiens.Core.Session
             controller.Initialize(resId, new NodeConfiguration(speed: 0f));
 
             _registry.RegisterNode(controller);
-            SimLog.RegisterAgentName(resId, $"{yieldItem}@({pos.x:0.#},{pos.y:0.#})");
+            SimLog.RegisterAgentName(resId, $"{yieldItem}@({pos.X:0.#},{pos.Y:0.#})");
             _simulationManager.RegisterResource(new ResourceData
             {
                 EntityId = resId,
@@ -470,11 +470,11 @@ namespace Simpiens.Core.Session
             });
         }
 
-        private void SpawnDemoCampfire(GameObject root, Vector2 pos, float radius, out EntityId anchorId)
+        private void SpawnDemoCampfire(GameObject root, Vec2 pos, float radius, out EntityId anchorId)
         {
-            var campfireGo = new GameObject($"DemoCampfire_{pos.x}_{pos.y}");
+            var campfireGo = new GameObject($"DemoCampfire_{pos.X}_{pos.Y}");
             campfireGo.transform.SetParent(root.transform);
-            campfireGo.transform.position = pos;
+            campfireGo.transform.position = pos.ToUnity();
 
             var sr = campfireGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.GetCampfireSprite(0);
@@ -499,11 +499,11 @@ namespace Simpiens.Core.Session
         }
 
         /// <summary>A bunk: walkable (no collider), one sleeper at a time (Epic MAP Phase 3 rest anchor).</summary>
-        private void SpawnBunk(GameObject root, Vector2 pos, out EntityId bunkId)
+        private void SpawnBunk(GameObject root, Vec2 pos, out EntityId bunkId)
         {
-            var bunkGo = new GameObject($"Bunk_{pos.x}_{pos.y}");
+            var bunkGo = new GameObject($"Bunk_{pos.X}_{pos.Y}");
             bunkGo.transform.SetParent(root.transform);
-            bunkGo.transform.position = pos;
+            bunkGo.transform.position = pos.ToUnity();
 
             var sr = bunkGo.AddComponent<SpriteRenderer>();
             sr.sprite = AgentSpriteLibrary.BunkSprite;

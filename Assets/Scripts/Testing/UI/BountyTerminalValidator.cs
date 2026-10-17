@@ -72,7 +72,7 @@ namespace Simpiens.Testing.UI
             var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 10,
                 rationStock: 50,
                 oreBuyPrice: 15,
@@ -130,7 +130,7 @@ namespace Simpiens.Testing.UI
             var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 15,
                 rationStock: 50,
                 oreBuyPrice: 20,
@@ -225,7 +225,7 @@ namespace Simpiens.Testing.UI
                 interventionService: interventionService);
 
             var stallId = new EntityId(9u, 9u, 9u, 9u);
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, 15, 50, 20, 10, 25, 10, treasuryGold: 250, interactionRadius: 3f));
 
             byte hub = Simpiens.Core.Session.Layouts.Floor1Layout.HubSectorId;
             byte deepSeam = Simpiens.Core.Session.Layouts.Floor1Layout.DeepSeamSectorId;
@@ -272,7 +272,7 @@ namespace Simpiens.Testing.UI
             var stallId = EntityId.Generate();
             var stall = new TradeStallData(
                 stallId,
-                position: Vector2.zero,
+                position: Vec2.Zero,
                 rationSellPrice: 15,
                 rationStock: 50,
                 oreBuyPrice: 20,

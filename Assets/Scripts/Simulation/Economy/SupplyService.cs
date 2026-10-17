@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
 using Simpiens.Simulation.Persistence;
-using UnityEngine;
 using ZLogger;
 
 namespace Simpiens.Simulation.Economy

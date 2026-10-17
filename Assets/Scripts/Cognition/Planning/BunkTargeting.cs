@@ -1,7 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -19,7 +17,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public const float ApproachDistance = 1.5f;
 
-        public static bool TryGetNearestFreeBunk(in AgentContext context, out EntityId bunkId, out Vector2 position)
+        public static bool TryGetNearestFreeBunk(in AgentContext context, out EntityId bunkId, out Vec2 position)
         {
             bunkId = default;
             position = default;
@@ -33,8 +31,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Bunk || context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
                 if (context.Snapshot != null && context.Snapshot.IsBunkOccupied(record.EntityId)) continue;
 
-                Vector2 at = record.LastKnownLocation;
-                float distSqr = (at - context.Position).sqrMagnitude;
+                Vec2 at = record.LastKnownLocation;
+                float distSqr = (at - context.Position).SqrMagnitude;
                 if (!found || distSqr < best || (distSqr == best && record.EntityId.CompareTo(bunkId) < 0))
                 {
                     found = true;
@@ -47,11 +45,11 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>The nearest free bunk within a last step (ApproachDistance) of the agent, if any.</summary>
-        public static bool TryGetBunkAtHand(in AgentContext context, out EntityId bunkId, out Vector2 position)
+        public static bool TryGetBunkAtHand(in AgentContext context, out EntityId bunkId, out Vec2 position)
         {
             bunkId = default;
             if (!TryGetNearestFreeBunk(context, out var id, out position)) return false;
-            if ((position - context.Position).sqrMagnitude > ApproachDistance * ApproachDistance) return false;
+            if ((position - context.Position).SqrMagnitude > ApproachDistance * ApproachDistance) return false;
             bunkId = id;
             return true;
         }

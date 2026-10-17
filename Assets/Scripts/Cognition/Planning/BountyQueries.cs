@@ -1,7 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -76,7 +74,7 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>Where the bounty is redeemed: its creator stall, else the nearest reachable stall, else the agent's position.</summary>
-        private static Vector2 RedemptionStallPosition(in AgentContext context, in BountyContract bounty)
+        private static Vec2 RedemptionStallPosition(in AgentContext context, in BountyContract bounty)
         {
             if (context.Snapshot != null && bounty.CreatorStallId != default && context.Snapshot.TryGetStall(bounty.CreatorStallId, out var creator))
             {

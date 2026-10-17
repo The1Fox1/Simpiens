@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -43,9 +41,9 @@ namespace Simpiens.Cognition.Planning.Actions
             return ResourceTargeting.BuildTravelIntentAsync(context, _pathfinder, ChooseDestination(context));
         }
 
-        public static Vector2 ChooseDestination(in AgentContext context)
+        public static Vec2 ChooseDestination(in AgentContext context)
         {
-            Vector2 advertised = default;
+            Vec2 advertised = default;
             if (BountyQueries.TryGetClaimedBounty(context, out var claimed) && claimed.Type == BountyType.GatherResource)
             {
                 advertised = claimed.TargetLocation;
@@ -55,7 +53,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 advertised = open.TargetLocation;
             }
 
-            if (advertised != default && (advertised - context.Position).sqrMagnitude > ArrivalRadius * ArrivalRadius)
+            if (advertised != default && (advertised - context.Position).SqrMagnitude > ArrivalRadius * ArrivalRadius)
             {
                 return advertised;
             }

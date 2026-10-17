@@ -1,7 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
@@ -27,7 +25,7 @@ namespace Simpiens.Cognition.Planning.Goals
             }
 
             // Sated/healthy agents seek communal comfort; priority scales with social need
-            float priority = Mathf.Max(0f, 75f - context.Social) + 15f;
+            float priority = SimMath.Max(0f, 75f - context.Social) + 15f;
 
             // Relational bonus: If agent knows warm or trusted companions, hearth gathering is especially attractive
             if (context.Memory != null && context.Memory.AffinityMap != null)

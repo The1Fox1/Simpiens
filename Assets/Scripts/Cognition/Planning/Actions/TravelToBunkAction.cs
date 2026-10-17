@@ -2,8 +2,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
@@ -25,7 +23,7 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override float GetCost(AgentContext context)
         {
-            float distance = BunkTargeting.TryGetNearestFreeBunk(context, out _, out var position) ? Vector2.Distance(context.Position, position) : 0f;
+            float distance = BunkTargeting.TryGetNearestFreeBunk(context, out _, out var position) ? Vec2.Distance(context.Position, position) : 0f;
             return Considerations.BunkTravelCost(BaseCost, distance);
         }
 

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Simpiens.Cognition.Groups;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
@@ -67,7 +65,7 @@ namespace Simpiens.Simulation.Spatial
 
         public void SetOccupiedBunks(IReadOnlyList<EntityId> occupied)
         {
-            int count = occupied != null ? Mathf.Min(occupied.Count, MaxBunks) : 0;
+            int count = occupied != null ? SimMath.Min(occupied.Count, MaxBunks) : 0;
             for (int i = 0; i < count; i++) _occupiedBunks[i] = occupied[i];
             OccupiedBunkCount = count;
         }
@@ -89,7 +87,7 @@ namespace Simpiens.Simulation.Spatial
         }
 
         /// <summary>True when the point lies in a charted sector, or when no map is loaded.</summary>
-        public bool IsCharted(Vector2 position)
+        public bool IsCharted(Vec2 position)
         {
             return Map == null || IsSectorCharted(Map.FindSector(position).Id);
         }
@@ -171,7 +169,7 @@ namespace Simpiens.Simulation.Spatial
                 return;
             }
 
-            int toCopy = Mathf.Min(count, MaxGroups);
+            int toCopy = SimMath.Min(count, MaxGroups);
             Array.Copy(source, GroupBuffer, toCopy);
             ActiveGroupCount = toCopy;
         }
@@ -212,7 +210,7 @@ namespace Simpiens.Simulation.Spatial
                 return;
             }
 
-            int toCopy = Mathf.Min(count, MaxStalls);
+            int toCopy = SimMath.Min(count, MaxStalls);
             Array.Copy(source, StallBuffer, toCopy);
             ActiveStallCount = toCopy;
         }
@@ -228,7 +226,7 @@ namespace Simpiens.Simulation.Spatial
                 return;
             }
 
-            int toCopy = Mathf.Min(source.Count, MaxStalls);
+            int toCopy = SimMath.Min(source.Count, MaxStalls);
             for (int i = 0; i < toCopy; i++)
             {
                 StallBuffer[i] = source[i];
@@ -272,7 +270,7 @@ namespace Simpiens.Simulation.Spatial
                 return;
             }
 
-            int toCopy = Mathf.Min(count, MaxBounties);
+            int toCopy = SimMath.Min(count, MaxBounties);
             Array.Copy(source, BountyBuffer, toCopy);
             ActiveBountyCount = toCopy;
         }
@@ -288,7 +286,7 @@ namespace Simpiens.Simulation.Spatial
                 return;
             }
 
-            int toCopy = Mathf.Min(source.Count, MaxBounties);
+            int toCopy = SimMath.Min(source.Count, MaxBounties);
             for (int i = 0; i < toCopy; i++)
             {
                 BountyBuffer[i] = source[i];
@@ -346,39 +344,39 @@ namespace Simpiens.Simulation.Spatial
             return true;
         }
 
-        private bool IsCentredInCell(Vector2 position, int cellX, int cellY)
+        private bool IsCentredInCell(Vec2 position, int cellX, int cellY)
         {
             float offsetX = Width * CellSize * 0.5f;
             float offsetY = Height * CellSize * 0.5f;
-            return Mathf.FloorToInt((position.x + offsetX) / CellSize) == cellX &&
-                   Mathf.FloorToInt((position.y + offsetY) / CellSize) == cellY;
+            return SimMath.FloorToInt((position.X + offsetX) / CellSize) == cellX &&
+                   SimMath.FloorToInt((position.Y + offsetY) / CellSize) == cellY;
         }
 
         /// <summary>
         /// Checks whether a straight line between two world positions is unobstructed by walls and corner intersections.
         /// Zero allocations, thread-safe off-thread evaluation.
         /// </summary>
-        public bool HasLineOfSight(Vector2 start, Vector2 end)
+        public bool HasLineOfSight(Vec2 start, Vec2 end)
         {
-            float distance = Vector2.Distance(start, end);
+            float distance = Vec2.Distance(start, end);
             if (distance < 0.1f) return true;
 
             float stepSize = 0.25f;
-            int steps = Mathf.CeilToInt(distance / stepSize);
-            Vector2 dir = (end - start) / distance;
+            int steps = SimMath.CeilToInt(distance / stepSize);
+            Vec2 dir = (end - start) / distance;
 
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
 
-            int prevCellX = Mathf.FloorToInt((start.x + offsetX) / CellSize);
-            int prevCellY = Mathf.FloorToInt((start.y + offsetY) / CellSize);
+            int prevCellX = SimMath.FloorToInt((start.X + offsetX) / CellSize);
+            int prevCellY = SimMath.FloorToInt((start.Y + offsetY) / CellSize);
 
             // Check intermediate steps along the ray
             for (int i = 1; i <= steps; i++)
             {
-                Vector2 sample = (i == steps) ? end : start + dir * (i * stepSize);
-                int cellX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
-                int cellY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
+                Vec2 sample = (i == steps) ? end : start + dir * (i * stepSize);
+                int cellX = SimMath.FloorToInt((sample.X + offsetX) / CellSize);
+                int cellY = SimMath.FloorToInt((sample.Y + offsetY) / CellSize);
 
                 if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height)
                 {
@@ -425,12 +423,12 @@ namespace Simpiens.Simulation.Spatial
         /// True when the world point lies in a statically walkable cell (static walls only). Out of bounds is not walkable.
         /// With no static grid every in-bounds point is walkable. Zero allocations, thread-safe.
         /// </summary>
-        public bool IsStaticWalkable(Vector2 worldPos)
+        public bool IsStaticWalkable(Vec2 worldPos)
         {
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
-            int cellX = Mathf.FloorToInt((worldPos.x + offsetX) / CellSize);
-            int cellY = Mathf.FloorToInt((worldPos.y + offsetY) / CellSize);
+            int cellX = SimMath.FloorToInt((worldPos.X + offsetX) / CellSize);
+            int cellY = SimMath.FloorToInt((worldPos.Y + offsetY) / CellSize);
             if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
             return StaticGrid == null || StaticGrid.IsCellWalkable(cellX, cellY);
         }
@@ -440,29 +438,29 @@ namespace Simpiens.Simulation.Spatial
         /// and fails on any statically blocked cell. Passing exactly through a cell corner requires both orthogonal
         /// cells to be walkable, matching A*'s no-corner-cutting rule. Zero allocations, thread-safe.
         /// </summary>
-        public bool IsSegmentStaticClear(Vector2 start, Vector2 end)
+        public bool IsSegmentStaticClear(Vec2 start, Vec2 end)
         {
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
-            float sx = (start.x + offsetX) / CellSize, sy = (start.y + offsetY) / CellSize;
-            float ex = (end.x + offsetX) / CellSize, ey = (end.y + offsetY) / CellSize;
+            float sx = (start.X + offsetX) / CellSize, sy = (start.Y + offsetY) / CellSize;
+            float ex = (end.X + offsetX) / CellSize, ey = (end.Y + offsetY) / CellSize;
 
-            int x = Mathf.FloorToInt(sx), y = Mathf.FloorToInt(sy);
-            int endX = Mathf.FloorToInt(ex), endY = Mathf.FloorToInt(ey);
+            int x = SimMath.FloorToInt(sx), y = SimMath.FloorToInt(sy);
+            int endX = SimMath.FloorToInt(ex), endY = SimMath.FloorToInt(ey);
             if (!IsStaticCellWalkable(x, y) || !IsStaticCellWalkable(endX, endY)) return false;
 
             float dx = ex - sx, dy = ey - sy;
             int stepX = dx > 0f ? 1 : (dx < 0f ? -1 : 0);
             int stepY = dy > 0f ? 1 : (dy < 0f ? -1 : 0);
-            float tDeltaX = stepX != 0 ? Mathf.Abs(1f / dx) : float.PositiveInfinity;
-            float tDeltaY = stepY != 0 ? Mathf.Abs(1f / dy) : float.PositiveInfinity;
+            float tDeltaX = stepX != 0 ? SimMath.Abs(1f / dx) : float.PositiveInfinity;
+            float tDeltaY = stepY != 0 ? SimMath.Abs(1f / dy) : float.PositiveInfinity;
             float tMaxX = stepX > 0 ? (x + 1 - sx) * tDeltaX : (stepX < 0 ? (sx - x) * tDeltaX : float.PositiveInfinity);
             float tMaxY = stepY > 0 ? (y + 1 - sy) * tDeltaY : (stepY < 0 ? (sy - y) * tDeltaY : float.PositiveInfinity);
 
             int guard = Width + Height + 2;
             while ((x != endX || y != endY) && guard-- > 0)
             {
-                if (Mathf.Abs(tMaxX - tMaxY) < 1e-5f)
+                if (SimMath.Abs(tMaxX - tMaxY) < 1e-5f)
                 {
                     // Exact corner crossing: both orthogonal neighbours must be open
                     if (!IsStaticCellWalkable(x + stepX, y) || !IsStaticCellWalkable(x, y + stepY)) return false;
@@ -489,20 +487,20 @@ namespace Simpiens.Simulation.Spatial
         /// well, or a smoothed segment could run straight through a fire. A prop within clearance of either endpoint
         /// is ignored: the path is leaving or approaching it. Clearance must not exceed one cell. Zero allocations.
         /// </summary>
-        public bool IsSegmentPropClear(Vector2 start, Vector2 end, float clearance)
+        public bool IsSegmentPropClear(Vec2 start, Vec2 end, float clearance)
         {
-            float distance = Vector2.Distance(start, end);
+            float distance = Vec2.Distance(start, end);
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
             float sqrClearance = clearance * clearance;
 
             // Samples at most half a cell apart; props within clearance of the segment lie within one cell of a sample
-            int steps = Mathf.Max(1, Mathf.CeilToInt(distance / (CellSize * 0.5f)));
+            int steps = SimMath.Max(1, SimMath.CeilToInt(distance / (CellSize * 0.5f)));
             for (int i = 0; i <= steps; i++)
             {
-                Vector2 sample = Vector2.Lerp(start, end, (float)i / steps);
-                int sampleX = Mathf.FloorToInt((sample.x + offsetX) / CellSize);
-                int sampleY = Mathf.FloorToInt((sample.y + offsetY) / CellSize);
+                Vec2 sample = Vec2.Lerp(start, end, (float)i / steps);
+                int sampleX = SimMath.FloorToInt((sample.X + offsetX) / CellSize);
+                int sampleY = SimMath.FloorToInt((sample.Y + offsetY) / CellSize);
 
                 for (int cy = sampleY - 1; cy <= sampleY + 1; cy++)
                 {
@@ -518,8 +516,8 @@ namespace Simpiens.Simulation.Spatial
                             var type = cellArray[c].Type;
                             if (type != EntityType.Anchor && type != EntityType.Stall) continue;
 
-                            Vector2 prop = cellArray[c].Position;
-                            if ((prop - start).sqrMagnitude < sqrClearance || (prop - end).sqrMagnitude < sqrClearance) continue;
+                            Vec2 prop = cellArray[c].Position;
+                            if ((prop - start).SqrMagnitude < sqrClearance || (prop - end).SqrMagnitude < sqrClearance) continue;
                             if (SqrDistanceToSegment(prop, start, end) < sqrClearance) return false;
                         }
                     }
@@ -528,12 +526,12 @@ namespace Simpiens.Simulation.Spatial
             return true;
         }
 
-        private static float SqrDistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+        private static float SqrDistanceToSegment(Vec2 point, Vec2 a, Vec2 b)
         {
-            Vector2 ab = b - a;
-            float lengthSqr = ab.sqrMagnitude;
-            float t = lengthSqr > 0f ? Mathf.Clamp01(Vector2.Dot(point - a, ab) / lengthSqr) : 0f;
-            return (point - (a + ab * t)).sqrMagnitude;
+            Vec2 ab = b - a;
+            float lengthSqr = ab.SqrMagnitude;
+            float t = lengthSqr > 0f ? SimMath.Clamp01(Vec2.Dot(point - a, ab) / lengthSqr) : 0f;
+            return (point - (a + ab * t)).SqrMagnitude;
         }
 
         private bool IsStaticCellWalkable(int cellX, int cellY)
@@ -545,15 +543,15 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>
         /// Thread-safe query method for cognitive agents to find entities in a radius.
         /// </summary>
-        public void GetEntitiesInRange(Vector2 position, float radius, List<EntitySnapshot> results)
+        public void GetEntitiesInRange(Vec2 position, float radius, List<EntitySnapshot> results)
         {
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
 
-            int minX = Mathf.FloorToInt((position.x - radius + offsetX) / CellSize);
-            int maxX = Mathf.FloorToInt((position.x + radius + offsetX) / CellSize);
-            int minY = Mathf.FloorToInt((position.y - radius + offsetY) / CellSize);
-            int maxY = Mathf.FloorToInt((position.y + radius + offsetY) / CellSize);
+            int minX = SimMath.FloorToInt((position.X - radius + offsetX) / CellSize);
+            int maxX = SimMath.FloorToInt((position.X + radius + offsetX) / CellSize);
+            int minY = SimMath.FloorToInt((position.Y - radius + offsetY) / CellSize);
+            int maxY = SimMath.FloorToInt((position.Y + radius + offsetY) / CellSize);
 
             float sqrRadius = radius * radius;
 
@@ -579,7 +577,7 @@ namespace Simpiens.Simulation.Spatial
                         // or we could use a HashSet, but that allocates if not pooled.
                         
                         // For now, check distance:
-                        float sqrDist = (entity.Position - position).sqrMagnitude;
+                        float sqrDist = (entity.Position - position).SqrMagnitude;
                         
                         // We account for the entity's radius in the overlap
                         float totalRadius = radius + entity.Radius;

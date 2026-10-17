@@ -34,21 +34,21 @@ namespace Simpiens.Testing.Environment
             }
         }
 
-        public void InjectWall(Vector2? position = null)
+        public void InjectWall(Vec2? position = null)
         {
             var snapshot = _spatialPartition?.GetActiveSnapshot();
             if (snapshot == null) return;
 
             // Pick a random spot near the center if not specified
-            Vector2 targetPos = position ?? (Random.insideUnitCircle * 4f);
+            Vec2 targetPos = position ?? (Random.insideUnitCircle * 4f).ToSim();
 
             // Defensive clearance: Ensure we don't spawn a wall directly on top of an existing entity
             for (int attempt = 0; attempt < 8; attempt++)
             {
-                var hit = Physics2D.OverlapCircle(targetPos, 0.7f);
+                var hit = Physics2D.OverlapCircle(targetPos.ToUnity(), 0.7f);
                 if (hit != null && hit.GetComponent<NodeController>() != null)
                 {
-                    targetPos += new Vector2(0.5f, 0.5f);
+                    targetPos += new Vec2(0.5f, 0.5f);
                 }
                 else
                 {
@@ -64,7 +64,7 @@ namespace Simpiens.Testing.Environment
             if (root == null) root = new GameObject("[DynamicObstacles]");
             var nodeGo = new GameObject("InjectedWall");
             nodeGo.transform.SetParent(root.transform);
-            nodeGo.transform.position = targetPos;
+            nodeGo.transform.position = targetPos.ToUnity();
 
             var sr = nodeGo.AddComponent<SpriteRenderer>();
             var tex = new Texture2D(1, 1);

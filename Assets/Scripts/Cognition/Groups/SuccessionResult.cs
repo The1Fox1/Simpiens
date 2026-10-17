@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Simpiens.Cognition.Groups
 {
     /// <summary>

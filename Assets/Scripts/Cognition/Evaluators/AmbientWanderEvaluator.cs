@@ -35,11 +35,11 @@ namespace Simpiens.Cognition.Evaluators
             }
 
             // Pick a point 3 to 5 units away
-            float angle = rng.NextFloat() * Mathf.PI * 2f;
+            float angle = rng.NextFloat() * SimMath.PI * 2f;
             float distance = rng.Range(3f, 5f);
 
-            Vector2 randomDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            Vector2 targetPos = context.Position + randomDir * distance;
+            Vec2 randomDir = new Vec2(SimMath.Cos(angle), SimMath.Sin(angle));
+            Vec2 targetPos = context.Position + randomDir * distance;
 
             var pathRequest = new PathRequest
             {

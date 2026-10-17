@@ -81,7 +81,7 @@ namespace Simpiens.Cognition
                     agent.VisualState = AgentVisualState.Thinking;
                 }
 
-                Vector2Int currentPosInt = Vector2Int.RoundToInt(agent.Position);
+                GridPoint currentPosInt = GridPoint.RoundToInt(agent.Position);
 
                 agent.Memory.UpdateMemory(snapshot, currentPosInt, visionRadius: DefaultVisionRadius, currentTick: tick,
                     surveySectorId: BountyQueries.SurveyingSector(snapshot, agent.AgentId));
@@ -143,7 +143,7 @@ namespace Simpiens.Cognition
         }
 
         // Group directives & compliance evaluation (main thread)
-        private static void EvaluateGroupDirective(AgentState agent, SharedWorldSnapshot snapshot, ISimulationManager simulationManager, Vector2Int currentPosInt, uint tick)
+        private static void EvaluateGroupDirective(AgentState agent, SharedWorldSnapshot snapshot, ISimulationManager simulationManager, GridPoint currentPosInt, uint tick)
         {
             if (!agent.Membership.HasGroup || agent.Membership.Role == RoleRank.Leader) return;
             if (!snapshot.TryGetGroup(agent.Membership.GroupId, out var groupData) || !groupData.ActiveDirective.IsActive(tick)) return;
@@ -183,7 +183,7 @@ namespace Simpiens.Cognition
                     agent.Membership = new GroupMembership(
                         agent.Membership.GroupId,
                         agent.Membership.Role,
-                        (byte)Mathf.Max(0, agent.Membership.Allegiance - 5),
+                        (byte)SimMath.Max(0, agent.Membership.Allegiance - 5),
                         agent.Membership.JoinTick);
                 }
                 agent.TriggerDefiantVisual(1.5f);

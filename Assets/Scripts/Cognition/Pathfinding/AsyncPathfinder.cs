@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 using Simpiens.Diagnostics;

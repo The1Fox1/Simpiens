@@ -1,6 +1,4 @@
 using Simpiens.Cognition.Contracts;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
@@ -21,8 +19,8 @@ namespace Simpiens.Cognition.Planning.Goals
         public override float CalculatePriority(AgentContext context)
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            float need = Mathf.Clamp(ComfortableGold - gold, 0, ComfortableGold) * 0.5f;
-            float priority = Mathf.Max(5f, 25f + need - (context.Hunger * 0.2f));
+            float need = SimMath.Clamp(ComfortableGold - gold, 0, ComfortableGold) * 0.5f;
+            float priority = SimMath.Max(5f, 25f + need - (context.Hunger * 0.2f));
             return priority * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome)
                             * Considerations.TraitFactor(context.Personality.Diligence, Considerations.DiligenceOnWork);
         }

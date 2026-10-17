@@ -4,8 +4,6 @@ using Simpiens.Cognition;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
-using UnityEngine;
-
 namespace Simpiens.Testing.Environment
 {
     /// <summary>
@@ -76,8 +74,8 @@ namespace Simpiens.Testing.Environment
                 var s = ordered[i].State;
                 ulong h = Offset;
                 Mix(ref h, s.AgentId.GetHashCode());
-                Mix(ref h, Quantize(s.Position.x, 1000f));
-                Mix(ref h, Quantize(s.Position.y, 1000f));
+                Mix(ref h, Quantize(s.Position.X, 1000f));
+                Mix(ref h, Quantize(s.Position.Y, 1000f));
                 Mix(ref h, Quantize(s.Hunger, 100f));
                 Mix(ref h, Quantize(s.Energy, 100f));
                 Mix(ref h, Quantize(s.Social, 100f));
@@ -98,7 +96,7 @@ namespace Simpiens.Testing.Environment
                 sample.AgentHashes.Add(h);
                 sample.AgentLines.Add(string.Format(CultureInfo.InvariantCulture,
                     "pos ({0:F3},{1:F3}) hunger {2:F2} energy {3:F2} gold {4} intent {5} goal {6}",
-                    s.Position.x, s.Position.y, s.Hunger, s.Energy, inv != null ? inv.Gold : -1, intent, goal));
+                    s.Position.X, s.Position.Y, s.Hunger, s.Energy, inv != null ? inv.Gold : -1, intent, goal));
                 Mix(ref total, h);
             }
 
@@ -152,7 +150,7 @@ namespace Simpiens.Testing.Environment
             return sample;
         }
 
-        private static long Quantize(float value, float scale) => (long)Mathf.Round(value * scale);
+        private static long Quantize(float value, float scale) => (long)SimMath.Round(value * scale);
 
         private static void Mix(ref ulong h, ulong value)
         {

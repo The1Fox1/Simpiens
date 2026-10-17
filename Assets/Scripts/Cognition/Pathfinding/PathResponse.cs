@@ -1,4 +1,3 @@
-using UnityEngine;
 using System.Collections.Concurrent;
 using System;
 
@@ -6,7 +5,7 @@ namespace Simpiens.Cognition.Pathfinding
 {
     public class PathResponse
     {
-        public Vector2[] Waypoints;
+        public Vec2[] Waypoints;
         public int Length;
         public bool IsValid;
         public bool IsComplete;
@@ -17,7 +16,7 @@ namespace Simpiens.Cognition.Pathfinding
         {
             if (Waypoints == null || Waypoints.Length != maxPathLength)
             {
-                Waypoints = new Vector2[maxPathLength];
+                Waypoints = new Vec2[maxPathLength];
             }
             _returnAction = returnAction;
             Clear();

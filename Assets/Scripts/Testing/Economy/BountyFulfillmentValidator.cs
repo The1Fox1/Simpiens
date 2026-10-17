@@ -61,7 +61,7 @@ namespace Simpiens.Testing.Economy
                 rewardGold: 75,
                 issuedTick: 100,
                 expirationTick: 1000,
-                targetLocation: new Vector2(15f, -20f),
+                targetLocation: new Vec2(15f, -20f),
                 claimantId: default,
                 creatorStallId: stallId,
                 status: BountyStatus.Open);
@@ -107,7 +107,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Player queues a PostBounty influence event
@@ -136,7 +136,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             // Live bounties must be escrowed by a stall (§3.1), so register one that can cover the reward
-            var stall = new TradeStallData(EntityId.Generate(), Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = new TradeStallData(EntityId.Generate(), Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var contract = new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 30, 0, 1000);
@@ -178,7 +178,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Post bounty with 20 tick lifespan (duration = 20)
@@ -210,13 +210,13 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 500);
+            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Deliverer]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = new Vector2(0.5f, 0.5f); // within stall reach
+            node.transform.position = (new Vec2(0.5f, 0.5f)).ToUnity(); // within stall reach
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Inventory.Gold = 10;
@@ -261,13 +261,13 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var go = new GameObject("[Test_Affinity_Deliverer]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             var agent = go.AddComponent<AutonomousAgent>();
             agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.MedicinalHerb, 1, 10), out _);
@@ -309,7 +309,7 @@ namespace Simpiens.Testing.Economy
 
             var planner = new GoapPlanner();
             var goal = new FulfillBountyGoal();
-            var context = new AgentContext(EntityId.Generate(), Vector2.zero, hunger: 20f, energy: 80f, frustration: 0f, snapshot: snapshot, memory: null, currentTick: 0);
+            var context = new AgentContext(EntityId.Generate(), Vec2.Zero, hunger: 20f, energy: 80f, frustration: 0f, snapshot: snapshot, memory: null, currentTick: 0);
 
             // Agent already carries the bounty item, has not claimed the bounty and is not at the stall yet
             var initial = WorldState.Empty
@@ -340,7 +340,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vector2.zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Post bounty #5 with 50 gold reward

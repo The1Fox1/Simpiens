@@ -109,17 +109,17 @@ namespace Simpiens.Testing.Environment
 
             for (int i = 0; i < PawnCount; i++)
             {
-                // Exact float equality (Vector2 == is approximate): determinism means bit-identical
-                Assert(inOrder[i].x == reversed[i].x && inOrder[i].y == reversed[i].y,
+                // Exact float equality (Vec2 == is approximate): determinism means bit-identical
+                Assert(inOrder[i].X == reversed[i].X && inOrder[i].Y == reversed[i].Y,
                     $"Pawn {i}: {inOrder[i]:F6} vs {reversed[i]:F6} after reversing intent arrival order.");
-                Assert(inOrder[i].x == reRegistered[i].x && inOrder[i].y == reRegistered[i].y,
+                Assert(inOrder[i].X == reRegistered[i].X && inOrder[i].Y == reRegistered[i].Y,
                     $"Pawn {i}: {inOrder[i]:F6} vs {reRegistered[i]:F6} after reversing registration order.");
             }
 
             bool crowded = false;
             for (int i = 0; i < PawnCount && !crowded; i++)
             {
-                if (inOrder[i].sqrMagnitude > 0.01f) crowded = true;
+                if (inOrder[i].SqrMagnitude > 0.01f) crowded = true;
             }
             Assert(crowded, "Scenario must actually be contended (not every pawn reached the centre).");
 
@@ -138,7 +138,7 @@ namespace Simpiens.Testing.Environment
             var sim = new SimulationManager(registry, grid);
 
             var go = new GameObject("[Determinism_Respawned]");
-            go.transform.position = Vector2.zero;
+            go.transform.position = Vec2.Zero.ToUnity();
             go.AddComponent<CircleCollider2D>().radius = 0.35f;
             var node = go.AddComponent<NodeController>();
             node.Type = EntityType.Pawn;
@@ -146,7 +146,7 @@ namespace Simpiens.Testing.Environment
             registry.RegisterNode(node);
             grid.UpdateFromRegistry(registry);
 
-            WanderIntent WalkEast() => new WanderIntent(node.Id, new PathResponse { Waypoints = new[] { new Vector2(3f, 0f) }, Length = 1, IsValid = true });
+            WanderIntent WalkEast() => new WanderIntent(node.Id, new PathResponse { Waypoints = new[] { new Vec2(3f, 0f) }, Length = 1, IsValid = true });
 
             uint before = sim.SessionEpoch;
             var stale = WalkEast();
@@ -155,24 +155,24 @@ namespace Simpiens.Testing.Environment
             Assert(sim.SessionEpoch == before + 1, $"A reset starts a new session ({before} -> {sim.SessionEpoch}).");
             sim.EnqueueIntent(stale);
             for (int t = 0; t < 10; t++) sim.Tick();
-            Assert(node.Position.x == 0f, $"An intent from the previous session is dropped (pawn moved to {node.Position}).");
+            Assert(node.Position.X == 0f, $"An intent from the previous session is dropped (pawn moved to {node.Position}).");
 
             var current = WalkEast();
             current.SessionEpoch = sim.SessionEpoch;
             sim.EnqueueIntent(current);
             for (int t = 0; t < 5; t++) sim.Tick();
-            float afterCurrent = node.Position.x;
+            float afterCurrent = node.Position.X;
             Assert(afterCurrent > 0.5f, $"An intent from the current session runs (pawn at {node.Position}).");
 
             sim.EnqueueIntent(WalkEast()); // unstamped: built directly, always accepted
             for (int t = 0; t < 5; t++) sim.Tick();
-            Assert(node.Position.x > afterCurrent, $"An unstamped intent runs (pawn at {node.Position}).");
+            Assert(node.Position.X > afterCurrent, $"An unstamped intent runs (pawn at {node.Position}).");
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 5: Intents decided before a respawn are dropped; current and unstamped intents run.");
         }
 
-        private Vector2[] RunConvergence(bool reverseEnqueue, bool reverseRegistration)
+        private Vec2[] RunConvergence(bool reverseEnqueue, bool reverseRegistration)
         {
             var ids = new EntityIdAllocator(new SimulationSettings(99));
             var registry = new WorldRegistry();
@@ -183,9 +183,9 @@ namespace Simpiens.Testing.Environment
             var nodes = new NodeController[PawnCount];
             for (int i = 0; i < PawnCount; i++)
             {
-                float angle = i * Mathf.PI * 2f / PawnCount;
+                float angle = i * SimMath.PI * 2f / PawnCount;
                 var go = new GameObject($"[Determinism_Pawn{i}]");
-                go.transform.position = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 3f;
+                go.transform.position = (new Vec2(SimMath.Cos(angle), SimMath.Sin(angle)) * 3f).ToUnity();
                 var col = go.AddComponent<CircleCollider2D>();
                 col.radius = 0.35f;
                 var node = go.AddComponent<NodeController>();
@@ -203,7 +203,7 @@ namespace Simpiens.Testing.Environment
             for (int k = 0; k < PawnCount; k++)
             {
                 var node = nodes[reverseEnqueue ? PawnCount - 1 - k : k];
-                var path = new PathResponse { Waypoints = new[] { Vector2.zero }, Length = 1, IsValid = true };
+                var path = new PathResponse { Waypoints = new[] { Vec2.Zero }, Length = 1, IsValid = true };
                 sim.EnqueueIntent(new WanderIntent(node.Id, path));
             }
 
@@ -212,7 +212,7 @@ namespace Simpiens.Testing.Environment
                 sim.Tick();
             }
 
-            var result = new Vector2[PawnCount];
+            var result = new Vec2[PawnCount];
             for (int i = 0; i < PawnCount; i++)
             {
                 result[i] = nodes[i].Position;

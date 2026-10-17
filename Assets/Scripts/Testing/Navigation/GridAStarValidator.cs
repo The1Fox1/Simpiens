@@ -52,8 +52,8 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(-5f, 0f),
-                TargetPosition = new Vector2(5f, 0f)
+                StartPosition = new Vec2(-5f, 0f),
+                TargetPosition = new Vec2(5f, 0f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -61,8 +61,8 @@ namespace Simpiens.Testing.Navigation
             Assert(success, "Direct path search must succeed.");
             Assert(response.IsValid, "Path must be marked valid.");
             Assert(response.Length == 2, $"Direct smoothed path must collapse to 2 waypoints, got {response.Length}.");
-            Assert(Vector2.Distance(response.Waypoints[0], request.StartPosition) < 0.05f, "Start waypoint must match start position.");
-            Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Goal waypoint must reach target.");
+            Assert(Vec2.Distance(response.Waypoints[0], request.StartPosition) < 0.05f, "Start waypoint must match start position.");
+            Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Goal waypoint must reach target.");
 
             Debug.Log("[PASS] Test 1: Direct unobstructed path collapsed to optimal 2-point direct vector.");
         }
@@ -75,7 +75,7 @@ namespace Simpiens.Testing.Navigation
             // Place a vertical wall barrier at X = 0 from Y = -3 to Y = 3
             for (int y = -3; y <= 3; y++)
             {
-                if (staticGrid.WorldToCell(new Vector2(0f, y), out int cx, out int cy))
+                if (staticGrid.WorldToCell(new Vec2(0f, y), out int cx, out int cy))
                 {
                     staticGrid.SetWall(cx, cy);
                 }
@@ -87,8 +87,8 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(-4f, 0f),
-                TargetPosition = new Vector2(4f, 0f)
+                StartPosition = new Vec2(-4f, 0f),
+                TargetPosition = new Vec2(4f, 0f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -96,12 +96,12 @@ namespace Simpiens.Testing.Navigation
             Assert(success, "Detour path search must succeed around vertical barrier.");
             Assert(response.IsValid, "Path must be marked valid.");
             Assert(response.Length >= 3, $"Detoured path must have >= 3 waypoints, got {response.Length}.");
-            Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach target.");
+            Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach target.");
 
             // Verify none of the waypoints or segment midpoints intersect the wall
             for (int i = 0; i < response.Length; i++)
             {
-                Vector2 pt = response.Waypoints[i];
+                Vec2 pt = response.Waypoints[i];
                 if (staticGrid.WorldToCell(pt, out int cx, out int cy))
                 {
                     Assert(staticGrid.IsCellWalkable(cx, cy), $"Waypoint {pt} must not be inside wall.");
@@ -121,7 +121,7 @@ namespace Simpiens.Testing.Navigation
             {
                 if (y == 3 || y == 4) continue; // Door opening
 
-                if (staticGrid.WorldToCell(new Vector2(0f, y), out int cx, out int cy))
+                if (staticGrid.WorldToCell(new Vec2(0f, y), out int cx, out int cy))
                 {
                     staticGrid.SetWall(cx, cy);
                 }
@@ -133,21 +133,21 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(-5f, -5f),
-                TargetPosition = new Vector2(5f, -5f)
+                StartPosition = new Vec2(-5f, -5f),
+                TargetPosition = new Vec2(5f, -5f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
 
             Assert(success, "Doorway traversal search must succeed.");
             Assert(response.IsValid, "Path must be valid.");
-            Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Goal must reach target.");
+            Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Goal must reach target.");
 
             // Verify the path went north toward the doorway
             bool traversedDoorway = false;
             for (int i = 0; i < response.Length; i++)
             {
-                if (response.Waypoints[i].y >= 2.5f)
+                if (response.Waypoints[i].Y >= 2.5f)
                 {
                     traversedDoorway = true;
                     break;
@@ -164,8 +164,8 @@ namespace Simpiens.Testing.Navigation
             var staticGrid = snapshot.StaticGrid;
 
             // Set up a wall corner: (0, 1) and (1, 0) are walls
-            if (staticGrid.WorldToCell(new Vector2(0f, 1f), out int cx1, out int cy1)) staticGrid.SetWall(cx1, cy1);
-            if (staticGrid.WorldToCell(new Vector2(1f, 0f), out int cx2, out int cy2)) staticGrid.SetWall(cx2, cy2);
+            if (staticGrid.WorldToCell(new Vec2(0f, 1f), out int cx1, out int cy1)) staticGrid.SetWall(cx1, cy1);
+            if (staticGrid.WorldToCell(new Vec2(1f, 0f), out int cx2, out int cy2)) staticGrid.SetWall(cx2, cy2);
 
             var searcher = new GridAStarSearcher();
             var response = new PathResponse();
@@ -173,8 +173,8 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(0f, 0f),
-                TargetPosition = new Vector2(1f, 1f)
+                StartPosition = new Vec2(0f, 0f),
+                TargetPosition = new Vec2(1f, 1f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -185,9 +185,9 @@ namespace Simpiens.Testing.Navigation
             {
                 for (int i = 0; i < response.Length - 1; i++)
                 {
-                    Vector2 mid = (response.Waypoints[i] + response.Waypoints[i + 1]) * 0.5f;
+                    Vec2 mid = (response.Waypoints[i] + response.Waypoints[i + 1]) * 0.5f;
                     // Midpoint must not pass directly over the diagonal intersection between the two walls
-                    float distToDiagonalIntersection = Vector2.Distance(mid, new Vector2(0.5f, 0.5f));
+                    float distToDiagonalIntersection = Vec2.Distance(mid, new Vec2(0.5f, 0.5f));
                     Assert(distToDiagonalIntersection > 0.1f || response.Length > 2, "Path must not cut through diagonal corner.");
                 }
             }
@@ -207,7 +207,7 @@ namespace Simpiens.Testing.Navigation
                 {
                     if (Math.Abs(x) == 2 || Math.Abs(y) == 2)
                     {
-                        if (staticGrid.WorldToCell(new Vector2(x, y), out int cx, out int cy))
+                        if (staticGrid.WorldToCell(new Vec2(x, y), out int cx, out int cy))
                         {
                             staticGrid.SetWall(cx, cy);
                         }
@@ -221,8 +221,8 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(-6f, 0f),
-                TargetPosition = new Vector2(0f, 0f)
+                StartPosition = new Vec2(-6f, 0f),
+                TargetPosition = new Vec2(0f, 0f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -246,18 +246,18 @@ namespace Simpiens.Testing.Navigation
             // A corridor two cells wide: walls in world columns [2,3) and [5,6), walkable columns [3,5)
             for (int y = -10; y <= 10; y++)
             {
-                if (staticGrid.WorldToCell(new Vector2(2.5f, y + 0.5f), out int lx, out int ly)) staticGrid.SetWall(lx, ly);
-                if (staticGrid.WorldToCell(new Vector2(5.5f, y + 0.5f), out int rx, out int ry)) staticGrid.SetWall(rx, ry);
+                if (staticGrid.WorldToCell(new Vec2(2.5f, y + 0.5f), out int lx, out int ly)) staticGrid.SetWall(lx, ly);
+                if (staticGrid.WorldToCell(new Vec2(5.5f, y + 0.5f), out int rx, out int ry)) staticGrid.SetWall(rx, ry);
             }
 
             // Hearth on the corner (4, 0), listed in every overlapped cell exactly as SpatialHashGrid inserts entities
-            var hearthPos = new Vector2(4f, 0f);
+            var hearthPos = new Vec2(4f, 0f);
             const float hearthRadius = 0.35f;
-            var hearth = new EntitySnapshot(default, hearthPos, Vector2.zero, hearthRadius, EntityType.Anchor);
+            var hearth = new EntitySnapshot(default, hearthPos, Vec2.Zero, hearthRadius, EntityType.Anchor);
             float offset = 15f;
-            for (int cy = Mathf.FloorToInt(hearthPos.y - hearthRadius + offset); cy <= Mathf.FloorToInt(hearthPos.y + hearthRadius + offset); cy++)
+            for (int cy = SimMath.FloorToInt(hearthPos.Y - hearthRadius + offset); cy <= SimMath.FloorToInt(hearthPos.Y + hearthRadius + offset); cy++)
             {
-                for (int cx = Mathf.FloorToInt(hearthPos.x - hearthRadius + offset); cx <= Mathf.FloorToInt(hearthPos.x + hearthRadius + offset); cx++)
+                for (int cx = SimMath.FloorToInt(hearthPos.X - hearthRadius + offset); cx <= SimMath.FloorToInt(hearthPos.X + hearthRadius + offset); cx++)
                 {
                     snapshot.AddEntity(cx, cy, in hearth);
                 }
@@ -271,13 +271,13 @@ namespace Simpiens.Testing.Navigation
             response.Initialize(200, null);
             var request = new PathRequest
             {
-                StartPosition = new Vector2(4f, 3f),
-                TargetPosition = new Vector2(4f, -3f)
+                StartPosition = new Vec2(4f, 3f),
+                TargetPosition = new Vec2(4f, -3f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
             Assert(success && response.IsValid, "A hearth on a cell corner must not seal a two-cell corridor.");
-            Assert(Vector2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach the far side of the hearth.");
+            Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach the far side of the hearth.");
 
             Debug.Log("[PASS] Test 8: Hearth on a cell corner blocks only its own cell; the corridor stays open.");
         }
@@ -290,9 +290,9 @@ namespace Simpiens.Testing.Navigation
         {
             var snapshot = CreateTestSnapshot(30, 30, 1.0f);
 
-            var hearthPos = new Vector2(0.5f, 0.5f);
+            var hearthPos = new Vec2(0.5f, 0.5f);
             const float hearthRadius = 0.35f;
-            var hearth = new EntitySnapshot(default, hearthPos, Vector2.zero, hearthRadius, EntityType.Anchor);
+            var hearth = new EntitySnapshot(default, hearthPos, Vec2.Zero, hearthRadius, EntityType.Anchor);
             snapshot.AddEntity(15, 15, in hearth);
 
             var searcher = new GridAStarSearcher();
@@ -300,8 +300,8 @@ namespace Simpiens.Testing.Navigation
             response.Initialize(200, null);
             var request = new PathRequest
             {
-                StartPosition = new Vector2(-6f, 0.5f),
-                TargetPosition = new Vector2(7f, 0.5f)
+                StartPosition = new Vec2(-6f, 0.5f),
+                TargetPosition = new Vec2(7f, 0.5f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -310,10 +310,10 @@ namespace Simpiens.Testing.Navigation
             float closest = float.MaxValue;
             for (int i = 1; i < response.Length; i++)
             {
-                Vector2 a = response.Waypoints[i - 1], b = response.Waypoints[i];
-                Vector2 ab = b - a;
-                float t = ab.sqrMagnitude > 0f ? Mathf.Clamp01(Vector2.Dot(hearthPos - a, ab) / ab.sqrMagnitude) : 0f;
-                closest = Mathf.Min(closest, Vector2.Distance(hearthPos, a + ab * t));
+                Vec2 a = response.Waypoints[i - 1], b = response.Waypoints[i];
+                Vec2 ab = b - a;
+                float t = ab.SqrMagnitude > 0f ? SimMath.Clamp01(Vec2.Dot(hearthPos - a, ab) / ab.SqrMagnitude) : 0f;
+                closest = SimMath.Min(closest, Vec2.Distance(hearthPos, a + ab * t));
             }
             Assert(closest >= GridAStarSearcher.PropClearance - 0.01f,
                 $"Smoothed path must keep {GridAStarSearcher.PropClearance} from the hearth (closest {closest:F2}).");
@@ -331,11 +331,11 @@ namespace Simpiens.Testing.Navigation
             // Wall on the right of the vertical branch, and under the horizontal branch
             for (int y = 0; y <= 8; y++)
             {
-                if (staticGrid.WorldToCell(new Vector2(2f, y), out int cx, out int cy)) staticGrid.SetWall(cx, cy);
+                if (staticGrid.WorldToCell(new Vec2(2f, y), out int cx, out int cy)) staticGrid.SetWall(cx, cy);
             }
             for (int x = 2; x <= 10; x++)
             {
-                if (staticGrid.WorldToCell(new Vector2(x, 8f), out int cx, out int cy)) staticGrid.SetWall(cx, cy);
+                if (staticGrid.WorldToCell(new Vec2(x, 8f), out int cx, out int cy)) staticGrid.SetWall(cx, cy);
             }
 
             var searcher = new GridAStarSearcher();
@@ -344,8 +344,8 @@ namespace Simpiens.Testing.Navigation
 
             var request = new PathRequest
             {
-                StartPosition = new Vector2(0f, 0f),
-                TargetPosition = new Vector2(0f, 10f)
+                StartPosition = new Vec2(0f, 0f),
+                TargetPosition = new Vec2(0f, 10f)
             };
 
             bool success = searcher.Search(in request, snapshot, response);
@@ -375,8 +375,8 @@ namespace Simpiens.Testing.Navigation
                     {
                         var req = new PathRequest
                         {
-                            StartPosition = new Vector2(-5f + (workerId * 0.5f), -5f),
-                            TargetPosition = new Vector2(5f, 5f)
+                            StartPosition = new Vec2(-5f + (workerId * 0.5f), -5f),
+                            TargetPosition = new Vec2(5f, 5f)
                         };
                         var res = pathfinder.CalculatePathImmediate(req, snapshot);
                         Assert(res.IsValid, $"Worker {workerId} iteration {i} must find valid path.");
@@ -393,8 +393,8 @@ namespace Simpiens.Testing.Navigation
 
             var benchRequest = new PathRequest
             {
-                StartPosition = new Vector2(-5f, -5f),
-                TargetPosition = new Vector2(5f, 5f)
+                StartPosition = new Vec2(-5f, -5f),
+                TargetPosition = new Vec2(5f, 5f)
             };
 
             // Warm up iteration

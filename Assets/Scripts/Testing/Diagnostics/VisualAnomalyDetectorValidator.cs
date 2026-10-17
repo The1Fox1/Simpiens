@@ -40,7 +40,7 @@ namespace Simpiens.Testing.Diagnostics
             float[] xs = { 0f, 0.5f, 0f, 0.5f, 0f };
             for (int t = 0; t < xs.Length; t++)
             {
-                node.transform.position = new Vector2(xs[t], 0f);
+                node.transform.position = (new Vec2(xs[t], 0f)).ToUnity();
                 detector.EvaluateJitterTick(t);
             }
             Assert(detector.JitterCount == 1, $"Jitter was detected once (actual JitterCount: {detector.JitterCount})");
@@ -67,7 +67,7 @@ namespace Simpiens.Testing.Diagnostics
                 float now = 0f;
                 for (int t = 0; t < 12; t++)
                 {
-                    node.transform.position = new Vector2(t % 2 == 0 ? 0f : 0.5f, 0f);
+                    node.transform.position = (new Vec2(t % 2 == 0 ? 0f : 0.5f, 0f)).ToUnity();
                     clock.AdvanceTicks(1);
                     // At 10x a frame covers ten times the sim time: the frame clock must not change the verdict
                     now += frameSeconds;
@@ -87,7 +87,7 @@ namespace Simpiens.Testing.Diagnostics
             var g = CreatePawn(reg, "[TestNode_FrameOnly]", out var n);
             for (int f = 0; f < 12; f++)
             {
-                n.transform.position = new Vector2(f % 2 == 0 ? 0f : 0.5f, 0f);
+                n.transform.position = (new Vec2(f % 2 == 0 ? 0f : 0.5f, 0f)).ToUnity();
                 frameOnly.Tick(0.016f, f * 0.016f);
             }
             Assert(frameOnly.JitterCount == 0, $"Frame ticks judge no jitter ({frameOnly.JitterCount}).");
@@ -104,8 +104,8 @@ namespace Simpiens.Testing.Diagnostics
 
             // Walk east 5 ticks, turn back once, walk west 5 ticks (arrive at a stall, then leave)
             long t = 0;
-            for (int k = 0; k <= 5; k++, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
-            for (int k = 4; k >= 0; k--, t++) { node.transform.position = new Vector2(k * 0.2f, 0f); detector.EvaluateJitterTick(t); }
+            for (int k = 0; k <= 5; k++, t++) { node.transform.position = new Vector3(k * 0.2f, 0f, 0f); detector.EvaluateJitterTick(t); }
+            for (int k = 4; k >= 0; k--, t++) { node.transform.position = new Vector3(k * 0.2f, 0f, 0f); detector.EvaluateJitterTick(t); }
             Assert(detector.JitterCount == 0, $"Turning back once is not jitter ({detector.JitterCount}).");
 
             // Back and forth every 3 ticks: 3 reversals span 6 ticks, beyond the 5-tick window
@@ -115,7 +115,7 @@ namespace Simpiens.Testing.Diagnostics
             {
                 if (k % 3 == 0) dir = -dir;
                 x += dir * 0.2f;
-                node.transform.position = new Vector2(x, 5f);
+                node.transform.position = (new Vec2(x, 5f)).ToUnity();
                 detector.EvaluateJitterTick(t);
             }
             Assert(detector.JitterCount == 0, $"Back and forth every 3 ticks is not jitter ({detector.JitterCount}).");
@@ -129,7 +129,7 @@ namespace Simpiens.Testing.Diagnostics
             var go = new GameObject(name);
             node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
             return go;
         }
@@ -142,13 +142,13 @@ namespace Simpiens.Testing.Diagnostics
             var goA = new GameObject("[TestNode_StackA]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vector2.zero;
+            nodeA.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(nodeA);
 
             var goB = new GameObject("[TestNode_StackB]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(0.1f, 0f); // 0.1m apart (tight stacking)
+            nodeB.transform.position = (new Vec2(0.1f, 0f)).ToUnity(); // 0.1m apart (tight stacking)
             registry.RegisterNode(nodeB);
 
             // Stacking evaluation runs every 5 frames and requires duration >= 1.0s
@@ -209,7 +209,7 @@ namespace Simpiens.Testing.Diagnostics
                 nodes[i] = new GameObject($"[TestNode_Bench_{i}]");
                 var n = nodes[i].AddComponent<NodeController>();
                 n.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-                n.transform.position = new Vector2(i * 2f, 0f);
+                n.transform.position = (new Vec2(i * 2f, 0f)).ToUnity();
                 registry.RegisterNode(n);
             }
 
@@ -247,8 +247,8 @@ namespace Simpiens.Testing.Diagnostics
         {
             // Static map walls are data (no colliders): penetration is checked against the loaded map's wall geometry
             var registry = new WorldRegistry();
-            var map = new MapDefinitionBuilder("PenetrationProbe", new Rect(-10f, -10f, 20f, 20f))
-                .WallRun(new Vector2(3f, -2f), new Vector2(3f, 2f))
+            var map = new MapDefinitionBuilder("PenetrationProbe", new RectF(-10f, -10f, 20f, 20f))
+                .WallRun(new Vec2(3f, -2f), new Vec2(3f, 2f))
                 .Build();
             var worldMap = new WorldMap(null, null);
             worldMap.Load(map);
@@ -257,7 +257,7 @@ namespace Simpiens.Testing.Diagnostics
             var go = new GameObject("[TestNode_Penetration]");
             var node = go.AddComponent<NodeController>();
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
 
             for (int f = 0; f < 20; f++)
@@ -266,7 +266,7 @@ namespace Simpiens.Testing.Diagnostics
             }
             Assert(detector.PenetrationCount == 0, $"A pawn clear of the wall must not be flagged (actual: {detector.PenetrationCount})");
 
-            node.transform.position = new Vector2(3f, 0f);
+            node.transform.position = (new Vec2(3f, 0f)).ToUnity();
             for (int f = 20; f < 40; f++)
             {
                 detector.Tick(0.05f, f * 0.05f);

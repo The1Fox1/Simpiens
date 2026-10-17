@@ -47,7 +47,7 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(registry, null, interventionService: interventionService, economyLedger: ledger);
 
             var stallId = NextTestGuid();
-            var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 100);
+            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 100);
             simManager.RegisterTradeStall(stall);
 
             var cmd = InfluenceEvent.CreatePostBounty("Player", new PostBountyCommand(1, BountyType.GatherResource, sectorId: 1, itemType: ItemType.IronOre, quantity: 5, rewardGold: 20, creatorStallId: stallId));
@@ -75,7 +75,7 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(registry, null, interventionService: interventionService, economyLedger: ledger);
 
             var stallId = NextTestGuid();
-            var stall = new TradeStallData(stallId, Vector2.zero, treasuryGold: 10); // Only 10 gold in treasury!
+            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 10); // Only 10 gold in treasury!
             simManager.RegisterTradeStall(stall);
 
             // Attempt to post a bounty with 50 gold reward from a stall with only 10 gold!
@@ -104,7 +104,7 @@ namespace Simpiens.Testing.Environment
             // Faucet: Initial economy seed
             ledger.RecordFaucet(150, "InitialSeed");
 
-            var stall = new TradeStallData(NextTestGuid(), Vector2.zero, treasuryGold: initialStallGold);
+            var stall = new TradeStallData(NextTestGuid(), Vec2.Zero, treasuryGold: initialStallGold);
 
             // 1. Post bounty: lock 40 gold in escrow
             ushort bountyId = 10;
@@ -148,7 +148,7 @@ namespace Simpiens.Testing.Environment
 
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(5f, 5f) },
+                Waypoints = new Vec2[] { new Vec2(5f, 5f) },
                 Length = 1,
                 IsValid = true
             };
@@ -183,7 +183,7 @@ namespace Simpiens.Testing.Environment
 
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(1f, 0f) },
+                Waypoints = new Vec2[] { new Vec2(1f, 0f) },
                 Length = 1,
                 IsValid = true
             };

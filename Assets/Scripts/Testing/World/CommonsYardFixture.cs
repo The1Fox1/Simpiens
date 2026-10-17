@@ -29,7 +29,7 @@ namespace Simpiens.Testing.World
 
         public const string OutpostStall = "outpost.stall";
 
-        public static readonly Vector2 OutpostStallPosition = new Vector2(0f, 9f);
+        public static readonly Vec2 OutpostStallPosition = new Vec2(0f, 9f);
 
         private static MapDefinition _definition;
 
@@ -39,32 +39,32 @@ namespace Simpiens.Testing.World
         private static MapDefinition Build()
         {
             // The yard (sectors span x -12..12, y 5..15) plus a 2-unit margin; the map perimeter is the world edge
-            var yard = new Rect(-14f, 3f, 28f, 14f);
+            var yard = new RectF(-14f, 3f, 28f, 14f);
             var b = new MapDefinitionBuilder("OutpostCommons", yard).CameraFrame(yard);
 
             // --- Sectors (first match wins, so order matters) ---
             b.Sector(OutpostMarketSectorId, "Outpost Market", "Trade stall, bounty board, and the commons where crawlers gather between runs.",
-                new Rect(-3f, 5f, 6f, 10f), new Vector2(0f, 9f), 3.0f);
+                new RectF(-3f, 5f, 6f, 10f), new Vec2(0f, 9f), 3.0f);
             b.Sector(OreRidgeSectorId, "Ore Ridge", "Exposed iron veins along the western ridge; regrow slowly after mining.",
-                new Rect(-12f, 5f, 7f, 10f), new Vector2(-8.5f, 10f), 2.5f, startsExplored: false);
+                new RectF(-12f, 5f, 7f, 10f), new Vec2(-8.5f, 10f), 2.5f, startsExplored: false);
             b.Sector(HerbHollowSectorId, "Herb Hollow", "Sheltered eastern hollow where medicinal herbs grow back between harvests.",
-                new Rect(5f, 5f, 7f, 10f), new Vector2(8.5f, 10f), 2.5f, startsExplored: false);
+                new RectF(5f, 5f, 7f, 10f), new Vec2(8.5f, 10f), 2.5f, startsExplored: false);
 
             // --- Resources ---
-            b.Node("ore.1", new Vector2(-9f, 12f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("ore.2", new Vector2(-8f, 9.5f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("ore.3", new Vector2(-10f, 8f), ItemType.IronOre, 3, OreRegrowTicks);
-            b.Node("herb.1", new Vector2(9f, 12f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("herb.2", new Vector2(8f, 9.5f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("herb.3", new Vector2(10f, 8f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
-            b.Node("food.1", new Vector2(-2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
-            b.Node("food.2", new Vector2(2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
+            b.Node("ore.1", new Vec2(-9f, 12f), ItemType.IronOre, 3, OreRegrowTicks);
+            b.Node("ore.2", new Vec2(-8f, 9.5f), ItemType.IronOre, 3, OreRegrowTicks);
+            b.Node("ore.3", new Vec2(-10f, 8f), ItemType.IronOre, 3, OreRegrowTicks);
+            b.Node("herb.1", new Vec2(9f, 12f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
+            b.Node("herb.2", new Vec2(8f, 9.5f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
+            b.Node("herb.3", new Vec2(10f, 8f), ItemType.MedicinalHerb, 3, HerbRegrowTicks);
+            b.Node("food.1", new Vec2(-2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
+            b.Node("food.2", new Vec2(2f, 6.5f), ItemType.Ration, 3, FoodRegrowTicks);
             b.Poi(OutpostStall, PoiKind.Stall, OutpostStallPosition, 3.0f);
 
             // --- Labels ---
-            b.Label("Ore Ridge", new Vector2(-8.5f, 14.5f), new Color(0.95f, 0.55f, 0.2f));
-            b.Label("Outpost Market", new Vector2(0f, 14.5f), new Color(0.95f, 0.85f, 0.4f));
-            b.Label("Herb Hollow", new Vector2(8.5f, 14.5f), new Color(0.45f, 0.9f, 0.8f));
+            b.Label("Ore Ridge", new Vec2(-8.5f, 14.5f), new Rgba(0.95f, 0.55f, 0.2f));
+            b.Label("Outpost Market", new Vec2(0f, 14.5f), new Rgba(0.95f, 0.85f, 0.4f));
+            b.Label("Herb Hollow", new Vec2(8.5f, 14.5f), new Rgba(0.45f, 0.9f, 0.8f));
 
             return b.Build();
         }

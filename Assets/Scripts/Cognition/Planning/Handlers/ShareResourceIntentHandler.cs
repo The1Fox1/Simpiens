@@ -1,4 +1,3 @@
-using UnityEngine;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -24,7 +23,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             bool withinAidReach = state.ElapsedTime > 0f;
             if (!withinAidReach)
             {
-                float distToTarget = Vector2.Distance(node.Position, targetNode.Position);
+                float distToTarget = Vec2.Distance(node.Position, targetNode.Position);
                 if (distToTarget <= 1.5f)
                 {
                     withinAidReach = true;
@@ -35,9 +34,9 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (aidReachResult == IntentResult.Success)
             {
                 // A missing or exhausted path must not let food be handed over at a distance
-                if (!withinAidReach && Vector2.Distance(node.Position, targetNode.Position) > 2.0f)
+                if (!withinAidReach && Vec2.Distance(node.Position, targetNode.Position) > 2.0f)
                 {
-                    SimLog.Social.ZLogDebug($"{SimLog.Agent(node.Id)} could not reach {SimLog.Agent(share.TargetPawnId)} to share food ({Vector2.Distance(node.Position, targetNode.Position):F1}m away)");
+                    SimLog.Social.ZLogDebug($"{SimLog.Agent(node.Id)} could not reach {SimLog.Agent(share.TargetPawnId)} to share food ({Vec2.Distance(node.Position, targetNode.Position):F1}m away)");
                     return IntentResult.PathBlocked;
                 }
 
@@ -56,14 +55,14 @@ namespace Simpiens.Cognition.Planning.Handlers
                 // State Mutation: Food transfer
                 if (agent != null)
                 {
-                    agent.Hunger = Mathf.Min(100f, agent.Hunger + 15f);
+                    agent.Hunger = SimMath.Min(100f, agent.Hunger + 15f);
                     agent.HasFoodInInventory = false;
                 }
 
                 var receiverAgent = targetNode.Agent;
                 if (receiverAgent != null)
                 {
-                    receiverAgent.Hunger = Mathf.Max(0f, receiverAgent.Hunger - share.FoodAmount);
+                    receiverAgent.Hunger = SimMath.Max(0f, receiverAgent.Hunger - share.FoodAmount);
                     if (receiverAgent.State != null) receiverAgent.State.Activity.RecordMeal(context.CurrentTick);
                     if (receiverAgent.Hunger < 85f)
                     {
@@ -75,7 +74,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 agent?.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                     MemoryEventType.AidGiven,
                     share.TargetPawnId,
-                    Vector2Int.RoundToInt(node.Position),
+                    GridPoint.RoundToInt(node.Position),
                     aidTick));
                 agent?.Memory?.RecordInteraction(share.TargetPawnId, deltaWarmth: 10, deltaTrust: 5, deltaFear: 0, deltaRespect: 5, aidTick);
 
@@ -83,7 +82,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 receiverAgent?.Memory?.EventLedger?.AddEvent(new MemoryEvent(
                     MemoryEventType.AidReceived,
                     node.Id,
-                    Vector2Int.RoundToInt(targetNode.Position),
+                    GridPoint.RoundToInt(targetNode.Position),
                     aidTick));
                 receiverAgent?.Memory?.RecordInteraction(node.Id, deltaWarmth: 25, deltaTrust: 30, deltaFear: -10, deltaRespect: 15, aidTick);
 

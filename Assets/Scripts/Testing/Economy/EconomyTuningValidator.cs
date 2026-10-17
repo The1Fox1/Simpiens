@@ -45,7 +45,7 @@ namespace Simpiens.Testing.Economy
             // Crawlers (were AgentState / AgentInventory literals and Considerations.RationReferencePrice)
             Assert(e.StartingGold == 15 && e.StartingGold >= e.StallRationPrice, "Starting gold 15: one ration at the default price (§3.3 D6).");
             Assert(new AgentInventory().Gold == EconomyTuning.InventoryDefaultGold && EconomyTuning.InventoryDefaultGold == 10, "AgentInventory's default gold is 10 (agents no session spawned).");
-            Assert(Mathf.Approximately(e.RationReferencePrice, 20f), "Reference ration price 20.");
+            Assert(SimMath.Approximately(e.RationReferencePrice, 20f), "Reference ration price 20.");
 
             // Stall and seeded bounties (were OutpostSession literals)
             Assert(e.StallRationPrice == 15 && e.StallRationStock == 50, "Stall rations: 15g, stock 50.");
@@ -60,14 +60,14 @@ namespace Simpiens.Testing.Economy
             Assert(s.OreQuota == 2 && s.HerbQuota == 2 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 2 ore at 24g + 2 herbs at 30g per visit (§3.3 tuning).");
             Assert(s.UpkeepPerVisit == 80, "Upkeep 80g per visit (§3.3 tuning).");
             Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
-            var full = new TradeStallData(new EntityId(1u, 1u, 1u, 1u), Vector2.zero, oreStock: 20, herbStock: 19);
+            var full = new TradeStallData(new EntityId(1u, 1u, 1u, 1u), Vec2.Zero, oreStock: 20, herbStock: 19);
             Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),
                 "StallHasRoom compares stock plus quantity with the capacity.");
 
             // Trade-to-trust (review §3.3 step 3 replaced the fixed 7.5g gouging line with the crawler's own valuation)
             var t = e.TradeTrust;
-            Assert(Mathf.Approximately(t.GenerousBuyRatio, 0.6f) && Mathf.Approximately(t.FairBuyRatio, 1f), "Purchases: generous at <= 60% of the calm value, fair up to 100%.");
-            Assert(Mathf.Approximately(t.GenerousSaleRatio, 3f) && Mathf.Approximately(t.FairSaleRatio, 1.5f), "Sales: generous at >= 3x the minimum, fair from 1.5x.");
+            Assert(SimMath.Approximately(t.GenerousBuyRatio, 0.6f) && SimMath.Approximately(t.FairBuyRatio, 1f), "Purchases: generous at <= 60% of the calm value, fair up to 100%.");
+            Assert(SimMath.Approximately(t.GenerousSaleRatio, 3f) && SimMath.Approximately(t.FairSaleRatio, 1.5f), "Sales: generous at >= 3x the minimum, fair from 1.5x.");
             AssertDelta(t.GenerousPurchase, 5, 10, 5, "generous purchase");
             AssertDelta(t.FairPurchase, 2, 3, 2, "fair purchase");
             AssertDelta(t.GougedPurchase, -10, -15, 0, "gouged purchase");
@@ -105,7 +105,7 @@ namespace Simpiens.Testing.Economy
             Assert(supply.Tuning.RationStockCap == 30 && supply.Tuning.RestockIntervalTicks == 20, "SetEconomy reconfigures the supply service.");
 
             var stallId = new EntityId(5u, 5u, 5u, 5u);
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vector2.zero, rationStock: 10, treasuryGold: 500));
+            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 10, treasuryGold: 500));
             ledger.RecordFaucet(500, "InitialSeed");
             while (sim.CurrentTick < 20) sim.Tick();
 
@@ -148,9 +148,9 @@ namespace Simpiens.Testing.Economy
                 .WithSupply(new SupplyTuning(1, 1, 1));
             Assert(copy.StartingGold == 99 && copy.StallTreasury == 4 && copy.BaseValue(ItemType.IronOre) == 7 && copy.Supply.RationStockCap == 1,
                 "The copy carries its changes.");
-            Assert(copy.StallRationStock == 50 && Mathf.Approximately(copy.RationReferencePrice, 20f), "Fields not changed are kept.");
+            Assert(copy.StallRationStock == 50 && SimMath.Approximately(copy.RationReferencePrice, 20f), "Fields not changed are kept.");
             var d = EconomyTuning.Default;
-            Assert(d.StartingGold == 15 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && Mathf.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
+            Assert(d.StartingGold == 15 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && SimMath.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
                 "The default is never mutated by a copy.");
 
             Debug.Log("[PASS] Test 5: With… copies leave the default untouched.");
@@ -159,7 +159,7 @@ namespace Simpiens.Testing.Economy
         private static AgentContext CreateContext(float hunger, SharedWorldSnapshot snapshot)
         {
             var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 100);
-            return new AgentContext(new EntityId(77u, 1u, 1u, 1u), Vector2.zero, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot,
+            return new AgentContext(new EntityId(77u, 1u, 1u, 1u), Vec2.Zero, new AgentNeeds(hunger, 90f, 80f), 0f, snapshot,
                 new AgentMemory(), 1, inventory: inventory.GetSnapshot(), personality: AgentPersonality.Neutral);
         }
 

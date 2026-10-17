@@ -45,12 +45,12 @@ namespace Simpiens.Testing.Environment
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
             node.Initialize(EntityId.Generate(), new NodeConfiguration(speed: 2.0f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
 
             var path = new PathResponse
             {
-                Waypoints = new Vector2[] { new Vector2(100f, 0f) },
+                Waypoints = new Vec2[] { new Vec2(100f, 0f) },
                 Length = 1,
                 IsValid = true
             };
@@ -61,19 +61,19 @@ namespace Simpiens.Testing.Environment
             // Advance 10 ticks at 1x speed (1.0 simulation second = 2.0 units traveled)
             clock.AdvanceTicks(10);
 
-            float distAt1x = node.Position.x;
-            Assert(Mathf.Approximately(distAt1x, 2.0f), $"At 1x speed, pawn traveled 2.0m across 10 ticks (actual: {distAt1x})");
+            float distAt1x = node.Position.X;
+            Assert(SimMath.Approximately(distAt1x, 2.0f), $"At 1x speed, pawn traveled 2.0m across 10 ticks (actual: {distAt1x})");
 
             // Advance another 10 ticks at 10x speed multiplier
             clock.SetTimeMultiplier(10.0f);
-            Assert(Mathf.Approximately(clock.TimeMultiplier, 10.0f), "Clock multiplier updated to 10x.");
+            Assert(SimMath.Approximately(clock.TimeMultiplier, 10.0f), "Clock multiplier updated to 10x.");
 
             // Reset position to zero for clean distance check across 10 ticks
-            node.SetLogicalPosition(Vector2.zero);
+            node.SetLogicalPosition(Vec2.Zero);
             clock.AdvanceTicks(10);
 
-            float distAt10x = node.Position.x;
-            Assert(Mathf.Approximately(distAt10x, 2.0f), $"Each logical tick advances exactly 0.2m regardless of speed multiplier (actual: {distAt10x})");
+            float distAt10x = node.Position.X;
+            Assert(SimMath.Approximately(distAt10x, 2.0f), $"Each logical tick advances exactly 0.2m regardless of speed multiplier (actual: {distAt10x})");
 
             GameObject.DestroyImmediate(go);
             simManager.Dispose();
@@ -90,7 +90,7 @@ namespace Simpiens.Testing.Environment
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
 
             var agent = go.AddComponent<AutonomousAgent>();
@@ -132,13 +132,13 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(registry, null, clock);
 
             var anchorId = EntityId.Generate();
-            simManager.RegisterAnchor(anchorId, Vector2.zero, 3.0f);
+            simManager.RegisterAnchor(anchorId, Vec2.Zero, 3.0f);
 
             var go = new GameObject("[TestNode_Periodic]");
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vector2.zero; // Inside campfire radius
+            node.transform.position = Vec2.Zero.ToUnity(); // Inside campfire radius
             registry.RegisterNode(node);
 
             var agent = go.AddComponent<AutonomousAgent>();
@@ -149,7 +149,7 @@ namespace Simpiens.Testing.Environment
             // each relieving exactly 1.0 frustration (total relief = 2.0f, leaving 8.0f).
             clock.AdvanceTicks(100);
 
-            Assert(Mathf.Approximately(agent.Frustration, 8.0f), 
+            Assert(SimMath.Approximately(agent.Frustration, 8.0f), 
                 $"Periodic hearth bonding fired exactly 2 times across 100 ticks (Frustration expected: 8.0, actual: {agent.Frustration})");
 
             GameObject.DestroyImmediate(go);
@@ -169,15 +169,15 @@ namespace Simpiens.Testing.Environment
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, null);
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
 
-            Assert(node.LogicalPosition == Vector2.zero, "Initial LogicalPosition matches transform.position.");
-            Assert(node.PreviousLogicalPosition == Vector2.zero, "Initial PreviousLogicalPosition matches transform.position.");
+            Assert(node.LogicalPosition == Vec2.Zero, "Initial LogicalPosition matches transform.position.");
+            Assert(node.PreviousLogicalPosition == Vec2.Zero, "Initial PreviousLogicalPosition matches transform.position.");
 
             // Step logical position
-            node.SetLogicalPosition(new Vector2(10f, 0f));
-            Assert(node.LogicalPosition == new Vector2(10f, 0f), "LogicalPosition updated to target coordinate.");
-            Assert(node.PreviousLogicalPosition == Vector2.zero, "PreviousLogicalPosition records previous tick coordinate.");
+            node.SetLogicalPosition(new Vec2(10f, 0f));
+            Assert(node.LogicalPosition == new Vec2(10f, 0f), "LogicalPosition updated to target coordinate.");
+            Assert(node.PreviousLogicalPosition == Vec2.Zero, "PreviousLogicalPosition records previous tick coordinate.");
 
             GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 4: Visual interpolation alpha and logical coordinate tracking verified.");
@@ -195,7 +195,7 @@ namespace Simpiens.Testing.Environment
             var node = go.AddComponent<NodeController>();
             node.Construct(clock, registry);
             node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vector2.zero;
+            node.transform.position = Vec2.Zero.ToUnity();
             registry.RegisterNode(node);
 
             var agent = go.AddComponent<AutonomousAgent>();

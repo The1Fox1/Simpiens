@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
@@ -12,7 +10,7 @@ namespace Simpiens.Simulation.Economy
     public readonly struct TradeStallData : IEquatable<TradeStallData>
     {
         public readonly EntityId StallEntityId;
-        public readonly Vector2 Position;
+        public readonly Vec2 Position;
         public readonly ushort RationSellPrice;
         public readonly ushort RationStock;
         public readonly ushort OreBuyPrice;
@@ -34,7 +32,7 @@ namespace Simpiens.Simulation.Economy
 
         public TradeStallData(
             EntityId stallEntityId,
-            Vector2 position,
+            Vec2 position,
             ushort rationSellPrice = 5,
             ushort rationStock = 50,
             ushort oreBuyPrice = 8,

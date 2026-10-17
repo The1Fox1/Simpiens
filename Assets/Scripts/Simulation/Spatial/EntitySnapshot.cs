@@ -1,7 +1,5 @@
 using System;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
@@ -11,25 +9,25 @@ namespace Simpiens.Simulation.Spatial
     public readonly struct EntitySnapshot
     {
         public readonly EntityId Id;
-        public readonly Vector2 Position;
-        public readonly Vector2 Velocity;
+        public readonly Vec2 Position;
+        public readonly Vec2 Velocity;
         public readonly float Radius;
         public readonly EntityType Type;
         public readonly bool IsCollapsed;
         public readonly float Hunger;
         public readonly ItemType ResourceKind;
 
-        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type)
+        public EntitySnapshot(EntityId id, Vec2 position, Vec2 velocity, float radius, EntityType type)
             : this(id, position, velocity, radius, type, false, 0f)
         {
         }
 
-        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger)
+        public EntitySnapshot(EntityId id, Vec2 position, Vec2 velocity, float radius, EntityType type, bool isCollapsed, float hunger)
             : this(id, position, velocity, radius, type, isCollapsed, hunger, ItemType.None)
         {
         }
 
-        public EntitySnapshot(EntityId id, Vector2 position, Vector2 velocity, float radius, EntityType type, bool isCollapsed, float hunger, ItemType resourceKind)
+        public EntitySnapshot(EntityId id, Vec2 position, Vec2 velocity, float radius, EntityType type, bool isCollapsed, float hunger, ItemType resourceKind)
         {
             ResourceKind = resourceKind;
             Id = id;

@@ -60,7 +60,7 @@ namespace Simpiens.Testing.Sociopolitical
             var registry = new GroupRegistry();
             var leaderId = CreateGuid();
             var followerId = CreateGuid();
-            var anchorPos = new Vector2(10f, 15f);
+            var anchorPos = new Vec2(10f, 15f);
 
             // 1. Create group
             byte groupId = registry.CreateGroup(GroupType.Settlement, leaderId, anchorPos, initialCohesion: 90);
@@ -110,8 +110,8 @@ namespace Simpiens.Testing.Sociopolitical
             var leaderA = CreateGuid();
             var leaderB = CreateGuid();
 
-            byte groupA = registry.CreateGroup(GroupType.TemporaryParty, leaderA, new Vector2(5f, 5f));
-            byte groupB = registry.CreateGroup(GroupType.FactionGuild, leaderB, new Vector2(-10f, 20f));
+            byte groupA = registry.CreateGroup(GroupType.TemporaryParty, leaderA, new Vec2(5f, 5f));
+            byte groupB = registry.CreateGroup(GroupType.FactionGuild, leaderB, new Vec2(-10f, 20f));
 
             var snapshot = new SharedWorldSnapshot(20, 20, 1.0f, 16, _ => { });
             var scratch = new GroupData[SharedWorldSnapshot.MaxGroups];
@@ -126,7 +126,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(snapshot.TryGetGroup(groupA, out var snapA), "TryGetGroup(groupA) succeeds.");
             Assert(snapA.Type == GroupType.TemporaryParty, "groupA type matches TemporaryParty.");
             Assert(snapA.LeaderId == leaderA, "groupA leader matches.");
-            Assert(snapA.AnchorPosition == new Vector2(5f, 5f), "groupA anchor matches.");
+            Assert(snapA.AnchorPosition == new Vec2(5f, 5f), "groupA anchor matches.");
 
             Assert(snapshot.TryGetGroup(groupB, out var snapB), "TryGetGroup(groupB) succeeds.");
             Assert(snapB.Type == GroupType.FactionGuild, "groupB type matches FactionGuild.");
@@ -147,13 +147,13 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var registry = new GroupRegistry();
             var leaderId = CreateGuid();
-            byte groupId = registry.CreateGroup(GroupType.TemporaryParty, leaderId, Vector2.zero);
+            byte groupId = registry.CreateGroup(GroupType.TemporaryParty, leaderId, Vec2.Zero);
 
             var directive = new GroupDirective(
                 DirectiveType.RallyAtLocation,
                 groupId,
                 leaderId,
-                new Vector2(15f, 25f),
+                new Vec2(15f, 25f),
                 CreateGuid(),
                 issuedTick: 10,
                 expirationTick: 100,
@@ -167,7 +167,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(registry.SetDirective(groupId, directive), "SetDirective succeeds.");
             Assert(registry.TryGetGroup(groupId, out var data), "TryGetGroup succeeds.");
             Assert(data.ActiveDirective.Type == DirectiveType.RallyAtLocation, "Active directive is RallyAtLocation.");
-            Assert(data.ActiveDirective.TargetLocation == new Vector2(15f, 25f), "Target location matches.");
+            Assert(data.ActiveDirective.TargetLocation == new Vec2(15f, 25f), "Target location matches.");
 
             // Tick before expiration
             registry.Tick(50);
@@ -192,7 +192,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Context with group standing
             var context = new AgentContext(
                 agentId,
-                new Vector2(2f, 3f),
+                new Vec2(2f, 3f),
                 new AgentNeeds(20, 80, 50),
                 frustration: 0f,
                 snapshot: null,
@@ -212,7 +212,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Backwards-compatible context
             var legacyContext = new AgentContext(
                 agentId,
-                Vector2.zero,
+                Vec2.Zero,
                 hunger: 30f,
                 energy: 70f,
                 frustration: 0f,
@@ -225,8 +225,8 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(legacyContext.Identity.CultureId == 0, "Legacy context defaults to CultureId == 0.");
 
             // Record group memory events
-            var joinEvent = new MemoryEvent(MemoryEventType.JoinedGroup, agentId, new Vector2Int(2, 3), 100);
-            var dirEvent = new MemoryEvent(MemoryEventType.DirectiveReceived, agentId, new Vector2Int(2, 3), 105);
+            var joinEvent = new MemoryEvent(MemoryEventType.JoinedGroup, agentId, new GridPoint(2, 3), 100);
+            var dirEvent = new MemoryEvent(MemoryEventType.DirectiveReceived, agentId, new GridPoint(2, 3), 105);
             memory.EventLedger.AddEvent(joinEvent);
             memory.EventLedger.AddEvent(dirEvent);
 
@@ -270,7 +270,7 @@ namespace Simpiens.Testing.Sociopolitical
         {
             var registry = new GroupRegistry();
             var leader = CreateGuid();
-            byte groupId = registry.CreateGroup(GroupType.Settlement, leader, new Vector2(10f, 10f));
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leader, new Vec2(10f, 10f));
 
             var snapshot = new SharedWorldSnapshot(10, 10, 1.0f, 16, _ => { });
             var scratch = new GroupData[SharedWorldSnapshot.MaxGroups];

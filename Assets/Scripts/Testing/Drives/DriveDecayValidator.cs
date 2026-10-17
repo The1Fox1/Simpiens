@@ -35,28 +35,28 @@ namespace Simpiens.Testing.Drives
 
             // 1. Hunger accumulation
             float deltaSeconds = 10f;
-            needs.Hunger = Mathf.Min(100f, needs.Hunger + deltaSeconds * 1.5f);
-            Assert(Mathf.Approximately(needs.Hunger, 65f), $"Hunger accumulated to 65 after 10s (actual: {needs.Hunger})");
+            needs.Hunger = SimMath.Min(100f, needs.Hunger + deltaSeconds * 1.5f);
+            Assert(SimMath.Approximately(needs.Hunger, 65f), $"Hunger accumulated to 65 after 10s (actual: {needs.Hunger})");
 
             // Hunger relief from eating
-            needs.Hunger = Mathf.Max(0f, needs.Hunger - 50f);
-            Assert(Mathf.Approximately(needs.Hunger, 15f), $"Hunger relieved to 15 after eating (actual: {needs.Hunger})");
+            needs.Hunger = SimMath.Max(0f, needs.Hunger - 50f);
+            Assert(SimMath.Approximately(needs.Hunger, 15f), $"Hunger relieved to 15 after eating (actual: {needs.Hunger})");
 
             // 2. Energy drain while walking
-            needs.Energy = Mathf.Max(0f, needs.Energy - deltaSeconds * 1.0f);
-            Assert(Mathf.Approximately(needs.Energy, 90f), $"Energy drained to 90 after 10s walking (actual: {needs.Energy})");
+            needs.Energy = SimMath.Max(0f, needs.Energy - deltaSeconds * 1.0f);
+            Assert(SimMath.Approximately(needs.Energy, 90f), $"Energy drained to 90 after 10s walking (actual: {needs.Energy})");
 
             // Energy rapid recovery while resting (15/s)
             float restSeconds = 2f;
-            needs.Energy = Mathf.Min(100f, needs.Energy + restSeconds * 15f);
-            Assert(Mathf.Approximately(needs.Energy, 100f), $"Energy restored to 100 after 2s resting (actual: {needs.Energy})");
+            needs.Energy = SimMath.Min(100f, needs.Energy + restSeconds * 15f);
+            Assert(SimMath.Approximately(needs.Energy, 100f), $"Energy restored to 100 after 2s resting (actual: {needs.Energy})");
 
             // 3. Social drain and gossip replenishment
-            needs.Social = Mathf.Max(0f, needs.Social - deltaSeconds * 0.5f);
-            Assert(Mathf.Approximately(needs.Social, 45f), $"Social drained to 45 after 10s isolation (actual: {needs.Social})");
+            needs.Social = SimMath.Max(0f, needs.Social - deltaSeconds * 0.5f);
+            Assert(SimMath.Approximately(needs.Social, 45f), $"Social drained to 45 after 10s isolation (actual: {needs.Social})");
 
-            needs.Social = Mathf.Min(100f, needs.Social + 25f);
-            Assert(Mathf.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
+            needs.Social = SimMath.Min(100f, needs.Social + 25f);
+            Assert(SimMath.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
 
             Debug.Log("[PASS] Test 1: AgentNeeds decay and replenishment dynamics verified.");
         }
@@ -70,7 +70,7 @@ namespace Simpiens.Testing.Drives
             var dummyGuid = EntityId.Generate();
 
             // Scenario A: Starving agent (Hunger = 85, Energy = 90, Social = 70)
-            var contextA = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
+            var contextA = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
             float hungerPriA = hungerGoal.CalculatePriority(contextA);
             float restPriA = restGoal.CalculatePriority(contextA);
             float socialPriA = socialGoal.CalculatePriority(contextA);
@@ -81,7 +81,7 @@ namespace Simpiens.Testing.Drives
             Assert(hungerPriA > restPriA && hungerPriA > socialPriA, "SatiateHungerGoal dominates when starving.");
 
             // Scenario B: Exhausted agent (Hunger = 30, Energy = 10, Social = 80)
-            var contextB = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(30f, 10f, 80f), 0f, null, null, 0);
+            var contextB = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(30f, 10f, 80f), 0f, null, null, 0);
             float hungerPriB = hungerGoal.CalculatePriority(contextB);
             float restPriB = restGoal.CalculatePriority(contextB);
 
@@ -89,7 +89,7 @@ namespace Simpiens.Testing.Drives
             Assert(restPriB > hungerPriB, "RestGoal dominates when exhausted.");
 
             // Scenario C: Isolated agent (Hunger = 20, Energy = 85, Social = 5)
-            var contextC = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(20f, 85f, 5f), 0f, null, null, 0);
+            var contextC = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(20f, 85f, 5f), 0f, null, null, 0);
             float socialPriC = socialGoal.CalculatePriority(contextC);
             Assert(socialPriC == 95f, $"Social priority is 95 (actual: {socialPriC})");
             Assert(socialPriC > hungerGoal.CalculatePriority(contextC), "SocializeGoal dominates when lonely.");
@@ -122,12 +122,12 @@ namespace Simpiens.Testing.Drives
             var dummyGuid = EntityId.Generate();
 
             // Sated energy -> IsResting = true
-            var contextRested = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(10f, 85f, 50f), 0f, null, null, 0);
+            var contextRested = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(10f, 85f, 50f), 0f, null, null, 0);
             var stateRested = WorldStateBuilder.BuildWorldState(contextRested);
             Assert(stateRested.Get(StateFact.IsResting) == true, "IsResting fact is true when Energy >= 80.");
 
             // Low energy -> IsResting = false
-            var contextTired = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(10f, 30f, 50f), 0f, null, null, 0);
+            var contextTired = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(10f, 30f, 50f), 0f, null, null, 0);
             var stateTired = WorldStateBuilder.BuildWorldState(contextTired);
             Assert(stateTired.Get(StateFact.IsResting) == false, "IsResting fact is false when Energy < 80.");
 
@@ -142,7 +142,7 @@ namespace Simpiens.Testing.Drives
             // Warmup
             for (int i = 0; i < 100; i++)
             {
-                var warmupContext = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
+                var warmupContext = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
                 goal.CalculatePriority(warmupContext);
                 WorldStateBuilder.BuildWorldState(warmupContext);
             }
@@ -155,7 +155,7 @@ namespace Simpiens.Testing.Drives
 
             for (int i = 0; i < 1000; i++)
             {
-                var context = new AgentContext(dummyGuid, Vector2.zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
+                var context = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
                 float priority = goal.CalculatePriority(context);
                 var state = WorldStateBuilder.BuildWorldState(context);
             }

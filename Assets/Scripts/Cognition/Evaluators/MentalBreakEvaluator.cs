@@ -62,7 +62,7 @@ namespace Simpiens.Cognition.Evaluators
                     var map = context.Snapshot?.Map;
                     if (map != null && Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(context, map, out var plot))
                     {
-                        if ((plot - context.Position).sqrMagnitude <= WaitAtPlotRadius * WaitAtPlotRadius)
+                        if ((plot - context.Position).SqrMagnitude <= WaitAtPlotRadius * WaitAtPlotRadius)
                         {
                             return new IdleIntent(context.AgentId, WaitAtPlotSeconds);
                         }
@@ -102,17 +102,17 @@ namespace Simpiens.Cognition.Evaluators
                     }
 
                     var rng = SimRandom.For(_seed, context.AgentId, context.CurrentTick, SimRandomSalt.PanicDirection);
-                    float baseAngle = rng.NextFloat() * Mathf.PI * 2f;
+                    float baseAngle = rng.NextFloat() * SimMath.PI * 2f;
 
                     const int candidateCount = 8;
-                    const float angleStep = (Mathf.PI * 2f) / candidateCount;
+                    const float angleStep = (SimMath.PI * 2f) / candidateCount;
                     float distance = rng.Range(2.5f, 4.5f); // 2.5 to 4.5 units away (fits within playpens and local bounds)
 
                     for (int c = 0; c < candidateCount; c++)
                     {
                         float candAngle = baseAngle + c * angleStep;
-                        Vector2 candDir = new Vector2(Mathf.Cos(candAngle), Mathf.Sin(candAngle));
-                        Vector2 targetPos = context.Position + candDir * distance;
+                        Vec2 candDir = new Vec2(SimMath.Cos(candAngle), SimMath.Sin(candAngle));
+                        Vec2 targetPos = context.Position + candDir * distance;
 
                         var pathRequest = new PathRequest
                         {

@@ -1,7 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -41,9 +39,9 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public static ushort RationReservationPrice(in AgentContext context)
         {
-            float urgency = 0.5f + Mathf.Clamp(context.Hunger, 0f, 100f) / 100f;
+            float urgency = 0.5f + SimMath.Clamp(context.Hunger, 0f, 100f) / 100f;
             float price = CalmRationValue(context.Personality, Economy(context)) * urgency;
-            return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
+            return (ushort)SimMath.Clamp(SimMath.RoundToInt(price), 0, ushort.MaxValue);
         }
 
         /// <summary>
@@ -106,18 +104,18 @@ namespace Simpiens.Cognition.Planning
         public static ushort MinimumSalePrice(in AgentPersonality personality, EconomyTuning economy, ItemType item)
         {
             float price = (economy ?? EconomyTuning.Default).BaseValue(item) * TraitFactor(personality.Greed, GreedOnPrice);
-            return (ushort)Mathf.Clamp(Mathf.RoundToInt(price), 0, ushort.MaxValue);
+            return (ushort)SimMath.Clamp(SimMath.RoundToInt(price), 0, ushort.MaxValue);
         }
 
         /// <summary>
         /// Desirability of a bounty: greed-weighted reward over a distance cost (agent → target → redemption stall)
         /// that diligent agents mind less. Higher is better; only compared between bounties for one agent.
         /// </summary>
-        public static float BountyScore(in AgentContext context, in BountyContract bounty, Vector2 stallPosition)
+        public static float BountyScore(in AgentContext context, in BountyContract bounty, Vec2 stallPosition)
         {
             float reward = bounty.RewardGold * TraitFactor(context.Personality.Greed, GreedOnReward);
-            Vector2 target = bounty.TargetLocation != default ? bounty.TargetLocation : stallPosition;
-            float distance = Vector2.Distance(context.Position, target) + Vector2.Distance(target, stallPosition);
+            Vec2 target = bounty.TargetLocation != default ? bounty.TargetLocation : stallPosition;
+            float distance = Vec2.Distance(context.Position, target) + Vec2.Distance(target, stallPosition);
             float distanceCost = TraitFactor(context.Personality.Diligence, -DiligenceOnDistance);
             return reward / (10f + distance * distanceCost);
         }

@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
@@ -92,9 +90,9 @@ namespace Simpiens.Simulation.Spatial
 
         public bool Configure(float worldWidth, float worldHeight, float cellSize)
         {
-            int width = Mathf.CeilToInt(worldWidth / cellSize);
-            int height = Mathf.CeilToInt(worldHeight / cellSize);
-            if (_staticGrid != null && width == _width && height == _height && Mathf.Approximately(cellSize, _cellSize))
+            int width = SimMath.CeilToInt(worldWidth / cellSize);
+            int height = SimMath.CeilToInt(worldHeight / cellSize);
+            if (_staticGrid != null && width == _width && height == _height && SimMath.Approximately(cellSize, _cellSize))
             {
                 return false;
             }
@@ -105,8 +103,8 @@ namespace Simpiens.Simulation.Spatial
         private void Build(float worldWidth, float worldHeight, float cellSize)
         {
             _cellSize = cellSize;
-            _width = Mathf.CeilToInt(worldWidth / cellSize);
-            _height = Mathf.CeilToInt(worldHeight / cellSize);
+            _width = SimMath.CeilToInt(worldWidth / cellSize);
+            _height = SimMath.CeilToInt(worldHeight / cellSize);
             _staticGrid = new StaticNavGrid(_width, _height, _cellSize);
             _staticGrid.SetPlayableHalfExtent(NavConstants.PlayAreaHalfExtent);
             _lastWallCount = 0;
@@ -240,10 +238,10 @@ namespace Simpiens.Simulation.Spatial
                 var snapshot = new EntitySnapshot(node.Id, pos, node.Velocity, radius, type, isCollapsed, hunger, node.ResourceKind);
 
                 // Find cells overlapped by this entity
-                int minX = Mathf.Max(0, Mathf.FloorToInt((pos.x - radius + offsetX) / _cellSize));
-                int maxX = Mathf.Min(_width - 1, Mathf.FloorToInt((pos.x + radius + offsetX) / _cellSize));
-                int minY = Mathf.Max(0, Mathf.FloorToInt((pos.y - radius + offsetY) / _cellSize));
-                int maxY = Mathf.Min(_height - 1, Mathf.FloorToInt((pos.y + radius + offsetY) / _cellSize));
+                int minX = SimMath.Max(0, SimMath.FloorToInt((pos.X - radius + offsetX) / _cellSize));
+                int maxX = SimMath.Min(_width - 1, SimMath.FloorToInt((pos.X + radius + offsetX) / _cellSize));
+                int minY = SimMath.Max(0, SimMath.FloorToInt((pos.Y - radius + offsetY) / _cellSize));
+                int maxY = SimMath.Min(_height - 1, SimMath.FloorToInt((pos.Y + radius + offsetY) / _cellSize));
 
                 if (type == EntityType.Wall)
                 {
@@ -252,10 +250,10 @@ namespace Simpiens.Simulation.Spatial
                     {
                         // Inflate by the pawn body radius: a pawn centred in any walkable cell then clears the wall
                         float inflated = radius + NavConstants.PawnBodyRadius;
-                        minX = Mathf.Max(0, Mathf.FloorToInt((pos.x - inflated + offsetX) / _cellSize));
-                        maxX = Mathf.Min(_width - 1, Mathf.FloorToInt((pos.x + inflated + offsetX) / _cellSize));
-                        minY = Mathf.Max(0, Mathf.FloorToInt((pos.y - inflated + offsetY) / _cellSize));
-                        maxY = Mathf.Min(_height - 1, Mathf.FloorToInt((pos.y + inflated + offsetY) / _cellSize));
+                        minX = SimMath.Max(0, SimMath.FloorToInt((pos.X - inflated + offsetX) / _cellSize));
+                        maxX = SimMath.Min(_width - 1, SimMath.FloorToInt((pos.X + inflated + offsetX) / _cellSize));
+                        minY = SimMath.Max(0, SimMath.FloorToInt((pos.Y - inflated + offsetY) / _cellSize));
+                        maxY = SimMath.Min(_height - 1, SimMath.FloorToInt((pos.Y + inflated + offsetY) / _cellSize));
                         for (int y = minY; y <= maxY; y++)
                         {
                             for (int x = minX; x <= maxX; x++)

@@ -46,7 +46,7 @@ namespace Simpiens.Testing.Diagnostics
         {
             SimLog.Configure(new SimLogSettings { DefaultLevel = LogLevel.Information });
             var agentId = NextGuid();
-            var position = new Vector2(1.5f, -2f);
+            var position = new Vec2(1.5f, -2f);
 
             // Warm up the call path
             SimLog.Planning.ZLogDebug($"warm-up {SimLog.Agent(agentId)} {position}");

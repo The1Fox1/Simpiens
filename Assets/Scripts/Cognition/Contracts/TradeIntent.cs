@@ -1,6 +1,4 @@
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Contracts
 {
     /// <summary>

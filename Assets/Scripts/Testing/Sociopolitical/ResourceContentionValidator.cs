@@ -43,7 +43,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goA = new GameObject("[Test_PawnA_Dominant]");
             var nodeA = goA.AddComponent<NodeController>();
             nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vector2.zero;
+            nodeA.transform.position = Vec2.Zero.ToUnity();
             var agentA = goA.AddComponent<AutonomousAgent>();
             agentA.Initialize(nodeA.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeA);
@@ -52,7 +52,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goB = new GameObject("[Test_PawnB_Submissive]");
             var nodeB = goB.AddComponent<NodeController>();
             nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = new Vector2(0f, 0.5f);
+            nodeB.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
             var agentB = goB.AddComponent<AutonomousAgent>();
             agentB.Initialize(nodeB.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeB);
@@ -117,7 +117,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goC = new GameObject("[Test_PawnC_Elder]");
             var nodeC = goC.AddComponent<NodeController>();
             nodeC.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeC.transform.position = new Vector2(2f, 2f);
+            nodeC.transform.position = (new Vec2(2f, 2f)).ToUnity();
             var agentC = goC.AddComponent<AutonomousAgent>();
             agentC.Initialize(nodeC.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeC);
@@ -126,7 +126,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goD = new GameObject("[Test_PawnD_Follower]");
             var nodeD = goD.AddComponent<NodeController>();
             nodeD.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeD.transform.position = new Vector2(2f, 2.3f);
+            nodeD.transform.position = (new Vec2(2f, 2.3f)).ToUnity();
             var agentD = goD.AddComponent<AutonomousAgent>();
             agentD.Initialize(nodeD.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeD);
@@ -174,7 +174,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goE = new GameObject("[Test_PawnE_Rival]");
             var nodeE = goE.AddComponent<NodeController>();
             nodeE.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeE.transform.position = new Vector2(5f, 5f);
+            nodeE.transform.position = (new Vec2(5f, 5f)).ToUnity();
             var agentE = goE.AddComponent<AutonomousAgent>();
             agentE.Initialize(nodeE.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeE);
@@ -182,7 +182,7 @@ namespace Simpiens.Testing.Sociopolitical
             var goF = new GameObject("[Test_PawnF_Rival]");
             var nodeF = goF.AddComponent<NodeController>();
             nodeF.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeF.transform.position = new Vector2(5f, 5.2f);
+            nodeF.transform.position = (new Vec2(5f, 5.2f)).ToUnity();
             var agentF = goF.AddComponent<AutonomousAgent>();
             agentF.Initialize(nodeF.Id, null, null, simManager, clock);
             registry.RegisterNode(nodeF);

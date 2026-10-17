@@ -4,8 +4,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Social;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Persistence
 {
     /// <summary>One crawler in a save: its names, its state, its pack and its memory.</summary>
@@ -31,7 +29,7 @@ namespace Simpiens.Simulation.Persistence
     public struct CrawlerRecord
     {
         public EntityId Id;
-        public Vector2 Position;
+        public Vec2 Position;
         public AgentNeeds Needs;
         public float Frustration;
         public AgentActivity Activity;

@@ -2,8 +2,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-
 namespace Simpiens.Cognition.Planning
 {
     /// <summary>
@@ -104,8 +102,8 @@ namespace Simpiens.Cognition.Planning
                     else if (record.Type == EntityType.Resource && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                     {
                         knowsResource = true;
-                        Vector2 loc = record.LastKnownLocation;
-                        float distSqr = (loc - context.Position).sqrMagnitude;
+                        Vec2 loc = record.LastKnownLocation;
+                        float distSqr = (loc - context.Position).SqrMagnitude;
                         if (distSqr <= reachDistSqr)
                         {
                             atResource = true;
@@ -113,8 +111,8 @@ namespace Simpiens.Cognition.Planning
                     }
                     else if (record.Type == EntityType.Pawn && record.EntityId != context.AgentId)
                     {
-                        Vector2 loc = record.LastKnownLocation;
-                        float distSqr = (loc - context.Position).sqrMagnitude;
+                        Vec2 loc = record.LastKnownLocation;
+                        float distSqr = (loc - context.Position).SqrMagnitude;
                         if (distSqr <= peerDistSqr)
                         {
                             isNearPeer = true;
@@ -123,8 +121,8 @@ namespace Simpiens.Cognition.Planning
                     else if (record.Type == EntityType.Anchor && !context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick))
                     {
                         knowsAnchor = true;
-                        Vector2 loc = record.LastKnownLocation;
-                        float distSqr = (loc - context.Position).sqrMagnitude;
+                        Vec2 loc = record.LastKnownLocation;
+                        float distSqr = (loc - context.Position).SqrMagnitude;
                         if (distSqr <= anchorDistSqr)
                         {
                             atAnchor = true;
@@ -142,7 +140,7 @@ namespace Simpiens.Cognition.Planning
                 // Rest anchor: a remembered bunk that is free right now
                 bool knowsBunk = BunkTargeting.TryGetNearestFreeBunk(context, out _, out var bunkPosition);
                 state = state.With(StateFact.KnowsBunkLocation, knowsBunk);
-                state = state.With(StateFact.AtBunk, knowsBunk && (bunkPosition - context.Position).sqrMagnitude <= BunkTargeting.ReachDistance * BunkTargeting.ReachDistance);
+                state = state.With(StateFact.AtBunk, knowsBunk && (bunkPosition - context.Position).SqrMagnitude <= BunkTargeting.ReachDistance * BunkTargeting.ReachDistance);
 
                 // 5. Relational / Social Matrix
                 bool hasWarmCompanion = false;
@@ -183,7 +181,7 @@ namespace Simpiens.Cognition.Planning
                     {
                         hasActiveDirective = true;
                         float radius = groupData.ActiveDirective.TargetRadius > 0.1f ? groupData.ActiveDirective.TargetRadius : 2.5f;
-                        float distSqr = (groupData.ActiveDirective.TargetLocation - context.Position).sqrMagnitude;
+                        float distSqr = (groupData.ActiveDirective.TargetLocation - context.Position).SqrMagnitude;
                         if (distSqr <= radius * radius)
                         {
                             atDirectiveLocation = true;
@@ -205,7 +203,7 @@ namespace Simpiens.Cognition.Planning
                 {
                     var stall = context.Snapshot.StallBuffer[i];
                     float r = stall.InteractionRadius > 0.1f ? stall.InteractionRadius : 2.5f;
-                    if ((stall.Position - context.Position).sqrMagnitude <= r * r)
+                    if ((stall.Position - context.Position).SqrMagnitude <= r * r)
                     {
                         atTradeStall = true;
                         break;
@@ -218,7 +216,7 @@ namespace Simpiens.Cognition.Planning
                 {
                     if (kvp.Value.Type == EntityType.Stall)
                     {
-                        if (((Vector2)kvp.Value.LastKnownLocation - context.Position).sqrMagnitude <= 2.5f * 2.5f)
+                        if (((Vec2)kvp.Value.LastKnownLocation - context.Position).SqrMagnitude <= 2.5f * 2.5f)
                         {
                             atTradeStall = true;
                             break;

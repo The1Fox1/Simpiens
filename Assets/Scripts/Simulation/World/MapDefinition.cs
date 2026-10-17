@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
 
 namespace Simpiens.Simulation.World
 {
@@ -15,9 +14,9 @@ namespace Simpiens.Simulation.World
     /// <summary>Axis-aligned solid wall geometry in world units.</summary>
     public readonly struct WallRect
     {
-        public readonly Rect Solid;
+        public readonly RectF Solid;
 
-        public WallRect(Rect solid)
+        public WallRect(RectF solid)
         {
             Solid = solid;
         }
@@ -32,12 +31,12 @@ namespace Simpiens.Simulation.World
         public readonly byte Id;
         public readonly string Name;
         public readonly string Description;
-        public readonly Rect Bounds;
-        public readonly Vector2 Anchor;
+        public readonly RectF Bounds;
+        public readonly Vec2 Anchor;
         public readonly float AnchorRadius;
         public readonly bool StartsExplored;
 
-        public SectorDefinition(byte id, string name, string description, Rect bounds, Vector2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
+        public SectorDefinition(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
         {
             Id = id;
             Name = name;
@@ -48,9 +47,9 @@ namespace Simpiens.Simulation.World
             StartsExplored = startsExplored;
         }
 
-        public bool Contains(Vector2 pos)
+        public bool Contains(Vec2 pos)
         {
-            if (AnchorRadius > 0f && Vector2.Distance(pos, Anchor) <= AnchorRadius)
+            if (AnchorRadius > 0f && Vec2.Distance(pos, Anchor) <= AnchorRadius)
             {
                 return true;
             }
@@ -58,18 +57,18 @@ namespace Simpiens.Simulation.World
         }
 
         /// <summary>Walkable target for travel into the sector: its anchor when defined, otherwise its bounds centre.</summary>
-        public Vector2 TargetPoint => AnchorRadius > 0f ? Anchor : Bounds.center;
+        public Vec2 TargetPoint => AnchorRadius > 0f ? Anchor : Bounds.Center;
     }
 
     public readonly struct ResourceNodeDefinition
     {
         public readonly string Key;
-        public readonly Vector2 Position;
+        public readonly Vec2 Position;
         public readonly ItemType Item;
         public readonly int Yield;
         public readonly uint RegrowTicks;
 
-        public ResourceNodeDefinition(string key, Vector2 position, ItemType item, int yield, uint regrowTicks)
+        public ResourceNodeDefinition(string key, Vec2 position, ItemType item, int yield, uint regrowTicks)
         {
             Key = key;
             Position = position;
@@ -84,10 +83,10 @@ namespace Simpiens.Simulation.World
     {
         public readonly string Key;
         public readonly PoiKind Kind;
-        public readonly Vector2 Position;
+        public readonly Vec2 Position;
         public readonly float Radius;
 
-        public PoiDefinition(string key, PoiKind kind, Vector2 position, float radius)
+        public PoiDefinition(string key, PoiKind kind, Vec2 position, float radius)
         {
             Key = key;
             Kind = kind;
@@ -100,10 +99,10 @@ namespace Simpiens.Simulation.World
     public readonly struct MapLabel
     {
         public readonly string Text;
-        public readonly Vector2 Position;
-        public readonly Color Color;
+        public readonly Vec2 Position;
+        public readonly Rgba Color;
 
-        public MapLabel(string text, Vector2 position, Color color)
+        public MapLabel(string text, Vec2 position, Rgba color)
         {
             Text = text;
             Position = position;
@@ -121,10 +120,10 @@ namespace Simpiens.Simulation.World
         public readonly string Name;
 
         /// <summary>Cells lying entirely outside this rect are blocked.</summary>
-        public readonly Rect PlayableBounds;
+        public readonly RectF PlayableBounds;
 
         /// <summary>View hint: the world rect the camera frames on load.</summary>
-        public readonly Rect CameraFrame;
+        public readonly RectF CameraFrame;
 
         public readonly IReadOnlyList<WallRect> Walls;
         public readonly IReadOnlyList<SectorDefinition> Sectors;
@@ -135,8 +134,8 @@ namespace Simpiens.Simulation.World
 
         internal MapDefinition(
             string name,
-            Rect playableBounds,
-            Rect cameraFrame,
+            RectF playableBounds,
+            RectF cameraFrame,
             WallRect[] walls,
             SectorDefinition[] sectors,
             SectorDefinition fallbackSector,
@@ -159,17 +158,17 @@ namespace Simpiens.Simulation.World
         /// Spatial partition size covering the playable bounds symmetrically about the origin plus a margin.
         /// Always an even number of cells per axis so cell edges stay on whole world units.
         /// </summary>
-        public Vector2Int PartitionCells(float cellSize, int marginCells = 2)
+        public GridPoint PartitionCells(float cellSize, int marginCells = 2)
         {
-            float halfX = Mathf.Max(Mathf.Abs(PlayableBounds.xMin), Mathf.Abs(PlayableBounds.xMax));
-            float halfY = Mathf.Max(Mathf.Abs(PlayableBounds.yMin), Mathf.Abs(PlayableBounds.yMax));
-            int cellsX = 2 * (Mathf.CeilToInt(halfX / cellSize) + marginCells);
-            int cellsY = 2 * (Mathf.CeilToInt(halfY / cellSize) + marginCells);
-            return new Vector2Int(cellsX, cellsY);
+            float halfX = SimMath.Max(SimMath.Abs(PlayableBounds.XMin), SimMath.Abs(PlayableBounds.XMax));
+            float halfY = SimMath.Max(SimMath.Abs(PlayableBounds.YMin), SimMath.Abs(PlayableBounds.YMax));
+            int cellsX = 2 * (SimMath.CeilToInt(halfX / cellSize) + marginCells);
+            int cellsY = 2 * (SimMath.CeilToInt(halfY / cellSize) + marginCells);
+            return new GridPoint(cellsX, cellsY);
         }
 
         /// <summary>First sector (in definition order) containing the point, otherwise the fallback sector.</summary>
-        public SectorDefinition FindSector(Vector2 pos)
+        public SectorDefinition FindSector(Vec2 pos)
         {
             for (int i = 0; i < Sectors.Count; i++)
             {

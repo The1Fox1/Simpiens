@@ -1,7 +1,5 @@
 using System;
 using Simpiens.Simulation;
-using UnityEngine;
-
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>

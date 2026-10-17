@@ -27,8 +27,8 @@ namespace Simpiens.Cognition
 
         // Identity & Transform
         public EntityId AgentId { get; set; }
-        public Vector2 Position { get; set; }
-        public Vector2 Velocity { get; set; }
+        public Vec2 Position { get; set; }
+        public Vec2 Velocity { get; set; }
         public float BaseSpeed { get; set; } = DefaultBaseSpeed;
 
         // Biological Drives & Needs
@@ -196,7 +196,7 @@ namespace Simpiens.Cognition
             }
 
             // Biological drive decay
-            float hunger = Mathf.Min(100f, Needs.Hunger + dt * 1.5f);
+            float hunger = SimMath.Min(100f, Needs.Hunger + dt * 1.5f);
             float energy = Needs.Energy;
 
             bool inBunk = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.SleepAtBunkAction;
@@ -204,7 +204,7 @@ namespace Simpiens.Cognition
             {
                 // A bunk restores energy faster than resting where you stand (Epic MAP Phase 3 rest anchor)
                 float rate = inBunk && !IsExhaustionCollapsed ? Simpiens.Cognition.Planning.Considerations.BunkRecoveryPerSecond : 15f;
-                energy = Mathf.Min(100f, energy + dt * rate);
+                energy = SimMath.Min(100f, energy + dt * rate);
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
                     SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} recovered from exhaustion collapse (energy {energy:F0})");
@@ -214,16 +214,16 @@ namespace Simpiens.Cognition
             }
             else if (VisualState == AgentVisualState.Walking)
             {
-                energy = Mathf.Max(0f, energy - dt * 1.0f);
+                energy = SimMath.Max(0f, energy - dt * 1.0f);
             }
             else
             {
-                energy = Mathf.Max(0f, energy - dt * 0.2f);
+                energy = SimMath.Max(0f, energy - dt * 0.2f);
             }
 
-            float social = Mathf.Max(0f, Needs.Social - dt * 0.5f);
+            float social = SimMath.Max(0f, Needs.Social - dt * 0.5f);
             Needs = new AgentNeeds(hunger, energy, social);
-            Frustration = Mathf.Max(0f, Frustration - dt * 1f);
+            Frustration = SimMath.Max(0f, Frustration - dt * 1f);
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;
@@ -300,7 +300,7 @@ namespace Simpiens.Cognition
 
         public void RelieveFrustration(float amount)
         {
-            Frustration = Mathf.Max(0f, Frustration - amount);
+            Frustration = SimMath.Max(0f, Frustration - amount);
         }
 
         /// <param name="resetVisual">False when the same evaluation immediately issues a replacement intent
