@@ -4,6 +4,8 @@ Welcome to the **Simpiens** project! This document outlines the Unity simulation
 
 > **Source of truth:** [`docs/ROADMAP.md`](docs/ROADMAP.md) is the highest source of truth for epic/milestone **status**, scope, sequencing, engineering invariants and the Definition of Done. This file explains *how to work in the code*; it deliberately does **not** track status. If this file and the roadmap disagree, the roadmap wins — fix this file.
 
+If you are an agent then please check the .agents/ directory for rules or any current *directives* the developer has issued for your current session. 
+
 ## Current Project Structure
 The `Assets/Scripts/` directory contains the core simulation logic, strongly emphasizing a code-first, decoupled approach where heavy cognitive logic runs asynchronously off the main Unity loop.
 
