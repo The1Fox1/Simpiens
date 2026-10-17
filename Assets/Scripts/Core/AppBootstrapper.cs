@@ -98,6 +98,9 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<OutpostSession>(Lifetime.Singleton).As<ISessionDefinition>();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
+            // The player's quick-save slot (Milestone 1): Saves/quicksave.simsave under the persistent data path
+            builder.Register<ISaveGameService>(resolver => new SaveGameService(resolver.Resolve<ISessionPersistence>()), Lifetime.Singleton);
+
             // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.
             // Domain validators no longer run at boot; they run as PlayMode tests (SwarmPlayModeTests).
             BootstrapExtensions.InstallAll(builder, gameObject);

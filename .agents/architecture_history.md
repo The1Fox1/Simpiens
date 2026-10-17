@@ -550,3 +550,34 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - D1–D7 stand as the producer's model.
   - No producer check is pending on §3.3 or Epic MAP.
   - Milestone 1 waits only on `MemoryPack`.
+
+## Milestone 1 Completed: Whole-Session Save and Load (2026-10-15)
+- **Context:** Milestone 1's last clause was "Integrates MemoryPack serialization for unmanaged inventory/contracts". The producer approved the completion plan on 2026-10-15 with D1–D6 as recommended (`.agents/milestone1_completion_plan.md`, removed; `git log --diff-filter=D -- .agents/milestone1_completion_plan.md`).
+- **Decisions (producer, 2026-10-15):**
+  - **D1 = B:** read the clause as a whole-session save and load; the economy's data is its first part.
+  - **D2 = A:** one quick-save slot, with Save and Load in the dashboard header.
+  - **D3 = A:** work in progress isn't saved. Intents, plans, and the bunk claims and contention tied to them start empty; crawlers decide afresh on the next tick. Bounty claims are durable state and are saved.
+  - **D4 = A:** a save with another format version, session or map is refused with a reason; no migration. The seed is checked as well, since entity ids and randomness derive from it.
+  - **D5 = A:** `EconomyZeroAllocValidator` is in scope.
+  - **D6:** (a) the dossier's *Feed ration* button is removed; (b) stale docs refreshed (ROADMAP's Milestone 1 status and closure-plan line, the design proposal's 12-sector MVP line).
+- **Design:**
+  - MemoryPack 1.21.4 is vendored next to ZLogger from one dependency closure; only `SaveSerializer` calls it. Unmanaged records are raw memory copies, so a saved struct's layout is the format (`SessionSaveHeader.CurrentFormatVersion`; the economy records' sizes are pinned).
+  - `SessionSave` holds a header and one block per owner; each owner captures and restores its own part. Keyed records are sorted by id, so a capture doesn't depend on dictionary order, and a restored session captures to the same bytes.
+  - A load rebuilds the map exactly as a respawn does (the map's entities get the same ids), then restores in place of `Populate`; the clock and the id counter resume at the save.
+  - `SaveFile` puts a plain header (format, length, checksum) in front, so bad files are refused before MemoryPack reads them. `SaveGameService` is the slot; it writes off the main thread through a temporary file.
+- **Deviations from the plan:**
+  - `SaveLoadScenario` saves when a crawler holds the seeded Gather bounty (about t400), not at t3,000: the seeded bounties finish by about t605, so a later save would resume no work in progress. Saving mid-bounty proves a claim survives a load.
+  - The plan's F7 note on positions was corrected: the copy of `transform.position` into `AgentState.Position` is a latent breach (ROADMAP §1A.2 #16; the architecture scan's M5), because crawler views never get the clock and so never interpolate.
+  - `ResetState` now drops queued player commands, for respawns too: nothing carries across a session boundary.
+  - The service gained a synchronous `QuickSave` beside `QuickSaveAsync`: a plain test can't wait on an async save that resumes on the frame loop, and a quit-time save needs one.
+- **Consequences:**
+  - Milestone 1 is `COMPLETED`, pending the producer's check of save and load at 1×.
+  - New authoritative state must be added to its owner's save block (AGENTS.md, `Persistence/`); a round trip can't catch state left out of the save.
+  - A loaded game doesn't replay the original's future exactly: cognition timing (§1A.2 #6), rebuilt dictionaries, and the world registry's order (a regrown node re-registers at the end in the original, at its spawn place after a load). Tests assert identical state at the load, not identical futures.
+  - Findings moved out of the plan: the latent position breach (ROADMAP §1A.2 #16); `GroupRegistry.CreateGroup` keeps a new leader on their old roster (Epic 8 §11); the *Calm Frustration* button has the same breach as *Feed ration* (Epic MAP §6 #10, a producer decision); `DeterminismScenario` diverged once more in a full suite (ROADMAP §1A.2 #6).
+- **Verification:**
+  - Each step was committed with its measured test status: step 0 `2bf65fe`, step 1 `27e4967`, step 2 `0fc3d4f`, step 3 `82615b9`, step 4 `640b90a`, step 5 `59478a6`, step 6 `720095b`.
+  - `SaveLoadScenario` passed in 3 of 3 consecutive full-suite runs (PlayMode 64/64 each), with identical results every time: saved at t394 with the Gather bounty claimed, delivered at t647 after the load, 32 cycles, 12/12 crawlers ate, 0 ledger violations, 0 anomalies. Final suite: 65/65 (67 total, 2 explicit skipped).
+  - The live outpost round-trips byte for byte at t600 (39,444 bytes); the Linux player saved and reloaded it at t25 (18,603 bytes, `scripts/run-persistence-smoke.sh`).
+  - 1,000 ticks of trading and bounties and 1,000 rounds of off-thread trade and bounty evaluation allocate 0 bytes.
+  - Pending: the producer's check of save and load at 1×.

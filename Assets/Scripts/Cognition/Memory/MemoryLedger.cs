@@ -24,6 +24,28 @@ namespace Simpiens.Cognition.Memory
         }
         
         public int Count => _count;
+        public int Capacity => _events.Length;
+
+        /// <summary>Replaces the events with saved ones, oldest first; beyond the capacity, the newest are kept.</summary>
+        public void Restore(MemoryEvent[] events)
+        {
+            System.Array.Clear(_events, 0, _events.Length);
+            _head = 0;
+            _count = 0;
+            if (events == null) return;
+            for (int i = 0; i < events.Length; i++) AddEvent(events[i]);
+        }
+
+        /// <summary>The events oldest first, as a new array (a save).</summary>
+        public MemoryEvent[] ToArray()
+        {
+            var events = new MemoryEvent[_count];
+            for (int i = 0; i < _count; i++)
+            {
+                events[i] = _events[(_head - _count + i + _events.Length) % _events.Length];
+            }
+            return events;
+        }
 
         public MemoryEvent GetEvent(int index)
         {

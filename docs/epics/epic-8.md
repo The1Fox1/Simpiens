@@ -399,3 +399,9 @@ IsGroupLeader       = 24  // Agent holds RoleRank.Leader in their group
 - **Track A (Future Epics)**:
   - `Epic 9`: Directives will coordinate collective hauling to shared group stockpiles.
   - `Epic 10`: Directives will drive squad-level combat flanking, focus-fire, and tactical retreat.
+
+---
+
+## 11. Open findings
+
+1. **`GroupRegistry.CreateGroup` doesn't take a new leader off their old group's roster** (found 2026-10-15, Milestone 1 save/load). `AddMember` does. If the old group is then disbanded, the leader's new membership is deleted with the old roster. Latent: no live code path is known to create a group led by a member of another group. Fix: remove the leader from any previous group first, as `AddMember` does.

@@ -1,0 +1,10 @@
+Vendored by scripts/update-memorypack.sh — do not edit by hand.
+Resolved together with ZLogger 2.5.10: shared dependencies are vendored once, in Assets/Plugins/ZLogger.
+
+MemoryPack.Core 1.21.4 (lib/netstandard2.1/MemoryPack.Core.dll)
+System.Buffers 4.5.1 (provided by Unity)
+System.Collections.Immutable 8.0.0 (shared: Assets/Plugins/ZLogger)
+System.Memory 4.5.5 (provided by Unity)
+System.Numerics.Vectors 4.4.0 (provided by Unity)
+System.Runtime.CompilerServices.Unsafe 6.0.0 (shared: Assets/Plugins/ZLogger)
+MemoryPack.Generator 1.21.4 (analyzers/dotnet/cs/MemoryPack.Generator.dll, as Analyzers/MemoryPack.Generator.dll)

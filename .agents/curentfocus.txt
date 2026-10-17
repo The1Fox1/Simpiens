@@ -69,7 +69,7 @@ Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15]
   - Section 2.3: Single-Writer Threading Architecture & Snapshot Memory Isolation (double-buffered AgentMemorySnapshot/AgentInventorySnapshot) [COMPLETED]
   - Section 2.4: Modular Intent Handlers, Typed Commands & Authoritative Economy Ledger (IntentHandlerRegistry, IEconomyLedger, typed InfluenceEvent union) [COMPLETED]
   - Section 2.6: High-Performance Zero-Allocation Grid A* Navigation Engine (StaticNavGrid, GridAStarSearcher, worker pool in AsyncPathfinder, corner-cutting guards, raycast smoothing) [COMPLETED]
-- DEFERRED (specified but not delivered): MemoryPack serialization,
+- DELIVERED 2026-10-15 with Milestone 1's save and load (previously deferred): MemoryPack serialization,
   EconomyZeroAllocValidator, EconomySerializationValidator
 - Review Section 3.1: Close the Milestone 1 Supply Side [IMPLEMENTED 2026-10-09 - loop emerges live]
   - Root cause fixed: Tier-1 SurvivalUtilityEvaluator never returned null, so GOAP never ran live
@@ -104,7 +104,14 @@ open: 3.2 personality, 3.3 economy model, 2.5 scaling, 2.8 test scope, 3.4 inspe
   restocks, starving crawler waits at known plots); soak plays fair/greedy/generous and asserts each pace band (9/9).
   Epic 9 PROMOTED to COMPLETED. Producer checks passed 2026-10-15: a play session in the Unity editor; the Epic MAP
   visual check at 1x.
-Current Focus (Track A): MemoryPack serialization (the rest of Milestone 1).
+Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load at 1x (see ROADMAP "Milestone 1 Status"):
+- MemoryPack 1.21.4 installed; a whole-session save and load (SessionSave, one block per owner, records sorted by id).
+- One quick-save slot (Saves/quicksave.simsave), with Save and Load in the dashboard header; a save from another
+  format, session, seed or map is refused with a reason; crawlers decide afresh after a load.
+- Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
+  anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
+- The dossier's Feed ration button is removed (D6 a).
+Current Focus (Track A): the soak test and scaling work (ROADMAP §3A #8) before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]

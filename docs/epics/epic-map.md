@@ -227,7 +227,7 @@ Each phase ends in a commit with an honest PlayMode status, per the AGENTS.md co
 - ~~**"No crawler starves" as a pass criterion of `BunkRestScenario`**: a broke crawler can starve while the Garden regrows; food pacing waits on §3.3 / Epic 9 ([Epic 9 §8.4](epic-9.md) #6). `OutpostLifecycleScenario` keeps the assertion.~~ **Delivered by §3.3 (2026-10-15):** asserted again.
 - **Descent gate sector and hazards**: Epic 10.
 - **Workshop sectors**: Milestone 3.
-- **Map serialization and save/load**: the MemoryPack slice. The definition is plain data, so it is ready for that.
+- ~~**Map serialization and save/load**~~: delivered 2026-10-15 with Milestone 1's whole-session save. The map itself isn't saved: a save names it by fingerprint, and a load rebuilds it from the session's definition.
 - **Cognition scaling for larger populations**: §3A #8.
 
 ---
@@ -263,7 +263,8 @@ Found by the live scenarios during Phases 2–5. None fails a test. The epic is 
 6. **Gather fulfilment does not check provenance** (H6, accepted): ore bought or found counts the same as ore mined.
 7. **Pen 7 hands leadership to the defiant follower at t50** (Phase 2, Dev Map only). Its only follower has negative respect for the leader, so the succession check judges the leader discredited and transfers leadership peacefully to the defiant agent. The defiance outcome happens first (t24), so the canary passes, but afterwards the pen shows a leader change it doesn't intend. Fix options: raise the follower count in the pen, or exempt single-follower groups from the discredit rule.
 8. **Trust toward the player falls on the default prices** (Phase 5): 10 of 12 crawlers end at −80 to −100. Owner: §3.3 / Epic 9 ([Epic 9 §8.3](epic-9.md)). **Resolved 2026-10-15 by §3.3 (D3):** each crawler judges a trade by its own valuation; trust rises for 10 of 12 at the default prices.
-9. **The dossier's *Feed ration* button writes a crawler's hunger directly from the UI** (`FacilityDashboardPresenter`, since 2026-10-09), bypassing typed commands (§1A.1 #7). No scenario presses it. It should become a command or be removed. Owner: Track B.
+9. ~~**The dossier's *Feed ration* button writes a crawler's hunger directly from the UI**~~ **Resolved 2026-10-15:** the button is removed (producer decision D6 a, Milestone 1 completion plan).
+10. **The dossier's *Calm Frustration* button writes a crawler's frustration directly from the UI** (`FacilityDashboardPresenter.HandleCalmTantrum`), the same breach of §1A.1 #7 as *Feed ration* (found 2026-10-15). No scenario presses it. It should become a command or be removed (a producer decision). Owner: Track B.
 
 ---
 

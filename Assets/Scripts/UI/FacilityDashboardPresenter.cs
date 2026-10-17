@@ -50,6 +50,13 @@ namespace Simpiens.UI
         private Label _sessionBanner;
         private Button _btnSessionSwitch;
 
+        // Quick save and load (Milestone 1, D2 = A): one slot, two header buttons and a status line. Like the session
+        // switch, these act on the session, not through simulation commands; a save is captured between ticks.
+        private ISaveGameService _saveGame;
+        private Button _btnQuickSave;
+        private Button _btnQuickLoad;
+        private Label _saveStatusLabel;
+
         // Header Economic HUD Metrics
         private Label _treasuryGoldLabel;
         private Label _provisionsStockLabel;
@@ -131,7 +138,6 @@ namespace Simpiens.UI
         private Label _dossierActiveGoal;
         private Label _dossierActiveAction;
         private ScrollView _dossierAffinitiesList;
-        private Button _btnFeedRation;
         private Button _btnCalmTantrum;
 
         private class AgentCardItem
@@ -188,9 +194,11 @@ namespace Simpiens.UI
             INarrativeFormatter narrativeFormatter = null,
             ISessionSwitcher sessionSwitcher = null,
             Simpiens.Entities.WorldSelection worldSelection = null,
-            ISectorRegistry sectorRegistry = null)
+            ISectorRegistry sectorRegistry = null,
+            ISaveGameService saveGame = null)
         {
             _sectorRegistry = sectorRegistry;
+            _saveGame = saveGame;
             _zoneService = zoneService;
             _worldRegistry = worldRegistry;
             _simulationClock = simulationClock;
@@ -244,6 +252,7 @@ namespace Simpiens.UI
             BuildSectorList();
             RefreshAllViews();
             RefreshSessionSwitch();
+            RefreshSaveButtons();
         }
 
         /// <summary>The session the switch button leads to: the next registered one after the current session.</summary>
@@ -256,6 +265,39 @@ namespace Simpiens.UI
                 if (sessions[i] == _sessionSwitcher.Current) current = i;
             }
             return sessions[(current + 1) % sessions.Count];
+        }
+
+        private void HandleQuickSaveClicked()
+        {
+            if (_saveGame == null) return;
+            QuickSaveAsync().Forget();
+        }
+
+        private async Cysharp.Threading.Tasks.UniTaskVoid QuickSaveAsync()
+        {
+            ShowSaveStatus("Saving...");
+            var outcome = await _saveGame.QuickSaveAsync();
+            ShowSaveStatus(outcome.Message);
+        }
+
+        /// <summary>A successful load raises SessionChanged first, so the dashboard has already rebuilt for the loaded game.</summary>
+        private void HandleQuickLoadClicked()
+        {
+            if (_saveGame == null) return;
+            ShowSaveStatus(_saveGame.QuickLoad().Message);
+        }
+
+        private void ShowSaveStatus(string message)
+        {
+            if (_saveStatusLabel != null) _saveStatusLabel.text = message ?? string.Empty;
+        }
+
+        private void RefreshSaveButtons()
+        {
+            var display = _saveGame != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_btnQuickSave != null) _btnQuickSave.style.display = display;
+            if (_btnQuickLoad != null) _btnQuickLoad.style.display = display;
+            if (_saveStatusLabel != null) _saveStatusLabel.style.display = display;
         }
 
         private void HandleSessionSwitchClicked()
@@ -368,6 +410,12 @@ namespace Simpiens.UI
                 _btnViewToggle.clicked += ToggleVisibility;
                 UpdateViewToggleLabel();
             }
+
+            _btnQuickSave = _root.Q<Button>("btn-quick-save");
+            if (_btnQuickSave != null) _btnQuickSave.clicked += HandleQuickSaveClicked;
+            _btnQuickLoad = _root.Q<Button>("btn-quick-load");
+            if (_btnQuickLoad != null) _btnQuickLoad.clicked += HandleQuickLoadClicked;
+            _saveStatusLabel = _root.Q<Label>("save-status-label");
 
             _sessionSwitchOverlay = _root.Q<VisualElement>("session-switch-overlay");
             _sessionBanner = _root.Q<Label>("session-banner");
@@ -539,12 +587,6 @@ namespace Simpiens.UI
             _dossierActiveGoal = _root.Q<Label>("dossier-active-goal");
             _dossierActiveAction = _root.Q<Label>("dossier-active-action");
             _dossierAffinitiesList = _root.Q<ScrollView>("dossier-affinities-list");
-
-            _btnFeedRation = _root.Q<Button>("btn-feed-ration");
-            if (_btnFeedRation != null)
-            {
-                _btnFeedRation.clicked += HandleFeedRation;
-            }
 
             _btnCalmTantrum = _root.Q<Button>("btn-calm-tantrum");
             if (_btnCalmTantrum != null)
@@ -1087,19 +1129,6 @@ namespace Simpiens.UI
                 AgentVisualState.Yielding => "badge-yielding",
                 _ => "badge-idle"
             };
-        }
-
-        private void HandleFeedRation()
-        {
-            if (_selectedAgentId == default || _worldRegistry == null) return;
-            var node = _worldRegistry.GetNode(_selectedAgentId);
-            if (node?.Agent != null)
-            {
-                node.Agent.Hunger = Mathf.Max(0f, node.Agent.Hunger - 45f);
-                node.Agent.TriggerReliefVisual();
-                RefreshDossierView();
-                SimLog.Intervention.ZLogInformation($"Player fed a ration to {SimLog.Agent(node.Id)} (hunger -45)");
-            }
         }
 
         private void HandleCalmTantrum()

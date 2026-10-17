@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Cognition.Social;
 
@@ -266,6 +267,92 @@ namespace Simpiens.Cognition.Memory
             {
                 _blacklistedEntities.Remove(_keysToRemove[i]);
             }
+        }
+
+        /// <summary>
+        /// Writes this memory into a save (Milestone 1 save/load). Keyed records are sorted by id and the event ledger is
+        /// oldest first, so the result doesn't depend on the order the dictionaries were filled in.
+        /// </summary>
+        public void CaptureTo(MemorySave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            var sightings = new SpatialMemoryRecord[SpatialMemoryMap.Count];
+            int n = 0;
+            foreach (var kvp in SpatialMemoryMap) sightings[n++] = kvp.Value;
+            System.Array.Sort(sightings, (a, b) => a.EntityId.CompareTo(b.EntityId));
+            save.Sightings = sightings;
+
+            var notes = new SurveyNoteRecord[_surveyNotes.Count];
+            n = 0;
+            foreach (var kvp in _surveyNotes) notes[n++] = new SurveyNoteRecord { Record = kvp.Value.Record, SectorId = kvp.Value.SectorId };
+            System.Array.Sort(notes, (a, b) => a.Record.EntityId.CompareTo(b.Record.EntityId));
+            save.SurveyNotes = notes;
+
+            save.Blacklist = SortedTicks(_blacklistedEntities);
+            save.GossipCooldowns = SortedTicks(_lastGossipWithAgent);
+
+            var affinities = new PeerAffinityRecord[_affinityMap.Count];
+            n = 0;
+            foreach (var kvp in _affinityMap) affinities[n++] = new PeerAffinityRecord { PeerId = kvp.Key, Affinity = kvp.Value };
+            System.Array.Sort(affinities, (a, b) => a.PeerId.CompareTo(b.PeerId));
+            save.Affinities = affinities;
+
+            save.Events = EventLedger.ToArray();
+            save.SectorVisits = (uint[])_sectorLastVisit.Clone();
+        }
+
+        /// <summary>Replaces everything this memory holds with a save's (a load).</summary>
+        public void RestoreFrom(MemorySave save)
+        {
+            if (save == null) throw new System.ArgumentNullException(nameof(save));
+
+            SpatialMemoryMap.Clear();
+            _surveyNotes.Clear();
+            _blacklistedEntities.Clear();
+            _lastGossipWithAgent.Clear();
+            _affinityMap.Clear();
+
+            if (save.Sightings != null)
+            {
+                for (int i = 0; i < save.Sightings.Length; i++) SpatialMemoryMap[save.Sightings[i].EntityId] = save.Sightings[i];
+            }
+            if (save.SurveyNotes != null)
+            {
+                for (int i = 0; i < save.SurveyNotes.Length; i++)
+                {
+                    var note = save.SurveyNotes[i];
+                    _surveyNotes[note.Record.EntityId] = new SurveyNote(note.Record, note.SectorId);
+                }
+            }
+            RestoreTicks(_blacklistedEntities, save.Blacklist);
+            RestoreTicks(_lastGossipWithAgent, save.GossipCooldowns);
+            if (save.Affinities != null)
+            {
+                for (int i = 0; i < save.Affinities.Length; i++) _affinityMap[save.Affinities[i].PeerId] = save.Affinities[i].Affinity;
+            }
+
+            EventLedger.Restore(save.Events);
+            System.Array.Clear(_sectorLastVisit, 0, _sectorLastVisit.Length);
+            if (save.SectorVisits != null)
+            {
+                System.Array.Copy(save.SectorVisits, _sectorLastVisit, System.Math.Min(save.SectorVisits.Length, _sectorLastVisit.Length));
+            }
+        }
+
+        private static void RestoreTicks(Dictionary<GUID, uint> into, IdTickRecord[] records)
+        {
+            if (records == null) return;
+            for (int i = 0; i < records.Length; i++) into[records[i].Id] = records[i].Tick;
+        }
+
+        private static IdTickRecord[] SortedTicks(Dictionary<GUID, uint> ticks)
+        {
+            var records = new IdTickRecord[ticks.Count];
+            int n = 0;
+            foreach (var kvp in ticks) records[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
+            System.Array.Sort(records, (a, b) => a.Id.CompareTo(b.Id));
+            return records;
         }
 
         public AffinityRecord GetAffinity(GUID peerId, uint currentTick)

@@ -149,6 +149,68 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_PersistenceToolchain_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.PersistenceToolchainValidator().RunAllValidationTests();
+        }
+
+        [UnityTest]
+        public IEnumerator Scenario_SessionCapture_SameStateSameBytes()
+        {
+            yield return ExecuteScenario(new SessionCaptureScenario());
+        }
+
+        [Test]
+        public void Scenario_SessionCapture_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SessionCaptureValidator().RunAllValidationTests();
+        }
+
+        /// <summary>The save/load Definition of Done (Milestone 1): saved mid-bounty, loaded into a fresh session, played on.</summary>
+        [UnityTest]
+        [Timeout(400000)]
+        public IEnumerator Scenario_SaveLoad_LoadedOutpostPlaysOn()
+        {
+            yield return ExecuteScenario(new SaveLoadScenario());
+        }
+
+        [UnityTest]
+        public IEnumerator Scenario_QuickSaveButtons_SaveAndLoadFromTheHeader()
+        {
+            yield return ExecuteScenario(new QuickSaveButtonsScenario());
+        }
+
+        [UnityTest]
+        public IEnumerator Scenario_SessionRestore_LoadsBackExactly()
+        {
+            yield return ExecuteScenario(new SessionRestoreScenario());
+        }
+
+        [Test]
+        public void Scenario_SessionRestore_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SessionRestoreValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_SaveFile_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Persistence.SaveFileValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_EconomySerialization_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomySerializationValidator().RunAllValidationTests();
+        }
+
+        [Test]
+        public void Scenario_EconomyZeroAlloc_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Economy.EconomyZeroAllocValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_Personality_AllDomainValidationTestsPass()
         {
             var validator = new Simpiens.Testing.Planning.PersonalityValidator();

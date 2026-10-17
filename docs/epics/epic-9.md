@@ -13,12 +13,12 @@
 ---
 
 > [!IMPORTANT]
-> **Status Reconciliation (2026-10-08).** Slices 1–3 (inventory/currency primitives, trade stall, bounty board and intervention pipeline) are delivered and validator-tested. The items below were specified in this document but **not delivered**, and the live gameplay loop is **not yet demonstrated** (see [ROADMAP Milestone 1 Status](../ROADMAP.md#milestone-1-status-verified-against-the-code-2026-10-09-not-yet-closed)).
+> **Status Reconciliation (2026-10-08).** Slices 1–3 (inventory/currency primitives, trade stall, bounty board and intervention pipeline) are delivered and validator-tested. The items below were specified in this document but **not delivered**, and the live gameplay loop is **not yet demonstrated** (see [ROADMAP Milestone 1 Status](../ROADMAP.md#milestone-1-status)). **Update 2026-10-15:** every item below is delivered.
 >
 > **Deferred / not delivered:**
-> - `MemoryPack` state serialization (package not installed; `ItemInstance`/`BountyContract` were *laid out* to be blittable, but nothing serializes them).
+> - ~~`MemoryPack` state serialization~~ **DELIVERED (2026-10-15)** with Milestone 1's whole-session save and load: items, bounties and stalls are saved as raw memory copies (`Simulation/Persistence/`).
 > - ~~Zero-allocation Grid A* upgrade of `AsyncPathfinder`~~ **DELIVERED (2026-10-09)**: Delivered via `StaticNavGrid`, zero-allocation `GridAStarSearcher`, and worker pool in `AsyncPathfinder`.
-> - `EconomyZeroAllocValidator` and `EconomySerializationValidator` (§6 items 3–4).
+> - ~~`EconomyZeroAllocValidator` and `EconomySerializationValidator` (§6 items 3–4)~~ **DELIVERED (2026-10-15)**.
 >
 > **Live-loop gaps (2026-10-08) → addressed in code by review §3.1 (2026-10-09):** typed resources and salvage harvesting, Scout bounty fulfilment, supply caravan restock and node regrowth, escrow-only payout, and a free-crawler population in the Outpost Commons. The root cause was that Tier-2 GOAP never ran in the live session (ROADMAP §1A.2 #11). **Still open:** the no-injection PlayMode scenario `OutpostSupplyLoopScenario` has not been run, so the live loop is not yet demonstrated.
 
@@ -378,11 +378,12 @@ Following the defensive null-safety and headless testing architecture of Simpien
 2. **`TradeTransactionValidator.cs`**:
    * Tests buy/sell boundaries, wallet underflow prevention, and inventory overflow handling.
    * Validates that dyadic `Trust` and `Warmth` increase after fair trade transactions.
-3. **`EconomyZeroAllocValidator.cs`** *(DEFERRED — not implemented)*:
-   * Runs 1,000 simulated trading and bounty evaluation ticks off-thread.
-   * Asserts zero heap allocations during the steady-state evaluation loop.
-4. **`EconomySerializationValidator.cs`** *(DEFERRED — not implemented; requires `MemoryPack`)*:
-   * Validates that `ItemInstance`, `BountyContract`, and `AgentInventory` round-trip serialize with `MemoryPack` at 0 bytes GC.
+3. **`EconomyZeroAllocValidator.cs`** (delivered 2026-10-15):
+   * 1,000 main-thread ticks of trading and bounties allocate 0 bytes: a claim, a delivery paid from escrow, a purchase, a sale, an untaken bounty that expires and is refunded, the player's price, post and cancel commands, and the supply service.
+   * 1,000 rounds of the off-thread trade and bounty evaluation allocate 0 bytes on a worker thread: world-state facts, bounty choice and score, reservation and minimum prices, the economic goals and actions.
+4. **`EconomySerializationValidator.cs`** (delivered 2026-10-15):
+   * Pins the saved sizes of `ItemInstance` (16), `BountyContract` (64) and `TradeStallData` (48): their layout is the save format.
+   * Items, bounties, stalls and an `AgentInventory` round-trip through MemoryPack; 1,000 round trips into kept buffers allocate 0 bytes.
 
 ---
 
@@ -396,6 +397,7 @@ Following the defensive null-safety and headless testing architecture of Simpien
 - [x] GOAP actions (`ClaimBountyAction`, `DeliverBountyAction`, `BuyProvisionsAction`, `SellSalvageAction`) registered in `SwarmSpawner` action graph.
 - [x] Trade transactions mutate agent dyadic affinity toward the player entity.
 - [x] All headless validators (`InventoryValidator`, `TradeTransactionValidator`, `BountyFulfillmentValidator`) passing with 0 errors in headless batch mode.
+- [x] `EconomySerializationValidator` and `EconomyZeroAllocValidator` pass (2026-10-15, Milestone 1 save and load).
 
 ### Review §3.1 — Milestone 1 Supply Side (implemented 2026-10-09)
 
@@ -432,7 +434,7 @@ Decisions D1–D7 are in §8.4; the model is in [docs/economy-model.md](../econo
   - the economy soak asserts each profile's pace band (`Scenario_EconomySoak_PaceBands`, 9/9).
 - [x] The producer's play session in the Unity editor passed (2026-10-15).
 
-**Deferred:** `MemoryPack` serialization (rest of Milestone 1); drifters, bounty fairness and Guild recruitment thresholds (Milestone 2); gear wear and gear-gated scarcity (Epic 10).
+**Deferred:** drifters, bounty fairness and Guild recruitment thresholds (Milestone 2); gear wear and gear-gated scarcity (Epic 10). `MemoryPack` serialization was delivered 2026-10-15 with Milestone 1's save and load.
 
 ---
 

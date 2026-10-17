@@ -32,6 +32,18 @@ namespace Simpiens.Simulation
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);
         void ResetState();
 
+        /// <summary>
+        /// Writes the simulation's state into a save's economy, world, group and chronicle blocks (Milestone 1
+        /// save/load). Main thread, between ticks.
+        /// </summary>
+        void CaptureTo(Simpiens.Simulation.Persistence.SessionSave save);
+
+        /// <summary>
+        /// Puts a save's economy, world, group and chronicle blocks back (a load), after the spawner has rebuilt the map
+        /// and the crawlers. Main thread.
+        /// </summary>
+        void RestoreFrom(Simpiens.Simulation.Persistence.SessionSave save);
+
         /// <summary>The current session's number: starts at 1, and every ResetState (respawn) starts a new one.</summary>
         uint SessionEpoch { get; }
     }

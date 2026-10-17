@@ -7,6 +7,7 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Planning;
 using Simpiens.Entities;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Diagnostics;
 using UnityEngine;
@@ -337,6 +338,84 @@ namespace Simpiens.Cognition
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// This crawler's plain state for a save (Milestone 1 save/load). The current intent, plan, goal, last decision
+        /// and look are work in progress and are left out: the crawler decides afresh after a load.
+        /// </summary>
+        public CrawlerRecord CaptureRecord()
+        {
+            return new CrawlerRecord
+            {
+                Id = AgentId,
+                Position = Position,
+                Needs = Needs,
+                Frustration = Frustration,
+                Activity = Activity,
+                Membership = Membership,
+                Identity = Identity,
+                Personality = Personality,
+                NavigationalStalls = NavigationalStalls,
+                TantrumTimer = TantrumTimer,
+                YieldingTimer = YieldingTimer,
+                GossipTimer = GossipTimer,
+                SharingTimer = SharingTimer,
+                RallyTimer = RallyTimer,
+                DefiantTimer = DefiantTimer,
+                LastGossipTimestamp = LastGossipTimestamp,
+                LastYieldTimestamp = LastYieldTimestamp,
+                LastTantrumTimestamp = LastTantrumTimestamp,
+                LastEvaluatedDirectiveTick = LastEvaluatedDirectiveTick,
+                ScoutReportTick = ScoutReportTick,
+                ScoutReportBountyId = ScoutReportBountyId,
+                IsExhaustionCollapsed = IsExhaustionCollapsed,
+                CanBuyFoodAtStall = CanBuyFoodAtStall
+            };
+        }
+
+        /// <summary>
+        /// Puts a saved record back (a load). The crawler must have been spawned with the record's id. Work in progress
+        /// starts empty: no intent, plan, goal or last decision, and an idle look, so the crawler decides afresh.
+        /// </summary>
+        public void RestoreRecord(in CrawlerRecord record)
+        {
+            if (record.Id != AgentId)
+            {
+                throw new ArgumentException($"The record belongs to {record.Id}, not {AgentId}: spawn the crawler with its saved id.", nameof(record));
+            }
+
+            Position = record.Position;
+            Needs = record.Needs;
+            Frustration = record.Frustration;
+            Activity = record.Activity;
+            Membership = record.Membership;
+            Identity = record.Identity;
+            Personality = record.Personality;
+            NavigationalStalls = record.NavigationalStalls;
+            TantrumTimer = record.TantrumTimer;
+            YieldingTimer = record.YieldingTimer;
+            GossipTimer = record.GossipTimer;
+            SharingTimer = record.SharingTimer;
+            RallyTimer = record.RallyTimer;
+            DefiantTimer = record.DefiantTimer;
+            LastGossipTimestamp = record.LastGossipTimestamp;
+            LastYieldTimestamp = record.LastYieldTimestamp;
+            LastTantrumTimestamp = record.LastTantrumTimestamp;
+            LastEvaluatedDirectiveTick = record.LastEvaluatedDirectiveTick;
+            ScoutReportTick = record.ScoutReportTick;
+            ScoutReportBountyId = record.ScoutReportBountyId;
+            IsExhaustionCollapsed = record.IsExhaustionCollapsed;
+            CanBuyFoodAtStall = record.CanBuyFoodAtStall;
+
+            ActivePlan.Clear();
+            ScratchPlan.Clear();
+            ActiveGoal = null;
+            CurrentIntent = null;
+            HasActiveIntent = false;
+            IsEvaluating = false;
+            LastDecision = default;
+            _baseVisualState = AgentVisualState.Idle;
         }
 
         public AgentContext CreateContext(SharedWorldSnapshot snapshot, uint currentTick)

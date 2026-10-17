@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition.Groups;
+using Simpiens.Simulation.Persistence;
 using UnityEngine;
 using Simpiens.Diagnostics;
 using ZLogger;
@@ -377,6 +378,62 @@ namespace Simpiens.Simulation
                         slot.ActiveDirective = GroupDirective.None;
                     }
                 }
+            }
+        }
+
+        public void CaptureTo(GroupSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            var groups = new List<GroupRecord>(_activeGroupCount);
+            var members = new List<GUID>(_memberships.Count);
+            var roster = new List<GUID>(16);
+            for (int i = 0; i < MaxGroups; i++)
+            {
+                ref readonly var slot = ref _slots[i];
+                if (!slot.IsActive) continue;
+
+                roster.Clear();
+                roster.AddRange(slot.Members);
+                roster.Sort((a, b) => a.CompareTo(b));
+                groups.Add(new GroupRecord((byte)(i + 1), slot.Type, slot.LeaderId, slot.AnchorPosition, slot.ActiveDirective, slot.Cohesion, members.Count, roster.Count));
+                members.AddRange(roster);
+            }
+            save.Groups = groups.ToArray();
+            save.Members = members.ToArray();
+
+            var memberships = new MembershipRecord[_memberships.Count];
+            int n = 0;
+            foreach (var kvp in _memberships) memberships[n++] = new MembershipRecord { AgentId = kvp.Key, Membership = kvp.Value };
+            Array.Sort(memberships, (a, b) => a.AgentId.CompareTo(b.AgentId));
+            save.Memberships = memberships;
+        }
+
+        public void RestoreFrom(GroupSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+
+            Clear();
+            if (save.Groups != null)
+            {
+                for (int g = 0; g < save.Groups.Length; g++)
+                {
+                    var record = save.Groups[g];
+                    if (record.GroupId == 0 || record.GroupId > MaxGroups) continue;
+                    ref var slot = ref _slots[record.GroupId - 1];
+                    slot.IsActive = true;
+                    slot.Type = record.Type;
+                    slot.LeaderId = record.LeaderId;
+                    slot.AnchorPosition = record.AnchorPosition;
+                    slot.ActiveDirective = record.ActiveDirective;
+                    slot.Cohesion = record.Cohesion;
+                    for (int m = 0; m < record.MemberCount; m++) slot.Members.Add(save.Members[record.MemberStart + m]);
+                    _activeGroupCount++;
+                }
+            }
+            if (save.Memberships != null)
+            {
+                for (int i = 0; i < save.Memberships.Length; i++) _memberships[save.Memberships[i].AgentId] = save.Memberships[i].Membership;
             }
         }
 

@@ -80,7 +80,6 @@
                     <!-- Player Intervention Buttons -->
                     <ui:Label text="PLAYER INTERVENTION" class="sub-header" />
                     <ui:VisualElement class="intervention-row">
-                        <ui:Button name="btn-feed-ration" text="🍎 Give Ration" class="action-btn btn-feed" />
                         <ui:Button name="btn-calm-tantrum" text="🕊️ Calm Frustration" class="action-btn btn-calm" />
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -107,6 +106,9 @@
             <ui:VisualElement class="header-right">
                 <ui:Button name="btn-merchant-terminal" text="⚖️ MERCHANT" class="hud-nav-button" />
                 <ui:Button name="btn-bounty-board" text="📜 BOUNTIES" class="hud-nav-button" />
+                <ui:Button name="btn-quick-save" text="💾 SAVE" class="hud-nav-button" />
+                <ui:Button name="btn-quick-load" text="📂 LOAD" class="hud-nav-button" />
+                <ui:Label name="save-status-label" text="" class="header-metric" />
                 <ui:Label name="clock-tick-label" text="TICK: 0000" class="header-metric" />
                 <ui:Label name="clock-multiplier-label" text="SPEED: 1.0x" class="header-metric" />
                 <ui:Button name="btn-view-toggle" text="[TAB] TOGGLE 2D VIEW" class="view-toggle-button" />
