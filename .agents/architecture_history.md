@@ -614,3 +614,29 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Kept on purpose:** a crawler view's destruction still stops its crawler (`OnDestroy` disposes the runtime), as before; C5b's session host makes the session own both.
 - **Test harness:** the 18 validators that built GameObjects to set up a test build records (`HeadlessEntities`, `TestCrawler`): a prerequisite for running them under .NET. Defaults reproduce what the GameObjects gave the simulation (radius 0.5, the default circle collider; speed 2). The anomaly detector checks injected walls by simulation geometry instead of a physics overlap, and finds a crawler's view through `NodeController.ViewOf(id)`.
 - **Verification:** golden world hashes identical; `DeterminismScenario` milestones unchanged; PlayMode 68/68.
+
+## Epic CORE Completed: Engine-Free Core and Headless .NET (C2–C11, 2026-10-17)
+- **Context:** Phases 0 (decouple inside Unity) and 1 (headless .NET 10) of the migration write-up, delivered chunk by chunk on `feat/godot-migration` under the agent's provisional authority (Epic CORE Started, above). C1 and C5a have their own entries.
+- **Decisions (agent):**
+  - **C2, golden hashes:** `Baselines/golden-world-hash.txt` holds 31 `WorldStateHash` samples (t0 to t3,000) of the outpost for 3 seeds, with a readable line per crawler for diagnosis. Every later chunk had to reproduce it; a deliberate behaviour change re-records it in its own commit (none was needed).
+  - **C3, `EntityId`:** bit-compatible with `UnityEngine.GUID` (layout, order, hash code, text), so ids, `SimRandom` streams and saves didn't change. It lives in the root namespace `Simpiens` because Unity 6.4 has its own `UnityEngine.EntityId`. A 64-bit id is deferred to the multiplayer wire format.
+  - **C4, maths:** `Vec2`, `GridPoint`, `RectF`, `Rgba` and `SimMath` copy Unity's formulas (approximate `==`, `Normalized` zero below 1e-5, round half to even), not `System.Numerics`, whose scalar division and exact equality change results.
+  - **C5b, the session host:** `SessionHost` (engine-free) builds, populates, ticks, captures and restores the session; `SwarmSpawner` only draws it. Body radii became constants (crawler 0.35, resource 0.4, hearth 0.35, bunk 0.5).
+  - **C6, infrastructure:** the clock advances by the host's elapsed time; the host plugs `SimLog`'s console sink in; validators log through `TestLog` and throw, so NUnit and xUnit both run them.
+  - **C7, the assembly:** `Assets/Simpiens.Core/` with `noEngineReferences: true`; the engine-free harness is `Simpiens.Testing.Core`. Namespaces unchanged.
+  - **C8, .NET:** `dotnet/` compiles the same files by glob, `netstandard2.1` at C# 10 (Unity's level) and `net10.0` at the latest C# (MemoryPack's generator needs C# 11 there).
+  - **C9, tests:** xUnit v3, tests in sequence. The DoD scenarios run headless without the visual anomaly detector, which needs the views. The .NET core is always built optimized, so the zero-allocation validators check shipping code.
+  - **C10, the console host:** `simpiens` on the Generic Host. It references the test harness (golden hashes), so it is a development tool that never ships. `EconomySoak` and `OutpostWatch` live in `Simpiens.Hosting`, shared by the host and the tests.
+  - **C11, CI:** a GitHub Actions workflow for the .NET solution; added, not pushed.
+- **Deviations from the plan:**
+  - C5 became C5a and C5b (no C5c); the crawler tick moved in C5a (see its entry).
+  - The plan put the Phase 1 gate at the end of C10; the tests that make it up landed in C9, and it was met there. C10 added the soak and the seed sweep.
+  - C9 changed core code that the port was meant to leave alone: `BeginEvaluation`'s thread-pool lambda allocated its closure on every call, early returns included (176 bytes a tick for an idle crawler, invisible to Mono's allocation counter). Behaviour-neutral: golden hashes identical.
+  - The C7 gate's persistence smoke first failed to start (the scripts had lost their executable bit, `8e2898a`); rerun, it passed (t25, 18,603 bytes, as in Milestone 1).
+- **Findings** (epic CORE §6): **F1**, Unity's Mono keeps scalar float intermediates at double precision while CoreCLR rounds each step, so the runtimes agree on the golden seeds but not on every seed (proven on `TryPickSectorWaypoint`); recorded, not fixed. **F2**, the outpost's day passes on 16 of 23 seeds (starvation on 5, no cycle on 2; Unity agrees on seed 11); a pacing decision for the producer. ROADMAP §1A.2 #17 and #19 (scan H1, M4) stay recorded, untouched.
+- **Verification:** one commit per chunk with its measured status: C0 `7bac9ac`, C1 `cc996f2`, C2 `78c10b4`, C3 `ed62d1b`, C4 `2144530`, C5a `e06e283`, C5b `236412d`, C6 `3a9f97b`, C7 `79391ba` (+ `8e2898a`), C8 `f7cc053`, C9 `a1307fd`, C10 `72c16a2`, C11 the close-out commit. Final: PlayMode 68/68 (70, 2 explicit skipped); Unity golden check 3/3 seeds; `dotnet test` 62/62; the economy soak 9/9 within its bands in both runtimes.
+- **Consequences:**
+  - Unity is still the game. Engine-free code must stay at C# 10 and netstandard2.1 APIs, and a core change is checked in both runtimes (AGENTS.md, *Checking a change*).
+  - Compare .NET runs with .NET runs (F1). After a cutover, CoreCLR becomes the reference and its own baseline is recorded.
+  - The Godot spike (Phase 2) waits on the producer's go/no-go. The soak and scaling work (§3A #8) can now run headless, in seconds.
+  - The working plan `.agents/godot_phase01_plan.md` was deleted at close-out; its findings are in the epic's §6 and its soak data in `docs/economy-model.md` §7.

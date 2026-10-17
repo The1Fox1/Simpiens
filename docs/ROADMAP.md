@@ -37,7 +37,7 @@ This allows core simulation logic, player interface layers, and verification har
 flowchart LR
     subgraph Independent: Spatial & World Topology
         MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(COMPLETED)"]
-        CORE["Epic CORE\nEngine-Free Core &\nHeadless .NET\n(ACTIVE)"]
+        CORE["Epic CORE\nEngine-Free Core &\nHeadless .NET\n(COMPLETED)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -187,6 +187,7 @@ Simpiens is an **agent-first, decoupled simulation**. In this development paradi
 > - **xUnit v3** runs the .NET tests under `dotnet test`. The Unity Test Framework (NUnit) keeps running the Unity suite until a cutover.
 > - The table above stays as written until each retirement lands; Epic CORE updates it.
 > - **Progress (2026-10-17, Epic CORE C6):** no code uses UniTask any more (cognition, saves, the narrative hook and the persistence smoke use `Task`/`ValueTask`), and the `com.cysharp.unitask` package is removed from `Packages/manifest.json`. Engine-free code carries no VContainer attribute or lifecycle interface; VContainer is only Unity's composition root (`AppBootstrapper`) and the Unity-side services it builds.
+> - **Epic CORE completed (2026-10-17):** the core builds for .NET 10, where `Microsoft.Extensions.DependencyInjection` composes it (`dotnet/Simpiens.Hosting`) and xUnit v3 tests it (`dotnet/Simpiens.Core.Tests`). VContainer and the Unity Test Framework stay on the Unity side until a cutover.
 
 ### 2.2 Rejected 3rd-Party Frameworks & Handroll Policies
 
@@ -245,7 +246,7 @@ Progress against the consultant review [`docs/reviews/architecture_review.md`](r
 | 5 | Agent personality + utility "considerations" for target selection (§3.2, §2.7) | ✅ Done (2026-10-11) | `AgentPersonality` (5 traits, seeded; pen agents neutral), `Considerations` (reservation/minimum prices, bounty score, trait factors on goal priorities; neutral = unchanged). Live: `PriceResponseScenario` shows gradual demand (e.g. 6/5/5/1/1/0 buyers at 10–60g). Risk tolerance is reserved for Epic 10. |
 | 6 | Intent-handler registry, typed `InfluenceEvent`, gold ledger (§2.4) | ✅ Done | §1A.2 #4, #10, #13. `SimulationManager` down from ~1,500 to ~1,190 lines. The legacy string `InfluenceEvent` constructor still exists. |
 | 7 | Plain-C# `AgentState` + `AgentRegistry`; `AutonomousAgent` as view (§2.2) | ✅ Done | §1A.2 #2. Save/load delivered 2026-10-15: a session round-trips byte for byte through `SessionSave`. The last latent breach (the view fed the position, §1A.2 #16) was closed 2026-10-17 by Epic CORE C5a. |
-| 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). No `CognitionScheduler`. The economy soak exists (Epic Test-2), but there is no profiled scaling soak (`PopulationScalingProbe` is a one-off measurement). No measured agent budget. |
+| 8 | Profiled soak test → spatial-hash queries, per-thread planners, cognition scheduler (§2.5) | ⬜ Not started | `GoapPlanner` is still a locked singleton (§1A.2 #8). `CognitionScheduler` (Epic CORE C1) lands decisions on fixed ticks but doesn't budget them. The economy soak exists (Epic Test-2) and runs headless in seconds (`simpiens soak`, Epic CORE C10), as does a seed sweep of the outpost's day (`simpiens sweep`: 16 of 23 seeds pass, Epic CORE §6 F2), but there is no profiled scaling soak (`PopulationScalingProbe` is a one-off measurement). No measured agent budget. |
 | 9 | Gameplay scope, separate test asmdef, remove stub engine (§2.8) | ✅ Done (2026-10-11) | §1A.2 #9. All 40 PlayMode tests pass with the new assembly layout. Not verified: a player build (relies on the standard `UNITY_INCLUDE_TESTS` constraint). A dedicated `GameplayLifetimeScope` / ScriptableObject-driven session definition was not done (`AppBootstrapper` stays the single scope). |
 | 10a | One-page economy model: faucets, sinks, scarcity lever (§3.3) | ✅ Done (2026-10-15); producer play session passed | [docs/economy-model.md](economy-model.md). Decided under the producer's provisional authority, D1–D7 as recommended, then reviewed and merged by the producer (2026-10-15, PR #3): a caravan salvage quota (faucet), outpost upkeep (sink), fairness judged by each crawler's own valuation, crawlers' willingness to trade as the scarcity lever, food paced by data plus one behaviour fix, drifters deferred to Milestone 2. Every number is one `EconomyTuning` per session. The soak asserts a fair, a greedy and a generous player's pace band. Evidence: [Epic 9 §8.5](epics/epic-9.md). |
 | 10b | "Why?" agent inspector (§3.4) | 🟨 Groundwork | `DecisionSummary` (source tier + top 3 goal priorities) recorded on every intent and copied to `AgentState.LastDecision` on the main thread (2026-10-11). The inspector UI is not started (Track B). |
@@ -398,10 +399,10 @@ Before Epic 10: soak test and scaling work (#8).
 - **Deferred:** drifter churn (Milestone 2, §3.3 D7), descent gate (Epic 10), workshops (Milestone 3), cognition scaling (§3A #8). Map save/load was delivered with Milestone 1's whole-session save (2026-10-15). Open findings and their owners: [epic §6](epics/epic-map.md).
 
 ### Epic CORE: [Engine-Free Core and Headless .NET](epics/epic-core.md)
-- **Status**: ACTIVE (started 2026-10-17).
+- **Status**: COMPLETED (2026-10-17) on branch `feat/godot-migration`, pending the producer's review and merge (the branch is not pushed).
 - **What:** Phases 0 and 1 of the Unity-to-Godot migration write-up (Claude Docs, 2026-10-15). The simulation runs without an engine: the same source compiles in a Unity assembly that may not reference the engine and for `net10.0`, where a host steps ticks with no frames, and both produce the same world hashes. It pays off on any engine; Phases 2–4 (the Godot spike, view parity, cutover) wait on the spike's go/no-go and are not part of this epic.
 - **Producer decisions (2026-10-17):** Phases 0–1 approved as standalone work, under the agent's provisional authority; web builds are not needed; commit to Godot only after the spike; `Microsoft.Extensions.DependencyInjection` and xUnit v3 for .NET; the §2 retirements and the MCP SDK lift above.
-- **Chunks** (plan: `.agents/godot_phase01_plan.md`; branch `feat/godot-migration`):
+- **Chunks** (branch `feat/godot-migration`; the working plan was removed at close-out):
   - Phase 0, Decouple: C1 cognition on fixed ticks (§1A.2 #6, #15); C2 golden world-hash baselines; C3 `EntityId`; C4 engine-free maths; C5 entities as data (§1A.2 #16); C6 infrastructure out of the core; C7 the `Simpiens.Core` assembly (`noEngineReferences`). Gate: same world hash, PlayMode green.
   - Phase 1, Headless .NET: C8 the `dotnet/` solution; C9 xUnit v3 tests and headless DoD scenarios; C10 the console host; C11 CI and close-out. Gate: Unity and .NET hashes match.
 - **Progress:**
@@ -418,14 +419,16 @@ Before Epic 10: soak test and scaling work (#8).
   - C8 (`dotnet/`: the core for `netstandard2.1;net10.0`, the engine-free harness, MS.DI hosting and `HeadlessSimulation`) done 2026-10-17: a headless .NET 10 run reproduces Unity's golden hashes for all 3 seeds, 3,000 ticks in about 0.4 s.
   - C9 (xUnit v3: `dotnet/Simpiens.Core.Tests`) done 2026-10-17. Phase 1 gate: `dotnet test` 53/53 in about 4 s: the 44 engine-free validators (zero-allocation ones included), the golden hashes equal to Unity's baseline for all 3 seeds, same-seed determinism, and the outpost's three DoD scenarios headless with nothing injected (lifecycle 9,000 ticks, supply loop, save/load). Unity still green (PlayMode 68/68). Found: Unity's Mono and CoreCLR round some float expressions differently, so the runtimes agree on the golden seeds but drift apart on others (seed 1 from t5); each runtime reproduces itself exactly (epic §6 F1).
   - C10 (`simpiens`, the console host on the Generic Host: `run`, `sweep`, `soak`, `golden`) done 2026-10-17: the economy soak's 9 runs stay in their pace bands headless in about 4 s (Unity: about 26 minutes), and `dotnet test` runs them too (62/62). Found: the outpost's day passes on 16 of 23 seeds; 5 have a starving crawler, 2 a crawler with no cycle; Unity agrees on seed 11 (epic §6 F2, a balance question for the producer).
+  - C11 (CI and close-out) done 2026-10-17: `.github/workflows/dotnet.yml` builds and tests the .NET solution on Ubuntu with no Unity (not pushed); docs reconciled. Final check: PlayMode 68/68 (70, 2 explicit skipped); golden check in Unity 3/3 seeds; `dotnet test` 62/62.
+  - **Phase 1 (Headless .NET) is complete; Epic CORE is complete.** Definition of Done: the validators pass in Unity and under `dotnet test` (zero-allocation ones included); the outpost's DoD scenarios pass in Unity and headless with nothing injected; the golden hashes are equal in both runtimes. Open findings: epic §6 (F1 Mono and CoreCLR round some float chains differently; F2 the outpost's day fails on 7 of 23 seeds). Next on this path: the producer's review, then the Godot spike (Phase 2) on its go/no-go.
 
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; the active engine work is **Epic CORE** (Independent Epics, 2026-10-17); the soak and scaling work, §3A #8, stays next for Track A). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; **Epic CORE** is `COMPLETED` on its branch, awaiting the producer's review; next for Track A: the soak and scaling work, §3A #8, with Epic CORE's finding F2). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
 2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `ACTIVE` and touches every layer: check its plan before large refactors). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`: the simulation is engine-free in `Assets/Simpiens.Core/` and builds for .NET in `dotnet/`, see AGENTS.md). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

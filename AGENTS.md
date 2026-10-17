@@ -19,6 +19,20 @@ The simulation is engine-free and lives in its own assembly (Epic CORE):
 
 Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both). Unity's Mono and .NET's CoreCLR round some scalar float expressions differently: they agree on the golden seeds, not on every seed, so compare a .NET run with .NET runs and a Unity run with Unity runs (epic CORE §6 F1).
 
+### Checking a change
+A change to the core is checked in both runtimes: `dotnet test` takes seconds; the Unity suite takes minutes.
+
+| Check | Command | Needs |
+| :--- | :--- | :--- |
+| .NET tests (validators, golden hashes, the outpost's DoD scenarios, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
+| Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
+| Unity PlayMode suite | `scripts/run-playmode-tests.sh` | Unity, with the editor closed |
+| Golden hashes in Unity, one process per seed | `scripts/golden-hashes.sh check` (`record` only for a deliberate behaviour change, in its own commit) | Unity |
+| Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |
+| Save and load in a Linux player | `scripts/run-persistence-smoke.sh` | Unity |
+
+CI (`.github/workflows/dotnet.yml`) runs the .NET tests and the golden check on pushes to `main` and on pull requests; the Unity suite runs locally.
+
 ### Directories
 
 - **`Cognition/`**

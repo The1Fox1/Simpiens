@@ -111,8 +111,9 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
-Current Focus (engine): Epic CORE (Independent Epics, below) since 2026-10-17. Track A next: the soak test and
-scaling work (ROADMAP §3A #8) before Epic 10.
+Current Focus (engine): Epic CORE (Independent Epics, below) COMPLETED 2026-10-17 on its branch, awaiting the
+producer's review. Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
+before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
@@ -175,8 +176,8 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
 - Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
   since Section 3.3 (2026-10-15).
 
-Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT ENGINE FOCUS)
-(See docs/epics/epic-core.md; plan .agents/godot_phase01_plan.md; branch feat/godot-migration)
+Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (on branch feat/godot-migration, not merged)
+(See docs/epics/epic-core.md; the working plan was removed at close-out)
 - Phases 0-1 of the Unity-to-Godot migration write-up, approved by the producer as standalone work (pays off on any
   engine); the agent works under provisional authority. Phases 2-4 (Godot spike, view parity, cutover) are NOT in scope.
 - Producer decisions 2026-10-17: no web build; Godot only after the spike; Microsoft.Extensions.DependencyInjection and
@@ -202,3 +203,6 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   C10 (simpiens console host: run, sweep, soak, golden; Generic Host) done 2026-10-17: soak 9/9 in band headless in
   ~4 s; dotnet test 62/62. Finding F2: the outpost's day passes on 16/23 seeds (starvation on 5, no cycle on 2;
   Unity agrees on seed 11) - a pacing decision for the producer.
+  C11 (CI workflow .github/workflows/dotnet.yml, not pushed; docs reconciled) done 2026-10-17. PHASE 1 COMPLETE.
+  EPIC CORE COMPLETED: validators in both runtimes, DoD scenarios in Unity and headless, golden hashes equal.
+  Next on this path: the producer's review and merge, then the Godot spike (Phase 2) on its go/no-go.
