@@ -14,8 +14,8 @@ namespace Simpiens.Testing.Environment
     /// <summary>
     /// Milestone 1 closure, Phase 2 (ROADMAP §1A.1 rules 3–4): seeded randomness, reproducible entity ids, and
     /// intent application that doesn't depend on the order cognition results arrive in.
-    /// Scope: same-tick ordering. The tick on which an async cognition result arrives is still thread-timing dependent
-    /// (§1A.2 #6); that belongs to the multiplayer work.
+    /// Scope: same-tick ordering. The tick a decision lands on is fixed by the CognitionScheduler (§1A.2 #6, Epic CORE C1;
+    /// see CognitionSchedulerValidator).
     /// </summary>
     public class DeterminismValidator : IStartable
     {

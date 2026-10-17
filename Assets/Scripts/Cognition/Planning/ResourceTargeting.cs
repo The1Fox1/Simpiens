@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
@@ -131,7 +131,7 @@ namespace Simpiens.Cognition.Planning
         /// When the node is unreachable the intent carries no path, so the harvest handler reports PathBlocked
         /// and the consequence service blacklists the node — closing the feedback loop on the main thread.
         /// </summary>
-        public static async UniTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
+        public static async ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
         {
             if (pathfinder == null)
             {
@@ -292,7 +292,7 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// Paths toward a destination and wraps it in a WanderIntent; falls back to a short Idle when unroutable.
         /// </summary>
-        public static async UniTask<AgentIntent> BuildTravelIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, Vector2 destination)
+        public static async ValueTask<AgentIntent> BuildTravelIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, Vector2 destination)
         {
             if (pathfinder == null)
             {

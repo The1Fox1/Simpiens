@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
@@ -379,9 +378,10 @@ namespace Simpiens.Testing.Economy
             var goals = new List<GoapGoal> { new SatiateHungerGoal(), new FulfillBountyGoal(), new EarnIncomeGoal() };
             var evaluators = new ICognitiveEvaluator[] { new SurvivalUtilityEvaluator(null) };
 
-            bool completed = cognition.EvaluateAgentCognitionAsync(agent.State, grid, sim, null, new GoapPlanner(), BuildProductionGraph(), goals, evaluators)
-                .AsTask().Wait(TimeSpan.FromSeconds(5));
-            Assert(completed, "Cognition evaluation completed.");
+            cognition.BeginEvaluation(agent.State, grid, sim, null, new GoapPlanner(), BuildProductionGraph(), goals, evaluators);
+            Assert(sim.Cognition.PendingCount == 1, "Cognition evaluation dispatched.");
+            // Land the decision (dispatched at t0: no clock) without running a tick, so the intent is still unexecuted
+            sim.Cognition.ApplyDue(CognitionScheduler.LatencyTicks);
 
             var intent = agent.State.CurrentIntent;
             Assert(intent != null, "An intent was produced.");

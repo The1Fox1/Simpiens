@@ -93,7 +93,7 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 
 ## 4. Acceptance checklist (delivered work only; filled in as chunks land)
 
-*(nothing delivered yet)*
+- [x] **C1, cognition on fixed ticks (2026-10-17).** `CognitionScheduler` lands every decision dispatched on tick T at the start of T + 1, in agent-id order, behind a barrier; the evaluation returns a `CognitionResult` and writes only its scratch plan; the main-thread preparation is guarded. The cognition path uses `ValueTask` (no UniTask), and the pathfinder plans on the calling worker. Closes ROADMAP §1A.2 #6, #15, #18. Evidence: `CognitionSchedulerValidator` (6 tests); `DeterminismScenario` identical alone in 3 of 3 runs (it diverged at t100 in 5 of 5 cold runs before), with the pre-C1 milestones; PlayMode 66/66; economy soak within every pace band, fair 546–771g at 30 minutes as in §3.3.
 
 ### Deferred (owned elsewhere)
 - 64-bit `EntityId` (smaller saves and network messages): changes behaviour and the save format; belongs with the multiplayer wire format.
@@ -119,3 +119,4 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 
 ## History
 - 2026-10-17: epic created from the migration write-up's Phases 0–1; producer approval and decisions recorded (§0).
+- 2026-10-17: C1 done (cognition on fixed ticks).

@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Groups;
@@ -28,7 +28,7 @@ namespace Simpiens.Cognition.Planning.Actions
             return new WanderIntent(context.AgentId, new PathResponse());
         }
 
-        public override async UniTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
+        public override async ValueTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
         {
             Vector2 target = GetTargetLocation(context);
             if (_pathfinder == null || context.Snapshot == null)

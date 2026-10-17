@@ -406,6 +406,8 @@ namespace Simpiens.Simulation
 
         public uint SessionEpoch { get; private set; } = 1;
 
+        public Simpiens.Cognition.CognitionScheduler Cognition { get; } = new Simpiens.Cognition.CognitionScheduler();
+
         public void ProcessQueuedIntents()
         {
             // Cognition finishes in thread-pool order; apply this tick's arrivals in agent-id order instead
@@ -937,6 +939,9 @@ namespace Simpiens.Simulation
         public void ResetState()
         {
             SessionEpoch++;
+
+            // Decisions in flight belong to the old session: wait for them, release their snapshots, drop them
+            Cognition.Reset();
             while (_intentQueue.TryDequeue(out _)) { }
 
             // Player commands queued before a respawn or a load belong to the old session
@@ -996,7 +1001,10 @@ namespace Simpiens.Simulation
 
             SimLog.CurrentTick = tick;
 
-            // Process queued intents from background cognitive threads
+            // Decisions dispatched on earlier ticks land now, in agent-id order, whatever order they finished in
+            Cognition.ApplyDue(tick);
+
+            // Register queued intents (cognition's decisions just applied, plus any enqueued directly)
             ProcessQueuedIntents();
 
             uint currentTick = (uint)tick;

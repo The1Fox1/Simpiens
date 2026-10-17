@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
 
@@ -40,7 +40,7 @@ namespace Simpiens.Cognition.Evaluators
             }
         }
 
-        public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
+        public async ValueTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
             if (_goals.Count == 0) return null;
 

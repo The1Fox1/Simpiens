@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation;
@@ -38,7 +38,7 @@ namespace Simpiens.Cognition.Evaluators
             _seed = settings != null ? settings.Seed : SimulationSettings.DefaultSeed;
         }
 
-        public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
+        public async ValueTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
             // 1. Exhaustion Collapse Reflex
             if (context.Energy <= ExhaustionThreshold)

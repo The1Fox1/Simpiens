@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Cognition.Groups;
@@ -362,7 +361,7 @@ namespace Simpiens.Cognition
 
                 if (!State.IsEvaluating && _cognitionService != null)
                 {
-                    _cognitionService.EvaluateAgentCognitionAsync(
+                    _cognitionService.BeginEvaluation(
                         State,
                         _spatialPartition,
                         _simulationManager,
@@ -371,7 +370,7 @@ namespace Simpiens.Cognition
                         _actionGraph,
                         _goals,
                         _evaluators,
-                        _cts.Token).Forget();
+                        _cts.Token);
                 }
                 return;
             }
@@ -385,7 +384,7 @@ namespace Simpiens.Cognition
 
             if (_cognitionService != null)
             {
-                _cognitionService.EvaluateAgentCognitionAsync(
+                _cognitionService.BeginEvaluation(
                     State,
                     _spatialPartition,
                     _simulationManager,
@@ -394,7 +393,7 @@ namespace Simpiens.Cognition
                     _actionGraph,
                     _goals,
                     _evaluators,
-                    _cts.Token).Forget();
+                    _cts.Token);
             }
         }
 

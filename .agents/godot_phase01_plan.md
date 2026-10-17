@@ -66,4 +66,5 @@ Each chunk gets a local implementation plan before it starts (what changes, file
 
 | Chunk | Status | Commit | Tests |
 | :-: | :--- | :--- | :--- |
-| C0 | Done 2026-10-17 | (this commit) | Docs only; not run |
+| C0 | Done 2026-10-17 | `7bac9ac` | Docs only; not run. Baseline before any change: PlayMode 65/65 (67, 2 explicit skipped) |
+| C1 | Done 2026-10-17 | (this commit) | PlayMode 66/66 (68, 2 explicit skipped); `DeterminismScenario` alone identical 3/3, milestones unchanged (first cycle 235, scout 382, gather 605, third sleeper 865); soak 9/9 in band |

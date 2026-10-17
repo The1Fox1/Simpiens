@@ -186,4 +186,5 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   (noEngineReferences). Gate: same world hash, PlayMode green.
 - Phase 1, Headless .NET: C8 dotnet/ solution -> C9 xUnit v3 tests + headless DoD scenarios -> C10 console host ->
   C11 CI + close-out. Gate: Unity and .NET hashes match.
-- Progress: C0 (setup, docs) done 2026-10-17.
+- Progress: C0 (setup, docs) done 2026-10-17. C1 (cognition on fixed ticks: #6, #15, #18 resolved) done 2026-10-17;
+  PlayMode 66/66, DeterminismScenario identical alone 3/3, soak in band.

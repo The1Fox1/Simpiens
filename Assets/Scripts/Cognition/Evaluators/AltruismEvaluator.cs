@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
@@ -27,7 +27,7 @@ namespace Simpiens.Cognition.Evaluators
             _pathfinder = pathfinder;
         }
 
-        public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
+        public async ValueTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
             // Self-preservation (Hunger >= 50), perception, line of sight and the altruism threshold are
             // applied by the shared selector so the GOAP AidCompanion goal agrees with this reflex

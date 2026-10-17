@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
 using VContainer;
@@ -14,7 +14,7 @@ namespace Simpiens.Cognition.Pathfinding
 {
     public interface IAsyncPathfinder
     {
-        UniTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot);
+        ValueTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot);
     }
 
     /// <summary>
@@ -51,7 +51,11 @@ namespace Simpiens.Cognition.Pathfinding
             _responsePool.Enqueue(response);
         }
 
-        public async UniTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot)
+        /// <summary>
+        /// Plans a path on the calling thread. Cognition already runs off the main thread (<see cref="CognitionScheduler"/>),
+        /// so this no longer hops to the thread pool; the result is synchronous and the ValueTask allocates nothing.
+        /// </summary>
+        public ValueTask<PathResponse> CalculatePathAsync(PathRequest request, SharedWorldSnapshot snapshot)
         {
             if (snapshot == null)
             {
@@ -59,26 +63,23 @@ namespace Simpiens.Cognition.Pathfinding
                 emptyResponse.Length = 0;
                 emptyResponse.IsValid = false;
                 emptyResponse.IsComplete = true;
-                return emptyResponse;
+                return new ValueTask<PathResponse>(emptyResponse);
             }
 
-            // Retain snapshot before sending to worker thread to ensure it stays alive.
+            // Retained for the search, as the caller may release its own hold meanwhile
             snapshot.Retain();
 
             try
             {
-                // Jumps off the main thread cleanly for zero-allocation background work
-                await UniTask.SwitchToThreadPool();
                 var response = ProcessRequest(request, snapshot);
                 if (!response.IsValid && SimLog.Traces(SimLog.Navigation, Microsoft.Extensions.Logging.LogLevel.Trace, request.RequesterId))
                 {
                     SimLog.Navigation.ZLogTrace($"No path for {SimLog.Agent(request.RequesterId)} from {request.StartPosition} to {request.TargetPosition}");
                 }
-                return response;
+                return new ValueTask<PathResponse>(response);
             }
             finally
             {
-                // Safe release once the background work is completed.
                 snapshot.Release();
             }
         }

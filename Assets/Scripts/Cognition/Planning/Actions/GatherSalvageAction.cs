@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Economy;
@@ -36,11 +36,11 @@ namespace Simpiens.Cognition.Planning.Actions
             return new HarvestResourceIntent(context.AgentId, target.EntityId, null);
         }
 
-        public override UniTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
+        public override ValueTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
         {
             if (!TrySelectTarget(context, out var target, out int units))
             {
-                return UniTask.FromResult(ResourceTargeting.MissingTargetIntent(context));
+                return new ValueTask<AgentIntent>(ResourceTargeting.MissingTargetIntent(context));
             }
             return ResourceTargeting.BuildHarvestIntentAsync(context, _pathfinder, target, units);
         }

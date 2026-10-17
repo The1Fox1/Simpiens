@@ -17,9 +17,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
     /// full runs). The live outpost runs twice from a respawn with the same seed, and the world is hashed every
     /// <see cref="SampleEveryTicks"/> ticks up to <see cref="HorizonTicks"/> (<see cref="WorldStateHash"/>). The two
     /// runs must be identical at every sample; a failure names the first tick and what differs.
-    /// This rests on cognition results arriving on the same tick in both runs. Which tick a result arrives on still
-    /// depends on thread timing (ROADMAP §1A.2 #6); on this machine, at 10x, it has not varied. A slower or busier
-    /// machine could break it before anything else changes.
+    /// Decisions land on a fixed tick (the CognitionScheduler, ROADMAP §1A.2 #6, resolved by Epic CORE C1), so this holds
+    /// alone or inside the suite, on a quiet or a busy machine.
     /// </summary>
     public class DeterminismScenario : ISimulationScenario
     {

@@ -435,6 +435,22 @@ namespace Simpiens.Tests.PlayMode
             validator.RunAllValidationTests();
         }
 
+        /// <summary>Epic CORE C1: decisions land at T + 1 in agent-id order, applied on the main thread.</summary>
+        [Test]
+        public void Scenario_CognitionScheduler_AllDomainValidationTestsPass()
+        {
+            // Two cases fail on purpose (a preparation and an evaluation that throw), and the scheduler logs them as errors
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
+                new Simpiens.Testing.Environment.CognitionSchedulerValidator().RunAllValidationTests();
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
+        }
+
         [Test]
         public void Scenario_SimulationManagerModularization_AllDomainValidationTestsPass()
         {

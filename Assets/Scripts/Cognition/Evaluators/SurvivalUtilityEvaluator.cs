@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
@@ -23,7 +23,7 @@ namespace Simpiens.Cognition.Evaluators
             _pathfinder = pathfinder;
         }
 
-        public async UniTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
+        public async ValueTask<AgentIntent> EvaluateAsync(AgentContext context, CancellationToken ct)
         {
             if (context.Hunger < HighHungerThreshold) return null;
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Cysharp.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Cognition.Memory;
@@ -31,7 +30,7 @@ namespace Simpiens.Testing.Planning
             ValidateSequentialStepProgression();
             ValidateSimulationManagerAbort();
             ValidatePlanInvalidationOnFailure();
-            ValidateGoapCognitiveEvaluatorIntegration().Forget();
+            ValidateGoapCognitiveEvaluatorIntegration();
             ValidateZeroAllocationWorldStateBenchmark();
 
             Debug.Log("<color=green>[PlanExecutionValidator] ALL TESTS PASSED SUCCESSFULLY!</color>");
@@ -171,7 +170,7 @@ namespace Simpiens.Testing.Planning
             Debug.Log("[PASS] Test 4: Plan invalidation on failure passed.");
         }
 
-        private async UniTaskVoid ValidateGoapCognitiveEvaluatorIntegration()
+        private void ValidateGoapCognitiveEvaluatorIntegration()
         {
             var planner = new GoapPlanner();
             var graph = new ActionGraph();
@@ -197,7 +196,8 @@ namespace Simpiens.Testing.Planning
 
             // Agent is hungry and knows no resources -> evaluator should plan Search -> Travel -> Harvest
             // and return the first action's intent (WanderIntent from SearchResourceAction)
-            var intent = await evaluator.EvaluateAsync(context, default);
+            // Synchronous: the evaluation runs on the calling thread (Epic CORE C1), so its asserts run inside the test
+            var intent = evaluator.EvaluateAsync(context, default).AsTask().GetAwaiter().GetResult();
 
             Assert(intent != null, "GoapCognitiveEvaluator generated an intent.");
             Assert(intent is WanderIntent, "First intent is WanderIntent from SearchResourceAction.");

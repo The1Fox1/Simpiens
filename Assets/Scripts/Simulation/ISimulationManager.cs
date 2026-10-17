@@ -46,5 +46,11 @@ namespace Simpiens.Simulation
 
         /// <summary>The current session's number: starts at 1, and every ResetState (respawn) starts a new one.</summary>
         uint SessionEpoch { get; }
+
+        /// <summary>
+        /// Cognition on fixed ticks (ROADMAP §1A.2 #6): evaluations in flight, applied at the start of their due tick in
+        /// agent-id order. Never null on <c>SimulationManager</c>.
+        /// </summary>
+        Simpiens.Cognition.CognitionScheduler Cognition { get; }
     }
 }

@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using UnityEngine;
@@ -39,7 +39,7 @@ namespace Simpiens.Cognition.Planning.Actions
             return new ShareResourceIntent(context.AgentId, peerId, null);
         }
 
-        public override async UniTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
+        public override async ValueTask<AgentIntent> CreateIntentAsync(AgentContext context, CancellationToken ct = default)
         {
             if (_pathfinder == null || !AltruismTargeting.TrySelectDistressedPeer(context, out var peerId, out var peerPosition, out _))
             {

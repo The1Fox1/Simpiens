@@ -1,5 +1,4 @@
 using System;
-using Cysharp.Threading.Tasks;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
@@ -84,7 +83,7 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(new WorldRegistry(), null);
 
             // Defensive null-safety verification: null spatial partition and null clock
-            cognitionService.EvaluateAgentCognitionAsync(state, null, simManager, null, null, null, null, null, default).Forget();
+            cognitionService.BeginEvaluation(state, null, simManager, null, null, null, null, null, default);
 
             Assert(state != null, "State remains valid during headless cognition evaluation.");
             Debug.Log("[PASS] Test 2: Headless context formulation and cognitive service null-safety verified.");
