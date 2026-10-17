@@ -3,7 +3,6 @@ using MemoryPack;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Unity.Collections.LowLevel.Unsafe;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Persistence
 {
@@ -15,13 +14,13 @@ namespace Simpiens.Testing.Persistence
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[PersistenceToolchainValidator] Beginning MemoryPack toolchain validation...");
+            TestLog.Log("[PersistenceToolchainValidator] Beginning MemoryPack toolchain validation...");
 
             ValidateProductionTypeRoundTrips();
             ValidateTestAssemblyTypeRoundTrips();
             ValidateUnmanagedRecordsAreMemoryCopies();
 
-            Debug.Log("<color=green>[PersistenceToolchainValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[PersistenceToolchainValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         /// <summary>The generator ran in Simpiens: the save header round-trips field for field.</summary>

@@ -2,8 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Navigation
 {
@@ -11,7 +9,7 @@ namespace Simpiens.Testing.Navigation
     /// Automated domain validation suite for Section 2.6:
     /// High-Performance Zero-Allocation Grid A* Navigation Engine.
     /// </summary>
-    public class GridAStarValidator : IStartable
+    public class GridAStarValidator
     {
         public void Start()
         {
@@ -20,7 +18,7 @@ namespace Simpiens.Testing.Navigation
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[GridAStarValidator] Beginning automated validation of 2D Grid A* Navigation Engine...");
+            TestLog.Log("[GridAStarValidator] Beginning automated validation of 2D Grid A* Navigation Engine...");
 
             ValidateDirectUnobstructedPath();
             ValidateObstacleDetour();
@@ -32,7 +30,7 @@ namespace Simpiens.Testing.Navigation
             ValidateHearthOnCellCornerKeepsCorridorOpen();
             ValidateSmoothedPathKeepsClearOfHearth();
 
-            Debug.Log("<color=green>[GridAStarValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GridAStarValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private SharedWorldSnapshot CreateTestSnapshot(int width = 30, int height = 30, float cellSize = 1.0f)
@@ -64,7 +62,7 @@ namespace Simpiens.Testing.Navigation
             Assert(Vec2.Distance(response.Waypoints[0], request.StartPosition) < 0.05f, "Start waypoint must match start position.");
             Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Goal waypoint must reach target.");
 
-            Debug.Log("[PASS] Test 1: Direct unobstructed path collapsed to optimal 2-point direct vector.");
+            TestLog.Log("[PASS] Test 1: Direct unobstructed path collapsed to optimal 2-point direct vector.");
         }
 
         private void ValidateObstacleDetour()
@@ -108,7 +106,7 @@ namespace Simpiens.Testing.Navigation
                 }
             }
 
-            Debug.Log("[PASS] Test 2: Obstacle detour successfully circumnavigated vertical barrier.");
+            TestLog.Log("[PASS] Test 2: Obstacle detour successfully circumnavigated vertical barrier.");
         }
 
         private void ValidateDoorwayTraversal()
@@ -155,7 +153,7 @@ namespace Simpiens.Testing.Navigation
             }
             Assert(traversedDoorway, "Path must travel north through the doorway gap at Y=3..4.");
 
-            Debug.Log("[PASS] Test 3: Doorway traversal navigated through narrow room portal.");
+            TestLog.Log("[PASS] Test 3: Doorway traversal navigated through narrow room portal.");
         }
 
         private void ValidateCornerCuttingClearance()
@@ -192,7 +190,7 @@ namespace Simpiens.Testing.Navigation
                 }
             }
 
-            Debug.Log("[PASS] Test 4: Corner-cutting prevention enforced for diagonal navigation.");
+            TestLog.Log("[PASS] Test 4: Corner-cutting prevention enforced for diagonal navigation.");
         }
 
         private void ValidateEnclosedUnreachableTarget()
@@ -230,7 +228,7 @@ namespace Simpiens.Testing.Navigation
             Assert(!success || !response.IsValid, "Path search to fully enclosed target must report failure.");
             Assert(response.Length == 0, "Failed path must have 0 length.");
 
-            Debug.Log("[PASS] Test 5: Fully enclosed target terminated safely without errors.");
+            TestLog.Log("[PASS] Test 5: Fully enclosed target terminated safely without errors.");
         }
 
         /// <summary>
@@ -279,7 +277,7 @@ namespace Simpiens.Testing.Navigation
             Assert(success && response.IsValid, "A hearth on a cell corner must not seal a two-cell corridor.");
             Assert(Vec2.Distance(response.Waypoints[response.Length - 1], request.TargetPosition) < 0.05f, "Path must reach the far side of the hearth.");
 
-            Debug.Log("[PASS] Test 8: Hearth on a cell corner blocks only its own cell; the corridor stays open.");
+            TestLog.Log("[PASS] Test 8: Hearth on a cell corner blocks only its own cell; the corridor stays open.");
         }
 
         /// <summary>
@@ -319,7 +317,7 @@ namespace Simpiens.Testing.Navigation
                 $"Smoothed path must keep {GridAStarSearcher.PropClearance} from the hearth (closest {closest:F2}).");
             Assert(snapshot.HasLineOfSight(request.StartPosition, request.TargetPosition), "Agents still see over the hearth.");
 
-            Debug.Log($"[PASS] Test 9: Smoothed path keeps clear of a hearth (closest approach {closest:F2}, {response.Length} waypoints).");
+            TestLog.Log($"[PASS] Test 9: Smoothed path keeps clear of a hearth (closest approach {closest:F2}, {response.Length} waypoints).");
         }
 
         private void ValidatePathSmoothing()
@@ -355,7 +353,7 @@ namespace Simpiens.Testing.Navigation
             // Direct straight line along X = 0 from Y = 0 to Y = 10 is clear
             Assert(response.Length == 2, $"Raycast smoothing should reduce unobstructed straight corridor to 2 waypoints, got {response.Length}.");
 
-            Debug.Log("[PASS] Test 6: Raycast string-pulling collapsed straight segments into minimal waypoints.");
+            TestLog.Log("[PASS] Test 6: Raycast string-pulling collapsed straight segments into minimal waypoints.");
         }
 
         private void ValidateZeroAllocationAndConcurrency()
@@ -414,7 +412,7 @@ namespace Simpiens.Testing.Navigation
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 searches.");
 
-            Debug.Log($"[PASS] Test 7: Multi-threaded concurrency passed (1,000 queries across 4 workers) and strictly 0 bytes allocated across 1,000 searches.");
+            TestLog.Log($"[PASS] Test 7: Multi-threaded concurrency passed (1,000 queries across 4 workers) and strictly 0 bytes allocated across 1,000 searches.");
         }
 
         private static void Assert(bool condition, string message)

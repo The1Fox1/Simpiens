@@ -7,8 +7,6 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Environment
 {
@@ -17,7 +15,7 @@ namespace Simpiens.Testing.Environment
     /// Pure C# AgentState, Headless Lifecycle, Decoupled Cognition & Consequence Ownership,
     /// Backward-Compatible MonoBehaviour Façade, and Zero-Allocation Invariants.
     /// </summary>
-    public class AgentStateValidator : IStartable
+    public class AgentStateValidator
     {
         public void Start()
         {
@@ -26,7 +24,7 @@ namespace Simpiens.Testing.Environment
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[AgentStateValidator] Beginning Section 2.2 AgentState Domain Validation...");
+            TestLog.Log("[AgentStateValidator] Beginning Section 2.2 AgentState Domain Validation...");
 
             ValidateHeadlessLifecycle();
             ValidateHeadlessContextAndCognition();
@@ -34,7 +32,7 @@ namespace Simpiens.Testing.Environment
             ValidateFacadeIntegration();
             ValidateZeroAllocationTickBenchmark();
 
-            Debug.Log("<color=green>[AgentStateValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[AgentStateValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateHeadlessLifecycle()
@@ -64,7 +62,7 @@ namespace Simpiens.Testing.Environment
             Assert(!state.IsInTantrum, "Agent should exit tantrum after duration expires.");
             Assert(state.VisualState == AgentVisualState.Idle, "VisualState should return to Idle.");
 
-            Debug.Log("[PASS] Test 1: Headless AgentState lifecycle and biological drive decay verified (0 GameObjects).");
+            TestLog.Log("[PASS] Test 1: Headless AgentState lifecycle and biological drive decay verified (0 GameObjects).");
         }
 
         private void ValidateHeadlessContextAndCognition()
@@ -86,7 +84,7 @@ namespace Simpiens.Testing.Environment
             cognitionService.BeginEvaluation(state, null, simManager, null, null, null, null, null, default);
 
             Assert(state != null, "State remains valid during headless cognition evaluation.");
-            Debug.Log("[PASS] Test 2: Headless context formulation and cognitive service null-safety verified.");
+            TestLog.Log("[PASS] Test 2: Headless context formulation and cognitive service null-safety verified.");
         }
 
         private void ValidateConsequenceOwnership()
@@ -108,7 +106,7 @@ namespace Simpiens.Testing.Environment
             consequenceService.ApplyConsequences(state, harvestIntent, IntentResult.Success, 51);
             Assert(state.Hunger == 0f, $"Expected hunger 0f after second harvest, actual: {state.Hunger}");
 
-            Debug.Log("[PASS] Test 3: Authoritative AgentConsequenceService consequence ownership verified.");
+            TestLog.Log("[PASS] Test 3: Authoritative AgentConsequenceService consequence ownership verified.");
         }
 
         private void ValidateFacadeIntegration()
@@ -127,7 +125,7 @@ namespace Simpiens.Testing.Environment
             Assert(agent.Position == new Vec2(33f, 44f), "SetLogicalPosition must synchronize agent.Position.");
 
             HeadlessEntities.Remove(null, goCrawler);
-            Debug.Log("[PASS] Test 4: Backward-compatible AutonomousAgent MonoBehaviour façade integration verified.");
+            TestLog.Log("[PASS] Test 4: Backward-compatible AutonomousAgent MonoBehaviour façade integration verified.");
         }
 
         private void ValidateZeroAllocationTickBenchmark()
@@ -150,7 +148,7 @@ namespace Simpiens.Testing.Environment
             long delta = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
 
             Assert(delta == 0, $"Tick benchmark allocated {delta} bytes across 1,000 ticks (expected 0).");
-            Debug.Log("[PASS] Test 5: Zero heap allocation verified on AgentState.Tick (0 bytes across 1,000 ticks).");
+            TestLog.Log("[PASS] Test 5: Zero heap allocation verified on AgentState.Tick (0 bytes across 1,000 ticks).");
         }
 
         private void Assert(bool condition, string message)

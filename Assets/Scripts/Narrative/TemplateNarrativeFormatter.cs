@@ -16,7 +16,6 @@ namespace Simpiens.Narrative
         {
         }
 
-        [VContainer.Inject]
         public TemplateNarrativeFormatter(
             IAgentIdentityService identityService = null,
             IFacilityZoneService zoneService = null)

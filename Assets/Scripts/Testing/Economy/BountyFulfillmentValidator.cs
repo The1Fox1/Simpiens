@@ -11,22 +11,20 @@ using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
     /// <summary>
     /// Automated headless domain validation suite for Epic 9 Slice 3:
     /// The Public Bounty Board & Player Intervention Pipeline.
-    /// Runs on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// </summary>
-    public class BountyFulfillmentValidator : IStartable
+    public class BountyFulfillmentValidator
     {
         public void Start()
         {
-            Debug.Log("[BountyFulfillmentValidator] Beginning automated validation of Epic 9 Slice 3...");
+            TestLog.Log("[BountyFulfillmentValidator] Beginning automated validation of Epic 9 Slice 3...");
 
             ValidateBountyContractLayoutAndZeroAlloc();
             ValidatePlayerInterventionPostBounty();
@@ -37,7 +35,7 @@ namespace Simpiens.Testing.Economy
             ValidateGOAPBountyChainResolution();
             ValidatePlayerInterventionCancelBounty();
 
-            Debug.Log("<color=green>[BountyFulfillmentValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBountyContractLayoutAndZeroAlloc()
@@ -97,7 +95,7 @@ namespace Simpiens.Testing.Economy
             snapshot.Clear();
             Assert(snapshot.ActiveBountyCount == 0, "Snapshot cleared active bounties.");
 
-            Debug.Log("[BountyFulfillmentValidator] Test 1 Passed: BountyContract unmanaged layout & snapshot buffering verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 1 Passed: BountyContract unmanaged layout & snapshot buffering verified.");
         }
 
         private void ValidatePlayerInterventionPostBounty()
@@ -127,7 +125,7 @@ namespace Simpiens.Testing.Economy
             Assert(simManager.TryGetTradeStall(stallId, out var updatedStall), "Stall found.");
             Assert(updatedStall.TreasuryGold == 450, $"Stall treasury is {updatedStall.TreasuryGold} instead of 450 (escrow deducted).");
 
-            Debug.Log("[BountyFulfillmentValidator] Test 2 Passed: Player intervention PostBounty and gold escrow verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 2 Passed: Player intervention PostBounty and gold escrow verified.");
         }
 
         private void ValidateClaimBountyAtomic()
@@ -162,7 +160,7 @@ namespace Simpiens.Testing.Economy
 
             registry?.Unregister(node1);
             registry?.Unregister(node2);
-            Debug.Log("[BountyFulfillmentValidator] Test 3 Passed: Atomic bounty claiming and double-claim prevention verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 3 Passed: Atomic bounty claiming and double-claim prevention verified.");
         }
 
         private void ValidateBountyExpirationAndEscrowRefund()
@@ -195,7 +193,7 @@ namespace Simpiens.Testing.Economy
             Assert(simManager.TryGetTradeStall(stallId, out var refundedStall), "Stall retrieved.");
             Assert(refundedStall.TreasuryGold == 500, $"Stall treasury is {refundedStall.TreasuryGold} instead of 500 (refunded).");
 
-            Debug.Log("[BountyFulfillmentValidator] Test 4 Passed: Bounty expiration and escrow refund verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 4 Passed: Bounty expiration and escrow refund verified.");
         }
 
         private void ValidateDeliverBountyAtomicTransfer()
@@ -243,7 +241,7 @@ namespace Simpiens.Testing.Economy
             Assert(completedBounty.Status == BountyStatus.Completed, "Bounty status is Completed.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[BountyFulfillmentValidator] Test 5 Passed: Atomic bounty delivery, item removal, gold award, and stall restocking verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 5 Passed: Atomic bounty delivery, item removal, gold award, and stall restocking verified.");
         }
 
         private void ValidateDeliverBountyAffinityReward()
@@ -275,7 +273,7 @@ namespace Simpiens.Testing.Economy
             Assert(aff.Respect == 10, $"Affinity Respect is {aff.Respect} instead of 10.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[BountyFulfillmentValidator] Test 6 Passed: Dyadic Trade-to-Affinity boost (+15 Trust, +10 Warmth, +10 Respect) verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 6 Passed: Dyadic Trade-to-Affinity boost (+15 Trust, +10 Warmth, +10 Respect) verified.");
         }
 
         private void ValidateGOAPBountyChainResolution()
@@ -318,7 +316,7 @@ namespace Simpiens.Testing.Economy
             Assert(plan.Actions[1] == travelStall, "Step 2 is TravelToStallAction.");
             Assert(plan.Actions[2] == deliverAction, "Step 3 is DeliverBountyAction.");
 
-            Debug.Log("[BountyFulfillmentValidator] Test 7 Passed: GOAP bounty chain resolution (ClaimGather -> Travel -> Deliver) verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 7 Passed: GOAP bounty chain resolution (ClaimGather -> Travel -> Deliver) verified.");
         }
 
         private void ValidatePlayerInterventionCancelBounty()
@@ -351,7 +349,7 @@ namespace Simpiens.Testing.Economy
             Assert(simManager.TryGetTradeStall(stallId, out var refundedStall), "Stall found.");
             Assert(refundedStall.TreasuryGold == 500, $"Stall treasury is {refundedStall.TreasuryGold} instead of 500.");
 
-            Debug.Log("[BountyFulfillmentValidator] Test 8 Passed: Player intervention CancelBounty and escrow refund verified.");
+            TestLog.Log("[BountyFulfillmentValidator] Test 8 Passed: Player intervention CancelBounty and escrow refund verified.");
         }
 
         private void Assert(bool condition, string message)

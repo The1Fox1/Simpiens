@@ -1,6 +1,5 @@
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Contracts
 {

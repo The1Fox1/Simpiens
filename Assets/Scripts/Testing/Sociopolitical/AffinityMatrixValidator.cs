@@ -4,9 +4,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Cognition.Social;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
@@ -15,11 +12,11 @@ namespace Simpiens.Testing.Sociopolitical
     /// The 4-Axis Social Affinity Matrix (Warmth, Trust, Fear, Respect),
     /// Selective Socialization, and GOAP Relational Facts.
     /// </summary>
-    public class AffinityMatrixValidator : IStartable
+    public class AffinityMatrixValidator
     {
         public void Start()
         {
-            Debug.Log("[AffinityMatrixValidator] Beginning automated validation of 4-Axis Social Affinity Matrix...");
+            TestLog.Log("[AffinityMatrixValidator] Beginning automated validation of 4-Axis Social Affinity Matrix...");
 
             ValidateAffinityRecordDynamicsAndRegression();
             ValidateGossipRelationalEvolution();
@@ -27,7 +24,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateWorldStateRelationalFactMapping();
             ValidateZeroAllocationAffinityBenchmark();
 
-            Debug.Log("<color=green>[AffinityMatrixValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[AffinityMatrixValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAffinityRecordDynamicsAndRegression()
@@ -62,7 +59,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(fullyNeutralized.Warmth == 0 && fullyNeutralized.Trust == 0 && fullyNeutralized.Fear == 0 && fullyNeutralized.Respect == 0,
                 "All relational valences regressed to neutral baseline over 19,000 ticks.");
 
-            Debug.Log("[PASS] Test 1: 4-Axis AffinityRecord clamping and temporal regression verified.");
+            TestLog.Log("[PASS] Test 1: 4-Axis AffinityRecord clamping and temporal regression verified.");
         }
 
         private void ValidateGossipRelationalEvolution()
@@ -96,7 +93,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(affAtoB2.Respect == 10, $"Respect accumulated to 10 (actual: {affAtoB2.Respect})");
             Assert(affAtoB2.IsTrusted, "Peer now qualifies as trusted (Trust >= 20).");
 
-            Debug.Log("[PASS] Test 2: Gossip relational evolution across 4 axes verified.");
+            TestLog.Log("[PASS] Test 2: Gossip relational evolution across 4 axes verified.");
         }
 
         private void ValidateSelectiveSocializationAndRefusal()
@@ -122,7 +119,7 @@ namespace Simpiens.Testing.Sociopolitical
             bool fearRefused = !memA.TryGossip(memC, idC, idA, currentTick: 100);
             Assert(fearRefused, "Gossip refused due to excessive fear.");
 
-            Debug.Log("[PASS] Test 3: Selective socialization and gossip refusal under distrust/fear verified.");
+            TestLog.Log("[PASS] Test 3: Selective socialization and gossip refusal under distrust/fear verified.");
         }
 
         private void ValidateWorldStateRelationalFactMapping()
@@ -162,7 +159,7 @@ namespace Simpiens.Testing.Sociopolitical
             float allyPriority = socializeGoal.CalculatePriority(contextPopulated);
             Assert(allyPriority > neutralPriority, $"SocializeGoal priority increased when warm/trusted companions are known ({allyPriority} > {neutralPriority}).");
 
-            Debug.Log("[PASS] Test 4: GOAP WorldState relational fact mapping and goal priority weighting verified.");
+            TestLog.Log("[PASS] Test 4: GOAP WorldState relational fact mapping and goal priority weighting verified.");
         }
 
         private void ValidateZeroAllocationAffinityBenchmark()
@@ -203,7 +200,7 @@ namespace Simpiens.Testing.Sociopolitical
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero-allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 relational evaluations.");
 
-            Debug.Log("[PASS] Test 5: Strict zero-allocation guarantee verified (0 bytes across 1,000 evaluations).");
+            TestLog.Log("[PASS] Test 5: Strict zero-allocation guarantee verified (0 bytes across 1,000 evaluations).");
         }
 
         private static void Assert(bool condition, string message)

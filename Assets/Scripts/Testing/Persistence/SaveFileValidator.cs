@@ -3,8 +3,6 @@ using System.IO;
 using Simpiens.Core.Session;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Persistence
 {
@@ -17,13 +15,13 @@ namespace Simpiens.Testing.Persistence
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[SaveFileValidator] Beginning save file validation...");
+            TestLog.Log("[SaveFileValidator] Beginning save file validation...");
 
             ValidateFileRoundTrips();
             ValidateBadFilesAreRefused();
             ValidateQuickSaveSlot();
 
-            Debug.Log("<color=green>[SaveFileValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SaveFileValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateFileRoundTrips()
@@ -36,7 +34,7 @@ namespace Simpiens.Testing.Persistence
             Assert(back.Header.Tick == 1234 && back.Economy.Stalls.Length == 1 && back.Economy.Stalls[0].TreasuryGold == 321, "The game in the file is the game that was saved.");
             AssertSameBytes(file, SaveFile.Encode(back), "Encoding the decoded save");
 
-            Debug.Log($"[PASS] Test 1: a save file ({file.Length} bytes) round-trips.");
+            TestLog.Log($"[PASS] Test 1: a save file ({file.Length} bytes) round-trips.");
         }
 
         private void ValidateBadFilesAreRefused()
@@ -58,7 +56,7 @@ namespace Simpiens.Testing.Persistence
             ExpectRefusal(System.Text.Encoding.UTF8.GetBytes("not a save at all, just text"), "not a Simpiens save", "a text file");
             ExpectRefusal(Array.Empty<byte>(), "not a Simpiens save", "an empty file");
 
-            Debug.Log("[PASS] Test 2: another format, a cut-off file, a damaged file and a file that isn't a save are each refused with a reason.");
+            TestLog.Log("[PASS] Test 2: another format, a cut-off file, a damaged file and a file that isn't a save are each refused with a reason.");
         }
 
         private void ExpectRefusal(byte[] file, string expectedWords, string what)
@@ -71,7 +69,7 @@ namespace Simpiens.Testing.Persistence
 
         private void ValidateQuickSaveSlot()
         {
-            string directory = Path.Combine(Application.temporaryCachePath, "SaveFileValidator");
+            string directory = Path.Combine(Path.GetTempPath(), "Simpiens", "SaveFileValidator");
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
 
             var session = new FakeSession { Next = SampleSave(777) };
@@ -100,7 +98,7 @@ namespace Simpiens.Testing.Persistence
             Assert(!bad.Succeeded && bad.Message.Contains("not a Simpiens save"), $"A bad slot is refused ({bad.Message}).");
 
             Directory.Delete(directory, true);
-            Debug.Log("[PASS] Test 3: the quick-save slot writes, replaces and loads its save, and refuses an empty, refused or bad slot.");
+            TestLog.Log("[PASS] Test 3: the quick-save slot writes, replaces and loads its save, and refuses an empty, refused or bad slot.");
         }
 
         private static SessionSave SampleSave(long tick)

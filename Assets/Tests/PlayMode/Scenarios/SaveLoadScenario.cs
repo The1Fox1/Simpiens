@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using Simpiens.Core.Session;
 using Simpiens.Simulation;
@@ -92,7 +91,8 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             sim.TryGetBounty(OutpostSession.SeedGatherBountyId, out _gatherAtSave);
             _savedHash = WorldStateHash.Capture(_saveTick, spawner.Host, sim, sectors, includeWork: false);
             var saving = slot.QuickSaveAsync(); // captures now, between ticks; the file is written off the main thread
-            yield return saving.ToCoroutine(outcome => _saved = outcome);
+            while (!saving.IsCompleted) yield return null;
+            _saved = saving.Result;
             if (!_saved.Succeeded) yield break;
 
             // 2. A fresh session with its own history, then the load

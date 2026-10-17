@@ -6,7 +6,6 @@
         "UnityEditor.TestRunner",
         "Simpiens",
         "VContainer",
-        "UniTask",
         "Unity.InputSystem",
         "Simpiens.Testing"
     ],

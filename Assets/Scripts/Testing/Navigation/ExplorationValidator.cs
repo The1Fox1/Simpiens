@@ -6,7 +6,6 @@ using Simpiens.Cognition.Planning;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
 
 namespace Simpiens.Testing.Navigation
 {
@@ -22,7 +21,7 @@ namespace Simpiens.Testing.Navigation
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[ExplorationValidator] Beginning exploration validation...");
+            TestLog.Log("[ExplorationValidator] Beginning exploration validation...");
 
             ValidateNoMapKeepsRandomBearing();
             ValidateWaypointsLieInOtherSectors();
@@ -31,7 +30,7 @@ namespace Simpiens.Testing.Navigation
             ValidateSingleSectorMapFallsBack();
             ValidateSearchTriesTheLeastRecentlyVisitedSector();
 
-            Debug.Log("<color=green>[ExplorationValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[ExplorationValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateNoMapKeepsRandomBearing()
@@ -46,7 +45,7 @@ namespace Simpiens.Testing.Navigation
                     Assert(d >= 4.99f && d <= 9.01f, $"Without a map the waypoint is 5-9 away (got {d:F2}).");
                 }
             }
-            Debug.Log("[PASS] Test 1: Without a map, exploration keeps the 5-9 unit random bearing.");
+            TestLog.Log("[PASS] Test 1: Without a map, exploration keeps the 5-9 unit random bearing.");
         }
 
         private void ValidateWaypointsLieInOtherSectors()
@@ -79,7 +78,7 @@ namespace Simpiens.Testing.Navigation
                 if (s.Id == Floor1Layout.HubSectorId) continue;
                 Assert(picked[s.Id], $"Sector {s.Name} is picked at least once from the Hub.");
             }
-            Debug.Log($"[PASS] Test 2: From the Hub, {Agents}x{Windows} waypoints all lie, walkable, in other sectors; every sector is visited.");
+            TestLog.Log($"[PASS] Test 2: From the Hub, {Agents}x{Windows} waypoints all lie, walkable, in other sectors; every sector is visited.");
         }
 
         private void ValidateDeterministicPerWindow()
@@ -96,7 +95,7 @@ namespace Simpiens.Testing.Navigation
                 if (next != first) changed++;
             }
             Assert(changed >= Agents / 2, $"A new window gives most agents a new waypoint ({changed}/{Agents}).");
-            Debug.Log($"[PASS] Test 3: Waypoints are deterministic within a {ResourceTargeting.SectorChoiceTicks}-tick window and change between windows.");
+            TestLog.Log($"[PASS] Test 3: Waypoints are deterministic within a {ResourceTargeting.SectorChoiceTicks}-tick window and change between windows.");
         }
 
         private void ValidateWaypointsAreRoutable()
@@ -122,7 +121,7 @@ namespace Simpiens.Testing.Navigation
                     }
                 }
             }
-            Debug.Log($"[PASS] Test 4: {routes} exploration routes across Floor 1 are all routable.");
+            TestLog.Log($"[PASS] Test 4: {routes} exploration routes across Floor 1 are all routable.");
         }
 
         private void ValidateSingleSectorMapFallsBack()
@@ -136,7 +135,7 @@ namespace Simpiens.Testing.Navigation
             Assert(!ResourceTargeting.TryPickSectorWaypoint(ctx, def, out _), "A map with no other sector offers no sector waypoint.");
             float d = Vec2.Distance(ResourceTargeting.PickExplorationPoint(ctx), Vec2.Zero);
             Assert(d >= 4.99f && d <= 9.01f, $"It falls back to the random bearing (got {d:F2}).");
-            Debug.Log("[PASS] Test 5: A single-sector map falls back to the random bearing.");
+            TestLog.Log("[PASS] Test 5: A single-sector map falls back to the random bearing.");
         }
 
         /// <summary>
@@ -169,7 +168,7 @@ namespace Simpiens.Testing.Navigation
             byte next = def.FindSector(ResourceTargeting.PickExplorationPoint(after)).Id;
             Assert(next == def.Sectors[0].Id || next == def.Sectors[1].Id,
                 $"Then the room seen longest ago (first visited) comes next, the Hub excluded (got sector {next}).");
-            Debug.Log("[PASS] Test 6: Searches try the sector visited least recently.");
+            TestLog.Log("[PASS] Test 6: Searches try the sector visited least recently.");
         }
 
         private static SharedWorldSnapshot Floor1Snapshot(MapDefinition def, out StaticNavGrid grid)

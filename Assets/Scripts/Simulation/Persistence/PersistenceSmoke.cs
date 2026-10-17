@@ -1,6 +1,6 @@
 #if SIMPIENS_PERSISTENCE_SMOKE
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using Simpiens.Diagnostics;
 using Simpiens.Simulation.Economy;
 using UnityEngine;
@@ -21,12 +21,13 @@ namespace Simpiens.Simulation.Persistence
         private const int FailExitCode = 3;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Schedule() => RunAsync().Forget();
+        private static void Schedule() => RunAsync();
 
-        private static async UniTaskVoid RunAsync()
+        // A fire-and-forget boot hook: Unity resumes it on the main thread after the delay
+        private static async void RunAsync()
         {
             // Let the session boot first, so the run also shows the game starts with MemoryPack present
-            await UniTask.Delay(TimeSpan.FromSeconds(3), DelayType.Realtime);
+            await Task.Delay(TimeSpan.FromSeconds(3));
 
             string failure;
             int bytes = 0;

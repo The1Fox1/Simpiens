@@ -19,6 +19,9 @@ namespace Simpiens.Simulation
         /// </summary>
         void SetTimeMultiplier(float multiplier);
 
+        /// <summary>Runs every tick that fits in <paramref name="realSeconds"/> of real time at the current speed (the host's frame time).</summary>
+        void Advance(float realSeconds);
+
         /// <summary>
         /// Explicitly advances the simulation by a fixed number of ticks.
         /// Useful for headless testing, deterministic simulation stepping, and catch-up ticks.

@@ -8,9 +8,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Navigation
 {
@@ -18,11 +15,11 @@ namespace Simpiens.Testing.Navigation
     /// Automated domain validation suite for Epic Alpha Phase 2:
     /// Autonomous Motor Watchdog (Dedicated Navigation Unstuck Failsafe).
     /// </summary>
-    public class MotorWatchdogValidator : IStartable
+    public class MotorWatchdogValidator
     {
         public void Start()
         {
-            Debug.Log("[MotorWatchdogValidator] Beginning automated validation of Motor Watchdog & Unstuck Reflexes...");
+            TestLog.Log("[MotorWatchdogValidator] Beginning automated validation of Motor Watchdog & Unstuck Reflexes...");
 
             ValidateStallDetection();
             ValidateTier1ClearanceNudge();
@@ -30,7 +27,7 @@ namespace Simpiens.Testing.Navigation
             ValidateTier3DisengageAndBlacklist();
             ValidateZeroAllocationWatchdog();
 
-            Debug.Log("<color=green>[MotorWatchdogValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MotorWatchdogValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateStallDetection()
@@ -60,7 +57,7 @@ namespace Simpiens.Testing.Navigation
             Assert(state.StallCount >= 1, $"Watchdog incremented StallCount when movement stalled (actual: {state.StallCount})");
             Assert(result == IntentResult.InProgress, "Intent remains in progress during initial unstick attempt.");
 
-            Debug.Log("[PASS] Test 1: Motor stall detection after 1.0s verified.");
+            TestLog.Log("[PASS] Test 1: Motor stall detection after 1.0s verified.");
         }
 
         private void ValidateTier1ClearanceNudge()
@@ -83,7 +80,7 @@ namespace Simpiens.Testing.Navigation
             Assert(!SimMath.Approximately(node.Position.Y, 0f), $"Node was orthogonally displaced along Y-axis (y: {node.Position.Y})");
             Assert(SimMath.Approximately(node.Position.X, 0f), "Node retained its position along movement axis.");
 
-            Debug.Log("[PASS] Test 2: Tier 1 Orthogonal clearance nudge breaks deadlock symmetry.");
+            TestLog.Log("[PASS] Test 2: Tier 1 Orthogonal clearance nudge breaks deadlock symmetry.");
         }
 
         private void ValidateTier2RelaxedClearance()
@@ -102,7 +99,7 @@ namespace Simpiens.Testing.Navigation
             Assert(result == IntentResult.InProgress, "Tier 2 reflex maintains InProgress intent state.");
             Assert(state.UseRelaxedClearance == true, "Tier 2 reflex activated UseRelaxedClearance on ActiveIntentState.");
 
-            Debug.Log("[PASS] Test 3: Tier 2 Relaxed clearance tolerance activated.");
+            TestLog.Log("[PASS] Test 3: Tier 2 Relaxed clearance tolerance activated.");
         }
 
         private void ValidateTier3DisengageAndBlacklist()
@@ -129,7 +126,7 @@ namespace Simpiens.Testing.Navigation
             Assert(agent.Memory.IsBlacklisted(resourceId, 100), "Target resource was blacklisted in AgentMemory.");
 
             HeadlessEntities.Remove(null, goCrawler);
-            Debug.Log("[PASS] Test 4: Tier 3 Disengage and target blacklisting verified.");
+            TestLog.Log("[PASS] Test 4: Tier 3 Disengage and target blacklisting verified.");
         }
 
         private void ValidateZeroAllocationWatchdog()
@@ -165,7 +162,7 @@ namespace Simpiens.Testing.Navigation
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 watchdog checks.");
 
-            Debug.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 watchdog evaluations).");
+            TestLog.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 watchdog evaluations).");
         }
 
         private static void Assert(bool condition, string message)

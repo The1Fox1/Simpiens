@@ -1,7 +1,7 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using VContainer;
 
 namespace Simpiens.Testing.Diagnostics
@@ -77,11 +77,11 @@ namespace Simpiens.Testing.Diagnostics
                 string fullPath = Path.Combine(directory, filename);
 
                 ScreenCapture.CaptureScreenshot(fullPath);
-                Debug.Log($"[VisualAnomalyRecorderView] Anomaly screenshot captured: {fullPath}");
+                TestLog.Log($"[VisualAnomalyRecorderView] Anomaly screenshot captured: {fullPath}");
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[VisualAnomalyRecorderView] Failed to capture anomaly screenshot: {ex.Message}");
+                TestLog.LogWarning($"[VisualAnomalyRecorderView] Failed to capture anomaly screenshot: {ex.Message}");
             }
         }
 

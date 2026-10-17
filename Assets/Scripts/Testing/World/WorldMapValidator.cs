@@ -4,7 +4,6 @@ using Simpiens.Testing.Sessions;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
 
 namespace Simpiens.Testing.World
 {
@@ -19,14 +18,14 @@ namespace Simpiens.Testing.World
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[WorldMapValidator] Beginning world map validation...");
+            TestLog.Log("[WorldMapValidator] Beginning world map validation...");
 
             ValidatePartitionReconfigure();
             ValidateWorldMapLoad();
             ValidateSectorRegistry();
             ValidateNullDependencies();
 
-            Debug.Log("<color=green>[WorldMapValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorldMapValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidatePartitionReconfigure()
@@ -55,7 +54,7 @@ namespace Simpiens.Testing.World
                 Assert(ReferenceEquals(s.StaticGrid, newGrid) && s.Width == 30, $"Update {i} handed out a snapshot from the previous world.");
             }
 
-            Debug.Log("[PASS] Test 1: Partition reconfiguration is idempotent, isolates retained readers and drops stale snapshots.");
+            TestLog.Log("[PASS] Test 1: Partition reconfiguration is idempotent, isolates retained readers and drops stale snapshots.");
         }
 
         private void ValidateWorldMapLoad()
@@ -93,7 +92,7 @@ namespace Simpiens.Testing.World
             worldMap.Load(dev);
             Assert(sectors.IsExplored(DirectiveSectorId), "Reloading a map restores its default exploration.");
 
-            Debug.Log("[PASS] Test 2: WorldMap.Load sizes the partition, writes walls, loads sectors and replaces the previous map.");
+            TestLog.Log("[PASS] Test 2: WorldMap.Load sizes the partition, writes walls, loads sectors and replaces the previous map.");
         }
 
         private void ValidateSectorRegistry()
@@ -119,7 +118,7 @@ namespace Simpiens.Testing.World
                 Assert(sectors.IsExplored(sectors.All[i].Id), $"Sector {sectors.All[i].Id} explored after SetAllExplored(true).");
             }
 
-            Debug.Log("[PASS] Test 3: Sector registry lookups, fallback and exploration state.");
+            TestLog.Log("[PASS] Test 3: Sector registry lookups, fallback and exploration state.");
         }
 
         private void ValidateNullDependencies()
@@ -132,7 +131,7 @@ namespace Simpiens.Testing.World
             registry.Load(null);
             Assert(registry.GetSectorAt(Vec2.Zero).Id == 0 && registry.All.Count == 0, "Loading a null map leaves only the fallback.");
 
-            Debug.Log("[PASS] Test 4: Null-dependency isolation.");
+            TestLog.Log("[PASS] Test 4: Null-dependency isolation.");
         }
 
         private static bool IsWalkable(StaticNavGrid grid, Vec2 world)

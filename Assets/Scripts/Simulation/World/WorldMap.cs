@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Diagnostics;
 using Simpiens.Simulation.Spatial;
-using VContainer;
 using ZLogger;
 
 namespace Simpiens.Simulation.World
@@ -79,7 +78,6 @@ namespace Simpiens.Simulation.World
 
         public ISectorRegistry Sectors => _sectors;
 
-        [Inject]
         public WorldMap(ISpatialPartition partition = null, ISectorRegistry sectors = null)
         {
             _partition = partition;

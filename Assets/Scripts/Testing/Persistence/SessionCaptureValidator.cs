@@ -12,8 +12,6 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Testing.Sessions;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Persistence
 {
@@ -31,7 +29,7 @@ namespace Simpiens.Testing.Persistence
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[SessionCaptureValidator] Beginning session capture validation...");
+            TestLog.Log("[SessionCaptureValidator] Beginning session capture validation...");
 
             ValidateMemoryCaptureIgnoresInsertionOrder();
             ValidateLedgerCaptureIgnoresRecordingOrder();
@@ -41,7 +39,7 @@ namespace Simpiens.Testing.Persistence
             ValidateCrawlerRecordCopiesEverySavedField();
             ValidateMapFingerprintTellsMapsApart();
 
-            Debug.Log("<color=green>[SessionCaptureValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionCaptureValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryCaptureIgnoresInsertionOrder()
@@ -60,7 +58,7 @@ namespace Simpiens.Testing.Persistence
             Assert(saveF.Events.Length == 2 && saveF.Events[0].SimulationTick == 10 && saveF.Events[1].SimulationTick == 20, "The event ledger is oldest first.");
             Assert(saveF.SectorVisits.Length == 64 && saveF.SectorVisits[5] == 41, "Sector visits are captured (stored as tick + 1).");
 
-            Debug.Log("[PASS] Test 1: a memory captures sorted sightings, blacklist and affinities, the ledger oldest first, and sector visits; fill order doesn't matter.");
+            TestLog.Log("[PASS] Test 1: a memory captures sorted sightings, blacklist and affinities, the ledger oldest first, and sector visits; fill order doesn't matter.");
         }
 
         private static AgentMemory BuildMemory(EntityId[] order)
@@ -110,7 +108,7 @@ namespace Simpiens.Testing.Persistence
             Assert(saveF.Totals.Escrow == 65 && saveF.Totals.Fauceted == 530 && saveF.Totals.Sunk == 35, "The running totals are captured.");
             Assert(saveF.FaucetNames.Length == 2 && string.CompareOrdinal(saveF.FaucetNames[0], saveF.FaucetNames[1]) < 0, "Named totals are in ordinal name order.");
 
-            Debug.Log("[PASS] Test 2: a ledger captures its totals, escrows by bounty id and named totals by name; recording order doesn't matter.");
+            TestLog.Log("[PASS] Test 2: a ledger captures its totals, escrows by bounty id and named totals by name; recording order doesn't matter.");
         }
 
         private void ValidateGroupCaptureIgnoresJoiningOrder()
@@ -140,7 +138,7 @@ namespace Simpiens.Testing.Persistence
             Assert(saveF.Memberships.Length == 3 && saveF.Memberships[1].Membership.Role == RoleRank.Officer, "Memberships are sorted by id and keep their role.");
             Assert(saveF.Groups[0].ActiveDirective.Type == DirectiveType.RallyAtLocation, "The active directive is captured.");
 
-            Debug.Log("[PASS] Test 3: a group registry captures active groups, sorted rosters and memberships; joining order doesn't matter.");
+            TestLog.Log("[PASS] Test 3: a group registry captures active groups, sorted rosters and memberships; joining order doesn't matter.");
         }
 
         private void ValidateChronicleCaptureKeepsHistoryOrder()
@@ -168,7 +166,7 @@ namespace Simpiens.Testing.Persistence
             chronicle.CaptureTo(cleared);
             Assert(cleared.Events.Length == 0 && cleared.Sectors.Length == 0 && cleared.Sequence == 6, "A cleared chronicle captures no history but keeps its sequence.");
 
-            Debug.Log("[PASS] Test 4: the chronicle captures its sequence, its history oldest first and each sector's own history.");
+            TestLog.Log("[PASS] Test 4: the chronicle captures its sequence, its history oldest first and each sector's own history.");
         }
 
         private void ValidateSupplyCaptureKeepsRegrowthOrder()
@@ -185,7 +183,7 @@ namespace Simpiens.Testing.Persistence
             Assert(save.Dormant[0].ResourceId == B && save.Dormant[1].ResourceId == A && save.Dormant[2].ResourceId == C,
                 "The regrowth queue keeps its order: ready tick first, then id.");
 
-            Debug.Log("[PASS] Test 5: the supply service captures its regrowth queue in order.");
+            TestLog.Log("[PASS] Test 5: the supply service captures its regrowth queue in order.");
         }
 
         private void ValidateCrawlerRecordCopiesEverySavedField()
@@ -225,7 +223,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.ScoutReportBountyId == 2 && r.ScoutReportTick == 88u, "A scout's report is captured.");
             Assert(r.IsExhaustionCollapsed && r.CanBuyFoodAtStall, "Collapse and stall-food knowledge are captured.");
 
-            Debug.Log("[PASS] Test 6: a crawler's record copies every saved field.");
+            TestLog.Log("[PASS] Test 6: a crawler's record copies every saved field.");
         }
 
         private void ValidateMapFingerprintTellsMapsApart()
@@ -236,7 +234,7 @@ namespace Simpiens.Testing.Persistence
             Assert(floor1 != devMap, "Floor 1 and the Dev Map have different fingerprints.");
             Assert(SaveFingerprint.Of(null) == 0UL, "No map has fingerprint 0.");
 
-            Debug.Log($"[PASS] Test 7: the map fingerprint is stable and tells Floor 1 ({floor1:X16}) from the Dev Map ({devMap:X16}).");
+            TestLog.Log($"[PASS] Test 7: the map fingerprint is stable and tells Floor 1 ({floor1:X16}) from the Dev Map ({devMap:X16}).");
         }
 
         private static void AssertSameBytes(byte[] a, byte[] b, string what)

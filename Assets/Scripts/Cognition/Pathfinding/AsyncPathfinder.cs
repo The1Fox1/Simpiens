@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Simulation.Spatial;
-using VContainer;
-using VContainer.Unity;
 using Simpiens.Diagnostics;
 using ZLogger;
 
@@ -20,7 +18,7 @@ namespace Simpiens.Cognition.Pathfinding
     /// High-performance, background-threaded 2D Grid A* pathfinder.
     /// Operates entirely off the main thread with zero heap allocations in hot paths.
     /// </summary>
-    public class AsyncPathfinder : IAsyncPathfinder, IStartable
+    public class AsyncPathfinder : IAsyncPathfinder
     {
         private readonly ConcurrentQueue<PathResponse> _responsePool = new ConcurrentQueue<PathResponse>();
         private readonly ConcurrentQueue<GridAStarSearcher> _searcherPool = new ConcurrentQueue<GridAStarSearcher>();
@@ -29,6 +27,7 @@ namespace Simpiens.Cognition.Pathfinding
         private const int InitialPoolSize = 2000;
         private const int InitialSearcherPoolSize = 8;
 
+        /// <summary>Fills the response and searcher pools up front (the composition root calls it once at boot).</summary>
         public void Start()
         {
             for (int i = 0; i < InitialPoolSize; i++)

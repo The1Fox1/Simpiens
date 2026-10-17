@@ -6,7 +6,6 @@ using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Evaluators
 {

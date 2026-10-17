@@ -1,10 +1,10 @@
+using UnityEngine;
 using System;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Entities;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using Simpiens.Testing.Sessions;
-using UnityEngine;
 using UnityEngine.Tilemaps;
 using Object = UnityEngine.Object;
 
@@ -22,12 +22,12 @@ namespace Simpiens.Testing.World
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[MapViewValidator] Beginning map view validation...");
+            TestLog.Log("[MapViewValidator] Beginning map view validation...");
 
             ValidateMap(Floor1Layout.Definition, 1);
             ValidateMap(DevMapLayout.Definition, 2);
 
-            Debug.Log("<color=green>[MapViewValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MapViewValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMap(MapDefinition map, int testNumber)
@@ -94,7 +94,7 @@ namespace Simpiens.Testing.World
                 int objects = root.GetComponentsInChildren<Transform>(true).Length;
                 Assert(objects < MaxViewObjects, $"{map.Name}: the view is {objects} GameObjects (limit {MaxViewObjects}).");
 
-                Debug.Log($"[PASS] Test {testNumber}: {map.Name} view matches the map ({wallCells} wall cells, {walkable} walkable nav cells on floor, {objects} GameObjects).");
+                TestLog.Log($"[PASS] Test {testNumber}: {map.Name} view matches the map ({wallCells} wall cells, {walkable} walkable nav cells on floor, {objects} GameObjects).");
             }
             finally
             {

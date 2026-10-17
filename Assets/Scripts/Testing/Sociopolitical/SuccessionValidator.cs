@@ -6,7 +6,6 @@ using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Social;
 using Simpiens.Simulation;
-using UnityEngine;
 using VContainer.Unity;
 
 namespace Simpiens.Testing.Sociopolitical
@@ -14,10 +13,10 @@ namespace Simpiens.Testing.Sociopolitical
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 3:
     /// Organic Emergence, Leadership Succession & Schisms.
-    /// Runs headlessly on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// Uses decoupled ISocialAgent for 100% pure headless C# test isolation without Unity GameObject dependencies.
     /// </summary>
-    public class SuccessionValidator : IStartable
+    public class SuccessionValidator
     {
         public class MockSocialAgent : ISocialAgent
         {
@@ -36,7 +35,7 @@ namespace Simpiens.Testing.Sociopolitical
 
         public void Start()
         {
-            Debug.Log("[SuccessionValidator] Beginning automated validation of Epic 8 Phase 3...");
+            TestLog.Log("[SuccessionValidator] Beginning automated validation of Epic 8 Phase 3...");
 
             ValidateOrganicHearthEmergence();
             ValidatePeacefulSuccession();
@@ -48,7 +47,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateZeroAllocationHotPath();
             ValidateOnlyRealChangesAreChronicled();
 
-            Debug.Log("<color=green>[SuccessionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SuccessionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateOrganicHearthEmergence()
@@ -96,7 +95,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(agentC.Membership.Role == RoleRank.Follower, "Agent C role is Follower.");
             Assert(agentC.Membership.Allegiance == 70, "Agent C allegiance is 70.");
 
-            Debug.Log("[PASS] Test 1: Organic hearth emergence verified.");
+            TestLog.Log("[PASS] Test 1: Organic hearth emergence verified.");
         }
 
         /// <summary>
@@ -115,7 +114,7 @@ namespace Simpiens.Testing.Sociopolitical
             var schism = new SuccessionResult(1, SuccessionMode.FactionalSchism, true, false, leader, leader, challenger, 2, 40);
             Assert(schism.ChangesLeadership, "A schism always changes the group, even when the original leader keeps it.");
 
-            Debug.Log("[PASS] Test 9: Only real leadership changes are chronicled.");
+            TestLog.Log("[PASS] Test 9: Only real leadership changes are chronicled.");
         }
 
         private void ValidatePeacefulSuccession()
@@ -166,7 +165,7 @@ namespace Simpiens.Testing.Sociopolitical
             registry.TryGetMembership(leader.AgentId, out var oldLeaderMem);
             Assert(oldLeaderMem.Role == RoleRank.Follower, "Previous leader demoted to Follower.");
 
-            Debug.Log("[PASS] Test 2: Peaceful succession under institutional order verified.");
+            TestLog.Log("[PASS] Test 2: Peaceful succession under institutional order verified.");
         }
 
         private void ValidateDominanceChallengeSuccession()
@@ -209,7 +208,7 @@ namespace Simpiens.Testing.Sociopolitical
             registry.TryGetMembership(followerA.AgentId, out var loserMem);
             Assert(loserMem.Allegiance == 60, $"Loser allegiance penalized by -10 to 60 (actual: {loserMem.Allegiance}).");
 
-            Debug.Log("[PASS] Test 3: Dominance challenge succession and loser penalty verified.");
+            TestLog.Log("[PASS] Test 3: Dominance challenge succession and loser penalty verified.");
         }
 
         private void ValidateDominanceLoserDeparture()
@@ -245,7 +244,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!registry.TryGetMembership(loser.AgentId, out _), "Loser removed from group registry roster.");
             Assert(!loser.Membership.HasGroup, "Loser agent Membership reset to None.");
 
-            Debug.Log("[PASS] Test 4: Dominance challenge loser departure on zero allegiance verified.");
+            TestLog.Log("[PASS] Test 4: Dominance challenge loser departure on zero allegiance verified.");
         }
 
         private void ValidateFactionalSchism()
@@ -307,7 +306,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(memLoyalistB.GroupId == result.SplinterGroupId, "Loyalist B moved to splinter group with Contender B.");
             Assert(memLoyalistB.Allegiance == 60, "Loyalist B suffered -10 allegiance shock from schism.");
 
-            Debug.Log("[PASS] Test 5: Factional schism and splinter group partition verified.");
+            TestLog.Log("[PASS] Test 5: Factional schism and splinter group partition verified.");
         }
 
         private void ValidateIncapacitationAndLegitimacyWatchdog()
@@ -351,7 +350,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(default, groupId, null, registry, 100, id => agentMap[id]),
                 "Default/null leader recognized as absent.");
 
-            Debug.Log("[PASS] Test 6: Incapacitation and legitimacy crisis watchdog verified.");
+            TestLog.Log("[PASS] Test 6: Incapacitation and legitimacy crisis watchdog verified.");
         }
 
         private void ValidateDefensiveNullSafety()
@@ -373,7 +372,7 @@ namespace Simpiens.Testing.Sociopolitical
             res = SuccessionEngine.ResolveSuccession(99, emptyRegistry, null, 0);
             Assert(!res.Succeeded, "ResolveSuccession with invalid group ID returns failed result.");
 
-            Debug.Log("[PASS] Test 7: Defensive null safety for test isolation verified.");
+            TestLog.Log("[PASS] Test 7: Defensive null safety for test isolation verified.");
         }
 
         private void ValidateZeroAllocationHotPath()
@@ -408,7 +407,7 @@ namespace Simpiens.Testing.Sociopolitical
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Hot path allocated {totalAlloc} bytes across 1,000 iterations! Must be strictly 0 bytes.");
 
-            Debug.Log("[PASS] Test 8: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
+            TestLog.Log("[PASS] Test 8: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
         }
 
         private static uint _guidCounter = 1;

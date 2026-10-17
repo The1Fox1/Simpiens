@@ -12,22 +12,20 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
     /// <summary>
     /// Automated domain validation suite for Epic 9 Slice 2:
     /// The Trade Stall & Commercial Exchange.
-    /// Runs headlessly on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// </summary>
-    public class TradeTransactionValidator : IStartable
+    public class TradeTransactionValidator
     {
         public void Start()
         {
-            Debug.Log("[TradeTransactionValidator] Beginning automated validation of Epic 9 Slice 2...");
+            TestLog.Log("[TradeTransactionValidator] Beginning automated validation of Epic 9 Slice 2...");
 
             ValidateTradeStallLayoutAndZeroAlloc();
             ValidateBuyProvisionsAtomicTransfer();
@@ -44,7 +42,7 @@ namespace Simpiens.Testing.Economy
             ValidateBountyItemsAreNotSold();
             ValidateStallRationsAreKnownFood();
 
-            Debug.Log("<color=green>[TradeTransactionValidator] ALL 14 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[TradeTransactionValidator] ALL 14 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -92,7 +90,7 @@ namespace Simpiens.Testing.Economy
             snapshot.Clear();
             Assert(snapshot.ActiveStallCount == 0, "Snapshot ActiveStallCount cleared to 0.");
 
-            Debug.Log("[TradeTransactionValidator] Test 1 Passed: TradeStallData unmanaged layout and snapshot buffering verified.");
+            TestLog.Log("[TradeTransactionValidator] Test 1 Passed: TradeStallData unmanaged layout and snapshot buffering verified.");
         }
 
         private void ValidateBuyProvisionsAtomicTransfer()
@@ -131,7 +129,7 @@ namespace Simpiens.Testing.Economy
             Assert(updatedStall.TreasuryGold == 505, $"Stall treasury is {updatedStall.TreasuryGold} instead of 505.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 2 Passed: BuyProvisions atomic item and currency transfer verified.");
+            TestLog.Log("[TradeTransactionValidator] Test 2 Passed: BuyProvisions atomic item and currency transfer verified.");
         }
 
         private void ValidateBuyProvisionsInsufficientFunds()
@@ -170,7 +168,7 @@ namespace Simpiens.Testing.Economy
             Assert(untouchedStall.TreasuryGold == 500, "Stall treasury remains 500.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 3 Passed: Insufficient funds buy attempt rejected without side-effects.");
+            TestLog.Log("[TradeTransactionValidator] Test 3 Passed: Insufficient funds buy attempt rejected without side-effects.");
         }
 
         private void ValidateBuyProvisionsInventoryFull()
@@ -210,7 +208,7 @@ namespace Simpiens.Testing.Economy
             Assert(!agent.Inventory.HasItem(ItemType.Ration), "Agent did not receive ration.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 4 Passed: Full inventory purchase rejected safely.");
+            TestLog.Log("[TradeTransactionValidator] Test 4 Passed: Full inventory purchase rejected safely.");
         }
 
         private void ValidateSellSalvageAtomicTransfer()
@@ -250,7 +248,7 @@ namespace Simpiens.Testing.Economy
             Assert(updatedStall.TreasuryGold == 484, $"Stall treasury is {updatedStall.TreasuryGold} instead of 484.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 5 Passed: SellSalvage atomic item and currency transfer verified.");
+            TestLog.Log("[TradeTransactionValidator] Test 5 Passed: SellSalvage atomic item and currency transfer verified.");
         }
 
         private void ValidateTradeToAffinityFairPrice()
@@ -288,7 +286,7 @@ namespace Simpiens.Testing.Economy
             Assert(postAffinity.Respect == 5, $"Post-trade Respect is {postAffinity.Respect} instead of 5.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 6 Passed: Fair trade increases dyadic Trust, Warmth, and Respect.");
+            TestLog.Log("[TradeTransactionValidator] Test 6 Passed: Fair trade increases dyadic Trust, Warmth, and Respect.");
         }
 
         private void ValidateTradeToAffinityPriceGouging()
@@ -322,7 +320,7 @@ namespace Simpiens.Testing.Economy
             Assert(postAffinity.Warmth == -10, $"Post-gouging Warmth is {postAffinity.Warmth} instead of -10.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 7 Passed: Price gouging imposes negative Trust and Warmth penalties.");
+            TestLog.Log("[TradeTransactionValidator] Test 7 Passed: Price gouging imposes negative Trust and Warmth penalties.");
         }
 
         /// <summary>
@@ -359,7 +357,7 @@ namespace Simpiens.Testing.Economy
             AssertDeltaEquals(TradeFairness.PurchaseDelta(TradeVerdict.Gouged, t), t.GougedPurchase, "gouged purchase");
             AssertDeltaEquals(TradeFairness.SaleDelta(TradeVerdict.Stingy, t), t.StingySale, "stingy sale");
 
-            Debug.Log("[TradeTransactionValidator] Test 11 Passed: Fairness is judged by each crawler's own valuation.");
+            TestLog.Log("[TradeTransactionValidator] Test 11 Passed: Fairness is judged by each crawler's own valuation.");
         }
 
         /// <summary>The live handler applies the sale verdict: 10g for ore is stingy to a neutral seller (-5 trust).</summary>
@@ -392,7 +390,7 @@ namespace Simpiens.Testing.Economy
             Assert(affinity.Trust == stingy.Trust && affinity.Warmth == stingy.Warmth, $"Stingy sale: trust {affinity.Trust} (expected {stingy.Trust}), warmth {affinity.Warmth} (expected {stingy.Warmth}).");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 12 Passed: The live handler applies the seller's verdict.");
+            TestLog.Log("[TradeTransactionValidator] Test 12 Passed: The live handler applies the seller's verdict.");
         }
 
         /// <summary>A stall at its salvage capacity refuses a sale: no gold, item or trust changes (review §3.3 step 4).</summary>
@@ -427,7 +425,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust == 0, "A refused sale changes no trust.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
+            TestLog.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
         }
 
         /// <summary>A stall in arrears (review §3.3 D2) refuses salvage but still sells rations.</summary>
@@ -464,7 +462,7 @@ namespace Simpiens.Testing.Economy
             Assert(stall.InArrears, "Selling rations doesn't clear arrears; only a full upkeep payment does.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[TradeTransactionValidator] Test 14 Passed: A stall in arrears buys no salvage but sells rations.");
+            TestLog.Log("[TradeTransactionValidator] Test 14 Passed: A stall in arrears buys no salvage but sells rations.");
         }
 
         private void AssertDeltaEquals(in TrustDelta actual, in TrustDelta expected, string what)
@@ -513,7 +511,7 @@ namespace Simpiens.Testing.Economy
             var noClaim = Context(1, 0, withClaim: false);
             Assert(goal.IsValid(noClaim) && ResourceTargeting.HoldsSellable(noClaim, ItemType.IronOre), "Without a claim the ore is for sale as before.");
 
-            Debug.Log("[TradeTransactionValidator] Test 9 Passed: units owed to a claimed Gather bounty are never sold.");
+            TestLog.Log("[TradeTransactionValidator] Test 9 Passed: units owed to a claimed Gather bounty are never sold.");
         }
 
         /// <summary>
@@ -541,7 +539,7 @@ namespace Simpiens.Testing.Economy
             Assert(!Simpiens.Cognition.Evaluators.MentalBreakEvaluator.HasKnownFood(Starving(20, withStall: false)),
                 "No stall at all is no food (headless contexts keep the old behaviour).");
 
-            Debug.Log("[TradeTransactionValidator] Test 10 Passed: an affordable stall ration counts as known food for the starvation reflex.");
+            TestLog.Log("[TradeTransactionValidator] Test 10 Passed: an affordable stall ration counts as known food for the starvation reflex.");
         }
 
         private void ValidateGOAPCommercialPlanResolution()
@@ -604,7 +602,7 @@ namespace Simpiens.Testing.Economy
             Assert(plan3.Actions[0] == travelStall, "Plan3 Step 1 is TravelToStallAction.");
             Assert(plan3.Actions[1] == sellSalvage, "Plan3 Step 2 is SellSalvageAction.");
 
-            Debug.Log("[TradeTransactionValidator] Test 8 Passed: GOAP commercial plan chaining (Purchase, Hunger via Stall, Liquidate) verified.");
+            TestLog.Log("[TradeTransactionValidator] Test 8 Passed: GOAP commercial plan chaining (Purchase, Hunger via Stall, Liquidate) verified.");
         }
 
         private void Assert(bool condition, string message)

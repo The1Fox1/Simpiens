@@ -1,6 +1,5 @@
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
-using UnityEngine;
 
 namespace Simpiens.Testing.World
 {

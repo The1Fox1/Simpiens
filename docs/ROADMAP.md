@@ -122,7 +122,7 @@ These violate §1A.1 or the project architecture rules today. They are recorded 
 
 All application logging goes through `Simpiens.Diagnostics.SimLog` (ZLogger, §2.1). Binding for new code:
 
-1. **No `UnityEngine.Debug.Log*` in application code.** Validators under `Testing/` may keep `Debug.Log` for test output.
+1. **No `UnityEngine.Debug.Log*` in application code.** Validators log test output through `Simpiens.Testing.TestLog` (framework-free since Epic CORE C6; Unity routes it to its console).
 2. **Interpolated ZLogger calls only:** `SimLog.<Channel>.ZLog<Level>($"...")`. Never pre-build a message string, and never call `string.Format`, `ToString()` or concatenation outside the hole. A disabled call must evaluate nothing and allocate nothing.
 3. **Pick the channel and level deliberately.**
    - Channels: `Bootstrap`, `Simulation`, `Cognition`, `Planning`, `Economy`, `Supply`, `Navigation`, `Social`, `Groups`, `Drives`, `Intervention`.
@@ -186,6 +186,7 @@ Simpiens is an **agent-first, decoupled simulation**. In this development paradi
 > - **`Microsoft.Extensions.DependencyInjection`** is the container for .NET hosts (`dotnet/Simpiens.Hosting`). The engine-free core stays container-agnostic: constructor injection only.
 > - **xUnit v3** runs the .NET tests under `dotnet test`. The Unity Test Framework (NUnit) keeps running the Unity suite until a cutover.
 > - The table above stays as written until each retirement lands; Epic CORE updates it.
+> - **Progress (2026-10-17, Epic CORE C6):** no code uses UniTask any more (cognition, saves, the narrative hook and the persistence smoke use `Task`/`ValueTask`); the package itself goes in a separate commit. Engine-free code carries no VContainer attribute or lifecycle interface; VContainer is only Unity's composition root (`AppBootstrapper`) and the Unity-side services it builds.
 
 ### 2.2 Rejected 3rd-Party Frameworks & Handroll Policies
 
@@ -411,6 +412,7 @@ Before Epic 10: soak test and scaling work (#8).
   - C4 (engine-free maths: `Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`, copying Unity's formulas) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
   - C5a (entities as data: `WorldEntity`, the engine-free `AgentRuntime`, views that only read; §1A.2 #16 resolved) done 2026-10-17: golden hashes identical, the validators build headless records; PlayMode 68/68.
   - C5b (`SessionHost`: the engine-free session; `SwarmSpawner` only draws it) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
+  - C6 (no UnityEngine, VContainer, UniTask or ZLogger.Unity in engine-free code; validators framework-free) done 2026-10-17: golden hashes identical; PlayMode 68/68.
 
 ---
 

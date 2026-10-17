@@ -11,8 +11,6 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Persistence
 {
@@ -30,7 +28,7 @@ namespace Simpiens.Testing.Persistence
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[SessionRestoreValidator] Beginning session restore validation...");
+            TestLog.Log("[SessionRestoreValidator] Beginning session restore validation...");
 
             ValidateMemoryRoundTrips();
             ValidateLedgerRoundTrips();
@@ -40,7 +38,7 @@ namespace Simpiens.Testing.Persistence
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
 
-            Debug.Log("<color=green>[SessionRestoreValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -72,7 +70,7 @@ namespace Simpiens.Testing.Persistence
             Assert(!fresh.CanGossipWith(B, 400u) && fresh.CanGossipWith(B, 600u), "The gossip cooldown came back.");
             Assert(fresh.IsBlacklisted(B, 650u) && fresh.LastSectorVisit(7) == 500u, "The blacklist and sector visits came back.");
 
-            Debug.Log("[PASS] Test 1: a memory restores sightings, blacklist, gossip cooldowns, affinities, a wrapped event ledger and sector visits.");
+            TestLog.Log("[PASS] Test 1: a memory restores sightings, blacklist, gossip cooldowns, affinities, a wrapped event ledger and sector visits.");
         }
 
         private void ValidateLedgerRoundTrips()
@@ -101,7 +99,7 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.HasEscrow(4) && fresh.GetEscrowAmount(2) == 15 && fresh.TotalEscrowGold == 40, "Escrows came back.");
             Assert(fresh.Flows.Purchases == 1 && fresh.Flows.PurchaseGold == 12, "Flow counters came back.");
 
-            Debug.Log("[PASS] Test 2: a ledger restores totals, escrows, flows and named faucets and sinks, and drops what it held.");
+            TestLog.Log("[PASS] Test 2: a ledger restores totals, escrows, flows and named faucets and sinks, and drops what it held.");
         }
 
         private void ValidateGroupsRoundTrip()
@@ -131,7 +129,7 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.TryGetMembership(B, out var m) && m.GroupId == third && m.Role == RoleRank.Leader, "Memberships came back.");
             Assert(fresh.CreateGroup(GroupType.TemporaryParty, A, Vec2.Zero) == first, "The free slot is still the lowest one.");
 
-            Debug.Log("[PASS] Test 3: a group registry restores group ids, leaders, rosters, directives and memberships.");
+            TestLog.Log("[PASS] Test 3: a group registry restores group ids, leaders, rosters, directives and memberships.");
         }
 
         private void ValidateChronicleRoundTrips()
@@ -159,7 +157,7 @@ namespace Simpiens.Testing.Persistence
             fresh.GetAllRecentEvents(recent, 1);
             Assert(recent.Count == 1 && recent[0].EventId == 14UL, $"The event sequence continues after the load (id {(recent.Count > 0 ? recent[0].EventId : 0UL)}).");
 
-            Debug.Log("[PASS] Test 4: a chronicle restores its wrapped history, each sector's history and its sequence.");
+            TestLog.Log("[PASS] Test 4: a chronicle restores its wrapped history, each sector's history and its sequence.");
         }
 
         private void ValidateSupplyAndFogRoundTrip()
@@ -188,7 +186,7 @@ namespace Simpiens.Testing.Persistence
             restored.RestoreExplored(explored);
             Assert(restored.IsExplored(3) && restored.IsExplored(200) && !restored.IsExplored(9), "The fog came back, and what the fresh registry charted is gone.");
 
-            Debug.Log("[PASS] Test 5: the regrowth queue, the supply counters and the fog restore.");
+            TestLog.Log("[PASS] Test 5: the regrowth queue, the supply counters and the fog restore.");
         }
 
         private void ValidateCrawlerRecordRoundTripsWithoutWork()
@@ -233,7 +231,7 @@ namespace Simpiens.Testing.Persistence
             }
             Assert(refused, "A record is refused by a crawler with another id.");
 
-            Debug.Log("[PASS] Test 6: a crawler record restores every saved field and starts without work in progress.");
+            TestLog.Log("[PASS] Test 6: a crawler record restores every saved field and starts without work in progress.");
         }
 
         private void ValidateClockAndIdsResume()
@@ -255,7 +253,7 @@ namespace Simpiens.Testing.Persistence
             Assert(counter == 17, $"The counter counts the ids handed out ({counter}).");
             Assert(resumed.Next() == original.Next() && resumed.Next() == original.Next(), "A resumed id sequence continues the saved one.");
 
-            Debug.Log("[PASS] Test 7: the clock and the id sequence resume where the save left them.");
+            TestLog.Log("[PASS] Test 7: the clock and the id sequence resume where the save left them.");
         }
 
         private static void AssertSameBytes(byte[] a, byte[] b, string what)

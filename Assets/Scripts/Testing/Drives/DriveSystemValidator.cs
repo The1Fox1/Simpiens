@@ -13,9 +13,6 @@ using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Drives
 {
@@ -24,11 +21,11 @@ namespace Simpiens.Testing.Drives
     /// Biological Drives, GOAP Priority Hierarchy, Motor Watchdog Cadence, Mental Break / Visual State Transitions,
     /// and Strict Zero-Allocation Simulation Performance.
     /// </summary>
-    public class DriveSystemValidator : IStartable
+    public class DriveSystemValidator
     {
         public void Start()
         {
-            Debug.Log("[DriveSystemValidator] Beginning master automated validation of Epic Alpha subsystems...");
+            TestLog.Log("[DriveSystemValidator] Beginning master automated validation of Epic Alpha subsystems...");
 
             ValidateBiologicalDriveDynamics();
             ValidateGoapPriorityHierarchy();
@@ -36,7 +33,7 @@ namespace Simpiens.Testing.Drives
             ValidateMentalBreakAndVisualTransitions();
             ValidateZeroAllocationBenchmark();
 
-            Debug.Log("<color=green>[DriveSystemValidator] ALL 5 MASTER DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DriveSystemValidator] ALL 5 MASTER DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBiologicalDriveDynamics()
@@ -70,7 +67,7 @@ namespace Simpiens.Testing.Drives
             needs.Social = SimMath.Min(100f, needs.Social + 25f);
             Assert(SimMath.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
 
-            Debug.Log("[PASS] Test 1: Continuous biological drive dynamics verified.");
+            TestLog.Log("[PASS] Test 1: Continuous biological drive dynamics verified.");
         }
 
         private void ValidateGoapPriorityHierarchy()
@@ -109,7 +106,7 @@ namespace Simpiens.Testing.Drives
             Assert(socialPriC == 95f, $"Social priority is 95 (actual: {socialPriC})");
             Assert(socialPriC > hungerPriC && socialPriC > restPriC, "SocializeGoal dominates when lonely.");
 
-            Debug.Log("[PASS] Test 2: Dynamic GOAP goal priority hierarchy verified.");
+            TestLog.Log("[PASS] Test 2: Dynamic GOAP goal priority hierarchy verified.");
         }
 
         private void ValidateMotorWatchdogCadence()
@@ -161,7 +158,7 @@ namespace Simpiens.Testing.Drives
 
             registry?.Unregister(blockerNode);
             registry?.Unregister(movingNode);
-            Debug.Log("[PASS] Test 3: Motor watchdog cadence and smooth yield verified.");
+            TestLog.Log("[PASS] Test 3: Motor watchdog cadence and smooth yield verified.");
         }
 
         private void ValidateMentalBreakAndVisualTransitions()
@@ -216,7 +213,7 @@ namespace Simpiens.Testing.Drives
             Assert(agent.VisualState == AgentVisualState.Resting, "VisualState switched to Resting during deliberate RestAction execution.");
 
             HeadlessEntities.Remove(null, goCrawler);
-            Debug.Log("[PASS] Test 4: Mental break and resting visual transitions verified.");
+            TestLog.Log("[PASS] Test 4: Mental break and resting visual transitions verified.");
         }
 
         private void ValidateZeroAllocationBenchmark()
@@ -263,7 +260,7 @@ namespace Simpiens.Testing.Drives
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 simulation ticks.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[PASS] Test 5: Strict zero-allocation guarantee verified (0 bytes across 1,000 ticks).");
+            TestLog.Log("[PASS] Test 5: Strict zero-allocation guarantee verified (0 bytes across 1,000 ticks).");
         }
 
         private static void Assert(bool condition, string message)

@@ -10,9 +10,6 @@ using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Drives
 {
@@ -20,11 +17,11 @@ namespace Simpiens.Testing.Drives
     /// Automated domain validation suite for Epic Alpha Phase 3:
     /// Mental Breaks & Emergency Reflexes (Starvation Panic & Exhaustion Collapse).
     /// </summary>
-    public class MentalBreakValidator : IStartable
+    public class MentalBreakValidator
     {
         public void Start()
         {
-            Debug.Log("[MentalBreakValidator] Beginning automated validation of Mental Breaks & Emergency Reflexes...");
+            TestLog.Log("[MentalBreakValidator] Beginning automated validation of Mental Breaks & Emergency Reflexes...");
 
             ValidateStarvationPanicActivation();
             ValidateStarvationPanicSuppressedWhenFoodKnown();
@@ -33,7 +30,7 @@ namespace Simpiens.Testing.Drives
             ValidateZeroAllocationMentalBreakCheck();
             ValidateStarvingCrawlerWaitsAtKnownPlots();
 
-            Debug.Log("<color=green>[MentalBreakValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MentalBreakValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         /// <summary>
@@ -78,7 +75,7 @@ namespace Simpiens.Testing.Drives
             var fogged = new AgentContext(EntityId.Generate(), Vec2.Zero, needs, 0f, uncharted, regular, 500);
             Assert(!Simpiens.Cognition.Planning.ResourceTargeting.TryPickFoodPlotWaypoint(fogged, map, out _), "An uncharted Garden is not a plot to return to.");
 
-            Debug.Log("[PASS] Test 6: A starving crawler that has seen the Garden waits at its plots instead of exploring away.");
+            TestLog.Log("[PASS] Test 6: A starving crawler that has seen the Garden waits at its plots instead of exploring away.");
         }
 
         private void ValidateStarvationPanicActivation()
@@ -98,7 +95,7 @@ namespace Simpiens.Testing.Drives
 
             Assert(intent is PanicIntent, "MentalBreakEvaluator returned PanicIntent during starvation with no food.");
             Assert(!memory.SpatialMemoryMap.ContainsKey(staleId), "Stale resource memory was pruned on starvation panic.");
-            Debug.Log("[PASS] Test 1: Starvation Panic triggered and stale resource memories pruned.");
+            TestLog.Log("[PASS] Test 1: Starvation Panic triggered and stale resource memories pruned.");
         }
 
         private void ValidateStarvationPanicSuppressedWhenFoodKnown()
@@ -116,7 +113,7 @@ namespace Simpiens.Testing.Drives
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert(intent == null, "MentalBreakEvaluator suppressed panic because valid food location is known in memory.");
-            Debug.Log("[PASS] Test 2: Starvation Panic suppressed when food is known (allowing GOAP deliberative plan).");
+            TestLog.Log("[PASS] Test 2: Starvation Panic suppressed when food is known (allowing GOAP deliberative plan).");
         }
 
         private void ValidateExhaustionCollapse()
@@ -130,7 +127,7 @@ namespace Simpiens.Testing.Drives
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert(intent is IdleIntent idle && SimMath.Approximately(idle.Duration, 2.0f), "MentalBreakEvaluator returned emergency IdleIntent (2s) on exhaustion collapse.");
-            Debug.Log("[PASS] Test 3: Exhaustion Collapse triggered emergency rest reflex.");
+            TestLog.Log("[PASS] Test 3: Exhaustion Collapse triggered emergency rest reflex.");
         }
 
         private void ValidateIntentPreemptionOnBreak()
@@ -158,7 +155,7 @@ namespace Simpiens.Testing.Drives
             Assert(!agent.HasActiveIntent, "Active intent was preempted/aborted by emergency mental break.");
 
             HeadlessEntities.Remove(null, goCrawler);
-            Debug.Log("[PASS] Test 4: Main-thread intent preemption on mental break verified.");
+            TestLog.Log("[PASS] Test 4: Main-thread intent preemption on mental break verified.");
         }
 
         private void ValidateZeroAllocationMentalBreakCheck()
@@ -188,7 +185,7 @@ namespace Simpiens.Testing.Drives
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 mental break evaluations.");
 
-            Debug.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
+            TestLog.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
         }
 
         private static void Assert(bool condition, string message)

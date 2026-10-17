@@ -40,6 +40,7 @@ namespace Simpiens.Core.Bootstrapping
 
             // Logging first, so container construction and entry points can already log.
             // Levels come from SIMPIENS_LOG* env vars / -simlog* command-line args (see SimLogSettings).
+            UnitySimLogSinks.Install(); // the engine-free logger's console is Unity's
             if (!SimLog.IsConfigured)
             {
                 SimLog.Configure(SimLogSettings.FromEnvironment());
@@ -71,20 +72,27 @@ namespace Simpiens.Core.Bootstrapping
             builder.Register<SpatialHashGrid>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.World.SectorRegistry>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<Simpiens.Simulation.World.WorldMap>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<AsyncPathfinder>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            // Engine-free services carry no container attributes: classes with several constructors are built here
+            builder.Register(resolver =>
+            {
+                var pathfinder = new AsyncPathfinder();
+                pathfinder.Start(); // fills its pools up front
+                return pathfinder;
+            }, Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationClock>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.RegisterEntryPoint<SimulationClockDriver>(); // advances the clock with Unity's frame time
             builder.Register<FacilityZoneService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<Simpiens.Entities.WorldSelection>(Lifetime.Singleton);
             builder.Register<AgentIdentityService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<NarrativeChronicleService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<TemplateNarrativeFormatter>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<PassthroughNarrativeEnricher>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register(resolver => new NarrativeChronicleService(), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register(resolver => new TemplateNarrativeFormatter(resolver.Resolve<IAgentIdentityService>(), resolver.Resolve<Simpiens.UI.Zones.IFacilityZoneService>()), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+            builder.Register(resolver => new PassthroughNarrativeEnricher(resolver.Resolve<INarrativeFormatter>()), Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<GroupRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentRegistry>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentConsequenceService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<AgentCognitionService>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<SimulationManager>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<IGoapPlanner, GoapPlanner>(Lifetime.Singleton);
+            builder.Register<IGoapPlanner>(resolver => new GoapPlanner(), Lifetime.Singleton);
             builder.Register<IPlayerInterventionService, PlayerInterventionService>(Lifetime.Singleton);
             builder.Register<Simpiens.Simulation.Economy.EconomyLedger>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             // The supply service's tuning comes from the session (EconomyTuning), applied by SwarmSpawner on every respawn
@@ -94,13 +102,13 @@ namespace Simpiens.Core.Bootstrapping
 
             // 4. Sessions and the spawner that builds them. Optional assemblies may register further sessions
             // (the test harness adds the Dev Map); the default is chosen by id, never by registration order.
-            builder.Register<OutpostSession>(Lifetime.Singleton).As<ISessionDefinition>();
+            builder.Register<ISessionDefinition>(resolver => new OutpostSession(), Lifetime.Singleton);
             // The session itself is engine-free (SessionHost); SwarmSpawner draws it and keeps the session API for the UI
             builder.Register<SessionHost>(Lifetime.Singleton).AsSelf();
             builder.Register<SwarmSpawner>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // The player's quick-save slot (Milestone 1): Saves/quicksave.simsave under the persistent data path
-            builder.Register<ISaveGameService>(resolver => new SaveGameService(resolver.Resolve<ISessionPersistence>()), Lifetime.Singleton);
+            builder.Register<ISaveGameService>(resolver => new SaveGameService(resolver.Resolve<ISessionPersistence>(), System.IO.Path.Combine(Application.persistentDataPath, "Saves")), Lifetime.Singleton);
 
             // Optional assemblies (the Simpiens.Testing harness in editor/test builds) add their own services.
             // Domain validators no longer run at boot; they run as PlayMode tests (SwarmPlayModeTests).

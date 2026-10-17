@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace Simpiens.Narrative
 {
@@ -18,7 +18,7 @@ namespace Simpiens.Narrative
         /// <summary>
         /// Asynchronously enriches a chronicle event into rich, evocative contextual prose.
         /// </summary>
-        UniTask<string> EnrichStoryBeatAsync(ChronicleEvent evt, CancellationToken ct = default);
+        ValueTask<string> EnrichStoryBeatAsync(ChronicleEvent evt, CancellationToken ct = default);
     }
 
     /// <summary>
@@ -35,15 +35,14 @@ namespace Simpiens.Narrative
         {
         }
 
-        [VContainer.Inject]
         public PassthroughNarrativeEnricher(INarrativeFormatter formatter = null)
         {
             _formatter = formatter ?? new TemplateNarrativeFormatter();
         }
 
-        public UniTask<string> EnrichStoryBeatAsync(ChronicleEvent evt, CancellationToken ct = default)
+        public ValueTask<string> EnrichStoryBeatAsync(ChronicleEvent evt, CancellationToken ct = default)
         {
-            return UniTask.FromResult(_formatter.FormatEvent(evt));
+            return new ValueTask<string>(_formatter.FormatEvent(evt));
         }
     }
 }

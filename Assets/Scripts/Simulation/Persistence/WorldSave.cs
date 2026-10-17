@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using MemoryPack;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
 
 namespace Simpiens.Simulation.Persistence
 {

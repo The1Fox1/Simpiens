@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Simulation.Persistence;
-using VContainer;
 
 namespace Simpiens.Narrative
 {
@@ -99,7 +98,6 @@ namespace Simpiens.Narrative
 
         public int SectorCapacity => _sectorCapacity;
 
-        [Inject]
         public NarrativeChronicleService() : this(DefaultGlobalCapacity, DefaultSectorCapacity)
         {
         }

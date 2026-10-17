@@ -6,8 +6,6 @@ using Simpiens.Entities;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Environment
 {
@@ -16,7 +14,7 @@ namespace Simpiens.Testing.Environment
     /// SimulationManager Modularization, Typed Influence Commands, Authoritative Economy Ledger,
     /// Escrow Solvency, and Zero-Allocation Modular Intent Execution.
     /// </summary>
-    public class SimulationManagerModularizationValidator : IStartable
+    public class SimulationManagerModularizationValidator
     {
         public void Start()
         {
@@ -25,7 +23,7 @@ namespace Simpiens.Testing.Environment
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[SimulationManagerModularizationValidator] Beginning Section 2.4 Architecture Validation...");
+            TestLog.Log("[SimulationManagerModularizationValidator] Beginning Section 2.4 Architecture Validation...");
 
             ValidateTypedBountyPostingAndDraining();
             ValidateEscrowRejectionOnInsufficientFunds();
@@ -33,7 +31,7 @@ namespace Simpiens.Testing.Environment
             ValidateModularIntentDispatch();
             ValidateZeroAllocationsDuringExecution();
 
-            Debug.Log("<color=green>[SimulationManagerModularizationValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SimulationManagerModularizationValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static uint _guidSeed = 1000;
@@ -64,7 +62,7 @@ namespace Simpiens.Testing.Environment
             Assert(simManager.TryGetTradeStall(stallId, out var updatedStall), "Stall found in manager.");
             Assert(updatedStall.TreasuryGold == 80, $"Stall treasury deducted to {updatedStall.TreasuryGold} instead of 80.");
 
-            Debug.Log("[SimulationManagerModularizationValidator] Test 1 Passed: Typed bounty command queued, drained, and posted with escrow.");
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 1 Passed: Typed bounty command queued, drained, and posted with escrow.");
         }
 
         private void ValidateEscrowRejectionOnInsufficientFunds()
@@ -91,7 +89,7 @@ namespace Simpiens.Testing.Environment
             Assert(simManager.TryGetTradeStall(stallId, out var updatedStall), "Stall found in manager.");
             Assert(updatedStall.TreasuryGold == 10, $"Stall treasury remains 10 (actual: {updatedStall.TreasuryGold}).");
 
-            Debug.Log("[SimulationManagerModularizationValidator] Test 2 Passed: Escrow rejection on insufficient treasury verified.");
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 2 Passed: Escrow rejection on insufficient treasury verified.");
         }
 
         private void ValidateLedgerConservationInvariant()
@@ -130,7 +128,7 @@ namespace Simpiens.Testing.Environment
             Assert(ledger.ValidateConservation(stall.TreasuryGold, updatedAgentGold, out int disc2), $"Invariant holds after payout (disc: {disc2}).");
             Assert(disc2 == 0, "Discrepancy is exactly 0.");
 
-            Debug.Log("[SimulationManagerModularizationValidator] Test 3 Passed: Gold conservation invariant (Delta Circulation == Faucets - Sinks) verified.");
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 3 Passed: Gold conservation invariant (Delta Circulation == Faucets - Sinks) verified.");
         }
 
         private void ValidateModularIntentDispatch()
@@ -163,7 +161,7 @@ namespace Simpiens.Testing.Environment
             Assert(agent.VisualState == AgentVisualState.Walking, "Agent visual state set to Walking by WanderIntentHandler.");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[SimulationManagerModularizationValidator] Test 4 Passed: Modular intent handler registration and dispatch verified.");
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 4 Passed: Modular intent handler registration and dispatch verified.");
         }
 
         private void ValidateZeroAllocationsDuringExecution()
@@ -209,7 +207,7 @@ namespace Simpiens.Testing.Environment
             Assert(delta == 0, $"Hot-path ExecuteIntent allocated {delta} bytes (expected 0 bytes).");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[SimulationManagerModularizationValidator] Test 5 Passed: Zero GC allocations on modular intent execution hot path verified.");
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 5 Passed: Zero GC allocations on modular intent execution hot path verified.");
         }
 
         private static void Assert(bool condition, string message)

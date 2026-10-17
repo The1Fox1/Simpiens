@@ -7,9 +7,6 @@ using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Planning
 {
@@ -17,7 +14,7 @@ namespace Simpiens.Testing.Planning
     /// Milestone 1 closure, Phase 4 (review §3.2): agent personality and utility considerations.
     /// Mechanism tests with hand-built contexts; live price response is asserted by PriceResponseScenario.
     /// </summary>
-    public class PersonalityValidator : IStartable
+    public class PersonalityValidator
     {
         public void Start()
         {
@@ -26,7 +23,7 @@ namespace Simpiens.Testing.Planning
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[PersonalityValidator] Beginning personality & considerations validation...");
+            TestLog.Log("[PersonalityValidator] Beginning personality & considerations validation...");
 
             ValidateGenerationIsDeterministic();
             ValidateNeutralIsUnchanged();
@@ -34,7 +31,7 @@ namespace Simpiens.Testing.Planning
             ValidateMinimumSalePrice();
             ValidateBountyChoiceFollowsPersonality();
 
-            Debug.Log("<color=green>[PersonalityValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[PersonalityValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateGenerationIsDeterministic()
@@ -61,7 +58,7 @@ namespace Simpiens.Testing.Planning
             Assert(anyDifferent && max - min > 1f, $"Personalities must vary across agents (range {min:F2}..{max:F2}).");
             Assert(SimMath.Abs(sum / count) < 0.1f, $"Trait mean {sum / count:F3} should be ~0 (centred distribution).");
 
-            Debug.Log("[PASS] Test 1: Personalities are deterministic per (seed, id), centred, varied, and default to neutral.");
+            TestLog.Log("[PASS] Test 1: Personalities are deterministic per (seed, id), centred, varied, and default to neutral.");
         }
 
         private void ValidateNeutralIsUnchanged()
@@ -79,7 +76,7 @@ namespace Simpiens.Testing.Planning
             var sociable = CreateContext(new AgentPersonality(0f, 0f, 1f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, social: 30f);
             Assert(new SocializeGoal().CalculatePriority(sociable) > 70f, "A sociable agent must want company more than a neutral one.");
 
-            Debug.Log("[PASS] Test 2: Neutral personalities reproduce the pre-personality priorities; traits move them.");
+            TestLog.Log("[PASS] Test 2: Neutral personalities reproduce the pre-personality priorities; traits move them.");
         }
 
         private void ValidateReservationPrice()
@@ -101,7 +98,7 @@ namespace Simpiens.Testing.Planning
             Assert(!new PurchaseProvisionsGoal().IsValid(atHalf), "25g ration must be refused above the neutral reservation at hunger 50.");
             Assert(new PurchaseProvisionsGoal().IsValid(atStarving), "25g ration must be acceptable when starving (reservation 28g).");
 
-            Debug.Log("[PASS] Test 3: Reservation price follows hunger and greed, and gates the purchase goal.");
+            TestLog.Log("[PASS] Test 3: Reservation price follows hunger and greed, and gates the purchase goal.");
         }
 
         private void ValidateMinimumSalePrice()
@@ -119,7 +116,7 @@ namespace Simpiens.Testing.Planning
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, cheapStall) == ItemType.None, "A greedy seller refuses 9g ore (minimum 12g).");
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, fairStall) == ItemType.IronOre, "A greedy seller accepts 20g ore.");
 
-            Debug.Log("[PASS] Test 4: Minimum sale price follows greed and gates salvage sales.");
+            TestLog.Log("[PASS] Test 4: Minimum sale price follows greed and gates salvage sales.");
         }
 
         private void ValidateBountyChoiceFollowsPersonality()
@@ -144,7 +141,7 @@ namespace Simpiens.Testing.Planning
             Assert(Pick(new AgentPersonality(1f, 0f, 0f, 0f, 1f)) == 2, "Greedy, diligent agent prefers the far, richer bounty.");
             Assert(Pick(new AgentPersonality(-1f, 0f, 0f, 0f, -1f)) == 1, "Unmotivated agent prefers the near bounty.");
 
-            Debug.Log("[PASS] Test 5: Bounty choice weighs reward against distance by personality.");
+            TestLog.Log("[PASS] Test 5: Bounty choice weighs reward against distance by personality.");
         }
 
         private static AgentContext CreateContext(AgentPersonality personality, float hunger, int gold, SharedWorldSnapshot snapshot,

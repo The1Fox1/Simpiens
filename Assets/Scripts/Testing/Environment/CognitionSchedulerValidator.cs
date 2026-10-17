@@ -7,7 +7,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Evaluators;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Testing.Environment
 {
@@ -21,7 +20,7 @@ namespace Simpiens.Testing.Environment
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[CognitionSchedulerValidator] Beginning Epic CORE C1 validation...");
+            TestLog.Log("[CognitionSchedulerValidator] Beginning Epic CORE C1 validation...");
 
             ValidateDecisionLandsOnTheNextTick(evaluationDelayMs: 0);
             ValidateDecisionLandsOnTheNextTick(evaluationDelayMs: 120);
@@ -30,7 +29,7 @@ namespace Simpiens.Testing.Environment
             ValidateResetDropsDecisionsInFlight();
             ValidateFailedEvaluationReleases();
 
-            Debug.Log("<color=green>[CognitionSchedulerValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[CognitionSchedulerValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private sealed class DelayedIdleEvaluator : ICognitiveEvaluator
@@ -96,7 +95,7 @@ namespace Simpiens.Testing.Environment
             Assert(sim.Cognition.PendingCount == 0, "No evaluation is left in flight.");
             Assert(evaluator.Calls == 1, "The evaluator ran once.");
 
-            Debug.Log($"[PASS] Decision dispatched at t5 lands at t6 with a {evaluationDelayMs} ms evaluation.");
+            TestLog.Log($"[PASS] Decision dispatched at t5 lands at t6 with a {evaluationDelayMs} ms evaluation.");
         }
 
         private void ValidateDecisionsLandInAgentIdOrder()
@@ -130,7 +129,7 @@ namespace Simpiens.Testing.Environment
             }
             Assert(handler.Released.Count == 3, "Every job was released.");
 
-            Debug.Log("[PASS] Decisions land in agent-id order whatever order the evaluations finish in.");
+            TestLog.Log("[PASS] Decisions land in agent-id order whatever order the evaluations finish in.");
         }
 
         private void ValidateFailedPreparationDoesNotFreeze()
@@ -144,7 +143,7 @@ namespace Simpiens.Testing.Environment
             Assert(!agent.IsEvaluating, "A failed preparation does not leave the agent marked as evaluating (§1A.2 #18).");
             Assert(sim.Cognition.PendingCount == 0, "Nothing was dispatched.");
 
-            Debug.Log("[PASS] A failed preparation does not freeze the agent.");
+            TestLog.Log("[PASS] A failed preparation does not freeze the agent.");
         }
 
         private void ValidateResetDropsDecisionsInFlight()
@@ -164,7 +163,7 @@ namespace Simpiens.Testing.Environment
             clock.AdvanceTicks(2);
             Assert(!agent.HasActiveIntent, "A dropped decision never lands.");
 
-            Debug.Log("[PASS] A respawn drops decisions in flight.");
+            TestLog.Log("[PASS] A respawn drops decisions in flight.");
         }
 
         private void ValidateFailedEvaluationReleases()
@@ -179,7 +178,7 @@ namespace Simpiens.Testing.Environment
             Assert(!agent.IsEvaluating, "A failed evaluation is released at its due tick.");
             Assert(!agent.HasActiveIntent, "A failed evaluation applies nothing.");
 
-            Debug.Log("[PASS] A failed evaluation is released and applies nothing.");
+            TestLog.Log("[PASS] A failed evaluation is released and applies nothing.");
         }
 
         private static EntityId CreateGuid(int value) => new EntityId((uint)value, 0, 0, 0);

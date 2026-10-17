@@ -1,6 +1,5 @@
 using System;
 using Simpiens.Simulation.World;
-using UnityEngine;
 
 namespace Simpiens.Simulation.Persistence
 {

@@ -5,9 +5,6 @@ using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Environment
 {
@@ -17,7 +14,7 @@ namespace Simpiens.Testing.Environment
     /// Scope: same-tick ordering. The tick a decision lands on is fixed by the CognitionScheduler (§1A.2 #6, Epic CORE C1;
     /// see CognitionSchedulerValidator).
     /// </summary>
-    public class DeterminismValidator : IStartable
+    public class DeterminismValidator
     {
         private const int PawnCount = 8;
         private const int SimTicks = 60;
@@ -29,7 +26,7 @@ namespace Simpiens.Testing.Environment
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[DeterminismValidator] Beginning determinism validation...");
+            TestLog.Log("[DeterminismValidator] Beginning determinism validation...");
 
             ValidateSimRandomIsReproducible();
             ValidateEntityIdsAreReproducible();
@@ -37,7 +34,7 @@ namespace Simpiens.Testing.Environment
             ValidateSimRandomIsZeroAlloc();
             ValidateStaleSessionIntentsAreDropped();
 
-            Debug.Log("<color=green>[DeterminismValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DeterminismValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateSimRandomIsReproducible()
@@ -69,7 +66,7 @@ namespace Simpiens.Testing.Environment
             double mean = sum / draws;
             Assert(mean > 0.48 && mean < 0.52, $"NextFloat mean {mean:F3} is not ~0.5.");
 
-            Debug.Log("[PASS] Test 1: SimRandom streams are reproducible and keyed by seed, entity, tick and salt.");
+            TestLog.Log("[PASS] Test 1: SimRandom streams are reproducible and keyed by seed, entity, tick and salt.");
         }
 
         private void ValidateEntityIdsAreReproducible()
@@ -97,7 +94,7 @@ namespace Simpiens.Testing.Environment
                 Assert(first.Next() == sequence[i], "Reset must replay the same id sequence (respawn reproducibility).");
             }
 
-            Debug.Log("[PASS] Test 2: Entity ids are reproducible per seed and replay after Reset.");
+            TestLog.Log("[PASS] Test 2: Entity ids are reproducible per seed and replay after Reset.");
         }
 
         private void ValidateIntentArrivalOrderDoesNotMatter()
@@ -123,7 +120,7 @@ namespace Simpiens.Testing.Environment
             }
             Assert(crowded, "Scenario must actually be contended (not every pawn reached the centre).");
 
-            Debug.Log("[PASS] Test 3: Final positions are identical regardless of intent arrival or registration order.");
+            TestLog.Log("[PASS] Test 3: Final positions are identical regardless of intent arrival or registration order.");
         }
 
         /// <summary>
@@ -163,7 +160,7 @@ namespace Simpiens.Testing.Environment
             Assert(node.Position.X > afterCurrent, $"An unstamped intent runs (pawn at {node.Position}).");
 
             registry?.Unregister(node);
-            Debug.Log("[PASS] Test 5: Intents decided before a respawn are dropped; current and unstamped intents run.");
+            TestLog.Log("[PASS] Test 5: Intents decided before a respawn are dropped; current and unstamped intents run.");
         }
 
         private Vec2[] RunConvergence(bool reverseEnqueue, bool reverseRegistration)
@@ -223,7 +220,7 @@ namespace Simpiens.Testing.Environment
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert(allocated == 0, $"SimRandom allocated {allocated} bytes across 10,000 streams.");
 
-            Debug.Log($"[PASS] Test 4: SimRandom is allocation-free (checksum {sink:F1}).");
+            TestLog.Log($"[PASS] Test 4: SimRandom is allocation-free (checksum {sink:F1}).");
         }
 
         private static void Assert(bool condition, string message)

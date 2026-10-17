@@ -4,7 +4,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Planning
 {

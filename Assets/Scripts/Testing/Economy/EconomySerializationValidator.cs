@@ -4,8 +4,6 @@ using Simpiens.Cognition.Inventory;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
@@ -18,14 +16,14 @@ namespace Simpiens.Testing.Economy
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[EconomySerializationValidator] Beginning economy serialization validation...");
+            TestLog.Log("[EconomySerializationValidator] Beginning economy serialization validation...");
 
             ValidateSavedLayoutsArePinned();
             ValidateRecordsRoundTrip();
             ValidateInventoryRoundTrips();
             ValidateRoundTripAllocatesNothing();
 
-            Debug.Log("<color=green>[EconomySerializationValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EconomySerializationValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         /// <summary>
@@ -37,7 +35,7 @@ namespace Simpiens.Testing.Economy
             AssertSize<ItemInstance>(16);
             AssertSize<BountyContract>(64);
             AssertSize<TradeStallData>(48);
-            Debug.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 48 bytes).");
+            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 48 bytes).");
         }
 
         private void ValidateRecordsRoundTrip()
@@ -62,7 +60,7 @@ namespace Simpiens.Testing.Economy
                 AssertStallEqual(stallsBack[i], stalls[i], $"Stall {i}");
             }
 
-            Debug.Log("[PASS] Test 2: items, bounties (claimant, location, status) and stalls (prices, stock, treasury, arrears) round-trip.");
+            TestLog.Log("[PASS] Test 2: items, bounties (claimant, location, status) and stalls (prices, stock, treasury, arrears) round-trip.");
         }
 
         private void ValidateInventoryRoundTrips()
@@ -100,7 +98,7 @@ namespace Simpiens.Testing.Economy
             }
             Assert(refused, "A saved pack with another capacity is refused.");
 
-            Debug.Log("[PASS] Test 3: an inventory round-trips its purse and every slot, and refuses a pack of another size.");
+            TestLog.Log("[PASS] Test 3: an inventory round-trips its purse and every slot, and refuses a pack of another size.");
         }
 
         /// <summary>
@@ -133,7 +131,7 @@ namespace Simpiens.Testing.Economy
             Assert(allocated == 0, $"1,000 economy round trips into kept buffers allocated {allocated} bytes (expected 0).");
             Assert(target.Gold == 120 && target.GetItemCount(ItemType.Ration) == 4, "The kept inventory holds the restored pack.");
             Assert(bountiesBack[1].Equals(bounties[1]) && singleBack.Equals(bounties[0]), "The kept bounty buffers hold the restored bounties.");
-            Debug.Log("[PASS] Test 4: 1,000 round trips of items, bounties, stalls and an inventory allocate 0 bytes.");
+            TestLog.Log("[PASS] Test 4: 1,000 round trips of items, bounties, stalls and an inventory allocate 0 bytes.");
 
             void RoundTrip()
             {

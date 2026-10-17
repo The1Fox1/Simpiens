@@ -59,7 +59,6 @@ namespace Simpiens.Cognition.Planning
         public int LastNodeCount { get; private set; }
         private readonly int[] _pathScratch;
 
-        [VContainer.Inject]
         public GoapPlanner() : this(256)
         {
         }

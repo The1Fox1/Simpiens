@@ -38,7 +38,7 @@ namespace Simpiens.Diagnostics
             catch (Exception ex)
             {
                 // Inner processors return the entry in their own finally blocks
-                UnityEngine.Debug.LogWarning($"[SimLog] Dropped a {category} log line that failed to format: {ex.GetType().Name}: {ex.Message}");
+                SimLog.SinkFailure?.Invoke($"[SimLog] Dropped a {category} log line that failed to format: {ex.GetType().Name}: {ex.Message}");
             }
         }
 

@@ -14,8 +14,6 @@ using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
@@ -39,7 +37,7 @@ namespace Simpiens.Testing.Economy
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[EconomyZeroAllocValidator] Beginning economy zero-allocation validation...");
+            TestLog.Log("[EconomyZeroAllocValidator] Beginning economy zero-allocation validation...");
 
             var previousLog = SimLog.Settings;
             SimLog.Shutdown();
@@ -53,7 +51,7 @@ namespace Simpiens.Testing.Economy
                 if (previousLog != null) SimLog.Configure(previousLog);
             }
 
-            Debug.Log("<color=green>[EconomyZeroAllocValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EconomyZeroAllocValidator] ALL 2 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         /// <summary>
@@ -112,7 +110,7 @@ namespace Simpiens.Testing.Economy
                 Assert(sim.TryGetBounty(CancelledId, out var cancelled) && cancelled.Status == BountyStatus.Cancelled, "The posted bounty was cancelled.");
                 Assert(allocated == 0, $"{Ticks} ticks of trading and bounties allocated {allocated} bytes (expected 0).");
 
-                Debug.Log($"[PASS] Test 1: {Ticks} ticks of trades, bounty claims, deliveries, expiries, player commands and supply ticks allocate 0 bytes.");
+                TestLog.Log($"[PASS] Test 1: {Ticks} ticks of trades, bounty claims, deliveries, expiries, player commands and supply ticks allocate 0 bytes.");
 
                 void PlayOneTick()
                 {
@@ -217,7 +215,7 @@ namespace Simpiens.Testing.Economy
             Assert(openFound == Ticks && claimedFound == Ticks, $"Every round found an open bounty and the claimed one ({openFound}, {claimedFound} of {Ticks}).");
             Assert(allocated == 0, $"{Ticks} rounds of off-thread trade and bounty evaluation allocated {allocated} bytes (expected 0).");
 
-            Debug.Log($"[PASS] Test 2: {Ticks} rounds of off-thread trade and bounty evaluation allocate 0 bytes (checksum {checksum:F1}).");
+            TestLog.Log($"[PASS] Test 2: {Ticks} rounds of off-thread trade and bounty evaluation allocate 0 bytes (checksum {checksum:F1}).");
 
             void Evaluate()
             {

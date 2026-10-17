@@ -7,8 +7,6 @@ using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Planning
 {
@@ -27,7 +25,7 @@ namespace Simpiens.Testing.Planning
 
         public void Start()
         {
-            Debug.Log("[GoapLiveLoopFixesValidator] Beginning validation of GOAP live-loop fixes...");
+            TestLog.Log("[GoapLiveLoopFixesValidator] Beginning validation of GOAP live-loop fixes...");
 
             ValidateNeedDrivenAid();
             ValidateStaticRegions();
@@ -35,7 +33,7 @@ namespace Simpiens.Testing.Planning
             ValidateRelevancePruning();
             ValidateZeroAllocation();
 
-            Debug.Log("<color=green>[GoapLiveLoopFixesValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GoapLiveLoopFixesValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // 1. AidCompanion / ShareFood only when someone in view actually needs help
@@ -64,7 +62,7 @@ namespace Simpiens.Testing.Planning
             var hungryHelper = Context(helperId, Vec2.Zero, hunger: 55f, starving, memory);
             Assert(!goal.IsValid(hungryHelper), "A hungry helper (>= 50) does not pursue AidCompanion.");
 
-            Debug.Log("[GoapLiveLoopFixesValidator] Test 1 Passed: need-driven AidCompanion/ShareFood.");
+            TestLog.Log("[GoapLiveLoopFixesValidator] Test 1 Passed: need-driven AidCompanion/ShareFood.");
         }
 
         // 2. Connected regions over the static nav grid
@@ -91,7 +89,7 @@ namespace Simpiens.Testing.Planning
             Assert(grid.RegionRebuildCount == builds + 1, "Rebuilt once after walkability changed.");
             Assert(grid.AreConnected(CellCenter(1, 1), CellCenter(7, 7)), "Opening a door connects the pen to the yard.");
 
-            Debug.Log("[GoapLiveLoopFixesValidator] Test 2 Passed: static connected regions.");
+            TestLog.Log("[GoapLiveLoopFixesValidator] Test 2 Passed: static connected regions.");
         }
 
         // 3. Walled-in agents ignore stalls and bounties they cannot reach
@@ -131,7 +129,7 @@ namespace Simpiens.Testing.Planning
             var calmFree = Context(free.AgentId, free.Position, hunger: 20f, snapshot, new AgentMemory(), inventory);
             Assert(fulfil.IsValid(calmFree), "FulfillBounty valid for a free agent.");
 
-            Debug.Log("[GoapLiveLoopFixesValidator] Test 3 Passed: reachability-aware stall and bounty planning.");
+            TestLog.Log("[GoapLiveLoopFixesValidator] Test 3 Passed: reachability-aware stall and bounty planning.");
         }
 
         // 4. Relevance pruning: impossible goals fail fast; solvable goals keep their optimal plan
@@ -159,7 +157,7 @@ namespace Simpiens.Testing.Planning
             Assert(resolved && plan.Actions.Count == 5, $"Salvage bounty plan still resolves with 5 steps (got {plan.Actions.Count}).");
             Assert(planner.LastNodeCount < 64, $"Pruned search stays small ({planner.LastNodeCount} nodes, pool 256).");
 
-            Debug.Log($"[GoapLiveLoopFixesValidator] Test 4 Passed: relevance pruning (solvable plan in {planner.LastNodeCount} nodes).");
+            TestLog.Log($"[GoapLiveLoopFixesValidator] Test 4 Passed: relevance pruning (solvable plan in {planner.LastNodeCount} nodes).");
         }
 
         // 5. Region queries and pruned planning allocate nothing in steady state
@@ -194,7 +192,7 @@ namespace Simpiens.Testing.Planning
             long after = GC.GetAllocatedBytesForCurrentThread();
 
             Assert(after - before == 0, $"Region queries + pruned planning allocated {after - before} bytes.");
-            Debug.Log("[GoapLiveLoopFixesValidator] Test 5 Passed: zero allocations in steady state.");
+            TestLog.Log("[GoapLiveLoopFixesValidator] Test 5 Passed: zero allocations in steady state.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -258,7 +256,7 @@ namespace Simpiens.Testing.Planning
         {
             if (!condition)
             {
-                Debug.LogError($"[GoapLiveLoopFixesValidator] FAILED: {message}");
+                TestLog.LogError($"[GoapLiveLoopFixesValidator] FAILED: {message}");
                 throw new Exception($"Assertion failed: {message}");
             }
         }

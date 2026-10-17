@@ -1,10 +1,12 @@
 using System;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Simulation
 {
-    public class SimulationClock : ISimulationClock, ITickable
+    /// <summary>
+    /// The fixed logical clock (10 ticks per second at 1x). Engine-free: the host hands in the real time that passed
+    /// (<see cref="Advance"/>: Unity's frame time; a headless host steps ticks with <see cref="AdvanceTicks"/>).
+    /// </summary>
+    public class SimulationClock : ISimulationClock
     {
         public long CurrentTick { get; private set; }
         public float TimeMultiplier { get; private set; } = 1f;
@@ -32,10 +34,10 @@ namespace Simpiens.Simulation
             OnTimeMultiplierChanged?.Invoke(TimeMultiplier);
         }
 
-        public void Tick()
+        public void Advance(float realSeconds)
         {
             // Accumulate real-time passed, modified by the speed multiplier.
-            _accumulator += Time.deltaTime * TimeMultiplier;
+            _accumulator += realSeconds * TimeMultiplier;
 
             while (_accumulator >= TimePerTick)
             {

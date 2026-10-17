@@ -2,9 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using Simpiens.Diagnostics;
-using UnityEngine;
 using ZLogger;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Diagnostics
 {
@@ -20,7 +18,7 @@ namespace Simpiens.Testing.Diagnostics
 
         public void Start()
         {
-            Debug.Log("[LoggingValidator] Beginning SimLog / ZLogger validation...");
+            TestLog.Log("[LoggingValidator] Beginning SimLog / ZLogger validation...");
             var previous = SimLog.Settings;
             long previousTick = SimLog.CurrentTick;
 
@@ -39,7 +37,7 @@ namespace Simpiens.Testing.Diagnostics
                 else SimLog.Shutdown();
             }
 
-            Debug.Log("<color=green>[LoggingValidator] ALL 5 LOGGING TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[LoggingValidator] ALL 5 LOGGING TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDisabledLogsAllocateNothing()
@@ -61,7 +59,7 @@ namespace Simpiens.Testing.Diagnostics
 
             Assert(after - before == 0, $"Disabled Debug/Trace logs allocated {after - before} bytes over 2,000 calls.");
             Assert(_expensiveCalls == 0, "Interpolation holes were evaluated for disabled log calls.");
-            Debug.Log("[LoggingValidator] Test 1 Passed: disabled logs allocate nothing and skip hole evaluation.");
+            TestLog.Log("[LoggingValidator] Test 1 Passed: disabled logs allocate nothing and skip hole evaluation.");
         }
 
         private int _expensiveCalls;
@@ -91,7 +89,7 @@ namespace Simpiens.Testing.Diagnostics
 
             SimLog.Shutdown();
             TryDelete(settings.FilePath);
-            Debug.Log("[LoggingValidator] Test 2 Passed: per-channel levels and sink floors filter correctly.");
+            TestLog.Log("[LoggingValidator] Test 2 Passed: per-channel levels and sink floors filter correctly.");
         }
 
         private void ValidateAgentFocus()
@@ -113,7 +111,7 @@ namespace Simpiens.Testing.Diagnostics
 
             SimLog.Configure(new SimLogSettings());
             Assert(SimLog.Traces(penAgent), "Without a focus every agent is traced.");
-            Debug.Log("[LoggingValidator] Test 3 Passed: agent focus filter.");
+            TestLog.Log("[LoggingValidator] Test 3 Passed: agent focus filter.");
         }
 
         private void ValidateFileSinkFormat()
@@ -134,7 +132,7 @@ namespace Simpiens.Testing.Diagnostics
             Assert(!text.Contains("must be filtered"), "Trace below the Planning=Debug override was not written.");
 
             TryDelete(settings.FilePath);
-            Debug.Log("[LoggingValidator] Test 4 Passed: file sink writes tick-stamped, channel-prefixed lines.");
+            TestLog.Log("[LoggingValidator] Test 4 Passed: file sink writes tick-stamped, channel-prefixed lines.");
         }
 
         private void ValidateFormattingFailureIsContained()
@@ -157,7 +155,7 @@ namespace Simpiens.Testing.Diagnostics
             SimLog.Shutdown();
             TryDelete(settings.FilePath);
             Assert(!threw, "A log line that fails to format propagated an exception into the calling code.");
-            Debug.Log("[LoggingValidator] Test 5 Passed: formatting failures are contained by the sink.");
+            TestLog.Log("[LoggingValidator] Test 5 Passed: formatting failures are contained by the sink.");
         }
 
         private static string TempLogPath(string name)
@@ -181,7 +179,7 @@ namespace Simpiens.Testing.Diagnostics
         {
             if (!condition)
             {
-                Debug.LogError($"[LoggingValidator] FAILED: {message}");
+                TestLog.LogError($"[LoggingValidator] FAILED: {message}");
                 throw new Exception($"Assertion failed: {message}");
             }
         }

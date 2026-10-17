@@ -4,22 +4,20 @@ using System.Runtime.InteropServices;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Inventory;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
 using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
     /// <summary>
     /// Automated domain validation suite for Epic 9 Slice 1:
     /// Unmanaged Inventory, Currency & Item Primitives.
-    /// Runs headlessly on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// </summary>
-    public class InventoryValidator : IStartable
+    public class InventoryValidator
     {
         public void Start()
         {
-            Debug.Log("[InventoryValidator] Beginning automated validation of Epic 9 Slice 1...");
+            TestLog.Log("[InventoryValidator] Beginning automated validation of Epic 9 Slice 1...");
 
             ValidateUnmanagedItemInstanceLayout();
             ValidateAgentInventoryStackMergingAndSlots();
@@ -29,7 +27,7 @@ namespace Simpiens.Testing.Economy
             ValidateAgentBackwardCompatibility();
             ValidateZeroAllocationQueries();
 
-            Debug.Log("<color=green>[InventoryValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[InventoryValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateUnmanagedItemInstanceLayout()
@@ -59,7 +57,7 @@ namespace Simpiens.Testing.Economy
             var rationCopy = new ItemInstance(1, ItemType.Ration, 5, 10, quality: 1, durability: 95);
             Assert(ration == rationCopy, "ItemInstance equality operator functions properly.");
 
-            Debug.Log("[PASS] Test 1: Unmanaged ItemInstance 16-byte layout and semantics verified.");
+            TestLog.Log("[PASS] Test 1: Unmanaged ItemInstance 16-byte layout and semantics verified.");
         }
 
         private void ValidateAgentInventoryStackMergingAndSlots()
@@ -95,7 +93,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.HasItem(ItemType.Ration, 13), "HasItem returns true for 13 rations.");
             Assert(!inv.HasItem(ItemType.Ration, 14), "HasItem returns false for 14 rations.");
 
-            Debug.Log("[PASS] Test 2: AgentInventory stack merging and slot assignment verified.");
+            TestLog.Log("[PASS] Test 2: AgentInventory stack merging and slot assignment verified.");
         }
 
         private void ValidateInventoryCapacityAndOverflow()
@@ -117,7 +115,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.OccupiedSlots == 3, "Occupied slots unchanged.");
             Assert(!inv.HasItem(ItemType.ToolPickaxe), "Inventory does not have rejected item.");
 
-            Debug.Log("[PASS] Test 3: Inventory capacity limits and overflow handling verified.");
+            TestLog.Log("[PASS] Test 3: Inventory capacity limits and overflow handling verified.");
         }
 
         private void ValidatePartialAndTotalItemRemoval()
@@ -143,7 +141,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.OccupiedSlots == 0, "Slot cleared after total removal.");
             Assert(!inv.HasItem(ItemType.Ration), "HasItem returns false after total removal.");
 
-            Debug.Log("[PASS] Test 4: Partial and total item removal verified.");
+            TestLog.Log("[PASS] Test 4: Partial and total item removal verified.");
         }
 
         private void ValidateWalletAndCurrencyBounds()
@@ -167,7 +165,7 @@ namespace Simpiens.Testing.Economy
             inv.AddGold(-20);
             Assert(inv.Gold == 45, "Negative AddGold ignored.");
 
-            Debug.Log("[PASS] Test 5: Wallet operations and underflow prevention verified.");
+            TestLog.Log("[PASS] Test 5: Wallet operations and underflow prevention verified.");
         }
 
         private void ValidateAgentBackwardCompatibility()
@@ -192,7 +190,7 @@ namespace Simpiens.Testing.Economy
             Assert(!agent.Inventory.HasItem(ItemType.Ration), "Inventory does not contain Ration item.");
 
             HeadlessEntities.Remove(null, goCrawler);
-            Debug.Log("[PASS] Test 6: AutonomousAgent.HasFoodInInventory backward compatibility verified.");
+            TestLog.Log("[PASS] Test 6: AutonomousAgent.HasFoodInInventory backward compatibility verified.");
         }
 
         private void ValidateZeroAllocationQueries()
@@ -215,7 +213,7 @@ namespace Simpiens.Testing.Economy
                 }
             }
 
-            Debug.Log("[PASS] Test 7: Zero-allocation hot path queries verified.");
+            TestLog.Log("[PASS] Test 7: Zero-allocation hot path queries verified.");
         }
 
         private static void Assert(bool condition, string message)

@@ -10,7 +10,6 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Diagnostics;
-using UnityEngine;
 using ZLogger;
 
 namespace Simpiens.Cognition

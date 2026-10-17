@@ -6,9 +6,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
@@ -16,11 +13,11 @@ namespace Simpiens.Testing.Sociopolitical
     /// Automated domain validation suite for Epic Beta Phase 1:
     /// Resource Contention & Yielding (Fear & Respect on Finite Nodes).
     /// </summary>
-    public class ResourceContentionValidator : IStartable
+    public class ResourceContentionValidator
     {
         public void Start()
         {
-            Debug.Log("[ResourceContentionValidator] Beginning automated validation of Resource Contention & Social Yielding...");
+            TestLog.Log("[ResourceContentionValidator] Beginning automated validation of Resource Contention & Social Yielding...");
 
             ValidateFearYielding();
             ValidateRespectYielding();
@@ -28,7 +25,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateYieldingVisualSpriteAndState();
             ValidateZeroAllocationContentionBenchmark();
 
-            Debug.Log("<color=green>[ResourceContentionValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[ResourceContentionValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateFearYielding()

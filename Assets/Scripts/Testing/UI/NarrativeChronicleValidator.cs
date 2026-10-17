@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using Simpiens.Narrative;
 using Simpiens.UI;
 using Simpiens.UI.Zones;
-using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.UI
 {
@@ -14,14 +11,13 @@ namespace Simpiens.Testing.UI
     /// Validates bounded ring buffer wrapping, strict chronological ordering, deterministic identity generation,
     /// sector query isolation, defensive null safety, and zero-allocation performance in hot paths.
     /// </summary>
-    public class NarrativeChronicleValidator : IStartable
+    public class NarrativeChronicleValidator
     {
         private readonly INarrativeChronicleService _chronicleService;
         private readonly IAgentIdentityService _identityService;
         private readonly INarrativeFormatter _formatter;
         private readonly IFacilityZoneService _zoneService;
 
-        [Inject]
         public NarrativeChronicleValidator(
             INarrativeChronicleService chronicleService = null,
             IAgentIdentityService identityService = null,
@@ -41,7 +37,7 @@ namespace Simpiens.Testing.UI
 
         public void RunAllValidationTests()
         {
-            Debug.Log("<color=#38bdf8><b>[NarrativeChronicleValidator]</b> >>> Starting Epic UI-Alpha Domain Validation Suite <<<</color>");
+            TestLog.Log("<color=#38bdf8><b>[NarrativeChronicleValidator]</b> >>> Starting Epic UI-Alpha Domain Validation Suite <<<</color>");
 
             ValidateRingBufferWrappingAndChronologicalOrder();
             ValidateAgentIdentityDeterminism();
@@ -52,7 +48,7 @@ namespace Simpiens.Testing.UI
             ValidateSectorPersistenceAndCapacityLimit();
             ValidateFiveMinuteRetention();
 
-            Debug.Log("<color=#10b981><b>[NarrativeChronicleValidator]</b> >>> ALL 8 NARRATIVE TESTS PASSED CLEANLY! <<<</color>");
+            TestLog.Log("<color=#10b981><b>[NarrativeChronicleValidator]</b> >>> ALL 8 NARRATIVE TESTS PASSED CLEANLY! <<<</color>");
         }
 
         public void ValidateRingBufferWrappingAndChronologicalOrder()
@@ -100,7 +96,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Expected EventId 8 on newest event, got {buffer[0].EventId}");
             }
 
-            Debug.Log("  ✔ ValidateRingBufferWrappingAndChronologicalOrder passed: Bounded ring buffer correctly wraps and preserves newest-first ordering.");
+            TestLog.Log("  ✔ ValidateRingBufferWrappingAndChronologicalOrder passed: Bounded ring buffer correctly wraps and preserves newest-first ordering.");
         }
 
         public void ValidateAgentIdentityDeterminism()
@@ -147,7 +143,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Formatted display name mismatch! Expected 'Commander Shepard [Agent_1]', got '{formatted}'");
             }
 
-            Debug.Log("  ✔ ValidateAgentIdentityDeterminism passed: 100% deterministic naming, custom overrides, and fallback display tags verified.");
+            TestLog.Log("  ✔ ValidateAgentIdentityDeterminism passed: 100% deterministic naming, custom overrides, and fallback display tags verified.");
         }
 
         public void ValidateSectorEventFiltering()
@@ -183,7 +179,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception("Sector query failed newest-to-oldest chronological sort!");
             }
 
-            Debug.Log("  ✔ ValidateSectorEventFiltering passed: Sector isolation verified without cross-room data leakage.");
+            TestLog.Log("  ✔ ValidateSectorEventFiltering passed: Sector isolation verified without cross-room data leakage.");
         }
 
         public void ValidateZeroAllocationQuery()
@@ -224,7 +220,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Hot-path zero-allocation assertion failed! Allocated {allocated} bytes across 1,000 queries.");
             }
 
-            Debug.Log("  ✔ ValidateZeroAllocationQuery passed: 1,000 sector queries produced exactly 0 bytes of heap garbage.");
+            TestLog.Log("  ✔ ValidateZeroAllocationQuery passed: 1,000 sector queries produced exactly 0 bytes of heap garbage.");
         }
 
         public void ValidateRelativeTimeFormatting()
@@ -249,7 +245,7 @@ namespace Simpiens.Testing.UI
             string t12m = RelativeTimeFormatter.Format(0, 36000, 50f);
             if (t12m != "[12m ago]") throw new Exception($"Expected '[12m ago]', got '{t12m}'");
 
-            Debug.Log("  ✔ ValidateRelativeTimeFormatting passed: Mathematical tick-to-human time translation verified.");
+            TestLog.Log("  ✔ ValidateRelativeTimeFormatting passed: Mathematical tick-to-human time translation verified.");
         }
 
         public void ValidateDefensiveNullSafety()
@@ -277,7 +273,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception("PassthroughNarrativeEnricher returned empty result!");
             }
 
-            Debug.Log("  ✔ ValidateDefensiveNullSafety passed: Headless isolation and null guards confirmed robust.");
+            TestLog.Log("  ✔ ValidateDefensiveNullSafety passed: Headless isolation and null guards confirmed robust.");
         }
 
         public void ValidateSectorPersistenceAndCapacityLimit()
@@ -345,7 +341,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception("Sector 2 event data corrupted after Sector 4 flood!");
             }
 
-            Debug.Log("  ✔ ValidateSectorPersistenceAndCapacityLimit passed: Sector 100-event cap and strict cross-sector isolation confirmed.");
+            TestLog.Log("  ✔ ValidateSectorPersistenceAndCapacityLimit passed: Sector 100-event cap and strict cross-sector isolation confirmed.");
         }
 
         public void ValidateFiveMinuteRetention()
@@ -382,7 +378,7 @@ namespace Simpiens.Testing.UI
                 throw new Exception($"Oldest event tick mismatch! Expected {startTick}, got {buffer[49].SimulationTick}");
             }
 
-            Debug.Log("  ✔ ValidateFiveMinuteRetention passed: Full 5-minute event history persisted without premature eviction.");
+            TestLog.Log("  ✔ ValidateFiveMinuteRetention passed: Full 5-minute event history persisted without premature eviction.");
         }
     }
 }

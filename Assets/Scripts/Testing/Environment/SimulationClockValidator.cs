@@ -5,8 +5,6 @@ using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Environment
 {
@@ -15,7 +13,7 @@ namespace Simpiens.Testing.Environment
     /// Unified Fixed-Tick Simulation Architecture, Speed Scaling, Pause Integrity,
     /// Periodic Exactness, Visual Interpolation, and Zero-Allocation Invariants.
     /// </summary>
-    public class SimulationClockValidator : IStartable
+    public class SimulationClockValidator
     {
         public void Start()
         {
@@ -24,7 +22,7 @@ namespace Simpiens.Testing.Environment
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[SimulationClockValidator] Beginning Section 2.1 Fixed-Tick Simulation Validation...");
+            TestLog.Log("[SimulationClockValidator] Beginning Section 2.1 Fixed-Tick Simulation Validation...");
 
             ValidateFixedTickRateAndSpeedScaling();
             ValidatePauseIntegrity();
@@ -32,7 +30,7 @@ namespace Simpiens.Testing.Environment
             ValidateVisualInterpolationAlpha();
             ValidateZeroAllocationOnTickLoop();
 
-            Debug.Log("<color=green>[SimulationClockValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SimulationClockValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateFixedTickRateAndSpeedScaling()
@@ -72,7 +70,7 @@ namespace Simpiens.Testing.Environment
 
             registry?.Unregister(node);
             simManager.Dispose();
-            Debug.Log("[PASS] Test 1: Fixed-tick rate and speed scaling verified.");
+            TestLog.Log("[PASS] Test 1: Fixed-tick rate and speed scaling verified.");
         }
 
         private void ValidatePauseIntegrity()
@@ -112,7 +110,7 @@ namespace Simpiens.Testing.Environment
 
             HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
-            Debug.Log("[PASS] Test 2: Pause integrity verified (no drift, no decay while paused).");
+            TestLog.Log("[PASS] Test 2: Pause integrity verified (no drift, no decay while paused).");
         }
 
         private void ValidatePeriodicHearthExactness()
@@ -139,7 +137,7 @@ namespace Simpiens.Testing.Environment
 
             HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
-            Debug.Log("[PASS] Test 3: Periodic hearth dynamics exactness verified (no duplicate frame fires).");
+            TestLog.Log("[PASS] Test 3: Periodic hearth dynamics exactness verified (no duplicate frame fires).");
         }
 
         private void ValidateVisualInterpolationAlpha()
@@ -160,7 +158,7 @@ namespace Simpiens.Testing.Environment
             Assert(node.Position == new Vec2(10f, 0f), "LogicalPosition updated to target coordinate.");
             Assert(node.PreviousPosition == Vec2.Zero, "PreviousLogicalPosition records previous tick coordinate.");
 
-            Debug.Log("[PASS] Test 4: Visual interpolation alpha and logical coordinate tracking verified.");
+            TestLog.Log("[PASS] Test 4: Visual interpolation alpha and logical coordinate tracking verified.");
         }
 
         private void ValidateZeroAllocationOnTickLoop()
@@ -208,7 +206,7 @@ namespace Simpiens.Testing.Environment
 
             HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
-            Debug.Log("[PASS] Test 5: Strict zero-allocation guarantee verified on fixed tick loop (0 bytes across 1,000 ticks).");
+            TestLog.Log("[PASS] Test 5: Strict zero-allocation guarantee verified on fixed tick loop (0 bytes across 1,000 ticks).");
         }
 
         private void Assert(bool condition, string message)

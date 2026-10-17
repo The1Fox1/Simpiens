@@ -7,8 +7,6 @@ using Simpiens.Core.Session;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
@@ -21,7 +19,7 @@ namespace Simpiens.Testing.Economy
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[EconomyTuningValidator] Beginning economy tuning validation...");
+            TestLog.Log("[EconomyTuningValidator] Beginning economy tuning validation...");
 
             ValidateDefaultsMatchLegacyConstants();
             ValidateSessionsExposeTheirTuning();
@@ -29,7 +27,7 @@ namespace Simpiens.Testing.Economy
             ValidateCognitionReadsTheSnapshotTuning();
             ValidateCopiesLeaveTheDefaultUntouched();
 
-            Debug.Log("<color=green>[EconomyTuningValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EconomyTuningValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDefaultsMatchLegacyConstants()
@@ -75,7 +73,7 @@ namespace Simpiens.Testing.Economy
             AssertDelta(t.FairSale, 2, 3, 2, "fair sale");
             AssertDelta(t.StingySale, -3, -5, 0, "stingy sale");
 
-            Debug.Log("[PASS] Test 1: The default tuning equals every constant it replaced.");
+            TestLog.Log("[PASS] Test 1: The default tuning equals every constant it replaced.");
         }
 
         private void ValidateSessionsExposeTheirTuning()
@@ -93,7 +91,7 @@ namespace Simpiens.Testing.Economy
             sim.SetEconomy(null);
             Assert(ReferenceEquals(sim.Economy, EconomyTuning.Default), "A null tuning falls back to the default.");
 
-            Debug.Log("[PASS] Test 2: Sessions expose their tuning and the simulation applies it.");
+            TestLog.Log("[PASS] Test 2: Sessions expose their tuning and the simulation applies it.");
         }
 
         private void ValidateSupplyFollowsTheSessionTuning()
@@ -112,7 +110,7 @@ namespace Simpiens.Testing.Economy
             Assert(sim.TryGetTradeStall(stallId, out var stall), "Stall retrieved.");
             Assert(stall.RationStock == 30 && stall.TreasuryGold == 440, $"Caravan used the session's cap and price: stock {stall.RationStock} (30), treasury {stall.TreasuryGold} (440).");
 
-            Debug.Log("[PASS] Test 3: The supply caravan follows the session's tuning.");
+            TestLog.Log("[PASS] Test 3: The supply caravan follows the session's tuning.");
         }
 
         private void ValidateCognitionReadsTheSnapshotTuning()
@@ -138,7 +136,7 @@ namespace Simpiens.Testing.Economy
             partition.UpdateFromRegistry(null);
             Assert(ReferenceEquals(partition.GetActiveSnapshot()?.Economy, economy), "The next snapshot carries it too.");
 
-            Debug.Log("[PASS] Test 4: Cognition reads the session's tuning from the world snapshot.");
+            TestLog.Log("[PASS] Test 4: Cognition reads the session's tuning from the world snapshot.");
         }
 
         private void ValidateCopiesLeaveTheDefaultUntouched()
@@ -153,7 +151,7 @@ namespace Simpiens.Testing.Economy
             Assert(d.StartingGold == 15 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && SimMath.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
                 "The default is never mutated by a copy.");
 
-            Debug.Log("[PASS] Test 5: With… copies leave the default untouched.");
+            TestLog.Log("[PASS] Test 5: With… copies leave the default untouched.");
         }
 
         private static AgentContext CreateContext(float hunger, SharedWorldSnapshot snapshot)

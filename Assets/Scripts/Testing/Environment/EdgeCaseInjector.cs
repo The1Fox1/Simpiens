@@ -1,7 +1,7 @@
+using UnityEngine;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -54,7 +54,7 @@ namespace Simpiens.Testing.Environment
                 }
             }
 
-            Debug.Log($"[EdgeCaseInjector] Spawning Wall at {targetPos} to invalidate paths!");
+            TestLog.Log($"[EdgeCaseInjector] Spawning Wall at {targetPos} to invalidate paths!");
 
             // A wall entity (the simulation's), drawn by a node view
             var root = GameObject.Find("[DynamicObstacles]");

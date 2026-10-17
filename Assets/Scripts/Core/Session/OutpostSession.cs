@@ -34,7 +34,6 @@ namespace Simpiens.Core.Session
         /// <summary>Extra crawlers beyond the gate's spawn points start this far east of a spawn point, between two.</summary>
         private const float OverflowOffset = 1f;
 
-        [VContainer.Inject]
         public OutpostSession() : this(DefaultCrawlerCount)
         {
         }

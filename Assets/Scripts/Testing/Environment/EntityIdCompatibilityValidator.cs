@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
 using Simpiens.Simulation;
-using UnityEngine;
 
 namespace Simpiens.Testing.Environment
 {
@@ -16,13 +15,13 @@ namespace Simpiens.Testing.Environment
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[EntityIdCompatibilityValidator] Beginning Epic CORE C3 validation...");
+            TestLog.Log("[EntityIdCompatibilityValidator] Beginning Epic CORE C3 validation...");
 
             ValidateLayout();
             ValidateValuesMatchGuid();
             ValidateKnownIds();
 
-            Debug.Log("<color=green>[EntityIdCompatibilityValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EntityIdCompatibilityValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateLayout()
@@ -31,7 +30,7 @@ namespace Simpiens.Testing.Environment
             var guid = new UnityEngine.GUID(0x01020304u, 0x05060708u, 0x090a0b0cu, 0x0d0e0f10u);
             var id = new EntityId(0x01020304u, 0x05060708u, 0x090a0b0cu, 0x0d0e0f10u);
             Assert(Bytes(guid).AsSpan().SequenceEqual(Bytes(id)), "Same bytes in memory: unmanaged save records keep their format.");
-            Debug.Log("[PASS] Test 1: same size and memory layout as GUID.");
+            TestLog.Log("[PASS] Test 1: same size and memory layout as GUID.");
         }
 
         private void ValidateValuesMatchGuid()
@@ -58,7 +57,7 @@ namespace Simpiens.Testing.Environment
                 previousGuid = guid;
                 previousId = id;
             }
-            Debug.Log($"[PASS] Test 2: {Samples} values match GUID's hash, text, emptiness, ordering, equality and parsing.");
+            TestLog.Log($"[PASS] Test 2: {Samples} values match GUID's hash, text, emptiness, ordering, equality and parsing.");
         }
 
         private void ValidateKnownIds()
@@ -69,7 +68,7 @@ namespace Simpiens.Testing.Environment
             Assert(Bytes(guid).AsSpan().SequenceEqual(Bytes(id)), $"The player id's text gives the same id ({id} vs {guid}).");
             Assert(WorldRegistry.PlayerEntityId == id, "WorldRegistry.PlayerEntityId is the same id.");
             Assert(new EntityId("not an id").IsEmpty && !EntityId.TryParse("", out _), "Bad text gives the empty id.");
-            Debug.Log("[PASS] Test 3: the player id and bad text behave as with GUID.");
+            TestLog.Log("[PASS] Test 3: the player id and bad text behave as with GUID.");
         }
 
         // Spread values over small, large and repeated words so ordering ties are exercised

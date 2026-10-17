@@ -7,8 +7,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Social;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Environment
 {
@@ -17,7 +15,7 @@ namespace Simpiens.Testing.Environment
     /// Single-Writer Threading Architecture, Snapshot Memory Isolation,
     /// Side-Effect-Free Reads, and Zero-Allocation Invariants.
     /// </summary>
-    public class SingleWriterMemoryValidator : IStartable
+    public class SingleWriterMemoryValidator
     {
         public void Start()
         {
@@ -266,7 +264,7 @@ namespace Simpiens.Testing.Environment
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static void CallUnityLog(string msg)
         {
-            Debug.Log(msg);
+            TestLog.Log(msg);
         }
 
         private void Assert(bool condition, string message)

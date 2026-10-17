@@ -10,7 +10,6 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
 
 namespace Simpiens.Testing.World
 {
@@ -31,7 +30,7 @@ namespace Simpiens.Testing.World
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[SectorChartingValidator] Beginning fog-of-war validation...");
+            TestLog.Log("[SectorChartingValidator] Beginning fog-of-war validation...");
 
             ValidateExploredMask();
             ValidateNoPerceptionThroughTheFog();
@@ -41,7 +40,7 @@ namespace Simpiens.Testing.World
             ValidateUnchartedGatherBountiesCannotBeClaimed();
             ValidateExplorationAvoidsUnchartedSectors();
 
-            Debug.Log("<color=green>[SectorChartingValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SectorChartingValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateExploredMask()
@@ -61,7 +60,7 @@ namespace Simpiens.Testing.World
             Assert(!snapshot.IsCharted(SeamNode) && snapshot.IsCharted(QuarryBelowSeamDoor), "The snapshot knows the Deep Seam is uncharted and the quarry is not.");
             var noMap = new SharedWorldSnapshot(8, 8, 1f, 4, null);
             Assert(noMap.IsCharted(SeamNode), "Without a map everything is charted.");
-            Debug.Log("[PASS] Test 1: The explored-sector mask follows the registry and reaches the snapshot.");
+            TestLog.Log("[PASS] Test 1: The explored-sector mask follows the registry and reaches the snapshot.");
         }
 
         private void ValidateNoPerceptionThroughTheFog()
@@ -79,7 +78,7 @@ namespace Simpiens.Testing.World
             var sameNode = AddResource(charted, SeamNode);
             memory.UpdateMemory(charted, GridPoint.RoundToInt(QuarryBelowSeamDoor), 6, 11);
             Assert(memory.SpatialMemoryMap.ContainsKey(sameNode), "Once charted, the same view reveals the node.");
-            Debug.Log("[PASS] Test 2: Nothing inside an uncharted sector is perceived, even in line of sight.");
+            TestLog.Log("[PASS] Test 2: Nothing inside an uncharted sector is perceived, even in line of sight.");
         }
 
         private void ValidateScoutKeepsPrivateSurveyNotes()
@@ -100,7 +99,7 @@ namespace Simpiens.Testing.World
             var taken = new List<SpatialMemoryRecord>();
             scout.TakeSurveyNotes(Floor1Layout.OvergrowthSectorId, taken);
             Assert(taken.Count == 0 && scout.SurveyNoteCount == 1, "Notes are taken per sector.");
-            Debug.Log("[PASS] Test 3: The surveying scout keeps private notes of its own sector only.");
+            TestLog.Log("[PASS] Test 3: The surveying scout keeps private notes of its own sector only.");
         }
 
         private void ValidateSurveyIsNotGossiped()
@@ -115,7 +114,7 @@ namespace Simpiens.Testing.World
 
             Assert(scout.TryGossip(peer, peerId, scoutId, 400), "Precondition: the two gossip.");
             Assert(peer.SpatialMemoryMap.Count == 0, $"Gossip passes on nothing from the survey (peer learned {peer.SpatialMemoryMap.Count}).");
-            Debug.Log("[PASS] Test 4: A survey is never gossiped before the report.");
+            TestLog.Log("[PASS] Test 4: A survey is never gossiped before the report.");
         }
 
         private void ValidateReportPublishesTheChart()
@@ -153,7 +152,7 @@ namespace Simpiens.Testing.World
             quitter.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 50, surveySectorId: Seam);
             quitter.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 51);
             Assert(quitter.SurveyNoteCount == 1 && !quitter.SpatialMemoryMap.ContainsKey(seam), "Without a report the survey stays private notes.");
-            Debug.Log("[PASS] Test 5: A successful report publishes the chart to every agent; an abandoned survey charts nothing.");
+            TestLog.Log("[PASS] Test 5: A successful report publishes the chart to every agent; an abandoned survey charts nothing.");
         }
 
         private void ValidateUnchartedGatherBountiesCannotBeClaimed()
@@ -176,7 +175,7 @@ namespace Simpiens.Testing.World
             uncharted.SetBounties(new[] { claimedScout }, 1);
             Assert(BountyQueries.SurveyingSector(uncharted, ctx.AgentId) == Seam, "The scout's claim names the sector it surveys.");
             Assert(BountyQueries.SurveyingSector(uncharted, NextGuid()) == 0, "Nobody else surveys it.");
-            Debug.Log("[PASS] Test 6: Gather bounties in uncharted sectors stay unclaimed; the scout's claim marks its survey.");
+            TestLog.Log("[PASS] Test 6: Gather bounties in uncharted sectors stay unclaimed; the scout's claim marks its survey.");
         }
 
         private void ValidateExplorationAvoidsUnchartedSectors()
@@ -194,7 +193,7 @@ namespace Simpiens.Testing.World
                     Assert(sector != Floor1Layout.DeepSeamSectorId && sector != Floor1Layout.OvergrowthSectorId, $"Exploration never heads into an uncharted sector (got {sector} at {p}).");
                 }
             }
-            Debug.Log("[PASS] Test 7: Exploration only picks charted sectors.");
+            TestLog.Log("[PASS] Test 7: Exploration only picks charted sectors.");
         }
 
         /// <summary>Floor 1 with walls; the Deep Seam (and the Overgrowth) charted or not.</summary>

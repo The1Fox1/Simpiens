@@ -25,7 +25,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
-  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`), `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
+  - **Key Files**: `AppBootstrapper.cs` (VContainer composition root; namespace `Simpiens.Core.Bootstrapping`; engine-free classes with several constructors are registered by factory, since the core carries no container attributes), `SimulationClockDriver.cs` (advances the engine-free clock with Unity's frame time), `UnitySimLogSinks.cs`, `SimulationStarter.cs`, `SimulationManager.cs` (main-thread tick: orchestrator implementing `IIntentExecutionContext`, delegating intent execution to `IIntentHandlerRegistry`, draining typed `InfluenceEvent`s, trade/bounty/contention rules, hearth dynamics).
   - `Session/`: sessions as code. An `ISessionDefinition` is a map plus `Populate(SessionBuilder)` (agents, relationships, groups, stalls, seeded bounties). Its `Economy` (`EconomyTuning`) is applied on every respawn, before `Populate`. `OutpostSession` is the live game. `SessionHost` (engine-free) builds any session (loads the map through `IWorldMap`, spawns its keyed nodes, bunks and hearths, calls `Populate`, records the ledger baseline, registers seeded bounties), ticks every crawler after the simulation's tick, and captures and restores it; `SwarmSpawner` is its Unity side: it draws what the host spawns (views follow the host's and the registry's events) and keeps the session API (`ISessionSwitcher`, `ISessionPersistence`) for the dashboard and scenarios (`spawner.Host` for the engine-free session). Every respawn rewinds the clock to tick 0: express seeded expiries relative to the session start. A respawn also starts a new session epoch: an intent stamped with an older `AgentIntent.SessionEpoch` is dropped, because entity ids repeat per seed. Boot always picks the default (outpost) session by id. `SessionHost` also captures and loads whole sessions (`Capture`, `TryRestore`: see `Simulation/Persistence/`), and `SaveGameService` is the player's quick-save slot.
   - `Session/Layouts/`: map definitions as code. `Floor1Layout` is the live outpost floor (sectors, doors, POIs, nodes, spawn points, bunks).
   - `BootstrapExtensions.cs`: hook through which optional assemblies (the test harness) add DI registrations; production never references `Simpiens.Testing`.
@@ -63,7 +63,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - **Key Files**: `WorldEntity.cs` (an entity as plain data: id, kind, position, radius, speed, resource kind, its `AgentState` for crawlers), `WorldRegistry.cs` (entities in registration order, which is the snapshot's order; `EntityRegistered`/`EntityUnregistered` let views show and hide), `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
 
 - **`Diagnostics/`**
-  Logging façade over ZLogger (`SimLog`, `SimLogSettings`, `SafeSinkLogProcessor`, `TickStampedFileLogProcessor`). One `ILogger` per channel (`SimLog.Planning`, `SimLog.Economy`, …). Configured once in `AppBootstrapper.Awake`; it is a silent `NullLogger` until then (headless validators). Rules: `docs/ROADMAP.md` §1A.3.
+  Logging façade over ZLogger (`SimLog`, `SimLogSettings`, `SafeSinkLogProcessor`, `TickStampedFileLogProcessor`). One `ILogger` per channel (`SimLog.Planning`, `SimLog.Economy`, …). Engine-free: the host plugs its console in (`SimLog.ConsoleSinkFactory`; Unity's is installed by `Core/UnitySimLogSinks` in `AppBootstrapper.Awake`, which then configures it); it is a silent `NullLogger` until configured (headless validators). Rules: `docs/ROADMAP.md` §1A.3.
 
 - **`Narrative/`**
   Chronicle pipeline: `NarrativeChronicleService`, `TemplateNarrativeFormatter`, `ILlmNarrativeEnricher` (LLM hook; passthrough by default).
@@ -128,7 +128,7 @@ The code currently violates some of the rules above and below in places (singlet
 ---
 
 ## Logging (binding; full rules in `docs/ROADMAP.md` §1A.3)
-- Use `SimLog.<Channel>.ZLog<Level>($"...")` and never `Debug.Log` in application code. Validators under `Testing/` may keep `Debug.Log`.
+- Use `SimLog.<Channel>.ZLog<Level>($"...")` and never `Debug.Log` in application code. Validators log through `TestLog` and fail by throwing, so any test framework can run them.
 - Build nothing outside the interpolation holes: a disabled call must allocate nothing. Gate per-agent decision traces with `SimLog.Traces(channel, level, agentId)` and label entities with `SimLog.Agent(id)`.
 - Levels:
   - **Error:** broken invariants.

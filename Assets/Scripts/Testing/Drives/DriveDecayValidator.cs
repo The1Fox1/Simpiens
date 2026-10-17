@@ -4,9 +4,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Drives
 {
@@ -14,11 +11,11 @@ namespace Simpiens.Testing.Drives
     /// Automated domain validation suite for Epic Alpha Phase 1:
     /// Multifaceted Biological Drives (AgentNeeds), Dynamic GOAP Priorities, and Drive Dynamics.
     /// </summary>
-    public class DriveDecayValidator : IStartable
+    public class DriveDecayValidator
     {
         public void Start()
         {
-            Debug.Log("[DriveDecayValidator] Beginning automated validation of Biological Drives & GOAP Goals...");
+            TestLog.Log("[DriveDecayValidator] Beginning automated validation of Biological Drives & GOAP Goals...");
 
             ValidateAgentNeedsDecayAndReplenishment();
             ValidateGoalDynamicPriorityFlipping();
@@ -26,7 +23,7 @@ namespace Simpiens.Testing.Drives
             ValidateWorldStateRestingFactMapping();
             ValidateZeroAllocationPerformance();
 
-            Debug.Log("<color=green>[DriveDecayValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DriveDecayValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAgentNeedsDecayAndReplenishment()
@@ -58,7 +55,7 @@ namespace Simpiens.Testing.Drives
             needs.Social = SimMath.Min(100f, needs.Social + 25f);
             Assert(SimMath.Approximately(needs.Social, 70f), $"Social replenished to 70 after gossip (actual: {needs.Social})");
 
-            Debug.Log("[PASS] Test 1: AgentNeeds decay and replenishment dynamics verified.");
+            TestLog.Log("[PASS] Test 1: AgentNeeds decay and replenishment dynamics verified.");
         }
 
         private void ValidateGoalDynamicPriorityFlipping()
@@ -94,7 +91,7 @@ namespace Simpiens.Testing.Drives
             Assert(socialPriC == 95f, $"Social priority is 95 (actual: {socialPriC})");
             Assert(socialPriC > hungerGoal.CalculatePriority(contextC), "SocializeGoal dominates when lonely.");
 
-            Debug.Log("[PASS] Test 2: Dynamic GOAP goal priority flipping verified.");
+            TestLog.Log("[PASS] Test 2: Dynamic GOAP goal priority flipping verified.");
         }
 
         private void ValidateRestAndSocialActionsInGraph()
@@ -114,7 +111,7 @@ namespace Simpiens.Testing.Drives
             graph.GetActionsSatisfying(WorldState.Empty.With(StateFact.HasExchangedGossip, true), socialMatches);
             Assert(socialMatches.Count == 1 && socialMatches[0] == travelPeer, "TravelToPeerAction satisfies HasExchangedGossip in ActionGraph.");
 
-            Debug.Log("[PASS] Test 3: RestAction and TravelToPeerAction registered and resolved in ActionGraph.");
+            TestLog.Log("[PASS] Test 3: RestAction and TravelToPeerAction registered and resolved in ActionGraph.");
         }
 
         private void ValidateWorldStateRestingFactMapping()
@@ -131,7 +128,7 @@ namespace Simpiens.Testing.Drives
             var stateTired = WorldStateBuilder.BuildWorldState(contextTired);
             Assert(stateTired.Get(StateFact.IsResting) == false, "IsResting fact is false when Energy < 80.");
 
-            Debug.Log("[PASS] Test 4: WorldStateBuilder maps IsResting fact accurately.");
+            TestLog.Log("[PASS] Test 4: WorldStateBuilder maps IsResting fact accurately.");
         }
 
         private void ValidateZeroAllocationPerformance()
@@ -163,7 +160,7 @@ namespace Simpiens.Testing.Drives
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 evaluations.");
 
-            Debug.Log($"[PASS] Test 5: Zero-allocation guarantee verified (0 bytes allocated across 1,000 evaluations).");
+            TestLog.Log($"[PASS] Test 5: Zero-allocation guarantee verified (0 bytes allocated across 1,000 evaluations).");
         }
 
         private static void Assert(bool condition, string message)

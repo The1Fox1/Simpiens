@@ -4,9 +4,6 @@ using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Planning
 {
@@ -14,7 +11,7 @@ namespace Simpiens.Testing.Planning
     /// Automated test harness for GOAP A* Search & Planning Engine.
     /// Tests plan resolution, cost optimization, branch pruning, and zero-allocation performance.
     /// </summary>
-    public class GoapPlannerValidator : IStartable
+    public class GoapPlannerValidator
     {
         private class MockInvalidAction : GoapAction
         {
@@ -31,7 +28,7 @@ namespace Simpiens.Testing.Planning
 
         public void Start()
         {
-            Debug.Log("[GoapPlannerValidator] Beginning automated validation of GOAP A* Search & Planner...");
+            TestLog.Log("[GoapPlannerValidator] Beginning automated validation of GOAP A* Search & Planner...");
 
             var planner = new GoapPlanner();
             var plan = new GoapPlan();
@@ -55,7 +52,7 @@ namespace Simpiens.Testing.Planning
             ValidateAlreadySatisfiedGoal(planner, plan, dummyContext);
             ValidateZeroAllocationBenchmark(planner, plan, dummyContext);
 
-            Debug.Log("<color=green>[GoapPlannerValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GoapPlannerValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateSingleStepPlan(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -73,7 +70,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Actions[0] is HarvestResourceAction, "Plan contains HarvestResourceAction.");
             Assert(SimMath.Approximately(plan.TotalCost, 1.0f), $"TotalCost is 1.0 (actual: {plan.TotalCost}).");
 
-            Debug.Log("[PASS] Test 1: Single-step plan resolution passed.");
+            TestLog.Log("[PASS] Test 1: Single-step plan resolution passed.");
         }
 
         private void ValidateTwoStepPlan(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -92,7 +89,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Actions[1] is HarvestResourceAction, "Step 2 is HarvestResourceAction.");
             Assert(SimMath.Approximately(plan.TotalCost, 3.0f), $"TotalCost is 3.0 (actual: {plan.TotalCost}).");
 
-            Debug.Log("[PASS] Test 2: Two-step plan resolution passed.");
+            TestLog.Log("[PASS] Test 2: Two-step plan resolution passed.");
         }
 
         private void ValidateThreeStepPlan(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -111,7 +108,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Actions[2] is HarvestResourceAction, "Step 3 is HarvestResourceAction.");
             Assert(SimMath.Approximately(plan.TotalCost, 6.0f), $"TotalCost is 6.0 (actual: {plan.TotalCost}).");
 
-            Debug.Log("[PASS] Test 3: Three-step full chain plan resolution passed.");
+            TestLog.Log("[PASS] Test 3: Three-step full chain plan resolution passed.");
         }
 
         private void ValidateBranchOptimization(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -133,7 +130,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Actions[0] is EatCarriedFoodAction, "Planner chose lowest-cost EatCarriedFoodAction.");
             Assert(SimMath.Approximately(plan.TotalCost, 0.5f), $"TotalCost is 0.5 (actual: {plan.TotalCost}).");
 
-            Debug.Log("[PASS] Test 4: Branch cost optimization passed.");
+            TestLog.Log("[PASS] Test 4: Branch cost optimization passed.");
         }
 
         private void ValidateProceduralInvalidation(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -152,7 +149,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Count == 3, $"Planner avoided invalid action and built 3-step plan (actual: {plan.Count}).");
             Assert(plan.Actions[0] is SearchResourceAction, "Step 1 is SearchResourceAction.");
 
-            Debug.Log("[PASS] Test 5: Procedural invalidation pruning passed.");
+            TestLog.Log("[PASS] Test 5: Procedural invalidation pruning passed.");
         }
 
         private void ValidateUnreachableGoal(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -167,7 +164,7 @@ namespace Simpiens.Testing.Planning
             Assert(!success, "Unreachable goal correctly returns false.");
             Assert(plan.IsEmpty, "Plan is empty for unreachable goal.");
 
-            Debug.Log("[PASS] Test 6: Unreachable goal handling passed.");
+            TestLog.Log("[PASS] Test 6: Unreachable goal handling passed.");
         }
 
         private void ValidateAlreadySatisfiedGoal(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -182,7 +179,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.IsEmpty, "Plan is empty when goal is already satisfied.");
             Assert(SimMath.Approximately(plan.TotalCost, 0f), "TotalCost is 0.0.");
 
-            Debug.Log("[PASS] Test 7: Already-satisfied goal evaluation passed.");
+            TestLog.Log("[PASS] Test 7: Already-satisfied goal evaluation passed.");
         }
 
         private void ValidateZeroAllocationBenchmark(GoapPlanner planner, GoapPlan plan, AgentContext context)
@@ -218,7 +215,7 @@ namespace Simpiens.Testing.Planning
             Assert(bytesAllocated == 0, $"Zero heap allocations asserted! (actual bytes: {bytesAllocated})");
             Assert(sw.ElapsedMilliseconds < 50, $"10k A* searches took {sw.ElapsedMilliseconds}ms (< 50ms threshold).");
 
-            Debug.Log($"[PASS] Test 8: Performance benchmark passed (10,000 A* searches in {sw.ElapsedMilliseconds}ms, {bytesAllocated} bytes allocated).");
+            TestLog.Log($"[PASS] Test 8: Performance benchmark passed (10,000 A* searches in {sw.ElapsedMilliseconds}ms, {bytesAllocated} bytes allocated).");
         }
 
         private ActionGraph CreateBaseGraph()
@@ -234,7 +231,7 @@ namespace Simpiens.Testing.Planning
         {
             if (!condition)
             {
-                Debug.LogError($"[ASSERTION FAILED] {message}");
+                TestLog.LogError($"[ASSERTION FAILED] {message}");
                 throw new Exception($"Assertion failed: {message}");
             }
         }

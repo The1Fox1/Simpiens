@@ -11,9 +11,6 @@ using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
@@ -21,11 +18,11 @@ namespace Simpiens.Testing.Sociopolitical
     /// Automated domain validation suite for Epic Beta Phase 3:
     /// Gathering Anchors & Organic Social Bonding (Campfires & Hearths).
     /// </summary>
-    public class GatheringAnchorValidator : IStartable
+    public class GatheringAnchorValidator
     {
         public void Start()
         {
-            Debug.Log("[GatheringAnchorValidator] Beginning automated validation of Gathering Anchors & Organic Social Bonding...");
+            TestLog.Log("[GatheringAnchorValidator] Beginning automated validation of Gathering Anchors & Organic Social Bonding...");
 
             ValidateAnchorDetectionAndWorldStateMapping();
             ValidateGatherAtAnchorGoalPriorityDominance();
@@ -34,7 +31,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateHearthFrustrationAndSocialReplenishment();
             ValidateZeroAllocationHearthBondingTick();
 
-            Debug.Log("<color=green>[GatheringAnchorValidator] ALL 6 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GatheringAnchorValidator] ALL 6 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAnchorDetectionAndWorldStateMapping()
@@ -66,7 +63,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!stateC.Get(StateFact.KnowsAnchorLocation), "WorldState does not have KnowsAnchorLocation when anchor is blacklisted.");
             Assert(!stateC.Get(StateFact.AtAnchorLocation), "WorldState does not have AtAnchorLocation when anchor is blacklisted.");
 
-            Debug.Log("[PASS] Test 1: Anchor detection and WorldState bitmask mapping verified.");
+            TestLog.Log("[PASS] Test 1: Anchor detection and WorldState bitmask mapping verified.");
         }
 
         private void ValidateGatherAtAnchorGoalPriorityDominance()
@@ -103,7 +100,7 @@ namespace Simpiens.Testing.Sociopolitical
             float exhaustedPriority = goal.CalculatePriority(contextExhausted);
             Assert(SimMath.Approximately(exhaustedPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during exhaustion (actual: {exhaustedPriority})");
 
-            Debug.Log("[PASS] Test 2: GatherAtAnchorGoal priority dominance switching verified.");
+            TestLog.Log("[PASS] Test 2: GatherAtAnchorGoal priority dominance switching verified.");
         }
 
         private void ValidateAStarPlanFormulationToAnchor()
@@ -132,7 +129,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(plan.Actions[0] is TravelToAnchorAction, "Plan step 1 is TravelToAnchorAction.");
             Assert(plan.Actions[1] is RelaxAtAnchorAction, "Plan step 2 is RelaxAtAnchorAction.");
 
-            Debug.Log("[PASS] Test 3: A* 2-step plan formulation to anchor verified.");
+            TestLog.Log("[PASS] Test 3: A* 2-step plan formulation to anchor verified.");
         }
 
         private void ValidateHearthProximityBondingAndGossipAcceleration()
@@ -200,7 +197,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             HeadlessEntities.Remove(worldRegistry, goACrawler);
             HeadlessEntities.Remove(worldRegistry, goBCrawler);
-            Debug.Log("[PASS] Test 4: Hearth proximity bonding and gossip acceleration verified.");
+            TestLog.Log("[PASS] Test 4: Hearth proximity bonding and gossip acceleration verified.");
         }
 
         private void ValidateHearthFrustrationAndSocialReplenishment()
@@ -232,7 +229,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             HeadlessEntities.Remove(worldRegistry, goACrawler);
             HeadlessEntities.Remove(worldRegistry, goBCrawler);
-            Debug.Log("[PASS] Test 5: Hearth frustration relief and social replenishment verified.");
+            TestLog.Log("[PASS] Test 5: Hearth frustration relief and social replenishment verified.");
         }
 
         private void ValidateZeroAllocationHearthBondingTick()
@@ -276,7 +273,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             HeadlessEntities.Remove(worldRegistry, goACrawler);
             HeadlessEntities.Remove(worldRegistry, goBCrawler);
-            Debug.Log($"[PASS] Test 6: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
+            TestLog.Log($"[PASS] Test 6: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
         }
 
         private static void Assert(bool condition, string message)

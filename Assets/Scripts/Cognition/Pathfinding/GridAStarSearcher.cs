@@ -1,6 +1,5 @@
 using System;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Pathfinding
 {

@@ -10,9 +10,6 @@ using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Planning
 {
@@ -20,11 +17,11 @@ namespace Simpiens.Testing.Planning
     /// Automated test harness for Cognitive Plan Execution & Preemption.
     /// Validates two-tier cognition, step progression, in-flight intent preemption, and plan invalidation.
     /// </summary>
-    public class PlanExecutionValidator : IStartable
+    public class PlanExecutionValidator
     {
         public void Start()
         {
-            Debug.Log("[PlanExecutionValidator] Beginning automated validation of Plan Execution & Preemption...");
+            TestLog.Log("[PlanExecutionValidator] Beginning automated validation of Plan Execution & Preemption...");
 
             ValidateWorldStateBuilder();
             ValidateSequentialStepProgression();
@@ -33,7 +30,7 @@ namespace Simpiens.Testing.Planning
             ValidateGoapCognitiveEvaluatorIntegration();
             ValidateZeroAllocationWorldStateBenchmark();
 
-            Debug.Log("<color=green>[PlanExecutionValidator] ALL TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[PlanExecutionValidator] ALL TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBuilder()
@@ -81,7 +78,7 @@ namespace Simpiens.Testing.Planning
             Assert(state2.Get(StateFact.HasFoodInInventory) == true, "State2: HasFoodInInventory is true.");
             Assert(state2.Get(StateFact.IsThreatened) == true, "State2: IsThreatened is true (frustration 70 > 60).");
 
-            Debug.Log("[PASS] Test 1: WorldStateBuilder context-to-bitmask mapping passed.");
+            TestLog.Log("[PASS] Test 1: WorldStateBuilder context-to-bitmask mapping passed.");
         }
 
         private void ValidateSequentialStepProgression()
@@ -117,7 +114,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.IsFinished, "Plan.IsFinished is true.");
             Assert(plan.CurrentAction == null, "CurrentAction is null when finished.");
 
-            Debug.Log("[PASS] Test 2: Sequential plan step advancement passed.");
+            TestLog.Log("[PASS] Test 2: Sequential plan step advancement passed.");
         }
 
         private void ValidateSimulationManagerAbort()
@@ -148,7 +145,7 @@ namespace Simpiens.Testing.Planning
             bool secondAbort = simManager.AbortIntent(agentId);
             Assert(!secondAbort, "Second AbortIntent call returned false.");
 
-            Debug.Log("[PASS] Test 3: SimulationManager.AbortIntent preemption passed.");
+            TestLog.Log("[PASS] Test 3: SimulationManager.AbortIntent preemption passed.");
         }
 
         private void ValidatePlanInvalidationOnFailure()
@@ -167,7 +164,7 @@ namespace Simpiens.Testing.Planning
             Assert(plan.Count == 0, "Plan count is 0.");
             Assert(plan.CurrentAction == null, "CurrentAction is null.");
 
-            Debug.Log("[PASS] Test 4: Plan invalidation on failure passed.");
+            TestLog.Log("[PASS] Test 4: Plan invalidation on failure passed.");
         }
 
         private void ValidateGoapCognitiveEvaluatorIntegration()
@@ -202,7 +199,7 @@ namespace Simpiens.Testing.Planning
             Assert(intent != null, "GoapCognitiveEvaluator generated an intent.");
             Assert(intent is WanderIntent, "First intent is WanderIntent from SearchResourceAction.");
 
-            Debug.Log("[PASS] Test 5: GoapCognitiveEvaluator integration passed.");
+            TestLog.Log("[PASS] Test 5: GoapCognitiveEvaluator integration passed.");
         }
 
         private void ValidateZeroAllocationWorldStateBenchmark()
@@ -249,7 +246,7 @@ namespace Simpiens.Testing.Planning
             Assert(bytesAllocated == 0, $"Zero heap allocations asserted! (actual bytes: {bytesAllocated})");
             Assert(sw.ElapsedMilliseconds < 25, $"10k WorldState builds took {sw.ElapsedMilliseconds}ms (< 25ms threshold).");
 
-            Debug.Log($"[PASS] Test 6: Performance benchmark passed (10,000 WorldState builds in {sw.ElapsedMilliseconds}ms, {bytesAllocated} bytes allocated).");
+            TestLog.Log($"[PASS] Test 6: Performance benchmark passed (10,000 WorldState builds in {sw.ElapsedMilliseconds}ms, {bytesAllocated} bytes allocated).");
         }
 
         private static EntityId CreateGuid()
@@ -261,7 +258,7 @@ namespace Simpiens.Testing.Planning
         {
             if (!condition)
             {
-                Debug.LogError($"[ASSERTION FAILED] {message}");
+                TestLog.LogError($"[ASSERTION FAILED] {message}");
                 throw new Exception($"Assertion failed: {message}");
             }
         }

@@ -5,8 +5,6 @@ using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Navigation
 {
@@ -15,7 +13,7 @@ namespace Simpiens.Testing.Navigation
     /// Covers inflated wall rasterization, static-grid reset/rebuild, wall-checked displacement (path steps,
     /// watchdog nudges and back-offs), A* endpoints snapped out of blocked cells, and pawn separation on arrival.
     /// </summary>
-    public class NavigationClearanceValidator : IStartable
+    public class NavigationClearanceValidator
     {
         private const float CellSize = 1f;
         private const int GridSize = 20; // world spans -10..10
@@ -27,7 +25,7 @@ namespace Simpiens.Testing.Navigation
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[NavigationClearanceValidator] Beginning navigation clearance validation...");
+            TestLog.Log("[NavigationClearanceValidator] Beginning navigation clearance validation...");
 
             ValidateInflatedWallRasterization();
             ValidateStaticResetAndRebuild();
@@ -36,7 +34,7 @@ namespace Simpiens.Testing.Navigation
             ValidateSnappedPathEndpoint();
             ValidateArrivalDoesNotStack();
 
-            Debug.Log("<color=green>[NavigationClearanceValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[NavigationClearanceValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateInflatedWallRasterization()
@@ -59,7 +57,7 @@ namespace Simpiens.Testing.Navigation
                 var p = new Vec2(0.44f, 0f) + new Vec2(SimMath.Cos(a), SimMath.Sin(a)) * reach;
                 Assert(!snapshot.IsStaticWalkable(p), $"Point {p} within body reach of the wall must be statically blocked.");
             }
-            Debug.Log("[PASS] Test 1: Walls are rasterized inflated by the pawn body radius.");
+            TestLog.Log("[PASS] Test 1: Walls are rasterized inflated by the pawn body radius.");
         }
 
         private void ValidateStaticResetAndRebuild()
@@ -85,7 +83,7 @@ namespace Simpiens.Testing.Navigation
             registry.Unregister(wall);
             grid.ResetStatic();
             Assert(grid.GetActiveSnapshot().IsStaticWalkable(new Vec2(3.5f, 3.5f)), "ResetStatic must clear rasterized walls.");
-            Debug.Log("[PASS] Test 2: Static grid clears on reset and rebuilds when walls disappear.");
+            TestLog.Log("[PASS] Test 2: Static grid clears on reset and rebuilds when walls disappear.");
         }
 
         private void ValidateDisplacementRejectsWalls()
@@ -102,7 +100,7 @@ namespace Simpiens.Testing.Navigation
             // A pawn already inside a blocked cell may always leave it
             pawn.SetPosition(new Vec2(0.5f, 0.5f));
             Assert(simManager.TryDisplacePawn(pawn, new Vec2(-0.5f, 0.5f)), "A pawn inside a wall cell must be allowed to escape.");
-            Debug.Log("[PASS] Test 3: Displacement never moves a pawn into or through static walls.");
+            TestLog.Log("[PASS] Test 3: Displacement never moves a pawn into or through static walls.");
         }
 
         private void ValidateWatchdogIsWallChecked()
@@ -123,7 +121,7 @@ namespace Simpiens.Testing.Navigation
             var backState = new ActiveIntentState { StallCount = 4, LastSampledPosition = pawn.Position };
             simManager.ApplyProgressiveUnstuckReflex(pawn, new Vec2(-3f, 0.5f), backState); // back-off direction = +X (into wall)
             Assert(grid.GetActiveSnapshot().IsStaticWalkable(pawn.Position), $"Tier 3 back-off must not land in a wall (at {pawn.Position}).");
-            Debug.Log("[PASS] Test 4: Watchdog nudges and back-offs are wall-checked.");
+            TestLog.Log("[PASS] Test 4: Watchdog nudges and back-offs are wall-checked.");
         }
 
         private void ValidateSnappedPathEndpoint()
@@ -147,7 +145,7 @@ namespace Simpiens.Testing.Navigation
                     $"Path segment {i} must stay in walkable cells.");
             }
 
-            Debug.Log("[PASS] Test 5: Blocked targets snap to the reachable cell; every segment is statically clear.");
+            TestLog.Log("[PASS] Test 5: Blocked targets snap to the reachable cell; every segment is statically clear.");
         }
 
         private void ValidateArrivalDoesNotStack()
@@ -188,7 +186,7 @@ namespace Simpiens.Testing.Navigation
             Assert(result == IntentResult.Success, $"Mover must arrive (Success) next to an occupied destination, got {result}.");
             float gap = Vec2.Distance(mover.Position, occupant.Position);
             Assert(gap >= 0.35f, $"Mover must not stack on the occupant (gap {gap:F2}m).");
-            Debug.Log("[PASS] Test 6: Pawns arrive beside an occupied destination instead of stacking.");
+            TestLog.Log("[PASS] Test 6: Pawns arrive beside an occupied destination instead of stacking.");
         }
 
         /// <summary>Grid with a static wall column at world x 0..1, y -10..10, wired into a SimulationManager.</summary>

@@ -3,7 +3,6 @@
     "rootNamespace": "Simpiens",
     "references": [
         "VContainer",
-        "UniTask",
         "Unity.InputSystem",
         "ZLogger.Unity"
     ],

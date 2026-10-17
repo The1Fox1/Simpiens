@@ -5,9 +5,6 @@ using Simpiens.Cognition;
 using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.World;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Diagnostics
 {
@@ -15,11 +12,11 @@ namespace Simpiens.Testing.Diagnostics
     /// Automated test harness for VisualAnomalyDetector.
     /// Validates heading jitter detection, pawn stacking, state thrashing, and zero-allocation performance.
     /// </summary>
-    public class VisualAnomalyDetectorValidator : IStartable
+    public class VisualAnomalyDetectorValidator
     {
         public void Start()
         {
-            Debug.Log("[VisualAnomalyDetectorValidator] Beginning automated validation of Visual Anomaly Detector...");
+            TestLog.Log("[VisualAnomalyDetectorValidator] Beginning automated validation of Visual Anomaly Detector...");
 
             ValidateJitterDetection();
             ValidateStackingDetection();
@@ -29,7 +26,7 @@ namespace Simpiens.Testing.Diagnostics
             ValidateJitterIsSpeedIndependent();
             ValidateJitterIgnoresNormalTurns();
 
-            Debug.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[VisualAnomalyDetectorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateJitterDetection()
@@ -50,7 +47,7 @@ namespace Simpiens.Testing.Diagnostics
             Assert(record.Type == VisualAnomalyType.OscillationJitter && record.Description.Contains("last positions"), $"The alert names the type and the pawn's last positions ({record.Description}).");
 
             registry?.Unregister(go);
-            Debug.Log("[PASS] Test 1: Rapid heading jitter/oscillation detection verified.");
+            TestLog.Log("[PASS] Test 1: Rapid heading jitter/oscillation detection verified.");
         }
 
         /// <summary>
@@ -94,7 +91,7 @@ namespace Simpiens.Testing.Diagnostics
             }
             Assert(frameOnly.JitterCount == 0, $"Frame ticks judge no jitter ({frameOnly.JitterCount}).");
             reg.Unregister(g);
-            Debug.Log("[PASS] Test 6: Jitter is judged in simulation ticks: the same twitch gives the same verdict at 1x and 10x.");
+            TestLog.Log("[PASS] Test 6: Jitter is judged in simulation ticks: the same twitch gives the same verdict at 1x and 10x.");
         }
 
         /// <summary>Normal movement is not jitter: turning back once, or slow back-and-forth beyond the window.</summary>
@@ -123,7 +120,7 @@ namespace Simpiens.Testing.Diagnostics
             Assert(detector.JitterCount == 0, $"Back and forth every 3 ticks is not jitter ({detector.JitterCount}).");
 
             registry?.Unregister(go);
-            Debug.Log("[PASS] Test 7: Turning back once, or slow back-and-forth, is not jitter.");
+            TestLog.Log("[PASS] Test 7: Turning back once, or slow back-and-forth, is not jitter.");
         }
 
         private static WorldEntity CreatePawn(WorldRegistry registry, string name, out WorldEntity node)
@@ -152,7 +149,7 @@ namespace Simpiens.Testing.Diagnostics
 
             registry?.Unregister(nodeA);
             registry?.Unregister(nodeB);
-            Debug.Log("[PASS] Test 2: Unnatural pawn stacking/clumping detection verified.");
+            TestLog.Log("[PASS] Test 2: Unnatural pawn stacking/clumping detection verified.");
         }
 
         private void ValidateStateThrashingDetection()
@@ -183,7 +180,7 @@ namespace Simpiens.Testing.Diagnostics
             Assert(detector.ThrashingCount >= 1, $"Visual state thrashing was detected (actual: {detector.ThrashingCount})");
 
             HeadlessEntities.Remove(registry, goCrawler);
-            Debug.Log("[PASS] Test 3: High-frequency visual state thrashing detection verified.");
+            TestLog.Log("[PASS] Test 3: High-frequency visual state thrashing detection verified.");
         }
 
         private void ValidateZeroAllocation()
@@ -224,7 +221,7 @@ namespace Simpiens.Testing.Diagnostics
                 registry.Unregister(nodes[i]);
             }
 
-            Debug.Log("[PASS] Test 4: Zero allocation guarantee verified (0 bytes across 500 continuous evaluation frames).");
+            TestLog.Log("[PASS] Test 4: Zero allocation guarantee verified (0 bytes across 500 continuous evaluation frames).");
         }
 
         private void ValidateMapWallPenetration()
@@ -255,7 +252,7 @@ namespace Simpiens.Testing.Diagnostics
             Assert(detector.BoundaryBreachCount == 0, "A pawn inside the playable bounds must not breach them.");
 
             registry?.Unregister(node);
-            Debug.Log("[PASS] Test 5: Penetration of static map walls is detected from map geometry.");
+            TestLog.Log("[PASS] Test 5: Penetration of static map walls is detected from map geometry.");
         }
 
         private static void Assert(bool condition, string message)

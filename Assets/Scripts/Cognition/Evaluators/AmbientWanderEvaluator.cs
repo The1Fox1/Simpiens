@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Evaluators
 {

@@ -2,9 +2,6 @@ using System;
 using Simpiens.Cognition;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
@@ -13,7 +10,7 @@ namespace Simpiens.Testing.Economy
     /// Counters must move exactly with the gold they describe, agree with the ledger totals, reset cleanly,
     /// and cost nothing on the hot path.
     /// </summary>
-    public class EconomyCountersValidator : IStartable
+    public class EconomyCountersValidator
     {
         public void Start()
         {
@@ -22,14 +19,14 @@ namespace Simpiens.Testing.Economy
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[EconomyCountersValidator] Beginning economy counter validation...");
+            TestLog.Log("[EconomyCountersValidator] Beginning economy counter validation...");
 
             ValidateTransferCounters();
             ValidateNamedBreakdownMatchesTotals();
             ValidateResetClearsCounters();
             ValidateCountersAreZeroAlloc();
 
-            Debug.Log("<color=green>[EconomyCountersValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EconomyCountersValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTransferCounters()
@@ -54,7 +51,7 @@ namespace Simpiens.Testing.Economy
             Assert(f.EscrowLockedGold == 35 && f.EscrowReleasedGold == 20 && f.EscrowRefundedGold == 15,
                 $"Escrow locked {f.EscrowLockedGold} / released {f.EscrowReleasedGold} / refunded {f.EscrowRefundedGold}.");
 
-            Debug.Log("[PASS] Test 1: Purchase, sale and escrow counters move exactly with successful transfers.");
+            TestLog.Log("[PASS] Test 1: Purchase, sale and escrow counters move exactly with successful transfers.");
         }
 
         private void ValidateNamedBreakdownMatchesTotals()
@@ -72,7 +69,7 @@ namespace Simpiens.Testing.Economy
             Assert(ledger.GetSinkTotal(SupplyService.CaravanSinkName) == ledger.TotalSinkedGold, "Sink breakdown must equal total.");
             Assert(ledger.GetFaucetTotal("NeverRecorded") == 0 && ledger.GetSinkTotal(null) == 0, "Unknown names read as 0.");
 
-            Debug.Log("[PASS] Test 2: Per-name faucet/sink breakdown sums to the ledger totals.");
+            TestLog.Log("[PASS] Test 2: Per-name faucet/sink breakdown sums to the ledger totals.");
         }
 
         private void ValidateResetClearsCounters()
@@ -93,7 +90,7 @@ namespace Simpiens.Testing.Economy
             Assert(f.EscrowLockedGold == 0 && f.EscrowReleasedGold == 0 && f.EscrowRefundedGold == 0, "Escrow counters reset.");
             Assert(ledger.GetFaucetTotal("InitialSeed") == 0 && ledger.GetSinkTotal(SupplyService.CaravanSinkName) == 0, "Named totals reset.");
 
-            Debug.Log("[PASS] Test 3: Reset clears every counter.");
+            TestLog.Log("[PASS] Test 3: Reset clears every counter.");
         }
 
         private void ValidateCountersAreZeroAlloc()
@@ -123,7 +120,7 @@ namespace Simpiens.Testing.Economy
             Assert(allocated == 0, $"Counter updates allocated {allocated} bytes across 1,000 iterations.");
             Assert(warm.Purchases == 1001, $"Purchases counted {warm.Purchases} instead of 1001.");
 
-            Debug.Log("[PASS] Test 4: Counter updates are allocation-free.");
+            TestLog.Log("[PASS] Test 4: Counter updates are allocation-free.");
         }
 
         private static AgentRegistry CreateRegistryWithAgent(out EntityId agentId, int gold)

@@ -6,7 +6,6 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using Simpiens.Testing.Sessions;
-using UnityEngine;
 
 namespace Simpiens.Testing.World
 {
@@ -18,7 +17,7 @@ namespace Simpiens.Testing.World
     {
         public void RunAllValidationTests()
         {
-            Debug.Log("[MapDefinitionValidator] Beginning map definition validation...");
+            TestLog.Log("[MapDefinitionValidator] Beginning map definition validation...");
 
             ValidateBuilderInvariants();
             ValidateWallRunInflation();
@@ -30,7 +29,7 @@ namespace Simpiens.Testing.World
             ValidateFloor1LiveUse();
             ValidateDevMapLayout();
 
-            Debug.Log("<color=green>[MapDefinitionValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MapDefinitionValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBuilderInvariants()
@@ -66,7 +65,7 @@ namespace Simpiens.Testing.World
             Assert(def.TryGetSector(0, out var fallback) && fallback.Id == 0, "Id 0 resolves to the fallback sector.");
             Assert(def.TryGetFirstPoi(PoiKind.Stall, out var stall) && stall.Key == "stall", "Stall POI lookup by kind.");
 
-            Debug.Log("[PASS] Test 1: Builder rejects duplicate ids/keys, reserved id 0, out-of-bounds entries and diagonal walls.");
+            TestLog.Log("[PASS] Test 1: Builder rejects duplicate ids/keys, reserved id 0, out-of-bounds entries and diagonal walls.");
         }
 
         private void ValidateWallRunInflation()
@@ -92,7 +91,7 @@ namespace Simpiens.Testing.World
                 Assert(!IsWalkable(grid, p), $"Point {p} within body reach of the wall must be blocked.");
             }
 
-            Debug.Log("[PASS] Test 2: Wall runs rasterize inflated by the pawn body radius.");
+            TestLog.Log("[PASS] Test 2: Wall runs rasterize inflated by the pawn body radius.");
         }
 
         private void ValidateHalfIntegerWallRows()
@@ -109,7 +108,7 @@ namespace Simpiens.Testing.World
             Assert(!IsWalkable(grid, new Vec2(0f, 4.5f)), "Row y in [4,5) blocked (3.5 + 0.8 = 4.3).");
             Assert(IsWalkable(grid, new Vec2(0f, 1.5f)) && IsWalkable(grid, new Vec2(0f, 5.5f)), "Rows beyond the inflated wall stay open.");
 
-            Debug.Log("[PASS] Test 3: Half-integer wall rows block the same three cell rows as legacy wall nodes.");
+            TestLog.Log("[PASS] Test 3: Half-integer wall rows block the same three cell rows as legacy wall nodes.");
         }
 
         private void ValidateBaseLayerSurvivesClear()
@@ -136,7 +135,7 @@ namespace Simpiens.Testing.World
             WallRasterizer.Rasterize(empty, grid);
             Assert(IsWalkable(grid, new Vec2(2.5f, 0f)), "Loading another map must drop the previous map's walls.");
 
-            Debug.Log("[PASS] Test 4: Static map walls survive dynamic resets; reloading replaces them.");
+            TestLog.Log("[PASS] Test 4: Static map walls survive dynamic resets; reloading replaces them.");
         }
 
         private void ValidatePlayableBounds()
@@ -155,7 +154,7 @@ namespace Simpiens.Testing.World
             WallRasterizer.Rasterize(wide, grid);
             Assert(IsWalkable(grid, new Vec2(6.5f, 0f)), "Reloading with wider bounds reopens cells.");
 
-            Debug.Log("[PASS] Test 5: Playable bounds block outside cells and are replaced on reload.");
+            TestLog.Log("[PASS] Test 5: Playable bounds block outside cells and are replaced on reload.");
         }
 
         private void ValidatePartitionSizing()
@@ -166,7 +165,7 @@ namespace Simpiens.Testing.World
             Assert(cells.X == 52 && cells.Y == 40, $"Partition cells expected 52x40, got {cells.X}x{cells.Y}.");
             Assert(cells.X % 2 == 0 && cells.Y % 2 == 0, "Partition cell counts must be even so cell edges stay on whole units.");
 
-            Debug.Log("[PASS] Test 6: Partition size covers the bounds symmetrically, independent of the camera.");
+            TestLog.Log("[PASS] Test 6: Partition size covers the bounds symmetrically, independent of the camera.");
         }
 
         private void ValidateFloor1Layout()
@@ -247,7 +246,7 @@ namespace Simpiens.Testing.World
             }
 
             var cells = def.PartitionCells(1f);
-            Debug.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
+            TestLog.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
         }
 
         /// <summary>
@@ -326,7 +325,7 @@ namespace Simpiens.Testing.World
                 Assert(d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
             }
 
-            Debug.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
+            TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
         }
 
         private static int CountPois(MapDefinition def, PoiKind kind, byte sectorId, StaticNavGrid grid)
@@ -380,7 +379,7 @@ namespace Simpiens.Testing.World
                 Assert(grid.TryGetRegion(n.Position, out int r) && r == penRegions[sectorId - 1], $"Node '{n.Key}' is not reachable inside its pen.");
             }
 
-            Debug.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
+            TestLog.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
         }
 
         private static StaticNavGrid Rasterized(MapDefinition def)

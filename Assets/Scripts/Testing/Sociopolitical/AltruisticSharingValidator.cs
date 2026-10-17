@@ -7,9 +7,6 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
@@ -17,11 +14,11 @@ namespace Simpiens.Testing.Sociopolitical
     /// Automated domain validation suite for Epic Beta Phase 2:
     /// Altruistic Sharing & Food Transfer (Warmth & Trust in Survival).
     /// </summary>
-    public class AltruisticSharingValidator : IStartable
+    public class AltruisticSharingValidator
     {
         public void Start()
         {
-            Debug.Log("[AltruisticSharingValidator] Beginning automated validation of Altruistic Sharing & Food Transfer...");
+            TestLog.Log("[AltruisticSharingValidator] Beginning automated validation of Altruistic Sharing & Food Transfer...");
 
             ValidateAltruisticUtilityCalculation();
             ValidateAltruisticAidExecution();
@@ -29,7 +26,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateRelationalBondingImpact();
             ValidateZeroAllocationAltruismBenchmark();
 
-            Debug.Log("<color=green>[AltruisticSharingValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[AltruisticSharingValidator] ALL 5 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAltruisticUtilityCalculation()
@@ -60,7 +57,7 @@ namespace Simpiens.Testing.Sociopolitical
             float collapsedCompUtility = memory.CalculateAltruismScore(companionId, 0, selfHunger: 20f, isTargetCollapsed: true);
             Assert(SimMath.Approximately(collapsedCompUtility, 84.5f), $"Collapsed companion utility includes +30 bonus (actual: {collapsedCompUtility})");
 
-            Debug.Log("[AltruisticSharingValidator] Test 1 Passed: Altruistic utility calculation mathematically verified.");
+            TestLog.Log("[AltruisticSharingValidator] Test 1 Passed: Altruistic utility calculation mathematically verified.");
         }
 
         private void ValidateAltruisticAidExecution()
@@ -135,7 +132,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             HeadlessEntities.Remove(registry, goACrawler);
             HeadlessEntities.Remove(registry, goBCrawler);
-            Debug.Log("[AltruisticSharingValidator] Test 2 Passed: Altruistic aid execution and hunger transfer verified.");
+            TestLog.Log("[AltruisticSharingValidator] Test 2 Passed: Altruistic aid execution and hunger transfer verified.");
         }
 
         private void ValidateSelfishIndifference()
@@ -157,7 +154,7 @@ namespace Simpiens.Testing.Sociopolitical
             // (80 * 0.5) + (70 * 0.3) - (60 * 0.4) = 40 + 21 - 24 = 37 (but hunger >= 50 suppresses intent in evaluator)
             Assert(60f >= AltruismEvaluator.SatedHungerThreshold, "Hungry agent (60 hunger) exceeds sated threshold (50) and suppresses aid.");
 
-            Debug.Log("[AltruisticSharingValidator] Test 3 Passed: Selfish indifference and self-preservation suppression verified.");
+            TestLog.Log("[AltruisticSharingValidator] Test 3 Passed: Selfish indifference and self-preservation suppression verified.");
         }
 
         private void ValidateRelationalBondingImpact()
@@ -204,7 +201,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             HeadlessEntities.Remove(registry, goACrawler);
             HeadlessEntities.Remove(registry, goBCrawler);
-            Debug.Log("[AltruisticSharingValidator] Test 4 Passed: Relational bonding deltas verified.");
+            TestLog.Log("[AltruisticSharingValidator] Test 4 Passed: Relational bonding deltas verified.");
         }
 
         private void ValidateZeroAllocationAltruismBenchmark()
@@ -231,7 +228,7 @@ namespace Simpiens.Testing.Sociopolitical
             long allocated = memoryAfter - memoryBefore;
 
             Assert(allocated == 0, $"Zero-Allocation Altruism Benchmark: 1,000 evaluations allocated {allocated} bytes (expected: 0 bytes). Dummy: {dummy}");
-            Debug.Log($"[AltruisticSharingValidator] Test 5 Passed: Zero-allocation benchmark passed ({allocated} bytes allocated across 1,000 checks).");
+            TestLog.Log($"[AltruisticSharingValidator] Test 5 Passed: Zero-allocation benchmark passed ({allocated} bytes allocated across 1,000 checks).");
         }
 
         private void Assert(bool condition, string message)

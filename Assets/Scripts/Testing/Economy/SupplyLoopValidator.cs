@@ -15,9 +15,6 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.UI.Zones;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Economy
 {
@@ -27,14 +24,14 @@ namespace Simpiens.Testing.Economy
     /// fulfilment, salvage bounty planning, the F1 Tier-1 → GOAP regression, and zero-GC supply ticking.
     /// These inject preconditions by design; live emergence is asserted by OutpostSupplyLoopScenario.
     /// </summary>
-    public class SupplyLoopValidator : IStartable
+    public class SupplyLoopValidator
     {
         private static uint _guidSeed = 31000;
         private static EntityId NextGuid() => new EntityId(_guidSeed++, 0x51A1, 0x3001, 0xC0DE);
 
         public void Start()
         {
-            Debug.Log("[SupplyLoopValidator] Beginning automated validation of §3.1 supply loop mechanisms...");
+            TestLog.Log("[SupplyLoopValidator] Beginning automated validation of §3.1 supply loop mechanisms...");
 
             ValidateTypedHarvest();
             ValidateInventoryFullHarvestFails();
@@ -49,7 +46,7 @@ namespace Simpiens.Testing.Economy
             ValidateActivityTally();
             ValidateCarriedFoodIsEaten();
 
-            Debug.Log("<color=green>[SupplyLoopValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SupplyLoopValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -78,7 +75,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.Inventory.GetItemCount(ItemType.IronOre) == 1, "Food harvest did not add salvage.");
 
             Destroy(oreGo, foodGo, agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 1 Passed: Typed harvest (ore → inventory, food → hunger relief).");
+            TestLog.Log("[SupplyLoopValidator] Test 1 Passed: Typed harvest (ore → inventory, food → hunger relief).");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -105,7 +102,7 @@ namespace Simpiens.Testing.Economy
             Assert(!agent.Inventory.HasItem(ItemType.MedicinalHerb), "No herb added to a full inventory.");
 
             Destroy(herbGo, agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 2 Passed: Inventory-full harvest fails without losing yield.");
+            TestLog.Log("[SupplyLoopValidator] Test 2 Passed: Inventory-full harvest fails without losing yield.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -136,7 +133,7 @@ namespace Simpiens.Testing.Economy
             Assert(sim.Supply.RegrowthCount == 1, "RegrowthCount is 1.");
 
             Destroy(bushGo, agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 3 Passed: Deterministic dormant regrowth at exactly RegrowTicks.");
+            TestLog.Log("[SupplyLoopValidator] Test 3 Passed: Deterministic dormant regrowth at exactly RegrowTicks.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -174,7 +171,7 @@ namespace Simpiens.Testing.Economy
             while (sim.CurrentTick < 40) sim.Tick();
             Assert(supply.RestockCount == 2, "Full stall not restocked again.");
 
-            Debug.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, delivers what a stall can pay for, and conserves the ledger.");
+            TestLog.Log("[SupplyLoopValidator] Test 4 Passed: Supply caravan respects cap, delivers what a stall can pay for, and conserves the ledger.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -213,7 +210,7 @@ namespace Simpiens.Testing.Economy
             while (sim.CurrentTick < 80) sim.Tick();
             Assert(supply.SalvageSaleVisits == 3, $"No salvage, no purchase: {supply.SalvageSaleVisits} visits bought salvage (expected 3).");
 
-            Debug.Log("[SupplyLoopValidator] Test 4b Passed: The caravan buys salvage up to its quota per visit, as a named faucet.");
+            TestLog.Log("[SupplyLoopValidator] Test 4b Passed: The caravan buys salvage up to its quota per visit, as a named faucet.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -248,7 +245,7 @@ namespace Simpiens.Testing.Economy
             Assert(sim.TryGetTradeStall(stallId, out stall) && stall.TreasuryGold == 200 && !stall.InArrears, $"Third visit paid in full and cleared arrears (treasury {stall.TreasuryGold}, arrears {stall.InArrears}).");
             Assert(ledger.ValidateConservation(stall.TreasuryGold, 0, out disc), $"Ledger conservation holds after recovery (discrepancy {disc}).");
 
-            Debug.Log("[SupplyLoopValidator] Test 4c Passed: Upkeep is a named sink; a stall that can't pay goes into arrears and recovers.");
+            TestLog.Log("[SupplyLoopValidator] Test 4c Passed: Upkeep is a named sink; a stall that can't pay goes into arrears and recovers.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -309,7 +306,7 @@ namespace Simpiens.Testing.Economy
             Assert(!accepted && !sim.TryGetBounty(43, out _), "Un-escrowable bounty rejected at registration.");
 
             Destroy(agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 5 Passed: Scout bounty fulfilment via escrow and sector exploration.");
+            TestLog.Log("[SupplyLoopValidator] Test 5 Passed: Scout bounty fulfilment via escrow and sector exploration.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -352,7 +349,7 @@ namespace Simpiens.Testing.Economy
             Assert(gatherAt >= 0 && travelAt > gatherAt && deliverAt > travelAt,
                 $"From the stall the plan still returns after gathering (gather {gatherAt}, travel {travelAt}, deliver {deliverAt}).");
 
-            Debug.Log("[SupplyLoopValidator] Test 6 Passed: Salvage bounty plan resolved from a clean world state.");
+            TestLog.Log("[SupplyLoopValidator] Test 6 Passed: Salvage bounty plan resolved from a clean world state.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -399,7 +396,7 @@ namespace Simpiens.Testing.Economy
             }
 
             Destroy(oreGo, agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 7 Passed: F1 regression — well-fed agent reaches Tier-2 GOAP.");
+            TestLog.Log("[SupplyLoopValidator] Test 7 Passed: F1 regression — well-fed agent reaches Tier-2 GOAP.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -446,7 +443,7 @@ namespace Simpiens.Testing.Economy
             Assert(supply.RestockCount == 11, $"11 caravan restocks (got {supply.RestockCount}).");
             Assert(after - before == 0, $"Supply ticking allocated {after - before} bytes over 1,000 ticks.");
 
-            Debug.Log("[SupplyLoopValidator] Test 8 Passed: Zero GC allocations over 1,000 supply ticks.");
+            TestLog.Log("[SupplyLoopValidator] Test 8 Passed: Zero GC allocations over 1,000 supply ticks.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -500,7 +497,7 @@ namespace Simpiens.Testing.Economy
             Assert(o.SalvageHarvests == 0 && o.SalvageSales == 0 && o.Meals == 0 && o.RationPurchases == 0, $"Another crawler's tally is untouched ({o}).");
 
             Destroy(oreGo, foodGo, agentGo, otherGo);
-            Debug.Log("[SupplyLoopValidator] Test 10 Passed: The activity tally counts each act once for its crawler; a cycle needs a harvest before the sale.");
+            TestLog.Log("[SupplyLoopValidator] Test 10 Passed: The activity tally counts each act once for its crawler; a cycle needs a harvest before the sale.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -539,7 +536,7 @@ namespace Simpiens.Testing.Economy
                 $"With nothing left to eat the intent fails and changes nothing ({result}, hunger {agent.Hunger}).");
 
             Destroy(agentGo);
-            Debug.Log("[SupplyLoopValidator] Test 11 Passed: A hungry crawler eats the ration it carries, by reflex or plan, instead of panicking.");
+            TestLog.Log("[SupplyLoopValidator] Test 11 Passed: A hungry crawler eats the ration it carries, by reflex or plan, instead of panicking.");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -628,7 +625,7 @@ namespace Simpiens.Testing.Economy
         {
             if (!condition)
             {
-                Debug.LogError($"[SupplyLoopValidator] FAILED: {message}");
+                TestLog.LogError($"[SupplyLoopValidator] FAILED: {message}");
                 throw new Exception($"Assertion failed: {message}");
             }
         }

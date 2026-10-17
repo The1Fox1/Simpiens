@@ -4,9 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using UnityEngine;
 using ZLogger;
-using ZLogger.Unity;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Simpiens.Diagnostics
@@ -75,6 +73,15 @@ namespace Simpiens.Diagnostics
         private static string[] _focusPrefixes = Array.Empty<string>();
 
         /// <summary>
+        /// Builds the host's console sink, given the formatter every sink shares (Epic CORE C6: the engine-free core
+        /// knows no console). Set by the host before <see cref="Configure"/>; Unity sets its Debug-console sink.
+        /// </summary>
+        public static Func<Action<ZLoggerOptions>, IAsyncLogProcessor> ConsoleSinkFactory { get; set; }
+
+        /// <summary>Where a sink reports a line it had to drop (Unity: a console warning). Defaults to stderr.</summary>
+        public static Action<string> SinkFailure { get; set; } = message => Console.Error.WriteLine(message);
+
+        /// <summary>
         /// (Re)configures all channels. Safe to call again (e.g. a PlayMode scenario raising verbosity);
         /// the previous factory is flushed and disposed.
         /// </summary>
@@ -103,9 +110,12 @@ namespace Simpiens.Diagnostics
                         builder.AddFilter(CategoryPrefix + ChannelNames[i], Max(settings.GetChannelLevel(ChannelNames[i]), lowestSinkFloor));
                     }
 
-                    var consoleOptions = new ZLoggerUnityDebugOptions { PrettyStacktrace = false };
-                    ConfigureFormatter(consoleOptions);
-                    builder.AddZLoggerLogProcessor(new SafeSinkLogProcessor(new UnityDebugLogProcessor(consoleOptions), settings.ConsoleMinimumLevel));
+                    // The console is the host's (Unity's Debug console in the editor and player); none without one
+                    var consoleSink = ConsoleSinkFactory?.Invoke(ConfigureFormatter);
+                    if (consoleSink != null)
+                    {
+                        builder.AddZLoggerLogProcessor(new SafeSinkLogProcessor(consoleSink, settings.ConsoleMinimumLevel));
+                    }
 
                     if (hasFile)
                     {

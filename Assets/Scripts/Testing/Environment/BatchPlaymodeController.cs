@@ -1,5 +1,6 @@
 using UnityEngine;
 
+
 namespace Simpiens.Testing.Environment
 {
     /// <summary>
@@ -26,7 +27,7 @@ namespace Simpiens.Testing.Environment
             if (condition.Contains("[Gossip]"))
             {
                 _gossipDetected++;
-                Debug.Log($"[BatchPlaymodeController] >>> CONFIRMED GOSSIP EVENT #{_gossipDetected}: {condition} <<<");
+                TestLog.Log($"[BatchPlaymodeController] >>> CONFIRMED GOSSIP EVENT #{_gossipDetected}: {condition} <<<");
             }
         }
 
@@ -36,7 +37,7 @@ namespace Simpiens.Testing.Environment
             // Exit after capturing at least 3 gossip events, or timeout after 25 seconds
             if (_gossipDetected >= 3 || _timer > 25f)
             {
-                Debug.Log($"[BatchPlaymodeController] Run complete. Total gossip events detected: {_gossipDetected} in {_timer:F2} seconds.");
+                TestLog.Log($"[BatchPlaymodeController] Run complete. Total gossip events detected: {_gossipDetected} in {_timer:F2} seconds.");
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
                 UnityEditor.EditorApplication.Exit(0);

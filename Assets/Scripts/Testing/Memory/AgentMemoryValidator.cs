@@ -1,8 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Memory;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
-using VContainer.Unity;
 
 namespace Simpiens.Testing.Memory
 {
@@ -10,11 +8,11 @@ namespace Simpiens.Testing.Memory
     /// Automated validation harness for Agent Memory & Gossip Systems.
     /// Executes on startup to verify memory retention, decay, and peer gossip exchange invariants.
     /// </summary>
-    public class AgentMemoryValidator : IStartable
+    public class AgentMemoryValidator
     {
         public void Start()
         {
-            Debug.Log("[AgentMemoryValidator] Beginning automated validation of Agent Memory & Gossip Systems...");
+            TestLog.Log("[AgentMemoryValidator] Beginning automated validation of Agent Memory & Gossip Systems...");
 
             ValidateMemoryDecay();
             ValidateGossipTransmission();
@@ -22,7 +20,7 @@ namespace Simpiens.Testing.Memory
             ValidateGossipCooldown();
             ValidateIdleDuration();
 
-            Debug.Log("<color=green>[AgentMemoryValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[AgentMemoryValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryDecay()
@@ -52,7 +50,7 @@ namespace Simpiens.Testing.Memory
             memory.UpdateMemory(dummySnapshot, GridPoint.Zero, visionRadius: 10, currentTick: 1650);
             Assert(!memory.SpatialMemoryMap.ContainsKey(resourceId), "Resource memory should decay after 1500 ticks of being unobserved.");
 
-            Debug.Log("[PASS] Test 1: Temporal memory decay & selective pruning passed.");
+            TestLog.Log("[PASS] Test 1: Temporal memory decay & selective pruning passed.");
         }
 
         private void ValidateGossipTransmission()
@@ -84,7 +82,7 @@ namespace Simpiens.Testing.Memory
             Assert(memoryA.EventLedger.Count > 0 && memoryA.EventLedger.GetEvent(memoryA.EventLedger.Count - 1).EventType == MemoryEventType.GossipShared, "Agent A ledger recorded GossipShared.");
             Assert(memoryB.EventLedger.Count > 0 && memoryB.EventLedger.GetEvent(memoryB.EventLedger.Count - 1).EventType == MemoryEventType.GossipReceived, "Agent B ledger recorded GossipReceived.");
 
-            Debug.Log("[PASS] Test 2: Gossip transmission of spatial knowledge & ledger passed.");
+            TestLog.Log("[PASS] Test 2: Gossip transmission of spatial knowledge & ledger passed.");
         }
 
         private void ValidateGossipFreshnessUpdate()
@@ -110,7 +108,7 @@ namespace Simpiens.Testing.Memory
             Assert(updatedRecordA.LastKnownLocation == new GridPoint(20, 20), "Agent A should adopt the newer coordinates.");
             Assert(updatedRecordA.LastSeenTick == 150, "Agent A should adopt the newer timestamp.");
 
-            Debug.Log("[PASS] Test 3: Gossip intel freshness update passed.");
+            TestLog.Log("[PASS] Test 3: Gossip intel freshness update passed.");
         }
 
         private void ValidateGossipCooldown()
@@ -133,7 +131,7 @@ namespace Simpiens.Testing.Memory
             bool third = memoryA.TryGossip(memoryB, agentBId, agentAId, currentTick: 401, cooldownTicks: 300);
             Assert(third, "Gossip after cooldown expiry should succeed.");
 
-            Debug.Log("[PASS] Test 4: Gossip cooldown enforcement passed.");
+            TestLog.Log("[PASS] Test 4: Gossip cooldown enforcement passed.");
         }
 
         private void ValidateIdleDuration()
@@ -146,14 +144,14 @@ namespace Simpiens.Testing.Memory
             var customIdle = new IdleIntent(agentId, 4.5f);
             Assert(SimMath.Approximately(customIdle.Duration, 4.5f), "Custom IdleIntent duration is 4.5s.");
 
-            Debug.Log("[PASS] Test 5: IdleIntent duration retention passed.");
+            TestLog.Log("[PASS] Test 5: IdleIntent duration retention passed.");
         }
 
         private void Assert(bool condition, string message)
         {
             if (!condition)
             {
-                Debug.LogError($"[ASSERTION FAILED] {message}");
+                TestLog.LogError($"[ASSERTION FAILED] {message}");
                 throw new System.Exception($"Assertion failed: {message}");
             }
         }

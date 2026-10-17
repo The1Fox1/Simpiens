@@ -1,9 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using System.IO;
-using Cysharp.Threading.Tasks;
 using Simpiens.Diagnostics;
 using Simpiens.Simulation.Persistence;
-using UnityEngine;
 using ZLogger;
 
 namespace Simpiens.Core.Session
@@ -43,7 +42,7 @@ namespace Simpiens.Core.Session
         bool IsSaving { get; }
 
         /// <summary>Captures the session now, between ticks, and writes it to the slot off the main thread (the dashboard).</summary>
-        UniTask<SaveOutcome> QuickSaveAsync();
+        Task<SaveOutcome> QuickSaveAsync();
 
         /// <summary>Captures the session now and writes it to the slot before returning (on quit, in tests).</summary>
         SaveOutcome QuickSave();
@@ -53,7 +52,8 @@ namespace Simpiens.Core.Session
     }
 
     /// <summary>
-    /// The quick-save slot: <c>Saves/quicksave.simsave</c> under Unity's persistent data path. A save is captured on the
+    /// The quick-save slot: <c>Saves/quicksave.simsave</c> under the folder the host gives it (Unity's persistent data
+    /// path in the game). A save is captured on the
     /// main thread between ticks, encoded there (a few tens of kilobytes) and written on the thread pool, through a
     /// temporary file so a crash mid-write never leaves half a save in the slot. A load reads and checks the file
     /// (<see cref="SaveFile"/>), then hands it to the session (<see cref="ISessionPersistence.TryRestore"/>), which
@@ -64,10 +64,6 @@ namespace Simpiens.Core.Session
         public const string QuickSaveName = "quicksave";
 
         private readonly ISessionPersistence _session;
-
-        public SaveGameService(ISessionPersistence session) : this(session, Path.Combine(Application.persistentDataPath, "Saves"))
-        {
-        }
 
         public SaveGameService(ISessionPersistence session, string directory)
         {
@@ -81,7 +77,7 @@ namespace Simpiens.Core.Session
         public bool HasQuickSave => File.Exists(QuickSavePath);
         public bool IsSaving { get; private set; }
 
-        public async UniTask<SaveOutcome> QuickSaveAsync()
+        public async Task<SaveOutcome> QuickSaveAsync()
         {
             if (IsSaving) return new SaveOutcome(false, -1, "A save is already being written.");
             if (!TryEncode(out byte[] file, out long tick, out var failed)) return failed;
@@ -90,7 +86,7 @@ namespace Simpiens.Core.Session
             try
             {
                 string path = QuickSavePath;
-                await UniTask.RunOnThreadPool(() => WriteThroughTemporaryFile(path, file));
+                await Task.Run(() => WriteThroughTemporaryFile(path, file));
                 return Written(tick, file.Length);
             }
             catch (Exception e)

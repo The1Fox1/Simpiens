@@ -1,5 +1,4 @@
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Simulation.World
 {

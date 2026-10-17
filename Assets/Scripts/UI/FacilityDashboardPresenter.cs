@@ -270,10 +270,11 @@ namespace Simpiens.UI
         private void HandleQuickSaveClicked()
         {
             if (_saveGame == null) return;
-            QuickSaveAsync().Forget();
+            QuickSaveAsync();
         }
 
-        private async Cysharp.Threading.Tasks.UniTaskVoid QuickSaveAsync()
+        // A UI event handler: the write runs off the main thread and Unity resumes here on the main thread
+        private async void QuickSaveAsync()
         {
             ShowSaveStatus("Saving...");
             var outcome = await _saveGame.QuickSaveAsync();

@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -6,7 +7,6 @@ using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -514,7 +514,7 @@ namespace Simpiens.Testing.Diagnostics
             }
             _recentAnomalies.Add(record);
 
-            Debug.LogWarning(record.ToString());
+            TestLog.LogWarning(record.ToString());
             OnAnomalyDetected?.Invoke(record);
         }
     }

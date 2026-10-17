@@ -10,22 +10,20 @@ using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Cognition.Social;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 2:
     /// Collective Directives & Compliance/Defiance Dynamics.
-    /// Runs headlessly on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// </summary>
-    public class DirectiveComplianceValidator : IStartable
+    public class DirectiveComplianceValidator
     {
         public void Start()
         {
-            Debug.Log("[DirectiveComplianceValidator] Beginning automated validation of Epic 8 Phase 2...");
+            TestLog.Log("[DirectiveComplianceValidator] Beginning automated validation of Epic 8 Phase 2...");
 
             ValidateWorldStateBuilderFactMapping();
             ValidateGoapBackwardPlanningForDirectives();
@@ -36,7 +34,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
 
-            Debug.Log("<color=green>[DirectiveComplianceValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DirectiveComplianceValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBuilderFactMapping()
@@ -92,7 +90,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!stateExpired.Get(StateFact.HasActiveDirective), "Expired directive reflects HasActiveDirective = false.");
             Assert(!stateExpired.Get(StateFact.AtDirectiveLocation), "Expired directive reflects AtDirectiveLocation = false.");
 
-            Debug.Log("[PASS] Test 1: WorldStateBuilder directive facts mapping verified.");
+            TestLog.Log("[PASS] Test 1: WorldStateBuilder directive facts mapping verified.");
         }
 
         private void ValidateGoapBackwardPlanningForDirectives()
@@ -140,7 +138,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(scratchPlan.Actions[0] is ExecuteDirectiveAction, "Only action is ExecuteDirectiveAction.");
             Assert(SimMath.Approximately(scratchPlan.TotalCost, 1.0f), $"Total plan cost is 1.0 (actual: {scratchPlan.TotalCost}).");
 
-            Debug.Log("[PASS] Test 2: GOAP backward planning for collective directives verified.");
+            TestLog.Log("[PASS] Test 2: GOAP backward planning for collective directives verified.");
         }
 
         private void ValidateComplianceUtilityEquation()
@@ -171,7 +169,7 @@ namespace Simpiens.Testing.Sociopolitical
             var decision = ComplianceUtility.Evaluate(context, groupData);
             Assert(decision == ComplianceDecision.Comply, $"Decision must be Comply for U={actualU} >= 20.");
 
-            Debug.Log("[PASS] Test 3: Compliance utility formula verified against analytical baseline.");
+            TestLog.Log("[PASS] Test 3: Compliance utility formula verified against analytical baseline.");
         }
 
         private void ValidateComplianceThresholdsAndDecisionOutcomes()
@@ -211,7 +209,7 @@ namespace Simpiens.Testing.Sociopolitical
                 Assert(ComplianceUtility.Evaluate(ctx, groupData) == ComplianceDecision.ActiveDesertion, "U < 0 yields ActiveDesertion.");
             }
 
-            Debug.Log("[PASS] Test 4: Compliance categorical decision thresholds verified.");
+            TestLog.Log("[PASS] Test 4: Compliance categorical decision thresholds verified.");
         }
 
         private void ValidateComplyDirectiveGoalPriorityAndStarvationOverride()
@@ -281,7 +279,7 @@ namespace Simpiens.Testing.Sociopolitical
                 Assert(intimidatedPriority >= 70f, $"Intimidation fear maintained high directive priority ({intimidatedPriority}) despite starvation.");
             }
 
-            Debug.Log("[PASS] Test 5: ComplyDirectiveGoal dynamic priority and crisis overrides verified.");
+            TestLog.Log("[PASS] Test 5: ComplyDirectiveGoal dynamic priority and crisis overrides verified.");
         }
 
         private void ValidatePassiveDefianceAndDesertionSideEffects()
@@ -316,7 +314,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             Assert(memory.EventLedger.Count == 3, "All 3 new memory events recorded without error.");
 
-            Debug.Log("[PASS] Test 6: Sociopolitical side effects (allegiance delta, memory logging, desertion) verified.");
+            TestLog.Log("[PASS] Test 6: Sociopolitical side effects (allegiance delta, memory logging, desertion) verified.");
         }
 
         private void ValidateDefensiveNullSafety()
@@ -354,7 +352,7 @@ namespace Simpiens.Testing.Sociopolitical
             var execIntent = execAction.CreateIntent(defaultContext);
             Assert(execIntent is IdleIntent, "ExecuteDirectiveAction returns IdleIntent with default context.");
 
-            Debug.Log("[PASS] Test 7: Defensive null safety for test isolation verified.");
+            TestLog.Log("[PASS] Test 7: Defensive null safety for test isolation verified.");
         }
 
         private void ValidateZeroAllocationHotPath()
@@ -410,7 +408,7 @@ namespace Simpiens.Testing.Sociopolitical
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Hot path allocated {totalAlloc} bytes across 1,000 iterations! Must be strictly 0 bytes.");
 
-            Debug.Log("[PASS] Test 8: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
+            TestLog.Log("[PASS] Test 8: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
         }
 
         [StructLayout(LayoutKind.Explicit)]

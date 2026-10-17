@@ -9,7 +9,6 @@ using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Core;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 
 namespace Simpiens.Testing.Drives
 {
@@ -27,7 +26,7 @@ namespace Simpiens.Testing.Drives
 
         public void RunAllValidationTests()
         {
-            Debug.Log("[RestAnchorValidator] Beginning rest anchor validation...");
+            TestLog.Log("[RestAnchorValidator] Beginning rest anchor validation...");
 
             ValidateTiredCrawlerWalksToAFreeBunk();
             ValidateFieldRestFallbacks();
@@ -36,7 +35,7 @@ namespace Simpiens.Testing.Drives
             ValidateClaimsNeverOutliveTheSleep();
             ValidateLastStepOntoTheBunk();
 
-            Debug.Log("<color=green>[RestAnchorValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[RestAnchorValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTiredCrawlerWalksToAFreeBunk()
@@ -56,7 +55,7 @@ namespace Simpiens.Testing.Drives
             Assert(oneShort is SleepAtBunkIntent s1 && s1.BunkId == BunkId, "One unit short of the bunk, the crawler still goes to sleep there (the handler makes the last step).");
             var tooFar = sleep.CreateIntent(Context(energy: 30f, bunkAt: new Vec2(2f, 0f), occupied: false, hearthAt: null));
             Assert(tooFar is IdleIntent, "Two units away is not a last step: the plan is re-evaluated instead.");
-            Debug.Log("[PASS] Test 1: A tired crawler walks to a free bunk it knows and sleeps there, making the last step itself.");
+            TestLog.Log("[PASS] Test 1: A tired crawler walks to a free bunk it knows and sleeps there, making the last step itself.");
         }
 
         private void ValidateFieldRestFallbacks()
@@ -69,7 +68,7 @@ namespace Simpiens.Testing.Drives
 
             var spent = PlanRest(energy: Considerations.TooTiredToWalkEnergy - 1f, bunkAt: new Vec2(10f, 0f), occupied: false, hearthAt: null);
             Assert(spent.Actions.Count == 1 && spent.Actions[0] is RestAction, $"Too tired to walk: rest in place (got {Describe(spent)}).");
-            Debug.Log("[PASS] Test 2: With no free bunk, or too tired to walk, a crawler rests where it stands.");
+            TestLog.Log("[PASS] Test 2: With no free bunk, or too tired to walk, a crawler rests where it stands.");
         }
 
         private void ValidateBunkBeatsTheHearthForSleep()
@@ -77,7 +76,7 @@ namespace Simpiens.Testing.Drives
             var plan = PlanRest(energy: 30f, bunkAt: new Vec2(20f, 0f), occupied: false, hearthAt: new Vec2(3f, 0f));
             Assert(plan.Actions.Count == 2 && plan.Actions[0] is TravelToBunkAction,
                 $"To sleep, a bunk 20 units away beats a nearby hearth (got {Describe(plan)}).");
-            Debug.Log("[PASS] Test 3: For rest, the bunk is preferred over relaxing at a nearby hearth.");
+            TestLog.Log("[PASS] Test 3: For rest, the bunk is preferred over relaxing at a nearby hearth.");
         }
 
         private void ValidateSingleOccupancy()
@@ -96,7 +95,7 @@ namespace Simpiens.Testing.Drives
             sim.ReleaseBunk(BunkId, AgentId);
             Assert(!sim.BunkOccupants.ContainsKey(BunkId) && sim.TryClaimBunk(BunkId, other, bunkPos), "Once released the bunk is free for the next crawler.");
             Assert(!sim.TryClaimBunk(new EntityId(65u, 5u, 5u, 5u), AgentId, bunkPos), "An unknown bunk cannot be claimed.");
-            Debug.Log("[PASS] Test 4: A bunk holds one sleeper, standing at it.");
+            TestLog.Log("[PASS] Test 4: A bunk holds one sleeper, standing at it.");
         }
 
         private void ValidateClaimsNeverOutliveTheSleep()
@@ -122,7 +121,7 @@ namespace Simpiens.Testing.Drives
             sim.TryClaimBunk(BunkId, AgentId, bunkPos);
             sim.ResetState();
             Assert(!sim.BunkOccupants.ContainsKey(BunkId) && !sim.TryClaimBunk(BunkId, AgentId, bunkPos), "A session reset forgets bunks and claims.");
-            Debug.Log("[PASS] Test 5: Bunk claims are dropped as soon as the sleep ends for any reason.");
+            TestLog.Log("[PASS] Test 5: Bunk claims are dropped as soon as the sleep ends for any reason.");
         }
 
         /// <summary>
@@ -157,7 +156,7 @@ namespace Simpiens.Testing.Drives
             {
                 registry.Unregister(node);
             }
-            Debug.Log("[PASS] Test 6: A sleeper a step short walks onto a free bunk, never onto a taken one.");
+            TestLog.Log("[PASS] Test 6: A sleeper a step short walks onto a free bunk, never onto a taken one.");
         }
 
         private static GoapPlan PlanRest(float energy, Vec2? bunkAt, bool occupied, Vec2? hearthAt)

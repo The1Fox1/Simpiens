@@ -1,5 +1,4 @@
 using Simpiens.Simulation;
-using UnityEngine;
 
 namespace Simpiens.Cognition.Contracts
 {

@@ -6,22 +6,20 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Core.Bootstrapping;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
-using UnityEngine;
 using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Sociopolitical
 {
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 1:
     /// Identity Tags & The Generic Group Primitive.
-    /// Runs headlessly on startup via VContainer IStartable.
+    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
     /// </summary>
-    public class GroupPrimitiveValidator : IStartable
+    public class GroupPrimitiveValidator
     {
         public void Start()
         {
-            Debug.Log("[GroupPrimitiveValidator] Beginning automated validation of Epic 8 Phase 1...");
+            TestLog.Log("[GroupPrimitiveValidator] Beginning automated validation of Epic 8 Phase 1...");
 
             ValidateUnmanagedStructSizesAndLayout();
             ValidateGroupLifecycleAndMembership();
@@ -31,7 +29,7 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
 
-            Debug.Log("<color=green>[GroupPrimitiveValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GroupPrimitiveValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateUnmanagedStructSizesAndLayout()
@@ -52,7 +50,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!GroupDirective.None.IsActive(0), "GroupDirective.None is not active at tick 0.");
             Assert(GroupData.Empty.GroupId == 0 && !GroupData.Empty.IsActive, "GroupData.Empty has GroupId 0 and IsActive == false.");
 
-            Debug.Log("[PASS] Test 1: Unmanaged struct sizes and default layouts verified.");
+            TestLog.Log("[PASS] Test 1: Unmanaged struct sizes and default layouts verified.");
         }
 
         private void ValidateGroupLifecycleAndMembership()
@@ -101,7 +99,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!registry.TryGetGroup(groupId, out _), "Disbanded group not found.");
             Assert(!registry.TryGetMembership(leaderId, out _), "Leader membership unlinked after disband.");
 
-            Debug.Log("[PASS] Test 2: Group creation, roster management, role promotion, and disbanding verified.");
+            TestLog.Log("[PASS] Test 2: Group creation, roster management, role promotion, and disbanding verified.");
         }
 
         private void ValidateSharedWorldSnapshotLockFreeQuery()
@@ -140,7 +138,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(snapshot.ActiveGroupCount == 0, "Snapshot ActiveGroupCount is 0 after Clear.");
             Assert(!snapshot.TryGetGroup(groupA, out _), "TryGetGroup returns false after Clear.");
 
-            Debug.Log("[PASS] Test 3: SharedWorldSnapshot lock-free buffer synchronization and query verified.");
+            TestLog.Log("[PASS] Test 3: SharedWorldSnapshot lock-free buffer synchronization and query verified.");
         }
 
         private void ValidateDirectiveLifecycleAndExpiration()
@@ -179,7 +177,7 @@ namespace Simpiens.Testing.Sociopolitical
             registry.TryGetGroup(groupId, out data);
             Assert(data.ActiveDirective.Type == DirectiveType.None, "Directive automatically expired after tick 100.");
 
-            Debug.Log("[PASS] Test 4: Directive issuance, spatial parameters, and automatic expiration verified.");
+            TestLog.Log("[PASS] Test 4: Directive issuance, spatial parameters, and automatic expiration verified.");
         }
 
         private void ValidateAgentContextAndMemoryIntegration()
@@ -234,7 +232,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(memory.EventLedger.GetEvent(0).EventType == MemoryEventType.JoinedGroup, "First event is JoinedGroup.");
             Assert(memory.EventLedger.GetEvent(1).EventType == MemoryEventType.DirectiveReceived, "Second event is DirectiveReceived.");
 
-            Debug.Log("[PASS] Test 5: AgentContext and MemoryEvent sociopolitical integration verified.");
+            TestLog.Log("[PASS] Test 5: AgentContext and MemoryEvent sociopolitical integration verified.");
         }
 
         private void ValidateDefensiveNullSafety()
@@ -263,7 +261,7 @@ namespace Simpiens.Testing.Sociopolitical
             registry.CopySnapshotData(null, out int count);
             Assert(count == 0, "CopySnapshotData with null destination safely yields 0 count.");
 
-            Debug.Log("[PASS] Test 6: Defensive null-safety and boundary conditions verified.");
+            TestLog.Log("[PASS] Test 6: Defensive null-safety and boundary conditions verified.");
         }
 
         private void ValidateZeroAllocationHotPath()
@@ -307,7 +305,7 @@ namespace Simpiens.Testing.Sociopolitical
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Hot path allocated {totalAlloc} bytes across 1,000 iterations! Must be strictly 0 bytes.");
 
-            Debug.Log("[PASS] Test 7: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
+            TestLog.Log("[PASS] Test 7: Zero-allocation hot path verified (0 bytes allocated across 1,000 iterations).");
         }
 
         [StructLayout(LayoutKind.Explicit)]

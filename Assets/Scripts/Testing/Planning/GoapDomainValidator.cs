@@ -3,9 +3,6 @@ using System.Diagnostics;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
-using UnityEngine;
-using VContainer.Unity;
-using Debug = UnityEngine.Debug;
 
 namespace Simpiens.Testing.Planning
 {
@@ -13,11 +10,11 @@ namespace Simpiens.Testing.Planning
     /// Automated test harness for GOAP Domain: WorldState Bitmasks, Action Prerequisites, and ActionGraph.
     /// Runs on startup to verify bitmask operations, action preconditions, and graph connectivity.
     /// </summary>
-    public class GoapDomainValidator : IStartable
+    public class GoapDomainValidator
     {
         public void Start()
         {
-            Debug.Log("[GoapDomainValidator] Beginning automated validation of GOAP Domain & ActionGraph...");
+            TestLog.Log("[GoapDomainValidator] Beginning automated validation of GOAP Domain & ActionGraph...");
 
             ValidateWorldStateBitmask();
             ValidateActionPrerequisites();
@@ -25,7 +22,7 @@ namespace Simpiens.Testing.Planning
             ValidateGoalSatisfaction();
             ValidateZeroAllocationPerformance();
 
-            Debug.Log("<color=green>[GoapDomainValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GoapDomainValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBitmask()
@@ -56,7 +53,7 @@ namespace Simpiens.Testing.Planning
             Assert(finalState.Get(StateFact.IsHungry) == false, "IsHungry cleared to false by satedEffect.");
             Assert(finalState.Get(StateFact.KnowsResourceLocation) == true, "KnowsResourceLocation still preserved.");
 
-            Debug.Log("[PASS] Test 1: WorldState bitmask evaluation and effect application passed.");
+            TestLog.Log("[PASS] Test 1: WorldState bitmask evaluation and effect application passed.");
         }
 
         private void ValidateActionPrerequisites()
@@ -75,7 +72,7 @@ namespace Simpiens.Testing.Planning
             Assert(harvest.Effects.Get(StateFact.IsHungry) == false, "Harvest produces IsHungry = false.");
             Assert(harvest.Effects.Get(StateFact.HasFoodInInventory) == true, "Harvest produces HasFoodInInventory = true.");
 
-            Debug.Log("[PASS] Test 2: Action preconditions and effect definitions passed.");
+            TestLog.Log("[PASS] Test 2: Action preconditions and effect definitions passed.");
         }
 
         private void ValidateActionGraphResolution()
@@ -112,7 +109,7 @@ namespace Simpiens.Testing.Planning
             Assert(graph.HasProducerFor(StateFact.AtResourceLocation, true), "Graph has producer for AtResourceLocation.");
             Assert(graph.HasProducerFor(StateFact.KnowsResourceLocation, true), "Graph has producer for KnowsResourceLocation.");
 
-            Debug.Log("[PASS] Test 3: ActionGraph dependency chaining (Search -> Travel -> Harvest) passed.");
+            TestLog.Log("[PASS] Test 3: ActionGraph dependency chaining (Search -> Travel -> Harvest) passed.");
         }
 
         private void ValidateGoalSatisfaction()
@@ -124,7 +121,7 @@ namespace Simpiens.Testing.Planning
             Assert(!goal.IsSatisfied(hungryState), "Goal is not satisfied when agent is hungry.");
             Assert(goal.IsSatisfied(satedState), "Goal is satisfied when agent is sated.");
 
-            Debug.Log("[PASS] Test 4: GoapGoal satisfaction evaluation passed.");
+            TestLog.Log("[PASS] Test 4: GoapGoal satisfaction evaluation passed.");
         }
 
         private void ValidateZeroAllocationPerformance()
@@ -143,14 +140,14 @@ namespace Simpiens.Testing.Planning
             sw.Stop();
 
             Assert(sw.ElapsedMilliseconds < 50, $"100k state evaluations took {sw.ElapsedMilliseconds}ms (< 50ms threshold).");
-            Debug.Log($"[PASS] Test 5: Performance validation completed in {sw.ElapsedMilliseconds}ms for 100,000 iterations.");
+            TestLog.Log($"[PASS] Test 5: Performance validation completed in {sw.ElapsedMilliseconds}ms for 100,000 iterations.");
         }
 
         private void Assert(bool condition, string message)
         {
             if (!condition)
             {
-                Debug.LogError($"[ASSERTION FAILED] {message}");
+                TestLog.LogError($"[ASSERTION FAILED] {message}");
                 throw new System.Exception($"Assertion failed: {message}");
             }
         }
