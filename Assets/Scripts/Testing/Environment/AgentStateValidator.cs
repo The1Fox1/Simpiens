@@ -113,22 +113,20 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateFacadeIntegration()
         {
-            var go = new GameObject("[TestNode_Facade]");
-            var node = go.AddComponent<NodeController>();
-            var agent = go.AddComponent<AutonomousAgent>();
-            var id = EntityId.Generate();
-            node.Initialize(id, new NodeConfiguration(speed: 3.0f));
+            var goCrawler = HeadlessEntities.Crawler(null, null, null, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Facade]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            Assert(node.AgentState != null, "node.AgentState must not be null.");
-            Assert(node.AgentState == agent.State, "node.AgentState must match agent.State.");
+            Assert(node.Agent != null, "node.Agent must not be null.");
+            Assert(node.Agent == agent, "node.Agent must match agent.");
 
             agent.Hunger = 42f;
-            Assert(agent.State.Hunger == 42f, "Mutating agent.Hunger must reflect on agent.State.Hunger.");
+            Assert(agent.Hunger == 42f, "Mutating agent.Hunger must reflect on agent.Hunger.");
 
-            node.SetLogicalPosition(new Vec2(33f, 44f));
-            Assert(agent.State.Position == new Vec2(33f, 44f), "SetLogicalPosition must synchronize agent.State.Position.");
+            node.SetPosition(new Vec2(33f, 44f));
+            Assert(agent.Position == new Vec2(33f, 44f), "SetLogicalPosition must synchronize agent.Position.");
 
-            UnityEngine.Object.DestroyImmediate(go);
+            HeadlessEntities.Remove(null, goCrawler);
             Debug.Log("[PASS] Test 4: Backward-compatible AutonomousAgent MonoBehaviour façade integration verified.");
         }
 

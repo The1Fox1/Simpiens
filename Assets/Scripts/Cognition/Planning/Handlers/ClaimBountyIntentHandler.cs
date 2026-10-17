@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class ClaimBountyIntentHandler : IntentHandlerBase<ClaimBountyIntent>
     {
-        protected override IntentResult Execute(NodeController node, ClaimBountyIntent claim, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, ClaimBountyIntent claim, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (!context.TryGetBounty(claim.BountyId, out var bounty))
             {

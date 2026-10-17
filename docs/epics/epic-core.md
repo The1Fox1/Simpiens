@@ -76,7 +76,7 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 | C2 | 0 | Golden world-hash baselines (§2.3) |
 | C3 | 0 | `EntityId` (§2.4) |
 | C4 | 0 | Engine-free maths (§2.4) |
-| C5 | 0 | Entities as data (§2.5) |
+| C5 | 0 | Entities as data (§2.5): C5a records and the crawler tick; C5b the session host |
 | C6 | 0 | Infrastructure out of the core |
 | C7 | 0 | The `Simpiens.Core` assembly; Phase 0 gate |
 | C8 | 1 | `dotnet/` solution and the headless simulation |
@@ -97,6 +97,7 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 - [x] **C2, golden world-hash baselines (2026-10-17).** `Baselines/golden-world-hash.txt` holds 31 `WorldStateHash` samples (t0 to t3,000) of the outpost for seeds 20261009, 20261010 and 424242: the total and part hashes, and each agent's hash with a readable line for diagnosis. `GoldenWorldHashScenario` checks the default seed in every full suite; `scripts/golden-hashes.sh check|record` runs each seed in its own Unity process. Evidence: all 3 seeds reproduce their baselines in fresh processes and inside the suite; a corrupted baseline fails at the corrupted tick and names the agent; PlayMode 67/67.
 - [x] **C3, `EntityId` (2026-10-17).** `Simpiens.EntityId` replaces `UnityEngine.GUID` in all 125 files that used it: the same four words, ordering, hash code (which keys `SimRandom`), hex text and memory layout, so the swap changes no behaviour and the save format is unchanged. It lives in the root namespace because Unity 6.4 has its own `UnityEngine.EntityId`. Evidence: `EntityIdCompatibilityValidator` (layout bytes; 5,000 values compared with `GUID` for hash, text, emptiness, ordering, equality and both parsers; the player id); golden hashes identical; save validators pass; PlayMode 68/68.
 - [x] **C4, engine-free maths (2026-10-17).** `Vec2`, `GridPoint`, `RectF`, `Rgba` and `SimMath` (root namespace) replace Unity's `Vector2`, `Vector2Int`, `Rect`, `Color` and `Mathf` in the 198 engine-free files, formula for formula from Unity's decompiled source (approximate `Vec2 ==`, `Normalized` zero below 1e-5, round half to even, the same hash codes and layouts). `NodeController`'s simulation API is `Vec2`; views, the dashboard and the test harness convert at the boundary (`SimUnityConversions`). Evidence: golden hashes identical for all 3 seeds in fresh processes; PlayMode 68/68.
+- [x] **C5a, entities as data (2026-10-17).** `WorldEntity` (plain data; a crawler's position is its `AgentState.Position`) replaces `NodeController` in the world registry, `SimulationManager`, the 12 intent handlers, the execution context, the spatial grid and the succession engine. The per-crawler tick moved from the `AutonomousAgent` MonoBehaviour to the engine-free `AgentRuntime`, without the copy of the rendered transform into the simulation (ROADMAP §1A.2 #16). `NodeController` and `AutonomousAgent` are views bound to their records; views show and hide with the registry's events. The 18 validators that built GameObjects build headless records (`HeadlessEntities`); the anomaly detector checks injected walls by simulation geometry. Evidence: golden hashes identical; `DeterminismScenario` milestones unchanged; PlayMode 68/68.
 
 ### Deferred (owned elsewhere)
 - 64-bit `EntityId` (smaller saves and network messages): changes behaviour and the save format; belongs with the multiplayer wire format.
@@ -126,3 +127,4 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 - 2026-10-17: C2 done (golden world-hash baselines).
 - 2026-10-17: C3 done (`EntityId`).
 - 2026-10-17: C4 done (engine-free maths).
+- 2026-10-17: C5a done (entities as data).

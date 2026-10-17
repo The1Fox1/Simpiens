@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -145,21 +146,15 @@ namespace Simpiens.Testing.Sociopolitical
             simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
             // Spawn 2 pawns around anchor within 3.0m
-            var goA = new GameObject("[PawnA]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = (new Vec2(1.0f, 0f)).ToUnity();
-            var agentA = goA.AddComponent<AutonomousAgent>();
-            agentA.Initialize(nodeA.Id, null, null, simManager, clock);
-            worldRegistry.RegisterNode(nodeA);
+            var goACrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(1.0f, 0f), id: EntityId.Generate(), name: "[PawnA]", register: false);
+            var nodeA = goACrawler.Node;
+            var agentA = goACrawler.Agent;
+            worldRegistry.Register(nodeA);
 
-            var goB = new GameObject("[PawnB]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = (new Vec2(-1.0f, 0f)).ToUnity();
-            var agentB = goB.AddComponent<AutonomousAgent>();
-            agentB.Initialize(nodeB.Id, null, null, simManager, clock);
-            worldRegistry.RegisterNode(nodeB);
+            var goBCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(-1.0f, 0f), id: EntityId.Generate(), name: "[PawnB]", register: false);
+            var nodeB = goBCrawler.Node;
+            var agentB = goBCrawler.Agent;
+            worldRegistry.Register(nodeB);
 
             // Trigger hearth evaluation at tick 100
             simManager.EvaluateHearthProximity(100);
@@ -203,8 +198,8 @@ namespace Simpiens.Testing.Sociopolitical
             // Verify accelerated gossip: Can gossip after 100 ticks instead of 300
             Assert(agentA.Memory.CanGossipWith(agentB.AgentId, 200, cooldownTicks: 100), "Gossip cooldown is accelerated to 100 ticks around anchor.");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
+            HeadlessEntities.Remove(worldRegistry, goACrawler);
+            HeadlessEntities.Remove(worldRegistry, goBCrawler);
             Debug.Log("[PASS] Test 4: Hearth proximity bonding and gossip acceleration verified.");
         }
 
@@ -217,23 +212,17 @@ namespace Simpiens.Testing.Sociopolitical
             var anchorId = EntityId.Generate();
             simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
-            var goA = new GameObject("[PawnComfortA]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = (new Vec2(0.5f, 0.5f)).ToUnity();
-            var agentA = goA.AddComponent<AutonomousAgent>();
-            agentA.Initialize(nodeA.Id, null, null, simManager, clock);
+            var goACrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0.5f, 0.5f), id: EntityId.Generate(), name: "[PawnComfortA]", register: false);
+            var nodeA = goACrawler.Node;
+            var agentA = goACrawler.Agent;
             agentA.Frustration = 20f;
             agentA.Social = 30f;
-            worldRegistry.RegisterNode(nodeA);
+            worldRegistry.Register(nodeA);
 
-            var goB = new GameObject("[PawnComfortB]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = (new Vec2(-0.5f, -0.5f)).ToUnity();
-            var agentB = goB.AddComponent<AutonomousAgent>();
-            agentB.Initialize(nodeB.Id, null, null, simManager, clock);
-            worldRegistry.RegisterNode(nodeB);
+            var goBCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(-0.5f, -0.5f), id: EntityId.Generate(), name: "[PawnComfortB]", register: false);
+            var nodeB = goBCrawler.Node;
+            var agentB = goBCrawler.Agent;
+            worldRegistry.Register(nodeB);
 
             // Run hearth evaluation
             simManager.EvaluateHearthProximity(50);
@@ -241,8 +230,8 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(agentA.Frustration < 20f, $"Frustration quenched near hearth (actual: {agentA.Frustration})");
             Assert(agentA.Social > 30f, $"Social drive replenished when 2 pawns are gathered near hearth (actual: {agentA.Social})");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
+            HeadlessEntities.Remove(worldRegistry, goACrawler);
+            HeadlessEntities.Remove(worldRegistry, goBCrawler);
             Debug.Log("[PASS] Test 5: Hearth frustration relief and social replenishment verified.");
         }
 
@@ -255,21 +244,15 @@ namespace Simpiens.Testing.Sociopolitical
             var anchorId = EntityId.Generate();
             simManager.RegisterAnchor(anchorId, Vec2.Zero, radius: 3.0f);
 
-            var goA = new GameObject("[PawnBenchA]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = (new Vec2(0.5f, 0f)).ToUnity();
-            var agentA = goA.AddComponent<AutonomousAgent>();
-            agentA.Initialize(nodeA.Id, null, null, simManager, clock);
-            worldRegistry.RegisterNode(nodeA);
+            var goACrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0.5f, 0f), id: EntityId.Generate(), name: "[PawnBenchA]", register: false);
+            var nodeA = goACrawler.Node;
+            var agentA = goACrawler.Agent;
+            worldRegistry.Register(nodeA);
 
-            var goB = new GameObject("[PawnBenchB]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = (new Vec2(-0.5f, 0f)).ToUnity();
-            var agentB = goB.AddComponent<AutonomousAgent>();
-            agentB.Initialize(nodeB.Id, null, null, simManager, clock);
-            worldRegistry.RegisterNode(nodeB);
+            var goBCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(-0.5f, 0f), id: EntityId.Generate(), name: "[PawnBenchB]", register: false);
+            var nodeB = goBCrawler.Node;
+            var agentB = goBCrawler.Agent;
+            worldRegistry.Register(nodeB);
 
             // Warmup
             for (int i = 0; i < 50; i++)
@@ -291,8 +274,8 @@ namespace Simpiens.Testing.Sociopolitical
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 hearth evaluation ticks.");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
+            HeadlessEntities.Remove(worldRegistry, goACrawler);
+            HeadlessEntities.Remove(worldRegistry, goBCrawler);
             Debug.Log($"[PASS] Test 6: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
         }
 

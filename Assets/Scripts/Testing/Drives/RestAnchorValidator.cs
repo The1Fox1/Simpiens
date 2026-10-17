@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Memory;
@@ -135,12 +136,7 @@ namespace Simpiens.Testing.Drives
             var bunkPos = new Vec2(-2f, -8f);
             sim.RegisterBunk(BunkId, bunkPos);
 
-            var go = new GameObject("[Test_Sleeper]");
-            go.transform.position = (bunkPos + new Vec2(0.9f, 0.9f)).ToUnity();
-            var node = go.AddComponent<Simpiens.Entities.NodeController>();
-            node.Type = EntityType.Pawn;
-            node.Initialize(AgentId, new Simpiens.Entities.NodeConfiguration(2f));
-            registry.RegisterNode(node);
+            var node = HeadlessEntities.Prop(registry, EntityType.Pawn, bunkPos + new Vec2(0.9f, 0.9f), id: AgentId, name: "[Test_Sleeper]");
             try
             {
                 var result = IntentResult.InProgress;
@@ -159,7 +155,7 @@ namespace Simpiens.Testing.Drives
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(go);
+                registry.Unregister(node);
             }
             Debug.Log("[PASS] Test 6: A sleeper a step short walks onto a free bunk, never onto a taken one.");
         }

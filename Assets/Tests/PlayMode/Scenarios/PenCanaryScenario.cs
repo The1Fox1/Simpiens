@@ -331,7 +331,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         {
             var agent = _agents[index];
             if (agent == null) return false;
-            return Vec2.Distance(agent.transform.position.ToSim(), point) <= radius;
+            return Vec2.Distance(agent.State.Position, point) <= radius;
         }
     }
 }

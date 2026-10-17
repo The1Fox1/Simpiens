@@ -122,13 +122,13 @@ namespace Simpiens.Entities
         public void ClickAt(Vector2 world)
         {
             _candidates.Clear();
-            var nodes = _registry?.ActiveNodes;
+            var nodes = _registry?.ActiveEntities;
             if (nodes != null)
             {
                 for (int i = 0; i < nodes.Count; i++)
                 {
                     var node = nodes[i];
-                    if (node != null && node.Type == EntityType.Pawn) _candidates.Add(new PickCandidate(node.Id, node.transform.position));
+                    if (node != null && node.Type == EntityType.Pawn) _candidates.Add(new PickCandidate(node.Id, node.Position.ToUnity()));
                 }
             }
 
@@ -154,13 +154,13 @@ namespace Simpiens.Entities
         {
             position = default;
             if (SelectedCrawler == default) return false;
-            var node = _registry?.GetNode(SelectedCrawler);
+            var node = _registry?.GetEntity(SelectedCrawler);
             if (node == null)
             {
                 ClearCrawler();
                 return false;
             }
-            position = node.transform.position;
+            position = node.Position.ToUnity();
             return true;
         }
 
@@ -168,8 +168,8 @@ namespace Simpiens.Entities
         {
             if (SelectedCrawler == default) return string.Empty;
             if (_identity != null) return _identity.GetFriendlyName(SelectedCrawler);
-            var node = _registry?.GetNode(SelectedCrawler);
-            return node != null ? node.name : string.Empty;
+            var node = _registry?.GetEntity(SelectedCrawler);
+            return node != null ? node.Name : string.Empty;
         }
     }
 }

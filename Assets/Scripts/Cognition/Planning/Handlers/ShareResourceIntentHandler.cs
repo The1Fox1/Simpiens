@@ -10,11 +10,11 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class ShareResourceIntentHandler : IntentHandlerBase<ShareResourceIntent>
     {
-        protected override IntentResult Execute(NodeController node, ShareResourceIntent share, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, ShareResourceIntent share, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             uint aidTick = context.CurrentTick;
-            var targetNode = context.WorldRegistry?.GetNode(share.TargetPawnId);
+            var targetNode = context.WorldRegistry?.GetEntity(share.TargetPawnId);
             if (targetNode == null)
             {
                 return IntentResult.TargetMissing;
@@ -63,7 +63,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if (receiverAgent != null)
                 {
                     receiverAgent.Hunger = SimMath.Max(0f, receiverAgent.Hunger - share.FoodAmount);
-                    if (receiverAgent.State != null) receiverAgent.State.Activity.RecordMeal(context.CurrentTick);
+                    if (receiverAgent != null) receiverAgent.Activity.RecordMeal(context.CurrentTick);
                     if (receiverAgent.Hunger < 85f)
                     {
                         receiverAgent.TriggerReliefVisual();

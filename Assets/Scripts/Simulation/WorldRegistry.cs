@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using Simpiens.Entities;
 
 namespace Simpiens.Simulation
 {
@@ -7,88 +7,44 @@ namespace Simpiens.Simulation
     {
         public static readonly EntityId PlayerEntityId = new EntityId("00000000000000000000000000000001");
 
-        private readonly List<NodeController> _activeNodes = new List<NodeController>(128); // Pre-allocate some capacity
-        private readonly Dictionary<EntityId, NodeController> _nodeLookup = new Dictionary<EntityId, NodeController>(128);
+        private readonly List<WorldEntity> _activeEntities = new List<WorldEntity>(128); // Pre-allocate some capacity
+        private readonly Dictionary<EntityId, WorldEntity> _lookup = new Dictionary<EntityId, WorldEntity>(128);
 
-        public IReadOnlyList<NodeController> ActiveNodes => _activeNodes;
+        public IReadOnlyList<WorldEntity> ActiveEntities => _activeEntities;
 
-        public void RegisterNode(NodeController node)
+        public event Action<WorldEntity> EntityRegistered;
+        public event Action<WorldEntity> EntityUnregistered;
+
+        public void Register(WorldEntity entity)
         {
-            if (node == null) return;
-            if (!_activeNodes.Contains(node))
+            if (entity == null) return;
+            if (!_activeEntities.Contains(entity))
             {
-                _activeNodes.Add(node);
-                _nodeLookup[node.Id] = node;
-                node.SetRegistry(this);
+                _activeEntities.Add(entity);
+                _lookup[entity.Id] = entity;
+                EntityRegistered?.Invoke(entity);
             }
         }
 
-        public void UnregisterNode(NodeController node)
+        public void Unregister(WorldEntity entity)
         {
-            if (node == null) return;
-            if (_activeNodes.Remove(node))
+            if (entity == null) return;
+            if (_activeEntities.Remove(entity))
             {
-                // Safely remove from lookup without accessing properties on potentially destroyed Unity object
-                EntityId keyToRemove = default;
-                bool found = false;
-                foreach (var kvp in _nodeLookup)
-                {
-                    if (kvp.Value == node)
-                    {
-                        keyToRemove = kvp.Key;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found)
-                {
-                    _nodeLookup.Remove(keyToRemove);
-                }
-            }
-        }
-
-        public void PruneDestroyed()
-        {
-            for (int i = _activeNodes.Count - 1; i >= 0; i--)
-            {
-                if (_activeNodes[i] == null)
-                {
-                    _activeNodes.RemoveAt(i);
-                }
-            }
-
-            List<EntityId> keysToRemove = null;
-            foreach (var kvp in _nodeLookup)
-            {
-                if (kvp.Value == null)
-                {
-                    keysToRemove ??= new List<EntityId>();
-                    keysToRemove.Add(kvp.Key);
-                }
-            }
-            if (keysToRemove != null)
-            {
-                for (int i = 0; i < keysToRemove.Count; i++)
-                {
-                    _nodeLookup.Remove(keysToRemove[i]);
-                }
+                if (_lookup.TryGetValue(entity.Id, out var current) && current == entity) _lookup.Remove(entity.Id);
+                EntityUnregistered?.Invoke(entity);
             }
         }
 
         public void Clear()
         {
-            _activeNodes.Clear();
-            _nodeLookup.Clear();
+            _activeEntities.Clear();
+            _lookup.Clear();
         }
 
-        public NodeController GetNode(EntityId id)
+        public WorldEntity GetEntity(EntityId id)
         {
-            if (_nodeLookup.TryGetValue(id, out var node))
-            {
-                if (node != null) return node;
-                _nodeLookup.Remove(id);
-            }
-            return null;
+            return _lookup.TryGetValue(id, out var entity) ? entity : null;
         }
     }
 }

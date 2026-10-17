@@ -59,7 +59,7 @@ namespace Simpiens.UI.Zones
             if (registry == null) return 0;
 
             var zone = GetZoneById(zoneId);
-            var nodes = registry.ActiveNodes;
+            var nodes = registry.ActiveEntities;
             int total = nodes.Count;
             int occupancy = 0;
 
@@ -78,7 +78,7 @@ namespace Simpiens.UI.Zones
             return occupancy;
         }
 
-        public void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<NodeController> resultsBuffer)
+        public void GetAgentsInZone(int zoneId, IWorldRegistry registry, List<WorldEntity> resultsBuffer)
         {
             if (resultsBuffer == null) return;
             resultsBuffer.Clear();
@@ -86,7 +86,7 @@ namespace Simpiens.UI.Zones
             if (registry == null) return;
 
             var zone = GetZoneById(zoneId);
-            var nodes = registry.ActiveNodes;
+            var nodes = registry.ActiveEntities;
             int total = nodes.Count;
 
             for (int i = 0; i < total; i++)

@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// </summary>
     public class EatCarriedFoodIntentHandler : IntentHandlerBase<EatCarriedFoodIntent>
     {
-        protected override IntentResult Execute(NodeController node, EatCarriedFoodIntent eat, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, EatCarriedFoodIntent eat, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             if (agent != null && !agent.HasFoodInInventory) return IntentResult.TargetMissing;

@@ -11,6 +11,6 @@ namespace Simpiens.Cognition.Contracts
     {
         void RegisterHandler(IIntentHandler handler);
         bool TryGetHandler(Type intentType, out IIntentHandler handler);
-        IntentResult ExecuteIntent(NodeController node, ActiveIntentState state, IIntentExecutionContext context);
+        IntentResult ExecuteIntent(WorldEntity node, ActiveIntentState state, IIntentExecutionContext context);
     }
 }

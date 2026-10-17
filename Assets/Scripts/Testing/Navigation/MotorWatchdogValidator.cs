@@ -1,3 +1,5 @@
+using Simpiens.Simulation.Spatial;
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -34,10 +36,7 @@ namespace Simpiens.Testing.Navigation
         private void ValidateStallDetection()
         {
             var simManager = new SimulationManager(null, null);
-            var go = new GameObject("[TestNode_Stall]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vec2.Zero.ToUnity();
+            var node = HeadlessEntities.Prop(null, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Stall]", register: false);
 
             var path = new PathResponse
             {
@@ -61,17 +60,13 @@ namespace Simpiens.Testing.Navigation
             Assert(state.StallCount >= 1, $"Watchdog incremented StallCount when movement stalled (actual: {state.StallCount})");
             Assert(result == IntentResult.InProgress, "Intent remains in progress during initial unstick attempt.");
 
-            GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 1: Motor stall detection after 1.0s verified.");
         }
 
         private void ValidateTier1ClearanceNudge()
         {
             var simManager = new SimulationManager(null, null);
-            var go = new GameObject("[TestNode_Tier1]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vec2.Zero.ToUnity();
+            var node = HeadlessEntities.Prop(null, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Tier1]", register: false);
 
             var targetPos = new Vec2(1f, 0f); // Movement axis is purely horizontal (X)
 
@@ -88,16 +83,13 @@ namespace Simpiens.Testing.Navigation
             Assert(!SimMath.Approximately(node.Position.Y, 0f), $"Node was orthogonally displaced along Y-axis (y: {node.Position.Y})");
             Assert(SimMath.Approximately(node.Position.X, 0f), "Node retained its position along movement axis.");
 
-            GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 2: Tier 1 Orthogonal clearance nudge breaks deadlock symmetry.");
         }
 
         private void ValidateTier2RelaxedClearance()
         {
             var simManager = new SimulationManager(null, null);
-            var go = new GameObject("[TestNode_Tier2]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
+            var node = HeadlessEntities.Prop(null, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Tier2]", register: false);
 
             var state = new ActiveIntentState
             {
@@ -110,7 +102,6 @@ namespace Simpiens.Testing.Navigation
             Assert(result == IntentResult.InProgress, "Tier 2 reflex maintains InProgress intent state.");
             Assert(state.UseRelaxedClearance == true, "Tier 2 reflex activated UseRelaxedClearance on ActiveIntentState.");
 
-            GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 3: Tier 2 Relaxed clearance tolerance activated.");
         }
 
@@ -118,13 +109,10 @@ namespace Simpiens.Testing.Navigation
         {
             var clock = new SimulationClock();
             var simManager = new SimulationManager(null, null, clock);
-            var go = new GameObject("[TestNode_Tier3]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(5f, 5f)).ToUnity();
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(5f, 5f), id: EntityId.Generate(), name: "[TestNode_Tier3]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
 
             var resourceId = EntityId.Generate();
             var state = new ActiveIntentState
@@ -140,16 +128,14 @@ namespace Simpiens.Testing.Navigation
             Assert(node.Position.X < 5f, $"Node backed off away from target (actual X: {node.Position.X})");
             Assert(agent.Memory.IsBlacklisted(resourceId, 100), "Target resource was blacklisted in AgentMemory.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(null, goCrawler);
             Debug.Log("[PASS] Test 4: Tier 3 Disengage and target blacklisting verified.");
         }
 
         private void ValidateZeroAllocationWatchdog()
         {
             var simManager = new SimulationManager(null, null);
-            var go = new GameObject("[TestNode_Bench]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
+            var node = HeadlessEntities.Prop(null, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Bench]", register: false);
 
             var state = new ActiveIntentState
             {
@@ -179,7 +165,6 @@ namespace Simpiens.Testing.Navigation
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 watchdog checks.");
 
-            GameObject.DestroyImmediate(go);
             Debug.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 watchdog evaluations).");
         }
 

@@ -603,3 +603,14 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Why one tick:** on a quiet machine results already landed at T + 1, so the outpost's behaviour is unchanged: the same `DeterminismScenario` milestones (first cycle 235, scout 382, gather 605, third sleeper 865) and the same soak numbers as §3.3 (fair 546–771g at 30 minutes).
 - **Verification:** `CognitionSchedulerValidator` (decision lands at T + 1 with a 0 ms or 120 ms evaluation; agent-id order whatever the completion order; a failed preparation or evaluation never freezes an agent; a respawn drops decisions in flight). `DeterminismScenario` alone identical in 3 of 3 runs (it diverged at t100 in 5 of 5 cold runs before). PlayMode 66/66 (68, 2 explicit skipped); economy soak 9/9 within its pace bands.
 - **Consequence:** a run is now reproducible cold, warm and across processes, which the golden world-hash baselines (C2) rely on.
+
+## Entities as Data (Epic CORE C5a, 2026-10-17)
+- **Context:** the simulation and its 12 intent handlers moved agents through `NodeController` (a MonoBehaviour), and `AutonomousAgent.ManualTick` (a MonoBehaviour) ran each crawler's tick and copied the rendered transform into `AgentState.Position` (ROADMAP §1A.2 #16).
+- **Decision:**
+  - `WorldEntity`, a plain-data record (id, kind, position, previous position, radius, speed, resource kind, and the `AgentState` of a crawler), is what the world registry, `SimulationManager`, the handlers, the execution context and the spatial grid work with. A crawler's position *is* its `AgentState.Position`.
+  - The registry raises `EntityRegistered`/`EntityUnregistered`; views show and hide with them (a dormant resource node used to be hidden by the simulation calling `SetActive`).
+  - `AgentRuntime` (engine-free) is a crawler's tick; `AutonomousAgent` and `NodeController` are views bound to their records and never write back. `NodeFactory` (dead code) is deleted.
+- **Why the crawler tick moved now, not in C5b as planned:** once positions live in `AgentState`, the old per-tick copy from the transform would have reverted every move with last frame's position.
+- **Kept on purpose:** a crawler view's destruction still stops its crawler (`OnDestroy` disposes the runtime), as before; C5b's session host makes the session own both.
+- **Test harness:** the 18 validators that built GameObjects to set up a test build records (`HeadlessEntities`, `TestCrawler`): a prerequisite for running them under .NET. Defaults reproduce what the GameObjects gave the simulation (radius 0.5, the default circle collider; speed 2). The anomaly detector checks injected walls by simulation geometry instead of a physics overlap, and finds a crawler's view through `NodeController.ViewOf(id)`.
+- **Verification:** golden world hashes identical; `DeterminismScenario` milestones unchanged; PlayMode 68/68.

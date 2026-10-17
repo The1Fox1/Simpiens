@@ -112,7 +112,7 @@ namespace Simpiens.Testing.UI
             // Test null buffer
             _zoneService.GetAgentsInZone(4, null, null);
 
-            var buffer = new List<NodeController>();
+            var buffer = new List<WorldEntity>();
             _zoneService.GetAgentsInZone(4, null, buffer);
             if (buffer.Count != 0) throw new Exception("Expected empty buffer for null registry query");
 
@@ -121,7 +121,7 @@ namespace Simpiens.Testing.UI
 
         public void ValidateZeroAllocationZoneOccupancyQuery()
         {
-            var buffer = new List<NodeController>(32);
+            var buffer = new List<WorldEntity>(32);
 
             // Warmup JIT
             _zoneService.GetOccupancyCount(4, _registry);

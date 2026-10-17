@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -136,12 +137,10 @@ namespace Simpiens.Testing.Drives
         {
             var clock = new SimulationClock();
             var simManager = new SimulationManager(null, null, clock);
-            var go = new GameObject("[TestNode_Preempt]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Preempt]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
 
             // Seed agent with an active intent
             var wanderIntent = new WanderIntent(node.Id, new PathResponse());
@@ -150,15 +149,15 @@ namespace Simpiens.Testing.Drives
 
             // Force agent into active intent state with critically low energy
             agent.Energy = 3f;
-            typeof(AutonomousAgent).GetProperty("HasActiveIntent").SetValue(agent, true);
+            agent.HasActiveIntent = true;
 
             // ManualUpdate should trigger emergency exhaustion preemption
-            agent.ManualUpdate();
+            goCrawler.ManualUpdate();
 
             Assert(agent.IsExhaustionCollapsed, "Agent transitioned into IsExhaustionCollapsed state.");
             Assert(!agent.HasActiveIntent, "Active intent was preempted/aborted by emergency mental break.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(null, goCrawler);
             Debug.Log("[PASS] Test 4: Main-thread intent preemption on mental break verified.");
         }
 

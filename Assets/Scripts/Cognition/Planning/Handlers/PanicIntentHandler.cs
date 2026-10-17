@@ -8,7 +8,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class PanicIntentHandler : IntentHandlerBase<PanicIntent>
     {
-        protected override IntentResult Execute(NodeController node, PanicIntent intent, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, PanicIntent intent, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             if (agent != null)

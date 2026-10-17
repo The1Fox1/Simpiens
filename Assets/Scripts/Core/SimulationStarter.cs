@@ -15,17 +15,15 @@ namespace Simpiens.Core.Bootstrapping
     /// </summary>
     public class SimulationStarter : IStartable
     {
-        private readonly NodeFactory _nodeFactory;
         private readonly ISimulationManager _simulationManager;
         private readonly IObjectResolver _resolver;
         private readonly IWorldRegistry _registry;
         private readonly SimulationSettings _settings;
 
         [Inject]
-        public SimulationStarter(NodeFactory nodeFactory, IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager, SimulationSettings settings)
+        public SimulationStarter(IObjectResolver resolver, IWorldRegistry registry, ISimulationManager simulationManager, SimulationSettings settings)
         {
             _settings = settings;
-            _nodeFactory = nodeFactory;
             _resolver = resolver;
             _registry = registry;
             _simulationManager = simulationManager;

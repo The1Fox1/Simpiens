@@ -98,7 +98,7 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                     }
 
                     // The sleeper lies in the bunk and is shown asleep
-                    var bunk = world?.GetNode(sleep.BunkId);
+                    var bunk = world?.GetEntity(sleep.BunkId);
                     if (bunk != null && agentRegistry != null && agentRegistry.TryGetAgent(kvp.Key, out var sleeper)
                         && (Vec2.Distance(sleeper.Position, bunk.Position) > SimulationManager.BunkSettleDistance
                             || sleeper.VisualState != Simpiens.Entities.AgentVisualState.Sleeping))

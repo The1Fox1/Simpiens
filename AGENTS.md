@@ -20,8 +20,8 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   - `Groups/`: Generic group primitive, directives, compliance, succession (`SuccessionEngine`, `ComplianceUtility`).
   - `Inventory/`: `AgentInventory` (fixed-capacity item slots + gold, double-buffered `AgentInventorySnapshot`).
   - `Pathfinding/`: Zero-allocation 2D Grid A* navigation engine with binary min-heap, epoch tracking, diagonal corner-cutting prevention, and raycast smoothing (`AsyncPathfinder`, `GridAStarSearcher`, `PathRequest`, `PathResponse`).
-  - **Key Files**: `AgentState.cs` (pure C# state, needs & drives), `AgentCognitionService.cs` (cognition: main-thread preparation, off-thread evaluation returning a `CognitionResult`), `CognitionScheduler.cs` (decisions dispatched on tick T land at T + 1 in agent-id order, on the main thread), `AgentConsequenceService.cs` (intent consequences & rewards), `ToolExecutionRegistry.cs` (MCP tool execution bridge), `AutonomousAgent.cs` (view/façade).
-  - `AutonomousAgent` is a thin `MonoBehaviour` view delegating state to `AgentState` and cognition to `IAgentCognitionService`. Agents can be instantiated, ticked, and simulated headlessly without any `GameObject`.
+  - **Key Files**: `AgentState.cs` (pure C# state, needs & drives), `AgentCognitionService.cs` (cognition: main-thread preparation, off-thread evaluation returning a `CognitionResult`), `CognitionScheduler.cs` (decisions dispatched on tick T land at T + 1 in agent-id order, on the main thread), `AgentConsequenceService.cs` (intent consequences & rewards), `ToolExecutionRegistry.cs` (MCP tool execution bridge), `AgentRuntime.cs` (a crawler's tick), `AutonomousAgent.cs` (its view).
+  - A crawler is plain data (Epic CORE C5): its `AgentState`, its `WorldEntity` in the world and its `AgentRuntime` (the per-tick drives, pre-emption, decision dispatch and perception while busy). `AutonomousAgent` is only its view (bound with `Bind(runtime)`, editor telemetry); it never ticks or writes state. Agents can be instantiated, ticked and simulated headlessly without any `GameObject`.
 
 - **`Core/`**
   Handles bootstrapping and Unity-specific initialization, and hosts the main-thread simulation executor.
@@ -38,7 +38,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
   Contains strictly `MonoBehaviour` views that hold state or rendering instructions.
   - **Rules**: Zero logic! Only basic view management, motor controls, and configurations.
   - **Key Files**: `AgentMotor.cs`, `NodeController.cs`, `AgentView.cs`, `NodeFactory.cs`, `MapView.cs` (draws a map's floors, rock and walls on tilemaps plus its labels; walls are tiles only, never entities), `ShroudView.cs` (fog over uncharted sectors, read from `ISectorRegistry.ExploredMask`), `CameraRig.cs` / `CameraController.cs` (camera maths and its Input System layer), `WorldSelection.cs` (the player's selected crawler and sector, shared with the dashboard), `RenderOrder.cs` (the one sorting-order table: use it for anything drawn).
-  - A `NodeController` requires a `Rigidbody2D` and a collider: set your own (static, trigger if walkable), or Unity adds a dynamic body that pawns shove around.
+  - A `NodeController` is the view of one `WorldEntity` (`Bind(entity)`): it draws the entity's logical position and never writes back. It requires a `Rigidbody2D` and a collider (for clicking): set your own (static, trigger if walkable), or Unity adds a dynamic body.
 
 - **`Intervention/`**
   Player intervention system acting as an influence queue.
@@ -60,7 +60,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
     - `SaveSerializer` is the only code that calls MemoryPack. MemoryPack is vendored by `scripts/update-memorypack.sh`, and its source generator runs as a Roslyn analyzer.
     - Unmanaged records are saved as raw memory copies, so changing a saved struct's layout changes the save format. When that happens, bump `SessionSaveHeader.CurrentFormatVersion` (`EconomySerializationValidator` pins the economy records' sizes).
     - `scripts/run-persistence-smoke.sh` builds a Linux player with a persistence smoke test compiled in and runs it headless: the player saves the running outpost to a file and loads it back.
-  - **Key Files**: `WorldRegistry.cs`, `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
+  - **Key Files**: `WorldEntity.cs` (an entity as plain data: id, kind, position, radius, speed, resource kind, its `AgentState` for crawlers), `WorldRegistry.cs` (entities in registration order, which is the snapshot's order; `EntityRegistered`/`EntityUnregistered` let views show and hide), `GroupRegistry.cs`, `SimulationClock.cs`, `ISimulationManager.cs`. (`SimulationManager.cs` itself lives in `Core/`.)
 
 - **`Diagnostics/`**
   Logging façade over ZLogger (`SimLog`, `SimLogSettings`, `SafeSinkLogProcessor`, `TickStampedFileLogProcessor`). One `ILogger` per channel (`SimLog.Planning`, `SimLog.Economy`, …). Configured once in `AppBootstrapper.Awake`; it is a silent `NullLogger` until then (headless validators). Rules: `docs/ROADMAP.md` §1A.3.
@@ -73,7 +73,7 @@ The `Assets/Scripts/` directory contains the core simulation logic, strongly emp
 
 - **`Testing/`** (separate `Simpiens.Testing` assembly, `UNITY_INCLUDE_TESTS` only: never ships in player builds)
   Domain validators and test harness services. Validators do **not** run at boot; each has a PlayMode test wrapper in `SwarmPlayModeTests`. `TestHarnessInstaller` registers the harness services (anomaly detector, recorder view, `EdgeCaseInjector`, batch controller) through `BootstrapExtensions`. Production internals are visible to it via `Assets/Scripts/AssemblyInfo.cs`.
-  - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), plus environment/determinism validators, `WorldStateHash` (a hash of the authoritative world, with per-part descriptions that name what differs) and `GoldenWorldHash` (the golden baselines in `Baselines/golden-world-hash.txt`).
+  - `Environment/`: Chaos injectors and batch runners (`EdgeCaseInjector.cs`, `BatchPlaymodeController.cs`), `HeadlessEntities` (validators build crawlers and props as records, never GameObjects), plus environment/determinism validators, `WorldStateHash` (a hash of the authoritative world, with per-part descriptions that name what differs) and `GoldenWorldHash` (the golden baselines in `Baselines/golden-world-hash.txt`).
   - `Sessions/`: the test-only **Dev Map**: `CanaryPenSession` (the 10 scripted demonstration pens) on `DevMapLayout`, registered by `TestHarnessInstaller` and reachable in the Editor through the dashboard's session switch. Pen code never goes back into production.
   - `World/`: map validators (`MapDefinitionValidator` incl. Floor1 and Dev Map checks, `WorldMapValidator`, `SectorChartingValidator` for the fog of war), `TestWorlds` fixtures and `CommonsYardFixture` (an open yard for validators that hand-place agents with no walls between sectors).
   - `Memory/`: Knowledge matrix and social gossip validation (`AgentMemoryValidator.cs`).
@@ -123,7 +123,7 @@ Multiplayer is a **required post-MVP feature**. The MVP is single-player, but do
 - **Single writer:** background threads read immutable snapshots/copies; all mutation happens on the simulation thread.
 
 ## Known Deviations (do not copy these patterns)
-The code currently violates some of the rules above and below in places (singleton `GoapPlanner` behind a lock; views that still feed the simulation, until Epic CORE C5). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
+The code currently violates some of the rules above and below in places (singleton `GoapPlanner` behind a lock). The full table is `docs/ROADMAP.md` §1A.2. When touching these areas, don't extend the deviation; follow the rules, and flag the conflict rather than silently entrenching it.
 
 ---
 

@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class TradeIntentHandler : IntentHandlerBase<TradeIntent>
     {
-        protected override IntentResult Execute(NodeController node, TradeIntent trade, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, TradeIntent trade, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (!context.TryGetStall(trade.StallEntityId, out var stall))
             {
@@ -31,7 +31,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             uint currentTradeTick = context.CurrentTick;
             var economy = context.Economy ?? EconomyTuning.Default;
-            var personality = agent.State != null ? agent.State.Personality : AgentPersonality.Neutral;
+            var personality = agent != null ? agent.Personality : AgentPersonality.Neutral;
 
             if (trade.ActionType == TradeActionType.BuyItem)
             {
@@ -86,7 +86,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
-                if (agent.State != null) agent.State.Activity.RecordRationPurchase();
+                if (agent != null) agent.Activity.RecordRationPurchase();
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x Ration for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.RationStock}, treasury {stall.TreasuryGold}g, {verdict} against a calm value of {calmValue:0.#}g, player trust delta {delta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
@@ -158,7 +158,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var saleVerdict = TradeFairness.ClassifySale(unitBuyPrice, minimumPrice, economy.TradeTrust);
                 var saleDelta = TradeFairness.SaleDelta(saleVerdict, economy.TradeTrust);
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, saleDelta.Warmth, saleDelta.Trust, 0, saleDelta.Respect, currentTradeTick);
-                if (agent.State != null) agent.State.Activity.RecordSalvageSale(currentTradeTick);
+                if (agent != null) agent.Activity.RecordSalvageSale(currentTradeTick);
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g, {saleVerdict} against a minimum of {minimumPrice}g, player trust delta {saleDelta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
@@ -176,7 +176,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             return Reject(node, trade, "unknown trade action");
         }
 
-        private static IntentResult Reject(NodeController node, TradeIntent trade, string reason, IntentResult result = IntentResult.Failed)
+        private static IntentResult Reject(WorldEntity node, TradeIntent trade, string reason, IntentResult result = IntentResult.Failed)
         {
             SimLog.Economy.ZLogDebug($"{SimLog.Agent(node.Id)} {trade.ActionType} {trade.Quantity}x {trade.ItemType} rejected: {reason}");
             return result;

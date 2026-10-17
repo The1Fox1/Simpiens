@@ -70,4 +70,5 @@ Each chunk gets a local implementation plan before it starts (what changes, file
 | C1 | Done 2026-10-17 | `cc996f2` | PlayMode 66/66 (68, 2 explicit skipped); `DeterminismScenario` alone identical 3/3, milestones unchanged (first cycle 235, scout 382, gather 605, third sleeper 865); soak 9/9 in band |
 | C2 | Done 2026-10-17 | `78c10b4` | PlayMode 67/67 (69, 2 explicit skipped); golden check 3/3 seeds in fresh processes; a corrupted baseline fails at its tick |
 | C3 | Done 2026-10-17 | `ed62d1b` | PlayMode 68/68 (70, 2 explicit skipped); golden identical; `EntityIdCompatibilityValidator` passes |
-| C4 | Done 2026-10-17 | (this commit) | PlayMode 68/68 (70, 2 explicit skipped); golden check 3/3 seeds identical |
+| C4 | Done 2026-10-17 | `2144530` | PlayMode 68/68 (70, 2 explicit skipped); golden check 3/3 seeds identical |
+| C5a | Done 2026-10-17 | (this commit) | PlayMode 68/68 (70, 2 explicit skipped) on the rerun; the first run failed 1 (a validator set a property by reflection on the old type), fixed; golden identical in both |

@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -120,19 +121,11 @@ namespace Simpiens.Testing.Drives
             var simManager = new SimulationManager(registry, grid, clock);
 
             // Create blocker node at target waypoint (1, 0)
-            var blockerGo = new GameObject("[TestNode_Blocker]");
-            var blockerNode = blockerGo.AddComponent<NodeController>();
-            blockerNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            blockerNode.transform.position = (new Vec2(1f, 0f)).ToUnity();
-            registry.RegisterNode(blockerNode);
+            var blockerNode = HeadlessEntities.Prop(registry, EntityType.Pawn, new Vec2(1f, 0f), id: EntityId.Generate(), name: "[TestNode_Blocker]");
             grid.UpdateFromRegistry(registry);
 
             // Create moving agent node at (0, 0)
-            var movingGo = new GameObject("[TestNode_Moving]");
-            var movingNode = movingGo.AddComponent<NodeController>();
-            movingNode.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            movingNode.transform.position = Vec2.Zero.ToUnity();
-            registry.RegisterNode(movingNode);
+            var movingNode = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Moving]");
 
             // The obstructed waypoint is intermediate: an occupied *final* waypoint within ArrivalTolerance counts as arrival
             var path = new PathResponse
@@ -166,8 +159,8 @@ namespace Simpiens.Testing.Drives
             Assert(state.TimeSinceLastProgress == 0f, "Watchdog resets progress timer after firing unstuck reflex.");
             Assert(!SimMath.Approximately(movingNode.Position.Y, 0f), "Tier 1 unstuck reflex applied orthogonal evasion.");
 
-            GameObject.DestroyImmediate(blockerGo);
-            GameObject.DestroyImmediate(movingGo);
+            registry?.Unregister(blockerNode);
+            registry?.Unregister(movingNode);
             Debug.Log("[PASS] Test 3: Motor watchdog cadence and smooth yield verified.");
         }
 
@@ -176,11 +169,9 @@ namespace Simpiens.Testing.Drives
             var clock = new SimulationClock();
             var simManager = new SimulationManager(null, null, clock);
 
-            var go = new GameObject("[TestAgent_Visual]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestAgent_Visual]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
             // Part A: Starvation Panic evaluation
             var evaluator = new MentalBreakEvaluator(null);
@@ -193,7 +184,7 @@ namespace Simpiens.Testing.Drives
             // Part B: Exhaustion Collapse & Resting Visual State
             agent.Energy = 3f;
             agent.HasActiveIntent = true;
-            agent.ManualUpdate();
+            goCrawler.ManualUpdate();
 
             Assert(agent.IsExhaustionCollapsed, "Agent collapsed into IsExhaustionCollapsed when Energy <= 5f.");
             Assert(agent.VisualState == AgentVisualState.Resting, $"VisualState switched to Resting on exhaustion collapse (actual: {agent.VisualState}).");
@@ -201,7 +192,7 @@ namespace Simpiens.Testing.Drives
 
             // Verify recovery threshold
             agent.Energy = 35f;
-            agent.ManualUpdate();
+            goCrawler.ManualUpdate();
             Assert(!agent.IsExhaustionCollapsed, "Agent recovered from collapse when Energy recovered to >= 30f.");
 
             // Part C: Deliberate RestAction in ActivePlan sets Resting visual state
@@ -224,7 +215,7 @@ namespace Simpiens.Testing.Drives
 
             Assert(agent.VisualState == AgentVisualState.Resting, "VisualState switched to Resting during deliberate RestAction execution.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(null, goCrawler);
             Debug.Log("[PASS] Test 4: Mental break and resting visual transitions verified.");
         }
 
@@ -236,14 +227,10 @@ namespace Simpiens.Testing.Drives
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, grid, clock);
 
-            var go = new GameObject("[TestNode_ZeroGC]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vec2.Zero.ToUnity();
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(registry, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_ZeroGC]");
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Energy = 100f;
             agent.Hunger = 0f;
             agent.Social = 100f;
@@ -256,7 +243,7 @@ namespace Simpiens.Testing.Drives
             // Warmup
             for (int i = 0; i < 50; i++)
             {
-                agent.ManualUpdate();
+                goCrawler.ManualUpdate();
                 simManager.Tick();
             }
 
@@ -268,14 +255,14 @@ namespace Simpiens.Testing.Drives
 
             for (int i = 0; i < 1000; i++)
             {
-                agent.ManualUpdate();
+                goCrawler.ManualUpdate();
                 simManager.Tick();
             }
 
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 simulation ticks.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[PASS] Test 5: Strict zero-allocation guarantee verified (0 bytes across 1,000 ticks).");
         }
 

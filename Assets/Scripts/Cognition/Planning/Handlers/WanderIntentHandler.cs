@@ -6,7 +6,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class WanderIntentHandler : IntentHandlerBase<WanderIntent>
     {
-        protected override IntentResult Execute(NodeController node, WanderIntent intent, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, WanderIntent intent, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             if (agent != null)

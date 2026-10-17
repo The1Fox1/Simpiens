@@ -16,7 +16,7 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// </summary>
     public class DeliverBountyIntentHandler : IntentHandlerBase<DeliverBountyIntent>
     {
-        protected override IntentResult Execute(NodeController node, DeliverBountyIntent deliver, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, DeliverBountyIntent deliver, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (!context.TryGetBounty(deliver.BountyId, out var delBounty))
             {
@@ -47,7 +47,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
 
             var agent = node.Agent;
-            var agentState = node.AgentState;
+            var agentState = node.Agent;
             if (agent == null || agent.Inventory == null)
             {
                 return Reject(node, deliver, "agent has no inventory");
@@ -131,7 +131,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             return IntentResult.Success;
         }
 
-        private static IntentResult Reject(NodeController node, DeliverBountyIntent deliver, string reason, IntentResult result = IntentResult.Failed)
+        private static IntentResult Reject(WorldEntity node, DeliverBountyIntent deliver, string reason, IntentResult result = IntentResult.Failed)
         {
             SimLog.Economy.ZLogDebug($"{SimLog.Agent(node.Id)} delivery of bounty #{deliver.BountyId} rejected: {reason}");
             return result;

@@ -63,7 +63,6 @@ namespace Simpiens.Core.Bootstrapping
             // 1. Core Services (camera framing is done by MapView when a map loads)
 
             // 2. Factories
-            builder.Register<NodeFactory>(Lifetime.Singleton);
 
             // 3. Simulation, Cognition & Narrative Systems
             builder.RegisterInstance(SimulationSettings.FromEnvironment());

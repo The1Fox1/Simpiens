@@ -214,7 +214,7 @@ namespace Simpiens.Simulation.Spatial
             }
 
             // Populate the new snapshot
-            var nodes = registry != null ? registry.ActiveNodes : null;
+            var nodes = registry != null ? registry.ActiveEntities : null;
             if (nodes == null) return;
             int count = nodes.Count;
 

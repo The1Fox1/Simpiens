@@ -1,86 +1,44 @@
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using UnityEngine;
-using VContainer;
 
 namespace Simpiens.Entities
 {
-    // [RequireComponent] enforces that Unity will automatically add these components 
-    // to the GameObject if they aren't already there. This is crucial for avoiding 
+    /// <summary>
+    /// The view of one <see cref="WorldEntity"/> (Epic CORE C5): it draws the entity where the simulation says it is and
+    /// never writes back. The body and collider stay for clicking and for the test harness's penetration probe; nothing
+    /// in the simulation reads them.
+    /// </summary>
+    // [RequireComponent] enforces that Unity will automatically add these components
+    // to the GameObject if they aren't already there. This is crucial for avoiding
     // NullReferenceExceptions at runtime, which are common when relying on designer setup.
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(CircleCollider2D))]
     public class NodeController : MonoBehaviour
     {
-        private float _baseSpeed;
-        private Rigidbody2D rb;
-        private CircleCollider2D col;
-        private ISimulationClock _simulationClock;
+        // The view drawing each entity, for harness code that measures what the player sees (the anomaly detector)
+        private static readonly System.Collections.Generic.Dictionary<EntityId, NodeController> s_views = new System.Collections.Generic.Dictionary<EntityId, NodeController>(256);
 
-        public EntityId Id { get; private set; }
-        public float BaseSpeed => _baseSpeed > 0f ? _baseSpeed : 2f;
+        /// <summary>The live view drawing the entity <paramref name="id"/>, or null.</summary>
+        public static NodeController ViewOf(EntityId id) => s_views.TryGetValue(id, out var view) && view != null ? view : null;
+
+        private Rigidbody2D rb;
+        private WorldEntity _entity;
+        private ISimulationClock _clock;
 
 #if UNITY_EDITOR
         [Header("Editor Debug Info")]
         [SerializeField] private string _inspectorGuid;
 #endif
 
-        // Expose radius for spatial hashing
-        public float Radius => col != null ? col.radius : (GetComponent<CircleCollider2D>() != null ? GetComponent<CircleCollider2D>().radius : 0.5f);
+        /// <summary>The simulation entity this view draws.</summary>
+        public WorldEntity Entity => _entity;
 
-        // The simulation's view of this node is engine-free (Epic CORE C4); the transform converts at this boundary
-        public Vec2 LogicalPosition { get; private set; }
-        public Vec2 PreviousLogicalPosition { get; private set; }
-        private bool _hasInitializedLogicalPos;
+        public EntityId Id => _entity != null ? _entity.Id : default;
+        public EntityType Type => _entity != null ? _entity.Type : EntityType.Pawn;
 
-        // Expose position and velocity for the snapshot and simulation
-        public Vec2 Position
-        {
-            get
-            {
-                if (transform != null && transform.hasChanged)
-                {
-                    LogicalPosition = transform.position.ToSim();
-                    PreviousLogicalPosition = LogicalPosition;
-                    transform.hasChanged = false;
-                    _hasInitializedLogicalPos = true;
-                }
-                return _hasInitializedLogicalPos ? LogicalPosition : (transform != null ? transform.position.ToSim() : Vec2.Zero);
-            }
-        }
-        public Vec2 Velocity => rb != null ? rb.linearVelocity.ToSim() : Vec2.Zero;
-
-        public void SetLogicalPosition(Vec2 pos)
-        {
-            PreviousLogicalPosition = _hasInitializedLogicalPos ? LogicalPosition : pos;
-            LogicalPosition = pos;
-            _hasInitializedLogicalPos = true;
-
-            if (Agent != null && Agent.State != null)
-            {
-                Agent.State.Position = pos;
-            }
-
-            // In headless test mode or if clock is missing, immediately sync transform
-            if (_simulationClock == null && transform != null)
-            {
-                transform.position = pos.ToUnity();
-                transform.hasChanged = false;
-            }
-        }
-        
-        public EntityType Type { get; set; } = EntityType.Pawn;
-
-        /// <summary>
-        /// Spawn-time yield classification for resource nodes, mirrored into EntitySnapshot.
-        /// The authoritative yield state lives in ResourceData.
-        /// </summary>
-        public Simpiens.Simulation.Economy.ItemType ResourceKind { get; private set; }
-
-        public void ConfigureResourceKind(Simpiens.Simulation.Economy.ItemType kind)
-        {
-            ResourceKind = kind;
-        }
+        /// <summary>The entity's logical position (where the simulation has it, not where it is drawn).</summary>
+        public Vec2 Position => _entity != null ? _entity.Position : transform.position.ToSim();
 
         private Simpiens.Cognition.AutonomousAgent _agent;
         public Simpiens.Cognition.AutonomousAgent Agent
@@ -92,128 +50,49 @@ namespace Simpiens.Entities
             }
         }
 
-        public Simpiens.Cognition.AgentState AgentState => Agent != null ? Agent.State : null;
+        public Simpiens.Cognition.AgentState AgentState => _entity?.Agent;
 
-        private IWorldRegistry _registry;
-
-        public void SetRegistry(IWorldRegistry registry)
+        /// <summary>
+        /// Draws <paramref name="entity"/> from now on. With a clock the view interpolates between the entity's last two
+        /// positions; without one it draws the logical position (crawlers today).
+        /// </summary>
+        public void Bind(WorldEntity entity, ISimulationClock clock = null)
         {
-            _registry = registry;
-        }
-
-        [Inject]
-        public void Construct(ISimulationClock clock = null, IWorldRegistry registry = null)
-        {
-            _simulationClock = clock;
-            if (_simulationClock != null)
-            {
-                _simulationClock.OnTimeMultiplierChanged += HandleMultiplierChanged;
-            }
-            if (registry != null)
-            {
-                _registry = registry;
-            }
-        }
-
-        // Configuration is now injected via code, completely bypassing the Unity Inspector
-        public void Initialize(EntityId id, NodeConfiguration config)
-        {
-            Id = id;
-            _baseSpeed = config.Speed;
-
-            if (transform != null)
-            {
-                LogicalPosition = transform.position.ToSim();
-                PreviousLogicalPosition = LogicalPosition;
-                transform.hasChanged = false;
-                _hasInitializedLogicalPos = true;
-            }
-
+            if (_entity != null && s_views.TryGetValue(_entity.Id, out var previous) && previous == this) s_views.Remove(_entity.Id);
+            _entity = entity;
+            _clock = clock;
+            if (entity != null) s_views[entity.Id] = this;
 #if UNITY_EDITOR
-            _inspectorGuid = id.ToString();
+            _inspectorGuid = entity != null ? entity.Id.ToString() : string.Empty;
 #endif
-
-            if (rb == null) rb = GetComponent<Rigidbody2D>();
-            if (col == null) col = GetComponent<CircleCollider2D>();
-
-            // Only apply automatic physics velocity to Dynamic bodies (e.g. bouncing nodes)
-            // Kinematic bodies (like SwarmAgents) are moved explicitly via their own controllers.
-            if (rb != null && rb.bodyType == RigidbodyType2D.Dynamic)
-            {
-                // Assign a random initial direction
-                float randomAngle = Random.Range(0f, 360f);
-                Vector2 initialDirection = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
-
-                // Instead of translating in Update(), we set velocity once. 
-                // We scale the base speed by the clock's multiplier.
-                float initialMultiplier = _simulationClock != null ? _simulationClock.TimeMultiplier : 1f;
-                rb.linearVelocity = initialDirection * (_baseSpeed * initialMultiplier);
-            }
+            SyncTransform();
         }
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            col = GetComponent<CircleCollider2D>();
-
-            if (transform != null)
-            {
-                LogicalPosition = transform.position.ToSim();
-                PreviousLogicalPosition = LogicalPosition;
-                transform.hasChanged = false;
-                _hasInitializedLogicalPos = true;
-            }
 
             // For a top-down 2D simulation, we don't want nodes to fall or rotate when bumping.
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
-
-            // Continuous dynamic collision detection prevents fast-moving nodes from tunneling 
-            // through boundaries, though it is slightly more CPU intensive.
-            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         }
 
         private void Update()
         {
-            if (rb != null && rb.bodyType == RigidbodyType2D.Dynamic) return;
-
-            if (_hasInitializedLogicalPos && transform != null)
-            {
-                float alpha = _simulationClock != null ? _simulationClock.InterpolationAlpha : 1f;
-                transform.position = Vector2.Lerp(PreviousLogicalPosition.ToUnity(), LogicalPosition.ToUnity(), alpha);
-                transform.hasChanged = false;
-            }
-        }
-
-        private void HandleMultiplierChanged(float newMultiplier)
-        {
-            if (rb == null || rb.bodyType != RigidbodyType2D.Dynamic) return;
-
-            // Re-scale the current velocity magnitude while preserving direction
-            if (rb.linearVelocity.sqrMagnitude > 0.001f)
-            {
-                Vector2 currentDirection = rb.linearVelocity.normalized;
-                rb.linearVelocity = currentDirection * (_baseSpeed * newMultiplier);
-            }
-            else
-            {
-                // Edge case: if velocity was zero, pick a random direction to resume
-                float randomAngle = Random.Range(0f, 360f);
-                Vector2 dir = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)).normalized;
-                rb.linearVelocity = dir * (_baseSpeed * newMultiplier);
-            }
+            SyncTransform();
         }
 
         private void OnDestroy()
         {
-            if (_simulationClock != null)
-            {
-                _simulationClock.OnTimeMultiplierChanged -= HandleMultiplierChanged;
-            }
-            if (_registry != null)
-            {
-                _registry.UnregisterNode(this);
-            }
+            if (_entity != null && s_views.TryGetValue(_entity.Id, out var view) && view == this) s_views.Remove(_entity.Id);
+        }
+
+        private void SyncTransform()
+        {
+            if (_entity == null || transform == null) return;
+            float alpha = _clock != null ? _clock.InterpolationAlpha : 1f;
+            transform.position = Vector2.Lerp(_entity.PreviousPosition.ToUnity(), _entity.Position.ToUnity(), alpha);
+            transform.hasChanged = false;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class HarvestResourceIntentHandler : IntentHandlerBase<HarvestResourceIntent>
     {
-        protected override IntentResult Execute(NodeController node, HarvestResourceIntent harvest, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, HarvestResourceIntent harvest, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             uint currentTick = context.CurrentTick;
@@ -32,7 +32,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 // 2. The agent had already reached the bush and was actively harvesting when it depleted (state.ElapsedTime > 0f)
                 if (state.ContestedCompetitorId == default && state.ElapsedTime > 0f && context.WorldRegistry != null)
                 {
-                    var activeNodes = context.WorldRegistry.ActiveNodes;
+                    var activeNodes = context.WorldRegistry.ActiveEntities;
                     for (int i = 0; i < activeNodes.Count; i++)
                     {
                         var other = activeNodes[i];
@@ -51,6 +51,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent.Frustration = SimMath.Min(100f, agent.Frustration + 25f);
                     agent.VisualState = AgentVisualState.Panicking;
                     agent.TriggerTantrumVisual();
+                    // The chronicle entry the crawler's view used to add (Epic CORE C5 moved the agent off the view)
+                    context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.TantrumStarted, agent.AgentId, default, 0, currentTick, ChronicleIntensity.Dramatic));
                     agent.Memory?.BlacklistEntity(harvest.TargetEntityId, currentTick + 150);
 
                     agent.Memory?.EventLedger?.AddEvent(new MemoryEvent(
@@ -66,7 +68,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return IntentResult.TargetMissing;
             }
 
-            var targetResourceNode = context.WorldRegistry?.GetNode(harvest.TargetEntityId);
+            var targetResourceNode = context.WorldRegistry?.GetEntity(harvest.TargetEntityId);
             bool withinHarvestReach = state.ElapsedTime > 0f || harvest.UnitsHarvested > 0;
             if (!withinHarvestReach && targetResourceNode != null)
             {
@@ -91,7 +93,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
 
                 // Social Yielding Protocol: Check if any other pawn is also targeting/harvesting this node
-                NodeController competitorNode = null;
+                WorldEntity competitorNode = null;
                 if (context.WorldRegistry != null && context.ActiveIntents != null)
                 {
                     foreach (var kvp in context.ActiveIntents)
@@ -101,7 +103,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                             if (otherHarvest.TargetEntityId == harvest.TargetEntityId)
                             {
                                 // Lowest id wins ties so the outcome never depends on Dictionary order
-                                var otherNode = context.WorldRegistry.GetNode(kvp.Key);
+                                var otherNode = context.WorldRegistry.GetEntity(kvp.Key);
                                 if (otherNode != null && Vec2.Distance(otherNode.Position, node.Position) <= 2.5f &&
                                     (competitorNode == null || otherNode.Id.CompareTo(competitorNode.Id) < 0))
                                 {
@@ -190,7 +192,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 harvest.YieldedItem = yieldItem == ItemType.None ? ItemType.Ration : yieldItem;
                 harvest.UnitsHarvested++;
                 context.RecordHarvest(harvest.YieldedItem);
-                var harvester = node.AgentState;
+                var harvester = node.Agent;
                 if (harvester != null && yieldItem.IsSalvage()) harvester.Activity.RecordSalvageHarvest(context.CurrentTick);
                 if (SimLog.Traces(SimLog.Economy, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {

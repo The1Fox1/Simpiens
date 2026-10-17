@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Runtime.InteropServices;
 using Simpiens.Cognition;
@@ -142,15 +143,9 @@ namespace Simpiens.Testing.Economy
             var contract = new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 30, 0, 1000);
             Assert(simManager.TryRegisterBounty(contract), "Escrowed bounty registered.");
 
-            var go1 = new GameObject("[Test_Claimant1]");
-            var node1 = go1.AddComponent<NodeController>();
-            node1.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            registry.RegisterNode(node1);
+            var node1 = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Claimant1]");
 
-            var go2 = new GameObject("[Test_Claimant2]");
-            var node2 = go2.AddComponent<NodeController>();
-            node2.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            registry.RegisterNode(node2);
+            var node2 = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Claimant2]");
 
             var state1 = new ActiveIntentState { Intent = new ClaimBountyIntent(node1.Id, 1) };
             var res1 = simManager.ExecuteIntent(node1, state1);
@@ -165,8 +160,8 @@ namespace Simpiens.Testing.Economy
             var res2 = simManager.ExecuteIntent(node2, state2);
             Assert(res2 == IntentResult.Failed, $"Second claimant got {res2} instead of Failed.");
 
-            GameObject.DestroyImmediate(go1);
-            GameObject.DestroyImmediate(go2);
+            registry?.Unregister(node1);
+            registry?.Unregister(node2);
             Debug.Log("[BountyFulfillmentValidator] Test 3 Passed: Atomic bounty claiming and double-claim prevention verified.");
         }
 
@@ -213,16 +208,13 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Deliverer]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0.5f, 0.5f)).ToUnity(); // within stall reach
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0.5f, 0.5f), id: EntityId.Generate(), name: "[Test_Deliverer]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 10;
             // Agent holds 2 IronOre in inventory
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 2, 8), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             // Register and claim bounty
             var contract = new BountyContract(3, BountyType.GatherResource, 0, ItemType.IronOre, 2, 60, 0, 1000, claimantId: node.Id, creatorStallId: stallId, status: BountyStatus.Claimed);
@@ -250,7 +242,7 @@ namespace Simpiens.Testing.Economy
             Assert(simManager.TryGetBounty(3, out var completedBounty), "Bounty retrieved.");
             Assert(completedBounty.Status == BountyStatus.Completed, "Bounty status is Completed.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[BountyFulfillmentValidator] Test 5 Passed: Atomic bounty delivery, item removal, gold award, and stall restocking verified.");
         }
 
@@ -264,14 +256,11 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Affinity_Deliverer]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = Vec2.Zero.ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Affinity_Deliverer]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.MedicinalHerb, 1, 10), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var contract = new BountyContract(4, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 40, 0, 1000, claimantId: node.Id, creatorStallId: stallId, status: BountyStatus.Claimed);
             simManager.RegisterBounty(contract);
@@ -285,7 +274,7 @@ namespace Simpiens.Testing.Economy
             Assert(aff.Warmth == 10, $"Affinity Warmth is {aff.Warmth} instead of 10.");
             Assert(aff.Respect == 10, $"Affinity Respect is {aff.Respect} instead of 10.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[BountyFulfillmentValidator] Test 6 Passed: Dyadic Trade-to-Affinity boost (+15 Trust, +10 Warmth, +10 Respect) verified.");
         }
 

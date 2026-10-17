@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Runtime.InteropServices;
 using Simpiens.Cognition;
@@ -171,8 +172,8 @@ namespace Simpiens.Testing.Economy
 
         private void ValidateAgentBackwardCompatibility()
         {
-            var go = new GameObject("[TestAgent_InventoryCompatibility]");
-            var agent = go.AddComponent<AutonomousAgent>();
+            var goCrawler = HeadlessEntities.Crawler(null, null, null, Vec2.Zero, id: EntityId.Generate(), name: "[TestAgent_InventoryCompatibility]", register: false);
+            var agent = goCrawler.Agent;
 
             // Before initialization, Inventory is auto-created with 10 gold
             Assert(agent.Inventory != null, "Agent.Inventory is not null.");
@@ -190,7 +191,7 @@ namespace Simpiens.Testing.Economy
             Assert(!agent.HasFoodInInventory, "HasFoodInInventory is false after clear.");
             Assert(!agent.Inventory.HasItem(ItemType.Ration), "Inventory does not contain Ration item.");
 
-            UnityEngine.Object.DestroyImmediate(go);
+            HeadlessEntities.Remove(null, goCrawler);
             Debug.Log("[PASS] Test 6: AutonomousAgent.HasFoodInInventory backward compatibility verified.");
         }
 

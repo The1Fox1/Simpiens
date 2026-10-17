@@ -20,7 +20,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         /// <summary>Ticks a bunk that could not be taken is left alone.</summary>
         public const uint BlacklistTicks = 100;
 
-        protected override IntentResult Execute(NodeController node, SleepAtBunkIntent sleep, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, SleepAtBunkIntent sleep, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (state.ElapsedTime <= 0f)
             {
@@ -35,7 +35,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     SimLog.Drives.ZLogDebug($"{SimLog.Agent(node.Id)} could not sleep in bunk {SimLog.Agent(sleep.BunkId)} from {node.Position} ({step})");
                     // Forget this bunk for a while so the next plan picks another one instead of retrying every tick
-                    node.AgentState?.Memory?.BlacklistEntity(sleep.BunkId, context.CurrentTick + BlacklistTicks);
+                    node.Agent?.Memory?.BlacklistEntity(sleep.BunkId, context.CurrentTick + BlacklistTicks);
                     return IntentResult.TargetMissing;
                 }
             }
@@ -48,7 +48,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             {
                 context.ReleaseBunk(sleep.BunkId, node.Id);
                 context.RecordBunkSleep(node.Id);
-                if (agent != null && agent.State != null) agent.State.Activity.RecordBunkSleep(context.CurrentTick);
+                if (agent != null && agent != null) agent.Activity.RecordBunkSleep(context.CurrentTick);
                 if (agent != null) agent.VisualState = AgentVisualState.Idle; // up and out of the bunk
                 SimLog.Drives.ZLogDebug($"{SimLog.Agent(node.Id)} slept in bunk {SimLog.Agent(sleep.BunkId)}");
                 return IntentResult.Success;

@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
@@ -69,24 +70,18 @@ namespace Simpiens.Testing.Sociopolitical
             var simManager = new SimulationManager(registry, null, clock);
 
             // Giver Pawn A at (0, 0), Hunger = 20
-            var goA = new GameObject("[Test_Giver_A]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vec2.Zero.ToUnity();
-            var agentA = goA.AddComponent<AutonomousAgent>();
-            agentA.Initialize(nodeA.Id, null, null, simManager, clock);
+            var goACrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Giver_A]", register: false);
+            var nodeA = goACrawler.Node;
+            var agentA = goACrawler.Agent;
             agentA.Hunger = 20f;
-            registry.RegisterNode(nodeA);
+            registry.Register(nodeA);
 
             // Receiver Pawn B at (0, 0.5), Hunger = 90 (starving)
-            var goB = new GameObject("[Test_Receiver_B]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agentB = goB.AddComponent<AutonomousAgent>();
-            agentB.Initialize(nodeB.Id, null, null, simManager, clock);
+            var goBCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Receiver_B]", register: false);
+            var nodeB = goBCrawler.Node;
+            var agentB = goBCrawler.Agent;
             agentB.Hunger = 90f;
-            registry.RegisterNode(nodeB);
+            registry.Register(nodeB);
 
             // Pairwise affinity: Warm companions
             agentA.Memory.RecordInteraction(nodeB.Id, deltaWarmth: 70, deltaTrust: 60, deltaFear: 0, deltaRespect: 10, 0);
@@ -138,8 +133,8 @@ namespace Simpiens.Testing.Sociopolitical
             }
             Assert(aidReceivedLogged, "Receiver B recorded AidReceived event in memory ledger.");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
+            HeadlessEntities.Remove(registry, goACrawler);
+            HeadlessEntities.Remove(registry, goBCrawler);
             Debug.Log("[AltruisticSharingValidator] Test 2 Passed: Altruistic aid execution and hunger transfer verified.");
         }
 
@@ -171,21 +166,15 @@ namespace Simpiens.Testing.Sociopolitical
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var goA = new GameObject("[Test_Bonding_A]");
-            var nodeA = goA.AddComponent<NodeController>();
-            nodeA.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeA.transform.position = Vec2.Zero.ToUnity();
-            var agentA = goA.AddComponent<AutonomousAgent>();
-            agentA.Initialize(nodeA.Id, null, null, simManager, clock);
-            registry.RegisterNode(nodeA);
+            var goACrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Bonding_A]", register: false);
+            var nodeA = goACrawler.Node;
+            var agentA = goACrawler.Agent;
+            registry.Register(nodeA);
 
-            var goB = new GameObject("[Test_Bonding_B]");
-            var nodeB = goB.AddComponent<NodeController>();
-            nodeB.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            nodeB.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agentB = goB.AddComponent<AutonomousAgent>();
-            agentB.Initialize(nodeB.Id, null, null, simManager, clock);
-            registry.RegisterNode(nodeB);
+            var goBCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Bonding_B]", register: false);
+            var nodeB = goBCrawler.Node;
+            var agentB = goBCrawler.Agent;
+            registry.Register(nodeB);
 
             // Initial affinities
             agentA.Memory.RecordInteraction(nodeB.Id, deltaWarmth: 30, deltaTrust: 20, deltaFear: 0, deltaRespect: 10, 0);
@@ -213,8 +202,8 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(affB.Trust == 50, $"Receiver Trust increased to 50 (actual: {affB.Trust})");
             Assert(affB.Respect == 25, $"Receiver Respect increased to 25 (actual: {affB.Respect})");
 
-            GameObject.DestroyImmediate(goA);
-            GameObject.DestroyImmediate(goB);
+            HeadlessEntities.Remove(registry, goACrawler);
+            HeadlessEntities.Remove(registry, goBCrawler);
             Debug.Log("[AltruisticSharingValidator] Test 4 Passed: Relational bonding deltas verified.");
         }
 

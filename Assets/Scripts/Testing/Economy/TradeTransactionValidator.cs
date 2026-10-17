@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -104,14 +105,11 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Buyer]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity(); // within interaction radius (2.5f)
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Buyer]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 10;
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -132,7 +130,7 @@ namespace Simpiens.Testing.Economy
             Assert(updatedStall.RationStock == 49, $"Stall stock is {updatedStall.RationStock} instead of 49.");
             Assert(updatedStall.TreasuryGold == 505, $"Stall treasury is {updatedStall.TreasuryGold} instead of 505.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 2 Passed: BuyProvisions atomic item and currency transfer verified.");
         }
 
@@ -146,14 +144,11 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Poor_Buyer]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Poor_Buyer]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 2; // Not enough for 5 gold ration
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -174,7 +169,7 @@ namespace Simpiens.Testing.Economy
             Assert(untouchedStall.RationStock == 50, "Stall stock remains 50.");
             Assert(untouchedStall.TreasuryGold == 500, "Stall treasury remains 500.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 3 Passed: Insufficient funds buy attempt rejected without side-effects.");
         }
 
@@ -188,12 +183,9 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Full_Buyer]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Full_Buyer]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 25;
 
             // Fill all 4 slots with distinct items
@@ -201,7 +193,7 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.MedicinalHerb, 1, 12), out _);
             agent.Inventory.TryAddItem(new ItemInstance(3, ItemType.ToolPickaxe, 1, 15), out _);
             agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.BasicWeapon, 1, 20), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -217,7 +209,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.Inventory.Gold == 25, "Agent gold remains 25.");
             Assert(!agent.Inventory.HasItem(ItemType.Ration), "Agent did not receive ration.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 4 Passed: Full inventory purchase rejected safely.");
         }
 
@@ -231,15 +223,12 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 8, oreStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Seller]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Seller]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 0;
             agent.Inventory.TryAddItem(new ItemInstance(10, ItemType.IronOre, 2, 8), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -260,7 +249,7 @@ namespace Simpiens.Testing.Economy
             Assert(updatedStall.OreStock == 2, $"Stall ore stock is {updatedStall.OreStock} instead of 2.");
             Assert(updatedStall.TreasuryGold == 484, $"Stall treasury is {updatedStall.TreasuryGold} instead of 484.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 5 Passed: SellSalvage atomic item and currency transfer verified.");
         }
 
@@ -274,14 +263,11 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Affinity_Fair]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_Fair]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 10;
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             // Initial affinity toward player is neutral
             var initialAffinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
@@ -301,7 +287,7 @@ namespace Simpiens.Testing.Economy
             Assert(postAffinity.Warmth == 5, $"Post-trade Warmth is {postAffinity.Warmth} instead of 5.");
             Assert(postAffinity.Respect == 5, $"Post-trade Respect is {postAffinity.Respect} instead of 5.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 6 Passed: Fair trade increases dyadic Trust, Warmth, and Respect.");
         }
 
@@ -316,14 +302,11 @@ namespace Simpiens.Testing.Economy
             var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 25, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
-            var go = new GameObject("[Test_Affinity_Gouged]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_Gouged]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 30;
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -338,7 +321,7 @@ namespace Simpiens.Testing.Economy
             Assert(postAffinity.Trust == -15, $"Post-gouging Trust is {postAffinity.Trust} instead of -15.");
             Assert(postAffinity.Warmth == -10, $"Post-gouging Warmth is {postAffinity.Warmth} instead of -10.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 7 Passed: Price gouging imposes negative Trust and Warmth penalties.");
         }
 
@@ -389,14 +372,11 @@ namespace Simpiens.Testing.Economy
             var stallId = EntityId.Generate();
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 10, treasuryGold: 500));
 
-            var go = new GameObject("[Test_Affinity_StingySale]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_StingySale]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             var intentState = new ActiveIntentState
             {
@@ -411,7 +391,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.Inventory.Gold == EconomyTuning.InventoryDefaultGold + 10, $"The sale completed (gold {agent.Inventory.Gold}).");
             Assert(affinity.Trust == stingy.Trust && affinity.Warmth == stingy.Warmth, $"Stingy sale: trust {affinity.Trust} (expected {stingy.Trust}), warmth {affinity.Warmth} (expected {stingy.Warmth}).");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 12 Passed: The live handler applies the seller's verdict.");
         }
 
@@ -426,14 +406,11 @@ namespace Simpiens.Testing.Economy
             ushort capacity = EconomyTuning.Default.StallSalvageCapacity;
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
 
-            var go = new GameObject("[Test_FullStall]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_FullStall]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
             int goldBefore = agent.Inventory.Gold;
 
             var intentState = new ActiveIntentState
@@ -449,7 +426,7 @@ namespace Simpiens.Testing.Economy
             Assert(stall.OreStock == capacity && stall.TreasuryGold == 500, $"Stall unchanged (ore {stall.OreStock}, treasury {stall.TreasuryGold}).");
             Assert(agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust == 0, "A refused sale changes no trust.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 13 Passed: A stall at its salvage capacity refuses a sale.");
         }
 
@@ -463,15 +440,12 @@ namespace Simpiens.Testing.Economy
             var stallId = EntityId.Generate();
             simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
 
-            var go = new GameObject("[Test_Arrears]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            node.transform.position = (new Vec2(0f, 0.5f)).ToUnity();
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Arrears]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             agent.Inventory.Gold = 30;
             agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
-            registry.RegisterNode(node);
+            registry.Register(node);
 
             simManager.ExecuteIntent(node, new ActiveIntentState
             {
@@ -489,7 +463,7 @@ namespace Simpiens.Testing.Economy
             Assert(agent.Inventory.HasItem(ItemType.Ration, 1) && agent.Inventory.Gold == 15 && stall.TreasuryGold == 15, $"A stall in arrears still sold a ration (treasury {stall.TreasuryGold}).");
             Assert(stall.InArrears, "Selling rations doesn't clear arrears; only a full upkeep payment does.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[TradeTransactionValidator] Test 14 Passed: A stall in arrears buys no salvage but sells rations.");
         }
 

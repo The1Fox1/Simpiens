@@ -11,7 +11,7 @@ namespace Simpiens.Cognition.Contracts
     public interface IIntentHandler
     {
         Type SupportedIntentType { get; }
-        IntentResult Execute(NodeController node, ActiveIntentState state, IIntentExecutionContext context);
+        IntentResult Execute(WorldEntity node, ActiveIntentState state, IIntentExecutionContext context);
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ namespace Simpiens.Cognition.Contracts
     {
         public Type SupportedIntentType => typeof(TIntent);
 
-        public IntentResult Execute(NodeController node, ActiveIntentState state, IIntentExecutionContext context)
+        public IntentResult Execute(WorldEntity node, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (state != null && state.Intent is TIntent typedIntent)
             {
@@ -30,6 +30,6 @@ namespace Simpiens.Cognition.Contracts
             return IntentResult.Aborted;
         }
 
-        protected abstract IntentResult Execute(NodeController node, TIntent intent, ActiveIntentState state, IIntentExecutionContext context);
+        protected abstract IntentResult Execute(WorldEntity node, TIntent intent, ActiveIntentState state, IIntentExecutionContext context);
     }
 }

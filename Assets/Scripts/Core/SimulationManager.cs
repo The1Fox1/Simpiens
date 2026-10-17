@@ -77,7 +77,7 @@ namespace Simpiens.Simulation
 
         // Main thread tracking stores
         private readonly Dictionary<EntityId, ResourceData> _resources = new Dictionary<EntityId, ResourceData>();
-        private readonly Dictionary<EntityId, Simpiens.Entities.NodeController> _dormantNodes = new Dictionary<EntityId, Simpiens.Entities.NodeController>();
+        private readonly Dictionary<EntityId, WorldEntity> _dormantNodes = new Dictionary<EntityId, WorldEntity>();
         private readonly Dictionary<EntityId, AnchorData> _anchors = new Dictionary<EntityId, AnchorData>();
         private readonly Dictionary<EntityId, TradeStallData> _stalls = new Dictionary<EntityId, TradeStallData>();
         private readonly List<TradeStallData> _activeStallsBuffer = new List<TradeStallData>(8);
@@ -89,7 +89,7 @@ namespace Simpiens.Simulation
         private readonly List<EntityId> _activeIntentOrder = new List<EntityId>(64);
         private readonly List<AgentIntent> _pendingIntents = new List<AgentIntent>(64);
         private readonly List<EntityId> _keysToRemove = new List<EntityId>(64);
-        private readonly List<Simpiens.Entities.NodeController> _hearthPawnsBuffer = new List<Simpiens.Entities.NodeController>(32);
+        private readonly List<WorldEntity> _hearthPawnsBuffer = new List<WorldEntity>(32);
         private readonly List<ISocialAgent> _hearthAgentsBuffer = new List<ISocialAgent>(32);
         private readonly List<AnchorData> _activeAnchorsBuffer = new List<AnchorData>(16);
 
@@ -115,7 +115,7 @@ namespace Simpiens.Simulation
 
         public void DepleteResource(EntityId resourceId)
         {
-            var node = _worldRegistry?.GetNode(resourceId);
+            var node = _worldRegistry?.GetEntity(resourceId);
 
             if (_resources.TryGetValue(resourceId, out var resource) && resource.RegrowTicks > 0 && _supplyService != null)
             {
@@ -130,8 +130,7 @@ namespace Simpiens.Simulation
                 if (node != null)
                 {
                     _dormantNodes[resourceId] = node;
-                    _worldRegistry.UnregisterNode(node);
-                    node.gameObject.SetActive(false);
+                    _worldRegistry.Unregister(node);
                 }
                 return;
             }
@@ -139,8 +138,7 @@ namespace Simpiens.Simulation
             _resources.Remove(resourceId);
             if (node != null)
             {
-                _worldRegistry.UnregisterNode(node);
-                node.gameObject.SetActive(false);
+                _worldRegistry.Unregister(node);
             }
             SimLog.Simulation.ZLogDebug($"Resource {SimLog.Agent(resourceId)} depleted and removed permanently (no regrowth)");
         }
@@ -152,8 +150,7 @@ namespace Simpiens.Simulation
                 _dormantNodes.Remove(resourceId);
                 if (node != null)
                 {
-                    node.gameObject.SetActive(true);
-                    _worldRegistry?.RegisterNode(node);
+                    _worldRegistry?.Register(node);
                 }
                 SimLog.Simulation.ZLogDebug($"Resource {SimLog.Agent(resourceId)} reactivated in the world");
             }
@@ -234,7 +231,7 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, EntityId bunkId)
+        public IntentResult StepOntoBunk(WorldEntity node, EntityId bunkId)
         {
             if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
@@ -310,9 +307,9 @@ namespace Simpiens.Simulation
         private Simpiens.Cognition.Memory.AgentMemory FindMemory(EntityId agentId)
         {
             if (_agentRegistry != null && _agentRegistry.TryGetAgent(agentId, out var state)) return state.Memory;
-            var node = _worldRegistry?.GetNode(agentId);
+            var node = _worldRegistry?.GetEntity(agentId);
             if (node == null) return null;
-            if (node.AgentState != null) return node.AgentState.Memory;
+            if (node.Agent != null) return node.Agent.Memory;
             return node.Agent != null ? node.Agent.Memory : null;
         }
         public bool TryGetStall(EntityId stallId, out TradeStallData stall) => _stalls.TryGetValue(stallId, out stall);
@@ -431,7 +428,7 @@ namespace Simpiens.Simulation
                 Vec2 initialPos = Vec2.Zero;
                 if (_worldRegistry != null)
                 {
-                    var node = _worldRegistry.GetNode(intent.AgentId);
+                    var node = _worldRegistry.GetEntity(intent.AgentId);
                     if (node != null) initialPos = node.Position;
                 }
 
@@ -929,11 +926,10 @@ namespace Simpiens.Simulation
 
         private void HideResourceNode(EntityId resourceId, bool dormant)
         {
-            var node = _worldRegistry?.GetNode(resourceId);
+            var node = _worldRegistry?.GetEntity(resourceId);
             if (node == null) return;
             if (dormant) _dormantNodes[resourceId] = node;
-            _worldRegistry.UnregisterNode(node);
-            node.gameObject.SetActive(false);
+            _worldRegistry.Unregister(node);
         }
 
         public void ResetState()
@@ -1086,7 +1082,7 @@ namespace Simpiens.Simulation
                     var agentId = _activeIntentOrder[k];
                     if (!_activeIntents.TryGetValue(agentId, out var state)) continue;
 
-                    var node = _worldRegistry.GetNode(agentId);
+                    var node = _worldRegistry.GetEntity(agentId);
                     if (node == null)
                     {
                         // Agent node no longer exists
@@ -1131,7 +1127,7 @@ namespace Simpiens.Simulation
             }
         }
 
-        internal IntentResult ExecuteIntent(Simpiens.Entities.NodeController node, ActiveIntentState state)
+        internal IntentResult ExecuteIntent(WorldEntity node, ActiveIntentState state)
         {
             if (_intentRegistry != null)
             {
@@ -1142,7 +1138,7 @@ namespace Simpiens.Simulation
 
         private const float GossipRadius = 2.5f;
 
-        public void CheckGossipOpportunity(Simpiens.Entities.NodeController node)
+        public void CheckGossipOpportunity(WorldEntity node)
         {
             var agentA = node.Agent;
             if (agentA == null || agentA.Memory == null || agentA.IsExhaustionCollapsed) return;
@@ -1150,7 +1146,7 @@ namespace Simpiens.Simulation
 
             uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;
 
-            var activeNodes = _worldRegistry.ActiveNodes;
+            var activeNodes = _worldRegistry.ActiveEntities;
             int count = activeNodes.Count;
             for (int i = 0; i < count; i++)
             {
@@ -1206,7 +1202,7 @@ namespace Simpiens.Simulation
             }
             SortStable(_activeAnchorsBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
 
-            var activeNodes = _worldRegistry.ActiveNodes;
+            var activeNodes = _worldRegistry.ActiveEntities;
             int totalNodes = activeNodes.Count;
 
             for (int i = 0; i < totalNodes; i++)
@@ -1252,7 +1248,7 @@ namespace Simpiens.Simulation
                     if (pawnCount >= 2)
                     {
                         agent.Social = SimMath.Min(100f, agent.Social + 1.0f);
-                        if (agent.State != null) agent.State.Activity.RecordHearthGathering(currentTick);
+                        if (agent != null) agent.Activity.RecordHearthGathering(currentTick);
                     }
                 }
 
@@ -1332,7 +1328,7 @@ namespace Simpiens.Simulation
                     for (int p = 0; p < pawnCount; p++)
                     {
                         var pawn = _hearthPawnsBuffer[p];
-                        ISocialAgent ag = pawn.AgentState != null ? (ISocialAgent)pawn.AgentState : (ISocialAgent)pawn.Agent;
+                        ISocialAgent ag = pawn.Agent != null ? (ISocialAgent)pawn.Agent : (ISocialAgent)pawn.Agent;
                         if (ag != null && !ag.Membership.HasGroup)
                         {
                             _hearthAgentsBuffer.Add(ag);
@@ -1394,7 +1390,7 @@ namespace Simpiens.Simulation
             }
         }
 
-        public IntentResult ExecutePanicMovement(Simpiens.Entities.NodeController node, PathResponse path, ref int currentIndex)
+        public IntentResult ExecutePanicMovement(WorldEntity node, PathResponse path, ref int currentIndex)
         {
             if (path == null || path.Waypoints == null || currentIndex >= path.Length)
             {
@@ -1426,7 +1422,7 @@ namespace Simpiens.Simulation
             return IntentResult.InProgress;
         }
 
-        public IntentResult ExecutePathMovement(Simpiens.Entities.NodeController node, PathResponse path, ActiveIntentState state)
+        public IntentResult ExecutePathMovement(WorldEntity node, PathResponse path, ActiveIntentState state)
         {
             if (path == null || path.Waypoints == null || state.CurrentWaypointIndex >= path.Length)
             {
@@ -1509,7 +1505,7 @@ namespace Simpiens.Simulation
             return IntentResult.InProgress;
         }
 
-        internal IntentResult ApplyProgressiveUnstuckReflex(Simpiens.Entities.NodeController node, Vec2 targetPos, ActiveIntentState state)
+        internal IntentResult ApplyProgressiveUnstuckReflex(WorldEntity node, Vec2 targetPos, ActiveIntentState state)
         {
             Vec2 toTarget = targetPos - (Vec2)node.Position;
             float dist = toTarget.Magnitude;
@@ -1569,7 +1565,7 @@ namespace Simpiens.Simulation
         /// crowd another pawn (see <see cref="IsCrowdedMove"/>). A pawn already inside a blocked cell may always move,
         /// so it can escape. Every simulation-side pawn displacement (path steps, panic, watchdog, yielding) goes through here.
         /// </summary>
-        public bool TryDisplacePawn(Simpiens.Entities.NodeController node, Vec2 candidate, bool respectPawns = true)
+        public bool TryDisplacePawn(WorldEntity node, Vec2 candidate, bool respectPawns = true)
         {
             if (node == null) return false;
             var snapshot = _spatialPartition?.GetActiveSnapshot();
@@ -1581,7 +1577,7 @@ namespace Simpiens.Simulation
             {
                 return false;
             }
-            node.SetLogicalPosition(candidate);
+            node.SetPosition(candidate);
             return true;
         }
 
@@ -1594,7 +1590,7 @@ namespace Simpiens.Simulation
         /// is always allowed). Nearby pawns come from the snapshot; their positions are read live from the registry,
         /// so pawns already moved earlier this tick are seen where they are now, not where they were.
         /// </summary>
-        internal bool IsCrowdedMove(Simpiens.Entities.NodeController node, Vec2 candidate)
+        internal bool IsCrowdedMove(WorldEntity node, Vec2 candidate)
         {
             var snapshot = _spatialPartition?.GetActiveSnapshot();
             if (snapshot == null || node == null) return false;
@@ -1621,7 +1617,7 @@ namespace Simpiens.Simulation
                         var entity = cellArray[i];
                         if (entity.Type != EntityType.Pawn || entity.Id == node.Id) continue;
 
-                        var otherNode = _worldRegistry != null ? _worldRegistry.GetNode(entity.Id) : null;
+                        var otherNode = _worldRegistry != null ? _worldRegistry.GetEntity(entity.Id) : null;
                         Vec2 other = otherNode != null ? otherNode.Position : entity.Position;
                         float candSqr = (candidate - other).SqrMagnitude;
                         if (candSqr >= sepSqr) continue;

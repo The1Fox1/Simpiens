@@ -24,7 +24,7 @@ namespace Simpiens.Cognition.Contracts
             return _handlers.TryGetValue(intentType, out handler);
         }
 
-        public IntentResult ExecuteIntent(NodeController node, ActiveIntentState state, IIntentExecutionContext context)
+        public IntentResult ExecuteIntent(WorldEntity node, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (state == null || state.Intent == null)
             {

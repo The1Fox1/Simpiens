@@ -157,7 +157,7 @@ namespace Simpiens.UI
         private float _refreshTimer = 0f;
         private const float RefreshInterval = 0.1f; // 10 Hz refresh for zero-allocation performance
 
-        private readonly List<NodeController> _agentsInZoneBuffer = new List<NodeController>(32);
+        private readonly List<WorldEntity> _agentsInZoneBuffer = new List<WorldEntity>(32);
         private readonly List<VisualElement> _sectorCardsPool = new List<VisualElement>(16);
         private readonly List<AgentCardItem> _agentCardItems = new List<AgentCardItem>(32);
         private readonly List<Label> _eventItemsPool = new List<Label>(128);
@@ -895,8 +895,8 @@ namespace Simpiens.UI
                     }
 
                     item.AgentId = node.Id;
-                    string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.name;
-                    item.NameLabel.text = $"{friendlyName} [{node.name}]";
+                    string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.Name;
+                    item.NameLabel.text = $"{friendlyName} [{node.Name}]";
                     item.DescLabel.text = GetAgentActivityDescription(agent);
 
                     var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
@@ -995,10 +995,10 @@ namespace Simpiens.UI
         {
             if (_worldRegistry == null) return;
 
-            NodeController node = null;
+            WorldEntity node = null;
             if (_selectedAgentId != default)
             {
-                node = _worldRegistry.GetNode(_selectedAgentId);
+                node = _worldRegistry.GetEntity(_selectedAgentId);
             }
 
             if (node == null || node.Agent == null)
@@ -1015,11 +1015,11 @@ namespace Simpiens.UI
 
             if (_dossierAgentName != null)
             {
-                string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.name;
+                string friendlyName = _identityService != null ? _identityService.GetFriendlyName(node.Id) : node.Name;
                 string title = _identityService != null ? _identityService.GetFriendlyTitle(node.Id) : "";
                 _dossierAgentName.text = string.IsNullOrEmpty(title)
-                    ? $"{friendlyName} [{node.name}]"
-                    : $"{friendlyName} the {title} [{node.name}]";
+                    ? $"{friendlyName} [{node.Name}]"
+                    : $"{friendlyName} the {title} [{node.Name}]";
             }
 
             var state = agent.VisualState;
@@ -1064,8 +1064,8 @@ namespace Simpiens.UI
                 {
                     foreach (var kvp in agent.Memory.AffinityMap)
                     {
-                        var peerNode = _worldRegistry.GetNode(kvp.Key);
-                        string peerName = peerNode != null ? peerNode.name : kvp.Key.ToString().Substring(0, 6);
+                        var peerNode = _worldRegistry.GetEntity(kvp.Key);
+                        string peerName = peerNode != null ? peerNode.Name : kvp.Key.ToString().Substring(0, 6);
                         var rel = kvp.Value;
 
                         Label row;
@@ -1099,7 +1099,7 @@ namespace Simpiens.UI
             }
         }
 
-        private string GetAgentActivityDescription(AutonomousAgent agent)
+        private string GetAgentActivityDescription(Simpiens.Cognition.AgentState agent)
         {
             if (agent == null) return "Unknown";
             if (agent.IsInTantrum) return "Throwing tantrum in anger";
@@ -1134,7 +1134,7 @@ namespace Simpiens.UI
         private void HandleCalmTantrum()
         {
             if (_selectedAgentId == default || _worldRegistry == null) return;
-            var node = _worldRegistry.GetNode(_selectedAgentId);
+            var node = _worldRegistry.GetEntity(_selectedAgentId);
             if (node?.Agent != null)
             {
                 node.Agent.Frustration = 0f;

@@ -6,7 +6,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class IdleIntentHandler : IntentHandlerBase<IdleIntent>
     {
-        protected override IntentResult Execute(NodeController node, IdleIntent idle, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, IdleIntent idle, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
             state.ElapsedTime += context.FixedTickDeltaTime;

@@ -1,20 +1,29 @@
 using System;
 using System.Collections.Generic;
-using Simpiens.Entities;
 
 namespace Simpiens.Simulation
 {
     /// <summary>
-    /// Tracks all active entities in the simulation so the main loop can sync them to the spatial grid.
+    /// The entities present in the world, in registration order (which is the snapshot's entity order, and so the
+    /// order cognition sees them in). Views follow <see cref="EntityRegistered"/> and <see cref="EntityUnregistered"/>
+    /// to show and hide themselves; they never register or remove entities.
     /// </summary>
     public interface IWorldRegistry
     {
-        IReadOnlyList<NodeController> ActiveNodes { get; }
-        
-        void RegisterNode(NodeController node);
-        void UnregisterNode(NodeController node);
-        void PruneDestroyed();
+        IReadOnlyList<WorldEntity> ActiveEntities { get; }
+
+        /// <summary>Adds an entity at the end of the order (a regrown node comes back at the end). Main thread.</summary>
+        void Register(WorldEntity entity);
+
+        /// <summary>Removes an entity (a depleted node, a removed wall). Main thread.</summary>
+        void Unregister(WorldEntity entity);
+
+        /// <summary>Forgets every entity without raising events (a respawn or load tears the world down).</summary>
         void Clear();
-        NodeController GetNode(EntityId id);
+
+        WorldEntity GetEntity(EntityId id);
+
+        event Action<WorldEntity> EntityRegistered;
+        event Action<WorldEntity> EntityUnregistered;
     }
 }

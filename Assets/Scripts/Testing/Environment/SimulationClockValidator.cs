@@ -41,12 +41,7 @@ namespace Simpiens.Testing.Environment
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var go = new GameObject("[TestNode_Speed]");
-            var node = go.AddComponent<NodeController>();
-            node.Construct(clock, registry);
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(speed: 2.0f));
-            node.transform.position = Vec2.Zero.ToUnity();
-            registry.RegisterNode(node);
+            var node = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Speed]");
 
             var path = new PathResponse
             {
@@ -69,13 +64,13 @@ namespace Simpiens.Testing.Environment
             Assert(SimMath.Approximately(clock.TimeMultiplier, 10.0f), "Clock multiplier updated to 10x.");
 
             // Reset position to zero for clean distance check across 10 ticks
-            node.SetLogicalPosition(Vec2.Zero);
+            node.SetPosition(Vec2.Zero);
             clock.AdvanceTicks(10);
 
             float distAt10x = node.Position.X;
             Assert(SimMath.Approximately(distAt10x, 2.0f), $"Each logical tick advances exactly 0.2m regardless of speed multiplier (actual: {distAt10x})");
 
-            GameObject.DestroyImmediate(go);
+            registry?.Unregister(node);
             simManager.Dispose();
             Debug.Log("[PASS] Test 1: Fixed-tick rate and speed scaling verified.");
         }
@@ -86,15 +81,10 @@ namespace Simpiens.Testing.Environment
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, null, clock);
 
-            var go = new GameObject("[TestNode_Pause]");
-            var node = go.AddComponent<NodeController>();
-            node.Construct(clock, registry);
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vec2.Zero.ToUnity();
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(registry, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Pause]", baseSpeed: 2.0f);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Hunger = 20.0f;
             agent.Energy = 80.0f;
 
@@ -109,7 +99,7 @@ namespace Simpiens.Testing.Environment
 
             // Ticking while paused must result in zero state mutations
             simManager.Tick();
-            agent.ManualUpdate();
+            goCrawler.ManualUpdate();
 
             Assert(clock.CurrentTick == tickBefore, "Clock current tick remained frozen during pause.");
             Assert(agent.Hunger == hungerBefore, "Agent hunger did not decay during pause.");
@@ -120,7 +110,7 @@ namespace Simpiens.Testing.Environment
             Assert(!simManager.IsPaused, "SimulationManager reports IsPaused = false after resume.");
             Assert(!clock.IsPaused, "SimulationClock reports IsPaused = false after resume.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
             Debug.Log("[PASS] Test 2: Pause integrity verified (no drift, no decay while paused).");
         }
@@ -134,15 +124,10 @@ namespace Simpiens.Testing.Environment
             var anchorId = EntityId.Generate();
             simManager.RegisterAnchor(anchorId, Vec2.Zero, 3.0f);
 
-            var go = new GameObject("[TestNode_Periodic]");
-            var node = go.AddComponent<NodeController>();
-            node.Construct(clock, registry);
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vec2.Zero.ToUnity(); // Inside campfire radius
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(registry, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Periodic]", baseSpeed: 2.0f);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Frustration = 10.0f;
 
             // Advance 100 ticks. Ticks 50 and 100 should fire EvaluateHearthProximity,
@@ -152,7 +137,7 @@ namespace Simpiens.Testing.Environment
             Assert(SimMath.Approximately(agent.Frustration, 8.0f), 
                 $"Periodic hearth bonding fired exactly 2 times across 100 ticks (Frustration expected: 8.0, actual: {agent.Frustration})");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
             Debug.Log("[PASS] Test 3: Periodic hearth dynamics exactness verified (no duplicate frame fires).");
         }
@@ -165,21 +150,16 @@ namespace Simpiens.Testing.Environment
             // InterpolationAlpha should be clamped [0, 1]
             Assert(clock.InterpolationAlpha >= 0f && clock.InterpolationAlpha <= 1f, "InterpolationAlpha is clamped in [0, 1].");
 
-            var go = new GameObject("[TestNode_Interpolation]");
-            var node = go.AddComponent<NodeController>();
-            node.Construct(clock, null);
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vec2.Zero.ToUnity();
+            var node = HeadlessEntities.Prop(null, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_Interpolation]", register: false);
 
-            Assert(node.LogicalPosition == Vec2.Zero, "Initial LogicalPosition matches transform.position.");
-            Assert(node.PreviousLogicalPosition == Vec2.Zero, "Initial PreviousLogicalPosition matches transform.position.");
+            Assert(node.Position == Vec2.Zero, "Initial LogicalPosition matches transform.position.");
+            Assert(node.PreviousPosition == Vec2.Zero, "Initial PreviousLogicalPosition matches transform.position.");
 
             // Step logical position
-            node.SetLogicalPosition(new Vec2(10f, 0f));
-            Assert(node.LogicalPosition == new Vec2(10f, 0f), "LogicalPosition updated to target coordinate.");
-            Assert(node.PreviousLogicalPosition == Vec2.Zero, "PreviousLogicalPosition records previous tick coordinate.");
+            node.SetPosition(new Vec2(10f, 0f));
+            Assert(node.Position == new Vec2(10f, 0f), "LogicalPosition updated to target coordinate.");
+            Assert(node.PreviousPosition == Vec2.Zero, "PreviousLogicalPosition records previous tick coordinate.");
 
-            GameObject.DestroyImmediate(go);
             Debug.Log("[PASS] Test 4: Visual interpolation alpha and logical coordinate tracking verified.");
         }
 
@@ -191,15 +171,10 @@ namespace Simpiens.Testing.Environment
             var clock = new SimulationClock();
             var simManager = new SimulationManager(registry, grid, clock);
 
-            var go = new GameObject("[TestNode_ZeroGC_Tick]");
-            var node = go.AddComponent<NodeController>();
-            node.Construct(clock, registry);
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2.0f));
-            node.transform.position = Vec2.Zero.ToUnity();
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(registry, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[TestNode_ZeroGC_Tick]", baseSpeed: 2.0f);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
 
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, clock);
             agent.Energy = 100f;
             agent.Hunger = 0f;
             agent.Social = 100f;
@@ -212,7 +187,7 @@ namespace Simpiens.Testing.Environment
             // Warmup
             for (int i = 0; i < 50; i++)
             {
-                agent.ManualTick(clock.CurrentTick);
+                goCrawler.Tick(clock.CurrentTick);
                 simManager.Tick();
             }
 
@@ -224,14 +199,14 @@ namespace Simpiens.Testing.Environment
 
             for (int i = 0; i < 1000; i++)
             {
-                agent.ManualTick(clock.CurrentTick);
+                goCrawler.Tick(clock.CurrentTick);
                 simManager.Tick();
             }
 
             long totalAlloc = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 fixed ticks.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             simManager.Dispose();
             Debug.Log("[PASS] Test 5: Strict zero-allocation guarantee verified on fixed tick loop (0 bytes across 1,000 ticks).");
         }

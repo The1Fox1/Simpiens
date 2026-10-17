@@ -95,6 +95,11 @@ namespace Simpiens.Core.Session
             {
                 _clock.OnSimulationTick += HandleSimulationTick;
             }
+            if (_registry != null)
+            {
+                _registry.EntityRegistered += HandleEntityRegistered;
+                _registry.EntityUnregistered += HandleEntityUnregistered;
+            }
 
             _evaluator = new Simpiens.Cognition.Evaluators.SurvivalUtilityEvaluator(_pathfinder);
             _cognitionService = new AgentCognitionService(null, new Simpiens.Cognition.Evaluators.AmbientWanderEvaluator(_pathfinder, settings));
@@ -364,14 +369,19 @@ namespace Simpiens.Core.Session
             var col = agentGo.AddComponent<CircleCollider2D>();
             col.radius = 0.35f;
 
-            var controller = agentGo.AddComponent<NodeController>();
-            controller.Type = EntityType.Pawn;
-            controller.Initialize(id, new NodeConfiguration(speed: 2f));
-            _registry.RegisterNode(controller);
-            SimLog.RegisterAgentName(controller.Id, label);
+            // The crawler itself is plain data (Epic CORE C5): its state, its entity in the world, its tick; the
+            // GameObject above is only their view
+            var state = new AgentState(id);
+            var entity = new WorldEntity(id, EntityType.Pawn, position, col.radius, baseSpeed: 2f, agent: state, name: name);
+            _registry.Register(entity);
+            SimLog.RegisterAgentName(id, label);
+            var runtime = new AgentRuntime(state, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
 
+            var controller = agentGo.AddComponent<NodeController>();
+            controller.Bind(entity);
             var agent = agentGo.AddComponent<AutonomousAgent>();
-            agent.Initialize(controller.Id, _spatialPartition, new Simpiens.Cognition.Evaluators.ICognitiveEvaluator[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
+            agent.Bind(runtime);
+            agent.SetTelemetryRegistry(_registry);
 
             // Attach AgentView for animated visual feedback
             agentGo.AddComponent<AgentView>();
@@ -452,13 +462,10 @@ namespace Simpiens.Core.Session
             var col = resourceGo.AddComponent<CircleCollider2D>();
             col.radius = 0.4f;
 
-            var controller = resourceGo.AddComponent<NodeController>();
-            controller.Type = EntityType.Resource;
-            controller.ConfigureResourceKind(yieldItem);
             resId = NextEntityId();
-            controller.Initialize(resId, new NodeConfiguration(speed: 0f));
-
-            _registry.RegisterNode(controller);
+            var entity = new WorldEntity(resId, EntityType.Resource, pos, col.radius, name: resourceGo.name) { ResourceKind = yieldItem };
+            BindView(resourceGo, entity);
+            _registry.Register(entity);
             SimLog.RegisterAgentName(resId, $"{yieldItem}@({pos.X:0.#},{pos.Y:0.#})");
             _simulationManager.RegisterResource(new ResourceData
             {
@@ -487,14 +494,13 @@ namespace Simpiens.Core.Session
             var col = campfireGo.AddComponent<CircleCollider2D>();
             col.radius = 0.35f;
 
-            var controller = campfireGo.AddComponent<NodeController>();
-            controller.Type = EntityType.Anchor;
             anchorId = NextEntityId();
-            controller.Initialize(anchorId, new NodeConfiguration(speed: 0f));
+            var entity = new WorldEntity(anchorId, EntityType.Anchor, pos, col.radius, name: campfireGo.name);
+            BindView(campfireGo, entity);
 
             campfireGo.AddComponent<CampfireView>();
 
-            _registry.RegisterNode(controller);
+            _registry.Register(entity);
             _simulationManager.RegisterAnchor(anchorId, pos, radius: radius);
         }
 
@@ -519,17 +525,36 @@ namespace Simpiens.Core.Session
             var col = bunkGo.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
 
-            var controller = bunkGo.AddComponent<NodeController>();
-            controller.Type = EntityType.Bunk;
             bunkId = NextEntityId();
-            controller.Initialize(bunkId, new NodeConfiguration(speed: 0f));
+            var entity = new WorldEntity(bunkId, EntityType.Bunk, pos, col.radius, name: bunkGo.name);
+            BindView(bunkGo, entity);
 
-            _registry.RegisterNode(controller);
+            _registry.Register(entity);
             _simulationManager?.RegisterBunk(bunkId, pos);
+        }
+
+        private readonly Dictionary<EntityId, GameObject> _views = new Dictionary<EntityId, GameObject>(256);
+
+        private void BindView(GameObject go, WorldEntity entity)
+        {
+            go.AddComponent<NodeController>().Bind(entity);
+            _views[entity.Id] = go;
+        }
+
+        // A view shows while its entity is in the world: a depleted resource node hides, a regrown one shows again
+        private void HandleEntityRegistered(WorldEntity entity)
+        {
+            if (_views.TryGetValue(entity.Id, out var go) && go != null) go.SetActive(true);
+        }
+
+        private void HandleEntityUnregistered(WorldEntity entity)
+        {
+            if (_views.TryGetValue(entity.Id, out var go) && go != null) go.SetActive(false);
         }
 
         private void CleanupExistingWorld()
         {
+            _views.Clear();
             string[] rootNames = new[] { "[SwarmAgents]", "[MapEntities]", "[DynamicObstacles]" };
             for (int i = 0; i < rootNames.Length; i++)
             {
@@ -547,6 +572,11 @@ namespace Simpiens.Core.Session
             if (_clock != null)
             {
                 _clock.OnSimulationTick -= HandleSimulationTick;
+            }
+            if (_registry != null)
+            {
+                _registry.EntityRegistered -= HandleEntityRegistered;
+                _registry.EntityUnregistered -= HandleEntityUnregistered;
             }
         }
 

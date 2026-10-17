@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -70,7 +71,7 @@ namespace Simpiens.Testing.Economy
             Assert(SimMath.Approximately(agent.Hunger, 70f), $"Ore harvest left hunger unchanged (hunger {agent.Hunger}).");
             Assert(sim.TryGetResource(oreId, out var ore) && ore.RemainingYield == 2, "Ore node yield decremented to 2.");
 
-            node.SetLogicalPosition(new Vec2(4.5f, 0f));
+            node.SetPosition(new Vec2(4.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, foodId, null));
             Assert(result == IntentResult.Success, $"Food harvest returned {result} instead of Success.");
             Assert(SimMath.Approximately(agent.Hunger, 20f), $"Food harvest relieved 50 hunger (hunger {agent.Hunger}).");
@@ -121,7 +122,7 @@ namespace Simpiens.Testing.Economy
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, bushId, null));
             Assert(result == IntentResult.Success, $"Depleting harvest returned {result}.");
             Assert(sim.TryGetResource(bushId, out var bush) && bush.IsDormant, "Depleted regrowable node is dormant, not removed.");
-            Assert(registry.GetNode(bushId) == null, "Dormant node is unregistered from the world (imperceptible).");
+            Assert(registry.GetEntity(bushId) == null, "Dormant node is unregistered from the world (imperceptible).");
 
             uint depletedAt = bush.DepletedAtTick;
             while (sim.CurrentTick < depletedAt + 49) sim.Tick();
@@ -131,7 +132,7 @@ namespace Simpiens.Testing.Economy
             sim.Tick();
             Assert(sim.CurrentTick == depletedAt + 50, "Advanced to depletion +50.");
             Assert(!bush.IsDormant && bush.RemainingYield == bush.MaxYield, "Node regrew to MaxYield at exactly +50.");
-            Assert(registry.GetNode(bushId) != null, "Regrown node re-registered with the world.");
+            Assert(registry.GetEntity(bushId) != null, "Regrown node re-registered with the world.");
             Assert(sim.Supply.RegrowthCount == 1, "RegrowthCount is 1.");
 
             Destroy(bushGo, agentGo);
@@ -285,17 +286,17 @@ namespace Simpiens.Testing.Economy
 
             var result = RunIntent(sim, new ScoutIntent(node.Id, 42, (byte)sector, path));
             Assert(result == IntentResult.Success, $"ScoutIntent returned {result} instead of Success.");
-            Assert(agent.State.ScoutReportBountyId == 42, "Scout report recorded on entering the sector.");
+            Assert(agent.ScoutReportBountyId == 42, "Scout report recorded on entering the sector.");
 
             // Report at the stall
-            node.SetLogicalPosition(stallPos + new Vec2(1f, 0f));
+            node.SetPosition(stallPos + new Vec2(1f, 0f));
             int goldBefore = agent.Inventory.Gold;
             result = RunIntent(sim, new DeliverBountyIntent(node.Id, 42, stallId));
             Assert(result == IntentResult.Success, $"Scout report delivery returned {result} instead of Success.");
             Assert(agent.Inventory.Gold == goldBefore + 15, $"Reward paid (gold {agent.Inventory.Gold}, expected {goldBefore + 15}).");
             Assert(!ledger.HasEscrow(42) && ledger.TotalEscrowGold == 0, "Escrow released.");
             Assert(zones.IsExplored(sector), "Herb Hollow marked explored.");
-            Assert(agent.State.ScoutReportBountyId == 0, "Scout report consumed.");
+            Assert(agent.ScoutReportBountyId == 0, "Scout report consumed.");
             Assert(sim.TryGetBounty(42, out var done) && done.Status == BountyStatus.Completed, "Scout bounty Completed.");
 
             Assert(sim.TryGetTradeStall(stallId, out var stall), "Stall retrieved.");
@@ -378,15 +379,15 @@ namespace Simpiens.Testing.Economy
             var goals = new List<GoapGoal> { new SatiateHungerGoal(), new FulfillBountyGoal(), new EarnIncomeGoal() };
             var evaluators = new ICognitiveEvaluator[] { new SurvivalUtilityEvaluator(null) };
 
-            cognition.BeginEvaluation(agent.State, grid, sim, null, new GoapPlanner(), BuildProductionGraph(), goals, evaluators);
+            cognition.BeginEvaluation(agent, grid, sim, null, new GoapPlanner(), BuildProductionGraph(), goals, evaluators);
             Assert(sim.Cognition.PendingCount == 1, "Cognition evaluation dispatched.");
             // Land the decision (dispatched at t0: no clock) without running a tick, so the intent is still unexecuted
             sim.Cognition.ApplyDue(CognitionScheduler.LatencyTicks);
 
-            var intent = agent.State.CurrentIntent;
+            var intent = agent.CurrentIntent;
             Assert(intent != null, "An intent was produced.");
             Assert(!(intent is IdleIntent) && !(intent is WanderIntent), $"Well-fed agent got {intent?.GetType().Name} instead of a GOAP intent.");
-            Assert(agent.State.ActiveGoal is FulfillBountyGoal, $"Active goal is {agent.State.ActiveGoal?.Name ?? "null"} instead of FulfillBounty.");
+            Assert(agent.ActiveGoal is FulfillBountyGoal, $"Active goal is {agent.ActiveGoal?.Name ?? "null"} instead of FulfillBounty.");
             Assert(intent is ClaimBountyIntent || intent is HarvestResourceIntent, $"First GOAP step emitted {intent.GetType().Name}.");
             Assert(agent.Memory.SpatialMemoryMap.Count > 0, "Ore vein perceived.");
             foreach (var kvp in agent.Memory.SpatialMemoryMap)
@@ -465,37 +466,37 @@ namespace Simpiens.Testing.Economy
             var otherGo = CreateAgent(registry, sim, new Vec2(1f, 2f), out _, out var other);
             agent.Inventory.Gold = 50;
             agent.Hunger = 70f;
-            var empty = agent.State.Activity;
+            var empty = agent.Activity;
             Assert(empty.Cycles == 0 && empty.Meals == 0 && empty.FirstCycleTick == -1 && empty.FirstMealTick == -1, "A new crawler starts with an empty tally.");
 
             // A sale of salvage the crawler did not harvest counts as a sale, not a cycle
             agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Sale returned {result}.");
-            Assert(agent.State.Activity.SalvageSales == 1 && agent.State.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.State.Activity}).");
+            Assert(agent.Activity.SalvageSales == 1 && agent.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.Activity}).");
 
             // Harvest, then sell: one cycle
-            node.SetLogicalPosition(new Vec2(6.5f, 0f));
+            node.SetPosition(new Vec2(6.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, oreId, null));
             Assert(result == IntentResult.Success, $"Ore harvest returned {result}.");
-            Assert(agent.State.Activity.SalvageHarvests == 1 && agent.State.Activity.FirstHarvestTick >= 0 && agent.State.Activity.Meals == 0, $"The ore harvest counts once and is no meal ({agent.State.Activity}).");
-            node.SetLogicalPosition(new Vec2(1f, 0f));
+            Assert(agent.Activity.SalvageHarvests == 1 && agent.Activity.FirstHarvestTick >= 0 && agent.Activity.Meals == 0, $"The ore harvest counts once and is no meal ({agent.Activity}).");
+            node.SetPosition(new Vec2(1f, 0f));
             result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Second sale returned {result}.");
-            var a = agent.State.Activity;
+            var a = agent.Activity;
             Assert(a.SalvageSales == 2 && a.Cycles == 1 && a.FirstCycleTick >= a.FirstHarvestTick, $"Harvest then sale closes one cycle ({a}).");
 
             // A purchase counts, and eating harvested food is a meal
             result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration));
-            Assert(result == IntentResult.Success && agent.State.Activity.RationPurchases == 1, $"The ration purchase counts ({result}, {agent.State.Activity}).");
-            node.SetLogicalPosition(new Vec2(-5.5f, 0f));
+            Assert(result == IntentResult.Success && agent.Activity.RationPurchases == 1, $"The ration purchase counts ({result}, {agent.Activity}).");
+            node.SetPosition(new Vec2(-5.5f, 0f));
             result = RunIntent(sim, new HarvestResourceIntent(node.Id, foodId, null));
             Assert(result == IntentResult.Success, $"Food harvest returned {result}.");
-            a = agent.State.Activity;
+            a = agent.Activity;
             Assert(a.Meals == 1 && a.FirstMealTick >= 0 && a.SalvageHarvests == 1, $"Harvested food is one meal and no salvage harvest ({a}).");
 
             // Nothing leaks to another crawler
-            var o = other.State.Activity;
+            var o = other.Activity;
             Assert(o.SalvageHarvests == 0 && o.SalvageSales == 0 && o.Meals == 0 && o.RationPurchases == 0, $"Another crawler's tally is untouched ({o}).");
 
             Destroy(oreGo, foodGo, agentGo, otherGo);
@@ -530,11 +531,11 @@ namespace Simpiens.Testing.Economy
             agent.HasFoodInInventory = true;
             var result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
             Assert(result == IntentResult.Success, $"Eating returned {result}.");
-            Assert(SimMath.Approximately(agent.Hunger, 50f) && !agent.HasFoodInInventory && agent.State.Activity.Meals == 1,
-                $"The ration relieved 40 hunger and was used up (hunger {agent.Hunger}, carries {agent.HasFoodInInventory}, meals {agent.State.Activity.Meals}).");
+            Assert(SimMath.Approximately(agent.Hunger, 50f) && !agent.HasFoodInInventory && agent.Activity.Meals == 1,
+                $"The ration relieved 40 hunger and was used up (hunger {agent.Hunger}, carries {agent.HasFoodInInventory}, meals {agent.Activity.Meals}).");
 
             result = RunIntent(sim, new EatCarriedFoodIntent(node.Id));
-            Assert(result == IntentResult.TargetMissing && SimMath.Approximately(agent.Hunger, 50f) && agent.State.Activity.Meals == 1,
+            Assert(result == IntentResult.TargetMissing && SimMath.Approximately(agent.Hunger, 50f) && agent.Activity.Meals == 1,
                 $"With nothing left to eat the intent fails and changes nothing ({result}, hunger {agent.Hunger}).");
 
             Destroy(agentGo);
@@ -598,38 +599,28 @@ namespace Simpiens.Testing.Economy
             return outcome.Value;
         }
 
-        private static EntityId CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vec2 pos, ItemType kind, int yield, uint regrowTicks, out GameObject go)
+        private static EntityId CreateResourceNode(WorldRegistry registry, SimulationManager sim, Vec2 pos, ItemType kind, int yield, uint regrowTicks, out WorldEntity node)
         {
-            go = new GameObject($"[Test_{kind}Node]");
-            go.transform.position = pos.ToUnity();
-            var node = go.AddComponent<NodeController>();
-            node.Type = EntityType.Resource;
-            node.ConfigureResourceKind(kind);
             var id = NextGuid();
-            node.Initialize(id, new NodeConfiguration(0f));
-            registry.RegisterNode(node);
+            node = HeadlessEntities.Prop(registry, EntityType.Resource, pos, id: id, resourceKind: kind, name: $"[Test_{kind}Node]");
             sim.RegisterResource(new ResourceData { EntityId = id, RemainingYield = yield, MaxYield = yield, YieldItem = kind, RegrowTicks = regrowTicks });
             return id;
         }
 
-        private static GameObject CreateAgent(WorldRegistry registry, SimulationManager sim, Vec2 pos, out NodeController node, out AutonomousAgent agent)
+        private static TestCrawler CreateAgent(WorldRegistry registry, SimulationManager sim, Vec2 pos, out WorldEntity node, out AgentState agent)
         {
-            var go = new GameObject("[Test_SupplyAgent]");
-            go.transform.position = pos.ToUnity();
-            node = go.AddComponent<NodeController>();
-            node.Type = EntityType.Pawn;
-            node.Initialize(NextGuid(), new NodeConfiguration(2f));
-            agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, sim, null);
-            registry.RegisterNode(node);
-            return go;
+            var crawler = HeadlessEntities.Crawler(registry, sim, null, pos, id: NextGuid(), name: "[Test_SupplyAgent]");
+            node = crawler.Node;
+            agent = crawler.Agent;
+            return crawler;
         }
 
-        private static void Destroy(params GameObject[] objects)
+        // Each test owns its registries, so cleanup only stops the crawlers (what destroying their GameObjects did)
+        private static void Destroy(params object[] objects)
         {
             for (int i = 0; i < objects.Length; i++)
             {
-                if (objects[i] != null) UnityEngine.Object.DestroyImmediate(objects[i]);
+                if (objects[i] is TestCrawler crawler) crawler.Runtime.Dispose();
             }
         }
 

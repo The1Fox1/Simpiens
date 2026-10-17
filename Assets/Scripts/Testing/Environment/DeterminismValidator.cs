@@ -137,13 +137,7 @@ namespace Simpiens.Testing.Environment
             grid.Initialize(20f, 20f, 1f);
             var sim = new SimulationManager(registry, grid);
 
-            var go = new GameObject("[Determinism_Respawned]");
-            go.transform.position = Vec2.Zero.ToUnity();
-            go.AddComponent<CircleCollider2D>().radius = 0.35f;
-            var node = go.AddComponent<NodeController>();
-            node.Type = EntityType.Pawn;
-            node.Initialize(new EntityIdAllocator(new SimulationSettings(7)).Next(), new NodeConfiguration(2f));
-            registry.RegisterNode(node);
+            var node = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: new EntityIdAllocator(new SimulationSettings(7)).Next(), radius: 0.35f, name: "[Determinism_Respawned]");
             grid.UpdateFromRegistry(registry);
 
             WanderIntent WalkEast() => new WanderIntent(node.Id, new PathResponse { Waypoints = new[] { new Vec2(3f, 0f) }, Length = 1, IsValid = true });
@@ -168,7 +162,7 @@ namespace Simpiens.Testing.Environment
             for (int t = 0; t < 5; t++) sim.Tick();
             Assert(node.Position.X > afterCurrent, $"An unstamped intent runs (pawn at {node.Position}).");
 
-            GameObject.DestroyImmediate(go);
+            registry?.Unregister(node);
             Debug.Log("[PASS] Test 5: Intents decided before a respawn are dropped; current and unstamped intents run.");
         }
 
@@ -180,23 +174,17 @@ namespace Simpiens.Testing.Environment
             grid.Initialize(20f, 20f, 1f);
             var sim = new SimulationManager(registry, grid);
 
-            var nodes = new NodeController[PawnCount];
+            var nodes = new WorldEntity[PawnCount];
             for (int i = 0; i < PawnCount; i++)
             {
                 float angle = i * SimMath.PI * 2f / PawnCount;
-                var go = new GameObject($"[Determinism_Pawn{i}]");
-                go.transform.position = (new Vec2(SimMath.Cos(angle), SimMath.Sin(angle)) * 3f).ToUnity();
-                var col = go.AddComponent<CircleCollider2D>();
-                col.radius = 0.35f;
-                var node = go.AddComponent<NodeController>();
-                node.Type = EntityType.Pawn;
-                node.Initialize(ids.Next(), new NodeConfiguration(2f));
+                var node = HeadlessEntities.Prop(null, EntityType.Pawn, new Vec2(SimMath.Cos(angle), SimMath.Sin(angle)) * 3f, id: ids.Next(), radius: 0.35f, name: $"[Determinism_Pawn{i}]", register: false);
                 nodes[i] = node;
             }
 
             for (int k = 0; k < PawnCount; k++)
             {
-                registry.RegisterNode(nodes[reverseRegistration ? PawnCount - 1 - k : k]);
+                registry.Register(nodes[reverseRegistration ? PawnCount - 1 - k : k]);
             }
             grid.UpdateFromRegistry(registry);
 
@@ -216,7 +204,6 @@ namespace Simpiens.Testing.Environment
             for (int i = 0; i < PawnCount; i++)
             {
                 result[i] = nodes[i].Position;
-                GameObject.DestroyImmediate(nodes[i].gameObject);
             }
             return result;
         }

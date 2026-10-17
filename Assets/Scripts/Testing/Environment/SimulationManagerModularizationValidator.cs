@@ -139,12 +139,10 @@ namespace Simpiens.Testing.Environment
             var handlerRegistry = IntentHandlerRegistry.CreateDefault();
             var simManager = new SimulationManager(registry, null, intentRegistry: handlerRegistry);
 
-            var go = new GameObject("[Test_ModularPawn]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(NextTestGuid(), new NodeConfiguration(2f));
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, null);
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, null, Vec2.Zero, id: NextTestGuid(), name: "[Test_ModularPawn]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
+            registry.Register(node);
 
             var path = new PathResponse
             {
@@ -164,7 +162,7 @@ namespace Simpiens.Testing.Environment
             Assert(result == IntentResult.InProgress || result == IntentResult.Success, "Modular WanderIntentHandler executed successfully.");
             Assert(agent.VisualState == AgentVisualState.Walking, "Agent visual state set to Walking by WanderIntentHandler.");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[SimulationManagerModularizationValidator] Test 4 Passed: Modular intent handler registration and dispatch verified.");
         }
 
@@ -174,12 +172,10 @@ namespace Simpiens.Testing.Environment
             var handlerRegistry = IntentHandlerRegistry.CreateDefault();
             var simManager = new SimulationManager(registry, null, intentRegistry: handlerRegistry);
 
-            var go = new GameObject("[Test_ZeroAllocPawn]");
-            var node = go.AddComponent<NodeController>();
-            node.Initialize(NextTestGuid(), new NodeConfiguration(2f));
-            var agent = go.AddComponent<AutonomousAgent>();
-            agent.Initialize(node.Id, null, null, simManager, null);
-            registry.RegisterNode(node);
+            var goCrawler = HeadlessEntities.Crawler(null, simManager, null, Vec2.Zero, id: NextTestGuid(), name: "[Test_ZeroAllocPawn]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
+            registry.Register(node);
 
             var path = new PathResponse
             {
@@ -212,7 +208,7 @@ namespace Simpiens.Testing.Environment
 
             Assert(delta == 0, $"Hot-path ExecuteIntent allocated {delta} bytes (expected 0 bytes).");
 
-            GameObject.DestroyImmediate(go);
+            HeadlessEntities.Remove(registry, goCrawler);
             Debug.Log("[SimulationManagerModularizationValidator] Test 5 Passed: Zero GC allocations on modular intent execution hot path verified.");
         }
 

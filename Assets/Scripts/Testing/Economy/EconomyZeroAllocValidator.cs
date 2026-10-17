@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -77,16 +78,14 @@ namespace Simpiens.Testing.Economy
             sim.RegisterBounty(new BountyContract(StandingGatherId, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, uint.MaxValue - 1, creatorStallId: stallId));
             sim.RegisterBounty(new BountyContract(StandingScoutId, BountyType.ScoutSector, 0, ItemType.None, 1, 10, 0, uint.MaxValue - 1, creatorStallId: stallId));
 
-            var go = new GameObject("[EconomyZeroAlloc_Crawler]");
+            var goCrawler = HeadlessEntities.Crawler(null, sim, clock, Vec2.Zero, id: new EntityId(51u, 52u, 53u, 54u), name: "[EconomyZeroAlloc_Crawler]", register: false);
+            var node = goCrawler.Node;
+            var agent = goCrawler.Agent;
             try
             {
-                var node = go.AddComponent<NodeController>();
-                node.Initialize(new EntityId(51u, 52u, 53u, 54u), new NodeConfiguration(2f));
-                node.transform.position = (new Vec2(0f, 0.5f)).ToUnity(); // within the stall's reach
-                var agent = go.AddComponent<AutonomousAgent>();
-                agent.Initialize(node.Id, null, null, sim, clock);
+                node.SetPosition(new Vec2(0f, 0.5f)); // within the stall's reach
                 agent.Inventory.Gold = 1000000;
-                registry.RegisterNode(node);
+                registry.Register(node);
 
                 var buy = Active(new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration, 1), node);
                 var sell = Active(new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, 1), node);
@@ -154,7 +153,7 @@ namespace Simpiens.Testing.Economy
             finally
             {
                 sim.Dispose();
-                GameObject.DestroyImmediate(go);
+                HeadlessEntities.Remove(registry, goCrawler);
             }
         }
 
@@ -251,7 +250,7 @@ namespace Simpiens.Testing.Economy
             }
         }
 
-        private static ActiveIntentState Active(AgentIntent intent, NodeController node)
+        private static ActiveIntentState Active(AgentIntent intent, WorldEntity node)
         {
             return new ActiveIntentState { Intent = intent, CurrentWaypointIndex = 0, LastSampledPosition = node.Position };
         }

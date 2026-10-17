@@ -22,7 +22,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         /// </summary>
         public const float SurveyRadius = 1.25f;
 
-        protected override IntentResult Execute(NodeController node, ScoutIntent scout, ActiveIntentState state, IIntentExecutionContext context)
+        protected override IntentResult Execute(WorldEntity node, ScoutIntent scout, ActiveIntentState state, IIntentExecutionContext context)
         {
             if (!context.TryGetBounty(scout.BountyId, out var bounty))
             {
@@ -36,7 +36,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return IntentResult.Failed;
             }
 
-            var agent = node.AgentState;
+            var agent = node.Agent;
 
             // A visit means reaching the sector's survey point, from where the scout can see the room, not just
             // crossing its threshold (fog of war: what it sees there is the survey it reports, Epic MAP Phase 3)

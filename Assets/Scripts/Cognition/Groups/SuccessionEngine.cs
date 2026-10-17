@@ -55,7 +55,7 @@ namespace Simpiens.Cognition.Groups
             ISocialAgent GetAgent(EntityId id)
             {
                 if (agentLookup != null) return agentLookup(id);
-                return worldRegistry?.GetNode(id)?.Agent;
+                return worldRegistry?.GetEntity(id)?.Agent;
             }
 
             var leaderAgent = GetAgent(leaderId);
@@ -229,7 +229,7 @@ namespace Simpiens.Cognition.Groups
             ISocialAgent GetAgent(EntityId id)
             {
                 if (agentLookup != null) return agentLookup(id);
-                return worldRegistry?.GetNode(id)?.Agent;
+                return worldRegistry?.GetEntity(id)?.Agent;
             }
 
             var members = groupRegistry.GetMembers(groupId);

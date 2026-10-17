@@ -25,12 +25,12 @@ namespace Simpiens.Cognition.Contracts
 
         IReadOnlyDictionary<EntityId, ActiveIntentState> ActiveIntents { get; }
 
-        IntentResult ExecutePathMovement(NodeController node, PathResponse path, ActiveIntentState state);
-        IntentResult ExecutePanicMovement(NodeController node, PathResponse path, ref int currentIndex);
+        IntentResult ExecutePathMovement(WorldEntity node, PathResponse path, ActiveIntentState state);
+        IntentResult ExecutePanicMovement(WorldEntity node, PathResponse path, ref int currentIndex);
 
         /// <summary>Moves a pawn only if the move stays clear of static walls and (by default) other pawns; returns false (no move) otherwise.</summary>
-        bool TryDisplacePawn(NodeController node, Vec2 candidate, bool respectPawns = true);
-        void CheckGossipOpportunity(NodeController node);
+        bool TryDisplacePawn(WorldEntity node, Vec2 candidate, bool respectPawns = true);
+        void CheckGossipOpportunity(WorldEntity node);
         int GetSectorForPosition(Vec2 position);
 
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
@@ -58,7 +58,7 @@ namespace Simpiens.Cognition.Contracts
         /// onto it is the point). Success once on the bunk's exact position, so the sleeper lies in it; PathBlocked when a
         /// wall is in the way; TargetMissing when unknown or taken by someone else.
         /// </summary>
-        IntentResult StepOntoBunk(Simpiens.Entities.NodeController node, EntityId bunkId);
+        IntentResult StepOntoBunk(WorldEntity node, EntityId bunkId);
 
         /// <summary>Frees the bunk if this agent holds it.</summary>
         void ReleaseBunk(EntityId bunkId, EntityId agentId);

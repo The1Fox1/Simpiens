@@ -1,3 +1,4 @@
+using Simpiens.Testing.Environment;
 using System;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Pathfinding;
@@ -46,7 +47,7 @@ namespace Simpiens.Testing.Navigation
 
             // Off-grid wall: before inflation its 0.55 rasterization left a free cell whose pawns overlapped the box
             var wall = CreateNode("[TestWall_Inflation]", new Vec2(0.44f, 0f), EntityType.Wall, 0.55f);
-            registry.RegisterNode(wall);
+            registry.Register(wall);
             grid.UpdateFromRegistry(registry);
             var snapshot = grid.GetActiveSnapshot();
 
@@ -58,8 +59,6 @@ namespace Simpiens.Testing.Navigation
                 var p = new Vec2(0.44f, 0f) + new Vec2(SimMath.Cos(a), SimMath.Sin(a)) * reach;
                 Assert(!snapshot.IsStaticWalkable(p), $"Point {p} within body reach of the wall must be statically blocked.");
             }
-
-            Destroy(wall);
             Debug.Log("[PASS] Test 1: Walls are rasterized inflated by the pawn body radius.");
         }
 
@@ -70,24 +69,22 @@ namespace Simpiens.Testing.Navigation
             grid.Initialize(GridSize, GridSize, CellSize);
 
             var wall = CreateNode("[TestWall_Reset]", new Vec2(3.5f, 3.5f), EntityType.Wall, 0.55f);
-            registry.RegisterNode(wall);
+            registry.Register(wall);
             grid.UpdateFromRegistry(registry);
             Assert(!grid.GetActiveSnapshot().IsStaticWalkable(new Vec2(3.5f, 3.5f)), "Registered wall must block its cell.");
 
             // Removal: rebuilt on the update after the wall count drops
-            registry.UnregisterNode(wall);
+            registry.Unregister(wall);
             grid.UpdateFromRegistry(registry);
             grid.UpdateFromRegistry(registry);
             Assert(grid.GetActiveSnapshot().IsStaticWalkable(new Vec2(3.5f, 3.5f)), "A removed wall must stop blocking after rebuild.");
 
             // Explicit reset (respawn path)
-            registry.RegisterNode(wall);
+            registry.Register(wall);
             grid.UpdateFromRegistry(registry);
-            registry.UnregisterNode(wall);
+            registry.Unregister(wall);
             grid.ResetStatic();
             Assert(grid.GetActiveSnapshot().IsStaticWalkable(new Vec2(3.5f, 3.5f)), "ResetStatic must clear rasterized walls.");
-
-            Destroy(wall);
             Debug.Log("[PASS] Test 2: Static grid clears on reset and rebuilds when walls disappear.");
         }
 
@@ -103,10 +100,8 @@ namespace Simpiens.Testing.Navigation
             Assert(simManager.TryDisplacePawn(pawn, new Vec2(-1.5f, 0.5f)), "Move into open space must succeed.");
 
             // A pawn already inside a blocked cell may always leave it
-            pawn.transform.position = (new Vec2(0.5f, 0.5f)).ToUnity();
+            pawn.SetPosition(new Vec2(0.5f, 0.5f));
             Assert(simManager.TryDisplacePawn(pawn, new Vec2(-0.5f, 0.5f)), "A pawn inside a wall cell must be allowed to escape.");
-
-            Destroy(pawn);
             Debug.Log("[PASS] Test 3: Displacement never moves a pawn into or through static walls.");
         }
 
@@ -124,12 +119,10 @@ namespace Simpiens.Testing.Navigation
             Assert(pawn.Position.X < -0.15f, $"Tier 1 nudge toward the wall must fall back to the mirrored flank (x: {pawn.Position.X}).");
 
             // Tier 3 back-off directly into the wall is skipped
-            pawn.transform.position = (new Vec2(-0.15f, 0.5f)).ToUnity();
+            pawn.SetPosition(new Vec2(-0.15f, 0.5f));
             var backState = new ActiveIntentState { StallCount = 4, LastSampledPosition = pawn.Position };
             simManager.ApplyProgressiveUnstuckReflex(pawn, new Vec2(-3f, 0.5f), backState); // back-off direction = +X (into wall)
             Assert(grid.GetActiveSnapshot().IsStaticWalkable(pawn.Position), $"Tier 3 back-off must not land in a wall (at {pawn.Position}).");
-
-            Destroy(pawn);
             Debug.Log("[PASS] Test 4: Watchdog nudges and back-offs are wall-checked.");
         }
 
@@ -166,22 +159,22 @@ namespace Simpiens.Testing.Navigation
 
             var occupant = CreateNode("[TestPawn_Occupant]", new Vec2(5f, 5f), EntityType.Pawn, 0.35f);
             var mover = CreateNode("[TestPawn_Mover]", new Vec2(4.2f, 5f), EntityType.Pawn, 0.35f);
-            registry.RegisterNode(occupant);
-            registry.RegisterNode(mover);
+            registry.Register(occupant);
+            registry.Register(mover);
             grid.UpdateFromRegistry(registry);
 
             // Separation rule: approaching is blocked, stepping apart is allowed
-            mover.transform.position = (new Vec2(4.5f, 5f)).ToUnity();
+            mover.SetPosition(new Vec2(4.5f, 5f));
             Assert(simManager.IsCrowdedMove(mover, new Vec2(4.7f, 5f)), "Approaching within separation must be reported as crowding.");
-            mover.transform.position = (new Vec2(4.7f, 5f)).ToUnity();
+            mover.SetPosition(new Vec2(4.7f, 5f));
             Assert(!simManager.IsCrowdedMove(mover, new Vec2(4.5f, 5f)), "Stepping away must never be blocked.");
 
             // Live positions: the occupant moved this tick (snapshot still has it at 5,5); the check must see where it is now
-            occupant.transform.position = (new Vec2(3.6f, 5f)).ToUnity();
-            mover.transform.position = (new Vec2(4.2f, 5f)).ToUnity();
+            occupant.SetPosition(new Vec2(3.6f, 5f));
+            mover.SetPosition(new Vec2(4.2f, 5f));
             Assert(simManager.IsCrowdedMove(mover, new Vec2(3.95f, 5f)), "Crowding must use the occupant's live position, not the stale snapshot.");
-            occupant.transform.position = (new Vec2(5f, 5f)).ToUnity();
-            mover.transform.position = (new Vec2(4.2f, 5f)).ToUnity();
+            occupant.SetPosition(new Vec2(5f, 5f));
+            mover.SetPosition(new Vec2(4.2f, 5f));
 
             // Both want the same spot: the mover arrives short of the occupant instead of stacking
             var path = new PathResponse { Waypoints = new[] { new Vec2(5f, 5f) }, Length = 1, IsValid = true };
@@ -195,9 +188,6 @@ namespace Simpiens.Testing.Navigation
             Assert(result == IntentResult.Success, $"Mover must arrive (Success) next to an occupied destination, got {result}.");
             float gap = Vec2.Distance(mover.Position, occupant.Position);
             Assert(gap >= 0.35f, $"Mover must not stack on the occupant (gap {gap:F2}m).");
-
-            Destroy(occupant);
-            Destroy(mover);
             Debug.Log("[PASS] Test 6: Pawns arrive beside an occupied destination instead of stacking.");
         }
 
@@ -218,21 +208,9 @@ namespace Simpiens.Testing.Navigation
             return grid;
         }
 
-        private static NodeController CreateNode(string name, Vec2 position, EntityType type, float radius)
+        private static WorldEntity CreateNode(string name, Vec2 position, EntityType type, float radius)
         {
-            var go = new GameObject(name);
-            go.transform.position = position.ToUnity();
-            var col = go.AddComponent<CircleCollider2D>();
-            col.radius = radius;
-            var node = go.AddComponent<NodeController>();
-            node.Type = type;
-            node.Initialize(EntityId.Generate(), new NodeConfiguration(2f));
-            return node;
-        }
-
-        private static void Destroy(NodeController node)
-        {
-            if (node != null) GameObject.DestroyImmediate(node.gameObject);
+            return HeadlessEntities.Prop(null, type, position, radius: radius, name: name, register: false);
         }
 
         private static void Assert(bool condition, string message)
