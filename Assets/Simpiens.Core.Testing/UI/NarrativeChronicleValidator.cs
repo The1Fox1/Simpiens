@@ -200,7 +200,8 @@ namespace Simpiens.Testing.UI
             GC.WaitForPendingFinalizers();
             GC.Collect();
 
-            long memoryBefore = GC.GetTotalMemory(true);
+            // Bytes this thread allocated (GC.GetTotalMemory is the heap's size, which moves in whole allocation chunks)
+            long memoryBefore = GC.GetAllocatedBytesForCurrentThread();
 
             // Execute 1,000 queries in a hot loop
             for (int i = 0; i < 1000; i++)
@@ -208,8 +209,7 @@ namespace Simpiens.Testing.UI
                 service.GetSectorEvents(4, buffer, 10);
             }
 
-            long memoryAfter = GC.GetTotalMemory(false);
-            long allocated = memoryAfter - memoryBefore;
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - memoryBefore;
 
             if (allocated > 0)
             {

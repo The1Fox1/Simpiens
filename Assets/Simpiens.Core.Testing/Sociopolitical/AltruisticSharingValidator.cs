@@ -215,17 +215,17 @@ namespace Simpiens.Testing.Sociopolitical
             GC.WaitForPendingFinalizers();
             GC.Collect();
 
-            long memoryBefore = GC.GetTotalMemory(true);
+            // Bytes this thread allocated (GC.GetTotalMemory is the heap's size, which moves in whole allocation chunks)
+            float dummy = memory.CalculateAltruismScore(companionId, 0, selfHunger: 20f, isTargetCollapsed: false);
+            long memoryBefore = GC.GetAllocatedBytesForCurrentThread();
 
             // Benchmark: 1,000 iterations of Altruism Score calculation
-            float dummy = 0f;
             for (int i = 0; i < 1000; i++)
             {
                 dummy += memory.CalculateAltruismScore(companionId, (uint)i, selfHunger: 20f, isTargetCollapsed: (i & 1) == 0);
             }
 
-            long memoryAfter = GC.GetTotalMemory(false);
-            long allocated = memoryAfter - memoryBefore;
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - memoryBefore;
 
             Assert(allocated == 0, $"Zero-Allocation Altruism Benchmark: 1,000 evaluations allocated {allocated} bytes (expected: 0 bytes). Dummy: {dummy}");
             TestLog.Log($"[AltruisticSharingValidator] Test 5 Passed: Zero-allocation benchmark passed ({allocated} bytes allocated across 1,000 checks).");

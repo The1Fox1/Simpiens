@@ -15,9 +15,9 @@ The simulation is engine-free and lives in its own assembly (Epic CORE):
 | `Assets/Scripts/` | `Simpiens` (Unity) | the composition root (`Core/`), views (`Entities/`), the dashboard (`UI/`), `SwarmSpawner`, `AutonomousAgent`, `GridVisualizer`, the persistence smoke |
 | `Assets/Simpiens.Core.Testing/` | `Simpiens.Testing.Core` (test-only, no engine) | engine-free validators, fixtures, the Dev Map session, `WorldStateHash` |
 | `Assets/Scripts/Testing/` | `Simpiens.Testing` (test-only, Unity) | the anomaly detector and recorder, the batch controller, `EdgeCaseInjector`, view and UI validators |
-| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), and `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`) |
+| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`), and `Simpiens.Core.Tests` (xUnit v3: the engine-free validators, the golden hashes, determinism and the outpost's DoD scenarios headless; `dotnet test dotnet/Simpiens.slnx`) |
 
-Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both).
+Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both). Unity's Mono and .NET's CoreCLR round some scalar float expressions differently: they agree on the golden seeds, not on every seed, so compare a .NET run with .NET runs and a Unity run with Unity runs (epic CORE §6 F1).
 
 ### Directories
 

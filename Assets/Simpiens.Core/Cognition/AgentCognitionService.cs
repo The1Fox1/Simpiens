@@ -137,8 +137,24 @@ namespace Simpiens.Cognition
                 return;
             }
 
-            job.Work = Task.Run(() => EvaluateAsync(agent, context, collapsed, hadPlan, planner, actionGraph, goals, evaluators, ct).AsTask(), ct);
+            job.Work = Dispatch(agent, context, collapsed, hadPlan, planner, actionGraph, goals, evaluators, ct);
             scheduler.Submit(job);
+        }
+
+        // The thread-pool hop lives in its own method: a lambda in BeginEvaluation would allocate its closure on every
+        // call, even on the early returns that dispatch nothing (176 bytes a tick for an idle crawler, measured on CoreCLR)
+        private Task<CognitionResult> Dispatch(
+            AgentState agent,
+            AgentContext context,
+            bool collapsed,
+            bool hadPlan,
+            IGoapPlanner planner,
+            ActionGraph actionGraph,
+            IReadOnlyList<GoapGoal> goals,
+            ICognitiveEvaluator[] evaluators,
+            CancellationToken ct)
+        {
+            return Task.Run(() => EvaluateAsync(agent, context, collapsed, hadPlan, planner, actionGraph, goals, evaluators, ct).AsTask(), ct);
         }
 
         // Group directives & compliance evaluation (main thread)

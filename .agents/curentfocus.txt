@@ -196,3 +196,6 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   C6 (no UnityEngine/VContainer/UniTask/ZLogger.Unity in engine-free code; TestLog) done 2026-10-17; golden identical.
   C7 (Assets/Simpiens.Core, noEngineReferences) done 2026-10-17: PHASE 0 COMPLETE (68/68 x3, soak, golden 3/3).
   C8 (dotnet/ solution, MS.DI hosting, HeadlessSimulation) done 2026-10-17: .NET 10 reproduces Unity's golden hashes.
+  C9 (xUnit v3: validators, golden, determinism, headless lifecycle/supply-loop/save-load DoD) done 2026-10-17:
+  dotnet test 53/53, PlayMode 68/68. Finding F1: Mono and CoreCLR round some float chains differently (golden seeds
+  agree; other seeds drift; each runtime reproduces itself).
