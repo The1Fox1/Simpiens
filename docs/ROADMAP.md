@@ -413,7 +413,9 @@ Before Epic 10: soak test and scaling work (#8).
   - C5a (entities as data: `WorldEntity`, the engine-free `AgentRuntime`, views that only read; §1A.2 #16 resolved) done 2026-10-17: golden hashes identical, the validators build headless records; PlayMode 68/68.
   - C5b (`SessionHost`: the engine-free session; `SwarmSpawner` only draws it) done 2026-10-17: golden hashes identical for all 3 seeds; PlayMode 68/68.
   - C6 (no UnityEngine, VContainer, UniTask or ZLogger.Unity in engine-free code; validators framework-free) done 2026-10-17: golden hashes identical; PlayMode 68/68.
-  - C7 (`Assets/Simpiens.Core/`, asmdef `noEngineReferences`; engine-free validators in `Simpiens.Testing.Core`) done 2026-10-17. Phase 0 gate: PlayMode 68/68 in 3 consecutive runs, economy soak within its bands, golden hashes identical for 3 seeds. The persistence smoke (player build) was not run.
+  - **Phase 0 (Decouple) is complete.**
+  - C7 (`Assets/Simpiens.Core/`, asmdef `noEngineReferences`; engine-free validators in `Simpiens.Testing.Core`) done 2026-10-17. Phase 0 gate: PlayMode 68/68 in 3 consecutive runs, economy soak within its bands, golden hashes identical for 3 seeds. The persistence smoke passes too: the Linux player boots and round-trips the outpost (t25, 18,603 bytes, the same as Milestone 1).
+  - C8 (`dotnet/`: the core for `netstandard2.1;net10.0`, the engine-free harness, MS.DI hosting and `HeadlessSimulation`) done 2026-10-17: a headless .NET 10 run reproduces Unity's golden hashes for all 3 seeds, 3,000 ticks in about 0.4 s.
 
 ---
 

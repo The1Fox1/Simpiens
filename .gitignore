@@ -119,3 +119,9 @@ Assets/_Recovery.meta
 /[Pp]rofilerCaptures/
 # Generated .NET solution format (Rider / VS 2022 17.13+); Unity regenerates it
 *.slnx
+
+# Epic CORE: the .NET side of the project (dotnet/) is real source, not Unity's generated project files
+!/dotnet/**/*.csproj
+!/dotnet/*.slnx
+/dotnet/**/bin/
+/dotnet/**/obj/

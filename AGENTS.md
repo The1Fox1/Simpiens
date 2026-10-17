@@ -7,7 +7,17 @@ Welcome to the **Simpiens** project! This document outlines the Unity simulation
 If you are an agent then please check the .agents/ directory for rules or any current *directives* the developer has issued for your current session. 
 
 ## Current Project Structure
-The `Assets/Scripts/` directory contains the core simulation logic, strongly emphasizing a code-first, decoupled approach where heavy cognitive logic runs asynchronously off the main Unity loop.
+The simulation is engine-free and lives in its own assembly (Epic CORE):
+
+| Folder | Assembly | Holds |
+| :--- | :--- | :--- |
+| `Assets/Simpiens.Core/` | `Simpiens.Core` (`noEngineReferences: true`: Unity refuses any engine reference) | `Cognition/`, `Simulation/` (incl. `SimulationManager.cs`), `Session/` (sessions, layouts, `SessionHost`), `Intervention/`, `Narrative/`, `Diagnostics/` |
+| `Assets/Scripts/` | `Simpiens` (Unity) | the composition root (`Core/`), views (`Entities/`), the dashboard (`UI/`), `SwarmSpawner`, `AutonomousAgent`, `GridVisualizer`, the persistence smoke |
+| `Assets/Simpiens.Core.Testing/` | `Simpiens.Testing.Core` (test-only, no engine) | engine-free validators, fixtures, the Dev Map session, `WorldStateHash` |
+| `Assets/Scripts/Testing/` | `Simpiens.Testing` (test-only, Unity) | the anomaly detector and recorder, the batch controller, `EdgeCaseInjector`, view and UI validators |
+| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), and `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`) |
+
+Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both).
 
 ### Directories
 

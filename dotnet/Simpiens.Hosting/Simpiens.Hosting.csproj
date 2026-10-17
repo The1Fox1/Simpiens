@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- .NET hosting for the engine-free core (Epic CORE Phase 1): its registrations for
+       Microsoft.Extensions.DependencyInjection, and a headless simulation that steps ticks with no frames. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Hosting</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Core/Simpiens.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+  </ItemGroup>
+</Project>

@@ -194,3 +194,5 @@ Epic CORE: Engine-Free Core and Headless .NET [ACTIVE since 2026-10-17] (CURRENT
   C5a (WorldEntity records, engine-free AgentRuntime, read-only views; #16 resolved) done 2026-10-17; golden identical.
   C5b (SessionHost: engine-free session; SwarmSpawner only draws it) done 2026-10-17; golden 3/3 seeds.
   C6 (no UnityEngine/VContainer/UniTask/ZLogger.Unity in engine-free code; TestLog) done 2026-10-17; golden identical.
+  C7 (Assets/Simpiens.Core, noEngineReferences) done 2026-10-17: PHASE 0 COMPLETE (68/68 x3, soak, golden 3/3).
+  C8 (dotnet/ solution, MS.DI hosting, HeadlessSimulation) done 2026-10-17: .NET 10 reproduces Unity's golden hashes.
