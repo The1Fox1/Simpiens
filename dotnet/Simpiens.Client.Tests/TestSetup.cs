@@ -62,6 +62,7 @@ namespace Simpiens.Client.Tests
             options.Width = 320;
             options.Height = 200;
             options.VSync = false;
+            options.ViewClockFromTicks = true; // renders at a given tick are always the same
             var game = new SimpiensGame(options);
             Alive.Add(game);
             for (int i = 0; i < frames; i++) game.RunOneFrame();

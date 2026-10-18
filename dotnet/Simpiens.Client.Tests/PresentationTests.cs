@@ -193,11 +193,14 @@ namespace Simpiens.Client.Tests
             using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Registry.ActiveEntities, sim.Clock.CurrentTick);
+            scene.Build(sim.Host.Current.Map, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
 
             int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null);
+            int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
+                || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
             Assert.True(crawlers > 0);
-            Assert.Equal(scene.Tiles.Tiles.Count + crawlers, scene.Items.Count);
+            Assert.True(props > 0);
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count);
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)
@@ -207,16 +210,6 @@ namespace Simpiens.Client.Tests
                 previousLayer = layer;
             }
             Assert.Equal(RenderLayer.Crawlers, DrawSortKey.Layer(scene.Items[scene.Items.Count - 1].SortKey));
-        }
-
-        [Fact]
-        public void AnimationFramesFollowTheTickNotTheClockOnTheWall()
-        {
-            // 4 frames a second at 10 ticks a second: frame 0 for ticks 0-2, 1 for 3-4, 0 for 5-7
-            Assert.Equal(0, WorldScene.AnimationFrame(AgentVisualState.Walking, 2));
-            Assert.Equal(1, WorldScene.AnimationFrame(AgentVisualState.Walking, 3));
-            Assert.Equal(0, WorldScene.AnimationFrame(AgentVisualState.Walking, 5));
-            Assert.Equal(1, WorldScene.AnimationFrame(AgentVisualState.Panicking, 2)); // 8 a second
         }
     }
 

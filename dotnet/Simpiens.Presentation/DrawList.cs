@@ -10,6 +10,8 @@ namespace Simpiens.Presentation
         public float Y;
         public float Width;
         public float Height;
+        /// <summary>Counter-clockwise in the world (y up), in radians, about the sprite's centre.</summary>
+        public float Rotation;
         public Rgba32 Tint;
         public ulong SortKey;
     }
@@ -59,7 +61,7 @@ namespace Simpiens.Presentation
 
         public void Clear() => Count = 0;
 
-        public void Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint)
+        public void Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f)
         {
             if (Count == _items.Length)
             {
@@ -67,7 +69,7 @@ namespace Simpiens.Presentation
                 Array.Resize(ref _keys, Count * 2);
             }
             ulong key = DrawSortKey.Make(layer, depth, Count);
-            _items[Count] = new DrawItem { SpriteIndex = spriteIndex, X = x, Y = y, Width = width, Height = height, Tint = tint, SortKey = key };
+            _items[Count] = new DrawItem { SpriteIndex = spriteIndex, X = x, Y = y, Width = width, Height = height, Rotation = rotation, Tint = tint, SortKey = key };
             _keys[Count] = key;
             Count++;
         }

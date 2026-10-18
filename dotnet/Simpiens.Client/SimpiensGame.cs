@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Simulation;
 
 namespace Simpiens.Client
 {
@@ -50,6 +51,11 @@ namespace Simpiens.Client
         /// <summary>The camera of the last frame drawn.</summary>
         public TopDownCamera Camera { get; private set; }
 
+        /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
+        public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
+
+        private double _realSeconds;
+
         protected override void Initialize()
         {
             Window.Title = "Simpiens";
@@ -65,6 +71,7 @@ namespace Simpiens.Client
 
         protected override void Update(GameTime gameTime)
         {
+            _realSeconds += gameTime.ElapsedGameTime.TotalSeconds;
             _driver.Advance(gameTime.ElapsedGameTime);
             base.Update(gameTime);
         }
@@ -93,7 +100,7 @@ namespace Simpiens.Client
             GraphicsDevice.Clear(Background);
 
             var map = Simulation.Host.Current?.Map;
-            Scene.Build(map, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick);
+            Scene.Build(map, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds);
             if (map == null) return;
 
             // M0: a fixed camera framing the map's camera frame at whole pixels per art pixel

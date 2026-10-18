@@ -18,5 +18,11 @@ namespace Simpiens.Client
         /// update runs exactly N ticks, whatever time passed.
         /// </summary>
         public int TicksPerUpdate { get; set; }
+
+        /// <summary>
+        /// False (the game): animations and fades run on real time, the same at any simulation speed, as in Unity. True
+        /// (tests, captures): the view's clock is the tick's time, so a frame drawn at a given tick is always the same.
+        /// </summary>
+        public bool ViewClockFromTicks { get; set; }
     }
 }
