@@ -107,6 +107,7 @@ flowchart TB
     - Crawler state overrides, the 3-tick display dwell and every per-state micro-animation (tilt and squash).
     - A view clock: real time in the game, the tick's time in tests, so renders stay deterministic.
     - Render references re-recorded after review (2026-10-18).
+- [x] M1.2: text and room names. `PixelFont` is a code-generated 5×7 font (ASCII 32–126) in its own sheet. `WorldText` lays it out in world units, snapped to its pixel grid. Floor 1's eight room names are drawn in their label colours on the Labels layer, as Unity's `MapView` placed them. The renderer starts a batch per sheet (2026-10-18).
 
 ---
 

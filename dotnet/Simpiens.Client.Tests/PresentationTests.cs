@@ -188,7 +188,7 @@ namespace Simpiens.Client.Tests
     public class WorldSceneTests
     {
         [Fact]
-        public void TheOutpostSceneIsTheMapsTilesThenItsCrawlersOnTop()
+        public void TheOutpostSceneIsTheMapsTilesThenPropsThenCrawlersThenLabels()
         {
             using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
@@ -200,7 +200,8 @@ namespace Simpiens.Client.Tests
                 || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count);
+            int labels = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) == RenderLayer.Labels);
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count - labels);
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)
@@ -209,7 +210,7 @@ namespace Simpiens.Client.Tests
                 Assert.True(layer >= previousLayer, $"item {i} is on layer {layer} after layer {previousLayer}");
                 previousLayer = layer;
             }
-            Assert.Equal(RenderLayer.Crawlers, DrawSortKey.Layer(scene.Items[scene.Items.Count - 1].SortKey));
+            Assert.Equal(RenderLayer.Labels, DrawSortKey.Layer(scene.Items[scene.Items.Count - 1].SortKey)); // room names on top
         }
     }
 

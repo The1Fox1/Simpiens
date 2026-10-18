@@ -8,8 +8,8 @@ using Simpiens.Simulation.World;
 namespace Simpiens.Presentation
 {
     /// <summary>
-    /// What the top-down view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles, the
-    /// props (resource nodes, the hearth, bunks) and the crawlers with their animation. It reads the simulation's state
+    /// What the top-down view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and
+    /// room names, the props (resource nodes, the hearth, bunks) and the crawlers with their animation. It reads the simulation's state
     /// and never writes it. The map's tiles are built once per map. Sizes are Unity's: crawlers 0.7 of a cell,
     /// resource nodes 0.8, the hearth and bunks 0.9.
     /// </summary>
@@ -41,6 +41,7 @@ namespace Simpiens.Presentation
             {
                 if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
                 AddTiles(_tiles);
+                AddLabels(map);
             }
 
             if (entities != null)
@@ -105,6 +106,16 @@ namespace Simpiens.Presentation
                     case TileKind.Rock: Items.Add(RenderLayer.Rock, 0f, rock, centre.X, centre.Y, 1f, 1f, White); break;
                     default: Items.Add(RenderLayer.Walls, 0f, wall, centre.X, centre.Y, 1f, 1f, White); break;
                 }
+            }
+        }
+
+        /// <summary>The map's room names, centred on their positions in their colours (Unity's MapView labels).</summary>
+        private void AddLabels(MapDefinition map)
+        {
+            for (int i = 0; i < map.Labels.Count; i++)
+            {
+                var label = map.Labels[i];
+                WorldText.Add(Items, label.Text, label.Position, WorldText.LabelPixel, Rgba32.From(label.Color), RenderLayer.Labels);
             }
         }
 

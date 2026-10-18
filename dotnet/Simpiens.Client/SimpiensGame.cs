@@ -19,7 +19,7 @@ namespace Simpiens.Client
         private readonly GraphicsDeviceManager _graphics;
         private readonly SimulationDriver _driver;
         private SpriteBatch _batch;
-        private SpriteAtlas _atlas;
+        private SpriteAtlas[] _sheets;
         private WorldRenderer _renderer;
 
         public SimpiensGame(ClientOptions options = null)
@@ -65,8 +65,9 @@ namespace Simpiens.Client
         protected override void LoadContent()
         {
             _batch = new SpriteBatch(GraphicsDevice);
-            _atlas = new SpriteAtlas(GraphicsDevice, ProceduralSprites.All);
-            _renderer = new WorldRenderer(_batch, _atlas);
+            // By DrawSheet value: the generated art, then the pixel font
+            _sheets = new[] { new SpriteAtlas(GraphicsDevice, ProceduralSprites.All), new SpriteAtlas(GraphicsDevice, PixelFont.Glyphs) };
+            _renderer = new WorldRenderer(_batch, _sheets);
         }
 
         protected override void Update(GameTime gameTime)
@@ -80,7 +81,7 @@ namespace Simpiens.Client
         {
             if (disposing)
             {
-                _atlas?.Dispose();
+                if (_sheets != null) foreach (var sheet in _sheets) sheet.Dispose();
                 _batch?.Dispose();
                 Simulation.Dispose();
             }

@@ -2,9 +2,22 @@ using System;
 
 namespace Simpiens.Presentation
 {
+    /// <summary>
+    /// Which image a draw item's sprite index refers to. The renderer starts a new batch when the sheet changes;
+    /// each sheet has its own sampling (pixel art is point-sampled).
+    /// </summary>
+    public enum DrawSheet : byte
+    {
+        /// <summary><see cref="ProceduralSprites.All"/>.</summary>
+        Sprites = 0,
+        /// <summary><see cref="PixelFont.Glyphs"/>.</summary>
+        Font = 1,
+    }
+
     /// <summary>One sprite to draw this frame, in world units: centred on <see cref="X"/>, <see cref="Y"/>.</summary>
     public struct DrawItem
     {
+        public DrawSheet Sheet;
         public int SpriteIndex;
         public float X;
         public float Y;
@@ -61,7 +74,7 @@ namespace Simpiens.Presentation
 
         public void Clear() => Count = 0;
 
-        public void Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f)
+        public void Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
         {
             if (Count == _items.Length)
             {
@@ -69,7 +82,7 @@ namespace Simpiens.Presentation
                 Array.Resize(ref _keys, Count * 2);
             }
             ulong key = DrawSortKey.Make(layer, depth, Count);
-            _items[Count] = new DrawItem { SpriteIndex = spriteIndex, X = x, Y = y, Width = width, Height = height, Rotation = rotation, Tint = tint, SortKey = key };
+            _items[Count] = new DrawItem { Sheet = sheet, SpriteIndex = spriteIndex, X = x, Y = y, Width = width, Height = height, Rotation = rotation, Tint = tint, SortKey = key };
             _keys[Count] = key;
             Count++;
         }
