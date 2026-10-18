@@ -122,6 +122,10 @@ flowchart TB
     - The selected crawler gets Unity's generated gold ring on the Selection layer, and its name from the identity service above it.
     - The camera follows the selection; panning or Esc stops it.
     - A respawn or a new map clears the selection (2026-10-18).
+- [x] M1.6: a compile-only Android build (2026-10-18).
+    - `dotnet/Simpiens.Android` runs KNI's game activity over the shared client, portrait only (`net10.0-android`, `nkast.Kni.Platform.Android.GL`). It is outside `Simpiens.slnx`, because it needs the Android workload.
+    - Built locally with a user-local toolchain (`scripts/setup-android-toolchain.sh`: a .NET 10 SDK with the android workload, a portable JDK 21 and the Android SDK, under `~/.cache/simpiens-toolchains`, with no sudo) and `scripts/build-android.sh`: 0 errors, and a debug-signed APK and AAB produced.
+    - CI has an `android` job that does the same on Ubuntu.
 
 ---
 
