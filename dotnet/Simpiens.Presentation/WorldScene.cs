@@ -21,6 +21,7 @@ namespace Simpiens.Presentation
         public const float BunkSize = 0.9f;
 
         private MapTileLayer _tiles;
+        private long _lastTick = long.MinValue;
 
         public DrawList Items { get; } = new DrawList();
 
@@ -30,18 +31,26 @@ namespace Simpiens.Presentation
         /// <summary>Each crawler's displayed state across frames.</summary>
         public CrawlerAppearance Appearance { get; } = new CrawlerAppearance();
 
+        /// <summary>The fog over uncharted sectors, and its fades.</summary>
+        public FogOfWar Fog { get; } = new FogOfWar();
+
         /// <summary>
-        /// Fills <see cref="Items"/> for <paramref name="map"/> and <paramref name="entities"/> at <paramref name="tick"/>.
-        /// <paramref name="viewSeconds"/> drives the animations: real time in the game, the tick's time in tests.
+        /// Fills <see cref="Items"/> for <paramref name="map"/>, its <paramref name="sectors"/> (charted or not) and
+        /// <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives the animations and
+        /// fades: real time in the game, the tick's time in tests.
         /// </summary>
-        public void Build(MapDefinition map, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds)
+        public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds)
         {
             Items.Clear();
+            if (tick < _lastTick) Fog.Load(map, sectors); // the clock went back: a respawn or a load, same map or not
+            _lastTick = tick;
+            Fog.Update(map, sectors, viewSeconds);
             if (map != null)
             {
                 if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
                 AddTiles(_tiles);
                 AddLabels(map);
+                Fog.Draw(Items, viewSeconds);
             }
 
             if (entities != null)

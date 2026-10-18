@@ -193,15 +193,15 @@ namespace Simpiens.Client.Tests
             using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
 
             int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null);
             int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
                 || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
-            int labels = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) == RenderLayer.Labels);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count - labels);
+            int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count - textAndFog);
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)

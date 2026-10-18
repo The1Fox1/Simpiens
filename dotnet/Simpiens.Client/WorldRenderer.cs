@@ -7,8 +7,8 @@ namespace Simpiens.Client
     /// <summary>
     /// Draws a sorted <see cref="DrawList"/> through the top-down camera (Epic CLIENT). The list is already in draw order,
     /// so each batch draws in submission order (<see cref="SpriteSortMode.Deferred"/>) and never sorts by depth itself;
-    /// a new batch starts only when the sheet changes. Pixel art: point sampling, colours not premultiplied. Sprites
-    /// turn about their centre.
+    /// a new batch starts only when the sheet changes, with that sheet's sampling (point for pixel art, linear for the
+    /// fog). Colours are not premultiplied. Sprites turn about their centre.
     /// </summary>
     public sealed class WorldRenderer
     {
@@ -32,7 +32,7 @@ namespace Simpiens.Client
                 if (sheet != open)
                 {
                     if (open >= 0) _batch.End();
-                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone);
                     open = sheet;
                 }
 

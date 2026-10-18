@@ -76,7 +76,7 @@ namespace Simpiens.Client.Tests
             using var sim = Simpiens.Hosting.HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Registry.ActiveEntities, 0, 0f);
+            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 0, 0f);
 
             var props = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Props).ToList();
             int bunks = sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Bunk);

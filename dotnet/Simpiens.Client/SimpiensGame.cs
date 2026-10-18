@@ -65,8 +65,13 @@ namespace Simpiens.Client
         protected override void LoadContent()
         {
             _batch = new SpriteBatch(GraphicsDevice);
-            // By DrawSheet value: the generated art, then the pixel font
-            _sheets = new[] { new SpriteAtlas(GraphicsDevice, ProceduralSprites.All), new SpriteAtlas(GraphicsDevice, PixelFont.Glyphs) };
+            // By DrawSheet value: the generated art, the pixel font, the fog's cloud
+            _sheets = new[]
+            {
+                new SpriteAtlas(GraphicsDevice, ProceduralSprites.All),
+                new SpriteAtlas(GraphicsDevice, PixelFont.Glyphs),
+                new SpriteAtlas(GraphicsDevice, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
+            };
             _renderer = new WorldRenderer(_batch, _sheets);
         }
 
@@ -101,7 +106,7 @@ namespace Simpiens.Client
             GraphicsDevice.Clear(Background);
 
             var map = Simulation.Host.Current?.Map;
-            Scene.Build(map, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds);
+            Scene.Build(map, Simulation.Sectors, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds);
             if (map == null) return;
 
             // M0: a fixed camera framing the map's camera frame at whole pixels per art pixel

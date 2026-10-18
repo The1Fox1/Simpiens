@@ -108,6 +108,10 @@ flowchart TB
     - A view clock: real time in the game, the tick's time in tests, so renders stay deterministic.
     - Render references re-recorded after review (2026-10-18).
 - [x] M1.2: text and room names. `PixelFont` is a code-generated 5×7 font (ASCII 32–126) in its own sheet. `WorldText` lays it out in world units, snapped to its pixel grid. Floor 1's eight room names are drawn in their label colours on the Labels layer, as Unity's `MapView` placed them. The renderer starts a batch per sheet (2026-10-18).
+- [x] M1.3: fog of war, ported from Unity's `ShroudView`.
+    - Each uncharted sector's interior is covered by the value-noise cloud (alpha 0.97, linear sampling, its own sheet), over the props and under the crawlers.
+    - "UNCHARTED" sits under the room's name. The line is 1.125 units down instead of Unity's 0.9, because the pixel font is taller.
+    - A scout's report fades the sector's fog over 1.5 s of view time, then removes it. A respawn brings the fog back (2026-10-18).
 
 ---
 

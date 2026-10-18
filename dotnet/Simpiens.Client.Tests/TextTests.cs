@@ -53,11 +53,12 @@ namespace Simpiens.Client.Tests
             using var sim = Simpiens.Hosting.HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Registry.ActiveEntities, 0, 0f);
+            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 0, 0f);
 
             var map = Floor1Layout.Definition;
             Assert.Equal(8, map.Labels.Count);
-            int glyphs = map.Labels.Sum(l => l.Text.Count(c => c != ' '));
+            // The room names, and "UNCHARTED" under each uncharted room's name (M1.3)
+            int glyphs = map.Labels.Sum(l => l.Text.Count(c => c != ' ')) + FogOfWar.UnchartedText.Length * scene.Fog.Overlays.Count;
             var labels = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Labels).ToList();
             Assert.Equal(glyphs, labels.Count);
             Assert.All(labels, l => Assert.Equal(DrawSheet.Font, l.Sheet));

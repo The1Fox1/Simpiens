@@ -12,14 +12,16 @@ namespace Simpiens.Client
     /// </summary>
     public sealed class SpriteAtlas : IDisposable
     {
-        private const int Gutter = 2;
         private readonly Rectangle[] _sources;
 
-        public SpriteAtlas(GraphicsDevice device, IReadOnlyList<PixelSprite> sprites)
+        /// <param name="smooth">Linear sampling (the fog); pixel art is point-sampled.</param>
+        /// <param name="gutter">Clear pixels between cells. A single smooth sprite takes none, so linear sampling clamps at its own edge.</param>
+        public SpriteAtlas(GraphicsDevice device, IReadOnlyList<PixelSprite> sprites, bool smooth = false, int gutter = 2)
         {
+            Sampling = smooth ? SamplerState.LinearClamp : SamplerState.PointClamp;
             int cell = 0;
             for (int i = 0; i < sprites.Count; i++) cell = Math.Max(cell, Math.Max(sprites[i].Width, sprites[i].Height));
-            int pitch = cell + Gutter;
+            int pitch = cell + gutter;
             int columns = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(sprites.Count)));
             int rows = (sprites.Count + columns - 1) / columns;
             int width = columns * pitch, height = Math.Max(1, rows) * pitch;
@@ -46,6 +48,8 @@ namespace Simpiens.Client
         }
 
         public Texture2D Texture { get; }
+
+        public SamplerState Sampling { get; }
 
         public Rectangle Source(int spriteIndex) => _sources[spriteIndex];
 
