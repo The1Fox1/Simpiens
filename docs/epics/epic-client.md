@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client`. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client`; M0 and M1 complete, M2 waits for the producer. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -76,6 +76,7 @@ flowchart TB
     Presentation["Simpiens.Presentation<br/>engine-free: tiles, sprites, draw list, projections"] --> Core
     Hosting["Simpiens.Hosting (existing)"] --> Core["Simpiens.Core (existing)"]
     Tests["Simpiens.Client.Tests<br/>xUnit v3: presentation, render, golden"] --> Client
+    Android["Simpiens.Android (apk)<br/>OpenGL ES, compile-only until M4"] --> Client
 ```
 
 **Rules:**
@@ -126,19 +127,29 @@ flowchart TB
     - `dotnet/Simpiens.Android` runs KNI's game activity over the shared client, portrait only (`net10.0-android`, `nkast.Kni.Platform.Android.GL`). It is outside `Simpiens.slnx`, because it needs the Android workload.
     - Built locally with a user-local toolchain (`scripts/setup-android-toolchain.sh`: a .NET 10 SDK with the android workload, a portable JDK 21 and the Android SDK, under `~/.cache/simpiens-toolchains`, with no sudo) and `scripts/build-android.sh`: 0 errors, and a debug-signed APK and AAB produced.
     - CI has an `android` job that does the same on Ubuntu.
+- [x] M1.7: the gate and close-out (2026-10-18).
+    - The review set: the outpost at t0, t300 and t1500 (fog lifting as the scout charts rooms), a zoomed and panned view, and a selected crawler. Each is a render reference, and the agent looked at each against the ported Unity logic.
+    - Frame time measured (§6 F2); the desktop exe logs through `SimLog` (the console sink moved into `Simpiens.Hosting`, shared with `simpiens`); a smoke test reads KNI's mouse and keyboard on a running game.
+- [x] **M1 complete (2026-10-18):** render tests pass for fog, props, labels, animation, the camera and selection; the Android client compiles. Measured: `dotnet test` 111/111 (client 49, core 62); golden check 3/3; the MonoGame and Android builds compile.
+    - The gate's second half, the producer's look at the client beside Unity, is person-gated and still open (§5).
 
 ---
 
 ## 4. Deferred
 
-- M2 to M7 and the map designer: they wait for the producer (the agent's authority covers M0 and M1).
+- M2 to M7 and the map designer: they wait for the producer (the agent's authority covered M0 and M1).
+- Interpolating crawlers between ticks: Unity didn't, so parity doesn't need it; in fixed-tick mode it would draw the previous tick. Unscheduled within this epic.
+- Sound: not in the proposal's milestones; unscheduled.
+- Touch controls: M4 (Android).
 - The removal of Unity: M2, by producer decision.
 
 ---
 
 ## 5. Risks
 
-- **CI is unverified (M0.5):** the workflow runs the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa; locally they run SDL's offscreen driver on Fedora's sdl2-compat. The first push shows whether the reference images match there as well (the render tolerance allows 0.1% of pixels to differ). If they don't, the renders from CI are kept as a workflow artifact.
+- **Open, person-gated: the producer's side-by-side look** at the client beside Unity, M1's gate (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop -c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **The application id is a placeholder (M1.6):** the Android project uses `dev.simpiens.game` until the producer picks the store identity (M4).
+- **CI is unverified (M0.5, M1.6):** neither the `test` job's client steps nor the `android` job has run yet. The workflow runs the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa; locally they run SDL's offscreen driver on Fedora's sdl2-compat. The first push shows whether the reference images match there as well (the render tolerance allows 0.1% of pixels to differ). If they don't, the renders from CI are kept as a workflow artifact.
 
 
 See the proposal's risk table. These matter for M0 and M1:
@@ -159,6 +170,13 @@ See the proposal's risk table. These matter for M0 and M1:
   - In offscreen mode, `Game.Dispose()` segfaults after `Run()`. The process exits cleanly if the game isn't disposed.
   - `Game.RunOneFrame()` works, and two games run in one process.
   - SDL and Mesa read their settings (`SDL_VIDEODRIVER`, `LIBGL_ALWAYS_SOFTWARE`) with `getenv`. On Unix, .NET's `Environment.SetEnvironmentVariable` doesn't reach it, so the test set-up calls libc's `setenv`. Without that, the first test run hung trying to open a real window (M0.1).
+- **F2: frame time is far inside the budget** (2026-10-18, M1.7, `FrameTimeProbe`, an explicit test).
+    - The probe ticks once a frame and builds and draws the whole outpost at 800×600: 1,925 draw items at tick 600.
+    - Per frame: 1.18 ms on Mesa's llvmpipe and 0.67 ms on an AMD RX 7900 XTX. The 30 fps budget is 33 ms.
+    - Rerun with `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*FrameTime*" -explicit only -showLiveOutput`; `LIBGL_ALWAYS_SOFTWARE=0` measures the GPU.
+    - Phones aren't measured yet (M4).
+- **F3: an offscreen game never has focus** (M1.7). XNA then naps `InactiveSleepTime` (20 ms) every frame, and doesn't read input (the game reads devices only while active). The tests set the nap to zero, which halved the client suite's time. The devices are exercised by a direct `ClientInput` test instead.
+- **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---
 
@@ -166,3 +184,4 @@ See the proposal's risk table. These matter for M0 and M1:
 
 - 2026-10-18: epic opened from the KNI engine proposal; C0 (setup) done.
 - 2026-10-18: M0 (first pixels) done in five chunks: M0.1 `ba1f17c`, M0.2 `27c48be`, M0.3 `79fa223`, M0.4 `cf88e89`, M0.5 the close-out commit. M1's plan follows.
+- 2026-10-18: M1 (top-down parity) done in seven chunks: the plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit. The plan was deleted at close-out. The agent's authority ends here: M2 waits for the producer.

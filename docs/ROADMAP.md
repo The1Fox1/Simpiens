@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed).
+- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed). M0 and M1 are complete. M2 waits for the producer: the agent's authority covered M0 and M1.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -450,8 +450,17 @@ Before Epic 10: soak test and scaling work (#8).
   - M0.3 (the client ticks the simulation) done 2026-10-18: the game, run frame by frame offscreen, reproduces the golden world hashes for all 3 seeds; uneven frame pacing gives the same world.
   - M0.4 (first pixels: Floor 1 and its crawlers drawn top-down; render tests against committed reference images; the desktop exe runs the live outpost) done 2026-10-18.
   - M0.5 (CI: the client's tests under Xvfb with Mesa, and the MonoGame compile; AGENTS.md) done 2026-10-18. The workflow is unverified until the branch is pushed.
-  - **M0 (first pixels) is complete:** golden hashes 3 of 3 from inside the client, render tests passing on Mesa's software renderer (locally; CI's first run comes with a push), the MonoGame build compiling. Measured: `dotnet test` 83/83 (client 21, core 62). Next: M1, top-down parity, with its own plan (`.agents/client_m1_plan.md`).
-  - M1 plan written 2026-10-18 (`.agents/client_m1_plan.md`): props and crawler appearance, text and map labels, fog of war, camera, picking and selection, a compile-only Android build, then the gate and close-out.
+  - **M0 (first pixels) is complete:** golden hashes 3 of 3 from inside the client, render tests passing on Mesa's software renderer (locally; CI's first run comes with a push), the MonoGame build compiling. Measured: `dotnet test` 83/83 (client 21, core 62). Next: M1, top-down parity, with its own plan.
+  - M1 plan written 2026-10-18: props and crawler appearance, text and map labels, fog of war, camera, picking and selection, a compile-only Android build, then the gate and close-out. It was deleted at M1's close-out; its decisions are in `.agents/architecture_history.md`.
+  - M1.1 (props, and crawler appearance as Unity's `AgentView` drew it), M1.2 (a pixel font and the room names), M1.3 (fog of war, as `ShroudView`), M1.4 (the camera and its controls, as `CameraRig` and `CameraController`) and M1.5 (picking and selection, as `WorldPicker` and `WorldSelection`) done 2026-10-18.
+  - M1.6 (a compile-only Android build, `dotnet/Simpiens.Android`, portrait; built locally with a user-local toolchain and in a CI job) done 2026-10-18.
+  - M1.7 (the gate and close-out) done 2026-10-18:
+    - The review set renders the outpost at t0, t300 and t1500, a zoomed and panned view, and a selection. The agent looked at each against the ported Unity logic.
+    - A full frame (one tick, 1,925 draw items, 800×600) takes 1.2 ms on Mesa's software renderer and 0.7 ms on a desktop GPU, against the 33 ms budget.
+    - The desktop exe logs through `SimLog`.
+  - **M1 (top-down parity on desktop) is complete:** render tests pass for fog, props, labels, animation, the camera and selection; the Android client compiles. Measured: `dotnet test` 111/111 (client 49, core 62); golden check 3/3; the MonoGame and Android builds compile.
+    - Still open: the producer's side-by-side look beside Unity, which is person-gated, and CI's first run, which comes with a push.
+    - Next: M2 (the dashboard in Gum, then Unity retired), when the producer starts it.
 
 ---
 

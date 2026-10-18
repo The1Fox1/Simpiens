@@ -658,3 +658,36 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Unity's views are frozen; new view work goes into `dotnet/`.
   - CI's client step (Xvfb, Ubuntu's SDL 2.30) runs for the first time on the first push.
   - The desktop exe hasn't been opened in a window by the agent, only run offscreen.
+
+## Epic CLIENT M1: Top-Down Parity on KNI (2026-10-18)
+- **Context:** the second half of the agent's provisional authority over Epic CLIENT. The goal was for the KNI client to show and play what Unity's 2D view did. M1's plan was `.agents/client_m1_plan.md`, deleted at this close-out. Unity's frozen views were the source of truth: `AgentView`, `CampfireView`, `MapView`, `ShroudView`, `CameraRig`, `CameraController`, `WorldPicker` and `WorldSelection`.
+- **Decisions (agent):**
+  - **Ports, rule for rule, into `Simpiens.Presentation`:** crawler appearance (state overrides, the 3-tick dwell, micro-animation), the fog overlays and their fade, the camera rig and its controls, and picking and selection. Each is plain C# tested without a GPU; `CameraRigValidator`'s checks were ported. `Simpiens.Client` only reads devices into snapshots and draws.
+  - **A view clock:** real seconds in the game, as Unity's unscaled time; tick × 0.1 s in tests, so a render at a given tick is always the same.
+  - **Draw sheets:** sprites, the font and the fog cloud. The renderer starts a batch whenever the sheet changes, each with its own sampler (point, or linear for the fog). The sort key still decides the order.
+  - **A code-generated 5×7 pixel font** for room names, "UNCHARTED" and crawler names. It needs no content pipeline and is replaced by Gum's fonts in M2. Because it is taller than Unity's text, "UNCHARTED" sits 1.125 units under the room name instead of 0.9.
+  - **Whole-pixel framing,** an addition to Unity's rig. Given the window's height, reframing and the zoom-out limit show the map at a whole number of screen pixels per art pixel. Without a pixel height, the rig is Unity's exactly.
+  - **The selection ring** is generated as Unity's was. It is the 34th sprite. The 33 ported sprites keep their own pin, and the whole set has a second pin.
+  - **A respawn or a new map clears the selection,** because the selected crawler no longer exists.
+  - **Android, compile-only:** `dotnet/Simpiens.Android` sits outside `Simpiens.slnx`.
+    - It is built locally with a user-local toolchain under `~/.cache/simpiens-toolchains` (scripts, no sudo), and in a CI job.
+    - It is portrait, as the producer decided.
+    - Its application id `dev.simpiens.game` is a placeholder until the producer picks one.
+  - **Shared console log sink:** the `SimLog` console sink moved from `simpiens` into `Simpiens.Hosting`, and the desktop exe installs it (warnings and up unless `SIMPIENS_LOG` is set).
+- **Deviations from the plan:**
+  - The plan's logging item (the desktop exe's console sink) landed at M1.7, not with the camera.
+  - M1.7 added a direct test of KNI's mouse and keyboard reads, because an offscreen game never has focus and so never reads them (epic F3).
+  - The gate's "screenshots reviewed beside Unity's" was split. The agent reviewed every render against the ported logic; the producer's look beside Unity's own screen is open and person-gated.
+  - Not in M1, as planned: position interpolation (Unity had none), sound, touch (M4), and the dashboard (M2).
+- **Verification:** one commit per chunk with its measured status:
+  - plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit;
+  - every render reference was looked at before it was recorded.
+
+  Final:
+  - `dotnet test` 111/111 (client 49, core 62); golden check 3/3;
+  - the MonoGame and Android builds compile; Unity untouched;
+  - frame time 1.2 ms on llvmpipe and 0.7 ms on a desktop GPU (epic F2).
+- **Consequences:**
+  - The client draws everything Unity's 2D view did. M2 (the dashboard in Gum, then Unity retired) is the producer's call.
+  - CI's client and Android jobs run for the first time on the first push.
+  - Explicit registration of KNI's platform factories (epic F4) waits for M4's trimming work.

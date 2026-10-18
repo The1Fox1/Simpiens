@@ -112,7 +112,7 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
 Current Focus (engine): Epic CLIENT (Independent Epics, below) ACTIVE 2026-10-18 on feat/kni-client: the KNI game
-client, M0-M1 under the agent's provisional authority. Epic CORE COMPLETED and merged (PR #5). Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
+client. M0 and M1 complete under the agent's provisional authority; M2 waits for the producer. Epic CORE COMPLETED and merged (PR #5). Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
 before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
@@ -208,7 +208,7 @@ Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (merged to 
   Next on this path: the engine spike (Phase 2) ran as desk research 2026-10-17/18 and chose KNI: Epic CLIENT.
 
 Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kni-client, not merged)
-(See docs/epics/epic-client.md, docs/engine-proposal-kni.md and the working plan .agents/client_m1_plan.md)
+(See docs/epics/epic-client.md and docs/engine-proposal-kni.md)
 - A new game client on KNI (MonoGame-derived XNA 4 framework) over the engine-free core; replaces Unity's views and
   dashboard. Unity's views are FROZEN from M0 and Unity is retired at M2.
 - Producer decisions 2026-10-18: KNI (MonoGame kept compiling in CI as fallback); isometric main view, top-down for
@@ -221,4 +221,8 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   M0.1 projects + XnaFramework switch; M0.2 engine-free presentation (art ported pixel for pixel, Floor 1 tiles, stable
   draw order, top-down camera, PNG); M0.3 the client ticks the simulation (golden 3/3 from inside the client); M0.4
   first pixels (render tests vs Baselines/ images); M0.5 CI (Xvfb + Mesa, MonoGame compile; unverified until pushed).
-  M0 COMPLETE 2026-10-18 (dotnet test 83/83). Next: M1 top-down parity, plan .agents/client_m1_plan.md.
+  M0 COMPLETE 2026-10-18 (dotnet test 83/83).
+  M1.1 props + crawler appearance; M1.2 pixel font + room names; M1.3 fog of war; M1.4 camera + controls; M1.5 picking +
+  selection; M1.6 compile-only Android (portrait; user-local toolchain, CI job); M1.7 gate: review renders (t0, t300,
+  t1500, zoomed, selection), frame time 1.2 ms llvmpipe / 0.7 ms GPU vs 33 ms. M1 COMPLETE 2026-10-18 (dotnet test
+  111/111). Open: the producer's side-by-side with Unity (person-gated); CI's first run (push). Next: M2, the producer's call.
