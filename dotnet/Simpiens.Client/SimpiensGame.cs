@@ -51,15 +51,38 @@ namespace Simpiens.Client
         /// <summary>The camera of the last frame drawn.</summary>
         public TopDownCamera Camera { get; private set; }
 
+        /// <summary>The player's view of the map: where it looks and how close (Unity's camera rig).</summary>
+        public CameraRig Rig { get; } = new CameraRig();
+
+        /// <summary>The player's camera controls, fed from the mouse and keyboard each update.</summary>
+        public CameraInput Controls { get; } = new CameraInput();
+
+        /// <summary>What the controls asked for in the last update (a click, a stop to following).</summary>
+        public CameraInputResult LastInput { get; private set; }
+
         /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
         private double _realSeconds;
+        private readonly ClientInput _input = new ClientInput();
+        private object _framedMap;
 
         protected override void Initialize()
         {
             Window.Title = "Simpiens";
+            Window.AllowUserResizing = true;
+            Window.ClientSizeChanged += OnClientSizeChanged;
             base.Initialize();
+        }
+
+        private void OnClientSizeChanged(object sender, System.EventArgs e)
+        {
+            var bounds = Window.ClientBounds;
+            if (bounds.Width <= 0 || bounds.Height <= 0) return;
+            if (bounds.Width == _graphics.PreferredBackBufferWidth && bounds.Height == _graphics.PreferredBackBufferHeight) return;
+            _graphics.PreferredBackBufferWidth = bounds.Width;
+            _graphics.PreferredBackBufferHeight = bounds.Height;
+            _graphics.ApplyChanges();
         }
 
         protected override void LoadContent()
@@ -77,9 +100,37 @@ namespace Simpiens.Client
 
         protected override void Update(GameTime gameTime)
         {
-            _realSeconds += gameTime.ElapsedGameTime.TotalSeconds;
+            float seconds = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _realSeconds += seconds;
             _driver.Advance(gameTime.ElapsedGameTime);
+            UpdateView(seconds, IsActive);
             base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// Keeps the camera rig on the current map and the window's shape, then applies the player's input (only while
+        /// the window has focus). Unscaled time: the camera feels the same paused or at 10x.
+        /// </summary>
+        private void UpdateView(float seconds, bool readInput)
+        {
+            var map = Simulation.Host.Current?.Map;
+            if (map == null) return;
+            var viewport = GraphicsDevice.Viewport;
+            if (!ReferenceEquals(map, _framedMap))
+            {
+                Rig.Configure(map.CameraFrame, viewport.AspectRatio, viewport.Height);
+                _framedMap = map;
+            }
+            Rig.SetPixelHeight(viewport.Height);
+            Rig.SetAspect(viewport.AspectRatio);
+
+            if (!readInput)
+            {
+                LastInput = default;
+                return;
+            }
+            _input.Read(out var pointer, out var keys);
+            LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
         }
 
         protected override void Dispose(bool disposing)
@@ -109,8 +160,12 @@ namespace Simpiens.Client
             Scene.Build(map, Simulation.Sectors, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds);
             if (map == null) return;
 
-            // M0: a fixed camera framing the map's camera frame at whole pixels per art pixel
-            Camera = TopDownCamera.Framing(map.CameraFrame, width, height);
+            if (!ReferenceEquals(map, _framedMap))
+            {
+                Rig.Configure(map.CameraFrame, (float)width / height, height); // before the first update
+                _framedMap = map;
+            }
+            Camera = Rig.ToCamera(width, height);
             _renderer.Draw(Scene.Items, Camera);
         }
     }

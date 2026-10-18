@@ -59,8 +59,8 @@ namespace Simpiens.Client.Tests
         public static SimpiensGame Start(ClientOptions options = null, int frames = 1)
         {
             options ??= new ClientOptions();
-            options.Width = 320;
-            options.Height = 200;
+            options.Width = 800;  // the render tests' size: the rig frames for the window
+            options.Height = 600;
             options.VSync = false;
             options.ViewClockFromTicks = true; // renders at a given tick are always the same
             var game = new SimpiensGame(options);

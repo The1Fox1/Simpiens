@@ -112,6 +112,11 @@ flowchart TB
     - Each uncharted sector's interior is covered by the value-noise cloud (alpha 0.97, linear sampling, its own sheet), over the props and under the crawlers.
     - "UNCHARTED" sits under the room's name. The line is 1.125 units down instead of Unity's 0.9, because the pixel font is taller.
     - A scout's report fades the sector's fog over 1.5 s of view time, then removes it. A respawn brings the fog back (2026-10-18).
+- [x] M1.4: the camera, ported from Unity's `CameraRig` and `CameraController`.
+    - Margin 2, closest zoom 3, zoom about the cursor (0.85 a notch), clamping, frame-rate-independent follow, reframe.
+    - Right or middle drag to pan, WASD or arrows (0.6 view heights a second), Home, Esc; a left click is one that moves no more than 6 px.
+    - Plain input snapshots, so the controls are tested without devices. The window is resizable.
+    - Addition: given the window's pixel height, reframing (and the zoom-out limit) shows the whole map at whole pixels per art pixel. `CameraRigValidator`'s checks are ported (2026-10-18).
 
 ---
 
