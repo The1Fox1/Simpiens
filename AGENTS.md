@@ -15,7 +15,9 @@ The simulation is engine-free and lives in its own assembly (Epic CORE):
 | `Assets/Scripts/` | `Simpiens` (Unity) | the composition root (`Core/`), views (`Entities/`), the dashboard (`UI/`), `SwarmSpawner`, `AutonomousAgent`, `GridVisualizer`, the persistence smoke |
 | `Assets/Simpiens.Core.Testing/` | `Simpiens.Testing.Core` (test-only, no engine) | engine-free validators, fixtures, the Dev Map session, `WorldStateHash` |
 | `Assets/Scripts/Testing/` | `Simpiens.Testing` (test-only, Unity) | the anomaly detector and recorder, the batch controller, `EdgeCaseInjector`, view and UI validators |
-| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`, the `EconomySoak` and the DoD observer `OutpostWatch`), `Simpiens.Host` (the `simpiens` development console: `run`, `sweep`, `soak`, `golden`; it uses the test harness and never ships), and `Simpiens.Core.Tests` (xUnit v3: the engine-free validators, the golden hashes, determinism and the outpost's DoD scenarios headless; `dotnet test dotnet/Simpiens.slnx`) |
+| `dotnet/` | `Simpiens.slnx` (`net10.0`) | the same core and harness sources compiled for .NET by glob (`Simpiens.Core`, `Simpiens.Testing.Core`), `Simpiens.Hosting` (registrations for `Microsoft.Extensions.DependencyInjection`, `HeadlessSimulation`, the `EconomySoak` and the DoD observer `OutpostWatch`), `Simpiens.Host` (the `simpiens` development console: `run`, `sweep`, `soak`, `golden`; it uses the test harness and never ships), and `Simpiens.Core.Tests` (xUnit v3: the engine-free validators, the golden hashes, determinism and the outpost's DoD scenarios headless; `dotnet test dotnet/Simpiens.slnx`). The KNI game client (Epic CLIENT): `Simpiens.Presentation` (what is drawn, as data, with no XNA reference: generated sprites, map tiles, the draw list and its sort key, cameras, PNG files), `Simpiens.Client` (the `SimpiensGame` XNA game, its simulation driver and renderer; `XnaPlatform` is the one class where KNI and MonoGame may differ), `Simpiens.Desktop` (the desktop exe) and `Simpiens.Client.Tests` (xUnit v3: presentation tests, golden hashes from inside the client, render tests against images in its `Baselines/`) |
+
+**Unity's views are frozen** (Epic CLIENT, see the roadmap): new view, UI and rendering work goes into the KNI client in `dotnet/`, not into `Assets/Scripts/`. In the client, views read the simulation and never write it, and only `XnaPlatform` may use an API that KNI and MonoGame don't share (`-p:XnaFramework=MonoGame` compiles the client against MonoGame to check).
 
 Namespaces didn't change when files moved (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, …). The directory notes below use the folder names inside those trees. Code shared with .NET stays at C# 10 and netstandard2.1 APIs (`dotnet build` checks both). Unity's Mono and .NET's CoreCLR round some scalar float expressions differently: they agree on the golden seeds, not on every seed, so compare a .NET run with .NET runs and a Unity run with Unity runs (epic CORE §6 F1).
 
@@ -26,12 +28,15 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 | :--- | :--- | :--- |
 | .NET tests (validators, golden hashes, the outpost's DoD scenarios, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
 | Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
+| The game client's tests (part of `dotnet test`): presentation, golden hashes inside the client, renders | `dotnet test dotnet/Simpiens.Client.Tests`; record changed renders with `SIMPIENS_RECORD_RENDERS=1` (look at `render-output/` first) | System SDL2 and Mesa (the tests run SDL's offscreen driver on llvmpipe, no display) |
+| The game (desktop) | `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242` (`-- --help` lists the options) | A display |
+| The client against MonoGame (compile only) | `dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame` | .NET 10 SDK |
 | Unity PlayMode suite | `scripts/run-playmode-tests.sh` | Unity, with the editor closed |
 | Golden hashes in Unity, one process per seed | `scripts/golden-hashes.sh check` (`record` only for a deliberate behaviour change, in its own commit) | Unity |
 | Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |
 | Save and load in a Linux player | `scripts/run-persistence-smoke.sh` | Unity |
 
-CI (`.github/workflows/dotnet.yml`) runs the .NET tests and the golden check on pushes to `main` and on pull requests; the Unity suite runs locally.
+CI (`.github/workflows/dotnet.yml`) runs the .NET tests (the client's under Xvfb with Mesa), the golden check and the MonoGame compile on pushes to `main` and on pull requests; the Unity suite runs locally.
 
 ### Directories
 

@@ -640,3 +640,21 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Compare .NET runs with .NET runs (F1). After a cutover, CoreCLR becomes the reference and its own baseline is recorded.
   - The Godot spike (Phase 2) waits on the producer's go/no-go. The soak and scaling work (§3A #8) can now run headless, in seconds.
   - The working plan `.agents/godot_phase01_plan.md` was deleted at close-out; its findings are in the epic's §6 and its soak data in `docs/economy-model.md` §7.
+
+## Epic CLIENT M0: First Pixels on KNI (2026-10-18)
+- **Context:** the producer chose KNI for the game client (engine proposal, `docs/engine-proposal-kni.md`) and gave the agent provisional authority over M0 and M1, with an implementation plan before each. M0's plan was `.agents/client_m0_plan.md`, deleted at this close-out.
+- **Decisions (agent):**
+  - **Two projects, not one:** `Simpiens.Presentation` holds everything that turns state into something drawable, with no XNA reference, so it is tested without a GPU. `Simpiens.Client` holds the XNA game and renderer. (The proposal had a single `Simpiens.Client`.)
+  - **The framework switch:** the MSBuild property `XnaFramework` (`Kni` by default, `MonoGame` compile-only), with separate `bin/` and `obj/` folders for MonoGame so the two restores never collide. `XnaPlatform` is the one class allowed to differ.
+  - **Headless rendering in tests:**
+    - SDL's offscreen driver, the system SDL2 (the test project excludes KNI's bundled copy, which can't create a GL context offscreen), and Mesa's software renderer pinned.
+    - The settings are set with libc `setenv`, because .NET's managed environment never reaches `getenv` on Unix.
+    - Games run in-process with `RunOneFrame` and are never disposed, because disposing segfaults offscreen.
+  - **The gate inside the client:** the golden world hashes are sampled while the real `SimpiensGame` runs frame by frame (100 ticks a frame), so the client's own tick path is what's checked. A second test feeds uneven real-time frames.
+  - **Art and pixels:** Unity's `AgentSpriteLibrary` was ported by a script that only swapped types (a normalised diff proves the patterns and palettes are identical). Animation frames come from the tick, not wall-clock time. The camera snaps to whole pixels.
+  - **Our own PNG writer and reader** (zlib from .NET): render references are plain files an agent can look at. The tolerance is 0.1% of pixels by more than 2 per channel.
+- **Verification:** M0.1 `ba1f17c`, M0.2 `27c48be`, M0.3 `79fa223`, M0.4 `cf88e89`, M0.5 the close-out commit, each with build, `dotnet test`, golden check and the MonoGame compile passing. Final: `dotnet test` 83/83 (client 21, core 62); golden check 3/3; Unity untouched.
+- **Consequences:**
+  - Unity's views are frozen; new view work goes into `dotnet/`.
+  - CI's client step (Xvfb, Ubuntu's SDL 2.30) runs for the first time on the first push.
+  - The desktop exe hasn't been opened in a window by the agent, only run offscreen.

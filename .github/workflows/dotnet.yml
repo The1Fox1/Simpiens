@@ -1,6 +1,8 @@
-# The simulation without Unity (Epic CORE): builds the engine-free core for .NET 10 and runs its tests (validators,
-# golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak). No Unity licence needed.
-# The Unity PlayMode suite still runs locally: scripts/run-playmode-tests.sh.
+# The simulation and the game client without Unity (Epic CORE, Epic CLIENT): builds the .NET solution and runs its
+# tests (validators, golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak, and
+# the KNI client's presentation, golden-hash and render tests), then checks that the client still compiles against
+# MonoGame, KNI's fallback. No Unity licence needed. The Unity PlayMode suite still runs locally:
+# scripts/run-playmode-tests.sh.
 name: dotnet
 
 on:
@@ -27,6 +29,11 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # The client's tests draw with OpenGL: SDL2 from the system (the test project excludes KNI's bundled copy), a
+      # virtual X display, and Mesa's software renderer (llvmpipe), the renderer the reference images were made with
+      - name: Install SDL2, Mesa and Xvfb
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libsdl2-2.0-0 libgl1-mesa-dri libglx-mesa0 libegl1 xvfb
+
       - name: Restore
         run: dotnet restore dotnet/Simpiens.slnx
 
@@ -34,7 +41,21 @@ jobs:
         run: dotnet build dotnet/Simpiens.slnx -c Release --no-restore
 
       - name: Test
-        run: dotnet test dotnet/Simpiens.slnx -c Release --no-build
+        env:
+          SDL_VIDEODRIVER: x11
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test dotnet/Simpiens.slnx -c Release --no-build
+
+      - name: Keep the client's renders when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-renders
+          path: dotnet/Simpiens.Client.Tests/bin/Release/net10.0/render-output/
+          if-no-files-found: ignore
 
       - name: Golden world hashes (console host)
         run: dotnet run --project dotnet/Simpiens.Host -c Release --no-build -- golden check
+
+      - name: The client against MonoGame (compile only)
+        run: dotnet build dotnet/Simpiens.Desktop -c Release -p:XnaFramework=MonoGame

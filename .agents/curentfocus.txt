@@ -208,7 +208,7 @@ Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (merged to 
   Next on this path: the engine spike (Phase 2) ran as desk research 2026-10-17/18 and chose KNI: Epic CLIENT.
 
 Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kni-client, not merged)
-(See docs/epics/epic-client.md, docs/engine-proposal-kni.md and the working plan .agents/client_m0_plan.md)
+(See docs/epics/epic-client.md, docs/engine-proposal-kni.md and the working plan .agents/client_m1_plan.md)
 - A new game client on KNI (MonoGame-derived XNA 4 framework) over the engine-free core; replaces Unity's views and
   dashboard. Unity's views are FROZEN from M0 and Unity is retired at M2.
 - Producer decisions 2026-10-18: KNI (MonoGame kept compiling in CI as fallback); isometric main view, top-down for
@@ -218,3 +218,7 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   M3 isometric -> M4 Android -> M5 iOS -> M6 screen sizes -> M7 art pipeline; map designer after M2.
 - Agent authority: M0 and M1 (an implementation plan before each).
 - Progress: C0 (setup: roadmap entry, epic doc, proposal copy, M0 plan) done 2026-10-18.
+  M0.1 projects + XnaFramework switch; M0.2 engine-free presentation (art ported pixel for pixel, Floor 1 tiles, stable
+  draw order, top-down camera, PNG); M0.3 the client ticks the simulation (golden 3/3 from inside the client); M0.4
+  first pixels (render tests vs Baselines/ images); M0.5 CI (Xvfb + Mesa, MonoGame compile; unverified until pushed).
+  M0 COMPLETE 2026-10-18 (dotnet test 83/83). Next: M1 top-down parity, plan .agents/client_m1_plan.md.

@@ -445,6 +445,12 @@ Before Epic 10: soak test and scaling work (#8).
   - M2 dashboard in Gum (5–8), then Unity retired in its own chunk. M3 isometric (3–5). M4 Android and M5 iOS (3–5 each, after the MVP). M6 screen sizes (1–3). M7 art pipeline (2–3). The developers' map designer follows M2.
 - **Progress:**
   - C0 (setup: this entry, the epic doc, the proposal copy, the M0 plan) done 2026-10-18.
+  - M0.1 (the client's projects: `Simpiens.Presentation`, `Simpiens.Client`, `Simpiens.Desktop`, `Simpiens.Client.Tests`; the `XnaFramework` switch, KNI or MonoGame compile-only) done 2026-10-18.
+  - M0.2 (the engine-free presentation: the generated art ported pixel for pixel from Unity, Floor 1 as tiles, the stable draw order, the top-down camera, PNG files) done 2026-10-18.
+  - M0.3 (the client ticks the simulation) done 2026-10-18: the game, run frame by frame offscreen, reproduces the golden world hashes for all 3 seeds; uneven frame pacing gives the same world.
+  - M0.4 (first pixels: Floor 1 and its crawlers drawn top-down; render tests against committed reference images; the desktop exe runs the live outpost) done 2026-10-18.
+  - M0.5 (CI: the client's tests under Xvfb with Mesa, and the MonoGame compile; AGENTS.md) done 2026-10-18. The workflow is unverified until the branch is pushed.
+  - **M0 (first pixels) is complete:** golden hashes 3 of 3 from inside the client, render tests passing on Mesa's software renderer (locally; CI's first run comes with a push), the MonoGame build compiling. Measured: `dotnet test` 83/83 (client 21, core 62). Next: M1, top-down parity, with its own plan (`.agents/client_m1_plan.md`).
 
 ---
 
