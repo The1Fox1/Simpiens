@@ -451,6 +451,7 @@ Before Epic 10: soak test and scaling work (#8).
   - M0.4 (first pixels: Floor 1 and its crawlers drawn top-down; render tests against committed reference images; the desktop exe runs the live outpost) done 2026-10-18.
   - M0.5 (CI: the client's tests under Xvfb with Mesa, and the MonoGame compile; AGENTS.md) done 2026-10-18. The workflow is unverified until the branch is pushed.
   - **M0 (first pixels) is complete:** golden hashes 3 of 3 from inside the client, render tests passing on Mesa's software renderer (locally; CI's first run comes with a push), the MonoGame build compiling. Measured: `dotnet test` 83/83 (client 21, core 62). Next: M1, top-down parity, with its own plan (`.agents/client_m1_plan.md`).
+  - M1 plan written 2026-10-18 (`.agents/client_m1_plan.md`): props and crawler appearance, text and map labels, fog of war, camera, picking and selection, a compile-only Android build, then the gate and close-out.
 
 ---
 
