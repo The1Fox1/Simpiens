@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Hosting;
+using Simpiens.Narrative;
 using Simpiens.Presentation;
 using Simpiens.Simulation;
 
@@ -38,6 +39,18 @@ namespace Simpiens.Client
             Simulation = HeadlessSimulation.Create(Options.Seed);
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
+
+            Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
+            Selection.Changed += OnSelectionChanged;
+        }
+
+        private bool _wasFollowing;
+
+        /// <summary>A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion.</summary>
+        private void OnSelectionChanged()
+        {
+            if (Selection.Following && !_wasFollowing) Rig.ResetFollow();
+            _wasFollowing = Selection.Following;
         }
 
         public ClientOptions Options { get; }
@@ -60,12 +73,16 @@ namespace Simpiens.Client
         /// <summary>What the controls asked for in the last update (a click, a stop to following).</summary>
         public CameraInputResult LastInput { get; private set; }
 
+        /// <summary>The player's selection: a crawler (followed or not) and a sector.</summary>
+        public WorldSelection Selection { get; }
+
         /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
         private double _realSeconds;
         private readonly ClientInput _input = new ClientInput();
         private object _framedMap;
+        private long _lastTick = long.MinValue;
 
         protected override void Initialize()
         {
@@ -116,21 +133,29 @@ namespace Simpiens.Client
             var map = Simulation.Host.Current?.Map;
             if (map == null) return;
             var viewport = GraphicsDevice.Viewport;
+            long tick = Simulation.Clock.CurrentTick;
+            if (tick < _lastTick) Selection.Clear(); // a respawn or a load: the selected crawler is gone
+            _lastTick = tick;
             if (!ReferenceEquals(map, _framedMap))
             {
                 Rig.Configure(map.CameraFrame, viewport.AspectRatio, viewport.Height);
+                Selection.Clear();
                 _framedMap = map;
             }
             Rig.SetPixelHeight(viewport.Height);
             Rig.SetAspect(viewport.AspectRatio);
 
-            if (!readInput)
+            LastInput = default;
+            if (readInput)
             {
-                LastInput = default;
-                return;
+                _input.Read(out var pointer, out var keys);
+                LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
+                if (LastInput.StopFollowing) Selection.StopFollowing();
+                if (LastInput.Clicked) Selection.ClickAt(LastInput.ClickWorld);
             }
-            _input.Read(out var pointer, out var keys);
-            LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
+
+            // The camera follows the selected crawler (Unity did this after the input, in LateUpdate)
+            if (Selection.Following && Selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, seconds);
         }
 
         protected override void Dispose(bool disposing)
@@ -157,7 +182,7 @@ namespace Simpiens.Client
             GraphicsDevice.Clear(Background);
 
             var map = Simulation.Host.Current?.Map;
-            Scene.Build(map, Simulation.Sectors, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds);
+            Scene.Build(map, Simulation.Sectors, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds, Selection);
             if (map == null) return;
 
             if (!ReferenceEquals(map, _framedMap))

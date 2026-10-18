@@ -117,6 +117,11 @@ flowchart TB
     - Right or middle drag to pan, WASD or arrows (0.6 view heights a second), Home, Esc; a left click is one that moves no more than 6 px.
     - Plain input snapshots, so the controls are tested without devices. The window is resizable.
     - Addition: given the window's pixel height, reframing (and the zoom-out limit) shows the whole map at whole pixels per art pixel. `CameraRigValidator`'s checks are ported (2026-10-18).
+- [x] M1.5: picking and selection, ported from Unity's `WorldPicker` and `WorldSelection`.
+    - A left click picks the nearest crawler within 0.6, ties going to the lower id. It selects and follows that crawler and its room, or selects just the room under an empty spot.
+    - The selected crawler gets Unity's generated gold ring on the Selection layer, and its name from the identity service above it.
+    - The camera follows the selection; panning or Esc stops it.
+    - A respawn or a new map clears the selection (2026-10-18).
 
 ---
 

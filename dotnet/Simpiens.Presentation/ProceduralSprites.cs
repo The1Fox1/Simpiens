@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Simulation.Economy;
@@ -35,6 +36,9 @@ namespace Simpiens.Presentation
         public static PixelSprite FloorSprite => _floorSprite;
         /// <summary>Solid rock outside the floor.</summary>
         public static PixelSprite RockSprite => _rockSprite;
+        private static readonly PixelSprite _selectionRing;
+        /// <summary>A thin gold circle under the selected crawler (Unity's <c>CameraController</c> ring), one unit across.</summary>
+        public static PixelSprite SelectionRing => _selectionRing;
 
         static ProceduralSprites()
         {
@@ -239,6 +243,28 @@ namespace Simpiens.Presentation
                 { 'k', new Rgba32(74, 72, 82, 255) }
             };
             _rockSprite = CreateSprite(PatternRock, rockPalette, "Map_Rock");
+
+            // 15. Selection ring (Epic CLIENT M1.5): generated, not a pattern, as Unity's CameraController made it
+            _selectionRing = CreateRing();
+        }
+
+        private static PixelSprite CreateRing()
+        {
+            const int size = 16;
+            var gold = new Rgba32(250, 204, 21, 255);
+            var pixels = new Rgba32[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - size * 0.5f, dy = y + 0.5f - size * 0.5f;
+                    float d = MathF.Sqrt(dx * dx + dy * dy);
+                    pixels[y * size + x] = d >= 6.2f && d <= 7.6f ? gold : Rgba32.Clear;
+                }
+            }
+            var sprite = new PixelSprite(_all.Count, "Selection_Ring", size, size, pixels);
+            _all.Add(sprite);
+            return sprite;
         }
 
         /// <summary>

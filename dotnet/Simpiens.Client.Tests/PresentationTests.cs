@@ -52,8 +52,9 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void EveryCrawlerStateHasTwoFramesAndTheMapAndPropsHaveTheirSprites()
         {
-            // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock
-            Assert.Equal(33, ProceduralSprites.All.Count);
+            // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
+            // and the selection ring (M1.5)
+            Assert.Equal(34, ProceduralSprites.All.Count);
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -80,14 +81,20 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
-        /// Pins every generated pixel. The art was ported pixel for pixel from Unity's AgentSpriteLibrary; a change
-        /// here is a deliberate art change, re-pinned in its own commit.
+        /// Pins every generated pixel. The first 33 sprites were ported pixel for pixel from Unity's AgentSpriteLibrary
+        /// and keep their own pin; the whole set's pin moves only with a deliberate art change, in its own commit.
         /// </summary>
         [Fact]
         public void TheGeneratedArtIsUnchanged()
         {
+            Assert.Equal(PortedArtHash, HashOf(ProceduralSprites.All.Take(PortedSpriteCount)));
+            Assert.Equal(PinnedArtHash, HashOf(ProceduralSprites.All));
+        }
+
+        private static ulong HashOf(System.Collections.Generic.IEnumerable<PixelSprite> sprites)
+        {
             ulong hash = 14695981039346656037UL;
-            foreach (var sprite in ProceduralSprites.All)
+            foreach (var sprite in sprites)
             {
                 foreach (var p in sprite.Pixels)
                 {
@@ -97,10 +104,13 @@ namespace Simpiens.Client.Tests
                     hash = (hash ^ p.A) * 1099511628211UL;
                 }
             }
-            Assert.Equal(PinnedArtHash, hash);
+            return hash;
         }
 
-        internal const ulong PinnedArtHash = 12981420596316165723UL; // recorded 2026-10-18 (M0.2) from the port of AgentSpriteLibrary
+        /// <summary>The sprites ported from Unity's AgentSpriteLibrary (M0.2), before the client's own additions.</summary>
+        internal const int PortedSpriteCount = 33;
+        internal const ulong PortedArtHash = 12981420596316165723UL; // recorded 2026-10-18 (M0.2) from the port of AgentSpriteLibrary
+        internal const ulong PinnedArtHash = 14919380766078513923UL; // recorded 2026-10-18 (M1.5): the port plus the selection ring
     }
 
     public class MapTileTests

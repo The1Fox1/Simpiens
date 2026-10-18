@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Simpiens.Presentation;
 using Xunit;
 
@@ -34,6 +35,16 @@ namespace Simpiens.Client.Tests
             Assert.Equal(300L, game.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t300", FrameCapture.Capture(game, Width, Height));
+        }
+
+        [Fact]
+        public void ASelectedCrawlerHasItsRingAndName()
+        {
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            game.Selection.SelectCrawler(crawler.Id, follow: false);
+
+            CompareWithReference("render-floor1-t300-selected", FrameCapture.Capture(game, Width, Height));
         }
 
         private static void CompareWithReference(string name, byte[] actual)

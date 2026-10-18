@@ -39,7 +39,7 @@ namespace Simpiens.Presentation
         /// <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives the animations and
         /// fades: real time in the game, the tick's time in tests.
         /// </summary>
-        public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds)
+        public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds, WorldSelection selection = null)
         {
             Items.Clear();
             if (tick < _lastTick) Fog.Load(map, sectors); // the clock went back: a respawn or a load, same map or not
@@ -63,8 +63,22 @@ namespace Simpiens.Presentation
                 }
             }
 
+            if (selection != null) AddSelection(selection);
+
             Items.Sort();
         }
+
+        /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController).</summary>
+        private void AddSelection(WorldSelection selection)
+        {
+            if (!selection.TryGetCrawlerPosition(out var at)) return;
+            Items.Add(RenderLayer.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize, SelectionRingSize, White);
+            WorldText.Add(Items, selection.CrawlerName(), at + NameOffset, WorldText.LabelPixel, NameColor, RenderLayer.Labels, TextAnchor.LowerCenter);
+        }
+
+        public const float SelectionRingSize = 0.9f;
+        private static readonly Vec2 NameOffset = new Vec2(0f, 0.65f);
+        private static readonly Rgba32 NameColor = Rgba32.From(new Rgba(1f, 0.92f, 0.55f));
 
         private void AddCrawler(WorldEntity entity, long tick, float viewSeconds)
         {
