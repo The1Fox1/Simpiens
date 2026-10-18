@@ -213,4 +213,22 @@ namespace Simpiens.Client.Tests
             Assert.False(Step(input, rig, default).StopFollowing);
         }
     }
+
+    /// <summary>The devices themselves: offscreen the window never has focus, so the game never reads them on its own.</summary>
+    public class ClientInputTests
+    {
+        [Fact]
+        public void TheMouseAndKeyboardReadIntoSnapshotsOnARunningGame()
+        {
+            Offscreen.Start(frames: 1);
+            var input = new ClientInput();
+            input.Read(out var pointer, out var keys);
+            input.Read(out var again, out _);
+
+            Assert.Equal(0, pointer.WheelNotches); // the first read sets the wheel's origin
+            Assert.Equal(0, again.WheelNotches);
+            Assert.False(keys.HomePressed || keys.EscapePressed);
+            Assert.False(pointer.OverUi);
+        }
+    }
 }

@@ -1,6 +1,9 @@
 using System;
 using System.Globalization;
+using Microsoft.Extensions.Logging;
 using Simpiens.Client;
+using Simpiens.Diagnostics;
+using Simpiens.Hosting;
 
 namespace Simpiens.Desktop
 {
@@ -14,7 +17,10 @@ namespace Simpiens.Desktop
   --width W --height H window size (default: 1280 x 720)
   --no-vsync           don't wait for the display's refresh
   --ticks-per-frame N  run N ticks every frame instead of following real time (fast-forward)
-  --help               this text";
+  --help               this text
+
+Logging: warnings and errors go to standard error. SIMPIENS_LOG, SIMPIENS_LOG_FILE and SIMPIENS_LOG_FOCUS choose
+more (AGENTS.md, Logging).";
 
         [STAThread]
         public static int Main(string[] args)
@@ -39,8 +45,19 @@ namespace Simpiens.Desktop
                 }
             }
 
-            using var game = new SimpiensGame(options);
-            game.Run();
+            ConsoleSimLogSink.Install();
+            var logging = SimLogSettings.FromEnvironment();
+            if (Environment.GetEnvironmentVariable("SIMPIENS_LOG") == null) logging.ConsoleMinimumLevel = LogLevel.Warning;
+            SimLog.Configure(logging);
+            try
+            {
+                using var game = new SimpiensGame(options);
+                game.Run();
+            }
+            finally
+            {
+                SimLog.Shutdown();
+            }
             return 0;
         }
 

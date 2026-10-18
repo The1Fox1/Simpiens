@@ -64,6 +64,7 @@ namespace Simpiens.Client.Tests
             options.VSync = false;
             options.ViewClockFromTicks = true; // renders at a given tick are always the same
             var game = new SimpiensGame(options);
+            game.InactiveSleepTime = TimeSpan.Zero; // an offscreen window never has focus: don't nap 20 ms a frame
             Alive.Add(game);
             for (int i = 0; i < frames; i++) game.RunOneFrame();
             return game;

@@ -47,6 +47,27 @@ namespace Simpiens.Client.Tests
             CompareWithReference("render-floor1-t300-selected", FrameCapture.Capture(game, Width, Height));
         }
 
+        [Fact]
+        public void TheOutpostAtTick1500LooksAsRecorded()
+        {
+            // Later in the day: the scout has charted rooms, so their fog has lifted
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 15);
+            Assert.Equal(1500L, game.Simulation.Clock.CurrentTick);
+
+            CompareWithReference("render-floor1-t1500", FrameCapture.Capture(game, Width, Height));
+        }
+
+        [Fact]
+        public void AZoomedAndPannedViewLooksAsRecorded()
+        {
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var hub = game.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
+            game.Rig.ZoomAt(hub, 0.4f);
+            game.Rig.Pan(new Vec2(2f, -3f));
+
+            CompareWithReference("render-floor1-t300-zoomed", FrameCapture.Capture(game, Width, Height));
+        }
+
         private static void CompareWithReference(string name, byte[] actual)
         {
             string output = Path.Combine(AppContext.BaseDirectory, "render-output");
