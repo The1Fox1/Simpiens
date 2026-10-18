@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Simpiens.Hosting;
 
 namespace Simpiens.Client
 {
@@ -14,6 +15,7 @@ namespace Simpiens.Client
         public static readonly Color Background = new Color(12, 14, 20);
 
         private readonly GraphicsDeviceManager _graphics;
+        private readonly SimulationDriver _driver;
 
         public SimpiensGame(ClientOptions options = null)
         {
@@ -26,14 +28,34 @@ namespace Simpiens.Client
             };
             IsFixedTimeStep = false;
             IsMouseVisible = true;
+
+            // The core composed as every .NET host composes it, the session spawned at tick 0 before the first frame
+            Simulation = HeadlessSimulation.Create(Options.Seed);
+            Simulation.Respawn(Options.SessionId);
+            _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
         }
 
         public ClientOptions Options { get; }
+
+        /// <summary>The simulation this client plays: the views read it, and only typed commands change it.</summary>
+        public HeadlessSimulation Simulation { get; }
 
         protected override void Initialize()
         {
             Window.Title = "Simpiens";
             base.Initialize();
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            _driver.Advance(gameTime.ElapsedGameTime);
+            base.Update(gameTime);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) Simulation.Dispose();
+            base.Dispose(disposing);
         }
 
         protected override void Draw(GameTime gameTime)
