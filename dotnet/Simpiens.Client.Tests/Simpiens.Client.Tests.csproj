@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The game client's tests (Epic CLIENT, xUnit v3): presentation and driver tests with no GPU, and the client
+       itself run offscreen frame by frame: the golden world hashes from inside the client and render tests against
+       committed images. KNI only. KNI's bundled SDL2 can't create a GL context offscreen, so its native files are
+       excluded here and the system's SDL2 loads (epic-client F1). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Client.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="nkast.Kni.Platform.SDL2.GL" Version="$(KniVersion)" ExcludeAssets="native" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Client/Simpiens.Client.csproj" />
+    <ProjectReference Include="../Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
+  </ItemGroup>
+</Project>

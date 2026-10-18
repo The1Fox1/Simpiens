@@ -5,4 +5,11 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <!-- KNI or MonoGame, for the few lines that must differ (Epic CLIENT: they live in Simpiens.Client's XnaPlatform) -->
+  <PropertyGroup Condition="'$(XnaFramework)' == 'Kni'">
+    <DefineConstants>$(DefineConstants);KNI</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <DefineConstants>$(DefineConstants);MONOGAME</DefineConstants>
+  </PropertyGroup>
 </Project>

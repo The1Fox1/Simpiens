@@ -10,5 +10,22 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssetsRoot>$(MSBuildThisFileDirectory)../Assets/</AssetsRoot>
+    <!-- Glob-compiled projects never pick up generated sources from either framework's output folders -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <!-- The game client's XNA framework (Epic CLIENT): KNI by default; MonoGame is KNI's fallback, which CI only
+       compiles (dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame). A MonoGame build restores and builds
+       into its own folders, so the two package sets never share an assets file. -->
+  <PropertyGroup>
+    <XnaFramework Condition="'$(XnaFramework)' == ''">Kni</XnaFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <BaseIntermediateOutputPath>obj/monogame/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/monogame/</BaseOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <KniVersion>4.3.9001</KniVersion>
+    <MonoGameVersion>3.8.6</MonoGameVersion>
   </PropertyGroup>
 </Project>

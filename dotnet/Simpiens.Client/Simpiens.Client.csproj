@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The game client (Epic CLIENT): an XNA Game that ticks the simulation through Simpiens.Hosting and draws what
+       Simpiens.Presentation describes. Built on KNI; -p:XnaFramework=MonoGame compiles it against MonoGame, KNI's
+       fallback. Framework-specific lines live in XnaPlatform only. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Client</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Presentation/Simpiens.Presentation.csproj" />
+    <ProjectReference Include="../Simpiens.Hosting/Simpiens.Hosting.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
+    <PackageReference Include="nkast.Xna.Framework.Game" Version="$(KniVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="$(MonoGameVersion)" />
+  </ItemGroup>
+</Project>

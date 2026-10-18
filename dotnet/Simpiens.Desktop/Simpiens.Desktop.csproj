@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The desktop game (Epic CLIENT): Windows and Linux, SDL2 and OpenGL. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Desktop</RootNamespace>
+    <AssemblyName>Simpiens</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Client/Simpiens.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
+    <PackageReference Include="nkast.Kni.Platform.SDL2.GL" Version="$(KniVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="$(MonoGameVersion)" />
+  </ItemGroup>
+</Project>

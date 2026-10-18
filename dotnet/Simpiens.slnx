@@ -1,7 +1,11 @@
 <Solution>
+  <Project Path="Simpiens.Client.Tests/Simpiens.Client.Tests.csproj" />
+  <Project Path="Simpiens.Client/Simpiens.Client.csproj" />
   <Project Path="Simpiens.Core.Tests/Simpiens.Core.Tests.csproj" />
   <Project Path="Simpiens.Core/Simpiens.Core.csproj" />
+  <Project Path="Simpiens.Desktop/Simpiens.Desktop.csproj" />
   <Project Path="Simpiens.Host/Simpiens.Host.csproj" />
   <Project Path="Simpiens.Hosting/Simpiens.Hosting.csproj" />
+  <Project Path="Simpiens.Presentation/Simpiens.Presentation.csproj" />
   <Project Path="Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
 </Solution>
