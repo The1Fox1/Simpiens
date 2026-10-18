@@ -29,8 +29,23 @@ namespace Simpiens.Presentation
         public static TopDownCamera Framing(RectF frame, int viewportWidth, int viewportHeight, bool wholePixels = true)
         {
             float fit = SimMath.Min(viewportWidth / frame.Width, viewportHeight / frame.Height);
-            if (wholePixels) fit = SimMath.Max(1f, SimMath.Floor(fit / BasePixelsPerUnit)) * BasePixelsPerUnit;
-            return new TopDownCamera(frame.Center, fit, viewportWidth, viewportHeight);
+            if (!wholePixels) return new TopDownCamera(frame.Center, fit, viewportWidth, viewportHeight);
+
+            fit = SimMath.Max(1f, SimMath.Floor(fit / BasePixelsPerUnit)) * BasePixelsPerUnit;
+            return new TopDownCamera(frame.Center, fit, viewportWidth, viewportHeight).SnappedToPixels();
+        }
+
+        /// <summary>
+        /// The same view moved by under a pixel so that whole world units land on whole screen pixels: map tiles then
+        /// start on pixel boundaries and point-sampled art keeps every pixel.
+        /// </summary>
+        public TopDownCamera SnappedToPixels()
+        {
+            float offsetX = ViewportWidth * 0.5f - Centre.X * PixelsPerUnit;
+            float offsetY = ViewportHeight * 0.5f + Centre.Y * PixelsPerUnit;
+            float x = (ViewportWidth * 0.5f - SimMath.Round(offsetX)) / PixelsPerUnit;
+            float y = (SimMath.Round(offsetY) - ViewportHeight * 0.5f) / PixelsPerUnit;
+            return new TopDownCamera(new Vec2(x, y), PixelsPerUnit, ViewportWidth, ViewportHeight);
         }
 
         public Vec2 WorldToScreen(Vec2 world)

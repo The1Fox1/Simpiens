@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Hosting;
+using Simpiens.Presentation;
 
 namespace Simpiens.Client
 {
@@ -16,6 +17,9 @@ namespace Simpiens.Client
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly SimulationDriver _driver;
+        private SpriteBatch _batch;
+        private SpriteAtlas _atlas;
+        private WorldRenderer _renderer;
 
         public SimpiensGame(ClientOptions options = null)
         {
@@ -40,10 +44,23 @@ namespace Simpiens.Client
         /// <summary>The simulation this client plays: the views read it, and only typed commands change it.</summary>
         public HeadlessSimulation Simulation { get; }
 
+        /// <summary>What the view shows this frame: rebuilt from the simulation's state on every draw.</summary>
+        public WorldScene Scene { get; } = new WorldScene();
+
+        /// <summary>The camera of the last frame drawn.</summary>
+        public TopDownCamera Camera { get; private set; }
+
         protected override void Initialize()
         {
             Window.Title = "Simpiens";
             base.Initialize();
+        }
+
+        protected override void LoadContent()
+        {
+            _batch = new SpriteBatch(GraphicsDevice);
+            _atlas = new SpriteAtlas(GraphicsDevice, ProceduralSprites.All);
+            _renderer = new WorldRenderer(_batch, _atlas);
         }
 
         protected override void Update(GameTime gameTime)
@@ -54,7 +71,12 @@ namespace Simpiens.Client
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) Simulation.Dispose();
+            if (disposing)
+            {
+                _atlas?.Dispose();
+                _batch?.Dispose();
+                Simulation.Dispose();
+            }
             base.Dispose(disposing);
         }
 
@@ -69,6 +91,14 @@ namespace Simpiens.Client
         public void DrawScene(int width, int height)
         {
             GraphicsDevice.Clear(Background);
+
+            var map = Simulation.Host.Current?.Map;
+            Scene.Build(map, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick);
+            if (map == null) return;
+
+            // M0: a fixed camera framing the map's camera frame at whole pixels per art pixel
+            Camera = TopDownCamera.Framing(map.CameraFrame, width, height);
+            _renderer.Draw(Scene.Items, Camera);
         }
     }
 }
