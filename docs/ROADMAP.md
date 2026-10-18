@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-17.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-18.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -38,6 +38,7 @@ flowchart LR
     subgraph Independent: Spatial & World Topology
         MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(COMPLETED)"]
         CORE["Epic CORE\nEngine-Free Core &\nHeadless .NET\n(COMPLETED)"]
+        CLIENT["Epic CLIENT\nKNI Client &\nEngine Rework\n(ACTIVE)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -68,6 +69,8 @@ flowchart LR
     A6 -.->|Validation Target| C2
     BAlpha -.->|Prepares Narrative Contracts for LLM| A8
     CORE -.->|Engine-free simulation, headless tests| A7
+    CORE ==>|Engine-free core and .NET host| CLIENT
+    CLIENT -.->|Replaces Unity's views and dashboard| B3
 ```
 
 ### Track Rules
@@ -178,6 +181,8 @@ Simpiens is an **agent-first, decoupled simulation**. In this development paradi
 | **`MemoryPack`** (`MemoryPack` 1.21.4 via NuGet DLLs) | **Zero-Alloc Binary Serialization** *(NEW APPROVED; installed 2026-10-15)* | High-performance C# source-generated binary serializer. Native memory-copy (`Unsafe.CopyBlock`) for unmanaged blittable structs (`ItemInstance`, `BountyContract`, `GroupData`, `WorldState`, `ChronicleEvent`). Powers state persistence, save/load, tick replays, and the Milestone 4 floor descent relocation loop.<br>• **Install:** vendored into `Assets/Plugins/MemoryPack/` by `scripts/update-memorypack.sh`.<br>• **Shared dependencies:** MemoryPack is resolved together with ZLogger, so `System.Collections.Immutable` and `System.Runtime.CompilerServices.Unsafe` ship once, from ZLogger's folder.<br>• **Source generator:** runs as a Roslyn analyzer and never ships in a player.<br>• **`MemoryPack.Unity`:** not installed, because no Unity reference types are saved.<br>• **Callers:** only `Simulation/Persistence/SaveSerializer` calls MemoryPack.<br>• **Used by:** the whole-session save and load (Milestone 1, 2026-10-15): `SessionSave`, `SaveFile`, the quick-save slot. |
 | **`ZLogger`** (`ZLogger` 2.5.10 via NuGet DLLs + `com.cysharp.zlogger` ZLogger.Unity) | **Zero-Alloc Structured Logging** *(NEW APPROVED, 2026-10-09)* | Microsoft.Extensions.Logging levels with interpolated-string handlers that evaluate and allocate nothing when a level is disabled. Wrapped by `Simpiens.Diagnostics.SimLog` (see §1A.3). The NuGet closure is vendored in `Assets/Plugins/ZLogger/` by `scripts/update-zlogger.sh` (facades Unity already provides are excluded). `Assets/Scripts/csc.rsp` raises the `Simpiens` assembly to C# 10. Keep the ZLogger.Unity git tag in `Packages/manifest.json` in sync with the vendored version. |
 | **`Unity.Collections` + Burst** (`com.unity.collections`, `com.unity.burst`) | **Main-Thread Spatial Broadphase** *(NEW APPROVED - HYBRID)* | Unmanaged off-heap containers (`NativeArray`, `NativeParallelMultiHashMap`) and SIMD-accelerated Burst jobs. Applied strictly on the main thread for physics broadphase, campfire proximity, and sector bounds in `SimulationManager.Tick()`. *(Note: Off-thread cognitive workers retain pure C# flat struct arrays in `SharedWorldSnapshot` to prevent `AtomicSafetyHandle` thread-pool exceptions).* |
+
+> **Producer decision, 2026-10-18 (Epic CLIENT):** the game client is built on **KNI** (`nkast.Xna.Framework.*` and `nkast.Kni.Platform.*` 4.3.9001, MS-PL), a MonoGame-derived implementation of the XNA 4 API, chosen over Godot, MonoGame, FNA and BRUTAL in the engine spike. **MonoGame** (`MonoGame.Framework.DesktopGL`) is approved only as KNI's fallback: CI compiles the client against it so that a switch stays a package swap. Gum (`Gum.KNI`) is planned for the dashboard (Epic CLIENT M2). The comparison and its measurements: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md).
 
 > **Install status (verified against `Packages/manifest.json` 2026-10-09; MemoryPack 2026-10-15; UniTask removed 2026-10-17):** `VContainer`, `ZLogger` and `MemoryPack` are installed; `UniTask` was removed by Epic CORE C6. `Unity.Collections` / Burst are **approved but not installed**; no code uses them yet.
 
@@ -399,7 +404,7 @@ Before Epic 10: soak test and scaling work (#8).
 - **Deferred:** drifter churn (Milestone 2, §3.3 D7), descent gate (Epic 10), workshops (Milestone 3), cognition scaling (§3A #8). Map save/load was delivered with Milestone 1's whole-session save (2026-10-15). Open findings and their owners: [epic §6](epics/epic-map.md).
 
 ### Epic CORE: [Engine-Free Core and Headless .NET](epics/epic-core.md)
-- **Status**: COMPLETED (2026-10-17) on branch `feat/godot-migration`, pending the producer's review and merge (the branch is not pushed).
+- **Status**: COMPLETED (2026-10-17). Merged to `main` as PR #5 on 2026-10-17.
 - **What:** Phases 0 and 1 of the Unity-to-Godot migration write-up (Claude Docs, 2026-10-15). The simulation runs without an engine: the same source compiles in a Unity assembly that may not reference the engine and for `net10.0`, where a host steps ticks with no frames, and both produce the same world hashes. It pays off on any engine; Phases 2–4 (the Godot spike, view parity, cutover) wait on the spike's go/no-go and are not part of this epic.
 - **Producer decisions (2026-10-17):** Phases 0–1 approved as standalone work, under the agent's provisional authority; web builds are not needed; commit to Godot only after the spike; `Microsoft.Extensions.DependencyInjection` and xUnit v3 for .NET; the §2 retirements and the MCP SDK lift above.
 - **Chunks** (branch `feat/godot-migration`; the working plan was removed at close-out):
@@ -420,15 +425,34 @@ Before Epic 10: soak test and scaling work (#8).
   - C9 (xUnit v3: `dotnet/Simpiens.Core.Tests`) done 2026-10-17. Phase 1 gate: `dotnet test` 53/53 in about 4 s: the 44 engine-free validators (zero-allocation ones included), the golden hashes equal to Unity's baseline for all 3 seeds, same-seed determinism, and the outpost's three DoD scenarios headless with nothing injected (lifecycle 9,000 ticks, supply loop, save/load). Unity still green (PlayMode 68/68). Found: Unity's Mono and CoreCLR round some float expressions differently, so the runtimes agree on the golden seeds but drift apart on others (seed 1 from t5); each runtime reproduces itself exactly (epic §6 F1).
   - C10 (`simpiens`, the console host on the Generic Host: `run`, `sweep`, `soak`, `golden`) done 2026-10-17: the economy soak's 9 runs stay in their pace bands headless in about 4 s (Unity: about 26 minutes), and `dotnet test` runs them too (62/62). Found: the outpost's day passes on 16 of 23 seeds; 5 have a starving crawler, 2 a crawler with no cycle; Unity agrees on seed 11 (epic §6 F2, a balance question for the producer).
   - C11 (CI and close-out) done 2026-10-17: `.github/workflows/dotnet.yml` builds and tests the .NET solution on Ubuntu with no Unity (not pushed); docs reconciled. Final check: PlayMode 68/68 (70, 2 explicit skipped); golden check in Unity 3/3 seeds; `dotnet test` 62/62.
-  - **Phase 1 (Headless .NET) is complete; Epic CORE is complete.** Definition of Done: the validators pass in Unity and under `dotnet test` (zero-allocation ones included); the outpost's DoD scenarios pass in Unity and headless with nothing injected; the golden hashes are equal in both runtimes. Open findings: epic §6 (F1 Mono and CoreCLR round some float chains differently; F2 the outpost's day fails on 7 of 23 seeds). Next on this path: the producer's review, then the Godot spike (Phase 2) on its go/no-go.
+  - **Phase 1 (Headless .NET) is complete; Epic CORE is complete.** Definition of Done: the validators pass in Unity and under `dotnet test` (zero-allocation ones included); the outpost's DoD scenarios pass in Unity and headless with nothing injected; the golden hashes are equal in both runtimes. Open findings: epic §6 (F1 Mono and CoreCLR round some float chains differently; F2 the outpost's day fails on 7 of 23 seeds). Next on this path: the engine spike (Phase 2) ran as desk research on 2026-10-17 and 2026-10-18 and chose KNI over Godot; the new client is Epic CLIENT below.
+
+
+### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
+- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed).
+- **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
+- **Producer decisions (2026-10-18):**
+  - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
+  - Isometric will most likely replace top-down as the main view; height is visual only; top-down is for design only; cutscenes are still backdrops with dynamic characters and text boxes (Fire Emblem style).
+  - The MVP is Windows and Linux desktop. Android and iOS follow it (portrait phones only; tablets not a priority; an Apple developer account and a Mac exist). Consoles last, only if mobile goes well. No macOS, no web.
+  - Art starts basic and grows to at most 64×64 px sprites. UI style and art designer to be decided. Target 30 fps.
+  - **Unity is retired at M2.** From M0, Unity's views and dashboard are frozen: new view and UI work goes into the client. Track B's UI Toolkit code stays as it is until then.
+  - The map designer is for developers only. No sponsorship of KNI for now.
+  - Same working rules as Epic CORE. The producer granted the agent provisional authority over M0 and M1 (2026-10-18), with an implementation plan before each.
+- **Milestones** (estimates in agent days; proposal §Roadmap):
+  - M0 first pixels (1–2): a desktop window where the host ticks the outpost and Floor 1 and its crawlers are drawn top-down. Gate: golden hashes 3 of 3 from inside the client; a render test in Linux CI; the MonoGame build compiles.
+  - M1 top-down parity on desktop (3–5): fog, props, labels, animation, camera, mouse picking; a compile-only Android build in CI. Gate: render tests pass; screenshots reviewed beside Unity's.
+  - M2 dashboard in Gum (5–8), then Unity retired in its own chunk. M3 isometric (3–5). M4 Android and M5 iOS (3–5 each, after the MVP). M6 screen sizes (1–3). M7 art pipeline (2–3). The developers' map designer follows M2.
+- **Progress:**
+  - C0 (setup: this entry, the epic doc, the proposal copy, the M0 plan) done 2026-10-18.
 
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; **Epic CORE** is `COMPLETED` on its branch, awaiting the producer's review; next for Track A: the soak and scaling work, §3A #8, with Epic CORE's finding F2). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
-2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters.
+1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; **Epic CORE** is `COMPLETED` and merged; next for Track A: the soak and scaling work, §3A #8, with Epic CORE's finding F2). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters. **Frozen from Epic CLIENT M0 (2026-10-18):** new views and UI go into the KNI client (`dotnet/Simpiens.Client`), which rebuilds the dashboard in Gum at M2.
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`: the simulation is engine-free in `Assets/Simpiens.Core/` and builds for .NET in `dotnet/`, see AGENTS.md). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`: the simulation is engine-free in `Assets/Simpiens.Core/` and builds for .NET in `dotnet/`, see AGENTS.md; **Epic CLIENT** is `ACTIVE`: the KNI client in `dotnet/`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

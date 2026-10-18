@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-17
+# Last reconciled: 2026-10-18
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -111,8 +111,8 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
-Current Focus (engine): Epic CORE (Independent Epics, below) COMPLETED 2026-10-17 on its branch, awaiting the
-producer's review. Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
+Current Focus (engine): Epic CLIENT (Independent Epics, below) ACTIVE 2026-10-18 on feat/kni-client: the KNI game
+client, M0-M1 under the agent's provisional authority. Epic CORE COMPLETED and merged (PR #5). Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
 before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
@@ -176,7 +176,7 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
 - Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
   since Section 3.3 (2026-10-15).
 
-Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (on branch feat/godot-migration, not merged)
+Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (merged to main as PR #5)
 (See docs/epics/epic-core.md; the working plan was removed at close-out)
 - Phases 0-1 of the Unity-to-Godot migration write-up, approved by the producer as standalone work (pays off on any
   engine); the agent works under provisional authority. Phases 2-4 (Godot spike, view parity, cutover) are NOT in scope.
@@ -205,4 +205,16 @@ Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (on branch 
   Unity agrees on seed 11) - a pacing decision for the producer.
   C11 (CI workflow .github/workflows/dotnet.yml, not pushed; docs reconciled) done 2026-10-17. PHASE 1 COMPLETE.
   EPIC CORE COMPLETED: validators in both runtimes, DoD scenarios in Unity and headless, golden hashes equal.
-  Next on this path: the producer's review and merge, then the Godot spike (Phase 2) on its go/no-go.
+  Next on this path: the engine spike (Phase 2) ran as desk research 2026-10-17/18 and chose KNI: Epic CLIENT.
+
+Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kni-client, not merged)
+(See docs/epics/epic-client.md, docs/engine-proposal-kni.md and the working plan .agents/client_m0_plan.md)
+- A new game client on KNI (MonoGame-derived XNA 4 framework) over the engine-free core; replaces Unity's views and
+  dashboard. Unity's views are FROZEN from M0 and Unity is retired at M2.
+- Producer decisions 2026-10-18: KNI (MonoGame kept compiling in CI as fallback); isometric main view, top-down for
+  design only, screen-space cutscenes; desktop MVP (Windows, Linux), Android/iOS after it (portrait phones);
+  consoles last; art up to 64x64 px; 30 fps; same working rules as Epic CORE.
+- Milestones: M0 first pixels -> M1 top-down parity + compile-only Android -> M2 Gum dashboard, Unity retired ->
+  M3 isometric -> M4 Android -> M5 iOS -> M6 screen sizes -> M7 art pipeline; map designer after M2.
+- Agent authority: M0 and M1 (an implementation plan before each).
+- Progress: C0 (setup: roadmap entry, epic doc, proposal copy, M0 plan) done 2026-10-18.
