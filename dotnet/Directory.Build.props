@@ -30,5 +30,8 @@
     <!-- Gum (MIT), the dashboard's UI (Epic CLIENT M2): Gum.KNI or Gum.MonoGame, same sources. Pinned: its packages
          ship most days; bump only on purpose, in a commit of its own. -->
     <GumVersion>2026.10.1.1</GumVersion>
+    <!-- KernSmith (MIT), Gum's font generator, for the offline font baker only (dotnet/Simpiens.FontBaker): FreeType
+         rasterizes with hinting. The game never loads it: it draws the baked atlases. -->
+    <KernSmithVersion>0.21.0</KernSmithVersion>
   </PropertyGroup>
 </Project>

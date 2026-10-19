@@ -11,6 +11,10 @@
     <ProjectReference Include="../Simpiens.Presentation/Simpiens.Presentation.csproj" />
     <ProjectReference Include="../Simpiens.Hosting/Simpiens.Hosting.csproj" />
   </ItemGroup>
+  <!-- The baked fonts (Simpiens.FontBaker): copied next to the game, where Gum looks for Content/FontCache -->
+  <ItemGroup>
+    <Content Include="Content/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
     <PackageReference Include="nkast.Xna.Framework.Game" Version="$(KniVersion)" />
     <PackageReference Include="Gum.KNI" Version="$(GumVersion)" />

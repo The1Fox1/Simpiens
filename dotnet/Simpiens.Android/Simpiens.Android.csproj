@@ -24,4 +24,8 @@
   <ItemGroup>
     <PackageReference Include="nkast.Kni.Platform.Android.GL" Version="$(KniVersion)" />
   </ItemGroup>
+  <!-- The baked fonts as Android assets: Gum reads Content/FontCache through TitleContainer there -->
+  <ItemGroup>
+    <AndroidAsset Include="../Simpiens.Client/Content/**" Link="Content/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

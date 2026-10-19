@@ -130,6 +130,5 @@ Render references and baked fonts change only on purpose, in the chunk that chan
 - SDF text;
 - M2.8 and M2.9, Unity's removal, which are independent of this.
 
-## Open for the producer
-1. **The typeface:** Inter, my default, or a typeface you or a designer prefer.
-2. **The map's text:** smooth labels in screen space, which match Unity's labels and the UI, my default; or a pixel font for an in-world retro look. Same pipeline either way.
+## Decided by the producer (2026-10-18)
+"Go ahead, Inter and smooth labels are fine": Inter is the typeface, and the map's text is smooth labels in screen space (T-D2, T-D5).

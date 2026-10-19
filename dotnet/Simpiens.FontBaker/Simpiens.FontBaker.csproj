@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The font baker (Epic CLIENT text cleanup): a developer tool, never shipped. It rasterizes FontSet's faces from
+       the TrueType sources in Fonts/ with KernSmith and FreeType, through Gum's own font description, and writes BMFont
+       atlases under Gum's cache names into Simpiens.Client/Content/FontCache, where they are committed. Run it after
+       changing FontSet (AGENTS.md, Checking a change, has the command). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.FontBaker</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Presentation/Simpiens.Presentation.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="KernSmith.GumCommon" Version="$(GumVersion)" />
+    <PackageReference Include="KernSmith" Version="$(KernSmithVersion)" />
+    <PackageReference Include="KernSmith.Rasterizers.FreeType" Version="$(KernSmithVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Fonts/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

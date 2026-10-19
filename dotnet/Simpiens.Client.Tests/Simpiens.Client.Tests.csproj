@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Simpiens.Client/Simpiens.Client.csproj" />
+    <ProjectReference Include="../Simpiens.FontBaker/Simpiens.FontBaker.csproj" />
     <ProjectReference Include="../Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
   </ItemGroup>
 </Project>
