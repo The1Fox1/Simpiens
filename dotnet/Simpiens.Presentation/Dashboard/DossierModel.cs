@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Entities;
+using Simpiens.Intervention;
 using Simpiens.Simulation;
 using static System.FormattableString;
 
@@ -38,6 +39,16 @@ namespace Simpiens.Presentation.Dashboard
         public IReadOnlyList<string> Affinities => _affinities;
 
         public static string Percent(float value) => Invariant($"{value:F0}%");
+
+        /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
+        public bool CanCalm => HasCrawler && _context.Intervention != null;
+
+        /// <summary>Calm Frustration: queues a <see cref="CalmCrawlerCommand"/>; the crawler calms on the next tick (Unity changed it at once, from the UI).</summary>
+        public void Calm()
+        {
+            if (!CanCalm) return;
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateCalmCrawler("Player", CrawlerId));
+        }
 
         public void Refresh(EntityId crawler)
         {

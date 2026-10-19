@@ -145,6 +145,10 @@ flowchart TB
     - Selection follows the map's `WorldSelection` both ways.
     - Unity's `FacilityZoneServiceValidator` and `BountyTerminalValidator` checks are ported. The validator's prices, escrow, refund and target rules now go through the model; the Unity UI-pool check moves to the views.
     - Deviation: affinities name peers by their friendly names, the dashboard's convention, where Unity printed the entity name.
+- [x] M2.2: "Calm frustration" is a typed command (2026-10-18).
+    - The core gets `CalmCrawlerCommand` in the `InfluenceEvent` union (`InfluenceCommandType.CalmCrawler`), with its string form for tools. `SimulationManager` applies it on the tick, as Unity's dossier did directly to the crawler: frustration to zero, a tantrum or collapse ended, the crawler shown idle.
+    - The dossier model's Calm sends it.
+    - `CalmCommandValidator` runs in both runtimes. Unity's PlayMode suite passed 69/69, and Unity's golden check matched 3 of 3 seeds. Unity's own presenter keeps its direct write, since Unity is frozen.
 
 ---
 

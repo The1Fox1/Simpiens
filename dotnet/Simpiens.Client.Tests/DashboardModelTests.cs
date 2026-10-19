@@ -274,6 +274,25 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void CalmFromTheDossierCalmsTheCrawlerOnTheNextTick()
+        {
+            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            model.SelectCrawler(crawler.Id);
+            Assert.True(model.Dossier.CanCalm);
+
+            crawler.Agent.Frustration = 90f; // the precondition, set by hand: this checks the button's path, not how frustration arises
+            model.Dossier.Calm();
+            Assert.Equal(90f, crawler.Agent.Frustration);
+            sim.Step(1);
+            Assert.Equal(0f, crawler.Agent.Frustration);
+
+            Assert.False(new DashboardModel(null).Dossier.CanCalm);
+        }
+
+        [Fact]
         public void ResidentsSayWhatTheyAreDoingAndEventsReadAsTheChronicle()
         {
             using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);

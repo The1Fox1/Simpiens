@@ -272,6 +272,12 @@ namespace Simpiens.Tests.PlayMode
         }
 
         [Test]
+        public void Scenario_CalmCommand_AllDomainValidationTestsPass()
+        {
+            new Simpiens.Testing.Drives.CalmCommandValidator().RunAllValidationTests();
+        }
+
+        [Test]
         public void Scenario_FacilityZoneService_AllDomainValidationTestsPass()
         {
             new Simpiens.Testing.UI.FacilityZoneServiceValidator().RunAllValidationTests();

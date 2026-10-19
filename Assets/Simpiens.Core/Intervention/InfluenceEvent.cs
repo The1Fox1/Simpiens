@@ -7,7 +7,9 @@ namespace Simpiens.Intervention
         None = 0,
         PostBounty = 1,
         CancelBounty = 2,
-        UpdateStallPrices = 3
+        UpdateStallPrices = 3,
+        /// <summary>The player calms a crawler: its frustration drops to zero and a tantrum or collapse ends (Epic CLIENT M2.2).</summary>
+        CalmCrawler = 4
     }
 
     public readonly struct PostBountyCommand
@@ -71,6 +73,17 @@ namespace Simpiens.Intervention
         }
     }
 
+    /// <summary>The player calms one crawler (the dossier's Calm Frustration).</summary>
+    public readonly struct CalmCrawlerCommand
+    {
+        public readonly EntityId CrawlerId;
+
+        public CalmCrawlerCommand(EntityId crawlerId)
+        {
+            CrawlerId = crawlerId;
+        }
+    }
+
     /// <summary>
     /// A strongly-typed data object representing a player input or external intervention.
     /// Operates as a zero-allocation command struct applied at fixed simulation tick boundaries.
@@ -82,12 +95,14 @@ namespace Simpiens.Intervention
         public readonly PostBountyCommand PostBounty;
         public readonly CancelBountyCommand CancelBounty;
         public readonly UpdateStallPricesCommand UpdateStallPrices;
+        public readonly CalmCrawlerCommand CalmCrawler;
 
         public string LegacyCommandName => CommandType switch
         {
             InfluenceCommandType.PostBounty => "PostBounty",
             InfluenceCommandType.CancelBounty => "CancelBounty",
             InfluenceCommandType.UpdateStallPrices => "UpdateStallPrices",
+            InfluenceCommandType.CalmCrawler => "CalmCrawler",
             _ => string.Empty
         };
 
@@ -96,13 +111,15 @@ namespace Simpiens.Intervention
             InfluenceCommandType commandType,
             in PostBountyCommand postBounty = default,
             in CancelBountyCommand cancelBounty = default,
-            in UpdateStallPricesCommand updateStallPrices = default)
+            in UpdateStallPricesCommand updateStallPrices = default,
+            in CalmCrawlerCommand calmCrawler = default)
         {
             SourceId = sourceId;
             CommandType = commandType;
             PostBounty = postBounty;
             CancelBounty = cancelBounty;
             UpdateStallPrices = updateStallPrices;
+            CalmCrawler = calmCrawler;
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)
@@ -120,6 +137,11 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.UpdateStallPrices, updateStallPrices: cmd);
         }
 
+        public static InfluenceEvent CreateCalmCrawler(string sourceId, EntityId crawlerId)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.CalmCrawler, calmCrawler: new CalmCrawlerCommand(crawlerId));
+        }
+
         /// <summary>
         /// Legacy constructor for backward compatibility with string-based tests and tools.
         /// Parses CSV payloads at instantiation time rather than inside the simulation hot loop.
@@ -130,6 +152,7 @@ namespace Simpiens.Intervention
             PostBounty = default;
             CancelBounty = default;
             UpdateStallPrices = default;
+            CalmCrawler = default;
 
             if (string.Equals(commandType, "PostBounty", StringComparison.OrdinalIgnoreCase))
             {
@@ -191,6 +214,14 @@ namespace Simpiens.Intervention
 
                         UpdateStallPrices = new UpdateStallPricesCommand(sId, ration, ore, herb);
                     }
+                }
+            }
+            else if (string.Equals(commandType, "CalmCrawler", StringComparison.OrdinalIgnoreCase))
+            {
+                CommandType = InfluenceCommandType.CalmCrawler;
+                if (!string.IsNullOrEmpty(payload) && EntityId.TryParse(payload.Trim(), out var crawlerId))
+                {
+                    CalmCrawler = new CalmCrawlerCommand(crawlerId);
                 }
             }
             else
