@@ -184,7 +184,7 @@ flowchart TB
     - Ported scenarios: `QuickSaveButtonsScenario`; `SessionSwitchScenario` (the outpost comes back as a fresh boot: ids, positions, personalities, ledger, stall, bounties, exploration); and `ShroudViewScenario`'s camera part (200 frames checked, worst 0.020 against Unity's 0.25 tolerance).
     - Map labels never reach a neighbour on their row. The Dev Map's pen titles shrink to fit, and a row shares one size; Floor 1's are unchanged.
     - The header is tightened to fit 1280 px with Save and Load.
-- [x] Text cleanup T1: the fonts and their baker (2026-10-18; plan `.agents/client_text_plan.md`, producer: Inter, smooth labels).
+- [x] Text cleanup T1: the fonts and their baker (2026-10-18; producer: Inter, smooth labels).
     - Inter (SIL OFL 1.1) Regular and Bold sources, with their licence, sit in `dotnet/Simpiens.FontBaker/Fonts/Inter`.
     - `FontSet` (Presentation) lists 15 faces: Regular 10–13, and Bold 10–16 plus 20, 24, 28 and 32 for the map's labels.
     - `Simpiens.FontBaker` bakes them with KernSmith 0.21.0 and FreeType, hinted and grayscale, through Gum's own `BmfcSave` and `GumFontGenerator`. They become BMFont atlases under Gum's cache names in `Simpiens.Client/Content/FontCache`: 30 files, 1.8 MB, ASCII and Latin-1 with kerning. They are copied next to the game and packed as Android assets.
