@@ -1,19 +1,17 @@
 using Gum.Forms.DefaultVisuals.V3;
 using Microsoft.Xna.Framework;
+using Simpiens.Presentation;
 using Simpiens.Presentation.Dashboard;
 
 namespace Simpiens.Client.Ui
 {
     /// <summary>
     /// The dashboard's look (Epic CLIENT M2, D1): Gum's built-in controls in the palette of Unity's
-    /// <c>FacilityDashboard.uss</c> (Tailwind's slate, sky, emerald, amber and red), with Gum's built-in font scaled to
-    /// Unity's 11 to 14 px. A designer's reskin replaces this class; the panels don't change.
+    /// <c>FacilityDashboard.uss</c> (Tailwind's slate, sky, emerald, amber and red), its text in Inter's baked faces
+    /// (<see cref="UiText"/>). A designer's reskin replaces this class; the panels don't change.
     /// </summary>
     public static class UiStyle
     {
-        /// <summary>Gum's built-in font is Arial at 18 px; text is drawn at this scale (about 13.5 px).</summary>
-        public const float TextScale = 0.75f;
-
         public static readonly Color Backdrop = Hex(0x090d16);      // behind the dashboard's panels
         public static readonly Color Header = Hex(0x0d1322);        // the header bar
         public static readonly Color Panel = Hex(0x0f172a);         // panels and windows
@@ -55,8 +53,22 @@ namespace Simpiens.Client.Ui
             colors.TextMuted = TextMuted;
             colors.IconDefault = Text;
 
+            // Gum's controls draw their text in these three styles: baked faces of Inter, 1:1 (no italic is baked)
             var text = style.Text;
-            foreach (var state in new[] { text.Normal, text.Strong, text.Emphasis }) state.SetValue("FontScale", TextScale, "float");
+            SetFace(text.Normal, UiText.Body);
+            SetFace(text.Strong, UiText.BodyBold);
+            SetFace(text.Emphasis, UiText.Body);
+
+            // A text created without a style starts on a baked face, not Gum's built-in Arial
+            MonoGameGum.GueDeriving.TextRuntime.DefaultFont = FontSet.Family;
+            MonoGameGum.GueDeriving.TextRuntime.DefaultFontSize = UiText.Body.Size;
+        }
+
+        private static void SetFace(Gum.DataTypes.Variables.StateSave state, UiText style)
+        {
+            state.SetValue("Font", FontSet.Family, "string");
+            state.SetValue("FontSize", style.Size, "int");
+            state.SetValue("IsBold", style.Bold, "bool");
         }
 
         private static Color Hex(uint rgb) => new Color((int)(rgb >> 16) & 0xff, (int)(rgb >> 8) & 0xff, (int)rgb & 0xff);

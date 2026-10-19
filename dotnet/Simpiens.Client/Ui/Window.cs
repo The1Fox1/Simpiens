@@ -54,8 +54,8 @@ namespace Simpiens.Client.Ui
 
             var titleRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 10f };
             var titles = UiParts.Column(2f);
-            titles.Children.Add(UiParts.Text(title, TitleColor, UiParts.TitleScale, bold: true));
-            titles.Children.Add(UiParts.Text(subtitle, SubtitleColor, UiParts.SmallScale));
+            titles.Children.Add(UiParts.Text(title, TitleColor, UiText.Title));
+            titles.Children.Add(UiParts.Text(subtitle, SubtitleColor, UiText.Small));
             titleRow.Children.Add(titles);
             CloseButton = UiParts.Button("X", 28f, 24f);
             CloseButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
@@ -90,6 +90,6 @@ namespace Simpiens.Client.Ui
         public static ContainerRuntime Gap(float height) => new ContainerRuntime { Width = 1f, Height = height };
 
         /// <summary>A sub-header in Unity's muted caps.</summary>
-        public static TextRuntime SubHeader(string text) => UiParts.Text(text, UiStyle.TextMuted, UiParts.SmallScale, bold: true);
+        public static TextRuntime SubHeader(string text) => UiParts.Text(text, UiStyle.TextMuted, UiText.SmallBold);
     }
 }

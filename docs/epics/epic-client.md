@@ -190,6 +190,13 @@ flowchart TB
     - `Simpiens.FontBaker` bakes them with KernSmith 0.21.0 and FreeType, hinted and grayscale, through Gum's own `BmfcSave` and `GumFontGenerator`. They become BMFont atlases under Gum's cache names in `Simpiens.Client/Content/FontCache`: 30 files, 1.8 MB, ASCII and Latin-1 with kerning. They are copied next to the game and packed as Android assets.
     - The bake is deterministic: two bakes are byte-identical.
     - Tests: `FontSet`'s names are Gum's; every face ships; the committed atlases equal a fresh bake (the font golden); Gum draws every face from its atlas with no fallback.
+- [x] Text cleanup T2: the UI on the baked fonts (2026-10-18).
+    - `UiText` defines the dashboard's text styles in Unity's sizes, each a baked face: Title 15 bold, Heading 14 bold, Body 13, Status 12, Small 11, Badge 10, and their bold forms.
+    - `UiParts` styles a text with its font, size and weight set together under suspended layout, so Gum looks the face up once.
+    - Gum's control styles and its default font are Inter. No `FontScale` is left.
+    - Gum's property errors (a font it can't find) are logged as warnings instead of failing silently.
+    - The merchant's status bar is laid out as a row, because Inter is wider.
+    - Tests: across the panels, both windows with their drop-downs open, a save and the Dev Map, Gum reports no missing font, and every text (over 100) draws at scale 1 from a baked face. The five UI references are re-recorded, each looked at whole and magnified.
 
 ---
 

@@ -67,20 +67,20 @@ namespace Simpiens.Client.Ui
             detail.Width = -(2f * Outer + 6f * Margin + SectorsWidth + DossierWidth);
             detailBody.HeightUnits = DimensionUnitType.RelativeToParent; // the events fill what is left (Unity's flex-grow)
             detailBody.Height = -2f * Inner;
-            _sectorTitle = UiParts.Text(string.Empty, UiStyle.TextBright, UiParts.TitleScale, bold: true);
+            _sectorTitle = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.Title);
             detailBody.Children.Add(_sectorTitle);
-            _sectorDescription = Wrapped(string.Empty, Slate, UiParts.BodyScale);
+            _sectorDescription = Wrapped(string.Empty, Slate, UiText.Body);
             var description = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 36f }; // two lines
             description.Children.Add(_sectorDescription);
             detailBody.Children.Add(description);
             detailBody.Children.Add(Window.Gap(8f));
             detailBody.Children.Add(Window.SubHeader("RESIDENTS IN SECTOR"));
-            _residentsEmpty = UiParts.Text("No residents in this sector.", UiStyle.TextMuted, UiParts.SmallScale);
+            _residentsEmpty = UiParts.Text("No residents in this sector.", UiStyle.TextMuted, UiText.Small);
             detailBody.Children.Add(_residentsEmpty);
             _residentsList = Scroll(detailBody, 240f, 6f); // Unity's max-height
             detailBody.Children.Add(Window.Gap(8f));
             detailBody.Children.Add(Window.SubHeader("RECENT SECTOR EVENTS"));
-            _eventsEmpty = UiParts.Text("Nothing has happened here yet.", UiStyle.TextMuted, UiParts.SmallScale);
+            _eventsEmpty = UiParts.Text("Nothing has happened here yet.", UiStyle.TextMuted, UiText.Small);
             detailBody.Children.Add(_eventsEmpty);
             _eventsList = Scroll(detailBody, 0f, 4f, fill: true);
             detail.Children.Add(detailBody);
@@ -91,14 +91,14 @@ namespace Simpiens.Client.Ui
             dossier.XUnits = GeneralUnitType.PixelsFromLarge;
             dossier.XOrigin = HorizontalAlignment.Right;
             dossier.X = -(Outer + Margin);
-            _dossierEmpty = Wrapped(DossierModel.EmptyText, UiStyle.TextMuted, UiParts.BodyScale);
+            _dossierEmpty = Wrapped(DossierModel.EmptyText, UiStyle.TextMuted, UiText.Body);
             dossierBody.Children.Add(Window.Gap(20f));
             dossierBody.Children.Add(_dossierEmpty);
             _dossierDetails = UiParts.Column(4f);
             _dossierDetails.WidthUnits = DimensionUnitType.RelativeToParent;
             _dossierDetails.Width = 0f;
             var titleRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 26f };
-            _dossierName = UiParts.Text(string.Empty, Title, UiParts.TitleScale, bold: true);
+            _dossierName = UiParts.Text(string.Empty, Title, UiText.Title);
             UiParts.CentreVertically(_dossierName);
             titleRow.Children.Add(_dossierName);
             var badge = Badge(out _dossierBadge, out _dossierBadgeFill);
@@ -121,12 +121,12 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(intent);
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)"));
-            _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiParts.SmallScale);
+            _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
             _affinitiesList = Scroll(_dossierDetails, 120f, 3f); // Unity's max-height
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("PLAYER INTERVENTION"));
-            CalmButton = UiParts.Button("Calm Frustration", DossierWidth - 2f * Inner, 32f, UiParts.BodyScale);
+            CalmButton = UiParts.Button("Calm Frustration", DossierWidth - 2f * Inner, 32f, UiText.BodyBold);
             CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
             _dossierDetails.Children.Add(CalmButton.Visual);
             dossierBody.Children.Add(_dossierDetails);
@@ -241,7 +241,7 @@ namespace Simpiens.Client.Ui
             {
                 if (i == _affinityRows.Count)
                 {
-                    var text = UiParts.Text(string.Empty, Light, UiParts.SmallScale);
+                    var text = UiParts.Text(string.Empty, Light, UiText.Small);
                     _affinityRows.Add(text);
                     _affinitiesList.Children.Add(text);
                 }
@@ -286,7 +286,7 @@ namespace Simpiens.Client.Ui
             body.Width = -2f * Inner;
             if (header != null)
             {
-                body.Children.Add(UiParts.Text(header, UiStyle.TextBright, UiParts.TitleScale * 0.95f, bold: true));
+                body.Children.Add(UiParts.Text(header, UiStyle.TextBright, UiText.Heading));
                 body.Children.Add(Window.Gap(2f));
                 body.Children.Add(Window.Rule());
                 body.Children.Add(Window.Gap(6f));
@@ -318,9 +318,9 @@ namespace Simpiens.Client.Ui
             return stack;
         }
 
-        private static TextRuntime Wrapped(string text, Color color, float scale)
+        private static TextRuntime Wrapped(string text, Color color, UiText style)
         {
-            var label = UiParts.Text(text, color, scale);
+            var label = UiParts.Text(text, color, style);
             label.WidthUnits = DimensionUnitType.RelativeToParent;
             label.Width = 0f;
             return label;
@@ -331,7 +331,7 @@ namespace Simpiens.Client.Ui
             var box = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 6f };
             UiParts.AddFill(box, Deep);
             box.Children.Add(new ColoredRectangleRuntime { Color = Blue, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
-            var text = UiParts.Text(string.Empty, Light, UiParts.SmallScale);
+            var text = UiParts.Text(string.Empty, Light, UiText.Small);
             text.X = 8f;
             text.Y = 3f;
             text.WidthUnits = DimensionUnitType.RelativeToParent;
@@ -343,11 +343,11 @@ namespace Simpiens.Client.Ui
 
         private static TextRuntime IntentRow(ContainerRuntime box, string key, float y)
         {
-            var keyText = UiParts.Text(key, UiStyle.TextMuted, UiParts.SmallScale);
+            var keyText = UiParts.Text(key, UiStyle.TextMuted, UiText.Small);
             keyText.X = 10f;
             keyText.Y = y;
             box.Children.Add(keyText);
-            var value = UiParts.Text(string.Empty, UiStyle.Accent, UiParts.BodyScale, bold: true);
+            var value = UiParts.Text(string.Empty, UiStyle.Accent, UiText.BodyBold);
             value.X = 65f;
             value.Y = y - 1f;
             box.Children.Add(value);
@@ -360,7 +360,7 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(badge);
             fill = new ColoredRectangleRuntime { WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
             badge.Children.Add(fill);
-            text = UiParts.Text(string.Empty, Color.White, UiParts.SmallScale * 0.95f, bold: true);
+            text = UiParts.Text(string.Empty, Color.White, UiText.Badge);
             text.X = 6f;
             text.Y = 2f;
             badge.Children.Add(text);
@@ -382,12 +382,12 @@ namespace Simpiens.Client.Ui
                 Root.Children.Add(_fill);
                 Root.Children.Add(_outline);
                 Root.Children.Add(_bar);
-                Name = UiParts.Text(string.Empty, UiStyle.TextBright, UiParts.BodyScale, bold: true);
+                Name = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
                 Name.X = 12f;
                 if (withDetail)
                 {
                     Name.Y = 7f;
-                    Detail = UiParts.Text(string.Empty, UiStyle.TextMuted, UiParts.SmallScale);
+                    Detail = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
                     Detail.X = 12f;
                     Detail.Y = 26f;
                     Root.Children.Add(Detail);
@@ -434,7 +434,7 @@ namespace Simpiens.Client.Ui
             public DriveBar(ContainerRuntime parent, string label, Color color)
             {
                 var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 20f };
-                var name = UiParts.Text(label, Slate, UiParts.BodyScale);
+                var name = UiParts.Text(label, Slate, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);
                 var track = new ColoredRectangleRuntime { Color = UiStyle.Border, X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
@@ -442,7 +442,7 @@ namespace Simpiens.Client.Ui
                 row.Children.Add(track);
                 _fill = new ColoredRectangleRuntime { Color = color, WidthUnits = DimensionUnitType.PercentageOfParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f };
                 track.Children.Add(_fill);
-                _value = UiParts.Text("0%", Light, UiParts.SmallScale);
+                _value = UiParts.Text("0%", Light, UiText.Small);
                 _value.XUnits = GeneralUnitType.PixelsFromLarge;
                 _value.XOrigin = HorizontalAlignment.Right;
                 UiParts.CentreVertically(_value);

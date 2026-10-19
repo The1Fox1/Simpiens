@@ -6,31 +6,40 @@ using Gum.Wireframe;
 using Microsoft.Xna.Framework;
 using MonoGameGum.GueDeriving;
 using RenderingLibrary.Graphics;
+using Simpiens.Presentation;
 
 namespace Simpiens.Client.Ui
 {
     /// <summary>The dashboard's building blocks in Gum: text in Unity's sizes, stacks, boxes and Unity's pill badges.</summary>
     public static class UiParts
     {
-        /// <summary>Gum's built-in font is 18 px; Unity's sizes as scales of it.</summary>
-        public const float TitleScale = 0.85f;   // 15-16 px titles
-        public const float BodyScale = 0.7f;     // 12-13 px
-        public const float SmallScale = 0.64f;   // 11 px
-
-        public static TextRuntime Text(string text, Color color, float scale = BodyScale, bool bold = false)
+        public static TextRuntime Text(string text, Color color, UiText style)
         {
             var label = new TextRuntime
             {
                 Text = text,
                 Color = color,
-                FontScale = scale,
-                IsBold = bold,
                 WidthUnits = DimensionUnitType.RelativeToChildren,
                 HeightUnits = DimensionUnitType.RelativeToChildren,
                 Width = 0f,
                 Height = 0f,
             };
+            Style(label, style);
             return label;
+        }
+
+        /// <summary>
+        /// Gives a text one of the baked faces, drawn 1:1. The three font properties are set under suspended layout, so
+        /// Gum looks the face up once instead of once per property (in-between faces aren't baked).
+        /// </summary>
+        public static void Style(TextRuntime text, UiText style)
+        {
+            text.SuspendLayout();
+            text.Font = FontSet.Family;
+            text.FontSize = style.Size;
+            text.IsBold = style.Bold;
+            text.FontScale = 1f;
+            text.ResumeLayout();
         }
 
         /// <summary>A left-to-right stack sized to its children, centred vertically in its parent.</summary>
@@ -81,7 +90,7 @@ namespace Simpiens.Client.Ui
         }
 
         /// <summary>Unity's pill badge: a tinted box with a coloured outline around bold text.</summary>
-        public static ContainerRuntime Pill(out TextRuntime text, string initial, Color tint, Color border, Color textColor, float scale = SmallScale)
+        public static ContainerRuntime Pill(out TextRuntime text, string initial, Color tint, Color border, Color textColor, UiText? style = null)
         {
             var pill = new ContainerRuntime
             {
@@ -91,7 +100,7 @@ namespace Simpiens.Client.Ui
                 Height = 3f,  // bottom padding
             };
             AddFill(pill, tint, border);
-            text = Text(initial, textColor, scale, bold: true);
+            text = Text(initial, textColor, style ?? UiText.SmallBold);
             text.X = 8f;
             text.Y = 3f;
             pill.Children.Add(text);
@@ -108,7 +117,7 @@ namespace Simpiens.Client.Ui
         /// <summary>A colour at an alpha, as Unity's rgba(r, g, b, a) backgrounds.</summary>
         public static Color Alpha(Color color, float alpha) => new Color(color.R, color.G, color.B, (byte)(alpha * 255f + 0.5f));
 
-        public static Button Button(string text, float width, float height = 28f, float scale = SmallScale)
+        public static Button Button(string text, float width, float height = 28f, UiText? style = null)
         {
             var button = new Button { Text = text };
             // Gum's button sizes itself from its text by default: these are fixed sizes, as Unity's were
@@ -116,7 +125,7 @@ namespace Simpiens.Client.Ui
             button.Visual.HeightUnits = DimensionUnitType.Absolute;
             button.Width = width;
             button.Height = height;
-            SetTextScale(button.Visual, scale);
+            SetTextStyle(button.Visual, style ?? UiText.SmallBold);
             return button;
         }
 
@@ -132,13 +141,13 @@ namespace Simpiens.Client.Ui
             return slider;
         }
 
-        /// <summary>Sets the scale of every text inside a control's visual (Gum's styles set one scale for all).</summary>
-        public static void SetTextScale(GraphicalUiElement visual, float scale)
+        /// <summary>Gives every text inside a control's visual the same style (Gum's own styles cover the rest).</summary>
+        public static void SetTextStyle(GraphicalUiElement visual, UiText style)
         {
-            if (visual is TextRuntime text) text.FontScale = scale;
+            if (visual is TextRuntime text) Style(text, style);
             foreach (var child in visual.Children)
             {
-                if (child is GraphicalUiElement element) SetTextScale(element, scale);
+                if (child is GraphicalUiElement element) SetTextStyle(element, style);
             }
         }
 

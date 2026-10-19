@@ -30,20 +30,21 @@ namespace Simpiens.Client.Ui
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
             UiParts.AddFill(statusBar, UiParts.Hex(0x0b1322), UiStyle.Border);
-            _status = UiParts.Text(string.Empty, UiStyle.Text, UiParts.BodyScale, bold: true);
-            _status.X = 12f;
+            // Unity spread the three across the bar; at Inter's widths the treasury follows the status instead
+            var left = UiParts.Row(14f);
+            left.X = 12f;
+            _status = UiParts.Text(string.Empty, UiStyle.Text, UiText.StatusBold);
             UiParts.CentreVertically(_status);
-            _treasury = UiParts.Text(string.Empty, GoldText, UiParts.BodyScale, bold: true);
-            _treasury.XUnits = GeneralUnitType.PixelsFromMiddle;
-            _treasury.XOrigin = HorizontalAlignment.Center;
+            _treasury = UiParts.Text(string.Empty, GoldText, UiText.StatusBold);
             UiParts.CentreVertically(_treasury);
-            _stock = UiParts.Text(string.Empty, StockText, UiParts.BodyScale);
+            left.Children.Add(_status);
+            left.Children.Add(_treasury);
+            _stock = UiParts.Text(string.Empty, StockText, UiText.Status);
             _stock.XUnits = GeneralUnitType.PixelsFromLarge;
             _stock.XOrigin = HorizontalAlignment.Right;
             _stock.X = -12f;
             UiParts.CentreVertically(_stock);
-            statusBar.Children.Add(_status);
-            statusBar.Children.Add(_treasury);
+            statusBar.Children.Add(left);
             statusBar.Children.Add(_stock);
             body.Children.Add(statusBar);
             body.Children.Add(Window.Gap(14f));
@@ -57,10 +58,10 @@ namespace Simpiens.Client.Ui
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
             var footer = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 48f };
-            _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiParts.SmallScale);
+            _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.Button("APPLY COMMODITY PRICES", 210f, 32f, UiParts.BodyScale);
+            ApplyButton = UiParts.Button("APPLY COMMODITY PRICES", 210f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);
@@ -88,8 +89,8 @@ namespace Simpiens.Client.Ui
             var labels = UiParts.Column(2f);
             labels.X = 12f;
             UiParts.CentreVertically(labels);
-            labels.Children.Add(UiParts.Text(title, RowTitle, UiParts.BodyScale, bold: true));
-            labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiParts.SmallScale));
+            labels.Children.Add(UiParts.Text(title, RowTitle, UiText.BodyBold));
+            labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiText.Small));
             row.Children.Add(labels);
 
             var slider = UiParts.Slider(MerchantModel.MinPrice, MerchantModel.MaxPrice, 1);
@@ -101,7 +102,7 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(slider.Visual);
             row.Children.Add(slider.Visual);
 
-            var shown = UiParts.Text(MerchantModel.PriceText(MerchantModel.MinPrice), UiStyle.Accent, UiParts.BodyScale, bold: true);
+            var shown = UiParts.Text(MerchantModel.PriceText(MerchantModel.MinPrice), UiStyle.Accent, UiText.BodyBold);
             shown.XUnits = GeneralUnitType.PixelsFromLarge;
             shown.XOrigin = HorizontalAlignment.Right;
             shown.X = -12f;

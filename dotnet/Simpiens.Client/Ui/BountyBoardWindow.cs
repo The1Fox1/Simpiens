@@ -50,7 +50,7 @@ namespace Simpiens.Client.Ui
             countPill.XOrigin = HorizontalAlignment.Right;
             listHeader.Children.Add(countPill);
             list.Children.Add(listHeader);
-            _empty = UiParts.Text("No active contracts. Post one to put the crew to work.", UiStyle.TextMuted, UiParts.SmallScale);
+            _empty = UiParts.Text("No active contracts. Post one to put the crew to work.", UiStyle.TextMuted, UiText.Small);
             list.Children.Add(_empty);
             _cards = UiParts.Column(6f);
             _cards.WidthUnits = DimensionUnitType.RelativeToParent;
@@ -77,7 +77,7 @@ namespace Simpiens.Client.Ui
 
             var sectorLabelRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 18f };
             sectorLabelRow.Children.Add(Label("Target Sector:"));
-            _sectorState = UiParts.Text(string.Empty, UiStyle.Accent, UiParts.SmallScale, bold: true);
+            _sectorState = UiParts.Text(string.Empty, UiStyle.Accent, UiText.SmallBold);
             _sectorState.XUnits = GeneralUnitType.PixelsFromLarge;
             _sectorState.XOrigin = HorizontalAlignment.Right;
             sectorLabelRow.Children.Add(_sectorState);
@@ -106,12 +106,12 @@ namespace Simpiens.Client.Ui
 
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(Window.Rule());
-            _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiParts.SmallScale);
+            _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             _feedback.WidthUnits = DimensionUnitType.RelativeToParent;
             _feedback.Width = 0f;
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(_feedback);
-            PostButton = UiParts.Button("POST BOUNTY (ESCROW GOLD)", FormWidth, 34f, UiParts.BodyScale);
+            PostButton = UiParts.Button("POST BOUNTY (ESCROW GOLD)", FormWidth, 34f, UiText.BodyBold);
             form.Children.Add(PostButton.Visual);
             PostButton.Click += (_, _) => { _model.Post(); Bind(); };
             columns.Children.Add(form);
@@ -144,7 +144,7 @@ namespace Simpiens.Client.Ui
             return group;
         }
 
-        private static TextRuntime Label(string text) => UiParts.Text(text, FormLabel, UiParts.SmallScale, bold: true);
+        private static TextRuntime Label(string text) => UiParts.Text(text, FormLabel, UiText.SmallBold);
 
         private static ComboBox Dropdown(string[] choices)
         {
@@ -152,7 +152,7 @@ namespace Simpiens.Client.Ui
             foreach (var choice in choices) box.Items.Add(choice);
             box.Visual.WidthUnits = DimensionUnitType.RelativeToParent;
             box.Width = 0f;
-            UiParts.SetTextScale(box.Visual, UiParts.BodyScale);
+            UiParts.SetTextStyle(box.Visual, UiText.Body);
             return box;
         }
 
@@ -160,7 +160,7 @@ namespace Simpiens.Client.Ui
         {
             var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 18f };
             row.Children.Add(Label(label));
-            var shown = UiParts.Text(format(min), UiStyle.Accent, UiParts.SmallScale, bold: true);
+            var shown = UiParts.Text(format(min), UiStyle.Accent, UiText.SmallBold);
             shown.XUnits = GeneralUnitType.PixelsFromLarge;
             shown.XOrigin = HorizontalAlignment.Right;
             row.Children.Add(shown);
@@ -249,21 +249,21 @@ namespace Simpiens.Client.Ui
         {
             Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 64f };
             UiParts.AddFill(Root, UiStyle.Card, UiStyle.CardBorder);
-            _title = UiParts.Text(string.Empty, UiStyle.TextBright, UiParts.BodyScale, bold: true);
+            _title = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             _title.X = 10f;
             _title.Y = 6f;
             Root.Children.Add(_title);
-            _status = UiParts.Text(string.Empty, Open, UiParts.SmallScale, bold: true);
+            _status = UiParts.Text(string.Empty, Open, UiText.SmallBold);
             _status.XUnits = GeneralUnitType.PixelsFromLarge;
             _status.XOrigin = HorizontalAlignment.Right;
             _status.X = -10f;
             _status.Y = 6f;
             Root.Children.Add(_status);
-            _details = UiParts.Text(string.Empty, UiStyle.TextMuted, UiParts.SmallScale);
+            _details = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _details.X = 10f;
             _details.Y = 24f;
             Root.Children.Add(_details);
-            _reward = UiParts.Text(string.Empty, GoldText, UiParts.SmallScale, bold: true);
+            _reward = UiParts.Text(string.Empty, GoldText, UiText.SmallBold);
             _reward.X = 10f;
             _reward.Y = 42f;
             Root.Children.Add(_reward);

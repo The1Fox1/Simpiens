@@ -41,7 +41,7 @@ namespace Simpiens.Client.Ui
 
             var left = UiParts.Row(10f);
             left.X = 16f;
-            left.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiParts.TitleScale, bold: true));
+            left.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiText.Title));
             left.Children.Add(UiParts.Pill(out _, "OPERATIONAL", UiParts.Alpha(UiStyle.Success, 0.15f), UiStyle.Success, Operational));
             Root.Children.Add(left);
 
@@ -66,10 +66,10 @@ namespace Simpiens.Client.Ui
             right.Children.Add(BountiesButton.Visual);
             right.Children.Add(SaveButton.Visual);
             right.Children.Add(LoadButton.Visual);
-            _tick = UiParts.Text("TICK: 00000", Metric, UiParts.SmallScale, bold: true);
+            _tick = UiParts.Text("TICK: 00000", Metric, UiText.SmallBold);
             UiParts.CentreVertically(_tick);
             right.Children.Add(_tick);
-            _speed = UiParts.Text("SPEED: 1.0x", Metric, UiParts.SmallScale, bold: true);
+            _speed = UiParts.Text("SPEED: 1.0x", Metric, UiText.SmallBold);
             UiParts.CentreVertically(_speed);
             right.Children.Add(_speed);
             TabButton = UiParts.Button("[TAB] MAP VIEW", 120f);
@@ -77,7 +77,7 @@ namespace Simpiens.Client.Ui
             Root.Children.Add(right);
 
             // The save's message, under everything at the bottom left (Unity had it in the header; at 1280 px it doesn't fit there)
-            Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, Metric, UiParts.SmallScale);
+            Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, Metric, UiText.Small);
             Status.X = 16f;
             Status.YUnits = GeneralUnitType.PixelsFromLarge;
             Status.YOrigin = VerticalAlignment.Bottom;

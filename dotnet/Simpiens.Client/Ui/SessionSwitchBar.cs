@@ -29,10 +29,10 @@ namespace Simpiens.Client.Ui
             Root.XUnits = GeneralUnitType.PixelsFromLarge;
             Root.XOrigin = HorizontalAlignment.Right;
             Root.X = -16f;
-            _banner = UiParts.Pill(out _bannerText, string.Empty, Banner, Orange, BannerText, UiParts.BodyScale);
+            _banner = UiParts.Pill(out _bannerText, string.Empty, Banner, Orange, BannerText, UiText.BodyBold);
             UiParts.CentreVertically(_banner);
             Root.Children.Add(_banner);
-            Button = UiParts.Button(string.Empty, 200f, 30f, UiParts.BodyScale);
+            Button = UiParts.Button(string.Empty, 200f, 30f, UiText.BodyBold);
             Root.Children.Add(Button.Visual);
             Button.Click += (_, _) => _model.Switch();
             Bind();

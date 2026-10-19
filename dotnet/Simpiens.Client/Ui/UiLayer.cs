@@ -1,6 +1,8 @@
 using Gum.Wireframe;
 using Microsoft.Xna.Framework;
 using MonoGameGum;
+using Simpiens.Diagnostics;
+using ZLogger;
 
 namespace Simpiens.Client.Ui
 {
@@ -12,6 +14,7 @@ namespace Simpiens.Client.Ui
     public sealed class UiLayer
     {
         private static UiLayer _owner;
+        private static bool _gumErrorsLogged;
         private readonly Game _game;
 
         public UiLayer(Game game) => _game = game;
@@ -27,6 +30,12 @@ namespace Simpiens.Client.Ui
         {
             if (GumService.Default.IsInitialized) GumService.Default.Uninitialize();
             GumService.Default.Initialize(_game, Gum.Forms.DefaultVisualsVersion.V3);
+            if (!_gumErrorsLogged)
+            {
+                // A font Gum can't find (or any property it can't apply) is a warning, never a silent fallback
+                Gum.Wireframe.CustomSetPropertyOnRenderable.PropertyAssignmentError += message => SimLog.Bootstrap.ZLogWarning($"Gum: {message}");
+                _gumErrorsLogged = true;
+            }
             UiStyle.Apply();
             _owner = this;
         }
