@@ -30,8 +30,7 @@ namespace Simpiens.Client.Tests
         {
             var ui = MapView();
             Assert.Equal("TICK: 00000", ui.Game.Dashboard.Header.TickText);
-            ui.Game.Simulation.Step(50);
-            ui.Frame();
+            ui.Ticks(50);
             Assert.Equal("TICK: 00050", ui.Game.Dashboard.Header.TickText);
             Assert.True(ui.Game.DashboardModel.Context.TryGetStall(out var stall));
             Assert.Equal($"{stall.TreasuryGold} GOLD", ui.Game.Dashboard.Header.TreasuryText);

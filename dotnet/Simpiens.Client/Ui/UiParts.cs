@@ -113,6 +113,18 @@ namespace Simpiens.Client.Ui
             return button;
         }
 
+        /// <summary>A slider whose thumb stands out: sky on a slate track (Gum's thumb is the dark button colour).</summary>
+        public static Slider Slider(double minimum, double maximum, double step)
+        {
+            var slider = new Slider { Minimum = minimum, Maximum = maximum, IsSnapToTickEnabled = true, TicksFrequency = step, SmallChange = step, LargeChange = step * 5 };
+            if (slider.Visual is Gum.Forms.DefaultVisuals.V3.SliderVisual visual)
+            {
+                visual.ThumbInstance.BackgroundColor = UiStyle.Accent;
+                visual.TrackBackgroundColor = Hex(0x334155);
+            }
+            return slider;
+        }
+
         /// <summary>Sets the scale of every text inside a control's visual (Gum's styles set one scale for all).</summary>
         public static void SetTextScale(GraphicalUiElement visual, float scale)
         {

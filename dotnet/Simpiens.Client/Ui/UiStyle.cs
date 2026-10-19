@@ -1,5 +1,6 @@
 using Gum.Forms.DefaultVisuals.V3;
 using Microsoft.Xna.Framework;
+using Simpiens.Presentation.Dashboard;
 
 namespace Simpiens.Client.Ui
 {
@@ -28,6 +29,15 @@ namespace Simpiens.Client.Ui
         public static readonly Color Success = Hex(0x10b981);       // emerald
         public static readonly Color Warning = Hex(0xf59e0b);       // amber
         public static readonly Color Danger = Hex(0xef4444);        // red
+
+        /// <summary>Unity's feedback colours: green (0.1, 0.8, 0.4), red (0.95, 0.3, 0.3), amber (0.95, 0.8, 0.2).</summary>
+        public static Color ToneColor(FeedbackTone tone) => tone switch
+        {
+            FeedbackTone.Ok => new Color(0.1f, 0.8f, 0.4f),
+            FeedbackTone.Error => new Color(0.95f, 0.3f, 0.3f),
+            FeedbackTone.Notice => new Color(0.95f, 0.8f, 0.2f),
+            _ => Text,
+        };
 
         /// <summary>Sets Gum's built-in visuals to this palette and text size. Call once Gum is initialized, before building controls.</summary>
         public static void Apply()

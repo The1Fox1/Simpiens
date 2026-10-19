@@ -11,12 +11,16 @@ namespace Simpiens.Client.Ui
     {
         private readonly float _refreshSeconds;
         private float _sinceRefresh;
+        private bool _merchantWasOpen;
 
         public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds)
         {
             Model = model;
             _refreshSeconds = refreshSeconds;
             Header = new HeaderBar();
+            Merchant = new MerchantWindow(model.Merchant);
+            Merchant.Window.CloseButton.Click += (_, _) => { Model.Merchant.Close(); Refresh(); };
+            ui.Root.Children.Add(Merchant.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
             Header.TabButton.Click += (_, _) => TogglePanels();
@@ -26,6 +30,7 @@ namespace Simpiens.Client.Ui
 
         public DashboardModel Model { get; }
         public HeaderBar Header { get; }
+        public MerchantWindow Merchant { get; }
 
         public void TogglePanels()
         {
@@ -53,6 +58,9 @@ namespace Simpiens.Client.Ui
         {
             Model.Refresh();
             Header.Bind(Model);
+            if (Model.Merchant.IsOpen && !_merchantWasOpen) Merchant.LoadPrices(); // opening loads the stall's prices into the sliders
+            _merchantWasOpen = Model.Merchant.IsOpen;
+            Merchant.Bind();
         }
     }
 }

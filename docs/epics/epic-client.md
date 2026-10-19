@@ -155,6 +155,11 @@ flowchart TB
     - Keys: Tab switches between the panels and the map (Unity started on the panels), and Esc closes an open window before it stops the camera.
     - Unity's `MapHudScenario` is ported. The map's render references are now map-only captures; the full frame is captured for the UI's references.
     - Finding F5: KNI can report a negative frame time, which the client clamps.
+- [x] M2.4: the merchant terminal (2026-10-18).
+    - `Window`: Unity's modal. An 82% veil from under the header takes the clicks, and a bordered window sits centred with its title row and close button.
+    - `MerchantWindow` (600 px): the stall's status, treasury and stock, and three price sliders (1–50, sky thumbs) whose prices are loaded from the stall on opening. Apply hands the prices to the model to queue.
+    - Tests: a real thumb drag and the Apply button through the scripted pointer change the stall on the next tick; the open window keeps the map from clicks; the close button; a render reference.
+    - Finding F6: `AdvanceTicks` on a paused clock counts ticks that the paused simulation skips. Tests step with the clock running.
 
 ---
 

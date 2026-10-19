@@ -74,6 +74,19 @@ namespace Simpiens.Client.Tests
             return new UiDriver(game);
         }
 
+        /// <summary>
+        /// Runs <paramref name="ticks"/> real ticks, then a frame. The game is paused (so nothing moves under the
+        /// pointer), and a paused simulation skips its ticks while the clock still counts them (epic F6): the clock
+        /// runs at speed for the steps.
+        /// </summary>
+        public void Ticks(long ticks)
+        {
+            Game.Simulation.Clock.SetTimeMultiplier(1f);
+            Game.Simulation.Step(ticks);
+            Game.Simulation.Clock.SetTimeMultiplier(0f);
+            Frame();
+        }
+
         public void Frame(int count = 1)
         {
             for (int i = 0; i < count; i++) Game.RunOneFrame();
