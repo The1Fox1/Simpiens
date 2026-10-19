@@ -12,9 +12,7 @@ Working document (AGENTS.md, documentation protocol): deleted when M2 closes, af
 
   Then Unity is removed from the repo, in chunks of their own.
 - **Branch:** `feat/kni-client`, as the producer asked (2026-10-18): parity comes before the pull request.
-- **Authority:** the producer's directive covered M0 and M1 only. This plan is executed once the producer says go.
-  - Removing Unity (M2.9) also needs the producer's sign-off of the side-by-side check after M2.7.
-  - Whether Unity's removal goes into the same pull request is an open question (see the end of this plan).
+- **Authority:** the producer said go on 2026-10-18 (see the end of this plan). The agent carries out M2.0 to M2.7, then stops for the producer's side-by-side with Unity. M2.8 and M2.9 follow only after that sign-off, in a second pull request.
 - **Gate (proposal §Roadmap):**
   1. Every panel works in the client, and Unity's view and UI scenarios pass as client tests.
   2. Render references are reviewed for every panel.
@@ -212,7 +210,8 @@ Render references change only on purpose, in the chunk that changes the drawing.
 | A UI scenario needs real-time behaviour (Unity's scenarios ran at 10x) | Drive the client frame by frame with the tick-based view clock, as the M0 and M1 tests do |
 | Removing Unity loses coverage that no one noticed | M2.8 inventories every Unity test first; M2.9 starts only when each has a .NET twin or a recorded reason |
 
-## Open for the producer
-1. **The pull request:** recommended, one at parity (after the M2.7 sign-off), then Unity's removal (M2.8 and M2.9) as a second, smaller pull request from the same branch. The alternative is one pull request with everything.
-2. **D1 and D3** (Gum's built-in visuals in Unity's colours; Unity's layout before the docked one) are the agent's defaults, open to change before M2.0 starts.
-3. **The new Definition of Done wording** for a repo without Unity (M2.8).
+## Decided by the producer (2026-10-18)
+"Go ahead with M2, two PRs, your defaults are fine":
+1. **Two pull requests:** the first at parity (after the M2.7 sign-off), the second removing Unity (M2.8 and M2.9), both from this branch.
+2. **D1 and D3** as written.
+3. **The Definition of Done wording** for a repo without Unity, as proposed in M2.8.

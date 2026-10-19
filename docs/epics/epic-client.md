@@ -25,6 +25,7 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
   - Android and iOS follow the MVP: phones in portrait only, tablets not a priority. An Apple developer account and a Mac exist.
   - Consoles come last, only if mobile goes well.
   - No macOS, no web.
+- **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
   - The UI style and the art designer are still to be decided.

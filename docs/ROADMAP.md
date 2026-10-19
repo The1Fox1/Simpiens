@@ -462,6 +462,7 @@ Before Epic 10: soak test and scaling work (#8).
     - Still open: the producer's side-by-side look beside Unity, which is person-gated, and CI's first run, which comes with a push.
     - Next: M2 (the dashboard in Gum, then Unity retired), when the producer starts it.
   - M2 plan written 2026-10-18 (`.agents/client_m2_plan.md`), on the same branch, because parity comes before the pull request (producer). It covers Gum in the client, an engine-free dashboard model, the calm command as a typed command, then each panel: the header, the merchant, the bounty board, the Tab dashboard, saving and the session switch. Then the producer's side-by-side, Unity-only coverage moved to .NET, and Unity removed. Execution waits for the producer's go-ahead.
+  - **Producer decisions (2026-10-18, M2):** go ahead with M2. Two pull requests: the first at parity (after the side-by-side sign-off following M2.7), the second removing Unity (M2.8 and M2.9). The plan's defaults are approved: Gum's built-in visuals in Unity's palette, Unity's layout first, and, once Unity is gone, a Definition of Done scenario that lives in `dotnet/` (headless or through the client) on the real session, with nothing injected.
 
 ---
 
