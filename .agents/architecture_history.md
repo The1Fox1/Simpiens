@@ -726,3 +726,27 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The client plays the whole game Unity plays. The first pull request waits for the producer's side-by-side.
   - M2.8 (Unity-only coverage moved to .NET) and M2.9 (Unity removed) form the second pull request.
   - Narrow windows wait for M6.
+
+## Epic CLIENT text cleanup: baked fonts, drawn 1:1 (2026-10-18)
+- **Context:** the producer found the client's text rough (blurry, letters not lining up) and asked for a cleanup before M3. They made `main-kni` the acting main until M4 and approved Inter with smooth map labels. The plan was `.agents/client_text_plan.md`, deleted at this close-out.
+- **Findings:**
+  - The UI scaled Gum's 18 px Arial bitmap, and Gum never snaps scaled text to pixels (epic F8).
+  - The map's code-made 5×7 pixel font broke off the whole-pixel scale and had no descenders.
+- **Decisions (agent, producer-approved where noted):**
+  - **One text pipeline.** TrueType fonts are baked offline into BMFont atlases at exact pixel sizes, committed, and drawn 1:1. There is no `FontScale` and no rasterizer at run time.
+  - **Inter (OFL)** in Regular and Bold, 15 faces (producer).
+  - **The baker** (`Simpiens.FontBaker`) uses KernSmith with FreeType through Gum's own `BmfcSave` and `GumFontGenerator`, so the names and metrics are Gum's. A test compares the committed atlases with a fresh bake byte for byte, as with the golden hashes.
+  - **The UI:** `UiText` styles in Unity's sizes. Font properties are set together under suspended layout. Gum's default font is Inter, and its property errors are logged.
+  - **The map:** text moved to screen space (producer: smooth labels). Labels hang on world points, sized by the zoom in baked steps, a size per row so that none overlaps, with a 1 px shadow. `PixelFont`, `WorldText` and `FitLabels` are removed.
+  - The client reads fonts through `TitleContainer`, so the same code reads Android's assets.
+- **Verification:**
+  - one commit per chunk: plan `f493515`, T1 `580740f`, T2 `04e8a09`, T3 `e6483e4`, and the close-out commit;
+  - every re-recorded reference was looked at, the text magnified.
+
+  Final:
+  - `dotnet test` 173/173 (client 110, core 63); golden 3/3;
+  - the MonoGame, Debug desktop and Android builds compile (the APK holds the 30 font files);
+  - frame time 1.4–3.6 ms.
+- **Consequences:**
+  - Any new text (isometric labels, cutscene text boxes, the map designer) takes a face from `FontSet`, adding a size by re-baking.
+  - High-DPI and phone screens (M6) bake larger sets from the same `FontSet`.

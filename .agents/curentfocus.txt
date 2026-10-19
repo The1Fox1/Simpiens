@@ -230,3 +230,6 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   a typed command (core; Unity PlayMode 69/69, golden 3/3); M2.3 header; M2.4 merchant; M2.5 bounty board (PlayerScout DoD
   through the UI: charted@291 of 520); M2.6 Tab dashboard; M2.7 save/load, Dev Map switch (Debug), camera follow. PARITY
   2026-10-18 (dotnet test 147/147). STOPPED for the producer's side-by-side, then PR 1; then M2.8 + M2.9 (PR 2: Unity out).
+  main-kni (= 681d3b5) is the acting main until M4 (producer). TEXT CLEANUP done 2026-10-18 on feat/client-text: baked Inter
+  (KernSmith/FreeType, Gum cache names, font golden), UI 1:1, map labels in screen space; dotnet test 173/173. Next: the
+  producer's look, the PR into main-kni, then M3.

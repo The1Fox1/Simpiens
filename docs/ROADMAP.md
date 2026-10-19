@@ -475,6 +475,10 @@ Before Epic 10: soak test and scaling work (#8).
     - **Causes:** the UI's text is a scaled 18 px bitmap, so Gum stops snapping glyphs to pixels. The map's 5×7 pixel font breaks off the whole-pixel scale and has no descenders.
     - **Fix:** fonts are baked offline (KernSmith and FreeType, Gum's own cache format) at exact sizes and drawn 1:1. Inter is the default typeface. Map text moves to screen space.
     - Chunks T1–T4.
+  - **Text cleanup done (2026-10-18):** T1 (the baker and the committed atlases, with a font golden), T2 (the UI on baked Inter, 1:1) and T3 (the map's text in screen space).
+    - Every text in the client is one of 15 baked Inter faces, drawn 1:1 on whole pixels. The UI's scaled bitmap and the map's pixel font are gone.
+    - Measured: `dotnet test` 173/173 (client 110, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.4–3.6 ms.
+    - The producer's look is open (person-gated); the pull request goes into `main-kni`.
 
 ---
 

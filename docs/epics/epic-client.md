@@ -212,6 +212,9 @@ flowchart TB
         - "UNCHARTED" under its room;
         - the name above its crawler.
     - The map's references are re-recorded (t0, t300, t1500, zoomed, selected, and those under the header and windows, plus the Dev Map), each looked at, some magnified.
+- [x] **Text cleanup complete (2026-10-18):** every text is a baked Inter face drawn 1:1.
+    - Frame time: 2.2 ms (llvmpipe) and 1.4 ms (GPU) for the map with its header; 3.2 and 3.6 ms with the panels refreshed every frame.
+    - The producer's look is open; the plan is deleted.
 
 ---
 
@@ -228,6 +231,7 @@ flowchart TB
 ## 5. Risks
 
 - **Open, person-gated: the producer's side-by-side look** at the client beside Unity, the gate of M1 and of M2.7 (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop` (Debug, with the Dev Map switch) or `-c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **Fonts are baked on Linux:** the font golden compares a FreeType bake with the committed atlases. A bake on another system may differ by a pixel; if that happens, re-commit deliberately or move the baker to StbTrueType, which is managed and identical everywhere.
 - **Narrow windows (M6):** the dashboard is laid out for the default 1280×720 and up. Below that, the header crowds and the detail column narrows (at 800 px it is 112 px wide), as Unity's would have.
 - **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. Two test helpers reach into Gum's and KNI's internals: the scripted cursor uses Gum's internal per-frame cursor method, and an offscreen game is made active through KNI's private flag. Both fail loudly if an update moves them.
 - **The application id is a placeholder (M1.6):** the Android project uses `dev.simpiens.game` until the producer picks the store identity (M4).
@@ -265,6 +269,11 @@ See the proposal's risk table. These matter for M0 and M1:
     - The panels with a dossier at 1280×720: 3.3 ms and about 3.9 ms.
     - The bounty board over the map: 1.3 ms and 0.6 ms.
     - The budget is 33 ms.
+- **F8: scaled text is never pixel-snapped in Gum** (text cleanup).
+    - `BitmapFont.DrawTextLines` places glyphs free-floating (at fractional pixels) whenever a text's scale isn't 1. That is why the UI's scaled 18 px Arial blurred and drifted.
+    - The fix is a baked face per size, drawn 1:1.
+    - Gum finds BMFont files under its cache names (`FontCache/Font{size}{family}[_Bold].fnt`) next to the game. They render pixel-identical to generating in memory.
+    - Gum looks a face up once per property set (font, size, weight), so the three are set together under suspended layout.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---
