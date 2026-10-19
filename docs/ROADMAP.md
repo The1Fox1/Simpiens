@@ -470,6 +470,11 @@ Before Epic 10: soak test and scaling work (#8).
     - Measured: `dotnet test` 147/147 (client 84, core 63); golden check 3/3; the MonoGame, Debug desktop and Android builds compile.
     - Frame time with the panels refreshed every frame: about 4 ms against the 33 ms budget.
     - Next: the producer's side-by-side with Unity, then the first pull request; then M2.8 and M2.9.
+  - **Producer decision (2026-10-18):** the branch `main-kni`, cut at `681d3b5`, acts as the main branch until M4 proves the Android build. Before M3, a cleanup pass begins with the text.
+  - Text cleanup plan written 2026-10-18 (`.agents/client_text_plan.md`, branch `feat/client-text` into `main-kni`):
+    - **Causes:** the UI's text is a scaled 18 px bitmap, so Gum stops snapping glyphs to pixels. The map's 5×7 pixel font breaks off the whole-pixel scale and has no descenders.
+    - **Fix:** fonts are baked offline (KernSmith and FreeType, Gum's own cache format) at exact sizes and drawn 1:1. Inter is the default typeface. Map text moves to screen space.
+    - Chunks T1–T4.
 
 ---
 
