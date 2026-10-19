@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Presentation;
@@ -46,6 +47,29 @@ namespace Simpiens.Client
                 _batch.Draw(atlas.Texture, new Vector2(centre.X, centre.Y), source, tint, -item.Rotation, origin, scale, SpriteEffects.None, 0f);
             }
             if (open >= 0) _batch.End();
+        }
+
+        /// <summary>
+        /// Draws the map's text over it, in screen space: every glyph 1:1 at its whole-pixel place, point-sampled, a batch
+        /// per page in the order given (shadows were written before their text).
+        /// </summary>
+        public void DrawGlyphs(List<ScreenGlyph> glyphs, FontAtlases atlases)
+        {
+            Texture2D open = null;
+            for (int i = 0; i < glyphs.Count; i++)
+            {
+                var glyph = glyphs[i];
+                var page = atlases.Page(glyph.Face, glyph.Page);
+                if (!ReferenceEquals(page, open))
+                {
+                    if (open != null) _batch.End();
+                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+                    open = page;
+                }
+                _batch.Draw(page, new Rectangle(glyph.X, glyph.Y, glyph.Width, glyph.Height), new Rectangle(glyph.SourceX, glyph.SourceY, glyph.Width, glyph.Height),
+                    new Color(glyph.Color.R, glyph.Color.G, glyph.Color.B, glyph.Color.A));
+            }
+            if (open != null) _batch.End();
         }
     }
 }

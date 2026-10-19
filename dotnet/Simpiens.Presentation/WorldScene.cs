@@ -25,6 +25,9 @@ namespace Simpiens.Presentation
 
         public DrawList Items { get; } = new DrawList();
 
+        /// <summary>The map's text this frame: room names, "UNCHARTED", the selected crawler's name (laid out on screen by <see cref="MapLabelLayout"/>).</summary>
+        public List<WorldLabel> Labels { get; } = new List<WorldLabel>(16);
+
         /// <summary>The tiles of the map last built, or null before the first build.</summary>
         public MapTileLayer Tiles => _tiles;
 
@@ -34,11 +37,6 @@ namespace Simpiens.Presentation
         /// <summary>The fog over uncharted sectors, and its fades.</summary>
         public FogOfWar Fog { get; } = new FogOfWar();
 
-        /// <summary>
-        /// Fills <see cref="Items"/> for <paramref name="map"/>, its <paramref name="sectors"/> (charted or not) and
-        /// <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives the animations and
-        /// fades: real time in the game, the tick's time in tests.
-        /// </summary>
         /// <summary>A new session or a load (the clock may have moved either way): the fog and the crawlers' poses start afresh.</summary>
         public void Reset()
         {
@@ -46,9 +44,15 @@ namespace Simpiens.Presentation
             Appearance.Reset();
         }
 
+        /// <summary>
+        /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/>, its <paramref name="sectors"/>
+        /// (charted or not) and <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives
+        /// the animations and fades: real time in the game, the tick's time in tests.
+        /// </summary>
         public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds, WorldSelection selection = null)
         {
             Items.Clear();
+            Labels.Clear();
             if (tick < _lastTick) Fog.Load(map, sectors); // the clock went back: a respawn or a load, same map or not
             _lastTick = tick;
             Fog.Update(map, sectors, viewSeconds);
@@ -56,8 +60,9 @@ namespace Simpiens.Presentation
             {
                 if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
                 AddTiles(_tiles);
-                AddLabels(map);
+                AddRoomNames(map);
                 Fog.Draw(Items, viewSeconds);
+                Fog.AddLabels(Labels, viewSeconds);
             }
 
             if (entities != null)
@@ -80,7 +85,7 @@ namespace Simpiens.Presentation
         {
             if (!selection.TryGetCrawlerPosition(out var at)) return;
             Items.Add(RenderLayer.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize, SelectionRingSize, White);
-            WorldText.Add(Items, selection.CrawlerName(), at + NameOffset, WorldText.LabelPixel, NameColor, RenderLayer.Labels, TextAnchor.LowerCenter);
+            Labels.Add(new WorldLabel(selection.CrawlerName(), at + NameOffset, LabelKind.Name, NameColor));
         }
 
         public const float SelectionRingSize = 0.9f;
@@ -140,55 +145,14 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>The map's room names, centred on their positions in their colours (Unity's MapView labels).</summary>
-        private MapDefinition _labelMap;
-        private float[] _labelPixels;
-
-        private void AddLabels(MapDefinition map)
+        /// <summary>The map's room names, hung on their points; drawn in screen space (<see cref="MapLabelLayout"/>).</summary>
+        private void AddRoomNames(MapDefinition map)
         {
-            if (!ReferenceEquals(map, _labelMap))
-            {
-                _labelPixels = FitLabels(map);
-                _labelMap = map;
-            }
             for (int i = 0; i < map.Labels.Count; i++)
             {
                 var label = map.Labels[i];
-                WorldText.Add(Items, label.Text, label.Position, _labelPixels[i], Rgba32.From(label.Color), RenderLayer.Labels);
+                Labels.Add(new WorldLabel(label.Text, label.Position, LabelKind.Room, Rgba32.From(label.Color)));
             }
-        }
-
-        /// <summary>
-        /// Each label's pixel size: <see cref="WorldText.LabelPixel"/>, unless it would reach a neighbour on its row; then
-        /// small enough that both leave a tenth of their distance free, and the same for its whole row. Floor 1's rooms are wide and keep the full size;
-        /// the Dev Map's pens are 4 units apart (Unity drew its labels in a smaller, smooth font).
-        /// </summary>
-        public static float[] FitLabels(MapDefinition map)
-        {
-            var labels = map.Labels;
-            var sizes = new float[labels.Count];
-            float rowHeight = PixelFont.GlyphHeight * WorldText.LabelPixel;
-            for (int i = 0; i < labels.Count; i++)
-            {
-                float room = float.MaxValue;
-                for (int j = 0; j < labels.Count; j++)
-                {
-                    if (j == i || Math.Abs(labels[i].Position.Y - labels[j].Position.Y) >= rowHeight) continue;
-                    room = Math.Min(room, Math.Abs(labels[i].Position.X - labels[j].Position.X));
-                }
-                int widthPixels = Math.Max(1, PixelFont.MeasurePixels(labels[i].Text));
-                sizes[i] = Math.Min(WorldText.LabelPixel, room * 0.9f / widthPixels);
-            }
-
-            // A row reads as one: every label on it takes the row's smallest size
-            var even = (float[])sizes.Clone();
-            for (int i = 0; i < labels.Count; i++)
-            {
-                for (int j = 0; j < labels.Count; j++)
-                {
-                    if (Math.Abs(labels[i].Position.Y - labels[j].Position.Y) < rowHeight) even[i] = Math.Min(even[i], sizes[j]);
-                }
-            }
-            return even;
         }
 
         private const float DegreesToRadians = MathF.PI / 180f;

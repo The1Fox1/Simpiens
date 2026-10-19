@@ -197,6 +197,21 @@ flowchart TB
     - Gum's property errors (a font it can't find) are logged as warnings instead of failing silently.
     - The merchant's status bar is laid out as a row, because Inter is wider.
     - Tests: across the panels, both windows with their drop-downs open, a save and the Dev Map, Gum reports no missing font, and every text (over 100) draws at scale 1 from a baked face. The five UI references are re-recorded, each looked at whole and magnified.
+- [x] Text cleanup T3: the map's text in screen space (2026-10-18).
+    - Room names, "UNCHARTED" and the selected crawler's name are now label requests (`WorldScene.Labels`). `MapLabelLayout` places them on screen from the baked faces, every glyph on a whole pixel with kerning (`BitmapFontMetrics`, `FontLibrary`).
+    - Room names are a world unit tall in baked steps (10 to 32 px). A row shares one size, the largest at which none overlaps (8 px apart); a row that fits nowhere from 10 px is hidden.
+    - "UNCHARTED" sits on the next line, one size smaller, fading with the fog. The selected name sits above its crawler at 13 px.
+    - Each label has a 1 px shadow.
+    - The client reads the pages through `TitleContainer`, so it works from Android's assets too, and draws them point-sampled after the world.
+    - Removed: the code-made `PixelFont`, `WorldText`, M2.7's `FitLabels` and the font draw sheet.
+    - Tests:
+        - the fonts' metrics parse (ASCII and Latin-1, kerning, '?' fallback);
+        - layout on whole pixels with kerning;
+        - the size steps with zoom;
+        - no overlaps on Floor 1 or the Dev Map at seven zooms;
+        - "UNCHARTED" under its room;
+        - the name above its crawler.
+    - The map's references are re-recorded (t0, t300, t1500, zoomed, selected, and those under the header and windows, plus the Dev Map), each looked at, some magnified.
 
 ---
 

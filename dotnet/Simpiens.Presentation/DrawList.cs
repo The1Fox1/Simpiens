@@ -10,10 +10,8 @@ namespace Simpiens.Presentation
     {
         /// <summary><see cref="ProceduralSprites.All"/>.</summary>
         Sprites = 0,
-        /// <summary><see cref="PixelFont.Glyphs"/>.</summary>
-        Font = 1,
         /// <summary><see cref="FogCloud.Sprite"/>, sampled smoothly.</summary>
-        Fog = 2,
+        Fog = 1,
     }
 
     /// <summary>One sprite to draw this frame, in world units: centred on <see cref="X"/>, <see cref="Y"/>.</summary>

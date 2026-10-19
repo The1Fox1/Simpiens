@@ -198,7 +198,7 @@ namespace Simpiens.Client.Tests
     public class WorldSceneTests
     {
         [Fact]
-        public void TheOutpostSceneIsTheMapsTilesThenPropsThenCrawlersThenLabels()
+        public void TheOutpostSceneIsTheMapsTilesThenPropsThenCrawlersWithItsTextApart()
         {
             using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
@@ -220,7 +220,9 @@ namespace Simpiens.Client.Tests
                 Assert.True(layer >= previousLayer, $"item {i} is on layer {layer} after layer {previousLayer}");
                 previousLayer = layer;
             }
-            Assert.Equal(RenderLayer.Labels, DrawSortKey.Layer(scene.Items[scene.Items.Count - 1].SortKey)); // room names on top
+            Assert.Equal(RenderLayer.Crawlers, DrawSortKey.Layer(scene.Items[scene.Items.Count - 1].SortKey)); // crawlers on top of the map
+            Assert.DoesNotContain(Enumerable.Range(0, scene.Items.Count), i => DrawSortKey.Layer(scene.Items[i].SortKey) == RenderLayer.Labels);
+            Assert.Equal(sim.Host.Current.Map.Labels.Count, scene.Labels.Count(l => l.Kind == LabelKind.Room)); // the text is drawn over it all, in screen space
         }
     }
 

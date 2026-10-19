@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Client.Ui;
@@ -24,6 +25,9 @@ namespace Simpiens.Client
         private readonly SimulationDriver _driver;
         private SpriteBatch _batch;
         private SpriteAtlas[] _sheets;
+        private FontAtlases _fontAtlases;
+        private readonly MapLabelLayout _labelLayout = new MapLabelLayout();
+        private readonly List<ScreenGlyph> _glyphs = new List<ScreenGlyph>(512);
         private WorldRenderer _renderer;
 
         public SimpiensGame(ClientOptions options = null)
@@ -91,6 +95,12 @@ namespace Simpiens.Client
         /// <summary>The player's selection: a crawler (followed or not) and a sector.</summary>
         public WorldSelection Selection { get; }
 
+        /// <summary>The baked fonts' metrics (loaded with the content).</summary>
+        public FontLibrary Fonts { get; private set; }
+
+        /// <summary>How the map's text was placed in the last frame drawn.</summary>
+        public MapLabelLayout LabelLayout => _labelLayout;
+
         /// <summary>The UI layer over the map (Gum).</summary>
         public UiLayer Ui { get; }
 
@@ -135,14 +145,16 @@ namespace Simpiens.Client
         protected override void LoadContent()
         {
             _batch = new SpriteBatch(GraphicsDevice);
-            // By DrawSheet value: the generated art, the pixel font, the fog's cloud
+            // By DrawSheet value: the generated art, the fog's cloud
             _sheets = new[]
             {
                 new SpriteAtlas(GraphicsDevice, ProceduralSprites.All),
-                new SpriteAtlas(GraphicsDevice, PixelFont.Glyphs),
                 new SpriteAtlas(GraphicsDevice, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
             };
             _renderer = new WorldRenderer(_batch, _sheets);
+            // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
+            Fonts = FontLibrary.Load(TitleContainer.OpenStream);
+            _fontAtlases = new FontAtlases(GraphicsDevice, Fonts, TitleContainer.OpenStream);
             Ui.Initialize();
             Dashboard = new DashboardView(Ui, DashboardModel, Options.DashboardRefreshSeconds);
         }
@@ -210,6 +222,7 @@ namespace Simpiens.Client
             if (disposing)
             {
                 if (_sheets != null) foreach (var sheet in _sheets) sheet.Dispose();
+                _fontAtlases?.Dispose();
                 _batch?.Dispose();
                 Ui.Shutdown();
                 Simulation.Dispose();
@@ -247,6 +260,8 @@ namespace Simpiens.Client
             }
             Camera = Rig.ToCamera(width, height);
             _renderer.Draw(Scene.Items, Camera);
+            _labelLayout.Layout(Scene.Labels, Camera, Fonts, _glyphs);
+            _renderer.DrawGlyphs(_glyphs, _fontAtlases);
         }
     }
 }

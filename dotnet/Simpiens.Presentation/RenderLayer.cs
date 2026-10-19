@@ -15,6 +15,7 @@ namespace Simpiens.Presentation
         public const int Fog = 10;
         public const int Crawlers = 20;
         public const int Selection = 25;
+        /// <summary>The map's text: drawn after the world, in screen space (<see cref="MapLabelLayout"/>), so always on top.</summary>
         public const int Labels = 30;
     }
 }

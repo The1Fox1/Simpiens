@@ -18,11 +18,6 @@ namespace Simpiens.Presentation
         public const float FogAlpha = 0.97f;
         public const string UnchartedText = "UNCHARTED";
 
-        /// <summary>
-        /// How far under the room's name "UNCHARTED" sits. Unity used 0.9 with its smaller TextMesh; the pixel font's
-        /// line is 0.875 tall, so the line moves down to keep a gap of two font pixels.
-        /// </summary>
-        public const float UnchartedLineOffset = 1.125f;
         private static readonly Rgba FogColor = new Rgba(0.07f, 0.08f, 0.11f, FogAlpha);
         private static readonly Rgba UnchartedColor = new Rgba(0.75f, 0.77f, 0.82f, 1f);
 
@@ -32,6 +27,7 @@ namespace Simpiens.Presentation
             public int SectorId { get; internal set; }
             /// <summary>The cloud's rectangle: the sector's bounds inset by the walls' half-thickness.</summary>
             public RectF Area { get; internal set; }
+            /// <summary>Where "UNCHARTED" hangs: on the room's name (the layout puts it on the next line), or the sector's centre.</summary>
             public Vec2 LabelAt { get; internal set; }
             /// <summary>The view time the fade began, or null while the sector is uncharted.</summary>
             public float? FadeStart { get; internal set; }
@@ -96,7 +92,7 @@ namespace Simpiens.Presentation
             }
         }
 
-        /// <summary>Adds the clouds (Fog layer) and their "UNCHARTED" lines (Labels layer) to <paramref name="list"/>.</summary>
+        /// <summary>Adds the clouds to <paramref name="list"/> (the Fog layer).</summary>
         public void Draw(DrawList list, float viewSeconds)
         {
             for (int i = 0; i < _overlays.Count; i++)
@@ -106,8 +102,17 @@ namespace Simpiens.Presentation
                 var area = overlay.Area;
                 var fog = new Rgba(FogColor.R, FogColor.G, FogColor.B, FogAlpha * (1f - t));
                 list.Add(RenderLayer.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width, area.Height, Rgba32.From(fog), 0f, DrawSheet.Fog);
-                var label = new Rgba(UnchartedColor.R, UnchartedColor.G, UnchartedColor.B, 1f - t);
-                WorldText.Add(list, UnchartedText, overlay.LabelAt, WorldText.LabelPixel, Rgba32.From(label), RenderLayer.Labels);
+            }
+        }
+
+        /// <summary>Adds each overlay's "UNCHARTED", fading with its cloud, under the room's name.</summary>
+        public void AddLabels(List<WorldLabel> labels, float viewSeconds)
+        {
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                var overlay = _overlays[i];
+                float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
+                labels.Add(new WorldLabel(UnchartedText, overlay.LabelAt, LabelKind.Uncharted, Rgba32.From(new Rgba(UnchartedColor.R, UnchartedColor.G, UnchartedColor.B, 1f - t))));
             }
         }
 
@@ -132,7 +137,7 @@ namespace Simpiens.Presentation
             var at = b.Center;
             for (int i = 0; i < map.Labels.Count; i++)
             {
-                if (sector.Contains(map.Labels[i].Position)) { at = map.Labels[i].Position + new Vec2(0f, -UnchartedLineOffset); break; }
+                if (sector.Contains(map.Labels[i].Position)) { at = map.Labels[i].Position; break; }
             }
             return new Overlay { SectorId = sector.Id, Area = area, LabelAt = at };
         }

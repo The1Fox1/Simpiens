@@ -76,9 +76,11 @@ namespace Simpiens.Client.Tests
             Assert.All(clouds, c => Assert.Equal(RenderLayer.Fog, DrawSortKey.Layer(c.SortKey)));
             Assert.True(RenderLayer.Props < RenderLayer.Fog && RenderLayer.Fog < RenderLayer.Crawlers);
 
-            int unchartedGlyphs = FogOfWar.UnchartedText.Length * scene.Fog.Overlays.Count;
-            int nameGlyphs = sim.Host.Current.Map.Labels.Sum(l => l.Text.Count(c => c != ' '));
-            Assert.Equal(nameGlyphs + unchartedGlyphs, items.Count(i => i.Sheet == DrawSheet.Font));
+            // "UNCHARTED" hangs on each uncharted room's name (laid out on the next line, in screen space: MapTextTests)
+            var uncharted = scene.Labels.Where(l => l.Kind == LabelKind.Uncharted).ToList();
+            Assert.Equal(scene.Fog.Overlays.Count, uncharted.Count);
+            Assert.All(uncharted, u => Assert.Contains(sim.Host.Current.Map.Labels, l => l.Position == u.At));
+            Assert.All(uncharted, u => Assert.Equal(FogOfWar.UnchartedText, u.Text));
         }
 
         [Fact]
