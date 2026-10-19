@@ -293,6 +293,18 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void TheDossierNamesThePlayerAmongACrawlersAffinities()
+        {
+            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            sim.Step(600); // trades build feelings toward the outpost
+            var trader = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && e.Agent.Memory?.AffinityMap.ContainsKey(WorldRegistry.PlayerEntityId) == true);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.SelectCrawler(trader.Id);
+            Assert.Contains(model.Dossier.Affinities, line => line.StartsWith(DossierModel.PlayerName + ": W:"));
+        }
+
+        [Fact]
         public void ResidentsSayWhatTheyAreDoingAndEventsReadAsTheChronicle()
         {
             using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);

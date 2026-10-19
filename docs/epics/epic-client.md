@@ -167,6 +167,14 @@ flowchart TB
         - The player opens the board over the map, picks Scout and the Overgrowth from the drop-downs by clicking, and posts at the default 25 g.
         - Measured on the default seed: claimed at tick 2, charted at tick 291 (bound 520), fog gone 1.5 s later (bound 2 s). Once the seeded scout charts the Deep Seam, Scout offers nothing.
     - A Gather contract posted and cancelled from its card; a render reference.
+- [x] M2.6: the Tab dashboard (2026-10-18).
+    - `DashboardPanels` has Unity's three panels, opaque over the map, under the header:
+        - the sectors, as cards with their occupancy or SHROUDED;
+        - the selected room's name, description, residents with their state badges, and its last 100 events;
+        - the dossier: drive bars, GOAP goal and action, affinities, and the calm button.
+    - Residents (240 px), events (the rest of the column) and affinities (120 px) scroll.
+    - Rows are pooled. Sector and resident cards take clicks and stay in step with the map's selection both ways. The game starts on the panels, as Unity's did.
+    - Deviation: the player shows as "You (the outpost)" in affinities, where Unity printed the first six characters of its id.
 
 ---
 

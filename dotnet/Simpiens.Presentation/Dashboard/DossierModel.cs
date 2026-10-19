@@ -12,6 +12,9 @@ namespace Simpiens.Presentation.Dashboard
     /// </summary>
     public sealed class DossierModel
     {
+        /// <summary>The name shown for the player in a crawler's affinities (trades and bounties are with the outpost; Unity printed the id's first characters).</summary>
+        public const string PlayerName = "You (the outpost)";
+
         public const string EmptyText = "Select an agent from the sector roster to view live psychological & biological telemetry.";
 
         private readonly DashboardContext _context;
@@ -78,7 +81,8 @@ namespace Simpiens.Presentation.Dashboard
             foreach (var pair in map)
             {
                 var peer = _context.Registry.GetEntity(pair.Key);
-                string peerName = peer != null ? _context.FriendlyName(peer.Id, peer.Name) : pair.Key.ToString().Substring(0, 6);
+                string peerName = pair.Key == WorldRegistry.PlayerEntityId ? PlayerName
+                    : peer != null ? _context.FriendlyName(peer.Id, peer.Name) : pair.Key.ToString().Substring(0, 6);
                 var rel = pair.Value;
                 _affinities.Add(Invariant($"{peerName}: W:{rel.Warmth:+0;-#;0} | T:{rel.Trust:+0;-#;0} | F:{rel.Fear:+0;-#;0} | R:{rel.Respect:+0;-#;0} ({rel.InteractionCount}x)"));
             }
