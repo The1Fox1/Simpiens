@@ -461,6 +461,7 @@ Before Epic 10: soak test and scaling work (#8).
   - **M1 (top-down parity on desktop) is complete:** render tests pass for fog, props, labels, animation, the camera and selection; the Android client compiles. Measured: `dotnet test` 111/111 (client 49, core 62); golden check 3/3; the MonoGame and Android builds compile.
     - Still open: the producer's side-by-side look beside Unity, which is person-gated, and CI's first run, which comes with a push.
     - Next: M2 (the dashboard in Gum, then Unity retired), when the producer starts it.
+  - M2 plan written 2026-10-18 (`.agents/client_m2_plan.md`), on the same branch, because parity comes before the pull request (producer). It covers Gum in the client, an engine-free dashboard model, the calm command as a typed command, then each panel: the header, the merchant, the bounty board, the Tab dashboard, saving and the session switch. Then the producer's side-by-side, Unity-only coverage moved to .NET, and Unity removed. Execution waits for the producer's go-ahead.
 
 ---
 
