@@ -69,6 +69,27 @@ namespace Simpiens.Client.Tests
             for (int i = 0; i < frames; i++) game.RunOneFrame();
             return game;
         }
+
+        /// <summary>
+        /// Gives an offscreen game focus. The window never gets it from the system, and without it the game reads no
+        /// input and Gum handles none. KNI keeps the flag in its private game strategy.
+        /// </summary>
+        public static void MakeActive(SimpiensGame game)
+        {
+            var strategy = FieldIn(typeof(Microsoft.Xna.Framework.Game), "_strategy").GetValue(game);
+            FieldIn(strategy.GetType(), "_isActive").SetValue(strategy, true);
+            if (!game.IsActive) throw new InvalidOperationException("The game is still inactive: KNI's focus flag has moved.");
+        }
+
+        private static System.Reflection.FieldInfo FieldIn(Type type, string name)
+        {
+            for (var t = type; t != null; t = t.BaseType)
+            {
+                var field = t.GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (field != null) return field;
+            }
+            throw new MissingFieldException(type.FullName, name);
+        }
     }
 
     /// <summary>Paths in the repository (tests run from dotnet/*/bin/...).</summary>

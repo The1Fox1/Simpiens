@@ -7,7 +7,7 @@ namespace Simpiens.Client
     /// Reads the mouse and keyboard into the plain snapshots the view's controls work on (Epic CLIENT M1.4): wheel
     /// notches since the last frame, and Home and Esc as presses rather than holds.
     /// </summary>
-    public sealed class ClientInput
+    public sealed class ClientInput : IClientInputSource
     {
         private const int WheelNotch = 120;
 

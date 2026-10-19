@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- The game client (Epic CLIENT): an XNA Game that ticks the simulation through Simpiens.Hosting and draws what
-       Simpiens.Presentation describes. Built on KNI; -p:XnaFramework=MonoGame compiles it against MonoGame, KNI's
-       fallback. Framework-specific lines live in XnaPlatform only. -->
+       Simpiens.Presentation describes, with its dashboard in Gum. Built on KNI; -p:XnaFramework=MonoGame compiles it
+       against MonoGame, KNI's fallback. Framework-specific lines live in XnaPlatform only. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
@@ -13,8 +13,10 @@
   </ItemGroup>
   <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
     <PackageReference Include="nkast.Xna.Framework.Game" Version="$(KniVersion)" />
+    <PackageReference Include="Gum.KNI" Version="$(GumVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(XnaFramework)' == 'MonoGame'">
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="$(MonoGameVersion)" />
+    <PackageReference Include="Gum.MonoGame" Version="$(GumVersion)" />
   </ItemGroup>
 </Project>

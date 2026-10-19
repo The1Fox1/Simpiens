@@ -68,6 +68,22 @@ namespace Simpiens.Client.Tests
             CompareWithReference("render-floor1-t300-zoomed", FrameCapture.Capture(game, Width, Height));
         }
 
+        [Fact]
+        public void GumDrawsOverTheMap()
+        {
+            // M2.0's smoke: a label and a button in the dashboard's palette over the outpost at t0
+            var game = Offscreen.Start(frames: 0);
+            game.Simulation.Clock.SetTimeMultiplier(0f);
+            game.RunOneFrame();
+            var label = new Gum.Forms.Controls.Label { Text = "SIMPIENS FACILITY OS", X = 16f, Y = 12f };
+            var button = new Gum.Forms.Controls.Button { Text = "BOUNTIES", X = 16f, Y = 40f, Width = 140f, Height = 32f };
+            game.Ui.Root.AddChild(label);
+            game.Ui.Root.AddChild(button);
+            game.RunOneFrame();
+
+            CompareWithReference("render-ui-smoke", FrameCapture.Capture(game, Width, Height));
+        }
+
         private static void CompareWithReference(string name, byte[] actual)
         {
             string output = Path.Combine(AppContext.BaseDirectory, "render-output");

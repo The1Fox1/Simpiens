@@ -133,6 +133,12 @@ flowchart TB
     - Frame time measured (§6 F2); the desktop exe logs through `SimLog` (the console sink moved into `Simpiens.Hosting`, shared with `simpiens`); a smoke test reads KNI's mouse and keyboard on a running game.
 - [x] **M1 complete (2026-10-18):** render tests pass for fog, props, labels, animation, the camera and selection; the Android client compiles. Measured: `dotnet test` 111/111 (client 49, core 62); golden check 3/3; the MonoGame and Android builds compile.
     - The gate's second half, the producer's look at the client beside Unity, is person-gated and still open (§5).
+- [x] M2.0: Gum in the client (2026-10-18).
+    - Gum 2026.10.1.1 (Gum.KNI, or Gum.MonoGame for the fallback), with its built-in visuals in the palette of Unity's `FacilityDashboard.uss` and its font at 0.75 scale (`UiStyle`).
+    - The UI layer is drawn over the map and updated before it, so the map ignores the pointer over a control and the camera ignores the keys while a control has them.
+    - Gum keeps global state, so the game that started it last owns it (`UiLayer`).
+    - Tests drive Gum's own cursor from a script, with the offscreen game marked active.
+    - The client suite ran clean 20 times in a row, and the frame time is unchanged.
 
 ---
 

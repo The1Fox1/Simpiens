@@ -15,7 +15,7 @@ namespace Simpiens.Client
             var device = game.GraphicsDevice;
             using var target = new RenderTarget2D(device, width, height);
             device.SetRenderTarget(target);
-            game.DrawScene(width, height);
+            game.DrawFrame(width, height); // the UI is laid out for the window: capture at the window's size
             device.SetRenderTarget(null);
 
             var pixels = new Color[width * height];

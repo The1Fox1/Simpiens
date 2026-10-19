@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Simpiens.Client.Ui;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Presentation;
@@ -42,6 +43,7 @@ namespace Simpiens.Client
 
             Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
             Selection.Changed += OnSelectionChanged;
+            Ui = new UiLayer(this);
         }
 
         private bool _wasFollowing;
@@ -76,11 +78,16 @@ namespace Simpiens.Client
         /// <summary>The player's selection: a crawler (followed or not) and a sector.</summary>
         public WorldSelection Selection { get; }
 
+        /// <summary>The dashboard over the map (Gum).</summary>
+        public UiLayer Ui { get; }
+
+        /// <summary>Where the pointer and keys come from while the window has focus: the devices, or a script in tests.</summary>
+        public IClientInputSource Input { get; set; } = new ClientInput();
+
         /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
         private double _realSeconds;
-        private readonly ClientInput _input = new ClientInput();
         private object _framedMap;
         private long _lastTick = long.MinValue;
 
@@ -113,6 +120,7 @@ namespace Simpiens.Client
                 new SpriteAtlas(GraphicsDevice, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
             };
             _renderer = new WorldRenderer(_batch, _sheets);
+            Ui.Initialize();
         }
 
         protected override void Update(GameTime gameTime)
@@ -120,6 +128,7 @@ namespace Simpiens.Client
             float seconds = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _realSeconds += seconds;
             _driver.Advance(gameTime.ElapsedGameTime);
+            Ui.Update(gameTime); // first, so the map knows what is under UI this frame
             UpdateView(seconds, IsActive);
             base.Update(gameTime);
         }
@@ -148,7 +157,9 @@ namespace Simpiens.Client
             LastInput = default;
             if (readInput)
             {
-                _input.Read(out var pointer, out var keys);
+                Input.Read(out var pointer, out var keys);
+                pointer.OverUi |= Ui.PointerOverUi;
+                if (Ui.HasKeyboardFocus) keys = default;
                 LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
                 if (LastInput.StopFollowing) Selection.StopFollowing();
                 if (LastInput.Clicked) Selection.ClickAt(LastInput.ClickWorld);
@@ -164,6 +175,7 @@ namespace Simpiens.Client
             {
                 if (_sheets != null) foreach (var sheet in _sheets) sheet.Dispose();
                 _batch?.Dispose();
+                Ui.Shutdown();
                 Simulation.Dispose();
             }
             base.Dispose(disposing);
@@ -172,11 +184,18 @@ namespace Simpiens.Client
         protected override void Draw(GameTime gameTime)
         {
             var viewport = GraphicsDevice.Viewport;
-            DrawScene(viewport.Width, viewport.Height);
+            DrawFrame(viewport.Width, viewport.Height);
             base.Draw(gameTime);
         }
 
-        /// <summary>Draws the current frame into the bound render target (the back buffer, or a capture).</summary>
+        /// <summary>Draws the whole frame, the map and then the UI over it, into the bound render target (the back buffer, or a capture).</summary>
+        public void DrawFrame(int width, int height)
+        {
+            DrawScene(width, height);
+            Ui.Draw();
+        }
+
+        /// <summary>Draws the map alone into the bound render target.</summary>
         public void DrawScene(int width, int height)
         {
             GraphicsDevice.Clear(Background);
