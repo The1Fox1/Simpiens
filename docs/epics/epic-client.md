@@ -139,6 +139,12 @@ flowchart TB
     - Gum keeps global state, so the game that started it last owns it (`UiLayer`).
     - Tests drive Gum's own cursor from a script, with the offscreen game marked active.
     - The client suite ran clean 20 times in a row, and the frame time is unchanged.
+- [x] M2.1: the dashboard as data, in `Simpiens.Presentation/Dashboard` with no UI types (2026-10-18).
+    - Unity's `FacilityZoneService` is ported read-only, and `FacilityDashboardPresenter`'s logic is split into five models: the header, the merchant, the bounty board, the sector panels and the dossier. A `DashboardModel` ties them together.
+    - The player's actions leave only as typed commands through `IPlayerInterventionService`.
+    - Selection follows the map's `WorldSelection` both ways.
+    - Unity's `FacilityZoneServiceValidator` and `BountyTerminalValidator` checks are ported. The validator's prices, escrow, refund and target rules now go through the model; the Unity UI-pool check moves to the views.
+    - Deviation: affinities name peers by their friendly names, the dashboard's convention, where Unity printed the entity name.
 
 ---
 
