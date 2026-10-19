@@ -160,6 +160,13 @@ flowchart TB
     - `MerchantWindow` (600 px): the stall's status, treasury and stock, and three price sliders (1–50, sky thumbs) whose prices are loaded from the stall on opening. Apply hands the prices to the model to queue.
     - Tests: a real thumb drag and the Apply button through the scripted pointer change the stall on the next tick; the open window keeps the map from clicks; the close button; a render reference.
     - Finding F6: `AdvanceTicks` on a paused clock counts ticks that the paused simulation skips. Tests step with the clock running.
+- [x] M2.5: the bounty board (2026-10-18).
+    - `BountyBoardWindow` (820 px): the active contracts as cards, each with Cancel while it can be cancelled.
+    - The post form: type, sector by name, item and quantity (hidden for Scout), reward and duration. The model's checks and reasons, and Post disabled when nothing can be scouted.
+    - **The player's Definition of Done:** Unity's `PlayerScoutScenario`, ported through the UI only, on the real outpost, with nothing injected.
+        - The player opens the board over the map, picks Scout and the Overgrowth from the drop-downs by clicking, and posts at the default 25 g.
+        - Measured on the default seed: claimed at tick 2, charted at tick 291 (bound 520), fog gone 1.5 s later (bound 2 s). Once the seeded scout charts the Deep Seam, Scout offers nothing.
+    - A Gather contract posted and cancelled from its card; a render reference.
 
 ---
 

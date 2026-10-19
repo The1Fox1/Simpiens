@@ -51,6 +51,9 @@ namespace Simpiens.Presentation
             return overlay != null && overlay.FadeStart == null;
         }
 
+        /// <summary>True while any of the sector's fog is on the map, fading included (Unity's <c>ShroudView.HasOverlay</c>).</summary>
+        public bool HasOverlay(int sectorId) => Find(sectorId) != null;
+
         /// <summary>Rebuilds the overlays for a newly loaded map: every sector not yet charted is covered.</summary>
         public void Load(MapDefinition map, ISectorRegistry sectors)
         {
