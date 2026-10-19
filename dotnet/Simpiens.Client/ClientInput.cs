@@ -44,6 +44,7 @@ namespace Simpiens.Client
                 Down = kb.IsKeyDown(Keys.S) || kb.IsKeyDown(Keys.Down),
                 HomePressed = kb.IsKeyDown(Keys.Home) && !_previousKeys.IsKeyDown(Keys.Home),
                 EscapePressed = kb.IsKeyDown(Keys.Escape) && !_previousKeys.IsKeyDown(Keys.Escape),
+                TabPressed = kb.IsKeyDown(Keys.Tab) && !_previousKeys.IsKeyDown(Keys.Tab),
             };
             _previousKeys = kb;
         }

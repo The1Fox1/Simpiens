@@ -1,0 +1,119 @@
+using Gum.Converters;
+using Gum.DataTypes;
+using Gum.Forms.Controls;
+using Microsoft.Xna.Framework;
+using MonoGameGum.GueDeriving;
+using RenderingLibrary.Graphics;
+using Simpiens.Presentation.Dashboard;
+
+namespace Simpiens.Client.Ui
+{
+    /// <summary>
+    /// The header across the top of the window (Unity's header bar, 52 px), over the map and the panels alike: the
+    /// title and status, the outpost's numbers, the windows' buttons, quick save and load, the tick, the speed and the
+    /// Tab switch. It takes clicks, so the map ignores the pointer over it.
+    /// </summary>
+    public sealed class HeaderBar
+    {
+        public const float Height = 52f;
+
+        private static readonly Color Gold = UiParts.Hex(0xf59e0b), GoldText = UiParts.Hex(0xfbbf24);
+        private static readonly Color Stock = UiParts.Hex(0x3b82f6), StockText = UiParts.Hex(0x93c5fd);
+        private static readonly Color Bounty = UiParts.Hex(0xa855f7), BountyText = UiParts.Hex(0xc084fc);
+        private static readonly Color Metric = UiParts.Hex(0x94a3b8);
+        private static readonly Color Operational = UiParts.Hex(0x34d399);
+
+        private readonly TextRuntime _treasury, _rations, _salvage, _bounties, _saveStatus, _tick, _speed;
+
+        public HeaderBar()
+        {
+            Root = new ContainerRuntime
+            {
+                Name = "header-bar",
+                WidthUnits = DimensionUnitType.RelativeToParent,
+                Width = 0f,
+                Height = Height,
+                HasEvents = true, // the bar itself takes clicks: none reach the map
+            };
+            UiParts.AddFill(Root, UiStyle.Header);
+            var rule = new ColoredRectangleRuntime { Color = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f, YUnits = GeneralUnitType.PixelsFromLarge, YOrigin = VerticalAlignment.Bottom };
+            Root.Children.Add(rule);
+
+            var left = UiParts.Row(12f);
+            left.X = 16f;
+            left.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiParts.TitleScale, bold: true));
+            left.Children.Add(UiParts.Pill(out _, "OPERATIONAL", UiParts.Alpha(UiStyle.Success, 0.15f), UiStyle.Success, Operational));
+            Root.Children.Add(left);
+
+            var centre = UiParts.Row(8f);
+            centre.XUnits = GeneralUnitType.PixelsFromMiddle;
+            centre.XOrigin = HorizontalAlignment.Center;
+            centre.X = -60f; // Unity's centre group sat left of middle: the right group is wider
+            centre.Children.Add(UiParts.Pill(out _treasury, "0 GOLD", UiParts.Alpha(Gold, 0.15f), Gold, GoldText));
+            centre.Children.Add(UiParts.Pill(out _rations, "0 RATIONS", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
+            centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
+            centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(Bounty, 0.15f), Bounty, BountyText));
+            Root.Children.Add(centre);
+
+            var right = UiParts.Row(8f);
+            right.XUnits = GeneralUnitType.PixelsFromLarge;
+            right.XOrigin = HorizontalAlignment.Right;
+            right.X = -16f;
+            MerchantButton = UiParts.Button("MERCHANT", 84f);
+            BountiesButton = UiParts.Button("BOUNTIES", 84f);
+            SaveButton = UiParts.Button("SAVE", 52f);
+            LoadButton = UiParts.Button("LOAD", 52f);
+            right.Children.Add(MerchantButton.Visual);
+            right.Children.Add(BountiesButton.Visual);
+            right.Children.Add(SaveButton.Visual);
+            right.Children.Add(LoadButton.Visual);
+            _saveStatus = UiParts.Text(string.Empty, Metric, UiParts.SmallScale, bold: true);
+            UiParts.CentreVertically(_saveStatus);
+            right.Children.Add(_saveStatus);
+            _tick = UiParts.Text("TICK: 00000", Metric, UiParts.SmallScale, bold: true);
+            UiParts.CentreVertically(_tick);
+            right.Children.Add(_tick);
+            _speed = UiParts.Text("SPEED: 1.0x", Metric, UiParts.SmallScale, bold: true);
+            UiParts.CentreVertically(_speed);
+            right.Children.Add(_speed);
+            TabButton = UiParts.Button("[TAB] MAP VIEW", 128f);
+            right.Children.Add(TabButton.Visual);
+            Root.Children.Add(right);
+
+            ShowSaveButtons(false);
+        }
+
+        public ContainerRuntime Root { get; }
+        public Button MerchantButton { get; }
+        public Button BountiesButton { get; }
+        public Button SaveButton { get; }
+        public Button LoadButton { get; }
+        public Button TabButton { get; }
+
+        public string TreasuryText => _treasury.Text;
+        public string TickText => _tick.Text;
+        public string SaveStatusText => _saveStatus.Text;
+
+        /// <summary>Save and Load show only when there is a save slot (Unity hid them without one).</summary>
+        public void ShowSaveButtons(bool show)
+        {
+            SaveButton.IsVisible = show;
+            LoadButton.IsVisible = show;
+            _saveStatus.Visible = show;
+        }
+
+        public void SetSaveStatus(string message) => _saveStatus.Text = message ?? string.Empty;
+
+        public void Bind(DashboardModel model)
+        {
+            var header = model.Header;
+            _treasury.Text = header.Treasury;
+            _rations.Text = header.Rations;
+            _salvage.Text = header.Salvage;
+            _bounties.Text = header.Bounties;
+            _tick.Text = header.Tick;
+            _speed.Text = header.Speed;
+            TabButton.Text = model.PanelsVisible ? "[TAB] MAP VIEW" : "[TAB] DASHBOARD";
+        }
+    }
+}

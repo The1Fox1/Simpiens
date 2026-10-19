@@ -25,7 +25,7 @@ namespace Simpiens.Client
         public void Advance(TimeSpan elapsed)
         {
             if (TicksPerUpdate > 0) _clock.AdvanceTicks(TicksPerUpdate);
-            else _clock.Advance((float)elapsed.TotalSeconds);
+            else if (elapsed > TimeSpan.Zero) _clock.Advance((float)elapsed.TotalSeconds); // never a negative frame (epic F5)
         }
     }
 }

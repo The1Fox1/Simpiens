@@ -9,13 +9,19 @@ namespace Simpiens.Client
     /// </summary>
     public static class FrameCapture
     {
-        /// <summary>The frame as RGBA bytes, row by row from the top, <paramref name="width"/> × <paramref name="height"/>.</summary>
-        public static byte[] Capture(SimpiensGame game, int width, int height)
+        /// <summary>The whole frame, map and UI, as RGBA bytes, row by row from the top. The UI is laid out for the window: capture at the window's size.</summary>
+        public static byte[] Capture(SimpiensGame game, int width, int height) => Read(game, width, height, withUi: true);
+
+        /// <summary>The map alone, without the UI over it (the map's render references).</summary>
+        public static byte[] CaptureMap(SimpiensGame game, int width, int height) => Read(game, width, height, withUi: false);
+
+        private static byte[] Read(SimpiensGame game, int width, int height, bool withUi)
         {
             var device = game.GraphicsDevice;
             using var target = new RenderTarget2D(device, width, height);
             device.SetRenderTarget(target);
-            game.DrawFrame(width, height); // the UI is laid out for the window: capture at the window's size
+            if (withUi) game.DrawFrame(width, height);
+            else game.DrawScene(width, height);
             device.SetRenderTarget(null);
 
             var pixels = new Color[width * height];

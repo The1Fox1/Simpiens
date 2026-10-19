@@ -56,11 +56,13 @@ namespace Simpiens.Client.Tests
     {
         private static readonly List<SimpiensGame> Alive = new List<SimpiensGame>();
 
-        public static SimpiensGame Start(ClientOptions options = null, int frames = 1)
+        /// <summary>The map's render tests run at 800x600; the dashboard's at the game's default 1280x720 (its header needs the width).</summary>
+        public static SimpiensGame Start(ClientOptions options = null, int frames = 1, int width = 800, int height = 600)
         {
             options ??= new ClientOptions();
-            options.Width = 800;  // the render tests' size: the rig frames for the window
-            options.Height = 600;
+            options.Width = width;
+            options.Height = height;
+            options.DashboardRefreshSeconds = 0f; // every frame: what a test reads is this frame's
             options.VSync = false;
             options.ViewClockFromTicks = true; // renders at a given tick are always the same
             var game = new SimpiensGame(options);

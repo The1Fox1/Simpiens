@@ -24,5 +24,8 @@ namespace Simpiens.Client
         /// (tests, captures): the view's clock is the tick's time, so a frame drawn at a given tick is always the same.
         /// </summary>
         public bool ViewClockFromTicks { get; set; }
+
+        /// <summary>How often the dashboard re-reads the simulation, in real seconds: Unity's 10 Hz. 0 (tests): every frame.</summary>
+        public float DashboardRefreshSeconds { get; set; } = 0.1f;
     }
 }

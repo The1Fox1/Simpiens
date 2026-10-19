@@ -22,6 +22,8 @@ namespace Simpiens.Presentation
         public bool Down;
         public bool HomePressed;
         public bool EscapePressed;
+        /// <summary>Tab this frame: the dashboard's panels (the camera ignores it).</summary>
+        public bool TabPressed;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>

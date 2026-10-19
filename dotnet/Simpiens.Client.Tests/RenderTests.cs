@@ -25,7 +25,7 @@ namespace Simpiens.Client.Tests
             game.RunOneFrame();
             Assert.Equal(0L, game.Simulation.Clock.CurrentTick);
 
-            CompareWithReference("render-floor1-t0", FrameCapture.Capture(game, Width, Height));
+            CompareWithReference("render-floor1-t0", FrameCapture.CaptureMap(game, Width, Height));
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
             Assert.Equal(300L, game.Simulation.Clock.CurrentTick);
 
-            CompareWithReference("render-floor1-t300", FrameCapture.Capture(game, Width, Height));
+            CompareWithReference("render-floor1-t300", FrameCapture.CaptureMap(game, Width, Height));
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace Simpiens.Client.Tests
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
             game.Selection.SelectCrawler(crawler.Id, follow: false);
 
-            CompareWithReference("render-floor1-t300-selected", FrameCapture.Capture(game, Width, Height));
+            CompareWithReference("render-floor1-t300-selected", FrameCapture.CaptureMap(game, Width, Height));
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 15);
             Assert.Equal(1500L, game.Simulation.Clock.CurrentTick);
 
-            CompareWithReference("render-floor1-t1500", FrameCapture.Capture(game, Width, Height));
+            CompareWithReference("render-floor1-t1500", FrameCapture.CaptureMap(game, Width, Height));
         }
 
         [Fact]
@@ -65,44 +65,28 @@ namespace Simpiens.Client.Tests
             game.Rig.ZoomAt(hub, 0.4f);
             game.Rig.Pan(new Vec2(2f, -3f));
 
-            CompareWithReference("render-floor1-t300-zoomed", FrameCapture.Capture(game, Width, Height));
+            CompareWithReference("render-floor1-t300-zoomed", FrameCapture.CaptureMap(game, Width, Height));
         }
 
-        [Fact]
-        public void GumDrawsOverTheMap()
-        {
-            // M2.0's smoke: a label and a button in the dashboard's palette over the outpost at t0
-            var game = Offscreen.Start(frames: 0);
-            game.Simulation.Clock.SetTimeMultiplier(0f);
-            game.RunOneFrame();
-            var label = new Gum.Forms.Controls.Label { Text = "SIMPIENS FACILITY OS", X = 16f, Y = 12f };
-            var button = new Gum.Forms.Controls.Button { Text = "BOUNTIES", X = 16f, Y = 40f, Width = 140f, Height = 32f };
-            game.Ui.Root.AddChild(label);
-            game.Ui.Root.AddChild(button);
-            game.RunOneFrame();
-
-            CompareWithReference("render-ui-smoke", FrameCapture.Capture(game, Width, Height));
-        }
-
-        private static void CompareWithReference(string name, byte[] actual)
+        internal static void CompareWithReference(string name, byte[] actual, int width = Width, int height = Height)
         {
             string output = Path.Combine(AppContext.BaseDirectory, "render-output");
-            Png.Write(Path.Combine(output, name + ".png"), Width, Height, actual);
+            Png.Write(Path.Combine(output, name + ".png"), width, height, actual);
 
             string reference = Path.Combine(Repo.Root, "dotnet", "Simpiens.Client.Tests", "Baselines", name + ".png");
             if (Environment.GetEnvironmentVariable("SIMPIENS_RECORD_RENDERS") == "1")
             {
-                Png.Write(reference, Width, Height, actual);
+                Png.Write(reference, width, height, actual);
                 return;
             }
             Assert.True(File.Exists(reference), $"No reference image {reference}; record one with SIMPIENS_RECORD_RENDERS=1 (and look at it first).");
 
-            byte[] expected = Png.Decode(File.ReadAllBytes(reference), out int width, out int height);
-            Assert.Equal((Width, Height), (width, height));
+            byte[] expected = Png.Decode(File.ReadAllBytes(reference), out int decodedWidth, out int decodedHeight);
+            Assert.Equal((width, height), (decodedWidth, decodedHeight));
 
             var diff = new byte[actual.Length];
             int differing = 0;
-            for (int i = 0; i < Width * Height; i++)
+            for (int i = 0; i < width * height; i++)
             {
                 int worst = 0;
                 for (int c = 0; c < 4; c++) worst = Math.Max(worst, Math.Abs(actual[i * 4 + c] - expected[i * 4 + c]));
@@ -114,10 +98,10 @@ namespace Simpiens.Client.Tests
                 diff[i * 4 + 3] = 255;
             }
 
-            if (differing > Width * Height * MaxDifferingShare)
+            if (differing > width * height * MaxDifferingShare)
             {
-                Png.Write(Path.Combine(output, name + ".diff.png"), Width, Height, diff);
-                Assert.Fail($"{name}: {differing} of {Width * Height} pixels differ from the reference by more than {ChannelTolerance}. Actual and diff: {output}");
+                Png.Write(Path.Combine(output, name + ".diff.png"), width, height, diff);
+                Assert.Fail($"{name}: {differing} of {width * height} pixels differ from the reference by more than {ChannelTolerance}. Actual and diff: {output}");
             }
         }
 

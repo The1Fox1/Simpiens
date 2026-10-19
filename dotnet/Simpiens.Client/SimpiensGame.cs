@@ -4,6 +4,7 @@ using Simpiens.Client.Ui;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Dashboard;
 using Simpiens.Simulation;
 
 namespace Simpiens.Client
@@ -44,6 +45,8 @@ namespace Simpiens.Client
             Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
             Selection.Changed += OnSelectionChanged;
             Ui = new UiLayer(this);
+            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services), Selection);
+            Simulation.Host.SessionChanged += _ => DashboardModel.SessionChanged();
         }
 
         private bool _wasFollowing;
@@ -78,8 +81,14 @@ namespace Simpiens.Client
         /// <summary>The player's selection: a crawler (followed or not) and a sector.</summary>
         public WorldSelection Selection { get; }
 
-        /// <summary>The dashboard over the map (Gum).</summary>
+        /// <summary>The UI layer over the map (Gum).</summary>
         public UiLayer Ui { get; }
+
+        /// <summary>The dashboard as data: what its views show, and where the player's clicks go.</summary>
+        public DashboardModel DashboardModel { get; }
+
+        /// <summary>The dashboard's views (built with the UI, in LoadContent).</summary>
+        public DashboardView Dashboard { get; private set; }
 
         /// <summary>Where the pointer and keys come from while the window has focus: the devices, or a script in tests.</summary>
         public IClientInputSource Input { get; set; } = new ClientInput();
@@ -121,15 +130,19 @@ namespace Simpiens.Client
             };
             _renderer = new WorldRenderer(_batch, _sheets);
             Ui.Initialize();
+            Dashboard = new DashboardView(Ui, DashboardModel, Options.DashboardRefreshSeconds);
         }
 
         protected override void Update(GameTime gameTime)
         {
-            float seconds = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // KNI can report a slightly negative frame time (seen offscreen, epic F5): time never runs backwards here
+            var elapsed = gameTime.ElapsedGameTime < System.TimeSpan.Zero ? System.TimeSpan.Zero : gameTime.ElapsedGameTime;
+            float seconds = (float)elapsed.TotalSeconds;
             _realSeconds += seconds;
-            _driver.Advance(gameTime.ElapsedGameTime);
+            _driver.Advance(elapsed);
             Ui.Update(gameTime); // first, so the map knows what is under UI this frame
             UpdateView(seconds, IsActive);
+            if (Ui.IsOwner) Dashboard?.Update(seconds);
             base.Update(gameTime);
         }
 
@@ -160,6 +173,11 @@ namespace Simpiens.Client
                 Input.Read(out var pointer, out var keys);
                 pointer.OverUi |= Ui.PointerOverUi;
                 if (Ui.HasKeyboardFocus) keys = default;
+                if (Ui.IsOwner && Dashboard != null)
+                {
+                    if (keys.TabPressed) Dashboard.TogglePanels();
+                    if (keys.EscapePressed && Dashboard.CloseWindow()) keys.EscapePressed = false; // Esc closes a window before it stops the camera
+                }
                 LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
                 if (LastInput.StopFollowing) Selection.StopFollowing();
                 if (LastInput.Clicked) Selection.ClickAt(LastInput.ClickWorld);

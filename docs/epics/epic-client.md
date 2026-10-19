@@ -149,6 +149,12 @@ flowchart TB
     - The core gets `CalmCrawlerCommand` in the `InfluenceEvent` union (`InfluenceCommandType.CalmCrawler`), with its string form for tools. `SimulationManager` applies it on the tick, as Unity's dossier did directly to the crawler: frustration to zero, a tantrum or collapse ended, the crawler shown idle.
     - The dossier model's Calm sends it.
     - `CalmCommandValidator` runs in both runtimes. Unity's PlayMode suite passed 69/69, and Unity's golden check matched 3 of 3 seeds. Unity's own presenter keeps its direct write, since Unity is frozen.
+- [x] M2.3: the header over the map (2026-10-18).
+    - `HeaderBar` is 52 px, in Unity's colours: the title and the OPERATIONAL pill, the treasury, rations, salvage and bounty pills, the Merchant and Bounties buttons, Save and Load (hidden until there is a slot, as in Unity), the tick, the speed and the Tab switch.
+    - It refreshes at 10 Hz (`DashboardView`) and takes clicks, so the map ignores the pointer over it.
+    - Keys: Tab switches between the panels and the map (Unity started on the panels), and Esc closes an open window before it stops the camera.
+    - Unity's `MapHudScenario` is ported. The map's render references are now map-only captures; the full frame is captured for the UI's references.
+    - Finding F5: KNI can report a negative frame time, which the client clamps.
 
 ---
 
