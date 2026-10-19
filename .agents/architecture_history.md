@@ -691,3 +691,38 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The client draws everything Unity's 2D view did. M2 (the dashboard in Gum, then Unity retired) is the producer's call.
   - CI's client and Android jobs run for the first time on the first push.
   - Explicit registration of KNI's platform factories (epic F4) waits for M4's trimming work.
+
+## Epic CLIENT M2, part 1: the dashboard in Gum, parity with Unity (2026-10-18)
+- **Context:** the producer said go for M2 with two pull requests: parity first, then Unity's removal. The plan's defaults were approved. The plan `.agents/client_m2_plan.md` stays until M2 closes; this entry covers M2.0–M2.7, the first pull request.
+- **Decisions (agent):**
+  - **Gum's built-in visuals, not the Meadow theme** (D1, a deviation from the proposal).
+    - Meadow needs HiDef and a pinned Apos.Shapes 0.8.1; 0.8.6 breaks Gum.Shapes at start-up.
+    - Meadow also adds FreeType natives, and its look is further from Unity's.
+    - The built-in visuals take Unity's palette through `Styling.ActiveStyle.Colors`, and its 11–14 px text through a `FontScale` on the three text styles.
+  - **The dashboard as data in `Simpiens.Presentation/Dashboard`,** with Gum views in `Simpiens.Client/Ui` that decide nothing. The player's actions leave only as typed commands.
+  - **Unity's dossier calm became a core command,** `CalmCrawlerCommand`. The client never writes simulation state. It was checked in both runtimes.
+  - **Gum keeps static state,** so the game that started it last owns it. Tests run many games in one process.
+  - **Tests drive Gum's own cursor from a script,** through its internal per-frame method, and make the offscreen game active through KNI's private flag. Both are test-only and fail loudly if moved.
+  - **With the tick-based view clock** (tests), the camera steps in view time and the dashboard refreshes every frame. The game uses real time and refreshes at 10 Hz.
+  - **Parity details kept:** the game starts on the panels; one window at a time; Esc closes a window before it stops the camera.
+  - **Changed for fit or clarity:**
+    - The metric pills follow the status in the header, and the save message sits at the bottom left, so 1280 px holds everything.
+    - The player shows as "You (the outpost)" in affinities.
+    - The Dev Map's labels shrink to fit their row.
+  - **The Dev Map only in Debug desktop builds,** through `ClientOptions.ConfigureServices`.
+- **Deviations from the plan:**
+  - M2.1 named the command `InfluenceType.CalmCrawler`; the core's enum is `InfluenceCommandType`.
+  - The negative frame time (epic F5) and the paused-tick quirk (F6) were found and handled along the way.
+  - An executable-bit fix for M1.6's scripts landed in its own commit (`3082ab8`).
+- **Verification:** one commit per chunk with its measured status:
+  - decisions `3223168`, M2.0 `9abd6c1`, M2.1 `7f99875`, M2.2 `81b2604`, M2.3 `4dc8aa1`, M2.4 `569547c`, M2.5 `3e13024`, M2.6 `8e045df`, M2.7 `dd5e1fc`, and the close-out commit;
+  - every new or changed render reference was looked at before it was recorded.
+
+  Final:
+  - `dotnet test` 147/147 (client 84, core 63); golden 3/3;
+  - the MonoGame, Debug desktop and Android builds compile;
+  - Unity: PlayMode 69/69 and golden 3/3 on M2.2's core change.
+- **Consequences:**
+  - The client plays the whole game Unity plays. The first pull request waits for the producer's side-by-side.
+  - M2.8 (Unity-only coverage moved to .NET) and M2.9 (Unity removed) form the second pull request.
+  - Narrow windows wait for M6.

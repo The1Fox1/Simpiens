@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client`; M0 and M1 complete, M2 waits for the producer. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client`; M0 and M1 complete; M2.0–M2.7 done (parity with Unity's game), stopped for the producer's side-by-side before the first pull request. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -199,7 +199,9 @@ flowchart TB
 
 ## 5. Risks
 
-- **Open, person-gated: the producer's side-by-side look** at the client beside Unity, M1's gate (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop -c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **Open, person-gated: the producer's side-by-side look** at the client beside Unity, the gate of M1 and of M2.7 (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop` (Debug, with the Dev Map switch) or `-c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **Narrow windows (M6):** the dashboard is laid out for the default 1280×720 and up. Below that, the header crowds and the detail column narrows (at 800 px it is 112 px wide), as Unity's would have.
+- **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. Two test helpers reach into Gum's and KNI's internals: the scripted cursor uses Gum's internal per-frame cursor method, and an offscreen game is made active through KNI's private flag. Both fail loudly if an update moves them.
 - **The application id is a placeholder (M1.6):** the Android project uses `dev.simpiens.game` until the producer picks the store identity (M4).
 - **CI is unverified (M0.5, M1.6):** neither the `test` job's client steps nor the `android` job has run yet. The workflow runs the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa; locally they run SDL's offscreen driver on Fedora's sdl2-compat. The first push shows whether the reference images match there as well (the render tolerance allows 0.1% of pixels to differ). If they don't, the renders from CI are kept as a workflow artifact.
 
@@ -228,6 +230,13 @@ See the proposal's risk table. These matter for M0 and M1:
     - Rerun with `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*FrameTime*" -explicit only -showLiveOutput`; `LIBGL_ALWAYS_SOFTWARE=0` measures the GPU.
     - Phones aren't measured yet (M4).
 - **F3: an offscreen game never has focus** (M1.7). XNA then naps `InactiveSleepTime` (20 ms) every frame, and doesn't read input (the game reads devices only while active). The tests set the nap to zero, which halved the client suite's time. The devices are exercised by a direct `ClientInput` test instead.
+- **F5: KNI can report a negative frame time** (M2.3). Seen offscreen from `RunOneFrame`: −0.5 ms. It froze the dashboard's refresh timer, so the game, the simulation driver and the dashboard clamp it to zero.
+- **F6: a paused clock counts ticks it doesn't simulate** (M2.4). `ISimulationClock.AdvanceTicks` increments the tick while `SimulationManager` skips paused ticks, so `HeadlessSimulation.Step` on a paused game moves the counter but not the world. This is core behaviour and left as it is; tests step with the clock running (`UiDriver.Ticks`).
+- **F7: frame time with the dashboard** (M2.7, `FrameTimeProbe`, explicit tests, the dashboard refreshed every frame where the game does it at 10 Hz):
+    - The map with the header at 800×600: 1.8 ms (llvmpipe), 1.1 ms (RX 7900 XTX).
+    - The panels with a dossier at 1280×720: 3.3 ms and about 3.9 ms.
+    - The bounty board over the map: 1.3 ms and 0.6 ms.
+    - The budget is 33 ms.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---

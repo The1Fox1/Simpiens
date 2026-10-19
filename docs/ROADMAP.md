@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed). M0 and M1 are complete. M2 waits for the producer: the agent's authority covered M0 and M1.
+- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed). M0 and M1 are complete; M2.0–M2.7 (the dashboard in Gum, parity with Unity's game) are done. The agent has stopped for the producer's side-by-side with Unity, after which the first pull request follows; Unity's removal (M2.8, M2.9) is the second.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -463,6 +463,13 @@ Before Epic 10: soak test and scaling work (#8).
     - Next: M2 (the dashboard in Gum, then Unity retired), when the producer starts it.
   - M2 plan written 2026-10-18 (`.agents/client_m2_plan.md`), on the same branch, because parity comes before the pull request (producer). It covers Gum in the client, an engine-free dashboard model, the calm command as a typed command, then each panel: the header, the merchant, the bounty board, the Tab dashboard, saving and the session switch. Then the producer's side-by-side, Unity-only coverage moved to .NET, and Unity removed. Execution waits for the producer's go-ahead.
   - **Producer decisions (2026-10-18, M2):** go ahead with M2. Two pull requests: the first at parity (after the side-by-side sign-off following M2.7), the second removing Unity (M2.8 and M2.9). The plan's defaults are approved: Gum's built-in visuals in Unity's palette, Unity's layout first, and, once Unity is gone, a Definition of Done scenario that lives in `dotnet/` (headless or through the client) on the real session, with nothing injected.
+  - M2.0 (Gum 2026.10.1.1 in the client, in Unity's palette; scripted pointer for tests), M2.1 (the dashboard as data, engine-free), M2.2 (the dossier's calm as a typed command in the core; checked in Unity too: PlayMode 69/69, golden 3/3), M2.3 (the header over the map), M2.4 (the merchant terminal), M2.5 (the bounty board), M2.6 (the Tab dashboard) and M2.7 (quick save and load, the Dev Map switch in development builds, the camera's follow) done 2026-10-18.
+  - **Parity with Unity's game (M2.0–M2.7):** every panel works in the client.
+    - Ported to the client, through the UI: Unity's view and UI scenarios (MapHud, PlayerScout, QuickSaveButtons, SessionSwitch, ShroudView's camera part) and UI validators (FacilityZoneService, BountyTerminal).
+    - `PlayerScoutScenario` passes on the real outpost with nothing injected: charted at tick 291, bound 520.
+    - Measured: `dotnet test` 147/147 (client 84, core 63); golden check 3/3; the MonoGame, Debug desktop and Android builds compile.
+    - Frame time with the panels refreshed every frame: about 4 ms against the 33 ms budget.
+    - Next: the producer's side-by-side with Unity, then the first pull request; then M2.8 and M2.9.
 
 ---
 
