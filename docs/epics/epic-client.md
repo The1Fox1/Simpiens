@@ -175,6 +175,15 @@ flowchart TB
     - Residents (240 px), events (the rest of the column) and affinities (120 px) scroll.
     - Rows are pooled. Sector and resident cards take clicks and stay in step with the map's selection both ways. The game starts on the panels, as Unity's did.
     - Deviation: the player shows as "You (the outpost)" in affinities, where Unity printed the first six characters of its id.
+- [x] M2.7: saving, the session switch and the camera's follow (2026-10-18).
+    - Quick save and load: the header's Save and Load, with Unity's messages, write to `Saves/quicksave.simsave` under the user's local application data (`ClientOptions.SaveDirectory`).
+        - The save message sits at the bottom left; the header has no room for it at 1280 px.
+        - An asynchronous save is polled on the game thread.
+        - A load, a respawn or a switch drops the selection, closes the windows, reloads the fog and the crawlers' poses, and rebuilds the lists.
+    - The Dev Map switch and its banner sit under the header at the right, in Debug desktop builds only. They reference the harness and register `CanaryPenSession`, as Unity's editor did; Release builds have no harness.
+    - Ported scenarios: `QuickSaveButtonsScenario`; `SessionSwitchScenario` (the outpost comes back as a fresh boot: ids, positions, personalities, ledger, stall, bounties, exploration); and `ShroudViewScenario`'s camera part (200 frames checked, worst 0.020 against Unity's 0.25 tolerance).
+    - Map labels never reach a neighbour on their row. The Dev Map's pen titles shrink to fit, and a row shares one size; Floor 1's are unchanged.
+    - The header is tightened to fit 1280 px with Save and Load.
 
 ---
 

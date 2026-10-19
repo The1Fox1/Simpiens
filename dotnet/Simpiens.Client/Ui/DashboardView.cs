@@ -29,7 +29,13 @@ namespace Simpiens.Client.Ui
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
             Header.TabButton.Click += (_, _) => TogglePanels();
+            Header.SaveButton.Click += (_, _) => { Model.Saves.Save(); Refresh(); };
+            Header.LoadButton.Click += (_, _) => { Model.Saves.Load(); Refresh(); };
             ui.Root.Children.Add(Header.Root);
+            ui.Root.Children.Add(Header.Status);
+            Sessions = new SessionSwitchBar(model.Sessions);
+            Sessions.Button.Click += (_, _) => Refresh();
+            ui.Root.Children.Add(Sessions.Root);
             Refresh();
         }
 
@@ -38,6 +44,7 @@ namespace Simpiens.Client.Ui
         public DashboardPanels Panels { get; }
         public MerchantWindow Merchant { get; }
         public BountyBoardWindow Bounties { get; }
+        public SessionSwitchBar Sessions { get; }
 
         public void TogglePanels()
         {
@@ -55,6 +62,7 @@ namespace Simpiens.Client.Ui
 
         public void Update(float realSeconds)
         {
+            Model.Saves.Poll();
             if (realSeconds > 0f) _sinceRefresh += realSeconds;
             if (_refreshSeconds > 0f && _sinceRefresh < _refreshSeconds) return;
             _sinceRefresh = 0f;
@@ -72,6 +80,7 @@ namespace Simpiens.Client.Ui
             if (Model.Bounties.IsOpen && !_bountiesWereOpen) Bounties.LoadForm();
             _bountiesWereOpen = Model.Bounties.IsOpen;
             Bounties.Bind();
+            Sessions?.Bind();
         }
     }
 }

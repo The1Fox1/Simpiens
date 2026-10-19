@@ -137,10 +137,10 @@ namespace Simpiens.Client.Ui
         {
             Window.IsShown = _model.IsOpen;
             if (!_model.IsOpen) return;
-            _status.Text = _model.StallStatus;
-            _treasury.Text = _model.Treasury;
-            _stock.Text = _model.Stock;
-            _feedback.Text = _model.Feedback.Text;
+            UiParts.SetText(_status, _model.StallStatus);
+            UiParts.SetText(_treasury, _model.Treasury);
+            UiParts.SetText(_stock, _model.Stock);
+            UiParts.SetText(_feedback, _model.Feedback.Text);
             _feedback.Color = UiStyle.ToneColor(_model.Feedback.Tone);
         }
     }

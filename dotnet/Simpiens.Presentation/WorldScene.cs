@@ -39,6 +39,13 @@ namespace Simpiens.Presentation
         /// <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives the animations and
         /// fades: real time in the game, the tick's time in tests.
         /// </summary>
+        /// <summary>A new session or a load (the clock may have moved either way): the fog and the crawlers' poses start afresh.</summary>
+        public void Reset()
+        {
+            _lastTick = long.MaxValue; // the next Build reloads the fog
+            Appearance.Reset();
+        }
+
         public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds, WorldSelection selection = null)
         {
             Items.Clear();
@@ -133,13 +140,55 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>The map's room names, centred on their positions in their colours (Unity's MapView labels).</summary>
+        private MapDefinition _labelMap;
+        private float[] _labelPixels;
+
         private void AddLabels(MapDefinition map)
         {
+            if (!ReferenceEquals(map, _labelMap))
+            {
+                _labelPixels = FitLabels(map);
+                _labelMap = map;
+            }
             for (int i = 0; i < map.Labels.Count; i++)
             {
                 var label = map.Labels[i];
-                WorldText.Add(Items, label.Text, label.Position, WorldText.LabelPixel, Rgba32.From(label.Color), RenderLayer.Labels);
+                WorldText.Add(Items, label.Text, label.Position, _labelPixels[i], Rgba32.From(label.Color), RenderLayer.Labels);
             }
+        }
+
+        /// <summary>
+        /// Each label's pixel size: <see cref="WorldText.LabelPixel"/>, unless it would reach a neighbour on its row; then
+        /// small enough that both leave a tenth of their distance free, and the same for its whole row. Floor 1's rooms are wide and keep the full size;
+        /// the Dev Map's pens are 4 units apart (Unity drew its labels in a smaller, smooth font).
+        /// </summary>
+        public static float[] FitLabels(MapDefinition map)
+        {
+            var labels = map.Labels;
+            var sizes = new float[labels.Count];
+            float rowHeight = PixelFont.GlyphHeight * WorldText.LabelPixel;
+            for (int i = 0; i < labels.Count; i++)
+            {
+                float room = float.MaxValue;
+                for (int j = 0; j < labels.Count; j++)
+                {
+                    if (j == i || Math.Abs(labels[i].Position.Y - labels[j].Position.Y) >= rowHeight) continue;
+                    room = Math.Min(room, Math.Abs(labels[i].Position.X - labels[j].Position.X));
+                }
+                int widthPixels = Math.Max(1, PixelFont.MeasurePixels(labels[i].Text));
+                sizes[i] = Math.Min(WorldText.LabelPixel, room * 0.9f / widthPixels);
+            }
+
+            // A row reads as one: every label on it takes the row's smallest size
+            var even = (float[])sizes.Clone();
+            for (int i = 0; i < labels.Count; i++)
+            {
+                for (int j = 0; j < labels.Count; j++)
+                {
+                    if (Math.Abs(labels[i].Position.Y - labels[j].Position.Y) < rowHeight) even[i] = Math.Min(even[i], sizes[j]);
+                }
+            }
+            return even;
         }
 
         private const float DegreesToRadians = MathF.PI / 180f;

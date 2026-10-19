@@ -27,6 +27,8 @@ namespace Simpiens.Presentation.Dashboard
             Bounties = new BountyBoardModel(_context);
             Sectors = new SectorPanelModel(_context);
             Dossier = new DossierModel(_context);
+            Saves = new SaveSlotModel(_context.SaveGame);
+            Sessions = new SessionSwitchModel(_context.Sessions);
             if (_selection != null) _selection.Changed += OnSelectionChanged;
             Sectors.EnsureSelection();
         }
@@ -37,6 +39,8 @@ namespace Simpiens.Presentation.Dashboard
         public BountyBoardModel Bounties { get; }
         public SectorPanelModel Sectors { get; }
         public DossierModel Dossier { get; }
+        public SaveSlotModel Saves { get; }
+        public SessionSwitchModel Sessions { get; }
 
         /// <summary>The three panels over the map (Tab). Unity started with them shown.</summary>
         public bool PanelsVisible { get; set; } = true;

@@ -98,6 +98,13 @@ namespace Simpiens.Client.Ui
             return pill;
         }
 
+        /// <summary>Sets a text only when it changed: Gum lays a text out again on every assignment (wrapped lines are costly).</summary>
+        public static void SetText(TextRuntime text, string value)
+        {
+            value ??= string.Empty;
+            if (!string.Equals(text.Text, value, System.StringComparison.Ordinal)) text.Text = value;
+        }
+
         /// <summary>A colour at an alpha, as Unity's rgba(r, g, b, a) backgrounds.</summary>
         public static Color Alpha(Color color, float alpha) => new Color(color.R, color.G, color.B, (byte)(alpha * 255f + 0.5f));
 

@@ -63,6 +63,7 @@ namespace Simpiens.Client.Tests
             options.Width = width;
             options.Height = height;
             options.DashboardRefreshSeconds = 0f; // every frame: what a test reads is this frame's
+            options.SaveDirectory ??= Path.Combine(Path.GetTempPath(), "simpiens-client-tests", Guid.NewGuid().ToString("N")); // never the player's slot
             options.VSync = false;
             options.ViewClockFromTicks = true; // renders at a given tick are always the same
             var game = new SimpiensGame(options);

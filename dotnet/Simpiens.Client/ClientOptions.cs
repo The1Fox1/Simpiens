@@ -27,5 +27,14 @@ namespace Simpiens.Client
 
         /// <summary>How often the dashboard re-reads the simulation, in real seconds: Unity's 10 Hz. 0 (tests): every frame.</summary>
         public float DashboardRefreshSeconds { get; set; } = 0.1f;
+
+        /// <summary>The quick-save slot's folder; null: <c>Simpiens/Saves</c> under the user's local application data.</summary>
+        public string SaveDirectory { get; set; }
+
+        /// <summary>Extra registrations for the simulation (development builds add the Dev Map; tests add doubles).</summary>
+        public System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> ConfigureServices { get; set; }
+
+        public static string DefaultSaveDirectory()
+            => System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "Simpiens", "Saves");
     }
 }

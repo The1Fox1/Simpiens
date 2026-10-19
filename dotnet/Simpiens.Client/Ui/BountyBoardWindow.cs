@@ -188,16 +188,16 @@ namespace Simpiens.Client.Ui
             QuantitySlider.Value = _model.Quantity;
             RewardSlider.Value = _model.Reward;
             DurationSlider.Value = _model.Duration;
-            _quantityValue.Text = BountyBoardModel.QuantityText(_model.Quantity);
-            _rewardValue.Text = BountyBoardModel.RewardText(_model.Reward);
-            _durationValue.Text = BountyBoardModel.DurationText(_model.Duration);
+            UiParts.SetText(_quantityValue, BountyBoardModel.QuantityText(_model.Quantity));
+            UiParts.SetText(_rewardValue, BountyBoardModel.RewardText(_model.Reward));
+            UiParts.SetText(_durationValue, BountyBoardModel.DurationText(_model.Duration));
             _binding = false;
         }
 
         public void Bind()
         {
             Window.IsShown = _model.IsOpen;
-            _count.Text = _model.CountBadge;
+            UiParts.SetText(_count, _model.CountBadge);
             if (!_model.IsOpen) return;
 
             _binding = true;
@@ -213,11 +213,11 @@ namespace Simpiens.Client.Ui
             if (SectorBox.SelectedIndex != _model.SelectedSectorIndex) SectorBox.SelectedIndex = _model.SelectedSectorIndex;
             _binding = false;
 
-            _sectorState.Text = _model.SectorState;
+            UiParts.SetText(_sectorState, _model.SectorState);
             _itemGroup.Visible = _model.ShowsItem;
             _quantityGroup.Visible = _model.ShowsItem;
             PostButton.IsEnabled = _model.CanPost;
-            _feedback.Text = _model.Feedback.Text;
+            UiParts.SetText(_feedback, _model.Feedback.Text);
             _feedback.Color = UiStyle.ToneColor(_model.Feedback.Tone);
 
             var rows = _model.Contracts;
@@ -284,11 +284,11 @@ namespace Simpiens.Client.Ui
         public void Bind(in BountyRow row)
         {
             BountyId = row.BountyId;
-            _title.Text = row.Title;
-            _status.Text = row.StatusText;
+            UiParts.SetText(_title, row.Title);
+            UiParts.SetText(_status, row.StatusText);
             _status.Color = row.Status == BountyStatus.Open ? Open : row.Status == BountyStatus.Claimed ? Claimed : Closed;
-            _details.Text = row.Details;
-            _reward.Text = row.Reward;
+            UiParts.SetText(_details, row.Details);
+            UiParts.SetText(_reward, row.Reward);
             CancelButton.IsVisible = row.CanCancel;
         }
     }

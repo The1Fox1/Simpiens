@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Client.Ui;
+using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Presentation;
@@ -38,18 +39,27 @@ namespace Simpiens.Client
             IsMouseVisible = true;
 
             // The core composed as every .NET host composes it, the session spawned at tick 0 before the first frame
-            Simulation = HeadlessSimulation.Create(Options.Seed);
+            Simulation = HeadlessSimulation.Create(Options.Seed, Options.ConfigureServices);
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
 
             Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
             Selection.Changed += OnSelectionChanged;
             Ui = new UiLayer(this);
-            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services), Selection);
-            Simulation.Host.SessionChanged += _ => DashboardModel.SessionChanged();
+            SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
+            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame), Selection);
+            Simulation.Host.SessionChanged += OnSessionChanged;
         }
 
         private bool _wasFollowing;
+
+        /// <summary>A respawn, a session switch or a load replaced every entity (ids are reissued).</summary>
+        private void OnSessionChanged(ISessionDefinition session)
+        {
+            Selection.Clear();
+            Scene.Reset();
+            DashboardModel.SessionChanged();
+        }
 
         /// <summary>A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion.</summary>
         private void OnSelectionChanged()
@@ -84,6 +94,9 @@ namespace Simpiens.Client
         /// <summary>The UI layer over the map (Gum).</summary>
         public UiLayer Ui { get; }
 
+        /// <summary>The quick-save slot (<see cref="ClientOptions.SaveDirectory"/>).</summary>
+        public ISaveGameService SaveGame { get; }
+
         /// <summary>The dashboard as data: what its views show, and where the player's clicks go.</summary>
         public DashboardModel DashboardModel { get; }
 
@@ -97,6 +110,7 @@ namespace Simpiens.Client
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
         private double _realSeconds;
+        private float _lastViewSeconds;
         private object _framedMap;
         private long _lastTick = long.MinValue;
 
@@ -140,8 +154,12 @@ namespace Simpiens.Client
             float seconds = (float)elapsed.TotalSeconds;
             _realSeconds += seconds;
             _driver.Advance(elapsed);
+            // The camera's time: real time in the game; with the tick-based view clock (tests, captures), view time
+            float view = ViewSeconds;
+            float cameraSeconds = Options.ViewClockFromTicks ? System.Math.Max(0f, view - _lastViewSeconds) : seconds;
+            _lastViewSeconds = view;
             Ui.Update(gameTime); // first, so the map knows what is under UI this frame
-            UpdateView(seconds, IsActive);
+            UpdateView(cameraSeconds, IsActive);
             if (Ui.IsOwner) Dashboard?.Update(seconds);
             base.Update(gameTime);
         }

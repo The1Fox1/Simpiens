@@ -1,4 +1,5 @@
 using System;
+using Simpiens.Core.Session;
 using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
@@ -17,8 +18,12 @@ namespace Simpiens.Presentation.Dashboard
             IAgentIdentityService identity = null,
             INarrativeChronicleService chronicle = null,
             INarrativeFormatter formatter = null,
-            IPlayerInterventionService intervention = null)
+            IPlayerInterventionService intervention = null,
+            ISaveGameService saveGame = null,
+            ISessionSwitcher sessions = null)
         {
+            SaveGame = saveGame;
+            Sessions = sessions;
             Simulation = simulation;
             Clock = clock;
             Registry = registry;
@@ -31,11 +36,12 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         /// <summary>The context of a composed simulation (<c>HeadlessSimulation.Services</c>).</summary>
-        public static DashboardContext From(IServiceProvider services)
+        public static DashboardContext From(IServiceProvider services, ISaveGameService saveGame = null)
         {
             T Get<T>() where T : class => services?.GetService(typeof(T)) as T;
             return new DashboardContext(Get<ISimulationManager>(), Get<ISimulationClock>(), Get<IWorldRegistry>(), Get<ISectorRegistry>(),
-                Get<IAgentIdentityService>(), Get<INarrativeChronicleService>(), Get<INarrativeFormatter>(), Get<IPlayerInterventionService>());
+                Get<IAgentIdentityService>(), Get<INarrativeChronicleService>(), Get<INarrativeFormatter>(), Get<IPlayerInterventionService>(),
+                saveGame ?? Get<ISaveGameService>(), Get<ISessionSwitcher>());
         }
 
         public ISimulationManager Simulation { get; }
@@ -50,6 +56,12 @@ namespace Simpiens.Presentation.Dashboard
         public IPlayerInterventionService Intervention { get; }
 
         public FacilityZoneService Zones { get; }
+
+        /// <summary>The quick-save slot, if the host gives one.</summary>
+        public ISaveGameService SaveGame { get; }
+
+        /// <summary>The registered sessions (the Dev Map only in development builds).</summary>
+        public ISessionSwitcher Sessions { get; }
 
         /// <summary>The outpost's stall (the first), if there is one.</summary>
         public bool TryGetStall(out Simpiens.Simulation.Economy.TradeStallData stall)

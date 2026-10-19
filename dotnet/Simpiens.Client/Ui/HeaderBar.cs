@@ -39,51 +39,57 @@ namespace Simpiens.Client.Ui
             var rule = new ColoredRectangleRuntime { Color = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f, YUnits = GeneralUnitType.PixelsFromLarge, YOrigin = VerticalAlignment.Bottom };
             Root.Children.Add(rule);
 
-            var left = UiParts.Row(12f);
+            var left = UiParts.Row(10f);
             left.X = 16f;
             left.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiParts.TitleScale, bold: true));
             left.Children.Add(UiParts.Pill(out _, "OPERATIONAL", UiParts.Alpha(UiStyle.Success, 0.15f), UiStyle.Success, Operational));
             Root.Children.Add(left);
 
-            var centre = UiParts.Row(8f);
-            centre.XUnits = GeneralUnitType.PixelsFromMiddle;
-            centre.XOrigin = HorizontalAlignment.Center;
-            centre.X = -60f; // Unity's centre group sat left of middle: the right group is wider
+            // The outpost's numbers follow the status (Unity centred them between the groups; at 1280 px there is no room to)
+            var centre = UiParts.Row(6f);
+            left.Children.Add(new ContainerRuntime { Width = 10f, Height = 1f });
+            left.Children.Add(centre);
             centre.Children.Add(UiParts.Pill(out _treasury, "0 GOLD", UiParts.Alpha(Gold, 0.15f), Gold, GoldText));
             centre.Children.Add(UiParts.Pill(out _rations, "0 RATIONS", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
             centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
             centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(Bounty, 0.15f), Bounty, BountyText));
-            Root.Children.Add(centre);
 
-            var right = UiParts.Row(8f);
+            var right = UiParts.Row(6f);
             right.XUnits = GeneralUnitType.PixelsFromLarge;
             right.XOrigin = HorizontalAlignment.Right;
             right.X = -16f;
-            MerchantButton = UiParts.Button("MERCHANT", 84f);
-            BountiesButton = UiParts.Button("BOUNTIES", 84f);
-            SaveButton = UiParts.Button("SAVE", 52f);
-            LoadButton = UiParts.Button("LOAD", 52f);
+            MerchantButton = UiParts.Button("MERCHANT", 78f);
+            BountiesButton = UiParts.Button("BOUNTIES", 78f);
+            SaveButton = UiParts.Button("SAVE", 48f);
+            LoadButton = UiParts.Button("LOAD", 48f);
             right.Children.Add(MerchantButton.Visual);
             right.Children.Add(BountiesButton.Visual);
             right.Children.Add(SaveButton.Visual);
             right.Children.Add(LoadButton.Visual);
-            _saveStatus = UiParts.Text(string.Empty, Metric, UiParts.SmallScale, bold: true);
-            UiParts.CentreVertically(_saveStatus);
-            right.Children.Add(_saveStatus);
             _tick = UiParts.Text("TICK: 00000", Metric, UiParts.SmallScale, bold: true);
             UiParts.CentreVertically(_tick);
             right.Children.Add(_tick);
             _speed = UiParts.Text("SPEED: 1.0x", Metric, UiParts.SmallScale, bold: true);
             UiParts.CentreVertically(_speed);
             right.Children.Add(_speed);
-            TabButton = UiParts.Button("[TAB] MAP VIEW", 128f);
+            TabButton = UiParts.Button("[TAB] MAP VIEW", 120f);
             right.Children.Add(TabButton.Visual);
             Root.Children.Add(right);
+
+            // The save's message, under everything at the bottom left (Unity had it in the header; at 1280 px it doesn't fit there)
+            Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, Metric, UiParts.SmallScale);
+            Status.X = 16f;
+            Status.YUnits = GeneralUnitType.PixelsFromLarge;
+            Status.YOrigin = VerticalAlignment.Bottom;
+            Status.Y = -20f;
 
             ShowSaveButtons(false);
         }
 
         public ContainerRuntime Root { get; }
+
+        /// <summary>The save status's own root (added to the UI after the panels).</summary>
+        public ContainerRuntime Status { get; }
         public Button MerchantButton { get; }
         public Button BountiesButton { get; }
         public Button SaveButton { get; }
@@ -99,7 +105,7 @@ namespace Simpiens.Client.Ui
         {
             SaveButton.IsVisible = show;
             LoadButton.IsVisible = show;
-            _saveStatus.Visible = show;
+            Status.Visible = show && !string.IsNullOrEmpty(_saveStatus.Text);
         }
 
         public void SetSaveStatus(string message) => _saveStatus.Text = message ?? string.Empty;
@@ -107,13 +113,15 @@ namespace Simpiens.Client.Ui
         public void Bind(DashboardModel model)
         {
             var header = model.Header;
-            _treasury.Text = header.Treasury;
-            _rations.Text = header.Rations;
-            _salvage.Text = header.Salvage;
-            _bounties.Text = header.Bounties;
-            _tick.Text = header.Tick;
-            _speed.Text = header.Speed;
+            UiParts.SetText(_treasury, header.Treasury);
+            UiParts.SetText(_rations, header.Rations);
+            UiParts.SetText(_salvage, header.Salvage);
+            UiParts.SetText(_bounties, header.Bounties);
+            UiParts.SetText(_tick, header.Tick);
+            UiParts.SetText(_speed, header.Speed);
             TabButton.Text = model.PanelsVisible ? "[TAB] MAP VIEW" : "[TAB] DASHBOARD";
+            UiParts.SetText(_saveStatus, model.Saves.Status);
+            ShowSaveButtons(model.Saves.Available);
         }
     }
 }

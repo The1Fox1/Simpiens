@@ -175,17 +175,17 @@ namespace Simpiens.Client.Ui
                 if (i >= rows.Count) continue;
                 var row = rows[i];
                 card.SectorId = row.SectorId;
-                card.Name.Text = row.Name;
+                UiParts.SetText(card.Name, row.Name);
                 card.Name.Color = row.Shrouded ? Slate : UiStyle.TextBright;
-                card.Badge.Text = row.Badge;
+                UiParts.SetText(card.Badge, row.Badge);
                 card.Badge.Color = row.Shrouded ? Slate : UiStyle.Accent;
                 card.BadgeFill.Color = row.Shrouded ? UiParts.Alpha(UiStyle.TextMuted, 0.25f) : Deep;
                 card.Style(row.Selected ? UiStyle.Border : row.Shrouded ? Shrouded : UiStyle.Card, row.Selected ? UiStyle.Accent : row.Shrouded ? ShroudBorder : UiStyle.CardBorder, row.Selected);
             }
 
             // The selected sector
-            _sectorTitle.Text = panel.Title;
-            _sectorDescription.Text = panel.Description;
+            UiParts.SetText(_sectorTitle, panel.Title);
+            UiParts.SetText(_sectorDescription, panel.Description);
             var residents = panel.Residents;
             while (_residentCards.Count < residents.Count)
             {
@@ -201,9 +201,9 @@ namespace Simpiens.Client.Ui
                 if (i >= residents.Count) continue;
                 var row = residents[i];
                 card.CrawlerId = row.CrawlerId;
-                card.Name.Text = row.Name;
-                card.Detail.Text = row.Activity;
-                card.Badge.Text = row.Badge;
+                UiParts.SetText(card.Name, row.Name);
+                UiParts.SetText(card.Detail, row.Activity);
+                UiParts.SetText(card.Badge, row.Badge);
                 card.Badge.Color = Color.White;
                 card.BadgeFill.Color = StateColor(row.State);
                 card.Style(row.Selected ? UiStyle.Border : UiStyle.Card, row.Selected ? Emerald : UiStyle.CardBorder, row.Selected, Emerald);
@@ -215,7 +215,7 @@ namespace Simpiens.Client.Ui
             for (int i = 0; i < events.Count; i++)
             {
                 if (i == _eventRows.Count) _eventRows.Add(EventRow());
-                _eventRows[i].Text = events[i];
+                UiParts.SetText(_eventRows[i], events[i]);
                 ((GraphicalUiElement)_eventRows[i].Parent).Visible = true;
             }
             for (int i = events.Count; i < _eventRows.Count; i++) ((GraphicalUiElement)_eventRows[i].Parent).Visible = false;
@@ -227,15 +227,15 @@ namespace Simpiens.Client.Ui
             _dossierEmpty.Visible = !dossier.HasCrawler;
             _dossierDetails.Visible = dossier.HasCrawler;
             if (!dossier.HasCrawler) return;
-            _dossierName.Text = dossier.Name;
-            _dossierBadge.Text = dossier.Badge;
+            UiParts.SetText(_dossierName, dossier.Name);
+            UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.Color = StateColor(dossier.State);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);
             _frustration.Set(dossier.Frustration);
-            _goal.Text = dossier.Goal;
-            _action.Text = dossier.Action;
+            UiParts.SetText(_goal, dossier.Goal);
+            UiParts.SetText(_action, dossier.Action);
             var affinities = dossier.Affinities;
             for (int i = 0; i < affinities.Count; i++)
             {
@@ -245,7 +245,7 @@ namespace Simpiens.Client.Ui
                     _affinityRows.Add(text);
                     _affinitiesList.Children.Add(text);
                 }
-                _affinityRows[i].Text = affinities[i];
+                UiParts.SetText(_affinityRows[i], affinities[i]);
                 _affinityRows[i].Visible = true;
             }
             for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityRows[i].Visible = false;
@@ -456,7 +456,7 @@ namespace Simpiens.Client.Ui
             {
                 Value = value;
                 _fill.Width = Math.Clamp(value, 0f, 100f);
-                _value.Text = DossierModel.Percent(value);
+                UiParts.SetText(_value, DossierModel.Percent(value));
             }
         }
     }

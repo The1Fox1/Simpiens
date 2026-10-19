@@ -11,6 +11,11 @@
   <ItemGroup>
     <ProjectReference Include="../Simpiens.Client/Simpiens.Client.csproj" />
   </ItemGroup>
+  <!-- Development builds only: the test harness's Dev Map, reachable through the session switch, as Unity's editor
+       had it. Release builds never reference the harness. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ProjectReference Include="../Simpiens.Testing.Core/Simpiens.Testing.Core.csproj" />
+  </ItemGroup>
   <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
     <PackageReference Include="nkast.Kni.Platform.SDL2.GL" Version="$(KniVersion)" />
   </ItemGroup>

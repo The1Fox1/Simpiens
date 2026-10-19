@@ -45,6 +45,10 @@ more (AGENTS.md, Logging).";
                 }
             }
 
+#if DEBUG
+            // Development builds offer the Dev Map (the canary pens) through the session switch, as Unity's editor did
+            options.ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Simpiens.Core.Session.ISessionDefinition>(services, new Simpiens.Testing.Sessions.CanaryPenSession());
+#endif
             ConsoleSimLogSink.Install();
             var logging = SimLogSettings.FromEnvironment();
             if (Environment.GetEnvironmentVariable("SIMPIENS_LOG") == null) logging.ConsoleMinimumLevel = LogLevel.Warning;
