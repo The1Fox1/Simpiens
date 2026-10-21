@@ -76,6 +76,19 @@ namespace Simpiens.Presentation
             return p.X + p.Y + height * HeightDepth;
         }
 
+        /// <summary>Walls, props and crawlers share the World layer, ordered by depth; the fog and the ring lie on the floor under them.</summary>
+        public int LayerOf(DrawRole role)
+        {
+            switch (role)
+            {
+                case DrawRole.Floor: return RenderLayer.Floor;
+                case DrawRole.Rock: return RenderLayer.Rock;
+                case DrawRole.Fog: return RenderLayer.FloorOverlay;
+                case DrawRole.Selection: return RenderLayer.FloorMarks;
+                default: return RenderLayer.World;
+            }
+        }
+
         /// <summary><paramref name="p"/> turned counter-clockwise by <paramref name="turns"/> quarter turns about the origin.</summary>
         private static Vec2 Turn(Vec2 p, int turns)
         {

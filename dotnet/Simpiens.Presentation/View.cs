@@ -22,6 +22,9 @@ namespace Simpiens.Presentation
 
         /// <summary>Order within a draw layer: higher depth is drawn later, in front.</summary>
         float Depth(Vec2 floor, float height = 0f);
+
+        /// <summary>The draw layer for items of a role (review A2): which roles share a layer, and so interleave by depth.</summary>
+        int LayerOf(DrawRole role);
     }
 
     /// <summary>Where a view looks and how close: the floor point at the viewport's centre, the scale and the viewport.</summary>

@@ -13,29 +13,34 @@ namespace Simpiens.Client.Tests
     public class DrawOrderTests
     {
         [Fact]
-        public void LayerComesFirstThenDepthThenInsertion()
+        public void LayerComesFirstThenDepthThenRoleThenInsertion()
         {
-            Assert.True(DrawSortKey.Make(RenderLayer.Floor, 1000f, 9) < DrawSortKey.Make(RenderLayer.Walls, -1000f, 0));
-            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, -3.5f, 9) < DrawSortKey.Make(RenderLayer.Crawlers, -2f, 0));
-            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, -2f, 0) < DrawSortKey.Make(RenderLayer.Crawlers, 0f, 0));
-            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, 0f, 0) < DrawSortKey.Make(RenderLayer.Crawlers, 2.25f, 0));
-            Assert.True(DrawSortKey.Make(RenderLayer.Props, 1f, 3) < DrawSortKey.Make(RenderLayer.Props, 1f, 4));
-            Assert.Equal(DrawSortKey.Make(RenderLayer.Props, -0f, 1), DrawSortKey.Make(RenderLayer.Props, 0f, 1));
+            const DrawRole crawler = DrawRole.Crawler, prop = DrawRole.Prop;
+            Assert.True(DrawSortKey.Make(RenderLayer.Floor, 1000f, DrawRole.Floor, 9) < DrawSortKey.Make(RenderLayer.Walls, -1000f, DrawRole.Wall, 0));
+            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, -3.5f, crawler, 9) < DrawSortKey.Make(RenderLayer.Crawlers, -2f, crawler, 0));
+            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, -2f, crawler, 0) < DrawSortKey.Make(RenderLayer.Crawlers, 0f, crawler, 0));
+            Assert.True(DrawSortKey.Make(RenderLayer.Crawlers, 0f, crawler, 0) < DrawSortKey.Make(RenderLayer.Crawlers, 2.25f, crawler, 0));
+            Assert.True(DrawSortKey.Make(RenderLayer.Props, 1f, prop, 3) < DrawSortKey.Make(RenderLayer.Props, 1f, prop, 4));
+            Assert.Equal(DrawSortKey.Make(RenderLayer.Props, -0f, prop, 1), DrawSortKey.Make(RenderLayer.Props, 0f, prop, 1));
+            Assert.True(DrawSortKey.Make(RenderLayer.World, 4f, crawler, 0) < DrawSortKey.Make(RenderLayer.World, 4.001f, prop, 0), "depth before role");
+            Assert.True(DrawSortKey.Make(RenderLayer.World, 4f, prop, 900) < DrawSortKey.Make(RenderLayer.World, 4f, crawler, 0), "at equal depth a prop is under a crawler");
 
-            ulong key = DrawSortKey.Make(RenderLayer.Selection, 7f, 1234);
+            ulong key = DrawSortKey.Make(RenderLayer.Selection, 7f, DrawRole.Selection, DrawSortKey.MaxSequence);
             Assert.Equal(RenderLayer.Selection, DrawSortKey.Layer(key));
-            Assert.Equal(1234, DrawSortKey.Sequence(key));
+            Assert.Equal(DrawRole.Selection, DrawSortKey.Role(key));
+            Assert.Equal(DrawSortKey.MaxSequence, DrawSortKey.Sequence(key));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DrawSortKey.Make(RenderLayer.Props, 0f, prop, DrawSortKey.MaxSequence + 1));
         }
 
         [Fact]
         public void TheDrawListSortsByLayerAndDepthAndKeepsInsertionOrderForTies()
         {
             var list = new DrawList();
-            list.Add(RenderLayer.Crawlers, 0f, 1, 0f, 0f, 1f, 1f, Rgba32.Clear);
-            list.Add(RenderLayer.Floor, 5f, 2, 0f, 0f, 1f, 1f, Rgba32.Clear);
-            list.Add(RenderLayer.Crawlers, -1f, 3, 0f, 0f, 1f, 1f, Rgba32.Clear);
-            list.Add(RenderLayer.Floor, 5f, 4, 0f, 0f, 1f, 1f, Rgba32.Clear);
-            for (int i = 0; i < 600; i++) list.Add(RenderLayer.Props, 0f, 100 + i, 0f, 0f, 1f, 1f, Rgba32.Clear); // grows the arrays
+            list.Add(RenderLayer.Crawlers, DrawRole.Crawler, 0f, 1, 0f, 0f, 1f, 1f, Rgba32.Clear);
+            list.Add(RenderLayer.Floor, DrawRole.Floor, 5f, 2, 0f, 0f, 1f, 1f, Rgba32.Clear);
+            list.Add(RenderLayer.Crawlers, DrawRole.Crawler, -1f, 3, 0f, 0f, 1f, 1f, Rgba32.Clear);
+            list.Add(RenderLayer.Floor, DrawRole.Floor, 5f, 4, 0f, 0f, 1f, 1f, Rgba32.Clear);
+            for (int i = 0; i < 600; i++) list.Add(RenderLayer.Props, DrawRole.Prop, 0f, 100 + i, 0f, 0f, 1f, 1f, Rgba32.Clear); // grows the arrays
             list.Sort();
 
             Assert.Equal(604, list.Count);
@@ -52,7 +57,7 @@ namespace Simpiens.Client.Tests
             var view = new View(TopDownProjection.Instance, new ViewCamera(Vec2.Zero, 32f, 800, 600)); // zoom 2
             var list = new DrawList();
             var id = new EntityId(1u, 0u, 0u, 7u);
-            ref var item = ref list.Add(RenderLayer.Crawlers, 0f, 1, 1f, 2f, 16f, 8f, Rgba32.Clear);
+            ref var item = ref list.Add(RenderLayer.Crawlers, DrawRole.Crawler, 0f, 1, 1f, 2f, 16f, 8f, Rgba32.Clear);
             item.Pick = list.Pickable(id);
 
             var centred = ScreenQuad.Of(list[0], view);
@@ -64,7 +69,7 @@ namespace Simpiens.Client.Tests
             item.PivotY = 1f; // standing on its feet: the sprite rises above its anchor
             var standing = ScreenQuad.Of(list[0], view);
             Assert.Equal(standing.Anchor.Y - 16f, standing.Top);
-            Assert.Equal(-1, new DrawList().Add(RenderLayer.Floor, 0f, 0, 0f, 0f, 1f, 1f, Rgba32.Clear).Pick); // not clickable unless asked
+            Assert.Equal(-1, new DrawList().Add(RenderLayer.Floor, DrawRole.Floor, 0f, 0, 0f, 0f, 1f, 1f, Rgba32.Clear).Pick); // not clickable unless asked
         }
     }
 

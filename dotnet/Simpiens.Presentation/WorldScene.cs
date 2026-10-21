@@ -60,12 +60,13 @@ namespace Simpiens.Presentation
             _lastTick = tick;
             Fog.Update(map, sectors, viewSeconds);
             _art = Projection.ArtPixelsPerUnit;
+            for (int r = 0; r < _layers.Length; r++) _layers[r] = Projection.LayerOf((DrawRole)r);
             if (map != null)
             {
                 if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
                 AddTiles(_tiles);
                 AddRoomNames(map);
-                Fog.Draw(Items, viewSeconds, _art);
+                Fog.Draw(Items, viewSeconds, Projection);
                 Fog.AddLabels(Labels, viewSeconds);
             }
 
@@ -88,7 +89,7 @@ namespace Simpiens.Presentation
         private void AddSelection(WorldSelection selection)
         {
             if (!selection.TryGetCrawlerPosition(out var at)) return;
-            Items.Add(RenderLayer.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize * _art, SelectionRingSize * _art, White);
+            Add(DrawRole.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize * _art, SelectionRingSize * _art, White);
             Labels.Add(new WorldLabel(selection.CrawlerName(), at + NameOffset, LabelKind.Name, NameColor));
         }
 
@@ -100,7 +101,7 @@ namespace Simpiens.Presentation
         {
             var pose = Appearance.Pose(entity.Id, entity.Agent, tick, viewSeconds);
             var position = entity.Agent.Position;
-            Items.Add(RenderLayer.Crawlers, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,
+            Add(DrawRole.Crawler, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,
                 CrawlerSize * pose.ScaleX * _art, CrawlerSize * pose.ScaleY * _art, White, pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
@@ -112,19 +113,19 @@ namespace Simpiens.Presentation
             switch (entity.Type)
             {
                 case EntityType.Resource:
-                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize * _art, ResourceSize * _art, White);
+                    Add(DrawRole.Prop, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize * _art, ResourceSize * _art, White);
                     break;
                 case EntityType.Anchor:
                 {
                     // Two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView)
                     var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
                     float size = HearthSize * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-                    Items.Add(RenderLayer.Props, depth, sprite.Index, position.X, position.Y, size * _art, size * _art, White);
+                    Add(DrawRole.Prop, depth, sprite.Index, position.X, position.Y, size * _art, size * _art, White);
                     break;
                 }
                 case EntityType.Bunk:
                     // Under its sleeper: props are drawn before crawlers
-                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize * _art, BunkSize * _art, White);
+                    Add(DrawRole.Prop, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize * _art, BunkSize * _art, White);
                     break;
             }
         }
@@ -142,9 +143,10 @@ namespace Simpiens.Presentation
                 var centre = tiles.CellCentre(tile.X, tile.Y);
                 switch (tile.Kind)
                 {
-                    case TileKind.Floor: Items.Add(RenderLayer.Floor, 0f, floor, centre.X, centre.Y, cell, cell, Rgba32.From(tile.Tint)); break;
-                    case TileKind.Rock: Items.Add(RenderLayer.Rock, 0f, rock, centre.X, centre.Y, cell, cell, White); break;
-                    default: Items.Add(RenderLayer.Walls, 0f, wall, centre.X, centre.Y, cell, cell, White); break;
+                    case TileKind.Floor: Add(DrawRole.Floor, 0f, floor, centre.X, centre.Y, cell, cell, Rgba32.From(tile.Tint)); break;
+                    case TileKind.Rock: Add(DrawRole.Rock, 0f, rock, centre.X, centre.Y, cell, cell, White); break;
+                    // Walls stand: in isometric they interleave with crawlers by depth (in top-down they never overlap)
+                    default: Add(DrawRole.Wall, Projection.Depth(centre), wall, centre.X, centre.Y, cell, cell, White); break;
                 }
             }
         }
@@ -161,6 +163,11 @@ namespace Simpiens.Presentation
         }
 
         private float _art = TopDownProjection.BasePixelsPerUnit; // art pixels per world unit, this build
+        private readonly int[] _layers = new int[(int)DrawRole.Crawler + 1]; // each role's layer, this build
+
+        /// <summary>Adds an item of <paramref name="role"/> in the layer the projection gives that role.</summary>
+        private ref DrawItem Add(DrawRole role, float depth, int sprite, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f)
+            => ref Items.Add(_layers[(int)role], role, depth, sprite, x, y, width, height, tint, rotation);
 
         private const float DegreesToRadians = MathF.PI / 180f;
         private static readonly Rgba32 White = new Rgba32(255, 255, 255, 255);

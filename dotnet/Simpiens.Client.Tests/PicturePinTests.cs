@@ -107,9 +107,12 @@ namespace Simpiens.Client.Tests
             public static long Quantize(float value) => (long)System.Math.Round(value * 64.0);
         }
 
-        // Recorded 2026-10-20 at main-kni 66c805f, before the projection seam (plan step 1.1)
-        private static readonly (ulong, ulong) PinnedTick0 = (4409963616687968739UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (12971714843452477590UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (15458948144476328945UL, 17765688760816253013UL);
+        // Recorded 2026-10-20 at main-kni 66c805f, before the projection seam (plan step 1.1). Items re-pinned at plan step
+        // 2.2: walls take the projection's depth (isometric needs it), which reorders top-down's wall tiles among themselves;
+        // they never overlap, so the picture is the same (render references unchanged, and with wall depth 0 the 1.1 pins
+        // still matched). The labels' pins are 1.1's.
+        private static readonly (ulong, ulong) PinnedTick0 = (3755311469026563443UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (8666672032589598222UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (6583990989785203313UL, 17765688760816253013UL);
     }
 }

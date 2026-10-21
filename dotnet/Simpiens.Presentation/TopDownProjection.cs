@@ -24,5 +24,20 @@ namespace Simpiens.Presentation
 
         /// <summary>Lower on screen (smaller world y) draws later.</summary>
         public float Depth(Vec2 floor, float height = 0f) => -floor.Y;
+
+        /// <summary>A layer per role, Unity's order: walls, then props, the fog, crawlers and the selection ring on top.</summary>
+        public int LayerOf(DrawRole role)
+        {
+            switch (role)
+            {
+                case DrawRole.Floor: return RenderLayer.Floor;
+                case DrawRole.Rock: return RenderLayer.Rock;
+                case DrawRole.Wall: return RenderLayer.Walls;
+                case DrawRole.Prop: return RenderLayer.Props;
+                case DrawRole.Fog: return RenderLayer.Fog;
+                case DrawRole.Crawler: return RenderLayer.Crawlers;
+                default: return RenderLayer.Selection;
+            }
+        }
     }
 }

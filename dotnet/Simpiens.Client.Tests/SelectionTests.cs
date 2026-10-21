@@ -16,7 +16,7 @@ namespace Simpiens.Client.Tests
         private static void AddCrawler(DrawList list, EntityId id, Vec2 at)
         {
             float size = WorldScene.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
-            list.Add(RenderLayer.Crawlers, TopDownProjection.Instance.Depth(at), 0, at.X, at.Y, size, size, Rgba32.Clear).Pick = list.Pickable(id);
+            list.Add(RenderLayer.Crawlers, DrawRole.Crawler, TopDownProjection.Instance.Depth(at), 0, at.X, at.Y, size, size, Rgba32.Clear).Pick = list.Pickable(id);
         }
 
         private static bool Pick(DrawList list, Vec2 world, out EntityId id) => WorldPicker.TryPick(list, Close, Close.WorldToScreen(world), out id);
@@ -28,7 +28,7 @@ namespace Simpiens.Client.Tests
             var b = new EntityId(1u, 0u, 0u, 2u);
             var c = new EntityId(1u, 0u, 0u, 3u);
             var list = new DrawList();
-            list.Add(RenderLayer.Floor, 0f, 0, 3f, 3f, 16f, 16f, Rgba32.Clear); // a floor tile: drawn, never picked
+            list.Add(RenderLayer.Floor, DrawRole.Floor, 0f, 0, 3f, 3f, 16f, 16f, Rgba32.Clear); // a floor tile: drawn, never picked
             AddCrawler(list, c, new Vec2(0.4f, 0f));
             AddCrawler(list, b, new Vec2(0f, 0.3f));
             AddCrawler(list, a, new Vec2(0f, -0.3f)); // lowest on screen: drawn last, on top

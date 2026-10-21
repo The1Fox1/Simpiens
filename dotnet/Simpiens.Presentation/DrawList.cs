@@ -73,26 +73,33 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
-    /// The draw order as one 64-bit key: the layer (<see cref="RenderLayer"/>), then the depth within the layer, then
-    /// insertion order. Sorting by it is stable, which <c>SpriteBatch</c>'s own depth sort isn't, and allocates nothing.
-    /// Lower keys are drawn first, so higher keys end up on top.
+    /// The draw order as one 64-bit key: the layer (<see cref="RenderLayer"/>, 8 bits), the depth within the layer (32),
+    /// the role at equal depth (<see cref="DrawRole"/>, 4) and insertion order (20). Sorting by it is stable, which
+    /// <c>SpriteBatch</c>'s own depth sort isn't, and allocates nothing. Lower keys are drawn first, so higher keys end
+    /// up on top.
     /// </summary>
     public static class DrawSortKey
     {
         private const int LayerOffset = 128;
+        /// <summary>The most items one frame can sort: insertion order has 20 bits.</summary>
+        public const int MaxSequence = (1 << 20) - 1;
 
         /// <param name="layer">-128 to 127.</param>
         /// <param name="depth">Within a layer, higher depth draws later.</param>
-        /// <param name="sequence">Insertion order, the tie-break: 0 to 2^24 - 1.</param>
-        public static ulong Make(int layer, float depth, int sequence)
+        /// <param name="role">At equal depth, the earlier role draws first.</param>
+        /// <param name="sequence">Insertion order, the last tie-break: 0 to <see cref="MaxSequence"/>.</param>
+        public static ulong Make(int layer, float depth, DrawRole role, int sequence)
         {
             if (layer < -LayerOffset || layer >= LayerOffset) throw new ArgumentOutOfRangeException(nameof(layer), layer, "A draw layer is -128 to 127.");
-            return ((ulong)(uint)(layer + LayerOffset) << 56) | ((ulong)OrderedBits(depth) << 24) | ((uint)sequence & 0xFFFFFFu);
+            if ((uint)sequence > MaxSequence) throw new ArgumentOutOfRangeException(nameof(sequence), sequence, "A frame sorts at most 2^20 items.");
+            return ((ulong)(uint)(layer + LayerOffset) << 56) | ((ulong)OrderedBits(depth) << 24) | ((ulong)((uint)role & 0xFu) << 20) | (uint)sequence;
         }
 
         public static int Layer(ulong key) => (int)(key >> 56) - LayerOffset;
 
-        public static int Sequence(ulong key) => (int)(key & 0xFFFFFFu);
+        public static DrawRole Role(ulong key) => (DrawRole)((key >> 20) & 0xFu);
+
+        public static int Sequence(ulong key) => (int)(key & MaxSequence);
 
         /// <summary>A float's bits, flipped so that unsigned order is numeric order (NaN aside).</summary>
         private static uint OrderedBits(float value)
@@ -127,14 +134,14 @@ namespace Simpiens.Presentation
         /// Adds a sprite anchored at <paramref name="x"/>, <paramref name="y"/> on the floor, centred on it, sized in art
         /// pixels. Returns the item, to set what the defaults don't cover (height, pivot, <see cref="Pickable"/>).
         /// </summary>
-        public ref DrawItem Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
+        public ref DrawItem Add(int layer, DrawRole role, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
         {
             if (Count == _items.Length)
             {
                 Array.Resize(ref _items, Count * 2);
                 Array.Resize(ref _keys, Count * 2);
             }
-            ulong key = DrawSortKey.Make(layer, depth, Count);
+            ulong key = DrawSortKey.Make(layer, depth, role, Count);
             _items[Count] = new DrawItem
             {
                 Sheet = sheet, SpriteIndex = spriteIndex, X = x, Y = y, PivotX = 0.5f, PivotY = 0.5f, Width = width, Height = height,
