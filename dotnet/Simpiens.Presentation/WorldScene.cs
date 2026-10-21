@@ -8,8 +8,9 @@ using Simpiens.Simulation.World;
 namespace Simpiens.Presentation
 {
     /// <summary>
-    /// What the top-down view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and
-    /// room names, the props (resource nodes, the hearth, bunks) and the crawlers with their animation. It reads the view's
+    /// What the view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and room names,
+    /// the props (resource nodes, the hearth, bunks) and the crawlers with their animation. What stands in an uncharted
+    /// sector is hidden by its fog and fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's
     /// frames (<see cref="WorldViewFrames"/>, review A3), never the live simulation. The map's tiles are built once per map. Sizes are Unity's: crawlers 0.7 of a cell,
     /// resource nodes 0.8, the hearth and bunks 0.9.
     /// </summary>
@@ -82,18 +83,24 @@ namespace Simpiens.Presentation
                 }
             }
 
-            if (selection != null) AddSelection(selection);
+            if (selection != null) AddSelection(selection, viewSeconds);
 
             Items.Sort();
         }
 
-        /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController).</summary>
-        private void AddSelection(WorldSelection selection)
+        /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController), hidden with the crawler in the fog.</summary>
+        private void AddSelection(WorldSelection selection, float viewSeconds)
         {
             if (!selection.TryGetCrawlerPosition(out var at)) return;
-            Add(DrawRole.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize * _art, SelectionRingSize * _art, White);
-            Labels.Add(new WorldLabel(selection.CrawlerName(), at + NameOffset, LabelKind.Name, NameColor));
+            float shown = Fog.Visibility(at, viewSeconds);
+            if (shown <= 0f) return;
+            Add(DrawRole.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize * _art, SelectionRingSize * _art, Shown(White, shown));
+            Labels.Add(new WorldLabel(selection.CrawlerName(), at + NameOffset, LabelKind.Name, Shown(NameColor, shown)));
         }
+
+        /// <summary><paramref name="colour"/> with its alpha scaled by how much shows through the fog.</summary>
+        private static Rgba32 Shown(Rgba32 colour, float shown)
+            => shown >= 1f ? colour : new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * shown));
 
         public const float SelectionRingSize = 0.9f;
         private static readonly Vec2 NameOffset = new Vec2(0f, 0.65f);
@@ -101,32 +108,37 @@ namespace Simpiens.Presentation
 
         private void AddCrawler(in EntityView entity, Vec2 position, long tick, float viewSeconds)
         {
-            var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, tick, viewSeconds);
+            var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, tick, viewSeconds); // its dwell runs under the fog too
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
             Add(DrawRole.Crawler, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,
-                CrawlerSize * pose.ScaleX * _art, CrawlerSize * pose.ScaleY * _art, White, pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
+                CrawlerSize * pose.ScaleX * _art, CrawlerSize * pose.ScaleY * _art, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
         /// <summary>The props Unity drew (resource nodes, the hearth, bunks); other kinds have no picture.</summary>
         private void AddProp(in EntityView entity, float viewSeconds)
         {
             var position = entity.Position;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var tint = Shown(White, shown);
             float depth = Projection.Depth(position);
             switch (entity.Type)
             {
                 case EntityType.Resource:
-                    Add(DrawRole.Prop, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize * _art, ResourceSize * _art, White);
+                    Add(DrawRole.Prop, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize * _art, ResourceSize * _art, tint);
                     break;
                 case EntityType.Anchor:
                 {
                     // Two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView)
                     var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
                     float size = HearthSize * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-                    Add(DrawRole.Prop, depth, sprite.Index, position.X, position.Y, size * _art, size * _art, White);
+                    Add(DrawRole.Prop, depth, sprite.Index, position.X, position.Y, size * _art, size * _art, tint);
                     break;
                 }
                 case EntityType.Bunk:
                     // Under its sleeper: props are drawn before crawlers
-                    Add(DrawRole.Prop, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize * _art, BunkSize * _art, White);
+                    Add(DrawRole.Prop, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize * _art, BunkSize * _art, tint);
                     break;
             }
         }

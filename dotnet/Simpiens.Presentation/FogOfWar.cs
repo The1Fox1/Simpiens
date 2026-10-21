@@ -7,7 +7,8 @@ namespace Simpiens.Presentation
     /// <summary>
     /// Fog of war on the map (Epic CLIENT M1.3): a port of Unity's <c>ShroudView</c>, rule for rule.
     /// <list type="bullet">
-    /// <item><description>Each uncharted sector's interior is covered by an opaque cloud, under the crawlers and over its props (producer decision D1 = A). "UNCHARTED" sits under the room's name. The walls and the name stay visible.</description></item>
+    /// <item><description>Each uncharted sector's interior is covered by an opaque cloud. "UNCHARTED" sits under the room's name. The walls and the name stay visible.</description></item>
+    /// <item><description>The cloud hides everything in the sector, crawlers included: a scout vanishes into the fog until the room is charted (producer decision D1 = C, 2026-10-21, replacing A's "over the props, under the crawlers"). The scene asks <see cref="Visibility"/> and doesn't draw what is hidden, so the rule holds in any projection, whatever the draw order.</description></item>
     /// <item><description>When a scout's report charts the sector, its fog fades out over <see cref="FadeSeconds"/> of view time and is removed.</description></item>
     /// </list>
     /// A view: it reads which sectors a frame captured as charted (<see cref="WorldViewFrame.IsCharted(int)"/>), the same
@@ -91,6 +92,23 @@ namespace Simpiens.Presentation
                 var start = _overlays[i].FadeStart;
                 if (start != null && viewSeconds - start.Value >= FadeSeconds) _overlays.RemoveAt(i);
             }
+        }
+
+        /// <summary>
+        /// How much of what stands at <paramref name="at"/> shows (D1 = C): 0 under a covering cloud, rising to 1 as the
+        /// cloud fades, 1 outside the fog.
+        /// </summary>
+        public float Visibility(Vec2 at, float viewSeconds)
+        {
+            float shown = 1f;
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                var overlay = _overlays[i];
+                if (!overlay.Area.Contains(at)) continue;
+                float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
+                shown = SimMath.Min(shown, t);
+            }
+            return shown;
         }
 
         /// <summary>Adds the clouds to <paramref name="list"/>, in the layer and at the art scale of <paramref name="projection"/>.</summary>

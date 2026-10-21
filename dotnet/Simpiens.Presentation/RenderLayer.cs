@@ -21,9 +21,9 @@ namespace Simpiens.Presentation
 
     /// <summary>
     /// Draw layers, bottom to top: the first part of a draw item's sort key. Top-down (<see cref="TopDownProjection"/>)
-    /// keeps Unity's <c>RenderOrder</c> (Epic MAP Phase 4): a layer per role, the fog over the props but under the
-    /// crawlers, so the player can't see what an uncharted room holds but can watch a scout walk into it (producer
-    /// decision D1 = A). Isometric (<see cref="IsometricProjection"/>) puts walls, props and crawlers in one
+    /// keeps Unity's <c>RenderOrder</c> (Epic MAP Phase 4): a layer per role. What an uncharted sector holds, crawlers
+    /// included, isn't drawn at all (producer decision D1 = C, <see cref="FogOfWar.Visibility"/>), so the fog's place in
+    /// the order only matters while a cloud fades. Isometric (<see cref="IsometricProjection"/>) puts walls, props and crawlers in one
     /// <see cref="World"/> layer sorted by depth, so a crawler can walk behind a wall; the fog and the selection ring lie
     /// on the floor under it.
     /// </summary>

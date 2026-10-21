@@ -25,11 +25,12 @@ namespace Simpiens.Client.Tests
         private static readonly EntityId Bunk = new EntityId(1u, 0u, 0u, 3u);
         private static readonly EntityId Sleeper = new EntityId(1u, 0u, 0u, 4u);
 
-        /// <summary>A wall row along y = 0 (cells x = -3 to 3); the south half charted, the north half not.</summary>
+        /// <summary>A wall row along y = 0 (cells x = -3 to 3) between two charted halves, and an uncharted store room in the north-east.</summary>
         private static MapDefinition Room() => new MapDefinitionBuilder("Depth order", new RectF(-6f, -6f, 12f, 12f))
             .WallRun(new Vec2(-3f, 0f), new Vec2(3f, 0f))
+            .Sector(3, "Store", string.Empty, new RectF(4f, 2f, 2f, 4f), startsExplored: false)
             .Sector(1, "South", string.Empty, new RectF(-6f, -6f, 12f, 6f))
-            .Sector(2, "North", string.Empty, new RectF(-6f, 0f, 12f, 6f), startsExplored: false)
+            .Sector(2, "North", string.Empty, new RectF(-6f, 0f, 12f, 6f))
             .Build();
 
         private static WorldEntity Crawler(EntityId id, Vec2 at) => new WorldEntity(id, EntityType.Pawn, at, 0.35f, agent: new AgentState(id));
@@ -90,7 +91,7 @@ namespace Simpiens.Client.Tests
             int cloud = items.FindIndex(i => i.Sheet == DrawSheet.Fog);
             int lastFloor = items.FindLastIndex(i => DrawSortKey.Role(i.SortKey) == DrawRole.Floor || DrawSortKey.Role(i.SortKey) == DrawRole.Rock);
 
-            Assert.True(cloud >= 0 && ring >= 0, "the uncharted north has a cloud, and the far crawler is selected");
+            Assert.True(cloud >= 0 && ring >= 0, "the uncharted store has a cloud, and the far crawler is selected");
             Assert.Equal(RenderLayer.FloorOverlay, DrawSortKey.Layer(items[cloud].SortKey));
             Assert.Equal(RenderLayer.FloorMarks, DrawSortKey.Layer(items[ring].SortKey));
             Assert.True(lastFloor < cloud && cloud < ring && ring < wall, "floor, then the cloud, then the ring, then everything standing");

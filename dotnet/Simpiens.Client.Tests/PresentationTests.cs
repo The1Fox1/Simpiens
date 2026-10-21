@@ -232,8 +232,10 @@ namespace Simpiens.Client.Tests
             var scene = new WorldScene();
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
 
-            int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null);
-            int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
+            // What stands in an uncharted sector is hidden by its fog (D1 = C)
+            bool Shown(Simpiens.Simulation.WorldEntity e) => scene.Fog.Visibility(e.Position, 0f) > 0f;
+            int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null && Shown(e));
+            int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && Shown(e) && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
                 || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
             Assert.True(crawlers > 0);
             Assert.True(props > 0);

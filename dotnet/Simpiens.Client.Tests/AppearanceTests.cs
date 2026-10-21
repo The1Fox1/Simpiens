@@ -85,9 +85,10 @@ namespace Simpiens.Client.Tests
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 0), 0f);
 
             var props = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Props).ToList();
-            int bunks = sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Bunk);
-            int hearths = sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Anchor);
-            int resources = sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Resource);
+            var shown = sim.Registry.ActiveEntities.Where(e => scene.Fog.Visibility(e.Position, 0f) > 0f).ToList(); // the fog hides the rest (D1 = C)
+            int bunks = shown.Count(e => e.Type == EntityType.Bunk);
+            int hearths = shown.Count(e => e.Type == EntityType.Anchor);
+            int resources = shown.Count(e => e.Type == EntityType.Resource);
             Assert.True(bunks > 0 && hearths > 0 && resources > 0);
             Assert.Equal(bunks + hearths + resources, props.Count);
             Assert.Equal(bunks, props.Count(p => p.SpriteIndex == ProceduralSprites.BunkSprite.Index && p.Width == WorldScene.BunkSize * TopDownProjection.BasePixelsPerUnit));

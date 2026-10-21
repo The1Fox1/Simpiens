@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
@@ -64,7 +65,7 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheSceneDrawsTheFogOverPropsAndUnderCrawlersWithUnchartedUnderTheRoomsName()
+        public void TheSceneDrawsACloudOverEachUnchartedSectorWithUnchartedUnderTheRoomsName()
         {
             using var sim = Outpost();
             var scene = new WorldScene();
@@ -74,13 +75,50 @@ namespace Simpiens.Client.Tests
             var clouds = items.Where(i => i.Sheet == DrawSheet.Fog).ToList();
             Assert.Equal(scene.Fog.Overlays.Count, clouds.Count);
             Assert.All(clouds, c => Assert.Equal(RenderLayer.Fog, DrawSortKey.Layer(c.SortKey)));
-            Assert.True(RenderLayer.Props < RenderLayer.Fog && RenderLayer.Fog < RenderLayer.Crawlers);
 
             // "UNCHARTED" hangs on each uncharted room's name (laid out on the next line, in screen space: MapTextTests)
             var uncharted = scene.Labels.Where(l => l.Kind == LabelKind.Uncharted).ToList();
             Assert.Equal(scene.Fog.Overlays.Count, uncharted.Count);
             Assert.All(uncharted, u => Assert.Contains(sim.Host.Current.Map.Labels, l => l.Position == u.At));
             Assert.All(uncharted, u => Assert.Equal(FogOfWar.UnchartedText, u.Text));
+        }
+
+        [Fact]
+        public void TheFogHidesEverythingInItsSectorCrawlersIncludedUntilItLifts()
+        {
+            // Producer decision D1 = C (2026-10-21): a scout vanishes into the fog until the room is charted
+            using var sim = Outpost();
+            var map = sim.Host.Current.Map;
+            var scene = new WorldScene();
+            scene.Build(map, TestFrames.Of(sim, 0), 0f);
+            var cloud = scene.Fog.Overlays.First(o => sim.Registry.ActiveEntities.Any(e => e.Agent == null && o.Area.Contains(e.Position)));
+            var crawler = sim.Registry.ActiveEntities.First(e => e.Agent != null);
+            crawler.SetPosition(cloud.Area.Center); // placed by hand: a fixture, not the simulation's path
+
+            var frames = TestFrames.Of(sim, 0);
+            var selection = new WorldSelection(frames);
+            selection.SelectCrawler(crawler.Id, follow: true);
+            scene.Build(map, frames, 0f, selection);
+            List<DrawItem> Inside() => Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i])
+                .Where(i => i.Sheet == DrawSheet.Sprites && cloud.Area.Contains(new Vec2(i.X, i.Y)) && DrawSortKey.Role(i.SortKey) is DrawRole.Prop or DrawRole.Crawler or DrawRole.Selection).ToList();
+            Assert.Empty(Inside());
+            Assert.DoesNotContain(scene.Labels, l => l.Kind == LabelKind.Name); // its name would give it away
+            var view = new View(TopDownProjection.Instance, new ViewCamera(cloud.Area.Center, 32f, 800, 600));
+            Assert.False(WorldPicker.TryPick(scene.Items, view, view.WorldToScreen(cloud.Area.Center), out _), "what the fog hides can't be clicked");
+            Assert.True(selection.TryGetCrawlerPosition(out _), "the selection (and the camera following it) keeps the crawler");
+
+            sim.Sectors.SetExplored(cloud.SectorId, true); // a scout's report
+            frames.Restart(sim.Registry.ActiveEntities, sim.Sectors, 0);
+            scene.Build(map, frames, 10f, selection); // the fade starts
+            scene.Build(map, frames, 10.75f, selection); // halfway
+            var halfway = Inside();
+            Assert.Contains(halfway, i => DrawSortKey.Role(i.SortKey) == DrawRole.Crawler);
+            Assert.Contains(halfway, i => DrawSortKey.Role(i.SortKey) == DrawRole.Prop);
+            Assert.All(halfway, i => Assert.InRange(i.Tint.A, 120, 135)); // fading in with the cloud
+            Assert.Contains(scene.Labels, l => l.Kind == LabelKind.Name && l.Color.A < 255);
+
+            scene.Build(map, frames, 12f, selection); // the cloud is gone
+            Assert.All(Inside(), i => Assert.Equal(255, i.Tint.A));
         }
 
         [Fact]

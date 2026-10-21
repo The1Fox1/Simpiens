@@ -110,9 +110,11 @@ namespace Simpiens.Client.Tests
         // Recorded 2026-10-20 at main-kni 66c805f, before the projection seam (plan step 1.1). Items re-pinned at plan step
         // 2.2: walls take the projection's depth (isometric needs it), which reorders top-down's wall tiles among themselves;
         // they never overlap, so the picture is the same (render references unchanged, and with wall depth 0 the 1.1 pins
-        // still matched). The labels' pins are 1.1's.
-        private static readonly (ulong, ulong) PinnedTick0 = (3755311469026563443UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (8666672032589598222UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (6583990989785203313UL, 17765688760816253013UL);
+        // still matched). Items re-pinned again at plan step 2.3 (producer decision D1 = C, 2026-10-21): the fog hides what an
+        // uncharted sector holds, so the props under the clouds are no longer drawn (the references were re-recorded with
+        // them). The labels' pins are 1.1's.
+        private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (16432157483044585443UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (4382740299715935319UL, 17765688760816253013UL);
     }
 }
