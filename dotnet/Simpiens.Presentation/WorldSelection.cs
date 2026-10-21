@@ -7,42 +7,46 @@ using Simpiens.Simulation.World;
 
 namespace Simpiens.Presentation
 {
-    /// <summary>A crawler the player could click: its id and where it is drawn.</summary>
-    public readonly struct PickCandidate
-    {
-        public readonly EntityId Id;
-        public readonly Vec2 Position;
-
-        public PickCandidate(EntityId id, Vec2 position)
-        {
-            Id = id;
-            Position = position;
-        }
-    }
-
-    /// <summary>Hit-testing for clicks on the map (Unity's <c>WorldPicker</c>).</summary>
+    /// <summary>
+    /// Hit-testing clicks on the map against what was drawn (review A1): a frame's draw list through its view, so a click
+    /// picks what the player sees, in any projection.
+    /// </summary>
     public static class WorldPicker
     {
+        /// <summary>A click this close to a pickable item's centre (world units at the view's scale) still picks it: Unity's pick radius.</summary>
+        public const float Reach = 0.6f;
+
         /// <summary>
-        /// The nearest candidate within <paramref name="radius"/> of <paramref name="point"/>; equal distances go to the
-        /// lower id, so a click on a crowd always picks the same crawler.
+        /// The pickable item under the screen point: the topmost one whose quad holds it; otherwise the one whose centre
+        /// is nearest within <see cref="Reach"/>, equal distances going to the one on top.
         /// </summary>
-        public static bool TryPickNearest(Vec2 point, IReadOnlyList<PickCandidate> candidates, float radius, out EntityId id)
+        public static bool TryPick(DrawList items, in View view, Vec2 screen, out EntityId id)
         {
             id = default;
-            if (candidates == null) return false;
-            float best = radius * radius;
-            bool found = false;
-            for (int i = 0; i < candidates.Count; i++)
+            if (items == null || view.Projection == null) return false;
+            float reach = Reach * view.PixelsPerUnit;
+            float best = reach * reach;
+            int nearest = -1;
+            for (int i = items.Count - 1; i >= 0; i--) // topmost first
             {
-                float d = (candidates[i].Position - point).SqrMagnitude;
-                if (d > best) continue;
-                if (found && SimMath.Approximately(d, best) && candidates[i].Id.CompareTo(id) > 0) continue;
-                best = d;
-                id = candidates[i].Id;
-                found = true;
+                ref readonly var item = ref items[i];
+                if (item.Pick < 0) continue;
+                var quad = ScreenQuad.Of(item, view);
+                if (screen.X >= quad.Left && screen.X < quad.Left + quad.Width && screen.Y >= quad.Top && screen.Y < quad.Top + quad.Height)
+                {
+                    id = items.PickedEntity(item.Pick);
+                    return true;
+                }
+                float d = (quad.Centre - screen).SqrMagnitude;
+                if (d < best || (nearest < 0 && d <= best))
+                {
+                    best = d;
+                    nearest = i;
+                }
             }
-            return found;
+            if (nearest < 0) return false;
+            id = items.PickedEntity(items[nearest].Pick);
+            return true;
         }
     }
 
@@ -53,13 +57,9 @@ namespace Simpiens.Presentation
     /// </summary>
     public sealed class WorldSelection
     {
-        /// <summary>A click this close to a crawler (world units) selects it.</summary>
-        public const float PickRadius = 0.6f;
-
         private readonly IWorldRegistry _registry;
         private readonly ISectorRegistry _sectors;
         private readonly IAgentIdentityService _identity;
-        private readonly List<PickCandidate> _candidates = new List<PickCandidate>(64);
 
         public WorldSelection(IWorldRegistry registry = null, ISectorRegistry sectors = null, IAgentIdentityService identity = null)
         {
@@ -114,30 +114,20 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>
-        /// A click on the map: the nearest crawler within <see cref="PickRadius"/> (where it is drawn) is selected and
-        /// followed, along with its sector; otherwise the crawler is deselected and the sector under the point selected.
+        /// A click on the map at the floor point <paramref name="floor"/>, on the crawler <paramref name="picked"/> drawn
+        /// there (<see cref="WorldPicker"/>), if any. The crawler is selected and followed, along with its sector;
+        /// without one the crawler is deselected and the sector under the point selected.
         /// </summary>
-        public void ClickAt(Vec2 world)
+        public void ClickAt(Vec2 floor, EntityId picked = default)
         {
-            _candidates.Clear();
-            var nodes = _registry?.ActiveEntities;
-            if (nodes != null)
+            if (picked != default)
             {
-                for (int i = 0; i < nodes.Count; i++)
-                {
-                    var node = nodes[i];
-                    if (node != null && node.Type == EntityType.Pawn) _candidates.Add(new PickCandidate(node.Id, node.Position));
-                }
-            }
-
-            if (WorldPicker.TryPickNearest(world, _candidates, PickRadius, out var id))
-            {
-                SelectCrawler(id, follow: true);
+                SelectCrawler(picked, follow: true);
                 if (TryGetCrawlerPosition(out var at)) SelectSectorAt(at);
                 return;
             }
             ClearCrawler();
-            SelectSectorAt(world);
+            SelectSectorAt(floor);
         }
 
         private void SelectSectorAt(Vec2 world)

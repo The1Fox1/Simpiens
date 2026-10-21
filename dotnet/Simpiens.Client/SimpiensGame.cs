@@ -221,11 +221,22 @@ namespace Simpiens.Client
                 }
                 LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToView(viewport.Width, viewport.Height));
                 if (LastInput.StopFollowing) Selection.StopFollowing();
-                if (LastInput.Clicked) Selection.ClickAt(LastInput.ClickWorld);
+                if (LastInput.Clicked) ClickMap(LastInput.ClickScreen);
             }
 
             // The camera follows the selected crawler (Unity did this after the input, in LateUpdate)
             if (Selection.Following && Selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, seconds);
+        }
+
+        /// <summary>
+        /// A left click on the map at a screen point: it picks what the last frame drew there (the picture the player
+        /// clicked on), and selects that crawler or the room under the point. Nothing is picked before the first frame.
+        /// </summary>
+        public void ClickMap(Vec2 screen)
+        {
+            if (View.Projection == null) return;
+            WorldPicker.TryPick(Scene.Items, View, screen, out var crawler);
+            Selection.ClickAt(View.ScreenToFloor(screen), crawler);
         }
 
         protected override void Dispose(bool disposing)

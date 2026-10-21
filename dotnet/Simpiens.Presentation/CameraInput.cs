@@ -29,8 +29,9 @@ namespace Simpiens.Presentation
     /// <summary>What the frame's input asks of the rest of the view.</summary>
     public struct CameraInputResult
     {
-        /// <summary>A left click on the map (pressed and released without dragging) at <see cref="ClickWorld"/>.</summary>
+        /// <summary>A left click on the map (pressed and released without dragging) at <see cref="ClickScreen"/>, over the floor at <see cref="ClickWorld"/>.</summary>
         public bool Clicked;
+        public Vec2 ClickScreen;
         public Vec2 ClickWorld;
         /// <summary>The player moved the camera: stop following the selected crawler.</summary>
         public bool StopFollowing;
@@ -90,6 +91,7 @@ namespace Simpiens.Presentation
             {
                 _clickArmed = false;
                 result.Clicked = true;
+                result.ClickScreen = pointer.Position;
                 result.ClickWorld = view.ScreenToFloor(pointer.Position);
             }
 

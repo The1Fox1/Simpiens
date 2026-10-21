@@ -259,7 +259,7 @@ namespace Simpiens.Client.Tests
             // A click on the map moves the dashboard to the crawler's room
             sim.Step(300);
             var walker = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && sim.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId);
-            selection.ClickAt(walker.Position);
+            selection.ClickAt(walker.Position, walker.Id); // the crawler drawn there (picking: SelectionTests)
             Assert.Equal(sim.Sectors.GetSectorAt(walker.Position).Id, model.Sectors.SelectedSectorId);
             Assert.Equal(walker.Id, model.Dossier.CrawlerId);
 

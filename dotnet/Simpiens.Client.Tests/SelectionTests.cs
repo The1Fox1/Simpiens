@@ -8,22 +8,39 @@ using Xunit;
 
 namespace Simpiens.Client.Tests
 {
-    /// <summary>Picking and selection, ported with Unity's CameraRigValidator picker checks (Epic CLIENT M1.5).</summary>
+    /// <summary>Picking and selection (Epic CLIENT M1.5; clicks pick what is drawn since review A1).</summary>
     public class SelectionTests
     {
+        private static readonly View Close = new View(TopDownProjection.Instance, new ViewCamera(Vec2.Zero, 32f, 800, 600));
+
+        private static void AddCrawler(DrawList list, EntityId id, Vec2 at)
+        {
+            float size = WorldScene.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
+            list.Add(RenderLayer.Crawlers, TopDownProjection.Instance.Depth(at), 0, at.X, at.Y, size, size, Rgba32.Clear).Pick = list.Pickable(id);
+        }
+
+        private static bool Pick(DrawList list, Vec2 world, out EntityId id) => WorldPicker.TryPick(list, Close, Close.WorldToScreen(world), out id);
+
         [Fact]
-        public void ClicksPickTheNearestCrawlerWithinReachTiesGoToTheLowerId()
+        public void ClicksPickWhatIsDrawnOnTopOrTheNearestCrawlerWithinReach()
         {
             var a = new EntityId(1u, 0u, 0u, 1u);
             var b = new EntityId(1u, 0u, 0u, 2u);
             var c = new EntityId(1u, 0u, 0u, 3u);
-            var crowd = new[] { new PickCandidate(c, new Vec2(0.4f, 0f)), new PickCandidate(b, new Vec2(0f, 0.3f)), new PickCandidate(a, new Vec2(0f, -0.3f)) };
-            float r = WorldSelection.PickRadius;
-            Assert.True(WorldPicker.TryPickNearest(new Vec2(0f, 0.25f), crowd, r, out var id) && id == b, "The nearest crawler is picked.");
-            Assert.True(WorldPicker.TryPickNearest(Vec2.Zero, crowd, r, out id) && id == a, "Equal distances go to the lower id.");
-            Assert.False(WorldPicker.TryPickNearest(new Vec2(5f, 5f), crowd, r, out _), "Nothing beyond the radius is picked.");
-            Assert.False(WorldPicker.TryPickNearest(Vec2.Zero, new PickCandidate[0], r, out _) || WorldPicker.TryPickNearest(Vec2.Zero, null, r, out _), "An empty map picks nothing.");
-            Assert.True(WorldPicker.TryPickNearest(new Vec2(0.4f + r - 0.01f, 0f), crowd, r, out id) && id == c, "A click just inside the radius picks.");
+            var list = new DrawList();
+            list.Add(RenderLayer.Floor, 0f, 0, 3f, 3f, 16f, 16f, Rgba32.Clear); // a floor tile: drawn, never picked
+            AddCrawler(list, c, new Vec2(0.4f, 0f));
+            AddCrawler(list, b, new Vec2(0f, 0.3f));
+            AddCrawler(list, a, new Vec2(0f, -0.3f)); // lowest on screen: drawn last, on top
+            list.Sort();
+
+            Assert.True(Pick(list, new Vec2(0f, 0.25f), out var id) && id == b, "A click on a crawler picks it.");
+            Assert.True(Pick(list, Vec2.Zero, out id) && id == a, "Where crawlers overlap, the one drawn on top is picked.");
+            Assert.True(Pick(list, new Vec2(0.4f + 0.35f + 0.2f, 0f), out id) && id == c, "A click beside a crawler, within reach of its centre, picks it.");
+            Assert.False(Pick(list, new Vec2(0.4f + WorldPicker.Reach + 0.05f, 0f), out _), "Nothing beyond reach is picked.");
+            Assert.False(Pick(list, new Vec2(3f, 3f), out _), "What isn't pickable is never picked.");
+            Assert.False(Pick(new DrawList(), Vec2.Zero, out _) || WorldPicker.TryPick(null, Close, Vec2.Zero, out _), "An empty map picks nothing.");
+            Assert.False(WorldPicker.TryPick(list, default, Vec2.Zero, out _), "Before the first frame there is no view to pick through.");
         }
 
         [Fact]
@@ -54,8 +71,18 @@ namespace Simpiens.Client.Tests
             var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));
             var selection = new WorldSelection(sim.Registry, sim.Sectors, identity);
 
+            var scene = new WorldScene();
+            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+            var view = new View(TopDownProjection.Instance, new ViewCamera(sim.Host.Current.Map.CameraFrame.Center, 32f, 1280, 720));
+            void Click(Vec2 world)
+            {
+                var screen = view.WorldToScreen(world);
+                WorldPicker.TryPick(scene.Items, view, screen, out var picked);
+                selection.ClickAt(view.ScreenToFloor(screen), picked);
+            }
+
             var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            selection.ClickAt(crawler.Position + new Vec2(0.2f, 0.1f));
+            Click(crawler.Position + new Vec2(0.2f, 0.1f));
             Assert.Equal(crawler.Id, selection.SelectedCrawler);
             Assert.True(selection.Following);
             Assert.Equal(sim.Sectors.GetSectorAt(crawler.Position).Id, selection.SelectedSector);
@@ -63,7 +90,7 @@ namespace Simpiens.Client.Tests
             Assert.False(string.IsNullOrEmpty(selection.CrawlerName()));
 
             var hub = sim.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position; // floor, no crawler at t0
-            selection.ClickAt(hub);
+            Click(hub);
             Assert.Equal(default, selection.SelectedCrawler);
             Assert.False(selection.Following);
             Assert.Equal(sim.Sectors.GetSectorAt(hub).Id, selection.SelectedSector);
@@ -75,7 +102,7 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 1);
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             game.Rig.ZoomAt(game.Rig.Frame.Center, 0.2f); // close enough that following has room to move
-            game.Selection.ClickAt(crawler.Position);
+            game.ClickMap(game.View.WorldToScreen(crawler.Position));
             Assert.True(game.Selection.Following);
 
             float before = Vec2.Distance(game.Rig.Position, crawler.Position);
