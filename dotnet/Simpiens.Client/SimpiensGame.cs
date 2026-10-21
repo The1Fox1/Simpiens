@@ -46,6 +46,8 @@ namespace Simpiens.Client
             Simulation = HeadlessSimulation.Create(Options.Seed, Options.ConfigureServices);
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
+            // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
+            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock);
 
             Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
             Selection.Changed += OnSelectionChanged;
@@ -76,6 +78,9 @@ namespace Simpiens.Client
 
         /// <summary>The simulation this client plays: the views read it, and only typed commands change it.</summary>
         public HeadlessSimulation Simulation { get; }
+
+        /// <summary>The world as the views draw it: the last two completed ticks, as plain data (review A3).</summary>
+        public WorldViewFrames Frames { get; } = new WorldViewFrames();
 
         /// <summary>What the view shows this frame: rebuilt from the simulation's state on every draw.</summary>
         public WorldScene Scene { get; } = new WorldScene();
@@ -247,6 +252,7 @@ namespace Simpiens.Client
                 _fontAtlases?.Dispose();
                 _batch?.Dispose();
                 Ui.Shutdown();
+                Frames.Dispose();
                 Simulation.Dispose();
             }
             base.Dispose(disposing);
