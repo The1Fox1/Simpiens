@@ -750,3 +750,20 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Consequences:**
   - Any new text (isometric labels, cutscene text boxes, the map designer) takes a face from `FontSet`, adding a size by re-baking.
   - High-DPI and phone screens (M6) bake larger sets from the same `FontSet`.
+
+## Epic CLIENT seams before M3: projection, draw order, view frame (review A1–A3, 2026-10-20/21)
+- **Context:** the producer had the KNI client reviewed (Claude Docs, "KNI Client Architecture Review", 2026-10-19). Its three high findings stood between the client and M3's isometric view: top-down was hard-wired (A1), the layer table couldn't interleave walls and crawlers by depth and left the fog without a slot (A2), and the views read live simulation objects in `Draw` (A3). The producer asked for a plan, then for its execution. The plan was the Claude Doc "Plan: Projection, Draw Order and Frame Snapshot (A1–A3)", with a working copy in `.agents/`, deleted at this close-out.
+- **Decisions (agent, unless noted):**
+  - **A projection is a linear map of the floor onto a view plane** (`ToView`, `ToFloor`, `ViewBounds`, `Depth`, `LayerOf`, `ArtPixelsPerUnit`); `View` (projection + `ViewCamera`) does pixels, snapping and framing once for every projection. The plan had sketched screen maths on each projection. Because top-down's view plane is the world, the camera, rig and renders stayed bit-identical through the refactor. The art scale is a power of two, so sizes in art pixels convert exactly.
+  - **Draw items stand on a floor anchor** with a height, a pivot and a size in art pixels; `ScreenQuad` places them for the renderer and the picker alike.
+  - **Picking hit-tests the last drawn list:** the topmost pickable quad under the click, else the nearest centre within Unity's 0.6-unit reach. Behaviour change: in a crowd, the crawler drawn on top wins.
+  - **Draw roles; the projection picks layers.** The sort key is layer 8 | depth 32 | role 4 | sequence 20. Walls take the projection's depth in both projections (top-down's wall order changed, not its picture).
+  - **Fog: producer decision D1 = C (2026-10-21), both projections,** replacing A in the client. Built as a rule in the scene builder (`FogOfWar.Visibility`): what an uncharted sector holds isn't drawn and fades in with the cloud, so it holds in isometric without a cloud layer over the walls. The selected crawler's ring and name hide with it (agent; the selection and the camera's follow keep it).
+  - **`WorldViewFrame`**, plain data captured on a new `SessionHost.TickCompleted` (raised after every crawler ticked, independent of subscription order; the seam a server would send from). Two frames, a new epoch on every respawn, switch or load. The views take no live entity, crawler state or registry (an architecture test).
+  - **Interpolation:** crawlers drawn between the two frames at the clock's fraction, alpha 1 when the view runs on ticks or updates step whole ticks; no glide across epochs, for newcomers or over 2 units.
+  - **`PicturePinTests`** hash the drawn picture finer than the render tolerance, which a hidden 11×11 px crawler passes (epic F9).
+- **Verification:** 15 commits, `a34eb78` to `0eb0489`, each with its measured status; the 3.2 and 3.3 commits were tested as snapshots, and 3.3 again alone in a scratch worktree. Final: `dotnet test` 199/199 (client 136, core 63); golden 3/3; Unity PlayMode 69/69 and golden 3/3 on the core change; the MonoGame build compiles; frame time 2.14 ms against 2.09 ms (llvmpipe).
+- **Consequences:**
+  - M3 sets `SimpiensGame.Projection` to an `IsometricProjection` (tile size and orientation from the art), stands sprites on their feet, and draws the cloud per floor cell.
+  - The simulation can later leave the render thread behind three frame buffers; the dashboard needs its own snapshot first.
+  - The producer's look at the interpolated motion is open.

@@ -377,7 +377,7 @@ Before Epic 10: soak test and scaling work (#8).
     - The economy soak re-ran on Floor 1: the numbers for the §3.3 decision are in the plan's §9.
   - **Phase 4, the player's view: done 2026-10-12** (PlayMode 52/52 ×3; producer visual check passed 2026-10-12, including the mouse and keyboard controls):
     - The map is drawn on a tilemap with a floor per room (14 GameObjects instead of about 270), checked cell for cell against the walls the pathfinder uses.
-    - **Fog of war on the map** (producer decision D1 = A): an uncharted room's contents are hidden, crawlers walking in stay visible; a scout's report fades the fog out.
+    - **Fog of war on the map** (producer decision D1 = A): an uncharted room's contents are hidden, crawlers walking in stay visible; a scout's report fades the fog out. (In the KNI client, D1 = C replaces it from 2026-10-21: crawlers are hidden too. See Epic CLIENT.)
     - Camera: pan, zoom toward the cursor, reframe; click a crawler to follow it, click a room to select it in the dashboard.
     - **The header and the Bounty and Merchant windows work over the map** (producer decision D2); Tab still opens the full dashboard.
     - Bounties target rooms by name; the simulation refuses a Scout bounty on a charted room or any bounty on an unknown sector, before escrow.
@@ -478,6 +478,14 @@ Before Epic 10: soak test and scaling work (#8).
   - **Text cleanup done (2026-10-18):** T1 (the baker and the committed atlases, with a font golden), T2 (the UI on baked Inter, 1:1) and T3 (the map's text in screen space).
     - Every text in the client is one of 15 baked Inter faces, drawn 1:1 on whole pixels. The UI's scaled bitmap and the map's pixel font are gone.
     - Measured: `dotnet test` 173/173 (client 110, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.4–3.6 ms.
+  - **Producer request (2026-10-20):** before M3, carry out the three high findings of the client's architecture review (Claude Docs, "KNI Client Architecture Review"): a projection seam (A1), a draw order the projection chooses (A2) and a per-tick view frame (A3). The plan is the Claude Doc "Plan: Projection, Draw Order and Frame Snapshot (A1–A3)"; its working copy was deleted at close-out. Branch `feat/client-seams`, into `main-kni`.
+  - **Producer decision D1 = C (2026-10-21), replacing D1 = A in the client, in both projections:** the fog hides everything in an uncharted sector, crawlers included. A scout vanishes into the fog until the room is charted. Unity's frozen views keep A.
+  - **Client seams done (2026-10-21):**
+    - A1: `IViewProjection` with `TopDownProjection` (and `IsometricProjection`, tested but not wired); `View` for the renderer, labels and controls; the camera rig and picking through the projection; clicks pick what is drawn.
+    - A2: draw roles, layers chosen by the projection, a role tie-break in the sort key; the fog rule D1 = C in the scene builder.
+    - A3: `WorldViewFrame`, captured on `SessionHost.TickCompleted` (the one core change), the only thing the views read; crawlers and the camera's follow drawn between ticks.
+    - Measured: `dotnet test` 199/199 (client 136, core 63); golden 3/3; Unity PlayMode 69/69 and golden 3/3 on the core change; the MonoGame build compiles. Frame time 2.14 ms against 2.09 ms before (llvmpipe, a tick every frame).
+    - Open: the producer's look at crawlers moving between ticks at 1× and 10×, and the pull request into `main-kni`. Next: M3, isometric.
     - The producer's look is open (person-gated); the pull request goes into `main-kni`.
 
 ---

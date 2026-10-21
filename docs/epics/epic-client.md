@@ -25,6 +25,8 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
   - Android and iOS follow the MVP: phones in portrait only, tablets not a priority. An Apple developer account and a Mac exist.
   - Consoles come last, only if mobile goes well.
   - No macOS, no web.
+- **Seams before M3 (2026-10-20):** carry out the architecture review's high findings A1–A3 (projection, draw order, view frame) before isometric. Plan: the Claude Doc "Plan: Projection, Draw Order and Frame Snapshot (A1–A3)".
+- **Fog, D1 = C (2026-10-21), replacing A in the client:** the fog hides everything in an uncharted sector, crawlers included, in both projections. A scout vanishes into the fog until the room is charted.
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
@@ -91,7 +93,9 @@ flowchart TB
   It is tested without a GPU. (A refinement of the proposal, which had a single `Simpiens.Client`.)
 - **`Simpiens.Client` holds the only code that touches XNA types.** KNI-specific code sits in one class. The MSBuild property `XnaFramework` picks the framework: `Kni` (the default) or `MonoGame`. CI compiles both.
 - **Views read state; they never write it.** Input goes down as typed commands.
-- **Draw order:** layers from today's `RenderOrder` table, then depth, then insertion order, packed into one sort key and stably sorted by us, not by `SpriteBatch`.
+- **Projections (review A1):** a view is an `IViewProjection` (a linear map of the floor onto a view plane: `TopDownProjection`, `IsometricProjection`) seen through a `ViewCamera`, as a `View`. The renderer, the map's text, the camera rig and its controls, and picking all go through the `View`, so a new projection touches none of them. A draw item stands on a floor anchor with a pivot and a size in art pixels; `ScreenQuad` places it for both the renderer and the picker, so a click picks what is drawn.
+- **Draw order (review A2):** each item has a `DrawRole`; the projection maps roles to layers (top-down: Unity's `RenderOrder` table; isometric: walls, props and crawlers in one World layer). The sort key is layer, depth, role and insertion order, stably sorted by us, not by `SpriteBatch`. The fog's rule (D1 = C) lives in the scene builder, not in the order.
+- **Views read frames (review A3):** after every tick (`SessionHost.TickCompleted`) the client copies what it draws into a `WorldViewFrame` of plain data; the scene, appearance, fog and selection read only the last two frames, never the live simulation (a test enforces it). Crawlers are drawn between the two at the clock's interpolation fraction, one tick behind.
 
 ---
 
@@ -216,12 +220,22 @@ flowchart TB
     - Frame time: 2.2 ms (llvmpipe) and 1.4 ms (GPU) for the map with its header; 3.2 and 3.6 ms with the panels refreshed every frame.
     - The producer's look is open; the plan is deleted.
 
+- [x] Client seams before M3 (review A1–A3; producer request 2026-10-20, on `feat/client-seams` into `main-kni`).
+    - Plan `a34eb78`; CI on `main-kni` pushes `0022a66` (review T1).
+    - Phase 1, the projection seam (A1): the picture pinned as data `c018688` (`PicturePinTests`, finer than the render tolerance); `IViewProjection`, `ViewCamera`, `View` and `TopDownProjection` `a21c0ee`; draw items on anchors, sized in art pixels `7f1a2df`; the camera rig through the projection `db6aed8`; clicks pick what is drawn, topmost first, with Unity's 0.6-unit reach `0b2f947`; `IsometricProjection`'s maths, tested in four orientations and carried by the rig, not wired in `2992b1d`.
+    - Phase 2, the draw order (A2): draw roles and layers chosen by the projection, with a role tie-break in the sort key `8c02eb9`; isometric depth order tested on a hand-built room `ee8fcee`; the fog rule D1 = C (props and crawlers in a covered sector aren't drawn, fade in with the cloud, and can't be clicked; the selected crawler's ring and name hide with it) `0eb0489`. Seven references were re-recorded for it after a look: the props that showed 3% through the cloud are gone.
+    - Phase 3, the view frame (A3): `SessionHost.TickCompleted` `4d7ef49` (core; Unity PlayMode 69/69, golden 3/3); `WorldViewFrame` and its writer `7fff0a4`; the views read only frames `eb1c439`; crawlers and the camera's follow drawn between ticks `a192dc9`.
+    - Measured: `dotnet test` 199/199 (client 136, core 63); golden 3/3; the MonoGame build compiles; frame time 2.14 ms against 2.09 ms before (F10).
+
 ---
 
 ## 4. Deferred
 
 - M2 to M7 and the map designer: they wait for the producer (the agent's authority covered M0 and M1).
-- Interpolating crawlers between ticks: Unity didn't, so parity doesn't need it; in fixed-tick mode it would draw the previous tick. Unscheduled within this epic.
+- Wiring isometric into the game, its art, sprites standing on their feet (pivot 0.5, 1), the fog's cloud drawn per floor cell (a sector's rectangle is a parallelogram in isometric), and cutscene mode: M3.
+- A static floor pass with chunk culling (review R1), one world epoch for every view cache and the scene built in `Update` (review A5, A6): before or with M3.
+- The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
+- Render tests in a pinned Mesa and SDL container (review T2).
 - Sound: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
 - The removal of Unity: M2, by producer decision.
@@ -231,6 +245,8 @@ flowchart TB
 ## 5. Risks
 
 - **Open, person-gated: the producer's side-by-side look** at the client beside Unity, the gate of M1 and of M2.7 (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop` (Debug, with the Dev Map switch) or `-c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **Open, person-gated: the producer's look at interpolated motion** (client seams, 2026-10-21): crawlers and the followed camera now move between ticks, one tick (100 ms of simulated time) behind the simulation. Watch them at 1× and 10× with `dotnet run --project dotnet/Simpiens.Desktop`.
+- **The render tolerance hides small changes** (F9): use the picture pins to tell a real change from rounding.
 - **Fonts are baked on Linux:** the font golden compares a FreeType bake with the committed atlases. A bake on another system may differ by a pixel; if that happens, re-commit deliberately or move the baker to StbTrueType, which is managed and identical everywhere.
 - **Narrow windows (M6):** the dashboard is laid out for the default 1280×720 and up. Below that, the header crowds and the detail column narrows (at 800 px it is 112 px wide), as Unity's would have.
 - **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. Two test helpers reach into Gum's and KNI's internals: the scripted cursor uses Gum's internal per-frame cursor method, and an offscreen game is made active through KNI's private flag. Both fail loudly if an update moves them.
@@ -274,6 +290,8 @@ See the proposal's risk table. These matter for M0 and M1:
     - The fix is a baked face per size, drawn 1:1.
     - Gum finds BMFont files under its cache names (`FontCache/Font{size}{family}[_Bold].fnt`) next to the game. They render pixel-identical to generating in memory.
     - Gum looks a face up once per property set (font, size, weight), so the three are set together under suspended layout.
+- **F9: the render tolerance hides a crawler** (client seams, 2026-10-21). The references allow 0.1% of pixels (480 at 800×600) to differ by more than 2 per channel; a crawler is about 11×11 px at the default zoom, and props showing 3% through the fog differ by a few levels. The fog rule D1 = C passed every render test unchanged. `PicturePinTests` hash every draw item and label in screen terms (to 1/64 px) and caught it, so the references were re-recorded deliberately.
+- **F10: frame time after the seams** (2026-10-21, `FrameTimeProbe`, llvmpipe, 800×600, a tick every frame, three alternating runs each): 2.14 ms against 2.09 ms on `main-kni`. The per-tick capture runs every frame in the probe but at 10 Hz in play at 1×. The budget is 33 ms.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---
@@ -283,3 +301,4 @@ See the proposal's risk table. These matter for M0 and M1:
 - 2026-10-18: epic opened from the KNI engine proposal; C0 (setup) done.
 - 2026-10-18: M0 (first pixels) done in five chunks: M0.1 `ba1f17c`, M0.2 `27c48be`, M0.3 `79fa223`, M0.4 `cf88e89`, M0.5 the close-out commit. M1's plan follows.
 - 2026-10-18: M1 (top-down parity) done in seven chunks: the plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit. The plan was deleted at close-out. The agent's authority ends here: M2 waits for the producer.
+- 2026-10-21: the client seams before M3 (review A1–A3) done on `feat/client-seams` in 15 commits, `a34eb78` to `0eb0489`, with the producer's fog decision D1 = C. The working plan was deleted at close-out.
