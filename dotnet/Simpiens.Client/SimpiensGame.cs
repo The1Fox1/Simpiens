@@ -83,6 +83,17 @@ namespace Simpiens.Client
         /// <summary>The view of the last frame drawn: its projection and camera.</summary>
         public View View { get; private set; }
 
+        /// <summary>How the map is projected (top-down until M3): the camera rig and the scene use the same one.</summary>
+        public IViewProjection Projection
+        {
+            get => Rig.Projection;
+            set
+            {
+                Rig.Projection = value;
+                Scene.Projection = Rig.Projection;
+            }
+        }
+
         /// <summary>The player's view of the map: where it looks and how close (Unity's camera rig).</summary>
         public CameraRig Rig { get; } = new CameraRig();
 

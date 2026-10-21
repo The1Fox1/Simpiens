@@ -105,13 +105,13 @@ namespace Simpiens.Presentation
             }
             else
             {
-                // Grab the map: it moves with the pointer (screen y points down, world y up)
-                float worldPerPixel = WorldUnitsPerPixel(rig, view);
-                var delta = new Vec2((_previous.Position.X - pointer.Position.X) * worldPerPixel, (pointer.Position.Y - _previous.Position.Y) * worldPerPixel);
+                // Grab the map: it moves with the pointer (screen y points down, the view plane's y up)
+                float unitsPerPixel = ViewUnitsPerPixel(rig, view);
+                var delta = new Vec2((_previous.Position.X - pointer.Position.X) * unitsPerPixel, (pointer.Position.Y - _previous.Position.Y) * unitsPerPixel);
                 if (delta.X != 0f || delta.Y != 0f)
                 {
                     result.StopFollowing = true;
-                    rig.Pan(delta);
+                    rig.PanOnScreen(delta);
                 }
             }
 
@@ -121,7 +121,7 @@ namespace Simpiens.Presentation
             {
                 result.StopFollowing = true;
                 var direction = new Vec2(dx, dy).Normalized;
-                rig.Pan(direction * (KeyPanViewsPerSecond * 2f * rig.Size * deltaSeconds));
+                rig.PanOnScreen(direction * (KeyPanViewsPerSecond * 2f * rig.Size * deltaSeconds));
             }
             if (keys.HomePressed)
             {
@@ -134,7 +134,7 @@ namespace Simpiens.Presentation
             return result;
         }
 
-        private static float WorldUnitsPerPixel(CameraRig rig, in View view)
+        private static float ViewUnitsPerPixel(CameraRig rig, in View view)
             => view.ViewportHeight > 0 ? 2f * rig.Size / view.ViewportHeight : 0f;
     }
 }
