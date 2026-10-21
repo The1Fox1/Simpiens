@@ -120,6 +120,12 @@ namespace Simpiens.Core.Session
 
         public event Action<ISessionDefinition> SessionChanged;
 
+        /// <summary>
+        /// A tick has finished: the simulation's own, then every crawler's. Nothing changes the world again until the
+        /// next tick, so views capture what they draw here (Epic CLIENT, review A3); a server would send its state here.
+        /// </summary>
+        public event Action<long> TickCompleted;
+
         /// <summary>Written into saves (the Unity host sets the player build's version).</summary>
         public string BuildVersion { get; set; } = "headless";
 
@@ -480,6 +486,7 @@ namespace Simpiens.Core.Session
                 var crawler = _crawlers[i];
                 if (!crawler.IsDisposed) crawler.Tick(currentTick);
             }
+            TickCompleted?.Invoke(currentTick);
         }
 
         public void Dispose()
