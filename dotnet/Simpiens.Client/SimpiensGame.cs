@@ -135,6 +135,12 @@ namespace Simpiens.Client
         /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
+        /// <summary>
+        /// How far the clock is between the last two ticks, for drawing crawlers between them: the clock's own fraction
+        /// live; 1 (the last tick exactly) when the view runs on ticks or every update steps whole ticks.
+        /// </summary>
+        public float ViewAlpha => Options.ViewClockFromTicks || Options.TicksPerUpdate > 0 ? 1f : Simulation.Clock.InterpolationAlpha;
+
         private double _realSeconds;
         private float _lastViewSeconds;
         private object _framedMap;
@@ -182,6 +188,7 @@ namespace Simpiens.Client
             float seconds = (float)elapsed.TotalSeconds;
             _realSeconds += seconds;
             _driver.Advance(elapsed);
+            Frames.Alpha = ViewAlpha;
             // The camera's time: real time in the game; with the tick-based view clock (tests, captures), view time
             float view = ViewSeconds;
             float cameraSeconds = Options.ViewClockFromTicks ? System.Math.Max(0f, view - _lastViewSeconds) : seconds;

@@ -72,7 +72,14 @@ namespace Simpiens.Presentation
             Epoch = epoch;
             _knowsCharting = sectors != null;
             ChartedMask = sectors != null ? sectors.ExploredMask : 0UL;
-            for (int i = 0; i < _charted.Length; i++) _charted[i] = sectors != null && sectors.IsExplored(i);
+            Array.Clear(_charted, 0, _charted.Length);
+            if (sectors != null)
+            {
+                // Only the map's sectors and the fallback can be charted
+                var all = sectors.All;
+                for (int i = 0; i < all.Count; i++) _charted[all[i].Id] = sectors.IsExplored(all[i].Id);
+                _charted[sectors.Fallback.Id] = sectors.IsExplored(sectors.Fallback.Id);
+            }
 
             _index.Clear();
             Count = 0;
@@ -112,9 +119,10 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
-    /// The view's last two frames (review A3): captured when a tick completes, restarted when the world is rebuilt. The
-    /// views draw between them at <see cref="Alpha"/>. Captures happen on the simulation's thread; if the simulation
-    /// moves to its own thread, two buffers become three behind one swap and no reader changes.
+    /// The view's last two frames (review A3): captured when a tick completes, restarted when the world is rebuilt.
+    /// Crawlers are drawn between them at <see cref="Alpha"/>, so they move smoothly between 10 Hz ticks; the picture
+    /// runs one tick behind the simulation, the usual price of interpolation. Captures happen on the simulation's
+    /// thread; if the simulation moves to its own thread, two buffers become three behind one swap and no reader changes.
     /// </summary>
     public sealed class WorldViewFrames : IDisposable
     {
@@ -132,8 +140,31 @@ namespace Simpiens.Presentation
         public WorldViewFrame Current => _current;
         public uint Epoch => _epoch;
 
-        /// <summary>Where the entity at <paramref name="currentIndex"/> in <see cref="Current"/> is drawn this frame.</summary>
-        public Vec2 DrawnPosition(int currentIndex) => _current[currentIndex].Position;
+        /// <summary>A move longer than this (world units) in one tick isn't drawn as a glide: a teleport, a load.</summary>
+        public const float SnapDistance = 2f;
+
+        private float _alpha = 1f;
+
+        /// <summary>How far the clock is from <see cref="Previous"/> to <see cref="Current"/>: 0 draws the one, 1 the other.</summary>
+        public float Alpha
+        {
+            get => _alpha;
+            set => _alpha = SimMath.Clamp01(value);
+        }
+
+        /// <summary>
+        /// Where the entity at <paramref name="currentIndex"/> in <see cref="Current"/> is drawn this frame: between its
+        /// two last positions at <see cref="Alpha"/> when both frames show it in the same world and it moved less than
+        /// <see cref="SnapDistance"/>; otherwise where it is now.
+        /// </summary>
+        public Vec2 DrawnPosition(int currentIndex)
+        {
+            ref readonly var now = ref _current[currentIndex];
+            if (_alpha >= 1f || _previous.Epoch != _current.Epoch || !_previous.TryGetIndex(now.Id, out int before)) return now.Position;
+            var from = _previous[before].Position;
+            if ((now.Position - from).SqrMagnitude > SnapDistance * SnapDistance) return now.Position;
+            return Vec2.Lerp(from, now.Position, _alpha);
+        }
 
         /// <summary>Where an entity is drawn this frame; false when the world doesn't have it.</summary>
         public bool TryGetDrawnPosition(EntityId id, out Vec2 position)
