@@ -50,12 +50,14 @@ namespace Simpiens.Presentation
     public readonly struct View
     {
         private readonly Vec2 _centre; // the camera's centre on the view plane
+        private readonly float _zoom;
 
         public View(IViewProjection projection, ViewCamera camera)
         {
             Projection = projection;
             Camera = camera;
             _centre = projection.ToView(camera.Centre);
+            _zoom = camera.PixelsPerUnit / projection.ArtPixelsPerUnit;
         }
 
         public IViewProjection Projection { get; }
@@ -63,7 +65,7 @@ namespace Simpiens.Presentation
 
         public float PixelsPerUnit => Camera.PixelsPerUnit;
         /// <summary>Screen pixels per art pixel.</summary>
-        public float Zoom => Camera.PixelsPerUnit / Projection.ArtPixelsPerUnit;
+        public float Zoom => _zoom;
         public int ViewportWidth => Camera.ViewportWidth;
         public int ViewportHeight => Camera.ViewportHeight;
 

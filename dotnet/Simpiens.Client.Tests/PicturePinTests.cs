@@ -60,14 +60,15 @@ namespace Simpiens.Client.Tests
             for (int i = 0; i < items.Count; i++)
             {
                 ref readonly var item = ref items[i];
-                var centre = camera.WorldToScreen(new Vec2(item.X, item.Y));
+                var quad = ScreenQuad.Of(item, camera);
+                var centre = quad.Anchor; // every item is centred on its anchor today
                 hash = Fnv.Add(hash, (long)item.Sheet);
                 hash = Fnv.Add(hash, item.SpriteIndex);
                 hash = Fnv.Add(hash, DrawSortKey.Layer(item.SortKey));
                 hash = Fnv.Add(hash, Fnv.Quantize(centre.X));
                 hash = Fnv.Add(hash, Fnv.Quantize(centre.Y));
-                hash = Fnv.Add(hash, Fnv.Quantize(item.Width * camera.PixelsPerUnit));
-                hash = Fnv.Add(hash, Fnv.Quantize(item.Height * camera.PixelsPerUnit));
+                hash = Fnv.Add(hash, Fnv.Quantize(quad.Width));
+                hash = Fnv.Add(hash, Fnv.Quantize(quad.Height));
                 hash = Fnv.Add(hash, Fnv.Quantize(item.Rotation * 64f));
                 hash = Fnv.Add(hash, (long)item.Tint.R << 24 | (long)item.Tint.G << 16 | (long)item.Tint.B << 8 | item.Tint.A);
             }

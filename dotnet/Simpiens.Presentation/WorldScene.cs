@@ -25,6 +25,9 @@ namespace Simpiens.Presentation
 
         public DrawList Items { get; } = new DrawList();
 
+        /// <summary>How the view projects the world: it gives each item its depth. Sizes here are world units, drawn at the projection's art scale.</summary>
+        public IViewProjection Projection { get; set; } = TopDownProjection.Instance;
+
         /// <summary>The map's text this frame: room names, "UNCHARTED", the selected crawler's name (laid out on screen by <see cref="MapLabelLayout"/>).</summary>
         public List<WorldLabel> Labels { get; } = new List<WorldLabel>(16);
 
@@ -56,12 +59,13 @@ namespace Simpiens.Presentation
             if (tick < _lastTick) Fog.Load(map, sectors); // the clock went back: a respawn or a load, same map or not
             _lastTick = tick;
             Fog.Update(map, sectors, viewSeconds);
+            _art = Projection.ArtPixelsPerUnit;
             if (map != null)
             {
                 if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
                 AddTiles(_tiles);
                 AddRoomNames(map);
-                Fog.Draw(Items, viewSeconds);
+                Fog.Draw(Items, viewSeconds, _art);
                 Fog.AddLabels(Labels, viewSeconds);
             }
 
@@ -84,7 +88,7 @@ namespace Simpiens.Presentation
         private void AddSelection(WorldSelection selection)
         {
             if (!selection.TryGetCrawlerPosition(out var at)) return;
-            Items.Add(RenderLayer.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize, SelectionRingSize, White);
+            Items.Add(RenderLayer.Selection, 0f, ProceduralSprites.SelectionRing.Index, at.X, at.Y, SelectionRingSize * _art, SelectionRingSize * _art, White);
             Labels.Add(new WorldLabel(selection.CrawlerName(), at + NameOffset, LabelKind.Name, NameColor));
         }
 
@@ -96,31 +100,31 @@ namespace Simpiens.Presentation
         {
             var pose = Appearance.Pose(entity.Id, entity.Agent, tick, viewSeconds);
             var position = entity.Agent.Position;
-            Items.Add(RenderLayer.Crawlers, TopDownProjection.Instance.Depth(position), pose.Sprite.Index, position.X, position.Y,
-                CrawlerSize * pose.ScaleX, CrawlerSize * pose.ScaleY, White, pose.TiltDegrees * DegreesToRadians);
+            Items.Add(RenderLayer.Crawlers, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,
+                CrawlerSize * pose.ScaleX * _art, CrawlerSize * pose.ScaleY * _art, White, pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
         /// <summary>The props Unity drew (resource nodes, the hearth, bunks); other kinds have no picture.</summary>
         private void AddProp(WorldEntity entity, float viewSeconds)
         {
             var position = entity.Position;
-            float depth = TopDownProjection.Instance.Depth(position);
+            float depth = Projection.Depth(position);
             switch (entity.Type)
             {
                 case EntityType.Resource:
-                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize, ResourceSize, White);
+                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.GetResourceSprite(entity.ResourceKind).Index, position.X, position.Y, ResourceSize * _art, ResourceSize * _art, White);
                     break;
                 case EntityType.Anchor:
                 {
                     // Two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView)
                     var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
                     float size = HearthSize * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-                    Items.Add(RenderLayer.Props, depth, sprite.Index, position.X, position.Y, size, size, White);
+                    Items.Add(RenderLayer.Props, depth, sprite.Index, position.X, position.Y, size * _art, size * _art, White);
                     break;
                 }
                 case EntityType.Bunk:
                     // Under its sleeper: props are drawn before crawlers
-                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize, BunkSize, White);
+                    Items.Add(RenderLayer.Props, depth, ProceduralSprites.BunkSprite.Index, position.X, position.Y, BunkSize * _art, BunkSize * _art, White);
                     break;
             }
         }
@@ -130,6 +134,7 @@ namespace Simpiens.Presentation
             int floor = ProceduralSprites.FloorSprite.Index;
             int rock = ProceduralSprites.RockSprite.Index;
             int wall = ProceduralSprites.WallSprite.Index;
+            float cell = _art;
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
@@ -137,9 +142,9 @@ namespace Simpiens.Presentation
                 var centre = tiles.CellCentre(tile.X, tile.Y);
                 switch (tile.Kind)
                 {
-                    case TileKind.Floor: Items.Add(RenderLayer.Floor, 0f, floor, centre.X, centre.Y, 1f, 1f, Rgba32.From(tile.Tint)); break;
-                    case TileKind.Rock: Items.Add(RenderLayer.Rock, 0f, rock, centre.X, centre.Y, 1f, 1f, White); break;
-                    default: Items.Add(RenderLayer.Walls, 0f, wall, centre.X, centre.Y, 1f, 1f, White); break;
+                    case TileKind.Floor: Items.Add(RenderLayer.Floor, 0f, floor, centre.X, centre.Y, cell, cell, Rgba32.From(tile.Tint)); break;
+                    case TileKind.Rock: Items.Add(RenderLayer.Rock, 0f, rock, centre.X, centre.Y, cell, cell, White); break;
+                    default: Items.Add(RenderLayer.Walls, 0f, wall, centre.X, centre.Y, cell, cell, White); break;
                 }
             }
         }
@@ -154,6 +159,8 @@ namespace Simpiens.Presentation
                 Labels.Add(new WorldLabel(label.Text, label.Position, LabelKind.Room, Rgba32.From(label.Color)));
             }
         }
+
+        private float _art = TopDownProjection.BasePixelsPerUnit; // art pixels per world unit, this build
 
         private const float DegreesToRadians = MathF.PI / 180f;
         private static readonly Rgba32 White = new Rgba32(255, 255, 255, 255);

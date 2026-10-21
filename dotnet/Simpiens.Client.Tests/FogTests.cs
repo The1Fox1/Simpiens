@@ -54,7 +54,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(before, fog.Overlays.Count); // still drawn while it fades
 
             var list = new DrawList();
-            fog.Draw(list, 10.75f);
+            fog.Draw(list, 10.75f, TopDownProjection.BasePixelsPerUnit);
             var cloud = Enumerable.Range(0, list.Count).Select(i => list[i]).First(i => i.Sheet == DrawSheet.Fog && i.X == fog.Overlays.Single(o => o.SectorId == sector).Area.Center.X);
             Assert.InRange(cloud.Tint.A, 118, 130); // half of 0.97 x 255
 

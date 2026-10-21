@@ -9,7 +9,7 @@ namespace Simpiens.Client
     /// Draws a sorted <see cref="DrawList"/> through a <see cref="View"/> (Epic CLIENT). The list is already in draw order,
     /// so each batch draws in submission order (<see cref="SpriteSortMode.Deferred"/>) and never sorts by depth itself;
     /// a new batch starts only when the sheet changes, with that sheet's sampling (point for pixel art, linear for the
-    /// fog). Colours are not premultiplied. Sprites turn about their centre.
+    /// fog). Colours are not premultiplied. Sprites turn about their pivot.
     /// </summary>
     public sealed class WorldRenderer
     {
@@ -39,12 +39,12 @@ namespace Simpiens.Client
 
                 var atlas = _sheets[sheet];
                 var source = atlas.Source(item.SpriteIndex);
-                var centre = camera.WorldToScreen(new Vec2(item.X, item.Y));
-                var scale = new Vector2(item.Width * camera.PixelsPerUnit / source.Width, item.Height * camera.PixelsPerUnit / source.Height);
-                var origin = new Vector2(source.Width * 0.5f, source.Height * 0.5f);
+                var quad = ScreenQuad.Of(item, camera);
+                var scale = new Vector2(quad.Width / source.Width, quad.Height / source.Height);
+                var origin = new Vector2(source.Width * item.PivotX, source.Height * item.PivotY);
                 var tint = new Color(item.Tint.R, item.Tint.G, item.Tint.B, item.Tint.A);
                 // World rotation is counter-clockwise with y up; on screen (y down) that is a negative angle
-                _batch.Draw(atlas.Texture, new Vector2(centre.X, centre.Y), source, tint, -item.Rotation, origin, scale, SpriteEffects.None, 0f);
+                _batch.Draw(atlas.Texture, new Vector2(quad.Anchor.X, quad.Anchor.Y), source, tint, -item.Rotation, origin, scale, SpriteEffects.None, 0f);
             }
             if (open >= 0) _batch.End();
         }

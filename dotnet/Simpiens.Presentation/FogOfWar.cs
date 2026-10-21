@@ -92,8 +92,8 @@ namespace Simpiens.Presentation
             }
         }
 
-        /// <summary>Adds the clouds to <paramref name="list"/> (the Fog layer).</summary>
-        public void Draw(DrawList list, float viewSeconds)
+        /// <summary>Adds the clouds to <paramref name="list"/> (the Fog layer), at <paramref name="artPixelsPerUnit"/> (the projection's art scale).</summary>
+        public void Draw(DrawList list, float viewSeconds, float artPixelsPerUnit)
         {
             for (int i = 0; i < _overlays.Count; i++)
             {
@@ -101,7 +101,7 @@ namespace Simpiens.Presentation
                 float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
                 var area = overlay.Area;
                 var fog = new Rgba(FogColor.R, FogColor.G, FogColor.B, FogAlpha * (1f - t));
-                list.Add(RenderLayer.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width, area.Height, Rgba32.From(fog), 0f, DrawSheet.Fog);
+                list.Add(RenderLayer.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width * artPixelsPerUnit, area.Height * artPixelsPerUnit, Rgba32.From(fog), 0f, DrawSheet.Fog);
             }
         }
 

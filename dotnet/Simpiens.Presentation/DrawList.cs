@@ -14,19 +14,62 @@ namespace Simpiens.Presentation
         Fog = 1,
     }
 
-    /// <summary>One sprite to draw this frame, in world units: centred on <see cref="X"/>, <see cref="Y"/>.</summary>
+    /// <summary>
+    /// One sprite to draw this frame: where it stands in the world, and how big it is in art pixels. The projection
+    /// places it (<see cref="ScreenQuad"/>); the item itself knows nothing of the screen.
+    /// </summary>
     public struct DrawItem
     {
         public DrawSheet Sheet;
         public int SpriteIndex;
+        /// <summary>The anchor: the floor point the sprite stands on, in world units.</summary>
         public float X;
         public float Y;
+        /// <summary>The anchor's height above the floor, in world units (visual only).</summary>
+        public float Z;
+        /// <summary>Where the anchor sits in the sprite, 0 to 1 from its top-left: 0.5, 0.5 is its centre (top-down), 0.5, 1 its feet.</summary>
+        public float PivotX;
+        public float PivotY;
+        /// <summary>Size at zoom 1, in art pixels.</summary>
         public float Width;
         public float Height;
-        /// <summary>Counter-clockwise in the world (y up), in radians, about the sprite's centre.</summary>
+        /// <summary>Counter-clockwise in the world (y up), in radians, about the pivot.</summary>
         public float Rotation;
         public Rgba32 Tint;
         public ulong SortKey;
+        /// <summary>What a click on it selects (<see cref="DrawList.PickedEntity"/>), or -1 when it can't be clicked.</summary>
+        public int Pick;
+    }
+
+    /// <summary>
+    /// Where a draw item lands on screen through a view. The renderer draws it and the picker hit-tests it, so a click
+    /// always lands on what is drawn.
+    /// </summary>
+    public readonly struct ScreenQuad
+    {
+        public ScreenQuad(Vec2 anchor, float width, float height, float pivotX, float pivotY)
+        {
+            Anchor = anchor;
+            Width = width;
+            Height = height;
+            PivotX = pivotX;
+            PivotY = pivotY;
+        }
+
+        /// <summary>The item's anchor on screen, in pixels from the top-left.</summary>
+        public Vec2 Anchor { get; }
+        /// <summary>Size in screen pixels.</summary>
+        public float Width { get; }
+        public float Height { get; }
+        public float PivotX { get; }
+        public float PivotY { get; }
+
+        public float Left => Anchor.X - Width * PivotX;
+        public float Top => Anchor.Y - Height * PivotY;
+        public Vec2 Centre => new Vec2(Left + Width * 0.5f, Top + Height * 0.5f);
+
+        public static ScreenQuad Of(in DrawItem item, in View view)
+            => new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
     }
 
     /// <summary>
@@ -67,14 +110,24 @@ namespace Simpiens.Presentation
     {
         private DrawItem[] _items = new DrawItem[256];
         private ulong[] _keys = new ulong[256];
+        private EntityId[] _picks = new EntityId[64];
+        private int _pickCount;
 
         public int Count { get; private set; }
 
         public ref readonly DrawItem this[int index] => ref _items[index];
 
-        public void Clear() => Count = 0;
+        public void Clear()
+        {
+            Count = 0;
+            _pickCount = 0;
+        }
 
-        public void Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
+        /// <summary>
+        /// Adds a sprite anchored at <paramref name="x"/>, <paramref name="y"/> on the floor, centred on it, sized in art
+        /// pixels. Returns the item, to set what the defaults don't cover (height, pivot, <see cref="Pickable"/>).
+        /// </summary>
+        public ref DrawItem Add(int layer, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
         {
             if (Count == _items.Length)
             {
@@ -82,10 +135,25 @@ namespace Simpiens.Presentation
                 Array.Resize(ref _keys, Count * 2);
             }
             ulong key = DrawSortKey.Make(layer, depth, Count);
-            _items[Count] = new DrawItem { Sheet = sheet, SpriteIndex = spriteIndex, X = x, Y = y, Width = width, Height = height, Rotation = rotation, Tint = tint, SortKey = key };
+            _items[Count] = new DrawItem
+            {
+                Sheet = sheet, SpriteIndex = spriteIndex, X = x, Y = y, PivotX = 0.5f, PivotY = 0.5f, Width = width, Height = height,
+                Rotation = rotation, Tint = tint, SortKey = key, Pick = -1,
+            };
             _keys[Count] = key;
-            Count++;
+            return ref _items[Count++];
         }
+
+        /// <summary>A pick slot for <paramref name="entity"/>, for an item's <see cref="DrawItem.Pick"/>: a click on the item selects it.</summary>
+        public int Pickable(EntityId entity)
+        {
+            if (_pickCount == _picks.Length) Array.Resize(ref _picks, _pickCount * 2);
+            _picks[_pickCount] = entity;
+            return _pickCount++;
+        }
+
+        /// <summary>The entity behind a pick slot.</summary>
+        public EntityId PickedEntity(int pick) => _picks[pick];
 
         /// <summary>Puts the items in draw order. Keys are unique (the sequence), so the order is total and stable.</summary>
         public void Sort() => Array.Sort(_keys, _items, 0, Count);

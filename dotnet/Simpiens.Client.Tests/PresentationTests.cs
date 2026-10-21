@@ -45,6 +45,27 @@ namespace Simpiens.Client.Tests
             Assert.Equal(3, list[602].SpriteIndex); // crawler at depth -1 (higher on screen) before the one at 0
             Assert.Equal(1, list[603].SpriteIndex);
         }
+
+        [Fact]
+        public void AnItemIsSizedInArtPixelsAndStandsOnItsAnchorAtItsPivot()
+        {
+            var view = new View(TopDownProjection.Instance, new ViewCamera(Vec2.Zero, 32f, 800, 600)); // zoom 2
+            var list = new DrawList();
+            var id = new EntityId(1u, 0u, 0u, 7u);
+            ref var item = ref list.Add(RenderLayer.Crawlers, 0f, 1, 1f, 2f, 16f, 8f, Rgba32.Clear);
+            item.Pick = list.Pickable(id);
+
+            var centred = ScreenQuad.Of(list[0], view);
+            Assert.Equal(view.WorldToScreen(new Vec2(1f, 2f)), centred.Anchor);
+            Assert.Equal((32f, 16f), (centred.Width, centred.Height));
+            Assert.Equal(centred.Anchor, centred.Centre); // the default pivot is the sprite's centre
+            Assert.Equal(id, list.PickedEntity(list[0].Pick));
+
+            item.PivotY = 1f; // standing on its feet: the sprite rises above its anchor
+            var standing = ScreenQuad.Of(list[0], view);
+            Assert.Equal(standing.Anchor.Y - 16f, standing.Top);
+            Assert.Equal(-1, new DrawList().Add(RenderLayer.Floor, 0f, 0, 0f, 0f, 1f, 1f, Rgba32.Clear).Pick); // not clickable unless asked
+        }
     }
 
     public class ProceduralSpriteTests
