@@ -230,7 +230,7 @@ namespace Simpiens.Client.Tests
             using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
 
             int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null);
             int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource

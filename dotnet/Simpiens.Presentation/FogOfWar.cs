@@ -10,7 +10,8 @@ namespace Simpiens.Presentation
     /// <item><description>Each uncharted sector's interior is covered by an opaque cloud, under the crawlers and over its props (producer decision D1 = A). "UNCHARTED" sits under the room's name. The walls and the name stay visible.</description></item>
     /// <item><description>When a scout's report charts the sector, its fog fades out over <see cref="FadeSeconds"/> of view time and is removed.</description></item>
     /// </list>
-    /// A view: it reads <see cref="ISectorRegistry.ExploredMask"/>, the same charted state cognition sees, and owns none.
+    /// A view: it reads which sectors a frame captured as charted (<see cref="WorldViewFrame.IsCharted(int)"/>), the same
+    /// state cognition sees, and owns none.
     /// </summary>
     public sealed class FogOfWar
     {
@@ -50,17 +51,17 @@ namespace Simpiens.Presentation
         /// <summary>True while any of the sector's fog is on the map, fading included (Unity's <c>ShroudView.HasOverlay</c>).</summary>
         public bool HasOverlay(int sectorId) => Find(sectorId) != null;
 
-        /// <summary>Rebuilds the overlays for a newly loaded map: every sector not yet charted is covered.</summary>
-        public void Load(MapDefinition map, ISectorRegistry sectors)
+        /// <summary>Rebuilds the overlays for a newly loaded map: every sector the frame doesn't show charted is covered.</summary>
+        public void Load(MapDefinition map, WorldViewFrame frame)
         {
             _overlays.Clear();
             _map = map;
-            _lastMask = sectors != null ? sectors.ExploredMask : 0UL;
+            _lastMask = frame != null ? frame.ChartedMask : 0UL;
             if (map == null) return;
             for (int i = 0; i < map.Sectors.Count; i++)
             {
                 var sector = map.Sectors[i];
-                bool charted = sectors != null ? sectors.IsExplored(sector.Id) : sector.StartsExplored;
+                bool charted = frame != null ? frame.IsCharted(sector) : sector.StartsExplored;
                 if (!charted) _overlays.Add(CreateOverlay(map, sector));
             }
         }
@@ -69,19 +70,19 @@ namespace Simpiens.Presentation
         /// Brings the fog up to date: a newly charted sector starts to fade, a finished fade is removed. Loads the map
         /// first if it changed (a respawn, a session switch, a load).
         /// </summary>
-        public void Update(MapDefinition map, ISectorRegistry sectors, float viewSeconds)
+        public void Update(MapDefinition map, WorldViewFrame frame, float viewSeconds)
         {
-            if (!ReferenceEquals(map, _map)) Load(map, sectors);
-            if (sectors == null || _overlays.Count == 0) return;
+            if (!ReferenceEquals(map, _map)) Load(map, frame);
+            if (frame == null || _overlays.Count == 0) return;
 
-            ulong mask = sectors.ExploredMask;
+            ulong mask = frame.ChartedMask;
             if (mask != _lastMask)
             {
                 // A sector can only be un-charted by a respawn or a load, which reload the map; this is a scout's report
                 _lastMask = mask;
                 for (int i = 0; i < _overlays.Count; i++)
                 {
-                    if (_overlays[i].FadeStart == null && sectors.IsExplored(_overlays[i].SectorId)) _overlays[i].FadeStart = viewSeconds;
+                    if (_overlays[i].FadeStart == null && frame.IsCharted(_overlays[i].SectorId)) _overlays[i].FadeStart = viewSeconds;
                 }
             }
 

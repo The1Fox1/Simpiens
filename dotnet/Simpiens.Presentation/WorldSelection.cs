@@ -53,17 +53,20 @@ namespace Simpiens.Presentation
     /// <summary>
     /// What the player has selected on the map (Epic CLIENT M1.5), a port of Unity's <c>WorldSelection</c>: a crawler
     /// (optionally followed by the camera) and a sector. View state shared by the camera and, from M2, the dashboard;
-    /// nothing here enters the simulation.
+    /// nothing here enters the simulation. It finds the crawler in the view's frames (review A3), where it is drawn.
     /// </summary>
     public sealed class WorldSelection
     {
-        private readonly IWorldRegistry _registry;
+        private readonly WorldViewFrames _frames;
         private readonly ISectorRegistry _sectors;
         private readonly IAgentIdentityService _identity;
 
-        public WorldSelection(IWorldRegistry registry = null, ISectorRegistry sectors = null, IAgentIdentityService identity = null)
+        /// <param name="frames">Where crawlers are drawn.</param>
+        /// <param name="sectors">The map's sectors, for the sector under a click.</param>
+        /// <param name="identity">Crawlers' names.</param>
+        public WorldSelection(WorldViewFrames frames = null, ISectorRegistry sectors = null, IAgentIdentityService identity = null)
         {
-            _registry = registry;
+            _frames = frames;
             _sectors = sectors;
             _identity = identity;
         }
@@ -137,27 +140,24 @@ namespace Simpiens.Presentation
             if (sectorId != 0) SelectSector(sectorId);
         }
 
-        /// <summary>Where the selected crawler is drawn. False (and the selection dropped) once it no longer exists.</summary>
+        /// <summary>Where the selected crawler is drawn; false when none is selected or it isn't in the world (see <see cref="PruneMissing"/>).</summary>
         public bool TryGetCrawlerPosition(out Vec2 position)
         {
             position = default;
-            if (SelectedCrawler == default) return false;
-            var node = _registry?.GetEntity(SelectedCrawler);
-            if (node == null)
-            {
-                ClearCrawler();
-                return false;
-            }
-            position = node.Position;
-            return true;
+            return SelectedCrawler != default && _frames != null && _frames.TryGetDrawnPosition(SelectedCrawler, out position);
+        }
+
+        /// <summary>Drops the selected crawler once the world no longer has it (it left, or the world was rebuilt).</summary>
+        public void PruneMissing()
+        {
+            if (SelectedCrawler == default || _frames == null) return;
+            if (!_frames.Current.TryGetIndex(SelectedCrawler, out _)) ClearCrawler();
         }
 
         public string CrawlerName()
         {
-            if (SelectedCrawler == default) return string.Empty;
-            if (_identity != null) return _identity.GetFriendlyName(SelectedCrawler);
-            var node = _registry?.GetEntity(SelectedCrawler);
-            return node != null ? node.Name : string.Empty;
+            if (SelectedCrawler == default || _identity == null) return string.Empty;
+            return _identity.GetFriendlyName(SelectedCrawler);
         }
     }
 }

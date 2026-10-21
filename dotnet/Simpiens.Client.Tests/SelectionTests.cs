@@ -69,10 +69,11 @@ namespace Simpiens.Client.Tests
             using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));
-            var selection = new WorldSelection(sim.Registry, sim.Sectors, identity);
+            var frames = TestFrames.Of(sim);
+            var selection = new WorldSelection(frames, sim.Sectors, identity);
 
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+            scene.Build(sim.Host.Current.Map, frames, 0f);
             var view = new View(TopDownProjection.Instance, new ViewCamera(sim.Host.Current.Map.CameraFrame.Center, 32f, 1280, 720));
             void Click(Vec2 world)
             {

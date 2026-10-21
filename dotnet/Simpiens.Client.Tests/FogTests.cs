@@ -24,7 +24,7 @@ namespace Simpiens.Client.Tests
             using var sim = Outpost();
             var map = sim.Host.Current.Map;
             var fog = new FogOfWar();
-            fog.Load(map, sim.Sectors);
+            fog.Load(map, TestFrames.Of(sim).Current);
 
             var uncharted = map.Sectors.Where(s => !sim.Sectors.IsExplored(s.Id)).ToList();
             Assert.NotEmpty(uncharted);
@@ -44,12 +44,12 @@ namespace Simpiens.Client.Tests
             using var sim = Outpost();
             var map = sim.Host.Current.Map;
             var fog = new FogOfWar();
-            fog.Update(map, sim.Sectors, 10f);
+            fog.Update(map, TestFrames.Of(sim).Current, 10f);
             int sector = fog.Overlays[0].SectorId;
             int before = fog.Overlays.Count;
 
             sim.Sectors.SetExplored(sector, true); // a scout's report
-            fog.Update(map, sim.Sectors, 10f);
+            fog.Update(map, TestFrames.Of(sim).Current, 10f);
             Assert.False(fog.IsCovered(sector));
             Assert.Equal(before, fog.Overlays.Count); // still drawn while it fades
 
@@ -58,7 +58,7 @@ namespace Simpiens.Client.Tests
             var cloud = Enumerable.Range(0, list.Count).Select(i => list[i]).First(i => i.Sheet == DrawSheet.Fog && i.X == fog.Overlays.Single(o => o.SectorId == sector).Area.Center.X);
             Assert.InRange(cloud.Tint.A, 118, 130); // half of 0.97 x 255
 
-            fog.Update(map, sim.Sectors, 11.5f);
+            fog.Update(map, TestFrames.Of(sim).Current, 11.5f);
             Assert.Equal(before - 1, fog.Overlays.Count);
             Assert.DoesNotContain(fog.Overlays, o => o.SectorId == sector);
         }
@@ -68,7 +68,7 @@ namespace Simpiens.Client.Tests
         {
             using var sim = Outpost();
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 0, 0f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 0), 0f);
 
             var items = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).ToList();
             var clouds = items.Where(i => i.Sheet == DrawSheet.Fog).ToList();
@@ -88,15 +88,15 @@ namespace Simpiens.Client.Tests
         {
             using var sim = Outpost();
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 100, 10f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 100), 10f);
             int covered = scene.Fog.Overlays.Count;
             foreach (var o in scene.Fog.Overlays.ToList()) sim.Sectors.SetExplored(o.SectorId, true);
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 101, 10f);
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 120, 12f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 101), 10f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 120), 12f);
             Assert.Empty(scene.Fog.Overlays);
 
             sim.Respawn(OutpostSession.SessionId); // back to tick 0, sectors uncharted again
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, sim.Clock.CurrentTick), 0f);
             Assert.Equal(covered, scene.Fog.Overlays.Count);
         }
     }

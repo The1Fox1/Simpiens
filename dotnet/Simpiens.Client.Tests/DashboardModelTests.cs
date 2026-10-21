@@ -224,7 +224,9 @@ namespace Simpiens.Client.Tests
         {
             using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            var selection = new WorldSelection(sim.Registry, sim.Sectors, (IAgentIdentityService)sim.Services.GetService(typeof(IAgentIdentityService)));
+            using var frames = new WorldViewFrames();
+            frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock);
+            var selection = new WorldSelection(frames, sim.Sectors, (IAgentIdentityService)sim.Services.GetService(typeof(IAgentIdentityService)));
             var model = new DashboardModel(DashboardContext.From(sim.Services), selection);
             model.Refresh();
 

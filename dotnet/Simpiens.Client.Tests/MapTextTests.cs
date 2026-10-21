@@ -112,11 +112,12 @@ namespace Simpiens.Client.Tests
             using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));
-            var selection = new WorldSelection(sim.Registry, sim.Sectors, identity);
+            var frames = TestFrames.Of(sim, 0);
+            var selection = new WorldSelection(frames, sim.Sectors, identity);
             var crawler = sim.Registry.ActiveEntities.First(e => e.Agent != null);
             selection.SelectCrawler(crawler.Id, follow: false);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 0, 0f, selection);
+            scene.Build(sim.Host.Current.Map, frames, 0f, selection);
 
             var map = sim.Host.Current.Map;
             Assert.Equal(map.Labels.Count, scene.Labels.Count(l => l.Kind == LabelKind.Room));

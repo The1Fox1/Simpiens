@@ -62,6 +62,9 @@ namespace Simpiens.Presentation
         /// <summary>Whether the sector was charted; with no charting captured, its default (<see cref="SectorDefinition.StartsExplored"/>).</summary>
         public bool IsCharted(in SectorDefinition sector) => _knowsCharting ? _charted[sector.Id] : sector.StartsExplored;
 
+        /// <summary>Whether the sector with this id was charted (false when no charting was captured).</summary>
+        public bool IsCharted(int sectorId) => _knowsCharting && sectorId >= 0 && sectorId < _charted.Length && _charted[sectorId];
+
         /// <summary>Copies <paramref name="entities"/> and the charting of <paramref name="sectors"/> (null: unknown) at <paramref name="tick"/>.</summary>
         public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch)
         {
@@ -95,7 +98,8 @@ namespace Simpiens.Presentation
             }
         }
 
-        private static CrawlerFlags FlagsOf(AgentState agent)
+        /// <summary>A crawler's passing moments, as a frame captures them.</summary>
+        public static CrawlerFlags FlagsOf(AgentState agent)
         {
             var flags = CrawlerFlags.None;
             if (agent.IsInTantrum) flags |= CrawlerFlags.Tantrum;
@@ -127,6 +131,21 @@ namespace Simpiens.Presentation
         /// <summary>The frame of the last completed tick.</summary>
         public WorldViewFrame Current => _current;
         public uint Epoch => _epoch;
+
+        /// <summary>Where the entity at <paramref name="currentIndex"/> in <see cref="Current"/> is drawn this frame.</summary>
+        public Vec2 DrawnPosition(int currentIndex) => _current[currentIndex].Position;
+
+        /// <summary>Where an entity is drawn this frame; false when the world doesn't have it.</summary>
+        public bool TryGetDrawnPosition(EntityId id, out Vec2 position)
+        {
+            if (_current.TryGetIndex(id, out int index))
+            {
+                position = DrawnPosition(index);
+                return true;
+            }
+            position = default;
+            return false;
+        }
 
         /// <summary>
         /// Captures the session's world from now on: after every completed tick, and afresh (a new epoch) on every

@@ -30,8 +30,8 @@ namespace Simpiens.Presentation
     /// A crawler's look (Epic CLIENT M1): a port of Unity's <c>AgentView</c>, rule for rule. The state shown is the
     /// simulation's visual state with the crises and social moments on top; a state is held for
     /// <see cref="MinDisplayTicks"/> ticks before it may change, so sub-tick flashes stay readable; each state has its
-    /// two-frame animation and its micro-animation, on the view's clock (seconds). View state only: it reads crawlers
-    /// and never writes them.
+    /// two-frame animation and its micro-animation, on the view's clock (seconds). View state only: it reads what a
+    /// frame captured of each crawler (<see cref="EntityView"/>), never the crawler itself.
     /// </summary>
     public sealed class CrawlerAppearance
     {
@@ -57,13 +57,16 @@ namespace Simpiens.Presentation
             _lastTick = long.MinValue;
         }
 
-        /// <summary>The crawler's look at <paramref name="tick"/>, with <paramref name="viewSeconds"/> driving the animation.</summary>
-        public CrawlerPose Pose(EntityId id, AgentState agent, long tick, float viewSeconds)
+        /// <summary>
+        /// The crawler's look at <paramref name="tick"/>, from its simulated <paramref name="state"/> and passing
+        /// <paramref name="flags"/>, with <paramref name="viewSeconds"/> driving the animation.
+        /// </summary>
+        public CrawlerPose Pose(EntityId id, AgentVisualState state, CrawlerFlags flags, long tick, float viewSeconds)
         {
             if (tick < _lastTick) Reset(); // the clock went back: a respawn or a load
             _lastTick = tick;
 
-            var state = Displayed(id, Desired(agent), tick);
+            state = Displayed(id, Desired(state, flags), tick);
             var sprite = ProceduralSprites.GetAgentSprite(state, AnimationFrame(state, viewSeconds));
             MicroAnimation(state, viewSeconds, out float tilt, out float scaleX, out float scaleY);
             return new CrawlerPose(state, sprite, tilt, scaleX, scaleY);
@@ -73,14 +76,13 @@ namespace Simpiens.Presentation
         /// The state to show before the dwell: a tantrum or starvation shows as panic, sleep stays sleep (brief social
         /// looks don't sit the sleeper up), then yielding, sharing and gossiping persist over the simulation's state.
         /// </summary>
-        public static AgentVisualState Desired(AgentState agent)
+        public static AgentVisualState Desired(AgentVisualState state, CrawlerFlags flags)
         {
-            var state = agent.VisualState;
-            if (agent.IsInTantrum || agent.IsStarvationPanicking) return AgentVisualState.Panicking;
+            if ((flags & (CrawlerFlags.Tantrum | CrawlerFlags.StarvationPanic)) != 0) return AgentVisualState.Panicking;
             if (state == AgentVisualState.Sleeping) return state;
-            if (agent.IsYielding) return AgentVisualState.Yielding;
-            if (agent.IsSharing) return AgentVisualState.Sharing;
-            if (agent.IsGossiping) return AgentVisualState.Gossiping;
+            if ((flags & CrawlerFlags.Yielding) != 0) return AgentVisualState.Yielding;
+            if ((flags & CrawlerFlags.Sharing) != 0) return AgentVisualState.Sharing;
+            if ((flags & CrawlerFlags.Gossiping) != 0) return AgentVisualState.Gossiping;
             return state;
         }
 

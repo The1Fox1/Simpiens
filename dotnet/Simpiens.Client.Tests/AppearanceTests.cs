@@ -12,24 +12,30 @@ namespace Simpiens.Client.Tests
     {
         private static readonly EntityId Id = new EntityId(1, 2, 3, 4);
 
+        // The view sees a crawler as a frame captured it (review A3)
+        private static AgentVisualState Desired(AgentState agent) => CrawlerAppearance.Desired(agent.VisualState, WorldViewFrame.FlagsOf(agent));
+
+        private static CrawlerPose Pose(CrawlerAppearance appearance, AgentState agent, long tick, float viewSeconds)
+            => appearance.Pose(Id, agent.VisualState, WorldViewFrame.FlagsOf(agent), tick, viewSeconds);
+
         [Fact]
         public void CrisesAndSocialMomentsShowOverTheSimulationsState()
         {
             var agent = new AgentState(Id) { VisualState = AgentVisualState.Walking };
-            Assert.Equal(AgentVisualState.Walking, CrawlerAppearance.Desired(agent));
+            Assert.Equal(AgentVisualState.Walking, Desired(agent));
 
             agent.GossipTimer = 1f;
-            Assert.Equal(AgentVisualState.Gossiping, CrawlerAppearance.Desired(agent));
+            Assert.Equal(AgentVisualState.Gossiping, Desired(agent));
             agent.SharingTimer = 1f;
-            Assert.Equal(AgentVisualState.Sharing, CrawlerAppearance.Desired(agent));
+            Assert.Equal(AgentVisualState.Sharing, Desired(agent));
             agent.YieldingTimer = 1f;
-            Assert.Equal(AgentVisualState.Yielding, CrawlerAppearance.Desired(agent));
+            Assert.Equal(AgentVisualState.Yielding, Desired(agent));
             agent.TantrumTimer = 1f;
-            Assert.Equal(AgentVisualState.Panicking, CrawlerAppearance.Desired(agent));
+            Assert.Equal(AgentVisualState.Panicking, Desired(agent));
 
             // Asleep: a social moment doesn't sit the sleeper up
             var sleeper = new AgentState(Id) { VisualState = AgentVisualState.Sleeping, GossipTimer = 1f };
-            Assert.Equal(AgentVisualState.Sleeping, CrawlerAppearance.Desired(sleeper));
+            Assert.Equal(AgentVisualState.Sleeping, Desired(sleeper));
         }
 
         [Fact]
@@ -37,17 +43,17 @@ namespace Simpiens.Client.Tests
         {
             var appearance = new CrawlerAppearance();
             var agent = new AgentState(Id) { VisualState = AgentVisualState.Thinking };
-            Assert.Equal(AgentVisualState.Thinking, appearance.Pose(Id, agent, 10, 0f).State);
+            Assert.Equal(AgentVisualState.Thinking, Pose(appearance, agent, 10, 0f).State);
 
             agent.VisualState = AgentVisualState.Idle; // a flash the dwell hides
-            Assert.Equal(AgentVisualState.Thinking, appearance.Pose(Id, agent, 11, 0f).State);
+            Assert.Equal(AgentVisualState.Thinking, Pose(appearance, agent, 11, 0f).State);
             agent.VisualState = AgentVisualState.Walking;
-            Assert.Equal(AgentVisualState.Thinking, appearance.Pose(Id, agent, 12, 0f).State);
-            Assert.Equal(AgentVisualState.Walking, appearance.Pose(Id, agent, 13, 0f).State);
+            Assert.Equal(AgentVisualState.Thinking, Pose(appearance, agent, 12, 0f).State);
+            Assert.Equal(AgentVisualState.Walking, Pose(appearance, agent, 13, 0f).State);
 
             // A respawn (the clock going back) forgets what was shown
             agent.VisualState = AgentVisualState.Harvesting;
-            Assert.Equal(AgentVisualState.Harvesting, appearance.Pose(Id, agent, 0, 0f).State);
+            Assert.Equal(AgentVisualState.Harvesting, Pose(appearance, agent, 0, 0f).State);
         }
 
         [Fact]
@@ -76,7 +82,7 @@ namespace Simpiens.Client.Tests
             using var sim = Simpiens.Hosting.HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, 0, 0f);
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 0), 0f);
 
             var props = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Props).ToList();
             int bunks = sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Bunk);

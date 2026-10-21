@@ -45,11 +45,12 @@ namespace Simpiens.Client.Tests
             registry.Register(Crawler(Front, new Vec2(0f, 1f)));
             registry.Register(Crawler(Sleeper, new Vec2(2f, -2f))); // before its bunk: the role, not the insertion order, puts it on top
             registry.Register(new WorldEntity(Bunk, EntityType.Bunk, new Vec2(2f, -2f), 0.5f));
-            var selection = new WorldSelection(registry);
+            var frames = TestFrames.Of(registry.ActiveEntities, null, 0); // no sector registry: each sector's default charting
+            var selection = new WorldSelection(frames);
             selection.SelectCrawler(Behind, follow: false);
 
             var scene = new WorldScene { Projection = projection };
-            scene.Build(Room(), null, registry.ActiveEntities, 0, 0f, selection);
+            scene.Build(Room(), frames, 0f, selection);
             return scene;
         }
 
@@ -100,7 +101,7 @@ namespace Simpiens.Client.Tests
         {
             var a = Build(Iso);
             var keys = Items(a).Select(i => i.SortKey).ToList();
-            a.Build(Room(), null, null, 0, 0f); // reuse the scene's buffers with other content first
+            a.Build(Room(), null, 0f); // reuse the scene's buffers with other content first
             var b = Build(Iso);
             Assert.Equal(keys, Items(b).Select(i => i.SortKey));
         }
@@ -118,7 +119,7 @@ namespace Simpiens.Client.Tests
             foreach (var projection in new IViewProjection[] { Iso, TopDownProjection.Instance })
             {
                 var scene = new WorldScene { Projection = projection };
-                scene.Build(sim.Host.Current.Map, sim.Sectors, sim.Registry.ActiveEntities, sim.Clock.CurrentTick, 0f);
+                scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
                 AssertOneCellWide(scene, projection);
             }
         }

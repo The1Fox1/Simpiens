@@ -9,8 +9,8 @@ namespace Simpiens.Presentation
 {
     /// <summary>
     /// What the top-down view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and
-    /// room names, the props (resource nodes, the hearth, bunks) and the crawlers with their animation. It reads the simulation's state
-    /// and never writes it. The map's tiles are built once per map. Sizes are Unity's: crawlers 0.7 of a cell,
+    /// room names, the props (resource nodes, the hearth, bunks) and the crawlers with their animation. It reads the view's
+    /// frames (<see cref="WorldViewFrames"/>, review A3), never the live simulation. The map's tiles are built once per map. Sizes are Unity's: crawlers 0.7 of a cell,
     /// resource nodes 0.8, the hearth and bunks 0.9.
     /// </summary>
     public sealed class WorldScene
@@ -48,17 +48,19 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>
-        /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/>, its <paramref name="sectors"/>
-        /// (charted or not) and <paramref name="entities"/> at <paramref name="tick"/>. <paramref name="viewSeconds"/> drives
-        /// the animations and fades: real time in the game, the tick's time in tests.
+        /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/> and what <paramref name="frames"/>
+        /// captured of the world (its entities and which sectors are charted). <paramref name="viewSeconds"/> drives the
+        /// animations and fades: real time in the game, the tick's time in tests.
         /// </summary>
-        public void Build(MapDefinition map, ISectorRegistry sectors, IReadOnlyList<WorldEntity> entities, long tick, float viewSeconds, WorldSelection selection = null)
+        public void Build(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null)
         {
             Items.Clear();
             Labels.Clear();
-            if (tick < _lastTick) Fog.Load(map, sectors); // the clock went back: a respawn or a load, same map or not
+            var frame = frames?.Current;
+            long tick = frame != null ? frame.Tick : 0;
+            if (tick < _lastTick) Fog.Load(map, frame); // the clock went back: a respawn or a load, same map or not
             _lastTick = tick;
-            Fog.Update(map, sectors, viewSeconds);
+            Fog.Update(map, frame, viewSeconds);
             _art = Projection.ArtPixelsPerUnit;
             for (int r = 0; r < _layers.Length; r++) _layers[r] = Projection.LayerOf((DrawRole)r);
             if (map != null)
@@ -70,12 +72,12 @@ namespace Simpiens.Presentation
                 Fog.AddLabels(Labels, viewSeconds);
             }
 
-            if (entities != null)
+            if (frame != null)
             {
-                for (int i = 0; i < entities.Count; i++)
+                for (int i = 0; i < frame.Count; i++)
                 {
-                    var entity = entities[i];
-                    if (entity.Agent != null) AddCrawler(entity, tick, viewSeconds);
+                    ref readonly var entity = ref frame[i];
+                    if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), tick, viewSeconds);
                     else AddProp(entity, viewSeconds);
                 }
             }
@@ -97,16 +99,15 @@ namespace Simpiens.Presentation
         private static readonly Vec2 NameOffset = new Vec2(0f, 0.65f);
         private static readonly Rgba32 NameColor = Rgba32.From(new Rgba(1f, 0.92f, 0.55f));
 
-        private void AddCrawler(WorldEntity entity, long tick, float viewSeconds)
+        private void AddCrawler(in EntityView entity, Vec2 position, long tick, float viewSeconds)
         {
-            var pose = Appearance.Pose(entity.Id, entity.Agent, tick, viewSeconds);
-            var position = entity.Agent.Position;
+            var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, tick, viewSeconds);
             Add(DrawRole.Crawler, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,
                 CrawlerSize * pose.ScaleX * _art, CrawlerSize * pose.ScaleY * _art, White, pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
         /// <summary>The props Unity drew (resource nodes, the hearth, bunks); other kinds have no picture.</summary>
-        private void AddProp(WorldEntity entity, float viewSeconds)
+        private void AddProp(in EntityView entity, float viewSeconds)
         {
             var position = entity.Position;
             float depth = Projection.Depth(position);

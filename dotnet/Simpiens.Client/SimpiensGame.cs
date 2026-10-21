@@ -49,7 +49,7 @@ namespace Simpiens.Client
             // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
             Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock);
 
-            Selection = new WorldSelection(Simulation.Registry, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
+            Selection = new WorldSelection(Frames, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
             Selection.Changed += OnSelectionChanged;
             Ui = new UiLayer(this);
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
@@ -82,7 +82,7 @@ namespace Simpiens.Client
         /// <summary>The world as the views draw it: the last two completed ticks, as plain data (review A3).</summary>
         public WorldViewFrames Frames { get; } = new WorldViewFrames();
 
-        /// <summary>What the view shows this frame: rebuilt from the simulation's state on every draw.</summary>
+        /// <summary>What the view shows this frame: rebuilt from <see cref="Frames"/> on every draw.</summary>
         public WorldScene Scene { get; } = new WorldScene();
 
         /// <summary>The view of the last frame drawn: its projection and camera.</summary>
@@ -229,7 +229,8 @@ namespace Simpiens.Client
                 if (LastInput.Clicked) ClickMap(LastInput.ClickScreen);
             }
 
-            // The camera follows the selected crawler (Unity did this after the input, in LateUpdate)
+            // The camera follows the selected crawler (Unity did this after the input, in LateUpdate); one that left the world is dropped
+            Selection.PruneMissing();
             if (Selection.Following && Selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, seconds);
         }
 
@@ -278,7 +279,7 @@ namespace Simpiens.Client
             GraphicsDevice.Clear(Background);
 
             var map = Simulation.Host.Current?.Map;
-            Scene.Build(map, Simulation.Sectors, Simulation.Registry.ActiveEntities, Simulation.Clock.CurrentTick, ViewSeconds, Selection);
+            Scene.Build(map, Frames, ViewSeconds, Selection);
             if (map == null) return;
 
             if (!ReferenceEquals(map, _framedMap))
