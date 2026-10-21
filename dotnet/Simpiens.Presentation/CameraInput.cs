@@ -63,7 +63,7 @@ namespace Simpiens.Presentation
         private Vec2 _pressPosition;
         private bool _dragging;
 
-        public CameraInputResult Update(in PointerInput pointer, in KeyInput keys, float deltaSeconds, CameraRig rig, in TopDownCamera view)
+        public CameraInputResult Update(in PointerInput pointer, in KeyInput keys, float deltaSeconds, CameraRig rig, in View view)
         {
             var result = new CameraInputResult();
 
@@ -71,7 +71,7 @@ namespace Simpiens.Presentation
             {
                 float factor = 1f;
                 for (int i = 0; i < System.Math.Abs(pointer.WheelNotches); i++) factor *= pointer.WheelNotches > 0 ? ZoomStep : 1f / ZoomStep;
-                rig.ZoomAt(view.ScreenToWorld(pointer.Position), factor);
+                rig.ZoomAt(view.ScreenToFloor(pointer.Position), factor);
             }
 
             // A left click (press and release without dragging, starting on the map) selects
@@ -90,7 +90,7 @@ namespace Simpiens.Presentation
             {
                 _clickArmed = false;
                 result.Clicked = true;
-                result.ClickWorld = view.ScreenToWorld(pointer.Position);
+                result.ClickWorld = view.ScreenToFloor(pointer.Position);
             }
 
             bool panHeld = pointer.Right || pointer.Middle;
@@ -134,7 +134,7 @@ namespace Simpiens.Presentation
             return result;
         }
 
-        private static float WorldUnitsPerPixel(CameraRig rig, in TopDownCamera view)
+        private static float WorldUnitsPerPixel(CameraRig rig, in View view)
             => view.ViewportHeight > 0 ? 2f * rig.Size / view.ViewportHeight : 0f;
     }
 }

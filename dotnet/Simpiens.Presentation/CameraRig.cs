@@ -114,14 +114,14 @@ namespace Simpiens.Presentation
         public Vec2 ViewportToWorld(Vec2 viewport)
             => Position + new Vec2((viewport.X - 0.5f) * 2f * Size * Aspect, (viewport.Y - 0.5f) * 2f * Size);
 
-        /// <summary>The camera that draws this view into a viewport of the given size (pixels).</summary>
-        public TopDownCamera ToCamera(int viewportWidth, int viewportHeight)
-            => new TopDownCamera(Position, viewportHeight / (2f * Size), viewportWidth, viewportHeight).SnappedToPixels();
+        /// <summary>The view that draws this into a viewport of the given size (pixels).</summary>
+        public View ToView(int viewportWidth, int viewportHeight)
+            => new View(TopDownProjection.Instance, new ViewCamera(Position, viewportHeight / (2f * Size), viewportWidth, viewportHeight)).SnappedToPixels();
 
         private float WholePixelSize(float size)
         {
             float pixelsPerUnit = PixelHeight / (2f * size);
-            float whole = SimMath.Max(1f, SimMath.Floor(pixelsPerUnit / TopDownCamera.BasePixelsPerUnit)) * TopDownCamera.BasePixelsPerUnit;
+            float whole = SimMath.Max(1f, SimMath.Floor(pixelsPerUnit / TopDownProjection.BasePixelsPerUnit)) * TopDownProjection.BasePixelsPerUnit;
             return PixelHeight / (2f * whole);
         }
 

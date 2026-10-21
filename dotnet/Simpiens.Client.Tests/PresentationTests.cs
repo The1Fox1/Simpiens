@@ -169,29 +169,30 @@ namespace Simpiens.Client.Tests
         internal const int PinnedFloor = 1175, PinnedRock = 384, PinnedWalls = 254; // recorded 2026-10-18 (M0.2)
     }
 
-    public class TopDownCameraTests
+    public class TopDownProjectionTests
     {
         [Fact]
         public void ScreenAndWorldRoundTripAndWorldYPointsUp()
         {
-            var camera = new TopDownCamera(new Vec2(3f, -2f), 32f, 800, 600);
+            var camera = new View(TopDownProjection.Instance, new ViewCamera(new Vec2(3f, -2f), 32f, 800, 600));
             var world = new Vec2(5.25f, 1.5f);
             var screen = camera.WorldToScreen(world);
-            var back = camera.ScreenToWorld(screen);
+            var back = camera.ScreenToFloor(screen);
             Assert.Equal(world.X, back.X, 4);
             Assert.Equal(world.Y, back.Y, 4);
-            Assert.Equal(new Vec2(400f, 300f), camera.WorldToScreen(camera.Centre));
+            Assert.Equal(new Vec2(400f, 300f), camera.WorldToScreen(camera.Camera.Centre));
             Assert.True(camera.WorldToScreen(new Vec2(3f, 0f)).Y < 300f); // higher in the world is higher on screen
+            Assert.Equal(2f, camera.Zoom); // 32 screen pixels per cell of 16 art pixels
         }
 
         [Fact]
         public void FramingShowsTheWholeFrameAtAWholeNumberOfPixelsPerArtPixel()
         {
             var frame = Floor1Layout.Definition.CameraFrame;
-            var camera = TopDownCamera.Framing(frame, 1280, 720);
+            var camera = View.Framing(TopDownProjection.Instance, frame, 1280, 720);
             Assert.True(frame.Width * camera.PixelsPerUnit <= 1280 && frame.Height * camera.PixelsPerUnit <= 720);
-            Assert.Equal(0f, camera.PixelsPerUnit % TopDownCamera.BasePixelsPerUnit);
-            Assert.True(camera.PixelsPerUnit >= TopDownCamera.BasePixelsPerUnit);
+            Assert.Equal(0f, camera.PixelsPerUnit % TopDownProjection.BasePixelsPerUnit);
+            Assert.True(camera.PixelsPerUnit >= TopDownProjection.BasePixelsPerUnit);
         }
     }
 

@@ -53,7 +53,7 @@ namespace Simpiens.Client.Tests
         /// <summary>Each item in draw order, in screen terms, quantized to 1/64 pixel so equal pictures hash equal.</summary>
         private static ulong ItemsHash(SimpiensGame game)
         {
-            var camera = game.Camera;
+            var camera = game.View;
             var items = game.Scene.Items;
             ulong hash = Fnv.Start;
             hash = Fnv.Add(hash, items.Count);

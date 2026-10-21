@@ -24,7 +24,7 @@ namespace Simpiens.Client.Tests
         private static List<WorldLabel> RoomNames(MapDefinition map)
             => map.Labels.Select(l => new WorldLabel(l.Text, l.Position, LabelKind.Room, Rgba32.From(l.Color))).ToList();
 
-        private static TopDownCamera CameraOn(MapDefinition map, float pixelsPerUnit) => new TopDownCamera(map.CameraFrame.Center, pixelsPerUnit, 1280, 720);
+        private static View CameraOn(MapDefinition map, float pixelsPerUnit) => new View(TopDownProjection.Instance, new ViewCamera(map.CameraFrame.Center, pixelsPerUnit, 1280, 720));
 
         [Fact]
         public void TheBakedFontsParseWithEveryCharacterAndTheirKerning()
@@ -69,7 +69,7 @@ namespace Simpiens.Client.Tests
         {
             var labels = new List<WorldLabel> { new WorldLabel("Outpost Hub", Vec2.Zero, LabelKind.Room, new Rgba32(255, 255, 255, 255)) };
             var layout = new MapLabelLayout();
-            layout.Layout(labels, new TopDownCamera(Vec2.Zero, pixelsPerUnit, 1280, 720), Fonts.Value, new List<ScreenGlyph>());
+            layout.Layout(labels, new View(TopDownProjection.Instance, new ViewCamera(Vec2.Zero, pixelsPerUnit, 1280, 720)), Fonts.Value, new List<ScreenGlyph>());
             var placed = Assert.Single(layout.Placed);
             Assert.Equal(expected > 0, placed.Shown);
             if (expected > 0) Assert.Equal(FontSet.Bold(expected), placed.Face);

@@ -163,7 +163,7 @@ namespace Simpiens.Client.Tests
             game.Dashboard.TogglePanels();
             ui.Frame(5);
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
             Assert.True(game.Selection.Following);
             Assert.Equal(game.Simulation.Sectors.GetSectorAt(crawler.Position).Id, game.Selection.SelectedSector);
@@ -196,7 +196,7 @@ namespace Simpiens.Client.Tests
             game.Rig.Reframe();
             ui.Frame();
             var floor = EmptyFloor(game, garden.Bounds);
-            ui.Click(game.Camera.WorldToScreen(floor));
+            ui.Click(game.View.WorldToScreen(floor));
             Assert.Equal(default, game.Selection.SelectedCrawler);
             Assert.False(game.Selection.Following);
             Assert.Equal(Floor1Layout.GardenSectorId, game.Selection.SelectedSector);

@@ -76,13 +76,13 @@ namespace Simpiens.Client.Tests
             var ui = OpenMerchant();
             var game = ui.Game;
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.Equal(default, game.Selection.SelectedCrawler); // the veil is over the map
 
             ui.Click(Centre(game.Dashboard.Merchant.Window.CloseButton));
             Assert.False(game.Dashboard.Merchant.Window.IsShown);
             Assert.False(game.DashboardModel.Merchant.IsOpen);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
         }
 

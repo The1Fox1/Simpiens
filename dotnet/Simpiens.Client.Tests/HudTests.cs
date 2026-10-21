@@ -63,7 +63,7 @@ namespace Simpiens.Client.Tests
 
             // On the map: a crawler is picked
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.False(game.Ui.PointerOverUi);
             Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
         }
@@ -87,7 +87,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal("[TAB] DASHBOARD", game.Dashboard.Header.TabButton.Text);
 
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.True(game.Selection.Following);
             game.DashboardModel.OpenBounties();
 

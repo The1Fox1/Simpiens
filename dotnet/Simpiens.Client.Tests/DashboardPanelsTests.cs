@@ -27,7 +27,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(game.Simulation.Sectors.All.Count, game.Dashboard.Panels.SectorCards.Count(c => c.Root.Visible));
 
             var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.Camera.WorldToScreen(crawler.Position));
+            ui.Click(game.View.WorldToScreen(crawler.Position));
             Assert.Equal(default, game.Selection.SelectedCrawler);
             Assert.True(game.Ui.PointerOverUi);
         }
@@ -66,7 +66,7 @@ namespace Simpiens.Client.Tests
             game.Dashboard.TogglePanels();
             ui.Frame();
             var walker = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Simulation.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId);
-            ui.Click(game.Camera.WorldToScreen(walker.Position));
+            ui.Click(game.View.WorldToScreen(walker.Position));
             Assert.Equal(walker.Id, game.Selection.SelectedCrawler);
 
             game.Dashboard.TogglePanels();

@@ -128,8 +128,8 @@ namespace Simpiens.Client.Tests
             var rig = new CameraRig();
             rig.Configure(Floor1Layout.Definition.CameraFrame, 800f / 600f, 600);
             Assert.True(rig.Size >= rig.FitSize - Eps, "The whole map is still visible.");
-            var camera = rig.ToCamera(800, 600);
-            Assert.Equal(0f, camera.PixelsPerUnit % TopDownCamera.BasePixelsPerUnit, 3);
+            var camera = rig.ToView(800, 600);
+            Assert.Equal(0f, camera.PixelsPerUnit % TopDownProjection.BasePixelsPerUnit, 3);
             rig.ZoomAt(rig.Frame.Center, 10f);
             Assert.Equal(rig.MaxSize, rig.Size, 4); // that crisp view is the zoom-out limit
         }
@@ -146,18 +146,18 @@ namespace Simpiens.Client.Tests
         }
 
         private static CameraInputResult Step(CameraInput input, CameraRig rig, PointerInput pointer, KeyInput keys = default, float dt = 1f / 60f)
-            => input.Update(pointer, keys, dt, rig, rig.ToCamera(800, 600));
+            => input.Update(pointer, keys, dt, rig, rig.ToView(800, 600));
 
         [Fact]
         public void ScrollZoomsTowardTheCursor()
         {
             var (rig, input) = Setup();
             var at = new Vec2(200f, 150f);
-            var worldUnder = rig.ToCamera(800, 600).ScreenToWorld(at);
+            var worldUnder = rig.ToView(800, 600).ScreenToFloor(at);
             float size = rig.Size;
             Step(input, rig, new PointerInput { Position = at, WheelNotches = 1 });
             Assert.Equal(size * CameraInput.ZoomStep, rig.Size, 3);
-            var stillUnder = rig.ToCamera(800, 600).ScreenToWorld(at);
+            var stillUnder = rig.ToView(800, 600).ScreenToFloor(at);
             Assert.True(Vec2.Distance(worldUnder, stillUnder) < 0.1f, $"the point under the cursor moved ({worldUnder} -> {stillUnder})");
 
             Step(input, rig, new PointerInput { Position = at, WheelNotches = 1, OverUi = true });
@@ -172,7 +172,7 @@ namespace Simpiens.Client.Tests
             Step(input, rig, new PointerInput { Position = p, Left = true });
             var click = Step(input, rig, new PointerInput { Position = p + new Vec2(3f, 2f) });
             Assert.True(click.Clicked);
-            Assert.True(Vec2.Distance(rig.ToCamera(800, 600).ScreenToWorld(p + new Vec2(3f, 2f)), click.ClickWorld) < 1e-3f);
+            Assert.True(Vec2.Distance(rig.ToView(800, 600).ScreenToFloor(p + new Vec2(3f, 2f)), click.ClickWorld) < 1e-3f);
 
             Step(input, rig, new PointerInput { Position = p, Left = true });
             Step(input, rig, new PointerInput { Position = p + new Vec2(20f, 0f), Left = true }); // beyond the 6 px slop

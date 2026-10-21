@@ -68,7 +68,7 @@ namespace Simpiens.Presentation
         public const int NameSize = 13;
         /// <summary>The least space between two names on a row, in pixels.</summary>
         public const int Gap = 8;
-        /// <summary>Names whose anchors are closer than this (world units) in height share a row.</summary>
+        /// <summary>Names whose anchors are closer than this on screen, in height (world units at the view's scale), share a row.</summary>
         public const float RowTolerance = 0.5f;
 
         private static readonly Rgba32 Shadow = new Rgba32(0, 0, 0, 150);
@@ -77,6 +77,13 @@ namespace Simpiens.Presentation
         private readonly List<int> _row = new List<int>(16);
         private readonly Dictionary<int, int> _roomSize = new Dictionary<int, int>(16);
         private readonly Dictionary<Vec2Key, int> _roomAt = new Dictionary<Vec2Key, int>(16);
+        private readonly List<Vec2> _screenAt = new List<Vec2>(16);
+        private readonly Comparison<int> _byScreenX;
+
+        public MapLabelLayout()
+        {
+            _byScreenX = (a, b) => _screenAt[a].X.CompareTo(_screenAt[b].X);
+        }
 
         /// <summary>What was placed last: each label's face and rectangle, or no face when hidden.</summary>
         public List<PlacedLabel> Placed { get; } = new List<PlacedLabel>(16);
@@ -109,8 +116,8 @@ namespace Simpiens.Presentation
             public override int GetHashCode() => HashCode.Combine(_x, _y);
         }
 
-        /// <summary>Places <paramref name="labels"/> for <paramref name="camera"/> and writes their glyphs (shadows first) to <paramref name="glyphs"/>.</summary>
-        public void Layout(IReadOnlyList<WorldLabel> labels, in TopDownCamera camera, FontLibrary fonts, List<ScreenGlyph> glyphs)
+        /// <summary>Places <paramref name="labels"/> for <paramref name="view"/> and writes their glyphs (shadows first) to <paramref name="glyphs"/>.</summary>
+        public void Layout(IReadOnlyList<WorldLabel> labels, in View view, FontLibrary fonts, List<ScreenGlyph> glyphs)
         {
             glyphs.Clear();
             Placed.Clear();
@@ -119,12 +126,16 @@ namespace Simpiens.Presentation
             if (labels == null || fonts == null) return;
 
             // Room names: a size per row, the largest the zoom allows at which the row's names don't overlap
+            // Rows are rows on screen, so the rule holds in any projection
             _rooms.Clear();
+            _screenAt.Clear();
             for (int i = 0; i < labels.Count; i++)
             {
+                _screenAt.Add(view.WorldToScreen(labels[i].At));
                 if (labels[i].Kind == LabelKind.Room) _rooms.Add(i);
             }
-            int wanted = (int)MathF.Floor(RoomWorldSize * camera.PixelsPerUnit);
+            int wanted = (int)MathF.Floor(RoomWorldSize * view.PixelsPerUnit);
+            float rowTolerance = RowTolerance * view.PixelsPerUnit;
             var done = new HashSet<int>();
             foreach (int first in _rooms)
             {
@@ -132,10 +143,10 @@ namespace Simpiens.Presentation
                 _row.Clear();
                 foreach (int other in _rooms)
                 {
-                    if (!done.Contains(other) && MathF.Abs(labels[other].At.Y - labels[first].At.Y) < RowTolerance) _row.Add(other);
+                    if (!done.Contains(other) && MathF.Abs(_screenAt[other].Y - _screenAt[first].Y) < rowTolerance) _row.Add(other);
                 }
-                _row.Sort((a, b) => labels[a].At.X.CompareTo(labels[b].At.X));
-                int size = RowSize(labels, _row, wanted, camera, fonts);
+                _row.Sort(_byScreenX);
+                int size = RowSize(labels, _row, wanted, view, fonts);
                 foreach (int i in _row)
                 {
                     done.Add(i);
@@ -154,7 +165,7 @@ namespace Simpiens.Presentation
                         int size = _roomSize[i];
                         if (size == 0) { Placed.Add(new PlacedLabel(i, false, default, 0, 0, 0, 0)); break; }
                         var font = fonts[FontSet.Bold(size)];
-                        var at = camera.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At);
                         Emit(i, label, font, Round(at.X - font.Measure(label.Text) * 0.5f), Round(at.Y - font.Base * 0.5f), glyphs);
                         break;
                     }
@@ -163,7 +174,7 @@ namespace Simpiens.Presentation
                         // Under its room's name when the room has one (and it shows), else on its own point
                         int size = MinSize;
                         float top;
-                        var at = camera.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At);
                         if (_roomAt.TryGetValue(new Vec2Key(label.At), out int room))
                         {
                             int roomSize = _roomSize[room];
@@ -183,7 +194,7 @@ namespace Simpiens.Presentation
                     default:
                     {
                         var font = fonts[FontSet.Bold(NameSize)];
-                        var at = camera.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At);
                         Emit(i, label, font, Round(at.X - font.Measure(label.Text) * 0.5f), Round(at.Y) - font.LineHeight, glyphs);
                         break;
                     }
@@ -192,7 +203,7 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>The largest baked size up to <paramref name="wanted"/> at which the row's names keep <see cref="Gap"/> apart; 0 when none from <see cref="MinSize"/> does.</summary>
-        private static int RowSize(IReadOnlyList<WorldLabel> labels, List<int> row, int wanted, in TopDownCamera camera, FontLibrary fonts)
+        private static int RowSize(IReadOnlyList<WorldLabel> labels, List<int> row, int wanted, in View view, FontLibrary fonts)
         {
             var sizes = FontSet.BoldSizes;
             for (int s = sizes.Length - 1; s >= 0; s--)
@@ -203,8 +214,8 @@ namespace Simpiens.Presentation
                 bool fits = true;
                 for (int k = 1; k < row.Count && fits; k++)
                 {
-                    float left = camera.WorldToScreen(labels[row[k - 1]].At).X + font.Measure(labels[row[k - 1]].Text) * 0.5f;
-                    float right = camera.WorldToScreen(labels[row[k]].At).X - font.Measure(labels[row[k]].Text) * 0.5f;
+                    float left = view.WorldToScreen(labels[row[k - 1]].At).X + font.Measure(labels[row[k - 1]].Text) * 0.5f;
+                    float right = view.WorldToScreen(labels[row[k]].At).X - font.Measure(labels[row[k]].Text) * 0.5f;
                     fits = right - left >= Gap;
                 }
                 if (fits) return size;

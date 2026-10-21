@@ -6,7 +6,7 @@ using Simpiens.Presentation;
 namespace Simpiens.Client
 {
     /// <summary>
-    /// Draws a sorted <see cref="DrawList"/> through the top-down camera (Epic CLIENT). The list is already in draw order,
+    /// Draws a sorted <see cref="DrawList"/> through a <see cref="View"/> (Epic CLIENT). The list is already in draw order,
     /// so each batch draws in submission order (<see cref="SpriteSortMode.Deferred"/>) and never sorts by depth itself;
     /// a new batch starts only when the sheet changes, with that sheet's sampling (point for pixel art, linear for the
     /// fog). Colours are not premultiplied. Sprites turn about their centre.
@@ -23,7 +23,7 @@ namespace Simpiens.Client
             _sheets = sheets;
         }
 
-        public void Draw(DrawList items, in TopDownCamera camera)
+        public void Draw(DrawList items, in View camera)
         {
             int open = -1;
             for (int i = 0; i < items.Count; i++)

@@ -80,8 +80,8 @@ namespace Simpiens.Client
         /// <summary>What the view shows this frame: rebuilt from the simulation's state on every draw.</summary>
         public WorldScene Scene { get; } = new WorldScene();
 
-        /// <summary>The camera of the last frame drawn.</summary>
-        public TopDownCamera Camera { get; private set; }
+        /// <summary>The view of the last frame drawn: its projection and camera.</summary>
+        public View View { get; private set; }
 
         /// <summary>The player's view of the map: where it looks and how close (Unity's camera rig).</summary>
         public CameraRig Rig { get; } = new CameraRig();
@@ -208,7 +208,7 @@ namespace Simpiens.Client
                     if (keys.TabPressed) Dashboard.TogglePanels();
                     if (keys.EscapePressed && Dashboard.CloseWindow()) keys.EscapePressed = false; // Esc closes a window before it stops the camera
                 }
-                LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToCamera(viewport.Width, viewport.Height));
+                LastInput = Controls.Update(pointer, keys, seconds, Rig, Rig.ToView(viewport.Width, viewport.Height));
                 if (LastInput.StopFollowing) Selection.StopFollowing();
                 if (LastInput.Clicked) Selection.ClickAt(LastInput.ClickWorld);
             }
@@ -258,9 +258,9 @@ namespace Simpiens.Client
                 Rig.Configure(map.CameraFrame, (float)width / height, height); // before the first update
                 _framedMap = map;
             }
-            Camera = Rig.ToCamera(width, height);
-            _renderer.Draw(Scene.Items, Camera);
-            _labelLayout.Layout(Scene.Labels, Camera, Fonts, _glyphs);
+            View = Rig.ToView(width, height);
+            _renderer.Draw(Scene.Items, View);
+            _labelLayout.Layout(Scene.Labels, View, Fonts, _glyphs);
             _renderer.DrawGlyphs(_glyphs, _fontAtlases);
         }
     }

@@ -37,7 +37,7 @@ namespace Simpiens.Client.Tests
         {
             var ui = UiDriver.Start();
             var crawler = ui.Game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            var screen = ui.Game.Camera.WorldToScreen(crawler.Position);
+            var screen = ui.Game.View.WorldToScreen(crawler.Position);
 
             AddButton(ui.Game, "OVER A CRAWLER", screen.X - 80f, screen.Y - 20f);
             ui.Frame();

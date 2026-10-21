@@ -96,7 +96,7 @@ namespace Simpiens.Presentation
         {
             var pose = Appearance.Pose(entity.Id, entity.Agent, tick, viewSeconds);
             var position = entity.Agent.Position;
-            Items.Add(RenderLayer.Crawlers, TopDownCamera.Depth(position), pose.Sprite.Index, position.X, position.Y,
+            Items.Add(RenderLayer.Crawlers, TopDownProjection.Instance.Depth(position), pose.Sprite.Index, position.X, position.Y,
                 CrawlerSize * pose.ScaleX, CrawlerSize * pose.ScaleY, White, pose.TiltDegrees * DegreesToRadians);
         }
 
@@ -104,7 +104,7 @@ namespace Simpiens.Presentation
         private void AddProp(WorldEntity entity, float viewSeconds)
         {
             var position = entity.Position;
-            float depth = TopDownCamera.Depth(position);
+            float depth = TopDownProjection.Instance.Depth(position);
             switch (entity.Type)
             {
                 case EntityType.Resource:
