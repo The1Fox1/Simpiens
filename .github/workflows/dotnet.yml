@@ -7,7 +7,8 @@ name: dotnet
 
 on:
   push:
-    branches: [main]
+    # main-kni is the acting main branch until M4 (Epic CLIENT)
+    branches: [main, main-kni]
   pull_request:
   workflow_dispatch:
 
