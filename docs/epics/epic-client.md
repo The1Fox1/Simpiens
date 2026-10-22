@@ -283,7 +283,7 @@ flowchart TB
     - **Frame time** `4f00abd` (F11).
     - Measured: `dotnet test` 258/258 (client 195, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; the desktop exe ran offscreen in both views.
 - [x] M3 Phase 3, cutscenes in two kinds (2026-10-21, producers P3, P7, P8).
-    - **The model** `3be0e40`: `CutsceneScript` written with `CutsceneBuilder`, as sessions are (a hard stage, or dynamic actor roles), and `CutscenePlayer`.
+    - **The model** `f4049a0`: `CutsceneScript` written with `CutsceneBuilder`, as sessions are (a hard stage, or dynamic actor roles), and `CutscenePlayer`.
         - Lines appear 40 letters a second; an advance finishes a line first; Esc skips.
         - A dynamic line moves on by itself after a reading time.
         - Characters slide in and out over 0.3 s.
