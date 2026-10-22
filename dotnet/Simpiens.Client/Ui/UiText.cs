@@ -35,5 +35,8 @@ namespace Simpiens.Client.Ui
         public static readonly UiText SmallBold = new UiText(11, true);
         /// <summary>State badges (Unity's 10 px bold).</summary>
         public static readonly UiText Badge = new UiText(10, true);
+        /// <summary>A cutscene's lines and its speaker's name plate (M3).</summary>
+        public static readonly UiText Dialogue = new UiText(16, false);
+        public static readonly UiText Speaker = new UiText(16, true);
     }
 }

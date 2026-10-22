@@ -41,8 +41,8 @@ namespace Simpiens.Presentation
         /// <summary>Under the game's folder: Gum looks here (its FileManager's "Content/") for "FontCache/...".</summary>
         public const string ContentFolder = "Content";
 
-        /// <summary>Body text.</summary>
-        public static readonly int[] RegularSizes = { 10, 11, 12, 13 };
+        /// <summary>Body text (10 to 13), and cutscene dialogue (16, M3).</summary>
+        public static readonly int[] RegularSizes = { 10, 11, 12, 13, 16 };
 
         /// <summary>Titles, buttons and badges (10 to 16), and the map's labels as they grow with the zoom (up to 32).</summary>
         public static readonly int[] BoldSizes = { 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32 };
