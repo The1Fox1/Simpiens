@@ -16,30 +16,53 @@ namespace Simpiens.Client
 
         public SimpiensGame(ClientOptions options = null)
         {
-            Options = options ?? new ClientOptions();
-            _graphics = new GraphicsDeviceManager(this)
-            {
-                PreferredBackBufferWidth = Options.Width,
-                PreferredBackBufferHeight = Options.Height,
-                SynchronizeWithVerticalRetrace = Options.VSync,
-            };
+            _graphics = new GraphicsDeviceManager(this);
             IsFixedTimeStep = false;
             IsMouseVisible = true;
+            Ui = new UiLayer(this);
+            Compose(options ?? new ClientOptions());
+        }
 
+        /// <summary>A client session and its views, for <paramref name="options"/>: the simulation, the world view, the play screen.</summary>
+        private void Compose(ClientOptions options)
+        {
+            Options = options;
+            _graphics.PreferredBackBufferWidth = Options.Width;
+            _graphics.PreferredBackBufferHeight = Options.Height;
+            _graphics.SynchronizeWithVerticalRetrace = Options.VSync;
+            _lastViewSeconds = 0f;
             Session = new ClientSession(Options);
             World = new WorldView(Session);
-            Ui = new UiLayer(this);
             Play = new PlayScreen(this);
             Screens.Push(Play);
         }
 
-        public ClientOptions Options { get; }
+        /// <summary>
+        /// Starts a new client session in this window, on this device: a new simulation, world view and play screen, as a
+        /// new game would, without opening a new window (a "new game" menu later; the tests reuse a few windows for all
+        /// their games, epic-client F15). Whatever was playing ends, cutscenes included, and the UI starts afresh.
+        /// </summary>
+        public void Restart(ClientOptions options)
+        {
+            while (Screens.Top is CutsceneScreen cutscene) EndCutscene(cutscene);
+            Screens.Clear();
+            World.Dispose();
+            Session.Dispose();
+            Compose(options ?? new ClientOptions());
+            if (Graphics == null) return; // the content isn't loaded yet: LoadContent does the rest
+            _graphics.ApplyChanges();
+            World.LoadContent(Graphics);
+            Ui.Initialize();
+            Play.LoadContent();
+        }
+
+        public ClientOptions Options { get; private set; }
 
         /// <summary>What the client plays: the simulation, the frames, the selection, the dashboard model and the save slot.</summary>
-        public ClientSession Session { get; }
+        public ClientSession Session { get; private set; }
 
         /// <summary>How the world is drawn: the projection, the camera, the scene, the map's text and picking.</summary>
-        public WorldView World { get; }
+        public WorldView World { get; private set; }
 
         /// <summary>The UI layer over the screens (Gum).</summary>
         public UiLayer Ui { get; }
@@ -48,7 +71,7 @@ namespace Simpiens.Client
         public ScreenStack Screens { get; } = new ScreenStack();
 
         /// <summary>Playing the outpost: the world view and the dashboard (the bottom screen).</summary>
-        public PlayScreen Play { get; }
+        public PlayScreen Play { get; private set; }
 
         /// <summary>What the screens draw with (made in LoadContent).</summary>
         public ClientGraphics Graphics { get; private set; }

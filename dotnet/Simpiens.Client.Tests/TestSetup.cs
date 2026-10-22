@@ -49,12 +49,25 @@ namespace Simpiens.Client.Tests
 
     /// <summary>
     /// Games run offscreen in the test process, a frame at a time (<c>RunOneFrame</c>), and are never disposed:
-    /// disposing segfaults under the offscreen driver (epic-client F1). They are kept referenced so that no finalizer
-    /// tears one down mid-run either.
+    /// disposing segfaults under the offscreen driver, after <c>Run</c> or <c>RunOneFrame</c> alike (epic-client F1). They
+    /// are kept referenced so that no finalizer tears one down mid-run either. A window and its device cost about 63 MB
+    /// that nothing frees, so a test reuses a window that no running test holds: the game restarts with the test's options
+    /// (<see cref="SimpiensGame.Restart"/>), a new session and views as a new game would have (epic-client F15).
     /// </summary>
     internal static class Offscreen
     {
-        private static readonly List<SimpiensGame> Alive = new List<SimpiensGame>();
+        private sealed class Window
+        {
+            public SimpiensGame Game;
+            public string Test;
+        }
+
+        private static readonly List<Window> Alive = new List<Window>();
+
+        private static string CurrentTest => TestContext.Current?.Test?.UniqueID ?? string.Empty;
+
+        /// <summary>How many windows the run has opened (a test needs at most a few at once).</summary>
+        public static int WindowsOpened => Alive.Count;
 
         /// <summary>The map's render tests run at 800x600; the dashboard's at the game's default 1280x720 (its header needs the width).</summary>
         public static SimpiensGame Start(ClientOptions options = null, int frames = 1, int width = 800, int height = 600)
@@ -66,9 +79,24 @@ namespace Simpiens.Client.Tests
             options.SaveDirectory ??= Path.Combine(Path.GetTempPath(), "simpiens-client-tests", Guid.NewGuid().ToString("N")); // never the player's slot
             options.VSync = false;
             options.ViewClockFromTicks = true; // renders at a given tick are always the same
-            var game = new SimpiensGame(options);
-            game.InactiveSleepTime = TimeSpan.Zero; // an offscreen window never has focus: don't nap 20 ms a frame
-            Alive.Add(game);
+
+            string test = CurrentTest;
+            var window = Alive.Find(w => w.Test != test); // one no running test holds: an earlier test's
+            SimpiensGame game;
+            if (window != null)
+            {
+                game = window.Game;
+                window.Test = test;
+                SetActive(game, false); // as a new window: no focus, the devices for input
+                game.Input = new ClientInput();
+                game.Restart(options);
+            }
+            else
+            {
+                game = new SimpiensGame(options);
+                game.InactiveSleepTime = TimeSpan.Zero; // an offscreen window never has focus: don't nap 20 ms a frame
+                Alive.Add(new Window { Game = game, Test = test });
+            }
             for (int i = 0; i < frames; i++) game.RunOneFrame();
             return game;
         }
@@ -77,11 +105,13 @@ namespace Simpiens.Client.Tests
         /// Gives an offscreen game focus. The window never gets it from the system, and without it the game reads no
         /// input and Gum handles none. KNI keeps the flag in its private game strategy.
         /// </summary>
-        public static void MakeActive(SimpiensGame game)
+        public static void MakeActive(SimpiensGame game) => SetActive(game, true);
+
+        private static void SetActive(SimpiensGame game, bool active)
         {
             var strategy = FieldIn(typeof(Microsoft.Xna.Framework.Game), "_strategy").GetValue(game);
-            FieldIn(strategy.GetType(), "_isActive").SetValue(strategy, true);
-            if (!game.IsActive) throw new InvalidOperationException("The game is still inactive: KNI's focus flag has moved.");
+            FieldIn(strategy.GetType(), "_isActive").SetValue(strategy, active);
+            if (game.IsActive != active) throw new InvalidOperationException("The game's focus didn't change: KNI's focus flag has moved.");
         }
 
         private static System.Reflection.FieldInfo FieldIn(Type type, string name)

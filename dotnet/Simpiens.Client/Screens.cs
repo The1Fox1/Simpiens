@@ -47,6 +47,8 @@ namespace Simpiens.Client
 
         public bool Contains(IScreen screen) => _screens.Contains(screen);
 
+        public void Clear() => _screens.Clear();
+
         public void Update(float seconds, float cameraSeconds, bool active) => Top?.Update(seconds, cameraSeconds, active);
 
         public void Draw(int width, int height)
