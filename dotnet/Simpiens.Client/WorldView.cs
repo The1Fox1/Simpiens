@@ -30,6 +30,7 @@ namespace Simpiens.Client
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _session.Selection.Changed += OnSelectionChanged;
+            Mode = _session.Options.View ?? ViewMode.Isometric;
 
             // The first map framed for the window asked for; updates keep the rig on the real window and later maps,
             // so drawing never changes the camera (review A6)
@@ -137,6 +138,12 @@ namespace Simpiens.Client
             }
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
         }
+
+        /// <summary>
+        /// Isometric to top-down and back (M3 design D8). The camera keeps the floor point at the centre and its scale in
+        /// screen pixels per art pixel (both art sets have 16 art pixels a unit), clamped to the new view's limits.
+        /// </summary>
+        public void ToggleView() => Mode = ReferenceEquals(Mode, ViewMode.Isometric) ? ViewMode.TopDown : ViewMode.Isometric;
 
         /// <summary>The next wall style: cutaway, full, low, and round again (M3 design D7).</summary>
         public void CycleWallStyle() => Scene.WallStyle = (WallStyle)(((int)Scene.WallStyle + 1) % 3);

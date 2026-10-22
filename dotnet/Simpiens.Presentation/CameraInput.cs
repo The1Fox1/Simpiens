@@ -26,6 +26,8 @@ namespace Simpiens.Presentation
         public bool TabPressed;
         /// <summary>C this frame: the next wall style (cutaway, full, low; M3 design D7).</summary>
         public bool WallStylePressed;
+        /// <summary>V this frame: isometric to top-down and back (M3 design D8).</summary>
+        public bool ViewTogglePressed;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>

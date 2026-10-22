@@ -10,8 +10,9 @@ namespace Simpiens.Presentation
     /// <item><description>smooth follow and reframe.</description></item>
     /// </list>
     /// One addition for pixel art: given the viewport's height in pixels, reframing shows the whole map at a whole
-    /// number of screen pixels per art pixel (crisp), and that view is the zoom-out limit. Without a pixel height it is
-    /// Unity's rig exactly.
+    /// number of screen pixels per art pixel (crisp), and that view is the zoom-out limit. When even 1:1 can't show the
+    /// whole map (the wider isometric outpost in a 1280x720 window), reframing starts at 1:1 on the map's centre and the
+    /// zoom-out limit still shows all of it, below 1:1 (M3 step 1.5). Without a pixel height it is Unity's rig exactly.
     /// The rig works on the projection's view plane (review A1): <see cref="Position"/> is a floor point, and the view's
     /// extent, the clamp and the pans are measured on screen axes. In top-down the view plane is the world, so the
     /// numbers are Unity's; an isometric projection needs no other code.
@@ -72,7 +73,7 @@ namespace Simpiens.Presentation
 
         public void Reframe()
         {
-            Size = MaxSize;
+            Size = PixelHeight > 0 ? WholePixelSize(FitSize) : MaxSize; // crisp first: never below 1:1 when framing
             Position = Frame.Center;
             Clamp();
         }

@@ -205,7 +205,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheDevMapAndItsBannerLookAsRecorded()
         {
-            var options = new ClientOptions { TicksPerUpdate = 100, ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<ISessionDefinition>(services, new CanaryPenSession()) };
+            var options = new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100, ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<ISessionDefinition>(services, new CanaryPenSession()) };
             var game = Offscreen.Start(options, frames: 1, Width, Height);
             game.Session.DashboardModel.Sessions.Switch();
             game.Play.Dashboard.TogglePanels();

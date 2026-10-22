@@ -97,10 +97,13 @@ namespace Simpiens.Client.Tests
             Assert.Equal(sim.Sectors.GetSectorAt(hub).Id, selection.SelectedSector);
         }
 
-        [Fact]
-        public void TheGameDrawsTheRingAndNameAndItsCameraFollowsTheSelection()
+        [Theory]
+        [InlineData("isometric")]
+        [InlineData("top-down")]
+        public void TheGameDrawsTheRingAndNameAndItsCameraFollowsTheSelection(string mode)
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 1);
+            var view = mode == "isometric" ? ViewMode.Isometric : ViewMode.TopDown;
+            var game = Offscreen.Start(new ClientOptions { View = view, TicksPerUpdate = 1 }, frames: 1);
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             game.World.Rig.ZoomAt(game.World.Rig.Frame.Center, 0.2f); // close enough that following has room to move
             game.World.ClickMap(game.World.View.WorldToScreen(crawler.Position));
@@ -111,7 +114,8 @@ namespace Simpiens.Client.Tests
             Assert.True(Vec2.Distance(game.World.Rig.Position, crawler.Position) < before, "the camera moved toward the followed crawler");
 
             var items = Enumerable.Range(0, game.World.Scene.Items.Count).Select(i => game.World.Scene.Items[i]).ToList();
-            Assert.Single(items, i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Selection && i.SpriteIndex == ProceduralSprites.SelectionRing.Index);
+            Assert.Single(items, i => DrawSortKey.Layer(i.SortKey) == view.Projection.LayerOf(DrawRole.Selection) && i.SpriteIndex == view.Art.SelectionRing.Sprite);
+            Assert.Single(game.World.Scene.Labels, l => l.Kind == LabelKind.Name);
         }
     }
 }

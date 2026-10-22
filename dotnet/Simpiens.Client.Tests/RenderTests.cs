@@ -8,7 +8,8 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// Epic CLIENT M0's render gate: the outpost drawn by the real client, offscreen on Mesa's software renderer,
-    /// compared with reference images committed in <c>Baselines/</c>. Each capture is also written to
+    /// compared with reference images committed in <c>Baselines/</c>. These are top-down's (the developers' view, asked for
+    /// by name since isometric is the game's default; isometric's are in <c>IsometricRenderTests</c>). Each capture is also written to
     /// <c>render-output/</c> next to the test binary, for anyone (an agent included) to look at. A deliberate change of
     /// what is drawn re-records the references with <c>SIMPIENS_RECORD_RENDERS=1</c>, in its own commit, after a look.
     /// </summary>
@@ -20,7 +21,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostAtTickZeroLooksAsRecorded()
         {
-            var game = Offscreen.Start(frames: 0);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown }, frames: 0);
             game.Session.Simulation.Clock.SetTimeMultiplier(0f); // the first frame initializes the game without a tick
             game.RunOneFrame();
             Assert.Equal(0L, game.Session.Simulation.Clock.CurrentTick);
@@ -31,7 +32,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostAtTick300LooksAsRecorded()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3);
             Assert.Equal(300L, game.Session.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t300", FrameCapture.CaptureMap(game, Width, Height));
@@ -40,7 +41,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void ASelectedCrawlerHasItsRingAndName()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3);
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
             game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
 
@@ -51,7 +52,7 @@ namespace Simpiens.Client.Tests
         public void TheOutpostAtTick1500LooksAsRecorded()
         {
             // Later in the day: the scout has charted rooms, so their fog has lifted
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 15);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 15);
             Assert.Equal(1500L, game.Session.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t1500", FrameCapture.CaptureMap(game, Width, Height));
@@ -60,7 +61,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void AZoomedAndPannedViewLooksAsRecorded()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3);
             var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
             game.World.Rig.ZoomAt(hub, 0.4f);
             game.World.Rig.Pan(new Vec2(2f, -3f));

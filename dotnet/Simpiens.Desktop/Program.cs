@@ -14,6 +14,7 @@ namespace Simpiens.Desktop
 
   --seed N             simulation seed (default: the default seed)
   --session ID         session to play (default: the outpost)
+  --view iso|top       isometric, the main view (default), or top-down; V switches in the game
   --width W --height H window size (default: 1280 x 720)
   --no-vsync           don't wait for the display's refresh
   --ticks-per-frame N  run N ticks every frame instead of following real time (fast-forward)
@@ -32,6 +33,7 @@ more (AGENTS.md, Logging).";
                 {
                     case "--seed": options.Seed = ulong.Parse(Next(args, ref i), CultureInfo.InvariantCulture); break;
                     case "--session": options.SessionId = Next(args, ref i); break;
+                    case "--view": options.View = ParseView(Next(args, ref i)); break;
                     case "--width": options.Width = int.Parse(Next(args, ref i), CultureInfo.InvariantCulture); break;
                     case "--height": options.Height = int.Parse(Next(args, ref i), CultureInfo.InvariantCulture); break;
                     case "--no-vsync": options.VSync = false; break;
@@ -63,6 +65,16 @@ more (AGENTS.md, Logging).";
                 SimLog.Shutdown();
             }
             return 0;
+        }
+
+        private static Simpiens.Presentation.ViewMode ParseView(string value)
+        {
+            switch (value)
+            {
+                case "iso": case "isometric": return Simpiens.Presentation.ViewMode.Isometric;
+                case "top": case "top-down": return Simpiens.Presentation.ViewMode.TopDown;
+                default: throw new System.ArgumentException($"--view takes iso or top, not '{value}'.");
+            }
         }
 
         private static string Next(string[] args, ref int i)

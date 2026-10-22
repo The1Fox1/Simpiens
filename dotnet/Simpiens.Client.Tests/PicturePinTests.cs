@@ -18,7 +18,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostAtTickZeroDrawsAsPinned()
         {
-            var game = Offscreen.Start(frames: 0);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown }, frames: 0);
             game.Session.Simulation.Clock.SetTimeMultiplier(0f);
             game.RunOneFrame();
             AssertPinned(game, PinnedTick0);
@@ -27,14 +27,14 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostAtTick300DrawsAsPinned()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3);
             AssertPinned(game, PinnedTick300);
         }
 
         [Fact]
         public void ASelectedCrawlerInAZoomedViewDrawsAsPinned()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3);
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
             game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
             var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;

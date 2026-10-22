@@ -46,6 +46,7 @@ namespace Simpiens.Client
                 EscapePressed = kb.IsKeyDown(Keys.Escape) && !_previousKeys.IsKeyDown(Keys.Escape),
                 TabPressed = kb.IsKeyDown(Keys.Tab) && !_previousKeys.IsKeyDown(Keys.Tab),
                 WallStylePressed = kb.IsKeyDown(Keys.C) && !_previousKeys.IsKeyDown(Keys.C),
+                ViewTogglePressed = kb.IsKeyDown(Keys.V) && !_previousKeys.IsKeyDown(Keys.V),
             };
             _previousKeys = kb;
         }

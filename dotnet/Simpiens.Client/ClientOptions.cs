@@ -1,4 +1,5 @@
 using Simpiens.Core.Session;
+using Simpiens.Presentation;
 using Simpiens.Simulation;
 
 namespace Simpiens.Client
@@ -12,6 +13,9 @@ namespace Simpiens.Client
         public int Width { get; set; } = 1280;
         public int Height { get; set; } = 720;
         public bool VSync { get; set; } = true;
+
+        /// <summary>How the world is looked at first: isometric, the main view (producer P4); V switches to top-down and back.</summary>
+        public ViewMode View { get; set; } = ViewMode.Isometric;
 
         /// <summary>
         /// 0 (the game): the clock follows real time, as Unity's clock driver did. N > 0 (tests, fast-forward): every

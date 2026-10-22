@@ -136,7 +136,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheBountyBoardLooksAsRecorded()
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.TopDown, TicksPerUpdate = 100 }, frames: 3, Width, Height);
             game.Play.Dashboard.TogglePanels();
             game.Session.Simulation.Clock.SetTimeMultiplier(1f);
             game.Session.DashboardModel.OpenBounties();

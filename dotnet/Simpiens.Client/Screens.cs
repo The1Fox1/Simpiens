@@ -91,6 +91,7 @@ namespace Simpiens.Client
                 pointer.OverUi |= ui.PointerOverUi;
                 if (ui.HasKeyboardFocus) keys = default;
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();
+                if (keys.ViewTogglePressed) _game.World.ToggleView();
                 if (ui.IsOwner && Dashboard != null)
                 {
                     if (keys.TabPressed) Dashboard.TogglePanels();
