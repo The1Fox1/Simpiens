@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client` (not merged, not pushed). M0 and M1 are complete; M2.0–M2.7 (the dashboard in Gum, parity with Unity's game) are done. The agent has stopped for the producer's side-by-side with Unity, after which the first pull request follows; Unity's removal (M2.8, M2.9) is the second.
+- **Status**: ACTIVE (2026-10-21). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup and the client seams are done. M3 (isometric and cutscenes) is done on `feat/client-m3`, not pushed: its gate passes, and the producer's look is open.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -487,7 +487,7 @@ Before Epic 10: soak test and scaling work (#8).
     - Measured: `dotnet test` 199/199 (client 136, core 63); golden 3/3; Unity PlayMode 69/69 and golden 3/3 on the core change; the MonoGame build compiles. Frame time 2.14 ms against 2.09 ms before (llvmpipe, a tick every frame).
     - Open: the producer's look at crawlers moving between ticks at 1× and 10×, and the pull request into `main-kni`. Next: M3, isometric.
     - The producer's look is open (person-gated); the pull request goes into `main-kni`.
-  - M3 plan written 2026-10-21 (`.agents/client_m3_plan.md`, branch `feat/client-m3` into `main-kni`):
+  - M3 plan written 2026-10-21 (deleted at its close-out; its decisions are in `.agents/architecture_history.md`), on branch `feat/client-m3` into `main-kni`:
     - Phase 0: the review items deferred into M3 (one world epoch, the scene built in `Update`, `SimpiensGame` split into a session, a world view and screens, and a frame path that allocates nothing), with no visual change.
     - Phase 1: isometric drawn from generated placeholders, with art sets per view mode, the fog as floor quads, a wall style for walls in the way, and the view toggle.
     - Phase 2: the gate (depth order and picking on the real outpost, labels, references, frame time).
@@ -520,6 +520,21 @@ Before Epic 10: soak test and scaling work (#8).
     - Nine isometric references and two pins, each looked at.
     - Measured: `dotnet test` 258/258 (client 195, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.59 ms (isometric) and 2.33 ms (top-down) on llvmpipe.
     - Open: the producer's look at the isometric view and the wall styles. Next: Phase 3, cutscenes.
+  - **M3 Phase 3 done (2026-10-21), the third pull request: cutscenes in two kinds.**
+    - One script model written in code, and one player: lines appear letter by letter, an advance finishes a line first, Esc skips.
+    - **Hard cutscenes** cover the game and hold the world. They are drawn in screen space, with a backdrop, characters in slots and a Gum text box.
+    - **Dynamic cutscenes** play over the running world:
+      - they start when a crawler enters a zone or starts an interaction with another (from the chronicle), checked once per tick;
+      - lines appear in a bubble over the speaker, or in a box at the bottom while it is hidden or off screen;
+      - the camera is directed until the player takes it back;
+      - one plays at a time, and they never move crawlers.
+    - **Demonstrations** in Debug builds: F9 for the hard one; the first gossip and the first crawler into the deep seam for the dynamic ones.
+    - The golden hashes hold with dynamic scenes playing. In real play with nothing injected, both dynamic demonstrations start within 1,000 ticks.
+    - A test-harness defect is fixed: every offscreen game stayed alive (about 81 MB each) and the client suite ran out of memory. The tests now reuse windows through `SimpiensGame.Restart`; the suite peaks at about 750 MB.
+  - **M3 done (2026-10-21)** on `feat/client-m3`, in three pull requests' worth: Phase 0 (`feat/client-m3-phase0`), Phases 1–2 (`feat/client-m3-isometric`), Phase 3 (the branch itself).
+    - Measured: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.62 ms in isometric and 2.38 ms in top-down on llvmpipe, 1.40 and 1.64 ms on the GPU.
+    - **Open, person-gated:** the producer's look at the isometric view, the wall styles, the V toggle and the camera, and both kinds of cutscene; the pull requests into `main-kni`.
+    - Next: M2.8–M2.9 (Unity's removal, after the side-by-side) or M4, as the producer decides.
 
 ---
 

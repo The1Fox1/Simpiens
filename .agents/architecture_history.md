@@ -767,3 +767,52 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - M3 sets `SimpiensGame.Projection` to an `IsometricProjection` (tile size and orientation from the art), stands sprites on their feet, and draws the cloud per floor cell.
   - The simulation can later leave the render thread behind three frame buffers; the dashboard needs its own snapshot first.
   - The producer's look at the interpolated motion is open.
+
+## Epic CLIENT M3: isometric as the game's view, and cutscenes in two kinds (2026-10-21)
+- **Context:** the producer asked for the M3 plan and then the go-ahead (2026-10-21), answering only where they disagreed with a default:
+  - P3: two kinds of cutscene: hard ones pause the game, dynamic ones are part of play.
+  - P5: no rotation; one fixed view.
+  - P7: a dynamic scene starts when a crawler enters a zone or starts an interaction with another, and never moves crawlers.
+  - P8: the player keeps control during one.
+  - P1, P2, P4 and P6 stood: 32×16 placeholders, cutaway walls, isometric by default with V to top-down, three pull requests.
+
+  The working plan was `.agents/client_m3_plan.md`, deleted at this close-out.
+- **Phase 0, the architecture review's items deferred into M3 (no visual change):**
+  - One world epoch, unique in the process, for every view cache (A5).
+  - View state advances once per update, and drawing is pure (A6).
+  - The game splits into `ClientSession` (no XNA type), `WorldView` and a stack of screens, with `SimpiensGame` as the shell (A4).
+  - Culling before sorting, and a frame path held at zero allocations by a test (R1's cheap half, R2, R3).
+- **Phase 1, isometric drawing:**
+  - **Art sets per view mode** (`WorldArt`, `ViewMode`), so the scene never asks which projection it has.
+  - **Generated placeholders** decided per pixel against the projection's diamond.
+  - **Each art set has its own sheet** (F12): a shared, larger atlas moved which texels point sampling picked.
+  - **Things on the floor** (the fog's cloud) are drawn in floor units under the view's affine transform. The plan's "cloud per floor cell" was replaced by one continuous quad per sector; top-down stayed pixel-identical.
+  - **Walls in the way:** the cutaway is a scene rule over the eight neighbours further from the viewer (the diagonals remove lone posts at T-junctions).
+  - **Framing is crisp first** (F14).
+- **Phase 2, the gate:**
+  - Depth order wherever things overlap walls on the real outpost, and a crawler walking past a wall, picking and labels, all checked.
+  - Nine isometric references and two pins, each looked at.
+  - Frame time measured (F11).
+- **Phase 3, cutscenes:**
+  - **One model and one player** for both kinds, written in code.
+  - **Hard cutscenes** are a covering screen that holds the world by stopping the simulation driver (no clock writes). They draw through `ScreenProjection`, a third projection, so the renderer is reused, with a Gum text box revealed by `MaxLettersToShow`.
+  - **Dynamic scenes:**
+    - **Triggers** are evaluated on frame capture (once per tick, on the simulation thread) from frames that now carry crawlers' sectors and the tick's chronicle events, so they start on the same tick in every run.
+    - **Presentation:** a bubble over the head, placed in the view this frame draws; a bottom box as the fallback; a directed camera the player takes back.
+    - **They write nothing:** the golden hashes hold with them playing.
+  - **Demonstration content** is Debug-only, because the story belongs to the narrative work.
+- **Deviations from the plan:**
+  - `ClientGraphics` (the shell's shared rendering resources) was added so the world view and cutscenes share one renderer.
+  - `SimpiensGame.Restart` and window reuse in the tests (F15) were added to fix a test-harness memory defect. Every offscreen game stayed alive, about 81 MB each, and the client suite was killed out of memory.
+  - Chunks 2.1 and 2.2 shared one commit (one test file).
+  - Two commit messages were corrected before any push: a frame-time run count, and a test count the gate hadn't measured.
+- **Consequences:**
+  - Isometric is the main view; top-down remains for developers (V).
+  - M7's real art replaces `IsometricSprites` and `CutsceneArt` through the art sets and sheets.
+  - The narrative work fills cutscene content and the hard ones' triggers.
+  - M4 measures the static floor pass on a phone.
+  - The tests can grow without memory growing per test.
+- **Verification:** one commit per chunk with the gate measured.
+  - Final: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; Unity untouched.
+  - Frame time 1.62 ms (isometric) and 2.38 ms (top-down) on llvmpipe.
+  - The producer's look is open.

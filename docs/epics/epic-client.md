@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-18) on branch `feat/kni-client`; M0 and M1 complete; M2.0–M2.7 done (parity with Unity's game), stopped for the producer's side-by-side before the first pull request. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-21). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup and the client seams are done. M3 (isometric and cutscenes) is done on `feat/client-m3`, not pushed: its gate passes, and the producer's look is open. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -282,13 +282,38 @@ flowchart TB
     - **Review set** `e023873`: nine isometric references at 1280×720 (t0, t300, t1500, zoomed with a selection, a cloud lifting, the header, the Dev Map, full and low walls) and two pins, each looked at.
     - **Frame time** `4f00abd` (F11).
     - Measured: `dotnet test` 258/258 (client 195, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; the desktop exe ran offscreen in both views.
+- [x] M3 Phase 3, cutscenes in two kinds (2026-10-21, producers P3, P7, P8).
+    - **The model** `3be0e40`: `CutsceneScript` written with `CutsceneBuilder`, as sessions are (a hard stage, or dynamic actor roles), and `CutscenePlayer`.
+        - Lines appear 40 letters a second; an advance finishes a line first; Esc skips.
+        - A dynamic line moves on by itself after a reading time.
+        - Characters slide in and out over 0.3 s.
+    - **Dialogue face** `7fa43bb`: Inter Regular 16, baked.
+    - **Screen space** `7bfe6b8`: `ScreenProjection`, a 640×360 virtual screen at whole scales, letterboxed, through the same renderer.
+    - **Hard cutscenes** `b4cd422`: `CutsceneScreen` (via `SimpiensGame.PlayCutscene`) covers the game, holds the world and hides the dashboard.
+        - `CutsceneStage` draws the backdrop and characters (6×, mirrored when facing left, dimmed while another speaks).
+        - A Gum text box (Gum's `MaxLettersToShow`); a click, Space or Enter advances.
+        - `ClientGraphics` is the shell's shared batch, sheets, renderer and fonts.
+    - **Dynamic scenes** `ca58e33`:
+        - **Triggers:** `SceneDirector` checks them once per captured frame. The frames carry each crawler's sector and the tick's chronicle events. Triggers fire on zone entry or a two-crawler interaction, play once per world or after a cooldown, one scene at a time.
+        - **The view:** `DynamicSceneView` puts the line in a bubble over the speaker's head, or a bottom box while it is hidden or off screen. A click on the box brings the camera back.
+        - **The camera:** `WorldView.DirectCamera`; the player's pan, or a follow of their own, takes it back.
+        - **Proof they write nothing:** the golden hashes hold with the scenes playing, on every seed.
+    - **The harness** `afdb4ea` (F15): `SimpiensGame.Restart`; the tests reuse windows.
+    - **Demonstrations** `8daf5d1`: F9 and two dynamic ones in Debug builds.
+        - Both dynamic ones start in real play with nothing injected within 1,000 ticks (t169–t568 on the seeds).
+        - References of two hard frames and the gossip's bubble; the backdrops pinned.
+- [x] **M3 complete (2026-10-21):** isometric is the game's view and both kinds of cutscene play.
+    - Measured: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile.
+    - Frame time 1.62 ms (isometric) and 2.38 ms (top-down) on llvmpipe; 1.40 and 1.64 ms on the GPU.
+    - The producer's look is open (person-gated); the working plan is deleted.
 
 ---
 
 ## 4. Deferred
 
 - M2 to M7 and the map designer: they wait for the producer (the agent's authority covered M0 and M1).
-- Cutscene mode, hard and dynamic: M3 Phase 3.
+- **The story:** which cutscenes exist, what they say, and what starts a hard cutscene in play. Owned by the narrative work (producer P3); M3 ships the mechanisms and Debug-only demonstrations.
+- **Cutscene art:** real portraits and backdrops (M7). Text boxes at screen density (M6).
 - Isometric's real art (64×64, possibly 64×32 tiles), and the sprite catalogue as data with a packer (review R5): M7.
 - The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
 - The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
@@ -302,6 +327,11 @@ flowchart TB
 ## 5. Risks
 
 - **Open, person-gated: the producer's side-by-side look** at the client beside Unity, the gate of M1 and of M2.7 (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop` (Debug, with the Dev Map switch) or `-c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
+- **Open, person-gated: the producer's look at M3** (2026-10-21). Run `dotnet run --project dotnet/Simpiens.Desktop` (Debug: the demonstrations on):
+    - isometric, the default; V switches to top-down;
+    - the wall styles: C cycles cutaway, full and low;
+    - F9 plays the hard cutscene;
+    - the dynamic scenes start in play: the scout entering the deep seam early, then the first gossip.
 - **Open, person-gated: the producer's look at interpolated motion** (client seams, 2026-10-21): crawlers and the followed camera now move between ticks, one tick (100 ms of simulated time) behind the simulation. Watch them at 1× and 10× with `dotnet run --project dotnet/Simpiens.Desktop`.
 - **The render tolerance hides small changes** (F9): use the picture pins to tell a real change from rounding.
 - **Fonts are baked on Linux:** the font golden compares a FreeType bake with the committed atlases. A bake on another system may differ by a pixel; if that happens, re-commit deliberately or move the baker to StbTrueType, which is managed and identical everywhere.
@@ -353,6 +383,10 @@ See the proposal's risk table. These matter for M0 and M1:
 - **F12: point sampling depends on the atlas layout** (M3 step 1.2). Growing the shared sprite atlas changed which texels the zoomed top-down view picked at its in-between scale: 15,614 pixels moved, with nothing in the art changed. So each art set has its own sheet: top-down's laid out as before, isometric's holding every sprite by the same indices (one batch for its interleaved World layer).
 - **F13: captures carry the fog's alpha** (M3 step 2.3). The fog's non-premultiplied blend leaves the render target's alpha below 255 (247 under a cloud, 197 mid-fade). An image viewer then shows covered rooms lighter over its own background; the colours are right and the window ignores alpha. Read a capture's colour channels, not how a viewer shows it.
 - **F14: the isometric outpost doesn't fit 1280×720 at 1:1** (M3 step 1.5); it would need 0.95. Framing is now crisp first: a map that doesn't fit at 1:1 is framed at 1:1 on its centre, and the zoom-out limit still shows all of it. Top-down at today's window sizes fits at 1:1 and is unchanged.
+- **F15: offscreen games can't be freed, so the tests reuse windows** (M3, 2026-10-21).
+    - **What happened:** the client suite's process was killed out of memory (exit 137) after 133 tests. Disposing a game segfaults under the offscreen driver after `RunOneFrame` as after `Run` (F1, rechecked), so every game stayed alive.
+    - **The cost:** a game is about 81 MB, of which about 63 MB is its window and device; the suite needed about 14 GB.
+    - **The fix:** `SimpiensGame.Restart(options)` starts a new session in the same window and device. The harness restarts a window no running test holds. The suite peaks at about 750 MB and every reference holds on reused windows.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---

@@ -234,12 +234,15 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   (KernSmith/FreeType, Gum cache names, font golden), UI 1:1, map labels in screen space; dotnet test 173/173. Next: the
   producer's look, the PR into main-kni, then M3.
   Client seams (A1-A3) done 2026-10-21 on main-kni (f5f09bc; dotnet test 199/199). M3 PLAN written 2026-10-21 on
-  feat/client-m3 (.agents/client_m3_plan.md): Phase 0 review groundwork, 1 isometric, 2 its gate, 3 cutscenes.
+  feat/client-m3 (plan deleted at close-out): Phase 0 review groundwork, 1 isometric, 2 its gate, 3 cutscenes.
   Producer 2026-10-21: P3 = two kinds (hard cutscenes pause; dynamic ones are part of play), P5 = no rotation (one fixed
   view), P7 = scenes start on zone entry or a crawler-to-crawler interaction and never move crawlers, P8 = the player
   keeps control; the other defaults stand. GO given 2026-10-21. Phase 0 DONE (533a3b4..320f20c; dotnet test 211/211),
   the first PR's content (local branch feat/client-m3-phase0). Phases 1-2 DONE (3c185d6..4f00abd; dotnet test 258/258):
-  isometric is the game's view, the second PR (local branch feat/client-m3-isometric). Next: Phase 3, cutscenes.
+  isometric is the game's view, the second PR (local branch feat/client-m3-isometric). Phase 3 DONE (3be0e40..8daf5d1):
+  cutscenes in two kinds, the third PR (feat/client-m3). M3 DONE 2026-10-21: dotnet test 297/297, golden 3/3; plan deleted.
+  Open: the producer's look at M3 (isometric, walls, V, F9, dynamic scenes) and the three PRs into main-kni (theirs to
+  push or ask for). Then M2.8-M2.9 (Unity out, after the side-by-side) or M4, as the producer decides.
   CLIENT SEAMS done 2026-10-21 on feat/client-seams (review A1-A3, producer request 2026-10-20): IViewProjection/View,
   rig and picking through the projection, isometric maths (not wired); draw roles, layers by projection; fog D1 = C
   (producer 2026-10-21: the fog hides crawlers too); WorldViewFrame on SessionHost.TickCompleted (core), views read only
