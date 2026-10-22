@@ -36,6 +36,7 @@ namespace Simpiens.Presentation
                 case DrawRole.Prop: return RenderLayer.Props;
                 case DrawRole.Fog: return RenderLayer.Fog;
                 case DrawRole.Crawler: return RenderLayer.Crawlers;
+                case DrawRole.Shadow: return RenderLayer.Props; // top-down's art has none
                 default: return RenderLayer.Selection;
             }
         }

@@ -142,6 +142,8 @@ namespace Simpiens.Presentation
             var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, viewSeconds);
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
+            var shadow = Art.CrawlerShadow;
+            if (!shadow.IsNone) Add(DrawRole.Shadow, 0f, shadow, position, Shown(White, shown));
             Add(DrawRole.Crawler, Projection.Depth(position), Art.Crawler(pose), position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
@@ -191,12 +193,12 @@ namespace Simpiens.Presentation
             }
         }
 
-        private readonly int[] _layers = new int[(int)DrawRole.Crawler + 1]; // each role's layer, this build
+        private readonly int[] _layers = new int[(int)DrawRole.Shadow + 1]; // each role's layer, this build
 
         /// <summary>Adds <paramref name="piece"/> standing at <paramref name="at"/> as an item of <paramref name="role"/>, in the layer the projection gives that role.</summary>
         private ref DrawItem Add(DrawRole role, float depth, in ArtPiece piece, Vec2 at, Rgba32 tint, float rotation = 0f)
         {
-            ref var item = ref Items.Add(_layers[(int)role], role, depth, piece.Sprite, at.X, at.Y, piece.Width, piece.Height, tint, rotation);
+            ref var item = ref Items.Add(_layers[(int)role], role, depth, piece.Sprite, at.X, at.Y, piece.Width, piece.Height, tint, rotation, piece.Sheet);
             item.PivotX = piece.PivotX;
             item.PivotY = piece.PivotY;
             return ref item;

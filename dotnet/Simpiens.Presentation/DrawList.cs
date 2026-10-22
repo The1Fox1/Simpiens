@@ -8,10 +8,15 @@ namespace Simpiens.Presentation
     /// </summary>
     public enum DrawSheet : byte
     {
-        /// <summary><see cref="ProceduralSprites.All"/>.</summary>
+        /// <summary><see cref="ProceduralSprites.All"/>: top-down's art.</summary>
         Sprites = 0,
         /// <summary><see cref="FogCloud.Sprite"/>, sampled smoothly.</summary>
         Fog = 1,
+        /// <summary>
+        /// <see cref="WorldSprites.All"/>: the 16x16 art and the isometric placeholders, by the same indices, so the isometric
+        /// World layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet, laid out as before.
+        /// </summary>
+        Isometric = 2,
     }
 
     /// <summary>

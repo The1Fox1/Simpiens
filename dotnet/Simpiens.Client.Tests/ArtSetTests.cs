@@ -26,6 +26,7 @@ namespace Simpiens.Client.Tests
             public override ArtPiece Bunk => Piece(112);
             public override ArtPiece Crawler(in CrawlerPose pose) => Piece(113);
             public override ArtPiece SelectionRing => Piece(114);
+            public override ArtPiece CrawlerShadow => Piece(115);
             public override Vec2 NameOffset => new Vec2(0.25f, 0f);
             public override float NameHeight => 1.5f;
         }
@@ -47,11 +48,11 @@ namespace Simpiens.Client.Tests
             Assert.NotEmpty(items);
             Assert.All(items, item =>
             {
-                Assert.InRange(item.SpriteIndex, 100, 114);
+                Assert.InRange(item.SpriteIndex, 100, 115);
                 var expected = MarkedArt.Piece(item.SpriteIndex);
                 Assert.Equal((expected.Width, expected.Height, expected.PivotX, expected.PivotY), (item.Width, item.Height, item.PivotX, item.PivotY));
             });
-            foreach (int sprite in new[] { 100, 101, 102, 110, 111, 112, 113, 114 }) Assert.Contains(items, i => i.SpriteIndex == sprite);
+            foreach (int sprite in new[] { 100, 101, 102, 110, 111, 112, 113, 114, 115 }) Assert.Contains(items, i => i.SpriteIndex == sprite);
 
             var name = scene.Labels.Single(l => l.Kind == LabelKind.Name);
             Assert.True(selection.TryGetCrawlerPosition(out var at));

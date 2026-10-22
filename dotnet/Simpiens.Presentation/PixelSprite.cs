@@ -49,7 +49,7 @@ namespace Simpiens.Presentation
             Pixels = pixels;
         }
 
-        /// <summary>Its place in <see cref="ProceduralSprites.All"/>.</summary>
+        /// <summary>Its place in <see cref="WorldSprites.All"/>: the world's one atlas.</summary>
         public int Index { get; }
         public string Name { get; }
         public int Width { get; }

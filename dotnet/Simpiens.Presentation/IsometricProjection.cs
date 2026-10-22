@@ -20,7 +20,7 @@ namespace Simpiens.Presentation
         private readonly float _rise;       // view units per unit of height
         private readonly int _turns;
 
-        /// <param name="tileWidth">A floor tile's width in art pixels (the proposal's 64, to be confirmed in M3).</param>
+        /// <param name="tileWidth">A floor tile's width in art pixels (the proposal's 64 for 64x64 art; the game's placeholders use 32: <see cref="ViewMode.Isometric"/>).</param>
         /// <param name="tileHeight">Its height in art pixels: half the width for 2:1. A power of two, so sizes in art pixels convert exactly.</param>
         /// <param name="heightPixelsPerUnit">Art pixels per world unit of height.</param>
         /// <param name="quarterTurns">Counter-clockwise quarter turns of the map before projecting (0 to 3).</param>
@@ -84,7 +84,8 @@ namespace Simpiens.Presentation
                 case DrawRole.Floor: return RenderLayer.Floor;
                 case DrawRole.Rock: return RenderLayer.Rock;
                 case DrawRole.Fog: return RenderLayer.FloorOverlay;
-                case DrawRole.Selection: return RenderLayer.FloorMarks;
+                case DrawRole.Selection:
+                case DrawRole.Shadow: return RenderLayer.FloorMarks;
                 default: return RenderLayer.World;
             }
         }

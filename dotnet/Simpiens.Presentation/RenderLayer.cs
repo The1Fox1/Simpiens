@@ -17,6 +17,8 @@ namespace Simpiens.Presentation
         /// <summary>Bunks, the hearth, resource nodes.</summary>
         Prop = 5,
         Crawler = 6,
+        /// <summary>A crawler's shadow on the floor (isometric).</summary>
+        Shadow = 7,
     }
 
     /// <summary>

@@ -87,11 +87,12 @@ namespace Simpiens.Client
         public void LoadContent(GraphicsDevice device)
         {
             _batch = new SpriteBatch(device);
-            // By DrawSheet value: the generated art, the fog's cloud
+            // By DrawSheet value: top-down's art, the fog's cloud, and every sprite with the isometric placeholders
             _sheets = new[]
             {
                 new SpriteAtlas(device, ProceduralSprites.All),
                 new SpriteAtlas(device, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
+                new SpriteAtlas(device, WorldSprites.All),
             };
             _renderer = new WorldRenderer(_batch, _sheets);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them

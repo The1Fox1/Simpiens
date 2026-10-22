@@ -9,8 +9,9 @@ namespace Simpiens.Presentation
     /// </summary>
     public readonly struct ArtPiece
     {
-        public ArtPiece(int sprite, float width, float height, float pivotX = 0.5f, float pivotY = 0.5f)
+        public ArtPiece(int sprite, float width, float height, float pivotX = 0.5f, float pivotY = 0.5f, DrawSheet sheet = DrawSheet.Sprites)
         {
+            Sheet = sheet;
             Sprite = sprite;
             Width = width;
             Height = height;
@@ -20,6 +21,8 @@ namespace Simpiens.Presentation
 
         public static ArtPiece None => new ArtPiece(-1, 0f, 0f);
 
+        /// <summary>The atlas the sprite is drawn from.</summary>
+        public DrawSheet Sheet { get; }
         public int Sprite { get; }
         public float Width { get; }
         public float Height { get; }
@@ -48,6 +51,9 @@ namespace Simpiens.Presentation
 
         /// <summary>A crawler in <paramref name="pose"/>; the pose's squash applies to its size, its tilt turns it.</summary>
         public abstract ArtPiece Crawler(in CrawlerPose pose);
+
+        /// <summary>A soft shadow on the floor under a crawler, or none.</summary>
+        public abstract ArtPiece CrawlerShadow { get; }
 
         /// <summary>The ring on the floor under the selected crawler.</summary>
         public abstract ArtPiece SelectionRing { get; }
@@ -106,6 +112,8 @@ namespace Simpiens.Presentation
         public override ArtPiece Crawler(in CrawlerPose pose)
             => new ArtPiece(pose.Sprite.Index, CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
 
+        public override ArtPiece CrawlerShadow => ArtPiece.None;
+
         public override ArtPiece SelectionRing => new ArtPiece(ProceduralSprites.SelectionRing.Index, SelectionRingSize * Art, SelectionRingSize * Art);
 
         /// <summary>Above the crawler on the map (Unity's CameraController).</summary>
@@ -129,6 +137,13 @@ namespace Simpiens.Presentation
 
         /// <summary>The developers' view (the map designer, debugging): Unity's top-down picture.</summary>
         public static ViewMode TopDown { get; } = new ViewMode("top-down", TopDownProjection.Instance, TopDownArt.Instance);
+
+        /// <summary>
+        /// The main view (M3): 2:1 isometric on 32x16 tiles (producer P1), height at the tile's 16 art pixels a world
+        /// unit, standing the placeholders on their feet.
+        /// </summary>
+        public static ViewMode Isometric { get; } = new ViewMode("isometric",
+            new IsometricProjection(IsometricSprites.TileWidth, IsometricSprites.TileHeight, IsometricSprites.TileHeight), IsometricArt.Instance);
 
         public string Name { get; }
         public IViewProjection Projection { get; }
