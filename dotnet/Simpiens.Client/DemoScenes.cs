@@ -39,7 +39,10 @@ namespace Simpiens.Client
             .Say("listener", "Only that nobody's come back from it yet.")
             .Build();
 
-        /// <summary>The first crawler into the deep seam, once it is charted.</summary>
+        /// <summary>
+        /// The first crawler into the deep seam: in play, the scout, while the room is still uncharted, so the fog hides
+        /// it and its lines show in the box at the bottom of the window.
+        /// </summary>
         public static CutsceneScript DeepSeamEntry { get; } = new CutsceneBuilder("demo-deep-seam-entry", CutsceneKind.Dynamic)
             .Actors("walker")
             .Focus("walker")

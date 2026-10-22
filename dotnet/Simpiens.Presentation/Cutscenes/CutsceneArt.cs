@@ -74,6 +74,8 @@ namespace Simpiens.Presentation.Cutscenes
             return pixels;
         }
 
+        private const int CaveFloor = 68;
+
         /// <summary>The deep seam: a dark cave with hanging rock and glowing crystals on its floor.</summary>
         private static Rgba32[] Cave()
         {
@@ -87,8 +89,8 @@ namespace Simpiens.Presentation.Cutscenes
                     // Hanging rock from the ceiling
                     int hang = 6 + (int)(10f * MathF.Abs(MathF.Sin(x * 0.11f)) + 4f * MathF.Abs(MathF.Sin(x * 0.37f)));
                     if (y < hang) c = new Rgba32(14, 12, 20);
-                    // The floor
-                    if (y > 74) c = new Rgba32(26, 22, 30);
+                    // The floor, where the characters stand (their feet are at row 69, above the text box)
+                    if (y > CaveFloor) c = new Rgba32(26, 22, 30);
                     pixels[y * BackdropWidth + x] = c;
                 }
             }
@@ -98,9 +100,9 @@ namespace Simpiens.Presentation.Cutscenes
             {
                 int height = 6 + (int)(Hash(cx, 0, 5u) % 7);
                 var glow = Hash(cx, 1, 5u) % 2 == 0 ? new Rgba32(103, 232, 249) : new Rgba32(192, 132, 252);
-                for (int y = 74 - height; y <= 74; y++)
+                for (int y = CaveFloor - height; y <= CaveFloor; y++)
                 {
-                    int half = (y - (74 - height)) / 3;
+                    int half = (y - (CaveFloor - height)) / 3;
                     for (int x = cx - half; x <= cx + half; x++)
                     {
                         if (x >= 0 && x < BackdropWidth) pixels[y * BackdropWidth + x] = (x + y) % 3 == 0 ? new Rgba32(230, 250, 255) : glow;

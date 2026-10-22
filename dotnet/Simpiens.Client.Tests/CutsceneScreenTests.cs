@@ -107,16 +107,6 @@ namespace Simpiens.Client.Tests
             Assert.Same(ui.Game.Play, ui.Game.Screens.Top);
         }
 
-        /// <summary>A frame mid-line, for a look: render-output/cutscene-frame.png.</summary>
-        [Fact(Explicit = true)]
-        public void WriteACutsceneFrame()
-        {
-            var ui = Running();
-            var screen = ui.Game.PlayCutscene(Scene());
-            ui.Frame(8);
-            Png.Write(System.IO.Path.Combine(System.AppContext.BaseDirectory, "render-output", "cutscene-frame.png"), 1280, 720, FrameCapture.Capture(ui.Game, 1280, 720));
-        }
-
         [Fact]
         public void ADynamicScriptIsNotAHardCutscene()
         {
