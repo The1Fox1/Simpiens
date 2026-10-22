@@ -78,6 +78,19 @@ namespace Simpiens.Presentation
             return new Vec2((v.X - _centre.X) * Camera.PixelsPerUnit + Camera.ViewportWidth * 0.5f, Camera.ViewportHeight * 0.5f - (v.Y - _centre.Y) * Camera.PixelsPerUnit);
         }
 
+        /// <summary>
+        /// The floor-to-screen map as an affine transform (M3 design D6): exact for height 0, because a projection is
+        /// linear. The renderer draws what lies on the floor (the fog's cloud) in floor units under it, so a floor
+        /// rectangle becomes whatever the projection makes of it (a parallelogram in isometric).
+        /// </summary>
+        public Affine2 FloorToScreen()
+        {
+            var origin = WorldToScreen(Vec2.Zero);
+            var x = WorldToScreen(new Vec2(1f, 0f)) - origin;
+            var y = WorldToScreen(new Vec2(0f, 1f)) - origin;
+            return new Affine2(x.X, y.X, x.Y, y.Y, origin.X, origin.Y);
+        }
+
         /// <summary>The floor point under a screen pixel.</summary>
         public Vec2 ScreenToFloor(Vec2 screen)
             => Projection.ToFloor(new Vec2((screen.X - Camera.ViewportWidth * 0.5f) / Camera.PixelsPerUnit + _centre.X, (Camera.ViewportHeight * 0.5f - screen.Y) / Camera.PixelsPerUnit + _centre.Y));
@@ -111,5 +124,31 @@ namespace Simpiens.Presentation
             fit = SimMath.Max(1f, SimMath.Floor(fit / art)) * art;
             return new View(projection, new ViewCamera(frame.Center, fit, viewportWidth, viewportHeight)).SnappedToPixels();
         }
+    }
+
+    /// <summary>
+    /// A 2D affine map: <c>x' = XX x + XY y + OffsetX</c>, <c>y' = YX x + YY y + OffsetY</c>. Engine-free; the client
+    /// turns it into its framework's matrix.
+    /// </summary>
+    public readonly struct Affine2
+    {
+        public Affine2(float xx, float xy, float yx, float yy, float offsetX, float offsetY)
+        {
+            XX = xx;
+            XY = xy;
+            YX = yx;
+            YY = yy;
+            OffsetX = offsetX;
+            OffsetY = offsetY;
+        }
+
+        public float XX { get; }
+        public float XY { get; }
+        public float YX { get; }
+        public float YY { get; }
+        public float OffsetX { get; }
+        public float OffsetY { get; }
+
+        public Vec2 Apply(Vec2 p) => new Vec2(XX * p.X + XY * p.Y + OffsetX, YX * p.X + YY * p.Y + OffsetY);
     }
 }

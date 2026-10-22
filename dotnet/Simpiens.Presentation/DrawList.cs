@@ -35,9 +35,15 @@ namespace Simpiens.Presentation
         /// <summary>Where the anchor sits in the sprite, 0 to 1 from its top-left: 0.5, 0.5 is its centre (top-down), 0.5, 1 its feet.</summary>
         public float PivotX;
         public float PivotY;
-        /// <summary>Size at zoom 1, in art pixels.</summary>
+        /// <summary>Size at zoom 1, in art pixels; for an item <see cref="OnFloor"/>, the floor rectangle's size in world units.</summary>
         public float Width;
         public float Height;
+        /// <summary>
+        /// True for a rectangle lying on the floor (the fog's cloud, M3 design D6): centred on the anchor, sized in world
+        /// units, drawn in floor space under the view's transform (<see cref="View.FloorToScreen"/>), so it takes the
+        /// projection's shape. Its texture's top row lies along the rectangle's far (high y) edge.
+        /// </summary>
+        public bool OnFloor;
         /// <summary>Counter-clockwise in the world (y up), in radians, about the pivot.</summary>
         public float Rotation;
         public Rgba32 Tint;
@@ -74,7 +80,23 @@ namespace Simpiens.Presentation
         public Vec2 Centre => new Vec2(Left + Width * 0.5f, Top + Height * 0.5f);
 
         public static ScreenQuad Of(in DrawItem item, in View view)
-            => new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
+        {
+            if (item.OnFloor) return FloorBounds(item, view);
+            return new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
+        }
+
+        /// <summary>A floor rectangle's screen bounds (the box round the shape the projection makes of it), centred on its centre's place.</summary>
+        private static ScreenQuad FloorBounds(in DrawItem item, in View view)
+        {
+            float hw = item.Width * 0.5f, hh = item.Height * 0.5f;
+            var a = view.WorldToScreen(new Vec2(item.X - hw, item.Y - hh));
+            var b = view.WorldToScreen(new Vec2(item.X + hw, item.Y - hh));
+            var c = view.WorldToScreen(new Vec2(item.X - hw, item.Y + hh));
+            var d = view.WorldToScreen(new Vec2(item.X + hw, item.Y + hh));
+            float width = SimMath.Max(SimMath.Max(a.X, b.X), SimMath.Max(c.X, d.X)) - SimMath.Min(SimMath.Min(a.X, b.X), SimMath.Min(c.X, d.X));
+            float height = SimMath.Max(SimMath.Max(a.Y, b.Y), SimMath.Max(c.Y, d.Y)) - SimMath.Min(SimMath.Min(a.Y, b.Y), SimMath.Min(c.Y, d.Y));
+            return new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y)), width, height, 0.5f, 0.5f);
+        }
 
         /// <summary>
         /// True when any of the quad can land in a viewport of the given size: its rectangle, grown on every side by half

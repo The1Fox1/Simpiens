@@ -108,18 +108,20 @@ namespace Simpiens.Presentation
             return shown;
         }
 
-        /// <summary>Adds the clouds to <paramref name="list"/>, in the layer and at the art scale of <paramref name="projection"/>.</summary>
+        /// <summary>
+        /// Adds the clouds to <paramref name="list"/> in <paramref name="projection"/>'s fog layer: each lies on the floor
+        /// over its sector (M3 design D6), so it takes the projection's shape, a parallelogram in isometric.
+        /// </summary>
         public void Draw(DrawList list, float viewSeconds, IViewProjection projection)
         {
             int layer = projection.LayerOf(DrawRole.Fog);
-            float artPixelsPerUnit = projection.ArtPixelsPerUnit;
             for (int i = 0; i < _overlays.Count; i++)
             {
                 var overlay = _overlays[i];
                 float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
                 var area = overlay.Area;
                 var fog = new Rgba(FogColor.R, FogColor.G, FogColor.B, FogAlpha * (1f - t));
-                list.Add(layer, DrawRole.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width * artPixelsPerUnit, area.Height * artPixelsPerUnit, Rgba32.From(fog), 0f, DrawSheet.Fog);
+                list.Add(layer, DrawRole.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width, area.Height, Rgba32.From(fog), 0f, DrawSheet.Fog).OnFloor = true;
             }
         }
 

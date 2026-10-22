@@ -26,19 +26,32 @@ namespace Simpiens.Client
         public void Draw(DrawList items, in View camera)
         {
             int open = -1;
+            bool openOnFloor = false;
+            var floorToScreen = ToMatrix(camera.FloorToScreen());
             for (int i = 0; i < items.Count; i++)
             {
                 ref readonly var item = ref items[i];
                 int sheet = (int)item.Sheet;
-                if (sheet != open)
+                if (sheet != open || item.OnFloor != openOnFloor)
                 {
                     if (open >= 0) _batch.End();
-                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone);
+                    // What lies on the floor is drawn in floor units under the view's transform (M3 design D6)
+                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone,
+                        null, item.OnFloor ? floorToScreen : Matrix.Identity);
                     open = sheet;
+                    openOnFloor = item.OnFloor;
                 }
 
                 var atlas = _sheets[sheet];
                 var source = atlas.Source(item.SpriteIndex);
+                if (item.OnFloor)
+                {
+                    // From the rectangle's near corner up its height; flipped so the texture's top row lies along its far edge
+                    var size = new Vector2(item.Width / source.Width, item.Height / source.Height);
+                    _batch.Draw(atlas.Texture, new Vector2(item.X - item.Width * 0.5f, item.Y - item.Height * 0.5f), source,
+                        new Color(item.Tint.R, item.Tint.G, item.Tint.B, item.Tint.A), 0f, Vector2.Zero, size, SpriteEffects.FlipVertically, 0f);
+                    continue;
+                }
                 var quad = ScreenQuad.Of(item, camera);
                 var scale = new Vector2(quad.Width / source.Width, quad.Height / source.Height);
                 var origin = new Vector2(source.Width * item.PivotX, source.Height * item.PivotY);
@@ -48,6 +61,10 @@ namespace Simpiens.Client
             }
             if (open >= 0) _batch.End();
         }
+
+        /// <summary>The engine-free affine as XNA's row-vector matrix: <c>[x y 0 1] M</c>.</summary>
+        private static Matrix ToMatrix(in Affine2 a)
+            => new Matrix(a.XX, a.YX, 0f, 0f, a.XY, a.YY, 0f, 0f, 0f, 0f, 1f, 0f, a.OffsetX, a.OffsetY, 0f, 1f);
 
         /// <summary>
         /// Draws the map's text over it, in screen space: every glyph 1:1 at its whole-pixel place, point-sampled, a batch
