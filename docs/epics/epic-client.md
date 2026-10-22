@@ -263,14 +263,34 @@ flowchart TB
         - the MonoGame, Debug desktop and Android builds compile;
         - the desktop exe ran offscreen;
         - frame time 2.27 ms (llvmpipe) and 1.59 ms (GPU), the map at 800×600 with a tick every frame.
+- [x] M3 Phases 1–2, isometric as the game's view (2026-10-21, on `feat/client-m3`).
+    - **Art sets** `3c185d6`: a `WorldArt` gives each thing's sprite, size in art pixels and pivot; `TopDownArt` is Unity's art and sizes; a `ViewMode` pairs a projection with its art. Labels have a height, so a name hangs over a standing head.
+    - **Placeholders** `85645b0`: `IsometricSprites` on 32×16 tiles (producer P1). Each pixel is decided against the projection's diamond, so floor tiles meet with no gap or overlap.
+        - Flagstone and rock diamonds; slate wall blocks, full (24 px) and low (4 px).
+        - An isometric bunk, a 2:1 ring and a crawler shadow.
+        - Crawlers, the hearth and resource nodes stand on their feet as their 16×16 sprites.
+        - Isometric draws from its own sheet, one batch; top-down's atlas is laid out as before (F12).
+    - **The fog on the floor** `6de670b`: things lying on the floor are drawn in floor units under the view's affine transform (`View.FloorToScreen`, `DrawItem.OnFloor`), so a sector's cloud is the parallelogram the projection makes of it. Top-down's clouds are pixel-identical.
+    - **Walls in the way** `2fa2fa3`: the cutaway (producer P2). A wall stands full height only when none of its eight neighbours further from the viewer is floor; C cycles full and low.
+    - **Isometric is the game's view** `4913be7` (producer P4): `ClientOptions.View`, `--view iso|top`, and V switches views keeping the centre and the scale. Framing is crisp first (F14). The rest of the suite (picking, the dashboard, saving, the golden hashes inside the client) runs in isometric unchanged.
+    - **The gate** `0fa92fa` (`IsometricGateTests`), on Floor 1:
+        - depth order wherever a crawler or prop overlaps a wall;
+        - a crawler walking past a wall goes behind it exactly where its depth crosses;
+        - a click on a head picks its crawler; a click on empty floor selects the room; a crawler hidden behind a full wall can be clicked;
+        - no two room names overlap on either map at seven zooms;
+        - "UNCHARTED" under its room; the name over the head.
+    - **Review set** `e023873`: nine isometric references at 1280×720 (t0, t300, t1500, zoomed with a selection, a cloud lifting, the header, the Dev Map, full and low walls) and two pins, each looked at.
+    - **Frame time** `4f00abd` (F11).
+    - Measured: `dotnet test` 258/258 (client 195, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; the desktop exe ran offscreen in both views.
 
 ---
 
 ## 4. Deferred
 
 - M2 to M7 and the map designer: they wait for the producer (the agent's authority covered M0 and M1).
-- Wiring isometric into the game, its art, sprites standing on their feet (pivot 0.5, 1), the fog's cloud drawn per floor cell (a sector's rectangle is a parallelogram in isometric), and cutscene mode: M3.
-- A static floor pass with chunk culling (review R1), one world epoch for every view cache and the scene built in `Update` (review A5, A6): before or with M3.
+- Cutscene mode, hard and dynamic: M3 Phase 3.
+- Isometric's real art (64×64, possibly 64×32 tiles), and the sprite catalogue as data with a packer (review R5): M7.
+- The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
 - The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
 - Render tests in a pinned Mesa and SDL container (review T2).
 - Sound: not in the proposal's milestones; unscheduled.
@@ -329,6 +349,10 @@ See the proposal's risk table. These matter for M0 and M1:
     - Gum looks a face up once per property set (font, size, weight), so the three are set together under suspended layout.
 - **F9: the render tolerance hides a crawler** (client seams, 2026-10-21). The references allow 0.1% of pixels (480 at 800×600) to differ by more than 2 per channel; a crawler is about 11×11 px at the default zoom, and props showing 3% through the fog differ by a few levels. The fog rule D1 = C passed every render test unchanged. `PicturePinTests` hash every draw item and label in screen terms (to 1/64 px) and caught it, so the references were re-recorded deliberately.
 - **F10: frame time after the seams** (2026-10-21, `FrameTimeProbe`, llvmpipe, 800×600, a tick every frame, three alternating runs each): 2.14 ms against 2.09 ms on `main-kni`. The per-tick capture runs every frame in the probe but at 10 Hz in play at 1×. The budget is 33 ms.
+- **F11: frame time in isometric** (M3 step 2.4, `FrameTimeProbe`, 800×600, a tick every frame, two runs of each view): isometric 1.54–1.59 ms on llvmpipe and 1.65 ms on the RX 7900 XTX (1,577 draw items); top-down 2.33 ms and 1.68 ms (1,844). The isometric outpost is wider than the window at 1:1, so culling drops part of it. The budget is 33 ms.
+- **F12: point sampling depends on the atlas layout** (M3 step 1.2). Growing the shared sprite atlas changed which texels the zoomed top-down view picked at its in-between scale: 15,614 pixels moved, with nothing in the art changed. So each art set has its own sheet: top-down's laid out as before, isometric's holding every sprite by the same indices (one batch for its interleaved World layer).
+- **F13: captures carry the fog's alpha** (M3 step 2.3). The fog's non-premultiplied blend leaves the render target's alpha below 255 (247 under a cloud, 197 mid-fade). An image viewer then shows covered rooms lighter over its own background; the colours are right and the window ignores alpha. Read a capture's colour channels, not how a viewer shows it.
+- **F14: the isometric outpost doesn't fit 1280×720 at 1:1** (M3 step 1.5); it would need 0.95. Framing is now crisp first: a map that doesn't fit at 1:1 is framed at 1:1 on its centre, and the zoom-out limit still shows all of it. Top-down at today's window sizes fits at 1:1 and is unchanged.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---

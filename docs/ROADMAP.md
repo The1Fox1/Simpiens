@@ -511,6 +511,15 @@ Before Epic 10: soak test and scaling work (#8).
     - a world frame that allocates nothing and culls what is off screen (R1–R3).
 
     Nothing on screen changed: the picture pins and render references hold. The pins now count only what lands on screen. Measured: `dotnet test` 211/211 (client 148, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 2.27 ms (llvmpipe) and 1.59 ms (GPU).
+  - **M3 Phases 1–2 done (2026-10-21), the second pull request: isometric is the game's view.**
+    - Art sets per view mode, generated isometric placeholders on 32×16 tiles, things standing on their feet.
+    - The fog lies on the floor under the view's transform.
+    - The cutaway for walls in the way (C cycles full and low).
+    - `--view` and V switch to top-down; framing is crisp first.
+    - **The gate:** on the real outpost, wherever a crawler or prop overlaps a wall on screen the nearer is on top. A crawler walking past a wall goes behind it exactly where its depth crosses. A click on a crawler's head picks it, and a crawler hidden behind a wall can still be clicked. Room names never overlap.
+    - Nine isometric references and two pins, each looked at.
+    - Measured: `dotnet test` 258/258 (client 195, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.59 ms (isometric) and 2.33 ms (top-down) on llvmpipe.
+    - Open: the producer's look at the isometric view and the wall styles. Next: Phase 3, cutscenes.
 
 ---
 
