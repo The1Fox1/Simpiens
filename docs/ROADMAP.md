@@ -504,6 +504,13 @@ Before Epic 10: soak test and scaling work (#8).
     - **P7: a dynamic scene starts when a crawler enters a zone or starts an interaction with another crawler.** The scene never moves crawlers.
     - **P8: the player keeps control during a dynamic scene.** They can click away to watch another crawler, or do other gameplay.
     - Go-ahead given 2026-10-21: execution started on `feat/client-m3`.
+  - **M3 Phase 0 done (2026-10-21), the first of three pull requests:**
+    - one world epoch for every view cache (review A5);
+    - view state advanced in `Update`, drawing pure (A6);
+    - the game split into `ClientSession`, `WorldView` and a stack of screens (A4);
+    - a world frame that allocates nothing and culls what is off screen (R1–R3).
+
+    Nothing on screen changed: the picture pins and render references hold. The pins now count only what lands on screen. Measured: `dotnet test` 211/211 (client 148, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 2.27 ms (llvmpipe) and 1.59 ms (GPU).
 
 ---
 

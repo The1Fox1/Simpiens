@@ -237,7 +237,8 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   feat/client-m3 (.agents/client_m3_plan.md): Phase 0 review groundwork, 1 isometric, 2 its gate, 3 cutscenes.
   Producer 2026-10-21: P3 = two kinds (hard cutscenes pause; dynamic ones are part of play), P5 = no rotation (one fixed
   view), P7 = scenes start on zone entry or a crawler-to-crawler interaction and never move crawlers, P8 = the player
-  keeps control; the other defaults stand. GO given 2026-10-21: executing Phase 0.
+  keeps control; the other defaults stand. GO given 2026-10-21. Phase 0 DONE (533a3b4..320f20c; dotnet test 211/211),
+  the first PR's content (local branch feat/client-m3-phase0). Next: Phase 1, isometric drawing.
   CLIENT SEAMS done 2026-10-21 on feat/client-seams (review A1-A3, producer request 2026-10-20): IViewProjection/View,
   rig and picking through the projection, isometric maths (not wired); draw roles, layers by projection; fog D1 = C
   (producer 2026-10-21: the fog hides crawlers too); WorldViewFrame on SessionHost.TickCompleted (core), views read only

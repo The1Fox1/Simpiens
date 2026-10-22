@@ -240,6 +240,29 @@ flowchart TB
     - Phase 2, the draw order (A2): draw roles and layers chosen by the projection, with a role tie-break in the sort key `8c02eb9`; isometric depth order tested on a hand-built room `ee8fcee`; the fog rule D1 = C (props and crawlers in a covered sector aren't drawn, fade in with the cloud, and can't be clicked; the selected crawler's ring and name hide with it) `0eb0489`. Seven references were re-recorded for it after a look: the props that showed 3% through the cloud are gone.
     - Phase 3, the view frame (A3): `SessionHost.TickCompleted` `4d7ef49` (core; Unity PlayMode 69/69, golden 3/3); `WorldViewFrame` and its writer `7fff0a4`; the views read only frames `eb1c439`; crawlers and the camera's follow drawn between ticks `a192dc9`.
     - Measured: `dotnet test` 199/199 (client 136, core 63); golden 3/3; the MonoGame build compiles; frame time 2.14 ms against 2.09 ms before (F10).
+- [x] M3 Phase 0, the groundwork (2026-10-21, on `feat/client-m3`). Nothing on screen changed.
+    - **One world epoch** (review A5), `533a3b4`. `WorldViewFrames.Epoch` is unique in the process and renewed by every respawn, switch or load.
+        - The scene's fog and poses, and the selection, key on it.
+        - The tick and map-object checks are gone; data derived from the map alone (tiles, the camera's framing) stays keyed on the map.
+    - **Drawing is pure** (A6), `5add9c4`:
+        - `WorldScene.Advance` moves fades and poses on, once per update;
+        - `Present` builds the picture and changes nothing;
+        - a capture or a second view can't start a fade or touch the selection.
+    - **The game splits** (A4), `69a2b8c`:
+        - `ClientSession`: the simulation, driver, frames, selection, dashboard model and save slot, with no XNA type;
+        - `WorldView`: projection, camera, scene, labels and picking;
+        - `IScreen` and `ScreenStack`, with `PlayScreen`;
+        - `SimpiensGame`: the XNA shell.
+    - **A world frame allocates nothing and culls what is off screen** (R1–R3), `0581522` and `320f20c`:
+        - the pins count only what lands on screen;
+        - the label layout reuses its row set;
+        - glyph pages are numbered;
+        - a test holds 100 frames at 0 bytes, KNI's `SpriteBatch` included.
+    - **Measured:**
+        - `dotnet test` 211/211 (client 148, core 63); golden 3/3;
+        - the MonoGame, Debug desktop and Android builds compile;
+        - the desktop exe ran offscreen;
+        - frame time 2.27 ms (llvmpipe) and 1.59 ms (GPU), the map at 800×600 with a tick every frame.
 
 ---
 
