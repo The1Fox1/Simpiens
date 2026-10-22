@@ -32,6 +32,10 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
     - **Hard,** traditional cutscenes pause the game.
     - **Dynamic** cutscenes are part of the gameplay itself.
   - **No rotation:** the isometric view is one fixed view.
+  - **Dynamic scenes:**
+    - **Start:** a scene starts when a crawler enters a zone, or starts an interaction with another crawler.
+    - **Crawlers:** the scene never moves them.
+    - **The player:** keeps control, and can click away to watch another crawler or do other gameplay.
   - **The plan's other defaults stand:**
     - placeholders at 32×16;
     - cutaway walls, with the three styles shown at the look;

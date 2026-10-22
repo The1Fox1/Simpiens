@@ -501,6 +501,9 @@ Before Epic 10: soak test and scaling work (#8).
       - P6: three pull requests into `main-kni`.
     - **P3: two kinds of cutscene.** Hard, traditional cutscenes pause the game. Dynamic cutscenes are part of the gameplay itself.
     - **P5: no rotation.** One fixed view.
+    - **P7: a dynamic scene starts when a crawler enters a zone or starts an interaction with another crawler.** The scene never moves crawlers.
+    - **P8: the player keeps control during a dynamic scene.** They can click away to watch another crawler, or do other gameplay.
+    - Go-ahead given 2026-10-21: execution started on `feat/client-m3`.
 
 ---
 

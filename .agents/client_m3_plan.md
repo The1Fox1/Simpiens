@@ -81,8 +81,14 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
     - The world keeps running, and they play over the world view with the real crawlers as actors.
     - **Speech boxes:** a line appears in a box over the crawler who speaks. The box sits above its head, follows it as it moves (at its drawn position, between ticks), and falls back to a text box at the bottom of the screen while the speaker is hidden by the fog or off screen.
     - **The camera** can be sent to a floor point or a crawler, and the player's own pan takes it back.
-    - **The dashboard and clicks keep working.**
-    - They present the simulation and never direct it (P7).
+    - **What starts one** (P7):
+      - a crawler entering a zone (a sector);
+      - a crawler starting an interaction with another crawler: the chronicle's events that name two crawlers, such as gossip, companionship at the hearth, sharing food, yielding, and directives.
+    - **A scene never moves anyone:** it presents what the crawlers already do.
+    - **Triggers read the view's frames.** The frames gain the tick's new chronicle events, read on the simulation thread with the rest of the frame (`EventId` is monotonic).
+    - **Triggers are checked once per captured frame,** so a scene starts on the same tick in every run.
+    - **One dynamic scene plays at a time.** A trigger that fires while one plays is dropped. A trigger can be once per session, or repeat after a cooldown in ticks.
+    - **The player keeps control** (P8): the dashboard and clicks work. Clicking away to watch another crawler, or to do anything else, leaves the scene running. Its lines then move to the bottom box, and a click on that box brings the camera back to the speaker.
   - **One model.** `CutsceneScript` is built in code (`CutsceneBuilder`, as sessions are).
     - **Shared steps:** lines (speaker and text), waits, camera moves.
     - **Hard cutscenes only:** the backdrop, and characters entering, moving, facing, posing and leaving slots.
@@ -93,7 +99,11 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
     - It is engine-free and tested without a GPU.
   - **Text** is drawn by Gum in baked Inter, with Regular 16 (and any size the look settles on) added to `FontSet` in its own re-bake. Speech boxes are placed on screen from the view, as the map's labels are.
   - **Placeholders:** generated backdrops, and crawler sprites at a whole scale as hard-cutscene characters.
-  - **Not in M3:** what starts either kind in play, and the story (the narrative work).
+  - **Not in M3:**
+    - the story: which scenes exist and what they say;
+    - what starts a hard cutscene in play.
+
+    Both are the narrative work. M3 ships the trigger mechanism and demonstration scenes.
 
 ---
 
@@ -185,6 +195,8 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
 4. **3.4 Dynamic cutscenes over the world.** A cutscene layer on `PlayScreen`:
    - speech boxes over their speakers, following their drawn positions, with the bottom box as the fallback when a speaker is hidden by the fog or off screen;
    - the directed camera, released by the player's pan;
+   - the bottom box's click back to the speaker;
+   - triggers on zone entry and on two-crawler chronicle events, read from the frames;
    - the world ticking throughout.
 
    Tests:
@@ -192,13 +204,21 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
    - a box follows its moving speaker;
    - a speaker hidden by the fog falls back to the bottom box;
    - a pan releases the camera;
-   - a click still selects;
-   - the golden hashes from inside the client are the same with a dynamic cutscene playing as without: it writes nothing.
+   - a click still selects, and clicking away leaves the scene running;
+   - entering a sector starts its scene on that tick;
+   - a two-crawler chronicle event starts a scene with both crawlers as actors;
+   - a trigger is dropped while another scene plays;
+   - the golden hashes from inside the client are the same with dynamic scenes playing as without: they write nothing.
 5. **3.5 Demonstrations** in Debug builds, started by keys or from the Dev Map's bar:
    - a hard cutscene;
-   - a dynamic one between the selected crawler and its nearest neighbour.
+   - dynamic ones started by real play: the first gossip between two crawlers, and a crawler entering a room for the first time.
 
-   Tests drive both through the scripted input: advance, the letter-by-letter text, skip, and for the hard one the world's tick unchanged while it plays. References: two hard-cutscene frames and one dynamic frame in isometric, each looked at.
+   Tests:
+   - both kinds are driven through the scripted input: advance, the letter-by-letter text, skip;
+   - the hard cutscene leaves the world's tick unchanged while it plays;
+   - on the real outpost with nothing injected, a demonstration dynamic scene starts within a bounded number of ticks.
+
+   References: two hard-cutscene frames and one dynamic frame in isometric, each looked at.
 
 ### Phase 4 · Close-out
 - Frame time measured again.
@@ -239,13 +259,9 @@ Render references, pins, pinned sprites and baked fonts change only on purpose, 
 - **P5, rotation:** out of scope. One fixed view.
 - **P6, pull requests:** three into `main-kni`: Phase 0, Phases 1–2, Phase 3.
 
-## Still open for the producer (defaults hold until you say otherwise)
-- **P7, dynamic cutscenes directing crawlers.**
-  - **Default:** they present the live world (the real crawlers, doing what they decide) and never direct it.
-  - **The alternative needs the core:** making crawlers walk to marks or act out a scene means a typed command that overrides their decisions for the scene. That belongs with the narrative work and the multiplayer rules, not in M3.
-- **P8, control during a dynamic cutscene.**
-  - **Default:** the player keeps it. The dashboard and clicks work, and a pan takes the camera back.
-  - **Alternative:** lock input to advance and skip while one plays.
+- **P7, what starts a dynamic scene:** a crawler entering a zone, or a crawler starting an interaction with another crawler. A scene never moves crawlers.
+- **P8, control during a dynamic scene:** the player keeps it. They can click away to watch another crawler, or do other gameplay.
+- **Go-ahead:** 2026-10-21.
 
 ---
 
@@ -282,5 +298,5 @@ Render references, pins, pinned sprites and baked fonts change only on purpose, 
 - **Speed, pause, save, load and switch as host commands** (review D3, with D2's tick cap per frame): still open, for the producer to schedule. The cutscene's pause doesn't add to it, because it stops the driver rather than writing the clock.
 - **Gameplay height:** height stays visual only.
 - **Rotation:** out of scope (producer, P5): one fixed view. The projection's quarter turns stay in its maths and tests, unused.
-- **Dynamic cutscenes that move crawlers** (P7): typed commands in the core, with the narrative work.
+- **Scenes moving crawlers:** never (P7). A scene presents the crawlers and doesn't direct them.
 - **Unity's removal (M2.8, M2.9):** independent; it waits for the side-by-side sign-off.
