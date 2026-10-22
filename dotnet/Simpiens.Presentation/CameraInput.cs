@@ -28,6 +28,8 @@ namespace Simpiens.Presentation
         public bool WallStylePressed;
         /// <summary>V this frame: isometric to top-down and back (M3 design D8).</summary>
         public bool ViewTogglePressed;
+        /// <summary>Space or Enter this frame: a cutscene's next line (M3 design D9).</summary>
+        public bool AdvancePressed;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>

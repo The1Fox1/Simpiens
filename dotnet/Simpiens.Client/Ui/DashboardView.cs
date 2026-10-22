@@ -46,6 +46,29 @@ namespace Simpiens.Client.Ui
         public BountyBoardWindow Bounties { get; }
         public SessionSwitchBar Sessions { get; }
 
+        /// <summary>True unless a hard cutscene hid it.</summary>
+        public bool Shown { get; private set; } = true;
+
+        /// <summary>Hides the whole dashboard (a hard cutscene covers the game).</summary>
+        public void Hide()
+        {
+            Shown = false;
+            Header.Root.Visible = false;
+            Header.Status.Visible = false;
+            Panels.IsShown = false;
+            Merchant.Window.IsShown = false;
+            Bounties.Window.IsShown = false;
+            Sessions.Root.Visible = false;
+        }
+
+        /// <summary>Shows it again as the model has it.</summary>
+        public void Show()
+        {
+            Shown = true;
+            Header.Root.Visible = true;
+            Refresh();
+        }
+
         public void TogglePanels()
         {
             Model.TogglePanels();

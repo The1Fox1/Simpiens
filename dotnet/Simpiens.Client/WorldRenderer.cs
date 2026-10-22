@@ -57,7 +57,7 @@ namespace Simpiens.Client
                 var origin = new Vector2(source.Width * item.PivotX, source.Height * item.PivotY);
                 var tint = new Color(item.Tint.R, item.Tint.G, item.Tint.B, item.Tint.A);
                 // World rotation is counter-clockwise with y up; on screen (y down) that is a negative angle
-                _batch.Draw(atlas.Texture, new Vector2(quad.Anchor.X, quad.Anchor.Y), source, tint, -item.Rotation, origin, scale, SpriteEffects.None, 0f);
+                _batch.Draw(atlas.Texture, new Vector2(quad.Anchor.X, quad.Anchor.Y), source, tint, -item.Rotation, origin, scale, item.FlipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
             }
             if (open >= 0) _batch.End();
         }

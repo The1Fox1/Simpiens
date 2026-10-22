@@ -19,10 +19,7 @@ namespace Simpiens.Client
         private readonly ClientSession _session;
         private readonly MapLabelLayout _labelLayout = new MapLabelLayout();
         private readonly List<ScreenGlyph> _glyphs = new List<ScreenGlyph>(512);
-        private SpriteBatch _batch;
-        private SpriteAtlas[] _sheets;
-        private FontAtlases _fontAtlases;
-        private WorldRenderer _renderer;
+        private ClientGraphics _graphics;
         private object _framedMap;
         private bool _wasFollowing;
 
@@ -79,27 +76,13 @@ namespace Simpiens.Client
         public CameraInputResult LastInput { get; private set; }
 
         /// <summary>The baked fonts' metrics (loaded with the content).</summary>
-        public FontLibrary Fonts { get; private set; }
+        public FontLibrary Fonts => _graphics?.Fonts;
 
         /// <summary>How the map's text was placed in the last frame drawn.</summary>
         public MapLabelLayout LabelLayout => _labelLayout;
 
-        /// <summary>The sprite sheets, the renderer and the fonts' pages, on the device.</summary>
-        public void LoadContent(GraphicsDevice device)
-        {
-            _batch = new SpriteBatch(device);
-            // By DrawSheet value: top-down's art, the fog's cloud, and every sprite with the isometric placeholders
-            _sheets = new[]
-            {
-                new SpriteAtlas(device, ProceduralSprites.All),
-                new SpriteAtlas(device, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
-                new SpriteAtlas(device, WorldSprites.All),
-            };
-            _renderer = new WorldRenderer(_batch, _sheets);
-            // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
-            Fonts = FontLibrary.Load(TitleContainer.OpenStream);
-            _fontAtlases = new FontAtlases(device, Fonts, TitleContainer.OpenStream);
-        }
+        /// <summary>What it draws with: the sheets, the renderer and the fonts, made by the shell once the device exists.</summary>
+        public void LoadContent(ClientGraphics graphics) => _graphics = graphics;
 
         /// <summary>
         /// One update of the view, in this order: the selection catches up with the frames, the rig follows the map and
@@ -163,18 +146,18 @@ namespace Simpiens.Client
         /// Draws the map into the bound render target. It presents the scene from the state the last update left and
         /// changes none (review A6), so two draws, or a capture at another size, never move a fade or a pose.
         /// </summary>
-        public void Draw(GraphicsDevice device, int width, int height)
+        public void Draw(int width, int height)
         {
-            device.Clear(Background);
+            _graphics.Device.Clear(Background);
 
             var map = _session.Simulation.Host.Current?.Map;
             View = Rig.ToView(width, height);
             Scene.Present(map, _session.Frames, _session.ViewSeconds, _session.Selection, View); // culled to the view
             if (map == null) return;
 
-            _renderer.Draw(Scene.Items, View);
+            _graphics.Renderer.Draw(Scene.Items, View);
             _labelLayout.Layout(Scene.Labels, View, Fonts, _glyphs);
-            _renderer.DrawGlyphs(_glyphs, _fontAtlases);
+            _graphics.Renderer.DrawGlyphs(_glyphs, _graphics.FontPages);
         }
 
         /// <summary>A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion.</summary>
@@ -185,12 +168,6 @@ namespace Simpiens.Client
             _wasFollowing = selection.Following;
         }
 
-        public void Dispose()
-        {
-            _session.Selection.Changed -= OnSelectionChanged;
-            if (_sheets != null) foreach (var sheet in _sheets) sheet.Dispose();
-            _fontAtlases?.Dispose();
-            _batch?.Dispose();
-        }
+        public void Dispose() => _session.Selection.Changed -= OnSelectionChanged;
     }
 }

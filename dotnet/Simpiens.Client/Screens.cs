@@ -104,6 +104,6 @@ namespace Simpiens.Client
             if (ui.IsOwner) Dashboard?.Update(seconds);
         }
 
-        public void Draw(int width, int height) => _game.World.Draw(_game.GraphicsDevice, width, height);
+        public void Draw(int width, int height) => _game.World.Draw(width, height);
     }
 }

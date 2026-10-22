@@ -17,6 +17,8 @@ namespace Simpiens.Presentation
         /// World layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet, laid out as before.
         /// </summary>
         Isometric = 2,
+        /// <summary><see cref="Cutscenes.CutsceneArt.Backdrops"/>: a hard cutscene's still backdrops, in their own index space.</summary>
+        Backdrop = 3,
     }
 
     /// <summary>
@@ -46,6 +48,8 @@ namespace Simpiens.Presentation
         public bool OnFloor;
         /// <summary>Counter-clockwise in the world (y up), in radians, about the pivot.</summary>
         public float Rotation;
+        /// <summary>Mirrored left to right (a cutscene character facing left).</summary>
+        public bool FlipX;
         public Rgba32 Tint;
         public ulong SortKey;
         /// <summary>What a click on it selects (<see cref="DrawList.PickedEntity"/>), or -1 when it can't be clicked.</summary>

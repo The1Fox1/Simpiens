@@ -50,8 +50,26 @@ namespace Simpiens.Client
         /// <summary>Playing the outpost: the world view and the dashboard (the bottom screen).</summary>
         public PlayScreen Play { get; }
 
+        /// <summary>What the screens draw with (made in LoadContent).</summary>
+        public ClientGraphics Graphics { get; private set; }
+
         /// <summary>Where the pointer and keys come from while the window has focus: the devices, or a script in tests.</summary>
         public IClientInputSource Input { get; set; } = new ClientInput();
+
+        /// <summary>Plays a hard cutscene over the game (M3): it covers the world and holds it until it ends.</summary>
+        public CutsceneScreen PlayCutscene(Simpiens.Presentation.Cutscenes.CutsceneScript script)
+        {
+            var screen = new CutsceneScreen(this, script);
+            Screens.Push(screen);
+            screen.Open();
+            return screen;
+        }
+
+        /// <summary>A cutscene ended (or was skipped): it leaves the stack and the game goes on.</summary>
+        internal void EndCutscene(CutsceneScreen screen)
+        {
+            if (Screens.Remove(screen)) screen.Close();
+        }
 
         protected override void Initialize()
         {
@@ -73,7 +91,8 @@ namespace Simpiens.Client
 
         protected override void LoadContent()
         {
-            World.LoadContent(GraphicsDevice);
+            Graphics = new ClientGraphics(GraphicsDevice);
+            World.LoadContent(Graphics);
             Ui.Initialize();
             Play.LoadContent();
         }
@@ -98,6 +117,7 @@ namespace Simpiens.Client
             if (disposing)
             {
                 World.Dispose();
+                Graphics?.Dispose();
                 Ui.Shutdown();
                 Session.Dispose();
             }
@@ -119,6 +139,6 @@ namespace Simpiens.Client
         }
 
         /// <summary>Draws the map alone into the bound render target (the map's render references).</summary>
-        public void DrawScene(int width, int height) => World.Draw(GraphicsDevice, width, height);
+        public void DrawScene(int width, int height) => World.Draw(width, height);
     }
 }

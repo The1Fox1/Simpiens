@@ -31,7 +31,7 @@ namespace Simpiens.Client.Tests
         {
             game.Session.Frames.Alpha = i % 10 / 10f; // crawlers drawn between ticks
             game.World.Update(1f / 30f, 800, 600, default, default, hasInput: false);
-            game.World.Draw(game.GraphicsDevice, 800, 600);
+            game.World.Draw(800, 600);
         }
     }
 }
