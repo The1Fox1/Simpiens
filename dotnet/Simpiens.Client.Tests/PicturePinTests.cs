@@ -50,17 +50,23 @@ namespace Simpiens.Client.Tests
             Assert.True(actual == pinned, $"The drawn picture changed: items {actual.Item1}UL, labels {actual.Item2}UL (pinned {pinned.items}UL, {pinned.labels}UL).");
         }
 
-        /// <summary>Each item in draw order, in screen terms, quantized to 1/64 pixel so equal pictures hash equal.</summary>
+        /// <summary>
+        /// Each item that lands on screen (<see cref="ScreenQuad.Touches"/>), in draw order, in screen terms, quantized to
+        /// 1/64 pixel so equal pictures hash equal. What is culled isn't part of the picture.
+        /// </summary>
         private static ulong ItemsHash(SimpiensGame game)
         {
             var camera = game.World.View;
             var items = game.World.Scene.Items;
+            int shown = 0;
+            for (int i = 0; i < items.Count; i++) if (ScreenQuad.Of(items[i], camera).Touches(Width, Height)) shown++;
             ulong hash = Fnv.Start;
-            hash = Fnv.Add(hash, items.Count);
+            hash = Fnv.Add(hash, shown);
             for (int i = 0; i < items.Count; i++)
             {
                 ref readonly var item = ref items[i];
                 var quad = ScreenQuad.Of(item, camera);
+                if (!quad.Touches(Width, Height)) continue;
                 var centre = quad.Anchor; // every item is centred on its anchor today
                 hash = Fnv.Add(hash, (long)item.Sheet);
                 hash = Fnv.Add(hash, item.SpriteIndex);
@@ -112,9 +118,11 @@ namespace Simpiens.Client.Tests
         // they never overlap, so the picture is the same (render references unchanged, and with wall depth 0 the 1.1 pins
         // still matched). Items re-pinned again at plan step 2.3 (producer decision D1 = C, 2026-10-21): the fog hides what an
         // uncharted sector holds, so the props under the clouds are no longer drawn (the references were re-recorded with
-        // them). The labels' pins are 1.1's.
+        // them). The labels' pins are 1.1's. M3 step 0.4: the pins count only what lands on screen, so culling (which drops
+        // the rest before sorting) can't move them; the full views have nothing off screen and kept their pins, and the
+        // zoomed view's items were re-pinned for the items it no longer counts.
         private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
         private static readonly (ulong, ulong) PinnedTick300 = (16432157483044585443UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (4382740299715935319UL, 17765688760816253013UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (5768202902293146726UL, 17765688760816253013UL);
     }
 }

@@ -70,6 +70,17 @@ namespace Simpiens.Presentation
 
         public static ScreenQuad Of(in DrawItem item, in View view)
             => new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
+
+        /// <summary>
+        /// True when any of the quad can land in a viewport of the given size: its rectangle, grown on every side by half
+        /// its longer side (room for any turn about its pivot), meets the viewport. What doesn't is culled, and isn't in
+        /// the picture.
+        /// </summary>
+        public bool Touches(int viewportWidth, int viewportHeight)
+        {
+            float grow = SimMath.Max(Width, Height) * 0.5f;
+            return Left - grow < viewportWidth && Left + Width + grow > 0f && Top - grow < viewportHeight && Top + Height + grow > 0f;
+        }
     }
 
     /// <summary>
