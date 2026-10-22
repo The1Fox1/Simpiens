@@ -14,8 +14,8 @@ namespace Simpiens.Client.Tests
         public void TwoDrawsWithNoUpdateBetweenGiveTheSamePicture()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: false);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
             game.RunOneFrame();
 
             var first = FrameCapture.CaptureMap(game, 800, 600);
@@ -30,28 +30,28 @@ namespace Simpiens.Client.Tests
         public void ADrawStartsNoFadeAndTouchesNoSelection()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 1);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: true);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: true);
             game.RunOneFrame();
             int changes = 0;
-            game.Selection.Changed += () => changes++;
+            game.Session.Selection.Changed += () => changes++;
 
             // Between two updates the frames show a scout's report, and then a rebuilt world
-            int sector = game.Scene.Fog.Overlays.First(o => game.Scene.Fog.IsCovered(o.SectorId)).SectorId;
-            game.Simulation.Sectors.SetExplored(sector, true);
-            game.Frames.Capture(game.Simulation.Registry.ActiveEntities, game.Simulation.Sectors, game.Simulation.Clock.CurrentTick);
+            int sector = game.World.Scene.Fog.Overlays.First(o => game.World.Scene.Fog.IsCovered(o.SectorId)).SectorId;
+            game.Session.Simulation.Sectors.SetExplored(sector, true);
+            game.Session.Frames.Capture(game.Session.Simulation.Registry.ActiveEntities, game.Session.Simulation.Sectors, game.Session.Simulation.Clock.CurrentTick);
             FrameCapture.CaptureMap(game, 800, 600);
             FrameCapture.Capture(game, 800, 600);
-            Assert.True(game.Scene.Fog.IsCovered(sector), "a draw starts no fade");
+            Assert.True(game.World.Scene.Fog.IsCovered(sector), "a draw starts no fade");
 
-            game.Frames.Restart(game.Simulation.Registry.ActiveEntities, game.Simulation.Sectors, game.Simulation.Clock.CurrentTick);
+            game.Session.Frames.Restart(game.Session.Simulation.Registry.ActiveEntities, game.Session.Simulation.Sectors, game.Session.Simulation.Clock.CurrentTick);
             FrameCapture.CaptureMap(game, 800, 600);
             Assert.Equal(0, changes);
-            Assert.Equal(crawler.Id, game.Selection.SelectedCrawler); // still there until the next update drops it
+            Assert.Equal(crawler.Id, game.Session.Selection.SelectedCrawler); // still there until the next update drops it
 
             game.RunOneFrame();
-            Assert.False(game.Scene.Fog.HasOverlay(sector), "the update loads the rebuilt world, charted");
-            Assert.Equal(default, game.Selection.SelectedCrawler);
+            Assert.False(game.World.Scene.Fog.HasOverlay(sector), "the update loads the rebuilt world, charted");
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler);
             Assert.Equal(1, changes);
         }
     }

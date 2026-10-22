@@ -16,7 +16,7 @@ namespace Simpiens.Client.Tests
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 0);
             game.RunOneFrame();
-            game.Dashboard.TogglePanels(); // the map, with the header over it (the game starts on the panels, as Unity did)
+            game.Play.Dashboard.TogglePanels(); // the map, with the header over it (the game starts on the panels, as Unity did)
             for (int i = 0; i < 300; i++) game.RunOneFrame(); // warm up, a crowd on the move
             const int frames = 300;
             var watch = Stopwatch.StartNew();
@@ -27,7 +27,7 @@ namespace Simpiens.Client.Tests
             }
             watch.Stop();
             double ms = watch.Elapsed.TotalMilliseconds / frames;
-            TestContext.Current.TestOutputHelper.WriteLine($"{ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 800x600 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, {game.Scene.Items.Count} draw items, tick {game.Simulation.Clock.CurrentTick}");
+            TestContext.Current.TestOutputHelper.WriteLine($"{ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 800x600 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, {game.World.Scene.Items.Count} draw items, tick {game.Session.Simulation.Clock.CurrentTick}");
             Assert.True(ms > 0);
         }
 
@@ -40,12 +40,12 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 0, width: 1280, height: 720);
             game.Options.DashboardRefreshSeconds = 0f;
             for (int i = 0; i < 300; i++) game.RunOneFrame();
-            var crawler = System.Linq.Enumerable.First(game.Simulation.Registry.ActiveEntities, e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
-            if (panels) game.DashboardModel.SelectCrawler(crawler.Id);
+            var crawler = System.Linq.Enumerable.First(game.Session.Simulation.Registry.ActiveEntities, e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            if (panels) game.Session.DashboardModel.SelectCrawler(crawler.Id);
             else
             {
-                game.Dashboard.TogglePanels();
-                game.DashboardModel.OpenBounties();
+                game.Play.Dashboard.TogglePanels();
+                game.Session.DashboardModel.OpenBounties();
             }
             const int frames = 300;
             var watch = Stopwatch.StartNew();
@@ -56,7 +56,7 @@ namespace Simpiens.Client.Tests
             }
             watch.Stop();
             double ms = watch.Elapsed.TotalMilliseconds / frames;
-            TestContext.Current.TestOutputHelper.WriteLine($"{(panels ? "panels with a dossier" : "bounty board over the map")}: {ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 1280x720 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, the dashboard refreshed every frame, tick {game.Simulation.Clock.CurrentTick}");
+            TestContext.Current.TestOutputHelper.WriteLine($"{(panels ? "panels with a dossier" : "bounty board over the map")}: {ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 1280x720 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, the dashboard refreshed every frame, tick {game.Session.Simulation.Clock.CurrentTick}");
             Assert.True(ms > 0);
         }
     }

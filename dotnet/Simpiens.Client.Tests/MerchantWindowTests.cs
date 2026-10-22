@@ -17,10 +17,10 @@ namespace Simpiens.Client.Tests
         private static UiDriver OpenMerchant()
         {
             var ui = UiDriver.Start(width: Width, height: Height);
-            ui.Game.Dashboard.TogglePanels(); // to the map, as a player would to see the outpost
+            ui.Game.Play.Dashboard.TogglePanels(); // to the map, as a player would to see the outpost
             ui.Frame();
-            ui.Click(Centre(ui.Game.Dashboard.Header.MerchantButton));
-            Assert.True(ui.Game.Dashboard.Merchant.Window.IsShown);
+            ui.Click(Centre(ui.Game.Play.Dashboard.Header.MerchantButton));
+            Assert.True(ui.Game.Play.Dashboard.Merchant.Window.IsShown);
             return ui;
         }
 
@@ -28,8 +28,8 @@ namespace Simpiens.Client.Tests
         public void TheWindowShowsTheStallAndItsPrices()
         {
             var ui = OpenMerchant();
-            var window = ui.Game.Dashboard.Merchant;
-            Assert.True(ui.Game.DashboardModel.Context.TryGetStall(out var stall));
+            var window = ui.Game.Play.Dashboard.Merchant;
+            Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
             Assert.Equal("Outpost Stall @ Central Corridor", window.StatusText);
             Assert.Equal($"Treasury: {stall.TreasuryGold} Gold", window.TreasuryText);
             Assert.Equal((double)stall.RationSellPrice, window.RationSlider.Value);
@@ -42,8 +42,8 @@ namespace Simpiens.Client.Tests
         {
             var ui = OpenMerchant();
             var game = ui.Game;
-            var window = game.Dashboard.Merchant;
-            Assert.True(game.DashboardModel.Context.TryGetStall(out var before));
+            var window = game.Play.Dashboard.Merchant;
+            Assert.True(game.Session.DashboardModel.Context.TryGetStall(out var before));
 
             // Drag the ration slider's thumb to the right end of its track
             var slider = window.RationSlider;
@@ -59,13 +59,13 @@ namespace Simpiens.Client.Tests
             ui.Frame();
             Assert.Equal(MerchantModelMax, (int)slider.Value);
             Assert.Equal($"{MerchantModelMax} Gold", window.RationValue.Text);
-            Assert.Equal(MerchantModelMax, game.DashboardModel.Merchant.RationPrice);
+            Assert.Equal(MerchantModelMax, game.Session.DashboardModel.Merchant.RationPrice);
 
             ui.Click(Centre(window.ApplyButton));
             Assert.StartsWith("Rates updated: Ration 50g", window.FeedbackText);
-            Assert.True(game.Simulation.Simulation.ActiveStalls[0].RationSellPrice == before.RationSellPrice, "Nothing changes before the tick.");
+            Assert.True(game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice == before.RationSellPrice, "Nothing changes before the tick.");
             ui.Ticks(1);
-            Assert.Equal(MerchantModelMax, (int)game.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
+            Assert.Equal(MerchantModelMax, (int)game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
         }
 
         private const int MerchantModelMax = Simpiens.Presentation.Dashboard.MerchantModel.MaxPrice;
@@ -75,25 +75,25 @@ namespace Simpiens.Client.Tests
         {
             var ui = OpenMerchant();
             var game = ui.Game;
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.View.WorldToScreen(crawler.Position));
-            Assert.Equal(default, game.Selection.SelectedCrawler); // the veil is over the map
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            ui.Click(game.World.View.WorldToScreen(crawler.Position));
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler); // the veil is over the map
 
-            ui.Click(Centre(game.Dashboard.Merchant.Window.CloseButton));
-            Assert.False(game.Dashboard.Merchant.Window.IsShown);
-            Assert.False(game.DashboardModel.Merchant.IsOpen);
-            ui.Click(game.View.WorldToScreen(crawler.Position));
-            Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
+            ui.Click(Centre(game.Play.Dashboard.Merchant.Window.CloseButton));
+            Assert.False(game.Play.Dashboard.Merchant.Window.IsShown);
+            Assert.False(game.Session.DashboardModel.Merchant.IsOpen);
+            ui.Click(game.World.View.WorldToScreen(crawler.Position));
+            Assert.Equal(crawler.Id, game.Session.Selection.SelectedCrawler);
         }
 
         [Fact]
         public void TheMerchantTerminalLooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
-            game.Dashboard.TogglePanels();
-            game.Simulation.Clock.SetTimeMultiplier(1f);
-            game.DashboardModel.OpenMerchant();
-            game.Dashboard.Refresh();
+            game.Play.Dashboard.TogglePanels();
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            game.Session.DashboardModel.OpenMerchant();
+            game.Play.Dashboard.Refresh();
             game.RunOneFrame();
             RenderTests.CompareWithReference("render-outpost-merchant-t300", FrameCapture.Capture(game, Width, Height), Width, Height);
         }

@@ -69,7 +69,7 @@ namespace Simpiens.Client.Tests
         public static UiDriver Start(ClientOptions options = null, int width = 800, int height = 600)
         {
             var game = Offscreen.Start(options, frames: 0, width, height);
-            game.Simulation.Clock.SetTimeMultiplier(0f);
+            game.Session.Simulation.Clock.SetTimeMultiplier(0f);
             game.RunOneFrame();
             return new UiDriver(game);
         }
@@ -81,9 +81,9 @@ namespace Simpiens.Client.Tests
         /// </summary>
         public void Ticks(long ticks)
         {
-            Game.Simulation.Clock.SetTimeMultiplier(1f);
-            Game.Simulation.Step(ticks);
-            Game.Simulation.Clock.SetTimeMultiplier(0f);
+            Game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            Game.Session.Simulation.Step(ticks);
+            Game.Session.Simulation.Clock.SetTimeMultiplier(0f);
             Frame();
         }
 

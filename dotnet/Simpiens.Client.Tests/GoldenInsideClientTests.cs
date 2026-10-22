@@ -26,16 +26,16 @@ namespace Simpiens.Client.Tests
             var baseline = GoldenWorldHash.Read(Repo.GoldenBaseline)[seed];
             // 100 ticks a frame: 30 frames to t3000, each one a full update and draw of the real game
             var game = Offscreen.Start(new ClientOptions { Seed = seed, TicksPerUpdate = 100 }, frames: 0);
-            var samples = Sample(game.Simulation);
+            var samples = Sample(game.Session.Simulation);
 
             int frames = 0;
-            while (game.Simulation.Clock.CurrentTick < GoldenWorldHash.HorizonTicks)
+            while (game.Session.Simulation.Clock.CurrentTick < GoldenWorldHash.HorizonTicks)
             {
                 game.RunOneFrame();
                 Assert.True(++frames <= 100, "the game stopped advancing the clock");
             }
 
-            Assert.Equal(GoldenWorldHash.HorizonTicks, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(GoldenWorldHash.HorizonTicks, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal(30, frames);
             AssertMatches(baseline, samples, seed);
         }

@@ -35,28 +35,28 @@ namespace Simpiens.Client.Tests
                 var game = ui.Game;
 
                 // The panels with a dossier
-                var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-                game.DashboardModel.SelectCrawler(crawler.Id);
+                var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+                game.Session.DashboardModel.SelectCrawler(crawler.Id);
                 ui.Ticks(300);
                 Texts(game, seen);
 
                 // The map with the merchant, then the bounty board with its drop-downs opened
-                game.Dashboard.TogglePanels();
-                ui.Click(Centre(game.Dashboard.Header.MerchantButton));
+                game.Play.Dashboard.TogglePanels();
+                ui.Click(Centre(game.Play.Dashboard.Header.MerchantButton));
                 Texts(game, seen);
-                ui.Click(Centre(game.Dashboard.Header.BountiesButton));
-                foreach (var box in new[] { game.Dashboard.Bounties.TypeBox, game.Dashboard.Bounties.SectorBox })
+                ui.Click(Centre(game.Play.Dashboard.Header.BountiesButton));
+                foreach (var box in new[] { game.Play.Dashboard.Bounties.TypeBox, game.Play.Dashboard.Bounties.SectorBox })
                 {
                     ui.Click(Centre(box));
                     Texts(game, seen);
                     ui.Click(Centre(box));
                 }
-                game.DashboardModel.CloseWindow();
+                game.Session.DashboardModel.CloseWindow();
 
                 // A save's message, and the Dev Map with its banner
-                ui.Click(Centre(game.Dashboard.Header.SaveButton));
-                for (int i = 0; i < 100 && game.DashboardModel.Saves.IsSaving; i++) ui.Frame();
-                ui.Click(Centre(game.Dashboard.Sessions.Button));
+                ui.Click(Centre(game.Play.Dashboard.Header.SaveButton));
+                for (int i = 0; i < 100 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();
+                ui.Click(Centre(game.Play.Dashboard.Sessions.Button));
                 Texts(game, seen);
             }
             finally

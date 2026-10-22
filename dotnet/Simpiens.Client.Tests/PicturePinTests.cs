@@ -19,7 +19,7 @@ namespace Simpiens.Client.Tests
         public void TheOutpostAtTickZeroDrawsAsPinned()
         {
             var game = Offscreen.Start(frames: 0);
-            game.Simulation.Clock.SetTimeMultiplier(0f);
+            game.Session.Simulation.Clock.SetTimeMultiplier(0f);
             game.RunOneFrame();
             AssertPinned(game, PinnedTick0);
         }
@@ -35,11 +35,11 @@ namespace Simpiens.Client.Tests
         public void ASelectedCrawlerInAZoomedViewDrawsAsPinned()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: false);
-            var hub = game.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-            game.Rig.ZoomAt(hub, 0.4f);
-            game.Rig.Pan(new Vec2(2f, -3f));
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
+            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
+            game.World.Rig.ZoomAt(hub, 0.4f);
+            game.World.Rig.Pan(new Vec2(2f, -3f));
             AssertPinned(game, PinnedSelectedZoomed);
         }
 
@@ -53,8 +53,8 @@ namespace Simpiens.Client.Tests
         /// <summary>Each item in draw order, in screen terms, quantized to 1/64 pixel so equal pictures hash equal.</summary>
         private static ulong ItemsHash(SimpiensGame game)
         {
-            var camera = game.View;
-            var items = game.Scene.Items;
+            var camera = game.World.View;
+            var items = game.World.Scene.Items;
             ulong hash = Fnv.Start;
             hash = Fnv.Add(hash, items.Count);
             for (int i = 0; i < items.Count; i++)
@@ -77,7 +77,7 @@ namespace Simpiens.Client.Tests
 
         private static ulong LabelsHash(SimpiensGame game)
         {
-            var placed = game.LabelLayout.Placed;
+            var placed = game.World.LabelLayout.Placed;
             ulong hash = Fnv.Start;
             hash = Fnv.Add(hash, placed.Count);
             foreach (var label in placed)

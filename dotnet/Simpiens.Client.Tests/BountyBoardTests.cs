@@ -41,10 +41,10 @@ namespace Simpiens.Client.Tests
         private static UiDriver BoardOverTheMap()
         {
             var ui = UiDriver.Start(width: Width, height: Height);
-            ui.Game.Dashboard.TogglePanels();
+            ui.Game.Play.Dashboard.TogglePanels();
             ui.Frame();
-            ui.Click(Centre(ui.Game.Dashboard.Header.BountiesButton));
-            Assert.True(ui.Game.Dashboard.Bounties.Window.IsShown);
+            ui.Click(Centre(ui.Game.Play.Dashboard.Header.BountiesButton));
+            Assert.True(ui.Game.Play.Dashboard.Bounties.Window.IsShown);
             return ui;
         }
 
@@ -56,17 +56,17 @@ namespace Simpiens.Client.Tests
         {
             var ui = BoardOverTheMap();
             var game = ui.Game;
-            var sectors = game.Simulation.Sectors;
-            var sim = game.Simulation.Simulation;
-            var board = game.Dashboard.Bounties;
+            var sectors = game.Session.Simulation.Sectors;
+            var sim = game.Session.Simulation.Simulation;
+            var board = game.Play.Dashboard.Bounties;
             int overgrowth = Floor1Layout.OvergrowthSectorId;
 
             Choose(ui, board.TypeBox, nameof(BountyType.ScoutSector));
             Assert.False(board.ItemFieldsShown, "Scout has no item or quantity.");
             var uncharted = sectors.All.Where(s => !sectors.IsExplored(s.Id)).Select(s => (int)s.Id).OrderBy(i => i).ToArray();
-            Assert.Equal(uncharted, game.DashboardModel.Bounties.SectorChoiceIds.OrderBy(i => i).ToArray());
+            Assert.Equal(uncharted, game.Session.DashboardModel.Bounties.SectorChoiceIds.OrderBy(i => i).ToArray());
             Choose(ui, board.SectorBox, "Overgrowth");
-            Assert.Equal("Uncharted", game.DashboardModel.Bounties.SectorState);
+            Assert.Equal("Uncharted", game.Session.DashboardModel.Bounties.SectorState);
             int reward = (int)board.RewardSlider.Value;
             Assert.Equal(BountyBoardModel.DefaultReward, reward);
             ui.Click(Centre(board.PostButton));
@@ -74,34 +74,34 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(board.Window.CloseButton));
             Assert.False(board.Window.IsShown);
 
-            long start = game.Simulation.Clock.CurrentTick;
+            long start = game.Session.Simulation.Clock.CurrentTick;
             ushort bountyId = 0;
             long claimed = -1;
-            while (game.Simulation.Clock.CurrentTick - start < ChartDeadlineTicks && !sectors.IsExplored(overgrowth))
+            while (game.Session.Simulation.Clock.CurrentTick - start < ChartDeadlineTicks && !sectors.IsExplored(overgrowth))
             {
                 ui.Ticks(1);
                 if (bountyId == 0) bountyId = FindScout(sim, overgrowth);
-                if (bountyId != 0 && claimed < 0 && sim.ActiveBounties.Any(b => b.BountyId == bountyId && b.Status != BountyStatus.Open)) claimed = game.Simulation.Clock.CurrentTick - start;
+                if (bountyId != 0 && claimed < 0 && sim.ActiveBounties.Any(b => b.BountyId == bountyId && b.Status != BountyStatus.Open)) claimed = game.Session.Simulation.Clock.CurrentTick - start;
             }
-            long charted = game.Simulation.Clock.CurrentTick - start;
+            long charted = game.Session.Simulation.Clock.CurrentTick - start;
             Assert.True(bountyId != 0, "The posted Scout Overgrowth bounty reached the simulation.");
             Assert.True(sectors.IsExplored(overgrowth), $"The Overgrowth was not charted within {ChartDeadlineTicks} ticks (claimed at {claimed}).");
 
             // Its fog fades on the map in view time (tick-based here: 0.1 s a tick) and is then gone
-            float liftStart = game.ViewSeconds;
-            Assert.True(game.Scene.Fog.HasOverlay(overgrowth) && !game.Scene.Fog.IsCovered(overgrowth), "The fog is fading on the frame after the chart.");
-            while (game.Scene.Fog.HasOverlay(overgrowth) && game.ViewSeconds - liftStart <= LiftSeconds * 3f) ui.Ticks(1);
-            float lifted = game.ViewSeconds - liftStart;
-            Assert.False(game.Scene.Fog.HasOverlay(overgrowth), "The Overgrowth's fog never lifted.");
+            float liftStart = game.Session.ViewSeconds;
+            Assert.True(game.World.Scene.Fog.HasOverlay(overgrowth) && !game.World.Scene.Fog.IsCovered(overgrowth), "The fog is fading on the frame after the chart.");
+            while (game.World.Scene.Fog.HasOverlay(overgrowth) && game.Session.ViewSeconds - liftStart <= LiftSeconds * 3f) ui.Ticks(1);
+            float lifted = game.Session.ViewSeconds - liftStart;
+            Assert.False(game.World.Scene.Fog.HasOverlay(overgrowth), "The Overgrowth's fog never lifted.");
             Assert.True(lifted <= LiftSeconds, $"The fog took {lifted:F2} s to lift (limit {LiftSeconds} s).");
             TestContext.Current.TestOutputHelper?.WriteLine($"posted Scout Overgrowth for {reward}g; claimed@{claimed}, charted@{charted}, fog gone after {lifted:F2}s");
 
             // Once the seeded scout charts the Deep Seam too, Scout has nothing left to offer
             for (int i = 0; i < 150 && !sectors.IsExplored(Floor1Layout.DeepSeamSectorId); i++) ui.Ticks(20);
             Assert.True(sectors.IsExplored(Floor1Layout.DeepSeamSectorId), "The Deep Seam was never charted.");
-            ui.Click(Centre(game.Dashboard.Header.BountiesButton));
+            ui.Click(Centre(game.Play.Dashboard.Header.BountiesButton));
             Assert.Equal(1, board.TypeBox.SelectedIndex);
-            Assert.Empty(game.DashboardModel.Bounties.SectorChoiceIds);
+            Assert.Empty(game.Session.DashboardModel.Bounties.SectorChoiceIds);
             Assert.False(board.PostButton.IsEnabled, "Post is disabled when there is nothing to scout.");
             Assert.Equal(BountyBoardModel.AllChartedText, board.FeedbackText);
         }
@@ -111,16 +111,16 @@ namespace Simpiens.Client.Tests
         {
             var ui = BoardOverTheMap();
             var game = ui.Game;
-            var board = game.Dashboard.Bounties;
-            int before = game.Simulation.Simulation.ActiveBounties.Count;
+            var board = game.Play.Dashboard.Bounties;
+            int before = game.Session.Simulation.Simulation.ActiveBounties.Count;
 
             Assert.True(board.ItemFieldsShown);
             Choose(ui, board.SectorBox, "Ore Quarry");
             Choose(ui, board.ItemBox, nameof(ItemType.IronOre));
             ui.Click(Centre(board.PostButton));
             ui.Ticks(1);
-            Assert.Equal(before + 1, game.Simulation.Simulation.ActiveBounties.Count);
-            var posted = game.Simulation.Simulation.ActiveBounties.Last();
+            Assert.Equal(before + 1, game.Session.Simulation.Simulation.ActiveBounties.Count);
+            var posted = game.Session.Simulation.Simulation.ActiveBounties.Last();
             Assert.Equal((BountyType.GatherResource, ItemType.IronOre, Floor1Layout.OreQuarrySectorId), (posted.Type, posted.TargetItemType, (byte)posted.TargetSectorId));
 
             var card = board.Cards.Take(board.ShownCards).Single(c => c.BountyId == posted.BountyId);
@@ -128,8 +128,8 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(card.CancelButton));
             Assert.StartsWith($"Dispatched cancellation for contract #{posted.BountyId}", board.FeedbackText);
             ui.Ticks(1);
-            Assert.DoesNotContain(game.Simulation.Simulation.ActiveBounties, b => b.BountyId == posted.BountyId);
-            Assert.True(game.Simulation.Simulation is SimulationManager manager && manager.TryGetBounty(posted.BountyId, out var cancelled) && cancelled.Status == BountyStatus.Cancelled);
+            Assert.DoesNotContain(game.Session.Simulation.Simulation.ActiveBounties, b => b.BountyId == posted.BountyId);
+            Assert.True(game.Session.Simulation.Simulation is SimulationManager manager && manager.TryGetBounty(posted.BountyId, out var cancelled) && cancelled.Status == BountyStatus.Cancelled);
             Assert.DoesNotContain(board.Cards.Take(board.ShownCards), c => c.BountyId == posted.BountyId);
         }
 
@@ -137,10 +137,10 @@ namespace Simpiens.Client.Tests
         public void TheBountyBoardLooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
-            game.Dashboard.TogglePanels();
-            game.Simulation.Clock.SetTimeMultiplier(1f);
-            game.DashboardModel.OpenBounties();
-            game.Dashboard.Refresh();
+            game.Play.Dashboard.TogglePanels();
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            game.Session.DashboardModel.OpenBounties();
+            game.Play.Dashboard.Refresh();
             game.RunOneFrame();
             RenderTests.CompareWithReference("render-outpost-bounties-t300", FrameCapture.Capture(game, Width, Height), Width, Height);
         }

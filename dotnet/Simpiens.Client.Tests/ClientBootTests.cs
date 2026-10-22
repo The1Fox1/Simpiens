@@ -25,7 +25,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(width * height * 4, rgba.Length);
 
             // Something other than the background was drawn
-            var background = SimpiensGame.Background;
+            var background = WorldView.Background;
             bool drew = false;
             for (int i = 0; i < width * height && !drew; i++)
             {

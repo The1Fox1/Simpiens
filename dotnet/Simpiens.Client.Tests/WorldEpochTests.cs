@@ -99,38 +99,38 @@ namespace Simpiens.Client.Tests
         {
             // Saved at t1500, when the scout has charted rooms; loaded at t100 of a fresh respawn, where they are uncharted
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 15);
-            Assert.True(game.SaveGame.QuickSave().Succeeded);
-            var charted = game.Simulation.Host.Current.Map.Sectors.Where(s => !s.StartsExplored && game.Simulation.Sectors.IsExplored(s.Id)).Select(s => s.Id).ToList();
+            Assert.True(game.Session.SaveGame.QuickSave().Succeeded);
+            var charted = game.Session.Simulation.Host.Current.Map.Sectors.Where(s => !s.StartsExplored && game.Session.Simulation.Sectors.IsExplored(s.Id)).Select(s => s.Id).ToList();
             Assert.NotEmpty(charted);
 
-            game.Simulation.Respawn(OutpostSession.SessionId);
+            game.Session.Simulation.Respawn(OutpostSession.SessionId);
             game.RunOneFrame();
-            Assert.Equal(100L, game.Simulation.Clock.CurrentTick);
-            Assert.All(charted, id => Assert.True(game.Scene.Fog.IsCovered(id)));
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: true);
+            Assert.Equal(100L, game.Session.Simulation.Clock.CurrentTick);
+            Assert.All(charted, id => Assert.True(game.World.Scene.Fog.IsCovered(id)));
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: true);
 
-            Assert.True(game.SaveGame.QuickLoad().Succeeded);
+            Assert.True(game.Session.SaveGame.QuickLoad().Succeeded);
             game.RunOneFrame();
-            Assert.Equal(default, game.Selection.SelectedCrawler); // ids are reissued
-            Assert.All(charted, id => Assert.False(game.Scene.Fog.HasOverlay(id), "a loaded world shows its charting at once, with no fade"));
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler); // ids are reissued
+            Assert.All(charted, id => Assert.False(game.World.Scene.Fog.HasOverlay(id), "a loaded world shows its charting at once, with no fade"));
         }
 
         [Fact]
         public void ARespawnAtTheSameTickOnTheSameMapDropsTheSelection()
         {
             var game = Offscreen.Start(frames: 0);
-            game.Simulation.Clock.SetTimeMultiplier(0f);
+            game.Session.Simulation.Clock.SetTimeMultiplier(0f);
             game.RunOneFrame();
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: true);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: true);
             game.RunOneFrame();
-            Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
+            Assert.Equal(crawler.Id, game.Session.Selection.SelectedCrawler);
 
-            game.Simulation.Respawn(OutpostSession.SessionId); // tick 0 again, the same map object
+            game.Session.Simulation.Respawn(OutpostSession.SessionId); // tick 0 again, the same map object
             game.RunOneFrame();
-            Assert.Equal(0L, game.Simulation.Clock.CurrentTick);
-            Assert.Equal(default, game.Selection.SelectedCrawler);
+            Assert.Equal(0L, game.Session.Simulation.Clock.CurrentTick);
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler);
         }
 
         private static int Sprite(AgentVisualState state) => ProceduralSprites.GetAgentSprite(state, CrawlerAppearance.AnimationFrame(state, 10f)).Index;

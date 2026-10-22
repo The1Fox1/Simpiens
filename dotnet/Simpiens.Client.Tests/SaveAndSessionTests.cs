@@ -28,37 +28,37 @@ namespace Simpiens.Client.Tests
         {
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
-            var header = game.Dashboard.Header;
+            var header = game.Play.Dashboard.Header;
             Assert.True(header.SaveButton.IsVisible && header.LoadButton.IsVisible, "Save and Load show with a slot.");
-            Assert.StartsWith(Path.GetTempPath(), game.SaveGame.QuickSavePath);
+            Assert.StartsWith(Path.GetTempPath(), game.Session.SaveGame.QuickSavePath);
 
             ui.Click(Centre(header.LoadButton));
             Assert.Equal("There is no quick save yet.", header.SaveStatusText);
 
             ui.Ticks(300);
-            long saved = game.Simulation.Clock.CurrentTick;
+            long saved = game.Session.Simulation.Clock.CurrentTick;
             ui.Click(Centre(header.SaveButton));
-            for (int i = 0; i < 200 && game.DashboardModel.Saves.IsSaving; i++) ui.Frame();
+            for (int i = 0; i < 200 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();
             Assert.Equal($"Saved at tick {saved}.", header.SaveStatusText);
-            Assert.True(File.Exists(game.SaveGame.QuickSavePath));
-            Assert.True(SaveFile.TryDecode(File.ReadAllBytes(game.SaveGame.QuickSavePath), out var onDisk, out _));
+            Assert.True(File.Exists(game.Session.SaveGame.QuickSavePath));
+            Assert.True(SaveFile.TryDecode(File.ReadAllBytes(game.Session.SaveGame.QuickSavePath), out var onDisk, out _));
             Assert.Equal(saved, onDisk.Header.Tick);
             Assert.Equal(OutpostSession.DefaultCrawlerCount, onDisk.Crawlers.Length);
 
             ui.Ticks(100);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.DashboardModel.SelectCrawler(crawler.Id);
-            game.DashboardModel.OpenBounties();
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            game.Session.DashboardModel.OpenBounties();
             ui.Click(Centre(header.LoadButton));
-            Assert.Equal(saved, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(saved, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal($"Loaded the save from tick {saved}.", header.SaveStatusText);
-            Assert.Contains(saved.ToString("D5"), game.Dashboard.Header.TickText);
-            Assert.Equal(OutpostSession.DefaultCrawlerCount, game.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
-            Assert.Equal(default, game.Selection.SelectedCrawler); // ids are reissued: the selection is dropped
-            Assert.False(game.DashboardModel.Bounties.IsOpen, "A load closes the windows.");
+            Assert.Contains(saved.ToString("D5"), game.Play.Dashboard.Header.TickText);
+            Assert.Equal(OutpostSession.DefaultCrawlerCount, game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler); // ids are reissued: the selection is dropped
+            Assert.False(game.Session.DashboardModel.Bounties.IsOpen, "A load closes the windows.");
 
             ui.Ticks(100);
-            Assert.Equal(saved + 100, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(saved + 100, game.Session.Simulation.Clock.CurrentTick);
         }
 
         [Fact]
@@ -67,8 +67,8 @@ namespace Simpiens.Client.Tests
             var options = new ClientOptions { ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<ISessionDefinition>(services, new CanaryPenSession()) };
             var ui = UiDriver.Start(options, Width, Height);
             var game = ui.Game;
-            var host = game.Simulation.Host;
-            var bar = game.Dashboard.Sessions;
+            var host = game.Session.Simulation.Host;
+            var bar = game.Play.Dashboard.Sessions;
             Assert.Equal(2, host.Sessions.Count);
             Assert.Same(host.Find(OutpostSession.SessionId), host.Default);
 
@@ -87,16 +87,16 @@ namespace Simpiens.Client.Tests
             Assert.True(bar.BannerShown);
             Assert.Equal("DEV MAP: TEST SESSION (NOT THE GAME)", bar.BannerTextShown);
             Assert.Equal("SWITCH TO MAIN MAP", bar.Button.Text);
-            Assert.Equal(0L, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(0L, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal("DevMap", host.Current.Map.Name);
-            Assert.Equal(CanaryPenSession.ScriptedPenAgentCount, game.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
-            var sim = game.Simulation.Simulation;
+            Assert.Equal(CanaryPenSession.ScriptedPenAgentCount, game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
+            var sim = game.Session.Simulation.Simulation;
             Assert.True(sim.ActiveStalls.Count == 0 && sim.ActiveBounties.Count == 0, "No stall or bounty survives the switch.");
             Assert.Equal(0, ((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents.Count);
             var events = new System.Collections.Generic.List<Simpiens.Narrative.ChronicleEvent>();
             sim.Chronicle.GetAllRecentEvents(events, Simpiens.Narrative.NarrativeChronicleService.DefaultGlobalCapacity);
             Assert.All(events, e => Assert.Equal(0u, e.SimulationTick));
-            Assert.Equal(game.Simulation.Sectors.All.Count, game.DashboardModel.Sectors.Sectors.Count);
+            Assert.Equal(game.Session.Simulation.Sectors.All.Count, game.Session.DashboardModel.Sectors.Sectors.Count);
 
             ui.Ticks(200);
             ui.Click(Centre(bar.Button));
@@ -107,7 +107,7 @@ namespace Simpiens.Client.Tests
 
             ui.Ticks(200);
             uint stallGold = (uint)sim.ActiveStalls.Sum(s => s.TreasuryGold);
-            uint crawlerGold = (uint)game.Simulation.Registry.ActiveEntities.Where(e => e.Agent != null).Sum(e => e.Agent.Inventory?.Gold ?? 0);
+            uint crawlerGold = (uint)game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Agent != null).Sum(e => e.Agent.Inventory?.Gold ?? 0);
             Assert.True(sim.EconomyLedger.ValidateConservation(stallGold, crawlerGold, out var why), "Ledger conserved after the switch back: " + why);
         }
 
@@ -123,13 +123,13 @@ namespace Simpiens.Client.Tests
 
             public static WorldCapture Of(SimpiensGame game)
             {
-                var sim = game.Simulation.Simulation;
-                var sectors = game.Simulation.Sectors;
-                var pawns = game.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
+                var sim = game.Session.Simulation.Simulation;
+                var sectors = game.Session.Simulation.Sectors;
+                var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
                 return new WorldCapture
                 {
-                    Tick = game.Simulation.Clock.CurrentTick,
-                    MapName = game.Simulation.Host.Current.Map.Name,
+                    Tick = game.Session.Simulation.Clock.CurrentTick,
+                    MapName = game.Session.Simulation.Host.Current.Map.Name,
                     Crawlers = pawns.Count,
                     Agents = string.Join(";", pawns.Select(p => $"{p.Id}@{p.Position.X:F3},{p.Position.Y:F3} {p.Agent.Personality}")),
                     Fauceted = sim.EconomyLedger.TotalFaucetedGold,
@@ -159,23 +159,23 @@ namespace Simpiens.Client.Tests
             const int frames = 200;
             var ui = UiDriver.Start(new ClientOptions { TicksPerUpdate = 1 }, Width, Height);
             var game = ui.Game;
-            game.Simulation.Clock.SetTimeMultiplier(1f); // TicksPerUpdate runs a tick a frame
-            game.Dashboard.TogglePanels();
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f); // TicksPerUpdate runs a tick a frame
+            game.Play.Dashboard.TogglePanels();
             ui.Frame(5);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.View.WorldToScreen(crawler.Position));
-            Assert.Equal(crawler.Id, game.Selection.SelectedCrawler);
-            Assert.True(game.Selection.Following);
-            Assert.Equal(game.Simulation.Sectors.GetSectorAt(crawler.Position).Id, game.Selection.SelectedSector);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            ui.Click(game.World.View.WorldToScreen(crawler.Position));
+            Assert.Equal(crawler.Id, game.Session.Selection.SelectedCrawler);
+            Assert.True(game.Session.Selection.Following);
+            Assert.Equal(game.Session.Simulation.Sectors.GetSectorAt(crawler.Position).Id, game.Session.Selection.SelectedSector);
 
-            game.Rig.ZoomAt(game.Rig.Position, 0.01f); // as close as the rig goes, as Unity's scenario did
+            game.World.Rig.ZoomAt(game.World.Rig.Position, 0.01f); // as close as the rig goes, as Unity's scenario did
             ui.Frame(10); // a second of view time to reach it
             int checkedFrames = 0, misses = 0;
             float worst = 0f;
             for (int i = 0; i < frames; i++)
             {
                 ui.Frame();
-                var rig = game.Rig;
+                var rig = game.World.Rig;
                 float halfW = rig.Size * rig.Aspect, halfH = rig.Size;
                 var frame = rig.Frame;
                 var at = crawler.Position;
@@ -192,14 +192,14 @@ namespace Simpiens.Client.Tests
             Assert.True(misses == 0, $"The camera lost the crawler in {misses} of {checkedFrames} frames (worst {worst:F3}).");
 
             // A click on empty floor drops the crawler and selects the room
-            var garden = game.Simulation.Sectors.All.First(s => s.Id == Floor1Layout.GardenSectorId);
-            game.Rig.Reframe();
+            var garden = game.Session.Simulation.Sectors.All.First(s => s.Id == Floor1Layout.GardenSectorId);
+            game.World.Rig.Reframe();
             ui.Frame();
             var floor = EmptyFloor(game, garden.Bounds);
-            ui.Click(game.View.WorldToScreen(floor));
-            Assert.Equal(default, game.Selection.SelectedCrawler);
-            Assert.False(game.Selection.Following);
-            Assert.Equal(Floor1Layout.GardenSectorId, game.Selection.SelectedSector);
+            ui.Click(game.World.View.WorldToScreen(floor));
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler);
+            Assert.False(game.Session.Selection.Following);
+            Assert.Equal(Floor1Layout.GardenSectorId, game.Session.Selection.SelectedSector);
         }
 
         [Fact]
@@ -207,19 +207,19 @@ namespace Simpiens.Client.Tests
         {
             var options = new ClientOptions { TicksPerUpdate = 100, ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<ISessionDefinition>(services, new CanaryPenSession()) };
             var game = Offscreen.Start(options, frames: 1, Width, Height);
-            game.DashboardModel.Sessions.Switch();
-            game.Dashboard.TogglePanels();
+            game.Session.DashboardModel.Sessions.Switch();
+            game.Play.Dashboard.TogglePanels();
             for (int i = 0; i < 3; i++) game.RunOneFrame();
-            Assert.Equal(CanaryPenSession.SessionId, game.Simulation.Host.Current.Id);
-            game.Simulation.Clock.SetTimeMultiplier(1f);
-            game.Dashboard.Refresh();
+            Assert.Equal(CanaryPenSession.SessionId, game.Session.Simulation.Host.Current.Id);
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            game.Play.Dashboard.Refresh();
             RenderTests.CompareWithReference("render-devmap-banner-t300", FrameCapture.Capture(game, Width, Height), Width, Height);
         }
 
         /// <summary>A point in the room at least two units from any crawler.</summary>
         private static Vec2 EmptyFloor(SimpiensGame game, RectF room)
         {
-            var pawns = game.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).Select(e => e.Position).ToList();
+            var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).Select(e => e.Position).ToList();
             for (float y = room.YMin + 1.5f; y < room.YMax - 1f; y += 0.5f)
             {
                 for (float x = room.XMin + 1.5f; x < room.XMax - 1f; x += 0.5f)

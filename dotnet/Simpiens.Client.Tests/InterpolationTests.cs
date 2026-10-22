@@ -91,9 +91,9 @@ namespace Simpiens.Client.Tests
         public void TheGameDrawsTheLastTickExactlyWhenItsViewRunsOnTicks()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 2); // the tests' view clock runs on ticks
-            Assert.Equal(1f, game.ViewAlpha);
-            Assert.Equal(1f, game.Frames.Alpha);
-            Assert.Equal(game.Simulation.Clock.CurrentTick, game.Frames.Current.Tick);
+            Assert.Equal(1f, game.Session.ViewAlpha);
+            Assert.Equal(1f, game.Session.Frames.Alpha);
+            Assert.Equal(game.Session.Simulation.Clock.CurrentTick, game.Session.Frames.Current.Tick);
         }
     }
 }

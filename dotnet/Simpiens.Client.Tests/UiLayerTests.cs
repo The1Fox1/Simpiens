@@ -36,18 +36,18 @@ namespace Simpiens.Client.Tests
         public void AClickOnAButtonNeverReachesTheCrawlerUnderIt()
         {
             var ui = UiDriver.Start();
-            var crawler = ui.Game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            var screen = ui.Game.View.WorldToScreen(crawler.Position);
+            var crawler = ui.Game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            var screen = ui.Game.World.View.WorldToScreen(crawler.Position);
 
             AddButton(ui.Game, "OVER A CRAWLER", screen.X - 80f, screen.Y - 20f);
             ui.Frame();
             ui.Click(screen);
-            Assert.Equal(default, ui.Game.Selection.SelectedCrawler);
+            Assert.Equal(default, ui.Game.Session.Selection.SelectedCrawler);
 
             ui.Game.Ui.Root.Children.Clear(); // the same click with nothing in the way
             ui.Frame();
             ui.Click(screen);
-            Assert.NotEqual(default, ui.Game.Selection.SelectedCrawler);
+            Assert.NotEqual(default, ui.Game.Session.Selection.SelectedCrawler);
         }
 
         [Fact]

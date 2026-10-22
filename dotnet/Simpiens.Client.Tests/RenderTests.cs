@@ -21,9 +21,9 @@ namespace Simpiens.Client.Tests
         public void TheOutpostAtTickZeroLooksAsRecorded()
         {
             var game = Offscreen.Start(frames: 0);
-            game.Simulation.Clock.SetTimeMultiplier(0f); // the first frame initializes the game without a tick
+            game.Session.Simulation.Clock.SetTimeMultiplier(0f); // the first frame initializes the game without a tick
             game.RunOneFrame();
-            Assert.Equal(0L, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(0L, game.Session.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t0", FrameCapture.CaptureMap(game, Width, Height));
         }
@@ -32,7 +32,7 @@ namespace Simpiens.Client.Tests
         public void TheOutpostAtTick300LooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
-            Assert.Equal(300L, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(300L, game.Session.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t300", FrameCapture.CaptureMap(game, Width, Height));
         }
@@ -41,8 +41,8 @@ namespace Simpiens.Client.Tests
         public void ASelectedCrawlerHasItsRingAndName()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
-            game.Selection.SelectCrawler(crawler.Id, follow: false);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
 
             CompareWithReference("render-floor1-t300-selected", FrameCapture.CaptureMap(game, Width, Height));
         }
@@ -52,7 +52,7 @@ namespace Simpiens.Client.Tests
         {
             // Later in the day: the scout has charted rooms, so their fog has lifted
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 15);
-            Assert.Equal(1500L, game.Simulation.Clock.CurrentTick);
+            Assert.Equal(1500L, game.Session.Simulation.Clock.CurrentTick);
 
             CompareWithReference("render-floor1-t1500", FrameCapture.CaptureMap(game, Width, Height));
         }
@@ -61,9 +61,9 @@ namespace Simpiens.Client.Tests
         public void AZoomedAndPannedViewLooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3);
-            var hub = game.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-            game.Rig.ZoomAt(hub, 0.4f);
-            game.Rig.Pan(new Vec2(2f, -3f));
+            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
+            game.World.Rig.ZoomAt(hub, 0.4f);
+            game.World.Rig.Pan(new Vec2(2f, -3f));
 
             CompareWithReference("render-floor1-t300-zoomed", FrameCapture.CaptureMap(game, Width, Height));
         }

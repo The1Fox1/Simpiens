@@ -22,13 +22,13 @@ namespace Simpiens.Client.Tests
         {
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
-            Assert.True(game.DashboardModel.PanelsVisible, "Unity started on the dashboard.");
-            Assert.True(game.Dashboard.Panels.IsShown);
-            Assert.Equal(game.Simulation.Sectors.All.Count, game.Dashboard.Panels.SectorCards.Count(c => c.Root.Visible));
+            Assert.True(game.Session.DashboardModel.PanelsVisible, "Unity started on the dashboard.");
+            Assert.True(game.Play.Dashboard.Panels.IsShown);
+            Assert.Equal(game.Session.Simulation.Sectors.All.Count, game.Play.Dashboard.Panels.SectorCards.Count(c => c.Root.Visible));
 
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            ui.Click(game.View.WorldToScreen(crawler.Position));
-            Assert.Equal(default, game.Selection.SelectedCrawler);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            ui.Click(game.World.View.WorldToScreen(crawler.Position));
+            Assert.Equal(default, game.Session.Selection.SelectedCrawler);
             Assert.True(game.Ui.PointerOverUi);
         }
 
@@ -37,21 +37,21 @@ namespace Simpiens.Client.Tests
         {
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
-            var panels = game.Dashboard.Panels;
+            var panels = game.Play.Dashboard.Panels;
 
             var gate = panels.SectorCards.First(c => c.SectorId == Floor1Layout.RoadGateSectorId);
             ui.Click(Centre(gate.Root));
             Assert.Equal("ROAD GATE", panels.SectorTitle);
             Assert.True(gate.Selected);
-            Assert.Equal(Floor1Layout.RoadGateSectorId, game.Selection.SelectedSector);
+            Assert.Equal(Floor1Layout.RoadGateSectorId, game.Session.Selection.SelectedSector);
             Assert.Equal(12, panels.ResidentsShown);
 
             var resident = panels.ResidentCards[3];
             ui.Click(Centre(resident.Root));
-            Assert.Equal(resident.CrawlerId, game.Selection.SelectedCrawler);
-            Assert.True(game.Selection.Following, "Back on the map, the camera follows the dossier's crawler.");
+            Assert.Equal(resident.CrawlerId, game.Session.Selection.SelectedCrawler);
+            Assert.True(game.Session.Selection.Following, "Back on the map, the camera follows the dossier's crawler.");
             Assert.True(panels.DossierShown);
-            var agent = game.Simulation.Registry.GetEntity(resident.CrawlerId).Agent;
+            var agent = game.Session.Simulation.Registry.GetEntity(resident.CrawlerId).Agent;
             Assert.Equal(agent.Hunger, panels.HungerShown);
             Assert.Contains("[", panels.DossierName);
             Assert.True(panels.ResidentCards[3].Selected);
@@ -63,18 +63,18 @@ namespace Simpiens.Client.Tests
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
             ui.Ticks(300);
-            game.Dashboard.TogglePanels();
+            game.Play.Dashboard.TogglePanels();
             ui.Frame();
-            var walker = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Simulation.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId);
-            ui.Click(game.View.WorldToScreen(walker.Position));
-            Assert.Equal(walker.Id, game.Selection.SelectedCrawler);
+            var walker = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId);
+            ui.Click(game.World.View.WorldToScreen(walker.Position));
+            Assert.Equal(walker.Id, game.Session.Selection.SelectedCrawler);
 
-            game.Dashboard.TogglePanels();
+            game.Play.Dashboard.TogglePanels();
             ui.Frame();
-            var room = game.Simulation.Sectors.GetSectorAt(walker.Position);
-            Assert.Equal(room.Name.ToUpperInvariant(), game.Dashboard.Panels.SectorTitle);
-            Assert.True(game.Dashboard.Panels.DossierShown);
-            Assert.Contains(game.DashboardModel.Context.FriendlyName(walker.Id, walker.Name), game.Dashboard.Panels.DossierName);
+            var room = game.Session.Simulation.Sectors.GetSectorAt(walker.Position);
+            Assert.Equal(room.Name.ToUpperInvariant(), game.Play.Dashboard.Panels.SectorTitle);
+            Assert.True(game.Play.Dashboard.Panels.DossierShown);
+            Assert.Contains(game.Session.DashboardModel.Context.FriendlyName(walker.Id, walker.Name), game.Play.Dashboard.Panels.DossierName);
         }
 
         [Fact]
@@ -82,11 +82,11 @@ namespace Simpiens.Client.Tests
         {
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.DashboardModel.SelectCrawler(crawler.Id);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
             ui.Frame();
             crawler.Agent.Frustration = 90f; // the precondition, by hand: this checks the button's path
-            ui.Click(Centre(game.Dashboard.Panels.CalmButton));
+            ui.Click(Centre(game.Play.Dashboard.Panels.CalmButton));
             Assert.Equal(90f, crawler.Agent.Frustration);
             ui.Ticks(1);
             Assert.Equal(0f, crawler.Agent.Frustration);
@@ -96,11 +96,11 @@ namespace Simpiens.Client.Tests
         public void TheDashboardLooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
-            game.Simulation.Clock.SetTimeMultiplier(1f);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Simulation.Sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId);
-            game.DashboardModel.SelectSector(Floor1Layout.HubSectorId);
-            game.DashboardModel.SelectCrawler(crawler.Id);
-            game.Dashboard.Refresh();
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId);
+            game.Session.DashboardModel.SelectSector(Floor1Layout.HubSectorId);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            game.Play.Dashboard.Refresh();
             game.RunOneFrame();
             RenderTests.CompareWithReference("render-outpost-dashboard-t300", FrameCapture.Capture(game, Width, Height), Width, Height);
         }

@@ -101,16 +101,16 @@ namespace Simpiens.Client.Tests
         public void TheGameDrawsTheRingAndNameAndItsCameraFollowsTheSelection()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 1);
-            var crawler = game.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            game.Rig.ZoomAt(game.Rig.Frame.Center, 0.2f); // close enough that following has room to move
-            game.ClickMap(game.View.WorldToScreen(crawler.Position));
-            Assert.True(game.Selection.Following);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.World.Rig.ZoomAt(game.World.Rig.Frame.Center, 0.2f); // close enough that following has room to move
+            game.World.ClickMap(game.World.View.WorldToScreen(crawler.Position));
+            Assert.True(game.Session.Selection.Following);
 
-            float before = Vec2.Distance(game.Rig.Position, crawler.Position);
+            float before = Vec2.Distance(game.World.Rig.Position, crawler.Position);
             for (int i = 0; i < 20; i++) game.RunOneFrame();
-            Assert.True(Vec2.Distance(game.Rig.Position, crawler.Position) < before, "the camera moved toward the followed crawler");
+            Assert.True(Vec2.Distance(game.World.Rig.Position, crawler.Position) < before, "the camera moved toward the followed crawler");
 
-            var items = Enumerable.Range(0, game.Scene.Items.Count).Select(i => game.Scene.Items[i]).ToList();
+            var items = Enumerable.Range(0, game.World.Scene.Items.Count).Select(i => game.World.Scene.Items[i]).ToList();
             Assert.Single(items, i => DrawSortKey.Layer(i.SortKey) == RenderLayer.Selection && i.SpriteIndex == ProceduralSprites.SelectionRing.Index);
         }
     }
