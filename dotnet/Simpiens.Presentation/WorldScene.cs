@@ -42,18 +42,15 @@ namespace Simpiens.Presentation
         public FogOfWar Fog { get; } = new FogOfWar();
 
         /// <summary>
-        /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/> and what <paramref name="frames"/>
-        /// captured of the world (its entities and which sectors are charted). <paramref name="viewSeconds"/> drives the
-        /// animations and fades: real time in the game, the tick's time in tests.
+        /// The view's state step, once per update (review A6): a new world reloads the fog and forgets the crawlers'
+        /// poses; a newly charted sector starts its fade, a finished one is removed; each crawler's shown state moves on
+        /// to the frame's tick. <paramref name="viewSeconds"/> drives the fades: real time in the game, the tick's time in tests.
         /// </summary>
-        public void Build(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null)
+        public void Advance(MapDefinition map, WorldViewFrames frames, float viewSeconds)
         {
-            Items.Clear();
-            Labels.Clear();
             var frame = frames?.Current;
-            long tick = frame != null ? frame.Tick : 0;
             // A new world (a respawn, a switch or a load: frames.Epoch): the fog and the crawlers' poses start afresh.
-            // Without frames there is no world to key on, so the fog is loaded for the map every build.
+            // Without frames there is no world to key on, so the fog is loaded for the map every step.
             uint epoch = frames != null ? frames.Epoch : 0;
             if (epoch == 0 || epoch != _epoch)
             {
@@ -62,6 +59,25 @@ namespace Simpiens.Presentation
                 _epoch = epoch;
             }
             Fog.Update(frame, viewSeconds);
+            if (frame == null) return;
+            for (int i = 0; i < frame.Count; i++)
+            {
+                ref readonly var entity = ref frame[i];
+                if (entity.IsCrawler) Appearance.Advance(entity.Id, entity.VisualState, entity.Flags, frame.Tick); // its dwell runs under the fog too
+            }
+        }
+
+        /// <summary>
+        /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/> and what <paramref name="frames"/>
+        /// captured of the world (its entities and which sectors are charted), from the state <see cref="Advance"/> left.
+        /// Changes no view state, so a draw, a capture or a second view at any size give the same picture (review A6).
+        /// <paramref name="viewSeconds"/> drives the animations and fades.
+        /// </summary>
+        public void Present(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null)
+        {
+            Items.Clear();
+            Labels.Clear();
+            var frame = frames?.Current;
             _art = Projection.ArtPixelsPerUnit;
             for (int r = 0; r < _layers.Length; r++) _layers[r] = Projection.LayerOf((DrawRole)r);
             if (map != null)
@@ -78,7 +94,7 @@ namespace Simpiens.Presentation
                 for (int i = 0; i < frame.Count; i++)
                 {
                     ref readonly var entity = ref frame[i];
-                    if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), tick, viewSeconds);
+                    if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
                     else AddProp(entity, viewSeconds);
                 }
             }
@@ -86,6 +102,13 @@ namespace Simpiens.Presentation
             if (selection != null) AddSelection(selection, viewSeconds);
 
             Items.Sort();
+        }
+
+        /// <summary>A one-off picture (tests, tools): <see cref="Advance"/>, then <see cref="Present"/>.</summary>
+        public void Build(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null)
+        {
+            Advance(map, frames, viewSeconds);
+            Present(map, frames, viewSeconds, selection);
         }
 
         /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController), hidden with the crawler in the fog.</summary>
@@ -106,9 +129,9 @@ namespace Simpiens.Presentation
         private static readonly Vec2 NameOffset = new Vec2(0f, 0.65f);
         private static readonly Rgba32 NameColor = Rgba32.From(new Rgba(1f, 0.92f, 0.55f));
 
-        private void AddCrawler(in EntityView entity, Vec2 position, long tick, float viewSeconds)
+        private void AddCrawler(in EntityView entity, Vec2 position, float viewSeconds)
         {
-            var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, tick, viewSeconds); // its dwell runs under the fog too
+            var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, viewSeconds);
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
             Add(DrawRole.Crawler, Projection.Depth(position), pose.Sprite.Index, position.X, position.Y,

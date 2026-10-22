@@ -16,7 +16,11 @@ namespace Simpiens.Client.Tests
         private static AgentVisualState Desired(AgentState agent) => CrawlerAppearance.Desired(agent.VisualState, WorldViewFrame.FlagsOf(agent));
 
         private static CrawlerPose Pose(CrawlerAppearance appearance, AgentState agent, long tick, float viewSeconds)
-            => appearance.Pose(Id, agent.VisualState, WorldViewFrame.FlagsOf(agent), tick, viewSeconds);
+        {
+            var flags = WorldViewFrame.FlagsOf(agent);
+            appearance.Advance(Id, agent.VisualState, flags, tick);
+            return appearance.Pose(Id, agent.VisualState, flags, viewSeconds);
+        }
 
         [Fact]
         public void CrisesAndSocialMomentsShowOverTheSimulationsState()

@@ -53,12 +53,19 @@ namespace Simpiens.Presentation
         public void Reset() => _shown.Clear();
 
         /// <summary>
-        /// The crawler's look at <paramref name="tick"/>, from its simulated <paramref name="state"/> and passing
-        /// <paramref name="flags"/>, with <paramref name="viewSeconds"/> driving the animation.
+        /// Moves the crawler's shown state on to <paramref name="tick"/> (the dwell), from its simulated
+        /// <paramref name="state"/> and passing <paramref name="flags"/>; returns the state shown. Once per update
+        /// (review A6); the same tick twice changes nothing.
         /// </summary>
-        public CrawlerPose Pose(EntityId id, AgentVisualState state, CrawlerFlags flags, long tick, float viewSeconds)
+        public AgentVisualState Advance(EntityId id, AgentVisualState state, CrawlerFlags flags, long tick) => Displayed(id, Desired(state, flags), tick);
+
+        /// <summary>
+        /// The crawler's look, with <paramref name="viewSeconds"/> driving the animation: the state <see cref="Advance"/>
+        /// last showed, or the desired one for a crawler it hasn't seen. Changes nothing, so any number of draws agree.
+        /// </summary>
+        public CrawlerPose Pose(EntityId id, AgentVisualState state, CrawlerFlags flags, float viewSeconds)
         {
-            state = Displayed(id, Desired(state, flags), tick);
+            state = _shown.TryGetValue(id, out var shown) ? shown.State : Desired(state, flags);
             var sprite = ProceduralSprites.GetAgentSprite(state, AnimationFrame(state, viewSeconds));
             MicroAnimation(state, viewSeconds, out float tilt, out float scaleX, out float scaleY);
             return new CrawlerPose(state, sprite, tilt, scaleX, scaleY);

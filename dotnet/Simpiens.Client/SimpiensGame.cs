@@ -55,6 +55,15 @@ namespace Simpiens.Client
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
             DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame), Selection);
             Simulation.Host.SessionChanged += OnSessionChanged;
+
+            // The first map framed for the window asked for; updates keep the rig on the real window and later maps,
+            // so drawing never changes the camera (review A6)
+            var map = Simulation.Host.Current?.Map;
+            if (map != null)
+            {
+                Rig.Configure(map.CameraFrame, (float)Options.Width / Options.Height, Options.Height);
+                _framedMap = map;
+            }
         }
 
         private bool _wasFollowing;
@@ -80,7 +89,7 @@ namespace Simpiens.Client
         /// <summary>The world as the views draw it: the last two completed ticks, as plain data (review A3).</summary>
         public WorldViewFrames Frames { get; } = new WorldViewFrames();
 
-        /// <summary>What the view shows this frame: rebuilt from <see cref="Frames"/> on every draw.</summary>
+        /// <summary>What the view shows: its state advanced once per update, its picture presented from <see cref="Frames"/> on every draw.</summary>
         public WorldScene Scene { get; } = new WorldScene();
 
         /// <summary>The view of the last frame drawn: its projection and camera.</summary>
@@ -192,6 +201,7 @@ namespace Simpiens.Client
             _lastViewSeconds = view;
             Ui.Update(gameTime); // first, so the map knows what is under UI this frame
             UpdateView(cameraSeconds, IsActive);
+            Scene.Advance(Simulation.Host.Current?.Map, Frames, view); // fades and poses move on here, never in a draw
             if (Ui.IsOwner) Dashboard?.Update(seconds);
             base.Update(gameTime);
         }
@@ -275,20 +285,18 @@ namespace Simpiens.Client
             Ui.Draw();
         }
 
-        /// <summary>Draws the map alone into the bound render target.</summary>
+        /// <summary>
+        /// Draws the map alone into the bound render target. It presents the scene from the state the last update left
+        /// and changes none (review A6), so two draws, or a capture at another size, never move a fade or a pose.
+        /// </summary>
         public void DrawScene(int width, int height)
         {
             GraphicsDevice.Clear(Background);
 
             var map = Simulation.Host.Current?.Map;
-            Scene.Build(map, Frames, ViewSeconds, Selection);
+            Scene.Present(map, Frames, ViewSeconds, Selection);
             if (map == null) return;
 
-            if (!ReferenceEquals(map, _framedMap))
-            {
-                Rig.Configure(map.CameraFrame, (float)width / height, height); // before the first update
-                _framedMap = map;
-            }
             View = Rig.ToView(width, height);
             _renderer.Draw(Scene.Items, View);
             _labelLayout.Layout(Scene.Labels, View, Fonts, _glyphs);
