@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Simpiens.Presentation;
 using Xunit;
 
 namespace Simpiens.Client.Tests
@@ -11,10 +12,13 @@ namespace Simpiens.Client.Tests
     /// </summary>
     public class FrameTimeProbe
     {
-        [Fact(Explicit = true)]
-        public void MeasureFrameTime()
+        /// <summary>The map with the header over it, in either view (M3 step 2.4: isometric beside top-down).</summary>
+        [Theory(Explicit = true)]
+        [InlineData("top-down")]
+        [InlineData("isometric")]
+        public void MeasureFrameTime(string view)
         {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 0);
+            var game = Offscreen.Start(new ClientOptions { View = view == "isometric" ? ViewMode.Isometric : ViewMode.TopDown, TicksPerUpdate = 1 }, frames: 0);
             game.RunOneFrame();
             game.Play.Dashboard.TogglePanels(); // the map, with the header over it (the game starts on the panels, as Unity did)
             for (int i = 0; i < 300; i++) game.RunOneFrame(); // warm up, a crowd on the move
@@ -27,7 +31,7 @@ namespace Simpiens.Client.Tests
             }
             watch.Stop();
             double ms = watch.Elapsed.TotalMilliseconds / frames;
-            TestContext.Current.TestOutputHelper.WriteLine($"{ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 800x600 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, {game.World.Scene.Items.Count} draw items, tick {game.Session.Simulation.Clock.CurrentTick}");
+            TestContext.Current.TestOutputHelper.WriteLine($"{view}: {ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 800x600 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, {game.World.Scene.Items.Count} draw items, tick {game.Session.Simulation.Clock.CurrentTick}");
             Assert.True(ms > 0);
         }
 
