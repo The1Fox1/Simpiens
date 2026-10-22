@@ -233,6 +233,9 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   main-kni (= 681d3b5) is the acting main until M4 (producer). TEXT CLEANUP done 2026-10-18 on feat/client-text: baked Inter
   (KernSmith/FreeType, Gum cache names, font golden), UI 1:1, map labels in screen space; dotnet test 173/173. Next: the
   producer's look, the PR into main-kni, then M3.
+  Client seams (A1-A3) done 2026-10-21 on main-kni (f5f09bc; dotnet test 199/199). M3 PLAN written 2026-10-21 on
+  feat/client-m3 (.agents/client_m3_plan.md): Phase 0 review groundwork, 1 isometric, 2 its gate, 3 cutscenes; questions
+  P1-P6 have defaults. WAITING for the producer's go-ahead.
   CLIENT SEAMS done 2026-10-21 on feat/client-seams (review A1-A3, producer request 2026-10-20): IViewProjection/View,
   rig and picking through the projection, isometric maths (not wired); draw roles, layers by projection; fog D1 = C
   (producer 2026-10-21: the fog hides crawlers too); WorldViewFrame on SessionHost.TickCompleted (core), views read only

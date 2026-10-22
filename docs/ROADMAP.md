@@ -487,6 +487,12 @@ Before Epic 10: soak test and scaling work (#8).
     - Measured: `dotnet test` 199/199 (client 136, core 63); golden 3/3; Unity PlayMode 69/69 and golden 3/3 on the core change; the MonoGame build compiles. Frame time 2.14 ms against 2.09 ms before (llvmpipe, a tick every frame).
     - Open: the producer's look at crawlers moving between ticks at 1× and 10×, and the pull request into `main-kni`. Next: M3, isometric.
     - The producer's look is open (person-gated); the pull request goes into `main-kni`.
+  - M3 plan written 2026-10-21 (`.agents/client_m3_plan.md`, branch `feat/client-m3` into `main-kni`):
+    - Phase 0: the review items deferred into M3 (one world epoch, the scene built in `Update`, `SimpiensGame` split into a session, a world view and screens, and a frame path that allocates nothing), with no visual change.
+    - Phase 1: isometric drawn from generated placeholders, with art sets per view mode, the fog as floor quads, a wall style for walls in the way, and the view toggle.
+    - Phase 2: the gate (depth order and picking on the real outpost, labels, references, frame time).
+    - Phase 3: cutscene mode (a screen-space projection, scripts in code, Gum text boxes, a demonstration).
+    - About 6–9 agent days. Six questions for the producer have defaults (tile size, walls in the way, cutscene pausing, the default view, rotation, the pull requests). Execution waits for the producer's go-ahead.
 
 ---
 
