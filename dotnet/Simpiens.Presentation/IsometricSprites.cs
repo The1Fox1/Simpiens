@@ -234,7 +234,7 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>A cut-away wall's stub (M3 design D7).</summary>
-        public ArtPiece LowWall => Wall(IsometricSprites.LowWall, IsometricSprites.LowWallRise);
+        public override ArtPiece LowWall => Wall(IsometricSprites.LowWall, IsometricSprites.LowWallRise);
 
         private static ArtPiece Wall(PixelSprite sprite, int rise)
             => new ArtPiece(sprite.Index, sprite.Width, sprite.Height, 0.5f, IsometricSprites.BlockPivotY(IsometricSprites.TileHeight, rise), Sheet);

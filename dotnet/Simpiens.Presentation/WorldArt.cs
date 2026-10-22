@@ -41,6 +41,9 @@ namespace Simpiens.Presentation
         /// <summary>A map tile: floor (tinted per sector by the scene), rock or a wall.</summary>
         public abstract ArtPiece Tile(TileKind kind);
 
+        /// <summary>A wall cut down so it hides nothing behind it (M3 design D7); top-down's walls are flat, so its is the wall tile.</summary>
+        public virtual ArtPiece LowWall => Tile(TileKind.Wall);
+
         /// <summary>A resource node yielding <paramref name="kind"/>.</summary>
         public abstract ArtPiece Resource(ItemType kind);
 

@@ -138,6 +138,9 @@ namespace Simpiens.Client
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
         }
 
+        /// <summary>The next wall style: cutaway, full, low, and round again (M3 design D7).</summary>
+        public void CycleWallStyle() => Scene.WallStyle = (WallStyle)(((int)Scene.WallStyle + 1) % 3);
+
         /// <summary>
         /// A left click on the map at a screen point: it picks what the last frame drew there (the picture the player
         /// clicked on), and selects that crawler or the room under the point. Nothing is picked before the first frame.

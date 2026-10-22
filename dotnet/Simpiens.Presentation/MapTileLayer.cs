@@ -41,13 +41,18 @@ namespace Simpiens.Presentation
         public static readonly Rgba NeutralFloor = new Rgba(0.2f, 0.21f, 0.24f);
 
         private readonly List<MapTile> _tiles;
+        private readonly HashSet<long> _floor;
 
-        private MapTileLayer(MapDefinition map, Vec2 origin, List<MapTile> tiles)
+        private MapTileLayer(MapDefinition map, Vec2 origin, List<MapTile> tiles, HashSet<long> floor)
         {
             Map = map;
             Origin = origin;
             _tiles = tiles;
+            _floor = floor;
         }
+
+        /// <summary>True when cell (<paramref name="x"/>, <paramref name="y"/>) is floor: neither wall nor rock, inside the playable bounds.</summary>
+        public bool IsFloor(int x, int y) => _floor.Contains(Key(x, y));
 
         public MapDefinition Map { get; }
 
@@ -84,6 +89,7 @@ namespace Simpiens.Presentation
                 }
             }
 
+            var floor = new HashSet<long>();
             CellRange(map.PlayableBounds, origin, out int bMinX, out int bMaxX, out int bMinY, out int bMaxY);
             for (int y = bMinY; y <= bMaxY; y++)
             {
@@ -93,10 +99,11 @@ namespace Simpiens.Presentation
                     if (walls.Contains(key) || rock.Contains(key)) continue;
                     var tint = TryGetSectorIndex(map, origin + new Vec2(x, y), out int sectorIndex) ? FloorTint(map, map.Sectors[sectorIndex]) : NeutralFloor;
                     tiles.Add(new MapTile(x, y, TileKind.Floor, tint));
+                    floor.Add(key);
                 }
             }
 
-            return new MapTileLayer(map, origin, tiles);
+            return new MapTileLayer(map, origin, tiles, floor);
         }
 
         /// <summary>A wall rect wider than one cell both ways is solid rock outside the floor, not a wall run.</summary>

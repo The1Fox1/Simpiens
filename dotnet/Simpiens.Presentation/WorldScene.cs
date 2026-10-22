@@ -15,6 +15,17 @@ namespace Simpiens.Presentation
     /// map. What each thing looks like (sprite, size, pivot) comes from the art set (<see cref="Art"/>, M3 design D4);
     /// where it goes and in what order, from the projection.
     /// </summary>
+    /// <summary>How the walls in front of rooms are drawn (M3 design D7, producer P2: cutaway).</summary>
+    public enum WallStyle : byte
+    {
+        /// <summary>A wall stands full height only where no floor lies behind it: the far walls stand, every nearer one is a stub (The Sims' cutaway).</summary>
+        Cutaway = 0,
+        /// <summary>Every wall full height: what is behind a wall is hidden by it.</summary>
+        Full = 1,
+        /// <summary>Every wall a stub.</summary>
+        Low = 2,
+    }
+
     public sealed class WorldScene
     {
         private MapTileLayer _tiles;
@@ -27,6 +38,9 @@ namespace Simpiens.Presentation
 
         /// <summary>What things look like in this view: their sprites, sizes in art pixels and pivots.</summary>
         public WorldArt Art { get; set; } = TopDownArt.Instance;
+
+        /// <summary>How walls in front of rooms are drawn; only art with a stub (isometric) shows a difference.</summary>
+        public WallStyle WallStyle { get; set; } = WallStyle.Cutaway;
 
         /// <summary>The projection and the art together (<see cref="ViewMode"/>).</summary>
         public ViewMode Mode
@@ -168,6 +182,8 @@ namespace Simpiens.Presentation
             var floor = Art.Tile(TileKind.Floor);
             var rock = Art.Tile(TileKind.Rock);
             var wall = Art.Tile(TileKind.Wall);
+            var low = Art.LowWall;
+            var stands = WallsStanding(tiles);
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
@@ -178,7 +194,7 @@ namespace Simpiens.Presentation
                     case TileKind.Floor: Add(DrawRole.Floor, 0f, floor, centre, Rgba32.From(tile.Tint)); break;
                     case TileKind.Rock: Add(DrawRole.Rock, 0f, rock, centre, White); break;
                     // Walls stand: in isometric they interleave with crawlers by depth (in top-down they never overlap)
-                    default: Add(DrawRole.Wall, Projection.Depth(centre), wall, centre, White); break;
+                    default: Add(DrawRole.Wall, Projection.Depth(centre), Stands(stands, i) ? wall : low, centre, White); break;
                 }
             }
         }
@@ -192,6 +208,41 @@ namespace Simpiens.Presentation
                 Labels.Add(new WorldLabel(label.Text, label.Position, LabelKind.Room, Rgba32.From(label.Color)));
             }
         }
+
+        private bool Stands(bool[] cutaway, int tile) => WallStyle == WallStyle.Full || (WallStyle == WallStyle.Cutaway && cutaway[tile]);
+
+        private bool[] _standing; // per tile: a wall with no floor behind it, for the cutaway
+        private MapTileLayer _standingTiles;
+        private IViewProjection _standingProjection;
+
+        /// <summary>
+        /// For each tile, whether a wall there has no floor behind it: none of its eight neighbours further from the viewer
+        /// (by the projection's depth) is floor. The diagonals count, or a wall meeting the front wall would stand as a lone
+        /// post. Derived from the map and the projection alone, so it is kept until either changes.
+        /// </summary>
+        private bool[] WallsStanding(MapTileLayer tiles)
+        {
+            if (ReferenceEquals(tiles, _standingTiles) && ReferenceEquals(Projection, _standingProjection)) return _standing;
+            var list = tiles.Tiles;
+            var standing = new bool[list.Count];
+            for (int i = 0; i < list.Count; i++)
+            {
+                var tile = list[i];
+                if (tile.Kind != TileKind.Wall) continue;
+                float depth = Projection.Depth(tiles.CellCentre(tile.X, tile.Y));
+                bool behind = false;
+                for (int dy = -1; dy <= 1 && !behind; dy++)
+                    for (int dx = -1; dx <= 1 && !behind; dx++)
+                        behind = (dx != 0 || dy != 0) && FloorBehind(tiles, tile.X + dx, tile.Y + dy, depth);
+                standing[i] = !behind;
+            }
+            _standing = standing;
+            _standingTiles = tiles;
+            _standingProjection = Projection;
+            return standing;
+        }
+
+        private bool FloorBehind(MapTileLayer tiles, int x, int y, float depth) => tiles.IsFloor(x, y) && Projection.Depth(tiles.CellCentre(x, y)) < depth;
 
         private readonly int[] _layers = new int[(int)DrawRole.Shadow + 1]; // each role's layer, this build
 
