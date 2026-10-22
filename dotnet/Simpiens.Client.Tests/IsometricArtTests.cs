@@ -130,21 +130,6 @@ namespace Simpiens.Client.Tests
             Png.Write(Path.Combine(AppContext.BaseDirectory, "render-output", "iso-placeholders.png"), width, height, rgba);
         }
 
-        /// <summary>The outpost at t300 in the isometric view, whole and zoomed, for a look: render-output/iso-outpost*.png.</summary>
-        [Fact(Explicit = true)]
-        public void WriteTheIsometricOutpost()
-        {
-            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, width: 1280, height: 720);
-            game.World.Mode = ViewMode.Isometric;
-            game.World.Rig.Configure(game.Session.Simulation.Host.Current.Map.CameraFrame, 1280f / 720f, 720);
-            game.RunOneFrame();
-            Png.Write(Path.Combine(AppContext.BaseDirectory, "render-output", "iso-outpost.png"), 1280, 720, FrameCapture.CaptureMap(game, 1280, 720));
-            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-            game.World.Rig.ZoomAt(hub, 0.3f);
-            game.RunOneFrame();
-            Png.Write(Path.Combine(AppContext.BaseDirectory, "render-output", "iso-outpost-zoomed.png"), 1280, 720, FrameCapture.CaptureMap(game, 1280, 720));
-        }
-
         private static ulong HashOf(System.Collections.Generic.IEnumerable<PixelSprite> sprites)
         {
             ulong hash = 14695981039346656037UL;

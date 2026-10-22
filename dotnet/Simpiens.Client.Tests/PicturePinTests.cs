@@ -43,6 +43,25 @@ namespace Simpiens.Client.Tests
             AssertPinned(game, PinnedSelectedZoomed);
         }
 
+        [Fact]
+        public void TheIsometricOutpostAtTick300DrawsAsPinned()
+        {
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.Isometric, TicksPerUpdate = 100 }, frames: 3);
+            AssertPinned(game, PinnedIsometricTick300);
+        }
+
+        [Fact]
+        public void ASelectedCrawlerInAZoomedIsometricViewDrawsAsPinned()
+        {
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.Isometric, TicksPerUpdate = 100 }, frames: 3);
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
+            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
+            game.World.Rig.ZoomAt(hub, 0.4f);
+            game.World.Rig.Pan(new Vec2(2f, -3f));
+            AssertPinned(game, PinnedIsometricSelectedZoomed);
+        }
+
         private static void AssertPinned(SimpiensGame game, (ulong items, ulong labels) pinned)
         {
             FrameCapture.CaptureMap(game, Width, Height); // draws the scene as the render references do
@@ -124,5 +143,8 @@ namespace Simpiens.Client.Tests
         private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
         private static readonly (ulong, ulong) PinnedTick300 = (16432157483044585443UL, 6705829926719516470UL);
         private static readonly (ulong, ulong) PinnedSelectedZoomed = (5768202902293146726UL, 17765688760816253013UL);
+        // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (11077098062671237693UL, 7580600243856684339UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (5529835639956102611UL, 1216540382167408918UL);
     }
 }
