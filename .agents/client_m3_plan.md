@@ -6,7 +6,9 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
   - **The isometric view:** the outpost drawn isometrically from generated placeholders. Walls, props and crawlers interleave by depth, so a crawler walks behind a wall.
   - **What carries over:** the fog, labels, picking, the camera and the dashboard all work in it.
   - **Top-down** stays for developers.
-  - **Cutscenes:** still backdrops with characters and text boxes (Fire Emblem style), in screen space.
+  - **Cutscenes come in two kinds** (producer, P3):
+    - **Hard cutscenes** pause the game: still backdrops with characters and text boxes (Fire Emblem style), in screen space.
+    - **Dynamic cutscenes** are part of play: they run over the live world, with the real crawlers as actors.
 - **The proposal's gate:** depth-order tests pass, and walls and crawlers interleave in reviewed screenshots.
 - **Where it starts:** the client seams (review A1–A3) are done. They delivered:
   - `IViewProjection` with `TopDownProjection` and `IsometricProjection` (the maths tested in four orientations, not wired in);
@@ -24,7 +26,7 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
   - `dotnet build` 0 errors;
   - `dotnet test` 199 of 199 (client 136, core 63);
   - golden check 3 of 3.
-- **Estimate:** about 6–9 agent days. That is the proposal's 3–5 for M3, plus 2–3.5 for the review items deferred into it, plus the cutscene mode's share.
+- **Estimate:** about 7–10 agent days. That is the proposal's 3–5 for M3, plus 2–3.5 for the review items deferred into it, plus about a day for the second kind of cutscene.
 - **No core change is planned.** If one becomes necessary, it is checked in Unity (PlayMode and golden), as the seams did.
 
 ---
@@ -50,7 +52,7 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
 - **M3-D5: generated isometric placeholders** (`IsometricSprites`, Presentation), built from code and pinned by a hash test like `ProceduralSprites`. The tile size is a parameter (P1; default 32×16, 2:1, height 16 art pixels per unit).
   - **Floor:** a flagstone diamond, tinted per sector as top-down tints it.
   - **Rock:** a dark flat diamond.
-  - **Walls:** a block per wall cell, full height and low, with lit top, left and right faces. The faces are lit by screen side, so the blocks look right in every orientation.
+  - **Walls:** a block per wall cell, full height and low, with lit top, left and right faces.
   - **On the floor:** a 2:1 selection ring and a soft crawler shadow.
   - **Bunk:** an isometric bunk, because the top-down bed doesn't stand.
   - **Reused standing:** the crawlers' 16 px sprites (front-facing figures), the hearth and the resource nodes, drawn 1:1 at the default tile size.
@@ -60,7 +62,7 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
   - This gives one continuous cloud per sector instead of a cloud per floor cell.
   - Top-down's cloud takes the same path. If its pixels move beyond the tolerance, its references are re-recorded after a look.
   - Pixel art (floor diamonds, the ring) stays pre-drawn, because point-sampled art under a shear is jagged.
-- **M3-D7: walls in the way** (P2). The wall style is a scene rule computed per map and orientation from the projection's depth, not art.
+- **M3-D7: walls in the way** (P2). The wall style is a scene rule computed per map from the projection's depth, not art.
   - Full: every wall full height.
   - Low: every wall low.
   - Cutaway: a wall stays full height only when no floor lies behind it, so the outer far walls stand and every wall nearer the viewer is a low stub (The Sims' cutaway).
@@ -69,14 +71,29 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
 - **M3-D8: switching views.**
   - `--view iso|top` picks the view at start, and a key (V) toggles it. Switching keeps the floor point at the centre and about the same scale.
   - Each mode has its camera limits: the closest zoom shows about a room in both. Whole-pixel zoom steps come from the art's pixels per unit.
-  - Rotation, if P5 says so: Q and E turn the view a quarter turn about the centre floor point. The maths and four-orientation tests exist.
-- **M3-D9: cutscenes are a third projection and a script.**
-  - **`ScreenProjection`:** virtual units of 640×360, scaled to the window at whole pixels and letterboxed, with draw order by layer only. Backdrops and characters go through the same draw list and renderer.
-  - **`CutsceneScript`** is built in code (`CutsceneBuilder`, as sessions are): backdrop, characters entering, moving, facing, posing and leaving slots, lines (speaker and text), waits.
-  - **`CutscenePlayer`** steps it on view time and the player's "advance" (click, Space, Enter). Text appears letter by letter: advance finishes the line, then moves on, and Esc skips the scene. It is engine-free and tested without a GPU.
-  - **The text box and name plate are Gum,** in baked Inter, with Regular 16 (and any size the look settles on) added to `FontSet` in its own re-bake.
-  - **Placeholders:** generated backdrops, and crawler sprites at a whole scale as characters.
-  - **The world doesn't advance under a cutscene** (P3): the screen stops the simulation driver, so nothing is written to the clock.
+  - **One fixed view, no rotation** (P5). The isometric view has one orientation (quarter turn 0). Which corner faces the viewer is a single constant, so it can change at the look.
+- **M3-D9: two kinds of cutscene on one script model** (P3).
+  - **Hard cutscenes stop the game.**
+    - They are still backdrops with characters and text boxes (Fire Emblem style), on a `CutsceneScreen` that covers the world.
+    - The world doesn't advance: the screen stops the simulation driver, so nothing is written to the clock.
+    - They draw in screen space through a `ScreenProjection`: virtual units of 640×360, scaled to the window at whole pixels, letterboxed, with draw order by layer only. Backdrops and characters go through the same draw list and renderer as the map.
+  - **Dynamic cutscenes are part of play.**
+    - The world keeps running, and they play over the world view with the real crawlers as actors.
+    - **Speech boxes:** a line appears in a box over the crawler who speaks. The box sits above its head, follows it as it moves (at its drawn position, between ticks), and falls back to a text box at the bottom of the screen while the speaker is hidden by the fog or off screen.
+    - **The camera** can be sent to a floor point or a crawler, and the player's own pan takes it back.
+    - **The dashboard and clicks keep working.**
+    - They present the simulation and never direct it (P7).
+  - **One model.** `CutsceneScript` is built in code (`CutsceneBuilder`, as sessions are).
+    - **Shared steps:** lines (speaker and text), waits, camera moves.
+    - **Hard cutscenes only:** the backdrop, and characters entering, moving, facing, posing and leaving slots.
+    - **Dynamic cutscenes only:** actors, which are crawlers named by id.
+  - **One player.** `CutscenePlayer` steps a script on view time (real time, so text reads at the same pace at 10×) and on the player's advance (click, Space, Enter).
+    - Text appears letter by letter: an advance finishes the line, then moves on, and Esc skips the scene.
+    - In a dynamic cutscene, lines also move on by themselves after a reading time, because the game doesn't wait.
+    - It is engine-free and tested without a GPU.
+  - **Text** is drawn by Gum in baked Inter, with Regular 16 (and any size the look settles on) added to `FontSet` in its own re-bake. Speech boxes are placed on screen from the view, as the map's labels are.
+  - **Placeholders:** generated backdrops, and crawler sprites at a whole scale as hard-cutscene characters.
+  - **Not in M3:** what starts either kind in play, and the story (the narrative work).
 
 ---
 
@@ -122,22 +139,18 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
      - a cloud's four corners land where the projection puts the sector's inset corners;
      - D1 = C still hides and fades in isometric;
      - the top-down render references hold, or are re-recorded after a look with the reason.
-4. **1.4 Walls in the way (D7).** The wall style rule, cached per map and orientation, with a key to cycle it.
-   - Tests:
-     - on Floor 1, cutaway keeps exactly the walls with no floor behind them;
-     - turning the view changes which walls stand.
+4. **1.4 Walls in the way (D7).** The wall style rule, cached per map, with a key to cycle it.
+   - Test: on Floor 1, cutaway keeps exactly the walls with no floor behind them.
 5. **1.5 Isometric in the game (D8).** `--view`, the V toggle, camera limits per mode, and reframing at whole pixels. The dashboard, the follow and the labels are unchanged.
    - Tests:
      - toggling keeps the centre floor point;
      - the zoom limits hold in both modes;
      - a resize keeps whole pixels.
-   - The default view at the end of the chunk follows P4.
-6. **1.6 Rotation (only if P5 says now).** Q and E quarter turns about the centre.
-   - Test: four turns return the same view, with labels and picking checked in each orientation.
+   - The default view at the end of the chunk is isometric (P4).
 
 ### Phase 2 · The gate for isometric
 1. **2.1 Depth order and picking on the real outpost.**
-   - **Depth order** (Floor 1 at t300 and t1500, in every orientation the build offers): every standing item that overlaps a wall on screen is drawn before it when behind it and after it when in front.
+   - **Depth order** (Floor 1 at t300 and t1500, in the fixed view): every standing item that overlaps a wall on screen is drawn before it when behind it and after it when in front.
    - **Crossing:** a crawler walking past a wall changes order on the tick its depth crosses.
    - **Picking:**
      - a click on a crawler's head picks it;
@@ -153,26 +166,39 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
    - A wall-style comparison set (full, low, cutaway) for P2.
 4. **2.4 Frame time in isometric**, on llvmpipe and the GPU, beside top-down's. Recorded as a finding.
 
-### Phase 3 · Cutscenes (D9)
-1. **3.1 `ScreenProjection`:** virtual 640×360, whole-pixel scale, letterbox.
-   - Tests: the scale steps with the window size; the letterbox is centred; order is by layer only.
-2. **3.2 The script and its player** (Presentation, engine-free): `CutsceneBuilder`, `CutsceneScript`, `CutscenePlayer`.
+### Phase 3 · Cutscenes, two kinds (D9)
+1. **3.1 The script and its player** (Presentation, engine-free, shared by both kinds): `CutsceneBuilder`, `CutsceneScript`, `CutscenePlayer`.
    - Tests:
      - the steps run in order on view time;
-     - the letter-by-letter text, and advance finishing a line;
+     - the letter-by-letter text, and an advance finishing a line;
      - skip;
+     - a dynamic script's lines move on by themselves;
      - deterministic replays.
-3. **3.3 The cutscene screen:**
-   - pushed over Play;
-   - the world paused under it (P3) and resumed after;
-   - backdrop and characters through the renderer;
-   - the text box and name plate in Gum;
-   - characters slide into their slots.
+2. **3.2 `ScreenProjection`:** virtual 640×360, whole-pixel scale, letterbox.
+   - Tests: the scale steps with the window size; the letterbox is centred; order is by layer only.
+3. **3.3 Hard cutscenes: the cutscene screen.**
+   - It is pushed over Play. The world is paused under it and resumed after.
+   - Backdrop and characters go through the renderer; characters slide into their slots.
+   - The text box and name plate are Gum.
 
    The new font size comes first, in its own re-bake commit; the font golden moves on purpose.
-4. **3.4 A demonstration cutscene** in Debug builds, started by a key or from the Dev Map's bar.
-   - Tests drive it through the scripted input: advance, the letter-by-letter text, skip, the world's tick unchanged while it plays.
-   - References of two cutscene frames, each looked at.
+4. **3.4 Dynamic cutscenes over the world.** A cutscene layer on `PlayScreen`:
+   - speech boxes over their speakers, following their drawn positions, with the bottom box as the fallback when a speaker is hidden by the fog or off screen;
+   - the directed camera, released by the player's pan;
+   - the world ticking throughout.
+
+   Tests:
+   - the tick advances while it plays;
+   - a box follows its moving speaker;
+   - a speaker hidden by the fog falls back to the bottom box;
+   - a pan releases the camera;
+   - a click still selects;
+   - the golden hashes from inside the client are the same with a dynamic cutscene playing as without: it writes nothing.
+5. **3.5 Demonstrations** in Debug builds, started by keys or from the Dev Map's bar:
+   - a hard cutscene;
+   - a dynamic one between the selected crawler and its nearest neighbour.
+
+   Tests drive both through the scripted input: advance, the letter-by-letter text, skip, and for the hard one the world's tick unchanged while it plays. References: two hard-cutscene frames and one dynamic frame in isometric, each looked at.
 
 ### Phase 4 · Close-out
 - Frame time measured again.
@@ -182,7 +208,7 @@ Working document (AGENTS.md, documentation protocol). It is deleted when M3 clos
   - AGENTS.md: view modes, art sets, screens, floor quads, cutscenes;
   - `curentfocus`;
   - an `architecture_history` entry.
-- The producer's look (person-gated): the isometric screenshots, the wall style, the toggle and camera feel, the cutscene.
+- The producer's look (person-gated): the isometric screenshots, the wall style, the toggle and camera feel, both kinds of cutscene.
 - This plan deleted.
 
 ---
@@ -201,38 +227,32 @@ Render references, pins, pinned sprites and baked fonts change only on purpose, 
 
 ---
 
-## Open for the producer (each has a default; execution can start on the defaults)
-1. **P1, the tile size for the placeholders.**
-   - **Default: 32×16.** The crawlers' 16 px sprites stand 1:1 and stay crisp at whole zooms.
-   - **Alternative: 64×32**, the proposal's size for 64×64 art. Today's sprites would then be doubled.
+## Decided by the producer (2026-10-21)
+- **P1, tile size:** 32×16 placeholders, as proposed. It is one constant and a regeneration, so M7 can change it with the real art.
+- **P2, walls in the way:** cutaway, as proposed. Phase 2 renders full, low and cutaway for the look.
+- **P3, cutscenes:** two kinds (D9):
+  - hard, traditional cutscenes that pause the game;
+  - dynamic cutscenes that are part of the gameplay itself.
 
-   It is one constant and a regeneration, so M7 can change it with the real art.
-2. **P2, walls in the way.**
-   - **Default: cutaway.** The far outer walls stand and nearer walls are stubs.
-   - **Alternatives:** all walls low; all full height, where crawlers behind walls are hidden.
+  Scripts are written in code. M3 ships both modes with a demonstration each; what starts them in play, and the story, are the narrative work.
+- **P4, default view:** isometric, with V switching to top-down in every build, as proposed.
+- **P5, rotation:** out of scope. One fixed view.
+- **P6, pull requests:** three into `main-kni`: Phase 0, Phases 1–2, Phase 3.
 
-   Phase 2 renders all three for you to pick by looking.
-3. **P3, cutscenes.**
-   - **Defaults:**
-     - the world pauses under a cutscene;
-     - scripts are written in code, like sessions;
-     - M3 ships the mode and one demonstration only.
-   - **Not in M3:** what triggers cutscenes in play and their story, which belong to the narrative work.
-4. **P4, the default view at the end of M3.**
-   - **Default:** isometric for play, with the V toggle to top-down in every build until playtesting says otherwise.
-   - **Alternative:** the toggle in Debug builds only.
-5. **P5, rotation.**
-   - **Default:** Q and E quarter turns in M3 for developers, which also exercises all four orientations.
-   - **Later:** whether players get it is decided with the art at M7, because asymmetric props then need four facings.
-6. **P6, pull requests.**
-   - **Default:** three, all into `main-kni`: Phase 0 (no visual change), Phases 1–2 (isometric) and Phase 3 (cutscenes).
+## Still open for the producer (defaults hold until you say otherwise)
+- **P7, dynamic cutscenes directing crawlers.**
+  - **Default:** they present the live world (the real crawlers, doing what they decide) and never direct it.
+  - **The alternative needs the core:** making crawlers walk to marks or act out a scene means a typed command that overrides their decisions for the scene. That belongs with the narrative work and the multiplayer rules, not in M3.
+- **P8, control during a dynamic cutscene.**
+  - **Default:** the player keeps it. The dashboard and clicks work, and a pan takes the camera back.
+  - **Alternative:** lock input to advance and skip while one plays.
 
 ---
 
 ## Risks
 | Risk | Plan |
 | :--- | :--- |
-| Isometric order breaks on tall or wide objects | Everything standing is one cell wide (a test exists), walls are blocks per cell, and equal depths tie-break by role. 2.1 checks every overlap on the real outpost in every orientation |
+| Isometric order breaks on tall or wide objects | Everything standing is one cell wide (a test exists), walls are blocks per cell, and equal depths tie-break by role. 2.1 checks every overlap on the real outpost |
 | Walls hide crawlers and rooms | The cutaway style (P2); the picker finds hidden crawlers; the producer picks the style from screenshots |
 | A floor quad under the view's transform samples differently from a sprite | The transform is shared XNA API, compiled for MonoGame and Android. Top-down's cloud is compared with its references, and re-recorded only after a look |
 | Labels crowd in isometric (rows aren't floor rows any more) | The layout already groups by screen rows; 2.2 checks both maps at seven zooms |
@@ -240,7 +260,8 @@ Render references, pins, pinned sprites and baked fonts change only on purpose, 
 | KNI's `SpriteBatch` allocates per frame | Our code is gated at zero allocations; KNI's share is recorded and raised upstream if it matters on phones (M4) |
 | Pixel art blurs at in-between zooms | Whole-pixel zoom steps come from the art's pixels per unit; the camera snaps the view plane to pixels in both modes |
 | Cutscene text needs larger faces | A re-bake adds them through `FontSet`; the font golden changes in that commit only |
-| Scope grows (6–9 days against the proposal's 3–5) | The review items are separate chunks in Phase 0, and rotation (P5) is optional. Phase 3 can become its own milestone if you prefer |
+| Scope grows (7–10 days against the proposal's 3–5) | The review items are separate chunks in Phase 0. Phase 3 (both kinds of cutscene) can become its own milestone if you prefer |
+| A dynamic cutscene changes the world | It only reads frames and steers the camera. A test compares the golden hashes from inside the client with one playing and without |
 
 ---
 
@@ -260,4 +281,6 @@ Render references, pins, pinned sprites and baked fonts change only on purpose, 
 - **The simulation on its own thread and the dashboard on a snapshot** (review D1): after M3.
 - **Speed, pause, save, load and switch as host commands** (review D3, with D2's tick cap per frame): still open, for the producer to schedule. The cutscene's pause doesn't add to it, because it stops the driver rather than writing the clock.
 - **Gameplay height:** height stays visual only.
+- **Rotation:** out of scope (producer, P5): one fixed view. The projection's quarter turns stay in its maths and tests, unused.
+- **Dynamic cutscenes that move crawlers** (P7): typed commands in the core, with the narrative work.
 - **Unity's removal (M2.8, M2.9):** independent; it waits for the side-by-side sign-off.

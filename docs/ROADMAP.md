@@ -491,8 +491,16 @@ Before Epic 10: soak test and scaling work (#8).
     - Phase 0: the review items deferred into M3 (one world epoch, the scene built in `Update`, `SimpiensGame` split into a session, a world view and screens, and a frame path that allocates nothing), with no visual change.
     - Phase 1: isometric drawn from generated placeholders, with art sets per view mode, the fog as floor quads, a wall style for walls in the way, and the view toggle.
     - Phase 2: the gate (depth order and picking on the real outpost, labels, references, frame time).
-    - Phase 3: cutscene mode (a screen-space projection, scripts in code, Gum text boxes, a demonstration).
-    - About 6–9 agent days. Six questions for the producer have defaults (tile size, walls in the way, cutscene pausing, the default view, rotation, the pull requests). Execution waits for the producer's go-ahead.
+    - Phase 3: cutscenes in two kinds on one script model (hard cutscenes in screen space; dynamic cutscenes over the running world), with Gum text boxes and a demonstration of each.
+    - About 7–10 agent days. Execution waits for the producer's go-ahead.
+  - **Producer decisions (2026-10-21, M3):**
+    - Accepted as proposed:
+      - P1: placeholders at 32×16;
+      - P2: cutaway walls, with the three styles shown at the look;
+      - P4: isometric by default, with V switching to top-down in every build;
+      - P6: three pull requests into `main-kni`.
+    - **P3: two kinds of cutscene.** Hard, traditional cutscenes pause the game. Dynamic cutscenes are part of the gameplay itself.
+    - **P5: no rotation.** One fixed view.
 
 ---
 

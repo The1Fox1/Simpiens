@@ -27,6 +27,16 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
   - No macOS, no web.
 - **Seams before M3 (2026-10-20):** carry out the architecture review's high findings A1–A3 (projection, draw order, view frame) before isometric. Plan: the Claude Doc "Plan: Projection, Draw Order and Frame Snapshot (A1–A3)".
 - **Fog, D1 = C (2026-10-21), replacing A in the client:** the fog hides everything in an uncharted sector, crawlers included, in both projections. A scout vanishes into the fog until the room is charted.
+- **M3 (2026-10-21):**
+  - **Cutscenes come in two kinds:**
+    - **Hard,** traditional cutscenes pause the game.
+    - **Dynamic** cutscenes are part of the gameplay itself.
+  - **No rotation:** the isometric view is one fixed view.
+  - **The plan's other defaults stand:**
+    - placeholders at 32×16;
+    - cutaway walls, with the three styles shown at the look;
+    - isometric by default, with V switching to top-down in every build;
+    - three pull requests into `main-kni`.
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
