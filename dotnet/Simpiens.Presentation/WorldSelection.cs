@@ -60,6 +60,7 @@ namespace Simpiens.Presentation
         private readonly WorldViewFrames _frames;
         private readonly ISectorRegistry _sectors;
         private readonly IAgentIdentityService _identity;
+        private uint _epoch; // the world the selection was made in
 
         /// <param name="frames">Where crawlers are drawn.</param>
         /// <param name="sectors">The map's sectors, for the sector under a click.</param>
@@ -69,6 +70,7 @@ namespace Simpiens.Presentation
             _frames = frames;
             _sectors = sectors;
             _identity = identity;
+            _epoch = frames != null ? frames.Epoch : 0;
         }
 
         public EntityId SelectedCrawler { get; private set; }
@@ -84,6 +86,7 @@ namespace Simpiens.Presentation
 
         public void SelectCrawler(EntityId id, bool follow)
         {
+            DropOtherWorld();
             if (SelectedCrawler == id && Following == follow) return;
             SelectedCrawler = id;
             Following = follow && id != default;
@@ -92,6 +95,7 @@ namespace Simpiens.Presentation
 
         public void SelectSector(int sectorId)
         {
+            DropOtherWorld();
             if (SelectedSector == sectorId) return;
             SelectedSector = sectorId;
             Changed?.Invoke();
@@ -140,18 +144,33 @@ namespace Simpiens.Presentation
             if (sectorId != 0) SelectSector(sectorId);
         }
 
-        /// <summary>Where the selected crawler is drawn; false when none is selected or it isn't in the world (see <see cref="PruneMissing"/>).</summary>
+        /// <summary>
+        /// Where the selected crawler is drawn; false when none is selected, it isn't in the world, or the world was
+        /// rebuilt since it was selected (its id may now name another crawler). See <see cref="Update"/>.
+        /// </summary>
         public bool TryGetCrawlerPosition(out Vec2 position)
         {
             position = default;
-            return SelectedCrawler != default && _frames != null && _frames.TryGetDrawnPosition(SelectedCrawler, out position);
+            return SelectedCrawler != default && _frames != null && _frames.Epoch == _epoch && _frames.TryGetDrawnPosition(SelectedCrawler, out position);
         }
 
-        /// <summary>Drops the selected crawler once the world no longer has it (it left, or the world was rebuilt).</summary>
-        public void PruneMissing()
+        /// <summary>
+        /// Brings the selection up to date with the frames, once per update: a rebuilt world (a new epoch: entity ids are
+        /// reissued) drops everything, and a crawler that left the world is dropped.
+        /// </summary>
+        public void Update()
         {
+            DropOtherWorld();
             if (SelectedCrawler == default || _frames == null) return;
             if (!_frames.Current.TryGetIndex(SelectedCrawler, out _)) ClearCrawler();
+        }
+
+        /// <summary>The frames show another world than the one the selection was made in: drop it.</summary>
+        private void DropOtherWorld()
+        {
+            if (_frames == null || _frames.Epoch == _epoch) return;
+            _epoch = _frames.Epoch;
+            Clear();
         }
 
         public string CrawlerName()

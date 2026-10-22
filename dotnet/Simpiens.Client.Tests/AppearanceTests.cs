@@ -51,7 +51,8 @@ namespace Simpiens.Client.Tests
             Assert.Equal(AgentVisualState.Thinking, Pose(appearance, agent, 12, 0f).State);
             Assert.Equal(AgentVisualState.Walking, Pose(appearance, agent, 13, 0f).State);
 
-            // A respawn (the clock going back) forgets what was shown
+            // A new world (the scene resets on a new epoch: WorldEpochTests) forgets what was shown
+            appearance.Reset();
             agent.VisualState = AgentVisualState.Harvesting;
             Assert.Equal(AgentVisualState.Harvesting, Pose(appearance, agent, 0, 0f).State);
         }

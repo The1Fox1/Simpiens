@@ -45,12 +45,13 @@ namespace Simpiens.Client.Tests
             using var sim = Outpost();
             var map = sim.Host.Current.Map;
             var fog = new FogOfWar();
-            fog.Update(map, TestFrames.Of(sim).Current, 10f);
+            fog.Load(map, TestFrames.Of(sim).Current);
+            fog.Update(TestFrames.Of(sim).Current, 10f);
             int sector = fog.Overlays[0].SectorId;
             int before = fog.Overlays.Count;
 
             sim.Sectors.SetExplored(sector, true); // a scout's report
-            fog.Update(map, TestFrames.Of(sim).Current, 10f);
+            fog.Update(TestFrames.Of(sim).Current, 10f);
             Assert.False(fog.IsCovered(sector));
             Assert.Equal(before, fog.Overlays.Count); // still drawn while it fades
 
@@ -59,7 +60,7 @@ namespace Simpiens.Client.Tests
             var cloud = Enumerable.Range(0, list.Count).Select(i => list[i]).First(i => i.Sheet == DrawSheet.Fog && i.X == fog.Overlays.Single(o => o.SectorId == sector).Area.Center.X);
             Assert.InRange(cloud.Tint.A, 118, 130); // half of 0.97 x 255
 
-            fog.Update(map, TestFrames.Of(sim).Current, 11.5f);
+            fog.Update(TestFrames.Of(sim).Current, 11.5f);
             Assert.Equal(before - 1, fog.Overlays.Count);
             Assert.DoesNotContain(fog.Overlays, o => o.SectorId == sector);
         }
@@ -108,7 +109,7 @@ namespace Simpiens.Client.Tests
             Assert.True(selection.TryGetCrawlerPosition(out _), "the selection (and the camera following it) keeps the crawler");
 
             sim.Sectors.SetExplored(cloud.SectorId, true); // a scout's report
-            frames.Restart(sim.Registry.ActiveEntities, sim.Sectors, 0);
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 1); // the same world, a tick later
             scene.Build(map, frames, 10f, selection); // the fade starts
             scene.Build(map, frames, 10.75f, selection); // halfway
             var halfway = Inside();
@@ -126,11 +127,15 @@ namespace Simpiens.Client.Tests
         {
             using var sim = Outpost();
             var scene = new WorldScene();
-            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 100), 10f);
+            var frames = TestFrames.Of(sim, 100);
+            scene.Build(sim.Host.Current.Map, frames, 10f);
             int covered = scene.Fog.Overlays.Count;
             foreach (var o in scene.Fog.Overlays.ToList()) sim.Sectors.SetExplored(o.SectorId, true);
-            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 101), 10f);
-            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 120), 12f);
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 101); // the same world: every cloud fades
+            scene.Build(sim.Host.Current.Map, frames, 10f);
+            Assert.Equal(covered, scene.Fog.Overlays.Count);
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 120);
+            scene.Build(sim.Host.Current.Map, frames, 12f);
             Assert.Empty(scene.Fog.Overlays);
 
             sim.Respawn(OutpostSession.SessionId); // back to tick 0, sectors uncharted again

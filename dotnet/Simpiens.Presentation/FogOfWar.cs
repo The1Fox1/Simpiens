@@ -36,7 +36,6 @@ namespace Simpiens.Presentation
         }
 
         private readonly List<Overlay> _overlays = new List<Overlay>(8);
-        private MapDefinition _map;
         private ulong _lastMask;
 
         /// <summary>Overlays still on the map (covering or fading).</summary>
@@ -56,7 +55,6 @@ namespace Simpiens.Presentation
         public void Load(MapDefinition map, WorldViewFrame frame)
         {
             _overlays.Clear();
-            _map = map;
             _lastMask = frame != null ? frame.ChartedMask : 0UL;
             if (map == null) return;
             for (int i = 0; i < map.Sectors.Count; i++)
@@ -68,12 +66,11 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>
-        /// Brings the fog up to date: a newly charted sector starts to fade, a finished fade is removed. Loads the map
-        /// first if it changed (a respawn, a session switch, a load).
+        /// Brings the fog up to date: a newly charted sector starts to fade, a finished fade is removed. A new world is
+        /// loaded first (<see cref="Load"/>); the scene does that on a new epoch.
         /// </summary>
-        public void Update(MapDefinition map, WorldViewFrame frame, float viewSeconds)
+        public void Update(WorldViewFrame frame, float viewSeconds)
         {
-            if (!ReferenceEquals(map, _map)) Load(map, frame);
             if (frame == null || _overlays.Count == 0) return;
 
             ulong mask = frame.ChartedMask;

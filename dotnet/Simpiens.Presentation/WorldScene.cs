@@ -22,7 +22,7 @@ namespace Simpiens.Presentation
         public const float BunkSize = 0.9f;
 
         private MapTileLayer _tiles;
-        private long _lastTick = long.MinValue;
+        private uint _epoch; // the world the fog and the poses were loaded for (review A5)
 
         public DrawList Items { get; } = new DrawList();
 
@@ -41,13 +41,6 @@ namespace Simpiens.Presentation
         /// <summary>The fog over uncharted sectors, and its fades.</summary>
         public FogOfWar Fog { get; } = new FogOfWar();
 
-        /// <summary>A new session or a load (the clock may have moved either way): the fog and the crawlers' poses start afresh.</summary>
-        public void Reset()
-        {
-            _lastTick = long.MaxValue; // the next Build reloads the fog
-            Appearance.Reset();
-        }
-
         /// <summary>
         /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/> and what <paramref name="frames"/>
         /// captured of the world (its entities and which sectors are charted). <paramref name="viewSeconds"/> drives the
@@ -59,14 +52,21 @@ namespace Simpiens.Presentation
             Labels.Clear();
             var frame = frames?.Current;
             long tick = frame != null ? frame.Tick : 0;
-            if (tick < _lastTick) Fog.Load(map, frame); // the clock went back: a respawn or a load, same map or not
-            _lastTick = tick;
-            Fog.Update(map, frame, viewSeconds);
+            // A new world (a respawn, a switch or a load: frames.Epoch): the fog and the crawlers' poses start afresh.
+            // Without frames there is no world to key on, so the fog is loaded for the map every build.
+            uint epoch = frames != null ? frames.Epoch : 0;
+            if (epoch == 0 || epoch != _epoch)
+            {
+                Fog.Load(map, frame);
+                Appearance.Reset();
+                _epoch = epoch;
+            }
+            Fog.Update(frame, viewSeconds);
             _art = Projection.ArtPixelsPerUnit;
             for (int r = 0; r < _layers.Length; r++) _layers[r] = Projection.LayerOf((DrawRole)r);
             if (map != null)
             {
-                if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map);
+                if (_tiles == null || !ReferenceEquals(_tiles.Map, map)) _tiles = MapTileLayer.Build(map); // derived from the map alone
                 AddTiles(_tiles);
                 AddRoomNames(map);
                 Fog.Draw(Items, viewSeconds, Projection);

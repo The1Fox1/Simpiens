@@ -138,7 +138,15 @@ namespace Simpiens.Presentation
         public WorldViewFrame Previous => _previous;
         /// <summary>The frame of the last completed tick.</summary>
         public WorldViewFrame Current => _current;
+
+        /// <summary>
+        /// Which world the frames show (review A5): every respawn, switch or load starts a new one. Unique in the process,
+        /// so a view cache keyed on it never mistakes another world (or another frames object) for its own; 0 before
+        /// the first capture. View caches compare it instead of guessing from the tick or the map.
+        /// </summary>
         public uint Epoch => _epoch;
+
+        private static int s_lastEpoch;
 
         /// <summary>A move longer than this (world units) in one tick isn't drawn as a glide: a teleport, a load.</summary>
         public const float SnapDistance = 2f;
@@ -209,7 +217,7 @@ namespace Simpiens.Presentation
         /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world.</summary>
         public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
         {
-            _epoch++;
+            _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
             Capture(entities, sectors, tick);
             Capture(entities, sectors, tick);
         }

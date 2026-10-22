@@ -59,13 +59,11 @@ namespace Simpiens.Client
 
         private bool _wasFollowing;
 
-        /// <summary>A respawn, a session switch or a load replaced every entity (ids are reissued).</summary>
-        private void OnSessionChanged(ISessionDefinition session)
-        {
-            Selection.Clear();
-            Scene.Reset();
-            DashboardModel.SessionChanged();
-        }
+        /// <summary>
+        /// A respawn, a session switch or a load replaced every entity (ids are reissued). The views see it as a new epoch
+        /// of their frames (review A5); the dashboard still reads the live simulation, so it is told here.
+        /// </summary>
+        private void OnSessionChanged(ISessionDefinition session) => DashboardModel.SessionChanged();
 
         /// <summary>A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion.</summary>
         private void OnSelectionChanged()
@@ -144,7 +142,6 @@ namespace Simpiens.Client
         private double _realSeconds;
         private float _lastViewSeconds;
         private object _framedMap;
-        private long _lastTick = long.MinValue;
 
         protected override void Initialize()
         {
@@ -208,13 +205,11 @@ namespace Simpiens.Client
             var map = Simulation.Host.Current?.Map;
             if (map == null) return;
             var viewport = GraphicsDevice.Viewport;
-            long tick = Simulation.Clock.CurrentTick;
-            if (tick < _lastTick) Selection.Clear(); // a respawn or a load: the selected crawler is gone
-            _lastTick = tick;
+            // A rebuilt world drops the selection (a new epoch of the frames); a new map is framed whole
+            Selection.Update();
             if (!ReferenceEquals(map, _framedMap))
             {
                 Rig.Configure(map.CameraFrame, viewport.AspectRatio, viewport.Height);
-                Selection.Clear();
                 _framedMap = map;
             }
             Rig.SetPixelHeight(viewport.Height);
@@ -237,7 +232,7 @@ namespace Simpiens.Client
             }
 
             // The camera follows the selected crawler (Unity did this after the input, in LateUpdate); one that left the world is dropped
-            Selection.PruneMissing();
+            Selection.Update();
             if (Selection.Following && Selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, seconds);
         }
 

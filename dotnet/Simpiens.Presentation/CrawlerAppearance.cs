@@ -48,14 +48,9 @@ namespace Simpiens.Presentation
         }
 
         private readonly Dictionary<EntityId, Shown> _shown = new Dictionary<EntityId, Shown>(64);
-        private long _lastTick = long.MinValue;
 
-        /// <summary>Forgets every crawler's displayed state (a new session: entity ids repeat per seed).</summary>
-        public void Reset()
-        {
-            _shown.Clear();
-            _lastTick = long.MinValue;
-        }
+        /// <summary>Forgets every crawler's displayed state: a new world (entity ids repeat per seed). The scene calls it on a new epoch.</summary>
+        public void Reset() => _shown.Clear();
 
         /// <summary>
         /// The crawler's look at <paramref name="tick"/>, from its simulated <paramref name="state"/> and passing
@@ -63,9 +58,6 @@ namespace Simpiens.Presentation
         /// </summary>
         public CrawlerPose Pose(EntityId id, AgentVisualState state, CrawlerFlags flags, long tick, float viewSeconds)
         {
-            if (tick < _lastTick) Reset(); // the clock went back: a respawn or a load
-            _lastTick = tick;
-
             state = Displayed(id, Desired(state, flags), tick);
             var sprite = ProceduralSprites.GetAgentSprite(state, AnimationFrame(state, viewSeconds));
             MicroAnimation(state, viewSeconds, out float tilt, out float scaleX, out float scaleY);
