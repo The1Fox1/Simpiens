@@ -59,7 +59,7 @@ namespace Simpiens.Client
             for (int i = 0; i < glyphs.Count; i++)
             {
                 var glyph = glyphs[i];
-                var page = atlases.Page(glyph.Face, glyph.Page);
+                var page = atlases.Page(glyph.Page);
                 if (!ReferenceEquals(page, open))
                 {
                     if (open != null) _batch.End();

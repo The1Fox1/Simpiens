@@ -14,10 +14,11 @@ namespace Simpiens.Client
     /// </summary>
     public sealed class FontAtlases : IDisposable
     {
-        private readonly Dictionary<(FontFace Face, int Page), Texture2D> _pages = new Dictionary<(FontFace, int), Texture2D>();
+        private readonly Texture2D[] _pages;
 
         public FontAtlases(GraphicsDevice device, FontLibrary fonts, Func<string, Stream> open)
         {
+            _pages = new Texture2D[fonts.PageCount];
             foreach (var font in fonts.All)
             {
                 string folder = FontSet.ContentFolder + "/" + Path.GetDirectoryName(font.Face.CacheFileName).Replace('\\', '/');
@@ -31,17 +32,17 @@ namespace Simpiens.Client
                     for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color(rgba[i * 4], rgba[i * 4 + 1], rgba[i * 4 + 2], rgba[i * 4 + 3]);
                     var texture = new Texture2D(device, width, height);
                     texture.SetData(pixels);
-                    _pages[(font.Face, page)] = texture;
+                    _pages[font.FirstPage + page] = texture;
                 }
             }
         }
 
-        public Texture2D Page(FontFace face, int page) => _pages[(face, page)];
+        /// <summary>A page by its number in the library (<see cref="ScreenGlyph.Page"/>).</summary>
+        public Texture2D Page(int page) => _pages[page];
 
         public void Dispose()
         {
-            foreach (var texture in _pages.Values) texture.Dispose();
-            _pages.Clear();
+            for (int i = 0; i < _pages.Length; i++) _pages[i]?.Dispose();
         }
     }
 }

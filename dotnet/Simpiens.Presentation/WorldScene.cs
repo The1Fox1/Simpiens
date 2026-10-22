@@ -71,9 +71,10 @@ namespace Simpiens.Presentation
         /// Fills <see cref="Items"/> and <see cref="Labels"/> for <paramref name="map"/> and what <paramref name="frames"/>
         /// captured of the world (its entities and which sectors are charted), from the state <see cref="Advance"/> left.
         /// Changes no view state, so a draw, a capture or a second view at any size give the same picture (review A6).
-        /// <paramref name="viewSeconds"/> drives the animations and fades.
+        /// <paramref name="viewSeconds"/> drives the animations and fades. With <paramref name="cullTo"/>, what can't land in
+        /// that view's viewport is dropped before sorting (<see cref="DrawList.Cull"/>).
         /// </summary>
-        public void Present(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null)
+        public void Present(MapDefinition map, WorldViewFrames frames, float viewSeconds, WorldSelection selection = null, in View cullTo = default)
         {
             Items.Clear();
             Labels.Clear();
@@ -101,6 +102,7 @@ namespace Simpiens.Presentation
 
             if (selection != null) AddSelection(selection, viewSeconds);
 
+            if (cullTo.Projection != null) Items.Cull(cullTo);
             Items.Sort();
         }
 

@@ -173,6 +173,27 @@ namespace Simpiens.Presentation
         /// <summary>The entity behind a pick slot.</summary>
         public EntityId PickedEntity(int pick) => _picks[pick];
 
+        /// <summary>
+        /// Drops the items that can't land in <paramref name="view"/>'s viewport (<see cref="ScreenQuad.Touches"/>), before
+        /// sorting (review R1): the cost of a frame follows what is on screen, not the map's size. What is culled isn't
+        /// drawn and can't be clicked.
+        /// </summary>
+        public void Cull(in View view)
+        {
+            int kept = 0;
+            for (int i = 0; i < Count; i++)
+            {
+                if (!ScreenQuad.Of(_items[i], view).Touches(view.ViewportWidth, view.ViewportHeight)) continue;
+                if (kept != i)
+                {
+                    _items[kept] = _items[i];
+                    _keys[kept] = _keys[i];
+                }
+                kept++;
+            }
+            Count = kept;
+        }
+
         /// <summary>Puts the items in draw order. Keys are unique (the sequence), so the order is total and stable.</summary>
         public void Sort() => Array.Sort(_keys, _items, 0, Count);
     }

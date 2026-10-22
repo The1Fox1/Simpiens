@@ -43,6 +43,11 @@ namespace Simpiens.Presentation
         public int Base { get; private set; }
         /// <summary>The atlas pages' file names, by page id, next to the .fnt.</summary>
         public IReadOnlyList<string> Pages => _pages;
+        /// <summary>
+        /// Where this face's pages start in its <see cref="FontLibrary"/>'s numbering (<see cref="FontLibrary.PageCount"/>),
+        /// so a glyph names its texture by one integer (review R3).
+        /// </summary>
+        public int FirstPage { get; internal set; }
         public int GlyphCount => _glyphs.Count;
         public int KerningCount => _kerning.Count;
 
@@ -132,9 +137,18 @@ namespace Simpiens.Presentation
         public static FontLibrary Load(Func<string, Stream> open)
         {
             var library = new FontLibrary();
-            foreach (var face in FontSet.All) library._fonts[face] = BitmapFontMetrics.Load(face, open);
+            foreach (var face in FontSet.All)
+            {
+                var font = BitmapFontMetrics.Load(face, open);
+                font.FirstPage = library.PageCount;
+                library.PageCount += font.Pages.Count;
+                library._fonts[face] = font;
+            }
             return library;
         }
+
+        /// <summary>Every face's pages, numbered from 0 in <see cref="FontSet.All"/>'s order (<see cref="BitmapFontMetrics.FirstPage"/>).</summary>
+        public int PageCount { get; private set; }
 
         /// <summary>From files: the content folder's parent (the game's folder, or a test's).</summary>
         public static FontLibrary LoadFrom(string folder) => Load(path => File.OpenRead(Path.Combine(folder, path)));

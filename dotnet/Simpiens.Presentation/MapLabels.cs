@@ -30,16 +30,16 @@ namespace Simpiens.Presentation
         }
     }
 
-    /// <summary>One glyph to draw on screen: a rectangle of a face's page, at whole pixels.</summary>
+    /// <summary>One glyph to draw on screen: a rectangle of a font page, at whole pixels.</summary>
     public readonly struct ScreenGlyph
     {
-        public readonly FontFace Face;
-        public readonly int Page, SourceX, SourceY, Width, Height, X, Y;
+        /// <summary>The page in the <see cref="FontLibrary"/>'s numbering (<see cref="BitmapFontMetrics.FirstPage"/>): one integer, no lookup by face (review R3).</summary>
+        public readonly int Page;
+        public readonly int SourceX, SourceY, Width, Height, X, Y;
         public readonly Rgba32 Color;
 
-        public ScreenGlyph(FontFace face, int page, int sourceX, int sourceY, int width, int height, int x, int y, Rgba32 color)
+        public ScreenGlyph(int page, int sourceX, int sourceY, int width, int height, int x, int y, Rgba32 color)
         {
-            Face = face;
             Page = page;
             SourceX = sourceX;
             SourceY = sourceY;
@@ -79,6 +79,7 @@ namespace Simpiens.Presentation
         private readonly Dictionary<Vec2Key, int> _roomAt = new Dictionary<Vec2Key, int>(16);
         private readonly List<Vec2> _screenAt = new List<Vec2>(16);
         private readonly Comparison<int> _byScreenX;
+        private readonly HashSet<int> _done = new HashSet<int>(); // room labels already in a row, this layout
 
         public MapLabelLayout()
         {
@@ -136,7 +137,8 @@ namespace Simpiens.Presentation
             }
             int wanted = (int)MathF.Floor(RoomWorldSize * view.PixelsPerUnit);
             float rowTolerance = RowTolerance * view.PixelsPerUnit;
-            var done = new HashSet<int>();
+            var done = _done;
+            done.Clear();
             foreach (int first in _rooms)
             {
                 if (done.Contains(first)) continue;
@@ -249,7 +251,7 @@ namespace Simpiens.Presentation
             for (int i = 0; i < text.Length; i++)
             {
                 var g = font.Glyph(text[i]);
-                if (g.Width > 0 && g.Height > 0) glyphs.Add(new ScreenGlyph(font.Face, g.Page, g.X, g.Y, g.Width, g.Height, pen + g.XOffset, top + g.YOffset, color));
+                if (g.Width > 0 && g.Height > 0) glyphs.Add(new ScreenGlyph(font.FirstPage + g.Page, g.X, g.Y, g.Width, g.Height, pen + g.XOffset, top + g.YOffset, color));
                 pen += g.XAdvance;
                 if (i + 1 < text.Length) pen += font.Kerning(text[i], text[i + 1]);
             }

@@ -148,10 +148,10 @@ namespace Simpiens.Client
             device.Clear(Background);
 
             var map = _session.Simulation.Host.Current?.Map;
-            Scene.Present(map, _session.Frames, _session.ViewSeconds, _session.Selection);
+            View = Rig.ToView(width, height);
+            Scene.Present(map, _session.Frames, _session.ViewSeconds, _session.Selection, View); // culled to the view
             if (map == null) return;
 
-            View = Rig.ToView(width, height);
             _renderer.Draw(Scene.Items, View);
             _labelLayout.Layout(Scene.Labels, View, Fonts, _glyphs);
             _renderer.DrawGlyphs(_glyphs, _fontAtlases);
