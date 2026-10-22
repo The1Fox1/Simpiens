@@ -13,20 +13,23 @@ namespace Simpiens.Presentation
         Name = 2,
     }
 
-    /// <summary>Text the map asks for: a world point to hang it on, in a colour (its alpha fades it).</summary>
+    /// <summary>Text the map asks for: a world point to hang it on (<see cref="Height"/> above the floor), in a colour (its alpha fades it).</summary>
     public readonly struct WorldLabel
     {
         public readonly string Text;
         public readonly Vec2 At;
         public readonly LabelKind Kind;
         public readonly Rgba32 Color;
+        /// <summary>World units above the floor point (visual only): a name over a standing crawler's head.</summary>
+        public readonly float Height;
 
-        public WorldLabel(string text, Vec2 at, LabelKind kind, Rgba32 color)
+        public WorldLabel(string text, Vec2 at, LabelKind kind, Rgba32 color, float height = 0f)
         {
             Text = text;
             At = at;
             Kind = kind;
             Color = color;
+            Height = height;
         }
     }
 
@@ -132,7 +135,7 @@ namespace Simpiens.Presentation
             _screenAt.Clear();
             for (int i = 0; i < labels.Count; i++)
             {
-                _screenAt.Add(view.WorldToScreen(labels[i].At));
+                _screenAt.Add(view.WorldToScreen(labels[i].At, labels[i].Height));
                 if (labels[i].Kind == LabelKind.Room) _rooms.Add(i);
             }
             int wanted = (int)MathF.Floor(RoomWorldSize * view.PixelsPerUnit);
@@ -167,7 +170,7 @@ namespace Simpiens.Presentation
                         int size = _roomSize[i];
                         if (size == 0) { Placed.Add(new PlacedLabel(i, false, default, 0, 0, 0, 0)); break; }
                         var font = fonts[FontSet.Bold(size)];
-                        var at = view.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At, label.Height);
                         Emit(i, label, font, Round(at.X - font.Measure(label.Text) * 0.5f), Round(at.Y - font.Base * 0.5f), glyphs);
                         break;
                     }
@@ -176,7 +179,7 @@ namespace Simpiens.Presentation
                         // Under its room's name when the room has one (and it shows), else on its own point
                         int size = MinSize;
                         float top;
-                        var at = view.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At, label.Height);
                         if (_roomAt.TryGetValue(new Vec2Key(label.At), out int room))
                         {
                             int roomSize = _roomSize[room];
@@ -196,7 +199,7 @@ namespace Simpiens.Presentation
                     default:
                     {
                         var font = fonts[FontSet.Bold(NameSize)];
-                        var at = view.WorldToScreen(label.At);
+                        var at = view.WorldToScreen(label.At, label.Height);
                         Emit(i, label, font, Round(at.X - font.Measure(label.Text) * 0.5f), Round(at.Y) - font.LineHeight, glyphs);
                         break;
                     }
@@ -216,8 +219,8 @@ namespace Simpiens.Presentation
                 bool fits = true;
                 for (int k = 1; k < row.Count && fits; k++)
                 {
-                    float left = view.WorldToScreen(labels[row[k - 1]].At).X + font.Measure(labels[row[k - 1]].Text) * 0.5f;
-                    float right = view.WorldToScreen(labels[row[k]].At).X - font.Measure(labels[row[k]].Text) * 0.5f;
+                    float left = view.WorldToScreen(labels[row[k - 1]].At, labels[row[k - 1]].Height).X + font.Measure(labels[row[k - 1]].Text) * 0.5f;
+                    float right = view.WorldToScreen(labels[row[k]].At, labels[row[k]].Height).X - font.Measure(labels[row[k]].Text) * 0.5f;
                     fits = right - left >= Gap;
                 }
                 if (fits) return size;

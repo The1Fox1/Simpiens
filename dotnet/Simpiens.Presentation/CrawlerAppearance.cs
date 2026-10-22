@@ -21,7 +21,7 @@ namespace Simpiens.Presentation
         public PixelSprite Sprite { get; }
         /// <summary>Counter-clockwise, as Unity's z rotation.</summary>
         public float TiltDegrees { get; }
-        /// <summary>Multipliers of the crawler's size (<see cref="WorldScene.CrawlerSize"/>).</summary>
+        /// <summary>Multipliers of the crawler's size (<see cref="TopDownArt.CrawlerSize"/>).</summary>
         public float ScaleX { get; }
         public float ScaleY { get; }
     }

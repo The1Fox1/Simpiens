@@ -15,7 +15,7 @@ namespace Simpiens.Client.Tests
 
         private static void AddCrawler(DrawList list, EntityId id, Vec2 at)
         {
-            float size = WorldScene.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
+            float size = TopDownArt.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
             list.Add(RenderLayer.Crawlers, DrawRole.Crawler, TopDownProjection.Instance.Depth(at), 0, at.X, at.Y, size, size, Rgba32.Clear).Pick = list.Pickable(id);
         }
 
