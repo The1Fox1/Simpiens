@@ -22,6 +22,7 @@ namespace Simpiens.Client
         private ClientGraphics _graphics;
         private object _framedMap;
         private bool _wasFollowing;
+        private EntityId _directed;
 
         public WorldView(ClientSession session)
         {
@@ -75,6 +76,26 @@ namespace Simpiens.Client
         /// <summary>What the controls asked for in the last update (a click, a stop to following).</summary>
         public CameraInputResult LastInput { get; private set; }
 
+        /// <summary>
+        /// The crawler a dynamic scene sent the camera to, or default (M3 design D9). The player keeps control (producer
+        /// P8): their own pan, Home, or following a crawler of their own takes the camera back.
+        /// </summary>
+        public EntityId DirectedAt => _directed;
+
+        /// <summary>Sends the camera after <paramref name="crawler"/> (a dynamic scene's focus), until the player takes it back.</summary>
+        public void DirectCamera(EntityId crawler)
+        {
+            if (crawler != _directed) Rig.ResetFollow();
+            _directed = crawler;
+        }
+
+        public void ReleaseCamera()
+        {
+            if (_directed == default) return;
+            _directed = default;
+            Rig.ResetFollow(); // a follow resumed afterwards starts afresh, without the scene's last target
+        }
+
         /// <summary>The baked fonts' metrics (loaded with the content).</summary>
         public FontLibrary Fonts => _graphics?.Fonts;
 
@@ -111,13 +132,18 @@ namespace Simpiens.Client
                 if (hasInput)
                 {
                     LastInput = Controls.Update(pointer, keys, cameraSeconds, Rig, Rig.ToView(viewportWidth, viewportHeight));
-                    if (LastInput.StopFollowing) selection.StopFollowing();
+                    if (LastInput.StopFollowing)
+                    {
+                        selection.StopFollowing();
+                        ReleaseCamera(); // the player's own pan takes the camera back from a scene
+                    }
                     if (LastInput.Clicked) ClickMap(LastInput.ClickScreen);
                 }
 
                 // The camera follows the selected crawler (Unity did this after the input, in LateUpdate); one that left the world is dropped
                 selection.Update();
-                if (selection.Following && selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, cameraSeconds);
+                if (_directed != default && _session.Frames.TryGetDrawnPosition(_directed, out var directed)) Rig.Follow(directed, cameraSeconds);
+                else if (selection.Following && selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, cameraSeconds);
             }
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
         }
@@ -160,11 +186,18 @@ namespace Simpiens.Client
             _graphics.Renderer.DrawGlyphs(_glyphs, _graphics.FontPages);
         }
 
-        /// <summary>A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion.</summary>
+        /// <summary>
+        /// A newly followed crawler starts the follow afresh, so the camera doesn't carry the last one's motion; the
+        /// player following a crawler of their own takes the camera back from a scene.
+        /// </summary>
         private void OnSelectionChanged()
         {
             var selection = _session.Selection;
-            if (selection.Following && !_wasFollowing) Rig.ResetFollow();
+            if (selection.Following && !_wasFollowing)
+            {
+                Rig.ResetFollow();
+                ReleaseCamera();
+            }
             _wasFollowing = selection.Following;
         }
 

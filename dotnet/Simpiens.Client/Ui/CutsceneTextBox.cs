@@ -18,6 +18,7 @@ namespace Simpiens.Client.Ui
             Root = new ContainerRuntime { Name = name, Visible = false };
             UiParts.AddFill(Root, UiParts.Alpha(UiStyle.Panel, 0.94f), UiStyle.Border);
             var column = UiParts.Column(6f);
+            column.HasEvents = false; // a click lands on the box itself
             column.X = 14f;
             column.Y = 10f;
             column.WidthUnits = DimensionUnitType.RelativeToParent;

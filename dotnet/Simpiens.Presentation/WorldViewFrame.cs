@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using Simpiens.Entities;
+using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
@@ -33,6 +34,8 @@ namespace Simpiens.Presentation
         public bool IsCrawler;
         public AgentVisualState VisualState;
         public CrawlerFlags Flags;
+        /// <summary>A crawler's sector at the end of the tick (for scenes started by entering a zone); -1 for props or with no sectors captured.</summary>
+        public int SectorId;
     }
 
     /// <summary>
@@ -45,6 +48,7 @@ namespace Simpiens.Presentation
         private EntityView[] _entities = new EntityView[128];
         private readonly Dictionary<EntityId, int> _index = new Dictionary<EntityId, int>(128);
         private readonly bool[] _charted = new bool[256];
+        private readonly List<ChronicleEvent> _events = new List<ChronicleEvent>(8);
         private bool _knowsCharting;
 
         /// <summary>The tick the frame was captured at.</summary>
@@ -54,6 +58,12 @@ namespace Simpiens.Presentation
         /// <summary>Bit i set when sector i (ids below 64) is charted, as <see cref="ISectorRegistry.ExploredMask"/>.</summary>
         public ulong ChartedMask { get; private set; }
         public int Count { get; private set; }
+
+        /// <summary>
+        /// What the chronicle recorded during this tick (oldest first): crawlers' interactions with each other among them,
+        /// which start dynamic scenes (M3 design D9). Empty right after a rebuilt world.
+        /// </summary>
+        public IReadOnlyList<ChronicleEvent> Events => _events;
 
         public ref readonly EntityView this[int index] => ref _entities[index];
 
@@ -65,11 +75,16 @@ namespace Simpiens.Presentation
         /// <summary>Whether the sector with this id was charted (false when no charting was captured).</summary>
         public bool IsCharted(int sectorId) => _knowsCharting && sectorId >= 0 && sectorId < _charted.Length && _charted[sectorId];
 
-        /// <summary>Copies <paramref name="entities"/> and the charting of <paramref name="sectors"/> (null: unknown) at <paramref name="tick"/>.</summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch)
+        /// <summary>
+        /// Copies <paramref name="entities"/>, the charting of <paramref name="sectors"/> (null: unknown) and the tick's
+        /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
+        /// </summary>
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null)
         {
             Tick = tick;
             Epoch = epoch;
+            _events.Clear();
+            if (events != null) for (int i = 0; i < events.Count; i++) _events.Add(events[i]);
             _knowsCharting = sectors != null;
             ChartedMask = sectors != null ? sectors.ExploredMask : 0UL;
             Array.Clear(_charted, 0, _charted.Length);
@@ -99,6 +114,7 @@ namespace Simpiens.Presentation
                     IsCrawler = agent != null,
                     VisualState = agent != null ? agent.VisualState : AgentVisualState.Idle,
                     Flags = agent != null ? FlagsOf(agent) : CrawlerFlags.None,
+                    SectorId = agent != null && sectors != null ? sectors.GetSectorAt(entity.Position).Id : -1,
                 };
                 _index[entity.Id] = Count;
                 Count++;
@@ -133,6 +149,16 @@ namespace Simpiens.Presentation
         private IWorldRegistry _registry;
         private ISectorRegistry _sectors;
         private ISimulationClock _clock;
+        private INarrativeChronicleService _chronicle;
+        private ulong _lastEventId;
+        private readonly List<ChronicleEvent> _recent = new List<ChronicleEvent>(64);
+        private readonly List<ChronicleEvent> _newEvents = new List<ChronicleEvent>(8);
+
+        /// <summary>
+        /// Raised after each frame is captured, and once after a rebuilt world's: on the simulation's thread, once per
+        /// tick, so what reacts to it (dynamic scenes' triggers) sees every tick, whatever the frame rate.
+        /// </summary>
+        public event Action<WorldViewFrames> Captured;
 
         /// <summary>The frame of the tick before <see cref="Current"/> (the same frame right after a rebuild).</summary>
         public WorldViewFrame Previous => _previous;
@@ -190,13 +216,14 @@ namespace Simpiens.Presentation
         /// Captures the session's world from now on: after every completed tick, and afresh (a new epoch) on every
         /// respawn, switch or load. Captures once at once.
         /// </summary>
-        public void Follow(SessionHost host, IWorldRegistry registry, ISectorRegistry sectors, ISimulationClock clock)
+        public void Follow(SessionHost host, IWorldRegistry registry, ISectorRegistry sectors, ISimulationClock clock, INarrativeChronicleService chronicle = null)
         {
             Dispose();
             _host = host;
             _registry = registry;
             _sectors = sectors;
             _clock = clock;
+            _chronicle = chronicle;
             if (_host != null)
             {
                 _host.TickCompleted += OnTickCompleted;
@@ -205,21 +232,51 @@ namespace Simpiens.Presentation
             Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0);
         }
 
-        /// <summary>The next frame: <see cref="Current"/> becomes <see cref="Previous"/>.</summary>
+        /// <summary>The next frame: <see cref="Current"/> becomes <see cref="Previous"/>, with the chronicle's new events.</summary>
         public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
+        {
+            CaptureFrame(entities, sectors, tick, TakeNewEvents());
+            Captured?.Invoke(this);
+        }
+
+        /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world (its chronicle's past included).</summary>
+        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
+        {
+            _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
+            _lastEventId = NewestEventId();
+            CaptureFrame(entities, sectors, tick, null);
+            CaptureFrame(entities, sectors, tick, null);
+            Captured?.Invoke(this);
+        }
+
+        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events)
         {
             var next = _previous;
             _previous = _current;
             _current = next;
-            _current.Capture(entities, sectors, tick, _epoch);
+            _current.Capture(entities, sectors, tick, _epoch, events);
         }
 
-        /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world.</summary>
-        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
+        /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>
+        private List<ChronicleEvent> TakeNewEvents()
         {
-            _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
-            Capture(entities, sectors, tick);
-            Capture(entities, sectors, tick);
+            _newEvents.Clear();
+            if (_chronicle == null) return _newEvents;
+            _chronicle.GetAllRecentEvents(_recent, _recent.Capacity);
+            for (int i = _recent.Count - 1; i >= 0; i--)
+            {
+                if (_recent[i].EventId <= _lastEventId) continue;
+                _newEvents.Add(_recent[i]);
+                _lastEventId = _recent[i].EventId;
+            }
+            return _newEvents;
+        }
+
+        private ulong NewestEventId()
+        {
+            if (_chronicle == null) return 0UL;
+            _chronicle.GetAllRecentEvents(_recent, 1);
+            return _recent.Count > 0 ? _recent[0].EventId : 0UL;
         }
 
         private void OnTickCompleted(long tick) => Capture(_registry?.ActiveEntities, _sectors, tick);

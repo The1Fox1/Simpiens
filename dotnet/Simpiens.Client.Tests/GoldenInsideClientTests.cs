@@ -40,6 +40,30 @@ namespace Simpiens.Client.Tests
             AssertMatches(baseline, samples, seed);
         }
 
+        /// <summary>
+        /// Dynamic scenes write nothing (M3 design D9): with the demonstration scenes armed, their triggers firing and the
+        /// scenes playing over the world (the camera directed, bubbles shown), every seed still reproduces the hashes.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(BaselineSeeds))]
+        public void TheGoldenHashesHoldWithDynamicScenesPlaying(ulong seed)
+        {
+            var baseline = GoldenWorldHash.Read(Repo.GoldenBaseline)[seed];
+            var game = Offscreen.Start(new ClientOptions { Seed = seed, TicksPerUpdate = 100, DemoScenes = true }, frames: 0);
+            int started = 0;
+            game.Session.Scenes.Started += _ => started++;
+            var samples = Sample(game.Session.Simulation);
+
+            for (int frames = 0; game.Session.Simulation.Clock.CurrentTick < GoldenWorldHash.HorizonTicks; frames++)
+            {
+                game.RunOneFrame();
+                Assert.True(frames < 100, "the game stopped advancing the clock");
+            }
+
+            Assert.True(started > 0, $"seed {seed}: no demonstration scene started by t{GoldenWorldHash.HorizonTicks}");
+            AssertMatches(baseline, samples, seed);
+        }
+
         [Fact]
         public void RealTimePacingGivesTheSameWorldAsFixedTicks()
         {

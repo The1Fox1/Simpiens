@@ -35,6 +35,12 @@ namespace Simpiens.Client
         /// <summary>The quick-save slot's folder; null: <c>Simpiens/Saves</c> under the user's local application data.</summary>
         public string SaveDirectory { get; set; }
 
+        /// <summary>
+        /// Development builds: the demonstration cutscenes (<see cref="DemoScenes"/>), F9 for the hard one and triggers for
+        /// the dynamic ones. Off in release builds, which have no story content yet (the narrative work).
+        /// </summary>
+        public bool DemoScenes { get; set; }
+
         /// <summary>Extra registrations for the simulation (development builds add the Dev Map; tests add doubles).</summary>
         public System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> ConfigureServices { get; set; }
 

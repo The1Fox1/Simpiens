@@ -3,6 +3,7 @@ using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Cutscenes;
 using Simpiens.Presentation.Dashboard;
 using Simpiens.Simulation;
 
@@ -26,9 +27,13 @@ namespace Simpiens.Client
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
             // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
-            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock);
+            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock,
+                Simulation.Services.GetService(typeof(INarrativeChronicleService)) as INarrativeChronicleService);
 
-            Selection = new WorldSelection(Frames, Simulation.Sectors, Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService);
+            Identity = Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService;
+            Selection = new WorldSelection(Frames, Simulation.Sectors, Identity);
+            Scenes = new SceneDirector(Frames);
+            if (Options.DemoScenes) DemoScenes.AddTo(Scenes);
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
             DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame), Selection);
             Simulation.Host.SessionChanged += OnSessionChanged;
@@ -41,6 +46,12 @@ namespace Simpiens.Client
 
         /// <summary>The world as the views draw it: the last two completed ticks, as plain data (review A3).</summary>
         public WorldViewFrames Frames { get; } = new WorldViewFrames();
+
+        /// <summary>Crawlers' names.</summary>
+        public IAgentIdentityService Identity { get; }
+
+        /// <summary>What starts dynamic scenes over the world, and the one playing (M3 design D9).</summary>
+        public SceneDirector Scenes { get; }
 
         /// <summary>The player's selection: a crawler (followed or not) and a sector.</summary>
         public WorldSelection Selection { get; }

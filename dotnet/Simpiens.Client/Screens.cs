@@ -73,12 +73,20 @@ namespace Simpiens.Client
         /// <summary>The dashboard's views (built with the UI, in <see cref="LoadContent"/>).</summary>
         public DashboardView Dashboard { get; private set; }
 
+        /// <summary>Dynamic scenes over the world: their speech bubbles and box (M3 design D9).</summary>
+        public DynamicSceneView Scenes { get; private set; }
+
         public bool Covers => true;
 
         public bool AdvancesWorld => true;
 
         /// <summary>Builds the dashboard's views, once the UI layer is up.</summary>
-        public void LoadContent() => Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds);
+        public void LoadContent()
+        {
+            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds);
+            Scenes = new DynamicSceneView(_game);
+            Scenes.LoadContent();
+        }
 
         public void Update(float seconds, float cameraSeconds, bool active)
         {
@@ -92,6 +100,11 @@ namespace Simpiens.Client
                 if (ui.HasKeyboardFocus) keys = default;
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();
                 if (keys.ViewTogglePressed) _game.World.ToggleView();
+                if (keys.DemoCutscenePressed && _game.Options.DemoScenes)
+                {
+                    _game.PlayCutscene(DemoScenes.Arrival);
+                    return;
+                }
                 if (ui.IsOwner && Dashboard != null)
                 {
                     if (keys.TabPressed) Dashboard.TogglePanels();
@@ -101,6 +114,7 @@ namespace Simpiens.Client
 
             var viewport = _game.GraphicsDevice.Viewport;
             _game.World.Update(cameraSeconds, viewport.Width, viewport.Height, pointer, keys, active);
+            if (ui.IsOwner) Scenes?.Update(seconds, cameraSeconds, keys);
             if (ui.IsOwner) Dashboard?.Update(seconds);
         }
 

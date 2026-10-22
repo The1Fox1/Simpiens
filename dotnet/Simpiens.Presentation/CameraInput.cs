@@ -30,6 +30,8 @@ namespace Simpiens.Presentation
         public bool ViewTogglePressed;
         /// <summary>Space or Enter this frame: a cutscene's next line (M3 design D9).</summary>
         public bool AdvancePressed;
+        /// <summary>F9 this frame: development builds play the demonstration hard cutscene.</summary>
+        public bool DemoCutscenePressed;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>
