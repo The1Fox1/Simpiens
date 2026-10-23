@@ -115,8 +115,10 @@ Current Focus (engine): EPIC 10 PART 1, THE GUILD AND ITS EXPEDITIONS (Milestone
 (docs/epics/epic-10.md; producer approved every default of the Claude Doc draft). G0 (a day that holds on every seed,
 Epic CORE F2) DONE 2026-10-23 on feat/epic10-g0 (88265d8..; 23/23 gate seeds, dotnet test 347/347, Unity PlayMode
 69/69; PR #7 into main). G1 DRIFTERS DONE 2026-10-23 on feat/epic10-g1 (245da04..; stacked on G0; dotnet test
-352/352, Unity PlayMode 69/69, soak 9/9 both runtimes; PR is the producer's); next G2 health and hazards (producer looks), G2 health and hazards, G3 gear, G4 the guild, G5
-expeditions, G6 the gate. One PR per milestone. Live DoD headless in dotnet test (ROADMAP §1B since 2026-10-23).
+352/352, Unity PlayMode 69/69, soak 9/9 both runtimes; PR #8, stacked on #7). G2 HEALTH AND HAZARDS DONE 2026-10-23 on
+feat/epic10-g2 (a6470ea..; stacked on G1; dotnet test 355/355, Unity PlayMode 69/69, soak 9/9 identical in both
+runtimes; fair band re-set to 1,000-2,200g, to confirm); PRODUCER LOOKS AT G2 (danger on screen) before G3 gear, G4 the
+guild, G5 expeditions, G6 the gate. One PR per milestone. Live DoD headless in dotnet test (ROADMAP §1B since 2026-10-23).
 Epic CLIENT PAUSED 2026-10-23 (merged as PR #6). Epic CORE COMPLETED and merged (PR #5).
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Part 1 The Guild and Its Expeditions [ACTIVE 2026-10-23]; Parts 2 (workshops), 3 (descent) [QUEUED]
