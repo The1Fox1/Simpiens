@@ -102,6 +102,7 @@ namespace Simpiens.Client
                 if (ui.HasKeyboardFocus) keys = default;
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();
                 if (keys.ViewTogglePressed) _game.World.ToggleView();
+                if (keys.TimingsPressed) _game.TimingsOverlay?.Toggle();
                 if (keys.DemoCutscenePressed && _game.Options.DemoScenes)
                 {
                     _game.PlayCutscene(DemoScenes.Arrival);

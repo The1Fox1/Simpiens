@@ -32,6 +32,8 @@ namespace Simpiens.Presentation
         public bool AdvancePressed;
         /// <summary>F9 this frame: development builds play the demonstration hard cutscene.</summary>
         public bool DemoCutscenePressed;
+        /// <summary>F3 this frame: development builds show or hide the frame's timings.</summary>
+        public bool TimingsPressed;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>

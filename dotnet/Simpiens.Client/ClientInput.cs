@@ -48,6 +48,7 @@ namespace Simpiens.Client
                 WallStylePressed = kb.IsKeyDown(Keys.C) && !_previousKeys.IsKeyDown(Keys.C),
                 ViewTogglePressed = kb.IsKeyDown(Keys.V) && !_previousKeys.IsKeyDown(Keys.V),
                 DemoCutscenePressed = kb.IsKeyDown(Keys.F9) && !_previousKeys.IsKeyDown(Keys.F9),
+                TimingsPressed = kb.IsKeyDown(Keys.F3) && !_previousKeys.IsKeyDown(Keys.F3),
                 AdvancePressed = (kb.IsKeyDown(Keys.Space) && !_previousKeys.IsKeyDown(Keys.Space)) || (kb.IsKeyDown(Keys.Enter) && !_previousKeys.IsKeyDown(Keys.Enter)),
             };
             _previousKeys = kb;

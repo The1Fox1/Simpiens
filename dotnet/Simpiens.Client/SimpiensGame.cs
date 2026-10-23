@@ -48,12 +48,12 @@ namespace Simpiens.Client
             Screens.Clear();
             World.Dispose();
             Session.Dispose();
+            Timings.Clear(); // a new game's frames
             Compose(options ?? new ClientOptions());
             if (Graphics == null) return; // the content isn't loaded yet: LoadContent does the rest
             _graphics.ApplyChanges();
             World.LoadContent(Graphics);
-            Ui.Initialize();
-            Play.LoadContent();
+            InitializeUi();
         }
 
         public ClientOptions Options { get; private set; }
@@ -75,6 +75,12 @@ namespace Simpiens.Client
 
         /// <summary>What the screens draw with (made in LoadContent).</summary>
         public ClientGraphics Graphics { get; private set; }
+
+        /// <summary>How long each part of a frame takes, over the last few seconds (review D1).</summary>
+        public FrameTimings Timings { get; } = new FrameTimings();
+
+        /// <summary>The timings in a corner, in development builds (F3); null without <see cref="ClientOptions.TimingsOverlay"/>.</summary>
+        public TimingsOverlay TimingsOverlay { get; private set; }
 
         /// <summary>Where the pointer and keys come from while the window has focus: the devices, or a script in tests.</summary>
         public IClientInputSource Input { get; set; } = new ClientInput();
@@ -116,8 +122,15 @@ namespace Simpiens.Client
         {
             Graphics = new ClientGraphics(GraphicsDevice);
             World.LoadContent(Graphics);
+            InitializeUi();
+        }
+
+        /// <summary>Starts the UI afresh: Gum, then what lives in it (the dashboard, the timings).</summary>
+        private void InitializeUi()
+        {
             Ui.Initialize();
             Play.LoadContent();
+            TimingsOverlay = Options.TimingsOverlay ? new TimingsOverlay(Ui, Timings) : null;
         }
 
         protected override void Update(GameTime gameTime)
@@ -125,13 +138,20 @@ namespace Simpiens.Client
             // KNI can report a slightly negative frame time (seen offscreen, epic F5): time never runs backwards here
             var elapsed = gameTime.ElapsedGameTime < System.TimeSpan.Zero ? System.TimeSpan.Zero : gameTime.ElapsedGameTime;
             float seconds = (float)elapsed.TotalSeconds;
+            long start = FrameTimings.Start();
             Session.Update(elapsed, Screens.WorldAdvances);
+            Timings.Add(FramePhase.Tick, start);
             // The camera's time: real time in the game; with the tick-based view clock (tests, captures), view time
             float view = Session.ViewSeconds;
             float cameraSeconds = Options.ViewClockFromTicks ? System.Math.Max(0f, view - _lastViewSeconds) : seconds;
             _lastViewSeconds = view;
+            start = FrameTimings.Start();
             Ui.Update(gameTime); // first, so the screens know what is under UI this frame
+            Timings.Add(FramePhase.UiUpdate, start);
+            start = FrameTimings.Start();
             Screens.Update(seconds, cameraSeconds, IsActive);
+            Timings.Add(FramePhase.ScreenUpdate, start);
+            TimingsOverlay?.Update(seconds);
             base.Update(gameTime);
         }
 
@@ -151,14 +171,19 @@ namespace Simpiens.Client
         {
             var viewport = GraphicsDevice.Viewport;
             DrawFrame(viewport.Width, viewport.Height);
+            Timings.EndFrame();
             base.Draw(gameTime);
         }
 
         /// <summary>Draws the whole frame, the screens and then the UI over them, into the bound render target (the back buffer, or a capture).</summary>
         public void DrawFrame(int width, int height)
         {
+            long start = FrameTimings.Start();
             Screens.Draw(width, height);
+            Timings.Add(FramePhase.ScreenDraw, start);
+            start = FrameTimings.Start();
             Ui.Draw();
+            Timings.Add(FramePhase.UiDraw, start);
         }
 
         /// <summary>Draws the map alone into the bound render target (the map's render references).</summary>

@@ -49,8 +49,9 @@ more (AGENTS.md, Logging).";
 
 #if DEBUG
             // Development builds offer the Dev Map (the canary pens) through the session switch, as Unity's editor did,
-            // and the demonstration cutscenes (F9, and dynamic scenes over play)
+            // the demonstration cutscenes (F9, and dynamic scenes over play) and the frame's timings (F3)
             options.DemoScenes = true;
+            options.TimingsOverlay = true;
             options.ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Simpiens.Core.Session.ISessionDefinition>(services, new Simpiens.Testing.Sessions.CanaryPenSession());
 #endif
             ConsoleSimLogSink.Install();

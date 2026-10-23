@@ -22,6 +22,7 @@ namespace Simpiens.Client.Tests
             game.RunOneFrame();
             game.Play.Dashboard.TogglePanels(); // the map, with the header over it (the game starts on the panels, as Unity did)
             for (int i = 0; i < 300; i++) game.RunOneFrame(); // warm up, a crowd on the move
+            game.Timings.Clear();
             const int frames = 300;
             var watch = Stopwatch.StartNew();
             for (int i = 0; i < frames; i++)
@@ -32,6 +33,7 @@ namespace Simpiens.Client.Tests
             watch.Stop();
             double ms = watch.Elapsed.TotalMilliseconds / frames;
             TestContext.Current.TestOutputHelper.WriteLine($"{view}: {ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 800x600 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, {game.World.Scene.Items.Count} draw items, tick {game.Session.Simulation.Clock.CurrentTick}");
+            WritePhases(game.Timings);
             Assert.True(ms > 0);
         }
 
@@ -44,6 +46,7 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 1 }, frames: 0, width: 1280, height: 720);
             game.Options.DashboardRefreshSeconds = 0f;
             for (int i = 0; i < 300; i++) game.RunOneFrame();
+            game.Timings.Clear();
             var crawler = System.Linq.Enumerable.First(game.Session.Simulation.Registry.ActiveEntities, e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
             if (panels) game.Session.DashboardModel.SelectCrawler(crawler.Id);
             else
@@ -61,7 +64,19 @@ namespace Simpiens.Client.Tests
             watch.Stop();
             double ms = watch.Elapsed.TotalMilliseconds / frames;
             TestContext.Current.TestOutputHelper.WriteLine($"{(panels ? "panels with a dossier" : "bounty board over the map")}: {ms:F2} ms a frame ({1000.0 / ms:F0} fps) at 1280x720 on {Microsoft.Xna.Framework.Graphics.GraphicsAdapter.DefaultAdapter.Description}, the dashboard refreshed every frame, tick {game.Session.Simulation.Clock.CurrentTick}");
+            WritePhases(game.Timings);
             Assert.True(ms > 0);
+        }
+
+        /// <summary>Where the time went (review D1): each phase's mean and 99th percentile on the CPU, and the whole frame's.</summary>
+        private static void WritePhases(FrameTimings timings)
+        {
+            var output = TestContext.Current.TestOutputHelper;
+            foreach (FramePhase phase in System.Enum.GetValues(typeof(FramePhase)))
+            {
+                output.WriteLine($"  {phase,-12} mean {timings.Mean(phase):F3} ms, p99 {timings.Percentile(phase, 99):F3} ms");
+            }
+            output.WriteLine($"  {"frame (CPU)",-12} mean {timings.MeanFrame:F3} ms, p99 {timings.FramePercentile(99):F3} ms over {timings.Frames} frames");
         }
     }
 }

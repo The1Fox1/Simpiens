@@ -41,6 +41,9 @@ namespace Simpiens.Client
         /// </summary>
         public bool DemoScenes { get; set; }
 
+        /// <summary>Development builds: F3 shows the frame's timings by phase in a corner (review D1).</summary>
+        public bool TimingsOverlay { get; set; }
+
         /// <summary>Extra registrations for the simulation (development builds add the Dev Map; tests add doubles).</summary>
         public System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> ConfigureServices { get; set; }
 
