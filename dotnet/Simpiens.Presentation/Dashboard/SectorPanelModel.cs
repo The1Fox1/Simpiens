@@ -37,13 +37,13 @@ namespace Simpiens.Presentation.Dashboard
         public readonly string Badge;
         public readonly bool Selected;
 
-        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected)
+        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected, bool downed = false)
         {
             CrawlerId = crawlerId;
             Name = name;
             Activity = activity;
             State = state;
-            Badge = state.ToString().ToUpperInvariant();
+            Badge = downed ? DossierModel.DownedBadge : state.ToString().ToUpperInvariant();
             Selected = selected;
         }
     }
@@ -114,7 +114,7 @@ namespace Simpiens.Presentation.Dashboard
                 if (node == null) continue;
                 var agent = node.Agent;
                 var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
-                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler));
+                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned));
             }
 
             _events.Clear();

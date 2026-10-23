@@ -115,6 +115,32 @@ namespace Simpiens.Core.Tests
             Assert.True(watch.DriftersLeft >= 1, "No drifter left after the load.");
         }
 
+        /// <summary>
+        /// Danger (Epic 10 G2's Definition of Done): on the real outpost, with nothing injected, a bold crawler goes into a
+        /// hazard sector on its own for its glowstone, is hurt, comes out and recovers (in the bunks, sooner with a herb:
+        /// herbs are eaten); no cautious crawler sets foot in one; the caravan buys the glowstone at its premium.
+        /// </summary>
+        [Fact]
+        public void TheBoldBraveTheHazardsAndHealAndTheCautiousStayOut()
+        {
+            using var sim = Outpost();
+            var watch = new OutpostWatch(sim);
+            watch.Run(9000);
+            watch.Finish();
+            TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
+
+            var bold = watch.Crawlers.Where(c => c.State.Personality.RiskTolerance >= Simpiens.Cognition.Vitality.VentureRiskTolerance).ToList();
+            var cautious = watch.Crawlers.Where(c => c.State.Personality.RiskTolerance < Simpiens.Cognition.Vitality.VentureRiskTolerance).ToList();
+            Assert.NotEmpty(bold);
+            Assert.Contains(bold, c => c.State.Activity.HazardTicks > 0 && c.LowestHealth < OutpostWatch.HurtBelow && c.HurtThenRecovered);
+            Assert.True(watch.Crawlers.Sum(c => c.State.Activity.HerbsEaten) > 0, "Nobody ate a herb to heal.");
+            Assert.Empty(cautious.Where(c => c.State.Activity.HazardTicks > 0).Select(c => c.Name));
+            Assert.True(sim.Simulation.EconomyLedger.GetFaucetTotal("CaravanSalvageSales") > 0);
+            Assert.Contains(sim.Host.CrawlerStates, s => s.Activity.SalvageSales > 0);
+            var failures = watch.DayFailures();
+            Assert.True(failures.Count == 0, "The day failed:\n  " + string.Join("\n  ", failures));
+        }
+
         /// <summary>The Milestone 1 supply loop: sale, scout, gather, restock and regrowth by their deadlines.</summary>
         [Fact]
         public void TheSupplyLoopEmergesWithoutInjection()

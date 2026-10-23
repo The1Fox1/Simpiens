@@ -739,9 +739,10 @@ namespace Simpiens.Simulation
                     cmd.RationSellPrice > 0 ? cmd.RationSellPrice : stall.RationSellPrice,
                     cmd.OreBuyPrice > 0 ? cmd.OreBuyPrice : stall.OreBuyPrice,
                     cmd.HerbBuyPrice > 0 ? cmd.HerbBuyPrice : stall.HerbBuyPrice);
+                if (cmd.GlowstoneBuyPrice > 0) _stalls[targetStallId] = _stalls[targetStallId].WithGlowstone(cmd.GlowstoneBuyPrice, stall.GlowstoneStock);
                 UpdateActiveStallsBuffer();
                 var updated = _stalls[targetStallId];
-                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: ration {updated.RationSellPrice}g, ore {updated.OreBuyPrice}g, herb {updated.HerbBuyPrice}g");
+                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: ration {updated.RationSellPrice}g, ore {updated.OreBuyPrice}g, herb {updated.HerbBuyPrice}g, glowstone {updated.GlowstoneBuyPrice}g");
             }
         }
 
@@ -1462,7 +1463,7 @@ namespace Simpiens.Simulation
 
             // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
-            float step = speed * FixedTickDeltaTime;
+            float step = (float)(speed * FixedTickDeltaTime);
             if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)) && !TryStep(node, targetPos, step, SidestepTurns))
             {
                 currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
@@ -1571,9 +1572,10 @@ namespace Simpiens.Simulation
                 return IntentResult.InProgress;
             }
 
-            // 3. Move the pawn visually and logically, keeping clear of walls and other pawns
+            // 3. Move the pawn visually and logically, keeping clear of walls and other pawns; a downed crawler limps
             float speed = node != null ? node.BaseSpeed : 2f;
-            float step = speed * FixedTickDeltaTime;
+            if (node?.Agent != null && node.Agent.IsDowned) speed = (float)(speed * Vitality.DownedSpeedFactor);
+            float step = (float)(speed * FixedTickDeltaTime);
             Vec2 candidate = Vec2.MoveTowards(node.Position, targetPos, step);
             if (IsCrowdedMove(node, candidate))
             {
@@ -1737,8 +1739,9 @@ namespace Simpiens.Simulation
             var snapshot = _spatialPartition.GetActiveSnapshot();
             if (snapshot == null) return false;
 
-            int cellX = SimMath.FloorToInt((targetPos.X + snapshot.Width * snapshot.CellSize * 0.5f) / snapshot.CellSize);
-            int cellY = SimMath.FloorToInt((targetPos.Y + snapshot.Height * snapshot.CellSize * 0.5f) / snapshot.CellSize);
+            // Cast at each step: Mono keeps a scalar chain at double precision, CoreCLR rounds each step (Epic CORE F1)
+            int cellX = SimMath.FloorToInt((float)((float)(targetPos.X + (float)(snapshot.Width * snapshot.CellSize * 0.5f)) / snapshot.CellSize));
+            int cellY = SimMath.FloorToInt((float)((float)(targetPos.Y + (float)(snapshot.Height * snapshot.CellSize * 0.5f)) / snapshot.CellSize));
 
             if (cellX < 0 || cellX >= snapshot.Width || cellY < 0 || cellY >= snapshot.Height) return true; // Out of bounds
 
@@ -1790,6 +1793,10 @@ namespace Simpiens.Simulation
             else if (intent is LeaveOutpostIntent loi)
             {
                 loi.Path?.ReturnToPool();
+            }
+            else if (intent is RetreatIntent ri)
+            {
+                ri.Path?.ReturnToPool();
             }
 
             if (_consequenceService != null && _agentRegistry != null && _agentRegistry.TryGetAgent(intent.AgentId, out var agentState))

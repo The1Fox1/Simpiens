@@ -30,7 +30,7 @@ namespace Simpiens.Cognition.Planning.Actions
         /// </summary>
         public override bool IsValid(AgentContext context)
         {
-            bool holdsSalvage = ResourceTargeting.HoldsSellable(context, ItemType.IronOre) || ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb);
+            bool holdsSalvage = ResourceTargeting.HoldsAnySellable(context);
             if (!holdsSalvage) return ResourceTargeting.NearestStallCanBuySalvage(context);
 
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
@@ -92,6 +92,10 @@ namespace Simpiens.Cognition.Planning.Actions
                 else if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
                 {
                     salvageType = ItemType.MedicinalHerb;
+                }
+                else if (ResourceTargeting.HoldsSellable(context, ItemType.Glowstone))
+                {
+                    salvageType = ItemType.Glowstone;
                 }
                 else
                 {

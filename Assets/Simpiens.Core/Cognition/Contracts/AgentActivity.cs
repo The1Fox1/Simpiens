@@ -27,6 +27,12 @@ namespace Simpiens.Cognition.Contracts
 
         private bool _harvestedSinceSale;
 
+        /// <summary>Danger (Epic 10 G2): ticks spent in a hazard sector, times downed, herbs eaten for health.</summary>
+        public int HazardTicks;
+        public int TimesDowned;
+        public int HerbsEaten;
+        public int Retreats;
+
         public static AgentActivity Empty => new AgentActivity
         {
             FirstHarvestTick = -1,
@@ -85,6 +91,7 @@ namespace Simpiens.Cognition.Contracts
 
         public override string ToString() =>
             $"harvests {SalvageHarvests}, sales {SalvageSales}, deliveries {BountyDeliveries}, cycles {Cycles} (first t{FirstCycleTick}), " +
-            $"purchases {RationPurchases}, meals {Meals} (first t{FirstMealTick}), sleeps {BunkSleeps}, hearth {HearthGatherings}";
+            $"purchases {RationPurchases}, meals {Meals} (first t{FirstMealTick}), sleeps {BunkSleeps}, hearth {HearthGatherings}" +
+            (HazardTicks > 0 || TimesDowned > 0 || HerbsEaten > 0 ? $", hazard {HazardTicks / 10}s, retreats {Retreats}, downed {TimesDowned}, herbs {HerbsEaten}" : string.Empty);
     }
 }

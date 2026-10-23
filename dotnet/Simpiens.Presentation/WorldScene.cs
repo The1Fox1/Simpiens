@@ -114,6 +114,7 @@ namespace Simpiens.Presentation
                 AddRoomNames(map);
                 Fog.Draw(Items, viewSeconds, Projection);
                 Fog.AddLabels(Labels, viewSeconds);
+                AddHazardNotes(map);
             }
 
             if (frame != null)
@@ -208,6 +209,36 @@ namespace Simpiens.Presentation
         /// the sector it stands in (the first that contains it, in map order), which pairs it with that sector's
         /// "UNCHARTED".
         /// </summary>
+        /// <summary>The red a hazard sector's danger is written in.</summary>
+        public static readonly Rgba HazardColor = new Rgba(0.98f, 0.45f, 0.40f, 1f);
+
+        /// <summary>What a hazard sector's note says (Epic 10 G2).</summary>
+        public static string HazardText(HazardKind kind) => kind switch
+        {
+            HazardKind.FoulAir => "FOUL AIR",
+            HazardKind.FallingRock => "FALLING ROCK",
+            _ => "DANGER",
+        };
+
+        /// <summary>
+        /// Each hazard sector's danger under its room's name; none while the fog covers the sector, whose "UNCHARTED"
+        /// takes that line (the fog hides what an uncharted sector holds).
+        /// </summary>
+        private void AddHazardNotes(MapDefinition map)
+        {
+            for (int s = 0; s < map.Sectors.Count; s++)
+            {
+                var sector = map.Sectors[s];
+                if (!sector.Hazard.IsHazardous || Fog.Covers(sector.Id)) continue;
+                var at = sector.Bounds.Center;
+                for (int i = 0; i < map.Labels.Count; i++)
+                {
+                    if (sector.Contains(map.Labels[i].Position)) { at = map.Labels[i].Position; break; }
+                }
+                Labels.Add(new WorldLabel(HazardText(sector.Hazard.Kind), at, LabelKind.Hazard, Rgba32.From(HazardColor), sectorId: sector.Id));
+            }
+        }
+
         private void AddRoomNames(MapDefinition map)
         {
             if (!ReferenceEquals(_labelSectorsMap, map))

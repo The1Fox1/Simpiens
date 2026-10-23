@@ -46,7 +46,23 @@ namespace Simpiens.Hosting
             public long HungrySince = -1;
             public long LongestHungry, LongestHungryFrom = -1;
             public bool Starved;
+
+            /// <summary>Danger (Epic 10 G2): the lowest health seen, and whether it came back to full after being hurt.</summary>
+            public float LowestHealth = 100f;
+            public bool HurtThenRecovered;
+            private bool _hurt;
+
+            internal void ObserveHealth(float health)
+            {
+                if (health < LowestHealth) LowestHealth = health;
+                if (health < HurtBelow) _hurt = true;
+                else if (_hurt && health >= RecoveredAt) HurtThenRecovered = true;
+            }
         }
+
+        /// <summary>A crawler under this health counts as hurt; back at RecoveredAt it has recovered (Epic 10 G2).</summary>
+        public const float HurtBelow = 70f;
+        public const float RecoveredAt = 80f;
 
         // Per pawn, residents and drifters alike: Unity's detector watches every pawn
         private sealed class StackingClock
@@ -147,6 +163,7 @@ namespace Simpiens.Hosting
             for (int i = 0; i < Crawlers.Count; i++)
             {
                 var c = Crawlers[i];
+                c.ObserveHealth(c.State.Health);
                 float hunger = c.State.Hunger;
                 if (hunger > c.PeakHunger) c.PeakHunger = hunger;
                 if (hunger >= StarvingHunger)
@@ -285,7 +302,7 @@ namespace Simpiens.Hosting
             sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); stacking {Stackings}{(FirstStacking != null ? $" (first {FirstStacking})" : "")}");
             foreach (var c in Crawlers)
             {
-                sb.AppendLine($"  {c.Name}: {c.State.Activity}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");
+                sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");
             }
             return sb.ToString();
         }

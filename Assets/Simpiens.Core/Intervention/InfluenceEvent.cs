@@ -64,8 +64,12 @@ namespace Simpiens.Intervention
         public readonly ushort OreBuyPrice;
         public readonly ushort HerbBuyPrice;
 
-        public UpdateStallPricesCommand(EntityId stallId, ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice)
+        /// <summary>What the stall pays for glowstone (Epic 10 G2); 0 keeps the current price, as for the others.</summary>
+        public readonly ushort GlowstoneBuyPrice;
+
+        public UpdateStallPricesCommand(EntityId stallId, ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice, ushort glowstoneBuyPrice = 0)
         {
+            GlowstoneBuyPrice = glowstoneBuyPrice;
             StallId = stallId;
             RationSellPrice = rationSellPrice;
             OreBuyPrice = oreBuyPrice;

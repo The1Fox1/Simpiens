@@ -30,7 +30,9 @@ namespace Simpiens.Narrative
         ResourceRegrown = 20,
         UpkeepUnpaid = 21,
         DrifterArrived = 22,
-        DrifterLeft = 23
+        DrifterLeft = 23,
+        CrawlerDowned = 24,
+        CrawlerRecovered = 25
     }
 
     /// <summary>

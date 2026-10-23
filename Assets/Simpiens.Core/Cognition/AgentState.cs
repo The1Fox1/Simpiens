@@ -123,6 +123,12 @@ namespace Simpiens.Cognition
 
         public bool IsDrifter => DepartsAtTick > 0;
 
+        /// <summary>Health, 0 to 100 (Epic 10 G2): hazard sectors take it, bunks and herbs give it back. Saved.</summary>
+        public float Health { get; set; } = Vitality.MaxHealth;
+
+        /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
+        public bool IsDowned { get; set; }
+
         /// <summary>
         /// Set on the main thread when the crawler walks out by the Road Gate; the session host removes it at the end of
         /// the tick. Never saved: a save is captured between ticks, after the removal.
@@ -209,7 +215,9 @@ namespace Simpiens.Cognition
             }
 
             // Biological drive decay
-            float hunger = SimMath.Min(100f, Needs.Hunger + dt * 1.5f);
+            // Every step cast to float: Unity's Mono keeps a scalar chain's intermediates at double precision, CoreCLR
+            // doesn't, and needs compared against thresholds then parted the golden seeds (Epic CORE F1, Epic 10 G2)
+            float hunger = SimMath.Min(100f, (float)(Needs.Hunger + (float)(dt * 1.5f)));
             float energy = Needs.Energy;
 
             bool inBunk = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.SleepAtBunkAction;
@@ -217,7 +225,7 @@ namespace Simpiens.Cognition
             {
                 // A bunk restores energy faster than resting where you stand (Epic MAP Phase 3 rest anchor)
                 float rate = inBunk && !IsExhaustionCollapsed ? Simpiens.Cognition.Planning.Considerations.BunkRecoveryPerSecond : 15f;
-                energy = SimMath.Min(100f, energy + dt * rate);
+                energy = SimMath.Min(100f, (float)(energy + (float)(dt * rate)));
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
                     SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} recovered from exhaustion collapse (energy {energy:F0})");
@@ -227,16 +235,26 @@ namespace Simpiens.Cognition
             }
             else if (VisualState == AgentVisualState.Walking)
             {
-                energy = SimMath.Max(0f, energy - dt * 1.0f);
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 1.0f)));
             }
             else
             {
-                energy = SimMath.Max(0f, energy - dt * 0.2f);
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 0.2f)));
             }
 
-            float social = SimMath.Max(0f, Needs.Social - dt * 0.5f);
+            // Health (Epic 10 G2): heals slowly anywhere, fast asleep in a bunk; a downed crawler gets up at RecoveredAt.
+            // Hazard damage is the runtime's (it knows the map)
+            bool sleepingInBunk = inBunk || CurrentIntent is SleepAtBunkIntent;
+            Health = SimMath.Min(Vitality.MaxHealth, (float)(Health + (float)(dt * (sleepingInBunk ? Vitality.BunkHealPerSecond : Vitality.RestingHealPerSecond))));
+            if (IsDowned && Health >= Vitality.RecoveredAt)
+            {
+                IsDowned = false;
+                SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} is back on its feet (health {Health:F0})");
+            }
+
+            float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * 0.5f)));
             Needs = new AgentNeeds(hunger, energy, social);
-            Frustration = SimMath.Max(0f, Frustration - dt * 1f);
+            Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * 1f)));
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;
@@ -384,7 +402,9 @@ namespace Simpiens.Cognition
                 ScoutReportBountyId = ScoutReportBountyId,
                 IsExhaustionCollapsed = IsExhaustionCollapsed,
                 CanBuyFoodAtStall = CanBuyFoodAtStall,
-                DepartsAtTick = DepartsAtTick
+                DepartsAtTick = DepartsAtTick,
+                Health = Health,
+                IsDowned = IsDowned
             };
         }
 
@@ -422,6 +442,8 @@ namespace Simpiens.Cognition
             IsExhaustionCollapsed = record.IsExhaustionCollapsed;
             CanBuyFoodAtStall = record.CanBuyFoodAtStall;
             DepartsAtTick = record.DepartsAtTick;
+            Health = record.Health;
+            IsDowned = record.IsDowned;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -451,7 +473,9 @@ namespace Simpiens.Cognition
                 inventorySnapshot,
                 ScoutReportBountyId,
                 Personality,
-                DepartsAtTick);
+                DepartsAtTick,
+                Health,
+                IsDowned);
         }
     }
 }

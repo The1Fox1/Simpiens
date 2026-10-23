@@ -10,7 +10,9 @@ namespace Simpiens.Cognition.Pathfinding
         public int ParentIndex;
         public float GCost;
         public float HCost;
-        public float FCost => GCost + HCost;
+        // Rounded to float: Unity's Mono keeps the sum at double precision, and two nodes that tie in float then ordered
+        // differently, so equal-cost routes parted the runtimes' golden seeds (Epic CORE F1, Epic 10 G2)
+        public float FCost => (float)(GCost + HCost);
     }
 
     /// <summary>
@@ -65,10 +67,11 @@ namespace Simpiens.Cognition.Pathfinding
             float offsetY = (snapshot.Height * snapshot.CellSize) * 0.5f;
             float cellSize = snapshot.CellSize;
 
-            int startX = SimMath.FloorToInt((request.StartPosition.X + offsetX) / cellSize);
-            int startY = SimMath.FloorToInt((request.StartPosition.Y + offsetY) / cellSize);
-            int targetX = SimMath.FloorToInt((request.TargetPosition.X + offsetX) / cellSize);
-            int targetY = SimMath.FloorToInt((request.TargetPosition.Y + offsetY) / cellSize);
+            // Every float step below is cast: Mono keeps a scalar chain at double precision, CoreCLR rounds each step (F1)
+            int startX = SimMath.FloorToInt((float)((float)(request.StartPosition.X + offsetX) / cellSize));
+            int startY = SimMath.FloorToInt((float)((float)(request.StartPosition.Y + offsetY) / cellSize));
+            int targetX = SimMath.FloorToInt((float)((float)(request.TargetPosition.X + offsetX) / cellSize));
+            int targetY = SimMath.FloorToInt((float)((float)(request.TargetPosition.Y + offsetY) / cellSize));
 
             // Clamp / In-Bounds Validation
             if (startX < 0 || startX >= snapshot.Width || startY < 0 || startY >= snapshot.Height)
@@ -184,8 +187,8 @@ namespace Simpiens.Cognition.Pathfinding
                         }
                     }
 
-                    float stepCost = StepCosts[d] * cellSize;
-                    float tentativeG = current.GCost + stepCost;
+                    float stepCost = (float)(StepCosts[d] * cellSize);
+                    float tentativeG = (float)(current.GCost + stepCost);
 
                     bool alreadyVisited = (_cellIteration[nCellIdx] == _currentIteration);
                     if (alreadyVisited)
@@ -227,8 +230,8 @@ namespace Simpiens.Cognition.Pathfinding
             int curr = goalNodeIdx;
             while (curr != -1 && rawLength < MaxPathLength)
             {
-                float wx = (_nodePool[curr].X + 0.5f) * cellSize - offsetX;
-                float wy = (_nodePool[curr].Y + 0.5f) * cellSize - offsetY;
+                float wx = (float)((float)((float)(_nodePool[curr].X + 0.5f) * cellSize) - offsetX);
+                float wy = (float)((float)((float)(_nodePool[curr].Y + 0.5f) * cellSize) - offsetY);
                 _rawWaypoints[rawLength++] = new Vec2(wx, wy);
                 curr = _nodePool[curr].ParentIndex;
             }
@@ -271,10 +274,10 @@ namespace Simpiens.Cognition.Pathfinding
 
         private static Vec2 ClosestPointInCell(Vec2 point, int cellX, int cellY, float cellSize, float offsetX, float offsetY)
         {
-            float minX = cellX * cellSize - offsetX + CellInset;
-            float minY = cellY * cellSize - offsetY + CellInset;
-            float maxX = (cellX + 1) * cellSize - offsetX - CellInset;
-            float maxY = (cellY + 1) * cellSize - offsetY - CellInset;
+            float minX = (float)((float)((float)(cellX * cellSize) - offsetX) + CellInset);
+            float minY = (float)((float)((float)(cellY * cellSize) - offsetY) + CellInset);
+            float maxX = (float)((float)((float)((cellX + 1) * cellSize) - offsetX) - CellInset);
+            float maxY = (float)((float)((float)((cellY + 1) * cellSize) - offsetY) - CellInset);
             return new Vec2(SimMath.Clamp(point.X, minX, maxX), SimMath.Clamp(point.Y, minY, maxY));
         }
 
@@ -378,7 +381,7 @@ namespace Simpiens.Cognition.Pathfinding
             int dy = Math.Abs(y1 - y2);
             int min = dx < dy ? dx : dy;
             int max = dx > dy ? dx : dy;
-            return ((max - min) + Sqrt2 * min) * cellSize;
+            return (float)((float)((max - min) + (float)(Sqrt2 * min)) * cellSize);
         }
 
         private void HeapPush(int nodeIndex)

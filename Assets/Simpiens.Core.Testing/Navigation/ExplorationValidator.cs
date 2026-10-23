@@ -72,10 +72,26 @@ namespace Simpiens.Testing.Navigation
                     Assert(def.FindSector(ResourceTargeting.PickExplorationPoint(arrived)).Id != sector, $"An agent that reached sector {sector} picks a different one.");
                 }
             }
+            // The bold explore the hazard sectors too (Epic 10 G2); the agents above are neutral, so cautious
+            var boldPicked = new bool[256];
+            for (int a = 0; a < Agents; a++)
+            {
+                for (int w = 0; w < Windows; w++)
+                {
+                    var bold = Context(a, (uint)w * ResourceTargeting.SectorChoiceTicks, hub.Bounds.Center, snapshot, new AgentPersonality(0f, 0.8f, 0f, 0f, 0f));
+                    boldPicked[def.FindSector(ResourceTargeting.PickExplorationPoint(bold)).Id] = true;
+                }
+            }
             for (int i = 0; i < def.Sectors.Count; i++)
             {
                 var s = def.Sectors[i];
                 if (s.Id == Floor1Layout.HubSectorId) continue;
+                if (s.Hazard.IsHazardous)
+                {
+                    Assert(!picked[s.Id], $"A cautious agent never explores {s.Name}, a hazard sector.");
+                    Assert(boldPicked[s.Id], $"A bold agent explores {s.Name} at least once from the Hub.");
+                    continue;
+                }
                 Assert(picked[s.Id], $"Sector {s.Name} is picked at least once from the Hub.");
             }
             TestLog.Log($"[PASS] Test 2: From the Hub, {Agents}x{Windows} waypoints all lie, walkable, in other sectors; every sector is visited.");
@@ -183,10 +199,10 @@ namespace Simpiens.Testing.Navigation
             return snapshot;
         }
 
-        private static AgentContext Context(int agent, uint tick, Vec2 position, SharedWorldSnapshot snapshot)
+        private static AgentContext Context(int agent, uint tick, Vec2 position, SharedWorldSnapshot snapshot, AgentPersonality personality = default)
         {
             var id = new EntityId((uint)agent + 1u, 0x5eed5eedu, 7u, 11u);
-            return new AgentContext(id, position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick);
+            return new AgentContext(id, position, new AgentNeeds(20f, 80f, 60f), 0f, snapshot, new AgentMemory(), tick, personality: personality);
         }
 
         private static void Assert(bool condition, string message)

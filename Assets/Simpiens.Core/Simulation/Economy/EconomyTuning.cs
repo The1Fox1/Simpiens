@@ -77,6 +77,7 @@ namespace Simpiens.Simulation.Economy
         public ushort HerbBaseValue { get; private set; } = 12;
         public ushort PickaxeBaseValue { get; private set; } = 30;
         public ushort WeaponBaseValue { get; private set; } = 40;
+        public ushort GlowstoneBaseValue { get; private set; } = 30; // rare salvage from the hazard sectors (Epic 10 G2)
 
         /// <summary>Gold a crawler arrives with: one ration at the stall's default price (review §3.3 D6).</summary>
         public int StartingGold { get; private set; } = 15;
@@ -91,6 +92,8 @@ namespace Simpiens.Simulation.Economy
         public ushort StallOreStock { get; private set; } = 10;
         public ushort StallHerbBuyPrice { get; private set; } = 25;
         public ushort StallHerbStock { get; private set; } = 10;
+        /// <summary>What the stall pays for Glowstone, the rare salvage (Epic 10 G2); the caravan pays 70 (SupplyTuning).</summary>
+        public ushort StallGlowstoneBuyPrice { get; private set; } = 45;
         public uint StallTreasury { get; private set; } = 250;
 
         /// <summary>Salvage units of each type the stall holds at most; full, it stops buying that type until the caravan comes.</summary>
@@ -99,8 +102,7 @@ namespace Simpiens.Simulation.Economy
         /// <summary>True when the stall has room for <paramref name="quantity"/> more units of a salvage type.</summary>
         public bool StallHasRoom(in TradeStallData stall, ItemType item, int quantity = 1)
         {
-            int stock = item == ItemType.IronOre ? stall.OreStock : item == ItemType.MedicinalHerb ? stall.HerbStock : 0;
-            return stock + quantity <= StallSalvageCapacity;
+            return stall.StockOf(item) + quantity <= StallSalvageCapacity;
         }
 
         // Seeded bounty rewards
@@ -134,6 +136,7 @@ namespace Simpiens.Simulation.Economy
                 case ItemType.MedicinalHerb: return HerbBaseValue;
                 case ItemType.ToolPickaxe: return PickaxeBaseValue;
                 case ItemType.BasicWeapon: return WeaponBaseValue;
+                case ItemType.Glowstone: return GlowstoneBaseValue;
                 default: return 0;
             }
         }

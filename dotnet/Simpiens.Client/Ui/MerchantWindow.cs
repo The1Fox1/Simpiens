@@ -15,7 +15,7 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class MerchantWindow
     {
-        public const float Width = 600f;
+        public const float Width = 660f; // 600 until Epic 10 G2's glowstone lengthened the stock line
 
         private readonly MerchantModel _model;
         private readonly TextRuntime _status, _treasury, _stock, _feedback;
@@ -53,6 +53,7 @@ namespace Simpiens.Client.Ui
             RationSlider = AddPriceRow(body, "Provision Sell Price:", "(Outpost sells rations to hungry agents)", v => _model.RationPrice = v, out RationValue);
             OreSlider = AddPriceRow(body, "Iron Ore Buy Price:", "(Outpost purchases ore from salvagers)", v => _model.OrePrice = v, out OreValue);
             HerbSlider = AddPriceRow(body, "Herb Buy Price:", "(Outpost purchases medicinal flora)", v => _model.HerbPrice = v, out HerbValue);
+            GlowstoneSlider = AddPriceRow(body, "Glowstone Buy Price:", "(Rare salvage from the hazard sectors)", v => _model.GlowstonePrice = v, out GlowstoneValue);
 
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
@@ -74,7 +75,8 @@ namespace Simpiens.Client.Ui
         public Slider RationSlider { get; }
         public Slider OreSlider { get; }
         public Slider HerbSlider { get; }
-        public readonly TextRuntime RationValue, OreValue, HerbValue;
+        public Slider GlowstoneSlider { get; }
+        public readonly TextRuntime RationValue, OreValue, HerbValue, GlowstoneValue;
         public Button ApplyButton { get; }
 
         public string StatusText => _status.Text;
@@ -127,9 +129,11 @@ namespace Simpiens.Client.Ui
             RationSlider.Value = _model.RationPrice;
             OreSlider.Value = _model.OrePrice;
             HerbSlider.Value = _model.HerbPrice;
+            GlowstoneSlider.Value = _model.GlowstonePrice;
             RationValue.Text = MerchantModel.PriceText(_model.RationPrice);
             OreValue.Text = MerchantModel.PriceText(_model.OrePrice);
             HerbValue.Text = MerchantModel.PriceText(_model.HerbPrice);
+            GlowstoneValue.Text = MerchantModel.PriceText(_model.GlowstonePrice);
             _binding = false;
         }
 

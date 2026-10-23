@@ -136,6 +136,9 @@ namespace Simpiens.Presentation
             }
         }
 
+        /// <summary>True while a cloud (or its fading) covers the sector.</summary>
+        public bool Covers(int sectorId) => Find(sectorId) != null;
+
         private Overlay Find(int sectorId)
         {
             for (int i = 0; i < _overlays.Count; i++)

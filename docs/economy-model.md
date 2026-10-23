@@ -22,6 +22,7 @@ The player sets three prices (rations, ore, herbs) and posts bounties. Each craw
 | Faucet | `CaravanSalvageSales` | 2 ore × 24g + 2 herbs × 30g per visit | at most 108g a minute (`SupplyTuning.MaxSalvagePaymentPerVisit`) |
 | Sink | `OutpostUpkeep` | 80g per visit | fixed; a stall that can't pay goes into arrears |
 | Sink | `SupplyCaravan` | 2g per wholesale ration, topping stock up to 50 | as much as the stall can pay for (partial restocks) |
+| Faucet | `CaravanSalvageSales` (glowstone) | up to 2 glowstone × 70g per visit (Epic 10 G2); the stall pays crawlers 45g | six nodes in the hazard sectors, one unit each, regrowing in 10 minutes |
 | Faucet | `DrifterPurses` | 20–26g per drifter, about one every 3.5 minutes from minute 2 | at most 3 drifters at once (`DrifterTuning`) |
 | Sink | `DrifterDepartures` | what a drifter still carries when it leaves | its purse plus what it earned |
 | Transfer | purchases, sales, bounty escrow | between the stall and crawlers | conserved |
@@ -64,11 +65,12 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 
 | Profile | Prices (ration / ore / herb) | Band (per run, at 30 min) | Measured 2026-10-15 (3 seeds) |
 | :--- | :--- | :--- | :--- |
-| Fair | 15 / 20 / 25 | treasury 375–875g (1.5–3.5× the 250g start); trust up for ≥ 8 of 12; 0 starving episodes | 546–771g; trust up 9–10; 0 starving |
+| Fair | 15 / 20 / 25 | treasury 1,000–2,200g since Epic 10 G2 (was 375–875g); trust up for ≥ 8 of 12; 0 starving episodes | 546–771g; trust up 9–10; 0 starving |
 | Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −3 to −17; treasury 0–216g, below fair on every seed |
 | Generous | 5 / 35 / 40 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10; peak trust up 12; 0 starving |
 
 - **Why greed paid nothing before drifters:** the economy was closed. Without an outside buyer, greedy prices only shrank the trade that fills the caravan's quota. Since Epic 10 G1 drifters bring outside gold: drifters leave gold behind on every soak seed (their purses exceed what they take away), and a slightly greedy player (rations 20, ore 18, herbs 22: the soak's `keen` profile) ends the 30 minutes richer than the same player in a closed outpost over the soak's seeds (`dotnet test`: `AKeenPlayerDoesBetterWithDrifters`; `simpiens soak --profile keen [--closed]`). Measured 2026-10-23, headless: 2,316g against 2,154g summed (886 against 796, 652 against 652, 778 against 706); drifters left 139g, 35g and 86g behind. Per seed the comparison is noisy: a run with drifters is a different run of a chaotic day.
+- **The fair band since glowstone (Epic 10 G2, 2026-10-23):** the hazard sectors' glowstone is new money by design (the caravan's premium); the fair player ends at 1,545–1,594g, the same in Unity and headless, so the band became 1,000–2,200g. Wages (G4) are the cost meant to meet it. Measured before G2, with drifters: 768–831g.
 - **The fair band with drifters:** it holds (768–831g headless, 2026-10-23). Larger purses broke it: 40–80g every two minutes nearly doubled the fair player's treasury (1,189–1,273g), so the tuning was cut until the band held.
 - **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.

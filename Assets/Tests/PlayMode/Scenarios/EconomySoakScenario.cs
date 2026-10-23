@@ -70,8 +70,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
         public SoakProfile Profile { get; private set; }
 
         // Pace bands per profile (docs/economy-model.md §7; review §3.3 D5), asserted per run at the horizon
-        public const uint FairTreasuryMin = 375;   // 1.5x the 250g start
-        public const uint FairTreasuryMax = 875;   // 3.5x
+        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors); was 375-875g (1.5x-3.5x the 250g start)
+        public const uint FairTreasuryMin = 1000;
+        public const uint FairTreasuryMax = 2200;
         public const int FairTrustUpMin = 8;       // of 12 crawlers
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8; // at its best, before bankruptcy erodes trade

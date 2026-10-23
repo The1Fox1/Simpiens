@@ -34,7 +34,7 @@ namespace Simpiens.Client.Ui
         private readonly ColoredRectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
-        private readonly DriveBar _hunger, _energy, _social, _frustration;
+        private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
         public DashboardPanels(DashboardModel model)
         {
@@ -105,6 +105,7 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(titleRow);
             _dossierDetails.Children.Add(Window.Gap(6f));
             _dossierDetails.Children.Add(Window.SubHeader("BIOLOGICAL DRIVES"));
+            _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
             _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
             _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
@@ -149,6 +150,7 @@ namespace Simpiens.Client.Ui
         public string DossierName => _dossierName.Text;
         public bool DossierShown => _dossierDetails.Visible;
         public float HungerShown => _hunger.Value;
+        public float HealthShown => _health.Value;
 
         public void Bind()
         {
@@ -227,6 +229,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_dossierName, dossier.Name);
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.Color = UiStyle.StateColor(dossier.State);
+            _health.Set(dossier.Health);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);

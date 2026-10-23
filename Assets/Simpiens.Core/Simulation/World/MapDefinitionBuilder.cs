@@ -69,9 +69,9 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
-        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
+        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default)
         {
-            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored));
+            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored, hazard));
             return this;
         }
 

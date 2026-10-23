@@ -46,6 +46,11 @@ namespace Simpiens.Cognition.Evaluators
                 return new IdleIntent(context.AgentId, 2.0f);
             }
 
+            // Danger (Epic 10 G2): a hurt crawler eats a herb it carries; a downed one limps to a bunk and sleeps there
+            // until it is back on its feet; one losing health in a hazard sector gets out, toward a bunk
+            var danger = await DangerReflexAsync(context);
+            if (danger != null) return danger;
+
             // 2. Starvation Panic Reflex
             if (context.Hunger >= StarvationThreshold)
             {
@@ -135,6 +140,53 @@ namespace Simpiens.Cognition.Evaluators
 
             // Neither emergency condition met; hand off to Tier 2 GOAP planning
             return null;
+        }
+
+        /// <summary>Within this of the bunks a downed crawler with no free bunk rests where it stands.</summary>
+        public const float RefugeRestRadius = 3f;
+
+        /// <summary>A hurt crawler fetches a herb only when hunger isn't the more pressing need.</summary>
+        public const float FetchHerbBelowHunger = 50f;
+
+        /// <summary>How long a downed crawler sleeps in its bunk before it looks again (it sleeps on until recovered).</summary>
+        public const float DownedSleepSeconds = 5f;
+
+        private async ValueTask<AgentIntent> DangerReflexAsync(AgentContext context)
+        {
+            if (context.Health < Vitality.TreatWoundsBelow && Simpiens.Cognition.Planning.ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
+            {
+                return new TreatWoundsIntent(context.AgentId);
+            }
+
+            bool inHazard = Vitality.HazardAt(context.Snapshot?.Map, context.Position).IsHazardous;
+
+            // Hurt but on its feet, out of danger and not hungry: it fetches a herb from a patch it knows, then eats it
+            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger
+                && Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, ItemType.MedicinalHerb, out var herb))
+            {
+                return await Simpiens.Cognition.Planning.ResourceTargeting.BuildHarvestIntentAsync(context, _pathfinder, herb, 1);
+            }
+
+            if (!context.IsDowned && !(inHazard && context.Health < Vitality.RetreatBelow)) return null;
+
+            // A free bunk within reach: a downed crawler sleeps in it
+            if (context.IsDowned && Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunk)
+                && (bunk - context.Position).SqrMagnitude <= 1f)
+            {
+                return new SleepAtBunkIntent(context.AgentId, bunkId, DownedSleepSeconds);
+            }
+
+            // Otherwise to the bunks, free or not; beside them, out of danger, a downed crawler rests until one frees
+            if (!Vitality.TryGetRefuge(context, out var refuge)) return context.IsDowned && !inHazard ? new IdleIntent(context.AgentId, DownedSleepSeconds) : null;
+            if (context.IsDowned && !inHazard && (refuge - context.Position).SqrMagnitude <= RefugeRestRadius * RefugeRestRadius)
+            {
+                return new IdleIntent(context.AgentId, DownedSleepSeconds);
+            }
+            if (_pathfinder == null) return null;
+            var path = await _pathfinder.CalculatePathAsync(new PathRequest { StartPosition = context.Position, TargetPosition = refuge }, context.Snapshot);
+            if (path.IsValid && path.Length > 0) return new RetreatIntent(context.AgentId, path);
+            path.ReturnToPool();
+            return context.IsDowned && !inHazard ? new IdleIntent(context.AgentId, DownedSleepSeconds) : null;
         }
 
         public static bool HasKnownFood(in AgentContext context)

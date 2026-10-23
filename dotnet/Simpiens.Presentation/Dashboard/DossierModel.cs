@@ -40,6 +40,10 @@ namespace Simpiens.Presentation.Dashboard
         public AgentVisualState State { get; private set; }
         public string Badge { get; private set; } = string.Empty;
 
+        /// <summary>Health, 0 to 100 (Epic 10 G2); a downed crawler's badge reads <see cref="DownedBadge"/>.</summary>
+        public float Health { get; private set; }
+        public const string DownedBadge = "DOWNED";
+
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
         public float Social { get; private set; }
@@ -85,7 +89,8 @@ namespace Simpiens.Presentation.Dashboard
             if (Residency.Length > 0) Name += " · " + Residency;
 
             State = agent.VisualState;
-            Badge = State.ToString().ToUpperInvariant();
+            Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
+            Health = agent.Health;
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;

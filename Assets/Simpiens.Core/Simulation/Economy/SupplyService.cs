@@ -250,17 +250,20 @@ namespace Simpiens.Simulation.Economy
         {
             uint oreUnits = _tuning.OreMarketPrice > 0 ? System.Math.Min(stall.OreStock, (uint)_tuning.OreQuota) : 0u;
             uint herbUnits = _tuning.HerbMarketPrice > 0 ? System.Math.Min(stall.HerbStock, (uint)_tuning.HerbQuota) : 0u;
-            if (oreUnits == 0 && herbUnits == 0) return stall;
+            // Glowstone, the rare salvage (Epic 10 G2): the caravan takes it up to its own quota, at a premium
+            uint glowUnits = _tuning.GlowstoneMarketPrice > 0 ? System.Math.Min(stall.GlowstoneStock, (uint)_tuning.GlowstoneQuota) : 0u;
+            if (oreUnits == 0 && herbUnits == 0 && glowUnits == 0) return stall;
 
-            uint revenue = oreUnits * _tuning.OreMarketPrice + herbUnits * _tuning.HerbMarketPrice;
+            uint revenue = oreUnits * _tuning.OreMarketPrice + herbUnits * _tuning.HerbMarketPrice + glowUnits * _tuning.GlowstoneMarketPrice;
             var updated = stall
                 .WithOreStock((ushort)(stall.OreStock - oreUnits))
                 .WithHerbStock((ushort)(stall.HerbStock - herbUnits))
+                .WithGlowstoneStock((ushort)(stall.GlowstoneStock - glowUnits))
                 .WithTreasury(stall.TreasuryGold + revenue);
             host.UpdateStall(updated);
             host.EconomyLedger?.RecordFaucet(revenue, SalvageSalesFaucetName);
             SalvageSaleVisits++;
-            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
+            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs + {glowUnits} glowstone from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
             return updated;
         }
 

@@ -43,15 +43,23 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>A drifter whose stay is over: it heads for the Road Gate.</summary>
         public bool StayIsOver => DepartsAtTick > 0 && CurrentTick >= DepartsAtTick;
 
+        /// <summary>Health, 0 to 100, and whether the crawler is downed (Epic 10 G2).</summary>
+        public readonly float Health;
+        public readonly bool IsDowned;
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership membership = default, in IdentityTag identity = default,
                             Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
                             ushort scoutReportBountyId = 0,
                             in AgentPersonality personality = default,
-                            uint departsAtTick = 0)
+                            uint departsAtTick = 0,
+                            float health = Vitality.MaxHealth,
+                            bool isDowned = false)
         {
             DepartsAtTick = departsAtTick;
+            Health = health;
+            IsDowned = isDowned;
             ScoutReportBountyId = scoutReportBountyId;
             Personality = personality;
             AgentId = agentId;

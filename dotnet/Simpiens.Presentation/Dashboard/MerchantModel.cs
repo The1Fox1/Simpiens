@@ -31,6 +31,7 @@ namespace Simpiens.Presentation.Dashboard
         public int RationPrice { get; set; } = 15;
         public int OrePrice { get; set; } = 20;
         public int HerbPrice { get; set; } = 25;
+        public int GlowstonePrice { get; set; } = 45; // the rare salvage from the hazard sectors (Epic 10 G2)
 
         public Feedback Feedback { get; private set; } = Feedback.None;
 
@@ -45,6 +46,7 @@ namespace Simpiens.Presentation.Dashboard
                 RationPrice = Clamp(stall.RationSellPrice);
                 OrePrice = Clamp(stall.OreBuyPrice);
                 HerbPrice = Clamp(stall.HerbBuyPrice);
+                GlowstonePrice = Clamp(stall.GlowstoneBuyPrice);
             }
             Refresh();
         }
@@ -60,17 +62,17 @@ namespace Simpiens.Presentation.Dashboard
                 Treasury = stall.InArrears
                     ? Invariant($"Treasury: {stall.TreasuryGold} Gold (in arrears: not buying salvage)")
                     : Invariant($"Treasury: {stall.TreasuryGold} Gold");
-                Stock = Invariant($"Stock: {stall.RationStock} Rations | {stall.OreStock} Ore | {stall.HerbStock} Herb");
+                Stock = Invariant($"Stock: {stall.RationStock} Rations | {stall.OreStock} Ore | {stall.HerbStock} Herb | {stall.GlowstoneStock} Glowstone");
             }
             else
             {
                 StallStatus = "No active stall established";
                 Treasury = "Treasury: 0 Gold";
-                Stock = "Stock: 0 Rations | 0 Ore | 0 Herb";
+                Stock = "Stock: 0 Rations | 0 Ore | 0 Herb | 0 Glowstone";
             }
         }
 
-        /// <summary>Queues the three prices for the stall.</summary>
+        /// <summary>Queues the four prices for the stall.</summary>
         public void Apply()
         {
             if (_context.Intervention == null)
@@ -78,9 +80,9 @@ namespace Simpiens.Presentation.Dashboard
                 Feedback = new Feedback("No intervention queue available.", FeedbackTone.Error);
                 return;
             }
-            ushort ration = (ushort)Clamp(RationPrice), ore = (ushort)Clamp(OrePrice), herb = (ushort)Clamp(HerbPrice);
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(StallId, ration, ore, herb)));
-            Feedback = new Feedback(Invariant($"Rates updated: Ration {ration}g | Ore {ore}g | Herb {herb}g"), FeedbackTone.Ok);
+            ushort ration = (ushort)Clamp(RationPrice), ore = (ushort)Clamp(OrePrice), herb = (ushort)Clamp(HerbPrice), glow = (ushort)Clamp(GlowstonePrice);
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(StallId, ration, ore, herb, glow)));
+            Feedback = new Feedback(Invariant($"Rates updated: Ration {ration}g | Ore {ore}g | Herb {herb}g | Glowstone {glow}g"), FeedbackTone.Ok);
         }
 
         private static int Clamp(int price) => price < MinPrice ? MinPrice : price > MaxPrice ? MaxPrice : price;

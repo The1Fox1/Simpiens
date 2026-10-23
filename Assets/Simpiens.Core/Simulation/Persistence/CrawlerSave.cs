@@ -52,6 +52,8 @@ namespace Simpiens.Simulation.Persistence
         public bool IsExhaustionCollapsed;
         public bool CanBuyFoodAtStall;
         public uint DepartsAtTick;
+        public float Health;
+        public bool IsDowned;
     }
 
     /// <summary>

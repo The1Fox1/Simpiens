@@ -21,6 +21,7 @@ namespace Simpiens.Cognition.Planning.Goals
             {
                 if (ResourceTargeting.HoldsSellable(context, ItemType.IronOre)) occupiedSlots++;
                 if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb)) occupiedSlots++;
+                if (ResourceTargeting.HoldsSellable(context, ItemType.Glowstone)) occupiedSlots++;
             }
             return (30f + (occupiedSlots * 15f)) * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome);
         }
@@ -29,7 +30,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
             if (context.Inventory == null) return false;
             // Units owed to a claimed Gather bounty are not for sale
-            if (!ResourceTargeting.HoldsSellable(context, ItemType.IronOre) && !ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb)) return false;
+            if (!ResourceTargeting.HoldsAnySellable(context)) return false;
 
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {
