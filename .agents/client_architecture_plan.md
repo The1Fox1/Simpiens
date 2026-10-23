@@ -106,4 +106,14 @@ Done in the client seams (A1–A3) and M3 Phase 0:
 
 ## Progress
 
-- 2026-10-22: plan written; branch cut.
+- 2026-10-22: plan written; branch cut (`9b8c456`).
+- Phase 1 done:
+  - 1.1 `7d96570`;
+  - 1.2 `2eb6b62`;
+  - 1.3 `9ea1f1b`.
+
+  First numbers: the tick is about 0.1 ms of a 1.4 ms isometric frame (CPU); drawing is most of it.
+- Phase 2 done:
+  - 2.1 `cebc9e3`;
+  - 2.2 `ce56fc2`, with eight header references re-recorded;
+  - 2.3, this step's commit.

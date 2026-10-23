@@ -37,7 +37,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(0L, session.Simulation.Clock.CurrentTick);
             Assert.Equal(1f, session.ViewSeconds, 3);
 
-            session.Update(TimeSpan.FromSeconds(1));
+            for (int i = 0; i < 4; i++) session.Update(TimeSpan.FromSeconds(0.25)); // a second in frames under the stall cap
             Assert.InRange(session.Simulation.Clock.CurrentTick, 9L, 10L); // 10 Hz
             Assert.Equal(2f, session.ViewSeconds, 3);
         }
