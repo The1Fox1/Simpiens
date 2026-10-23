@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed) is done (2026-10-23); G1 (drifters) is next. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed) and G1 (drifters) are done (2026-10-23); G2 (health and hazards) is next, with the producer's look. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -107,6 +107,14 @@ Each milestone also needs its validators, the golden check and the client's test
     - Golden hashes re-recorded in Unity `91066cb`; the client's references and pins re-recorded in the pinned image `0e8fb1f`.
     - Measured: the gate seeds 23/23 (16/23 before), no stacking; seeds 21–120: 96/100; `dotnet test` 347/347 (core 86, client 261); the client's 261/261 exactly in the pinned image; golden 3/3 in both runtimes; Unity PlayMode 69/69 (2 explicit skipped); the economy soak 9/9 headless and in Unity (fair 701–785g in Unity).
 
+- [x] **G1. Drifters** (2026-10-23, `feat/epic10-g1`, stacked on G0): the outpost's economy is open (Q7).
+    - Drifters `245da04`: strangers on a seeded schedule (`DrifterTuning`: one about every 3.5 minutes from minute 2, at most 3 at once, a 3–5 minute stay, 20–26g, arriving hungry) come in at a free Road Gate spawn point, live as crawlers, and leave by deciding to (`LeaveOutpostGoal`). Their purses are the `DrifterPurses` faucet, what they take away the `DrifterDepartures` sink; a claimed bounty goes back on the board and a bunk is freed. `AgentState.DepartsAtTick` and the host's schedule are saved (format 2). The chronicle tells arrivals and departures; the dossier names a drifter's stay.
+    - Found with drifters about, and fixed in the same commit: walkers keep right around a crawler in the way (head-on jams in doorways); salvage the stall won't take no longer stops a crawler from gathering what it still buys; food past the 30-unit search is still food; the walk to food stops at 0.7, inside the 0.8 harvest reach.
+    - Cross-runtime: `Vec2`'s scalar chains round to float after every step, so Unity's Mono matches CoreCLR on the borderline distance tests that had parted two golden seeds (Epic CORE F1, narrowed).
+    - Live scenarios: `DriftersComeBuyAndGo` (in the 15-minute day 4–6 drifters leave, having bought; both ledger flows show; the gold balances), `ASaveWithDriftersLoadsAndTheirScheduleResumes`, `AKeenPlayerDoesBetterWithDrifters` (2,316g against 2,154g closed over the soak seeds; drifters leave 35–139g behind per seed), and in the client `TheGameDrawsDriftersComingAndGoing`.
+    - Golden hashes re-recorded in Unity `d80944b`; the client's references and pins `6a275a0`.
+    - Measured: the gate seeds 23/23 with drifters, no stacking; seeds 21–120: 98/100 (F3); `dotnet test` 352/352 (core 89, client 263); the client's 263/263 exactly in the pinned image; golden 3/3 in both runtimes; Unity PlayMode 69/69 (2 explicit skipped); the soak 9/9 headless (fair 768–831g) and in Unity (fair 805–831g).
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -144,10 +152,11 @@ Each milestone also needs its validators, the golden check and the client's test
     5. **Searching away from food.** A hungry crawler among empty plots explored the Road Gate and starved on the walk back; the food search now waits at the nearest plot it has seen, as the starvation reflex does.
 
     Measured: 23 of 23 gate seeds pass, with no pawn stacking; seeds 21–120, 96 of 100.
-- **F3 (2026-10-23): on some seeds trust rises for fewer than ⅔ of crawlers.** Seeds 31, 43, 61 and 69 (of 21–120) end with trust up for 6 or 7 of 12 (the day asks for 8). Those crawlers trade two or three times early, spend the day at the hearth, and their trust drifts back to neutral. A balance question, not a stuck crawler: G1 (drifters) and G4 (bounty fairness) add paths to trust; re-measure there.
+- **F3 (2026-10-23): on some seeds trust rises for fewer than ⅔ of crawlers.** Seeds 31, 43, 61 and 69 (of 21–120) end with trust up for 6 or 7 of 12 (the day asks for 8). Those crawlers trade two or three times early, spend the day at the hearth, and their trust drifts back to neutral. A balance question, not a stuck crawler: G1 (drifters) and G4 (bounty fairness) add paths to trust; re-measure there. **Re-measured after G1:** seeds 61 and 64 (7 of 12); drifters, who pass through, do not count toward it.
 - **The greedy soak band is judged at its lowest trust mean (2026-10-23).** With the G0 fixes, hungry crawlers eat at the Garden instead of buying gouged rations late in the run; at greedy prices nobody trades once the stall is empty, and trust drifts back to neutral by minute 30 (seed 2: mean 0.0). The band now asks that greed pushed the mean below 0 at some point, as the generous band is judged at its peak ([economy model](../economy-model.md) §7).
 
 ## History
 
 - 2026-10-23: drafted as a Claude Doc and approved by the producer with every default; G0 started on `feat/epic10-g0`.
 - 2026-10-23: G0 done: finding F2 resolved, the day gated on 23 seeds; findings F3 (trust on some seeds) and the greedy band recorded. Its working plan was deleted at close-out.
+- 2026-10-23: G1 done: drifters open the economy; four navigation and planning faults found and fixed with them; Vec2 rounds alike in both runtimes. Its working plan was deleted at close-out.
