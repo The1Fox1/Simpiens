@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Simpiens.Core.Session;
+using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.World;
 
@@ -25,6 +26,8 @@ namespace Simpiens.Hosting
             Host = services.GetRequiredService<SessionHost>();
             Sectors = services.GetRequiredService<ISectorRegistry>();
             Registry = services.GetRequiredService<IWorldRegistry>();
+            Identity = services.GetRequiredService<IAgentIdentityService>();
+            Chronicle = services.GetRequiredService<INarrativeChronicleService>();
         }
 
         /// <param name="configure">Extra registrations (more sessions, test doubles).</param>
@@ -41,6 +44,12 @@ namespace Simpiens.Hosting
         public SessionHost Host { get; }
         public ISectorRegistry Sectors { get; }
         public IWorldRegistry Registry { get; }
+
+        /// <summary>Crawlers' names.</summary>
+        public IAgentIdentityService Identity { get; }
+
+        /// <summary>What happened, as the chronicle tells it.</summary>
+        public INarrativeChronicleService Chronicle { get; }
 
         /// <summary>Respawns a session at tick 0 (the outpost by default).</summary>
         public void Respawn(string sessionId = OutpostSession.SessionId)

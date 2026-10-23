@@ -41,13 +41,19 @@ namespace Simpiens.Presentation.Dashboard
             Zones = new FacilityZoneService(sectors);
         }
 
-        /// <summary>The context of a composed simulation (<c>HeadlessSimulation.Services</c>).</summary>
+        /// <summary>
+        /// The context of a composed simulation (<c>HeadlessSimulation.Services</c>). It requires every service the game
+        /// always has (review U4), so a wiring mistake fails here, at start, instead of showing an empty panel; only the
+        /// save slot and the host's commands are optional. The constructor, where anything may be null, is for unit tests.
+        /// </summary>
         public static DashboardContext From(IServiceProvider services, ISaveGameService saveGame = null, IHostCommands hostCommands = null)
         {
-            T Get<T>() where T : class => services?.GetService(typeof(T)) as T;
-            return new DashboardContext(Get<ISimulationManager>(), Get<ISimulationClock>(), Get<IWorldRegistry>(), Get<ISectorRegistry>(),
-                Get<IAgentIdentityService>(), Get<INarrativeChronicleService>(), Get<INarrativeFormatter>(), Get<IPlayerInterventionService>(),
-                saveGame ?? Get<ISaveGameService>(), Get<ISessionSwitcher>(), hostCommands);
+            if (services == null) throw new ArgumentNullException(nameof(services));
+            T Need<T>() where T : class => services.GetService(typeof(T)) as T
+                ?? throw new InvalidOperationException($"The dashboard needs {typeof(T).Name}, and the simulation's services have none.");
+            return new DashboardContext(Need<ISimulationManager>(), Need<ISimulationClock>(), Need<IWorldRegistry>(), Need<ISectorRegistry>(),
+                Need<IAgentIdentityService>(), Need<INarrativeChronicleService>(), Need<INarrativeFormatter>(), Need<IPlayerInterventionService>(),
+                saveGame ?? services.GetService(typeof(ISaveGameService)) as ISaveGameService, Need<ISessionSwitcher>(), hostCommands);
         }
 
         public ISimulationManager Simulation { get; }

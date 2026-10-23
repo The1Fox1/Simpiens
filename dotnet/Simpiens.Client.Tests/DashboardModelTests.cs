@@ -83,6 +83,24 @@ namespace Simpiens.Client.Tests
     /// </summary>
     public class DashboardModelTests
     {
+        [Fact]
+        public void TheGamesDashboardRequiresEveryServiceTheGameAlwaysHas()
+        {
+            // A wiring mistake fails at start with the service's name, not as an empty panel (review U4)
+            var empty = Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(new Microsoft.Extensions.DependencyInjection.ServiceCollection());
+            var missing = Assert.Throws<InvalidOperationException>(() => DashboardContext.From(empty));
+            Assert.Contains(nameof(ISimulationManager), missing.Message);
+            Assert.Throws<ArgumentNullException>(() => DashboardContext.From(null));
+
+            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var context = DashboardContext.From(sim.Services);
+            Assert.Same(sim.Identity, context.Identity);
+            Assert.Same(sim.Chronicle, context.Chronicle);
+            Assert.NotNull(context.Intervention);
+            Assert.NotNull(context.Sessions);
+            Assert.Null(context.SaveGame); // optional: the client gives its slot explicitly
+        }
+
         /// <summary>A bare simulation manager with one stall, as Unity's validator built it.</summary>
         private static (SimulationManager sim, PlayerInterventionService queue, EntityId stall, DashboardModel model) BareOutpost(uint treasury = 250, ISectorRegistry sectors = null, NarrativeChronicleService chronicle = null)
         {

@@ -29,10 +29,9 @@ namespace Simpiens.Client
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
             // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
-            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock,
-                Simulation.Services.GetService(typeof(INarrativeChronicleService)) as INarrativeChronicleService);
+            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock, Simulation.Chronicle);
 
-            Identity = Simulation.Services.GetService(typeof(IAgentIdentityService)) as IAgentIdentityService;
+            Identity = Simulation.Identity;
             Selection = new WorldSelection(Frames, Simulation.Sectors, Identity);
             Scenes = new SceneDirector(Frames);
             if (Options.DemoScenes) DemoScenes.AddTo(Scenes);
