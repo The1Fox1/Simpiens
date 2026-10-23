@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework.Input;
 using Simpiens.Presentation;
 
@@ -5,19 +6,31 @@ namespace Simpiens.Client
 {
     /// <summary>
     /// Reads the mouse and keyboard into the plain snapshots the view's controls work on (Epic CLIENT M1.4): wheel
-    /// notches since the last frame, and Home and Esc as presses rather than holds.
+    /// notches since the last frame, and the keys as actions through <see cref="KeyBindings"/> (review U1), held or
+    /// pressed this frame. Read once per update: the presses are edges against the previous read.
     /// </summary>
     public sealed class ClientInput : IClientInputSource
     {
         private const int WheelNotch = 120;
 
+        private static readonly int ActionCount = Enum.GetValues(typeof(InputAction)).Length;
+
+        private readonly bool[] _held = new bool[ActionCount];
+        private readonly bool[] _pressed = new bool[ActionCount];
         private int _wheel;
         private bool _hasWheel;
         private KeyboardState _previousKeys;
 
-        public void Read(out PointerInput pointer, out KeyInput keys)
+        public ClientInput(KeyBindings bindings = null) => Bindings = bindings ?? KeyBindings.Default();
+
+        /// <summary>Which keys ask for which actions; rebinding takes effect on the next read.</summary>
+        public KeyBindings Bindings { get; }
+
+        public void Read(out PointerInput pointer, out KeyInput keys) => Read(Mouse.GetState(), Keyboard.GetState(), out pointer, out keys);
+
+        /// <summary>The same from given device states (tests: the offscreen window can't be typed into).</summary>
+        public void Read(in MouseState mouse, in KeyboardState kb, out PointerInput pointer, out KeyInput keys)
         {
-            var mouse = Mouse.GetState();
             if (!_hasWheel)
             {
                 _wheel = mouse.ScrollWheelValue;
@@ -35,27 +48,19 @@ namespace Simpiens.Client
                 WheelNotches = notches,
             };
 
-            var kb = Keyboard.GetState();
-            keys = new KeyInput
+            Array.Clear(_held, 0, _held.Length);
+            Array.Clear(_pressed, 0, _pressed.Length);
+            var bindings = Bindings.All;
+            for (int i = 0; i < bindings.Count; i++)
             {
-                Left = kb.IsKeyDown(Keys.A) || kb.IsKeyDown(Keys.Left),
-                Right = kb.IsKeyDown(Keys.D) || kb.IsKeyDown(Keys.Right),
-                Up = kb.IsKeyDown(Keys.W) || kb.IsKeyDown(Keys.Up),
-                Down = kb.IsKeyDown(Keys.S) || kb.IsKeyDown(Keys.Down),
-                HomePressed = kb.IsKeyDown(Keys.Home) && !_previousKeys.IsKeyDown(Keys.Home),
-                EscapePressed = kb.IsKeyDown(Keys.Escape) && !_previousKeys.IsKeyDown(Keys.Escape),
-                TabPressed = kb.IsKeyDown(Keys.Tab) && !_previousKeys.IsKeyDown(Keys.Tab),
-                WallStylePressed = kb.IsKeyDown(Keys.C) && !_previousKeys.IsKeyDown(Keys.C),
-                ViewTogglePressed = kb.IsKeyDown(Keys.V) && !_previousKeys.IsKeyDown(Keys.V),
-                DemoCutscenePressed = kb.IsKeyDown(Keys.F9) && !_previousKeys.IsKeyDown(Keys.F9),
-                TimingsPressed = kb.IsKeyDown(Keys.F3) && !_previousKeys.IsKeyDown(Keys.F3),
-                PausePressed = kb.IsKeyDown(Keys.P) && !_previousKeys.IsKeyDown(Keys.P),
-                SpeedKey = Pressed(kb, Keys.D1) ? 1 : Pressed(kb, Keys.D2) ? 2 : Pressed(kb, Keys.D3) ? 3 : Pressed(kb, Keys.D4) ? 4 : 0,
-                AdvancePressed = (kb.IsKeyDown(Keys.Space) && !_previousKeys.IsKeyDown(Keys.Space)) || (kb.IsKeyDown(Keys.Enter) && !_previousKeys.IsKeyDown(Keys.Enter)),
-            };
+                var binding = bindings[i];
+                if (!kb.IsKeyDown(binding.Key)) continue;
+                int action = (int)binding.Action;
+                _held[action] = true;
+                if (!_previousKeys.IsKeyDown(binding.Key)) _pressed[action] = true;
+            }
+            keys = KeyInput.From(_held, _pressed);
             _previousKeys = kb;
         }
-
-        private bool Pressed(KeyboardState now, Keys key) => now.IsKeyDown(key) && !_previousKeys.IsKeyDown(key);
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework.Input;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Presentation;
 using Xunit;
@@ -229,6 +230,50 @@ namespace Simpiens.Client.Tests
             Assert.Equal(0, again.WheelNotches);
             Assert.False(keys.HomePressed || keys.EscapePressed);
             Assert.False(pointer.OverUi);
+        }
+
+        private static readonly MouseState NoMouse = new MouseState();
+
+        [Fact]
+        public void KeysBecomeActionsThroughTheBindingsHeldOrPressedOnTheirFirstFrame()
+        {
+            var input = new ClientInput();
+            input.Read(NoMouse, new KeyboardState(Keys.A, Keys.Tab, Keys.D3), out _, out var keys);
+            Assert.True(keys.Left && keys.TabPressed && keys.SpeedKey == 3);
+            Assert.False(keys.Right || keys.EscapePressed || keys.PausePressed);
+
+            input.Read(NoMouse, new KeyboardState(Keys.Left, Keys.Tab), out _, out keys); // still down: Tab isn't pressed again
+            Assert.True(keys.Left);
+            Assert.False(keys.TabPressed);
+            Assert.Equal(0, keys.SpeedKey);
+
+            input.Read(NoMouse, new KeyboardState(Keys.Up, Keys.Enter, Keys.P, Keys.F3, Keys.F9, Keys.V, Keys.C, Keys.Home, Keys.Escape), out _, out keys);
+            Assert.True(keys.Up && keys.AdvancePressed && keys.PausePressed && keys.TimingsPressed && keys.DemoCutscenePressed);
+            Assert.True(keys.ViewTogglePressed && keys.WallStylePressed && keys.HomePressed && keys.EscapePressed);
+        }
+
+        [Fact]
+        public void AKeyCanBeRebound()
+        {
+            var input = new ClientInput();
+            input.Bindings.Bind(Keys.Space, InputAction.Pause); // Space pauses instead of advancing
+            input.Bindings.Unbind(Keys.P);
+            input.Read(NoMouse, new KeyboardState(Keys.Space), out _, out var keys);
+            Assert.True(keys.PausePressed);
+            Assert.False(keys.AdvancePressed);
+            input.Read(NoMouse, new KeyboardState(Keys.P), out _, out keys);
+            Assert.False(keys.PausePressed);
+            Assert.True(input.Bindings.TryGetAction(Keys.Enter, out var enter) && enter == InputAction.Advance);
+        }
+
+        [Fact]
+        public void EveryActionHasADefaultKey()
+        {
+            var bindings = KeyBindings.Default();
+            foreach (InputAction action in System.Enum.GetValues(typeof(InputAction)))
+            {
+                Assert.Contains(bindings.All, b => b.Action == action);
+            }
         }
     }
 }

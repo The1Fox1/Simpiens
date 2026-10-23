@@ -13,9 +13,31 @@ namespace Simpiens.Presentation
         public bool OverUi;
     }
 
-    /// <summary>The keys the camera reads: held (WASD or the arrows) or pressed this frame (Home, Esc).</summary>
+    /// <summary>
+    /// The frame's actions (<see cref="InputAction"/>), from whatever the player pressed: held (the pans) or pressed this
+    /// frame (everything else). The client's key bindings fill it from the keyboard; tests set it directly.
+    /// </summary>
     public struct KeyInput
     {
+        /// <summary>The actions held and newly pressed this frame, each array indexed by <see cref="InputAction"/>.</summary>
+        public static KeyInput From(bool[] held, bool[] pressed) => new KeyInput
+        {
+            Left = held[(int)InputAction.PanLeft],
+            Right = held[(int)InputAction.PanRight],
+            Up = held[(int)InputAction.PanUp],
+            Down = held[(int)InputAction.PanDown],
+            HomePressed = pressed[(int)InputAction.Reframe],
+            EscapePressed = pressed[(int)InputAction.Close],
+            TabPressed = pressed[(int)InputAction.TogglePanels],
+            WallStylePressed = pressed[(int)InputAction.WallStyle],
+            ViewTogglePressed = pressed[(int)InputAction.ToggleView],
+            AdvancePressed = pressed[(int)InputAction.Advance],
+            DemoCutscenePressed = pressed[(int)InputAction.DemoCutscene],
+            TimingsPressed = pressed[(int)InputAction.Timings],
+            PausePressed = pressed[(int)InputAction.Pause],
+            SpeedKey = pressed[(int)InputAction.Speed1] ? 1 : pressed[(int)InputAction.Speed2] ? 2 : pressed[(int)InputAction.Speed3] ? 3 : pressed[(int)InputAction.Speed4] ? 4 : 0,
+        };
+
         public bool Left;
         public bool Right;
         public bool Up;
