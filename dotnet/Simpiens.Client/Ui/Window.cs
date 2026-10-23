@@ -14,7 +14,6 @@ namespace Simpiens.Client.Ui
     public sealed class Window
     {
         public const float Padding = 16f;
-        private static readonly Color TitleColor = UiParts.Hex(0xf8fafc), SubtitleColor = UiParts.Hex(0x94a3b8);
 
         public Window(string name, string title, string subtitle, float width, Color border)
         {
@@ -29,7 +28,7 @@ namespace Simpiens.Client.Ui
                 HasEvents = true,
                 Visible = false,
             };
-            UiParts.AddFill(Veil, new Color(9, 13, 22, 209)); // rgba(9, 13, 22, 0.82)
+            UiParts.AddFill(Veil, UiStyle.Veil);
 
             Frame = new ContainerRuntime
             {
@@ -54,8 +53,8 @@ namespace Simpiens.Client.Ui
 
             var titleRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 10f };
             var titles = UiParts.Column(2f);
-            titles.Children.Add(UiParts.Text(title, TitleColor, UiText.Title));
-            titles.Children.Add(UiParts.Text(subtitle, SubtitleColor, UiText.Small));
+            titles.Children.Add(UiParts.Text(title, UiStyle.TextTitle, UiText.Title));
+            titles.Children.Add(UiParts.Text(subtitle, UiStyle.TextSecondary, UiText.Small));
             titleRow.Children.Add(titles);
             CloseButton = UiParts.Button("X", 28f, 24f);
             CloseButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;

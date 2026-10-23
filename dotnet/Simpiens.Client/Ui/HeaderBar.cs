@@ -17,12 +17,6 @@ namespace Simpiens.Client.Ui
     {
         public const float Height = 52f;
 
-        private static readonly Color Gold = UiParts.Hex(0xf59e0b), GoldText = UiParts.Hex(0xfbbf24);
-        private static readonly Color Stock = UiParts.Hex(0x3b82f6), StockText = UiParts.Hex(0x93c5fd);
-        private static readonly Color Bounty = UiParts.Hex(0xa855f7), BountyText = UiParts.Hex(0xc084fc);
-        private static readonly Color Metric = UiParts.Hex(0x94a3b8);
-        private static readonly Color Operational = UiParts.Hex(0x34d399);
-
         private readonly TextRuntime _treasury, _rations, _salvage, _bounties, _saveStatus, _tick;
 
         public HeaderBar()
@@ -42,17 +36,17 @@ namespace Simpiens.Client.Ui
             var left = UiParts.Row(10f);
             left.X = 16f;
             left.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiText.Title));
-            left.Children.Add(UiParts.Pill(out _, "OPERATIONAL", UiParts.Alpha(UiStyle.Success, 0.15f), UiStyle.Success, Operational));
+            left.Children.Add(UiParts.Pill(out _, "OPERATIONAL", UiParts.Alpha(UiStyle.Success, 0.15f), UiStyle.Success, UiStyle.Operational));
             Root.Children.Add(left);
 
             // The outpost's numbers follow the status (Unity centred them between the groups; at 1280 px there is no room to)
             var centre = UiParts.Row(6f);
             left.Children.Add(new ContainerRuntime { Width = 10f, Height = 1f });
             left.Children.Add(centre);
-            centre.Children.Add(UiParts.Pill(out _treasury, "0 GOLD", UiParts.Alpha(Gold, 0.15f), Gold, GoldText));
-            centre.Children.Add(UiParts.Pill(out _rations, "0 RATIONS", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
-            centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
-            centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(Bounty, 0.15f), Bounty, BountyText));
+            centre.Children.Add(UiParts.Pill(out _treasury, "0 GOLD", UiParts.Alpha(UiStyle.Gold, 0.15f), UiStyle.Gold, UiStyle.GoldText));
+            centre.Children.Add(UiParts.Pill(out _rations, "0 RATIONS", UiParts.Alpha(UiStyle.Stock, 0.15f), UiStyle.Stock, UiStyle.StockText));
+            centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(UiStyle.Stock, 0.15f), UiStyle.Stock, UiStyle.StockText));
+            centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(UiStyle.Bounty, 0.15f), UiStyle.Bounty, UiStyle.BountyText));
 
             var right = UiParts.Row(4f); // 4 px apart: pause and speed took the room the speed's text left (1280 px)
             right.XUnits = GeneralUnitType.PixelsFromLarge;
@@ -66,7 +60,7 @@ namespace Simpiens.Client.Ui
             right.Children.Add(BountiesButton.Visual);
             right.Children.Add(SaveButton.Visual);
             right.Children.Add(LoadButton.Visual);
-            _tick = UiParts.Text("TICK: 00000", Metric, UiText.SmallBold);
+            _tick = UiParts.Text("TICK: 00000", UiStyle.TextSecondary, UiText.SmallBold);
             UiParts.CentreVertically(_tick);
             right.Children.Add(_tick);
             PauseButton = UiParts.Button("PAUSE", 52f);
@@ -78,7 +72,7 @@ namespace Simpiens.Client.Ui
             Root.Children.Add(right);
 
             // The save's message, under everything at the bottom left (Unity had it in the header; at 1280 px it doesn't fit there)
-            Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, Metric, UiText.Small);
+            Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, UiStyle.TextSecondary, UiText.Small);
             Status.X = 16f;
             Status.YUnits = GeneralUnitType.PixelsFromLarge;
             Status.YOrigin = VerticalAlignment.Bottom;

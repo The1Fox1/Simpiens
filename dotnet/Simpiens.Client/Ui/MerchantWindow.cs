@@ -16,7 +16,6 @@ namespace Simpiens.Client.Ui
     public sealed class MerchantWindow
     {
         public const float Width = 600f;
-        private static readonly Color GoldText = UiParts.Hex(0xfbbf24), StockText = UiParts.Hex(0x94a3b8), RowTitle = UiParts.Hex(0xf1f5f9);
 
         private readonly MerchantModel _model;
         private readonly TextRuntime _status, _treasury, _stock, _feedback;
@@ -29,17 +28,17 @@ namespace Simpiens.Client.Ui
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
-            UiParts.AddFill(statusBar, UiParts.Hex(0x0b1322), UiStyle.Border);
+            UiParts.AddFill(statusBar, UiStyle.Inset, UiStyle.Border);
             // Unity spread the three across the bar; at Inter's widths the treasury follows the status instead
             var left = UiParts.Row(14f);
             left.X = 12f;
             _status = UiParts.Text(string.Empty, UiStyle.Text, UiText.StatusBold);
             UiParts.CentreVertically(_status);
-            _treasury = UiParts.Text(string.Empty, GoldText, UiText.StatusBold);
+            _treasury = UiParts.Text(string.Empty, UiStyle.GoldText, UiText.StatusBold);
             UiParts.CentreVertically(_treasury);
             left.Children.Add(_status);
             left.Children.Add(_treasury);
-            _stock = UiParts.Text(string.Empty, StockText, UiText.Status);
+            _stock = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Status);
             _stock.XUnits = GeneralUnitType.PixelsFromLarge;
             _stock.XOrigin = HorizontalAlignment.Right;
             _stock.X = -12f;
@@ -89,7 +88,7 @@ namespace Simpiens.Client.Ui
             var labels = UiParts.Column(2f);
             labels.X = 12f;
             UiParts.CentreVertically(labels);
-            labels.Children.Add(UiParts.Text(title, RowTitle, UiText.BodyBold));
+            labels.Children.Add(UiParts.Text(title, UiStyle.TextBright, UiText.BodyBold));
             labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiText.Small));
             row.Children.Add(labels);
 

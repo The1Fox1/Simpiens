@@ -12,8 +12,6 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class SessionSwitchBar
     {
-        private static readonly Color Banner = UiParts.Hex(0x7c2d12), Orange = UiParts.Hex(0xf97316), BannerText = UiParts.Hex(0xffedd5);
-
         private readonly SessionSwitchModel _model;
         private readonly ContainerRuntime _banner;
         private readonly TextRuntime _bannerText;
@@ -29,7 +27,7 @@ namespace Simpiens.Client.Ui
             Root.XUnits = GeneralUnitType.PixelsFromLarge;
             Root.XOrigin = HorizontalAlignment.Right;
             Root.X = -16f;
-            _banner = UiParts.Pill(out _bannerText, string.Empty, Banner, Orange, BannerText, UiText.BodyBold);
+            _banner = UiParts.Pill(out _bannerText, string.Empty, UiStyle.TestBanner, UiStyle.TestBannerBorder, UiStyle.TestBannerText, UiText.BodyBold);
             UiParts.CentreVertically(_banner);
             Root.Children.Add(_banner);
             Button = UiParts.Button(string.Empty, 200f, 30f, UiText.BodyBold);

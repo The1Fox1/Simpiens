@@ -136,7 +136,7 @@ namespace Simpiens.Client.Ui
             if (slider.Visual is Gum.Forms.DefaultVisuals.V3.SliderVisual visual)
             {
                 visual.ThumbInstance.BackgroundColor = UiStyle.Accent;
-                visual.TrackBackgroundColor = Hex(0x334155);
+                visual.TrackBackgroundColor = UiStyle.SliderTrack;
             }
             return slider;
         }
@@ -150,7 +150,5 @@ namespace Simpiens.Client.Ui
                 if (child is GraphicalUiElement element) SetTextStyle(element, style);
             }
         }
-
-        public static Color Hex(uint rgb) => new Color((int)(rgb >> 16) & 0xff, (int)(rgb >> 8) & 0xff, (int)rgb & 0xff);
     }
 }

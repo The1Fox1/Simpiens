@@ -26,9 +26,6 @@ namespace Simpiens.Client.Ui
     {
         public const float SectorsWidth = 260f, DossierWidth = 380f, Outer = 12f, Margin = 4f, Inner = 14f;
 
-        private static readonly Color Backdrop = UiParts.Hex(0x090d16), Deep = UiParts.Hex(0x0b1322), Shrouded = UiParts.Hex(0x0b111e);
-        private static readonly Color ShroudBorder = UiParts.Hex(0x334155), Slate = UiParts.Hex(0x94a3b8), Light = UiParts.Hex(0xcbd5e1), Title = UiParts.Hex(0xf8fafc);
-        private static readonly Color Emerald = UiParts.Hex(0x10b981), Blue = UiParts.Hex(0x3b82f6);
 
         private readonly DashboardModel _model;
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
@@ -52,7 +49,7 @@ namespace Simpiens.Client.Ui
                 Y = HeaderBar.Height,
                 HasEvents = true,
             };
-            UiParts.AddFill(Root, Backdrop);
+            UiParts.AddFill(Root, UiStyle.Backdrop);
 
             // Column 1: the facility's sectors
             var sectors = Panel(Outer + Margin, SectorsWidth, "FACILITY SECTORS", out var sectorsBody);
@@ -69,7 +66,7 @@ namespace Simpiens.Client.Ui
             detailBody.Height = -2f * Inner;
             _sectorTitle = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.Title);
             detailBody.Children.Add(_sectorTitle);
-            _sectorDescription = Wrapped(string.Empty, Slate, UiText.Body);
+            _sectorDescription = Wrapped(string.Empty, UiStyle.TextSecondary, UiText.Body);
             var description = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 36f }; // two lines
             description.Children.Add(_sectorDescription);
             detailBody.Children.Add(description);
@@ -98,7 +95,7 @@ namespace Simpiens.Client.Ui
             _dossierDetails.WidthUnits = DimensionUnitType.RelativeToParent;
             _dossierDetails.Width = 0f;
             var titleRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 26f };
-            _dossierName = UiParts.Text(string.Empty, Title, UiText.Title);
+            _dossierName = UiParts.Text(string.Empty, UiStyle.TextTitle, UiText.Title);
             UiParts.CentreVertically(_dossierName);
             titleRow.Children.Add(_dossierName);
             var badge = Badge(out _dossierBadge, out _dossierBadgeFill);
@@ -108,9 +105,9 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(titleRow);
             _dossierDetails.Children.Add(Window.Gap(6f));
             _dossierDetails.Children.Add(Window.SubHeader("BIOLOGICAL DRIVES"));
-            _hunger = new DriveBar(_dossierDetails, "Hunger:", UiParts.Hex(0xf59e0b));
-            _energy = new DriveBar(_dossierDetails, "Energy:", Blue);
-            _social = new DriveBar(_dossierDetails, "Social:", UiParts.Hex(0x06b6d4));
+            _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
+            _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
+            _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
@@ -176,11 +173,11 @@ namespace Simpiens.Client.Ui
                 var row = rows[i];
                 card.SectorId = row.SectorId;
                 UiParts.SetText(card.Name, row.Name);
-                card.Name.Color = row.Shrouded ? Slate : UiStyle.TextBright;
+                card.Name.Color = row.Shrouded ? UiStyle.TextSecondary : UiStyle.TextBright;
                 UiParts.SetText(card.Badge, row.Badge);
-                card.Badge.Color = row.Shrouded ? Slate : UiStyle.Accent;
-                card.BadgeFill.Color = row.Shrouded ? UiParts.Alpha(UiStyle.TextMuted, 0.25f) : Deep;
-                card.Style(row.Selected ? UiStyle.Border : row.Shrouded ? Shrouded : UiStyle.Card, row.Selected ? UiStyle.Accent : row.Shrouded ? ShroudBorder : UiStyle.CardBorder, row.Selected);
+                card.Badge.Color = row.Shrouded ? UiStyle.TextSecondary : UiStyle.Accent;
+                card.BadgeFill.Color = row.Shrouded ? UiParts.Alpha(UiStyle.TextMuted, 0.25f) : UiStyle.Inset;
+                card.Style(row.Selected ? UiStyle.Border : row.Shrouded ? UiStyle.Shrouded : UiStyle.Card, row.Selected ? UiStyle.Accent : row.Shrouded ? UiStyle.ShroudedBorder : UiStyle.CardBorder, row.Selected);
             }
 
             // The selected sector
@@ -204,9 +201,9 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Detail, row.Activity);
                 UiParts.SetText(card.Badge, row.Badge);
-                card.Badge.Color = Color.White;
-                card.BadgeFill.Color = StateColor(row.State);
-                card.Style(row.Selected ? UiStyle.Border : UiStyle.Card, row.Selected ? Emerald : UiStyle.CardBorder, row.Selected, Emerald);
+                card.Badge.Color = UiStyle.BadgeText;
+                card.BadgeFill.Color = UiStyle.StateColor(row.State);
+                card.Style(row.Selected ? UiStyle.Border : UiStyle.Card, row.Selected ? UiStyle.Success : UiStyle.CardBorder, row.Selected, UiStyle.Success);
             }
             ResidentsShown = residents.Count;
             _residentsEmpty.Visible = residents.Count == 0;
@@ -229,7 +226,7 @@ namespace Simpiens.Client.Ui
             if (!dossier.HasCrawler) return;
             UiParts.SetText(_dossierName, dossier.Name);
             UiParts.SetText(_dossierBadge, dossier.Badge);
-            _dossierBadgeFill.Color = StateColor(dossier.State);
+            _dossierBadgeFill.Color = UiStyle.StateColor(dossier.State);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);
@@ -241,7 +238,7 @@ namespace Simpiens.Client.Ui
             {
                 if (i == _affinityRows.Count)
                 {
-                    var text = UiParts.Text(string.Empty, Light, UiText.Small);
+                    var text = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
                     _affinityRows.Add(text);
                     _affinitiesList.Children.Add(text);
                 }
@@ -252,20 +249,6 @@ namespace Simpiens.Client.Ui
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
         }
-
-        /// <summary>Unity's state badge colours.</summary>
-        public static Color StateColor(AgentVisualState state) => state switch
-        {
-            AgentVisualState.Walking => UiParts.Hex(0x3b82f6),
-            AgentVisualState.Harvesting => UiParts.Hex(0xf59e0b),
-            AgentVisualState.Resting => UiParts.Hex(0x6366f1),
-            AgentVisualState.Sleeping => UiParts.Hex(0x6366f1),
-            AgentVisualState.Gossiping => UiParts.Hex(0x06b6d4),
-            AgentVisualState.Sharing => UiParts.Hex(0x10b981),
-            AgentVisualState.Panicking => UiParts.Hex(0xef4444),
-            AgentVisualState.Yielding => UiParts.Hex(0xeab308),
-            _ => UiParts.Hex(0x64748b),
-        };
 
         private static ContainerRuntime Panel(float x, float width, string header, out ContainerRuntime body)
         {
@@ -329,9 +312,9 @@ namespace Simpiens.Client.Ui
         private TextRuntime EventRow()
         {
             var box = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 6f };
-            UiParts.AddFill(box, Deep);
-            box.Children.Add(new ColoredRectangleRuntime { Color = Blue, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
-            var text = UiParts.Text(string.Empty, Light, UiText.Small);
+            UiParts.AddFill(box, UiStyle.Inset);
+            box.Children.Add(new ColoredRectangleRuntime { Color = UiStyle.Stock, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
+            var text = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             text.X = 8f;
             text.Y = 3f;
             text.WidthUnits = DimensionUnitType.RelativeToParent;
@@ -360,7 +343,7 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(badge);
             fill = new ColoredRectangleRuntime { WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
             badge.Children.Add(fill);
-            text = UiParts.Text(string.Empty, Color.White, UiText.Badge);
+            text = UiParts.Text(string.Empty, UiStyle.BadgeText, UiText.Badge);
             text.X = 6f;
             text.Y = 2f;
             badge.Children.Add(text);
@@ -434,7 +417,7 @@ namespace Simpiens.Client.Ui
             public DriveBar(ContainerRuntime parent, string label, Color color)
             {
                 var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 20f };
-                var name = UiParts.Text(label, Slate, UiText.Body);
+                var name = UiParts.Text(label, UiStyle.TextSecondary, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);
                 var track = new ColoredRectangleRuntime { Color = UiStyle.Border, X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
@@ -442,7 +425,7 @@ namespace Simpiens.Client.Ui
                 row.Children.Add(track);
                 _fill = new ColoredRectangleRuntime { Color = color, WidthUnits = DimensionUnitType.PercentageOfParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f };
                 track.Children.Add(_fill);
-                _value = UiParts.Text("0%", Light, UiText.Small);
+                _value = UiParts.Text("0%", UiStyle.TextLight, UiText.Small);
                 _value.XUnits = GeneralUnitType.PixelsFromLarge;
                 _value.XOrigin = HorizontalAlignment.Right;
                 UiParts.CentreVertically(_value);

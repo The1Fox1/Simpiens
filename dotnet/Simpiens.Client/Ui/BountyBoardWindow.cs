@@ -21,7 +21,6 @@ namespace Simpiens.Client.Ui
     {
         public const float Width = 820f;
         private const float ListWidth = 400f, FormWidth = 360f, ColumnGap = 28f;
-        private static readonly Color Gold = UiParts.Hex(0xf59e0b), GoldText = UiParts.Hex(0xfbbf24), FormLabel = UiParts.Hex(0xcbd5e1);
 
         private readonly BountyBoardModel _model;
         private readonly ContainerRuntime _cards;
@@ -34,7 +33,7 @@ namespace Simpiens.Client.Ui
         public BountyBoardWindow(BountyBoardModel model)
         {
             _model = model;
-            Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, Gold);
+            Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, UiStyle.Gold);
 
             var columns = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = ColumnGap };
             Window.Body.Children.Add(columns);
@@ -45,7 +44,7 @@ namespace Simpiens.Client.Ui
             list.Width = ListWidth;
             var listHeader = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 22f };
             listHeader.Children.Add(Window.SubHeader("ACTIVE CONTRACTS"));
-            var countPill = UiParts.Pill(out _count, "0 ACTIVE", UiParts.Alpha(Gold, 0.15f), Gold, GoldText);
+            var countPill = UiParts.Pill(out _count, "0 ACTIVE", UiParts.Alpha(UiStyle.Gold, 0.15f), UiStyle.Gold, UiStyle.GoldText);
             countPill.XUnits = GeneralUnitType.PixelsFromLarge;
             countPill.XOrigin = HorizontalAlignment.Right;
             listHeader.Children.Add(countPill);
@@ -144,7 +143,7 @@ namespace Simpiens.Client.Ui
             return group;
         }
 
-        private static TextRuntime Label(string text) => UiParts.Text(text, FormLabel, UiText.SmallBold);
+        private static TextRuntime Label(string text) => UiParts.Text(text, UiStyle.TextLight, UiText.SmallBold);
 
         private static ComboBox Dropdown(string[] choices)
         {
@@ -242,7 +241,6 @@ namespace Simpiens.Client.Ui
     /// <summary>One contract on the board (Unity's bounty card).</summary>
     public sealed class BountyCard
     {
-        private static readonly Color Open = UiParts.Hex(0x10b981), Claimed = UiParts.Hex(0x38bdf8), Closed = UiParts.Hex(0x64748b), GoldText = UiParts.Hex(0xfbbf24);
         private readonly TextRuntime _title, _status, _details, _reward;
 
         public BountyCard()
@@ -253,7 +251,7 @@ namespace Simpiens.Client.Ui
             _title.X = 10f;
             _title.Y = 6f;
             Root.Children.Add(_title);
-            _status = UiParts.Text(string.Empty, Open, UiText.SmallBold);
+            _status = UiParts.Text(string.Empty, UiStyle.Success, UiText.SmallBold);
             _status.XUnits = GeneralUnitType.PixelsFromLarge;
             _status.XOrigin = HorizontalAlignment.Right;
             _status.X = -10f;
@@ -263,7 +261,7 @@ namespace Simpiens.Client.Ui
             _details.X = 10f;
             _details.Y = 24f;
             Root.Children.Add(_details);
-            _reward = UiParts.Text(string.Empty, GoldText, UiText.SmallBold);
+            _reward = UiParts.Text(string.Empty, UiStyle.GoldText, UiText.SmallBold);
             _reward.X = 10f;
             _reward.Y = 42f;
             Root.Children.Add(_reward);
@@ -286,7 +284,7 @@ namespace Simpiens.Client.Ui
             BountyId = row.BountyId;
             UiParts.SetText(_title, row.Title);
             UiParts.SetText(_status, row.StatusText);
-            _status.Color = row.Status == BountyStatus.Open ? Open : row.Status == BountyStatus.Claimed ? Claimed : Closed;
+            _status.Color = UiStyle.BountyStatusColor(row.Status);
             UiParts.SetText(_details, row.Details);
             UiParts.SetText(_reward, row.Reward);
             CancelButton.IsVisible = row.CanCancel;
