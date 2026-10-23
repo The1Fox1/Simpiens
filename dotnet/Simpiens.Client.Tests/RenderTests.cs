@@ -10,8 +10,10 @@ namespace Simpiens.Client.Tests
     /// Epic CLIENT M0's render gate: the outpost drawn by the real client, offscreen on Mesa's software renderer,
     /// compared with reference images committed in <c>Baselines/</c>. These are top-down's (the developers' view, asked for
     /// by name since isometric is the game's default; isometric's are in <c>IsometricRenderTests</c>). Each capture is also written to
-    /// <c>render-output/</c> next to the test binary, for anyone (an agent included) to look at. A deliberate change of
-    /// what is drawn re-records the references with <c>SIMPIENS_RECORD_RENDERS=1</c>, in its own commit, after a look.
+    /// <c>render-output/</c> next to the test binary, for anyone (an agent included) to look at. The references are drawn
+    /// in the pinned image (<c>scripts/test-client-in-container.sh</c>), where a render must match them exactly; elsewhere
+    /// a driver's rounding is allowed. A deliberate change of what is drawn re-records them there, with <c>--record</c>
+    /// (<c>SIMPIENS_RECORD_RENDERS=1</c> inside), in its own commit, after a look.
     /// </summary>
     public class RenderTests
     {
@@ -85,13 +87,19 @@ namespace Simpiens.Client.Tests
             byte[] expected = Png.Decode(File.ReadAllBytes(reference), out int decodedWidth, out int decodedHeight);
             Assert.Equal((width, height), (decodedWidth, decodedHeight));
 
+            // In the pinned image (scripts/client-tests.Containerfile) the references were drawn by the same Mesa and SDL,
+            // so a render must match them byte for byte; elsewhere, a driver's rounding is allowed (review T2, epic F9)
+            bool exact = Environment.GetEnvironmentVariable("SIMPIENS_RENDERS_EXACT") == "1";
+            int channelTolerance = exact ? 0 : ChannelTolerance;
+            double maxDifferingShare = exact ? 0.0 : MaxDifferingShare;
+
             var diff = new byte[actual.Length];
             int differing = 0;
             for (int i = 0; i < width * height; i++)
             {
                 int worst = 0;
                 for (int c = 0; c < 4; c++) worst = Math.Max(worst, Math.Abs(actual[i * 4 + c] - expected[i * 4 + c]));
-                bool differs = worst > ChannelTolerance;
+                bool differs = worst > channelTolerance;
                 if (differs) differing++;
                 diff[i * 4] = differs ? (byte)255 : (byte)(expected[i * 4] / 4);
                 diff[i * 4 + 1] = differs ? (byte)0 : (byte)(expected[i * 4 + 1] / 4);
@@ -99,14 +107,14 @@ namespace Simpiens.Client.Tests
                 diff[i * 4 + 3] = 255;
             }
 
-            if (differing > width * height * MaxDifferingShare)
+            if (differing > width * height * maxDifferingShare)
             {
                 Png.Write(Path.Combine(output, name + ".diff.png"), width, height, diff);
-                Assert.Fail($"{name}: {differing} of {width * height} pixels differ from the reference by more than {ChannelTolerance}. Actual and diff: {output}");
+                Assert.Fail($"{name}: {differing} of {width * height} pixels differ from the reference by more than {channelTolerance}{(exact ? " (exact: the pinned renderer)" : "")}. Actual and diff: {output}");
             }
         }
 
-        /// <summary>Per-channel difference that counts as the same pixel (rounding between drivers).</summary>
+        /// <summary>Per-channel difference that counts as the same pixel (rounding between drivers), outside the pinned image.</summary>
         private const int ChannelTolerance = 2;
 
         /// <summary>The share of pixels allowed to differ: 0.1%.</summary>

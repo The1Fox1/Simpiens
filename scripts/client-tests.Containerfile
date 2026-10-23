@@ -32,8 +32,10 @@ RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
  && rm /tmp/dotnet-install.sh \
  && dotnet --version
 
-# The tests draw through X under Xvfb with Mesa's software renderer, as CI did before the image
+# The tests draw through X under Xvfb with Mesa's software renderer, as CI did before the image; the references were
+# recorded in this image, so its renders must match them exactly (no driver rounding allowed)
 ENV SDL_VIDEODRIVER=x11 \
-    LIBGL_ALWAYS_SOFTWARE=1
+    LIBGL_ALWAYS_SOFTWARE=1 \
+    SIMPIENS_RENDERS_EXACT=1
 
 WORKDIR /work
