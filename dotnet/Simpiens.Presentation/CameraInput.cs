@@ -34,6 +34,10 @@ namespace Simpiens.Presentation
         public bool DemoCutscenePressed;
         /// <summary>F3 this frame: development builds show or hide the frame's timings.</summary>
         public bool TimingsPressed;
+        /// <summary>P this frame: pause or resume the world.</summary>
+        public bool PausePressed;
+        /// <summary>1 to 4 this frame: the world's speed, the n-th of the header's speeds; 0 when none was pressed.</summary>
+        public int SpeedKey;
     }
 
     /// <summary>What the frame's input asks of the rest of the view.</summary>

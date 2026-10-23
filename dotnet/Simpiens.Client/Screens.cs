@@ -111,6 +111,8 @@ namespace Simpiens.Client
                 if (ui.IsOwner && Dashboard != null)
                 {
                     if (keys.TabPressed) Dashboard.TogglePanels();
+                    if (keys.PausePressed) Dashboard.Model.Header.TogglePause();
+                    if (keys.SpeedKey > 0) Dashboard.Model.Header.SetSpeedStep(keys.SpeedKey - 1);
                     if (keys.EscapePressed && Dashboard.CloseWindow()) keys.EscapePressed = false; // Esc closes a window before it stops the camera
                 }
             }

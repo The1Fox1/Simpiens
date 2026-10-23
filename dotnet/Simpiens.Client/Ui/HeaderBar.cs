@@ -10,8 +10,8 @@ namespace Simpiens.Client.Ui
 {
     /// <summary>
     /// The header across the top of the window (Unity's header bar, 52 px), over the map and the panels alike: the
-    /// title and status, the outpost's numbers, the windows' buttons, quick save and load, the tick, the speed and the
-    /// Tab switch. It takes clicks, so the map ignores the pointer over it.
+    /// title and status, the outpost's numbers, the windows' buttons, quick save and load, the tick, pause and speed,
+    /// and the Tab switch. It takes clicks, so the map ignores the pointer over it.
     /// </summary>
     public sealed class HeaderBar
     {
@@ -23,7 +23,7 @@ namespace Simpiens.Client.Ui
         private static readonly Color Metric = UiParts.Hex(0x94a3b8);
         private static readonly Color Operational = UiParts.Hex(0x34d399);
 
-        private readonly TextRuntime _treasury, _rations, _salvage, _bounties, _saveStatus, _tick, _speed;
+        private readonly TextRuntime _treasury, _rations, _salvage, _bounties, _saveStatus, _tick;
 
         public HeaderBar()
         {
@@ -54,7 +54,7 @@ namespace Simpiens.Client.Ui
             centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(Stock, 0.15f), Stock, StockText));
             centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(Bounty, 0.15f), Bounty, BountyText));
 
-            var right = UiParts.Row(6f);
+            var right = UiParts.Row(4f); // 4 px apart: pause and speed took the room the speed's text left (1280 px)
             right.XUnits = GeneralUnitType.PixelsFromLarge;
             right.XOrigin = HorizontalAlignment.Right;
             right.X = -16f;
@@ -69,9 +69,10 @@ namespace Simpiens.Client.Ui
             _tick = UiParts.Text("TICK: 00000", Metric, UiText.SmallBold);
             UiParts.CentreVertically(_tick);
             right.Children.Add(_tick);
-            _speed = UiParts.Text("SPEED: 1.0x", Metric, UiText.SmallBold);
-            UiParts.CentreVertically(_speed);
-            right.Children.Add(_speed);
+            PauseButton = UiParts.Button("PAUSE", 52f);
+            SpeedButton = UiParts.Button("1x", 36f);
+            right.Children.Add(PauseButton.Visual);
+            right.Children.Add(SpeedButton.Visual);
             TabButton = UiParts.Button("[TAB] MAP VIEW", 120f);
             right.Children.Add(TabButton.Visual);
             Root.Children.Add(right);
@@ -94,6 +95,12 @@ namespace Simpiens.Client.Ui
         public Button BountiesButton { get; }
         public Button SaveButton { get; }
         public Button LoadButton { get; }
+
+        /// <summary>Pauses or resumes the world (P).</summary>
+        public Button PauseButton { get; }
+
+        /// <summary>The world's speed: a click moves to the next (1 to 4 pick one).</summary>
+        public Button SpeedButton { get; }
         public Button TabButton { get; }
 
         public string TreasuryText => _treasury.Text;
@@ -118,7 +125,10 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_salvage, header.Salvage);
             UiParts.SetText(_bounties, header.Bounties);
             UiParts.SetText(_tick, header.Tick);
-            UiParts.SetText(_speed, header.Speed);
+            if (PauseButton.Text != header.PauseLabel) PauseButton.Text = header.PauseLabel;
+            if (SpeedButton.Text != header.Speed) SpeedButton.Text = header.Speed;
+            PauseButton.IsVisible = header.CanControlSpeed;
+            SpeedButton.IsVisible = header.CanControlSpeed;
             TabButton.Text = model.PanelsVisible ? "[TAB] MAP VIEW" : "[TAB] DASHBOARD";
             UiParts.SetText(_saveStatus, model.Saves.Status);
             ShowSaveButtons(model.Saves.Available);

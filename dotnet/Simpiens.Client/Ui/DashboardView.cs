@@ -32,6 +32,8 @@ namespace Simpiens.Client.Ui
             Header.TabButton.Click += (_, _) => TogglePanels();
             Header.SaveButton.Click += (_, _) => { Model.Saves.Save(); Refresh(); };
             Header.LoadButton.Click += (_, _) => { Model.Saves.Load(); Refresh(); };
+            Header.PauseButton.Click += (_, _) => Model.Header.TogglePause();
+            Header.SpeedButton.Click += (_, _) => { Model.Header.NextSpeed(); Refresh(); };
             ui.Root.Children.Add(Header.Root);
             ui.Root.Children.Add(Header.Status);
             Sessions = new SessionSwitchBar(model.Sessions);

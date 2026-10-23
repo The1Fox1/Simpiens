@@ -49,9 +49,13 @@ namespace Simpiens.Client
                 ViewTogglePressed = kb.IsKeyDown(Keys.V) && !_previousKeys.IsKeyDown(Keys.V),
                 DemoCutscenePressed = kb.IsKeyDown(Keys.F9) && !_previousKeys.IsKeyDown(Keys.F9),
                 TimingsPressed = kb.IsKeyDown(Keys.F3) && !_previousKeys.IsKeyDown(Keys.F3),
+                PausePressed = kb.IsKeyDown(Keys.P) && !_previousKeys.IsKeyDown(Keys.P),
+                SpeedKey = Pressed(kb, Keys.D1) ? 1 : Pressed(kb, Keys.D2) ? 2 : Pressed(kb, Keys.D3) ? 3 : Pressed(kb, Keys.D4) ? 4 : 0,
                 AdvancePressed = (kb.IsKeyDown(Keys.Space) && !_previousKeys.IsKeyDown(Keys.Space)) || (kb.IsKeyDown(Keys.Enter) && !_previousKeys.IsKeyDown(Keys.Enter)),
             };
             _previousKeys = kb;
         }
+
+        private bool Pressed(KeyboardState now, Keys key) => now.IsKeyDown(key) && !_previousKeys.IsKeyDown(key);
     }
 }
