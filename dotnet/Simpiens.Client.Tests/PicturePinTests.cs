@@ -142,12 +142,14 @@ namespace Simpiens.Client.Tests
         // zoomed view's items were re-pinned for the items it no longer counts. Epic 10 G0 (2026-10-23): the crawlers move
         // differently (navigation fixes for finding F2), so every pin after tick 0 was re-pinned with the render references;
         // the selected crawler's name moves with it, hence the zoomed views' labels. Re-pinned again for Epic 10 G1 (walkers
-        // keep right around a crawler in the way; gathering prefers what the stall still buys).
-        private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (13824482585671684769UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (5765466608837767562UL, 13960357606586035424UL);
+        // keep right around a crawler in the way; gathering prefers what the stall still buys). Re-pinned with the labels for
+        // Epic 10 G2: the Sump and the Glow Caves replace the rock, with their names, their dangers under them ("FOUL AIR")
+        // and tinted floors.
+        private static readonly (ulong, ulong) PinnedTick0 = (6235278446463465821UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (4660904809810335205UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (9351933147033982476UL, 10398974787805613629UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (10612309808054305871UL, 7580600243856684339UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (3878807140041491720UL, 927920339744917363UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (588843616322108427UL, 16142742670942183276UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (4937425532101275212UL, 14081288791794121755UL);
     }
 }
