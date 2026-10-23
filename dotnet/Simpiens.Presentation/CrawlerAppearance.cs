@@ -45,9 +45,15 @@ namespace Simpiens.Presentation
         {
             public AgentVisualState State;
             public long SinceTick;
+            /// <summary>The last frame's tick that had this crawler.</summary>
+            public long SeenTick;
         }
 
         private readonly Dictionary<EntityId, Shown> _shown = new Dictionary<EntityId, Shown>(64);
+        private readonly List<EntityId> _gone = new List<EntityId>(8);
+
+        /// <summary>Crawlers whose shown state is kept.</summary>
+        public int Remembered => _shown.Count;
 
         /// <summary>Forgets every crawler's displayed state: a new world (entity ids repeat per seed). The scene calls it on a new epoch.</summary>
         public void Reset() => _shown.Clear();
@@ -89,13 +95,34 @@ namespace Simpiens.Presentation
         {
             if (!_shown.TryGetValue(id, out var shown))
             {
-                _shown[id] = new Shown { State = desired, SinceTick = tick };
+                _shown[id] = new Shown { State = desired, SinceTick = tick, SeenTick = tick };
                 return desired;
             }
-            if (desired == shown.State) return desired;
-            if (tick - shown.SinceTick < MinDisplayTicks) return shown.State; // hold until the dwell elapses
-            _shown[id] = new Shown { State = desired, SinceTick = tick };
-            return desired;
+            shown.SeenTick = tick;
+            // Hold the shown state until the dwell elapses
+            if (desired != shown.State && tick - shown.SinceTick >= MinDisplayTicks)
+            {
+                shown.State = desired;
+                shown.SinceTick = tick;
+            }
+            _shown[id] = shown;
+            return shown.State;
+        }
+
+        /// <summary>
+        /// Forgets the crawlers the frame at <paramref name="tick"/> no longer has (review S1: a crawler that leaves the
+        /// world, a death or a departure, would otherwise be kept for the rest of the session). Call after advancing the
+        /// frame's <paramref name="present"/> crawlers; with none gone it does nothing, and it never allocates once warm.
+        /// </summary>
+        public void ForgetAbsent(long tick, int present)
+        {
+            if (_shown.Count <= present) return;
+            _gone.Clear();
+            foreach (var pair in _shown)
+            {
+                if (pair.Value.SeenTick != tick) _gone.Add(pair.Key);
+            }
+            for (int i = 0; i < _gone.Count; i++) _shown.Remove(_gone[i]);
         }
 
         /// <summary>The sprite frame (0 or 1): 8 frames a second panicking, 1.5 asleep, 4 otherwise (Unity's speeds).</summary>

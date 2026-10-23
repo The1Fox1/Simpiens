@@ -62,6 +62,38 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void ACrawlerThatLeavesTheWorldIsForgotten()
+        {
+            // Review S1: the shown states were kept for every crawler ever seen until the session ended
+            var appearance = new CrawlerAppearance();
+            var ids = new[] { new EntityId(1u, 0u, 0u, 1u), new EntityId(1u, 0u, 0u, 2u), new EntityId(1u, 0u, 0u, 3u) };
+            foreach (var id in ids) appearance.Advance(id, AgentVisualState.Walking, CrawlerFlags.None, 10);
+            appearance.ForgetAbsent(10, ids.Length);
+            Assert.Equal(3, appearance.Remembered);
+
+            appearance.Advance(ids[0], AgentVisualState.Walking, CrawlerFlags.None, 11); // the third left at tick 11
+            appearance.Advance(ids[1], AgentVisualState.Walking, CrawlerFlags.None, 11);
+            appearance.ForgetAbsent(11, 2);
+            Assert.Equal(2, appearance.Remembered);
+
+            // Forgetting allocates nothing once warm
+            appearance.Advance(ids[2], AgentVisualState.Walking, CrawlerFlags.None, 12);
+            appearance.ForgetAbsent(13, 0);
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int t = 14; t < 114; t++)
+            {
+                appearance.Advance(ids[0], AgentVisualState.Walking, CrawlerFlags.None, t);
+                bool back = (t & 1) == 1; // every other tick the second is gone, then back
+                if (back) appearance.Advance(ids[1], AgentVisualState.Idle, CrawlerFlags.None, t);
+                appearance.ForgetAbsent(t, back ? 2 : 1);
+            }
+            Assert.Equal(before, System.GC.GetAllocatedBytesForCurrentThread());
+            Assert.Equal(2, appearance.Remembered); // the last tick, 113, had both
+            appearance.ForgetAbsent(114, 0);
+            Assert.Equal(0, appearance.Remembered);
+        }
+
+        [Fact]
         public void AnimationFramesAndMicroAnimationsFollowTheViewClock()
         {
             // 4 frames a second: frame 0 for 0.0-0.24 s, 1 for 0.25-0.49 s

@@ -132,7 +132,7 @@ namespace Simpiens.Presentation
             {
                 var overlay = _overlays[i];
                 float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
-                labels.Add(new WorldLabel(UnchartedText, overlay.LabelAt, LabelKind.Uncharted, Rgba32.From(new Rgba(UnchartedColor.R, UnchartedColor.G, UnchartedColor.B, 1f - t))));
+                labels.Add(new WorldLabel(UnchartedText, overlay.LabelAt, LabelKind.Uncharted, Rgba32.From(new Rgba(UnchartedColor.R, UnchartedColor.G, UnchartedColor.B, 1f - t)), sectorId: overlay.SectorId));
             }
         }
 

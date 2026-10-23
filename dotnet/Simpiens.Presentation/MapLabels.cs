@@ -22,14 +22,17 @@ namespace Simpiens.Presentation
         public readonly Rgba32 Color;
         /// <summary>World units above the floor point (visual only): a name over a standing crawler's head.</summary>
         public readonly float Height;
+        /// <summary>The sector a room's name or its "UNCHARTED" belongs to, which pairs them (review S2); -1 for neither.</summary>
+        public readonly int SectorId;
 
-        public WorldLabel(string text, Vec2 at, LabelKind kind, Rgba32 color, float height = 0f)
+        public WorldLabel(string text, Vec2 at, LabelKind kind, Rgba32 color, float height = 0f, int sectorId = -1)
         {
             Text = text;
             At = at;
             Kind = kind;
             Color = color;
             Height = height;
+            SectorId = sectorId;
         }
     }
 
@@ -79,7 +82,7 @@ namespace Simpiens.Presentation
         private readonly List<int> _rooms = new List<int>(16);
         private readonly List<int> _row = new List<int>(16);
         private readonly Dictionary<int, int> _roomSize = new Dictionary<int, int>(16);
-        private readonly Dictionary<Vec2Key, int> _roomAt = new Dictionary<Vec2Key, int>(16);
+        private readonly Dictionary<int, int> _roomOfSector = new Dictionary<int, int>(16);
         private readonly List<Vec2> _screenAt = new List<Vec2>(16);
         private readonly Comparison<int> _byScreenX;
         private readonly HashSet<int> _done = new HashSet<int>(); // room labels already in a row, this layout
@@ -111,22 +114,13 @@ namespace Simpiens.Presentation
             }
         }
 
-        private readonly struct Vec2Key : IEquatable<Vec2Key>
-        {
-            private readonly float _x, _y;
-            public Vec2Key(Vec2 v) { _x = v.X; _y = v.Y; }
-            public bool Equals(Vec2Key other) => _x.Equals(other._x) && _y.Equals(other._y);
-            public override bool Equals(object obj) => obj is Vec2Key other && Equals(other);
-            public override int GetHashCode() => HashCode.Combine(_x, _y);
-        }
-
         /// <summary>Places <paramref name="labels"/> for <paramref name="view"/> and writes their glyphs (shadows first) to <paramref name="glyphs"/>.</summary>
         public void Layout(IReadOnlyList<WorldLabel> labels, in View view, FontLibrary fonts, List<ScreenGlyph> glyphs)
         {
             glyphs.Clear();
             Placed.Clear();
             _roomSize.Clear();
-            _roomAt.Clear();
+            _roomOfSector.Clear();
             if (labels == null || fonts == null) return;
 
             // Room names: a size per row, the largest the zoom allows at which the row's names don't overlap
@@ -156,7 +150,7 @@ namespace Simpiens.Presentation
                 {
                     done.Add(i);
                     _roomSize[i] = size;
-                    _roomAt[new Vec2Key(labels[i].At)] = i;
+                    if (labels[i].SectorId >= 0) _roomOfSector.TryAdd(labels[i].SectorId, i); // a sector's first name, as the fog pairs them
                 }
             }
 
@@ -180,7 +174,7 @@ namespace Simpiens.Presentation
                         int size = MinSize;
                         float top;
                         var at = view.WorldToScreen(label.At, label.Height);
-                        if (_roomAt.TryGetValue(new Vec2Key(label.At), out int room))
+                        if (label.SectorId >= 0 && _roomOfSector.TryGetValue(label.SectorId, out int room))
                         {
                             int roomSize = _roomSize[room];
                             if (roomSize == 0) { Placed.Add(new PlacedLabel(i, false, default, 0, 0, 0, 0)); break; }

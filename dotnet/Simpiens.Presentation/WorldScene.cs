@@ -83,11 +83,15 @@ namespace Simpiens.Presentation
             }
             Fog.Update(frame, viewSeconds);
             if (frame == null) return;
+            int crawlers = 0;
             for (int i = 0; i < frame.Count; i++)
             {
                 ref readonly var entity = ref frame[i];
-                if (entity.IsCrawler) Appearance.Advance(entity.Id, entity.VisualState, entity.Flags, frame.Tick); // its dwell runs under the fog too
+                if (!entity.IsCrawler) continue;
+                Appearance.Advance(entity.Id, entity.VisualState, entity.Flags, frame.Tick); // its dwell runs under the fog too
+                crawlers++;
             }
+            Appearance.ForgetAbsent(frame.Tick, crawlers);
         }
 
         /// <summary>
@@ -199,15 +203,37 @@ namespace Simpiens.Presentation
             }
         }
 
-        /// <summary>The map's room names, hung on their points; drawn in screen space (<see cref="MapLabelLayout"/>).</summary>
+        /// <summary>
+        /// The map's room names, hung on their points; drawn in screen space (<see cref="MapLabelLayout"/>). Each carries
+        /// the sector it stands in (the first that contains it, in map order), which pairs it with that sector's
+        /// "UNCHARTED".
+        /// </summary>
         private void AddRoomNames(MapDefinition map)
         {
+            if (!ReferenceEquals(_labelSectorsMap, map))
+            {
+                _labelSectors = new int[map.Labels.Count];
+                for (int i = 0; i < map.Labels.Count; i++)
+                {
+                    _labelSectors[i] = -1;
+                    for (int s = 0; s < map.Sectors.Count; s++)
+                    {
+                        if (!map.Sectors[s].Contains(map.Labels[i].Position)) continue;
+                        _labelSectors[i] = map.Sectors[s].Id;
+                        break;
+                    }
+                }
+                _labelSectorsMap = map; // derived from the map alone
+            }
             for (int i = 0; i < map.Labels.Count; i++)
             {
                 var label = map.Labels[i];
-                Labels.Add(new WorldLabel(label.Text, label.Position, LabelKind.Room, Rgba32.From(label.Color)));
+                Labels.Add(new WorldLabel(label.Text, label.Position, LabelKind.Room, Rgba32.From(label.Color), sectorId: _labelSectors[i]));
             }
         }
+
+        private int[] _labelSectors;
+        private MapDefinition _labelSectorsMap;
 
         private bool Stands(bool[] cutaway, int tile) => WallStyle == WallStyle.Full || (WallStyle == WallStyle.Cutaway && cutaway[tile]);
 

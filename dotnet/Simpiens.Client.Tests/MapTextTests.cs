@@ -143,5 +143,24 @@ namespace Simpiens.Client.Tests
             Assert.True(placedName.Y + placedName.Height <= MathF.Ceiling(camera.WorldToScreen(crawler.Position).Y), "The name sits above its crawler.");
             Assert.All(glyphs, g => Assert.True(g.Width > 0 && g.Height > 0));
         }
+
+        [Fact]
+        public void UnchartedFindsItsRoomBySectorNotByAnExactlyEqualPoint()
+        {
+            // Review S2: the pairing used to compare two floats for equality; a point a hair off lost its room
+            var white = Rgba32.From(new Rgba(1f, 1f, 1f, 1f));
+            var labels = new List<WorldLabel>
+            {
+                new WorldLabel("Outpost Hub", new Vec2(0f, 0f), LabelKind.Room, white, sectorId: 3),
+                new WorldLabel("Garden", new Vec2(8f, 0f), LabelKind.Room, white, sectorId: 4),
+                new WorldLabel(FogOfWar.UnchartedText, new Vec2(0.0001f, 0f), LabelKind.Uncharted, white, sectorId: 3),
+            };
+            var layout = new MapLabelLayout();
+            layout.Layout(labels, CameraOn(Simpiens.Core.Session.Layouts.Floor1Layout.Definition, 16f), Fonts.Value, new List<ScreenGlyph>());
+            var room = layout.Placed.Single(p => p.Index == 0);
+            var uncharted = layout.Placed.Single(p => p.Index == 2);
+            Assert.Equal(room.Y + room.Height, uncharted.Y);
+            Assert.True(uncharted.Face.Size < room.Face.Size);
+        }
     }
 }

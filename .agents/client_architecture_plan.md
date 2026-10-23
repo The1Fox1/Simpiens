@@ -116,4 +116,16 @@ Done in the client seams (A1–A3) and M3 Phase 0:
 - Phase 2 done:
   - 2.1 `cebc9e3`;
   - 2.2 `ce56fc2`, with eight header references re-recorded;
-  - 2.3, this step's commit.
+  - 2.3 `9c3105f`.
+- Phase 3 done:
+  - 3.1 `2195f35`;
+  - 3.2 `01ced93`.
+
+  The tests' reflection into Gum's cursor is gone; KNI's focus flag stays, because Gum gates its whole update on it.
+- Phase 4 done:
+  - 4.1 `974352d`;
+  - 4.2 `89732e1`;
+  - 4.3 `fb7d3dc`.
+
+  4.3 was committed twice. A power cut emptied the first commit's objects; `.git` was repaired from the last sound commit, and the same tree was committed again after a full re-check.
+- 5.1: S1 and S2 fixed; S6 was already fixed. This step's commit.
