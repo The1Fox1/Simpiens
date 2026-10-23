@@ -144,7 +144,7 @@ namespace Simpiens.Client.Tests
             var (sim, _, stall, model) = BareOutpost(250, sectors, chronicle);
 
             model.OpenBounties();
-            model.Bounties.Type = BountyType.GatherResource;
+            model.Bounties.SetType(BountyType.GatherResource);
             Assert.True(model.Bounties.SelectSector(Floor1LayoutSector("Ore Quarry")));
             model.Bounties.Item = ItemType.IronOre;
             model.Bounties.Quantity = 2;
@@ -189,13 +189,13 @@ namespace Simpiens.Client.Tests
             model.OpenBounties();
 
             // Scout offers exactly the uncharted rooms
-            model.Bounties.Type = BountyType.ScoutSector;
+            model.Bounties.SetType(BountyType.ScoutSector);
             Assert.Equal(new[] { (int)Floor1Layout.DeepSeamSectorId, Floor1Layout.OvergrowthSectorId }, model.Bounties.SectorChoiceIds.OrderBy(i => i).ToArray());
             Assert.False(model.Bounties.SelectSector(Floor1Layout.HubSectorId), "A charted room is not offered to scout.");
             Assert.Equal("Uncharted", model.Bounties.SectorState);
 
             // Gather offers every sector, marking the uncharted ones
-            model.Bounties.Type = BountyType.GatherResource;
+            model.Bounties.SetType(BountyType.GatherResource);
             Assert.Equal(sectors.All.Count, model.Bounties.SectorChoiceIds.Count);
             int deep = model.Bounties.SectorChoiceIds.ToList().IndexOf(Floor1Layout.DeepSeamSectorId);
             Assert.EndsWith(BountyBoardModel.AwaitsChartSuffix, model.Bounties.SectorChoiceLabels[deep]);
@@ -211,7 +211,7 @@ namespace Simpiens.Client.Tests
 
             // Once every room is charted, Scout has nothing left to offer
             sectors.SetAllExplored(true);
-            model.Bounties.Type = BountyType.ScoutSector;
+            model.Bounties.SetType(BountyType.ScoutSector);
             Assert.False(model.Bounties.CanPost);
             Assert.Equal(BountyBoardModel.AllChartedText, model.Bounties.Feedback.Text);
             model.Bounties.Post();

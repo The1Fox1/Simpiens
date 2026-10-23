@@ -78,6 +78,27 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The registered sessions (the Dev Map only in development builds).</summary>
         public ISessionSwitcher Sessions { get; }
 
+        /// <summary>The stall <paramref name="stallId"/>, if it is open.</summary>
+        public bool TryGetStall(EntityId stallId, out Simpiens.Simulation.Economy.TradeStallData stall)
+        {
+            var stalls = Simulation?.ActiveStalls;
+            for (int i = 0; stalls != null && i < stalls.Count; i++)
+            {
+                if (stalls[i].StallEntityId != stallId) continue;
+                stall = stalls[i];
+                return true;
+            }
+            stall = default;
+            return false;
+        }
+
+        /// <summary>Where a stall stands, for the player: "Outpost Stall @ " and its room's name on the loaded map.</summary>
+        public string StallLabel(in Simpiens.Simulation.Economy.TradeStallData stall)
+        {
+            string room = Sectors?.Map != null ? Sectors.GetSectorAt(stall.Position).Name : null;
+            return string.IsNullOrEmpty(room) ? "Outpost Stall" : "Outpost Stall @ " + room;
+        }
+
         /// <summary>The outpost's stall (the first), if there is one.</summary>
         public bool TryGetStall(out Simpiens.Simulation.Economy.TradeStallData stall)
         {

@@ -6,7 +6,8 @@ namespace Simpiens.Presentation.Dashboard
 {
     /// <summary>
     /// The merchant terminal (Unity's merchant window): the stall's state, and three prices the player sets. Apply
-    /// queues one <see cref="UpdateStallPricesCommand"/>; the stall changes on the next tick.
+    /// queues one <see cref="UpdateStallPricesCommand"/>; the stall changes on the next tick. The window works on one
+    /// stall, picked by id when it opens (the outpost has one), and names it by the room it stands in (review S7).
     /// </summary>
     public sealed class MerchantModel
     {
@@ -18,6 +19,9 @@ namespace Simpiens.Presentation.Dashboard
         internal MerchantModel(DashboardContext context) => _context = context;
 
         public bool IsOpen { get; private set; }
+
+        /// <summary>The stall the window shows and prices, or default when none is open.</summary>
+        public EntityId StallId { get; private set; }
 
         public string StallStatus { get; private set; } = string.Empty;
         public string Treasury { get; private set; } = string.Empty;
@@ -35,7 +39,8 @@ namespace Simpiens.Presentation.Dashboard
         public void Open()
         {
             IsOpen = true;
-            if (_context.TryGetStall(out var stall))
+            StallId = _context.TryGetStall(out var stall) ? stall.StallEntityId : default;
+            if (StallId != default)
             {
                 RationPrice = Clamp(stall.RationSellPrice);
                 OrePrice = Clamp(stall.OreBuyPrice);
@@ -49,9 +54,9 @@ namespace Simpiens.Presentation.Dashboard
         public void Refresh()
         {
             if (!IsOpen) return;
-            if (_context.TryGetStall(out var stall))
+            if (_context.TryGetStall(StallId, out var stall))
             {
-                StallStatus = "Outpost Stall @ Central Corridor";
+                StallStatus = _context.StallLabel(stall);
                 Treasury = stall.InArrears
                     ? Invariant($"Treasury: {stall.TreasuryGold} Gold (in arrears: not buying salvage)")
                     : Invariant($"Treasury: {stall.TreasuryGold} Gold");
@@ -74,8 +79,7 @@ namespace Simpiens.Presentation.Dashboard
                 return;
             }
             ushort ration = (ushort)Clamp(RationPrice), ore = (ushort)Clamp(OrePrice), herb = (ushort)Clamp(HerbPrice);
-            EntityId stallId = _context.TryGetStall(out var stall) ? stall.StallEntityId : default;
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(stallId, ration, ore, herb)));
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(StallId, ration, ore, herb)));
             Feedback = new Feedback(Invariant($"Rates updated: Ration {ration}g | Ore {ore}g | Herb {herb}g"), FeedbackTone.Ok);
         }
 

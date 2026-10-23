@@ -56,14 +56,17 @@ namespace Simpiens.Presentation.Dashboard
 
         public bool IsOpen { get; private set; }
 
-        public BountyType Type
+        public BountyType Type => _type;
+
+        /// <summary>
+        /// Picks the contract's type: Scout, or Gather for anything else. The sector choices are rebuilt for it (Scout
+        /// offers only uncharted sectors), which can change the picked sector and the feedback (review S9: the side
+        /// effect is a call, not a setter).
+        /// </summary>
+        public void SetType(BountyType type)
         {
-            get => _type;
-            set
-            {
-                _type = value == BountyType.ScoutSector ? BountyType.ScoutSector : BountyType.GatherResource;
-                RebuildSectorChoices();
-            }
+            _type = type == BountyType.ScoutSector ? BountyType.ScoutSector : BountyType.GatherResource;
+            RebuildSectorChoices();
         }
 
         /// <summary>Item and quantity only mean something for Gather (Unity hid them for Scout).</summary>

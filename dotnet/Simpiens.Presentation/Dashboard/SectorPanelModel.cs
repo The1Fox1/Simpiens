@@ -139,7 +139,7 @@ namespace Simpiens.Presentation.Dashboard
             if (agent.IsYielding) return "Yielding to dominant peer";
             if (agent.IsSharing) return "Sharing food rations";
             if (agent.IsGossiping) return "Gossiping with neighbor";
-            if (agent.HasActivePlan && agent.ActivePlan.CurrentAction != null) return agent.ActivePlan.CurrentAction.GetType().Name.Replace("Action", "");
+            if (agent.HasActivePlan && agent.ActivePlan.CurrentAction != null) return PlanText.Action(agent.ActivePlan.CurrentAction);
             return "Loitering / Idle";
         }
     }

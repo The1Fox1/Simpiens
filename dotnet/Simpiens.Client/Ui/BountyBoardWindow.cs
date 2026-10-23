@@ -70,7 +70,7 @@ namespace Simpiens.Client.Ui
             TypeBox.SelectionChanged += (_, _) =>
             {
                 if (_binding) return;
-                _model.Type = TypeBox.SelectedIndex == 1 ? BountyType.ScoutSector : BountyType.GatherResource;
+                _model.SetType(TypeBox.SelectedIndex == 1 ? BountyType.ScoutSector : BountyType.GatherResource);
                 Bind();
             };
 

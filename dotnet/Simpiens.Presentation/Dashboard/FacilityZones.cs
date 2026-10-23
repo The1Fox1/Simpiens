@@ -28,18 +28,14 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         public FacilityZone WithExplored(bool explored) => new FacilityZone(ZoneId, Name, Description, Bounds, AnchorPosition, AnchorRadius, explored);
-
-        public bool Contains(Vec2 position)
-        {
-            if (AnchorRadius > 0f && Vec2.Distance(position, AnchorPosition) <= AnchorRadius) return true;
-            return Bounds.Contains(position);
-        }
     }
 
     /// <summary>
     /// The loaded map's sectors for the dashboard, with occupancy queries (Epic CLIENT M2.1, a port of Unity's
     /// <c>FacilityZoneService</c>). An adapter over the simulation's <see cref="ISectorRegistry"/>: it holds no sector
-    /// data and writes nothing. The queries allocate nothing; the zone list is rebuilt only when a new map loads.
+    /// data and writes nothing. The queries allocate nothing; the zone list is rebuilt only when a new map loads. A
+    /// crawler is in one sector, the one the map's own lookup gives (<see cref="ISectorRegistry.GetSectorAt"/>, as the
+    /// selection uses), so it is counted once even where sectors overlap (review U5).
     /// </summary>
     public sealed class FacilityZoneService
     {
@@ -75,13 +71,13 @@ namespace Simpiens.Presentation.Dashboard
         public int GetOccupancyCount(int zoneId, IWorldRegistry registry)
         {
             if (registry == null) return 0;
-            var zone = GetZoneById(zoneId);
+            int id = GetZoneById(zoneId).ZoneId;
             var nodes = registry.ActiveEntities;
             int occupancy = 0;
             for (int i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
-                if (node != null && node.Type == EntityType.Pawn && zone.Contains(node.Position)) occupancy++;
+                if (node != null && node.Type == EntityType.Pawn && _sectors.GetSectorAt(node.Position).Id == id) occupancy++;
             }
             return occupancy;
         }
@@ -91,12 +87,12 @@ namespace Simpiens.Presentation.Dashboard
             if (results == null) return;
             results.Clear();
             if (registry == null) return;
-            var zone = GetZoneById(zoneId);
+            int id = GetZoneById(zoneId).ZoneId;
             var nodes = registry.ActiveEntities;
             for (int i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
-                if (node != null && node.Type == EntityType.Pawn && zone.Contains(node.Position)) results.Add(node);
+                if (node != null && node.Type == EntityType.Pawn && _sectors.GetSectorAt(node.Position).Id == id) results.Add(node);
             }
         }
 
