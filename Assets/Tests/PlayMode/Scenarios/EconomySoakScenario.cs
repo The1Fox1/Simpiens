@@ -423,11 +423,13 @@ namespace Simpiens.Tests.PlayMode.Scenarios
             var last = _rows[_rowCount - 1];
             uint minTreasury = uint.MaxValue;
             int peakTrustUp = 0;
+            float lowestTrustMean = float.MaxValue;
             bool everInArrears = false;
             for (int i = 0; i < _rowCount; i++)
             {
                 if (_rows[i].Treasury < minTreasury) minTreasury = _rows[i].Treasury;
                 if (_rows[i].TrustUp > peakTrustUp) peakTrustUp = _rows[i].TrustUp;
+                if (_rows[i].TrustMean < lowestTrustMean) lowestTrustMean = _rows[i].TrustMean;
                 if (_rows[i].InArrearsNow != 0) everInArrears = true;
             }
 
@@ -441,7 +443,9 @@ namespace Simpiens.Tests.PlayMode.Scenarios
                     break;
                 case "greedy":
                     Assert.LessOrEqual(last.TrustUp, GreedyTrustUpMax, $"Greedy: trust rose for {last.TrustUp} crawlers (at most {GreedyTrustUpMax}).");
-                    Assert.Less(last.TrustMean, 0f, $"Greedy: trust mean {last.TrustMean:F1} is not below 0.");
+                    // At its lowest, as generous is judged at its peak: once greed has emptied the stall nobody trades,
+                    // and trust drifts back to neutral by minute 30 (Epic 10 G0)
+                    Assert.Less(lowestTrustMean, 0f, $"Greedy: trust mean never fell below 0 (lowest {lowestTrustMean:F1}).");
                     break;
                 case "generous":
                     Assert.IsTrue(minTreasury == 0 || everInArrears, $"Generous: the stall never went broke (lowest treasury {minTreasury}g).");

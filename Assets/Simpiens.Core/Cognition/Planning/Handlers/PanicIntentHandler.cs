@@ -8,6 +8,12 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     public class PanicIntentHandler : IntentHandlerBase<PanicIntent>
     {
+        /// <summary>
+        /// A panic ends after this long even short of its last waypoint, and the crawler re-evaluates from where it is:
+        /// sidestepping a crowd can circle a waypoint for good (one sprint lasted 4,000 ticks; Epic 10 G0).
+        /// </summary>
+        public const float MaxSeconds = 6f;
+
         protected override IntentResult Execute(WorldEntity node, PanicIntent intent, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
@@ -33,6 +39,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
                 return IntentResult.Success;
             }
+            if (panicResult == IntentResult.InProgress && state.ElapsedTime >= MaxSeconds) return IntentResult.Success;
             return panicResult;
         }
     }

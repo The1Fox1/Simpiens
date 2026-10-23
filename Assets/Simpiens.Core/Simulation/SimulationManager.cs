@@ -238,6 +238,9 @@ namespace Simpiens.Simulation
             if ((bunkPosition - (Vec2)node.Position).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
 
             Vec2 candidate = Vec2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
+            // Someone still standing in it (a sleeper just up): wait, within the handler's bounded approach, rather than
+            // lie down on them (Epic 10 G0: walkers reach occupied bunks now, and stacked there)
+            if (IsCrowdedMove(node, candidate)) return IntentResult.InProgress;
             if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
             return (bunkPosition - candidate).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
         }
@@ -1420,7 +1423,7 @@ namespace Simpiens.Simulation
             // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
             float step = speed * FixedTickDeltaTime;
-            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)))
+            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)) && !TrySidestep(node, targetPos, step))
             {
                 currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
                 return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
@@ -1438,6 +1441,32 @@ namespace Simpiens.Simulation
             }
 
             return IntentResult.InProgress;
+        }
+
+        // Sidesteps for a panicking pawn whose way is blocked: 45 degrees either side, then 90, as (cos, sin) pairs
+        private static readonly Vec2[] SidestepTurns =
+        {
+            new Vec2(0.70710677f, 0.70710677f), new Vec2(0.70710677f, -0.70710677f), new Vec2(0f, 1f), new Vec2(0f, -1f)
+        };
+
+        /// <summary>
+        /// Steps a pawn around whatever blocks its straight step toward <paramref name="targetPos"/>, trying the turns
+        /// of <see cref="SidestepTurns"/> in order. Without it a panicking crawler in a crowd skipped every waypoint
+        /// within a few ticks and panicked again on the spot, starving there (Epic 10 G0, finding F2).
+        /// </summary>
+        private bool TrySidestep(WorldEntity node, Vec2 targetPos, float step)
+        {
+            Vec2 toTarget = targetPos - (Vec2)node.Position;
+            float dist = toTarget.Magnitude;
+            if (dist < 0.001f) return false;
+            Vec2 dir = toTarget / dist;
+            for (int i = 0; i < SidestepTurns.Length; i++)
+            {
+                Vec2 turn = SidestepTurns[i];
+                Vec2 turned = new Vec2(dir.X * turn.X - dir.Y * turn.Y, dir.X * turn.Y + dir.Y * turn.X);
+                if (TryDisplacePawn(node, (Vec2)node.Position + turned * step)) return true;
+            }
+            return false;
         }
 
         public IntentResult ExecutePathMovement(WorldEntity node, PathResponse path, ActiveIntentState state)
@@ -1475,11 +1504,14 @@ namespace Simpiens.Simulation
             }
 
             bool isFinalWaypoint = state.CurrentWaypointIndex == path.Length - 1;
-            bool nearFinal = isFinalWaypoint && Vec2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance;
+            bool nearWaypoint = Vec2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance;
+            bool nearFinal = isFinalWaypoint && nearWaypoint;
 
-            // 2. Path Invalidation: Check if next step is blocked
+            // 2. Path Invalidation: Check if next step is blocked. Only near the waypoint: a smoothed path's next
+            // waypoint is often the destination, and a pawn standing there froze a crawler across the map (Epic 10 G0,
+            // finding F2); further away, IsCrowdedMove below keeps pawns apart
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
-            if (IsPositionBlocked(targetPos, node.Id, clearance))
+            if (nearWaypoint && IsPositionBlocked(targetPos, node.Id, clearance))
             {
                 // Someone already stands on our destination and we're close: arrive here rather than stack on them
                 if (nearFinal) return IntentResult.Success;

@@ -39,6 +39,26 @@ namespace Simpiens.Core.Tests
             Assert.True(failures.Count == 0, "Outpost lifecycle failures:\n  " + string.Join("\n  ", failures));
         }
 
+        public static TheoryData<ulong> GateSeeds => new TheoryData<ulong>(OutpostWatch.GateSeeds);
+
+        /// <summary>
+        /// The day holds on every gate seed (Epic 10 G0, finding F2), not only the default one: nobody starves, every
+        /// crawler closes a harvest-to-sell cycle, both bounties are delivered, the ledger balances, nobody stacks.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(GateSeeds))]
+        public void TheOutpostsDayHoldsOnEverySeed(ulong seed)
+        {
+            using var sim = LocalSimulation.Create(seed);
+            sim.Respawn(OutpostSession.SessionId);
+            var watch = new OutpostWatch(sim);
+            watch.Run(9000);
+            watch.Finish();
+
+            var failures = watch.DayFailures();
+            Assert.True(failures.Count == 0, $"Seed {seed}'s day failed:\n  " + string.Join("\n  ", failures) + "\n" + watch.Report());
+        }
+
         /// <summary>The Milestone 1 supply loop: sale, scout, gather, restock and regrowth by their deadlines.</summary>
         [Fact]
         public void TheSupplyLoopEmergesWithoutInjection()
