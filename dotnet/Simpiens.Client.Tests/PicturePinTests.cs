@@ -141,12 +141,13 @@ namespace Simpiens.Client.Tests
         // the rest before sorting) can't move them; the full views have nothing off screen and kept their pins, and the
         // zoomed view's items were re-pinned for the items it no longer counts. Epic 10 G0 (2026-10-23): the crawlers move
         // differently (navigation fixes for finding F2), so every pin after tick 0 was re-pinned with the render references;
-        // the selected crawler's name moves with it, hence the zoomed views' labels.
+        // the selected crawler's name moves with it, hence the zoomed views' labels. Re-pinned again for Epic 10 G1 (walkers
+        // keep right around a crawler in the way; gathering prefers what the stall still buys).
         private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (17136331033887249008UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (14726820994859452996UL, 9961463459885518582UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (13824482585671684769UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (5765466608837767562UL, 13960357606586035424UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (3788725809304656315UL, 7580600243856684339UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15834235469868254433UL, 13698735132650210947UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (10612309808054305871UL, 7580600243856684339UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (3878807140041491720UL, 927920339744917363UL);
     }
 }
