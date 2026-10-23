@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The game client (Epic CLIENT): an XNA Game that ticks the simulation through Simpiens.Hosting and draws what
+       Simpiens.Presentation describes, with its dashboard in Gum. Built on KNI; -p:XnaFramework=MonoGame compiles it
+       against MonoGame, KNI's fallback. Framework-specific lines live in XnaPlatform only. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Client</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Presentation/Simpiens.Presentation.csproj" />
+    <ProjectReference Include="../Simpiens.Hosting/Simpiens.Hosting.csproj" />
+  </ItemGroup>
+  <!-- The baked fonts (Simpiens.FontBaker): copied next to the game, where Gum looks for Content/FontCache -->
+  <ItemGroup>
+    <Content Include="Content/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'Kni'">
+    <PackageReference Include="nkast.Xna.Framework.Game" Version="$(KniVersion)" />
+    <PackageReference Include="Gum.KNI" Version="$(GumVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="$(MonoGameVersion)" />
+    <PackageReference Include="Gum.MonoGame" Version="$(GumVersion)" />
+  </ItemGroup>
+</Project>

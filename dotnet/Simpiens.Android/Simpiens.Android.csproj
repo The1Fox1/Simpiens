@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Android game (Epic CLIENT): KNI's Android/OpenGL ES platform under the shared client. Mobile comes after
+       the MVP (producer, 2026-10-18); until then this project is only compiled, by CI and on demand, so that nothing
+       desktop-only creeps into the client. It needs the .NET Android workload, a JDK and the Android SDK, so it is
+       not part of Simpiens.slnx. Phones are portrait only. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Android</RootNamespace>
+    <AssemblyName>Simpiens.Android</AssemblyName>
+    <ApplicationId>dev.simpiens.game</ApplicationId>
+    <ApplicationTitle>Simpiens</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+    <!-- From KNI 4.3's template and migration guide -->
+    <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
+    <KniPlatform>Android</KniPlatform>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Client/Simpiens.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="nkast.Kni.Platform.Android.GL" Version="$(KniVersion)" />
+  </ItemGroup>
+  <!-- The baked fonts as Android assets: Gum reads Content/FontCache through TitleContainer there -->
+  <ItemGroup>
+    <AndroidAsset Include="../Simpiens.Client/Content/**" Link="Content/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

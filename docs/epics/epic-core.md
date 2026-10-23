@@ -1,6 +1,6 @@
 # Epic CORE: Engine-Free Core and Headless .NET
 
-- **Status**: COMPLETED (2026-10-17) on branch `feat/godot-migration`, pending the producer's review and merge. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: COMPLETED (2026-10-17). Merged to `main` as PR #5 on 2026-10-17. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: Phases 0 and 1 of the migration write-up "Simpiens: Migrating from Unity to Godot on .NET 10" (Claude Docs, 2026-10-15). Phases 2–4 (Godot spike, view parity, cutover) are outside this epic; the spike decides whether they happen.
 - **Downstream beneficiaries**: multiplayer (state as plain data, deterministic ticks: §1A.1), Epic 10 and the scaling work (§3A #8: profiling and soaks without the editor), Epic 11 (the official MCP SDK needs .NET), and any engine choice.
@@ -145,3 +145,5 @@ Entity records (id, kind, position, radius, speed, resource kind) keyed by `Enti
 - 2026-10-17: C9 done (xUnit v3 and the headless DoD scenarios; Phase 1 gate passed); finding F1 recorded.
 - 2026-10-17: C10 done (the console host); finding F2 recorded.
 - 2026-10-17: C11 done (CI, close-out). Epic CORE COMPLETED on its branch, pending the producer's review.
+- 2026-10-17: merged to `main` as PR #5.
+- 2026-10-18: the engine spike (Phase 2, desk research) chose KNI over Godot; the client is [Epic CLIENT](epic-client.md).

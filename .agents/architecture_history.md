@@ -640,3 +640,216 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Compare .NET runs with .NET runs (F1). After a cutover, CoreCLR becomes the reference and its own baseline is recorded.
   - The Godot spike (Phase 2) waits on the producer's go/no-go. The soak and scaling work (§3A #8) can now run headless, in seconds.
   - The working plan `.agents/godot_phase01_plan.md` was deleted at close-out; its findings are in the epic's §6 and its soak data in `docs/economy-model.md` §7.
+
+## Epic CLIENT M0: First Pixels on KNI (2026-10-18)
+- **Context:** the producer chose KNI for the game client (engine proposal, `docs/engine-proposal-kni.md`) and gave the agent provisional authority over M0 and M1, with an implementation plan before each. M0's plan was `.agents/client_m0_plan.md`, deleted at this close-out.
+- **Decisions (agent):**
+  - **Two projects, not one:** `Simpiens.Presentation` holds everything that turns state into something drawable, with no XNA reference, so it is tested without a GPU. `Simpiens.Client` holds the XNA game and renderer. (The proposal had a single `Simpiens.Client`.)
+  - **The framework switch:** the MSBuild property `XnaFramework` (`Kni` by default, `MonoGame` compile-only), with separate `bin/` and `obj/` folders for MonoGame so the two restores never collide. `XnaPlatform` is the one class allowed to differ.
+  - **Headless rendering in tests:**
+    - SDL's offscreen driver, the system SDL2 (the test project excludes KNI's bundled copy, which can't create a GL context offscreen), and Mesa's software renderer pinned.
+    - The settings are set with libc `setenv`, because .NET's managed environment never reaches `getenv` on Unix.
+    - Games run in-process with `RunOneFrame` and are never disposed, because disposing segfaults offscreen.
+  - **The gate inside the client:** the golden world hashes are sampled while the real `SimpiensGame` runs frame by frame (100 ticks a frame), so the client's own tick path is what's checked. A second test feeds uneven real-time frames.
+  - **Art and pixels:** Unity's `AgentSpriteLibrary` was ported by a script that only swapped types (a normalised diff proves the patterns and palettes are identical). Animation frames come from the tick, not wall-clock time. The camera snaps to whole pixels.
+  - **Our own PNG writer and reader** (zlib from .NET): render references are plain files an agent can look at. The tolerance is 0.1% of pixels by more than 2 per channel.
+- **Verification:** M0.1 `ba1f17c`, M0.2 `27c48be`, M0.3 `79fa223`, M0.4 `cf88e89`, M0.5 the close-out commit, each with build, `dotnet test`, golden check and the MonoGame compile passing. Final: `dotnet test` 83/83 (client 21, core 62); golden check 3/3; Unity untouched.
+- **Consequences:**
+  - Unity's views are frozen; new view work goes into `dotnet/`.
+  - CI's client step (Xvfb, Ubuntu's SDL 2.30) runs for the first time on the first push.
+  - The desktop exe hasn't been opened in a window by the agent, only run offscreen.
+
+## Epic CLIENT M1: Top-Down Parity on KNI (2026-10-18)
+- **Context:** the second half of the agent's provisional authority over Epic CLIENT. The goal was for the KNI client to show and play what Unity's 2D view did. M1's plan was `.agents/client_m1_plan.md`, deleted at this close-out. Unity's frozen views were the source of truth: `AgentView`, `CampfireView`, `MapView`, `ShroudView`, `CameraRig`, `CameraController`, `WorldPicker` and `WorldSelection`.
+- **Decisions (agent):**
+  - **Ports, rule for rule, into `Simpiens.Presentation`:** crawler appearance (state overrides, the 3-tick dwell, micro-animation), the fog overlays and their fade, the camera rig and its controls, and picking and selection. Each is plain C# tested without a GPU; `CameraRigValidator`'s checks were ported. `Simpiens.Client` only reads devices into snapshots and draws.
+  - **A view clock:** real seconds in the game, as Unity's unscaled time; tick × 0.1 s in tests, so a render at a given tick is always the same.
+  - **Draw sheets:** sprites, the font and the fog cloud. The renderer starts a batch whenever the sheet changes, each with its own sampler (point, or linear for the fog). The sort key still decides the order.
+  - **A code-generated 5×7 pixel font** for room names, "UNCHARTED" and crawler names. It needs no content pipeline and is replaced by Gum's fonts in M2. Because it is taller than Unity's text, "UNCHARTED" sits 1.125 units under the room name instead of 0.9.
+  - **Whole-pixel framing,** an addition to Unity's rig. Given the window's height, reframing and the zoom-out limit show the map at a whole number of screen pixels per art pixel. Without a pixel height, the rig is Unity's exactly.
+  - **The selection ring** is generated as Unity's was. It is the 34th sprite. The 33 ported sprites keep their own pin, and the whole set has a second pin.
+  - **A respawn or a new map clears the selection,** because the selected crawler no longer exists.
+  - **Android, compile-only:** `dotnet/Simpiens.Android` sits outside `Simpiens.slnx`.
+    - It is built locally with a user-local toolchain under `~/.cache/simpiens-toolchains` (scripts, no sudo), and in a CI job.
+    - It is portrait, as the producer decided.
+    - Its application id `dev.simpiens.game` is a placeholder until the producer picks one.
+  - **Shared console log sink:** the `SimLog` console sink moved from `simpiens` into `Simpiens.Hosting`, and the desktop exe installs it (warnings and up unless `SIMPIENS_LOG` is set).
+- **Deviations from the plan:**
+  - The plan's logging item (the desktop exe's console sink) landed at M1.7, not with the camera.
+  - M1.7 added a direct test of KNI's mouse and keyboard reads, because an offscreen game never has focus and so never reads them (epic F3).
+  - The gate's "screenshots reviewed beside Unity's" was split. The agent reviewed every render against the ported logic; the producer's look beside Unity's own screen is open and person-gated.
+  - Not in M1, as planned: position interpolation (Unity had none), sound, touch (M4), and the dashboard (M2).
+- **Verification:** one commit per chunk with its measured status:
+  - plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit;
+  - every render reference was looked at before it was recorded.
+
+  Final:
+  - `dotnet test` 111/111 (client 49, core 62); golden check 3/3;
+  - the MonoGame and Android builds compile; Unity untouched;
+  - frame time 1.2 ms on llvmpipe and 0.7 ms on a desktop GPU (epic F2).
+- **Consequences:**
+  - The client draws everything Unity's 2D view did. M2 (the dashboard in Gum, then Unity retired) is the producer's call.
+  - CI's client and Android jobs run for the first time on the first push.
+  - Explicit registration of KNI's platform factories (epic F4) waits for M4's trimming work.
+
+## Epic CLIENT M2, part 1: the dashboard in Gum, parity with Unity (2026-10-18)
+- **Context:** the producer said go for M2 with two pull requests: parity first, then Unity's removal. The plan's defaults were approved. The plan `.agents/client_m2_plan.md` stays until M2 closes; this entry covers M2.0–M2.7, the first pull request.
+- **Decisions (agent):**
+  - **Gum's built-in visuals, not the Meadow theme** (D1, a deviation from the proposal).
+    - Meadow needs HiDef and a pinned Apos.Shapes 0.8.1; 0.8.6 breaks Gum.Shapes at start-up.
+    - Meadow also adds FreeType natives, and its look is further from Unity's.
+    - The built-in visuals take Unity's palette through `Styling.ActiveStyle.Colors`, and its 11–14 px text through a `FontScale` on the three text styles.
+  - **The dashboard as data in `Simpiens.Presentation/Dashboard`,** with Gum views in `Simpiens.Client/Ui` that decide nothing. The player's actions leave only as typed commands.
+  - **Unity's dossier calm became a core command,** `CalmCrawlerCommand`. The client never writes simulation state. It was checked in both runtimes.
+  - **Gum keeps static state,** so the game that started it last owns it. Tests run many games in one process.
+  - **Tests drive Gum's own cursor from a script,** through its internal per-frame method, and make the offscreen game active through KNI's private flag. Both are test-only and fail loudly if moved.
+  - **With the tick-based view clock** (tests), the camera steps in view time and the dashboard refreshes every frame. The game uses real time and refreshes at 10 Hz.
+  - **Parity details kept:** the game starts on the panels; one window at a time; Esc closes a window before it stops the camera.
+  - **Changed for fit or clarity:**
+    - The metric pills follow the status in the header, and the save message sits at the bottom left, so 1280 px holds everything.
+    - The player shows as "You (the outpost)" in affinities.
+    - The Dev Map's labels shrink to fit their row.
+  - **The Dev Map only in Debug desktop builds,** through `ClientOptions.ConfigureServices`.
+- **Deviations from the plan:**
+  - M2.1 named the command `InfluenceType.CalmCrawler`; the core's enum is `InfluenceCommandType`.
+  - The negative frame time (epic F5) and the paused-tick quirk (F6) were found and handled along the way.
+  - An executable-bit fix for M1.6's scripts landed in its own commit (`3082ab8`).
+- **Verification:** one commit per chunk with its measured status:
+  - decisions `3223168`, M2.0 `9abd6c1`, M2.1 `7f99875`, M2.2 `81b2604`, M2.3 `4dc8aa1`, M2.4 `569547c`, M2.5 `3e13024`, M2.6 `8e045df`, M2.7 `dd5e1fc`, and the close-out commit;
+  - every new or changed render reference was looked at before it was recorded.
+
+  Final:
+  - `dotnet test` 147/147 (client 84, core 63); golden 3/3;
+  - the MonoGame, Debug desktop and Android builds compile;
+  - Unity: PlayMode 69/69 and golden 3/3 on M2.2's core change.
+- **Consequences:**
+  - The client plays the whole game Unity plays. The first pull request waits for the producer's side-by-side.
+  - M2.8 (Unity-only coverage moved to .NET) and M2.9 (Unity removed) form the second pull request.
+  - Narrow windows wait for M6.
+
+## Epic CLIENT text cleanup: baked fonts, drawn 1:1 (2026-10-18)
+- **Context:** the producer found the client's text rough (blurry, letters not lining up) and asked for a cleanup before M3. They made `main-kni` the acting main until M4 and approved Inter with smooth map labels. The plan was `.agents/client_text_plan.md`, deleted at this close-out.
+- **Findings:**
+  - The UI scaled Gum's 18 px Arial bitmap, and Gum never snaps scaled text to pixels (epic F8).
+  - The map's code-made 5×7 pixel font broke off the whole-pixel scale and had no descenders.
+- **Decisions (agent, producer-approved where noted):**
+  - **One text pipeline.** TrueType fonts are baked offline into BMFont atlases at exact pixel sizes, committed, and drawn 1:1. There is no `FontScale` and no rasterizer at run time.
+  - **Inter (OFL)** in Regular and Bold, 15 faces (producer).
+  - **The baker** (`Simpiens.FontBaker`) uses KernSmith with FreeType through Gum's own `BmfcSave` and `GumFontGenerator`, so the names and metrics are Gum's. A test compares the committed atlases with a fresh bake byte for byte, as with the golden hashes.
+  - **The UI:** `UiText` styles in Unity's sizes. Font properties are set together under suspended layout. Gum's default font is Inter, and its property errors are logged.
+  - **The map:** text moved to screen space (producer: smooth labels). Labels hang on world points, sized by the zoom in baked steps, a size per row so that none overlaps, with a 1 px shadow. `PixelFont`, `WorldText` and `FitLabels` are removed.
+  - The client reads fonts through `TitleContainer`, so the same code reads Android's assets.
+- **Verification:**
+  - one commit per chunk: plan `f493515`, T1 `580740f`, T2 `04e8a09`, T3 `e6483e4`, and the close-out commit;
+  - every re-recorded reference was looked at, the text magnified.
+
+  Final:
+  - `dotnet test` 173/173 (client 110, core 63); golden 3/3;
+  - the MonoGame, Debug desktop and Android builds compile (the APK holds the 30 font files);
+  - frame time 1.4–3.6 ms.
+- **Consequences:**
+  - Any new text (isometric labels, cutscene text boxes, the map designer) takes a face from `FontSet`, adding a size by re-baking.
+  - High-DPI and phone screens (M6) bake larger sets from the same `FontSet`.
+
+## Epic CLIENT seams before M3: projection, draw order, view frame (review A1–A3, 2026-10-20/21)
+- **Context:** the producer had the KNI client reviewed (Claude Docs, "KNI Client Architecture Review", 2026-10-19). Its three high findings stood between the client and M3's isometric view: top-down was hard-wired (A1), the layer table couldn't interleave walls and crawlers by depth and left the fog without a slot (A2), and the views read live simulation objects in `Draw` (A3). The producer asked for a plan, then for its execution. The plan was the Claude Doc "Plan: Projection, Draw Order and Frame Snapshot (A1–A3)", with a working copy in `.agents/`, deleted at this close-out.
+- **Decisions (agent, unless noted):**
+  - **A projection is a linear map of the floor onto a view plane** (`ToView`, `ToFloor`, `ViewBounds`, `Depth`, `LayerOf`, `ArtPixelsPerUnit`); `View` (projection + `ViewCamera`) does pixels, snapping and framing once for every projection. The plan had sketched screen maths on each projection. Because top-down's view plane is the world, the camera, rig and renders stayed bit-identical through the refactor. The art scale is a power of two, so sizes in art pixels convert exactly.
+  - **Draw items stand on a floor anchor** with a height, a pivot and a size in art pixels; `ScreenQuad` places them for the renderer and the picker alike.
+  - **Picking hit-tests the last drawn list:** the topmost pickable quad under the click, else the nearest centre within Unity's 0.6-unit reach. Behaviour change: in a crowd, the crawler drawn on top wins.
+  - **Draw roles; the projection picks layers.** The sort key is layer 8 | depth 32 | role 4 | sequence 20. Walls take the projection's depth in both projections (top-down's wall order changed, not its picture).
+  - **Fog: producer decision D1 = C (2026-10-21), both projections,** replacing A in the client. Built as a rule in the scene builder (`FogOfWar.Visibility`): what an uncharted sector holds isn't drawn and fades in with the cloud, so it holds in isometric without a cloud layer over the walls. The selected crawler's ring and name hide with it (agent; the selection and the camera's follow keep it).
+  - **`WorldViewFrame`**, plain data captured on a new `SessionHost.TickCompleted` (raised after every crawler ticked, independent of subscription order; the seam a server would send from). Two frames, a new epoch on every respawn, switch or load. The views take no live entity, crawler state or registry (an architecture test).
+  - **Interpolation:** crawlers drawn between the two frames at the clock's fraction, alpha 1 when the view runs on ticks or updates step whole ticks; no glide across epochs, for newcomers or over 2 units.
+  - **`PicturePinTests`** hash the drawn picture finer than the render tolerance, which a hidden 11×11 px crawler passes (epic F9).
+- **Verification:** 15 commits, `a34eb78` to `0eb0489`, each with its measured status; the 3.2 and 3.3 commits were tested as snapshots, and 3.3 again alone in a scratch worktree. Final: `dotnet test` 199/199 (client 136, core 63); golden 3/3; Unity PlayMode 69/69 and golden 3/3 on the core change; the MonoGame build compiles; frame time 2.14 ms against 2.09 ms (llvmpipe).
+- **Consequences:**
+  - M3 sets `SimpiensGame.Projection` to an `IsometricProjection` (tile size and orientation from the art), stands sprites on their feet, and draws the cloud per floor cell.
+  - The simulation can later leave the render thread behind three frame buffers; the dashboard needs its own snapshot first.
+  - The producer's look at the interpolated motion is open.
+
+## Epic CLIENT M3: isometric as the game's view, and cutscenes in two kinds (2026-10-21)
+- **Context:** the producer asked for the M3 plan and then the go-ahead (2026-10-21), answering only where they disagreed with a default:
+  - P3: two kinds of cutscene: hard ones pause the game, dynamic ones are part of play.
+  - P5: no rotation; one fixed view.
+  - P7: a dynamic scene starts when a crawler enters a zone or starts an interaction with another, and never moves crawlers.
+  - P8: the player keeps control during one.
+  - P1, P2, P4 and P6 stood: 32×16 placeholders, cutaway walls, isometric by default with V to top-down, three pull requests.
+
+  The working plan was `.agents/client_m3_plan.md`, deleted at this close-out.
+- **Phase 0, the architecture review's items deferred into M3 (no visual change):**
+  - One world epoch, unique in the process, for every view cache (A5).
+  - View state advances once per update, and drawing is pure (A6).
+  - The game splits into `ClientSession` (no XNA type), `WorldView` and a stack of screens, with `SimpiensGame` as the shell (A4).
+  - Culling before sorting, and a frame path held at zero allocations by a test (R1's cheap half, R2, R3).
+- **Phase 1, isometric drawing:**
+  - **Art sets per view mode** (`WorldArt`, `ViewMode`), so the scene never asks which projection it has.
+  - **Generated placeholders** decided per pixel against the projection's diamond.
+  - **Each art set has its own sheet** (F12): a shared, larger atlas moved which texels point sampling picked.
+  - **Things on the floor** (the fog's cloud) are drawn in floor units under the view's affine transform. The plan's "cloud per floor cell" was replaced by one continuous quad per sector; top-down stayed pixel-identical.
+  - **Walls in the way:** the cutaway is a scene rule over the eight neighbours further from the viewer (the diagonals remove lone posts at T-junctions).
+  - **Framing is crisp first** (F14).
+- **Phase 2, the gate:**
+  - Depth order wherever things overlap walls on the real outpost, and a crawler walking past a wall, picking and labels, all checked.
+  - Nine isometric references and two pins, each looked at.
+  - Frame time measured (F11).
+- **Phase 3, cutscenes:**
+  - **One model and one player** for both kinds, written in code.
+  - **Hard cutscenes** are a covering screen that holds the world by stopping the simulation driver (no clock writes). They draw through `ScreenProjection`, a third projection, so the renderer is reused, with a Gum text box revealed by `MaxLettersToShow`.
+  - **Dynamic scenes:**
+    - **Triggers** are evaluated on frame capture (once per tick, on the simulation thread) from frames that now carry crawlers' sectors and the tick's chronicle events, so they start on the same tick in every run.
+    - **Presentation:** a bubble over the head, placed in the view this frame draws; a bottom box as the fallback; a directed camera the player takes back.
+    - **They write nothing:** the golden hashes hold with them playing.
+  - **Demonstration content** is Debug-only, because the story belongs to the narrative work.
+- **Deviations from the plan:**
+  - `ClientGraphics` (the shell's shared rendering resources) was added so the world view and cutscenes share one renderer.
+  - `SimpiensGame.Restart` and window reuse in the tests (F15) were added to fix a test-harness memory defect. Every offscreen game stayed alive, about 81 MB each, and the client suite was killed out of memory.
+  - Chunks 2.1 and 2.2 shared one commit (one test file).
+  - Two commit messages were corrected before any push: a frame-time run count, and a test count the gate hadn't measured.
+- **Consequences:**
+  - Isometric is the main view; top-down remains for developers (V).
+  - M7's real art replaces `IsometricSprites` and `CutsceneArt` through the art sets and sheets.
+  - The narrative work fills cutscene content and the hard ones' triggers.
+  - M4 measures the static floor pass on a phone.
+  - The tests can grow without memory growing per test.
+- **Verification:** one commit per chunk with the gate measured.
+  - Final: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; Unity untouched.
+  - Frame time 1.62 ms (isometric) and 2.38 ms (top-down) on llvmpipe.
+  - The producer's look is open.
+
+## 2026-10-22 — Epic CLIENT: the architecture review's open findings (M4 deferred)
+
+- **Request:** the producer deferred M4 (Android) and asked for the open findings of the Claude Doc "KNI Client Architecture Review" first, on a new branch. Plan `.agents/client_architecture_plan.md` (deleted at this close-out), branch `feat/client-architecture` from `main-kni` at `9ff5be3`, 16 commits `9b8c456`..`ff3d81f`, not pushed.
+- **Decisions:**
+  - **Host commands are the client's, not the core's** (D3). `HostCommand` lives in `Simpiens.Presentation`; `ClientSession` applies them at the start of its update, before the ticks. Speed, pause, save, load and the switch are the host's decisions in a multiplayer game, and a network host would apply the same commands. The core didn't change.
+  - **Pause holds the driver as well as the clock**, so whole-tick updates count no ticks they don't simulate (epic F6 in the client). The core's paused-clock behaviour is unchanged; tests that set the clock directly behave as before.
+  - **A frame simulates at most 400 ms** (D2): a cap on real time, so it scales with the speed (4 ticks at 1x, 40 at 10x). The dropped time is counted and logged once per stall.
+  - **Gum's cursor is the client's** (U1). `ClientCursor` ports Gum's mouse rules from the commit the package was built from (MIT), installed with `FormsUtilities.SetCursor` as Gum supports. The test harness no longer reflects into Gum. It still sets KNI's private focus flag, because Gum gates its whole update on `Game.IsActive` (epic F17).
+  - **Keys are data:** `KeyBindings` maps keys to `InputAction`s; `KeyInput` stays as the frame's actions, so tests and the controls didn't change shape.
+  - **Pause and speed are two header buttons** (PAUSE/PLAY and 1x/2x/5x/10x) plus P and 1–4. Space stays with cutscenes and dynamic scenes. The header's right group is 4 px apart, to keep about 38 px of slack at 1280 px.
+  - **The dashboard requires its services** in the game (`DashboardContext.From`); the nullable constructor remains for unit tests, per the core's null-safety rule.
+  - **Display names are a table** (`PlanText`), with a test that every planner type is named.
+  - **One sector rule:** occupancy and residents use the map's `GetSectorAt`.
+  - **The pinned image needs no registry:** Ubuntu by digest, apt by `--snapshot`, the SDK by version. The references are recorded in it, and inside it renders must match exactly (`SIMPIENS_RENDERS_EXACT`); other machines keep the tolerance.
+- **Deviations from the plan:**
+  - The frame-time gate's mean budget is 10 ms, not the review's 8, for CI runners' variance.
+  - S6 was already fixed.
+  - `HeadlessSimulation` became `LocalSimulation`; dated records keep the old name.
+  - T2 landed as two commits: the image with the references unchanged, then the exact references.
+  - Step 4.3 was committed twice. A power cut left its commit's objects empty (22 of them). `.git` was backed up, the branch pointed back at the last sound commit (`89732e1`), the empty objects and the index moved aside, and the index rebuilt from HEAD. Then `git fsck --full` was clean, and the same working tree was committed again after a non-incremental build and every check.
+- **Deferred:**
+  - U2 (density) and R6 (frame cap): M4.
+  - R4, R5, R7 and S10: M7.
+  - S5 (Unity in comments): Unity's removal.
+  - The simulation on its own thread (D1's second half): not needed yet, since the tick is about 0.1 ms of a 1.4 ms frame (epic F16).
+- **Verification:**
+  - `dotnet test` 324/324 (client 261, core 63).
+  - The client's 261/261 exactly in the pinned image, twice; a single one-level pixel change fails there.
+  - Golden 3/3; the MonoGame and Android builds compile; Unity untouched.
+  - Frame time unchanged: 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
+
+## 2026-10-23 — Epic CLIENT: into `main` before M4
+
+- **Decision (producer):** the KNI client merges into `main` now, without waiting for M4 (Android), which stays deferred. This replaces the 2026-10-18 decision that `main-kni` acts as the main branch until M4 proves the Android build.
+- **How:** one pull request from `feat/client-architecture` into `main`. The branch holds everything on `main-kni` (`9ff5be3`: M2.0–M2.7, the text cleanup, the seams, M3) and the architecture review's findings, so the 17 architecture commits are reviewed with the rest instead of in a pull request into `main-kni` first.
+- **Consequences:** `main` is the main branch again. CI runs on pushes to `main` and on pull requests; the `main-kni` push trigger is removed, and `main-kni` retires once the pull request is merged. The Android client keeps compiling in CI.

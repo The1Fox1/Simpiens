@@ -58,7 +58,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             ulong seed = options.Seeds(new[] { SimulationSettings.DefaultSeed })[0];
             long ticks = options.Long("ticks", 9000);
 
-            using var sim = HeadlessSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(sessionId);
             var manager = sim.Simulation;
             Console.WriteLine($"session {sessionId}, seed {seed}, {sim.Host.CrawlerStates.Count} crawlers, {ticks} ticks");
@@ -80,7 +80,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             return ct.IsCancellationRequested ? 1 : 0;
         }
 
-        private static string Line(HeadlessSimulation sim, long rel)
+        private static string Line(LocalSimulation sim, long rel)
         {
             var manager = sim.Simulation;
             uint treasury = 0;
@@ -102,7 +102,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 rel, treasury, gold, crawlers.Count > 0 ? trust / crawlers.Count : 0f, open, restocks, regrowths);
         }
 
-        private static IEnumerable<string> Crawlers(HeadlessSimulation sim)
+        private static IEnumerable<string> Crawlers(LocalSimulation sim)
         {
             var host = sim.Host;
             for (int i = 0; i < host.CrawlerStates.Count; i++) yield return $"{host.CrawlerNames[i]}: {host.CrawlerStates[i].Activity}";
@@ -118,7 +118,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             foreach (var seed in seeds)
             {
                 if (ct.IsCancellationRequested) return 1;
-                using var sim = HeadlessSimulation.Create(seed);
+                using var sim = LocalSimulation.Create(seed);
                 sim.Respawn(OutpostSession.SessionId);
                 var day = new OutpostWatch(sim);
                 day.Run(ticks);
@@ -204,7 +204,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
         /// <summary>The outpost's world hash every 100 ticks to t3,000, as GoldenWorldHashScenario samples it.</summary>
         private static List<WorldStateSample> GoldenSamples(ulong seed)
         {
-            using var sim = HeadlessSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var samples = new List<WorldStateSample>(32) { WorldStateHash.Capture(sim.Clock.CurrentTick, sim.Host, sim.Simulation, sim.Sectors) };
             sim.Clock.OnSimulationTick += tick =>

@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-17
+# Last reconciled: 2026-10-23
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -111,8 +111,8 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
-Current Focus (engine): Epic CORE (Independent Epics, below) COMPLETED 2026-10-17 on its branch, awaiting the
-producer's review. Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
+Current Focus (engine): Epic CLIENT (Independent Epics, below) ACTIVE 2026-10-18 on feat/kni-client: the KNI game
+client. M0, M1 and M2.0-M2.7 (parity) complete; stopped for the producer's side-by-side before PR 1. Epic CORE COMPLETED and merged (PR #5). Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
 before Epic 10.
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
 - Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
@@ -176,7 +176,7 @@ Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (Rev
 - Deferred: drifter arrival/departure (Milestone 2, Section 3.3 D7). Trust and BunkRest starvation are asserted again
   since Section 3.3 (2026-10-15).
 
-Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (on branch feat/godot-migration, not merged)
+Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (merged to main as PR #5)
 (See docs/epics/epic-core.md; the working plan was removed at close-out)
 - Phases 0-1 of the Unity-to-Godot migration write-up, approved by the producer as standalone work (pays off on any
   engine); the agent works under provisional authority. Phases 2-4 (Godot spike, view parity, cutover) are NOT in scope.
@@ -205,4 +205,54 @@ Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (on branch 
   Unity agrees on seed 11) - a pacing decision for the producer.
   C11 (CI workflow .github/workflows/dotnet.yml, not pushed; docs reconciled) done 2026-10-17. PHASE 1 COMPLETE.
   EPIC CORE COMPLETED: validators in both runtimes, DoD scenarios in Unity and headless, golden hashes equal.
-  Next on this path: the producer's review and merge, then the Godot spike (Phase 2) on its go/no-go.
+  Next on this path: the engine spike (Phase 2) ran as desk research 2026-10-17/18 and chose KNI: Epic CLIENT.
+
+Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kni-client, not merged)
+(See docs/epics/epic-client.md and docs/engine-proposal-kni.md)
+- A new game client on KNI (MonoGame-derived XNA 4 framework) over the engine-free core; replaces Unity's views and
+  dashboard. Unity's views are FROZEN from M0 and Unity is retired at M2.
+- Producer decisions 2026-10-18: KNI (MonoGame kept compiling in CI as fallback); isometric main view, top-down for
+  design only, screen-space cutscenes; desktop MVP (Windows, Linux), Android/iOS after it (portrait phones);
+  consoles last; art up to 64x64 px; 30 fps; same working rules as Epic CORE.
+- Milestones: M0 first pixels -> M1 top-down parity + compile-only Android -> M2 Gum dashboard, Unity retired ->
+  M3 isometric -> M4 Android -> M5 iOS -> M6 screen sizes -> M7 art pipeline; map designer after M2.
+- Agent authority: M0 and M1 (an implementation plan before each).
+- Progress: C0 (setup: roadmap entry, epic doc, proposal copy, M0 plan) done 2026-10-18.
+  M0.1 projects + XnaFramework switch; M0.2 engine-free presentation (art ported pixel for pixel, Floor 1 tiles, stable
+  draw order, top-down camera, PNG); M0.3 the client ticks the simulation (golden 3/3 from inside the client); M0.4
+  first pixels (render tests vs Baselines/ images); M0.5 CI (Xvfb + Mesa, MonoGame compile; unverified until pushed).
+  M0 COMPLETE 2026-10-18 (dotnet test 83/83).
+  M1.1 props + crawler appearance; M1.2 pixel font + room names; M1.3 fog of war; M1.4 camera + controls; M1.5 picking +
+  selection; M1.6 compile-only Android (portrait; user-local toolchain, CI job); M1.7 gate: review renders (t0, t300,
+  t1500, zoomed, selection), frame time 1.2 ms llvmpipe / 0.7 ms GPU vs 33 ms. M1 COMPLETE 2026-10-18 (dotnet test
+  111/111). Open: the producer's side-by-side with Unity (person-gated); CI's first run (push).
+  M2 plan .agents/client_m2_plan.md (producer: go, two PRs, defaults approved). M2.0 Gum; M2.1 dashboard as data; M2.2 calm as
+  a typed command (core; Unity PlayMode 69/69, golden 3/3); M2.3 header; M2.4 merchant; M2.5 bounty board (PlayerScout DoD
+  through the UI: charted@291 of 520); M2.6 Tab dashboard; M2.7 save/load, Dev Map switch (Debug), camera follow. PARITY
+  2026-10-18 (dotnet test 147/147). STOPPED for the producer's side-by-side, then PR 1; then M2.8 + M2.9 (PR 2: Unity out).
+  main-kni (= 681d3b5) is the acting main until M4 (producer). TEXT CLEANUP done 2026-10-18 on feat/client-text: baked Inter
+  (KernSmith/FreeType, Gum cache names, font golden), UI 1:1, map labels in screen space; dotnet test 173/173. Next: the
+  producer's look, the PR into main-kni, then M3.
+  Client seams (A1-A3) done 2026-10-21 on main-kni (f5f09bc; dotnet test 199/199). M3 PLAN written 2026-10-21 on
+  feat/client-m3 (plan deleted at close-out): Phase 0 review groundwork, 1 isometric, 2 its gate, 3 cutscenes.
+  Producer 2026-10-21: P3 = two kinds (hard cutscenes pause; dynamic ones are part of play), P5 = no rotation (one fixed
+  view), P7 = scenes start on zone entry or a crawler-to-crawler interaction and never move crawlers, P8 = the player
+  keeps control; the other defaults stand. GO given 2026-10-21. Phase 0 DONE (533a3b4..320f20c; dotnet test 211/211),
+  the first PR's content (local branch feat/client-m3-phase0). Phases 1-2 DONE (3c185d6..4f00abd; dotnet test 258/258):
+  isometric is the game's view, the second PR (local branch feat/client-m3-isometric). Phase 3 DONE (f4049a0..8daf5d1):
+  cutscenes in two kinds, the third PR (feat/client-m3). M3 DONE 2026-10-21: dotnet test 297/297, golden 3/3; plan deleted.
+  Open: the producer's look at M3 (isometric, walls, V, F9, dynamic scenes) and the three PRs into main-kni (theirs to
+  push or ask for). Then M2.8-M2.9 (Unity out, after the side-by-side) or M4, as the producer decides.
+  CLIENT SEAMS done 2026-10-21 on feat/client-seams (review A1-A3, producer request 2026-10-20): IViewProjection/View,
+  rig and picking through the projection, isometric maths (not wired); draw roles, layers by projection; fog D1 = C
+  (producer 2026-10-21: the fog hides crawlers too); WorldViewFrame on SessionHost.TickCompleted (core), views read only
+  frames, crawlers drawn between ticks. dotnet test 199/199; Unity PlayMode 69/69, golden 3/3. Next: the producer's look
+  at the motion (1x, 10x), the PR into main-kni, then M3.
+  M4 DEFERRED (producer 2026-10-22; plan in Claude Docs). ARCHITECTURE FINDINGS DONE 2026-10-22 on
+  feat/client-architecture (9b8c456..ff3d81f + close-out, not pushed; plan deleted): frame timings (F3), frame-time
+  gate, views-write-nothing test; host commands (speed, pause, save, load, switch) + header PAUSE/1x and P/1-4; 400 ms
+  stall cap; key bindings + one input frame feeding Gum's cursor; UiStyle tokens; required services; display names;
+  LocalSimulation; client tests in a pinned image (exact renders). dotnet test 324/324. U2/R6 with M4; R4/R5/R7 M7.
+  Open: the producer's look and the PR into main-kni.
+  INTO MAIN BEFORE M4 (producer 2026-10-23): one PR from feat/client-architecture (everything on main-kni + the
+  architecture work) into main; main is the main branch again, main-kni retires with the merge; CI on main + PRs.

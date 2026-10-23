@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- What the game client draws, as plain data (Epic CLIENT): the map's tiles, generated sprite pixels, draw items
+       and their sort keys, projections, PNG files. No XNA reference: everything here is tested without a GPU, and
+       the framework-specific code stays in Simpiens.Client. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <RootNamespace>Simpiens.Presentation</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Simpiens.Core/Simpiens.Core.csproj" />
+  </ItemGroup>
+</Project>

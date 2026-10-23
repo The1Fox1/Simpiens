@@ -1,6 +1,9 @@
-# The simulation without Unity (Epic CORE): builds the engine-free core for .NET 10 and runs its tests (validators,
-# golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak). No Unity licence needed.
-# The Unity PlayMode suite still runs locally: scripts/run-playmode-tests.sh.
+# The simulation and the game client without Unity (Epic CORE, Epic CLIENT): builds the .NET solution and runs its
+# tests (validators, golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak, and
+# the KNI client's presentation, golden-hash and render tests), then checks that the client still compiles against
+# MonoGame, KNI's fallback. The client's tests run in the pinned image of scripts/client-tests.Containerfile (review
+# T2), the same one scripts/test-client-in-container.sh runs locally, so the renders must match the references byte for
+# byte. No Unity licence needed. The Unity PlayMode suite still runs locally: scripts/run-playmode-tests.sh.
 name: dotnet
 
 on:
@@ -19,7 +22,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -33,8 +36,52 @@ jobs:
       - name: Build
         run: dotnet build dotnet/Simpiens.slnx -c Release --no-restore
 
-      - name: Test
-        run: dotnet test dotnet/Simpiens.slnx -c Release --no-build
+      - name: Test the core
+        run: dotnet test dotnet/Simpiens.Core.Tests -c Release --no-build
+
+      # The client's tests draw with OpenGL (SDL2, Xvfb, Mesa's llvmpipe), all pinned in the image: a different Mesa
+      # would move pixels, so the image, not the runner, decides them
+      - name: Test the client in the pinned image
+        env:
+          CONTAINER_ENGINE: docker
+        run: scripts/test-client-in-container.sh
+
+      - name: Keep the client's renders when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-renders
+          path: container-output/render-output/
+          if-no-files-found: ignore
 
       - name: Golden world hashes (console host)
         run: dotnet run --project dotnet/Simpiens.Host -c Release --no-build -- golden check
+
+      - name: The client against MonoGame (compile only)
+        run: dotnet build dotnet/Simpiens.Desktop -c Release -p:XnaFramework=MonoGame
+
+  # The Android client is compiled only, until mobile work starts after the MVP (Epic CLIENT M4): it keeps
+  # desktop-only assumptions out of the shared client. GitHub's Ubuntu image carries an Android SDK.
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: "21"
+
+      - name: Install the .NET Android workload
+        run: dotnet workload install android
+
+      - name: Install the Android SDK packages the build asks for
+        run: dotnet build dotnet/Simpiens.Android -t:InstallAndroidDependencies -f net10.0-android -p:AndroidSdkDirectory="$ANDROID_HOME" -p:AcceptAndroidSdkLicenses=True
+
+      - name: Build the Android client (compile only)
+        run: dotnet build dotnet/Simpiens.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME"

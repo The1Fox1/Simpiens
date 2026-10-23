@@ -12,6 +12,9 @@ namespace Simpiens.Core.Tests
         public void RestAnchor() => new Simpiens.Testing.Drives.RestAnchorValidator().RunAllValidationTests();
 
         [Fact]
+        public void CalmCommand() => new Simpiens.Testing.Drives.CalmCommandValidator().RunAllValidationTests();
+
+        [Fact]
         public void EconomyTuning() => new Simpiens.Testing.Economy.EconomyTuningValidator().RunAllValidationTests();
 
         [Fact]

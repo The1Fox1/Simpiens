@@ -32,7 +32,7 @@ namespace Simpiens.Hosting
             public bool Starved;
         }
 
-        private readonly HeadlessSimulation _sim;
+        private readonly LocalSimulation _sim;
         private readonly int _baselineSalvage;
         private readonly long _startTick;
 
@@ -44,7 +44,7 @@ namespace Simpiens.Hosting
         public string FirstFogLeak;
         public long ObservedTicks;
 
-        public OutpostWatch(HeadlessSimulation sim)
+        public OutpostWatch(LocalSimulation sim)
         {
             _sim = sim;
             _startTick = sim.Clock.CurrentTick;

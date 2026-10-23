@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 using Simpiens.Diagnostics;
 using ZLogger;
 
-namespace Simpiens.Host
+namespace Simpiens.Hosting
 {
     /// <summary>
-    /// The console host's sink for <see cref="SimLog"/>: standard error, formatted on the logging thread (so each line
-    /// keeps the tick it was logged at), leaving standard output to the commands' results.
+    /// The .NET hosts' console sink for <see cref="SimLog"/> (the <c>simpiens</c> console, the desktop game): standard
+    /// error, formatted on the logging thread (so each line keeps the tick it was logged at), leaving standard output to
+    /// the console's results.
     /// </summary>
-    internal sealed class ConsoleSimLogSink : IAsyncLogProcessor
+    public sealed class ConsoleSimLogSink : IAsyncLogProcessor
     {
         [ThreadStatic]
         private static ArrayBufferWriter<byte> _buffer;

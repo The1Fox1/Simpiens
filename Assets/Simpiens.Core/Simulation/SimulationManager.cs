@@ -638,7 +638,27 @@ namespace Simpiens.Simulation
                 case InfluenceCommandType.UpdateStallPrices:
                     ExecuteUpdateStallPricesCommand(influence.UpdateStallPrices);
                     break;
+
+                case InfluenceCommandType.CalmCrawler:
+                    ExecuteCalmCrawlerCommand(influence.CalmCrawler);
+                    break;
             }
+        }
+
+        /// <summary>The dossier's Calm Frustration, applied on the tick: what Unity's dashboard did directly to the crawler.</summary>
+        private void ExecuteCalmCrawlerCommand(in CalmCrawlerCommand cmd)
+        {
+            var node = _worldRegistry?.GetEntity(cmd.CrawlerId);
+            var agent = node?.Agent;
+            if (agent == null)
+            {
+                SimLog.Intervention.ZLogWarning($"Calm rejected: no crawler {SimLog.Agent(cmd.CrawlerId)}");
+                return;
+            }
+            agent.Frustration = 0f;
+            agent.RelieveFrustration(100f);
+            agent.TriggerReliefVisual();
+            SimLog.Intervention.ZLogInformation($"Player calmed {SimLog.Agent(node.Id)} (frustration -> 0)");
         }
 
         private void ExecutePostBountyCommand(in PostBountyCommand cmd, uint currentTick)

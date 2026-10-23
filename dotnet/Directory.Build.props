@@ -10,5 +10,28 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssetsRoot>$(MSBuildThisFileDirectory)../Assets/</AssetsRoot>
+    <!-- Glob-compiled projects never pick up generated sources from either framework's output folders -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <!-- The game client's XNA framework (Epic CLIENT): KNI by default; MonoGame is KNI's fallback, which CI only
+       compiles (dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame). A MonoGame build restores and builds
+       into its own folders, so the two package sets never share an assets file. -->
+  <PropertyGroup>
+    <XnaFramework Condition="'$(XnaFramework)' == ''">Kni</XnaFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(XnaFramework)' == 'MonoGame'">
+    <BaseIntermediateOutputPath>obj/monogame/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/monogame/</BaseOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <KniVersion>4.3.9001</KniVersion>
+    <MonoGameVersion>3.8.6</MonoGameVersion>
+    <!-- Gum (MIT), the dashboard's UI (Epic CLIENT M2): Gum.KNI or Gum.MonoGame, same sources. Pinned: its packages
+         ship most days; bump only on purpose, in a commit of its own. -->
+    <GumVersion>2026.10.1.1</GumVersion>
+    <!-- KernSmith (MIT), Gum's font generator, for the offline font baker only (dotnet/Simpiens.FontBaker): FreeType
+         rasterizes with hinting. The game never loads it: it draws the baked atlases. -->
+    <KernSmithVersion>0.21.0</KernSmithVersion>
   </PropertyGroup>
 </Project>
