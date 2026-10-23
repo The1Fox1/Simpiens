@@ -816,3 +816,34 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Final: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; Unity untouched.
   - Frame time 1.62 ms (isometric) and 2.38 ms (top-down) on llvmpipe.
   - The producer's look is open.
+
+## 2026-10-22 — Epic CLIENT: the architecture review's open findings (M4 deferred)
+
+- **Request:** the producer deferred M4 (Android) and asked for the open findings of the Claude Doc "KNI Client Architecture Review" first, on a new branch. Plan `.agents/client_architecture_plan.md` (deleted at this close-out), branch `feat/client-architecture` from `main-kni` at `9ff5be3`, 16 commits `9b8c456`..`ff3d81f`, not pushed.
+- **Decisions:**
+  - **Host commands are the client's, not the core's** (D3). `HostCommand` lives in `Simpiens.Presentation`; `ClientSession` applies them at the start of its update, before the ticks. Speed, pause, save, load and the switch are the host's decisions in a multiplayer game, and a network host would apply the same commands. The core didn't change.
+  - **Pause holds the driver as well as the clock**, so whole-tick updates count no ticks they don't simulate (epic F6 in the client). The core's paused-clock behaviour is unchanged; tests that set the clock directly behave as before.
+  - **A frame simulates at most 400 ms** (D2): a cap on real time, so it scales with the speed (4 ticks at 1x, 40 at 10x). The dropped time is counted and logged once per stall.
+  - **Gum's cursor is the client's** (U1). `ClientCursor` ports Gum's mouse rules from the commit the package was built from (MIT), installed with `FormsUtilities.SetCursor` as Gum supports. The test harness no longer reflects into Gum. It still sets KNI's private focus flag, because Gum gates its whole update on `Game.IsActive` (epic F17).
+  - **Keys are data:** `KeyBindings` maps keys to `InputAction`s; `KeyInput` stays as the frame's actions, so tests and the controls didn't change shape.
+  - **Pause and speed are two header buttons** (PAUSE/PLAY and 1x/2x/5x/10x) plus P and 1–4. Space stays with cutscenes and dynamic scenes. The header's right group is 4 px apart, to keep about 38 px of slack at 1280 px.
+  - **The dashboard requires its services** in the game (`DashboardContext.From`); the nullable constructor remains for unit tests, per the core's null-safety rule.
+  - **Display names are a table** (`PlanText`), with a test that every planner type is named.
+  - **One sector rule:** occupancy and residents use the map's `GetSectorAt`.
+  - **The pinned image needs no registry:** Ubuntu by digest, apt by `--snapshot`, the SDK by version. The references are recorded in it, and inside it renders must match exactly (`SIMPIENS_RENDERS_EXACT`); other machines keep the tolerance.
+- **Deviations from the plan:**
+  - The frame-time gate's mean budget is 10 ms, not the review's 8, for CI runners' variance.
+  - S6 was already fixed.
+  - `HeadlessSimulation` became `LocalSimulation`; dated records keep the old name.
+  - T2 landed as two commits: the image with the references unchanged, then the exact references.
+  - Step 4.3 was committed twice. A power cut left its commit's objects empty (22 of them). `.git` was backed up, the branch pointed back at the last sound commit (`89732e1`), the empty objects and the index moved aside, and the index rebuilt from HEAD. Then `git fsck --full` was clean, and the same working tree was committed again after a non-incremental build and every check.
+- **Deferred:**
+  - U2 (density) and R6 (frame cap): M4.
+  - R4, R5, R7 and S10: M7.
+  - S5 (Unity in comments): Unity's removal.
+  - The simulation on its own thread (D1's second half): not needed yet, since the tick is about 0.1 ms of a 1.4 ms frame (epic F16).
+- **Verification:**
+  - `dotnet test` 324/324 (client 261, core 63).
+  - The client's 261/261 exactly in the pinned image, twice; a single one-level pixel change fails there.
+  - Golden 3/3; the MonoGame and Android builds compile; Unity untouched.
+  - Frame time unchanged: 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.

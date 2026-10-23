@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). Now: the architecture review's open findings, on `feat/client-architecture`.
+- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, not pushed; the pull request into `main-kni` is the producer's.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -536,7 +536,7 @@ Before Epic 10: soak test and scaling work (#8).
     - **Open, person-gated:** the producer's look at the isometric view, the wall styles, the V toggle and the camera, and both kinds of cutscene; the pull requests into `main-kni`.
     - Next: M2.8–M2.9 (Unity's removal, after the side-by-side) or M4, as the producer decides.
   - **Producer decision (2026-10-22):** M4 (Android) is deferred until later. Its plan is the Claude Doc "Plan: M4 Android (Epic CLIENT)". `main-kni` stays the acting main meanwhile.
-  - **Architecture improvements (producer request, 2026-10-22):** the open findings of the client's architecture review (Claude Docs, "KNI Client Architecture Review"), planned in `.agents/client_architecture_plan.md`, on branch `feat/client-architecture` into `main-kni`. In order:
+  - **Architecture improvements (producer request, 2026-10-22):** the open findings of the client's architecture review (Claude Docs, "KNI Client Architecture Review"), planned in a working plan (deleted at its close-out; its decisions are in `.agents/architecture_history.md`), on branch `feat/client-architecture` into `main-kni`. In order:
     - measurement and guards (D1, T3, T4);
     - host commands with speed and pause (D3, D2);
     - one input frame (U1);
@@ -544,6 +544,15 @@ Before Epic 10: soak test and scaling work (#8).
     - smaller items, and the client tests in a pinned container (T2).
 
     U2 and R6 stay with M4; R4, R5 and R7 with M7.
+  - **Architecture improvements done (2026-10-22)** on `feat/client-architecture`, 16 commits from `9b8c456` to `ff3d81f`, not pushed:
+    - **Measure and guard:** frame timings by phase (F3 in Debug), a frame-time gate, a test that views write nothing.
+    - **Host commands:** speed, pause, save, load and the session switch are typed commands applied before the ticks; pause and speed controls in the header (P, 1–4); a stalled frame simulates at most 400 ms.
+    - **One input frame:** keys map to actions through a bindings table, and Gum's cursor is fed from the game's frame. The tests no longer reflect into Gum.
+    - **The dashboard:** every colour is a `UiStyle` token, the game's services are required, display names replace type names, crawlers are counted once, affinities are sorted.
+    - **Smaller items:** `HeadlessSimulation` became `LocalSimulation`.
+    - **The pinned image:** the client's tests run in a pinned Ubuntu image, locally (podman) and in CI (docker), where renders must match the references exactly.
+    - Measured: `dotnet test` 324/324 (client 261, core 63); the client's 261/261 exactly in the pinned image; golden 3/3; the MonoGame and Android builds compile; frame time 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
+    - Open: the producer's look at the header's pause and speed, and the dashboard's new wording; CI's container job runs first on a push.
 
 ---
 

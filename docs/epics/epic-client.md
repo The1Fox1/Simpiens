@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`; the producer's look at M3 is open. M4 is deferred (producer, 2026-10-22); the architecture review's open findings come first, on `feat/client-architecture`. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`; the producer's look at M3 is open. M4 is deferred (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, not pushed. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -41,7 +41,7 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
     - cutaway walls, with the three styles shown at the look;
     - isometric by default, with V switching to top-down in every build;
     - three pull requests into `main-kni`.
-- **M4 deferred (2026-10-22):** Android waits until later. Its plan stays in Claude Docs ("Plan: M4 Android (Epic CLIENT)"). The architecture review's open findings come first (`.agents/client_architecture_plan.md`).
+- **M4 deferred (2026-10-22):** Android waits until later. Its plan stays in Claude Docs ("Plan: M4 Android (Epic CLIENT)"). The architecture review's open findings come first; they are done (§3).
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
@@ -307,6 +307,30 @@ flowchart TB
     - Measured: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile.
     - Frame time 1.62 ms (isometric) and 2.38 ms (top-down) on llvmpipe; 1.40 and 1.64 ms on the GPU.
     - The producer's look is open (person-gated); the working plan is deleted.
+- [x] **The architecture review's open findings** (producer request 2026-10-22, on `feat/client-architecture`; M4 deferred). Each step is one commit with its measured status.
+    - **Measure and guard** (D1, T3, T4):
+        - `FrameTimings`, the frame's phases with a mean and 99th percentile, shown on F3 in Debug, `7d96570`;
+        - `FrameTimeGateTests`: a mean of at most 10 ms and a 99th percentile of at most 33 ms, `2eb6b62`;
+        - `ViewsWriteNothingTests`: a paused world's hash holds through a minute of looking around, `9ea1f1b`.
+    - **Host commands** (D3, D2):
+        - `HostCommand` (speed, pause, resume, quick save, quick load, switch), queued by the dashboard and applied by `ClientSession` before the ticks, so a load or a switch never runs inside a click, `cebc9e3`;
+        - pause and speed controls in the header, with P and 1–4, `ce56fc2`;
+        - a stalled frame simulates at most 400 ms, `9c3105f`.
+    - **One input frame** (U1):
+        - `InputAction` and `KeyBindings`, keys mapped to actions as data, `2195f35`;
+        - `ClientCursor`, Gum's cursor fed from the game's one `InputFrame` with Gum's own mouse rules; the tests' reflection into Gum is gone, `01ced93`.
+    - **The dashboard** (U3, U4, U5, S3, S7, S8, S9):
+        - every colour a `UiStyle` token, `974352d`;
+        - `DashboardContext.From` requires the game's services, and the host gains typed `Identity` and `Chronicle`, `89732e1`;
+        - `PlanText` display names; crawlers counted once by the map's sector lookup; affinities warmest first, absent peers "Unknown"; the stall named by its room and priced by id; `SetType` on the bounty board, `fb7d3dc`.
+    - **Smaller items** (S1, S2, S4):
+        - the appearance forgets crawlers that leave, and "UNCHARTED" pairs with its room by sector id, `d8b609b`;
+        - `HeadlessSimulation` became `LocalSimulation`, `1c2c68a`.
+    - **The pinned image** (T2):
+        - `scripts/client-tests.Containerfile`: Ubuntu 24.04 by digest, apt from the 2026-10-15 snapshot (Mesa 25.2.8, SDL 2.30.0), .NET SDK 10.0.109;
+        - `scripts/test-client-in-container.sh`, and CI's client tests in the image, `55562ee`;
+        - the references recorded in the image and matched exactly there (`SIMPIENS_RENDERS_EXACT`), `ff3d81f`.
+    - Measured: `dotnet test` 324/324 (client 261, core 63); the client's 261/261 exactly in the image; golden 3/3; the MonoGame and Android builds compile; frame time 1.51 ms (isometric) and 2.40 ms (top-down) on llvmpipe, unchanged.
 
 ---
 
@@ -318,7 +342,9 @@ flowchart TB
 - Isometric's real art (64×64, possibly 64×32 tiles), and the sprite catalogue as data with a packer (review R5): M7.
 - The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
 - The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
-- Render tests in a pinned Mesa and SDL container (review T2).
+- The UI's scaling by display density (review U2) and a frame cap per platform (R6): M4.
+- Premultiplied alpha (R4), the sprite catalogue (R5), textures through `Texture2D.FromStream` (R7), sizes as data (S10): M7.
+- The comments' references to Unity's code (S5): with Unity's removal (M2.9).
 - Sound: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
 - The removal of Unity: M2, by producer decision.
@@ -334,12 +360,13 @@ flowchart TB
     - F9 plays the hard cutscene;
     - the dynamic scenes start in play: the scout entering the deep seam early, then the first gossip.
 - **Open, person-gated: the producer's look at interpolated motion** (client seams, 2026-10-21): crawlers and the followed camera now move between ticks, one tick (100 ms of simulated time) behind the simulation. Watch them at 1× and 10× with `dotnet run --project dotnet/Simpiens.Desktop`.
-- **The render tolerance hides small changes** (F9): use the picture pins to tell a real change from rounding.
+- **The render tolerance hides small changes** (F9) on machines other than the pinned image. In the image (`scripts/test-client-in-container.sh`, and CI) renders must match exactly; elsewhere, use the picture pins to tell a real change from rounding.
+- **The pinned image depends on Ubuntu's snapshot service** (snapshot.ubuntu.com) and dot.net's install script to build. If either is down, CI's client tests can't run until it is back. A registry with a pushed image would remove the dependency; it needs an account.
 - **Fonts are baked on Linux:** the font golden compares a FreeType bake with the committed atlases. A bake on another system may differ by a pixel; if that happens, re-commit deliberately or move the baker to StbTrueType, which is managed and identical everywhere.
 - **Narrow windows (M6):** the dashboard is laid out for the default 1280×720 and up. Below that, the header crowds and the detail column narrows (at 800 px it is 112 px wide), as Unity's would have.
-- **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. Two test helpers reach into Gum's and KNI's internals: the scripted cursor uses Gum's internal per-frame cursor method, and an offscreen game is made active through KNI's private flag. Both fail loudly if an update moves them.
+- **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. The client's `ClientCursor` follows Gum's cursor rules at the commit that package was built from (de21a042); a Gum update that changes them should be ported. One test helper still reaches into KNI's internals: an offscreen game is made active through KNI's private flag, because Gum skips its whole update while the game hasn't focus. It fails loudly if an update moves it.
 - **The application id is a placeholder (M1.6):** the Android project uses `dev.simpiens.game` until the producer picks the store identity (M4).
-- **CI ran clean (2026-10-22):** both jobs, `test` (the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa) and `android`, pass on `main-kni` at `9ff5be3`. The references, recorded on Fedora, match Ubuntu's renders within the tolerance. Pinning the renderer (review T2) is in the architecture plan.
+- **CI ran clean (2026-10-22):** both jobs, `test` (the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa) and `android`, pass on `main-kni` at `9ff5be3`. The references, recorded on Fedora, match Ubuntu's renders within the tolerance. Pinning the renderer (review T2) is in the architecture plan. Since the architecture work, the client's tests run in the pinned image; that job runs for the first time on a push.
 
 
 See the proposal's risk table. These matter for M0 and M1:
@@ -388,6 +415,8 @@ See the proposal's risk table. These matter for M0 and M1:
     - **What happened:** the client suite's process was killed out of memory (exit 137) after 133 tests. Disposing a game segfaults under the offscreen driver after `RunOneFrame` as after `Run` (F1, rechecked), so every game stayed alive.
     - **The cost:** a game is about 81 MB, of which about 63 MB is its window and device; the suite needed about 14 GB.
     - **The fix:** `SimpiensGame.Restart(options)` starts a new session in the same window and device. The harness restarts a window no running test holds. The suite peaks at about 750 MB and every reference holds on reused windows.
+- **F16: the tick is a small share of the frame** (2026-10-22, `FrameTimings`, llvmpipe, 800×600, a tick every frame). Isometric: the tick 0.10 ms mean (0.20 ms p99) of a 1.41 ms CPU frame; the screens' draw 0.97 ms. Top-down: the tick 0.16 ms (1.0 ms p99) of 2.36 ms. Drawing, not the simulation, is where frame time goes, so moving the simulation to its own thread (review D1's second half) can wait for a measured need.
+- **F17: Gum's update is gated on focus** (2026-10-22). `FormsUtilities.Update` returns at once while `Game.IsActive` is false, so an offscreen test game still needs KNI's private focus flag even with the client's own cursor. Gum's typed `GumService.Cursor` is null once a custom `ICursor` is installed (Gum's documented behaviour); the client reads its own `UiLayer.Cursor`.
 - **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---
@@ -398,3 +427,4 @@ See the proposal's risk table. These matter for M0 and M1:
 - 2026-10-18: M0 (first pixels) done in five chunks: M0.1 `ba1f17c`, M0.2 `27c48be`, M0.3 `79fa223`, M0.4 `cf88e89`, M0.5 the close-out commit. M1's plan follows.
 - 2026-10-18: M1 (top-down parity) done in seven chunks: the plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit. The plan was deleted at close-out. The agent's authority ends here: M2 waits for the producer.
 - 2026-10-21: the client seams before M3 (review A1–A3) done on `feat/client-seams` in 15 commits, `a34eb78` to `0eb0489`, with the producer's fog decision D1 = C. The working plan was deleted at close-out.
+- 2026-10-22: M4 deferred by the producer; the architecture review's open findings done on `feat/client-architecture`, 16 commits from `9b8c456` to `ff3d81f`, not pushed. A power cut emptied the git objects of step 4.3's first commit; `.git` was repaired from the last sound commit and the same tree committed again after a full re-check. The working plan was deleted at close-out.
