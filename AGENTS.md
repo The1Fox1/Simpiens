@@ -28,7 +28,8 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 | :--- | :--- | :--- |
 | .NET tests (validators, golden hashes, the outpost's DoD scenarios, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
 | Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
-| The game client's tests (part of `dotnet test`): presentation, golden hashes inside the client, renders | `dotnet test dotnet/Simpiens.Client.Tests`; record changed renders with `SIMPIENS_RECORD_RENDERS=1` (look at `render-output/` first) | System SDL2 and Mesa (the tests run SDL's offscreen driver on llvmpipe, no display) |
+| The game client's tests (part of `dotnet test`): presentation, golden hashes inside the client, renders | `dotnet test dotnet/Simpiens.Client.Tests` (renders within a driver's rounding of the references) | System SDL2 and Mesa (the tests run SDL's offscreen driver on llvmpipe, no display) |
+| The client's tests in the pinned image, as CI runs them: the same Mesa and SDL2 locally and in CI | `scripts/test-client-in-container.sh`; record changed renders only here, with `--record` (look at `container-output/render-output/` first, commit them on their own) | podman (rootless), or `CONTAINER_ENGINE=docker` |
 | The game (desktop) | `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242` (`-- --help` lists the options) | A display |
 | The client against MonoGame (compile only) | `dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame` | .NET 10 SDK |
 | Re-bake the fonts after changing `FontSet` (commit the result on purpose; a test compares the committed atlases with a fresh bake) | `dotnet run --project dotnet/Simpiens.FontBaker` | .NET 10 SDK (KernSmith with FreeType, Linux x64 or Windows) |
@@ -39,7 +40,7 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 | Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |
 | Save and load in a Linux player | `scripts/run-persistence-smoke.sh` | Unity |
 
-CI (`.github/workflows/dotnet.yml`) runs the .NET tests (the client's under Xvfb with Mesa), the golden check, the MonoGame compile and the Android compile on pushes to `main` and `main-kni` (the acting main until M4) and on pull requests; the Unity suite runs locally.
+CI (`.github/workflows/dotnet.yml`) runs the .NET tests (the client's in the pinned image of `scripts/client-tests.Containerfile`), the golden check, the MonoGame compile and the Android compile on pushes to `main` and `main-kni` (the acting main until M4) and on pull requests; the Unity suite runs locally.
 
 ### Directories
 

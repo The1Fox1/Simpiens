@@ -125,3 +125,6 @@ Assets/_Recovery.meta
 !/dotnet/*.slnx
 /dotnet/**/bin/
 /dotnet/**/obj/
+
+# The client tests run in the pinned container (scripts/test-client-in-container.sh): its renders and copied sources
+container-output/
