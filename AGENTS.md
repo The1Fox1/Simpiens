@@ -33,7 +33,7 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 | The client against MonoGame (compile only) | `dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame` | .NET 10 SDK |
 | Re-bake the fonts after changing `FontSet` (commit the result on purpose; a test compares the committed atlases with a fresh bake) | `dotnet run --project dotnet/Simpiens.FontBaker` | .NET 10 SDK (KernSmith with FreeType, Linux x64 or Windows) |
 | The Android client (compile only) | `scripts/build-android.sh` | A user-local toolchain: `scripts/setup-android-toolchain.sh` installs a .NET SDK with the android workload, a JDK and the Android SDK under `~/.cache/simpiens-toolchains`, with no sudo |
-| The client's frame time (a measurement, not a gate): the map, the panels, a window | `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*MeasureFrameTime*" -explicit only -showLiveOutput` | As the client's tests |
+| The client's frame time by phase (a measurement; `FrameTimeGateTests` is the gate, with a generous budget): the map, the panels, a window | `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*MeasureFrameTime*" -explicit only -showLiveOutput` | As the client's tests |
 | Unity PlayMode suite | `scripts/run-playmode-tests.sh` | Unity, with the editor closed |
 | Golden hashes in Unity, one process per seed | `scripts/golden-hashes.sh check` (`record` only for a deliberate behaviour change, in its own commit) | Unity |
 | Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |

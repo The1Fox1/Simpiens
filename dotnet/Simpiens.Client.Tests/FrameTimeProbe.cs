@@ -6,8 +6,9 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// How long the client takes to build and draw a frame of the outpost (Epic CLIENT M1.7), against the 30 fps
-    /// budget of 33 ms. A measurement, not a gate: it depends on the machine and the renderer (the tests pin Mesa's
-    /// software renderer; set LIBGL_ALWAYS_SOFTWARE=0 to measure the GPU). Run it on its own:
+    /// budget of 33 ms, with each phase's share (review D1). A measurement: it depends on the machine and the renderer
+    /// (the tests pin Mesa's software renderer; set LIBGL_ALWAYS_SOFTWARE=0 to measure the GPU). The gate, with a
+    /// generous budget, is <see cref="FrameTimeGateTests"/>. Run the probe on its own:
     /// <c>dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*FrameTime*" -explicit only</c>.
     /// </summary>
     public class FrameTimeProbe
