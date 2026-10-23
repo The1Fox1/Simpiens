@@ -116,7 +116,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostsPropsAreDrawnOnThePropsLayerAtUnitysSizes()
         {
-            using var sim = Simpiens.Hosting.HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
+            using var sim = Simpiens.Hosting.LocalSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
             var scene = new WorldScene();
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim, 0), 0f);

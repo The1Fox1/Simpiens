@@ -84,7 +84,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheIsometricOutpostDrawsFromOneSheetBesideTheFog()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene { Mode = ViewMode.Isometric };
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);

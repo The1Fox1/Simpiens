@@ -16,8 +16,8 @@ namespace Simpiens.Client.Tests
             return frames;
         }
 
-        public static WorldViewFrames Of(HeadlessSimulation sim, long tick) => Of(sim.Registry.ActiveEntities, sim.Sectors, tick);
+        public static WorldViewFrames Of(LocalSimulation sim, long tick) => Of(sim.Registry.ActiveEntities, sim.Sectors, tick);
 
-        public static WorldViewFrames Of(HeadlessSimulation sim) => Of(sim, sim.Clock.CurrentTick);
+        public static WorldViewFrames Of(LocalSimulation sim) => Of(sim, sim.Clock.CurrentTick);
     }
 }

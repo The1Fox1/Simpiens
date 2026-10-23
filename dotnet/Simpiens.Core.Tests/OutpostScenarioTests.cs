@@ -18,9 +18,9 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class OutpostScenarioTests
     {
-        private static HeadlessSimulation Outpost()
+        private static LocalSimulation Outpost()
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }

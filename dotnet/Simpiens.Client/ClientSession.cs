@@ -25,7 +25,7 @@ namespace Simpiens.Client
         {
             Options = options ?? new ClientOptions();
             // The core composed as every .NET host composes it, the session spawned at tick 0 before the first frame
-            Simulation = HeadlessSimulation.Create(Options.Seed, Options.ConfigureServices);
+            Simulation = LocalSimulation.Create(Options.Seed, Options.ConfigureServices);
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
             // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
@@ -43,7 +43,7 @@ namespace Simpiens.Client
         public ClientOptions Options { get; }
 
         /// <summary>The simulation this client plays: the views read it, and only typed commands change it.</summary>
-        public HeadlessSimulation Simulation { get; }
+        public LocalSimulation Simulation { get; }
 
         /// <summary>The world as the views draw it: the last two completed ticks, as plain data (review A3).</summary>
         public WorldViewFrames Frames { get; } = new WorldViewFrames();

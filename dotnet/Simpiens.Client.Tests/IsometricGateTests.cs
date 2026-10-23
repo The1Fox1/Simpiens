@@ -63,7 +63,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void ACrawlerWalkingPastAWallGoesBehindItExactlyWhereItsDepthCrosses()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var map = sim.Host.Current.Map;
             var scene = new WorldScene { Mode = ViewMode.Isometric, WallStyle = WallStyle.Full };
@@ -89,9 +89,9 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>The outpost at t300 (the crawlers have spread out from where they woke), close up on the hub.</summary>
-        private static (WorldScene Scene, View View, HeadlessSimulation Sim) CloseUp(WallStyle style)
+        private static (WorldScene Scene, View View, LocalSimulation Sim) CloseUp(WallStyle style)
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(300);
             var scene = new WorldScene { Mode = ViewMode.Isometric, WallStyle = style };
@@ -148,7 +148,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void ACrawlerHiddenBehindAFullWallCanStillBeClicked()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var map = sim.Host.Current.Map;
             var scene = new WorldScene { Mode = ViewMode.Isometric, WallStyle = WallStyle.Full };
@@ -206,7 +206,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void UnchartedSitsUnderItsRoomAndTheNameAboveTheStandingCrawlersHead()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var frames = TestFrames.Of(sim, 0);
             var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));

@@ -27,17 +27,17 @@ namespace Simpiens.Client.Tests
         private static CutsceneScript Arrive() => new CutsceneBuilder("test-arrive", CutsceneKind.Dynamic)
             .Actors("walker").Say("walker", "Here at last.").Build();
 
-        private static HeadlessSimulation Outpost()
+        private static LocalSimulation Outpost()
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }
 
-        private static INarrativeChronicleService Chronicle(HeadlessSimulation sim) => (INarrativeChronicleService)sim.Services.GetService(typeof(INarrativeChronicleService));
+        private static INarrativeChronicleService Chronicle(LocalSimulation sim) => (INarrativeChronicleService)sim.Services.GetService(typeof(INarrativeChronicleService));
 
         /// <summary>A crawler's interaction with another, as the simulation records it (recorded by hand: a fixture).</summary>
-        private static void Gossip(HeadlessSimulation sim, EntityId a, EntityId b, long tick)
+        private static void Gossip(LocalSimulation sim, EntityId a, EntityId b, long tick)
             => Chronicle(sim).RecordEvent(new ChronicleEvent(ChronicleEventType.CampfireGossip, a, b, Floor1Layout.HubSectorId, (uint)tick));
 
         [Fact]

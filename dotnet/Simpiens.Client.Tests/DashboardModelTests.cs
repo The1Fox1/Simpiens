@@ -45,7 +45,7 @@ namespace Simpiens.Client.Tests
             zones.GetAgentsInZone(4, null, buffer);
             Assert.Empty(buffer);
 
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var outpost = new FacilityZoneService(sim.Sectors);
             int gate = Floor1Layout.RoadGateSectorId;
@@ -92,7 +92,7 @@ namespace Simpiens.Client.Tests
             Assert.Contains(nameof(ISimulationManager), missing.Message);
             Assert.Throws<ArgumentNullException>(() => DashboardContext.From(null));
 
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             var context = DashboardContext.From(sim.Services);
             Assert.Same(sim.Identity, context.Identity);
             Assert.Same(sim.Chronicle, context.Chronicle);
@@ -240,7 +240,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void OnTheOutpostTheModelShowsWhatTheSimulationHolds()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             using var frames = new WorldViewFrames();
             frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock);
@@ -296,7 +296,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void CalmFromTheDossierCalmsTheCrawlerOnTheNextTick()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var model = new DashboardModel(DashboardContext.From(sim.Services));
             var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
@@ -315,7 +315,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheDossierNamesThePlayerAmongACrawlersAffinities()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(600); // trades build feelings toward the outpost
             var trader = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && e.Agent.Memory?.AffinityMap.ContainsKey(WorldRegistry.PlayerEntityId) == true);
@@ -327,7 +327,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void ResidentsSayWhatTheyAreDoingAndEventsReadAsTheChronicle()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(1500);
             var model = new DashboardModel(DashboardContext.From(sim.Services));

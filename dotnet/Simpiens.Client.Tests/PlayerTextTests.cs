@@ -28,9 +28,9 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Earn income", PlanText.Words("EarnIncomeGoal"));
         }
 
-        private static HeadlessSimulation Outpost(long ticks)
+        private static LocalSimulation Outpost(long ticks)
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(ticks);
             return sim;

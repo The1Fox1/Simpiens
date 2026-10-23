@@ -34,7 +34,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheSceneDrawsWhatItsArtSetSays()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var frames = TestFrames.Of(sim);
             var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && sim.Sectors.IsExplored(sim.Sectors.GetSectorAt(e.Position).Id));

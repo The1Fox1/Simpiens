@@ -12,7 +12,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheHostSignalsTheEndOfEveryTickAfterWhichNothingMoves()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var ticks = new List<long>();
             var seen = new Dictionary<EntityId, Vec2>();

@@ -12,9 +12,9 @@ namespace Simpiens.Client.Tests
     /// <summary>Fog of war, ported from Unity's ShroudView (Epic CLIENT M1.3).</summary>
     public class FogTests
     {
-        private static HeadlessSimulation Outpost()
+        private static LocalSimulation Outpost()
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }

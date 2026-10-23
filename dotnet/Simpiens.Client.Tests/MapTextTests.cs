@@ -109,7 +109,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void UnchartedSitsUnderItsRoomsNameOneSizeSmallerAndTheSelectedNameAboveItsCrawler()
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));
             var frames = TestFrames.Of(sim, 0);

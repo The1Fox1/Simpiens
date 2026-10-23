@@ -12,7 +12,7 @@ namespace Simpiens.Client.Tests
     {
         private static WorldScene Outpost(ViewMode mode, WallStyle style)
         {
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene { Mode = mode, WallStyle = style };
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);

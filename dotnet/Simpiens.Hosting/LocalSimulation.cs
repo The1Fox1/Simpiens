@@ -8,15 +8,16 @@ using Simpiens.Simulation.World;
 namespace Simpiens.Hosting
 {
     /// <summary>
-    /// The simulation with no engine and no frames (Epic CORE C8): the core composed as the game composes it, stepped
-    /// tick by tick as fast as the machine allows. Cognition decisions land on a fixed tick (CognitionScheduler), so a
-    /// run here is the same run as in Unity at any speed. One instance per world; dispose it to stop.
+    /// The simulation in this process (Epic CORE C8): the core composed as the game composes it, with no engine. The KNI
+    /// client plays it frame by frame; the console host and the tests step it tick by tick as fast as the machine allows.
+    /// Cognition decisions land on a fixed tick (CognitionScheduler), so a run is the same run at any speed. One instance
+    /// per world; dispose it to stop. (Named HeadlessSimulation until the client began to play it, review S4.)
     /// </summary>
-    public sealed class HeadlessSimulation : IDisposable
+    public sealed class LocalSimulation : IDisposable
     {
         private readonly ServiceProvider _services;
 
-        private HeadlessSimulation(ServiceProvider services)
+        private LocalSimulation(ServiceProvider services)
         {
             _services = services;
             Clock = services.GetRequiredService<ISimulationClock>();
@@ -31,11 +32,11 @@ namespace Simpiens.Hosting
         }
 
         /// <param name="configure">Extra registrations (more sessions, test doubles).</param>
-        public static HeadlessSimulation Create(ulong seed, Action<IServiceCollection> configure = null)
+        public static LocalSimulation Create(ulong seed, Action<IServiceCollection> configure = null)
         {
             var services = new ServiceCollection().AddSimpiensCore(new SimulationSettings(seed));
             configure?.Invoke(services);
-            return new HeadlessSimulation(services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true }));
+            return new LocalSimulation(services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true }));
         }
 
         public IServiceProvider Services => _services;

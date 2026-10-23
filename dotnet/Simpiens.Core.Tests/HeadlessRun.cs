@@ -15,7 +15,7 @@ namespace Simpiens.Core.Tests
         /// </summary>
         public static List<WorldStateSample> GoldenSamples(ulong seed)
         {
-            using var sim = HeadlessSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var samples = new List<WorldStateSample>(32) { WorldStateHash.Capture(sim.Clock.CurrentTick, sim.Host, sim.Simulation, sim.Sectors) };
             sim.Clock.OnSimulationTick += tick =>

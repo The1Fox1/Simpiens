@@ -151,7 +151,7 @@ namespace Simpiens.Hosting
         /// <summary>Plays the outpost with <paramref name="seed"/> for <paramref name="horizonTicks"/> as one kind of player.</summary>
         public static Result Run(ulong seed, string profile, long horizonTicks = HorizonTicks)
         {
-            using var sim = HeadlessSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var manager = sim.Simulation;
             var result = new Result { Player = Resolve(profile, manager.Economy), Seed = seed };

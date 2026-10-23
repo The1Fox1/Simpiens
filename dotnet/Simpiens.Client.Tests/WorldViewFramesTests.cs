@@ -10,14 +10,14 @@ namespace Simpiens.Client.Tests
     /// <summary>The frames the views draw from (review A3, plan step 3.2): what the world was when each tick completed.</summary>
     public class WorldViewFramesTests
     {
-        private static HeadlessSimulation Outpost()
+        private static LocalSimulation Outpost()
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }
 
-        private static void AssertShowsTheWorld(WorldViewFrame frame, HeadlessSimulation sim)
+        private static void AssertShowsTheWorld(WorldViewFrame frame, LocalSimulation sim)
         {
             Assert.Equal(sim.Clock.CurrentTick, frame.Tick);
             var entities = sim.Registry.ActiveEntities;

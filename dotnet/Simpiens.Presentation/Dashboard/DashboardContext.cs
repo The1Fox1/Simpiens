@@ -42,7 +42,7 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         /// <summary>
-        /// The context of a composed simulation (<c>HeadlessSimulation.Services</c>). It requires every service the game
+        /// The context of a composed simulation (<c>LocalSimulation.Services</c>). It requires every service the game
         /// always has (review U4), so a wiring mistake fails here, at start, instead of showing an empty panel; only the
         /// save slot and the host's commands are optional. The constructor, where anything may be null, is for unit tests.
         /// </summary>

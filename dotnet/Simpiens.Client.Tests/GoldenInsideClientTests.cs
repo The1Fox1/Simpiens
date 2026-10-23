@@ -70,7 +70,7 @@ namespace Simpiens.Client.Tests
             // Uneven frames, a long hitch and a zero-length frame: only the number of whole ticks matters
             ulong seed = SimulationSettings.DefaultSeed;
             var baseline = GoldenWorldHash.Read(Repo.GoldenBaseline)[seed];
-            using var sim = HeadlessSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var samples = Sample(sim);
             var driver = new SimulationDriver(sim.Clock, ticksPerUpdate: 0);
@@ -85,7 +85,7 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>The outpost hashed at its current tick and every 100 ticks to t3000, sampled after every other subscriber.</summary>
-        private static List<WorldStateSample> Sample(HeadlessSimulation sim)
+        private static List<WorldStateSample> Sample(LocalSimulation sim)
         {
             var samples = new List<WorldStateSample>(32) { WorldStateHash.Capture(sim.Clock.CurrentTick, sim.Host, sim.Simulation, sim.Sectors) };
             sim.Clock.OnSimulationTick += tick =>

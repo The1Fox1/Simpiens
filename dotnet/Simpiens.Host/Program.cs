@@ -11,7 +11,7 @@ namespace Simpiens.Host
 {
     /// <summary>
     /// The development console host (Epic CORE C10) on the Generic Host: Ctrl+C cancels the command between ticks. Each
-    /// run composes its own simulation (HeadlessSimulation), so runs in one process are independent.
+    /// run composes its own simulation (LocalSimulation), so runs in one process are independent.
     /// </summary>
     public static class Program
     {

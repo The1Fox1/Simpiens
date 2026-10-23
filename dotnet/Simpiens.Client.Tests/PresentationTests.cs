@@ -227,7 +227,7 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void TheOutpostSceneIsTheMapsTilesThenPropsThenCrawlersWithItsTextApart()
         {
-            using var sim = HeadlessSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var scene = new WorldScene();
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);

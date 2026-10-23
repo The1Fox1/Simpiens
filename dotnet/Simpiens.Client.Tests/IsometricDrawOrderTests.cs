@@ -115,7 +115,7 @@ namespace Simpiens.Client.Tests
             AssertOneCellWide(Build(Iso), Iso);
             AssertOneCellWide(Build(TopDownProjection.Instance), TopDownProjection.Instance);
 
-            using var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             foreach (var projection in new IViewProjection[] { Iso, TopDownProjection.Instance })
             {

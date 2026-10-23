@@ -18,9 +18,9 @@ namespace Simpiens.Client.Tests
 
         private static ViewMode Mode(string name) => name == "isometric" ? ViewMode.Isometric : ViewMode.TopDown;
 
-        private static HeadlessSimulation Outpost()
+        private static LocalSimulation Outpost()
         {
-            var sim = HeadlessSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }
