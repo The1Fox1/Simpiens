@@ -139,12 +139,14 @@ namespace Simpiens.Client.Tests
         // uncharted sector holds, so the props under the clouds are no longer drawn (the references were re-recorded with
         // them). The labels' pins are 1.1's. M3 step 0.4: the pins count only what lands on screen, so culling (which drops
         // the rest before sorting) can't move them; the full views have nothing off screen and kept their pins, and the
-        // zoomed view's items were re-pinned for the items it no longer counts.
+        // zoomed view's items were re-pinned for the items it no longer counts. Epic 10 G0 (2026-10-23): the crawlers move
+        // differently (navigation fixes for finding F2), so every pin after tick 0 was re-pinned with the render references;
+        // the selected crawler's name moves with it, hence the zoomed views' labels.
         private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (16432157483044585443UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (5768202902293146726UL, 17765688760816253013UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (17136331033887249008UL, 6705829926719516470UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (14726820994859452996UL, 9961463459885518582UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (11077098062671237693UL, 7580600243856684339UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (5529835639956102611UL, 1216540382167408918UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (3788725809304656315UL, 7580600243856684339UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15834235469868254433UL, 13698735132650210947UL);
     }
 }
