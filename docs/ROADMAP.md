@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-21). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup and the client seams are done. M3 (isometric and cutscenes) is done on `feat/client-m3`, not pushed: its gate passes, and the producer's look is open.
+- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). Now: the architecture review's open findings, on `feat/client-architecture`.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -535,6 +535,15 @@ Before Epic 10: soak test and scaling work (#8).
     - Measured: `dotnet test` 297/297 (client 234, core 63); golden 3/3; the MonoGame, Debug desktop and Android builds compile; frame time 1.62 ms in isometric and 2.38 ms in top-down on llvmpipe, 1.40 and 1.64 ms on the GPU.
     - **Open, person-gated:** the producer's look at the isometric view, the wall styles, the V toggle and the camera, and both kinds of cutscene; the pull requests into `main-kni`.
     - Next: M2.8–M2.9 (Unity's removal, after the side-by-side) or M4, as the producer decides.
+  - **Producer decision (2026-10-22):** M4 (Android) is deferred until later. Its plan is the Claude Doc "Plan: M4 Android (Epic CLIENT)". `main-kni` stays the acting main meanwhile.
+  - **Architecture improvements (producer request, 2026-10-22):** the open findings of the client's architecture review (Claude Docs, "KNI Client Architecture Review"), planned in `.agents/client_architecture_plan.md`, on branch `feat/client-architecture` into `main-kni`. In order:
+    - measurement and guards (D1, T3, T4);
+    - host commands with speed and pause (D3, D2);
+    - one input frame (U1);
+    - the dashboard's loose ends (U3, U4, U5);
+    - smaller items, and the client tests in a pinned container (T2).
+
+    U2 and R6 stay with M4; R4, R5 and R7 with M7.
 
 ---
 

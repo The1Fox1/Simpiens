@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-21). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup and the client seams are done. M3 (isometric and cutscenes) is done on `feat/client-m3`, not pushed: its gate passes, and the producer's look is open. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`; the producer's look at M3 is open. M4 is deferred (producer, 2026-10-22); the architecture review's open findings come first, on `feat/client-architecture`. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -41,6 +41,7 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
     - cutaway walls, with the three styles shown at the look;
     - isometric by default, with V switching to top-down in every build;
     - three pull requests into `main-kni`.
+- **M4 deferred (2026-10-22):** Android waits until later. Its plan stays in Claude Docs ("Plan: M4 Android (Epic CLIENT)"). The architecture review's open findings come first (`.agents/client_architecture_plan.md`).
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
@@ -338,7 +339,7 @@ flowchart TB
 - **Narrow windows (M6):** the dashboard is laid out for the default 1280×720 and up. Below that, the header crowds and the detail column narrows (at 800 px it is 112 px wide), as Unity's would have.
 - **Gum moves fast:** a preview most days. It is pinned at 2026.10.1.1. Two test helpers reach into Gum's and KNI's internals: the scripted cursor uses Gum's internal per-frame cursor method, and an offscreen game is made active through KNI's private flag. Both fail loudly if an update moves them.
 - **The application id is a placeholder (M1.6):** the Android project uses `dev.simpiens.game` until the producer picks the store identity (M4).
-- **CI is unverified (M0.5, M1.6):** neither the `test` job's client steps nor the `android` job has run yet. The workflow runs the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa; locally they run SDL's offscreen driver on Fedora's sdl2-compat. The first push shows whether the reference images match there as well (the render tolerance allows 0.1% of pixels to differ). If they don't, the renders from CI are kept as a workflow artifact.
+- **CI ran clean (2026-10-22):** both jobs, `test` (the client's tests under Xvfb with Ubuntu's SDL 2.30 and Mesa) and `android`, pass on `main-kni` at `9ff5be3`. The references, recorded on Fedora, match Ubuntu's renders within the tolerance. Pinning the renderer (review T2) is in the architecture plan.
 
 
 See the proposal's risk table. These matter for M0 and M1:

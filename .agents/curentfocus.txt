@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-18
+# Last reconciled: 2026-10-22
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -248,3 +248,6 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   (producer 2026-10-21: the fog hides crawlers too); WorldViewFrame on SessionHost.TickCompleted (core), views read only
   frames, crawlers drawn between ticks. dotnet test 199/199; Unity PlayMode 69/69, golden 3/3. Next: the producer's look
   at the motion (1x, 10x), the PR into main-kni, then M3.
+  M4 DEFERRED (producer 2026-10-22; plan in Claude Docs). NOW: the architecture review's open findings on
+  feat/client-architecture (.agents/client_architecture_plan.md): D1/T3/T4 measure and guard, D3/D2 host commands +
+  speed/pause, U1 one input frame, U3/U4/U5 dashboard, S1/S2/S4/S6 + T2 pinned container. U2/R6 with M4; R4/R5/R7 M7.
