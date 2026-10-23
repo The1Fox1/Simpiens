@@ -27,6 +27,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
             [typeof(SocializeGoal)] = "Socialize",
+            [typeof(LeaveOutpostGoal)] = "Move on",
 
             // Actions
             [typeof(BuyProvisionsAction)] = "Buying provisions",
@@ -53,6 +54,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(TravelToPeerAction)] = "Going to a peer",
             [typeof(TravelToResourceAction)] = "Going to a resource",
             [typeof(TravelToStallAction)] = "Going to the stall",
+            [typeof(LeaveOutpostAction)] = "Leaving by the Road Gate",
         };
 
         /// <summary>The goal in words, or "(None)".</summary>

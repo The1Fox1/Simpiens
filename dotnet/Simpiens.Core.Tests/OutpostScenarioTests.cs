@@ -59,6 +59,62 @@ namespace Simpiens.Core.Tests
             Assert.True(failures.Count == 0, $"Seed {seed}'s day failed:\n  " + string.Join("\n  ", failures) + "\n" + watch.Report());
         }
 
+        /// <summary>
+        /// Drifters (Epic 10 G1's Definition of Done): on the real outpost, with nothing injected, strangers come in by the
+        /// Road Gate within the day, buy at the stall and leave. Their purses enter the ledger as DrifterPurses, what they
+        /// take away leaves it as DrifterDepartures, the gold balances every tick and the residents' day still holds.
+        /// </summary>
+        [Fact]
+        public void DriftersComeBuyAndGo()
+        {
+            using var sim = Outpost();
+            var watch = new OutpostWatch(sim);
+            watch.Run(9000);
+            watch.Finish();
+            TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
+
+            Assert.True(watch.DriftersArrived >= 2, $"Only {watch.DriftersArrived} drifters came in during the day.");
+            Assert.True(watch.DriftersLeft >= 2, $"Only {watch.DriftersLeft} drifters left by the Road Gate.");
+            Assert.True(watch.DrifterPurchases >= 2, $"The drifters who left bought {watch.DrifterPurchases} rations.");
+            var ledger = sim.Simulation.EconomyLedger;
+            Assert.True(ledger.GetFaucetTotal("DrifterPurses") > 0, "No DrifterPurses faucet in the ledger.");
+            Assert.True(ledger.GetSinkTotal("DrifterDepartures") > 0, "No DrifterDepartures sink in the ledger.");
+            Assert.Equal(0, watch.ConservationViolations);
+            var failures = watch.DayFailures();
+            Assert.True(failures.Count == 0, "The residents' day failed:\n  " + string.Join("\n  ", failures));
+        }
+
+        /// <summary>
+        /// A save made while drifters are in the outpost loads byte for byte: each drifter comes back with its departure
+        /// tick, the next arrival is still due when it was, and the session plays on with the gold balanced (Epic 10 G1).
+        /// </summary>
+        [Fact]
+        public void ASaveWithDriftersLoadsAndTheirScheduleResumes()
+        {
+            using var sim = Outpost();
+            while (sim.Clock.CurrentTick < 4000 && !sim.Host.CrawlerStates.Any(s => s.IsDrifter)) sim.Step(1);
+            var drifters = sim.Host.CrawlerStates.Where(s => s.IsDrifter).Select(s => (s.AgentId, s.DepartsAtTick)).ToList();
+            Assert.NotEmpty(drifters);
+            long next = sim.Host.NextDrifterTick;
+            int arrived = sim.Host.DriftersArrived;
+            byte[] saved = SaveFile.Encode(sim.Host.Capture());
+
+            sim.Respawn(OutpostSession.SessionId);
+            sim.Step(100);
+            Assert.True(SaveFile.TryDecode(saved, out var save, out var refusal), refusal);
+            Assert.True(sim.Host.TryRestore(save, out refusal), refusal);
+
+            Assert.Equal(saved, SaveFile.Encode(sim.Host.Capture()));
+            Assert.Equal(drifters, sim.Host.CrawlerStates.Where(s => s.IsDrifter).Select(s => (s.AgentId, s.DepartsAtTick)).ToList());
+            Assert.Equal(next, sim.Host.NextDrifterTick);
+            Assert.Equal(arrived, sim.Host.DriftersArrived);
+
+            var watch = new OutpostWatch(sim);
+            watch.Run(3500);
+            Assert.Equal(0, watch.ConservationViolations);
+            Assert.True(watch.DriftersLeft >= 1, "No drifter left after the load.");
+        }
+
         /// <summary>The Milestone 1 supply loop: sale, scout, gather, restock and regrowth by their deadlines.</summary>
         [Fact]
         public void TheSupplyLoopEmergesWithoutInjection()

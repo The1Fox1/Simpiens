@@ -58,5 +58,7 @@ namespace Simpiens.Simulation
         public const uint PanicDirection = 2;
         public const uint EntityId = 3;
         public const uint Personality = 4;
+        public const uint DrifterSchedule = 5;
+        public const uint DrifterTraits = 6;
     }
 }

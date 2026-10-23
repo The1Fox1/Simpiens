@@ -245,6 +245,46 @@ namespace Simpiens.Simulation
             return (bunkPosition - candidate).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
         }
 
+        private readonly List<ushort> _departingClaims = new List<ushort>(2);
+        private readonly List<EntityId> _departingBunks = new List<EntityId>(1);
+
+        public void DepartOutpost(WorldEntity node)
+        {
+            var agent = node?.Agent;
+            if (agent == null || agent.HasLeft) return;
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
+
+            var inventory = agent.Inventory;
+            int gold = inventory != null ? inventory.Gold : 0;
+            if (gold > 0)
+            {
+                _economyLedger?.RecordSink((uint)gold, "DrifterDepartures");
+                inventory.Gold = 0;
+            }
+
+            _departingClaims.Clear();
+            for (int i = 0; i < _activeBountiesBuffer.Count; i++)
+            {
+                var bounty = _activeBountiesBuffer[i];
+                if (bounty.Status == BountyStatus.Claimed && bounty.ClaimantId == node.Id) _departingClaims.Add(bounty.BountyId);
+            }
+            for (int i = 0; i < _departingClaims.Count; i++)
+            {
+                if (_bounties.TryGetValue(_departingClaims[i], out var claimed)) UpdateBounty(claimed.WithClaimant(default, BountyStatus.Open));
+            }
+
+            _departingBunks.Clear();
+            foreach (var kvp in _bunkOccupants)
+            {
+                if (kvp.Value == node.Id) _departingBunks.Add(kvp.Key);
+            }
+            for (int i = 0; i < _departingBunks.Count; i++) ReleaseBunk(_departingBunks[i], node.Id);
+
+            agent.HasLeft = true;
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({_departingClaims.Count} claim(s) released)");
+            _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));
+        }
+
         public void ReleaseBunk(EntityId bunkId, EntityId agentId)
         {
             if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant == agentId)
@@ -1423,7 +1463,7 @@ namespace Simpiens.Simulation
             // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
             float step = speed * FixedTickDeltaTime;
-            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)) && !TrySidestep(node, targetPos, step))
+            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)) && !TryStep(node, targetPos, step, SidestepTurns))
             {
                 currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
                 return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
@@ -1449,21 +1489,30 @@ namespace Simpiens.Simulation
             new Vec2(0.70710677f, 0.70710677f), new Vec2(0.70710677f, -0.70710677f), new Vec2(0f, 1f), new Vec2(0f, -1f)
         };
 
+        // A walker's way around a pawn: 45 degrees to the right first (keep right), then to the left; both gain ground
+        private static readonly Vec2[] FlowTurns =
+        {
+            new Vec2(0.70710677f, -0.70710677f), new Vec2(0.70710677f, 0.70710677f)
+        };
+
         /// <summary>
         /// Steps a pawn around whatever blocks its straight step toward <paramref name="targetPos"/>, trying the turns
-        /// of <see cref="SidestepTurns"/> in order. Without it a panicking crawler in a crowd skipped every waypoint
-        /// within a few ticks and panicked again on the spot, starving there (Epic 10 G0, finding F2).
+        /// in order, each a (cos, sin) rotation of the heading; walls and pawn spacing are respected. A panicking crawler
+        /// uses <see cref="SidestepTurns"/>: without it, in a crowd it skipped every waypoint and panicked again on the
+        /// spot, starving there (Epic 10 G0, finding F2). A walker uses <see cref="FlowTurns"/>.
         /// </summary>
-        private bool TrySidestep(WorldEntity node, Vec2 targetPos, float step)
+        private bool TryStep(WorldEntity node, Vec2 targetPos, float step, Vec2[] turns)
         {
             Vec2 toTarget = targetPos - (Vec2)node.Position;
             float dist = toTarget.Magnitude;
             if (dist < 0.001f) return false;
             Vec2 dir = toTarget / dist;
-            for (int i = 0; i < SidestepTurns.Length; i++)
+            for (int i = 0; i < turns.Length; i++)
             {
-                Vec2 turn = SidestepTurns[i];
-                Vec2 turned = new Vec2(dir.X * turn.X - dir.Y * turn.Y, dir.X * turn.Y + dir.Y * turn.X);
+                Vec2 turn = turns[i];
+                // Vec2 operators, not a scalar chain: each rounds when it stores, so Unity's Mono (which keeps a chain's
+                // intermediates at double precision) and CoreCLR turn the same way (Epic CORE F1)
+                Vec2 turned = dir * turn.X + new Vec2(-dir.Y, dir.X) * turn.Y;
                 if (TryDisplacePawn(node, (Vec2)node.Position + turned * step)) return true;
             }
             return false;
@@ -1529,9 +1578,12 @@ namespace Simpiens.Simulation
             if (IsCrowdedMove(node, candidate))
             {
                 if (nearFinal) return IntentResult.Success;
-                return IntentResult.InProgress; // watchdog resolves persistent face-offs
+                // Flow around: a step 45 degrees to the right, else to the left, still gains on the waypoint. Two crawlers
+                // meeting head-on in a doorway both keep right and pass instead of standing nose to nose (Epic 10 G1:
+                // a jam in the Garden door starved a crawler); the watchdog resolves what this can't
+                if (!TryStep(node, targetPos, step, FlowTurns)) return IntentResult.InProgress;
             }
-            if (!TryDisplacePawn(node, candidate, respectPawns: false))
+            else if (!TryDisplacePawn(node, candidate, respectPawns: false))
             {
                 return IntentResult.InProgress; // static wall ahead; watchdog takes over
             }
@@ -1734,6 +1786,10 @@ namespace Simpiens.Simulation
             else if (intent is ShareResourceIntent sri)
             {
                 sri.Path?.ReturnToPool();
+            }
+            else if (intent is LeaveOutpostIntent loi)
+            {
+                loi.Path?.ReturnToPool();
             }
 
             if (_consequenceService != null && _agentRegistry != null && _agentRegistry.TryGetAgent(intent.AgentId, out var agentState))

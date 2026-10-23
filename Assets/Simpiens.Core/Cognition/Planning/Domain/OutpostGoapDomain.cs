@@ -37,6 +37,7 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new GatherSalvageAction(pathfinder));
             graph.RegisterAction(new ScoutSectorAction(pathfinder));
             graph.RegisterAction(new ReportScoutBountyAction());
+            graph.RegisterAction(new LeaveOutpostAction(pathfinder));
             return graph;
         }
 
@@ -53,7 +54,8 @@ namespace Simpiens.Cognition.Planning.Domain
                 new PurchaseProvisionsGoal(),
                 new LiquidateSalvageGoal(),
                 new FulfillBountyGoal(),
-                new EarnIncomeGoal()
+                new EarnIncomeGoal(),
+                new LeaveOutpostGoal()
             };
         }
     }

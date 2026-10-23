@@ -40,6 +40,7 @@ namespace Simpiens.Core.Session
             _host.MapLoaded += HandleMapLoaded;
             _host.PropSpawned += HandlePropSpawned;
             _host.CrawlerSpawned += HandleCrawlerSpawned;
+            _host.CrawlerDeparted += HandleCrawlerDeparted;
             if (_registry != null)
             {
                 _registry.EntityRegistered += HandleEntityRegistered;
@@ -133,6 +134,19 @@ namespace Simpiens.Core.Session
             _agents.Add(agent);
         }
 
+        // A drifter walked out by the Road Gate (Epic 10 G1): its view goes with it. Unity's views are frozen; this only
+        // keeps them from drawing a crawler the simulation no longer has.
+        private void HandleCrawlerDeparted(AgentRuntime runtime, WorldEntity entity)
+        {
+            for (int i = _agents.Count - 1; i >= 0; i--)
+            {
+                var agent = _agents[i];
+                if (agent == null || agent.State != runtime.State) continue;
+                _agents.RemoveAt(i);
+                Object.Destroy(agent.gameObject);
+            }
+        }
+
         private void HandlePropSpawned(WorldEntity entity)
         {
             var go = new GameObject(entity.Name);
@@ -190,6 +204,7 @@ namespace Simpiens.Core.Session
             _host.MapLoaded -= HandleMapLoaded;
             _host.PropSpawned -= HandlePropSpawned;
             _host.CrawlerSpawned -= HandleCrawlerSpawned;
+            _host.CrawlerDeparted -= HandleCrawlerDeparted;
             if (_registry != null)
             {
                 _registry.EntityRegistered -= HandleEntityRegistered;

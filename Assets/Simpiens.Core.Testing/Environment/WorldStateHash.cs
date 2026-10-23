@@ -70,6 +70,7 @@ namespace Simpiens.Testing.Environment
 
             ulong total = Offset;
             Mix(ref total, (ulong)tick);
+            Mix(ref total, host != null ? host.NextDrifterTick : -1L); // who comes in next (Epic 10 G1)
             for (int i = 0; i < ordered.Count; i++)
             {
                 var s = host.CrawlerStates[ordered[i]];
@@ -80,6 +81,7 @@ namespace Simpiens.Testing.Environment
                 Mix(ref h, Quantize(s.Hunger, 100f));
                 Mix(ref h, Quantize(s.Energy, 100f));
                 Mix(ref h, Quantize(s.Social, 100f));
+                Mix(ref h, (long)s.DepartsAtTick); // 0 for a resident; a drifter's departure (Epic 10 G1)
                 var inv = s.Inventory;
                 Mix(ref h, inv != null ? inv.Gold : -1);
                 if (inv != null)

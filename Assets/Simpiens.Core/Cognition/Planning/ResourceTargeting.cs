@@ -83,7 +83,10 @@ namespace Simpiens.Cognition.Planning
             ushort orePrice = 1;
             ushort herbPrice = 1;
             uint treasury = uint.MaxValue;
-            if (context.Snapshot != null && TryGetNearestStall(context, out var stall))
+            TradeStallData stall = default;
+            bool stallKnown = context.Snapshot != null && TryGetNearestStall(context, out stall);
+            var economy = Considerations.Economy(context);
+            if (stallKnown)
             {
                 orePrice = stall.OreBuyPrice > 0 ? stall.OreBuyPrice : (ushort)1;
                 herbPrice = stall.HerbBuyPrice > 0 ? stall.HerbBuyPrice : (ushort)1;
@@ -109,8 +112,10 @@ namespace Simpiens.Cognition.Planning
                 else
                 {
                     float price = record.ResourceKind == ItemType.IronOre ? orePrice : herbPrice;
-                    // Speculative gathering only targets salvage the stall can currently pay for
+                    // Speculative gathering only targets salvage the stall can currently pay for, and has room for: with
+                    // the ore shelf full, a crawler goes for herbs (Epic 10 G1; drifters sell too)
                     if (price > treasury) continue;
+                    if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
                     score = price / dist;
                 }
 
@@ -365,6 +370,18 @@ namespace Simpiens.Cognition.Planning
         /// True when the nearest reachable stall has room for salvage, isn't in arrears and its treasury can pay for at least one unit, so a sale won't
         /// fail on arrival. Without any visible stall this returns true (headless contexts); behind walls, false.
         /// </summary>
+        /// <summary>
+        /// True when the agent holds salvage for sale (not owed to a bounty) and the reachable stall would take none of
+        /// it right now: that shelf is full, the treasury can't pay, the stall is in arrears, or the price is under the
+        /// agent's minimum. The planner then does not count it as salvage to sell, so the agent can gather a kind the
+        /// stall still buys instead of holding out all day (Epic 10 G1).
+        /// </summary>
+                public static bool StallRefusesHeldSalvage(in AgentContext context)
+        {
+            if (!HoldsSellable(context, ItemType.IronOre) && !HoldsSellable(context, ItemType.MedicinalHerb)) return false;
+            return GetStallAccess(context, out var stall) == StallAccess.Reachable && AffordableHeldSalvage(context, stall) == ItemType.None;
+        }
+
         public static bool NearestStallCanBuySalvage(in AgentContext context)
         {
             var access = GetStallAccess(context, out var stall);

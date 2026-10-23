@@ -76,6 +76,26 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void ADriftersDossierSaysWhenItMovesOn()
+        {
+            Assert.Equal(string.Empty, DossierModel.Stay(0, 100));
+            Assert.Equal("drifter, leaves in 2 min", DossierModel.Stay(1300, 200));
+            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1000));
+            Assert.Equal("drifter, leaving", DossierModel.Stay(1300, 1300));
+
+            using var sim = Outpost(0);
+            while (sim.Clock.CurrentTick < 4000 && !sim.Host.CrawlerStates.Any(s => s.IsDrifter)) sim.Step(1);
+            var drifter = sim.Host.CrawlerStates.First(s => s.IsDrifter);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.SelectCrawler(drifter.AgentId);
+            Assert.StartsWith("drifter, leaves in", model.Dossier.Residency);
+            Assert.EndsWith(" · " + model.Dossier.Residency, model.Dossier.Name);
+
+            model.SelectCrawler(sim.Host.CrawlerStates.First(s => !s.IsDrifter).AgentId);
+            Assert.Equal(string.Empty, model.Dossier.Residency);
+        }
+
+        [Fact]
         public void TheMerchantNamesItsStallByTheRoomItStandsIn()
         {
             using var sim = Outpost(0);

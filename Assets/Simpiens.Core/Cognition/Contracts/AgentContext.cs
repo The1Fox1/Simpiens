@@ -35,13 +35,23 @@ namespace Simpiens.Cognition.Contracts
         // Stable traits (review §3.2); default is neutral
         public readonly AgentPersonality Personality;
 
+        /// <summary>A drifter's departure tick (its stay ends); 0 for a resident (Epic 10 G1).</summary>
+        public readonly uint DepartsAtTick;
+
+        public bool IsDrifter => DepartsAtTick > 0;
+
+        /// <summary>A drifter whose stay is over: it heads for the Road Gate.</summary>
+        public bool StayIsOver => DepartsAtTick > 0 && CurrentTick >= DepartsAtTick;
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership membership = default, in IdentityTag identity = default,
                             Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
                             ushort scoutReportBountyId = 0,
-                            in AgentPersonality personality = default)
+                            in AgentPersonality personality = default,
+                            uint departsAtTick = 0)
         {
+            DepartsAtTick = departsAtTick;
             ScoutReportBountyId = scoutReportBountyId;
             Personality = personality;
             AgentId = agentId;

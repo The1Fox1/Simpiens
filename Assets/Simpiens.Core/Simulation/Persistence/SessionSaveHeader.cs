@@ -12,7 +12,7 @@ namespace Simpiens.Simulation.Persistence
     public sealed partial class SessionSaveHeader
     {
         /// <summary>Bumped whenever a saved type's layout changes: unmanaged records are saved as memory copies.</summary>
-        public const int CurrentFormatVersion = 1;
+        public const int CurrentFormatVersion = 2; // 2: drifters (Epic 10 G1): CrawlerRecord.DepartsAtTick, SessionSave.Population
 
         public int FormatVersion { get; set; } = CurrentFormatVersion;
         public string BuildVersion { get; set; }

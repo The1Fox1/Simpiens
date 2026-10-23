@@ -51,6 +51,7 @@ namespace Simpiens.Simulation.Persistence
         public ushort ScoutReportBountyId;
         public bool IsExhaustionCollapsed;
         public bool CanBuyFoodAtStall;
+        public uint DepartsAtTick;
     }
 
     /// <summary>

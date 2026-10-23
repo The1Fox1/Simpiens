@@ -46,8 +46,14 @@ namespace Simpiens.Hosting
             public long HungrySince = -1;
             public long LongestHungry, LongestHungryFrom = -1;
             public bool Starved;
-            public float StackedFor, LastStackingAlert = -10f;
         }
+
+        // Per pawn, residents and drifters alike: Unity's detector watches every pawn
+        private sealed class StackingClock
+        {
+            public float StackedFor, LastAlert = -10f;
+        }
+        private readonly Dictionary<EntityId, StackingClock> _stacking = new Dictionary<EntityId, StackingClock>();
 
         private readonly LocalSimulation _sim;
         private readonly int _baselineSalvage;
@@ -65,15 +71,27 @@ namespace Simpiens.Hosting
         public int Stackings;
         public string FirstStacking;
 
+        /// <summary>Drifters seen while watching (Epic 10 G1): arrived, walked out, and what those who left bought.</summary>
+        public int DriftersArrived, DriftersLeft, DrifterPurchases;
+        private readonly int _driftersAtStart;
+
         public OutpostWatch(LocalSimulation sim)
         {
             _sim = sim;
             _startTick = sim.Clock.CurrentTick;
             _baselineSalvage = TotalSalvage(sim.Simulation);
             var host = sim.Host;
+            _driftersAtStart = host.DriftersArrived;
+            host.CrawlerDeparted += (runtime, entity) =>
+            {
+                DriftersLeft++;
+                DrifterPurchases += runtime.State.Activity.RationPurchases;
+            };
+            // The day judges the residents: drifters pass through (Epic 10 G1)
             for (int i = 0; i < host.CrawlerStates.Count; i++)
             {
                 var state = host.CrawlerStates[i];
+                if (state.IsDrifter) continue;
                 Crawlers.Add(new Crawler
                 {
                     State = state,
@@ -119,11 +137,16 @@ namespace Simpiens.Hosting
             if (RestockTick < 0 && sim.Supply != null && sim.Supply.RestockCount > 0) RestockTick = rel;
             if (RegrowthTick < 0 && sim.Supply != null && sim.Supply.RegrowthCount > 0) RegrowthTick = rel;
 
+            DriftersArrived = _sim.Host.DriftersArrived - _driftersAtStart;
             uint agentGold = 0;
+            var present = _sim.Host.CrawlerStates;
+            for (int i = 0; i < present.Count; i++)
+            {
+                if (present[i].Inventory != null) agentGold += (uint)present[i].Inventory.Gold;
+            }
             for (int i = 0; i < Crawlers.Count; i++)
             {
                 var c = Crawlers[i];
-                if (c.State.Inventory != null) agentGold += (uint)c.State.Inventory.Gold;
                 float hunger = c.State.Hunger;
                 if (hunger > c.PeakHunger) c.PeakHunger = hunger;
                 if (hunger >= StarvingHunger)
@@ -165,8 +188,7 @@ namespace Simpiens.Hosting
             {
                 var a = pawns[i];
                 if (a.Type != EntityType.Pawn || a.Agent == null) continue;
-                var watched = Crawlers.Find(c => c.State == a.Agent);
-                if (watched == null) continue;
+                if (!_stacking.TryGetValue(a.Id, out var watched)) _stacking[a.Id] = watched = new StackingClock();
                 bool stacked = false;
                 for (int j = i + 1; j < pawns.Count; j++)
                 {
@@ -176,11 +198,11 @@ namespace Simpiens.Hosting
                     if (Vec2.Distance(a.Position, b.Position) >= StackingDistance) continue;
                     stacked = true;
                     watched.StackedFor += TickSeconds;
-                    if (watched.StackedFor >= StackingSeconds && now - watched.LastStackingAlert >= 1f)
+                    if (watched.StackedFor >= StackingSeconds && now - watched.LastAlert >= 1f)
                     {
-                        watched.LastStackingAlert = now;
+                        watched.LastAlert = now;
                         Stackings++;
-                        FirstStacking ??= $"t{rel}: {watched.Name} with {b.Name} at {a.Position}";
+                        FirstStacking ??= $"t{rel}: {a.Name} with {b.Name} at {a.Position}";
                     }
                     break;
                 }
@@ -260,7 +282,7 @@ namespace Simpiens.Hosting
         public string Report()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; stacking {Stackings}{(FirstStacking != null ? $" (first {FirstStacking})" : "")}");
+            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); stacking {Stackings}{(FirstStacking != null ? $" (first {FirstStacking})" : "")}");
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");

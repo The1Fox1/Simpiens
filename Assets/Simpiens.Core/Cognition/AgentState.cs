@@ -115,6 +115,20 @@ namespace Simpiens.Cognition
         public ushort ScoutReportBountyId { get; set; }
         public uint ScoutReportTick { get; set; }
 
+        /// <summary>
+        /// A drifter's departure tick: past it, it heads for the Road Gate and leaves (Epic 10 G1). 0 for a resident,
+        /// who never leaves. Saved.
+        /// </summary>
+        public uint DepartsAtTick { get; set; }
+
+        public bool IsDrifter => DepartsAtTick > 0;
+
+        /// <summary>
+        /// Set on the main thread when the crawler walks out by the Road Gate; the session host removes it at the end of
+        /// the tick. Never saved: a save is captured between ticks, after the removal.
+        /// </summary>
+        public bool HasLeft { get; set; }
+
         public bool IsInTantrum => TantrumTimer > 0f;
         public bool IsYielding => YieldingTimer > 0f;
         public bool IsGossiping => GossipTimer > 0f;
@@ -369,7 +383,8 @@ namespace Simpiens.Cognition
                 ScoutReportTick = ScoutReportTick,
                 ScoutReportBountyId = ScoutReportBountyId,
                 IsExhaustionCollapsed = IsExhaustionCollapsed,
-                CanBuyFoodAtStall = CanBuyFoodAtStall
+                CanBuyFoodAtStall = CanBuyFoodAtStall,
+                DepartsAtTick = DepartsAtTick
             };
         }
 
@@ -406,6 +421,7 @@ namespace Simpiens.Cognition
             ScoutReportBountyId = record.ScoutReportBountyId;
             IsExhaustionCollapsed = record.IsExhaustionCollapsed;
             CanBuyFoodAtStall = record.CanBuyFoodAtStall;
+            DepartsAtTick = record.DepartsAtTick;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -434,7 +450,8 @@ namespace Simpiens.Cognition
                 Identity,
                 inventorySnapshot,
                 ScoutReportBountyId,
-                Personality);
+                Personality,
+                DepartsAtTick);
         }
     }
 }

@@ -63,6 +63,13 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Frees the bunk if this agent holds it.</summary>
         void ReleaseBunk(EntityId bunkId, EntityId agentId);
 
+        /// <summary>
+        /// A crawler walks out by the Road Gate (Epic 10 G1): the gold it carries leaves the economy as the
+        /// "DrifterDepartures" sink, a bounty it claimed goes back on the board (its escrow stays), its bunk is freed,
+        /// and it is marked as gone; the session host removes it at the end of the tick.
+        /// </summary>
+        void DepartOutpost(WorldEntity node);
+
         /// <summary>Counts a completed bunk sleep (observed by scenarios).</summary>
         void RecordBunkSleep(EntityId agentId);
 

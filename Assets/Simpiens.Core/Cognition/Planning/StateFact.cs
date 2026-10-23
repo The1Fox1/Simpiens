@@ -43,6 +43,7 @@ namespace Simpiens.Cognition.Planning
         HasScoutReport = 34,
         HasSoldSalvage = 35,
         KnowsBunkLocation = 36,
-        AtBunk = 37
+        AtBunk = 37,
+        HasLeftOutpost = 38 // a drifter's last goal (Epic 10 G1); never true in a built state: leaving ends the crawler
     }
 }

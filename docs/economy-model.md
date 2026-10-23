@@ -7,11 +7,13 @@
 
 ## 1. The loop in one paragraph
 Crawlers harvest ore and herbs and sell them to the player's stall. They spend that gold on stall rations or eat free from the Garden. The caravan visits every minute:
-1. it buys a fixed quota of the stall's salvage at a market price (the only way new gold enters);
+1. it buys a fixed quota of the stall's salvage at a market price (the main way new gold enters);
 2. the stall pays its upkeep (the main way gold leaves);
 3. the caravan sells the stall wholesale rations.
 
 The player sets three prices (rations, ore, herbs) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
+
+**Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
 
 ## 2. Faucets and sinks (all named in the ledger)
 | Flow | Name | Size | Bound |
@@ -20,6 +22,8 @@ The player sets three prices (rations, ore, herbs) and posts bounties. Each craw
 | Faucet | `CaravanSalvageSales` | 2 ore × 24g + 2 herbs × 30g per visit | at most 108g a minute (`SupplyTuning.MaxSalvagePaymentPerVisit`) |
 | Sink | `OutpostUpkeep` | 80g per visit | fixed; a stall that can't pay goes into arrears |
 | Sink | `SupplyCaravan` | 2g per wholesale ration, topping stock up to 50 | as much as the stall can pay for (partial restocks) |
+| Faucet | `DrifterPurses` | 20–26g per drifter, about one every 3.5 minutes from minute 2 | at most 3 drifters at once (`DrifterTuning`) |
+| Sink | `DrifterDepartures` | what a drifter still carries when it leaves | its purse plus what it earned |
 | Transfer | purchases, sales, bounty escrow | between the stall and crawlers | conserved |
 
 **What follows:** the stall's net per visit ≈ salvage faucet − upkeep − wholesale − growth in crawler wallets.
@@ -64,7 +68,8 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 | Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −3 to −17; treasury 0–216g, below fair on every seed |
 | Generous | 5 / 35 / 40 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10; peak trust up 12; 0 starving |
 
-- **Why greed doesn't pay here:** the economy is closed. Without an outside buyer (drifters, Milestone 2), greedy prices only shrink the trade that fills the caravan's quota.
+- **Why greed paid nothing before drifters:** the economy was closed. Without an outside buyer, greedy prices only shrank the trade that fills the caravan's quota. Since Epic 10 G1 drifters bring outside gold: drifters leave gold behind on every soak seed (their purses exceed what they take away), and a slightly greedy player (rations 20, ore 18, herbs 22: the soak's `keen` profile) ends the 30 minutes richer than the same player in a closed outpost over the soak's seeds (`dotnet test`: `AKeenPlayerDoesBetterWithDrifters`; `simpiens soak --profile keen [--closed]`). Measured 2026-10-23, headless: 2,316g against 2,154g summed (886 against 796, 652 against 652, 778 against 706); drifters left 139g, 35g and 86g behind. Per seed the comparison is noisy: a run with drifters is a different run of a chaotic day.
+- **The fair band with drifters:** it holds (768–831g headless, 2026-10-23). Larger purses broke it: 40–80g every two minutes nearly doubled the fair player's treasury (1,189–1,273g), so the tuning was cut until the band held.
 - **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
 - **The regular suite** asserts the fair case over 15 minutes: `OutpostLifecycleScenario` checks that trust rises for ⅔ of crawlers and nobody starves.
@@ -72,7 +77,7 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - **Across seeds (headless sweep, 2026-10-17):** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on 16 of 23 seeds: 5 seeds have a crawler starving (hunger ≥ 95 for 300+ ticks) and 2 a crawler that never closes a cycle. Unity agrees on seed 11 (two crawlers starve there too). Only the default seed is asserted. Open: epic CORE §6 F2.
 
 ## 8. Deferred
-- **Drifters** (outside buyers and churn): Milestone 2.
+- ~~**Drifters** (outside buyers and churn): Milestone 2.~~ Delivered by Epic 10 G1 (2026-10-23): §1, §2, §7.
 - **Gear, wear and gear-gated scarcity:** Epic 10.
 - **Bounty fairness and Guild recruitment thresholds:** Milestone 2.
 - **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.

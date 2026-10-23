@@ -36,7 +36,9 @@ namespace Simpiens.Cognition.Planning.Actions
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {
                 case ResourceTargeting.StallAccess.Reachable:
-                    return ResourceTargeting.AffordableHeldSalvage(context, stall) != ItemType.None;
+                    // Nothing held that it will take: the plan gathers a kind it still buys first (WorldStateBuilder
+                    // doesn't count refused salvage), so any room will do (Epic 10 G1)
+                    return ResourceTargeting.AffordableHeldSalvage(context, stall) != ItemType.None || ResourceTargeting.NearestStallCanBuySalvage(context);
                 case ResourceTargeting.StallAccess.Unreachable:
                     return false;
                 default:

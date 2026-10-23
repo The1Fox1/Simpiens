@@ -22,5 +22,16 @@ namespace Simpiens.Simulation.Persistence
         public WorldSave World { get; set; }
         public GroupSave Groups { get; set; }
         public ChronicleSave Chronicle { get; set; }
+
+        /// <summary>The session host's: who comes in next (Epic 10 G1, drifters).</summary>
+        public PopulationSave Population { get; set; }
+    }
+
+    /// <summary>The drifters' schedule: the next arrival's tick (-1: none) and how many have come.</summary>
+    [MemoryPackable]
+    public sealed partial class PopulationSave
+    {
+        public long NextDrifterTick { get; set; }
+        public int DriftersArrived { get; set; }
     }
 }
