@@ -7,7 +7,11 @@ using Simpiens.Simulation.World;
 
 namespace Simpiens.Presentation.Dashboard
 {
-    /// <summary>What the dashboard reads, and the one queue it writes to. Any of them may be null (tests); the models then show nothing and send nothing.</summary>
+    /// <summary>
+    /// What the dashboard reads, and the two queues it writes to: the player's influence on the simulation, and the
+    /// host's commands (speed, pause, save, load, switch). Any of them may be null (tests); the models then show nothing
+    /// and send nothing.
+    /// </summary>
     public sealed class DashboardContext
     {
         public DashboardContext(
@@ -20,8 +24,10 @@ namespace Simpiens.Presentation.Dashboard
             INarrativeFormatter formatter = null,
             IPlayerInterventionService intervention = null,
             ISaveGameService saveGame = null,
-            ISessionSwitcher sessions = null)
+            ISessionSwitcher sessions = null,
+            IHostCommands hostCommands = null)
         {
+            HostCommands = hostCommands;
             SaveGame = saveGame;
             Sessions = sessions;
             Simulation = simulation;
@@ -36,12 +42,12 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         /// <summary>The context of a composed simulation (<c>HeadlessSimulation.Services</c>).</summary>
-        public static DashboardContext From(IServiceProvider services, ISaveGameService saveGame = null)
+        public static DashboardContext From(IServiceProvider services, ISaveGameService saveGame = null, IHostCommands hostCommands = null)
         {
             T Get<T>() where T : class => services?.GetService(typeof(T)) as T;
             return new DashboardContext(Get<ISimulationManager>(), Get<ISimulationClock>(), Get<IWorldRegistry>(), Get<ISectorRegistry>(),
                 Get<IAgentIdentityService>(), Get<INarrativeChronicleService>(), Get<INarrativeFormatter>(), Get<IPlayerInterventionService>(),
-                saveGame ?? Get<ISaveGameService>(), Get<ISessionSwitcher>());
+                saveGame ?? Get<ISaveGameService>(), Get<ISessionSwitcher>(), hostCommands);
         }
 
         public ISimulationManager Simulation { get; }
@@ -54,6 +60,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The player's commands go here, and only here (ROADMAP §1A.1).</summary>
         public IPlayerInterventionService Intervention { get; }
+
+        /// <summary>The host's commands go here: speed, pause, save, load and switch (review D3).</summary>
+        public IHostCommands HostCommands { get; }
 
         public FacilityZoneService Zones { get; }
 

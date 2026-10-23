@@ -1,11 +1,13 @@
 using System;
 using Simpiens.Core.Session;
+using Simpiens.Diagnostics;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Presentation;
 using Simpiens.Presentation.Cutscenes;
 using Simpiens.Presentation.Dashboard;
 using Simpiens.Simulation;
+using ZLogger;
 
 namespace Simpiens.Client
 {
@@ -35,7 +37,7 @@ namespace Simpiens.Client
             Scenes = new SceneDirector(Frames);
             if (Options.DemoScenes) DemoScenes.AddTo(Scenes);
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
-            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame), Selection);
+            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame, HostCommands), Selection);
             Simulation.Host.SessionChanged += OnSessionChanged;
         }
 
@@ -62,6 +64,19 @@ namespace Simpiens.Client
         /// <summary>The dashboard as data: what its views show, and where the player's clicks go.</summary>
         public DashboardModel DashboardModel { get; }
 
+        /// <summary>
+        /// The host's commands (review D3): speed, pause, quick save and load, the session switch. The dashboard and the
+        /// keys queue them; <see cref="Update"/> applies them first, before the ticks, so a load or a switch never runs
+        /// inside a click.
+        /// </summary>
+        public HostCommandQueue HostCommands { get; } = new HostCommandQueue();
+
+        /// <summary>The speed the world runs at when it isn't paused (a multiple of real time).</summary>
+        public float Speed { get; private set; } = 1f;
+
+        /// <summary>The player paused the world (<see cref="HostCommand.Pause"/>).</summary>
+        public bool Paused { get; private set; }
+
         /// <summary>The view's clock in seconds: what animations and fades run on (<see cref="ClientOptions.ViewClockFromTicks"/>).</summary>
         public float ViewSeconds => Options.ViewClockFromTicks ? Simulation.Clock.CurrentTick * SimulationClock.FixedTickDeltaTime : (float)_realSeconds;
 
@@ -78,9 +93,64 @@ namespace Simpiens.Client
         public void Update(TimeSpan elapsed, bool advanceWorld = true)
         {
             if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero; // KNI can report a slightly negative frame time (epic F5)
+            ApplyHostCommands();
             _realSeconds += elapsed.TotalSeconds;
             if (advanceWorld) _driver.Advance(elapsed);
             Frames.Alpha = ViewAlpha;
+        }
+
+        /// <summary>Applies the queued host commands in the order they came, between ticks.</summary>
+        public void ApplyHostCommands()
+        {
+            if (HostCommands.Count == 0) return;
+            var commands = HostCommands.Drain();
+            for (int i = 0; i < commands.Count; i++) Apply(commands[i]);
+        }
+
+        private void Apply(in HostCommand command)
+        {
+            var clock = Simulation.Clock;
+            switch (command.Type)
+            {
+                case HostCommandType.SetSpeed:
+                    Speed = command.Speed;
+                    if (!Paused) clock.SetTimeMultiplier(Speed);
+                    break;
+                case HostCommandType.Pause:
+                    Paused = true;
+                    _driver.Held = true;
+                    clock.SetTimeMultiplier(0f);
+                    break;
+                case HostCommandType.Resume:
+                    Paused = false;
+                    _driver.Held = false;
+                    clock.SetTimeMultiplier(Speed);
+                    break;
+                case HostCommandType.QuickSave:
+                    if (DashboardModel.Saves.IsSaving) break;
+                    DashboardModel.Saves.Track(SaveGame.QuickSaveAsync()); // captured here, between ticks; written on the thread pool
+                    break;
+                case HostCommandType.QuickLoad:
+                    DashboardModel.Saves.Report(SaveGame.QuickLoad().Message);
+                    break;
+                case HostCommandType.SwitchSession:
+                    SwitchTo(command.SessionId);
+                    break;
+            }
+        }
+
+        private void SwitchTo(string sessionId)
+        {
+            var switcher = DashboardModel.Context.Sessions;
+            var sessions = switcher?.Sessions;
+            for (int i = 0; sessions != null && i < sessions.Count; i++)
+            {
+                if (sessions[i].Id != sessionId) continue;
+                SimLog.Bootstrap.ZLogInformation($"Session switch: {switcher.Current.DisplayName} -> {sessions[i].DisplayName}");
+                switcher.SwitchTo(sessions[i]);
+                return;
+            }
+            SimLog.Bootstrap.ZLogWarning($"Session switch refused: no registered session '{sessionId}'.");
         }
 
         /// <summary>

@@ -27,8 +27,8 @@ namespace Simpiens.Presentation.Dashboard
             Bounties = new BountyBoardModel(_context);
             Sectors = new SectorPanelModel(_context);
             Dossier = new DossierModel(_context);
-            Saves = new SaveSlotModel(_context.SaveGame);
-            Sessions = new SessionSwitchModel(_context.Sessions);
+            Saves = new SaveSlotModel(_context.SaveGame, _context.HostCommands);
+            Sessions = new SessionSwitchModel(_context.Sessions, _context.HostCommands);
             if (_selection != null) _selection.Changed += OnSelectionChanged;
             Sectors.EnsureSelection();
         }
@@ -44,6 +44,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The three panels over the map (Tab). Unity started with them shown.</summary>
         public bool PanelsVisible { get; set; } = true;
+
+        /// <summary>Counts the sessions this model has seen replaced (respawn, switch, load): a view that sees it move shows the new one at once.</summary>
+        public int SessionVersion { get; private set; }
 
         /// <summary>The crawler the dossier shows.</summary>
         public EntityId SelectedCrawler => _selection != null ? _selection.SelectedCrawler : _selectedCrawler;
@@ -123,6 +126,7 @@ namespace Simpiens.Presentation.Dashboard
             Bounties.Reset();
             Sectors.SelectedSectorId = -1;
             Sectors.EnsureSelection();
+            SessionVersion++;
             Refresh();
         }
 

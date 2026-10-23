@@ -55,8 +55,11 @@ namespace Simpiens.Client.Tests
 
                 // A save's message, and the Dev Map with its banner
                 ui.Click(Centre(game.Play.Dashboard.Header.SaveButton));
+                ui.Frame(); // the host applies it before its next ticks (review D3)
                 for (int i = 0; i < 100 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();
                 ui.Click(Centre(game.Play.Dashboard.Sessions.Button));
+                ui.Frame();
+                Assert.True(game.Play.Dashboard.Sessions.BannerShown, "the switch reached the Dev Map");
                 Texts(game, seen);
             }
             finally

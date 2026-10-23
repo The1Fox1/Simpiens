@@ -22,8 +22,15 @@ namespace Simpiens.Client
 
         public int TicksPerUpdate { get; }
 
+        /// <summary>
+        /// The player paused (a host command): no tick runs. Live, the paused clock runs none anyway; with whole ticks
+        /// per update the driver must hold them itself, or a paused clock would count ticks it doesn't simulate (epic F6).
+        /// </summary>
+        public bool Held { get; set; }
+
         public void Advance(TimeSpan elapsed)
         {
+            if (Held) return;
             if (TicksPerUpdate > 0) _clock.AdvanceTicks(TicksPerUpdate);
             else if (elapsed > TimeSpan.Zero) _clock.Advance((float)elapsed.TotalSeconds); // never a negative frame (epic F5)
         }

@@ -7,15 +7,21 @@ namespace Simpiens.Presentation.Dashboard
     /// <summary>
     /// The session switch (Unity's, top right under the header): shown only when a test session (the Dev Map) is
     /// registered, which only development builds do. Switching is a full respawn with the same seed. On a test session
-    /// a banner says it is not the game.
+    /// a banner says it is not the game. The button queues the switch as a host command (review D3): the host respawns
+    /// before its next ticks, never inside the click.
     /// </summary>
     public sealed class SessionSwitchModel
     {
         private readonly ISessionSwitcher _switcher;
+        private readonly IHostCommands _commands;
 
-        public SessionSwitchModel(ISessionSwitcher switcher) => _switcher = switcher;
+        public SessionSwitchModel(ISessionSwitcher switcher, IHostCommands commands = null)
+        {
+            _switcher = switcher;
+            _commands = commands;
+        }
 
-        public bool Visible => _switcher != null && _switcher.Sessions.Count > 1;
+        public bool Visible => _switcher != null && _commands != null && _switcher.Sessions.Count > 1;
 
         /// <summary>The session the button leads to: the next registered one after the current.</summary>
         public ISessionDefinition Next
@@ -41,8 +47,8 @@ namespace Simpiens.Presentation.Dashboard
         {
             if (!Visible) return;
             var next = Next;
-            SimLog.Bootstrap.ZLogInformation($"Session switch: {_switcher.Current.DisplayName} -> {next.DisplayName}");
-            _switcher.SwitchTo(next);
+            SimLog.Bootstrap.ZLogInformation($"Session switch asked: {_switcher.Current.DisplayName} -> {next.DisplayName}");
+            _commands.Enqueue(HostCommand.SwitchSession(next.Id));
         }
     }
 }

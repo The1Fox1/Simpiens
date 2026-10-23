@@ -12,6 +12,7 @@ namespace Simpiens.Client.Ui
         private readonly float _refreshSeconds;
         private float _sinceRefresh;
         private bool _merchantWasOpen, _bountiesWereOpen;
+        private int _sessionVersion;
 
         public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds)
         {
@@ -34,7 +35,6 @@ namespace Simpiens.Client.Ui
             ui.Root.Children.Add(Header.Root);
             ui.Root.Children.Add(Header.Status);
             Sessions = new SessionSwitchBar(model.Sessions);
-            Sessions.Button.Click += (_, _) => Refresh();
             ui.Root.Children.Add(Sessions.Root);
             Refresh();
         }
@@ -87,13 +87,15 @@ namespace Simpiens.Client.Ui
         {
             Model.Saves.Poll();
             if (realSeconds > 0f) _sinceRefresh += realSeconds;
-            if (_refreshSeconds > 0f && _sinceRefresh < _refreshSeconds) return;
+            bool newSession = Model.SessionVersion != _sessionVersion; // a switch or a load shows at once, not at the next refresh
+            if (!newSession && _refreshSeconds > 0f && _sinceRefresh < _refreshSeconds) return;
             _sinceRefresh = 0f;
             Refresh();
         }
 
         public void Refresh()
         {
+            _sessionVersion = Model.SessionVersion;
             Model.Refresh();
             Header.Bind(Model);
             Panels.Bind();

@@ -33,11 +33,14 @@ namespace Simpiens.Client.Tests
             Assert.StartsWith(Path.GetTempPath(), game.Session.SaveGame.QuickSavePath);
 
             ui.Click(Centre(header.LoadButton));
+            ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal("There is no quick save yet.", header.SaveStatusText);
 
             ui.Ticks(300);
             long saved = game.Session.Simulation.Clock.CurrentTick;
             ui.Click(Centre(header.SaveButton));
+            Assert.Equal("Saving...", game.Session.DashboardModel.Saves.Status);
+            ui.Frame(); // the host applies it before its next ticks (review D3)
             for (int i = 0; i < 200 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();
             Assert.Equal($"Saved at tick {saved}.", header.SaveStatusText);
             Assert.True(File.Exists(game.Session.SaveGame.QuickSavePath));
@@ -50,6 +53,8 @@ namespace Simpiens.Client.Tests
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             game.Session.DashboardModel.OpenBounties();
             ui.Click(Centre(header.LoadButton));
+            Assert.Equal(saved + 100, game.Session.Simulation.Clock.CurrentTick); // not inside the click: Gum is still dispatching it
+            ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(saved, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal($"Loaded the save from tick {saved}.", header.SaveStatusText);
             Assert.Contains(saved.ToString("D5"), game.Play.Dashboard.Header.TickText);
@@ -83,6 +88,8 @@ namespace Simpiens.Client.Tests
             Assert.Equal("SWITCH TO DEV MAP", bar.Button.Text);
 
             ui.Click(Centre(bar.Button));
+            Assert.Equal(OutpostSession.SessionId, host.Current.Id); // queued, not run inside the click
+            ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(CanaryPenSession.SessionId, host.Current.Id);
             Assert.True(bar.BannerShown);
             Assert.Equal("DEV MAP: TEST SESSION (NOT THE GAME)", bar.BannerTextShown);
@@ -100,6 +107,7 @@ namespace Simpiens.Client.Tests
 
             ui.Ticks(200);
             ui.Click(Centre(bar.Button));
+            ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(OutpostSession.SessionId, host.Current.Id);
             Assert.False(bar.BannerShown, "The banner hides again on the main map.");
             Assert.Equal(0, ((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents.Count);
