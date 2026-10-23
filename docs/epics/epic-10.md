@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed) is in progress. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed) is done (2026-10-23); G1 (drifters) is next. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -100,7 +100,12 @@ Each milestone also needs its validators, the golden check and the client's test
 
 ## 4. Acceptance checklist (delivered work only)
 
-Nothing is delivered yet.
+- [x] **G0. A day that holds on every seed** (2026-10-23, `feat/epic10-g0`): finding F2 resolved (§7).
+    - The navigation and planning fixes `88265d8`: an occupied destination no longer freezes a crawler; a sale is planned only for what the stall will buy; the last step onto a bunk waits for it to clear; a panicking crawler sidesteps and a panic lasts at most 6 s; the food search waits at the nearest known plot.
+    - The gate: `OutpostScenarioTests.TheOutpostsDayHoldsOnEverySeed` plays the day on the 23 gate seeds (`OutpostWatch.GateSeeds`) in `dotnet test`, with pawn stacking checked as Unity's anomaly detector does.
+    - The greedy soak band is judged at its lowest trust mean (economy model §7).
+    - Golden hashes re-recorded in Unity `91066cb`; the client's references and pins re-recorded in the pinned image `0e8fb1f`.
+    - Measured: the gate seeds 23/23 (16/23 before), no stacking; seeds 21–120: 96/100; `dotnet test` 347/347 (core 86, client 261); the client's 261/261 exactly in the pinned image; golden 3/3 in both runtimes; Unity PlayMode 69/69 (2 explicit skipped); the economy soak 9/9 headless and in Unity (fair 701–785g in Unity).
 
 ## 5. Deferred and out of scope
 
@@ -131,8 +136,18 @@ Nothing is delivered yet.
 
 ## 7. Findings
 
-- **F2 (from Epic CORE, owned by G0):** the outpost's day fails on 7 of 23 seeds. Re-measured 2026-10-23 on `main` (`simpiens sweep --seeds 1..20`): 13 of 20 pass; seeds 4, 10, 11, 12 and 18 have a starving crawler, seeds 8 and 16 a crawler with no harvest-to-sell cycle.
+- **F2 (from Epic CORE): resolved by G0 (2026-10-23).** The day failed on 7 of 23 seeds (re-measured on `main`: seeds 4, 10, 11, 12 and 18 had a starving crawler, seeds 8 and 16 a crawler with no harvest-to-sell cycle). No food shortage: every failure was a crawler that could not move or retried something that could not work.
+    1. **An occupied destination froze a crawler across the map.** The motor waited while its next waypoint was occupied, and a smoothed path's next waypoint is often the destination: one crawler idling at the stall stopped another in the quarry. The check now applies only near the waypoint.
+    2. **A refused sale, retried every tick.** The planner asked whether the stall had room for either salvage; it now asks about what the crawler holds, as the liquidate goal did.
+    3. **Lying down on a crawler still in its bunk** (once walkers reached occupied bunks): the last step onto a bunk now waits for the bunk to clear.
+    4. **Panic in place.** A panicking crawler blocked by another skipped every waypoint and panicked again on the spot; it now sidesteps, and a panic lasts at most 6 s.
+    5. **Searching away from food.** A hungry crawler among empty plots explored the Road Gate and starved on the walk back; the food search now waits at the nearest plot it has seen, as the starvation reflex does.
+
+    Measured: 23 of 23 gate seeds pass, with no pawn stacking; seeds 21–120, 96 of 100.
+- **F3 (2026-10-23): on some seeds trust rises for fewer than ⅔ of crawlers.** Seeds 31, 43, 61 and 69 (of 21–120) end with trust up for 6 or 7 of 12 (the day asks for 8). Those crawlers trade two or three times early, spend the day at the hearth, and their trust drifts back to neutral. A balance question, not a stuck crawler: G1 (drifters) and G4 (bounty fairness) add paths to trust; re-measure there.
+- **The greedy soak band is judged at its lowest trust mean (2026-10-23).** With the G0 fixes, hungry crawlers eat at the Garden instead of buying gouged rations late in the run; at greedy prices nobody trades once the stall is empty, and trust drifts back to neutral by minute 30 (seed 2: mean 0.0). The band now asks that greed pushed the mean below 0 at some point, as the generous band is judged at its peak ([economy model](../economy-model.md) §7).
 
 ## History
 
 - 2026-10-23: drafted as a Claude Doc and approved by the producer with every default; G0 started on `feat/epic10-g0`.
+- 2026-10-23: G0 done: finding F2 resolved, the day gated on 23 seeds; findings F3 (trust on some seeds) and the greedy band recorded. Its working plan was deleted at close-out.

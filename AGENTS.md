@@ -26,7 +26,7 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 
 | Check | Command | Needs |
 | :--- | :--- | :--- |
-| .NET tests (validators, golden hashes, the outpost's DoD scenarios, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
+| .NET tests (validators, golden hashes, the outpost's DoD scenarios, the day on 23 gate seeds with Unity's stacking check, the economy soak) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK |
 | Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
 | The game client's tests (part of `dotnet test`): presentation, golden hashes inside the client, renders | `dotnet test dotnet/Simpiens.Client.Tests` (renders within a driver's rounding of the references) | System SDL2 and Mesa (the tests run SDL's offscreen driver on llvmpipe, no display) |
 | The client's tests in the pinned image, as CI runs them: renders must match the references byte for byte | `scripts/test-client-in-container.sh`; record changed renders only here, with `--record` (look at `container-output/render-output/` first, commit them on their own) | podman (rootless), or `CONTAINER_ENGINE=docker` |

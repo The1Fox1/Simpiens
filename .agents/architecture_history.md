@@ -862,3 +862,23 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Definition of Done amended (Q8):** new work proves live emergence headless in `dotnet test`, on the real session with nothing injected; a scripted player acting only through typed player commands is input, not injection. Unity's PlayMode suite stays a regression check on the core while Unity exists. ROADMAP §1B and AGENTS.md updated.
 - **Dropped:** Epic 10's "`Unity.Collections` + Burst" deliverable; the core is engine-free, and speed-ups follow measurements (§3A #8 only on a measured need).
 - **Shipping (Q10):** one pull request into `main` per milestone, from a `feat/` branch; each milestone has a working plan in `.agents/`, deleted at its close-out.
+
+## 2026-10-23 — Epic 10 G0: a day that holds on every seed (finding F2)
+
+- **Diagnosis:** no food shortage. Every failing seed had a crawler that could not move or kept retrying something that could not work:
+  - an occupied destination froze a crawler across the map (the motor waited while its next waypoint was occupied, and a smoothed path's next waypoint is often the destination);
+  - a sale the stall refused was retried every tick (room for either salvage passed for a crawler holding the other);
+  - a panicking crawler blocked by a pawn panicked in place;
+  - a hungry crawler searched the Road Gate and starved on the walk back.
+- **Decisions:**
+  - The waypoint-occupied check applies only within `ArrivalTolerance`; further out `IsCrowdedMove` keeps pawns apart.
+  - Selling is planned only for a held item the stall can pay for, has room for, at or above the crawler's minimum (`AffordableHeldSalvage`, as `LiquidateSalvageGoal` did).
+  - Fixing the motor let walkers reach occupied bunks, where they lay down on sleepers just up: the last step onto a bunk now waits for it to clear.
+  - Panic sidesteps a blocking pawn (45°, then 90°) and lasts at most 6 s: the first version, without the cap, sprinted for 4,000 ticks around one waypoint.
+  - The food search waits at the nearest plot the crawler has seen, as the starvation reflex already did.
+  - **The headless day checks pawn stacking** as Unity's anomaly detector does (0.35 m for 1 s), so a navigation change that stacks pawns fails `dotnet test`, not only Unity's suite. Before the bunk fix it found 15 stackings on some seeds.
+  - **The day is gated on 23 seeds** in `dotnet test` (`OutpostWatch.GateSeeds`: the golden seeds and 1–20), about 6 s.
+  - **The greedy soak band is judged at its lowest trust mean**, as generous is at its peak. With hungry crawlers eating at the Garden instead of buying gouged rations late in the run, trust drifts back to neutral by minute 30 once greed has emptied the stall (seed 2: mean 0.0). The band's intent, that greed costs trust, is unchanged; reported to the producer, whose band it is (D5).
+- **Deviations:** the working plan was written mid-milestone, after the diagnosis, rather than before it (G0 started as a measurement).
+- **Findings:** F2 resolved. F3: on 4 of seeds 21–120 trust rises for 6–7 of 12 (crawlers who trade early, then socialize); a balance question for G1 and G4.
+- **Verification:** gate seeds 23/23 with no stacking (16/23 before); seeds 21–120: 96/100; `dotnet test` 347/347; the client's 261/261 exactly in the pinned image; golden re-recorded in Unity, 3/3 headless; Unity PlayMode 69/69 (2 explicit skipped); the economy soak 9/9 headless and in Unity.

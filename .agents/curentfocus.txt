@@ -113,7 +113,8 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - The dossier's Feed ration button is removed (D6 a).
 Current Focus (engine): EPIC 10 PART 1, THE GUILD AND ITS EXPEDITIONS (Milestone 2) ACTIVE 2026-10-23
 (docs/epics/epic-10.md; producer approved every default of the Claude Doc draft). G0 (a day that holds on every seed,
-Epic CORE F2) in progress on feat/epic10-g0; then G1 drifters, G2 health and hazards, G3 gear, G4 the guild, G5
+Epic CORE F2) DONE 2026-10-23 on feat/epic10-g0 (88265d8..; 23/23 gate seeds, dotnet test 347/347, Unity PlayMode
+69/69; PR into main is the producer's); next G1 drifters, G2 health and hazards, G3 gear, G4 the guild, G5
 expeditions, G6 the gate. One PR per milestone. Live DoD headless in dotnet test (ROADMAP §1B since 2026-10-23).
 Epic CLIENT PAUSED 2026-10-23 (merged as PR #6). Epic CORE COMPLETED and merged (PR #5).
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
