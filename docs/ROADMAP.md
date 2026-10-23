@@ -552,7 +552,7 @@ Before Epic 10: soak test and scaling work (#8).
     - **Smaller items:** `HeadlessSimulation` became `LocalSimulation`.
     - **The pinned image:** the client's tests run in a pinned Ubuntu image, locally (podman) and in CI (docker), where renders must match the references exactly.
     - Measured: `dotnet test` 324/324 (client 261, core 63); the client's 261/261 exactly in the pinned image; golden 3/3; the MonoGame and Android builds compile; frame time 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
-    - Open: the producer's look at the header's pause and speed, and the dashboard's new wording; CI's container job runs first on a push.
+    - Open: the producer's look at the header's pause and speed, and the dashboard's new wording. CI's container job passed on its first run (pull request #6, 2026-10-23): the client's 261/261 with exact renders, after `0537155` made its script executable.
   - **Producer decision (2026-10-23):** the client goes into `main` before M4, which stays deferred. One pull request from `feat/client-architecture` carries everything on `main-kni` (M2.0–M2.7, the text cleanup, the seams, M3) and the architecture work. CI runs on pushes to `main` and on pull requests; `main-kni` retires once the pull request is merged.
 
 ---
