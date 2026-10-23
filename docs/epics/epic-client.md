@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`; the producer's look at M3 is open. M4 is deferred (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, not pushed. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). `main` is the main branch again: the client goes into it before M4 (producer, 2026-10-23), and `main-kni` retires with that merge. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`; the producer's look at M3 is open. M4 is deferred (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, which carries them and everything on `main-kni` into `main` in one pull request. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -42,6 +42,7 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
     - isometric by default, with V switching to top-down in every build;
     - three pull requests into `main-kni`.
 - **M4 deferred (2026-10-22):** Android waits until later. Its plan stays in Claude Docs ("Plan: M4 Android (Epic CLIENT)"). The architecture review's open findings come first; they are done (§3).
+- **Into `main` before M4 (2026-10-23):** the client merges into `main` without waiting for Android, in one pull request from `feat/client-architecture` (everything on `main-kni`, and the architecture work). `main` is the main branch again; `main-kni` retires with the merge.
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
@@ -428,3 +429,4 @@ See the proposal's risk table. These matter for M0 and M1:
 - 2026-10-18: M1 (top-down parity) done in seven chunks: the plan `f83a948`, M1.1 `0dbfaf9`, M1.2 `981e5aa`, M1.3 `fa789fc`, M1.4 `510d31a`, M1.5 `989f2cd`, M1.6 `adcde54`, M1.7 the close-out commit. The plan was deleted at close-out. The agent's authority ends here: M2 waits for the producer.
 - 2026-10-21: the client seams before M3 (review A1–A3) done on `feat/client-seams` in 15 commits, `a34eb78` to `0eb0489`, with the producer's fog decision D1 = C. The working plan was deleted at close-out.
 - 2026-10-22: M4 deferred by the producer; the architecture review's open findings done on `feat/client-architecture`, 16 commits from `9b8c456` to `ff3d81f`, not pushed. A power cut emptied the git objects of step 4.3's first commit; `.git` was repaired from the last sound commit and the same tree committed again after a full re-check. The working plan was deleted at close-out.
+- 2026-10-23: the producer chose to merge the client into `main` before M4, in one pull request from `feat/client-architecture`; `main` is the main branch again and `main-kni` retires with the merge.

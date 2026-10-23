@@ -5,7 +5,7 @@
 # Update the roadmap FIRST, then the epic doc header, then this file.
 # Status vocabulary: QUEUED | ACTIVE | PAUSED | MECHANISM COMPLETE | COMPLETED
 # "Done" = emerges in the live simulation (PlayMode scenario), not only validators.
-# Last reconciled: 2026-10-22
+# Last reconciled: 2026-10-23
 # ------------------------------------------------------------------------------
 
 To support parallel workflows across different sessions (UI redesign, testing harness revamps, and deep cognitive simulation) without colliding or disturbing the core engine progression, development is structured into three concurrent tracks:
@@ -254,3 +254,5 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   stall cap; key bindings + one input frame feeding Gum's cursor; UiStyle tokens; required services; display names;
   LocalSimulation; client tests in a pinned image (exact renders). dotnet test 324/324. U2/R6 with M4; R4/R5/R7 M7.
   Open: the producer's look and the PR into main-kni.
+  INTO MAIN BEFORE M4 (producer 2026-10-23): one PR from feat/client-architecture (everything on main-kni + the
+  architecture work) into main; main is the main branch again, main-kni retires with the merge; CI on main + PRs.

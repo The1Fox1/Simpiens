@@ -40,7 +40,7 @@ A change to the core is checked in both runtimes: `dotnet test` takes seconds; t
 | Economy soak in Unity | `scripts/run-economy-soak.sh` | Unity |
 | Save and load in a Linux player | `scripts/run-persistence-smoke.sh` | Unity |
 
-CI (`.github/workflows/dotnet.yml`) runs the .NET tests (the client's in the pinned image of `scripts/client-tests.Containerfile`), the golden check, the MonoGame compile and the Android compile on pushes to `main` and `main-kni` (the acting main until M4) and on pull requests; the Unity suite runs locally.
+CI (`.github/workflows/dotnet.yml`) runs the .NET tests (the client's in the pinned image of `scripts/client-tests.Containerfile`), the golden check, the MonoGame compile and the Android compile on pushes to `main` and on pull requests; the Unity suite runs locally.
 
 ### Directories
 

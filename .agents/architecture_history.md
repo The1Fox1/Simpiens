@@ -847,3 +847,9 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The client's 261/261 exactly in the pinned image, twice; a single one-level pixel change fails there.
   - Golden 3/3; the MonoGame and Android builds compile; Unity untouched.
   - Frame time unchanged: 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
+
+## 2026-10-23 — Epic CLIENT: into `main` before M4
+
+- **Decision (producer):** the KNI client merges into `main` now, without waiting for M4 (Android), which stays deferred. This replaces the 2026-10-18 decision that `main-kni` acts as the main branch until M4 proves the Android build.
+- **How:** one pull request from `feat/client-architecture` into `main`. The branch holds everything on `main-kni` (`9ff5be3`: M2.0–M2.7, the text cleanup, the seams, M3) and the architecture review's findings, so the 17 architecture commits are reviewed with the rest instead of in a pull request into `main-kni` first.
+- **Consequences:** `main` is the main branch again. CI runs on pushes to `main` and on pull requests; the `main-kni` push trigger is removed, and `main-kni` retires once the pull request is merged. The Android client keeps compiling in CI.

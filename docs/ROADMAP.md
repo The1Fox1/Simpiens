@@ -429,7 +429,7 @@ Before Epic 10: soak test and scaling work (#8).
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-22). `main-kni` is the acting main until M4. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, not pushed; the pull request into `main-kni` is the producer's.
+- **Status**: ACTIVE (2026-10-23). `main` is the main branch again: the client goes into it before M4 (producer, 2026-10-23), and `main-kni` retires with that merge. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, which carries them and everything on `main-kni` into `main` in one pull request.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -553,6 +553,7 @@ Before Epic 10: soak test and scaling work (#8).
     - **The pinned image:** the client's tests run in a pinned Ubuntu image, locally (podman) and in CI (docker), where renders must match the references exactly.
     - Measured: `dotnet test` 324/324 (client 261, core 63); the client's 261/261 exactly in the pinned image; golden 3/3; the MonoGame and Android builds compile; frame time 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
     - Open: the producer's look at the header's pause and speed, and the dashboard's new wording; CI's container job runs first on a push.
+  - **Producer decision (2026-10-23):** the client goes into `main` before M4, which stays deferred. One pull request from `feat/client-architecture` carries everything on `main-kni` (M2.0–M2.7, the text cleanup, the seams, M3) and the architecture work. CI runs on pushes to `main` and on pull requests; `main-kni` retires once the pull request is merged.
 
 ---
 
