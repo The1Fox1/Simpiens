@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Simpiens.Client.Ui;
+using Simpiens.Presentation;
 
 namespace Simpiens.Client
 {
@@ -85,6 +86,12 @@ namespace Simpiens.Client
         /// <summary>Where the pointer and keys come from while the window has focus: the devices, or a script in tests.</summary>
         public IClientInputSource Input { get; set; } = new ClientInput();
 
+        /// <summary>
+        /// This update's input, read once from <see cref="Input"/> while the window has focus, nothing otherwise (review U1):
+        /// Gum's cursor and the top screen both take it.
+        /// </summary>
+        public InputFrame CurrentInput { get; private set; }
+
         /// <summary>Plays a hard cutscene over the game (M3): it covers the world and holds it until it ends.</summary>
         public CutsceneScreen PlayCutscene(Simpiens.Presentation.Cutscenes.CutsceneScript script)
         {
@@ -145,14 +152,26 @@ namespace Simpiens.Client
             float view = Session.ViewSeconds;
             float cameraSeconds = Options.ViewClockFromTicks ? System.Math.Max(0f, view - _lastViewSeconds) : seconds;
             _lastViewSeconds = view;
+            ReadInput();
             start = FrameTimings.Start();
-            Ui.Update(gameTime); // first, so the screens know what is under UI this frame
+            Ui.Update(gameTime, CurrentInput.Pointer); // first, so the screens know what is under UI this frame
             Timings.Add(FramePhase.UiUpdate, start);
             start = FrameTimings.Start();
             Screens.Update(seconds, cameraSeconds, IsActive);
             Timings.Add(FramePhase.ScreenUpdate, start);
             TimingsOverlay?.Update(seconds);
             base.Update(gameTime);
+        }
+
+        private void ReadInput()
+        {
+            if (!IsActive)
+            {
+                CurrentInput = default;
+                return;
+            }
+            Input.Read(out var pointer, out var keys);
+            CurrentInput = new InputFrame(pointer, keys);
         }
 
         protected override void Dispose(bool disposing)

@@ -97,7 +97,8 @@ namespace Simpiens.Client
             KeyInput keys = default;
             if (active)
             {
-                _game.Input.Read(out pointer, out keys);
+                pointer = _game.CurrentInput.Pointer;
+                keys = _game.CurrentInput.Keys;
                 pointer.OverUi |= ui.PointerOverUi;
                 if (ui.HasKeyboardFocus) keys = default;
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();

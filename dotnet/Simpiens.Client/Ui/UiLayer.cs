@@ -19,6 +19,9 @@ namespace Simpiens.Client.Ui
 
         public UiLayer(Game game) => _game = game;
 
+        /// <summary>Gum's cursor, fed from the game's input frame (review U1): Gum never reads the mouse itself.</summary>
+        public ClientCursor Cursor { get; } = new ClientCursor();
+
         /// <summary>True while this game's UI is the one Gum shows.</summary>
         public bool IsOwner => ReferenceEquals(_owner, this);
 
@@ -30,6 +33,7 @@ namespace Simpiens.Client.Ui
         {
             if (GumService.Default.IsInitialized) GumService.Default.Uninitialize();
             GumService.Default.Initialize(_game, Gum.Forms.DefaultVisualsVersion.V3);
+            Gum.Forms.FormsUtilities.SetCursor(Cursor);
             if (!_gumErrorsLogged)
             {
                 // A font Gum can't find (or any property it can't apply) is a warning, never a silent fallback
@@ -40,10 +44,15 @@ namespace Simpiens.Client.Ui
             _owner = this;
         }
 
-        /// <summary>Lays out the UI for the window and handles the pointer and keyboard (Gum reads them only while the game has focus).</summary>
-        public void Update(GameTime gameTime)
+        /// <summary>
+        /// Lays out the UI for the window and handles <paramref name="pointer"/>, the frame's, and the keyboard (Gum skips
+        /// its whole update while the game hasn't focus).
+        /// </summary>
+        public void Update(GameTime gameTime, in Simpiens.Presentation.PointerInput pointer)
         {
-            if (IsOwner) GumService.Default.Update(gameTime);
+            if (!IsOwner) return;
+            Cursor.Feed(pointer);
+            GumService.Default.Update(gameTime);
         }
 
         public void Draw()
@@ -52,7 +61,7 @@ namespace Simpiens.Client.Ui
         }
 
         /// <summary>The pointer is over a control or a panel that takes clicks: the map ignores it there.</summary>
-        public bool PointerOverUi => IsOwner && (GumService.Default.Cursor.WindowOver != null || GumService.Default.Cursor.WindowPushed != null);
+        public bool PointerOverUi => IsOwner && (Cursor.WindowOver != null || Cursor.WindowPushed != null);
 
         /// <summary>A control has the keyboard: the camera ignores the keys.</summary>
         public bool HasKeyboardFocus => IsOwner && InteractiveGue.CurrentInputReceiver != null;

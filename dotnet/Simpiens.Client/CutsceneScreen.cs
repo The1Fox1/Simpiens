@@ -52,7 +52,8 @@ namespace Simpiens.Client
         {
             if (active)
             {
-                _game.Input.Read(out var pointer, out var keys);
+                var pointer = _game.CurrentInput.Pointer;
+                var keys = _game.CurrentInput.Keys;
                 bool click = pointer.Left && !_wasPressed;
                 _wasPressed = pointer.Left;
                 if (keys.EscapePressed) Player.Skip();

@@ -62,6 +62,22 @@ namespace Simpiens.Presentation
         public int SpeedKey;
     }
 
+    /// <summary>
+    /// The frame's input, read once per update (review U1): the UI's cursor, the map's controls and the screens all see
+    /// the same pointer and actions.
+    /// </summary>
+    public readonly struct InputFrame
+    {
+        public InputFrame(in PointerInput pointer, in KeyInput keys)
+        {
+            Pointer = pointer;
+            Keys = keys;
+        }
+
+        public PointerInput Pointer { get; }
+        public KeyInput Keys { get; }
+    }
+
     /// <summary>What the frame's input asks of the rest of the view.</summary>
     public struct CameraInputResult
     {
