@@ -921,3 +921,23 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - golden 3/3 in both runtimes;
   - Unity PlayMode 69/69 (2 explicit skipped);
   - the soak 9/9 headless and in Unity, with identical numbers.
+
+## 2026-10-24 — Docs cleanup; the producer's sign-offs; the move away from Unity
+
+- **Request (producer):** clean up stale documents under `docs/` and `.agents/`, reconcile discrepancies, and ask where unclear.
+- **Producer answers (2026-10-24):**
+  - Milestone 1's save/load check at 1× passed.
+  - Epic CLIENT's side-by-side with Unity passed, as did the looks at M3, the motion between ticks, and the header's pause and speed. "We are at a point where we can officially move away from Unity": M2.8–M2.9 are unblocked, to be scheduled.
+  - Still open: the look at Epic 10 G2 and the re-set fair soak band.
+- **Found: G1 and G2 never reached `main`.** PRs #8 and #9 were stacked on the previous milestone's branch, merged into it, and those branches were deleted after #7 merged; `main` stops at G0. Producer decision: G1, G2 and this cleanup go into `main` in one pull request from `docs/cleanup` (cut from `feat/epic10-g2`). Stacked milestone PRs are not used again; from G3 each targets `main`.
+- **Done:**
+  - The roadmap: the Epic MAP, CORE and CLIENT logs condensed to status, decisions and open items (the detail is in the epic docs and this log); §2.1's library table brought up to date (UniTask retired, `Unity.Collections` + Burst dropped, VContainer Unity-only; MS.DI, xUnit v3, KNI, MonoGame, Gum and KernSmith added); §2.2's handroll and UI Toolkit policies marked delivered or superseded; Milestone 1's pending check closed; §3A's stale numbers (risk tolerance used, the 23-seed gate, 39 of 64 GOAP facts); the Epic 10 and 11 rows; the operating rhythm.
+  - Links: every `file:///` absolute link and every link to a file moved by Epic CORE repointed to its current location (the roadmap, epics 7, 9 and UI-2, the consultant review); none broken.
+  - `docs/epics/epic-client.md`: the sign-offs; M2.8–M2.9's scope moved in from `.agents/client_m2_plan.md`, which was deleted (its decisions are in the M2 entry above); the closed person-gated risks.
+  - `docs/epics/epic-10.md`: how G1 and G2 landed; the fact count. `docs/epics/epic-core.md`: F1's owner is Unity's removal.
+  - `docs/economy-model.md`: four prices, glowstone in the loop, the salvage cap (248g a visit), current measurements, the 23-seed gate.
+  - `docs/Game Design Proposal.md`: a title, the producer's platform and presentation decisions, the economy question marked answered.
+  - `.agents/curentfocus.txt`: rewritten as a short mirror (266 → about 70 lines).
+  - `.agents/rules/`: the two original bootstrap prompts (`autonomous-architecture.md`, `unityrules.md`), loaded always-on by some IDE agents and contradicting `AGENTS.md`, replaced by one pointer to `AGENTS.md` and the roadmap that keeps the producer's communication preferences.
+  - `.agents/local/`: Epic CLIENT's directive and design decisions archived as `archive/epic-client-m0-m3_2026-10-23.zip` (local, never committed).
+- **Left as they are:** the completed epics' specs (history; their Unity-era wording describes the code as built), `docs/engine-proposal-kni.md` (a dated decision record), the consultant review's text (a dated snapshot).
