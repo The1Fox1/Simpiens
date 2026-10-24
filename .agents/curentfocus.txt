@@ -11,20 +11,18 @@
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
+- Epic CLIENT M2.8-M2.9, Unity's removal [ACTIVE 2026-10-24] (producer: "remove Unity first"): Unity's tests get
+  .NET twins, then Unity is removed. Plan .agents/client_unity_removal_plan.md, branch feat/remove-unity (PR into main).
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
     merged into deleted branches; only G0, PR #7, reached main). From G3, one PR per milestone into main.
-  - Next: G3 gear, G4 the guild, G5 expeditions, G6 the gate. The producer looks at G2, G5 and G6.
-- Unity: the producer called the move away from Unity (2026-10-24). Epic CLIENT M2.8-M2.9 (Unity's coverage
-  moved to .NET, then Unity removed) are unblocked and wait to be scheduled; until then a core change still
-  passes Unity's PlayMode suite and golden check.
+  - Next, after Unity's removal: G3 gear, G4 the guild, G5 expeditions, G6 the gate. The producer looks at G2, G5 and G6.
 
 OPEN WITH THE PRODUCER
 - The look at G2 (danger on screen) and the fair soak band re-set to 1,000-2,200g (Epic 10 §7).
 - The greedy soak band judged at its lowest trust mean (Epic 10 G0) and the drifter tuning (G1): accepted by
   default unless the producer says otherwise.
-- When to schedule M2.8-M2.9 (Unity's removal) relative to G3.
 - Closed 2026-10-24: Milestone 1's save/load check at 1x; Epic CLIENT's side-by-side with Unity and the looks
   at M3, motion between ticks, and the header's pause and speed.
 
@@ -57,6 +55,6 @@ INDEPENDENT EPICS
 - Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (docs/epics/epic-map.md)
 - Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (docs/epics/epic-core.md; PR #5)
   Open finding F1 (Mono vs CoreCLR float rounding) ends with Unity's removal.
-- Epic CLIENT: KNI Client and Engine Rework [PAUSED 2026-10-23] (docs/epics/epic-client.md; PR #6)
-  Done: M0, M1, M2.0-M2.7, text cleanup, seams, M3, the architecture findings. Remaining: M2.8-M2.9 (unblocked
-  2026-10-24), M4 Android (deferred), M5-M7, the map designer.
+- Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-24 for M2.8-M2.9; was PAUSED 2026-10-23] (docs/epics/epic-client.md)
+  Done: M0, M1, M2.0-M2.7, text cleanup, seams, M3, the architecture findings. In progress: M2.8-M2.9. Then M4 Android
+  (deferred), M5-M7, the map designer.

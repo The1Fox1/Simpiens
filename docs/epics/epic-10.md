@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open before G3 (gear) starts. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open. G3 (gear) waits for Unity's removal (Epic CLIENT M2.8–M2.9; producer, 2026-10-24: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
