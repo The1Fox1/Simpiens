@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open. G3 (gear) waits for Unity's removal (Epic CLIENT M2.8–M2.9; producer, 2026-10-24: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open. G3 (gear) is next; Unity was removed first (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -20,7 +20,7 @@ On 2026-10-23, after the KNI client merged into `main` (PR #6), the producer set
 - **Q5, recruitment:** trust ≥ 60 and warmth ≥ 40 toward the player (Epic 9's design), plus a signing fee and a wage. The numbers are tuned at G4.
 - **Q6, a member's own life:** it eats, sleeps and socializes as before, and works for itself when it has no orders. Guild orders come first, obeyed in proportion to its trust.
 - **Q7, drifters:** the 12 residents stay. A few drifters at a time arrive with their own gold and leave after a stay; the rate and the cap are tuned at G1.
-- **Q8, where "done" is proven:** headless, in `dotnet test`, with live scenarios on the real session and nothing injected. ROADMAP §1B says so since 2026-10-23. Unity's PlayMode suite stays a regression check on the core while Unity exists.
+- **Q8, where "done" is proven:** headless, in `dotnet test`, with live scenarios on the real session and nothing injected. ROADMAP §1B says so since 2026-10-23. Unity's PlayMode suite stayed a regression check on the core until Unity's removal (2026-10-24).
 - **Q9, the haul:** one new rare salvage, found only in hazard sectors and bought only by the caravan, at a premium. It has a placeholder name until art and naming are chosen.
 - **Q10, shipping:** one pull request into `main` per milestone, from a `feat/` branch, with its measured tests. The agent never merges. Each milestone has a working plan in `.agents/`, deleted when the milestone closes. **How G1 and G2 landed (2026-10-24):** their pull requests (#8, #9) were stacked on the previous milestone's branch and merged into those branches, which were then deleted, so only G0 (#7) reached `main`. G1 and G2 go into `main` in one pull request with the docs cleanup of 2026-10-24. From G3, each milestone's pull request targets `main` directly.
 
@@ -70,7 +70,7 @@ Order: G0 first; G1 (the world), G2 → G3 (danger) and G4 (the guild) are separ
 
 The roadmap's invariants (§1A) bind this epic.
 
-- **The rules live in the engine-free core** (`Assets/Simpiens.Core`, C# 10, netstandard2.1), tested with `dotnet test`. The client in `dotnet/` shows them and sends commands; Unity's views stay frozen.
+- **The rules live in the engine-free core** (`dotnet/Simpiens.Core`, still C# 10 and netstandard2.1; `Assets/Simpiens.Core` until Unity's removal on 2026-10-24), tested with `dotnet test`. The client in `dotnet/` shows them and sends commands.
 - **The player's actions are typed commands** applied in a fixed order on the tick: recruit, dismiss, set a wage, give gear, form a party, dispatch and recall an expedition. Gear prices extend the existing price command.
 - **The guild and its parties reuse Epic 8's groups:** the guild is a `FactionGuild` group with the player as patron, a party a `TemporaryParty` inside it, an expedition a new kind of directive. Epic 8's directives come from a crawler leader, so the patron needs its own path of authority, with compliance weighted by trust in the player.
 - **Numbers live in the session's tuning** (`EconomyTuning` or a tuning beside it), never as literals.
@@ -78,8 +78,8 @@ The roadmap's invariants (§1A) bind this epic.
 - **Durations are in ticks;** arrivals, hazard checks and injuries use the session's seeded random numbers.
 - **The planner has room:** 39 of its 64 facts are used (`StateFact` 0–38; G1 added `HasLeftOutpost`).
 - **New state is saved by its owner** (health, gear wear, drifters, the guild, wages, parties, expeditions in progress), checked by the round-trip validators, with the save format's version raised when a saved record changes shape.
-- **The golden hashes change once per behaviour change, on purpose,** re-recorded in their own commit in .NET and in Unity.
-- **Unity stays a check, not a view:** while Unity exists, a core change still passes its PlayMode suite and golden check.
+- **The golden hashes change once per behaviour change, on purpose,** re-recorded in their own commit (`simpiens golden record`; in Unity until its removal on 2026-10-24, from G0 to G2).
+- **Unity was a check, not a view,** for G0–G2: a core change passed its PlayMode suite and golden check. Unity was removed on 2026-10-24 (Epic CLIENT M2.9) and every one of its scenarios has a .NET twin.
 - **Epic 10's old "`Unity.Collections` + Burst" deliverable is dropped:** the core is engine-free. G1 and G5 measure the cost of a larger population; anything faster is built only on a measured need.
 
 ## 3. Definition of Done
@@ -134,7 +134,6 @@ Each milestone also needs its validators, the golden check and the client's test
 | A guild larger than four, barracks and a guildhall | Milestone 3 |
 | Tavern rumours written by a language model | Epic 11 |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
-| Removing Unity after the side-by-side look | Epic CLIENT M2.8 and M2.9 (paused) |
 | A planner per thread and a cognition budget (ROADMAP §3A #8) | Only if G1 or G5 measures a need |
 | Art beyond the generated placeholders | Until the producer picks an art direction |
 | Multiplayer | After the MVP; this epic keeps it possible (ROADMAP §1A.1) |
@@ -147,7 +146,6 @@ Each milestone also needs its validators, the golden check and the client's test
 | Finding F2 has a deeper cause, in pathing or in the food supply | G0 is time-boxed at 3 days; a seed that still fails is recorded, with its cause, as its own finding |
 | Epic 8's directives assume a crawler leader, not the player | G4 opens with a short design note on the player as patron, before any code |
 | More crawlers cost more planning time (one locked planner, ROADMAP §1A.2 #8) | Measure at G1 and G5, headless and against the frame-time gate; build per-thread planning only on a measured need |
-| Every core change costs minutes in Unity while Unity remains | Batch core changes per milestone for the Unity check |
 | The dashboard is laid out for 1280×720; the roster and the tracker need room | Make them windows, like the merchant and the bounty board |
 | The save format changes at most milestones | Old saves are refused with a reason, as today; no migration before release |
 

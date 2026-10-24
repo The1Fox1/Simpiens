@@ -11,13 +11,13 @@
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
-- Epic CLIENT M2.8-M2.9, Unity's removal [ACTIVE 2026-10-24] (producer: "remove Unity first"): Unity's tests get
-  .NET twins, then Unity is removed. Plan .agents/client_unity_removal_plan.md, branch feat/remove-unity (PR into main).
+- Unity is gone (Epic CLIENT M2.8-M2.9, 2026-10-24; producer: "remove Unity first"): every Unity test has a .NET
+  twin, the core lives in dotnet/Simpiens.Core, and the solution is .NET only. On feat/remove-unity, PR into main.
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
     merged into deleted branches; only G0, PR #7, reached main). From G3, one PR per milestone into main.
-  - Next, after Unity's removal: G3 gear, G4 the guild, G5 expeditions, G6 the gate. The producer looks at G2, G5 and G6.
+  - Next: G3 gear, G4 the guild, G5 expeditions, G6 the gate. The producer looks at G2, G5 and G6.
 
 OPEN WITH THE PRODUCER
 - The look at G2 (danger on screen) and the fair soak band re-set to 1,000-2,200g (Epic 10 §7).
@@ -38,7 +38,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 
 ================================================================================
-TRACK B: UI / UX (Epic UI-X) - Unity's UI Toolkit is frozen; new UI goes into the KNI client
+TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
 ================================================================================
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
 - Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client.
@@ -54,7 +54,7 @@ INDEPENDENT EPICS
 ================================================================================
 - Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (docs/epics/epic-map.md)
 - Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (docs/epics/epic-core.md; PR #5)
-  Open finding F1 (Mono vs CoreCLR float rounding) ends with Unity's removal.
-- Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-24 for M2.8-M2.9; was PAUSED 2026-10-23] (docs/epics/epic-client.md)
-  Done: M0, M1, M2.0-M2.7, text cleanup, seams, M3, the architecture findings. In progress: M2.8-M2.9. Then M4 Android
+  F1 (Mono vs CoreCLR float rounding) closed 2026-10-24 with Unity's removal.
+- Epic CLIENT: KNI Client and Engine Rework [PAUSED 2026-10-24, after M2.8-M2.9 removed Unity] (docs/epics/epic-client.md)
+  Done: M0, M1, M2 (Unity removed), text cleanup, seams, M3, the architecture findings. Remaining: M4 Android
   (deferred), M5-M7, the map designer.
