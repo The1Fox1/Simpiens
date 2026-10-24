@@ -61,10 +61,11 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 | Profile | Prices (ration / ore / herb) | Band (per run, at 30 min) | Measured 2026-10-15 (3 seeds) |
 | :--- | :--- | :--- | :--- |
 | Fair | 15 / 20 / 25 | treasury 375–875g (1.5–3.5× the 250g start); trust up for ≥ 8 of 12; 0 starving episodes | 546–771g; trust up 9–10; 0 starving |
-| Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 (treasury not asserted) | trust up 0, mean −3 to −17; treasury 0–216g, below fair on every seed |
+| Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −3 to −17; treasury 0–216g, below fair on every seed |
 | Generous | 5 / 35 / 40 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10; peak trust up 12; 0 starving |
 
 - **Why greed doesn't pay here:** the economy is closed. Without an outside buyer (drifters, Milestone 2), greedy prices only shrink the trade that fills the caravan's quota.
+- **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
 - **The regular suite** asserts the fair case over 15 minutes: `OutpostLifecycleScenario` checks that trust rises for ⅔ of crawlers and nobody starves.
 - **Headless (.NET 10, 2026-10-17):** `simpiens soak` and `dotnet test` assert the same bands without Unity, all 9 runs in about 4 s. Measured: fair 664–768g, trust up 8–10, 0 starving; greedy trust up 0, mean −4.6 to −12.6, treasury 0–342g, below fair on every seed; generous broke by minute 10, peak trust up 12. The numbers differ from Unity's because Mono rounds some float expressions differently (epic CORE §6 F1); both runtimes are inside every band.

@@ -128,7 +128,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 if (failures.Count > 0) failed++;
                 Console.WriteLine($"{(failures.Count == 0 ? "PASS" : "FAIL")}  seed {seed,-9} scout t{day.ScoutTick}, gather t{day.GatherTick}, first sale t{day.SaleTick}; " +
                                   $"cycles {day.Crawlers.Sum(c => c.State.Activity.Cycles)}, meals {day.Crawlers.Sum(c => c.State.Activity.Meals)}, " +
-                                  $"trust up {day.Crawlers.Count(c => c.TrustEnd > c.TrustStart)}/{day.Crawlers.Count}, peak hunger {day.Crawlers.Max(c => c.PeakHunger):F0}");
+                                  $"trust up {day.Crawlers.Count(c => c.TrustEnd > c.TrustStart)}/{day.Crawlers.Count}, peak hunger {day.Crawlers.Max(c => c.PeakHunger):F0}, stacking {day.Stackings}");
                 foreach (var failure in failures) Console.WriteLine($"      {failure}");
                 if (verbose) Console.Write(day.Report());
             }

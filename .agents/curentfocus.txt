@@ -111,11 +111,14 @@ Milestone 1 COMPLETED 2026-10-15, pending the producer's check of save and load 
 - Live DoD: SaveLoadScenario (saved mid-bounty, loaded into a fresh session byte for byte, then 3,000 ticks: zero
   anomalies, ledger balanced, nobody starving, every crawler eats, a cycle, the claimed bounty delivered).
 - The dossier's Feed ration button is removed (D6 a).
-Current Focus (engine): Epic CLIENT (Independent Epics, below) ACTIVE 2026-10-18 on feat/kni-client: the KNI game
-client. M0, M1 and M2.0-M2.7 (parity) complete; stopped for the producer's side-by-side before PR 1. Epic CORE COMPLETED and merged (PR #5). Track A next: the soak test and scaling work (ROADMAP §3A #8, with Epic CORE's finding F2)
-before Epic 10.
+Current Focus (engine): EPIC 10 PART 1, THE GUILD AND ITS EXPEDITIONS (Milestone 2) ACTIVE 2026-10-23
+(docs/epics/epic-10.md; producer approved every default of the Claude Doc draft). G0 (a day that holds on every seed,
+Epic CORE F2) DONE 2026-10-23 on feat/epic10-g0 (88265d8..; 23/23 gate seeds, dotnet test 347/347, Unity PlayMode
+69/69; PR into main is the producer's); next G1 drifters, G2 health and hazards, G3 gear, G4 the guild, G5
+expeditions, G6 the gate. One PR per milestone. Live DoD headless in dotnet test (ROADMAP §1B since 2026-10-23).
+Epic CLIENT PAUSED 2026-10-23 (merged as PR #6). Epic CORE COMPLETED and merged (PR #5).
 Autonomous closure run (producer directive 2026-10-11): finished; branch merged to main (PR #1).
-- Epic 10: Sector Hazards & Dungeon Descent [QUEUED]
+- Epic 10: Part 1 The Guild and Its Expeditions [ACTIVE 2026-10-23]; Parts 2 (workshops), 3 (descent) [QUEUED]
 - Epic 11: The Agentic Narrative Engine (MCP Integration) [QUEUED]
 
 ================================================================================
@@ -133,8 +136,8 @@ Epic UI-2: Merchant Terminal & Bounty Board UI [COMPLETED] (no UI epic currently
 - Phase 2: Public Bounty Posting Modal (Scout & Gather Contracts)
 - Phase 3: Outpost Treasury & Renown HUD Widget
 
-Queued (Track B):
-- Epic UI-3: Guild Roster & Expedition Dispatch
+Folded (Track B):
+- Epic UI-3: Guild Roster & Expedition Dispatch -> built in the KNI client as Epic 10 Part 1 G4-G5
 
 ================================================================================
 TRACK C: HARNESS, TOOLING & DIAGNOSTICS (Branching Track)
@@ -207,7 +210,7 @@ Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (merged to 
   EPIC CORE COMPLETED: validators in both runtimes, DoD scenarios in Unity and headless, golden hashes equal.
   Next on this path: the engine spike (Phase 2) ran as desk research 2026-10-17/18 and chose KNI: Epic CLIENT.
 
-Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kni-client, not merged)
+Epic CLIENT: KNI Client and Engine Rework [PAUSED 2026-10-23] (merged into main as PR #6)
 (See docs/epics/epic-client.md and docs/engine-proposal-kni.md)
 - A new game client on KNI (MonoGame-derived XNA 4 framework) over the engine-free core; replaces Unity's views and
   dashboard. Unity's views are FROZEN from M0 and Unity is retired at M2.
@@ -256,3 +259,5 @@ Epic CLIENT: KNI Client and Engine Rework [ACTIVE 2026-10-18] (on branch feat/kn
   Open: the producer's look and the PR into main-kni.
   INTO MAIN BEFORE M4 (producer 2026-10-23): one PR from feat/client-architecture (everything on main-kni + the
   architecture work) into main; main is the main branch again, main-kni retires with the merge; CI on main + PRs.
+  PR #6 MERGED into main 2026-10-23. Epic CLIENT PAUSED (producer 2026-10-23): engine and Android work set aside for
+  core gameplay, Epic 10 Part 1.

@@ -6,6 +6,7 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Core.Session;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Hosting
 {
@@ -20,6 +21,21 @@ namespace Simpiens.Hosting
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300;
 
+        /// <summary>
+        /// The seeds whose day must hold (Epic 10 G0, finding F2): the three golden seeds and 1 to 20. `dotnet test`
+        /// plays each; `simpiens sweep --seeds 424242,20261009,20261010,1..20` prints them.
+        /// </summary>
+        public static readonly ulong[] GateSeeds =
+        {
+            424242UL, 20261009UL, 20261010UL,
+            1UL, 2UL, 3UL, 4UL, 5UL, 6UL, 7UL, 8UL, 9UL, 10UL, 11UL, 12UL, 13UL, 14UL, 15UL, 16UL, 17UL, 18UL, 19UL, 20UL
+        };
+
+        // Unity's VisualAnomalyDetector calls two pawns closer than this for a second "stacked" (Epic 10 G0)
+        public const float StackingDistance = 0.35f;
+        public const float StackingSeconds = 1f;
+        private const float TickSeconds = 0.1f;
+
         public sealed class Crawler
         {
             public AgentState State;
@@ -28,8 +44,9 @@ namespace Simpiens.Hosting
             public int MealsAtStart, CyclesAtStart;
             public float PeakHunger;
             public long HungrySince = -1;
-            public long LongestHungry;
+            public long LongestHungry, LongestHungryFrom = -1;
             public bool Starved;
+            public float StackedFor, LastStackingAlert = -10f;
         }
 
         private readonly LocalSimulation _sim;
@@ -43,6 +60,10 @@ namespace Simpiens.Hosting
         public int ConservationViolations, WorstDiscrepancy, FogLeaks;
         public string FirstFogLeak;
         public long ObservedTicks;
+
+        /// <summary>Pawn stacking as Unity's anomaly detector counts it, from the simulation's positions.</summary>
+        public int Stackings;
+        public string FirstStacking;
 
         public OutpostWatch(LocalSimulation sim)
         {
@@ -109,7 +130,7 @@ namespace Simpiens.Hosting
                 {
                     if (c.HungrySince < 0) c.HungrySince = rel;
                     long stretch = rel - c.HungrySince;
-                    if (stretch > c.LongestHungry) c.LongestHungry = stretch;
+                    if (stretch > c.LongestHungry) { c.LongestHungry = stretch; c.LongestHungryFrom = c.HungrySince; }
                     if (stretch >= StarvingTicks) c.Starved = true;
                 }
                 else
@@ -117,6 +138,8 @@ namespace Simpiens.Hosting
                     c.HungrySince = -1;
                 }
             }
+
+            CheckStacking(rel);
 
             if (sim.EconomyLedger != null)
             {
@@ -128,6 +151,40 @@ namespace Simpiens.Hosting
                     ConservationViolations++;
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
+            }
+        }
+
+        // VisualAnomalyDetector.EvaluateStacking, per tick: a pawn accrues time while closer than StackingDistance to a
+        // later pawn in the registry (gossip and sharing exempt), loses it twice as fast otherwise, and counts once a
+        // second while past StackingSeconds. Unity's lifecycle, supply-loop and save/load scenarios assert none.
+        private void CheckStacking(long rel)
+        {
+            var pawns = _sim.Registry.ActiveEntities;
+            float now = rel * TickSeconds;
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                var a = pawns[i];
+                if (a.Type != EntityType.Pawn || a.Agent == null) continue;
+                var watched = Crawlers.Find(c => c.State == a.Agent);
+                if (watched == null) continue;
+                bool stacked = false;
+                for (int j = i + 1; j < pawns.Count; j++)
+                {
+                    var b = pawns[j];
+                    if (b.Type != EntityType.Pawn) continue;
+                    if (a.Agent.IsGossiping || a.Agent.IsSharing || (b.Agent != null && (b.Agent.IsGossiping || b.Agent.IsSharing))) continue;
+                    if (Vec2.Distance(a.Position, b.Position) >= StackingDistance) continue;
+                    stacked = true;
+                    watched.StackedFor += TickSeconds;
+                    if (watched.StackedFor >= StackingSeconds && now - watched.LastStackingAlert >= 1f)
+                    {
+                        watched.LastStackingAlert = now;
+                        Stackings++;
+                        FirstStacking ??= $"t{rel}: {watched.Name} with {b.Name} at {a.Position}";
+                    }
+                    break;
+                }
+                if (!stacked) watched.StackedFor = SimMath.Max(0f, watched.StackedFor - TickSeconds * 2f);
             }
         }
 
@@ -143,8 +200,9 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>
-        /// What fails the outpost's day (Epic MAP's DoD, OutpostLifecycleScenario's assertions without the anomaly
-        /// detector) after a 9,000-tick run and <see cref="Finish"/>. Empty when the day emerged.
+        /// What fails the outpost's day (Epic MAP's DoD, OutpostLifecycleScenario's assertions; of the anomaly detector's,
+        /// only stacking, which the simulation's positions show) after a 9,000-tick run and <see cref="Finish"/>. Empty
+        /// when the day emerged.
         /// </summary>
         public List<string> DayFailures()
         {
@@ -168,6 +226,7 @@ namespace Simpiens.Hosting
             if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
             if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
             if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
+            if (Stackings > 0) failures.Add($"pawn stacking {Stackings} times (first {FirstStacking})");
             return failures;
         }
 
@@ -201,10 +260,10 @@ namespace Simpiens.Hosting
         public string Report()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}");
+            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; stacking {Stackings}{(FirstStacking != null ? $" (first {FirstStacking})" : "")}");
             foreach (var c in Crawlers)
             {
-                sb.AppendLine($"  {c.Name}: {c.State.Activity}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.Starved ? " STARVED" : "")}");
+                sb.AppendLine($"  {c.Name}: {c.State.Activity}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");
             }
             return sb.ToString();
         }

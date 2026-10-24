@@ -98,11 +98,13 @@ namespace Simpiens.Hosting
                 var last = Last;
                 uint minTreasury = uint.MaxValue;
                 int peakTrustUp = 0;
+                float lowestTrustMean = float.MaxValue;
                 bool everInArrears = false;
                 foreach (var row in Rows)
                 {
                     if (row.Treasury < minTreasury) minTreasury = row.Treasury;
                     if (row.TrustUp > peakTrustUp) peakTrustUp = row.TrustUp;
+                    if (row.TrustMean < lowestTrustMean) lowestTrustMean = row.TrustMean;
                     everInArrears |= row.InArrears;
                 }
                 switch (Player.Name)
@@ -114,7 +116,9 @@ namespace Simpiens.Hosting
                         break;
                     case "greedy":
                         if (last.TrustUp > GreedyTrustUpMax) failures.Add($"greedy: trust rose for {last.TrustUp} crawlers (at most {GreedyTrustUpMax})");
-                        if (!(last.TrustMean < 0f)) failures.Add($"greedy: trust mean {last.TrustMean:F1} is not below 0");
+                        // At its lowest, as generous is judged at its peak: once greed has emptied the stall nobody
+                        // trades, and trust drifts back to neutral by minute 30 (Epic 10 G0)
+                        if (!(lowestTrustMean < 0f)) failures.Add($"greedy: trust mean never fell below 0 (lowest {lowestTrustMean:F1})");
                         break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");

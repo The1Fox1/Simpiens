@@ -22,12 +22,26 @@ namespace Simpiens.Cognition.Planning.Actions
         }
 
         /// <summary>
-        /// Plannable when the reachable stall can pay for at least the cheapest salvage. At execution the agent
-        /// sells the held item the treasury can afford (see CreateIntent).
+        /// Plannable when the reachable stall can buy what the agent would sell. Holding sellable salvage, that is a
+        /// held unit the stall can pay for and has room for, at or above the agent's minimum (as LiquidateSalvageGoal
+        /// asks): room for the other type made a crawler holding ore retry a refused sale every tick while the stall
+        /// was full of ore (Epic 10 G0, finding F2). Holding none yet, any salvage the stall can still buy. At
+        /// execution the agent sells the held item the treasury can afford (see CreateIntent).
         /// </summary>
         public override bool IsValid(AgentContext context)
         {
-            return ResourceTargeting.NearestStallCanBuySalvage(context);
+            bool holdsSalvage = ResourceTargeting.HoldsSellable(context, ItemType.IronOre) || ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb);
+            if (!holdsSalvage) return ResourceTargeting.NearestStallCanBuySalvage(context);
+
+            switch (ResourceTargeting.GetStallAccess(context, out var stall))
+            {
+                case ResourceTargeting.StallAccess.Reachable:
+                    return ResourceTargeting.AffordableHeldSalvage(context, stall) != ItemType.None;
+                case ResourceTargeting.StallAccess.Unreachable:
+                    return false;
+                default:
+                    return true;
+            }
         }
 
         public override AgentIntent CreateIntent(AgentContext context)

@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-18.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-23.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -38,7 +38,7 @@ flowchart LR
     subgraph Independent: Spatial & World Topology
         MAP["Epic MAP\nOutpost Floor &\nLiving Simulation Loop\n(COMPLETED)"]
         CORE["Epic CORE\nEngine-Free Core &\nHeadless .NET\n(COMPLETED)"]
-        CLIENT["Epic CLIENT\nKNI Client &\nEngine Rework\n(ACTIVE)"]
+        CLIENT["Epic CLIENT\nKNI Client &\nEngine Rework\n(PAUSED)"]
     end
 
     subgraph Track A: Core Simulation & Cognition (Authoritative Engine)
@@ -47,14 +47,14 @@ flowchart LR
         A3 --> A4["Epic Beta\nInterdependence"]
         A4 --> A5["Epic 8\nGroups & Directives\n(COMPLETED)"]
         A5 --> A6["Epic 9\nOutpost Economy\n& Public Bounties\n(COMPLETED)"]
-        A6 --> A7["Epic 10\nHazards & Descent\n(QUEUED)"]
+        A6 --> A7["Epic 10\nGuild, Hazards & Descent\n(Part 1 ACTIVE)"]
         A7 --> A8["Epic 11\nMCP Narrative\n(QUEUED)"]
     end
 
     subgraph Track B: UI / UX & Player Interface (Dumb Views)
         B1["Epic UI-1\nFacility Dashboard\n(COMPLETED)"] --> BAlpha["Epic UI-Alpha\nNarrative Chronicle\n(COMPLETED)"]
         BAlpha --> B2["Epic UI-2\nMerchant Terminal\n& Bounty Board\n(COMPLETED)"]
-        B2 --> B3["Epic UI-3\nGuild Roster &\nExpeditions\n(QUEUED)"]
+        B2 --> B3["Epic UI-3\nGuild Roster &\nExpeditions\n(in Epic 10 Part 1)"]
     end
 
     subgraph Track C: Harness & Diagnostics (Verification Track)
@@ -158,7 +158,7 @@ Every line is prefixed `[t<tick>] <LVL> <Channel> |`.
 Domain validators prove a mechanism is correct *in isolation*, and they usually do so by injecting the preconditions (hand-placed inventory, teleported agents, forced intents, pre-claimed bounties). That proves the code works, not that the game does. An epic or slice may be marked `COMPLETED` only when **all** of the following hold:
 
 1. **Mechanism verified.** Headless domain validators pass (0 errors, 0 steady-state allocations where the hot path rule applies).
-2. **Live emergence demonstrated.** At least one PlayMode scenario (Track C harness: `Assets/Tests/PlayMode/`) shows the feature occurring *naturally* in the real session setup. It must **not** inject the outcome's preconditions. It asserts a concrete outcome within a bounded number of ticks (e.g. *"within N ticks, at least one posted Gather bounty is claimed, fulfilled and paid out"*).
+2. **Live emergence demonstrated.** At least one live scenario shows the feature occurring *naturally* in the real session setup. Since 2026-10-23 (producer, Epic 10 Q8) new work proves this headless in `dotnet test` (`dotnet/Simpiens.Core.Tests`, on the real session); earlier epics did it with a PlayMode scenario (Track C harness: `Assets/Tests/PlayMode/`), and Unity's PlayMode suite stays a regression check on the core while Unity exists. A scripted player that acts only through the typed commands a real player sends is input, not injection. It must **not** inject the outcome's preconditions. It asserts a concrete outcome within a bounded number of ticks (e.g. *"within N ticks, at least one posted Gather bounty is claimed, fulfilled and paid out"*).
 3. **Docs reconciled.** This roadmap's status is updated first, the epic's `Status` header matches it, and its acceptance checklist contains only delivered items. Anything dropped or postponed is listed under an explicit **Deferred** heading with the epic that now owns it.
 
 Rules of thumb:
@@ -215,7 +215,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 | Milestone | Target Scope | Aligned Epics | Target Release State |
 | :--- | :--- | :--- | :--- |
 | **Milestone 1** | **The Outpost Loop (MVP)** | Track A: Epic 9<br>Track B: Epic UI-2<br>Track C: Epic Test-2 | Single connected outpost floor (Epic MAP; sector count is data, not a target: producer 2026-10-11). Player manages a roadside trading post: sets buy/sell prices for salvaged materials and provisions, posts public bounties (Scout, Gather), and builds dyadic trust with visiting crawlers. Integrates MemoryPack serialization for unmanaged inventory/contracts and zero-alloc Grid A* navigation (Grid A* delivered 2026-10-09; MemoryPack delivered 2026-10-15 as a whole-session save and load with one quick-save slot). |
-| **Milestone 2** | **Guild Roster & Expeditions** | Track A: Epic 10 (Part 1)<br>Track B: Epic UI-3 | High-affinity adventurers convert into the player's permanent Guild. Player organizes 4-man parties and issues expedition directives to high-hazard sectors. `Unity.Collections` + Burst broadphase for multi-agent party coordination. |
+| **Milestone 2** | **Guild Roster & Expeditions** | Track A: [Epic 10 Part 1](epics/epic-10.md), with Epic UI-3 folded in (its UI is the KNI client's) | High-affinity adventurers convert into the player's permanent Guild (up to four). The player outfits parties and issues expedition directives to high-hazard sectors; drifters open the economy. (The earlier `Unity.Collections` + Burst item is dropped: the core is engine-free, and speed-ups follow measurements.) |
 | **Milestone 3** | **Facility Workshops & Crafting** | Track A: Epic 10 (Part 2)<br>Track B: Epic UI-4 | Fixed outpost expansion stations (Forge, Alchemy Still). Hired non-combat artisans refine raw salvage into weapons, armor, and potions. |
 | **Milestone 4** | **Gatekeeper Descent & Floor Relocation** | Track A: Epic 10 (Part 3) & Epic 11<br>Track B: Epic UI-5 | Boss-guarded descent gate breach, roguelike forward operating base relocation loop (via MemoryPack state snapshotting), and LLM-powered MCP tavern chronicles. |
 
@@ -300,7 +300,7 @@ Before Epic 10: soak test and scaling work (#8).
 | **Epic Beta** | Concrete World Mechanics & Interdependence | **COMPLETED** | Dominance contention/yielding, altruistic food sharing, campfire gathering anchors. |
 | **Epic 8** | [Socio-Political Structures & Groups](epics/epic-8.md) | **COMPLETED** | 4-layer taxonomy, parameter-driven `Group` primitive (`GroupData`, `GroupDirective`, `GroupMembership`), compliance/defiance dynamics, and organic hearth succession. |
 | **Epic 9** | [The Outpost Economy & Public Bounties](epics/epic-9.md) | **COMPLETED** (2026-10-15; producer play session passed) | **Delivered (Slices 1–3 + Modernization):** unmanaged item/inventory structs, gold currency, trade stall entity, public bounty board with escrow/refund, `PlayerInterventionService` drained in `Tick()`, trade-to-affinity pipeline, GOAP economic actions/goals, zero-alloc Grid A* in `AsyncPathfinder`, 3 headless validators. ~~**Deferred (not delivered):** `MemoryPack` state serialization, `EconomyZeroAllocValidator`, `EconomySerializationValidator`.~~ **Delivered 2026-10-15 with Milestone 1's save and load.** **§3.1 supply side (2026-10-09, implemented, live run pending):** typed resources, salvage harvesting, Scout fulfilment, escrow-only bounty payout, supply caravan & regrowth, Outpost Commons arena, `SupplyLoopValidator`, `OutpostSupplyLoopScenario`. §3.2 personality landed 2026-10-11 (`PriceResponseScenario` passes). **§3.3 economy model (2026-10-15):** `EconomyTuning`, the fairness rule (trust from trade), caravan salvage quota, outpost upkeep and arrears, food pacing, and the soak's pace bands; `OutpostLifecycleScenario` asserts trust toward the player ([docs/economy-model.md](economy-model.md)). **Still deferred:** drifters (Milestone 2). |
-| **Epic 10** | Sector Hazards & Dungeon Descent | **QUEUED** | Environmental sector hazards, gear-gated survival checks, sector descent gate clearance, floor relocation migration loop, `Unity.Collections` + Burst hazard spatial checks. |
+| **Epic 10** | [Part 1: The Guild and Its Expeditions](epics/epic-10.md); Parts 2 and 3: workshops, the descent | **ACTIVE** (Part 1, 2026-10-23; G0 done 2026-10-23) | **Part 1 (Milestone 2):** G0 a day that holds on every seed (Epic CORE F2), G1 drifters, G2 health and environmental hazards, G3 gear, G4 the guild (recruitment, wages, quitting), G5 expeditions (parties of up to four), G6 the gate. No combat and no death in Part 1. **Part 2 (Milestone 3):** workshops and crafting. **Part 3 (Milestone 4):** the descent gate and floor relocation. |
 | **Epic 11** | Agentic Narrative Engine (MCP Integration) | **QUEUED** | External Model Context Protocol integration via lean pure-C# UniTask JSON-RPC/SSE client (`ILlmNarrativeEnricher`), dynamic tavern rumors. |
 
 ---
@@ -341,7 +341,8 @@ Before Epic 10: soak test and scaling work (#8).
   - **Zero-Allocation Element Pooling**: Generic `VisualElementPool<TData, TElement>` delivering 0 bytes GC in 10 Hz UI loops.
   - **Automated Domain Suite**: `BountyTerminalValidator` validating price updates, bounty posting/escrow, cancellation refunds, shroud tracking, and pooling.
 
-### Epic UI-3: Guild Roster & Expedition Dispatch (QUEUED — Focus: Production Phase 2)
+### Epic UI-3: Guild Roster & Expedition Dispatch (folded into [Epic 10 Part 1](epics/epic-10.md), 2026-10-23)
+*Its roster, party builder and expedition tracker are built in the KNI client as Epic 10's G4 and G5. The goal below is kept as the original intent.*
 * **Goal**: Provide management controls for recruited guild adventurers and organized expeditions.
 * **Key Features**:
   - Roster card inspector displaying crawler combat readiness, equipment loadout, and dyadic affinity toward the player.
@@ -425,11 +426,11 @@ Before Epic 10: soak test and scaling work (#8).
   - C9 (xUnit v3: `dotnet/Simpiens.Core.Tests`) done 2026-10-17. Phase 1 gate: `dotnet test` 53/53 in about 4 s: the 44 engine-free validators (zero-allocation ones included), the golden hashes equal to Unity's baseline for all 3 seeds, same-seed determinism, and the outpost's three DoD scenarios headless with nothing injected (lifecycle 9,000 ticks, supply loop, save/load). Unity still green (PlayMode 68/68). Found: Unity's Mono and CoreCLR round some float expressions differently, so the runtimes agree on the golden seeds but drift apart on others (seed 1 from t5); each runtime reproduces itself exactly (epic §6 F1).
   - C10 (`simpiens`, the console host on the Generic Host: `run`, `sweep`, `soak`, `golden`) done 2026-10-17: the economy soak's 9 runs stay in their pace bands headless in about 4 s (Unity: about 26 minutes), and `dotnet test` runs them too (62/62). Found: the outpost's day passes on 16 of 23 seeds; 5 have a starving crawler, 2 a crawler with no cycle; Unity agrees on seed 11 (epic §6 F2, a balance question for the producer).
   - C11 (CI and close-out) done 2026-10-17: `.github/workflows/dotnet.yml` builds and tests the .NET solution on Ubuntu with no Unity (not pushed); docs reconciled. Final check: PlayMode 68/68 (70, 2 explicit skipped); golden check in Unity 3/3 seeds; `dotnet test` 62/62.
-  - **Phase 1 (Headless .NET) is complete; Epic CORE is complete.** Definition of Done: the validators pass in Unity and under `dotnet test` (zero-allocation ones included); the outpost's DoD scenarios pass in Unity and headless with nothing injected; the golden hashes are equal in both runtimes. Open findings: epic §6 (F1 Mono and CoreCLR round some float chains differently; F2 the outpost's day fails on 7 of 23 seeds). Next on this path: the engine spike (Phase 2) ran as desk research on 2026-10-17 and 2026-10-18 and chose KNI over Godot; the new client is Epic CLIENT below.
+  - **Phase 1 (Headless .NET) is complete; Epic CORE is complete.** Definition of Done: the validators pass in Unity and under `dotnet test` (zero-allocation ones included); the outpost's DoD scenarios pass in Unity and headless with nothing injected; the golden hashes are equal in both runtimes. Open findings: epic §6 (F1 Mono and CoreCLR round some float chains differently; F2 the outpost's day fails on 7 of 23 seeds, resolved 2026-10-23 by Epic 10 G0). Next on this path: the engine spike (Phase 2) ran as desk research on 2026-10-17 and 2026-10-18 and chose KNI over Godot; the new client is Epic CLIENT below.
 
 
 ### Epic CLIENT: [KNI Client and Engine Rework](epics/epic-client.md)
-- **Status**: ACTIVE (2026-10-23). `main` is the main branch again: the client goes into it before M4 (producer, 2026-10-23), and `main-kni` retires with that merge. M0 and M1 are complete; M2.0–M2.7 (parity with Unity's game) are done, with the producer's side-by-side and Unity's removal (M2.8, M2.9) still open. The text cleanup, the client seams and M3 (isometric and cutscenes) are done and on `main-kni`, where CI passes; the producer's look at M3 is open. **M4 is deferred** (producer, 2026-10-22). The architecture review's open findings are done on `feat/client-architecture`, which carries them and everything on `main-kni` into `main` in one pull request.
+- **Status**: PAUSED (2026-10-23): the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epics/epic-10.md)). **What exists**, merged into `main` as PR #6 on 2026-10-23: M0 and M1; M2.0–M2.7 (parity with Unity's game); the text cleanup, the client seams, M3 (isometric and cutscenes) and the architecture review's findings. **What does not:** the producer's side-by-side and Unity's removal (M2.8, M2.9), M4 (Android, deferred) and M5–M7. The producer's look at M3 and at the header's pause and speed is still open. Epic 10's new screens are built in this client.
 - **What:** a new game client on KNI over the engine-free core, replacing Unity's views and dashboard. It draws the simulation in top-down (developers' map designer and debugging), isometric (the main view) and screen space (cutscenes), on Windows and Linux first and on Android and iOS after the MVP. The simulation core doesn't change and never references KNI. Proposal, comparison and producer answers: [`docs/engine-proposal-kni.md`](engine-proposal-kni.md) (live version in Claude Docs).
 - **Producer decisions (2026-10-18):**
   - Framework KNI; MonoGame kept compiling in CI as its fallback; Godot dropped.
@@ -554,14 +555,15 @@ Before Epic 10: soak test and scaling work (#8).
     - Measured: `dotnet test` 324/324 (client 261, core 63); the client's 261/261 exactly in the pinned image; golden 3/3; the MonoGame and Android builds compile; frame time 1.5 ms (isometric) and 2.4 ms (top-down) on llvmpipe.
     - Open: the producer's look at the header's pause and speed, and the dashboard's new wording. CI's container job passed on its first run (pull request #6, 2026-10-23): the client's 261/261 with exact renders, after `0537155` made its script executable.
   - **Producer decision (2026-10-23):** the client goes into `main` before M4, which stays deferred. One pull request from `feat/client-architecture` carries everything on `main-kni` (M2.0–M2.7, the text cleanup, the seams, M3) and the architecture work. CI runs on pushes to `main` and on pull requests; `main-kni` retires once the pull request is merged.
+  - **Merged (2026-10-23):** PR #6, after CI passed both jobs. **Producer decision (2026-10-23):** Epic CLIENT pauses; core gameplay comes next ([Epic 10 Part 1](epics/epic-10.md)).
 
 ---
 
 ## Strategic Operating Rhythm
 
 When working in parallel agent sessions:
-1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; Epic 10 is `QUEUED`; **Epic CORE** is `COMPLETED` and merged; next for Track A: the soak and scaling work, §3A #8, with Epic CORE's finding F2). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
-2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is `QUEUED` for Milestone 2). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters. **Frozen from Epic CLIENT M0 (2026-10-18):** new views and UI go into the KNI client (`dotnet/Simpiens.Client`), which rebuilds the dashboard in Gum at M2.
+1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`, pending the producer's save/load check; **Epic 10 Part 1 is `ACTIVE`** (Milestone 2, [epics/epic-10.md](epics/epic-10.md)), G0 (the day on every seed, Epic CORE's F2) done 2026-10-23, G1 (drifters) next; **Epic CORE** is `COMPLETED` and merged). All code lives in `Simpiens.Cognition`, `Simpiens.Simulation`, and headless validators.
+2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is folded into Epic 10 Part 1). All code lives in `Simpiens.UI`, UI Toolkit UXML/USS assets, and presenters. **Frozen from Epic CLIENT M0 (2026-10-18):** new views and UI go into the KNI client (`dotnet/Simpiens.Client`), which rebuilds the dashboard in Gum at M2.
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). All code lives in `Simpiens.Testing` and `Assets/Tests/`.
-4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`: the simulation is engine-free in `Assets/Simpiens.Core/` and builds for .NET in `dotnet/`, see AGENTS.md; **Epic CLIENT** is `ACTIVE`: the KNI client in `dotnet/`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
+4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`: the simulation is engine-free in `Assets/Simpiens.Core/` and builds for .NET in `dotnet/`, see AGENTS.md; **Epic CLIENT** is `PAUSED`: the KNI client in `dotnet/`, merged into `main`). Code lives in `Simpiens.Simulation.World` (map definition, sectors), `Core/Session` (sessions, layouts) and views in `Simpiens.Entities` / `Simpiens.UI`.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).
