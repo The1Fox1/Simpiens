@@ -11,7 +11,7 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
 
 | Project | Holds |
 | :--- | :--- |
-| `Simpiens.Core` | The engine-free simulation: `Cognition/`, `Simulation/` (incl. `SimulationManager.cs`), `Session/` (sessions, layouts, `SessionHost`), `Intervention/`, `Narrative/`, `Diagnostics/`. Builds for `netstandard2.1` and `net10.0`. |
+| `Simpiens.Core` | The engine-free simulation: `Cognition/`, `Simulation/` (incl. `SimulationManager.cs`), `Session/` (sessions, layouts, `SessionHost`), `Intervention/`, `Narrative/`, `Diagnostics/`. |
 | `Simpiens.Testing.Core` | Test-only, never shipped: the engine-free validators, fixtures, the Dev Map session, `WorldStateHash` and `GoldenWorldHash`. |
 | `Simpiens.Hosting` | Registrations for `Microsoft.Extensions.DependencyInjection`, `LocalSimulation` (the simulation in this process), and the harness the tests and the console share: the economy soak (`EconomySoak`), the Definition-of-Done observer `OutpostWatch`, the `AnomalyDetector` (jitter, stacking, wall penetration, boundary breaches, state thrashing, judged per tick) and the `EdgeCaseInjector`. |
 | `Simpiens.Host` | The `simpiens` development console: `run`, `sweep`, `soak`, `golden`. It uses the test harness and never ships. |
@@ -43,7 +43,7 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
   - the renderer, and `Ui/`: the dashboard in Gum, views over the dashboard models that decide nothing.
 - **Rules:** views read the simulation and never write it (a test enforces it), and only `XnaPlatform` may use an API that KNI and MonoGame don't share (`-p:XnaFramework=MonoGame` compiles the client against MonoGame to check).
 
-Namespaces kept the names of the Unity era (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, `Simpiens.Entities` for the visual-state enum, …). The directory notes below use the folder names inside `Simpiens.Core` and `Simpiens.Testing.Core`. The core still builds for `netstandard2.1` at C# 10, as it did while Unity compiled it; lifting that cap is a separate change.
+Namespaces kept the names of the Unity era (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, `Simpiens.Entities` for the visual-state enum, …). The directory notes below use the folder names inside `Simpiens.Core` and `Simpiens.Testing.Core`. Every project targets `net10.0` with its default C#, C# 14: .NET 10 is the newest .NET KNI supports (its Android platform targets `net10.0-android`), and the client references the core, so the solution moves to a newer .NET together, when KNI does.
 
 ### Checking a change
 

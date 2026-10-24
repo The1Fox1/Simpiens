@@ -46,6 +46,7 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
 - **Paused (2026-10-23):** after PR #6 merged, the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). Its new screens (the guild roster, the expedition tracker) are built in this client.
 - **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone). The parity work went into `main` with PR #6 instead.
 - **Remove Unity first (2026-10-24):** after the sign-offs below, the producer asked for Unity's removal (M2.8–M2.9) before Epic 10 G3.
+- **The latest .NET and C# KNI supports (2026-10-24),** as part of the removal: if the core were independent of the client it could run on its own version, but the client references it. KNI 4.3.9001, the latest, ships its Android platform for `net10.0-android`, so the solution is .NET 10 with C# 14; it moves when KNI does.
 - **Sign-offs (2026-10-24):** the producer's side-by-side with Unity passed, as did the looks at M3, at the motion between ticks and at the header's pause and speed. "We are at a point where we can officially move away from Unity": M2.8 and M2.9 are unblocked, to be scheduled.
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
@@ -347,6 +348,7 @@ flowchart TB
     - `7d4187e`: words that pointed at Unity's tools and assemblies (the golden baselines are re-recorded with `simpiens golden record`, which writes the committed file line for line); notes on where code was ported from stay.
     - Docs: `AGENTS.md` rewritten for a .NET-only repo; the roadmap's rules and library table; Epic CORE's F1 closed.
     - Measured: `dotnet test` 372/372; golden 3/3; the client's 267/267 exactly in the pinned image; the MonoGame and Android builds compile.
+    - `fb86e80`: C# 14 on .NET 10 everywhere. The core dropped its `netstandard2.1` build and the C# 10 pin, which only Unity needed; nothing in the sources worked around them. Measured the same.
 
 ---
 
@@ -360,7 +362,7 @@ flowchart TB
 - The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
 - The UI's scaling by display density (review U2) and a frame cap per platform (R6): M4.
 - Premultiplied alpha (R4), the sprite catalogue (R5), textures through `Texture2D.FromStream` (R7), sizes as data (S10): M7.
-- Lifting the core's `netstandard2.1` / C# 10 cap, which only Unity needed: a follow-up of its own, unscheduled. (S5, comments naming Unity's code: done at M2.9 where they misled; notes on where code was ported from stay.)
+- (S5, comments naming Unity's code: done at M2.9 where they misled; notes on where code was ported from stay.)
 - Sound: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
 

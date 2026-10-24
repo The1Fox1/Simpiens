@@ -70,7 +70,7 @@ Order: G0 first; G1 (the world), G2 → G3 (danger) and G4 (the guild) are separ
 
 The roadmap's invariants (§1A) bind this epic.
 
-- **The rules live in the engine-free core** (`dotnet/Simpiens.Core`, still C# 10 and netstandard2.1; `Assets/Simpiens.Core` until Unity's removal on 2026-10-24), tested with `dotnet test`. The client in `dotnet/` shows them and sends commands.
+- **The rules live in the engine-free core** (`dotnet/Simpiens.Core`, .NET 10 and C# 14 since 2026-10-24; C# 10 and netstandard2.1 in `Assets/Simpiens.Core` until Unity's removal), tested with `dotnet test`. The client in `dotnet/` shows them and sends commands.
 - **The player's actions are typed commands** applied in a fixed order on the tick: recruit, dismiss, set a wage, give gear, form a party, dispatch and recall an expedition. Gear prices extend the existing price command.
 - **The guild and its parties reuse Epic 8's groups:** the guild is a `FactionGuild` group with the player as patron, a party a `TemporaryParty` inside it, an expedition a new kind of directive. Epic 8's directives come from a crawler leader, so the patron needs its own path of authority, with compliance weighted by trust in the player.
 - **Numbers live in the session's tuning** (`EconomyTuning` or a tuning beside it), never as literals.
