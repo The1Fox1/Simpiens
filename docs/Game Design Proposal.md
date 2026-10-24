@@ -1,3 +1,7 @@
+# Simpiens: Game Design Proposal
+
+> Product vision and player-facing design (rank 4 in [ROADMAP §0](ROADMAP.md)). Status, scope numbers and sequencing are the roadmap's.
+
 ## 1. Executive Summary & Core Game Loop
 
 **Simpiens** is an indirect-control simulation where players operate the support infrastructure—merchant stalls, artisan workshops, and guildhalls—fueling an autonomous adventurer ecosystem. Rather than directly piloting heroes or micromanaging survival pawns, the player functions as a logistical architect within a living megadungeon settlement, exerting influence through contract bounties, economic leverage, and interpersonal goodwill.
@@ -20,6 +24,7 @@
 ```
 
 * **The Staged Progression:** The player begins with a modest roadside trading post on Floor 1, selling basic provisions to drifters. By fulfilling supply contracts and discovering map sectors, the business expands into an integrated Guildhall that hires non-combat artisans, crafts specialized armaments, and contracts persistent adventurer parties.
+* **Platforms and presentation (producer, 2026-10-18):** the MVP is a Windows and Linux desktop game; Android and iOS phones (portrait) follow it, consoles only if mobile goes well, no macOS or web. The world is shown in a fixed isometric view, with cutscenes in screen space (hard cutscenes pause the game; dynamic ones play over it). Art starts as generated placeholders and grows to at most 64×64 px sprites; the target is 30 fps. The client is built on KNI ([Epic CLIENT](epics/epic-client.md)).
 * **Session Design:** The core game runs as a single-player offline experience with full simulation clock controls (pause, 1x, 5x, 10x), built on deterministic logical ticks. **Multiplayer is a required post-MVP feature**: the MVP ships single-player, but the architecture must allow an authoritative client-server runtime to be added later (binding constraints: `docs/ROADMAP.md` §1A.1).
 
 ---
@@ -61,4 +66,4 @@ The initial release must strictly isolate the transaction-and-bounty loop on a s
 
 ## 5. Open Design Questions
 
-* **Economic constraint & Faucets/Sinks:** What specific economic constraint should prevent the player from immediately outfitting every crawler with top-tier gear in the MVP: strict local material scarcity, or the adventurer's own willingness to spend personal gold? *(Note: Faucets and sinks fall under Section 3.3 and will be addressed when that section is tackled.)*
+* ~~**Economic constraint & Faucets/Sinks:** What specific economic constraint should prevent the player from immediately outfitting every crawler with top-tier gear in the MVP: strict local material scarcity, or the adventurer's own willingness to spend personal gold?~~ **Answered 2026-10-15** by the economy model ([docs/economy-model.md](economy-model.md) §3): the scarcity lever is the crawlers' own willingness to trade, judged by each crawler's valuation; faucets and sinks are named in the ledger (§2). Gear-gated scarcity comes with Epic 10 G3.

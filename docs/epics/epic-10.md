@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer looks at G2 (danger on screen) before G3 (gear) starts. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open before G3 (gear) starts. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -22,7 +22,7 @@ On 2026-10-23, after the KNI client merged into `main` (PR #6), the producer set
 - **Q7, drifters:** the 12 residents stay. A few drifters at a time arrive with their own gold and leave after a stay; the rate and the cap are tuned at G1.
 - **Q8, where "done" is proven:** headless, in `dotnet test`, with live scenarios on the real session and nothing injected. ROADMAP §1B says so since 2026-10-23. Unity's PlayMode suite stays a regression check on the core while Unity exists.
 - **Q9, the haul:** one new rare salvage, found only in hazard sectors and bought only by the caravan, at a premium. It has a placeholder name until art and naming are chosen.
-- **Q10, shipping:** one pull request into `main` per milestone, from a `feat/` branch, with its measured tests. The agent never merges. Each milestone has a working plan in `.agents/`, deleted when the milestone closes.
+- **Q10, shipping:** one pull request into `main` per milestone, from a `feat/` branch, with its measured tests. The agent never merges. Each milestone has a working plan in `.agents/`, deleted when the milestone closes. **How G1 and G2 landed (2026-10-24):** their pull requests (#8, #9) were stacked on the previous milestone's branch and merged into those branches, which were then deleted, so only G0 (#7) reached `main`. G1 and G2 go into `main` in one pull request with the docs cleanup of 2026-10-24. From G3, each milestone's pull request targets `main` directly.
 
 ## 1. Goal
 
@@ -76,7 +76,7 @@ The roadmap's invariants (§1A) bind this epic.
 - **Numbers live in the session's tuning** (`EconomyTuning` or a tuning beside it), never as literals.
 - **Hazards and rare salvage are map data** on sectors and nodes in `MapDefinition`; Floor 1 grows by one or two sectors beyond the frontier.
 - **Durations are in ticks;** arrivals, hazard checks and injuries use the session's seeded random numbers.
-- **The planner has room:** 36 of its 64 facts are used.
+- **The planner has room:** 39 of its 64 facts are used (`StateFact` 0–38; G1 added `HasLeftOutpost`).
 - **New state is saved by its owner** (health, gear wear, drifters, the guild, wages, parties, expeditions in progress), checked by the round-trip validators, with the save format's version raised when a saved record changes shape.
 - **The golden hashes change once per behaviour change, on purpose,** re-recorded in their own commit in .NET and in Unity.
 - **Unity stays a check, not a view:** while Unity exists, a core change still passes its PlayMode suite and golden check.

@@ -65,7 +65,7 @@ flowchart TD
 ```
 
 ### Strict Command Pattern Adherence
-In strict accordance with the project's autonomous architecture guidelines ([`.agents/rules/autonomous-architecture.md`](../../.agents/rules/autonomous-architecture.md)):
+In strict accordance with the project's autonomous architecture guidelines (then `.agents/rules/autonomous-architecture.md`, retired 2026-10-24; today [`AGENTS.md`](../../AGENTS.md)):
 - **Zero Direct State Mutation**: UI controls never alter simulation structs or engine state directly.
 - **Influence Enqueuing**: All player actions are serialized into immutable `InfluenceEvent` command structs and enqueued onto `IPlayerInterventionService`.
 - **Deterministic Tick Processing**: `SimulationManager.Tick()` drains the queue synchronously at the start of each simulation tick, ensuring thread-safe state mutations, escrow accounting, and event logging.
@@ -75,29 +75,29 @@ In strict accordance with the project's autonomous architecture guidelines ([`.a
 ## 3. Implemented Components & Deliverables
 
 ### Component 1: Zero-Allocation UI Pooling Utility (`Simpiens.UI.Pooling`)
-- [`VisualElementPool.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/Pooling/VisualElementPool.cs):
+- [`VisualElementPool.cs`](../../Assets/Scripts/UI/Pooling/VisualElementPool.cs):
   - Generic UI Toolkit element recycling utility: `VisualElementPool<TData, TElement> where TElement : VisualElement`.
   - Lazily expands pooled elements when incoming data exceeds capacity.
   - Automatically manages element visibility (`display: Flex` vs `display: None`) and bindings without rebuilding the visual tree.
   - Eliminates garbage collection pressure on high-frequency (10 Hz) refresh loops.
 
 ### Component 2: Sector Exploration & Shroud Service (`Simpiens.UI.Zones`)
-- [`FacilityZone.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/Zones/FacilityZone.cs): Added `IsExplored` property and `WithExplored(bool explored)` immutable copy helper.
-- [`IFacilityZoneService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/Zones/IFacilityZoneService.cs) & [`FacilityZoneService.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/Zones/FacilityZoneService.cs):
+- [`FacilityZone.cs`](../../Assets/Scripts/UI/Zones/FacilityZone.cs): Added `IsExplored` property and `WithExplored(bool explored)` immutable copy helper.
+- [`IFacilityZoneService.cs`](../../Assets/Scripts/UI/Zones/IFacilityZoneService.cs) & [`FacilityZoneService.cs`](../../Assets/Scripts/UI/Zones/FacilityZoneService.cs):
   - Manages dynamic sector exploration state (`HashSet<int> _exploredZoneIds`).
   - Outpost core sectors (0 through 5) initialize as explored; peripheral wilderness sectors (6+) start shrouded.
   - Exposes `IsSectorExplored(int zoneId)`, `SetSectorExplored(int zoneId, bool explored)`, and `SetAllSectorsExplored(bool explored)`.
 
 ### Component 3: UXML & USS Layout Updates (`Assets/Resources/UI/`)
-- [`FacilityDashboard.uxml`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Resources/UI/FacilityDashboard.uxml):
+- [`FacilityDashboard.uxml`](../../Assets/Resources/UI/FacilityDashboard.uxml):
   - **Top Navigation HUD**: Added `treasury-gold-label`, `provisions-stock-label`, `salvage-stock-label`, `bounties-active-label`, `btn-merchant-terminal`, and `btn-bounty-board`.
   - **Merchant Terminal Modal Overlay** (`merchant-terminal-overlay`): Outpost stall status, treasury balance, inventory readouts, interactive sliders for Ration sell price, Iron Ore buy price, and Herb buy price, live value readouts, and `btn-apply-prices`.
   - **Bounty Board Modal Overlay** (`bounty-board-overlay`): Two-column layout featuring active contract list (`bounties-scroll-list`), count badge, and a contract creation form with type dropdown, sector selector, item dropdown, quantity slider, gold reward slider, duration slider, and `btn-post-bounty`.
-- [`FacilityDashboard.uss`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Resources/UI/FacilityDashboard.uss):
+- [`FacilityDashboard.uss`](../../Assets/Resources/UI/FacilityDashboard.uss):
   - Styled economic HUD metric pills (`.hud-gold`, `.hud-stock`, `.hud-bounties`), navigation buttons, modal windows, sliders, shrouded sector cards (`.sector-card-shrouded`, `.shroud-badge`), and bounty contract cards (`.bounty-card`, `.bounty-badge-open`, `.bounty-badge-claimed`, `.bounty-badge-cancelled`).
 
 ### Component 4: Dashboard Presenter Binding (`Simpiens.UI`)
-- [`FacilityDashboardPresenter.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/UI/FacilityDashboardPresenter.cs):
+- [`FacilityDashboardPresenter.cs`](../../Assets/Scripts/UI/FacilityDashboardPresenter.cs):
   - Integrated `IPlayerInterventionService` for command dispatches.
   - Linked top economic HUD labels to `_simulationManager.ActiveStalls` and `_simulationManager.ActiveBounties`.
   - Bound price sliders to `UpdateStallPrices` influence events.
@@ -107,12 +107,12 @@ In strict accordance with the project's autonomous architecture guidelines ([`.a
   - Enhanced sector list rendering with shroud badges and descriptions for unmapped regions.
 
 ### Component 5: Simulation Startup Seeding (`Simpiens.Testing.Environment`)
-- [`SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs):
+- [`SwarmSpawner.cs`](../../Assets/Scripts/Core/Session/SwarmSpawner.cs):
   - Automatically seeds an Outpost `TradeStallData` at Central Corridor (`Vector2.zero`) with 250 Treasury Gold, 50 Rations, 10 Iron Ore, and 10 Medicinal Herbs.
   - Seeds initial sample contracts (`GatherResource` for Iron Ore and `ScoutSector` for Wilderness) for immediate interactive verification.
 
 ### Component 6: Domain Validation Suite (`Simpiens.Testing.UI`)
-- [`BountyTerminalValidator.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/UI/BountyTerminalValidator.cs):
+- [`BountyTerminalValidator.cs`](../../Assets/Scripts/Testing/UI/BountyTerminalValidator.cs):
   - Automated test suite validating all 6 core domain invariants:
     1. `ValidatePriceUpdateInfluenceDispatch`: Verifies price update command execution through the intervention pipeline.
     2. `ValidateBountyPostingAndEscrow`: Verifies contract registration, gold escrow deduction from stall treasury, and chronicle logging.
@@ -120,9 +120,9 @@ In strict accordance with the project's autonomous architecture guidelines ([`.a
     4. `ValidateSectorShroudTracking`: Verifies sector fog of war toggling and bulk exploration updates.
     5. `ValidateZeroAllocationElementPool`: Verifies 1,000 UI sync cycles produce **0 bytes GC heap allocation**.
     6. `ValidateDefensiveNullSafety`: Verifies presentation operations safely no-op when dependencies are null.
-- [`SetupFacilityUIAsset.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/Editor/SetupFacilityUIAsset.cs): Added Editor MenuItem `Simpiens/UI Toolkit/Run Bounty Terminal Validator`.
-- [`AppBootstrapper.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/AppBootstrapper.cs): Registered `BountyTerminalValidator` in VContainer container.
-- [`SwarmPlayModeTests.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Tests/PlayMode/SwarmPlayModeTests.cs): Added NUnit test `Scenario_BountyTerminal_AllDomainValidationTestsPass`.
+- [`SetupFacilityUIAsset.cs`](../../Assets/Scripts/Core/Editor/SetupFacilityUIAsset.cs): Added Editor MenuItem `Simpiens/UI Toolkit/Run Bounty Terminal Validator`.
+- [`AppBootstrapper.cs`](../../Assets/Scripts/Core/AppBootstrapper.cs): Registered `BountyTerminalValidator` in VContainer container.
+- [`SwarmPlayModeTests.cs`](../../Assets/Tests/PlayMode/SwarmPlayModeTests.cs): Added NUnit test `Scenario_BountyTerminal_AllDomainValidationTestsPass`.
 
 ---
 

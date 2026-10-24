@@ -1,17 +1,17 @@
-# The Outpost Economy Model (Milestone 1)
+# The Outpost Economy Model
 
 - **Owner:** review §3.3 / [ROADMAP §3A #10a](ROADMAP.md#3a-architecture-review-remediation-tracker). Status is owned by the roadmap.
-- **Evidence:** [Epic 9 §8](epics/epic-9.md).
-- **Numbers:** one `EconomyTuning` per session (`Assets/Scripts/Simulation/Economy/EconomyTuning.cs`, with `SupplyTuning` nested). The Garden is map data (`Floor1Layout`).
-- **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15.
+- **Evidence:** [Epic 9 §8](epics/epic-9.md) (Milestone 1); [Epic 10 §4 and §7](epics/epic-10.md) (drifters, glowstone, the bands since).
+- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../Assets/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning` and `DrifterTuning`). The Garden and the hazard sectors are map data (`Floor1Layout`).
+- **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15. Extended by Epic 10: drifters (G1) and glowstone (G2).
 
 ## 1. The loop in one paragraph
 Crawlers harvest ore and herbs and sell them to the player's stall. They spend that gold on stall rations or eat free from the Garden. The caravan visits every minute:
-1. it buys a fixed quota of the stall's salvage at a market price (the main way new gold enters);
+1. it buys a fixed quota of the stall's salvage at a market price (the main way new gold enters), glowstone from the hazard sectors at a premium since Epic 10 G2;
 2. the stall pays its upkeep (the main way gold leaves);
 3. the caravan sells the stall wholesale rations.
 
-The player sets three prices (rations, ore, herbs) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
+The player sets four prices (rations, ore, herbs, and glowstone since Epic 10 G2) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
 
 **Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
 
@@ -19,7 +19,7 @@ The player sets three prices (rations, ore, herbs) and posts bounties. Each craw
 | Flow | Name | Size | Bound |
 | :--- | :--- | :--- | :--- |
 | Faucet | `InitialSeed` | stall treasury 250g + 15g per crawler | once, at tick 0 |
-| Faucet | `CaravanSalvageSales` | 2 ore × 24g + 2 herbs × 30g per visit | at most 108g a minute (`SupplyTuning.MaxSalvagePaymentPerVisit`) |
+| Faucet | `CaravanSalvageSales` | 2 ore × 24g + 2 herbs × 30g per visit | 108g a visit for ore and herbs; with glowstone's row below, `SupplyTuning.MaxSalvagePaymentPerVisit` is 248g |
 | Sink | `OutpostUpkeep` | 80g per visit | fixed; a stall that can't pay goes into arrears |
 | Sink | `SupplyCaravan` | 2g per wholesale ration, topping stock up to 50 | as much as the stall can pay for (partial restocks) |
 | Faucet | `CaravanSalvageSales` (glowstone) | up to 2 glowstone × 70g per visit (Epic 10 G2); the stall pays crawlers 45g | six nodes in the hazard sectors, one unit each, regrowing in 10 minutes |
@@ -63,11 +63,11 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 ## 7. Pace targets (D5), asserted by the soak
 `scripts/run-economy-soak.sh` runs 30 sim-minutes for each of 3 seeds; each profile is set by a price command at tick 0. `EconomySoakScenario.AssertPace` checks every run against its profile's band.
 
-| Profile | Prices (ration / ore / herb) | Band (per run, at 30 min) | Measured 2026-10-15 (3 seeds) |
+| Profile | Prices (ration / ore / herb) | Band (per run, at 30 min) | Measured 2026-10-24, headless (3 seeds; Unity identical at Epic 10 G2) |
 | :--- | :--- | :--- | :--- |
-| Fair | 15 / 20 / 25 | treasury 1,000–2,200g since Epic 10 G2 (was 375–875g); trust up for ≥ 8 of 12; 0 starving episodes | 546–771g; trust up 9–10; 0 starving |
-| Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −3 to −17; treasury 0–216g, below fair on every seed |
-| Generous | 5 / 35 / 40 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10; peak trust up 12; 0 starving |
+| Fair | 15 / 20 / 25 | treasury 1,000–2,200g since Epic 10 G2 (was 375–875g; the re-set awaits the producer's look); trust up for ≥ 8 of 12; 0 starving episodes | 1,545–1,594g; trust up 11–12; 0 starving (2026-10-15, before Epic 10: 546–771g) |
+| Greedy | 30 / 10 / 12 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −2.5 to −0.8 at 30 min; treasury 0g at 30 min on every seed |
+| Generous | 5 / 35 / 40 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10 on every seed; trust up 11–12; 0 starving |
 
 - **Why greed paid nothing before drifters:** the economy was closed. Without an outside buyer, greedy prices only shrank the trade that fills the caravan's quota. Since Epic 10 G1 drifters bring outside gold: drifters leave gold behind on every soak seed (their purses exceed what they take away), and a slightly greedy player (rations 20, ore 18, herbs 22: the soak's `keen` profile) ends the 30 minutes richer than the same player in a closed outpost over the soak's seeds (`dotnet test`: `AKeenPlayerDoesBetterWithDrifters`; `simpiens soak --profile keen [--closed]`). Measured 2026-10-23, headless: 2,316g against 2,154g summed (886 against 796, 652 against 652, 778 against 706); drifters left 139g, 35g and 86g behind. Per seed the comparison is noisy: a run with drifters is a different run of a chaotic day.
 - **The fair band since glowstone (Epic 10 G2, 2026-10-23):** the hazard sectors' glowstone is new money by design (the caravan's premium); the fair player ends at 1,545–1,594g, the same in Unity and headless, so the band became 1,000–2,200g. Wages (G4) are the cost meant to meet it. Measured before G2, with drifters: 768–831g.
@@ -75,11 +75,11 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
 - **The regular suite** asserts the fair case over 15 minutes: `OutpostLifecycleScenario` checks that trust rises for ⅔ of crawlers and nobody starves.
-- **Headless (.NET 10, 2026-10-17):** `simpiens soak` and `dotnet test` assert the same bands without Unity, all 9 runs in about 4 s. Measured: fair 664–768g, trust up 8–10, 0 starving; greedy trust up 0, mean −4.6 to −12.6, treasury 0–342g, below fair on every seed; generous broke by minute 10, peak trust up 12. The numbers differ from Unity's because Mono rounds some float expressions differently (epic CORE §6 F1); both runtimes are inside every band.
-- **Across seeds (headless sweep, 2026-10-17):** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on 16 of 23 seeds: 5 seeds have a crawler starving (hunger ≥ 95 for 300+ ticks) and 2 a crawler that never closes a cycle. Unity agrees on seed 11 (two crawlers starve there too). Only the default seed is asserted. Open: epic CORE §6 F2.
+- **Headless (.NET 10, since 2026-10-17):** `simpiens soak` and `dotnet test` assert the same bands without Unity, all 9 runs in about 4 s. Until Epic 10 G2 the numbers differed from Unity's, because Mono rounded some float expressions differently (epic CORE §6 F1); since G2's rounding fixes the 9 runs end on identical numbers in both runtimes.
+- **Across seeds:** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on all 23 gate seeds since Epic 10 G0, and `dotnet test` asserts it (`OutpostWatch.GateSeeds`). On 2026-10-17 it passed on 16 of 23 (epic CORE §6 F2, resolved by G0: crawlers that couldn't move, not a food shortage). Wider sweeps leave a few trust shortfalls (Epic 10 F3).
 
 ## 8. Deferred
 - ~~**Drifters** (outside buyers and churn): Milestone 2.~~ Delivered by Epic 10 G1 (2026-10-23): §1, §2, §7.
-- **Gear, wear and gear-gated scarcity:** Epic 10.
-- **Bounty fairness and Guild recruitment thresholds:** Milestone 2.
+- **Gear, wear and gear-gated scarcity:** Epic 10 G3.
+- **Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).
 - **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.
