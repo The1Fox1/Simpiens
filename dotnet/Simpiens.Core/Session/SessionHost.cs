@@ -20,7 +20,7 @@ namespace Simpiens.Core.Session
     /// resource nodes, bunks, hearths), hands the rest (agents, relationships, groups, stalls, seeded bounties) to the
     /// session definition, ticks every crawler after each simulation tick, and captures and restores the whole session.
     /// Every respawn starts from tick 0 with a reset id allocator, so the same seed gives the same world. Views follow
-    /// its events (<c>SwarmSpawner</c> in Unity); a headless host uses it as it is. Main thread.
+    /// its events (the client captures its frames on <see cref="TickCompleted"/>); a headless host uses it as it is. Main thread.
     /// </summary>
     public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable
     {

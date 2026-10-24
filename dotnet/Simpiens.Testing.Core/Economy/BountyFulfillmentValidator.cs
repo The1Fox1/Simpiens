@@ -17,7 +17,7 @@ namespace Simpiens.Testing.Economy
     /// <summary>
     /// Automated headless domain validation suite for Epic 9 Slice 3:
     /// The Public Bounty Board & Player Intervention Pipeline.
-    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
+    /// Runs as a test (ValidatorTests), never at boot.
     /// </summary>
     public class BountyFulfillmentValidator
     {

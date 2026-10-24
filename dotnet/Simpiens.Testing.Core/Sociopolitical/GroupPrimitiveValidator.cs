@@ -11,7 +11,7 @@ namespace Simpiens.Testing.Sociopolitical
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 1:
     /// Identity Tags & The Generic Group Primitive.
-    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
+    /// Runs as a test (ValidatorTests), never at boot.
     /// </summary>
     public class GroupPrimitiveValidator
     {

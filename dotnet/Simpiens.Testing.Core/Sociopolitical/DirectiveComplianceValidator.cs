@@ -16,7 +16,7 @@ namespace Simpiens.Testing.Sociopolitical
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 2:
     /// Collective Directives & Compliance/Defiance Dynamics.
-    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
+    /// Runs as a test (ValidatorTests), never at boot.
     /// </summary>
     public class DirectiveComplianceValidator
     {

@@ -2,7 +2,7 @@ namespace Simpiens.Simulation.Spatial
 {
     /// <summary>
     /// Shared pawn navigation dimensions. The motor (SimulationManager), the static grid rasterizer
-    /// (SpatialHashGrid) and the PlayMode anomaly detector must agree on these, or "free" cells can still overlap walls.
+    /// (SpatialHashGrid) and the anomaly detector (Simpiens.Hosting) must agree on these, or "free" cells can still overlap walls.
     /// </summary>
     public static class NavConstants
     {

@@ -18,7 +18,7 @@ namespace Simpiens.Testing.Economy
     /// <summary>
     /// Automated domain validation suite for Epic 9 Slice 2:
     /// The Trade Stall & Commercial Exchange.
-    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
+    /// Runs as a test (ValidatorTests), never at boot.
     /// </summary>
     public class TradeTransactionValidator
     {

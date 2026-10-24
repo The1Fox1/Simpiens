@@ -7,8 +7,9 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// Epic CORE's Phase 1 gate: the simulation on .NET 10 (CoreCLR) reproduces, sample for sample, the golden world
-    /// hashes Unity (Mono) recorded in Baselines/golden-world-hash.txt. Every seed in the file is checked.
+    /// The simulation reproduces, sample for sample, the golden world hashes in Baselines/golden-world-hash.txt. Every
+    /// seed in the file is checked. (Epic CORE's Phase 1 gate: Unity recorded them until it was removed in Epic CLIENT
+    /// M2.9; <c>simpiens golden record</c> re-records them now.)
     /// </summary>
     public class GoldenWorldHashTests
     {
@@ -17,14 +18,14 @@ namespace Simpiens.Core.Tests
 
         [Theory]
         [MemberData(nameof(BaselineSeeds))]
-        public void HeadlessRunReproducesUnitysGoldenHashes(ulong seed)
+        public void HeadlessRunReproducesTheGoldenHashes(ulong seed)
         {
             var baseline = GoldenWorldHash.Read(Repo.GoldenBaseline)[seed];
             var samples = HeadlessRun.GoldenSamples(seed);
 
             Assert.Equal(GoldenWorldHash.HorizonTicks / GoldenWorldHash.SampleEveryTicks + 1, samples.Count);
             string difference = GoldenWorldHash.Compare(baseline, OutpostSession.SessionId, samples, out long tick);
-            Assert.True(difference == null, $"Seed {seed}: first difference from Unity's golden hashes at t{tick}: {difference}");
+            Assert.True(difference == null, $"Seed {seed}: first difference from the golden hashes at t{tick}: {difference}");
         }
 
         [Fact]

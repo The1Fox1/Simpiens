@@ -12,7 +12,7 @@ namespace Simpiens.Testing.Sociopolitical
     /// <summary>
     /// Automated domain validation suite for Epic 8 Phase 3:
     /// Organic Emergence, Leadership Succession & Schisms.
-    /// Runs as a test (SwarmPlayModeTests in Unity), never at boot.
+    /// Runs as a test (ValidatorTests), never at boot.
     /// Uses decoupled ISocialAgent for 100% pure headless C# test isolation without Unity GameObject dependencies.
     /// </summary>
     public class SuccessionValidator

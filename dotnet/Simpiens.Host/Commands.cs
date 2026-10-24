@@ -29,8 +29,8 @@ namespace Simpiens.Host
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
       Compares headless runs with the golden world hashes (the default: every seed in the file).
   simpiens golden record --out PATH [--seeds 20261009]
-      Writes headless runs' hashes in the baseline format (diagnosis; the committed file is re-recorded with
-      scripts/golden-hashes.sh).
+      Writes runs' hashes in the baseline format. Re-record the committed file only for a deliberate behaviour change,
+      in its own commit: --out Baselines/golden-world-hash.txt --seeds 424242,20261009,20261010.
 
 Logging: SIMPIENS_LOG=""Default=Info;Planning=Debug"" SIMPIENS_LOG_FILE=Logs/sim.log (or -simlog ...), to standard error.
 Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line.";

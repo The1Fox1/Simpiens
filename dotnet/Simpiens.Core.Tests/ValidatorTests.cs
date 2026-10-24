@@ -3,8 +3,8 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// The engine-free domain validators (Simpiens.Testing.Core), the same ones the Unity suite runs in
-    /// SwarmPlayModeTests. A validator throws on its first failed assertion; its log is the test output.
+    /// The engine-free domain validators (Simpiens.Testing.Core). A validator throws on its first failed assertion; its
+    /// log is the test output.
     /// </summary>
     public class ValidatorTests
     {
