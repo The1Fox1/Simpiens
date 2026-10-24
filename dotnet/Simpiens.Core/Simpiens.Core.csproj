@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The engine-free simulation core. It still builds for netstandard2.1 at C# 10, the level Unity compiled it at
-       until Unity was removed (Epic CLIENT M2.9); lifting the cap is a follow-up of its own. -->
+  <!-- The engine-free simulation core. It references no engine, but the client references it, so it targets the
+       client's .NET (Directory.Build.props). -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Simpiens.Core</AssemblyName>
     <RootNamespace>Simpiens</RootNamespace>
     <!-- Always optimized, so the zero-allocation validators check the code as it ships: a Debug build turns every
