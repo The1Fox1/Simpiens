@@ -81,7 +81,7 @@ Rather than a simplistic 0–100 "friendship" slider, relationships are modeled 
 ### Phase 1: The Social Affinity Matrix & Relational Dynamics [COMPLETED]
 - **Zero-Allocation Data Layer**:
   - `AffinityRecord`: 16-byte unmanaged struct (`Warmth`, `Trust`, `Fear`, `Respect`, `InteractionCount`, `LastInteractionTick`).
-  - `AffinityMatrix`: Sparse, on-demand dictionary in [`AgentMemory.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Memory/AgentMemory.cs). Unseen agents consume 0 memory.
+  - `AffinityMatrix`: Sparse, on-demand dictionary in [`AgentMemory.cs`](../../Assets/Simpiens.Core/Cognition/Memory/AgentMemory.cs). Unseen agents consume 0 memory.
 - **Relational Updates & Ledger Binding**:
   - Mutual gossip updates: Successful knowledge exchange awards $+3\text{ Warmth}$, $+2\text{ Trust}$, $+1\text{ Respect}$.
   - Temporal regression: Extreme scores slowly regress toward neutral over long time horizons ($1,000\text{ ticks}$).

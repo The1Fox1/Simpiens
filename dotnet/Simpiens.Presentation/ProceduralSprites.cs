@@ -17,6 +17,7 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _resourceSprite;
         private static readonly PixelSprite _oreVeinSprite;
         private static readonly PixelSprite _herbPatchSprite;
+        private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -246,6 +247,17 @@ namespace Simpiens.Presentation
 
             // 15. Selection ring (Epic CLIENT M1.5): generated, not a pattern, as Unity's CameraController made it
             _selectionRing = CreateRing();
+
+            // 15. Glowstone (Epic 10 G2): the hazard sectors' rare salvage, a tinted bush glowing amber and cyan, made last so
+            // every earlier sprite keeps its index
+            var glowPalette = new Dictionary<char, Rgba32>
+            {
+                { '.', Rgba32.Clear },
+                { '#', new Rgba32(46, 16, 101, 255) },
+                { 'G', new Rgba32(251, 191, 36, 255) },
+                { 'R', new Rgba32(103, 232, 249, 255) }
+            };
+            _glowstoneSprite = CreateSprite(PatternBerryBush, glowPalette, "Resource_Glowstone");
         }
 
         private static PixelSprite CreateRing()
@@ -276,6 +288,7 @@ namespace Simpiens.Presentation
             {
                 case ItemType.IronOre: return _oreVeinSprite;
                 case ItemType.MedicinalHerb: return _herbPatchSprite;
+                case ItemType.Glowstone: return _glowstoneSprite;
                 default: return _resourceSprite;
             }
         }

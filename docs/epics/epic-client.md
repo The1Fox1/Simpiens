@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: PAUSED (2026-10-23): the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). **What exists**, merged into `main` as PR #6 on 2026-10-23: M0 and M1; M2.0–M2.7 (parity with Unity's game); the text cleanup, the client seams, M3 (isometric and cutscenes) and the architecture review's findings. **What does not:** the producer's side-by-side and Unity's removal (M2.8, M2.9), M4 (Android, deferred) and M5–M7. The producer's look at M3 and at the header's pause and speed is still open. Epic 10's new screens are built in this client. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: PAUSED (2026-10-23): the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). **What exists**, merged into `main` as PR #6 on 2026-10-23: M0 and M1; M2.0–M2.7 (parity with Unity's game); the text cleanup, the client seams, M3 (isometric and cutscenes) and the architecture review's findings. **Producer sign-offs (2026-10-24):** the side-by-side with Unity, the look at M3, the motion between ticks and the header's pause and speed passed; the producer: "we can officially move away from Unity". **What does not exist:** Unity's removal (M2.8, M2.9: unblocked, see §4), M4 (Android, deferred) and M5–M7. Epic 10's new screens are built in this client. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -44,7 +44,8 @@ The producer chose KNI on 2026-10-18 for its responsive maintainer and its moder
 - **M4 deferred (2026-10-22):** Android waits until later. Its plan stays in Claude Docs ("Plan: M4 Android (Epic CLIENT)"). The architecture review's open findings come first; they are done (§3).
 - **Into `main` before M4 (2026-10-23):** the client merges into `main` without waiting for Android, in one pull request from `feat/client-architecture` (everything on `main-kni`, and the architecture work). `main` is the main branch again; `main-kni` retires with the merge.
 - **Paused (2026-10-23):** after PR #6 merged, the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). Its new screens (the guild roster, the expedition tracker) are built in this client.
-- **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone).
+- **M2 (2026-10-18):** two pull requests, the first at parity and the second removing Unity. The M2 plan's defaults are approved (Gum's built-in visuals in Unity's palette; Unity's layout first; the Definition of Done in `dotnet/` once Unity is gone). The parity work went into `main` with PR #6 instead.
+- **Sign-offs (2026-10-24):** the producer's side-by-side with Unity passed, as did the looks at M3, at the motion between ticks and at the header's pause and speed. "We are at a point where we can officially move away from Unity": M2.8 and M2.9 are unblocked, to be scheduled.
 - **Art and performance:**
   - Art starts basic and grows to at most 64×64 px sprites.
   - The UI style and the art designer are still to be decided.
@@ -80,7 +81,7 @@ A KNI game client draws the simulation for players, replacing Unity, and the sim
 
 The developers' map designer follows M2 as its own milestone.
 
-**The agent's current authority covers M0 and M1.** M2 and later wait for the producer.
+**Done:** M0, M1, M2.0–M2.7 and M3 (§3). **Remaining:** M2.8–M2.9 (unblocked 2026-10-24), M4–M7 and the map designer (§4).
 
 ---
 
@@ -338,7 +339,11 @@ flowchart TB
 
 ## 4. Deferred
 
-- M2 to M7 and the map designer: they wait for the producer (the agent's authority covered M0 and M1).
+- **M2.8 and M2.9, Unity's removal** (unblocked by the producer's sign-off, 2026-10-24; to be scheduled). The scope, from the M2 plan:
+    - **M2.8, Unity-only coverage moves to .NET.** Every Unity PlayMode scenario without a .NET twin gets one: `BunkRestScenario`, `PriceResponseScenario`, `PenCanaryScenario`; `SessionCaptureScenario` and `SessionRestoreScenario` (live); `ResourceContentionScenario`, `SwarmNavigationScenario` and `DynamicChaosScenario`, for which the `VisualAnomalyDetector` and the `EdgeCaseInjector` are ported to engine-free code over `WorldEntity` (with the client's `CrawlerAppearance` in place of `AgentView` for state thrashing), together with the detector's validator; `PopulationScalingProbe`, as an explicit test or a `simpiens` command. Dropped, with the reason recorded: `EntityIdCompatibilityValidator`, which proves bit-compatibility with `UnityEngine.GUID` and means nothing without Unity. (The Definition of Done in `dotnet/` is already ROADMAP §1B since 2026-10-23.)
+    - **M2.9, Unity removed,** in its own commit. The core and the test harness move from `Assets/` into `dotnet/` (`git mv`, without `.meta` and `.asmdef` files), and the projects stop globbing from `Assets/`. Deleted: `Assets/`, `ProjectSettings/`, `Packages/`; the Unity scripts (`run-playmode-tests.sh`, `golden-hashes.sh`, `run-economy-soak.sh`, `run-persistence-smoke.sh`, and `update-memorypack.sh`, since .NET gets MemoryPack from NuGet); Unity's `.gitignore` entries. The golden baselines stay (.NET reproduces them); Epic CORE's F1 ends with one runtime. The C# 10 and netstandard2.1 cap stays for that commit, so it is a pure move; lifting it is a follow-up. Docs: `AGENTS.md` rewritten for a .NET-only repo; the roadmap's rules that name Unity (§1A, §1B, §2), Track B and Epic CORE's notes; `curentfocus`; the history log.
+    - **Gate:** `dotnet test`, the golden check, and the MonoGame and Android builds stay green, with every DoD scenario still covered; M2.9 starts only when each Unity test has a .NET twin or a recorded reason.
+- M4 to M7 and the developers' map designer: they wait for the producer.
 - **The story:** which cutscenes exist, what they say, and what starts a hard cutscene in play. Owned by the narrative work (producer P3); M3 ships the mechanisms and Debug-only demonstrations.
 - **Cutscene art:** real portraits and backdrops (M7). Text boxes at screen density (M6).
 - Isometric's real art (64×64, possibly 64×32 tiles), and the sprite catalogue as data with a packer (review R5): M7.
@@ -349,19 +354,12 @@ flowchart TB
 - The comments' references to Unity's code (S5): with Unity's removal (M2.9).
 - Sound: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
-- The removal of Unity: M2, by producer decision.
 
 ---
 
 ## 5. Risks
 
-- **Open, person-gated: the producer's side-by-side look** at the client beside Unity, the gate of M1 and of M2.7 (2026-10-18). Run the client with `dotnet run --project dotnet/Simpiens.Desktop` (Debug, with the Dev Map switch) or `-c Release`. The agent compared every render with the ported Unity logic, but never with Unity's own screen.
-- **Open, person-gated: the producer's look at M3** (2026-10-21). Run `dotnet run --project dotnet/Simpiens.Desktop` (Debug: the demonstrations on):
-    - isometric, the default; V switches to top-down;
-    - the wall styles: C cycles cutaway, full and low;
-    - F9 plays the hard cutscene;
-    - the dynamic scenes start in play: the scout entering the deep seam early, then the first gossip.
-- **Open, person-gated: the producer's look at interpolated motion** (client seams, 2026-10-21): crawlers and the followed camera now move between ticks, one tick (100 ms of simulated time) behind the simulation. Watch them at 1× and 10× with `dotnet run --project dotnet/Simpiens.Desktop`.
+- **Closed 2026-10-24: the producer's person-gated looks** (the side-by-side with Unity, the gate of M1 and M2.7; M3's isometric view, wall styles and cutscenes; the motion between ticks; the header's pause and speed) all passed.
 - **The render tolerance hides small changes** (F9) on machines other than the pinned image. In the image (`scripts/test-client-in-container.sh`, and CI) renders must match exactly; elsewhere, use the picture pins to tell a real change from rounding.
 - **The pinned image depends on Ubuntu's snapshot service** (snapshot.ubuntu.com) and dot.net's install script to build. If either is down, CI's client tests can't run until it is back. A registry with a pushed image would remove the dependency; it needs an account.
 - **Fonts are baked on Linux:** the font golden compares a FreeType bake with the committed atlases. A bake on another system may differ by a pixel; if that happens, re-commit deliberately or move the baker to StbTrueType, which is managed and identical everywhere.
@@ -395,6 +393,7 @@ See the proposal's risk table. These matter for M0 and M1:
     - Rerun with `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*FrameTime*" -explicit only -showLiveOutput`; `LIBGL_ALWAYS_SOFTWARE=0` measures the GPU.
     - Phones aren't measured yet (M4).
 - **F3: an offscreen game never has focus** (M1.7). XNA then naps `InactiveSleepTime` (20 ms) every frame, and doesn't read input (the game reads devices only while active). The tests set the nap to zero, which halved the client suite's time. The devices are exercised by a direct `ClientInput` test instead.
+- **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 - **F5: KNI can report a negative frame time** (M2.3). Seen offscreen from `RunOneFrame`: −0.5 ms. It froze the dashboard's refresh timer, so the game, the simulation driver and the dashboard clamp it to zero.
 - **F6: a paused clock counts ticks it doesn't simulate** (M2.4). `ISimulationClock.AdvanceTicks` increments the tick while `SimulationManager` skips paused ticks, so `HeadlessSimulation.Step` on a paused game moves the counter but not the world. This is core behaviour and left as it is; tests step with the clock running (`UiDriver.Ticks`).
 - **F7: frame time with the dashboard** (M2.7, `FrameTimeProbe`, explicit tests, the dashboard refreshed every frame where the game does it at 10 Hz):
@@ -419,7 +418,6 @@ See the proposal's risk table. These matter for M0 and M1:
     - **The fix:** `SimpiensGame.Restart(options)` starts a new session in the same window and device. The harness restarts a window no running test holds. The suite peaks at about 750 MB and every reference holds on reused windows.
 - **F16: the tick is a small share of the frame** (2026-10-22, `FrameTimings`, llvmpipe, 800×600, a tick every frame). Isometric: the tick 0.10 ms mean (0.20 ms p99) of a 1.41 ms CPU frame; the screens' draw 0.97 ms. Top-down: the tick 0.16 ms (1.0 ms p99) of 2.36 ms. Drawing, not the simulation, is where frame time goes, so moving the simulation to its own thread (review D1's second half) can wait for a measured need.
 - **F17: Gum's update is gated on focus** (2026-10-22). `FormsUtilities.Update` returns at once while `Game.IsActive` is false, so an offscreen test game still needs KNI's private focus flag even with the client's own cursor. Gum's typed `GumService.Cursor` is null once a custom `ICursor` is installed (Gum's documented behaviour); the client reads its own `UiLayer.Cursor`.
-- **F4: KNI registers its platform factories by reflection** (M1.7). The desktop exe prints "GameFactory not found ... Registering ... through reflection" to standard output at start. Registering them explicitly in each platform's entry point would quiet it and avoid reflection, which matters for trimming and AOT on mobile (M4).
 
 ---
 
@@ -432,3 +430,4 @@ See the proposal's risk table. These matter for M0 and M1:
 - 2026-10-22: M4 deferred by the producer; the architecture review's open findings done on `feat/client-architecture`, 16 commits from `9b8c456` to `ff3d81f`, not pushed. A power cut emptied the git objects of step 4.3's first commit; `.git` was repaired from the last sound commit and the same tree committed again after a full re-check. The working plan was deleted at close-out.
 - 2026-10-23: the producer chose to merge the client into `main` before M4, in one pull request from `feat/client-architecture`; `main` is the main branch again and `main-kni` retires with the merge.
 - 2026-10-23: PR #6 merged into `main`; the epic is PAUSED for core gameplay (Epic 10 Part 1).
+- 2026-10-24: the producer signed off the side-by-side with Unity and the open looks, and called the move away from Unity; M2.8–M2.9 are unblocked. The M2 plan (`.agents/client_m2_plan.md`) was deleted; its remaining scope is in §4.

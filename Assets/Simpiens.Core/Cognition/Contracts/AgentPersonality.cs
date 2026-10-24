@@ -19,8 +19,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Values money: pays less, asks more, weighs rewards higher.</summary>
         public float Greed => _greed / 100f;
 
-        /// <summary>Tolerates danger. Reserved for Epic 10 hazards; no consideration reads it yet.</summary>
+        /// <summary>Tolerates danger: who goes into a hazard sector (Epic 10 G2, Vitality.WouldVenture).</summary>
         public float RiskTolerance => _riskTolerance / 100f;
+
+        /// <summary>The same in whole percent, for exact comparisons: a float threshold on a value divided by 100 can round
+        /// differently in Unity's Mono and in CoreCLR (Epic CORE F1).</summary>
+        public int RiskTolerancePercent => _riskTolerance;
 
         /// <summary>Seeks company: socializing and hearth gathering weigh more.</summary>
         public float Sociability => _sociability / 100f;

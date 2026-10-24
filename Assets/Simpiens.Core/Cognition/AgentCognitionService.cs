@@ -400,7 +400,7 @@ namespace Simpiens.Cognition
             }
 
             var intent = result.Intent;
-            if (intent == null) return;
+            if (intent == null || agent.HasLeft) return; // a drifter that walked out while it was deciding
 
             // Set intent tracking so agent waits until it completes
             agent.CurrentIntent = intent;

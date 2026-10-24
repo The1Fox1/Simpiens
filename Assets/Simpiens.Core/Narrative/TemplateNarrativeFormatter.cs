@@ -99,6 +99,18 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ResourceRegrown:
                     return $"A depleted salvage or forage node regrew in {sector}.";
 
+                case ChronicleEventType.DrifterArrived:
+                    return $"{actorA}, a drifter, came in by the Road Gate.";
+
+                case ChronicleEventType.DrifterLeft:
+                    return $"{actorA} moved on by the Road Gate.";
+
+                case ChronicleEventType.CrawlerDowned:
+                    return $"{actorA} was overcome in {sector} and limps home.";
+
+                case ChronicleEventType.CrawlerRecovered:
+                    return $"{actorA} is back on its feet.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

@@ -199,7 +199,8 @@ namespace Simpiens.Testing.Persistence
                 Personality = new AgentPersonality(-0.3f, 0.6f, 0.2f, -0.9f, 0.1f),
                 ScoutReportBountyId = 2,
                 ScoutReportTick = 312u,
-                IsExhaustionCollapsed = true
+                IsExhaustionCollapsed = true,
+                DepartsAtTick = 2750u
             };
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
@@ -219,6 +220,7 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.ActiveGoal == null && fresh.CurrentIntent == null && !fresh.HasActiveIntent && !fresh.IsEvaluating, "A loaded crawler has no work in progress.");
             Assert(fresh.VisualState == Simpiens.Entities.AgentVisualState.Resting, "A collapsed crawler still looks collapsed; otherwise its look starts idle.");
             Assert(fresh.Activity.Cycles == 1 && fresh.Activity.FirstCycleTick == 95, "The activity tally came back.");
+            Assert(fresh.IsDrifter && fresh.DepartsAtTick == 2750u, "A drifter is still a drifter, leaving at the same tick.");
 
             bool refused = false;
             try

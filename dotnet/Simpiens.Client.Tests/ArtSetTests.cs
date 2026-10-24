@@ -52,7 +52,8 @@ namespace Simpiens.Client.Tests
                 var expected = MarkedArt.Piece(item.SpriteIndex);
                 Assert.Equal((expected.Width, expected.Height, expected.PivotX, expected.PivotY), (item.Width, item.Height, item.PivotX, item.PivotY));
             });
-            foreach (int sprite in new[] { 100, 101, 102, 110, 111, 112, 113, 114, 115 }) Assert.Contains(items, i => i.SpriteIndex == sprite);
+            // Floor and wall tiles; Floor 1 has no rock tiles since Epic 10 G2 (the rock became the hazard sectors)
+            foreach (int sprite in new[] { 100, 102, 110, 111, 112, 113, 114, 115 }) Assert.Contains(items, i => i.SpriteIndex == sprite);
 
             var name = scene.Labels.Single(l => l.Kind == LabelKind.Name);
             Assert.True(selection.TryGetCrawlerPosition(out var at));

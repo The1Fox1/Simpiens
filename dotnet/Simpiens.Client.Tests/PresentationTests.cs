@@ -80,7 +80,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(34, ProceduralSprites.All.Count);
+            Assert.Equal(35, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -136,7 +136,8 @@ namespace Simpiens.Client.Tests
         /// <summary>The sprites ported from Unity's AgentSpriteLibrary (M0.2), before the client's own additions.</summary>
         internal const int PortedSpriteCount = 33;
         internal const ulong PortedArtHash = 12981420596316165723UL; // recorded 2026-10-18 (M0.2) from the port of AgentSpriteLibrary
-        internal const ulong PinnedArtHash = 14919380766078513923UL; // recorded 2026-10-18 (M1.5): the port plus the selection ring
+        // Recorded 2026-10-18 (M1.5): the port plus the selection ring; again for Epic 10 G2: the glowstone sprite, made last
+        internal const ulong PinnedArtHash = 7875643926992335447UL;
     }
 
     public class MapTileTests
@@ -192,7 +193,9 @@ namespace Simpiens.Client.Tests
             Assert.Equal((PinnedFloor, PinnedRock, PinnedWalls), (floor, rock, walls));
         }
 
-        internal const int PinnedFloor = 1175, PinnedRock = 384, PinnedWalls = 254; // recorded 2026-10-18 (M0.2)
+        // Recorded 2026-10-18 (M0.2) as 1175, 384, 254; Epic 10 G2 turned the two blocks of rock either side of the lower
+        // wing into the Sump and the Glow Caves, so Floor 1 has no rock tiles any more
+        internal const int PinnedFloor = 1515, PinnedRock = 0, PinnedWalls = 298;
     }
 
     public class TopDownProjectionTests

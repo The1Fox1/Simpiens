@@ -30,13 +30,15 @@ namespace Simpiens.Cognition.Planning.Actions
         /// </summary>
         public override bool IsValid(AgentContext context)
         {
-            bool holdsSalvage = ResourceTargeting.HoldsSellable(context, ItemType.IronOre) || ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb);
+            bool holdsSalvage = ResourceTargeting.HoldsAnySellable(context);
             if (!holdsSalvage) return ResourceTargeting.NearestStallCanBuySalvage(context);
 
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {
                 case ResourceTargeting.StallAccess.Reachable:
-                    return ResourceTargeting.AffordableHeldSalvage(context, stall) != ItemType.None;
+                    // Nothing held that it will take: the plan gathers a kind it still buys first (WorldStateBuilder
+                    // doesn't count refused salvage), so any room will do (Epic 10 G1)
+                    return ResourceTargeting.AffordableHeldSalvage(context, stall) != ItemType.None || ResourceTargeting.NearestStallCanBuySalvage(context);
                 case ResourceTargeting.StallAccess.Unreachable:
                     return false;
                 default:
@@ -90,6 +92,10 @@ namespace Simpiens.Cognition.Planning.Actions
                 else if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
                 {
                     salvageType = ItemType.MedicinalHerb;
+                }
+                else if (ResourceTargeting.HoldsSellable(context, ItemType.Glowstone))
+                {
+                    salvageType = ItemType.Glowstone;
                 }
                 else
                 {

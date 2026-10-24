@@ -25,7 +25,8 @@ namespace Simpiens.Cognition.Planning
             var inv = inventory ?? context.Inventory;
             bool hasFood = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.Ration);
             bool hasTool = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.ToolPickaxe);
-            bool hasSalvage = inv != null && (inv.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb));
+            bool hasSalvage = inv != null && (inv.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.Glowstone))
+                && !ResourceTargeting.StallRefusesHeldSalvage(context);
             bool hasWeapon = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.BasicWeapon);
 
             var state = BuildWorldState(context, hasFood, hasTool);
@@ -60,7 +61,8 @@ namespace Simpiens.Cognition.Planning
                 {
                     hasTool = true;
                 }
-                bool hasSalvage = context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb);
+                bool hasSalvage = (context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.Glowstone))
+                    && !ResourceTargeting.StallRefusesHeldSalvage(context);
                 bool hasWeapon = context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.BasicWeapon);
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasWeapon, hasWeapon);

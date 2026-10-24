@@ -207,7 +207,8 @@ namespace Simpiens.Testing.Persistence
                 ScoutReportBountyId = 2,
                 ScoutReportTick = 88u,
                 IsExhaustionCollapsed = true,
-                CanBuyFoodAtStall = true
+                CanBuyFoodAtStall = true,
+                DepartsAtTick = 4321u
             };
             state.Activity.RecordSalvageHarvest(5u);
             state.Activity.RecordMeal(9u);
@@ -222,6 +223,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.LastGossipTimestamp == 11f && r.LastEvaluatedDirectiveTick == 77u, "Timestamps are captured.");
             Assert(r.ScoutReportBountyId == 2 && r.ScoutReportTick == 88u, "A scout's report is captured.");
             Assert(r.IsExhaustionCollapsed && r.CanBuyFoodAtStall, "Collapse and stall-food knowledge are captured.");
+            Assert(r.DepartsAtTick == 4321u, "A drifter's departure tick is captured.");
 
             TestLog.Log("[PASS] Test 6: a crawler's record copies every saved field.");
         }

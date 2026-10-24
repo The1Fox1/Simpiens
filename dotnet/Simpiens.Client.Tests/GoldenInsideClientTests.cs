@@ -41,6 +41,29 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
+        /// Drifters come and go while the game draws (Epic 10 G1): played frame by frame past a drifter's departure, the
+        /// world view draws the newcomers, and forgets those who walked out, keeping no look for a crawler that is gone.
+        /// </summary>
+        [Fact]
+        public void TheGameDrawsDriftersComingAndGoing()
+        {
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 0);
+            var host = game.Session.Simulation.Host;
+            int left = 0;
+            host.CrawlerDeparted += (runtime, entity) => left++;
+            int frames = 0;
+            while (left == 0)
+            {
+                game.RunOneFrame();
+                Assert.True(++frames <= 120, "no drifter left within 12,000 ticks");
+            }
+            game.RunOneFrame();
+            int pawns = game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            Assert.True(host.DriftersArrived >= 1);
+            Assert.Equal(pawns, game.World.Scene.Appearance.Remembered);
+        }
+
+        /// <summary>
         /// Dynamic scenes write nothing (M3 design D9): with the demonstration scenes armed, their triggers firing and the
         /// scenes playing over the world (the camera directed, bubbles shown), every seed still reproduces the hashes.
         /// </summary>

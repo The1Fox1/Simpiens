@@ -11,6 +11,29 @@ namespace Simpiens.Simulation.World
         SpawnPoint
     }
 
+    /// <summary>What makes a sector dangerous (Epic 10 G2): the environment, never creatures (producer decision Q2).</summary>
+    public enum HazardKind : byte
+    {
+        None = 0,
+        FoulAir = 1,
+        FallingRock = 2
+    }
+
+    /// <summary>A sector's danger: every crawler standing in it loses health at this rate (G3's gear will soften it).</summary>
+    public readonly struct SectorHazard
+    {
+        public readonly HazardKind Kind;
+        public readonly float DamagePerSecond;
+
+        public SectorHazard(HazardKind kind, float damagePerSecond)
+        {
+            Kind = kind;
+            DamagePerSecond = damagePerSecond;
+        }
+
+        public bool IsHazardous => Kind != HazardKind.None && DamagePerSecond > 0f;
+    }
+
     /// <summary>Axis-aligned solid wall geometry in world units.</summary>
     public readonly struct WallRect
     {
@@ -35,9 +58,11 @@ namespace Simpiens.Simulation.World
         public readonly Vec2 Anchor;
         public readonly float AnchorRadius;
         public readonly bool StartsExplored;
+        public readonly SectorHazard Hazard;
 
-        public SectorDefinition(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true)
+        public SectorDefinition(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default)
         {
+            Hazard = hazard;
             Id = id;
             Name = name;
             Description = description;

@@ -15,9 +15,11 @@ namespace Simpiens.Core.Session
         public readonly ushort HerbBuyPrice;
         public readonly ushort HerbStock;
         public readonly uint TreasuryGold;
+        public readonly ushort GlowstoneBuyPrice;
 
-        public StallTerms(ushort rationSellPrice, ushort rationStock, ushort oreBuyPrice, ushort oreStock, ushort herbBuyPrice, ushort herbStock, uint treasuryGold)
+        public StallTerms(ushort rationSellPrice, ushort rationStock, ushort oreBuyPrice, ushort oreStock, ushort herbBuyPrice, ushort herbStock, uint treasuryGold, ushort glowstoneBuyPrice = 0)
         {
+            GlowstoneBuyPrice = glowstoneBuyPrice;
             RationSellPrice = rationSellPrice;
             RationStock = rationStock;
             OreBuyPrice = oreBuyPrice;
@@ -98,7 +100,8 @@ namespace Simpiens.Core.Session
                 herbBuyPrice: terms.HerbBuyPrice,
                 herbStock: terms.HerbStock,
                 treasuryGold: terms.TreasuryGold,
-                interactionRadius: poi.Radius);
+                interactionRadius: poi.Radius,
+                glowstoneBuyPrice: terms.GlowstoneBuyPrice);
             Simulation.RegisterTradeStall(stall);
             _seededStallGold += stall.TreasuryGold;
             _stallCount++;

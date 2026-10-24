@@ -77,7 +77,8 @@ namespace Simpiens.Core.Session
                 rationSellPrice: economy.StallRationPrice, rationStock: economy.StallRationStock,
                 oreBuyPrice: economy.StallOreBuyPrice, oreStock: economy.StallOreStock,
                 herbBuyPrice: economy.StallHerbBuyPrice, herbStock: economy.StallHerbStock,
-                treasuryGold: economy.StallTreasury));
+                treasuryGold: economy.StallTreasury,
+                glowstoneBuyPrice: economy.StallGlowstoneBuyPrice));
 
             // Both seeded bounties go through the same escrow path as player-posted ones.
             // TargetLocation is left default so the simulation derives it from the target sector.

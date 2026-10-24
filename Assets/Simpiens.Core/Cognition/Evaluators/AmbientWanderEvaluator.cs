@@ -40,6 +40,12 @@ namespace Simpiens.Cognition.Evaluators
             Vec2 randomDir = new Vec2(SimMath.Cos(angle), SimMath.Sin(angle));
             Vec2 targetPos = context.Position + randomDir * distance;
 
+            // A point beyond a wall can lie in a hazard sector, a long walk round: only the bold wander there (Epic 10 G2)
+            if (!Vitality.WouldVenture(context) && Vitality.HazardAt(context.Snapshot?.Map, targetPos).IsHazardous)
+            {
+                return new IdleIntent(context.AgentId, duration: 1.5f);
+            }
+
             var pathRequest = new PathRequest
             {
                 StartPosition = context.Position,

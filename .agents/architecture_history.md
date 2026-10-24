@@ -882,3 +882,62 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Deviations:** the working plan was written mid-milestone, after the diagnosis, rather than before it (G0 started as a measurement).
 - **Findings:** F2 resolved. F3: on 4 of seeds 21–120 trust rises for 6–7 of 12 (crawlers who trade early, then socialize); a balance question for G1 and G4.
 - **Verification:** gate seeds 23/23 with no stacking (16/23 before); seeds 21–120: 96/100; `dotnet test` 347/347; the client's 261/261 exactly in the pinned image; golden re-recorded in Unity, 3/3 headless; Unity PlayMode 69/69 (2 explicit skipped); the economy soak 9/9 headless and in Unity.
+
+## 2026-10-23 — Epic 10 G1: drifters
+
+- **Decision (producer Q7, defaults):** the 12 residents stay; strangers come in with their own gold and leave after a stay. Plan `.agents/epic10_g1_plan.md` (deleted at this close-out), branch `feat/epic10-g1` stacked on G0's.
+- **Design:**
+  - **Leaving is a decision, not a teleport.** Past its stay a drifter's `LeaveOutpostGoal` (priority 95, above every need short of starvation) walks it to the nearest spawn point; `SimulationManager.DepartOutpost` sends its gold out as `DrifterDepartures`, reopens a claimed bounty (escrow kept) and frees its bunk; the host removes it at the end of the tick, before views capture the frame, and raises `CrawlerDeparted`.
+  - **The schedule is the host's and is saved** (`SessionSave.Population`); a drifter's `DepartsAtTick` is saved in its record (0 means resident); save format 2.
+  - **Checks that judge "every crawler" judge the residents:** the day, the soak's trust bands. Gold conservation counts every present crawler.
+  - **Tuning by the approved Definition of Done** ("the fair player's soak stays in its band"): purses of 40–80g every two minutes nearly doubled the fair treasury (1,189–1,273g against 375–875g); 20–26g every 3.5 minutes keeps it at 768–831g, with the keen player still richer than closed over the soak seeds. Per seed that comparison is noisy (a different run of a chaotic day), so the test sums it and checks per seed that drifters leave gold behind.
+- **Fixed on the way** (each was a crawler stuck or a borderline in the residents' day once drifters were about): walkers keep right around a crawler in the way (head-on jams in doorways); salvage the stall won't take no longer counts as salvage to sell, so a crawler gathers what it still buys (and gathering prefers that kind); food beyond the 30-unit search distance is still food (a crawler at the Road Gate "arrived" in place every tick); the walk to food stops at 0.7, inside the 0.8 harvest reach, instead of on its edge.
+- **Cross-runtime (Epic CORE F1, narrowed):** the golden seeds parted twice (424242 at t2600, 20261010 at t2700) at borderline distance tests. `Vec2`'s scalar chains now cast to float after every step, which makes Mono round as CoreCLR does and changes nothing on CoreCLR; the drifters' random draws do the same. All three golden seeds match in both runtimes again.
+- **Unity:** `SwarmSpawner` destroys a departed drifter's view (an adaptation to a crawler leaving, not new view work).
+- **Verification:** gate seeds 23/23 with drifters, no stacking; seeds 21–120: 98/100 (F3); `dotnet test` 352/352; the client's 263/263 exactly in the pinned image; golden 3/3 in both runtimes; Unity PlayMode 69/69 (2 explicit skipped); the soak 9/9 headless and in Unity.
+
+## 2026-10-23 — Epic 10 G2: health and hazards
+
+- **Decision (producer Q2, Q3, Q9, defaults):** no combat and no death: the danger is the floor's, and a crawler at 0 health is downed; one rare salvage, found only in hazard sectors and bought by the caravan at a premium. Plan `.agents/epic10_g2_plan.md` (deleted at this close-out), branch `feat/epic10-g2` stacked on G1's.
+- **Design:**
+  - **Hazards are map data** (`SectorDefinition.Hazard`: a kind and damage a second). Floor 1's two blocks of rock became the Sump and the Glow Caves, so every existing room keeps its place; both start charted and are dead ends, so pathfinding needs nothing new. Floor 1 has no rock tiles any more.
+  - **Health is the crawler's** (`AgentState.Health`, `IsDowned`, saved, format 3); the rules are in `Cognition/Vitality`. Damage is the runtime's (it knows the map); healing is the state's tick. The reflexes sit in `MentalBreakEvaluator.DangerReflexAsync`, before the planner.
+  - **Who ventures** is personality and condition (`Vitality.WouldVenture`): risk tolerance compared in whole percent, because `30 / 100f >= 0.3f` holds in CoreCLR and not in Mono's double evaluation.
+  - **Glowstone** is a fourth stall price and stock (`TradeStallData` appended, 52 bytes) and a caravan quota at a premium (`CaravanSalvageSales`).
+- **Tuning and faults found on the way:**
+  - Glowstone was worth farming at first: one unit per node, 10-minute regrowth and a caravan quota of 2.
+  - Cautious crawlers wandered into hazards through exploration and ambient wander, which now apply the venture rule too.
+  - Fetching a herb starved crawlers; they now fetch one only when hunger is under 50.
+  - A downed crawler stayed in the caves, because it knew no free bunk. The refuge is the floor plan's nearest bunk, which every crawler knows.
+  - The starvation rule pre-empted a retreat every tick; tending (retreat, treating wounds, sleeping, resting out of danger) is now exempt.
+  - Bold crawlers looped in and out without selling, until damage was set at 3 and 4 a second and the retreat at 40.
+- **Deviation:** the epic's G2 Definition of Done asked that the soak keep its bands; glowstone is new money by design, so the fair band was re-set to 1,000–2,200g (fair 1,545–1,594g) rather than tuning the danger out of being worth it. **To confirm at the producer's look.**
+- **Client beyond the plan:** the red tint alone read weakly (the Sump looked like the Ore Quarry), so each hazard's danger is written under the room's name ("FOUL AIR"), hidden while the fog covers the sector; the merchant window widened to 660 for the longer stock line.
+- **Cross-runtime (Epic CORE F1, narrowed again):** the golden seeds parted at t100 and t3000. A per-tick trace of every crawler's position bits found the first divergence at one crawler's first step, and a dump of its raw path showed two equal-cost A* routes. Mono kept `PathNode.FCost`, the octile heuristic and the step costs at double precision. The searcher, the snapshot's line checks and `IsPositionBlocked` now round each float step, as do `AgentState`'s drives; nothing changes on CoreCLR. The soak's 9 runs then matched to the gold in both runtimes.
+- **Unity:** no view changes; its frozen views draw the new sectors from the map and glowstone with the fallback sprite.
+- **Verification:**
+  - gate seeds 23/23, no stacking; seeds 1–120 with the golden seeds 120/123 (F3: 31, 43; seed 73 one crawler's hunger peak);
+  - `dotnet test` 355/355; the client's 265/265 exactly in the pinned image;
+  - golden 3/3 in both runtimes;
+  - Unity PlayMode 69/69 (2 explicit skipped);
+  - the soak 9/9 headless and in Unity, with identical numbers.
+
+## 2026-10-24 — Docs cleanup; the producer's sign-offs; the move away from Unity
+
+- **Request (producer):** clean up stale documents under `docs/` and `.agents/`, reconcile discrepancies, and ask where unclear.
+- **Producer answers (2026-10-24):**
+  - Milestone 1's save/load check at 1× passed.
+  - Epic CLIENT's side-by-side with Unity passed, as did the looks at M3, the motion between ticks, and the header's pause and speed. "We are at a point where we can officially move away from Unity": M2.8–M2.9 are unblocked, to be scheduled.
+  - Still open: the look at Epic 10 G2 and the re-set fair soak band.
+- **Found: G1 and G2 never reached `main`.** PRs #8 and #9 were stacked on the previous milestone's branch, merged into it, and those branches were deleted after #7 merged; `main` stops at G0. Producer decision: G1, G2 and this cleanup go into `main` in one pull request from `docs/cleanup` (cut from `feat/epic10-g2`). Stacked milestone PRs are not used again; from G3 each targets `main`.
+- **Done:**
+  - The roadmap: the Epic MAP, CORE and CLIENT logs condensed to status, decisions and open items (the detail is in the epic docs and this log); §2.1's library table brought up to date (UniTask retired, `Unity.Collections` + Burst dropped, VContainer Unity-only; MS.DI, xUnit v3, KNI, MonoGame, Gum and KernSmith added); §2.2's handroll and UI Toolkit policies marked delivered or superseded; Milestone 1's pending check closed; §3A's stale numbers (risk tolerance used, the 23-seed gate, 39 of 64 GOAP facts); the Epic 10 and 11 rows; the operating rhythm.
+  - Links: every `file:///` absolute link and every link to a file moved by Epic CORE repointed to its current location (the roadmap, epics 7, 9 and UI-2, the consultant review); none broken.
+  - `docs/epics/epic-client.md`: the sign-offs; M2.8–M2.9's scope moved in from `.agents/client_m2_plan.md`, which was deleted (its decisions are in the M2 entry above); the closed person-gated risks.
+  - `docs/epics/epic-10.md`: how G1 and G2 landed; the fact count. `docs/epics/epic-core.md`: F1's owner is Unity's removal.
+  - `docs/economy-model.md`: four prices, glowstone in the loop, the salvage cap (248g a visit), current measurements, the 23-seed gate.
+  - `docs/Game Design Proposal.md`: a title, the producer's platform and presentation decisions, the economy question marked answered.
+  - `.agents/curentfocus.txt`: rewritten as a short mirror (266 → about 70 lines).
+  - `.agents/rules/`: the two original bootstrap prompts (`autonomous-architecture.md`, `unityrules.md`), loaded always-on by some IDE agents and contradicting `AGENTS.md`, replaced by one pointer to `AGENTS.md` and the roadmap that keeps the producer's communication preferences.
+  - `.agents/local/`: Epic CLIENT's directive and design decisions archived as `archive/epic-client-m0-m3_2026-10-23.zip` (local, never committed).
+- **Left as they are:** the completed epics' specs (history; their Unity-era wording describes the code as built), `docs/engine-proposal-kni.md` (a dated decision record), the consultant review's text (a dated snapshot).

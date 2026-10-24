@@ -26,11 +26,11 @@
 
 ## 1. Executive Summary & Problem Statement
 
-In **Epic 8**, agents gained the ability to organize into collectives ([`GroupRegistry`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/GroupRegistry.cs)) and execute top-down directives ([`GroupDirective`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Groups/GroupDirective.cs)) based on hierarchical compliance ([`ComplianceUtility`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Groups/ComplianceUtility.cs)).
+In **Epic 8**, agents gained the ability to organize into collectives ([`GroupRegistry`](../../Assets/Simpiens.Core/Simulation/GroupRegistry.cs)) and execute top-down directives ([`GroupDirective`](../../Assets/Simpiens.Core/Cognition/Groups/GroupDirective.cs)) based on hierarchical compliance ([`ComplianceUtility`](../../Assets/Simpiens.Core/Cognition/Groups/ComplianceUtility.cs)).
 
 However, our simulation currently lacks an **economic feedback loop**:
-1. **The Direct Intervention Deficit**: While [`PlayerInterventionService`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Intervention/PlayerInterventionService.cs) exists as a concurrent queue of `InfluenceEvent` structs, it is completely unhooked from `SimulationManager.Tick()`. The player has no mechanism to influence the world.
-2. **The Binary Inventory Bottleneck**: Agents only possess a single boolean flag `bool HasFoodInInventory` ([`AutonomousAgent.cs:69`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs#L69)). There is no concept of item types, stack quantities, equipment, or currencies.
+1. **The Direct Intervention Deficit**: While [`PlayerInterventionService`](../../Assets/Simpiens.Core/Intervention/PlayerInterventionService.cs) exists as a concurrent queue of `InfluenceEvent` structs, it is completely unhooked from `SimulationManager.Tick()`. The player has no mechanism to influence the world.
+2. **The Binary Inventory Bottleneck**: Agents only possess a single boolean flag `bool HasFoodInInventory` ([`AutonomousAgent.cs:69`](../../Assets/Scripts/Cognition/AutonomousAgent.cs#L69)). There is no concept of item types, stack quantities, equipment, or currencies.
 3. **Absence of Public Contracts**: `GroupDirective` only works for formal leaders commanding subordinates within an established group. Unaligned drifters and independent crawlers have no mechanism to take on freelance work.
 4. **Zero Trading Mechanics**: There is no merchant infrastructure. Agents cannot trade harvested salvage for provisions, and players cannot accumulate capital or interpersonal affinity through commerce.
 
@@ -40,7 +40,7 @@ Epic 9 implements the foundational engine mechanics for **Production Phase 1 (Th
 * **Public Bounty Board**: Player posts public contracts (`ScoutSector`, `GatherResource`) via `PlayerInterventionService` which are broadcast through `SharedWorldSnapshot`.
 * **Trade Stall Entity (`EntityType.Stall`)**: A spatial market anchor where agents buy provisions (Rations) and sell harvested materials (Iron Ore, Herbs).
 * **GOAP Economic Expansion**: New goals (`ClaimBountyGoal`, `PurchaseProvisionsGoal`) and actions (`TravelToStallAction`, `DeliverBountyAction`, `TradeAtStallAction`).
-* **Trade-to-Affinity Pipeline**: Commercial transactions directly mutate the agent's dyadic [`AffinityRecord`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Social/AffinityRecord.cs) toward the Player entity ($+\text{Trust}$ and $+\text{Warmth}$ for fair trades; $-\text{Trust}$ for extortion).
+* **Trade-to-Affinity Pipeline**: Commercial transactions directly mutate the agent's dyadic [`AffinityRecord`](../../Assets/Simpiens.Core/Cognition/Social/AffinityRecord.cs) toward the Player entity ($+\text{Trust}$ and $+\text{Warmth}$ for fair trades; $-\text{Trust}$ for extortion).
 
 ---
 
@@ -306,7 +306,7 @@ namespace Simpiens.Cognition
 ## 4. GOAP Integration & Utility Decision Math
 
 ### 4.1 StateFact Additions
-Expand [`StateFact.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/StateFact.cs) with economic facts:
+Expand [`StateFact.cs`](../../Assets/Simpiens.Core/Cognition/Planning/StateFact.cs) with economic facts:
 ```csharp
 HasActiveBounty       = 25,
 AtTradeStall          = 26,
@@ -322,21 +322,21 @@ HasSalvageInInventory = 29
 2. **`PurchaseProvisionsGoal`**: Triggered when an agent is hungry ($\text{Hunger} \ge 70$), possesses Gold ($\text{Gold} \ge \text{RationPrice}$), but has no food in inventory.
 
 ### 4.3 Economic Actions
-* **`TravelToStallAction`**: Navigates agent to the trade stall anchor across sector bounds via [`AsyncPathfinder`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs).
+* **`TravelToStallAction`**: Navigates agent to the trade stall anchor across sector bounds via [`AsyncPathfinder`](../../Assets/Simpiens.Core/Cognition/Pathfinding/AsyncPathfinder.cs).
 * **`ClaimBountyAction`**: Claims an active bounty contract from the public board.
 * **`DeliverBountyAction`**: Interacts with the stall node, handing over required salvage and receiving bounty gold.
 * **`BuyProvisionsAction`**: Spends gold at the stall to acquire a `Ration` item.
 * **`SellSalvageAction`**: Sells excess harvested ore/herbs for market price.
 
 > [!NOTE]
-> **Navigation Infrastructure Upgrade** *(DEFERRED — not delivered)*: Multi-sector travel between resource nodes and the player stall will utilize the upgraded zero-allocation Grid A* engine in [`AsyncPathfinder.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs), porting the array-backed min-heap and node pool from [`GoapPlanner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs) to eliminate watchdog stalls across complex sector layouts.
+> **Navigation Infrastructure Upgrade** *(DEFERRED — not delivered)*: Multi-sector travel between resource nodes and the player stall will utilize the upgraded zero-allocation Grid A* engine in [`AsyncPathfinder.cs`](../../Assets/Simpiens.Core/Cognition/Pathfinding/AsyncPathfinder.cs), porting the array-backed min-heap and node pool from [`GoapPlanner.cs`](../../Assets/Simpiens.Core/Cognition/Planning/GoapPlanner.cs) to eliminate watchdog stalls across complex sector layouts.
 
 ---
 
 ## 5. System Integration & Execution Flow
 
 ### 5.1 Connecting `PlayerInterventionService`
-In [`SimulationManager.Tick()`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs#L170), process queued influence commands before updating spatial snapshots:
+In [`SimulationManager.Tick()`](../../Assets/Simpiens.Core/Simulation/SimulationManager.cs#L170), process queued influence commands before updating spatial snapshots:
 
 ```csharp
 while (_playerIntervention.TryDequeueInfluence(out var influence))
@@ -391,7 +391,7 @@ Following the defensive null-safety and headless testing architecture of Simpien
 
 - [x] `ItemInstance`, `BountyContract`, and `TradeStallData` implemented as unmanaged structs with zero heap allocations.
 - [x] Memory layout compatibility verified for unmanaged economic data structures (fixed 16B, 44B, 64B sizes).
-- [x] `AgentInventory` integrated into [`AutonomousAgent`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs) with fixed-size struct array storage.
+- [x] `AgentInventory` integrated into [`AutonomousAgent`](../../Assets/Scripts/Cognition/AutonomousAgent.cs) with fixed-size struct array storage.
 - [x] `PlayerInterventionService` drained and executed within `SimulationManager.Tick()`.
 - [x] Public `BountyBoard` baked into `SharedWorldSnapshot` for lock-free background worker queries.
 - [x] GOAP actions (`ClaimBountyAction`, `DeliverBountyAction`, `BuyProvisionsAction`, `SellSalvageAction`) registered in `SwarmSpawner` action graph.

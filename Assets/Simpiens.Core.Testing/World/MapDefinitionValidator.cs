@@ -224,7 +224,22 @@ namespace Simpiens.Testing.World
                     doors++;
                 }
             }
-            Assert(doors == 7, $"(d) Expected 7 doorways, found {doors}.");
+            Assert(doors == Floor1Layout.Doors.Count, $"(d) Expected {Floor1Layout.Doors.Count} doorways, found {doors}.");
+
+            // The hazard sectors (Epic 10 G2) are dead ends, each opening onto its work room only, and only they hurt
+            def.TryGetSector(Floor1Layout.SumpSectorId, out var sump);
+            def.TryGetSector(Floor1Layout.GlowCavesSectorId, out var caves);
+            def.TryGetSector(Floor1Layout.OreQuarrySectorId, out var quarry);
+            def.TryGetSector(Floor1Layout.HerbGroveSectorId, out var grove);
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var s = def.Sectors[i];
+                bool hazard = s.Id == Floor1Layout.SumpSectorId || s.Id == Floor1Layout.GlowCavesSectorId;
+                Assert(s.Hazard.IsHazardous == hazard, $"(h) {s.Name} {(hazard ? "must" : "must not")} be hazardous.");
+                if (s.Id != Floor1Layout.OreQuarrySectorId && s.Id != Floor1Layout.SumpSectorId) Assert(DoorWidth(grid, sump.Bounds, s.Bounds) == 0, $"(h) The Sump must open only onto the Ore Quarry, not {s.Name}.");
+                if (s.Id != Floor1Layout.HerbGroveSectorId && s.Id != Floor1Layout.GlowCavesSectorId) Assert(DoorWidth(grid, caves.Bounds, s.Bounds) == 0, $"(h) The Glow Caves must open only onto the Herb Grove, not {s.Name}.");
+            }
+            Assert(DoorWidth(grid, sump.Bounds, quarry.Bounds) >= 3 && DoorWidth(grid, caves.Bounds, grove.Bounds) >= 3, "(h) Each hazard sector has its door.");
             def.TryGetSector(Floor1Layout.GardenSectorId, out var garden);
             def.TryGetSector(Floor1Layout.DeepSeamSectorId, out var seam);
             def.TryGetSector(Floor1Layout.OvergrowthSectorId, out var overgrowth);

@@ -23,8 +23,9 @@ namespace Simpiens.Host
       Plays a session and prints one line per sim-minute, then its world hash.
   simpiens sweep  [--seeds 1..20] [--ticks 9000] [--verbose]
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
-  simpiens soak   [--profile fair|greedy|generous|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR]
+  simpiens soak   [--profile fair|greedy|generous|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
       The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
+      --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
       Compares headless runs with the golden world hashes (the default: every seed in the file).
   simpiens golden record --out PATH [--seeds 20261009]
@@ -143,6 +144,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
             long ticks = options.Long("ticks", EconomySoak.HorizonTicks);
             string csv = options.Text("csv");
+            bool drifters = !options.Flag("closed");
 
             int failed = 0, runs = 0;
             var watch = Stopwatch.StartNew();
@@ -151,7 +153,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 foreach (var seed in seeds)
                 {
                     if (ct.IsCancellationRequested) return 1;
-                    var result = EconomySoak.Run(seed, p, ticks);
+                    var result = EconomySoak.Run(seed, p, ticks, drifters);
                     var failures = result.Failures();
                     runs++;
                     if (failures.Count > 0) failed++;

@@ -102,10 +102,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
             else if (trade.ActionType == TradeActionType.SellItem)
             {
-                ushort unitBuyPrice = 0;
-                if (trade.ItemType == ItemType.IronOre) unitBuyPrice = stall.OreBuyPrice;
-                else if (trade.ItemType == ItemType.MedicinalHerb) unitBuyPrice = stall.HerbBuyPrice;
-                else return Reject(node, trade, "stall does not buy this item");
+                if (!trade.ItemType.IsSalvage()) return Reject(node, trade, "stall does not buy this item");
+                ushort unitBuyPrice = stall.BuyPriceOf(trade.ItemType);
 
                 if (!agent.Inventory.HasItem(trade.ItemType, trade.Quantity))
                 {
@@ -150,6 +148,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 ushort newOre = trade.ItemType == ItemType.IronOre ? (ushort)(stall.OreStock + trade.Quantity) : stall.OreStock;
                 ushort newHerb = trade.ItemType == ItemType.MedicinalHerb ? (ushort)(stall.HerbStock + trade.Quantity) : stall.HerbStock;
                 stall = stall.WithStock(stall.RationStock, newOre, newHerb);
+                if (trade.ItemType == ItemType.Glowstone) stall = stall.WithGlowstoneStock((ushort)(stall.GlowstoneStock + trade.Quantity));
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation

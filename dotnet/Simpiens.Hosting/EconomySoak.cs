@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using Simpiens.Intervention;
@@ -25,8 +27,9 @@ namespace Simpiens.Hosting
         public const uint StarvingTicks = 300;
 
         // Pace bands (docs/economy-model.md §7; review §3.3 D5), as EconomySoakScenario asserts them
-        public const uint FairTreasuryMin = 375;
-        public const uint FairTreasuryMax = 875;
+        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors); was 375-875g (docs/economy-model.md §7)
+        public const uint FairTreasuryMin = 1000;
+        public const uint FairTreasuryMax = 2200;
         public const int FairTrustUpMin = 8;
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8;
@@ -59,7 +62,9 @@ namespace Simpiens.Hosting
                 case "fair": return new Player("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, sendsCommand: false);
                 case "greedy": return new Player("greedy", 30, 10, 12, sendsCommand: true);
                 case "generous": return new Player("generous", 5, 35, 40, sendsCommand: true);
-                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous).", nameof(name));
+                // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
+                case "keen": return new Player("keen", 20, 18, 22, sendsCommand: true);
+                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, keen).", nameof(name));
             }
         }
 
@@ -82,6 +87,9 @@ namespace Simpiens.Hosting
             public int ConservationViolations, WorstDiscrepancy;
             public bool PricesApplied;
             public string PricesSeen = "never sampled";
+
+            /// <summary>Gold the drifters brought and took away (Epic 10 G1): the faucet and sink of that name.</summary>
+            public uint DrifterPurses, DrifterDepartures;
 
             public Row Last => Rows[Rows.Count - 1];
 
@@ -152,10 +160,17 @@ namespace Simpiens.Hosting
             }
         }
 
-        /// <summary>Plays the outpost with <paramref name="seed"/> for <paramref name="horizonTicks"/> as one kind of player.</summary>
-        public static Result Run(ulong seed, string profile, long horizonTicks = HorizonTicks)
+        /// <summary>
+        /// Plays the outpost with <paramref name="seed"/> for <paramref name="horizonTicks"/> as one kind of player.
+        /// Without <paramref name="drifters"/> the outpost is closed, as it was before Epic 10 G1.
+        /// </summary>
+        public static Result Run(ulong seed, string profile, long horizonTicks = HorizonTicks, bool drifters = true)
         {
-            using var sim = LocalSimulation.Create(seed);
+            using var sim = LocalSimulation.Create(seed, drifters ? null : services =>
+            {
+                services.RemoveAll<ISessionDefinition>();
+                services.AddSingleton<ISessionDefinition>(new OutpostSession(OutpostSession.DefaultCrawlerCount, EconomyTuning.Default.WithDrifters(DrifterTuning.None)));
+            });
             sim.Respawn(OutpostSession.SessionId);
             var manager = sim.Simulation;
             var result = new Result { Player = Resolve(profile, manager.Economy), Seed = seed };
@@ -224,6 +239,11 @@ namespace Simpiens.Hosting
                 if (rel >= horizonTicks) break;
                 sim.Step(1);
             }
+            if (manager.EconomyLedger != null)
+            {
+                result.DrifterPurses = manager.EconomyLedger.GetFaucetTotal("DrifterPurses");
+                result.DrifterDepartures = manager.EconomyLedger.GetSinkTotal("DrifterDepartures");
+            }
             return result;
         }
 
@@ -238,11 +258,15 @@ namespace Simpiens.Hosting
                 row.InArrears = stall.InArrears;
             }
 
-            // Trust toward the player, against each crawler's own value at the first sample
+            // Trust toward the player, against each resident's own value at the first sample (drifters pass through:
+            // the bands are about the outpost's own crawlers, Epic 10 G1)
             float sum = 0f;
+            int residents = 0;
             for (int i = 0; i < crawlers.Count; i++)
             {
                 var state = crawlers[i];
+                if (state.IsDrifter) continue;
+                residents++;
                 int trust = state.Memory != null ? state.Memory.GetAffinity(SimulationManager.PlayerEntityId, (uint)absoluteTick).Trust : 0;
                 if (!trustAtStart.TryGetValue(state.AgentId, out int startTrust)) trustAtStart[state.AgentId] = startTrust = trust;
                 sum += trust;
@@ -251,8 +275,8 @@ namespace Simpiens.Hosting
                 if (trust > startTrust) row.TrustUp++;
                 else if (trust < startTrust) row.TrustDown++;
             }
-            if (crawlers.Count == 0) { row.TrustMin = 0; row.TrustMax = 0; }
-            row.TrustMean = crawlers.Count > 0 ? sum / crawlers.Count : 0f;
+            if (residents == 0) { row.TrustMin = 0; row.TrustMax = 0; }
+            row.TrustMean = residents > 0 ? sum / residents : 0f;
             return row;
         }
     }

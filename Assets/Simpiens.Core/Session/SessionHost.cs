@@ -22,7 +22,7 @@ namespace Simpiens.Core.Session
     /// Every respawn starts from tick 0 with a reset id allocator, so the same seed gives the same world. Views follow
     /// its events (<c>SwarmSpawner</c> in Unity); a headless host uses it as it is. Main thread.
     /// </summary>
-    public sealed class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable
+    public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable
     {
         // Body radii and speed the simulation gives each kind of entity (they were the views' collider radii)
         public const float CrawlerRadius = 0.35f;
@@ -202,6 +202,7 @@ namespace Simpiens.Core.Session
                 }
             }
 
+            ScheduleFirstDrifter(map);
             SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_crawlers.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
             SessionChanged?.Invoke(session);
         }
@@ -281,6 +282,7 @@ namespace Simpiens.Core.Session
 
             for (int i = 0; i < save.Crawlers.Length; i++) SpawnRestoredCrawler(save.Crawlers[i]);
             _simulationManager?.RestoreFrom(save);
+            RestoreDriftersFrom(save, session.Map);
 
             var world = save.World;
             if (world.EntityKeys != null && world.EntityIds != null)
@@ -428,6 +430,7 @@ namespace Simpiens.Core.Session
             save.Crawlers = crawlers.ToArray();
 
             _simulationManager?.CaptureTo(save);
+            CaptureDriftersTo(save);
             save.World ??= new WorldSave();
             if (_world != null)
             {
@@ -486,6 +489,7 @@ namespace Simpiens.Core.Session
                 var crawler = _crawlers[i];
                 if (!crawler.IsDisposed) crawler.Tick(currentTick);
             }
+            TickPopulation(currentTick);
             TickCompleted?.Invoke(currentTick);
         }
 

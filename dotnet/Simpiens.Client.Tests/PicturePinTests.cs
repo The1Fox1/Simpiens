@@ -141,12 +141,15 @@ namespace Simpiens.Client.Tests
         // the rest before sorting) can't move them; the full views have nothing off screen and kept their pins, and the
         // zoomed view's items were re-pinned for the items it no longer counts. Epic 10 G0 (2026-10-23): the crawlers move
         // differently (navigation fixes for finding F2), so every pin after tick 0 was re-pinned with the render references;
-        // the selected crawler's name moves with it, hence the zoomed views' labels.
-        private static readonly (ulong, ulong) PinnedTick0 = (14850633018029031482UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (17136331033887249008UL, 6705829926719516470UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (14726820994859452996UL, 9961463459885518582UL);
+        // the selected crawler's name moves with it, hence the zoomed views' labels. Re-pinned again for Epic 10 G1 (walkers
+        // keep right around a crawler in the way; gathering prefers what the stall still buys). Re-pinned with the labels for
+        // Epic 10 G2: the Sump and the Glow Caves replace the rock, with their names, their dangers under them ("FOUL AIR")
+        // and tinted floors.
+        private static readonly (ulong, ulong) PinnedTick0 = (6235278446463465821UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (4660904809810335205UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (9351933147033982476UL, 10398974787805613629UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (3788725809304656315UL, 7580600243856684339UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15834235469868254433UL, 13698735132650210947UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (588843616322108427UL, 16142742670942183276UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (4937425532101275212UL, 14081288791794121755UL);
     }
 }

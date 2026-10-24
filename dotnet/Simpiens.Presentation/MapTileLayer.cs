@@ -157,12 +157,17 @@ namespace Simpiens.Presentation
         /// </summary>
         public static Rgba FloorTint(MapDefinition map, in SectorDefinition sector)
         {
+            var tint = NeutralFloor;
             for (int i = 0; i < map.Labels.Count; i++)
             {
-                if (sector.Contains(map.Labels[i].Position)) return Lerp(NeutralFloor, map.Labels[i].Color, 0.3f);
+                if (sector.Contains(map.Labels[i].Position)) { tint = Lerp(NeutralFloor, map.Labels[i].Color, 0.3f); break; }
             }
-            return NeutralFloor;
+            // A hazard sector's floor leans toward a danger red, so the danger reads before the label (Epic 10 G2)
+            return sector.Hazard.IsHazardous ? Lerp(tint, DangerFloor, 0.35f) : tint;
         }
+
+        /// <summary>The red a hazard sector's floor leans toward.</summary>
+        public static readonly Rgba DangerFloor = new Rgba(0.55f, 0.16f, 0.12f);
 
         /// <summary>Unity's <c>Color.Lerp</c>: t clamped to 0–1, every channel including alpha.</summary>
         private static Rgba Lerp(Rgba a, Rgba b, float t)

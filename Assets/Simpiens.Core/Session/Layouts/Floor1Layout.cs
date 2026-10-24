@@ -15,9 +15,9 @@ namespace Simpiens.Core.Session.Layouts
     ///   y  6   +---D------+----D-----+------D---+
     ///          |  Ore     D  stall   D   Herb   |   quarry and grove doors sit beside the stall
     ///          |  Quarry  |fire      |   Grove  |   the hearth has the hub's quiet south-west corner
-    ///   y -6   +----------+-------D--+----------+
-    ///          |   rock   |bunks    D|   rock   |   one straight lane, gate to hub, along the east side
-    ///   y-12   |          +-------D--+          |
+    ///   y -6   +---D------+-------D--+------D---+
+    ///          | The Sump |bunks    D|Glow Caves|   one straight lane, gate to hub, along the east side;
+    ///   y-12   | foul air +-------D--+ rockfall |   the Sump and the Glow Caves hurt whoever stays (Epic 10 G2)
     ///          |          | Road Gate|          |
     ///   y-18   +----------+----------+----------+
     ///
@@ -34,6 +34,13 @@ namespace Simpiens.Core.Session.Layouts
         public const byte DeepSeamSectorId = 6;
         public const byte OvergrowthSectorId = 7;
         public const byte RoadGateSectorId = 8;
+        public const byte SumpSectorId = 9;
+        public const byte GlowCavesSectorId = 10;
+
+        /// <summary>The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them.</summary>
+        public static readonly SectorHazard SumpHazard = new SectorHazard(HazardKind.FoulAir, 3f);
+        public static readonly SectorHazard GlowCavesHazard = new SectorHazard(HazardKind.FallingRock, 4f);
+        public const uint GlowstoneRegrowTicks = 6000; // ten minutes: rare (Epic 10 G2)
 
         public const uint FoodRegrowTicks = 300; // review §3.3 D6 (was 450)
         public const int FoodPlotYield = 4;      // rations per plot between regrowths (review §3.3 D6; was 3): 4 plots, about 32 a minute at most
@@ -56,6 +63,8 @@ namespace Simpiens.Core.Session.Layouts
             new Vec2(8f, 3f),    // Hub - Herb Grove
             new Vec2(4f, -6f),   // Hub - Bunkhouse
             new Vec2(4f, -12f),  // Bunkhouse - Road Gate
+            new Vec2(-16f, -6f), // Ore Quarry - The Sump
+            new Vec2(16f, -6f),  // Herb Grove - Glow Caves
         };
 
         public static Vec2 HubBunkhouseDoor => Doors[5];
@@ -71,8 +80,8 @@ namespace Simpiens.Core.Session.Layouts
 
             // --- Outer walls of the 3x2 upper block ---
             b.WallRun(new Vec2(-24f, 18f), new Vec2(24f, 18f));
-            b.WallRun(new Vec2(-24f, -6f), new Vec2(-24f, 17f));
-            b.WallRun(new Vec2(24f, -6f), new Vec2(24f, 17f));
+            b.WallRun(new Vec2(-24f, -18f), new Vec2(-24f, 17f));
+            b.WallRun(new Vec2(24f, -18f), new Vec2(24f, 17f));
 
             // y = 6: frontier row / work row. Doors: Deep Seam-Ore Quarry (x -16), Garden-Hub (x 0), Overgrowth-Herb Grove (x 16)
             b.WallRun(new Vec2(-24f, 6f), new Vec2(-19f, 6f));
@@ -87,20 +96,20 @@ namespace Simpiens.Core.Session.Layouts
             b.WallRun(new Vec2(8f, -6f), new Vec2(8f, 0f));
             b.WallRun(new Vec2(8f, 6f), new Vec2(8f, 17f));
 
-            // y = -6: bottom of the upper block. Door: Hub-Bunkhouse (x 1..7, east of the hearth)
-            b.WallRun(new Vec2(-24f, -6f), new Vec2(1f, -6f));
-            b.WallRun(new Vec2(7f, -6f), new Vec2(24f, -6f));
+            // y = -6: bottom of the upper block. Doors: Ore Quarry-Sump (x -19..-13), Hub-Bunkhouse (x 1..7, east of the
+            // hearth), Herb Grove-Glow Caves (x 13..19)
+            b.WallRun(new Vec2(-24f, -6f), new Vec2(-19f, -6f));
+            b.WallRun(new Vec2(-13f, -6f), new Vec2(1f, -6f));
+            b.WallRun(new Vec2(7f, -6f), new Vec2(13f, -6f));
+            b.WallRun(new Vec2(19f, -6f), new Vec2(24f, -6f));
 
-            // Lower wing (Bunkhouse over Road Gate). Door: Bunkhouse-Road Gate (x 1..7, in line with the hub door)
-            b.WallRun(new Vec2(-8f, -18f), new Vec2(-8f, -7f));
-            b.WallRun(new Vec2(8f, -18f), new Vec2(8f, -7f));
-            b.WallRun(new Vec2(-8f, -18f), new Vec2(8f, -18f));
+            // Lower wing (Bunkhouse over Road Gate). Door: Bunkhouse-Road Gate (x 1..7, in line with the hub door). Its
+            // side walls also close the Sump and the Glow Caves, which were solid rock before Epic 10 G2
+            b.WallRun(new Vec2(-8f, -18f), new Vec2(-8f, -6f));
+            b.WallRun(new Vec2(8f, -18f), new Vec2(8f, -6f));
+            b.WallRun(new Vec2(-24f, -18f), new Vec2(24f, -18f));
             b.WallRun(new Vec2(-8f, -12f), new Vec2(1f, -12f));
             b.WallRun(new Vec2(7f, -12f), new Vec2(8f, -12f));
-
-            // Solid rock either side of the lower wing (inside the playable rect, outside the floor)
-            b.Wall(RectF.MinMaxRect(-24.5f, -18.5f, -8.5f, -6.5f));
-            b.Wall(RectF.MinMaxRect(8.5f, -18.5f, 24.5f, -6.5f));
 
             // --- Sectors (bounds meet on wall centre lines; no overlaps) ---
             b.Sector(HubSectorId, "Outpost Hub", "Trade stall, bounty board and the common hearth where crawlers gather.",
@@ -119,6 +128,10 @@ namespace Simpiens.Core.Session.Layouts
                 new RectF(8f, 6f, 16f, 12f), new Vec2(16f, 12f), 0f, startsExplored: false);
             b.Sector(RoadGateSectorId, "Road Gate", "Where the road meets the outpost; crawlers arrive here.",
                 new RectF(-8f, -18f, 16f, 6f));
+            b.Sector(SumpSectorId, "The Sump", "A flooded pit under the quarry. Its foul air sickens whoever lingers; glowstone crusts its walls.",
+                new RectF(-24f, -18f, 16f, 12f), hazard: SumpHazard);
+            b.Sector(GlowCavesSectorId, "Glow Caves", "Unstable caves under the grove, lit by glowstone. Loose rock falls on whoever stays.",
+                new RectF(8f, -18f, 16f, 12f), hazard: GlowCavesHazard);
 
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
@@ -156,6 +169,14 @@ namespace Simpiens.Core.Session.Layouts
             b.Node("overgrowth.2", new Vec2(16f, 10f), ItemType.MedicinalHerb, 6, HerbRegrowTicks);
             b.Node("overgrowth.3", new Vec2(20f, 14f), ItemType.MedicinalHerb, 6, HerbRegrowTicks);
 
+            // --- Resources: hazard sectors (Epic 10 G2): the rare salvage, for whoever dares ---
+            b.Node("sump.1", new Vec2(-20f, -10f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+            b.Node("sump.2", new Vec2(-13f, -14f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+            b.Node("sump.3", new Vec2(-20f, -15f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+            b.Node("caves.1", new Vec2(20f, -10f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+            b.Node("caves.2", new Vec2(13f, -14f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+            b.Node("caves.3", new Vec2(20f, -15f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
+
             // --- Labels (sector names near each sector's top edge) ---
             b.Label("Outpost Hub", new Vec2(0f, 4.6f), new Rgba(0.95f, 0.85f, 0.4f));
             b.Label("Bunkhouse", new Vec2(0f, -7.4f), new Rgba(0.7f, 0.75f, 0.95f));
@@ -165,6 +186,8 @@ namespace Simpiens.Core.Session.Layouts
             b.Label("Deep Seam", new Vec2(-16f, 16.6f), new Rgba(0.8f, 0.5f, 0.3f));
             b.Label("Overgrowth", new Vec2(16f, 16.6f), new Rgba(0.35f, 0.75f, 0.6f));
             b.Label("Road Gate", new Vec2(0f, -13.4f), new Rgba(0.8f, 0.8f, 0.8f));
+            b.Label("The Sump", new Vec2(-16f, -7.4f), new Rgba(0.65f, 0.7f, 0.35f));
+            b.Label("Glow Caves", new Vec2(16f, -7.4f), new Rgba(0.55f, 0.85f, 1f));
 
             return b.Build();
         }

@@ -1,6 +1,6 @@
 # Simpiens — Architecture, Scaling & Game Design Review
 
-*This review is a dated snapshot. Live remediation status is tracked in [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker).*  
+*This review is a dated snapshot. Live remediation status is tracked in [ROADMAP §3A](../ROADMAP.md#3a-architecture-review-remediation-tracker). Its code links were repointed on 2026-10-24 to where the files live now (most moved to `Assets/Simpiens.Core/` in Epic CORE); the text describes the code as it was on 2026-10-08.*  
 *Documentation drift flagged in §4.3 was reconciled on 2026-10-08 (ROADMAP.md is now the top source of truth; multiplayer confirmed as required post-MVP; the "Done means emerges in the live sim" rule from §4.2 is in ROADMAP §1B and AGENTS.md).*  
 *Reviewer: Consulting Lead Developer · Scope: `Assets/Scripts/` (~21k LOC), `docs/ROADMAP.md`, `docs/Game Design Proposal.md`, epic specs, `.agents/` history · Date: 2026-10-08*
 
@@ -35,11 +35,11 @@ The team has built a **strong set of engine parts** but hasn't yet **put them to
 
 These are real strengths. Protect them as the codebase grows.
 
-1. **Snapshot → Intent → Execute loop.** Background reasoning reads an immutable, pooled [`SharedWorldSnapshot`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/Spatial/SharedWorldSnapshot.cs) and returns a data object ([`AgentIntent`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Contracts/AgentIntent.cs)). Only the main thread changes the world. This is the correct pattern for agent simulations, and it's the reason an LLM can later be plugged in safely.
+1. **Snapshot → Intent → Execute loop.** Background reasoning reads an immutable, pooled [`SharedWorldSnapshot`](../../Assets/Simpiens.Core/Simulation/Spatial/SharedWorldSnapshot.cs) and returns a data object ([`AgentIntent`](../../Assets/Simpiens.Core/Cognition/Contracts/AgentIntent.cs)). Only the main thread changes the world. This is the correct pattern for agent simulations, and it's the reason an LLM can later be plugged in safely.
    - *Plain terms:* agents "think" on a photograph of the world and hand in a request. Only one referee updates the real board.
-2. **Player influence as queued commands** ([`PlayerInterventionService`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Intervention/PlayerInterventionService.cs)). The UI never changes simulation state directly. This is exactly what you need later for replays, multiplayer, undo, and analytics.
+2. **Player influence as queued commands** ([`PlayerInterventionService`](../../Assets/Simpiens.Core/Intervention/PlayerInterventionService.cs)). The UI never changes simulation state directly. This is exactly what you need later for replays, multiplayer, undo, and analytics.
 3. **Data-oriented economy and group primitives.** `ItemInstance`, `BountyContract`, `TradeStallData`, `GroupData` and `WorldState` are small, blittable structs. They are cheap to copy into snapshots, cheap to serialize, and won't cause GC hitches.
-4. **GOAP planner implementation** ([`GoapPlanner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs)). Bitmask state, pooled nodes, a binary heap and an open-addressing closed set make it professional-grade.
+4. **GOAP planner implementation** ([`GoapPlanner.cs`](../../Assets/Simpiens.Core/Cognition/Planning/GoapPlanner.cs)). Bitmask state, pooled nodes, a binary heap and an open-addressing closed set make it professional-grade.
 5. **The "simulation void trap" pivot (Epic 7 → Epic Beta).** The team noticed that abstract social numbers mean nothing without concrete world mechanics, and grounded affinity in contention, food sharing and campfires. That's mature design judgement.
 6. **Two-stage narrative pipeline.** Deterministic templates come first, and an optional async LLM enrichment runs behind a circuit breaker. The LLM can never block or corrupt the simulation. This is the right risk posture for Epic 11.
 7. **Library policy with written rationale** (ROADMAP §2). Rejecting MonoBehaviour-coupled pathfinding and the ASP.NET-bound MCP SDK was correct, and writing down *why* is rare and valuable.
@@ -52,12 +52,12 @@ These are real strengths. Protect them as the codebase grows.
 
 ### 2.1 🔴 Two clocks: the simulation doesn't actually run on its own tick
 
-**What's happening.** [`SimulationClock`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/SimulationClock.cs) produces logical ticks at 10 Hz × speed multiplier. But [`SimulationManager.Tick()`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs#L384-L494) runs **once per rendered frame**, and gameplay depends on *unscaled* `Time.deltaTime`:
+**What's happening.** [`SimulationClock`](../../Assets/Simpiens.Core/Simulation/SimulationClock.cs) produces logical ticks at 10 Hz × speed multiplier. But [`SimulationManager.Tick()`](../../Assets/Simpiens.Core/Simulation/SimulationManager.cs#L384-L494) runs **once per rendered frame**, and gameplay depends on *unscaled* `Time.deltaTime`:
 
 | Uses **frame time** (ignores speed and pause) | Uses **logical ticks** (respects speed and pause) |
 |---|---|
-| Walking speed, harvest/share/idle durations ([SimulationManager.cs](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs#L1404)) | Bounty expiry, directive expiry |
-| Hunger, energy, social and frustration decay ([AutonomousAgent.cs](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs#L330-L357)) | Memory decay, blacklists, gossip cooldowns, affinity regression |
+| Walking speed, harvest/share/idle durations ([SimulationManager.cs](../../Assets/Simpiens.Core/Simulation/SimulationManager.cs#L1404)) | Bounty expiry, directive expiry |
+| Hunger, energy, social and frustration decay ([AutonomousAgent.cs](../../Assets/Scripts/Cognition/AutonomousAgent.cs#L330-L357)) | Memory decay, blacklists, gossip cooldowns, affinity regression |
 | Watchdog stall timers | Hearth bonding and succession (`currentTick % 50`) |
 
 **Consequences.**
@@ -79,12 +79,12 @@ These are real strengths. Protect them as the codebase grows.
 
 ### 2.2 🔴 Agent "brain and body" live in a MonoBehaviour
 
-**What's happening.** The project rule is "MonoBehaviours are dumb views". But [`AutonomousAgent`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs) is an 870-line `MonoBehaviour` that owns:
+**What's happening.** The project rule is "MonoBehaviours are dumb views". But [`AutonomousAgent`](../../Assets/Scripts/Cognition/AutonomousAgent.cs) is an 870-line `MonoBehaviour` that owns:
 - needs, inventory, memory, group membership and the active GOAP plan;
 - the cognition loop;
 - the *consequences* of completed actions (e.g. "harvest done → hunger −50").
 
-Agent position is `transform.position`, and the simulation moves pawns by writing to `node.transform.position`. The [`ISocialAgent`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Contracts/ISocialAgent.cs) interface was added specifically to work around this when testing.
+Agent position is `transform.position`, and the simulation moves pawns by writing to `node.transform.position`. The [`ISocialAgent`](../../Assets/Simpiens.Core/Cognition/Contracts/ISocialAgent.cs) interface was added specifically to work around this when testing.
 
 **Why it matters for the roadmap.**
 - **Save/load and floor relocation (Milestone 4, MemoryPack):** you can't serialize a GameObject graph. The agent state must be plain data first.
@@ -101,10 +101,10 @@ Agent position is `transform.position`, and the simulation moves pawns by writin
 
 ### 2.3 🔴 Hidden thread-safety hole: the snapshot is safe, the agent's memory isn't
 
-**What's happening.** The snapshot is immutable, but [`AgentContext`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Contracts/AgentContext.cs) also carries **live references** to `AgentMemory` and `AgentInventory`. Both use plain `Dictionary`s with no locking ([AgentMemory.cs](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Memory/AgentMemory.cs#L27-L31)).
+**What's happening.** The snapshot is immutable, but [`AgentContext`](../../Assets/Simpiens.Core/Cognition/Contracts/AgentContext.cs) also carries **live references** to `AgentMemory` and `AgentInventory`. Both use plain `Dictionary`s with no locking ([AgentMemory.cs](../../Assets/Simpiens.Core/Cognition/Memory/AgentMemory.cs#L27-L31)).
 - **Background planners read memory.** `GetAffinity` even *writes* to the dictionary on read, because it applies decay toward neutral.
 - **At the same time, the main thread writes to the same dictionaries:** gossip (`TryGossip` rewrites *both* agents' spatial maps), trade affinity, contention penalties, hearth bonding.
-- **Snapshot lifetime gap:** in `EvaluateCognitionAsync`, `snapshot.Retain()` is called *after* `SwitchToThreadPool()` ([AutonomousAgent.cs](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/AutonomousAgent.cs#L513-L516)). The main thread can recycle the snapshot to its pool in between.
+- **Snapshot lifetime gap:** in `EvaluateCognitionAsync`, `snapshot.Retain()` is called *after* `SwitchToThreadPool()` ([AutonomousAgent.cs](../../Assets/Scripts/Cognition/AutonomousAgent.cs#L513-L516)). The main thread can recycle the snapshot to its pool in between.
 
 **Consequence.** Rare, nondeterministic failures: "Collection was modified" exceptions, corrupted dictionaries, or agents planning on a half-cleared snapshot. These will appear only at higher agent counts and speeds, which is exactly when they are hardest to diagnose.
 
@@ -117,7 +117,7 @@ Agent position is `transform.position`, and the simulation moves pawns by writin
 
 ### 2.4 🟠 `SimulationManager` is becoming the whole game
 
-**What's happening.** [`SimulationManager.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/SimulationManager.cs) is about 1,500 lines. Every intent type (harvest, share, trade, claim, deliver…) is a `case` in one `ExecuteIntent` switch. Contention rules, gossip, hearth bonding, succession, the bounty lifecycle, escrow and string-command parsing all live in the same class. Epic 10 (hazards, gear checks, combat), Milestone 2 (parties) and Milestone 3 (crafting) will each add more cases.
+**What's happening.** [`SimulationManager.cs`](../../Assets/Simpiens.Core/Simulation/SimulationManager.cs) is about 1,500 lines. Every intent type (harvest, share, trade, claim, deliver…) is a `case` in one `ExecuteIntent` switch. Contention rules, gossip, hearth bonding, succession, the bounty lifecycle, escrow and string-command parsing all live in the same class. Epic 10 (hazards, gear checks, combat), Milestone 2 (parties) and Milestone 3 (crafting) will each add more cases.
 
 **Symptoms already visible.**
 - **Split ownership of consequences.** Harvesting reduces hunger by 50 in `SimulationManager` *and* again by 50 (plus grants a ration) in the agent's `OnComplete` callback. This happens because no single owner is responsible for "what harvesting does".
@@ -139,7 +139,7 @@ Agent position is `transform.position`, and the simulation moves pawns by writin
 - Contention scans all active intents.
 - Hearth evaluation is anchors × all nodes.
 - The spatial hash exists but is used only by background threads. Main-thread systems ignore it.
-- [`GoapPlanner`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/GoapPlanner.cs#L92) is a DI singleton guarded by a `lock`. **All agents' planning is serialized onto one lane**, so the background parallelism is mostly illusory.
+- [`GoapPlanner`](../../Assets/Simpiens.Core/Cognition/Planning/GoapPlanner.cs#L92) is a DI singleton guarded by a `lock`. **All agents' planning is serialized onto one lane**, so the background parallelism is mostly illusory.
 - There is no cognition scheduler. Every free agent launches its own task as soon as its previous intent finishes, with no global budget or rate limit.
 
 **Recommendation.**
@@ -154,7 +154,7 @@ Agent position is `transform.position`, and the simulation moves pawns by writin
 
 ### 2.6 🟠 Pathfinding is still a placeholder, and the MAP epic depends on it
 
-[`AsyncPathfinder`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Pathfinding/AsyncPathfinder.cs#L71-L74) walks a straight line and stops at the first wall. Its own comment says it is for stress testing.
+[`AsyncPathfinder`](../../Assets/Simpiens.Core/Cognition/Pathfinding/AsyncPathfinder.cs#L71-L74) walks a straight line and stops at the first wall. Its own comment says it is for stress testing.
 
 The 3-tier motor watchdog, the "nudge" reflexes and some of the anti-jitter fixes in recent commits are **compensating for missing navigation**. Epic MAP's 9-sector map with 2.5 m doorways can't work without real pathing: an agent in the Quarry can't reach the Hub stall in a straight line.
 
@@ -169,7 +169,7 @@ Grid A* is currently buried inside Epic 9's deliverables. Epic 9 is marked COMPL
 
 ### 2.7 🟠 GOAP is approaching its "fact budget" and its expressiveness limit
 
-`WorldState` is a 64-bit mask, and **30 of 64 facts are used after 9 epics** ([StateFact.cs](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/Planning/StateFact.cs)). Epic 10 (hazards, gear, injuries), Milestone 2 (party roles) and Milestone 3 (crafting inputs and outputs) will exhaust it.
+`WorldState` is a 64-bit mask, and **30 of 64 facts are used after 9 epics** ([StateFact.cs](../../Assets/Simpiens.Core/Cognition/Planning/StateFact.cs)). Epic 10 (hazards, gear, injuries), Milestone 2 (party roles) and Milestone 3 (crafting inputs and outputs) will exhaust it.
 
 The facts are also **global booleans** (`HasSalvageInInventory`, `HasActiveBounty`). The planner can't express *which* item, *which* bounty or *which* sector. That choice is made ad hoc inside each action's `CreateIntent`. For example, `ClaimBountyAction` takes the **first** open bounty, regardless of type, distance or reward.
 
@@ -184,10 +184,10 @@ In practice, most plans are 2–3 step chains (travel → act). **Most of the ag
 
 ### 2.8 🟡 The production game is assembled inside the test harness
 
-- The real GOAP domain (action graph, goals), agent spawning, and world seeding live in [`Testing/Environment/SwarmSpawner.cs`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Testing/Environment/SwarmSpawner.cs).
-- [`AppBootstrapper`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Core/AppBootstrapper.cs) registers about 24 validators as `IStartable`, so they **run on every game boot**.
+- The real GOAP domain (action graph, goals), agent spawning, and world seeding live in [`Testing/Environment/SwarmSpawner.cs`](../../Assets/Scripts/Core/Session/SwarmSpawner.cs).
+- [`AppBootstrapper`](../../Assets/Scripts/Core/AppBootstrapper.cs) registers about 24 validators as `IStartable`, so they **run on every game boot**.
 - There is a single `Simpiens.asmdef`, so test code ships in player builds.
-- [`CognitiveEngine`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Cognition/CognitiveEngine.cs), `IContextBuilder` and `IToolExecutionRegistry` are unused stubs. The real cognition loop is inside `AutonomousAgent`.
+- `CognitiveEngine`, `IContextBuilder` and `IToolExecutionRegistry` are unused stubs. The real cognition loop is inside `AutonomousAgent`.
 
 **Recommendation.**
 - Create a `GameplayLifetimeScope` and a `SessionBootstrap` (world, domain and population definition, ideally driven by ScriptableObjects).
@@ -202,7 +202,7 @@ In practice, most plans are 2–3 step chains (travel → act). **Most of the ag
 
 The design loop is: *Post bounty → agents harvest salvage → sell at stall → trust grows → recruit.* In the live simulation:
 
-- **Resources are untyped.** [`ResourceData`](file:///home/bfox/Code/Repos/Unity/Simpiens/Assets/Scripts/Simulation/ResourceData.cs) has no item type. Every node behaves like a food bush.
+- **Resources are untyped.** [`ResourceData`](../../Assets/Simpiens.Core/Simulation/ResourceData.cs) has no item type. Every node behaves like a food bush.
 - **No agent action produces Iron Ore or Herbs.** Nothing has `HasSalvageInInventory = true` as an effect. `FulfillBountyGoal` and `LiquidateSalvageGoal` are therefore unreachable through planning, so agents never complete Gather bounties.
 - **Scout bounties exist in the UI and data model with no fulfilment behaviour.** Agents can still *claim* them, because claiming ignores bounty type.
 - **The stall's ration stock only goes down.** I found no restock path. Agents start with 10 gold, and earning gold requires salvage, which they can't get.

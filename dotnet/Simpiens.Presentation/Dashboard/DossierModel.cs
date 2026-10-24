@@ -40,12 +40,19 @@ namespace Simpiens.Presentation.Dashboard
         public AgentVisualState State { get; private set; }
         public string Badge { get; private set; } = string.Empty;
 
+        /// <summary>Health, 0 to 100 (Epic 10 G2); a downed crawler's badge reads <see cref="DownedBadge"/>.</summary>
+        public float Health { get; private set; }
+        public const string DownedBadge = "DOWNED";
+
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
         public float Social { get; private set; }
         public float Frustration { get; private set; }
 
         public string Goal { get; private set; } = string.Empty;
+
+        /// <summary>Empty for a resident; for a drifter (Epic 10 G1), when it moves on: "drifter, leaves in 3 min".</summary>
+        public string Residency { get; private set; } = string.Empty;
         public string Action { get; private set; } = string.Empty;
 
         /// <summary>
@@ -78,9 +85,12 @@ namespace Simpiens.Presentation.Dashboard
             string friendly = _context.FriendlyName(node.Id, node.Name);
             string title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
             Name = string.IsNullOrEmpty(title) ? $"{friendly} [{node.Name}]" : $"{friendly} the {title} [{node.Name}]";
+            Residency = Stay(agent.DepartsAtTick, _context.Clock?.CurrentTick ?? 0);
+            if (Residency.Length > 0) Name += " · " + Residency;
 
             State = agent.VisualState;
-            Badge = State.ToString().ToUpperInvariant();
+            Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
+            Health = agent.Health;
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -102,6 +112,16 @@ namespace Simpiens.Presentation.Dashboard
             }
             _rows.Sort(WarmestFirst);
             for (int i = 0; i < _rows.Count; i++) _affinities.Add(_rows[i].Line);
+        }
+
+        /// <summary>A drifter's stay in words, by the sim-minute (600 ticks); empty for a resident.</summary>
+        public static string Stay(uint departsAtTick, long now)
+        {
+            if (departsAtTick == 0) return string.Empty;
+            long left = departsAtTick - now;
+            if (left <= 0) return "drifter, leaving";
+            long minutes = (left + 599) / 600;
+            return minutes == 1 ? "drifter, leaves in 1 min" : Invariant($"drifter, leaves in {minutes} min");
         }
 
         private readonly struct AffinityRow

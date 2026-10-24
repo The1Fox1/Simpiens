@@ -57,6 +57,7 @@ namespace Simpiens.Client.Ui
         public static readonly Color ShroudedBorder = Hex(0x334155);
 
         // A crawler's drive bars
+        public static readonly Color DriveHealth = Hex(0x22c55e);  // green (Epic 10 G2)
         public static readonly Color DriveHunger = Hex(0xf59e0b);
         public static readonly Color DriveEnergy = Hex(0x3b82f6);
         public static readonly Color DriveSocial = Hex(0x06b6d4);

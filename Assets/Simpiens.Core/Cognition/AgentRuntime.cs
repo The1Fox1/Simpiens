@@ -1,3 +1,5 @@
+using Simpiens.Diagnostics;
+using ZLogger;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -95,6 +97,27 @@ namespace Simpiens.Cognition
                 }
             }
 
+            // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's
+            bool wasDowned = State.IsDowned;
+            var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
+            if (hazard.IsHazardous)
+            {
+                State.Activity.HazardTicks++;
+                State.Health = SimMath.Max(0f, (float)(State.Health - (float)(hazard.DamagePerSecond * FixedTickDeltaTime)));
+                if (State.Health <= 0f && !State.IsDowned)
+                {
+                    State.IsDowned = true;
+                    State.Activity.TimesDowned++;
+                    SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)} was downed by {hazard.Kind} at {State.Position}");
+                    RecordStory(ChronicleEventType.CrawlerDowned, ChronicleIntensity.Crisis);
+                }
+            }
+            if (wasDowned && !State.IsDowned) RecordStory(ChronicleEventType.CrawlerRecovered, ChronicleIntensity.Notable);
+            bool hurtInDanger = !State.IsDowned && hazard.IsHazardous && State.Health < Vitality.RetreatBelow;
+            // Tending to itself; resting counts only out of danger (a downed crawler must not rest in a hazard sector)
+            bool tending = State.CurrentIntent is RetreatIntent || State.CurrentIntent is TreatWoundsIntent || State.CurrentIntent is SleepAtBunkIntent
+                || (State.CurrentIntent is IdleIntent && !hazard.IsHazardous);
+
             // Reflexive preemption check
             bool emergencyExhaustion = State.Energy <= MentalBreakEvaluator.ExhaustionThreshold;
             bool emergencyStarvation = State.Hunger >= MentalBreakEvaluator.StarvationThreshold && !State.HasFoodInInventory && !State.HasKnownFood();
@@ -110,8 +133,15 @@ namespace Simpiens.Cognition
             {
                 shouldPreempt = true;
             }
-            else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent))
+            else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent) && !tending)
             {
+                // Not while it tends to itself: a starving crawler retreating from a hazard sector was stopped every tick
+                // and stayed in it all day (Epic 10 G2)
+                shouldPreempt = true;
+            }
+            else if ((State.IsDowned || hurtInDanger) && !tending)
+            {
+                if (hurtInDanger) State.Activity.Retreats++;
                 shouldPreempt = true;
             }
 

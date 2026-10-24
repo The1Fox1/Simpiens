@@ -28,7 +28,11 @@ namespace Simpiens.Narrative
         BountyExpired = 18,
         SupplyCaravanArrived = 19,
         ResourceRegrown = 20,
-        UpkeepUnpaid = 21
+        UpkeepUnpaid = 21,
+        DrifterArrived = 22,
+        DrifterLeft = 23,
+        CrawlerDowned = 24,
+        CrawlerRecovered = 25
     }
 
     /// <summary>

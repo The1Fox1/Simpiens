@@ -65,6 +65,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
+                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in (Epic 10 G2)
+                if (!Vitality.WouldVenture(context) && Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation).IsHazardous) continue;
                 return true;
             }
             return false;
@@ -83,7 +85,12 @@ namespace Simpiens.Cognition.Planning
             ushort orePrice = 1;
             ushort herbPrice = 1;
             uint treasury = uint.MaxValue;
-            if (context.Snapshot != null && TryGetNearestStall(context, out var stall))
+            TradeStallData stall = default;
+            bool stallKnown = context.Snapshot != null && TryGetNearestStall(context, out stall);
+            var map = context.Snapshot?.Map;
+            bool venture = Vitality.WouldVenture(context);
+            var economy = Considerations.Economy(context);
+            if (stallKnown)
             {
                 orePrice = stall.OreBuyPrice > 0 ? stall.OreBuyPrice : (ushort)1;
                 herbPrice = stall.HerbBuyPrice > 0 ? stall.HerbBuyPrice : (ushort)1;
@@ -99,6 +106,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
+                // Danger is for the bold and healthy (Epic 10 G2): a hazard sector's nodes are left to them
+                if (!venture && Vitality.HazardAt(map, record.LastKnownLocation).IsHazardous) continue;
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -108,9 +117,12 @@ namespace Simpiens.Cognition.Planning
                 }
                 else
                 {
-                    float price = record.ResourceKind == ItemType.IronOre ? orePrice : herbPrice;
-                    // Speculative gathering only targets salvage the stall can currently pay for
+                    float price = record.ResourceKind == ItemType.IronOre ? orePrice
+                        : record.ResourceKind == ItemType.Glowstone ? (stallKnown && stall.GlowstoneBuyPrice > 0 ? stall.GlowstoneBuyPrice : 1f) : herbPrice;
+                    // Speculative gathering only targets salvage the stall can currently pay for, and has room for: with
+                    // the ore shelf full, a crawler goes for herbs (Epic 10 G1; drifters sell too)
                     if (price > treasury) continue;
+                    if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
                     score = price / dist;
                 }
 
@@ -233,10 +245,11 @@ namespace Simpiens.Cognition.Planning
             byte current = map.FindSector(context.Position).Id;
 
             var snapshot = context.Snapshot;
+            bool venture = Vitality.WouldVenture(context);
             int candidates = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
-                if (IsExplorable(snapshot, sectors[i].Id, current)) candidates++;
+                if (IsExplorable(snapshot, sectors[i], current, venture)) candidates++;
             }
             if (candidates == 0) return false;
 
@@ -246,7 +259,7 @@ namespace Simpiens.Cognition.Planning
             int tied = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
-                if (!IsExplorable(snapshot, sectors[i].Id, current)) continue;
+                if (!IsExplorable(snapshot, sectors[i], current, venture)) continue;
                 uint visit = context.Memory != null ? context.Memory.LastSectorVisit(sectors[i].Id) : 0u;
                 if (visit < oldest) { oldest = visit; tied = 1; }
                 else if (visit == oldest) tied++;
@@ -257,7 +270,7 @@ namespace Simpiens.Cognition.Planning
             for (int i = 0; i < sectors.Count; i++)
             {
                 var sector = sectors[i];
-                if (!IsExplorable(snapshot, sector.Id, current)) continue;
+                if (!IsExplorable(snapshot, sector, current, venture)) continue;
                 uint lastVisit = context.Memory != null ? context.Memory.LastSectorVisit(sector.Id) : 0u;
                 if (lastVisit != oldest) continue;
                 if (pick-- > 0) continue;
@@ -274,9 +287,10 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>Another sector, and a charted one: uncharted sectors are a scout's job (fog of war).</summary>
-        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, byte sectorId, byte current)
+        // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2)
+        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture)
         {
-            return sectorId != current && (snapshot == null || snapshot.IsSectorCharted(sectorId));
+            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && (venture || !sector.Hazard.IsHazardous);
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)
@@ -365,6 +379,18 @@ namespace Simpiens.Cognition.Planning
         /// True when the nearest reachable stall has room for salvage, isn't in arrears and its treasury can pay for at least one unit, so a sale won't
         /// fail on arrival. Without any visible stall this returns true (headless contexts); behind walls, false.
         /// </summary>
+        /// <summary>
+        /// True when the agent holds salvage for sale (not owed to a bounty) and the reachable stall would take none of
+        /// it right now: that shelf is full, the treasury can't pay, the stall is in arrears, or the price is under the
+        /// agent's minimum. The planner then does not count it as salvage to sell, so the agent can gather a kind the
+        /// stall still buys instead of holding out all day (Epic 10 G1).
+        /// </summary>
+        public static bool StallRefusesHeldSalvage(in AgentContext context)
+        {
+            if (!HoldsAnySellable(context)) return false;
+            return GetStallAccess(context, out var stall) == StallAccess.Reachable && AffordableHeldSalvage(context, stall) == ItemType.None;
+        }
+
         public static bool NearestStallCanBuySalvage(in AgentContext context)
         {
             var access = GetStallAccess(context, out var stall);
@@ -372,7 +398,9 @@ namespace Simpiens.Cognition.Planning
             if (access == StallAccess.Unreachable) return false;
             uint cheapest = stall.OreBuyPrice < stall.HerbBuyPrice ? stall.OreBuyPrice : stall.HerbBuyPrice;
             var economy = Considerations.Economy(context);
-            bool room = economy.StallHasRoom(stall, ItemType.IronOre) || economy.StallHasRoom(stall, ItemType.MedicinalHerb);
+            // Glowstone's shelf counts only for a crawler who would go into danger for it (Epic 10 G2)
+            bool room = economy.StallHasRoom(stall, ItemType.IronOre) || economy.StallHasRoom(stall, ItemType.MedicinalHerb)
+                || (Vitality.WouldVenture(context) && stall.GlowstoneBuyPrice > 0 && economy.StallHasRoom(stall, ItemType.Glowstone));
             return room && !stall.InArrears && stall.TreasuryGold >= cheapest;
         }
 
@@ -383,6 +411,10 @@ namespace Simpiens.Cognition.Planning
         /// True when the agent holds a unit of this salvage it may sell: more than its claimed Gather bounty still
         /// needs. Units owed to a contract are never sold at the stall (the bounty pays better and was promised).
         /// </summary>
+        /// <summary>True when the agent holds any salvage it may sell (ore, herbs or Glowstone; none owed to a bounty).</summary>
+        public static bool HoldsAnySellable(in AgentContext context) =>
+            HoldsSellable(context, ItemType.IronOre) || HoldsSellable(context, ItemType.MedicinalHerb) || HoldsSellable(context, ItemType.Glowstone);
+
         public static bool HoldsSellable(in AgentContext context, ItemType item)
         {
             if (context.Inventory == null) return false;
@@ -400,17 +432,24 @@ namespace Simpiens.Cognition.Planning
             // Payable by the treasury, with room in the stall, at or above the agent's personal minimum sale price, and
             // not owed to a bounty
             if (stall.InArrears) return ItemType.None; // a stall in arrears buys no salvage (review §3.3 D2)
-            var economy = Considerations.Economy(context);
-            bool herb = HoldsSellable(context, ItemType.MedicinalHerb) && stall.TreasuryGold >= stall.HerbBuyPrice
-                && economy.StallHasRoom(stall, ItemType.MedicinalHerb)
-                && stall.HerbBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.MedicinalHerb);
-            bool ore = HoldsSellable(context, ItemType.IronOre) && stall.TreasuryGold >= stall.OreBuyPrice
-                && economy.StallHasRoom(stall, ItemType.IronOre)
-                && stall.OreBuyPrice >= Considerations.MinimumSalePrice(context, ItemType.IronOre);
-            if (herb && ore) return stall.HerbBuyPrice >= stall.OreBuyPrice ? ItemType.MedicinalHerb : ItemType.IronOre;
-            if (herb) return ItemType.MedicinalHerb;
-            if (ore) return ItemType.IronOre;
-            return ItemType.None;
+            // The best-paid kind it will take; at equal prices herbs before ore (as before), Glowstone first of all
+            var best = ItemType.None;
+            ushort bestPrice = 0;
+            Consider(context, stall, ItemType.Glowstone, ref best, ref bestPrice);
+            Consider(context, stall, ItemType.MedicinalHerb, ref best, ref bestPrice);
+            Consider(context, stall, ItemType.IronOre, ref best, ref bestPrice);
+            return best;
+        }
+
+        private static void Consider(in AgentContext context, in TradeStallData stall, ItemType item, ref ItemType best, ref ushort bestPrice)
+        {
+            ushort price = stall.BuyPriceOf(item);
+            if (price == 0 || (best != ItemType.None && price <= bestPrice)) return;
+            if (!HoldsSellable(context, item) || stall.TreasuryGold < price) return;
+            if (!Considerations.Economy(context).StallHasRoom(stall, item)) return;
+            if (price < Considerations.MinimumSalePrice(context, item)) return;
+            best = item;
+            bestPrice = price;
         }
 
         /// <summary>

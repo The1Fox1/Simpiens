@@ -362,21 +362,22 @@ namespace Simpiens.Simulation.Spatial
             if (distance < 0.1f) return true;
 
             float stepSize = 0.25f;
-            int steps = SimMath.CeilToInt(distance / stepSize);
+            // Every float step cast: Mono keeps a scalar chain at double precision, CoreCLR rounds each step (Epic CORE F1)
+            int steps = SimMath.CeilToInt((float)(distance / stepSize));
             Vec2 dir = (end - start) / distance;
 
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
 
-            int prevCellX = SimMath.FloorToInt((start.X + offsetX) / CellSize);
-            int prevCellY = SimMath.FloorToInt((start.Y + offsetY) / CellSize);
+            int prevCellX = CellOf(start.X, offsetX);
+            int prevCellY = CellOf(start.Y, offsetY);
 
             // Check intermediate steps along the ray
             for (int i = 1; i <= steps; i++)
             {
-                Vec2 sample = (i == steps) ? end : start + dir * (i * stepSize);
-                int cellX = SimMath.FloorToInt((sample.X + offsetX) / CellSize);
-                int cellY = SimMath.FloorToInt((sample.Y + offsetY) / CellSize);
+                Vec2 sample = (i == steps) ? end : start + dir * (float)(i * stepSize);
+                int cellX = CellOf(sample.X, offsetX);
+                int cellY = CellOf(sample.Y, offsetY);
 
                 if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height)
                 {
@@ -427,8 +428,8 @@ namespace Simpiens.Simulation.Spatial
         {
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
-            int cellX = SimMath.FloorToInt((worldPos.X + offsetX) / CellSize);
-            int cellY = SimMath.FloorToInt((worldPos.Y + offsetY) / CellSize);
+            int cellX = CellOf(worldPos.X, offsetX);
+            int cellY = CellOf(worldPos.Y, offsetY);
             if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) return false;
             return StaticGrid == null || StaticGrid.IsCellWalkable(cellX, cellY);
         }
@@ -442,38 +443,39 @@ namespace Simpiens.Simulation.Spatial
         {
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
-            float sx = (start.X + offsetX) / CellSize, sy = (start.Y + offsetY) / CellSize;
-            float ex = (end.X + offsetX) / CellSize, ey = (end.Y + offsetY) / CellSize;
+            // Every float step cast: Mono keeps a scalar chain at double precision, CoreCLR rounds each step (Epic CORE F1)
+            float sx = GridCoord(start.X, offsetX), sy = GridCoord(start.Y, offsetY);
+            float ex = GridCoord(end.X, offsetX), ey = GridCoord(end.Y, offsetY);
 
             int x = SimMath.FloorToInt(sx), y = SimMath.FloorToInt(sy);
             int endX = SimMath.FloorToInt(ex), endY = SimMath.FloorToInt(ey);
             if (!IsStaticCellWalkable(x, y) || !IsStaticCellWalkable(endX, endY)) return false;
 
-            float dx = ex - sx, dy = ey - sy;
+            float dx = (float)(ex - sx), dy = (float)(ey - sy);
             int stepX = dx > 0f ? 1 : (dx < 0f ? -1 : 0);
             int stepY = dy > 0f ? 1 : (dy < 0f ? -1 : 0);
-            float tDeltaX = stepX != 0 ? SimMath.Abs(1f / dx) : float.PositiveInfinity;
-            float tDeltaY = stepY != 0 ? SimMath.Abs(1f / dy) : float.PositiveInfinity;
-            float tMaxX = stepX > 0 ? (x + 1 - sx) * tDeltaX : (stepX < 0 ? (sx - x) * tDeltaX : float.PositiveInfinity);
-            float tMaxY = stepY > 0 ? (y + 1 - sy) * tDeltaY : (stepY < 0 ? (sy - y) * tDeltaY : float.PositiveInfinity);
+            float tDeltaX = stepX != 0 ? SimMath.Abs((float)(1f / dx)) : float.PositiveInfinity;
+            float tDeltaY = stepY != 0 ? SimMath.Abs((float)(1f / dy)) : float.PositiveInfinity;
+            float tMaxX = stepX > 0 ? (float)((float)(x + 1 - sx) * tDeltaX) : (stepX < 0 ? (float)((float)(sx - x) * tDeltaX) : float.PositiveInfinity);
+            float tMaxY = stepY > 0 ? (float)((float)(y + 1 - sy) * tDeltaY) : (stepY < 0 ? (float)((float)(sy - y) * tDeltaY) : float.PositiveInfinity);
 
             int guard = Width + Height + 2;
             while ((x != endX || y != endY) && guard-- > 0)
             {
-                if (SimMath.Abs(tMaxX - tMaxY) < 1e-5f)
+                if (SimMath.Abs((float)(tMaxX - tMaxY)) < 1e-5f)
                 {
                     // Exact corner crossing: both orthogonal neighbours must be open
                     if (!IsStaticCellWalkable(x + stepX, y) || !IsStaticCellWalkable(x, y + stepY)) return false;
                     x += stepX; y += stepY;
-                    tMaxX += tDeltaX; tMaxY += tDeltaY;
+                    tMaxX = (float)(tMaxX + tDeltaX); tMaxY = (float)(tMaxY + tDeltaY);
                 }
                 else if (tMaxX < tMaxY)
                 {
-                    x += stepX; tMaxX += tDeltaX;
+                    x += stepX; tMaxX = (float)(tMaxX + tDeltaX);
                 }
                 else
                 {
-                    y += stepY; tMaxY += tDeltaY;
+                    y += stepY; tMaxY = (float)(tMaxY + tDeltaY);
                 }
 
                 if (!IsStaticCellWalkable(x, y)) return false;
@@ -492,15 +494,15 @@ namespace Simpiens.Simulation.Spatial
             float distance = Vec2.Distance(start, end);
             float offsetX = (Width * CellSize) * 0.5f;
             float offsetY = (Height * CellSize) * 0.5f;
-            float sqrClearance = clearance * clearance;
+            float sqrClearance = (float)(clearance * clearance);
 
             // Samples at most half a cell apart; props within clearance of the segment lie within one cell of a sample
-            int steps = SimMath.Max(1, SimMath.CeilToInt(distance / (CellSize * 0.5f)));
+            int steps = SimMath.Max(1, SimMath.CeilToInt((float)(distance / (float)(CellSize * 0.5f))));
             for (int i = 0; i <= steps; i++)
             {
-                Vec2 sample = Vec2.Lerp(start, end, (float)i / steps);
-                int sampleX = SimMath.FloorToInt((sample.X + offsetX) / CellSize);
-                int sampleY = SimMath.FloorToInt((sample.Y + offsetY) / CellSize);
+                Vec2 sample = Vec2.Lerp(start, end, (float)((float)i / steps));
+                int sampleX = CellOf(sample.X, offsetX);
+                int sampleY = CellOf(sample.Y, offsetY);
 
                 for (int cy = sampleY - 1; cy <= sampleY + 1; cy++)
                 {
@@ -530,9 +532,15 @@ namespace Simpiens.Simulation.Spatial
         {
             Vec2 ab = b - a;
             float lengthSqr = ab.SqrMagnitude;
-            float t = lengthSqr > 0f ? SimMath.Clamp01(Vec2.Dot(point - a, ab) / lengthSqr) : 0f;
+            float t = lengthSqr > 0f ? SimMath.Clamp01((float)(Vec2.Dot(point - a, ab) / lengthSqr)) : 0f;
             return (point - (a + ab * t)).SqrMagnitude;
         }
+
+        /// <summary>A world coordinate in cells, rounded to float at each step (Mono keeps a chain at double precision, F1).</summary>
+        private float GridCoord(float world, float offset) => (float)((float)(world + offset) / CellSize);
+
+        /// <summary>The cell holding a world coordinate, computed as <see cref="GridCoord"/>.</summary>
+        private int CellOf(float world, float offset) => SimMath.FloorToInt(GridCoord(world, offset));
 
         private bool IsStaticCellWalkable(int cellX, int cellY)
         {

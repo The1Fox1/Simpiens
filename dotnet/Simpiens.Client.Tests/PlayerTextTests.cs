@@ -76,6 +76,67 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void ADriftersDossierSaysWhenItMovesOn()
+        {
+            Assert.Equal(string.Empty, DossierModel.Stay(0, 100));
+            Assert.Equal("drifter, leaves in 2 min", DossierModel.Stay(1300, 200));
+            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1000));
+            Assert.Equal("drifter, leaving", DossierModel.Stay(1300, 1300));
+
+            using var sim = Outpost(0);
+            while (sim.Clock.CurrentTick < 4000 && !sim.Host.CrawlerStates.Any(s => s.IsDrifter)) sim.Step(1);
+            var drifter = sim.Host.CrawlerStates.First(s => s.IsDrifter);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.SelectCrawler(drifter.AgentId);
+            Assert.StartsWith("drifter, leaves in", model.Dossier.Residency);
+            Assert.EndsWith(" · " + model.Dossier.Residency, model.Dossier.Name);
+
+            model.SelectCrawler(sim.Host.CrawlerStates.First(s => !s.IsDrifter).AgentId);
+            Assert.Equal(string.Empty, model.Dossier.Residency);
+        }
+
+        [Fact]
+        public void TheMerchantPricesGlowstoneAndTheDossierShowsHealth()
+        {
+            using var sim = Outpost(0);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.OpenMerchant();
+            Assert.Equal(45, model.Merchant.GlowstonePrice);
+            Assert.Contains("0 Glowstone", model.Merchant.Stock);
+            model.Merchant.GlowstonePrice = 38;
+            model.Merchant.Apply();
+            sim.Step(1);
+            Assert.True(model.Context.TryGetStall(model.Merchant.StallId, out var stall));
+            Assert.Equal(38, stall.GlowstoneBuyPrice);
+            Assert.Equal(20, stall.OreBuyPrice); // the others keep their prices
+
+            var crawler = sim.Host.CrawlerStates[0];
+            crawler.Health = 30f;
+            crawler.IsDowned = true;
+            model.SelectCrawler(crawler.AgentId);
+            Assert.Equal(30f, model.Dossier.Health);
+            Assert.Equal(DossierModel.DownedBadge, model.Dossier.Badge);
+        }
+
+        [Fact]
+        public void AHazardSectorReadsAsDangerous()
+        {
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            map.TryGetSector(Simpiens.Core.Session.Layouts.Floor1Layout.SumpSectorId, out var sump);
+            var sumpTint = Simpiens.Presentation.MapTileLayer.FloorTint(map, sump);
+            Assert.True(sumpTint.R > sumpTint.B && sumpTint.R >= sumpTint.G, $"The Sump's floor {sumpTint} is not reddish.");
+
+            // Its danger is written under its name; no other room has a note
+            using var sim = Outpost(0);
+            var scene = new Simpiens.Presentation.WorldScene();
+            scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
+            var notes = Enumerable.Range(0, scene.Labels.Count).Select(i => scene.Labels[i]).Where(l => l.Kind == Simpiens.Presentation.LabelKind.Hazard).ToList();
+            Assert.Equal(2, notes.Count);
+            Assert.Contains(notes, l => l.Text == "FOUL AIR" && l.SectorId == Simpiens.Core.Session.Layouts.Floor1Layout.SumpSectorId);
+            Assert.Contains(notes, l => l.Text == "FALLING ROCK" && l.SectorId == Simpiens.Core.Session.Layouts.Floor1Layout.GlowCavesSectorId);
+        }
+
+        [Fact]
         public void TheMerchantNamesItsStallByTheRoomItStandsIn()
         {
             using var sim = Outpost(0);

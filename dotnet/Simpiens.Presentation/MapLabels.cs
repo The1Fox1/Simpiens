@@ -11,6 +11,8 @@ namespace Simpiens.Presentation
         Uncharted = 1,
         /// <summary>The selected crawler's name above it, at one size.</summary>
         Name = 2,
+        /// <summary>A hazard sector's danger ("FOUL AIR") under its room's name, placed as <see cref="Uncharted"/> (Epic 10 G2).</summary>
+        Hazard = 3,
     }
 
     /// <summary>Text the map asks for: a world point to hang it on (<see cref="Height"/> above the floor), in a colour (its alpha fades it).</summary>
@@ -169,6 +171,7 @@ namespace Simpiens.Presentation
                         break;
                     }
                     case LabelKind.Uncharted:
+                    case LabelKind.Hazard:
                     {
                         // Under its room's name when the room has one (and it shows), else on its own point
                         int size = MinSize;

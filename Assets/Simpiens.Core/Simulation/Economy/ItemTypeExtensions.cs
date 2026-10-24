@@ -8,7 +8,7 @@ namespace Simpiens.Simulation.Economy
     {
         public static bool IsFoodYield(this ItemType type) => type == ItemType.None || type == ItemType.Ration;
 
-        public static bool IsSalvage(this ItemType type) => type == ItemType.IronOre || type == ItemType.MedicinalHerb;
+        public static bool IsSalvage(this ItemType type) => type == ItemType.IronOre || type == ItemType.MedicinalHerb || type == ItemType.Glowstone;
 
         // Item base values live in EconomyTuning.BaseValue (one economy tuning per session)
     }

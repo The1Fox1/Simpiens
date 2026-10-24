@@ -32,14 +32,21 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Gold the stall pays per visit to keep the outpost running; leaves the economy as "OutpostUpkeep".</summary>
         public readonly ushort UpkeepPerVisit;
 
+        /// <summary>Most Glowstone units the caravan buys per visit, and what it pays: the rare salvage's premium (Epic 10 G2).</summary>
+        public readonly ushort GlowstoneQuota;
+        public readonly ushort GlowstoneMarketPrice;
+
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost)
             : this(restockIntervalTicks, rationStockCap, wholesaleRationCost, 0, 0, 0, 0, 0)
         {
         }
 
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost,
-            ushort oreQuota, ushort herbQuota, ushort oreMarketPrice, ushort herbMarketPrice, ushort upkeepPerVisit = 0)
+            ushort oreQuota, ushort herbQuota, ushort oreMarketPrice, ushort herbMarketPrice, ushort upkeepPerVisit = 0,
+            ushort glowstoneQuota = 0, ushort glowstoneMarketPrice = 0)
         {
+            GlowstoneQuota = glowstoneQuota;
+            GlowstoneMarketPrice = glowstoneMarketPrice;
             RestockIntervalTicks = restockIntervalTicks;
             RationStockCap = rationStockCap;
             WholesaleRationCost = wholesaleRationCost;
@@ -52,9 +59,10 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2,
-            oreQuota: 2, herbQuota: 2, oreMarketPrice: 24, herbMarketPrice: 30, upkeepPerVisit: 80);
+            oreQuota: 2, herbQuota: 2, oreMarketPrice: 24, herbMarketPrice: 30, upkeepPerVisit: 80,
+            glowstoneQuota: 2, glowstoneMarketPrice: 70);
 
         /// <summary>The most gold the caravan can pay a stall for salvage in one visit.</summary>
-        public uint MaxSalvagePaymentPerVisit => (uint)OreQuota * OreMarketPrice + (uint)HerbQuota * HerbMarketPrice;
+        public uint MaxSalvagePaymentPerVisit => (uint)OreQuota * OreMarketPrice + (uint)HerbQuota * HerbMarketPrice + (uint)GlowstoneQuota * GlowstoneMarketPrice;
     }
 }
