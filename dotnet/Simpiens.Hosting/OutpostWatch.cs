@@ -31,10 +31,6 @@ namespace Simpiens.Hosting
             1UL, 2UL, 3UL, 4UL, 5UL, 6UL, 7UL, 8UL, 9UL, 10UL, 11UL, 12UL, 13UL, 14UL, 15UL, 16UL, 17UL, 18UL, 19UL, 20UL
         };
 
-        // Unity's VisualAnomalyDetector calls two pawns closer than this for a second "stacked" (Epic 10 G0)
-        public const float StackingDistance = 0.35f;
-        public const float StackingSeconds = 1f;
-        private const float TickSeconds = 0.1f;
 
         public sealed class Crawler
         {
@@ -65,11 +61,6 @@ namespace Simpiens.Hosting
         public const float RecoveredAt = 80f;
 
         // Per pawn, residents and drifters alike: Unity's detector watches every pawn
-        private sealed class StackingClock
-        {
-            public float StackedFor, LastAlert = -10f;
-        }
-        private readonly Dictionary<EntityId, StackingClock> _stacking = new Dictionary<EntityId, StackingClock>();
 
         private readonly LocalSimulation _sim;
         private readonly int _baselineSalvage;
@@ -83,9 +74,15 @@ namespace Simpiens.Hosting
         public string FirstFogLeak;
         public long ObservedTicks;
 
-        /// <summary>Pawn stacking as Unity's anomaly detector counts it, from the simulation's positions.</summary>
-        public int Stackings;
-        public string FirstStacking;
+        /// <summary>
+        /// Jitter, stacking, wall penetration, boundary breaches and state thrashing, judged every tick (Epic CLIENT M2.8:
+        /// the checks of Unity's visual anomaly detector, on the simulation's own data).
+        /// </summary>
+        public AnomalyDetector Anomalies { get; }
+
+        /// <summary>Pawn stacking (Epic 10 G0), and the first one seen.</summary>
+        public int Stackings => Anomalies.StackingCount;
+        public string FirstStacking { get; private set; }
 
         /// <summary>Drifters seen while watching (Epic 10 G1): arrived, walked out, and what those who left bought.</summary>
         public int DriftersArrived, DriftersLeft, DrifterPurchases;
@@ -96,6 +93,11 @@ namespace Simpiens.Hosting
             _sim = sim;
             _startTick = sim.Clock.CurrentTick;
             _baselineSalvage = TotalSalvage(sim.Simulation);
+            Anomalies = AnomalyDetector.For(sim);
+            Anomalies.AnomalyFound += record =>
+            {
+                if (record.Type == AnomalyType.PawnStacking) FirstStacking ??= $"t{record.Tick - _startTick}: {record.Description} at {record.Position}";
+            };
             var host = sim.Host;
             _driftersAtStart = host.DriftersArrived;
             host.CrawlerDeparted += (runtime, entity) =>
@@ -179,7 +181,7 @@ namespace Simpiens.Hosting
                 }
             }
 
-            CheckStacking(rel);
+            Anomalies.Observe(tick);
 
             if (sim.EconomyLedger != null)
             {
@@ -191,39 +193,6 @@ namespace Simpiens.Hosting
                     ConservationViolations++;
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
-            }
-        }
-
-        // VisualAnomalyDetector.EvaluateStacking, per tick: a pawn accrues time while closer than StackingDistance to a
-        // later pawn in the registry (gossip and sharing exempt), loses it twice as fast otherwise, and counts once a
-        // second while past StackingSeconds. Unity's lifecycle, supply-loop and save/load scenarios assert none.
-        private void CheckStacking(long rel)
-        {
-            var pawns = _sim.Registry.ActiveEntities;
-            float now = rel * TickSeconds;
-            for (int i = 0; i < pawns.Count; i++)
-            {
-                var a = pawns[i];
-                if (a.Type != EntityType.Pawn || a.Agent == null) continue;
-                if (!_stacking.TryGetValue(a.Id, out var watched)) _stacking[a.Id] = watched = new StackingClock();
-                bool stacked = false;
-                for (int j = i + 1; j < pawns.Count; j++)
-                {
-                    var b = pawns[j];
-                    if (b.Type != EntityType.Pawn) continue;
-                    if (a.Agent.IsGossiping || a.Agent.IsSharing || (b.Agent != null && (b.Agent.IsGossiping || b.Agent.IsSharing))) continue;
-                    if (Vec2.Distance(a.Position, b.Position) >= StackingDistance) continue;
-                    stacked = true;
-                    watched.StackedFor += TickSeconds;
-                    if (watched.StackedFor >= StackingSeconds && now - watched.LastAlert >= 1f)
-                    {
-                        watched.LastAlert = now;
-                        Stackings++;
-                        FirstStacking ??= $"t{rel}: {a.Name} with {b.Name} at {a.Position}";
-                    }
-                    break;
-                }
-                if (!stacked) watched.StackedFor = SimMath.Max(0f, watched.StackedFor - TickSeconds * 2f);
             }
         }
 
@@ -239,9 +208,9 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>
-        /// What fails the outpost's day (Epic MAP's DoD, OutpostLifecycleScenario's assertions; of the anomaly detector's,
-        /// only stacking, which the simulation's positions show) after a 9,000-tick run and <see cref="Finish"/>. Empty
-        /// when the day emerged.
+        /// What fails the outpost's day (Epic MAP's DoD, OutpostLifecycleScenario's assertions, with every anomaly type but
+        /// state thrashing, which the views judge) after a 9,000-tick run and <see cref="Finish"/>. Empty when the day
+        /// emerged.
         /// </summary>
         public List<string> DayFailures()
         {
@@ -266,6 +235,9 @@ namespace Simpiens.Hosting
             if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
             if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
             if (Stackings > 0) failures.Add($"pawn stacking {Stackings} times (first {FirstStacking})");
+            // The rest of Unity's anomaly checks (Epic CLIENT M2.8); thrashing is the views' to judge (AnomalyDetector)
+            if (Anomalies.JitterCount + Anomalies.PenetrationCount + Anomalies.BoundaryBreachCount > 0)
+                failures.Add($"{Anomalies.Summary()}; first {Anomalies.First}");
             return failures;
         }
 
@@ -299,7 +271,7 @@ namespace Simpiens.Hosting
         public string Report()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); stacking {Stackings}{(FirstStacking != null ? $" (first {FirstStacking})" : "")}");
+            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");
