@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The engine-free simulation core: the same files as the Unity assembly Simpiens.Core (Assets/Simpiens.Core).
-       netstandard2.1 is built too, so an API Unity lacks fails here before it fails in Unity. -->
+  <!-- The engine-free simulation core. It still builds for netstandard2.1 at C# 10, the level Unity compiled it at
+       until Unity was removed (Epic CLIENT M2.9); lifting the cap is a follow-up of its own. -->
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
     <AssemblyName>Simpiens.Core</AssemblyName>
@@ -10,7 +10,7 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(AssetsRoot)Simpiens.Core/**/*.cs" LinkBase="Core" />
+    <Compile Include="**/*.cs" Exclude="bin/**;obj/**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ZLogger" Version="2.5.10" />

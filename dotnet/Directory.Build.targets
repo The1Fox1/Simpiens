@@ -1,6 +1,6 @@
 <Project>
   <!-- On net10.0 the MemoryPack generator emits C# 11+ (static abstract interface members), so those builds use the
-       latest language version. The shared source is still held to C# 10 by the netstandard2.1 build and by Unity.
+       latest language version. The core is still held to C# 10 by its netstandard2.1 build.
        (Here, not in Directory.Build.props: a single-target project sets TargetFramework after the props are read.) -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <LangVersion>latest</LangVersion>

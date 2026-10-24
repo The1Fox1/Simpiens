@@ -1,9 +1,8 @@
-# The simulation and the game client without Unity (Epic CORE, Epic CLIENT): builds the .NET solution and runs its
-# tests (validators, golden world hashes, the outpost's Definition-of-Done scenarios headless, the economy soak, and
-# the KNI client's presentation, golden-hash and render tests), then checks that the client still compiles against
-# MonoGame, KNI's fallback. The client's tests run in the pinned image of scripts/client-tests.Containerfile (review
-# T2), the same one scripts/test-client-in-container.sh runs locally, so the renders must match the references byte for
-# byte. No Unity licence needed. The Unity PlayMode suite still runs locally: scripts/run-playmode-tests.sh.
+# The simulation and the game client: builds the .NET solution and runs its tests (validators, golden world hashes,
+# the outpost's Definition-of-Done scenarios headless, the economy soak, and the KNI client's presentation,
+# golden-hash and render tests), then checks that the client still compiles against MonoGame, KNI's fallback. The
+# client's tests run in the pinned image of scripts/client-tests.Containerfile (review T2), the same one
+# scripts/test-client-in-container.sh runs locally, so the renders must match the references byte for byte.
 name: dotnet
 
 on:

@@ -1,15 +1,14 @@
 <Project>
-  <!-- Shared settings for the .NET side of Simpiens (Epic CORE Phase 1). The simulation's source lives under Assets/
-       and is compiled here by glob: Unity compiles the same files, so they stay at C# 10 and netstandard2.1 APIs. -->
+  <!-- Shared settings for Simpiens. The core still targets netstandard2.1 at C# 10, as it did while Unity compiled the
+       same files (Unity was removed in Epic CLIENT M2.9); lifting that cap is a follow-up of its own. -->
   <PropertyGroup>
-    <!-- C# 10 where Unity's API level is checked (netstandard2.1); net10.0 builds raise it in Directory.Build.targets -->
+    <!-- C# 10 for netstandard2.1 builds; net10.0 builds raise it in Directory.Build.targets -->
     <LangVersion>10</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <AssetsRoot>$(MSBuildThisFileDirectory)../Assets/</AssetsRoot>
     <!-- Glob-compiled projects never pick up generated sources from either framework's output folders -->
     <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
   </PropertyGroup>
