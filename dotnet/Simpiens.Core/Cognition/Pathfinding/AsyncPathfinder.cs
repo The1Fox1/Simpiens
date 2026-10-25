@@ -103,6 +103,7 @@ namespace Simpiens.Cognition.Pathfinding
                 response = new PathResponse();
                 response.Initialize(MaxPathLength, ReturnToPool);
             }
+            response.MarkRented();
             return response;
         }
 
