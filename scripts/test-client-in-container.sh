@@ -30,9 +30,8 @@ OUT="$REPO/container-output"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
-# The sources the .NET solution compiles: dotnet/ (without its build output), the core and harness under Assets/, and
-# the golden baselines. Unity's Library/ and the host's builds stay out.
-tar -C "$REPO" --exclude='bin' --exclude='obj' -czf "$OUT/sources.tgz" dotnet Assets/Simpiens.Core Assets/Simpiens.Core.Testing Baselines
+# The sources the .NET solution compiles: dotnet/ (without its build output) and the golden baselines
+tar -C "$REPO" --exclude='bin' --exclude='obj' -czf "$OUT/sources.tgz" dotnet Baselines
 
 "$ENGINE" run --rm \
   -v "$OUT":/out:Z \

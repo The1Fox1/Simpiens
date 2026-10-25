@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- The simulation's tests under dotnet test (Epic CORE C9, xUnit v3: the producer's choice): the engine-free
-       validators, the golden world hashes against Unity's baseline file, and the Definition-of-Done scenarios run
-       headless on the real outpost. No Unity needed. -->
+       validators, the golden world hashes, and the Definition-of-Done scenarios run headless on the real outpost. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>

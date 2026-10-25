@@ -1,10 +1,4 @@
 <Project>
-  <!-- On net10.0 the MemoryPack generator emits C# 11+ (static abstract interface members), so those builds use the
-       latest language version. The shared source is still held to C# 10 by the netstandard2.1 build and by Unity.
-       (Here, not in Directory.Build.props: a single-target project sets TargetFramework after the props are read.) -->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
   <!-- KNI or MonoGame, for the few lines that must differ (Epic CLIENT: they live in Simpiens.Client's XnaPlatform) -->
   <PropertyGroup Condition="'$(XnaFramework)' == 'Kni'">
     <DefineConstants>$(DefineConstants);KNI</DefineConstants>

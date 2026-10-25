@@ -2,7 +2,7 @@
 
 - **Owner:** review §3.3 / [ROADMAP §3A #10a](ROADMAP.md#3a-architecture-review-remediation-tracker). Status is owned by the roadmap.
 - **Evidence:** [Epic 9 §8](epics/epic-9.md) (Milestone 1); [Epic 10 §4 and §7](epics/epic-10.md) (drifters, glowstone, the bands since).
-- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../Assets/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning` and `DrifterTuning`). The Garden and the hazard sectors are map data (`Floor1Layout`).
+- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../dotnet/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning` and `DrifterTuning`). The Garden and the hazard sectors are map data (`Floor1Layout`).
 - **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15. Extended by Epic 10: drifters (G1) and glowstone (G2).
 
 ## 1. The loop in one paragraph
@@ -61,7 +61,7 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - **Behaviour:** a starving crawler that knows no reachable food goes back to the Garden plots it has seen and waits for them to regrow. It doesn't explore away.
 
 ## 7. Pace targets (D5), asserted by the soak
-`scripts/run-economy-soak.sh` runs 30 sim-minutes for each of 3 seeds; each profile is set by a price command at tick 0. `EconomySoakScenario.AssertPace` checks every run against its profile's band.
+`simpiens soak` and `dotnet test` (`EconomySoakTests`) run 30 sim-minutes for each of 3 seeds; each profile is set by a price command at tick 0, and every run is checked against its profile's band (`EconomySoak`). (Unity's `scripts/run-economy-soak.sh` did the same until Unity's removal on 2026-10-24.)
 
 | Profile | Prices (ration / ore / herb) | Band (per run, at 30 min) | Measured 2026-10-24, headless (3 seeds; Unity identical at Epic 10 G2) |
 | :--- | :--- | :--- | :--- |
@@ -74,8 +74,8 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - **The fair band with drifters:** it holds (768–831g headless, 2026-10-23). Larger purses broke it: 40–80g every two minutes nearly doubled the fair player's treasury (1,189–1,273g), so the tuning was cut until the band held.
 - **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
-- **The regular suite** asserts the fair case over 15 minutes: `OutpostLifecycleScenario` checks that trust rises for ⅔ of crawlers and nobody starves.
-- **Headless (.NET 10, since 2026-10-17):** `simpiens soak` and `dotnet test` assert the same bands without Unity, all 9 runs in about 4 s. Until Epic 10 G2 the numbers differed from Unity's, because Mono rounded some float expressions differently (epic CORE §6 F1); since G2's rounding fixes the 9 runs end on identical numbers in both runtimes.
+- **The regular suite** asserts the fair case over 15 minutes: the outpost's day (`OutpostScenarioTests`, on 23 gate seeds) checks that trust rises for ⅔ of crawlers and nobody starves.
+- **Headless (.NET 10, since 2026-10-17; the only runtime since Unity's removal on 2026-10-24):** `simpiens soak` and `dotnet test` assert the bands, all 9 runs in about 4 s. Until Epic 10 G2 the numbers differed from Unity's, because Mono rounded some float expressions differently (epic CORE §6 F1); since G2's rounding fixes the 9 runs end on identical numbers in both runtimes.
 - **Across seeds:** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on all 23 gate seeds since Epic 10 G0, and `dotnet test` asserts it (`OutpostWatch.GateSeeds`). On 2026-10-17 it passed on 16 of 23 (epic CORE §6 F2, resolved by G0: crawlers that couldn't move, not a food shortage). Wider sweeps leave a few trust shortfalls (Epic 10 F3).
 
 ## 8. Deferred

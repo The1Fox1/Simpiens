@@ -1,15 +1,14 @@
 <Project>
-  <!-- Shared settings for the .NET side of Simpiens (Epic CORE Phase 1). The simulation's source lives under Assets/
-       and is compiled here by glob: Unity compiles the same files, so they stay at C# 10 and netstandard2.1 APIs. -->
+  <!-- Shared settings for Simpiens. Every project targets net10.0, and C# is the framework's default (C# 14). .NET 10 is
+       the newest .NET the client's framework supports: KNI 4.3's Android platform targets net10.0-android. The client
+       references the core, so the core can't run ahead of it; move them together when KNI moves. (Until Unity's
+       removal the core also built for netstandard2.1 at C# 10, the level Unity compiled.) -->
   <PropertyGroup>
-    <!-- C# 10 where Unity's API level is checked (netstandard2.1); net10.0 builds raise it in Directory.Build.targets -->
-    <LangVersion>10</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <AssetsRoot>$(MSBuildThisFileDirectory)../Assets/</AssetsRoot>
     <!-- Glob-compiled projects never pick up generated sources from either framework's output folders -->
     <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
   </PropertyGroup>

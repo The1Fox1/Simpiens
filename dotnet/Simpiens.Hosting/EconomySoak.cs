@@ -34,7 +34,7 @@ namespace Simpiens.Hosting
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8;
 
-        /// <summary>The seeds scripts/run-economy-soak.sh plays.</summary>
+        /// <summary>The soak's seeds.</summary>
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
         public static readonly string[] Profiles = { "fair", "greedy", "generous" };
 
