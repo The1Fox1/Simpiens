@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Gum.Forms.Controls;
 using Gum.Wireframe;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using Simpiens.Core.Session;
 using Simpiens.Presentation;
 using Simpiens.Simulation.Spatial;
@@ -76,7 +76,7 @@ namespace Simpiens.Client.Tests
                 Assert.True(text.FontScale == 1f, $"{what} is scaled.");
                 var face = new FontFace(text.Font, (int)text.FontSize, text.IsBold);
                 Assert.True(faces.Contains(face) && text.FontSize == face.Size, $"{what} is not a baked face.");
-                Assert.Equal(LineHeight(face), text.BitmapFont?.LineHeightInPixels);
+                Assert.Equal(LineHeight(face), text.Typeface?.LineHeightInPixels);
             }
         }
 

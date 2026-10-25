@@ -49,12 +49,12 @@ namespace Simpiens.Client.Tests
             var slider = window.RationSlider;
             var track = slider.Visual;
             var thumb = Centre(slider);
-            float startX = track.AbsoluteLeft + track.GetAbsoluteWidth() * (float)((slider.Value - slider.Minimum) / (slider.Maximum - slider.Minimum));
+            float startX = track.AbsoluteLeft + track.AbsoluteWidth * (float)((slider.Value - slider.Minimum) / (slider.Maximum - slider.Minimum));
             var grab = new Vec2(startX, thumb.Y);
             ui.MoveTo(grab);
             ui.Script.Left = true;
             ui.Frame();
-            ui.MoveTo(new Vec2(track.AbsoluteLeft + track.GetAbsoluteWidth() + 40f, thumb.Y));
+            ui.MoveTo(new Vec2(track.AbsoluteLeft + track.AbsoluteWidth + 40f, thumb.Y));
             ui.Script.Left = false;
             ui.Frame();
             Assert.Equal(MerchantModelMax, (int)slider.Value);

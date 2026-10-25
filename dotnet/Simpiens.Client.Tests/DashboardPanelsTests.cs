@@ -12,7 +12,7 @@ namespace Simpiens.Client.Tests
         private const int Width = 1280, Height = 720;
 
         private static Vec2 Centre(Gum.Wireframe.GraphicalUiElement element)
-            => new Vec2(element.AbsoluteLeft + element.GetAbsoluteWidth() * 0.5f, element.AbsoluteTop + element.GetAbsoluteHeight() * 0.5f);
+            => new Vec2(element.AbsoluteLeft + element.AbsoluteWidth * 0.5f, element.AbsoluteTop + element.AbsoluteHeight * 0.5f);
 
         private static Vec2 Centre(Gum.Forms.Controls.FrameworkElement control)
             => new Vec2(control.AbsoluteLeft + control.ActualWidth * 0.5f, control.AbsoluteTop + control.ActualHeight * 0.5f);

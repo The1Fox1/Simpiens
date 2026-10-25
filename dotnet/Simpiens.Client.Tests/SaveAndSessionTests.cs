@@ -99,7 +99,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(CanaryPenSession.ScriptedPenAgentCount, game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
             var sim = game.Session.Simulation.Simulation;
             Assert.True(sim.ActiveStalls.Count == 0 && sim.ActiveBounties.Count == 0, "No stall or bounty survives the switch.");
-            Assert.Equal(0, ((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents.Count);
+            Assert.Empty(((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents);
             var events = new System.Collections.Generic.List<Simpiens.Narrative.ChronicleEvent>();
             sim.Chronicle.GetAllRecentEvents(events, Simpiens.Narrative.NarrativeChronicleService.DefaultGlobalCapacity);
             Assert.All(events, e => Assert.Equal(0u, e.SimulationTick));
@@ -110,7 +110,7 @@ namespace Simpiens.Client.Tests
             ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(OutpostSession.SessionId, host.Current.Id);
             Assert.False(bar.BannerShown, "The banner hides again on the main map.");
-            Assert.Equal(0, ((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents.Count);
+            Assert.Empty(((Simpiens.Cognition.Contracts.IIntentExecutionContext)sim).ActiveIntents);
             WorldCapture.Of(game).AssertSameAs(fresh);
 
             ui.Ticks(200);

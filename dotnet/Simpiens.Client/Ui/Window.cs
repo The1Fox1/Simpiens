@@ -2,7 +2,7 @@ using Gum.Converters;
 using Gum.DataTypes;
 using Gum.Forms.Controls;
 using Microsoft.Xna.Framework;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
 
 namespace Simpiens.Client.Ui
@@ -83,7 +83,7 @@ namespace Simpiens.Client.Ui
         }
 
         /// <summary>A 1 px line across the window.</summary>
-        public static ColoredRectangleRuntime Rule() => new ColoredRectangleRuntime { Color = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f };
+        public static RectangleRuntime Rule() => new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f };
 
         /// <summary>Empty space in a column.</summary>
         public static ContainerRuntime Gap(float height) => new ContainerRuntime { Width = 1f, Height = height };
