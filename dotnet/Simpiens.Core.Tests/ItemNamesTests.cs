@@ -8,7 +8,7 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// Code asks for item groups, not items (.agents/item_system_plan.md §3.10): production code names an item
+    /// Code asks for item groups, not items (the item system refactor, 2026-10-26): production code names an item
     /// (ItemType.X, other than None) only in the files below, each with its reason. The list only shrinks: a file that
     /// starts naming items fails, and so does an entry whose file no longer names any (take it off the list).
     /// </summary>
@@ -24,10 +24,10 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Economy/SupplyTuning.cs"] = "the default caravan: what it exports and supplies",
             ["Simpiens.Hosting/EconomySoak.cs"] = "the soak's player profiles: the prices each one sets",
             ["Simpiens.Presentation/ItemTexts.cs"] = "the client's words for items: merchant rows, stock and header",
-            // Quirks kept on purpose (the plan's §5)
-            ["Simpiens.Core/Simulation/ResourceData.cs"] = "§5: a node's default yield is a ration",
-            ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "§5: an untyped node yields a ration",
-            ["Simpiens.Core/Cognition/AgentState.cs"] = "§5: HasFoodInInventory packs a ration when set",
+            // Quirks kept on purpose (.agents/core_refactor_plan.md, R7)
+            ["Simpiens.Core/Simulation/ResourceData.cs"] = "quirk: a node's default yield is a ration",
+            ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "quirk: an untyped node yields a ration",
+            ["Simpiens.Core/Cognition/AgentState.cs"] = "quirk: HasFoodInInventory packs a ration when set",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

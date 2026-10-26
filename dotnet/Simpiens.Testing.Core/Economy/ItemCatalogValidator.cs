@@ -8,7 +8,7 @@ using Simpiens.Simulation.Items;
 namespace Simpiens.Testing.Economy
 {
     /// <summary>
-    /// The item catalog (.agents/item_system_plan.md, I1): every definition is consistent, its groups answer what the
+    /// The item catalog (the item system refactor, 2026-10-26): every definition is consistent, its groups answer what the
     /// hand-written lists they replaced answered, group queries are ordered and allocation-free, every map's nodes yield
     /// defined items, and rarity scores fall with rarity. Runs as a test (ValidatorTests), never at boot.
     /// </summary>

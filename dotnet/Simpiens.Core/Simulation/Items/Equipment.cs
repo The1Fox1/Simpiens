@@ -2,7 +2,7 @@ using System;
 
 namespace Simpiens.Simulation.Items
 {
-    /// <summary>Where a crawler wears or wields an item: one item per slot (.agents/item_system_plan.md §3.7).</summary>
+    /// <summary>Where a crawler wears or wields an item: one item per slot (the item system refactor, 2026-10-26).</summary>
     public enum EquipmentSlot : byte
     {
         Protection = 0,

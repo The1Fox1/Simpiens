@@ -57,7 +57,7 @@ namespace Simpiens.Cognition
 
         public bool HasFoodInInventory
         {
-            // Any food in the pack. Setting it true without food packs a ration (the item plan's §5: a plot's harvest), false
+            // Any food in the pack. Setting it true without food packs a ration (a quirk kept on purpose: a plot's harvest; .agents/core_refactor_plan.md, R7), false
             // takes one food out
             get => Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food);
             set

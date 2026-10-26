@@ -3,7 +3,7 @@ using Simpiens.Cognition.Inventory;
 namespace Simpiens.Simulation.Items
 {
     /// <summary>
-    /// A crawler's stats as its equipment makes them (.agents/item_system_plan.md §3.7): a base value, then every
+    /// A crawler's stats as its equipment makes them (the item system refactor, 2026-10-26): a base value, then every
     /// equipped item's Add modifiers, then its Multiply modifiers, in slot order (deterministic). Code asks here
     /// ("HazardResistance") instead of reading a tuning.
     /// </summary>

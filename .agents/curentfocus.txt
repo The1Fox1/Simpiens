@@ -16,8 +16,7 @@ CURRENT FOCUS
 - A cleanup before G3 (2026-10-25, no epic): ROADMAP 1A.2 #17 and #19 fixed, intent faults counted and failing the
   day, warnings as errors. On feat/code-cleanliness, PR into main. The rest of .agents/core_refactor_plan.md
   (R1-R6: guards, SimulationManager's split, planners per worker) comes back after Epic 10 Part 1; R7, the item
-  system (.agents/item_system_plan.md: catalog, groups, rarity, effects, equipment stats, loot tables), before
-  Epic 10 Part 2.
+  system, was done 2026-10-26 (PR #15): catalog, groups, rarity, effects, equipment stats, loot tables.
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9

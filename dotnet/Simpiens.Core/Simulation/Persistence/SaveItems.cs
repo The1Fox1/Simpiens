@@ -5,7 +5,7 @@ namespace Simpiens.Simulation.Persistence
 {
     /// <summary>
     /// Every item a save holds must be one the game defines (ItemCatalog): a removed item's id is never reused, and a
-    /// save that still holds one is refused on load, with where it was found (.agents/item_system_plan.md §3.1).
+    /// save that still holds one is refused on load, with where it was found (the item system refactor, 2026-10-26).
     /// </summary>
     public static class SaveItems
     {

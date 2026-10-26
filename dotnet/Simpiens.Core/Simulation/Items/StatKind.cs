@@ -1,7 +1,7 @@
 namespace Simpiens.Simulation.Items
 {
     /// <summary>
-    /// A crawler's stats, as item effects and equipment name them (.agents/item_system_plan.md §3.6). The first five are
+    /// A crawler's stats, as item effects and equipment name them (the item system refactor, 2026-10-26). The first five are
     /// today's needs and health; the rest are reserved for equipment, and only HazardResistance is read so far.
     /// </summary>
     public enum StatKind : byte

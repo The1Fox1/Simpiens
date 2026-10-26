@@ -10,7 +10,7 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// The item system's proof (.agents/item_system_plan.md, I8): an item is added to the game and the economy, or taken
+    /// The item system's proof (the item system refactor, 2026-10-26): an item is added to the game and the economy, or taken
     /// out of the economy, by data alone, on the real outpost. Adding: a test-only resource joins the catalog (the
     /// catalog's test hook) and the session's economy; a crawler holding some sells them to the stall on its own, and the
     /// caravan exports them, with no other code knowing the item. Removing: a day with glowstone out of the economy still

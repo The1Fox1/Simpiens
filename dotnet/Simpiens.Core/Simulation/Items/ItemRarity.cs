@@ -2,7 +2,7 @@ namespace Simpiens.Simulation.Items
 {
     /// <summary>
     /// How rare an item is. Each tier has a score, the item's default weight in a loot table: lower is rarer
-    /// (.agents/item_system_plan.md §3.5). Nothing in play reads it yet.
+    /// (the item system refactor, 2026-10-26). Nothing in play reads it yet.
     /// </summary>
     public enum ItemRarity : byte
     {

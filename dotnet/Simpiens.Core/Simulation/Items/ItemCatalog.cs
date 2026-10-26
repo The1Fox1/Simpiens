@@ -4,7 +4,7 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Simulation.Items
 {
     /// <summary>
-    /// Every item the game knows, by id (.agents/item_system_plan.md §3.2). What an item is doesn't vary by session, so
+    /// Every item the game knows, by id (the item system refactor, 2026-10-26). What an item is doesn't vary by session, so
     /// the catalog is static and immutable: any code reads it, on any thread, without being handed it. How a session
     /// trades an item is its economy (EconomyTuning).
     /// <para>

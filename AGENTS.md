@@ -93,7 +93,14 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   - `Primitives/`: engine-free value types in the root namespace `Simpiens`: `EntityId`, the id of every simulation entity; and the maths: `Vec2`, `GridPoint`, `RectF`, `Rgba`, `SimMath`. They copy Unity's `Vector2`, `Vector2Int`, `Rect` and `Mathf` formulas exactly (including `Vec2 ==` being approximate and rounding half to even), and float steps are cast where Unity's Mono rounded differently from CoreCLR: the golden baselines depend on both. Keep them.
   - `Spatial/`: Handles memory-managed grids (`SpatialHashGrid`, `SharedWorldSnapshot`, `EntitySnapshot`, `StaticNavGrid` with a static base layer for map walls).
   - `World/`: static geography as plain data. `MapDefinition` (+ `MapDefinitionBuilder`) is the single source of truth for walls, sectors, resource nodes, POIs and labels; `WallRasterizer` writes walls into the nav grid; `IWorldMap.Load` sizes the partition from the map and loads `ISectorRegistry` (authoritative sectors + exploration). The snapshot carries the map and the charted-sector mask: **fog of war**, nothing inside an uncharted sector is perceived until a scout's report charts it. A sector may be a **hazard** (`SectorDefinition.Hazard`, Epic 10 G2): it takes health from whoever stands in it. Never hard-code coordinates or sector ids elsewhere: read them from the layout.
-  - `Items/`: the item catalog (`ItemCatalog`, static and immutable: what each item *is*: its groups as `[Flags] ItemCategory`, its `ItemRarity`, names and stack size). Code asks for a group (`ItemCatalog.Is`, `InCategory`), not for items by name. To add an item: an `ItemType` value (never reuse one), a definition in `ItemCatalog`, a sprite, and the nodes that yield it; a save holding an item the catalog doesn't define is refused (`SaveItems`). How a session trades an item is its economy. The refactor in progress: `.agents/item_system_plan.md`.
+  - `Items/`: the item system (item refactor I1–I8, 2026-10-26).
+    - **What an item is:** `ItemCatalog`, static and immutable, holds one `ItemDefinition` per `ItemType`: its groups as `[Flags] ItemCategory`, its `ItemRarity` (a score that is its default loot weight), names, stack size, sprite key, consume effects (`ConsumeEffect` on a `StatKind`, applied by `Cognition/ItemUse`), and equipment (`EquipmentBlock`: slot, `StatModifier`s, durability and `WearRule`).
+    - **Equipment and stats:** a crawler's stats with equipment come from `CrawlerStats`. `AgentInventory` has three equipment slots beside the pack (protection, weapon, tool).
+    - **Loot:** loot tables (`Loot.cs`: `LootTable`, `LootTables`, `LootRoller`) are deterministic on `SimRandom` and not yet wired into play.
+    - **Code asks for groups, not items:** `ItemCatalog.Is`, `InCategory`, `InventoryGroups`. `ItemNamesTests` fails on production code that names an item outside content.
+    - **How a session trades an item is its economy:** `EconomyTuning`'s `ItemTerms` (base value; the stall's role, opening price and stock) and `SupplyTuning`'s `CaravanTerms` (exports or supplies). A stall's goods are a table (`TradeStallData`'s `StallGoods`), and a price command carries (item, price) pairs.
+    - **The client's words for items** are `Simpiens.Presentation/ItemTexts` (an item without an entry gets words from its catalog name).
+    - **A save** holding an item the catalog doesn't define is refused (`SaveItems`).
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), the session's economy numbers (`EconomyTuning`, with `SupplyTuning`, `DrifterTuning` and `GearTuning` nested), the trade fairness rule (`TradeFairness`), and the periodic economy (`ISupplyService`, `SupplyService`). The periodic economy covers dormant-node regrowth and the caravan visit: salvage quota faucet, then upkeep sink, then ration restock. `SimulationManager` ticks it via `ISupplyHost`. The model is in [`docs/economy-model.md`](docs/economy-model.md). Economy numbers live in `EconomyTuning` only: read them from the session's tuning (`IIntentExecutionContext.Economy`, or `Considerations.Economy` in cognition), never as literals.
   - `Persistence/`: session save and load.
     - `SessionSave` is a whole session at one tick: a header, then one block per owner (crawlers, economy, world, groups, chronicle). Each owner writes and reads its own block (`CaptureTo` / `RestoreFrom`, `AgentState.CaptureRecord` / `RestoreRecord`); `SessionHost.Capture` / `TryRestore` assemble them. Keyed records are sorted by id, so a capture doesn't depend on dictionary order.
@@ -121,6 +128,19 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 
 - **Live scenarios** (`Simpiens.Core.Tests`)
   The Definition of Done's evidence, headless on the real session with nothing injected (`OutpostScenarioTests` shows how): `OutpostWatch` observes every tick (ledger conservation, starvation, the fog, the bounties, trust, the anomaly detector, intent handlers that threw). `TheOutpostsDayHoldsOnEverySeed` plays the 15-minute day on the 23 gate seeds; `GoldenWorldHashTests` compares a run with the committed baselines: a change that must not alter behaviour must reproduce them, and a deliberate behaviour change re-records them in its own commit. Simulation seed: `SIMPIENS_SEED` / `--seed`.
+
+### Adding or removing an item
+- **Add:**
+  1. An `ItemType` value. Never reuse one: a removed item's id stays reserved.
+  2. A definition in `ItemCatalog`: groups, rarity, and its consume or equipment block if it has one.
+  3. Its terms in the session's economy, if the stall or the caravan trades it (`EconomyTuning`'s item terms, `SupplyTuning`'s caravan terms).
+  4. A sprite under its sprite key, if it lies on the map.
+  5. The map nodes that yield it.
+  6. Optionally, bespoke words in `ItemTexts`.
+  - Nothing else: the stall, the caravan, the crawlers and the merchant terminal follow (`ItemSystemProofTests` adds one this way).
+  - If the stall's goods would pass `TradeStallData.GoodsCapacity` (8), raise it: that changes the save format.
+- **Take out of the economy:** drop its stall and caravan terms (glowstone was taken out this way in `ItemSystemProofTests`).
+- **Remove from the game:** delete its definition and mark its `ItemType` value retired; saves holding it are refused on load.
 
 ---
 

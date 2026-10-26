@@ -1064,3 +1064,36 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - golden 3/3 unchanged; the soak's 9 runs identical to the number;
   - the pinned image 269/269 byte for byte;
   - `dotnet test` 377/377 (core 108, client 269); 0 warnings.
+
+## 2026-10-26 — Item system I2–I8: groups, effects, equipment, tables, the client, loot; done
+
+- **Decision (producer):** ship I2–I8 as one PR. They went onto `feat/items-i1-catalog` with I1, so PR #15 carries I1–I8, one commit per phase, with no stacked branches.
+- **I2:** cognition asks for groups. The sale choice tries Resources in descending id (glowstone, herbs, ore: today's order); the sell fallback tries them in ascending id. `ItemNamesTests` fails on production code that names an item outside an allowlist.
+- **I3:** consume effects are data (`StatKind`, `ConsumeEffect`, `ItemUse`), bit-exact with the code they replaced.
+- **I4:** three equipment slots (format 5), `StatModifier`s and `CrawlerStats`.
+  - **`GearTuning` is gone:** gear's protection and life are its definition's.
+  - **The dossier** names gear by its catalog name ("Hazard Gear, …"); the renders, which show "None", didn't change.
+  - **The world hash** mixes the weapon and tool slots only when they're filled, so the recorded hashes hold.
+- **I5:** the economy's per-item fields became tables.
+  - **The tables:** the stall's goods (`StallGoods`, an inline array of 8; format 6), the economy's `ItemTerms`, and the caravan's `CaravanTerms`. The price command carries (item, price) pairs.
+  - **Validators keep today's names** through C# 14 extension members and factories in `Simpiens.Testing.Core`, which production can't reference.
+  - **Deviations:**
+    - the stall's size budget went from 64 to 96 bytes (the table is 84);
+    - bounty deliveries go on the shelf of any good the stall buys, not only ore and herbs (glowstone bounties don't exist);
+    - `OutpostWatch`'s first-sale check counts every resource.
+- **I6:** the client trades from the catalog.
+  - **Merchant rows** come from the stall's goods (food sold, goods bought, other goods sold).
+  - **The client's words** live in `ItemTexts`, with words from the catalog name when an item has no entry.
+  - **Sprites** come by sprite key; the bounty board offers the resources that aren't hazardous.
+  - **Renders** are byte for byte.
+- **I7:** loot tables, a foundation not in play. They're deterministic on `SimRandom`, use integer weighted picks, take an item's rarity score as its default weight, nest at most 4 deep, and allocate nothing.
+- **I8:** the proof.
+  - **Adding:** a test-only resource added to the catalog (its `ExtendForTest` hook) and to the economy is sold by a crawler on its own and exported by the caravan.
+  - **Removing:** a day with glowstone out of the economy holds.
+- **Guard test:** it matches `ItemType`'s member names by reflection.
+- **Production names items only in content:** the catalog, the map, the session, the default economy and caravan, the soak's profiles, the client's words. It also names them in three kept quirks.
+- **The plan is deleted.** Its deferrals and quirks are in `.agents/core_refactor_plan.md`, R7; how to add or remove an item is in `AGENTS.md`.
+- **Verification (each phase):** golden 3/3 unchanged; the soak's 9 runs identical to `main`; 0 warnings. At the end:
+  - `dotnet test` 381/381 (core 112, client 269);
+  - the pinned image 269/269 byte for byte;
+  - the MonoGame and Android builds compile.

@@ -4,7 +4,7 @@ namespace Simpiens.Simulation.Items
 {
     /// <summary>
     /// The groups an item belongs to, as flags: an item can be in several (a medicinal herb is a resource, a medicine and
-    /// a consumable). Code asks for a group rather than naming items (.agents/item_system_plan.md §3.4). A flag test is
+    /// a consumable). Code asks for a group rather than naming items (the item system refactor, 2026-10-26). A flag test is
     /// free on the tick path, allocates nothing and is deterministic.
     /// </summary>
     [Flags]

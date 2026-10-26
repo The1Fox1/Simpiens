@@ -5,7 +5,7 @@ namespace Simpiens.Cognition
 {
     /// <summary>
     /// Consuming an item: its definition's effects on the crawler's stats, then one unit leaves the pack
-    /// (.agents/item_system_plan.md §3.6). Main thread (single writer).
+    /// (the item system refactor, 2026-10-26). Main thread (single writer).
     /// </summary>
     public static class ItemUse
     {

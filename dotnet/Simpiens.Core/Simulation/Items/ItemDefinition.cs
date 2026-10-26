@@ -3,7 +3,7 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Simulation.Items
 {
     /// <summary>
-    /// What an item is, the same in every session: its groups, rarity, names and stack size (.agents/item_system_plan.md
+    /// What an item is, the same in every session: its groups, rarity, names and stack size (the item system refactor, 2026-10-26
     /// §3.3). How a session trades it (base value, the stall's and the caravan's terms) is the session's economy
     /// (EconomyTuning). Immutable: off-thread cognition reads it freely.
     /// </summary>
