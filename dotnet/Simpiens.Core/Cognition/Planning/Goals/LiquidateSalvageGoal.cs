@@ -19,9 +19,11 @@ namespace Simpiens.Cognition.Planning.Goals
             int occupiedSlots = 0;
             if (context.Inventory != null)
             {
-                if (ResourceTargeting.HoldsSellable(context, ItemType.IronOre)) occupiedSlots++;
-                if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb)) occupiedSlots++;
-                if (ResourceTargeting.HoldsSellable(context, ItemType.Glowstone)) occupiedSlots++;
+                var salvage = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource);
+                for (int i = 0; i < salvage.Count; i++)
+                {
+                    if (ResourceTargeting.HoldsSellable(context, salvage[i])) occupiedSlots++;
+                }
             }
             return (30f + (occupiedSlots * 15f)) * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome);
         }
