@@ -94,6 +94,9 @@ namespace Simpiens.Simulation.Economy
         public ushort StallHerbStock { get; private set; } = 10;
         /// <summary>What the stall pays for Glowstone, the rare salvage (Epic 10 G2); the caravan pays 70 (SupplyTuning).</summary>
         public ushort StallGlowstoneBuyPrice { get; private set; } = 45;
+        /// <summary>What the stall sells hazard gear for (Epic 10 G3): its base value, fair to a neutral crawler; and its opening stock.</summary>
+        public ushort StallHazardGearPrice { get; private set; } = 40;
+        public ushort StallHazardGearStock { get; private set; } = 3;
         public uint StallTreasury { get; private set; } = 250;
 
         /// <summary>Salvage units of each type the stall holds at most; full, it stops buying that type until the caravan comes.</summary>
@@ -113,6 +116,9 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Strangers who arrive with their own gold and leave (Epic 10 G1).</summary>
         public DrifterTuning Drifters { get; private set; } = DrifterTuning.Default;
+
+        /// <summary>What hazard gear does and how long it lasts (Epic 10 G3).</summary>
+        public GearTuning Gear { get; private set; } = GearTuning.Default;
 
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
@@ -154,6 +160,21 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Drifters = drifters;
+            return copy;
+        }
+
+        public EconomyTuning WithGear(in GearTuning gear)
+        {
+            var copy = Copy();
+            copy.Gear = gear;
+            return copy;
+        }
+
+        public EconomyTuning WithStallHazardGear(ushort price, ushort stock)
+        {
+            var copy = Copy();
+            copy.StallHazardGearPrice = price;
+            copy.StallHazardGearStock = stock;
             return copy;
         }
 

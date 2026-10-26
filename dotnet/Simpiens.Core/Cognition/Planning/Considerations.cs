@@ -55,6 +55,22 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
+        /// What this personality thinks a piece of hazard gear is worth (Epic 10 G3): its base value, lowered by greed
+        /// (neutral 40g with the default tuning, greedy 20g, generous 60g). No need pushes it higher, so it is also the most
+        /// the crawler will pay, and the fairness rule judges a purchase against it as for a ration.
+        /// </summary>
+        public static float CalmGearValue(in AgentPersonality personality, EconomyTuning economy)
+        {
+            return (economy ?? EconomyTuning.Default).HazardGearBaseValue * TraitFactor(personality.Greed, -GreedOnPrice);
+        }
+
+        /// <summary>The most this crawler pays for a piece of hazard gear: its calm value, rounded.</summary>
+        public static ushort GearReservationPrice(in AgentContext context)
+        {
+            return (ushort)SimMath.Clamp(SimMath.RoundToInt(CalmGearValue(context.Personality, Economy(context))), 0, ushort.MaxValue);
+        }
+
+        /// <summary>
         /// Lowest price per unit this agent accepts when selling salvage: the item's base value, raised by greed.
         /// Neutral: ore 8g, herb 12g (seeded stall buy prices are 20g / 25g, so neutral behaviour is unchanged).
         /// </summary>

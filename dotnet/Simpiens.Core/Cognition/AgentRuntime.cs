@@ -10,6 +10,7 @@ using Simpiens.Cognition.Planning;
 using Simpiens.Entities;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Cognition
@@ -97,13 +98,31 @@ namespace Simpiens.Cognition
                 }
             }
 
-            // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's
+            // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
+            // Worn gear (G3) stops part of the damage and wears a tick for every tick in danger; at 0 it is gone
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
             if (hazard.IsHazardous)
             {
                 State.Activity.HazardTicks++;
-                State.Health = SimMath.Max(0f, (float)(State.Health - (float)(hazard.DamagePerSecond * FixedTickDeltaTime)));
+                var inventory = State.Inventory;
+                bool geared = inventory != null && !inventory.Gear.IsEmpty;
+                var gearTuning = (_simulationManager?.Economy ?? EconomyTuning.Default).Gear;
+                float before = State.Health;
+                State.Health = SimMath.Max(0f, (float)(State.Health - (float)(gearTuning.DamageThrough(hazard.DamagePerSecond, geared) * FixedTickDeltaTime)));
+                float taken = before - State.Health;
+                State.Activity.HazardDamage += taken;
+                if (geared)
+                {
+                    State.Activity.GearedHazardTicks++;
+                    State.Activity.GearedHazardDamage += taken;
+                    if (inventory.WearGear())
+                    {
+                        State.Activity.GearWornOut++;
+                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s hazard gear wore out in {hazard.Kind} at {State.Position}");
+                        RecordStory(ChronicleEventType.GearWornOut, ChronicleIntensity.Notable);
+                    }
+                }
                 if (State.Health <= 0f && !State.IsDowned)
                 {
                     State.IsDowned = true;

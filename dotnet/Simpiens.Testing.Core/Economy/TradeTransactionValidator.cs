@@ -40,8 +40,10 @@ namespace Simpiens.Testing.Economy
             ValidateGOAPCommercialPlanResolution();
             ValidateBountyItemsAreNotSold();
             ValidateStallRationsAreKnownFood();
+            ValidateBuyHazardGearIsWorn();
+            ValidateHazardGearPurchaseRefusals();
 
-            TestLog.Log("<color=green>[TradeTransactionValidator] ALL 14 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[TradeTransactionValidator] ALL 16 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
@@ -248,6 +250,91 @@ namespace Simpiens.Testing.Economy
 
             HeadlessEntities.Remove(registry, goCrawler);
             TestLog.Log("[TradeTransactionValidator] Test 5 Passed: SellSalvage atomic item and currency transfer verified.");
+        }
+
+        private static (SimulationManager sim, WorldRegistry registry, EntityId stallId) GearStall(ushort price, ushort stock)
+        {
+            var registry = new WorldRegistry();
+            var simManager = new SimulationManager(registry, null, new SimulationClock());
+            var stallId = EntityId.Generate();
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 500, hazardGearSellPrice: price, hazardGearStock: stock));
+            return (simManager, registry, stallId);
+        }
+
+        private static IntentResult BuyGear(SimulationManager simManager, WorldEntity node, EntityId stallId, ushort maxPrice = ushort.MaxValue)
+        {
+            return simManager.ExecuteIntent(node, new ActiveIntentState
+            {
+                Intent = new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.HazardGear, quantity: 1, maxExpectedPricePerUnit: maxPrice),
+                LastSampledPosition = node.Position
+            });
+        }
+
+        /// <summary>
+        /// Epic 10 G3: hazard gear bought at the stall is worn, not packed, with the tuning's life as its durability; gold
+        /// moves through the ledger; a neutral crawler judges 40g fair against its calm gear value (40g), 20g generous.
+        /// </summary>
+        private void ValidateBuyHazardGearIsWorn()
+        {
+            var (simManager, registry, stallId) = GearStall(price: 40, stock: 2);
+            var crawler = HeadlessEntities.Crawler(null, simManager, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearBuyer]", register: false);
+            var node = crawler.Node;
+            var agent = crawler.Agent;
+            agent.Inventory.Gold = 50;
+            registry.Register(node);
+
+            Assert(BuyGear(simManager, node, stallId) == IntentResult.Success, "The gear purchase succeeds.");
+            Assert(agent.Inventory.Gold == 10, $"The crawler paid 40g (gold {agent.Inventory.Gold}).");
+            Assert(agent.Inventory.Gear.Type == ItemType.HazardGear && agent.Inventory.Gear.Durability == EconomyTuning.Default.Gear.LifeTicks,
+                $"The gear is worn with {EconomyTuning.Default.Gear.LifeTicks} ticks of life (got {agent.Inventory.Gear}, durability {agent.Inventory.Gear.Durability}).");
+            Assert(agent.Inventory.OccupiedSlots == 0, "Worn gear takes no pack slot.");
+            Assert(agent.Activity.GearPurchases == 1 && agent.Activity.RationPurchases == 0, "The tally counts a gear purchase, not a ration.");
+            simManager.TryGetTradeStall(stallId, out var after);
+            Assert(after.HazardGearStock == 1 && after.TreasuryGold == 540, $"The stall sold one (stock {after.HazardGearStock}, treasury {after.TreasuryGold}g).");
+            Assert(simManager.EconomyLedger.Flows.Purchases == 1, "The ledger records the purchase.");
+            var trust = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust;
+            Assert(trust == 3, $"40g is fair to a neutral crawler: trust +3 (got {trust}).");
+
+            var (cheapSim, cheapRegistry, cheapStall) = GearStall(price: 20, stock: 1);
+            var bargain = HeadlessEntities.Crawler(null, cheapSim, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearBargain]", register: false);
+            bargain.Agent.Inventory.Gold = 50;
+            cheapRegistry.Register(bargain.Node);
+            Assert(BuyGear(cheapSim, bargain.Node, cheapStall) == IntentResult.Success, "The cheap purchase succeeds.");
+            var bargainTrust = bargain.Agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust;
+            Assert(bargainTrust == 10, $"20g is generous (at most 0.6 of 40g): trust +10 (got {bargainTrust}).");
+
+            HeadlessEntities.Remove(registry, crawler);
+            HeadlessEntities.Remove(cheapRegistry, bargain);
+            TestLog.Log("[TradeTransactionValidator] Test 15 Passed: Hazard gear is bought, worn with its life, and judged by the buyer's calm value.");
+        }
+
+        /// <summary>Epic 10 G3: a gear purchase is refused, changing nothing, while gear is worn, above the crawler's price, when the stall has none, or when it can't pay.</summary>
+        private void ValidateHazardGearPurchaseRefusals()
+        {
+            var (simManager, registry, stallId) = GearStall(price: 40, stock: 3);
+            var crawler = HeadlessEntities.Crawler(null, simManager, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearRefused]", register: false);
+            var node = crawler.Node;
+            var agent = crawler.Agent;
+            registry.Register(node);
+
+            agent.Inventory.Gold = 30;
+            Assert(BuyGear(simManager, node, stallId) != IntentResult.Success, "Refused: the crawler can't pay 40g.");
+            agent.Inventory.Gold = 100;
+            Assert(BuyGear(simManager, node, stallId, maxPrice: 35) != IntentResult.Success, "Refused: 40g is above what the crawler will pay.");
+            Assert(BuyGear(simManager, node, stallId) == IntentResult.Success, "Bought.");
+            Assert(BuyGear(simManager, node, stallId) != IntentResult.Success, "Refused: one piece of gear is worn at a time.");
+            simManager.TryGetTradeStall(stallId, out var stall);
+            Assert(agent.Inventory.Gold == 60 && stall.HazardGearStock == 2, $"Refusals change nothing (gold {agent.Inventory.Gold}, stock {stall.HazardGearStock}).");
+
+            var (emptySim, emptyRegistry, emptyStall) = GearStall(price: 40, stock: 0);
+            var other = HeadlessEntities.Crawler(null, emptySim, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearNone]", register: false);
+            other.Agent.Inventory.Gold = 100;
+            emptyRegistry.Register(other.Node);
+            Assert(BuyGear(emptySim, other.Node, emptyStall) != IntentResult.Success && other.Agent.Inventory.Gear.IsEmpty, "Refused: the stall has no gear.");
+
+            HeadlessEntities.Remove(registry, crawler);
+            HeadlessEntities.Remove(emptyRegistry, other);
+            TestLog.Log("[TradeTransactionValidator] Test 16 Passed: Gear purchases are refused while worn, above the price, out of stock or unaffordable.");
         }
 
         private void ValidateTradeToAffinityFairPrice()

@@ -111,6 +111,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.CrawlerRecovered:
                     return $"{actorA} is back on its feet.";
 
+                case ChronicleEventType.GearWornOut:
+                    return $"{actorA}'s hazard gear wore out in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

@@ -33,8 +33,8 @@ namespace Simpiens.Testing.Economy
         {
             AssertSize<ItemInstance>(16);
             AssertSize<BountyContract>(64);
-            AssertSize<TradeStallData>(52); // 52 since Epic 10 G2: the glowstone price and stock (save format 3)
-            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 52 bytes).");
+            AssertSize<TradeStallData>(56); // 52 since Epic 10 G2 (the glowstone price and stock, format 3); 56 since G3 (hazard gear, format 4)
+            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 56 bytes).");
         }
 
         private void ValidateRecordsRoundTrip()
