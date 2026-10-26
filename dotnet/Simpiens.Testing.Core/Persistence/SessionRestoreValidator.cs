@@ -5,6 +5,7 @@ using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Social;
+using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -37,8 +38,9 @@ namespace Simpiens.Testing.Persistence
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
+            ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -256,6 +258,52 @@ namespace Simpiens.Testing.Persistence
             Assert(resumed.Next() == original.Next() && resumed.Next() == original.Next(), "A resumed id sequence continues the saved one.");
 
             TestLog.Log("[PASS] Test 7: the clock and the id sequence resume where the save left them.");
+        }
+
+        /// <summary>
+        /// ROADMAP §1A.2 #19: the next generated bounty id isn't saved; a load derives it from the saved bounties, finished
+        /// ones included. A bounty posted after the load gets the id the uninterrupted session gives its next one.
+        /// </summary>
+        private void ValidateBountyIdsResume()
+        {
+            var stallId = new EntityId(1, 2, 3, 4);
+            SimulationManager Board(PlayerInterventionService intervention)
+            {
+                var sim = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
+                sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+                return sim;
+            }
+            void Post(PlayerInterventionService intervention, SimulationManager sim)
+            {
+                intervention.QueueInfluence(InfluenceEvent.CreatePostBounty("Player",
+                    new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 100, default, stallId)));
+                sim.Tick();
+            }
+
+            // The uninterrupted session: explicit ids 1 and 3, a generated 4 that is then cancelled (finished bounties stay)
+            var playing = new PlayerInterventionService();
+            var original = Board(playing);
+            Assert(original.TryRegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 1 registered.");
+            Assert(original.TryRegisterBounty(new BountyContract(3, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 3 registered.");
+            Post(playing, original);
+            playing.QueueInfluence(InfluenceEvent.CreateCancelBounty("Player", 4));
+            original.Tick();
+            Assert(original.TryGetBounty(4, out var cancelled) && cancelled.Status == BountyStatus.Cancelled, "Bounty 4 posted, then cancelled.");
+
+            var save = new SessionSave();
+            original.CaptureTo(save);
+            byte[] bytes = SaveSerializer.Serialize(save);
+
+            var loading = new PlayerInterventionService();
+            var loaded = Board(loading);
+            loaded.RestoreFrom(SaveSerializer.Deserialize<SessionSave>(bytes));
+
+            Post(playing, original);
+            Post(loading, loaded);
+            Assert(original.TryGetBounty(5, out _), "The uninterrupted session's next bounty is 5.");
+            Assert(loaded.TryGetBounty(5, out var resumed) && resumed.Status == BountyStatus.Open, "The loaded session's next bounty is 5 as well.");
+
+            TestLog.Log("[PASS] Test 8: bounty ids resume after a load where the save left them.");
         }
 
         private static void AssertSameBytes(byte[] a, byte[] b, string what)

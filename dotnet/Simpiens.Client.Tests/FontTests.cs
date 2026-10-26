@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using RenderingLibrary.Graphics.Fonts;
 using Simpiens.Presentation;
 using Xunit;
@@ -84,8 +84,8 @@ namespace Simpiens.Client.Tests
                     text.IsBold = face.Bold;
                     text.ResumeLayout();
                     int lineHeight = int.Parse(Regex.Match(File.ReadAllText(Path.Combine(Shipped, face.CacheFileName)), "lineHeight=(\\d+)").Groups[1].Value);
-                    Assert.NotNull(text.BitmapFont);
-                    Assert.Equal(lineHeight, text.BitmapFont.LineHeightInPixels);
+                    Assert.NotNull(text.Typeface);
+                    Assert.Equal(lineHeight, text.Typeface.LineHeightInPixels);
                 }
             }
             finally

@@ -116,8 +116,8 @@ namespace Simpiens.Client.Ui
             SetFace(text.Emphasis, UiText.Body);
 
             // A text created without a style starts on a baked face, not Gum's built-in Arial
-            MonoGameGum.GueDeriving.TextRuntime.DefaultFont = FontSet.Family;
-            MonoGameGum.GueDeriving.TextRuntime.DefaultFontSize = UiText.Body.Size;
+            Gum.GueDeriving.TextRuntime.DefaultFont = FontSet.Family;
+            Gum.GueDeriving.TextRuntime.DefaultFontSize = UiText.Body.Size;
         }
 
         private static void SetFace(Gum.DataTypes.Variables.StateSave state, UiText style)

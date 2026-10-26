@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Simpiens.Cognition;
@@ -80,6 +81,10 @@ namespace Simpiens.Simulation
         private readonly Dictionary<EntityId, TradeStallData> _stalls = new Dictionary<EntityId, TradeStallData>();
         private readonly List<TradeStallData> _activeStallsBuffer = new List<TradeStallData>(8);
         private readonly Dictionary<ushort, BountyContract> _bounties = new Dictionary<ushort, BountyContract>();
+        // The next generated bounty id. Not saved: a load derives it as the highest saved id + 1, which is exact because
+        // nothing removes a bounty from _bounties (finished ones stay, and are saved) and every id taken raises it (until
+        // the 65,535 ids run out and generation wraps to fill gaps)
+        private ushort _nextBountyId = 1;
         private readonly List<BountyContract> _activeBountiesBuffer = new List<BountyContract>(16);
         private readonly List<ushort> _expiredBountiesBuffer = new List<ushort>(16);
         private readonly Dictionary<EntityId, ActiveIntentState> _activeIntents = new Dictionary<EntityId, ActiveIntentState>();
@@ -102,6 +107,8 @@ namespace Simpiens.Simulation
         public ISupplyService Supply => _supplyService;
         public EconomyTuning Economy => _economy;
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
+        public int IntentFaults { get; private set; }
+        public string FirstIntentFault { get; private set; }
         public IReadOnlyList<TradeStallData> ActiveStalls => _activeStallsBuffer;
         public IReadOnlyList<BountyContract> ActiveBounties => _activeBountiesBuffer;
         internal Dictionary<EntityId, ActiveIntentState> ActiveIntents => _activeIntents;
@@ -582,6 +589,22 @@ namespace Simpiens.Simulation
 
         public bool TryRegisterBounty(BountyContract bounty)
         {
+            if (bounty.BountyId == 0)
+            {
+                SimLog.Intervention.ZLogWarning($"Bounty rejected: BountyId cannot be 0");
+                return false;
+            }
+
+            // A live bounty's id is never taken over (ROADMAP §1A.2 #19): its escrow and claimant would be lost. A finished
+            // bounty's record may be replaced by an explicit id (scripted sessions and validators reuse fixed ids);
+            // generated ids never reuse one
+            if (_bounties.TryGetValue(bounty.BountyId, out var existing) &&
+                (existing.Status == BountyStatus.Open || existing.Status == BountyStatus.Claimed))
+            {
+                SimLog.Intervention.ZLogWarning($"Bounty #{bounty.BountyId} rejected: the id is held by a live bounty (status {existing.Status})");
+                return false;
+            }
+
             bool isLive = bounty.Status == BountyStatus.Open || bounty.Status == BountyStatus.Claimed;
 
             // The target must make sense on the loaded map (unknown sectors, scouting a charted one), before any escrow
@@ -629,6 +652,10 @@ namespace Simpiens.Simulation
             }
 
             _bounties[bounty.BountyId] = bounty;
+            if (bounty.BountyId >= _nextBountyId)
+            {
+                _nextBountyId = (ushort)(bounty.BountyId + 1);
+            }
             UpdateActiveBountiesBuffer();
             SimLog.Intervention.ZLogInformation($"Bounty #{bounty.BountyId} registered: {bounty.Type} {bounty.TargetItemType}x{bounty.TargetQuantity} sector {bounty.TargetSectorId} at {bounty.TargetLocation}, reward {bounty.RewardGold}g, status {bounty.Status}, expires t{bounty.ExpirationTick}");
             return true;
@@ -706,7 +733,12 @@ namespace Simpiens.Simulation
 
         private void ExecutePostBountyCommand(in PostBountyCommand cmd, uint currentTick)
         {
-            ushort bountyId = cmd.BountyId != 0 ? cmd.BountyId : (ushort)(_bounties.Count + 1);
+            ushort bountyId = cmd.BountyId;
+            if (bountyId == 0 && !TryTakeNextFreeBountyId(out bountyId))
+            {
+                SimLog.Intervention.ZLogWarning($"Bounty rejected: every bounty id is taken");
+                return;
+            }
             PostBountyInternal(
                 bountyId,
                 cmd.Type,
@@ -718,6 +750,22 @@ namespace Simpiens.Simulation
                 cmd.TargetLocation,
                 cmd.CreatorStallId,
                 currentTick);
+        }
+
+        // The next free id from _nextBountyId on, skipping 0 and every id on the board; false when all 65,535 are taken
+        private bool TryTakeNextFreeBountyId(out ushort id)
+        {
+            for (int tried = 0; tried <= ushort.MaxValue; tried++)
+            {
+                ushort candidate = _nextBountyId++;
+                if (candidate != 0 && !_bounties.ContainsKey(candidate))
+                {
+                    id = candidate;
+                    return true;
+                }
+            }
+            id = 0;
+            return false;
         }
 
         private void ExecuteCancelBountyCommand(in CancelBountyCommand cmd, uint currentTick)
@@ -921,9 +969,18 @@ namespace Simpiens.Simulation
             UpdateActiveStallsBuffer();
 
             _bounties.Clear();
+            _nextBountyId = 1;
             if (economy?.Bounties != null)
             {
-                for (int i = 0; i < economy.Bounties.Length; i++) _bounties[economy.Bounties[i].BountyId] = economy.Bounties[i];
+                for (int i = 0; i < economy.Bounties.Length; i++)
+                {
+                    var b = economy.Bounties[i];
+                    _bounties[b.BountyId] = b;
+                    if (b.BountyId >= _nextBountyId)
+                    {
+                        _nextBountyId = (ushort)(b.BountyId + 1);
+                    }
+                }
             }
             UpdateActiveBountiesBuffer();
             if (economy?.Ledger != null) _economyLedger?.RestoreFrom(economy.Ledger);
@@ -1022,6 +1079,7 @@ namespace Simpiens.Simulation
             _stalls.Clear();
             _activeStallsBuffer.Clear();
             _bounties.Clear();
+            _nextBountyId = 1;
             _activeBountiesBuffer.Clear();
             _keysToRemove.Clear();
             _hearthPawnsBuffer.Clear();
@@ -1134,38 +1192,57 @@ namespace Simpiens.Simulation
                 _groupRegistry.Tick(currentTick);
             }
 
-            // Execute active intents if registry is present
+            // Execute active intents if registry is present. A handler that throws aborts its own intent only (ROADMAP
+            // §1A.2 #17): the agents after it still run, every finished intent is removed once, and the fault is counted
             if (_worldRegistry != null)
             {
                 _keysToRemove.Clear();
 
-                for (int k = 0; k < _activeIntentOrder.Count; k++)
+                try
                 {
-                    var agentId = _activeIntentOrder[k];
-                    if (!_activeIntents.TryGetValue(agentId, out var state)) continue;
-
-                    var node = _worldRegistry.GetEntity(agentId);
-                    if (node == null)
+                    for (int k = 0; k < _activeIntentOrder.Count; k++)
                     {
-                        // Agent node no longer exists
-                        _keysToRemove.Add(agentId);
-                        CompleteIntent(state.Intent, IntentResult.Aborted);
-                        continue;
-                    }
+                        var agentId = _activeIntentOrder[k];
+                        if (!_activeIntents.TryGetValue(agentId, out var state)) continue;
 
-                    var result = ExecuteIntent(node, state);
-                    if (result != IntentResult.InProgress)
-                    {
-                        _keysToRemove.Add(agentId);
-                        CompleteIntent(state.Intent, result);
+                        // An agent whose node no longer exists is aborted
+                        var node = _worldRegistry.GetEntity(agentId);
+                        IntentResult result = IntentResult.Aborted;
+                        if (node != null)
+                        {
+                            try
+                            {
+                                result = ExecuteIntent(node, state);
+                            }
+                            catch (Exception ex)
+                            {
+                                RecordIntentFault(ex, "executing", agentId, state.Intent, currentTick);
+                                result = IntentResult.Aborted;
+                            }
+                        }
+
+                        if (result != IntentResult.InProgress)
+                        {
+                            _keysToRemove.Add(agentId);
+                            try
+                            {
+                                CompleteIntent(state.Intent, result);
+                            }
+                            catch (Exception ex)
+                            {
+                                RecordIntentFault(ex, "completing", agentId, state.Intent, currentTick);
+                            }
+                        }
                     }
                 }
-
-                int removeCount = _keysToRemove.Count;
-                for (int i = 0; i < removeCount; i++)
+                finally
                 {
-                    _activeIntents.Remove(_keysToRemove[i]);
-                    RemoveSorted(_activeIntentOrder, _keysToRemove[i]);
+                    int removeCount = _keysToRemove.Count;
+                    for (int i = 0; i < removeCount; i++)
+                    {
+                        _activeIntents.Remove(_keysToRemove[i]);
+                        RemoveSorted(_activeIntentOrder, _keysToRemove[i]);
+                    }
                 }
             }
 
@@ -1187,6 +1264,13 @@ namespace Simpiens.Simulation
                 _spatialPartition.SetOccupiedBunks(_occupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);
             }
+        }
+
+        private void RecordIntentFault(Exception ex, string phase, EntityId agentId, AgentIntent intent, long tick)
+        {
+            IntentFaults++;
+            FirstIntentFault ??= $"t{tick}: {SimLog.Agent(agentId)} {intent?.GetType().Name} threw while {phase}: {ex.GetType().Name}: {ex.Message}";
+            SimLog.Planning.ZLogError(ex, $"{SimLog.Agent(agentId)} {intent?.GetType().Name} threw while {phase}; its intent is removed");
         }
 
         internal IntentResult ExecuteIntent(WorldEntity node, ActiveIntentState state)

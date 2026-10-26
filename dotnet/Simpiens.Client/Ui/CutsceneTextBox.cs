@@ -1,7 +1,7 @@
 using Gum.DataTypes;
 using Gum.Wireframe;
 using Microsoft.Xna.Framework;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using Simpiens.Presentation;
 
 namespace Simpiens.Client.Ui

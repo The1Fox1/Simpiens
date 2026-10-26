@@ -45,8 +45,9 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
             ValidateOnlyRealChangesAreChronicled();
+            ValidateTiedCandidatesResolveByEntityId();
 
-            TestLog.Log("<color=green>[SuccessionValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SuccessionValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateOrganicHearthEmergence()
@@ -350,6 +351,27 @@ namespace Simpiens.Testing.Sociopolitical
                 "Default/null leader recognized as absent.");
 
             TestLog.Log("[PASS] Test 6: Incapacitation and legitimacy crisis watchdog verified.");
+        }
+
+        /// <summary>
+        /// Determinism (ROADMAP §1A.1 rule 3): candidates tied on rank, respect and allegiance resolve by entity id, never by
+        /// the members set's order or the unstable sort. Added out of id order, the lowest id still wins.
+        /// </summary>
+        private void ValidateTiedCandidatesResolveByEntityId()
+        {
+            var registry = new GroupRegistry();
+            var leaderId = new EntityId(10, 0, 0, 0);
+            byte groupId = registry.CreateGroup(GroupType.Settlement, leaderId, Vec2.Zero, initialCohesion: 100);
+            var lowest = new EntityId(20, 0, 0, 0);
+            registry.AddMember(groupId, new EntityId(40, 0, 0, 0), RoleRank.Follower);
+            registry.AddMember(groupId, lowest, RoleRank.Follower);
+            registry.AddMember(groupId, new EntityId(30, 0, 0, 0), RoleRank.Follower);
+
+            var result = SuccessionEngine.ResolveSuccession(groupId, registry, new WorldRegistry(), 0);
+            Assert(result.Mode == SuccessionMode.Peaceful, $"Cohesion 100 is a peaceful succession (got {result.Mode}).");
+            Assert(result.NewLeaderId == lowest, $"The lowest id wins a tie (got {result.NewLeaderId}).");
+
+            TestLog.Log("[PASS] Test 10: Tied succession candidates resolve by entity id.");
         }
 
         private void ValidateDefensiveNullSafety()

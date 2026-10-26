@@ -113,6 +113,7 @@ namespace Simpiens.Core.Tests
             watch.Run(3500);
             Assert.Equal(0, watch.ConservationViolations);
             Assert.True(watch.DriftersLeft >= 1, "No drifter left after the load.");
+            Assert.True(watch.IntentFaults == 0, $"Intent handlers threw: {sim.Simulation.FirstIntentFault}");
         }
 
         /// <summary>
@@ -160,6 +161,7 @@ namespace Simpiens.Core.Tests
             Assert.True(watch.RestockTick >= 0 && watch.RestockTick <= 6000, $"No caravan restock by t6000 (t{watch.RestockTick}).");
             Assert.True(watch.RegrowthTick >= 0 && watch.RegrowthTick <= 6000, $"No node regrowth by t6000 (t{watch.RegrowthTick}).");
             Assert.Equal(0, watch.ConservationViolations);
+            Assert.True(watch.IntentFaults == 0, $"Intent handlers threw: {sim.Simulation.FirstIntentFault}");
         }
 
         /// <summary>
@@ -201,6 +203,7 @@ namespace Simpiens.Core.Tests
 
                 Assert.Equal(0, watch.ConservationViolations);
                 Assert.Empty(watch.Crawlers.Where(c => c.Starved).Select(c => c.Name));
+                Assert.True(watch.IntentFaults == 0, $"Intent handlers threw: {sim.Simulation.FirstIntentFault}");
                 Assert.Empty(watch.Crawlers.Where(c => c.State.Activity.Meals <= c.MealsAtStart).Select(c => c.Name));
                 Assert.True(watch.Crawlers.Sum(c => c.State.Activity.Cycles - c.CyclesAtStart) > 0, "No harvest-to-sell cycle completed after the load.");
                 Assert.True(watch.GatherTick > 0, "The Gather bounty claimed before the save was not delivered after the load.");

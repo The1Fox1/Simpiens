@@ -6,7 +6,7 @@ using Gum.Forms.Controls;
 using Gum.Managers;
 using Gum.Wireframe;
 using Microsoft.Xna.Framework;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
 using Simpiens.Entities;
 using Simpiens.Presentation.Dashboard;
@@ -31,7 +31,7 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
-        private readonly ColoredRectangleRuntime _dossierBadgeFill;
+        private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
@@ -178,7 +178,7 @@ namespace Simpiens.Client.Ui
                 card.Name.Color = row.Shrouded ? UiStyle.TextSecondary : UiStyle.TextBright;
                 UiParts.SetText(card.Badge, row.Badge);
                 card.Badge.Color = row.Shrouded ? UiStyle.TextSecondary : UiStyle.Accent;
-                card.BadgeFill.Color = row.Shrouded ? UiParts.Alpha(UiStyle.TextMuted, 0.25f) : UiStyle.Inset;
+                card.BadgeFill.FillColor = row.Shrouded ? UiParts.Alpha(UiStyle.TextMuted, 0.25f) : UiStyle.Inset;
                 card.Style(row.Selected ? UiStyle.Border : row.Shrouded ? UiStyle.Shrouded : UiStyle.Card, row.Selected ? UiStyle.Accent : row.Shrouded ? UiStyle.ShroudedBorder : UiStyle.CardBorder, row.Selected);
             }
 
@@ -204,7 +204,7 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Detail, row.Activity);
                 UiParts.SetText(card.Badge, row.Badge);
                 card.Badge.Color = UiStyle.BadgeText;
-                card.BadgeFill.Color = UiStyle.StateColor(row.State);
+                card.BadgeFill.FillColor = UiStyle.StateColor(row.State);
                 card.Style(row.Selected ? UiStyle.Border : UiStyle.Card, row.Selected ? UiStyle.Success : UiStyle.CardBorder, row.Selected, UiStyle.Success);
             }
             ResidentsShown = residents.Count;
@@ -228,7 +228,7 @@ namespace Simpiens.Client.Ui
             if (!dossier.HasCrawler) return;
             UiParts.SetText(_dossierName, dossier.Name);
             UiParts.SetText(_dossierBadge, dossier.Badge);
-            _dossierBadgeFill.Color = UiStyle.StateColor(dossier.State);
+            _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
@@ -316,7 +316,7 @@ namespace Simpiens.Client.Ui
         {
             var box = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 6f };
             UiParts.AddFill(box, UiStyle.Inset);
-            box.Children.Add(new ColoredRectangleRuntime { Color = UiStyle.Stock, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
+            box.Children.Add(new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Stock, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
             var text = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             text.X = 8f;
             text.Y = 3f;
@@ -340,11 +340,11 @@ namespace Simpiens.Client.Ui
             return value;
         }
 
-        private static ContainerRuntime Badge(out TextRuntime text, out ColoredRectangleRuntime fill)
+        private static ContainerRuntime Badge(out TextRuntime text, out RectangleRuntime fill)
         {
             var badge = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, HeightUnits = DimensionUnitType.RelativeToChildren, Width = 6f, Height = 2f };
             UiParts.CentreVertically(badge);
-            fill = new ColoredRectangleRuntime { WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
+            fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
             badge.Children.Add(fill);
             text = UiParts.Text(string.Empty, UiStyle.BadgeText, UiText.Badge);
             text.X = 6f;
@@ -356,15 +356,15 @@ namespace Simpiens.Client.Ui
         /// <summary>A row in a list that can be clicked: a sector or a resident, with a badge on the right.</summary>
         public sealed class Card
         {
-            private readonly ColoredRectangleRuntime _fill, _bar;
+            private readonly RectangleRuntime _fill, _bar;
             private readonly RectangleRuntime _outline;
 
             public Card(float height, bool withDetail = false)
             {
                 Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = height, HasEvents = true };
-                _fill = new ColoredRectangleRuntime { WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
-                _outline = new RectangleRuntime { WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
-                _bar = new ColoredRectangleRuntime { Width = 4f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f, Visible = false };
+                _fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
+                _outline = new RectangleRuntime { IsFilled = false, StrokeWidth = 1, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
+                _bar = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, Width = 4f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f, Visible = false };
                 Root.Children.Add(_fill);
                 Root.Children.Add(_outline);
                 Root.Children.Add(_bar);
@@ -396,17 +396,17 @@ namespace Simpiens.Client.Ui
             public TextRuntime Name { get; }
             public TextRuntime Detail { get; }
             public TextRuntime Badge { get; }
-            public ColoredRectangleRuntime BadgeFill { get; }
+            public RectangleRuntime BadgeFill { get; }
             public int SectorId { get; set; } = -1;
             public EntityId CrawlerId { get; set; }
             public bool Selected { get; private set; }
 
             internal void Style(Color fill, Color border, bool selected, Color? bar = null)
             {
-                _fill.Color = fill;
-                _outline.Color = border;
+                _fill.FillColor = fill;
+                _outline.StrokeColor = border;
                 _bar.Visible = selected;
-                _bar.Color = bar ?? UiStyle.Accent;
+                _bar.FillColor = bar ?? UiStyle.Accent;
                 Selected = selected;
             }
         }
@@ -414,7 +414,7 @@ namespace Simpiens.Client.Ui
         /// <summary>A drive's label, bar and percentage (Unity's drive row).</summary>
         private sealed class DriveBar
         {
-            private readonly ColoredRectangleRuntime _fill;
+            private readonly RectangleRuntime _fill;
             private readonly TextRuntime _value;
 
             public DriveBar(ContainerRuntime parent, string label, Color color)
@@ -423,10 +423,10 @@ namespace Simpiens.Client.Ui
                 var name = UiParts.Text(label, UiStyle.TextSecondary, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);
-                var track = new ColoredRectangleRuntime { Color = UiStyle.Border, X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
+                var track = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Border, X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
                 UiParts.CentreVertically(track);
                 row.Children.Add(track);
-                _fill = new ColoredRectangleRuntime { Color = color, WidthUnits = DimensionUnitType.PercentageOfParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f };
+                _fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = color, WidthUnits = DimensionUnitType.PercentageOfParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f };
                 track.Children.Add(_fill);
                 _value = UiParts.Text("0%", UiStyle.TextLight, UiText.Small);
                 _value.XUnits = GeneralUnitType.PixelsFromLarge;

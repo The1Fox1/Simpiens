@@ -282,12 +282,13 @@ namespace Simpiens.Cognition.Groups
                 });
             }
 
-            // Sort candidate scores descending: Officer first, then TotalRespect, then Allegiance
+            // Sort candidate scores descending: Officer first, then TotalRespect, then Allegiance; tie-break by EntityId ascending
             _scoreBuffer.Sort((a, b) =>
             {
                 if (a.IsOfficer != b.IsOfficer) return b.IsOfficer.CompareTo(a.IsOfficer);
                 if (a.TotalRespect != b.TotalRespect) return b.TotalRespect.CompareTo(a.TotalRespect);
-                return b.Allegiance.CompareTo(a.Allegiance);
+                if (a.Allegiance != b.Allegiance) return b.Allegiance.CompareTo(a.Allegiance);
+                return a.Id.CompareTo(b.Id);
             });
 
             SuccessionMode mode = DetermineSuccessionMode(groupData.Cohesion);

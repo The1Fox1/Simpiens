@@ -21,9 +21,6 @@ namespace Simpiens.Cognition.Memory
         [System.ThreadStatic]
         private static List<EntityId> _keysToRemove;
 
-        [System.ThreadStatic]
-        private static List<MemoryEvent> _gossipEventBuffer;
-
         private readonly Dictionary<EntityId, uint> _blacklistedEntities;
         private readonly Dictionary<EntityId, uint> _lastGossipWithAgent;
         private readonly Dictionary<EntityId, AffinityRecord> _affinityMap;

@@ -6,6 +6,7 @@ using Simpiens.Entities;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Testing.Environment
 {
@@ -30,8 +31,9 @@ namespace Simpiens.Testing.Environment
             ValidateLedgerConservationInvariant();
             ValidateModularIntentDispatch();
             ValidateZeroAllocationsDuringExecution();
+            ValidateThrowingHandlerIsContained();
 
-            TestLog.Log("<color=green>[SimulationManagerModularizationValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SimulationManagerModularizationValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static uint _guidSeed = 1000;
@@ -208,6 +210,66 @@ namespace Simpiens.Testing.Environment
 
             HeadlessEntities.Remove(registry, goCrawler);
             TestLog.Log("[SimulationManagerModularizationValidator] Test 5 Passed: Zero GC allocations on modular intent execution hot path verified.");
+        }
+
+        // Wanders in place: throws for one agent, finishes at once for the others
+        private sealed class ThrowingWanderHandler : IntentHandlerBase<WanderIntent>
+        {
+            public EntityId Thrower;
+            protected override IntentResult Execute(WorldEntity node, WanderIntent intent, ActiveIntentState state, IIntentExecutionContext context)
+            {
+                if (node.Id == Thrower) throw new InvalidOperationException("handler fault (injected)");
+                return IntentResult.Success;
+            }
+        }
+
+        /// <summary>
+        /// ROADMAP §1A.2 #17: a handler that throws, or a completion callback that throws, aborts that intent only. The
+        /// agents after it in the same tick still run, every finished intent is removed once (none runs again on the next
+        /// tick), each path goes back to its pool once, and both faults are counted with a description of the first.
+        /// </summary>
+        private void ValidateThrowingHandlerIsContained()
+        {
+            var registry = new WorldRegistry();
+            var handlers = new IntentHandlerRegistry();
+            var handler = new ThrowingWanderHandler();
+            handlers.RegisterHandler(handler);
+            var simManager = new SimulationManager(registry, null, intentRegistry: handlers);
+
+            // Agent-id order: the thrower runs first, the one whose completion throws second, a plain one last
+            var ids = new[] { new EntityId(1, 0, 0, 0), new EntityId(2, 0, 0, 0), new EntityId(3, 0, 0, 0) };
+            var returns = new int[ids.Length];
+            var outcomes = new IntentResult?[ids.Length];
+            for (int i = 0; i < ids.Length; i++)
+            {
+                registry.Register(new WorldEntity(ids[i], EntityType.Pawn, new Vec2(i * 3f, 0f), 0.3f, name: $"[Test_Fault{i}]"));
+                int index = i;
+                var path = new PathResponse();
+                path.Initialize(4, _ => returns[index]++);
+                path.MarkRented();
+                var intent = new WanderIntent(ids[i], path);
+                intent.OnComplete = outcome =>
+                {
+                    outcomes[index] = outcome;
+                    if (index == 1) throw new InvalidOperationException("completion fault (injected)");
+                };
+                simManager.EnqueueIntent(intent);
+            }
+            handler.Thrower = ids[0];
+
+            simManager.Tick();
+            Assert(simManager.IntentFaults == 2, $"2 faults counted (got {simManager.IntentFaults}).");
+            Assert(simManager.FirstIntentFault != null && simManager.FirstIntentFault.Contains("WanderIntent") && simManager.FirstIntentFault.Contains("executing")
+                && simManager.FirstIntentFault.Contains("handler fault"), $"The first fault is described: {simManager.FirstIntentFault}");
+            Assert(outcomes[0] == IntentResult.Aborted, $"The throwing handler's intent is aborted (got {outcomes[0]}).");
+            Assert(outcomes[1] == IntentResult.Success && outcomes[2] == IntentResult.Success, $"The agents after it still ran ({outcomes[1]}, {outcomes[2]}).");
+            Assert(simManager.ActiveIntents.Count == 0, $"Every finished intent is removed ({simManager.ActiveIntents.Count} left).");
+
+            simManager.Tick();
+            Assert(simManager.IntentFaults == 2, $"Nothing runs again on the next tick ({simManager.IntentFaults} faults).");
+            for (int i = 0; i < ids.Length; i++) Assert(returns[i] == 1, $"Path {i} returned to its pool once (got {returns[i]}).");
+
+            TestLog.Log("[SimulationManagerModularizationValidator] Test 6 Passed: A throwing handler or completion aborts its own intent only, is counted, and every finished intent is removed once.");
         }
 
         private static void Assert(bool condition, string message)

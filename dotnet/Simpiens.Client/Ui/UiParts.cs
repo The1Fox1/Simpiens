@@ -4,7 +4,7 @@ using Gum.Forms.Controls;
 using Gum.Managers;
 using Gum.Wireframe;
 using Microsoft.Xna.Framework;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
 using Simpiens.Presentation;
 
@@ -82,10 +82,10 @@ namespace Simpiens.Client.Ui
         /// <summary>Fills its parent: a solid colour, and optionally a 1 px outline.</summary>
         public static void AddFill(GraphicalUiElement parent, Color fill, Color? border = null)
         {
-            var background = new ColoredRectangleRuntime { Color = fill, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
+            var background = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = fill, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
             parent.Children.Add(background);
             if (border == null) return;
-            var outline = new RectangleRuntime { Color = border.Value, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
+            var outline = new RectangleRuntime { IsFilled = false, StrokeWidth = 1, StrokeColor = border.Value, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
             parent.Children.Add(outline);
         }
 

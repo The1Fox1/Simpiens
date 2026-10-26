@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using System;
+using System.Threading;
 
 namespace Simpiens.Cognition.Pathfinding
 {
@@ -11,6 +11,9 @@ namespace Simpiens.Cognition.Pathfinding
         public bool IsComplete;
         
         private Action<PathResponse> _returnAction;
+        private int _isRented;
+
+        public bool IsRented => _isRented == 1;
 
         public void Initialize(int maxPathLength, Action<PathResponse> returnAction)
         {
@@ -19,7 +22,13 @@ namespace Simpiens.Cognition.Pathfinding
                 Waypoints = new Vec2[maxPathLength];
             }
             _returnAction = returnAction;
+            _isRented = 0;
             Clear();
+        }
+
+        public void MarkRented()
+        {
+            _isRented = 1;
         }
 
         public void Clear()
@@ -31,7 +40,7 @@ namespace Simpiens.Cognition.Pathfinding
 
         public void ReturnToPool()
         {
-            if (_returnAction != null)
+            if (_returnAction != null && Interlocked.Exchange(ref _isRented, 0) == 1)
             {
                 _returnAction(this);
             }

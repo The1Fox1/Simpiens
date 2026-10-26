@@ -6,11 +6,11 @@ namespace Simpiens.Client.Tests
     /// <summary>A pointer and keys the test moves by hand, read by the game as if they were the devices.</summary>
     internal sealed class ScriptedInput : IClientInputSource
     {
-        public Vec2 Position;
-        public bool Left;
-        public bool Right;
-        public bool Middle;
-        public KeyInput Keys;
+        public Vec2 Position { get; set; }
+        public bool Left { get; set; }
+        public bool Right { get; set; }
+        public bool Middle { get; set; }
+        public KeyInput Keys { get; set; }
 
         public void Read(out PointerInput pointer, out KeyInput keys)
         {

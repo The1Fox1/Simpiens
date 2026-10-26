@@ -7,12 +7,15 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-24
+# Last reconciled: 2026-10-25
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
 - Unity is gone (Epic CLIENT M2.8-M2.9, 2026-10-24; producer: "remove Unity first"): every Unity test has a .NET
-  twin, the core lives in dotnet/Simpiens.Core, and the solution is .NET only. On feat/remove-unity, PR into main.
+  twin, the core lives in dotnet/Simpiens.Core, and the solution is .NET only, on C# 14 / .NET 10. Merged (PR #12).
+- A cleanup before G3 (2026-10-25, no epic): ROADMAP 1A.2 #17 and #19 fixed, intent faults counted and failing the
+  day, warnings as errors. On feat/code-cleanliness, PR into main. The rest of .agents/core_refactor_plan.md
+  (R1-R6: guards, SimulationManager's split, planners per worker) comes back after Epic 10 Part 1.
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9

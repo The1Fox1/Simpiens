@@ -2,7 +2,7 @@ using Gum.Converters;
 using Gum.DataTypes;
 using Gum.Forms.Controls;
 using Microsoft.Xna.Framework;
-using MonoGameGum.GueDeriving;
+using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
 using Simpiens.Presentation.Dashboard;
 
@@ -30,7 +30,7 @@ namespace Simpiens.Client.Ui
                 HasEvents = true, // the bar itself takes clicks: none reach the map
             };
             UiParts.AddFill(Root, UiStyle.Header);
-            var rule = new ColoredRectangleRuntime { Color = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f, YUnits = GeneralUnitType.PixelsFromLarge, YOrigin = VerticalAlignment.Bottom };
+            var rule = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f, YUnits = GeneralUnitType.PixelsFromLarge, YOrigin = VerticalAlignment.Bottom };
             Root.Children.Add(rule);
 
             var left = UiParts.Row(10f);

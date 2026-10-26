@@ -119,14 +119,14 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   - `Memory/`, `Planning/`, `Drives/`, `Navigation/`, `Sociopolitical/`, `Economy/`, `Persistence/`, `UI/`, `Diagnostics/`: Domain validators per feature area.
 
 - **Live scenarios** (`Simpiens.Core.Tests`)
-  The Definition of Done's evidence, headless on the real session with nothing injected (`OutpostScenarioTests` shows how): `OutpostWatch` observes every tick (ledger conservation, starvation, the fog, the bounties, trust, the anomaly detector). `TheOutpostsDayHoldsOnEverySeed` plays the 15-minute day on the 23 gate seeds; `GoldenWorldHashTests` compares a run with the committed baselines: a change that must not alter behaviour must reproduce them, and a deliberate behaviour change re-records them in its own commit. Simulation seed: `SIMPIENS_SEED` / `--seed`.
+  The Definition of Done's evidence, headless on the real session with nothing injected (`OutpostScenarioTests` shows how): `OutpostWatch` observes every tick (ledger conservation, starvation, the fog, the bounties, trust, the anomaly detector, intent handlers that threw). `TheOutpostsDayHoldsOnEverySeed` plays the 15-minute day on the 23 gate seeds; `GoldenWorldHashTests` compares a run with the committed baselines: a change that must not alter behaviour must reproduce them, and a deliberate behaviour change re-records them in its own commit. Simulation seed: `SIMPIENS_SEED` / `--seed`.
 
 ---
 
 ## Version Control (commit discipline)
 Work is saved through regular, reviewable commits. Uncommitted progress spanning several sessions is a defect.
 1. **Commit at the end of every completed session or task.** Also commit after each self-contained step of a multi-phase plan (a phase of `.agents/*_plan.md`, a fix plus its validator, a docs reconciliation). Never end a session with completed work only in the working tree.
-2. **Commit a working state.** The solution builds. State the test status honestly in the commit body (e.g. "dotnet test 372/372; golden 3/3"). Never claim tests passed that were not run.
+2. **Commit a working state.** The solution builds, with no warnings: warnings are errors (`dotnet/Directory.Build.props`), so fix a new one rather than suppress it. State the test status honestly in the commit body (e.g. "dotnet test 372/372; golden 3/3"). Never claim tests passed that were not run.
 3. **Keep commits logical and scoped.** Separate dependency/tooling changes, feature code and docs where practical. Use the existing Conventional Commits style: `feat(scope):`, `fix(scope):`, `docs(scope):`, `chore(scope):`, `test(scope):`.
 4. **Never commit generated artifacts:** `bin/`, `obj/`, `Logs/`, `container-output/`. `.gitignore` covers these. If a new kind of generated output appears, extend `.gitignore` in the same commit.
 5. **Branching:** follow the user's instruction. When none is given, do not commit large multi-session work directly to `main`; use a descriptive branch (`feat/<topic>`) and say so. Target pull requests at `main`, not at another feature branch.
