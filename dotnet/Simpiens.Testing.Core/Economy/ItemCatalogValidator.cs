@@ -24,8 +24,9 @@ namespace Simpiens.Testing.Economy
             ValidateMapsYieldDefinedItems();
             ValidateRarityScores();
             ValidateConsumables();
+            ValidateEquipmentStats();
 
-            TestLog.Log("<color=green>[ItemCatalogValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[ItemCatalogValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDefinitionsAreConsistent()
@@ -50,6 +51,12 @@ namespace Simpiens.Testing.Economy
                 if (item.Is(ItemCategory.Food) || item.Is(ItemCategory.Medicine)) Assert(item.Is(ItemCategory.Consumable), $"{item.Name}: food and medicine are consumables.");
                 int kinds = (item.Is(ItemCategory.Weapon) ? 1 : 0) + (item.Is(ItemCategory.Protection) ? 1 : 0) + (item.Is(ItemCategory.Tool) ? 1 : 0);
                 Assert(item.Is(ItemCategory.Equipment) ? kinds == 1 : kinds == 0, $"{item.Name}: equipment is exactly one of weapon, protection or tool.");
+                Assert(item.Is(ItemCategory.Equipment) == (item.Equipment != null), $"{item.Name}: equipment exactly when it has an equipment block.");
+                if (item.Equipment != null)
+                {
+                    var expected = item.Is(ItemCategory.Weapon) ? EquipmentSlot.Weapon : item.Is(ItemCategory.Protection) ? EquipmentSlot.Protection : EquipmentSlot.Tool;
+                    Assert(item.Equipment.Slot == expected && item.Equipment.Durability > 0, $"{item.Name}: in the {expected} slot, with a life.");
+                }
             }
             TestLog.Log("[PASS] Test 1: every definition is consistent.");
         }
@@ -62,12 +69,13 @@ namespace Simpiens.Testing.Economy
                 var id = (ItemType)i;
                 bool wasFood = id == ItemType.None || id == ItemType.Ration;
                 bool wasSalvage = id == ItemType.IronOre || id == ItemType.MedicinalHerb || id == ItemType.Glowstone;
-                bool wasWearable = id == ItemType.HazardGear;
                 Assert(id.IsFoodYield() == wasFood, $"Item {i}: IsFoodYield {id.IsFoodYield()}, was {wasFood}.");
                 Assert(id.IsSalvage() == wasSalvage, $"Item {i}: IsSalvage {id.IsSalvage()}, was {wasSalvage}.");
-                Assert(AgentInventory.IsWearable(id) == wasWearable, $"Item {i}: IsWearable {AgentInventory.IsWearable(id)}, was {wasWearable}.");
+                // The one gear slot of G3 took hazard gear only; I4's slots take every equipment item, in its own slot
+                bool equipment = ItemCatalog.Is(id, ItemCategory.Equipment);
+                Assert(AgentInventory.IsEquipment(id) == equipment, $"Item {i}: IsEquipment {AgentInventory.IsEquipment(id)}, category Equipment {equipment}.");
             }
-            TestLog.Log("[PASS] Test 2: IsFoodYield, IsSalvage and IsWearable answer as the lists they replaced, for all 256 ids.");
+            TestLog.Log("[PASS] Test 2: IsFoodYield and IsSalvage answer as the lists they replaced, and IsEquipment as the Equipment group, for all 256 ids.");
         }
 
         private void ValidateGroupQueries()
@@ -172,6 +180,24 @@ namespace Simpiens.Testing.Economy
             Assert(!Simpiens.Cognition.ItemUse.Consume(eater, ItemType.IronOre) && eater.Inventory.GetItemCount(ItemType.IronOre) == 1, "Ore isn't consumed.");
             Assert(Simpiens.Cognition.ItemUse.Consume(eater, ItemType.Ration) && eater.Hunger == 30f && eater.Inventory.GetItemCount(ItemType.Ration) == 1, "A ration: hunger 70 -> 30, one left.");
             TestLog.Log("[PASS] Test 6: consumables are defined by their effects, and using one is exactly the old arithmetic.");
+        }
+
+        /// <summary>
+        /// I4: a crawler's stats are a base value, then its equipment's Add modifiers, then its Multiply modifiers. Hazard
+        /// gear gives HazardResistance exactly 0.5 (so hazard damage keeps G3's float arithmetic); a pickaxe multiplies
+        /// HarvestSpeed (reserved); nothing equipped leaves the base.
+        /// </summary>
+        private void ValidateEquipmentStats()
+        {
+            var inv = new AgentInventory(4, startingGold: 0);
+            Assert(CrawlerStats.Get(inv, StatKind.HazardResistance) == 0f && CrawlerStats.Get(inv, StatKind.HarvestSpeed, 1f) == 1f, "Nothing equipped: the base.");
+            inv.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 500));
+            Assert(BitConverter.SingleToInt32Bits(CrawlerStats.Get(inv, StatKind.HazardResistance)) == BitConverter.SingleToInt32Bits(0.5f), "Hazard gear: resistance exactly 0.5.");
+            inv.TryEquip(new ItemInstance(2, ItemType.ToolPickaxe, 1, 30, durability: 100));
+            Assert(CrawlerStats.Get(inv, StatKind.HarvestSpeed, 1f) == 1.5f, "A pickaxe: harvest speed x1.5 on a base of 1.");
+            Assert(CrawlerStats.Get(inv, StatKind.HarvestSpeed, 2f) == 3f && CrawlerStats.Get(inv, StatKind.HazardResistance) == 0.5f, "Each stat reads only its own modifiers.");
+            Assert(CrawlerStats.Get(null, StatKind.Attack, 4f) == 4f, "No inventory: the base.");
+            TestLog.Log("[PASS] Test 7: equipment stats are the base, plus adds, times multiplies.");
         }
 
         private static void Assert(bool condition, string message)

@@ -29,8 +29,16 @@ namespace Simpiens.Cognition.Inventory
             return Simpiens.Simulation.Economy.ItemType.None;
         }
 
-        /// <summary>True when the worn gear is in the group.</summary>
-        public static bool IsWearing(this IAgentInventory inventory, ItemCategory group) =>
-            inventory != null && !inventory.Gear.IsEmpty && ItemCatalog.Is(inventory.Gear.Type, group);
+        /// <summary>True when an equipped item is in the group.</summary>
+        public static bool IsWearing(this IAgentInventory inventory, ItemCategory group)
+        {
+            if (inventory == null) return false;
+            for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
+            {
+                var item = inventory.GetEquipped((EquipmentSlot)s);
+                if (!item.IsEmpty && ItemCatalog.Is(item.Type, group)) return true;
+            }
+            return false;
+        }
     }
 }

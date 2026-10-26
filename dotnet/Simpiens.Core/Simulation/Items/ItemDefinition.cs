@@ -12,8 +12,9 @@ namespace Simpiens.Simulation.Items
         private readonly ConsumeEffect[] _consume;
 
         public ItemDefinition(ItemType id, string name, string displayName, ItemCategory categories, ItemRarity rarity,
-            ushort maxStack = 99, string spriteKey = null, ConsumeEffect[] consume = null)
+            ushort maxStack = 99, string spriteKey = null, ConsumeEffect[] consume = null, EquipmentBlock equipment = null)
         {
+            Equipment = equipment;
             _consume = consume != null ? (ConsumeEffect[])consume.Clone() : System.Array.Empty<ConsumeEffect>();
             Id = id;
             Name = name;
@@ -40,6 +41,9 @@ namespace Simpiens.Simulation.Items
 
         /// <summary>What the client draws.</summary>
         public string SpriteKey { get; }
+
+        /// <summary>Its slot, stat modifiers and life when it is equipment (§3.7); null otherwise.</summary>
+        public EquipmentBlock Equipment { get; }
 
         /// <summary>What consuming it does, in order; none for an item that isn't consumed (§3.6).</summary>
         public int ConsumeEffectCount => _consume.Length;

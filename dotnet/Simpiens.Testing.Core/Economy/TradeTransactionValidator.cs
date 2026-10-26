@@ -285,8 +285,9 @@ namespace Simpiens.Testing.Economy
 
             Assert(BuyGear(simManager, node, stallId) == IntentResult.Success, "The gear purchase succeeds.");
             Assert(agent.Inventory.Gold == 10, $"The crawler paid 40g (gold {agent.Inventory.Gold}).");
-            Assert(agent.Inventory.Gear.Type == ItemType.HazardGear && agent.Inventory.Gear.Durability == EconomyTuning.Default.Gear.LifeTicks,
-                $"The gear is worn with {EconomyTuning.Default.Gear.LifeTicks} ticks of life (got {agent.Inventory.Gear}, durability {agent.Inventory.Gear.Durability}).");
+            var worn = agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+            ushort life = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.Durability;
+            Assert(worn.Type == ItemType.HazardGear && worn.Durability == life, $"The gear is worn with {life} ticks of life (got {worn}, durability {worn.Durability}).");
             Assert(agent.Inventory.OccupiedSlots == 0, "Worn gear takes no pack slot.");
             Assert(agent.Activity.GearPurchases == 1 && agent.Activity.RationPurchases == 0, "The tally counts a gear purchase, not a ration.");
             simManager.TryGetTradeStall(stallId, out var after);
@@ -330,7 +331,7 @@ namespace Simpiens.Testing.Economy
             var other = HeadlessEntities.Crawler(null, emptySim, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearNone]", register: false);
             other.Agent.Inventory.Gold = 100;
             emptyRegistry.Register(other.Node);
-            Assert(BuyGear(emptySim, other.Node, emptyStall) != IntentResult.Success && other.Agent.Inventory.Gear.IsEmpty, "Refused: the stall has no gear.");
+            Assert(BuyGear(emptySim, other.Node, emptyStall) != IntentResult.Success && other.Agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection).IsEmpty, "Refused: the stall has no gear.");
 
             HeadlessEntities.Remove(registry, crawler);
             HeadlessEntities.Remove(emptyRegistry, other);

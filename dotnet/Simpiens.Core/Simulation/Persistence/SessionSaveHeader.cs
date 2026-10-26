@@ -12,7 +12,7 @@ namespace Simpiens.Simulation.Persistence
     public sealed partial class SessionSaveHeader
     {
         /// <summary>Bumped whenever a saved type's layout changes: unmanaged records are saved as memory copies.</summary>
-        public const int CurrentFormatVersion = 4; // 2: drifters (Epic 10 G1); 3: health, danger tallies and the stall's glowstone (Epic 10 G2); 4: worn gear, the stall's gear (Epic 10 G3)
+        public const int CurrentFormatVersion = 5; // 2: drifters (Epic 10 G1); 3: health, danger tallies and the stall's glowstone (Epic 10 G2); 4: worn gear, the stall's gear (Epic 10 G3); 5: three equipment slots (item system I4)
 
         public int FormatVersion { get; set; } = CurrentFormatVersion;
         public string BuildVersion { get; set; }

@@ -120,9 +120,6 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Strangers who arrive with their own gold and leave (Epic 10 G1).</summary>
         public DrifterTuning Drifters { get; private set; } = DrifterTuning.Default;
 
-        /// <summary>What hazard gear does and how long it lasts (Epic 10 G3).</summary>
-        public GearTuning Gear { get; private set; } = GearTuning.Default;
-
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -163,13 +160,6 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Drifters = drifters;
-            return copy;
-        }
-
-        public EconomyTuning WithGear(in GearTuning gear)
-        {
-            var copy = Copy();
-            copy.Gear = gear;
             return copy;
         }
 

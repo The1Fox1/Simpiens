@@ -35,13 +35,14 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             if (trade.ActionType == TradeActionType.BuyItem)
             {
-                // The stall sells rations and, since Epic 10 G3, hazard gear, which is worn rather than carried
+                // The stall sells rations and, since Epic 10 G3, hazard gear, which is equipped rather than carried
+                var equipment = Simpiens.Simulation.Items.ItemCatalog.Get(trade.ItemType)?.Equipment;
                 bool gear = trade.ItemType == ItemType.HazardGear;
                 if (trade.ItemType != ItemType.Ration && !gear)
                 {
                     return Reject(node, trade, "stall only sells rations and hazard gear");
                 }
-                if (gear && (trade.Quantity != 1 || !agent.Inventory.Gear.IsEmpty))
+                if (gear && (trade.Quantity != 1 || !agent.Inventory.GetEquipped(equipment.Slot).IsEmpty))
                 {
                     return Reject(node, trade, "a crawler wears one piece of gear at a time");
                 }
@@ -65,8 +66,8 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 if (gear)
                 {
-                    // New gear lasts the tuning's ticks of hazard exposure (its durability counts them down)
-                    agent.Inventory.TryWear(new ItemInstance(1, ItemType.HazardGear, 1, (ushort)unitPrice, durability: economy.Gear.LifeTicks));
+                    // New equipment starts at its definition's durability (hazard gear: ticks of hazard exposure)
+                    agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, durability: equipment.Durability));
                 }
                 else if (!agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, trade.Quantity, (ushort)unitPrice), out _))
                 {
@@ -79,7 +80,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     if (!context.EconomyLedger.TryExecuteStallPurchase(stall.StallEntityId, ref stall, agent.Inventory, totalCost))
                     {
                         // Roll back what was added
-                        if (gear) agent.Inventory.RemoveGear();
+                        if (gear) agent.Inventory.Unequip(equipment.Slot);
                         else agent.Inventory.TryRemoveItem(ItemType.Ration, trade.Quantity);
                         return Reject(node, trade, "ledger refused the purchase");
                     }

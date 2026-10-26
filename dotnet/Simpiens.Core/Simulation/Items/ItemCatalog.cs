@@ -32,9 +32,14 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common, spriteKey: "Resource_HerbPatch",
                 consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }));
             Define(new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
-                ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon)); // no source until Epic 10 Part 2
+                ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 100, WearRule.PerUse,
+                    new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f)))); // no source until Epic 10 Part 2; nothing reads HarvestSpeed yet
             Define(new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",
-                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon));
+                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon,
+                // Halves hazard damage; lasts 500 ticks (50 s) in danger (Epic 10 G3)
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))));
             Define(new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
                 ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare, spriteKey: "Resource_Glowstone"));
 

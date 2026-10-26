@@ -27,8 +27,14 @@ namespace Simpiens.Simulation.Persistence
                             if (!slots[i].IsEmpty && Unknown(slots[i].Type)) return Where(slots[i].Type, $"{crawler.Name}'s pack");
                         }
                     }
-                    var gear = crawler.Inventory != null ? crawler.Inventory.Gear : ItemInstance.Empty;
-                    if (!gear.IsEmpty && Unknown(gear.Type)) return Where(gear.Type, $"{crawler.Name}'s gear");
+                    var equipped = crawler.Inventory?.Equipped;
+                    if (equipped != null)
+                    {
+                        for (int i = 0; i < equipped.Length; i++)
+                        {
+                            if (!equipped[i].IsEmpty && Unknown(equipped[i].Type)) return Where(equipped[i].Type, $"{crawler.Name}'s equipment");
+                        }
+                    }
                     var sightings = crawler.Memory?.Sightings;
                     if (sightings != null)
                     {

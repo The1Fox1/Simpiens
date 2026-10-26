@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Persistence;
 
 namespace Simpiens.Cognition.Inventory
@@ -21,11 +22,16 @@ namespace Simpiens.Cognition.Inventory
         public int Capacity => _capacity;
         public int Gold { get; set; }
 
-        /// <summary>The worn gear (Epic 10 G3): one item beside the pack, so gear never takes a pack slot.</summary>
-        public ItemInstance Gear { get; private set; }
+        /// <summary>Equipment slots beside the pack (protection, weapon, tool), one item each, so equipment never takes a pack slot.</summary>
+        public const int EquipmentSlots = 3;
 
-        /// <summary>True for an item worn in the gear slot rather than carried in the pack: protection (the item plan's I4 adds a slot per kind of equipment).</summary>
-        public static bool IsWearable(ItemType type) => Simpiens.Simulation.Items.ItemCatalog.Is(type, Simpiens.Simulation.Items.ItemCategory.Protection);
+        private readonly ItemInstance[] _equipped = new ItemInstance[EquipmentSlots];
+
+        /// <summary>What is equipped in a slot, or empty. Its Durability counts the wear it still takes.</summary>
+        public ItemInstance GetEquipped(EquipmentSlot slot) => _equipped[(int)slot];
+
+        /// <summary>True for an item that is equipped rather than carried (the catalog gives it an equipment block).</summary>
+        public static bool IsEquipment(ItemType type) => ItemCatalog.Get(type)?.Equipment != null;
 
         public AgentInventory(int capacity = DefaultCapacity, int startingGold = Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold)
         {
@@ -182,34 +188,34 @@ namespace Simpiens.Cognition.Inventory
             return true;
         }
 
-        /// <summary>Puts gear on. Refused (false) for an item that isn't worn, or while gear is already worn.</summary>
-        public bool TryWear(in ItemInstance gear)
+        /// <summary>Equips an item in its slot. Refused (false) for an item that isn't equipment, or while the slot is taken.</summary>
+        public bool TryEquip(in ItemInstance item)
         {
-            if (gear.IsEmpty || !IsWearable(gear.Type) || !Gear.IsEmpty) return false;
-            Gear = gear.WithQuantity(1);
+            var equipment = item.IsEmpty ? null : ItemCatalog.Get(item.Type)?.Equipment;
+            if (equipment == null || !_equipped[(int)equipment.Slot].IsEmpty) return false;
+            _equipped[(int)equipment.Slot] = item.WithQuantity(1);
             return true;
         }
 
-        /// <summary>Takes the worn gear off (a rolled-back purchase); what was worn, or empty.</summary>
-        public ItemInstance RemoveGear()
+        /// <summary>Takes a slot's item off (a rolled-back purchase); what was equipped, or empty.</summary>
+        public ItemInstance Unequip(EquipmentSlot slot)
         {
-            var worn = Gear;
-            Gear = ItemInstance.Empty;
+            var worn = _equipped[(int)slot];
+            _equipped[(int)slot] = ItemInstance.Empty;
             return worn;
         }
 
-        /// <summary>
-        /// Wears the gear by <paramref name="ticks"/> of hazard exposure. At 0 it breaks and is gone: returns true then.
-        /// </summary>
-        public bool WearGear(ushort ticks = 1)
+        /// <summary>Wears a slot's item by <paramref name="units"/>. At 0 it breaks and is gone: returns true then.</summary>
+        public bool Wear(EquipmentSlot slot, ushort units = 1)
         {
-            if (Gear.IsEmpty) return false;
-            if (Gear.Durability > ticks)
+            var item = _equipped[(int)slot];
+            if (item.IsEmpty) return false;
+            if (item.Durability > units)
             {
-                Gear = Gear.WithDurability((ushort)(Gear.Durability - ticks));
+                _equipped[(int)slot] = item.WithDurability((ushort)(item.Durability - units));
                 return false;
             }
-            Gear = ItemInstance.Empty;
+            _equipped[(int)slot] = ItemInstance.Empty;
             return true;
         }
 
@@ -233,20 +239,21 @@ namespace Simpiens.Cognition.Inventory
         public void Clear()
         {
             Array.Clear(_slots, 0, _capacity);
-            Gear = ItemInstance.Empty;
+            Array.Clear(_equipped, 0, EquipmentSlots);
         }
 
-        /// <summary>Writes the purse, every slot and the worn gear into a save, reusing its slot array when the capacity matches.</summary>
+        /// <summary>Writes the purse, every slot and the equipment into a save, reusing its slot array when the capacity matches.</summary>
         public void CaptureTo(InventorySave save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (save.Slots == null || save.Slots.Length != _capacity) save.Slots = new ItemInstance[_capacity];
             Array.Copy(_slots, save.Slots, _capacity);
             save.Gold = Gold;
-            save.Gear = Gear;
+            if (save.Equipped == null || save.Equipped.Length != EquipmentSlots) save.Equipped = new ItemInstance[EquipmentSlots];
+            Array.Copy(_equipped, save.Equipped, EquipmentSlots);
         }
 
-        /// <summary>Replaces the purse, the slots and the worn gear with a save's. The save must have this inventory's capacity.</summary>
+        /// <summary>Replaces the purse, the slots and the equipment with a save's. The save must have this inventory's capacity.</summary>
         public void RestoreFrom(InventorySave save)
         {
             if (save?.Slots == null) throw new ArgumentNullException(nameof(save));
@@ -256,7 +263,8 @@ namespace Simpiens.Cognition.Inventory
             }
             Array.Copy(save.Slots, _slots, _capacity);
             Gold = save.Gold;
-            Gear = save.Gear;
+            Array.Clear(_equipped, 0, EquipmentSlots);
+            if (save.Equipped != null) Array.Copy(save.Equipped, _equipped, Math.Min(EquipmentSlots, save.Equipped.Length));
         }
     }
 }
