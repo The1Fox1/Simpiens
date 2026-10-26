@@ -33,8 +33,10 @@ namespace Simpiens.Testing.Economy
             ValidateDeliverBountyAffinityReward();
             ValidateGOAPBountyChainResolution();
             ValidatePlayerInterventionCancelBounty();
+            ValidateLiveBountyIdsAreNeverTakenOver();
+            ValidateGeneratedBountyIdsSkipTakenOnes();
 
-            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBountyContractLayoutAndZeroAlloc()
@@ -349,6 +351,84 @@ namespace Simpiens.Testing.Economy
             Assert(refundedStall.TreasuryGold == 500, $"Stall treasury is {refundedStall.TreasuryGold} instead of 500.");
 
             TestLog.Log("[BountyFulfillmentValidator] Test 8 Passed: Player intervention CancelBounty and escrow refund verified.");
+        }
+
+        /// <summary>
+        /// ROADMAP §1A.2 #19: id 0 is refused, and so is the id of a live bounty, whose escrow and claimant would be lost;
+        /// a refused bounty escrows nothing. A finished bounty's id may be reused explicitly (scripted ids; the zero-alloc
+        /// validator reposts fixed ids): the new bounty replaces the finished record.
+        /// </summary>
+        private void ValidateLiveBountyIdsAreNeverTakenOver()
+        {
+            var intervention = new PlayerInterventionService();
+            var simManager = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
+            var stallId = new EntityId(1, 2, 3, 4);
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+
+            Assert(!simManager.TryRegisterBounty(new BountyContract(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Id 0 is refused.");
+            Assert(simManager.TryRegisterBounty(new BountyContract(42, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 42 registered.");
+            Assert(!simManager.TryRegisterBounty(new BountyContract(42, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 20, 0, 100, creatorStallId: stallId)), "A live bounty's id is refused.");
+            Assert(simManager.TryGetBounty(42, out var live) && live.TargetItemType == ItemType.IronOre && live.Status == BountyStatus.Open, "The live bounty is kept as it was.");
+            Assert(simManager.TryGetTradeStall(stallId, out var escrowed) && escrowed.TreasuryGold == 990, $"Only the live bounty's 10g is escrowed (treasury {escrowed.TreasuryGold}g).");
+
+            intervention.QueueInfluence(InfluenceEvent.CreateCancelBounty("Player", 42));
+            simManager.Tick();
+            Assert(simManager.TryGetBounty(42, out var cancelled) && cancelled.Status == BountyStatus.Cancelled, "Bounty 42 cancelled.");
+            Assert(simManager.TryRegisterBounty(new BountyContract(42, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 20, 0, 100, creatorStallId: stallId)), "A finished bounty's id is reused explicitly.");
+            Assert(simManager.TryGetBounty(42, out var replaced) && replaced.Status == BountyStatus.Open && replaced.TargetItemType == ItemType.MedicinalHerb, "The new bounty replaced the finished record.");
+            Assert(simManager.TryGetTradeStall(stallId, out var stall) && stall.TreasuryGold == 980, $"The new bounty's 20g is escrowed, the cancelled one's 10g refunded (treasury {stall.TreasuryGold}g).");
+
+            TestLog.Log("[BountyFulfillmentValidator] Test 9 Passed: A live bounty's id is never taken over; a finished one's may be reused explicitly.");
+        }
+
+        /// <summary>
+        /// ROADMAP §1A.2 #19: a posted bounty without an id gets the next free one. Explicit ids 1 and 3 leave a gap, so
+        /// the old rule (count + 1 = 3) would have overwritten bounty 3; the board hands out 4, then 5.
+        /// </summary>
+        private void ValidateGeneratedBountyIdsSkipTakenOnes()
+        {
+            var intervention = new PlayerInterventionService();
+            var simManager = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
+            var stallId = new EntityId(1, 2, 3, 4);
+            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+            Assert(simManager.TryRegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 1 registered.");
+            Assert(simManager.TryRegisterBounty(new BountyContract(3, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 3 registered.");
+
+            for (int i = 0; i < 2; i++)
+            {
+                intervention.QueueInfluence(InfluenceEvent.CreatePostBounty("Player",
+                    new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 10, 100, default, stallId)));
+            }
+            simManager.Tick();
+
+            Assert(simManager.TryGetBounty(3, out var three) && three.TargetItemType == ItemType.IronOre, "Bounty 3 is not overwritten.");
+            Assert(simManager.TryGetBounty(4, out var four) && four.TargetItemType == ItemType.MedicinalHerb, "The first posted bounty got id 4.");
+            Assert(simManager.TryGetBounty(5, out var five) && five.TargetItemType == ItemType.MedicinalHerb, "The second posted bounty got id 5.");
+            Assert(!simManager.TryGetBounty(2, out _), "Id 2, below the highest id taken, is not handed out.");
+
+            // A full board, loaded in one go: every id but 777 is taken by a finished bounty, so generation wraps to the
+            // gap, then refuses (and doesn't hang)
+            var full = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
+            full.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+            var board = new Simpiens.Simulation.Persistence.SessionSave();
+            full.CaptureTo(board);
+            var finished = new System.Collections.Generic.List<BountyContract>(ushort.MaxValue);
+            for (int id = 1; id <= ushort.MaxValue; id++)
+            {
+                if (id != 777) finished.Add(new BountyContract((ushort)id, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId, status: BountyStatus.Completed));
+            }
+            board.Economy.Bounties = finished.ToArray();
+            full.RestoreFrom(board);
+            for (int i = 0; i < 2; i++)
+            {
+                intervention.QueueInfluence(InfluenceEvent.CreatePostBounty("Player",
+                    new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 10, 100, default, stallId)));
+            }
+            full.Tick();
+            Assert(full.TryGetBounty(777, out var gap) && gap.TargetItemType == ItemType.MedicinalHerb && gap.Status == BountyStatus.Open, "On a full board the posted bounty takes the one free id.");
+            Assert(full.TryGetTradeStall(stallId, out var fullStall) && fullStall.TreasuryGold == 990, $"The second post is refused and escrows nothing (treasury {fullStall.TreasuryGold}g).");
+
+            TestLog.Log("[BountyFulfillmentValidator] Test 10 Passed: Generated bounty ids skip every id taken, and a full board refuses a post.");
         }
 
         private void Assert(bool condition, string message)

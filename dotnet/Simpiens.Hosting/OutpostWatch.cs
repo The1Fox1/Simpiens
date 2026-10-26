@@ -87,12 +87,17 @@ namespace Simpiens.Hosting
         /// <summary>Drifters seen while watching (Epic 10 G1): arrived, walked out, and what those who left bought.</summary>
         public int DriftersArrived, DriftersLeft, DrifterPurchases;
         private readonly int _driftersAtStart;
+        private readonly int _faultsAtStart;
+
+        /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
+        public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
 
         public OutpostWatch(LocalSimulation sim)
         {
             _sim = sim;
             _startTick = sim.Clock.CurrentTick;
             _baselineSalvage = TotalSalvage(sim.Simulation);
+            _faultsAtStart = sim.Simulation.IntentFaults;
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>
             {
@@ -238,6 +243,7 @@ namespace Simpiens.Hosting
             // The rest of Unity's anomaly checks (Epic CLIENT M2.8); thrashing is the views' to judge (AnomalyDetector)
             if (Anomalies.JitterCount + Anomalies.PenetrationCount + Anomalies.BoundaryBreachCount > 0)
                 failures.Add($"{Anomalies.Summary()}; first {Anomalies.First}");
+            if (IntentFaults > 0) failures.Add($"{IntentFaults} intent handlers threw (first {_sim.Simulation.FirstIntentFault})");
             return failures;
         }
 
@@ -271,7 +277,7 @@ namespace Simpiens.Hosting
         public string Report()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
+            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; intent faults {IntentFaults}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");

@@ -29,8 +29,9 @@ namespace Simpiens.Testing.Navigation
             ValidateZeroAllocationAndConcurrency();
             ValidateHearthOnCellCornerKeepsCorridorOpen();
             ValidateSmoothedPathKeepsClearOfHearth();
+            ValidateDoubleReturnPoolsOnce();
 
-            TestLog.Log("<color=green>[GridAStarValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GridAStarValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private SharedWorldSnapshot CreateTestSnapshot(int width = 30, int height = 30, float cellSize = 1.0f)
@@ -413,6 +414,27 @@ namespace Simpiens.Testing.Navigation
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 searches.");
 
             TestLog.Log($"[PASS] Test 7: Multi-threaded concurrency passed (1,000 queries across 4 workers) and strictly 0 bytes allocated across 1,000 searches.");
+        }
+
+        /// <summary>
+        /// ROADMAP §1A.2 #17: a path returned twice (an intent completed, then cleaned up again after a fault) goes back to
+        /// the pool once, so two later requests never share one waypoint buffer.
+        /// </summary>
+        private void ValidateDoubleReturnPoolsOnce()
+        {
+            var pathfinder = new AsyncPathfinder();
+            var first = pathfinder.CalculatePathImmediate(default, null);
+            Assert(first.IsRented, "A rented path is marked rented.");
+            first.ReturnToPool();
+            Assert(!first.IsRented, "A returned path is no longer rented.");
+            first.ReturnToPool();
+
+            var second = pathfinder.CalculatePathImmediate(default, null);
+            var third = pathfinder.CalculatePathImmediate(default, null);
+            Assert(ReferenceEquals(second, first), "The returned path is reused.");
+            Assert(!ReferenceEquals(third, second), "The second return was a no-op: the next request gets another path.");
+
+            TestLog.Log("[PASS] Test 10: A path returned twice goes back to the pool once.");
         }
 
         private static void Assert(bool condition, string message)

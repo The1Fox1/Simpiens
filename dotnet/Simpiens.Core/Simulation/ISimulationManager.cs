@@ -52,5 +52,13 @@ namespace Simpiens.Simulation
         /// agent-id order. Never null on <c>SimulationManager</c>.
         /// </summary>
         Simpiens.Cognition.CognitionScheduler Cognition { get; }
+
+        /// <summary>
+        /// Intent handlers that threw since this simulation was built (ROADMAP §1A.2 #17), respawns included: each was
+        /// aborted, logged at Error and counted here, so a live scenario fails on any. <see cref="FirstIntentFault"/>
+        /// describes the first (tick, agent, intent, exception), or is null.
+        /// </summary>
+        int IntentFaults { get; }
+        string FirstIntentFault { get; }
     }
 }
