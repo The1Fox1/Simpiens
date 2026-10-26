@@ -68,6 +68,15 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The caravan's terms for an item (role None when it doesn't trade it).</summary>
         public CaravanTerms Terms(ItemType item) => _items != null ? _items[(byte)item] : default;
 
+        /// <summary>A copy with one item's terms set (role None stops the caravan trading it).</summary>
+        public SupplyTuning With(in CaravanTerms terms)
+        {
+            var copy = new SupplyTuning(RestockIntervalTicks, UpkeepPerVisit);
+            if (_items != null) System.Array.Copy(_items, copy._items, _items.Length);
+            copy._items[(byte)terms.Item] = terms;
+            return copy;
+        }
+
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, upkeepPerVisit: 80,
             CaravanTerms.Supplies(ItemType.Ration, stockCap: 50, wholesaleCost: 2, SupplyService.CaravanSinkName),
