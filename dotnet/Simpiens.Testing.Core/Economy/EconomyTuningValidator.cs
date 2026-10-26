@@ -58,7 +58,7 @@ namespace Simpiens.Testing.Economy
             Assert(s.OreQuota == 2 && s.HerbQuota == 2 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 2 ore at 24g + 2 herbs at 30g per visit (§3.3 tuning).");
             Assert(s.UpkeepPerVisit == 80, "Upkeep 80g per visit (§3.3 tuning).");
             Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
-            var full = new TradeStallData(new EntityId(1u, 1u, 1u, 1u), Vec2.Zero, oreStock: 20, herbStock: 19);
+            var full = TestStalls.Stall(new EntityId(1u, 1u, 1u, 1u), Vec2.Zero, oreStock: 20, herbStock: 19);
             Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),
                 "StallHasRoom compares stock plus quantity with the capacity.");
 
@@ -99,11 +99,11 @@ namespace Simpiens.Testing.Economy
             var ledger = new EconomyLedger();
             var supply = new SupplyService(); // default tuning: cap 50 every 600 ticks
             var sim = new SimulationManager(new WorldRegistry(), null, economyLedger: ledger, supplyService: supply);
-            sim.SetEconomy(EconomyTuning.Default.WithSupply(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 30, wholesaleRationCost: 3)));
+            sim.SetEconomy(EconomyTuning.Default.WithSupply(TestSupply.Tuning(restockIntervalTicks: 20, rationStockCap: 30, wholesaleRationCost: 3)));
             Assert(supply.Tuning.RationStockCap == 30 && supply.Tuning.RestockIntervalTicks == 20, "SetEconomy reconfigures the supply service.");
 
             var stallId = new EntityId(5u, 5u, 5u, 5u);
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 10, treasuryGold: 500));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationStock: 10, treasuryGold: 500));
             ledger.RecordFaucet(500, "InitialSeed");
             while (sim.CurrentTick < 20) sim.Tick();
 
@@ -143,7 +143,7 @@ namespace Simpiens.Testing.Economy
         {
             var copy = EconomyTuning.Default.WithStartingGold(99).WithStallTerms(1, 2, 3, 4).WithBaseValues(7, 7, 7)
                 .WithTradeTrust(new TradeTrustTuning(0.1f, 0.2f, 3f, 2f, default, default, default, default, default, default))
-                .WithSupply(new SupplyTuning(1, 1, 1));
+                .WithSupply(TestSupply.Tuning(1, 1, 1));
             Assert(copy.StartingGold == 99 && copy.StallTreasury == 4 && copy.BaseValue(ItemType.IronOre) == 7 && copy.Supply.RationStockCap == 1,
                 "The copy carries its changes.");
             Assert(copy.StallRationStock == 50 && SimMath.Approximately(copy.RationReferencePrice, 20f), "Fields not changed are kept.");

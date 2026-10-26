@@ -394,7 +394,15 @@ namespace Simpiens.Cognition.Planning
             var access = GetStallAccess(context, out var stall);
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
-            uint cheapest = stall.OreBuyPrice < stall.HerbBuyPrice ? stall.OreBuyPrice : stall.HerbBuyPrice;
+            // The cheapest price the stall pays for a resource that isn't hazardous (ore, herbs): it must be able to pay that
+            uint cheapest = uint.MaxValue;
+            var resources = ItemCatalog.InCategory(ItemCategory.Resource);
+            for (int i = 0; i < resources.Count; i++)
+            {
+                if (ItemCatalog.Is(resources[i], ItemCategory.Hazardous) || !stall.TryGetGood(resources[i], out var good) || good.Role != StallRole.Buys) continue;
+                if (good.Price < cheapest) cheapest = good.Price;
+            }
+            if (cheapest == uint.MaxValue) cheapest = 0;
             var economy = Considerations.Economy(context);
             // A hazardous kind's shelf counts only for a crawler who would go into danger for it, and only while the stall
             // pays for it (Epic 10 G2)
@@ -488,8 +496,9 @@ namespace Simpiens.Cognition.Planning
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            return stall.RationStock > 0 && gold >= stall.RationSellPrice
-                && stall.RationSellPrice <= Considerations.RationReservationPrice(context);
+            var food = FoodForSale(stall);
+            return stall.SellStockOf(food) > 0 && gold >= stall.SellPriceOf(food)
+                && stall.SellPriceOf(food) <= Considerations.RationReservationPrice(context);
         }
 
         /// <summary>
@@ -500,9 +509,38 @@ namespace Simpiens.Cognition.Planning
         {
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            return stall.HazardGearStock > 0 && stall.HazardGearSellPrice > 0
-                && stall.HazardGearSellPrice <= Considerations.GearReservationPrice(context)
-                && gold >= stall.HazardGearSellPrice + stall.RationSellPrice;
+            var protection = ProtectionForSale(stall);
+            ushort price = stall.SellPriceOf(protection);
+            return stall.SellStockOf(protection) > 0 && price > 0
+                && price <= Considerations.GearReservationPrice(context, protection)
+                && gold >= price + stall.SellPriceOf(FoodForSale(stall));
+        }
+
+        /// <summary>The first food the stall sells, in id order (a ration); None when it sells none.</summary>
+        public static ItemType FoodForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Food);
+
+        /// <summary>The first protection the stall sells, in id order (hazard gear, Epic 10 G3); None when it sells none.</summary>
+        public static ItemType ProtectionForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Protection);
+
+        private static ItemType FirstForSale(in TradeStallData stall, ItemCategory group)
+        {
+            var members = ItemCatalog.InCategory(group);
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (stall.TryGetGood(members[i], out var good) && good.Role == StallRole.Sells) return members[i];
+            }
+            return ItemType.None;
+        }
+
+        /// <summary>True when the crawler knows a node of a hazardous resource (glowstone, Epic 10 G2) it would go for.</summary>
+        public static bool KnowsHazardousSalvage(in AgentContext context)
+        {
+            var hazardous = ItemCatalog.InCategory(ItemCategory.Hazardous);
+            for (int i = 0; i < hazardous.Count; i++)
+            {
+                if (KnowsSalvage(context, hazardous[i])) return true;
+            }
+            return false;
         }
 
         /// <summary>Nearest stall the agent can walk to.</summary>

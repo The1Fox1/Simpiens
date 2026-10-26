@@ -107,7 +107,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Player queues a PostBounty influence event
@@ -136,7 +136,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             // Live bounties must be escrowed by a stall (§3.1), so register one that can cover the reward
-            var stall = new TradeStallData(EntityId.Generate(), Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(EntityId.Generate(), Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var contract = new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 30, 0, 1000);
@@ -172,7 +172,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Post bounty with 20 tick lifespan (duration = 20)
@@ -204,7 +204,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0.5f, 0.5f), id: EntityId.Generate(), name: "[Test_Deliverer]", register: false);
@@ -252,7 +252,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Affinity_Deliverer]", register: false);
@@ -328,7 +328,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock, null, null, null, intervention);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             // Post bounty #5 with 50 gold reward
@@ -363,7 +363,7 @@ namespace Simpiens.Testing.Economy
             var intervention = new PlayerInterventionService();
             var simManager = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
             var stallId = new EntityId(1, 2, 3, 4);
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 1000));
 
             Assert(!simManager.TryRegisterBounty(new BountyContract(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Id 0 is refused.");
             Assert(simManager.TryRegisterBounty(new BountyContract(42, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 42 registered.");
@@ -390,7 +390,7 @@ namespace Simpiens.Testing.Economy
             var intervention = new PlayerInterventionService();
             var simManager = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
             var stallId = new EntityId(1, 2, 3, 4);
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 1000));
             Assert(simManager.TryRegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 1 registered.");
             Assert(simManager.TryRegisterBounty(new BountyContract(3, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, 100, creatorStallId: stallId)), "Bounty 3 registered.");
 
@@ -409,7 +409,7 @@ namespace Simpiens.Testing.Economy
             // A full board, loaded in one go: every id but 777 is taken by a finished bounty, so generation wraps to the
             // gap, then refuses (and doesn't hang)
             var full = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
-            full.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+            full.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 1000));
             var board = new Simpiens.Simulation.Persistence.SessionSave();
             full.CaptureTo(board);
             var finished = new System.Collections.Generic.List<BountyContract>(ushort.MaxValue);

@@ -78,7 +78,7 @@ namespace Simpiens.Testing.Persistence
         private void ValidateLedgerRoundTrips()
         {
             var ledger = new EconomyLedger();
-            var stall = new TradeStallData(A, Vec2.Zero, treasuryGold: 900);
+            var stall = TestStalls.Stall(A, Vec2.Zero, treasuryGold: 900);
             ledger.RecordFaucet(800, "InitialSeed");
             ledger.RecordSink(30, SupplyService.UpkeepSinkName);
             ledger.TryLockEscrow(A, 4, 25, ref stall);
@@ -270,7 +270,7 @@ namespace Simpiens.Testing.Persistence
             SimulationManager Board(PlayerInterventionService intervention)
             {
                 var sim = new SimulationManager(new WorldRegistry(), new SpatialHashGrid(), interventionService: intervention);
-                sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 1000));
+                sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 1000));
                 return sim;
             }
             void Post(PlayerInterventionService intervention, SimulationManager sim)

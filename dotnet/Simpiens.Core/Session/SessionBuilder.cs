@@ -5,36 +5,6 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
 namespace Simpiens.Core.Session
 {
-    /// <summary>Trading terms for a stall opened by a session; position and radius come from the stall's POI.</summary>
-    public readonly struct StallTerms
-    {
-        public readonly ushort RationSellPrice;
-        public readonly ushort RationStock;
-        public readonly ushort OreBuyPrice;
-        public readonly ushort OreStock;
-        public readonly ushort HerbBuyPrice;
-        public readonly ushort HerbStock;
-        public readonly uint TreasuryGold;
-        public readonly ushort GlowstoneBuyPrice;
-        public readonly ushort HazardGearSellPrice;
-        public readonly ushort HazardGearStock;
-
-        public StallTerms(ushort rationSellPrice, ushort rationStock, ushort oreBuyPrice, ushort oreStock, ushort herbBuyPrice, ushort herbStock, uint treasuryGold, ushort glowstoneBuyPrice = 0,
-            ushort hazardGearSellPrice = 0, ushort hazardGearStock = 0)
-        {
-            HazardGearSellPrice = hazardGearSellPrice;
-            HazardGearStock = hazardGearStock;
-            GlowstoneBuyPrice = glowstoneBuyPrice;
-            RationSellPrice = rationSellPrice;
-            RationStock = rationStock;
-            OreBuyPrice = oreBuyPrice;
-            OreStock = oreStock;
-            HerbBuyPrice = herbBuyPrice;
-            HerbStock = herbStock;
-            TreasuryGold = treasuryGold;
-        }
-    }
-
     /// <summary>
     /// What a <see cref="ISessionDefinition"/> may do while it populates a freshly built world. Created by
     /// <see cref="SwarmSpawner"/> for one respawn. Seeded bounties are staged and registered after the ledger baseline,
@@ -84,8 +54,11 @@ namespace Simpiens.Core.Session
             return _spawner.SpawnAgent(position, label, seededPersonality);
         }
 
-        /// <summary>Opens a trade stall at the map POI <paramref name="poiKey"/>. Returns its entity id (default without a simulation).</summary>
-        public EntityId OpenStall(string poiKey, in StallTerms terms)
+        /// <summary>
+        /// Opens a trade stall at the map POI <paramref name="poiKey"/> with an opening treasury and goods (item system I5:
+        /// the session's economy gives them, EconomyTuning.StallGoods). Returns its entity id (default without a simulation).
+        /// </summary>
+        public EntityId OpenStall(string poiKey, uint treasuryGold, IReadOnlyList<StallGood> goods)
         {
             if (Simulation == null) return default;
             if (!Map.TryGetPoi(poiKey, out var poi))
@@ -95,20 +68,8 @@ namespace Simpiens.Core.Session
 
             var stallId = _spawner.NextEntityId();
             World.RegisterEntity(poiKey, stallId);
-            var stall = new TradeStallData(
-                stallId,
-                position: poi.Position,
-                rationSellPrice: terms.RationSellPrice,
-                rationStock: terms.RationStock,
-                oreBuyPrice: terms.OreBuyPrice,
-                oreStock: terms.OreStock,
-                herbBuyPrice: terms.HerbBuyPrice,
-                herbStock: terms.HerbStock,
-                treasuryGold: terms.TreasuryGold,
-                interactionRadius: poi.Radius,
-                glowstoneBuyPrice: terms.GlowstoneBuyPrice,
-                hazardGearSellPrice: terms.HazardGearSellPrice,
-                hazardGearStock: terms.HazardGearStock);
+            var stall = new TradeStallData(stallId, poi.Position, treasuryGold, poi.Radius);
+            for (int i = 0; goods != null && i < goods.Count; i++) stall = stall.WithGood(goods[i]);
             Simulation.RegisterTradeStall(stall);
             _seededStallGold += stall.TreasuryGold;
             _stallCount++;

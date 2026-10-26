@@ -70,7 +70,7 @@ namespace Simpiens.Testing.Economy
             sim.SetEconomy(EconomyTuning.Default);
 
             var stallId = new EntityId(41u, 42u, 43u, 44u);
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 5000,
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 5000,
                 oreBuyPrice: 8, herbBuyPrice: 12, treasuryGold: 1000000));
             // A standing board, scanned for expiry on every tick
             sim.RegisterBounty(new BountyContract(StandingGatherId, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, 0, uint.MaxValue - 1, creatorStallId: stallId));
@@ -118,7 +118,7 @@ namespace Simpiens.Testing.Economy
 
                     // The player's commands are drained by the next simulation tick: a price change, a post and its cancel
                     interventions.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices(PlayerSource,
-                        new UpdateStallPricesCommand(stallId, (ushort)(5 + tick % 3), 8, 12)));
+                        TestPrices.Command(stallId, (ushort)(5 + tick % 3), 8, 12)));
                     interventions.QueueInfluence(InfluenceEvent.CreatePostBounty(PlayerSource,
                         new PostBountyCommand(CancelledId, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 10, 500, default, stallId)));
                     interventions.QueueInfluence(InfluenceEvent.CreateCancelBounty(PlayerSource, CancelledId));
@@ -167,7 +167,7 @@ namespace Simpiens.Testing.Economy
 
             var snapshot = new SharedWorldSnapshot(40, 40, 1f, 8, _ => { });
             snapshot.SetEconomy(EconomyTuning.Default);
-            snapshot.SetStalls(new[] { new TradeStallData(stallId, new Vec2(2f, 0f), rationSellPrice: 15, rationStock: 20, treasuryGold: 300) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(stallId, new Vec2(2f, 0f), rationSellPrice: 15, rationStock: 20, treasuryGold: 300) }, 1);
             snapshot.SetBounties(new[]
             {
                 new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 2, 25, 0, 100000, new Vec2(5f, 5f), creatorStallId: stallId),

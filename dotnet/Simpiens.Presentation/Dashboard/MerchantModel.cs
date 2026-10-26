@@ -1,5 +1,6 @@
 using Simpiens.Intervention;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using static System.FormattableString;
 
 namespace Simpiens.Presentation.Dashboard
@@ -45,11 +46,11 @@ namespace Simpiens.Presentation.Dashboard
             StallId = _context.TryGetStall(out var stall) ? stall.StallEntityId : default;
             if (StallId != default)
             {
-                RationPrice = Clamp(stall.RationSellPrice);
-                OrePrice = Clamp(stall.OreBuyPrice);
-                HerbPrice = Clamp(stall.HerbBuyPrice);
-                GlowstonePrice = Clamp(stall.GlowstoneBuyPrice);
-                GearPrice = Clamp(stall.HazardGearSellPrice);
+                RationPrice = Clamp(stall.SellPriceOf(ItemType.Ration));
+                OrePrice = Clamp(stall.BuyPriceOf(ItemType.IronOre));
+                HerbPrice = Clamp(stall.BuyPriceOf(ItemType.MedicinalHerb));
+                GlowstonePrice = Clamp(stall.BuyPriceOf(ItemType.Glowstone));
+                GearPrice = Clamp(stall.SellPriceOf(ItemType.HazardGear));
             }
             Refresh();
         }
@@ -65,7 +66,7 @@ namespace Simpiens.Presentation.Dashboard
                 Treasury = stall.InArrears
                     ? Invariant($"Treasury: {stall.TreasuryGold} Gold (in arrears: not buying salvage)")
                     : Invariant($"Treasury: {stall.TreasuryGold} Gold");
-                Stock = Invariant($"Stock: {stall.RationStock} Rations | {stall.OreStock} Ore | {stall.HerbStock} Herb | {stall.GlowstoneStock} Glowstone | {stall.HazardGearStock} Gear");
+                Stock = Invariant($"Stock: {stall.StockOf(ItemType.Ration)} Rations | {stall.StockOf(ItemType.IronOre)} Ore | {stall.StockOf(ItemType.MedicinalHerb)} Herb | {stall.StockOf(ItemType.Glowstone)} Glowstone | {stall.StockOf(ItemType.HazardGear)} Gear");
             }
             else
             {
@@ -84,7 +85,9 @@ namespace Simpiens.Presentation.Dashboard
                 return;
             }
             ushort ration = (ushort)Clamp(RationPrice), ore = (ushort)Clamp(OrePrice), herb = (ushort)Clamp(HerbPrice), glow = (ushort)Clamp(GlowstonePrice), gear = (ushort)Clamp(GearPrice);
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(StallId, ration, ore, herb, glow, gear)));
+            var prices = new UpdateStallPricesCommand(StallId).With(ItemType.Ration, ration).With(ItemType.IronOre, ore).With(ItemType.MedicinalHerb, herb)
+                .With(ItemType.Glowstone, glow).With(ItemType.HazardGear, gear);
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", prices));
             Feedback = new Feedback(Invariant($"Rates updated: Ration {ration}g | Ore {ore}g | Herb {herb}g | Glowstone {glow}g | Gear {gear}g"), FeedbackTone.Ok);
         }
 

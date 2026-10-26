@@ -57,27 +57,66 @@ namespace Simpiens.Intervention
         }
     }
 
+    /// <summary>One price in a price command: the item and its new price (0 keeps the current one).</summary>
+    public readonly struct StallPrice
+    {
+        public readonly ItemType Item;
+        public readonly ushort Price;
+
+        public StallPrice(ItemType item, ushort price)
+        {
+            Item = item;
+            Price = price;
+        }
+    }
+
+    [System.Runtime.CompilerServices.InlineArray(UpdateStallPricesCommand.Capacity)]
+    public struct StallPrices
+    {
+        private StallPrice _entry;
+    }
+
+    /// <summary>
+    /// The player sets a stall's prices (item system I5): up to <see cref="Capacity"/> (item, price) pairs, applied
+    /// together on the next tick in their order. A price of 0 keeps the current one, and an item the stall doesn't trade
+    /// is ignored. Zero-allocation: the pairs are a fixed table.
+    /// </summary>
     public readonly struct UpdateStallPricesCommand
     {
+        public const int Capacity = 8;
+
         public readonly EntityId StallId;
-        public readonly ushort RationSellPrice;
-        public readonly ushort OreBuyPrice;
-        public readonly ushort HerbBuyPrice;
+        public readonly int Count;
+        private readonly StallPrices _prices;
 
-        /// <summary>What the stall pays for glowstone (Epic 10 G2); 0 keeps the current price, as for the others.</summary>
-        public readonly ushort GlowstoneBuyPrice;
-
-        /// <summary>What the stall sells hazard gear for (Epic 10 G3); 0 keeps the current price.</summary>
-        public readonly ushort HazardGearSellPrice;
-
-        public UpdateStallPricesCommand(EntityId stallId, ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice, ushort glowstoneBuyPrice = 0, ushort hazardGearSellPrice = 0)
+        public UpdateStallPricesCommand(EntityId stallId) : this(stallId, 0, default)
         {
-            HazardGearSellPrice = hazardGearSellPrice;
-            GlowstoneBuyPrice = glowstoneBuyPrice;
+        }
+
+        private UpdateStallPricesCommand(EntityId stallId, int count, in StallPrices prices)
+        {
             StallId = stallId;
-            RationSellPrice = rationSellPrice;
-            OreBuyPrice = oreBuyPrice;
-            HerbBuyPrice = herbBuyPrice;
+            Count = count;
+            _prices = prices;
+        }
+
+        public StallPrice this[int index] => _prices[index];
+
+        /// <summary>The same command setting one more price (replacing an earlier price for the same item).</summary>
+        public UpdateStallPricesCommand With(ItemType item, ushort price)
+        {
+            var prices = _prices;
+            for (int i = 0; i < Count; i++)
+            {
+                if (prices[i].Item == item)
+                {
+                    prices[i] = new StallPrice(item, price);
+                    return new UpdateStallPricesCommand(StallId, Count, prices);
+                }
+            }
+            if (Count >= Capacity) throw new System.InvalidOperationException($"A price command sets at most {Capacity} prices.");
+            prices[Count] = new StallPrice(item, price);
+            return new UpdateStallPricesCommand(StallId, Count + 1, prices);
         }
     }
 
@@ -198,30 +237,6 @@ namespace Simpiens.Intervention
                 if (!string.IsNullOrEmpty(payload) && ushort.TryParse(payload.Trim(), out ushort bId))
                 {
                     CancelBounty = new CancelBountyCommand(bId);
-                }
-            }
-            else if (string.Equals(commandType, "UpdateStallPrices", StringComparison.OrdinalIgnoreCase))
-            {
-                CommandType = InfluenceCommandType.UpdateStallPrices;
-                if (!string.IsNullOrEmpty(payload))
-                {
-                    string[] parts = payload.Split(new char[] { ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 3)
-                    {
-                        EntityId sId = default;
-                        int offset = 0;
-                        if (parts.Length >= 4)
-                        {
-                            EntityId.TryParse(parts[0].Trim(), out sId);
-                            offset = 1;
-                        }
-
-                        ushort.TryParse(parts[offset].Trim(), out ushort ration);
-                        ushort.TryParse(parts[offset + 1].Trim(), out ushort ore);
-                        ushort.TryParse(parts[offset + 2].Trim(), out ushort herb);
-
-                        UpdateStallPrices = new UpdateStallPricesCommand(sId, ration, ore, herb);
-                    }
                 }
             }
             else if (string.Equals(commandType, "CalmCrawler", StringComparison.OrdinalIgnoreCase))

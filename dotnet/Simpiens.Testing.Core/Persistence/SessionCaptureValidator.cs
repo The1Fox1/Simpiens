@@ -81,7 +81,7 @@ namespace Simpiens.Testing.Persistence
         {
             var first = new EconomyLedger();
             var second = new EconomyLedger();
-            var stall = new TradeStallData(A, Vec2.Zero, treasuryGold: 1000);
+            var stall = TestStalls.Stall(A, Vec2.Zero, treasuryGold: 1000);
             var stallCopy = stall;
 
             first.RecordFaucet(500, "InitialSeed");

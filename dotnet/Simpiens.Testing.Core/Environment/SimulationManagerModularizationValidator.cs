@@ -47,7 +47,7 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(registry, null, interventionService: interventionService, economyLedger: ledger);
 
             var stallId = NextTestGuid();
-            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 100);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 100);
             simManager.RegisterTradeStall(stall);
 
             var cmd = InfluenceEvent.CreatePostBounty("Player", new PostBountyCommand(1, BountyType.GatherResource, sectorId: 1, itemType: ItemType.IronOre, quantity: 5, rewardGold: 20, creatorStallId: stallId));
@@ -75,7 +75,7 @@ namespace Simpiens.Testing.Environment
             var simManager = new SimulationManager(registry, null, interventionService: interventionService, economyLedger: ledger);
 
             var stallId = NextTestGuid();
-            var stall = new TradeStallData(stallId, Vec2.Zero, treasuryGold: 10); // Only 10 gold in treasury!
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 10); // Only 10 gold in treasury!
             simManager.RegisterTradeStall(stall);
 
             // Attempt to post a bounty with 50 gold reward from a stall with only 10 gold!
@@ -104,7 +104,7 @@ namespace Simpiens.Testing.Environment
             // Faucet: Initial economy seed
             ledger.RecordFaucet(150, "InitialSeed");
 
-            var stall = new TradeStallData(NextTestGuid(), Vec2.Zero, treasuryGold: initialStallGold);
+            var stall = TestStalls.Stall(NextTestGuid(), Vec2.Zero, treasuryGold: initialStallGold);
 
             // 1. Post bounty: lock 40 gold in escrow
             ushort bountyId = 10;

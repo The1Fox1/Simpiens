@@ -59,8 +59,8 @@ namespace Simpiens.Presentation.Dashboard
             if (_context.TryGetStall(out var stall))
             {
                 Treasury = Invariant($"{stall.TreasuryGold} GOLD");
-                Rations = Invariant($"{stall.RationStock} RATIONS");
-                Salvage = Invariant($"{stall.OreStock} ORE | {stall.HerbStock} HERB");
+                Rations = Invariant($"{stall.StockOf(Simpiens.Simulation.Economy.ItemType.Ration)} RATIONS");
+                Salvage = Invariant($"{stall.StockOf(Simpiens.Simulation.Economy.ItemType.IronOre)} ORE | {stall.StockOf(Simpiens.Simulation.Economy.ItemType.MedicinalHerb)} HERB");
             }
             else
             {

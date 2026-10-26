@@ -92,7 +92,7 @@ namespace Simpiens.Testing.Planning
 
             // The purchase goal respects it: a reachable stall priced at 25g is refused at hunger 50, bought when starving
             var snapshot = new SharedWorldSnapshot(20, 20, 1f, 8, _ => { });
-            snapshot.SetStalls(new[] { new TradeStallData(new EntityId(3u, 3u, 3u, 3u), new Vec2(1f, 0f), rationSellPrice: 25, rationStock: 10) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(new EntityId(3u, 3u, 3u, 3u), new Vec2(1f, 0f), rationSellPrice: 25, rationStock: 10) }, 1);
             var atHalf = CreateContext(AgentPersonality.Neutral, hunger: 50f, gold: 100, snapshot: snapshot);
             var atStarving = CreateContext(AgentPersonality.Neutral, hunger: 90f, gold: 100, snapshot: snapshot);
             Assert(!new PurchaseProvisionsGoal().IsValid(atHalf), "25g ration must be refused above the neutral reservation at hunger 50.");
@@ -111,8 +111,8 @@ namespace Simpiens.Testing.Planning
             var inventory = new AgentInventory();
             inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var holder = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, inventory: inventory);
-            var cheapStall = new TradeStallData(new EntityId(4u, 4u, 4u, 4u), Vec2.Zero, oreBuyPrice: 9, treasuryGold: 500);
-            var fairStall = new TradeStallData(new EntityId(5u, 5u, 5u, 5u), Vec2.Zero, oreBuyPrice: 20, treasuryGold: 500);
+            var cheapStall = TestStalls.Stall(new EntityId(4u, 4u, 4u, 4u), Vec2.Zero, oreBuyPrice: 9, treasuryGold: 500);
+            var fairStall = TestStalls.Stall(new EntityId(5u, 5u, 5u, 5u), Vec2.Zero, oreBuyPrice: 20, treasuryGold: 500);
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, cheapStall) == ItemType.None, "A greedy seller refuses 9g ore (minimum 12g).");
             Assert(ResourceTargeting.AffordableHeldSalvage(holder, fairStall) == ItemType.IronOre, "A greedy seller accepts 20g ore.");
 
@@ -123,7 +123,7 @@ namespace Simpiens.Testing.Planning
         {
             var stallId = new EntityId(6u, 6u, 6u, 6u);
             var snapshot = new SharedWorldSnapshot(40, 40, 1f, 8, _ => { });
-            snapshot.SetStalls(new[] { new TradeStallData(stallId, Vec2.Zero) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(stallId, Vec2.Zero) }, 1);
             snapshot.SetBounties(new[]
             {
                 new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 20, 0, 5000, new Vec2(2f, 0f), creatorStallId: stallId),

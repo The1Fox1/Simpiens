@@ -1,3 +1,4 @@
+using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
 
@@ -24,15 +25,16 @@ namespace Simpiens.Cognition.Planning.Goals
             // Valid if agent is hungry, can afford a ration at the nearest stall (which has stock),
             // and does not already hold food. Unreachable stalls invalidate the goal; without any stall, fall back to the 5g floor.
             bool isHungry = context.Hunger >= 50f;
-            bool hasFood = context.Inventory != null && context.Inventory.HasItem(ItemType.Ration);
+            bool hasFood = context.Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food);
             if (!isHungry || hasFood || context.Inventory == null) return false;
 
             switch (ResourceTargeting.GetStallAccess(context, out var stall))
             {
                 case ResourceTargeting.StallAccess.Reachable:
                     // Personal reservation price: hunger raises it, greed lowers it (review §3.2: no binary price switch)
-                    return stall.RationStock > 0 && context.Inventory.Gold >= stall.RationSellPrice
-                        && stall.RationSellPrice <= Considerations.RationReservationPrice(context);
+                    var food = ResourceTargeting.FoodForSale(stall);
+                    return stall.SellStockOf(food) > 0 && context.Inventory.Gold >= stall.SellPriceOf(food)
+                        && stall.SellPriceOf(food) <= Considerations.RationReservationPrice(context);
                 case ResourceTargeting.StallAccess.Unreachable:
                     return false; // Walled off from every stall
                 default:

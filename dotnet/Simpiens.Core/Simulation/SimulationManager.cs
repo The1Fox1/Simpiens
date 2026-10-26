@@ -783,15 +783,16 @@ namespace Simpiens.Simulation
 
             if (targetStallId != default && _stalls.TryGetValue(targetStallId, out var stall))
             {
-                _stalls[targetStallId] = stall.WithPrices(
-                    cmd.RationSellPrice > 0 ? cmd.RationSellPrice : stall.RationSellPrice,
-                    cmd.OreBuyPrice > 0 ? cmd.OreBuyPrice : stall.OreBuyPrice,
-                    cmd.HerbBuyPrice > 0 ? cmd.HerbBuyPrice : stall.HerbBuyPrice);
-                if (cmd.GlowstoneBuyPrice > 0) _stalls[targetStallId] = _stalls[targetStallId].WithGlowstone(cmd.GlowstoneBuyPrice, stall.GlowstoneStock);
-                if (cmd.HazardGearSellPrice > 0) _stalls[targetStallId] = _stalls[targetStallId].WithHazardGear(cmd.HazardGearSellPrice, stall.HazardGearStock);
+                // Each pair in order; 0 keeps the current price, and an item the stall doesn't trade is ignored
+                var updated = stall;
+                for (int i = 0; i < cmd.Count; i++)
+                {
+                    var price = cmd[i];
+                    if (price.Price > 0) updated = updated.WithPrice(price.Item, price.Price);
+                }
+                _stalls[targetStallId] = updated;
                 UpdateActiveStallsBuffer();
-                var updated = _stalls[targetStallId];
-                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: ration {updated.RationSellPrice}g, ore {updated.OreBuyPrice}g, herb {updated.HerbBuyPrice}g, glowstone {updated.GlowstoneBuyPrice}g, hazard gear {updated.HazardGearSellPrice}g");
+                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: {cmd.Count} prices");
             }
         }
 
@@ -817,7 +818,8 @@ namespace Simpiens.Simulation
                 bountyId,
                 resolvedType,
                 sectorId,
-                itemType == ItemType.None && resolvedType == BountyType.GatherResource ? ItemType.IronOre : itemType,
+                // A Gather bounty without an item asks for the first resource (iron ore)
+                itemType == ItemType.None && resolvedType == BountyType.GatherResource ? Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource)[0] : itemType,
                 qty == 0 ? (byte)1 : qty,
                 rewardGold,
                 currentTick,

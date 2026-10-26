@@ -20,28 +20,26 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Items/ItemCatalog.cs"] = "the catalog: the items' definitions",
             ["Simpiens.Core/Session/Layouts/Floor1Layout.cs"] = "the map: what each node yields",
             ["Simpiens.Core/Session/OutpostSession.cs"] = "the session: its seeded Gather bounty's item",
+            ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "the default economy: each item's base value and stall terms",
+            ["Simpiens.Core/Simulation/Economy/SupplyTuning.cs"] = "the default caravan: what it exports and supplies",
+            ["Simpiens.Hosting/EconomySoak.cs"] = "the soak's player profiles: the prices each one sets",
             // Quirks kept on purpose (the plan's §5)
             ["Simpiens.Core/Simulation/ResourceData.cs"] = "§5: a node's default yield is a ration",
             ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "§5: an untyped node yields a ration",
             ["Simpiens.Core/Cognition/AgentState.cs"] = "§5: HasFoodInInventory packs a ration when set",
-            // I5, the stall, the caravan and prices
-            ["Simpiens.Core/Simulation/Economy/TradeStallData.cs"] = "I5: per-item stall fields",
-            ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "I5: per-item terms",
-            ["Simpiens.Core/Simulation/SimulationManager.cs"] = "I5: a Gather bounty's default item",
-            ["Simpiens.Core/Cognition/Planning/Handlers/TradeIntentHandler.cs"] = "I5: what the stall sells",
-            ["Simpiens.Core/Cognition/Planning/Handlers/DeliverBountyIntentHandler.cs"] = "I5: delivered goods to the stall's shelves",
-            ["Simpiens.Core/Cognition/Planning/Goals/PurchaseProvisionsGoal.cs"] = "I5: the food the stall sells",
-            ["Simpiens.Core/Cognition/Planning/Actions/BuyProvisionsAction.cs"] = "I5: the food the stall sells",
-            ["Simpiens.Core/Cognition/Planning/Goals/OutfitForDangerGoal.cs"] = "I5: the protection the stall sells",
-            ["Simpiens.Core/Cognition/Planning/Actions/BuyHazardGearAction.cs"] = "I5: the protection the stall sells",
             // I6, the client
             ["Simpiens.Presentation/ProceduralSprites.cs"] = "I6: sprites by key",
+            ["Simpiens.Presentation/Dashboard/MerchantModel.cs"] = "I6: the merchant's rows",
+            ["Simpiens.Presentation/Dashboard/HeaderModel.cs"] = "I6: the header's stock",
             ["Simpiens.Presentation/Dashboard/BountyBoardModel.cs"] = "I6: the bounty board's items",
             ["Simpiens.Client/Ui/BountyBoardWindow.cs"] = "I6: the bounty board's items",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
-        private static readonly Regex ItemName = new Regex(@"\bItemType\.(?!None\b)([A-Z]\w*)", RegexOptions.Compiled);
+        // ItemType's members (None aside), so a property named ItemType (trade.ItemType.IsSalvage()) doesn't match and a
+        // qualified name (Simpiens.Simulation.Economy.ItemType.Ration) does
+        private static readonly Regex ItemName = new Regex(@"\bItemType\.(" + string.Join("|",
+            Enum.GetNames(typeof(Simpiens.Simulation.Economy.ItemType)).Where(n => n != "None")) + @")\b", RegexOptions.Compiled);
 
         [Fact]
         public void ProductionCodeNamesItemsOnlyWhereAllowed()

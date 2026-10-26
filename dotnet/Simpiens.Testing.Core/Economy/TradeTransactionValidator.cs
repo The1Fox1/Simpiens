@@ -42,14 +42,17 @@ namespace Simpiens.Testing.Economy
             ValidateStallRationsAreKnownFood();
             ValidateBuyHazardGearIsWorn();
             ValidateHazardGearPurchaseRefusals();
+            ValidateTheStallsGoodsTable();
 
-            TestLog.Log("<color=green>[TradeTransactionValidator] ALL 16 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[TradeTransactionValidator] ALL 17 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTradeStallLayoutAndZeroAlloc()
         {
             int stallSize = Marshal.SizeOf<TradeStallData>();
-            Assert(stallSize <= 64, $"TradeStallData size ({stallSize} bytes) exceeds 64-byte threshold.");
+            // 96 since item system I5 (was 64): the stall's goods are a table of 8, so items can be added without changing its
+            // layout; it is 84 bytes, and the outpost has one stall
+            Assert(stallSize <= 96, $"TradeStallData size ({stallSize} bytes) exceeds 96-byte threshold.");
 
             // Verify default empty state
             Assert(!TradeStallData.Empty.IsActive, "TradeStallData.Empty has IsActive == false.");
@@ -57,7 +60,7 @@ namespace Simpiens.Testing.Economy
 
             // Verify constructor and immutable modifiers
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, new Vec2(5f, 10f), rationSellPrice: 5, rationStock: 40, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 600, interactionRadius: 3.0f);
+            var stall = TestStalls.Stall(stallId, new Vec2(5f, 10f), rationSellPrice: 5, rationStock: 40, oreBuyPrice: 8, oreStock: 0, herbBuyPrice: 12, herbStock: 0, treasuryGold: 600, interactionRadius: 3.0f);
 
             Assert(stall.IsActive, "Stall is active.");
             Assert(stall.StallEntityId == stallId, "Stall entity ID preserved.");
@@ -101,7 +104,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Buyer]", register: false);
@@ -140,7 +143,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Poor_Buyer]", register: false);
@@ -179,7 +182,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Full_Buyer]", register: false);
@@ -219,7 +222,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 8, oreStock: 0, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, oreBuyPrice: 8, oreStock: 0, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Seller]", register: false);
@@ -257,7 +260,7 @@ namespace Simpiens.Testing.Economy
             var registry = new WorldRegistry();
             var simManager = new SimulationManager(registry, null, new SimulationClock());
             var stallId = EntityId.Generate();
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 500, hazardGearSellPrice: price, hazardGearStock: stock));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 500, hazardGearSellPrice: price, hazardGearStock: stock));
             return (simManager, registry, stallId);
         }
 
@@ -338,6 +341,40 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("[TradeTransactionValidator] Test 16 Passed: Gear purchases are refused while worn, above the price, out of stock or unaffordable.");
         }
 
+        /// <summary>
+        /// Item system I5: a stall's goods are a table. A good is added or replaced in place; prices answer by role (the
+        /// stall buys or sells it); stock and price changes leave an untraded item alone; the table holds 8 goods. A price
+        /// command carries (item, price) pairs, 0 keeping a price, and the default caravan's exports pay at most 248g a visit.
+        /// </summary>
+        private void ValidateTheStallsGoodsTable()
+        {
+            var stall = new TradeStallData(new EntityId(9, 0, 0, 0), Vec2.Zero, treasuryGold: 100)
+                .WithGood(new StallGood(ItemType.Ration, StallRole.Sells, 15, 50))
+                .WithGood(new StallGood(ItemType.IronOre, StallRole.Buys, 20, 4));
+            Assert(stall.SellPriceOf(ItemType.Ration) == 15 && stall.BuyPriceOf(ItemType.Ration) == 0, "A ration is sold, not bought.");
+            Assert(stall.BuyPriceOf(ItemType.IronOre) == 20 && stall.SellPriceOf(ItemType.IronOre) == 0, "Ore is bought, not sold.");
+            Assert(stall.StockOf(ItemType.IronOre) == 4 && stall.SellStockOf(ItemType.IronOre) == 0 && stall.SellStockOf(ItemType.Ration) == 50, "Stock by good; sale stock only for what it sells.");
+            Assert(!stall.Trades(ItemType.Glowstone) && stall.StockOf(ItemType.Glowstone) == 0, "An item it doesn't trade has no stock.");
+            Assert(stall.WithStock(ItemType.Glowstone, 5).StockOf(ItemType.Glowstone) == 0 && stall.WithPrice(ItemType.Glowstone, 9).BuyPriceOf(ItemType.Glowstone) == 0,
+                "Stock and price changes leave an untraded item alone.");
+            var restocked = stall.WithStock(ItemType.IronOre, 7).WithPrice(ItemType.Ration, 12);
+            Assert(restocked.StockOf(ItemType.IronOre) == 7 && restocked.SellPriceOf(ItemType.Ration) == 12 && restocked.StockOf(ItemType.Ration) == 50, "A change touches one good only.");
+            Assert(restocked.GoodAt(0).Item == ItemType.Ration && restocked.GoodAt(1).Item == ItemType.IronOre, "Goods keep their places.");
+
+            var full = new TradeStallData(new EntityId(10, 0, 0, 0), Vec2.Zero);
+            for (int i = 1; i <= TradeStallData.GoodsCapacity; i++) full = full.WithGood(new StallGood((ItemType)(100 + i), StallRole.Buys, 1, 0));
+            bool refused = false;
+            try { full.WithGood(new StallGood((ItemType)120, StallRole.Buys, 1, 0)); }
+            catch (InvalidOperationException) { refused = true; }
+            Assert(refused, $"A stall trades at most {TradeStallData.GoodsCapacity} goods.");
+
+            var prices = new Simpiens.Intervention.UpdateStallPricesCommand(default).With(ItemType.Ration, 18).With(ItemType.IronOre, 0).With(ItemType.Ration, 19);
+            Assert(prices.Count == 2 && prices[0].Item == ItemType.Ration && prices[0].Price == 19 && prices[1].Price == 0, "A price command keeps one price per item, in order.");
+
+            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 248, $"The default caravan's exports: 2 ore x 24 + 2 herbs x 30 + 2 glowstone x 70 = 248g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
+            TestLog.Log("[TradeTransactionValidator] Test 17 Passed: A stall's goods are a table; prices answer by role; price commands carry pairs.");
+        }
+
         private void ValidateTradeToAffinityFairPrice()
         {
             var registry = new WorldRegistry();
@@ -345,7 +382,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_Fair]", register: false);
@@ -384,7 +421,7 @@ namespace Simpiens.Testing.Economy
 
             var stallId = EntityId.Generate();
             // Price gouging: 25 gold for a ration a neutral crawler values at 20g when calm (review §3.3 D3)
-            var stall = new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 25, rationStock: 50, treasuryGold: 500);
+            var stall = TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 25, rationStock: 50, treasuryGold: 500);
             simManager.RegisterTradeStall(stall);
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_Gouged]", register: false);
@@ -455,7 +492,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 10, treasuryGold: 500));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, oreBuyPrice: 10, treasuryGold: 500));
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_StingySale]", register: false);
             var node = goCrawler.Node;
@@ -489,7 +526,7 @@ namespace Simpiens.Testing.Economy
 
             var stallId = EntityId.Generate();
             ushort capacity = EconomyTuning.Default.StallSalvageCapacity;
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, oreBuyPrice: 20, oreStock: capacity, treasuryGold: 500));
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_FullStall]", register: false);
             var node = goCrawler.Node;
@@ -523,7 +560,7 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            simManager.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 15, rationStock: 10, oreBuyPrice: 20, treasuryGold: 0, inArrears: true));
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Arrears]", register: false);
             var node = goCrawler.Node;
@@ -564,7 +601,7 @@ namespace Simpiens.Testing.Economy
         private void ValidateBountyItemsAreNotSold()
         {
             var agentId = new EntityId(41u, 1u, 1u, 1u);
-            var stall = new TradeStallData(new EntityId(42u, 2u, 2u, 2u), Vec2.Zero, oreBuyPrice: 20, herbBuyPrice: 25, treasuryGold: 500);
+            var stall = TestStalls.Stall(new EntityId(42u, 2u, 2u, 2u), Vec2.Zero, oreBuyPrice: 20, herbBuyPrice: 25, treasuryGold: 500);
             var claimed = new BountyContract(7, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 6000,
                 claimantId: agentId, creatorStallId: stall.StallEntityId, status: BountyStatus.Claimed);
 
@@ -607,11 +644,11 @@ namespace Simpiens.Testing.Economy
         /// </summary>
         private void ValidateStallRationsAreKnownFood()
         {
-            var stall = new TradeStallData(new EntityId(43u, 3u, 3u, 3u), Vec2.Zero, rationSellPrice: 15, rationStock: 10, treasuryGold: 100);
+            var stall = TestStalls.Stall(new EntityId(43u, 3u, 3u, 3u), Vec2.Zero, rationSellPrice: 15, rationStock: 10, treasuryGold: 100);
             AgentContext Starving(int gold, bool withStall, ushort stock = 10)
             {
                 var snapshot = new SharedWorldSnapshot(16, 16, 1f, 8, null);
-                if (withStall) snapshot.SetStalls(new[] { new TradeStallData(stall.StallEntityId, Vec2.Zero, rationSellPrice: 15, rationStock: stock, treasuryGold: 100) }, 1);
+                if (withStall) snapshot.SetStalls(new[] { TestStalls.Stall(stall.StallEntityId, Vec2.Zero, rationSellPrice: 15, rationStock: stock, treasuryGold: 100) }, 1);
                 var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: gold);
                 return new AgentContext(new EntityId(44u, 4u, 4u, 4u), new Vec2(1f, 0f), new AgentNeeds(95f, 60f, 60f), 0f, snapshot,
                     new Simpiens.Cognition.Memory.AgentMemory(), 10, inventory: inventory.GetSnapshot());

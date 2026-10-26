@@ -1,22 +1,56 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 namespace Simpiens.Simulation.Economy
 {
+    /// <summary>Whether the stall buys an item from crawlers, sells it to them, or neither.</summary>
+    public enum StallRole : byte
+    {
+        None = 0,
+        Buys = 1,
+        Sells = 2
+    }
+
+    /// <summary>One good on a stall's table: the item, whether the stall buys or sells it, its price and the stall's stock.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StallGood
+    {
+        public ItemType Item;
+        public StallRole Role;
+        public ushort Price;
+        public ushort Stock;
+
+        public StallGood(ItemType item, StallRole role, ushort price, ushort stock)
+        {
+            Item = item;
+            Role = role;
+            Price = price;
+            Stock = stock;
+        }
+    }
+
+    /// <summary>A stall's goods, a fixed table (unmanaged, saved as raw memory): unused entries hold <see cref="ItemType.None"/>.</summary>
+    [InlineArray(TradeStallData.GoodsCapacity)]
+    public struct StallGoods
+    {
+        private StallGood _entry;
+    }
+
     /// <summary>
     /// An unmanaged, zero-allocation sequential snapshot struct representing an outpost trade stall.
     /// Shared with background cognitive worker threads for lock-free price and stock evaluation.
+    /// <para>
+    /// What it trades is a table of goods (item system I5), not a field per item: adding an item to the economy changes
+    /// no field here. The table holds at most <see cref="GoodsCapacity"/> goods; raising it changes the save format.
+    /// </para>
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct TradeStallData : IEquatable<TradeStallData>
     {
+        public const int GoodsCapacity = 8;
+
         public readonly EntityId StallEntityId;
         public readonly Vec2 Position;
-        public readonly ushort RationSellPrice;
-        public readonly ushort RationStock;
-        public readonly ushort OreBuyPrice;
-        public readonly ushort OreStock;
-        public readonly ushort HerbBuyPrice;
-        public readonly ushort HerbStock;
         public readonly uint TreasuryGold;
         public readonly float InteractionRadius;
 
@@ -26,159 +60,97 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly bool InArrears;
 
-        /// <summary>The rare salvage (Epic 10 G2): what the stall pays a crawler for one, and how many it holds for the caravan.</summary>
-        public readonly ushort GlowstoneBuyPrice;
-        public readonly ushort GlowstoneStock;
-
-        /// <summary>Hazard gear (Epic 10 G3): what the stall sells one for, and how many it has (the caravan restocks them).</summary>
-        public readonly ushort HazardGearSellPrice;
-        public readonly ushort HazardGearStock;
+        private readonly StallGoods _goods;
 
         public static readonly TradeStallData Empty = default;
 
         public bool IsActive => StallEntityId != default;
 
-        public TradeStallData(
-            EntityId stallEntityId,
-            Vec2 position,
-            ushort rationSellPrice = 5,
-            ushort rationStock = 50,
-            ushort oreBuyPrice = 8,
-            ushort oreStock = 0,
-            ushort herbBuyPrice = 12,
-            ushort herbStock = 0,
-            uint treasuryGold = 500,
-            float interactionRadius = 2.5f,
-            bool inArrears = false,
-            ushort glowstoneBuyPrice = 0,
-            ushort glowstoneStock = 0,
-            ushort hazardGearSellPrice = 0,
-            ushort hazardGearStock = 0)
+        public TradeStallData(EntityId stallEntityId, Vec2 position, uint treasuryGold = 500, float interactionRadius = 2.5f, bool inArrears = false)
+            : this(stallEntityId, position, treasuryGold, interactionRadius, inArrears, default)
         {
-            HazardGearSellPrice = hazardGearSellPrice;
-            HazardGearStock = hazardGearStock;
-            GlowstoneBuyPrice = glowstoneBuyPrice;
-            GlowstoneStock = glowstoneStock;
+        }
+
+        private TradeStallData(EntityId stallEntityId, Vec2 position, uint treasuryGold, float interactionRadius, bool inArrears, in StallGoods goods)
+        {
             StallEntityId = stallEntityId;
             Position = position;
-            RationSellPrice = rationSellPrice;
-            RationStock = rationStock;
-            OreBuyPrice = oreBuyPrice;
-            OreStock = oreStock;
-            HerbBuyPrice = herbBuyPrice;
-            HerbStock = herbStock;
             TreasuryGold = treasuryGold;
             InteractionRadius = interactionRadius;
             InArrears = inArrears;
+            _goods = goods;
         }
 
-        public TradeStallData WithStock(ushort rationStock, ushort oreStock, ushort herbStock)
+        // --- The goods table ---
+
+        /// <summary>The goods in table order (the order they were added; empty entries skipped by callers).</summary>
+        public StallGood GoodAt(int index) => _goods[index];
+
+        /// <summary>The entry for an item, or false when the stall doesn't trade it.</summary>
+        public bool TryGetGood(ItemType item, out StallGood good)
         {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, rationStock,
-                OreBuyPrice, oreStock,
-                HerbBuyPrice, herbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
+            if (item != ItemType.None)
+            {
+                for (int i = 0; i < GoodsCapacity; i++)
+                {
+                    if (_goods[i].Item == item)
+                    {
+                        good = _goods[i];
+                        return true;
+                    }
+                }
+            }
+            good = default;
+            return false;
         }
 
-        public TradeStallData WithRationStock(ushort rationStock)
+        public bool Trades(ItemType item) => TryGetGood(item, out _);
+
+        /// <summary>What the stall pays for one unit of an item it buys; 0 for anything else.</summary>
+        public ushort BuyPriceOf(ItemType item) => TryGetGood(item, out var good) && good.Role == StallRole.Buys ? good.Price : (ushort)0;
+
+        /// <summary>What the stall sells one unit of an item for; 0 for anything it doesn't sell.</summary>
+        public ushort SellPriceOf(ItemType item) => TryGetGood(item, out var good) && good.Role == StallRole.Sells ? good.Price : (ushort)0;
+
+        /// <summary>The stall's stock of an item it trades (held for the caravan, or for sale); 0 for anything else.</summary>
+        public int StockOf(ItemType item) => TryGetGood(item, out var good) ? good.Stock : 0;
+
+        /// <summary>Units of an item the stall sells; 0 for anything it doesn't sell.</summary>
+        public int SellStockOf(ItemType item) => TryGetGood(item, out var good) && good.Role == StallRole.Sells ? good.Stock : 0;
+
+        /// <summary>The same stall trading <paramref name="good"/>: its entry replaced, or added in the first free place.</summary>
+        public TradeStallData WithGood(in StallGood good)
         {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, rationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
+            if (good.Item == ItemType.None) throw new ArgumentException("A good is an item.", nameof(good));
+            var goods = _goods;
+            int free = -1;
+            for (int i = 0; i < GoodsCapacity; i++)
+            {
+                if (goods[i].Item == good.Item)
+                {
+                    goods[i] = good;
+                    return new TradeStallData(StallEntityId, Position, TreasuryGold, InteractionRadius, InArrears, goods);
+                }
+                if (free < 0 && goods[i].Item == ItemType.None) free = i;
+            }
+            if (free < 0) throw new InvalidOperationException($"A stall trades at most {GoodsCapacity} goods.");
+            goods[free] = good;
+            return new TradeStallData(StallEntityId, Position, TreasuryGold, InteractionRadius, InArrears, goods);
         }
 
-        public TradeStallData WithOreStock(ushort oreStock)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, oreStock,
-                HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
+        /// <summary>The same stall with a new stock of an item it trades (unchanged when it doesn't trade it).</summary>
+        public TradeStallData WithStock(ItemType item, ushort stock) =>
+            TryGetGood(item, out var good) ? WithGood(new StallGood(item, good.Role, good.Price, stock)) : this;
 
-        public TradeStallData WithHerbStock(ushort herbStock)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, herbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
+        /// <summary>The same stall with a new price for an item it trades (unchanged when it doesn't trade it).</summary>
+        public TradeStallData WithPrice(ItemType item, ushort price) =>
+            TryGetGood(item, out var good) ? WithGood(new StallGood(item, good.Role, price, good.Stock)) : this;
 
-        public TradeStallData WithTreasury(uint newTreasury)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, HerbStock,
-                newTreasury, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
+        public TradeStallData WithTreasury(uint newTreasury) =>
+            new TradeStallData(StallEntityId, Position, newTreasury, InteractionRadius, InArrears, _goods);
 
-        public TradeStallData WithPrices(ushort rationSellPrice, ushort oreBuyPrice, ushort herbBuyPrice)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                rationSellPrice, RationStock,
-                oreBuyPrice, OreStock,
-                herbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
-
-        public TradeStallData WithGlowstone(ushort glowstoneBuyPrice, ushort glowstoneStock)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, InArrears, glowstoneBuyPrice, glowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
-
-        public TradeStallData WithGlowstoneStock(ushort glowstoneStock) => WithGlowstone(GlowstoneBuyPrice, glowstoneStock);
-
-        public TradeStallData WithHazardGear(ushort hazardGearSellPrice, ushort hazardGearStock)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, InArrears, GlowstoneBuyPrice, GlowstoneStock, hazardGearSellPrice, hazardGearStock);
-        }
-
-        public TradeStallData WithHazardGearStock(ushort hazardGearStock) => WithHazardGear(HazardGearSellPrice, hazardGearStock);
-
-        /// <summary>Units of a good the stall sells (rations, hazard gear), and its price (0 for anything else).</summary>
-        public int SellStockOf(ItemType item) => item == ItemType.Ration ? RationStock : item == ItemType.HazardGear ? HazardGearStock : 0;
-
-        public ushort SellPriceOf(ItemType item) => item == ItemType.Ration ? RationSellPrice : item == ItemType.HazardGear ? HazardGearSellPrice : (ushort)0;
-
-        /// <summary>The same stall with <paramref name="stock"/> units of a good it sells.</summary>
-        public TradeStallData WithSellStock(ItemType item, ushort stock) =>
-            item == ItemType.Ration ? WithRationStock(stock) : item == ItemType.HazardGear ? WithHazardGearStock(stock) : this;
-
-        /// <summary>Held units of a salvage kind, and what the stall pays for one (0 for anything else).</summary>
-        public int StockOf(ItemType item) => item == ItemType.IronOre ? OreStock : item == ItemType.MedicinalHerb ? HerbStock : item == ItemType.Glowstone ? GlowstoneStock : 0;
-
-        public ushort BuyPriceOf(ItemType item) => item == ItemType.IronOre ? OreBuyPrice : item == ItemType.MedicinalHerb ? HerbBuyPrice : item == ItemType.Glowstone ? GlowstoneBuyPrice : (ushort)0;
-
-        public TradeStallData WithArrears(bool inArrears)
-        {
-            return new TradeStallData(
-                StallEntityId, Position,
-                RationSellPrice, RationStock,
-                OreBuyPrice, OreStock,
-                HerbBuyPrice, HerbStock,
-                TreasuryGold, InteractionRadius, inArrears, GlowstoneBuyPrice, GlowstoneStock, HazardGearSellPrice, HazardGearStock);
-        }
+        public TradeStallData WithArrears(bool inArrears) =>
+            new TradeStallData(StallEntityId, Position, TreasuryGold, InteractionRadius, inArrears, _goods);
 
         public bool Equals(TradeStallData other) => StallEntityId == other.StallEntityId;
         public override bool Equals(object obj) => obj is TradeStallData other && Equals(other);

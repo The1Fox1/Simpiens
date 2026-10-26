@@ -33,8 +33,8 @@ namespace Simpiens.Testing.Economy
         {
             AssertSize<ItemInstance>(16);
             AssertSize<BountyContract>(64);
-            AssertSize<TradeStallData>(56); // 52 since Epic 10 G2 (the glowstone price and stock, format 3); 56 since G3 (hazard gear, format 4)
-            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 56 bytes).");
+            AssertSize<TradeStallData>(84); // 52 since Epic 10 G2 (format 3); 56 since G3 (format 4); 84 since item system I5: a goods table of 8, so new items don't change it (format 6)
+            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 84 bytes).");
         }
 
         private void ValidateRecordsRoundTrip()
@@ -174,9 +174,9 @@ namespace Simpiens.Testing.Economy
         {
             return new[]
             {
-                new TradeStallData(new EntityId(11u, 12u, 13u, 14u), new Vec2(0.5f, 1.5f), rationSellPrice: 17, rationStock: 33,
+                TestStalls.Stall(new EntityId(11u, 12u, 13u, 14u), new Vec2(0.5f, 1.5f), rationSellPrice: 17, rationStock: 33,
                     oreBuyPrice: 21, oreStock: 4, herbBuyPrice: 26, herbStock: 2, treasuryGold: 412, interactionRadius: 2.75f, inArrears: true),
-                new TradeStallData(new EntityId(31u, 32u, 33u, 34u), new Vec2(-4f, 9f), treasuryGold: 0),
+                TestStalls.Stall(new EntityId(31u, 32u, 33u, 34u), new Vec2(-4f, 9f), treasuryGold: 0),
             };
         }
 

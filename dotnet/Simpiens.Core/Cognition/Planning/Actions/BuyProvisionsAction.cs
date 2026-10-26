@@ -54,7 +54,10 @@ namespace Simpiens.Cognition.Planning.Actions
             }
 
             // The stall re-checks this at execution, so a price raised after planning is refused, not paid
-            return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1,
+            // The food the reachable stall sells (a ration); without one in sight, the first food there is
+            var food = ResourceTargeting.TryGetNearestStall(context, out var seller) ? ResourceTargeting.FoodForSale(seller) : ItemType.None;
+            if (food == ItemType.None) food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
+            return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, food, quantity: 1,
                 maxExpectedPricePerUnit: Considerations.RationReservationPrice(context));
         }
     }
