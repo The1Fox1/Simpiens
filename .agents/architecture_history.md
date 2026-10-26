@@ -1025,3 +1025,24 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Decision (producer, 2026-10-26):** add R7, an item catalog, to `.agents/core_refactor_plan.md`.
   - **Design:** item definitions with bit-flag categories; per-item tables in the stall and the caravan; cognition looping over a category in a stated order.
   - **Timing:** before Epic 10 Part 2, whose crafting multiplies the items, and alongside R4 (the stall's extraction into `Market`).
+
+## 2026-10-26 — The item system refactor planned (replaces refactor R7)
+
+- **The ask (producer):** an implementation plan to refactor the item system.
+  - Items are easy to add to and remove from the economy, and grouped (resources, consumables, …).
+  - Each has a rarity score as the groundwork for random drops and loot tables.
+  - Weapons that give stats and consumables that restore them get a foundation, not the full systems.
+- **The plan:** `.agents/item_system_plan.md`, phases I1–I8, about 5–6.5 agent days, after refactor R1–R4 and before Epic 10 Part 2. Every phase must keep the golden hashes, the pinned renders and the soak's numbers unchanged.
+  - **The catalog:** a per-session catalog of item definitions, with bit-flag categories. Salvage is computed (a resource the stall buys).
+  - **Rarity:** tiers with default loot weights.
+  - **Consumables:** effects as data, over a `StatKind`.
+  - **Equipment:** three slots with stat modifiers, read through `CrawlerStats`.
+  - **The stall:** a goods table in place of per-item fields.
+  - **The player's prices:** a single-price command.
+  - **Loot tables:** deterministic on `SimRandom`, built and tested, not wired into play.
+  - **A guard test:** production code names no item.
+- **Defaults for the producer:**
+  - five rarity tiers;
+  - three equipment slots;
+  - `ItemType` stays a byte enum, and ids are never reused;
+  - after Epic 10 Part 1.

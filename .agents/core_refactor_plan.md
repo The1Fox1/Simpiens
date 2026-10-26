@@ -138,45 +138,15 @@ Pure moves, no edited lines, after the precedent of `SessionHost.Drifters.cs`:
 - **Measure first:** `PopulationScalingProbe` before and after, at 12, 16 and 24 crawlers. The headless step waits for cognition at each tick barrier, so the lock costs time only when evaluations overlap.
 - **The decision:** if the probe shows no gain, it still closes #8. Whether that's worth it now is the producer's call.
 
-### R7. An item catalog (~2–3 days; before Epic 10 Part 2; added 2026-10-26)
-The producer asked, before merging Epic 10 G3, whether the item system is extensible and can group items by tag or category. It is neither (analysis of 2026-10-26).
+### R7. The item system: replaced by `.agents/item_system_plan.md` (2026-10-26)
+- **History:** R7 was added on 2026-10-26 as an item catalog with categories. The same day the producer asked for more:
+  - easy adding and removing of items;
+  - groups;
+  - a rarity score as the groundwork for loot tables;
+  - a foundation for weapons that give stats and consumables that restore them.
+- **Now:** its own plan, phases I1–I8, about 5–6.5 agent days, after R1–R4 and before Epic 10 Part 2. The analysis that started it (each new item touched about 20 files) is in that plan's §2.
 
-- **Why:**
-  - **Every new item touches about 20 files.** Glowstone (G2) and hazard gear (G3) each did.
-  - **The stall and the caravan name each item in their fields:**
-    - `TradeStallData` has a price and a stock field per item, threaded through 8 copy methods (16–17 edits per item). It is saved as raw memory, so each item also bumps the save format.
-    - `SupplyTuning` has a quota and a price per item.
-    - `UpdateStallPricesCommand` has a parameter per price, and `StallTerms` and `EconomyTuning` have opening terms per item.
-  - **Categories are hand-written checks** (`IsFoodYield`, `IsSalvage`, `AgentInventory.IsWearable`). Cognition also lists ore, herbs and glowstone by hand in `SellSalvageAction`, `LiquidateSalvageGoal`, `ResourceTargeting.AffordableHeldSalvage` and `WorldStateBuilder` (twice).
-  - **Missing one fails silently:** a new salvage that crawlers never sell compiles cleanly.
-  - **The client** has a sprite `switch` per item, and the merchant rows and stock line are written by hand.
-  - **What's already generic:** the item record (`ItemInstance`), the pack (`AgentInventory`) and resource nodes (map data).
-- **Goal:** adding an item is one catalog entry, one sprite and the map nodes that yield it. Code asks "every Salvage item" instead of naming items.
-- **Design:**
-  - **The catalog:** an immutable, engine-free `ItemCatalog` of `ItemDefinition`s per session, beside `EconomyTuning` (on the world snapshot, so cognition reads it without locks).
-  - **What a definition holds:** its categories; base value; stack size; gear slot; whether the stall buys it, sells it or neither; the caravan's quota and market price, or its wholesale cap and cost; a display name; a sprite key.
-  - **The id:** `ItemType` stays the stable id that saves, the ledger and the world hash use.
-  - **Categories are a bit-flag field,** `[Flags] ItemCategory` (Food, Salvage, Rare, Wearable, Tool, Medicine…), not text tags. Testing a flag is free on the tick path, allocates nothing and is deterministic.
-  - **Per-item tables:**
-    - The stall's and the caravan's prices and stocks become fixed-size tables indexed by `ItemType`, using C# 12 inline arrays, so the records stay unmanaged, allocation-free and raw-saved.
-    - The save format changes once, here, and afterwards only if the table size changes.
-    - Design them alongside R4, which moves the stall into `Market`: both reshape the stall's record, so do R4 first or together.
-  - **The price command** carries (item, price) pairs.
-  - **Cognition** loops over a category in a stated order.
-    - **Today's orders, which must be reproduced exactly:** the sale choice tries glowstone, then herbs, then ore, and takes a strictly higher price (descending id). `SellSalvageAction` checks ore, then herbs, then glowstone.
-    - Each order becomes an explicit rule, not an accident of a list.
-  - **The client:** merchant rows, the stock line and sprites come from the catalog.
-  - **`ItemInstance` itself:**
-    - `Quality` stays, unused until Part 2's grades.
-    - `ItemId` is stamped 1 everywhere: give it a meaning or record that it has none.
-- **Steps, each with every gate:**
-  1. The catalog and categories. Replace the hand-written checks and lists; golden unchanged.
-  2. The stall's and caravan's tables, the price command, save format 5; golden unchanged.
-  3. The client builds from the catalog; renders unchanged.
-- **Proof that behaviour didn't change:** golden 3/3 unchanged after every step, the pinned image byte for byte, and the soak's numbers identical.
-- **What's left out:** item definitions loaded from data files (JSON) and text tags for content tools come with the map designer (Epic CLIENT). Crafting recipes come with Part 2.
-
-Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6 and 2–3 for R7.
+Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6; the item system (R7) is estimated in its own plan.
 
 ---
 
