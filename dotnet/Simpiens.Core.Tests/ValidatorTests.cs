@@ -142,5 +142,8 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void Determinism() => new Simpiens.Testing.Environment.DeterminismValidator().RunAllValidationTests();
+
+        [Fact]
+        public void ItemCatalog() => new Simpiens.Testing.Economy.ItemCatalogValidator().RunAllValidationTests();
     }
 }

@@ -1,7 +1,7 @@
 # Item system refactor (working plan)
 
 Working document (AGENTS.md, Documentation Protocol 6): deleted when the work closes.
-- **Status:** proposal (2026-10-26), awaiting the producer. It replaces refactor R7 in `.agents/core_refactor_plan.md`, and widens it with grouping, rarity, consumable effects, equipment stats and loot tables.
+- **Status:** in progress. The producer said "proceed with refactor plan" on 2026-10-26, after merging Epic 10 G3 (PR #14), so it runs now, before G4, and before refactor R1–R4 (§6's order, changed). **I1 done** (`feat/items-i1-catalog`). It replaces refactor R7 in `.agents/core_refactor_plan.md`, and widens it with grouping, rarity, consumable effects, equipment stats and loot tables.
 - **Timing:** after Epic 10 Part 1, before Part 2 (crafting multiplies the items), with the refactor's R1–R4 first (§6).
 - **The ask (producer, 2026-10-26):**
   - adding and removing items is easy;
@@ -55,6 +55,15 @@ Working document (AGENTS.md, Documentation Protocol 6): deleted when the work cl
 - **Room:** 255 ids. If that's ever short, `ItemInstance`'s 2 bytes of padding let `ItemType` widen to `ushort` (a save-format change, recorded then).
 
 ### 3.2 The catalog
+**Changed in I1 (2026-10-26): what an item *is* and how a session *trades* it are split.**
+- **Why:** the group checks are called where no per-session catalog can reach without new plumbing (`AgentState`, `AgentInventory`, the consequence service). Besides, what an item is (its groups, rarity, names, stack size, and later its use and equipment effects) doesn't vary by session.
+- **The split:**
+  - `ItemCatalog` is **static and immutable**, readable anywhere on any thread, like `Floor1Layout.Definition`.
+  - How a session trades an item stays in **`EconomyTuning`**, which already reaches every caller: today's base-value `switch` and per-item fields, and from I5 a per-item terms table holding the base value and the stall's and caravan's terms.
+  - Sessions still differ in which items they trade and place, through their economy and map.
+  - §3.3's `BaseValue`, `Stall` and `Caravan` rows therefore live in the economy's table from I5, not in the definition.
+
+The original design follows, as planned:
 - **Where the types live:** `ItemCatalog` (in `Simulation/Items/`) is an immutable table of `ItemDefinition`s indexed by `ItemType`.
 - **Per session:** `ISessionDefinition.Items`, beside `Economy`. Sessions can differ: the Dev Map can leave items out.
 - **Published on the world snapshot,** so off-thread cognition reads it without locks, as it reads `EconomyTuning`.

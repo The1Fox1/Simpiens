@@ -1046,3 +1046,21 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - three equipment slots;
   - `ItemType` stays a byte enum, and ids are never reused;
   - after Epic 10 Part 1.
+
+## 2026-10-26 — Item system I1: the catalog
+
+- **Decision (producer):** "proceed with refactor plan", after merging Epic 10 G3 (PR #14). The item system plan runs now, before G4, and before refactor R1–R4. Its I5 (the stall's goods table) therefore works on the stall still inside `SimulationManager`.
+- **Built:**
+  - `Simulation/Items/`: `ItemCategory` (flags), `ItemRarity` (scores 1000/250/50/10/2), `ItemDefinition` and a static `ItemCatalog` with today's six items;
+  - `IsFoodYield`, `IsSalvage` and `AgentInventory.IsWearable` read the catalog, and stack size comes from it;
+  - a load refuses a save holding an undefined item (`SaveItems`);
+  - `ItemCatalogValidator`.
+- **Deviation from the plan (§3.2):**
+  - **The catalog is static, not per session.** The group checks are called where a per-session catalog can't reach, and what an item is doesn't vary by session.
+  - **Trade terms stay per session,** in `EconomyTuning`, and become a table in I5.
+  - **`IsSalvage` means "a resource" for now** (exactly today's three items), and becomes "a resource the stall buys" in I5.
+- **Proof that nothing changed:**
+  - for all 256 ids, the three group checks answer as the lists they replaced did;
+  - golden 3/3 unchanged; the soak's 9 runs identical to the number;
+  - the pinned image 269/269 byte for byte;
+  - `dotnet test` 377/377 (core 108, client 269); 0 warnings.

@@ -330,6 +330,12 @@ namespace Simpiens.Core.Session
                 session = null;
                 return $"The save was made on a different version of the map '{map.Name}'.";
             }
+            string unknownItem = SaveItems.FirstUnknown(save);
+            if (unknownItem != null)
+            {
+                session = null;
+                return $"The save holds an item this game doesn't have ({unknownItem}).";
+            }
             return null;
         }
 

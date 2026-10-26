@@ -24,8 +24,8 @@ namespace Simpiens.Cognition.Inventory
         /// <summary>The worn gear (Epic 10 G3): one item beside the pack, so gear never takes a pack slot.</summary>
         public ItemInstance Gear { get; private set; }
 
-        /// <summary>True for an item worn in the gear slot rather than carried in the pack.</summary>
-        public static bool IsWearable(ItemType type) => type == ItemType.HazardGear;
+        /// <summary>True for an item worn in the gear slot rather than carried in the pack: protection (the item plan's I4 adds a slot per kind of equipment).</summary>
+        public static bool IsWearable(ItemType type) => Simpiens.Simulation.Items.ItemCatalog.Is(type, Simpiens.Simulation.Items.ItemCategory.Protection);
 
         public AgentInventory(int capacity = DefaultCapacity, int startingGold = Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold)
         {
@@ -77,6 +77,7 @@ namespace Simpiens.Cognition.Inventory
             }
 
             ushort remainingQty = item.Quantity;
+            ushort maxStack = Simpiens.Simulation.Items.ItemCatalog.Get(item.Type)?.MaxStack ?? MaxStackSize;
 
             // 1. Stack into existing slots of the same Type and Quality
             for (int i = 0; i < _capacity; i++)
@@ -84,7 +85,7 @@ namespace Simpiens.Cognition.Inventory
                 if (!_slots[i].IsEmpty && _slots[i].Type == item.Type && _slots[i].Quality == item.Quality)
                 {
                     ushort currentQty = _slots[i].Quantity;
-                    ushort spaceInSlot = (ushort)Math.Max(0, MaxStackSize - currentQty);
+                    ushort spaceInSlot = (ushort)Math.Max(0, maxStack - currentQty);
 
                     if (spaceInSlot > 0)
                     {
@@ -106,7 +107,7 @@ namespace Simpiens.Cognition.Inventory
             {
                 if (_slots[i].IsEmpty)
                 {
-                    ushort qtyToAdd = Math.Min(MaxStackSize, remainingQty);
+                    ushort qtyToAdd = Math.Min(maxStack, remainingQty);
                     _slots[i] = item.WithQuantity(qtyToAdd);
                     remainingQty -= qtyToAdd;
 
