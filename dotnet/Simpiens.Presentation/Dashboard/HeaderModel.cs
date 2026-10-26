@@ -56,18 +56,19 @@ namespace Simpiens.Presentation.Dashboard
 
         public void Refresh()
         {
-            if (_context.TryGetStall(out var stall))
+            // The food the stall sells, and the resources it buys that aren't hazardous (ore, herbs), by the client's words
+            bool open = _context.TryGetStall(out var stall);
+            Treasury = open ? Invariant($"{stall.TreasuryGold} GOLD") : "0 GOLD";
+            var food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
+            Rations = Invariant($"{(open ? stall.StockOf(food) : 0)} {ItemTexts.Of(food).HeaderWord}");
+            var resources = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource);
+            var parts = new System.Collections.Generic.List<string>(resources.Count);
+            for (int i = 0; i < resources.Count; i++)
             {
-                Treasury = Invariant($"{stall.TreasuryGold} GOLD");
-                Rations = Invariant($"{stall.StockOf(Simpiens.Simulation.Economy.ItemType.Ration)} RATIONS");
-                Salvage = Invariant($"{stall.StockOf(Simpiens.Simulation.Economy.ItemType.IronOre)} ORE | {stall.StockOf(Simpiens.Simulation.Economy.ItemType.MedicinalHerb)} HERB");
+                if (Simpiens.Simulation.Items.ItemCatalog.Is(resources[i], Simpiens.Simulation.Items.ItemCategory.Hazardous)) continue;
+                parts.Add(Invariant($"{(open ? stall.StockOf(resources[i]) : 0)} {ItemTexts.Of(resources[i]).HeaderWord}"));
             }
-            else
-            {
-                Treasury = "0 GOLD";
-                Rations = "0 RATIONS";
-                Salvage = "0 ORE | 0 HERB";
-            }
+            Salvage = string.Join(" | ", parts);
 
             int active = _context.Simulation?.ActiveBounties?.Count ?? 0;
             Bounties = Invariant($"{active} BOUNTIES");

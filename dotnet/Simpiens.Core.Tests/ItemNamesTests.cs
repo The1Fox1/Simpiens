@@ -23,16 +23,11 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "the default economy: each item's base value and stall terms",
             ["Simpiens.Core/Simulation/Economy/SupplyTuning.cs"] = "the default caravan: what it exports and supplies",
             ["Simpiens.Hosting/EconomySoak.cs"] = "the soak's player profiles: the prices each one sets",
+            ["Simpiens.Presentation/ItemTexts.cs"] = "the client's words for items: merchant rows, stock and header",
             // Quirks kept on purpose (the plan's §5)
             ["Simpiens.Core/Simulation/ResourceData.cs"] = "§5: a node's default yield is a ration",
             ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "§5: an untyped node yields a ration",
             ["Simpiens.Core/Cognition/AgentState.cs"] = "§5: HasFoodInInventory packs a ration when set",
-            // I6, the client
-            ["Simpiens.Presentation/ProceduralSprites.cs"] = "I6: sprites by key",
-            ["Simpiens.Presentation/Dashboard/MerchantModel.cs"] = "I6: the merchant's rows",
-            ["Simpiens.Presentation/Dashboard/HeaderModel.cs"] = "I6: the header's stock",
-            ["Simpiens.Presentation/Dashboard/BountyBoardModel.cs"] = "I6: the bounty board's items",
-            ["Simpiens.Client/Ui/BountyBoardWindow.cs"] = "I6: the bounty board's items",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
