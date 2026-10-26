@@ -29,6 +29,7 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new ExecuteDirectiveAction());
             graph.RegisterAction(new TravelToStallAction(pathfinder));
             graph.RegisterAction(new BuyProvisionsAction());
+            graph.RegisterAction(new BuyHazardGearAction());
             graph.RegisterAction(new SellSalvageAction());
             graph.RegisterAction(new ClaimGatherBountyAction());
             graph.RegisterAction(new ClaimScoutBountyAction());
@@ -52,6 +53,7 @@ namespace Simpiens.Cognition.Planning.Domain
                 new GatherAtAnchorGoal(),
                 new ComplyDirectiveGoal(),
                 new PurchaseProvisionsGoal(),
+                new OutfitForDangerGoal(),
                 new LiquidateSalvageGoal(),
                 new FulfillBountyGoal(),
                 new EarnIncomeGoal(),

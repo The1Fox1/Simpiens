@@ -33,6 +33,16 @@ namespace Simpiens.Cognition.Contracts
         public int HerbsEaten;
         public int Retreats;
 
+        /// <summary>
+        /// Gear (Epic 10 G3): pieces bought and worn out; of the hazard ticks, those spent geared; and the health hazards
+        /// took, in all and while geared. Damage per second, bare against geared, is what the live scenario compares.
+        /// </summary>
+        public int GearPurchases;
+        public int GearWornOut;
+        public int GearedHazardTicks;
+        public float HazardDamage;
+        public float GearedHazardDamage;
+
         public static AgentActivity Empty => new AgentActivity
         {
             FirstHarvestTick = -1,
@@ -92,6 +102,7 @@ namespace Simpiens.Cognition.Contracts
         public override string ToString() =>
             $"harvests {SalvageHarvests}, sales {SalvageSales}, deliveries {BountyDeliveries}, cycles {Cycles} (first t{FirstCycleTick}), " +
             $"purchases {RationPurchases}, meals {Meals} (first t{FirstMealTick}), sleeps {BunkSleeps}, hearth {HearthGatherings}" +
-            (HazardTicks > 0 || TimesDowned > 0 || HerbsEaten > 0 ? $", hazard {HazardTicks / 10}s, retreats {Retreats}, downed {TimesDowned}, herbs {HerbsEaten}" : string.Empty);
+            (HazardTicks > 0 || TimesDowned > 0 || HerbsEaten > 0 ? $", hazard {HazardTicks / 10}s, retreats {Retreats}, downed {TimesDowned}, herbs {HerbsEaten}" : string.Empty) +
+            (GearPurchases > 0 ? $", gear bought {GearPurchases}, worn out {GearWornOut}, geared {GearedHazardTicks / 10}s" : string.Empty);
     }
 }

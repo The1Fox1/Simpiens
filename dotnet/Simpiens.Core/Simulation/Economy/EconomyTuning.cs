@@ -76,7 +76,7 @@ namespace Simpiens.Simulation.Economy
         public ushort OreBaseValue { get; private set; } = 8;
         public ushort HerbBaseValue { get; private set; } = 12;
         public ushort PickaxeBaseValue { get; private set; } = 30;
-        public ushort WeaponBaseValue { get; private set; } = 40;
+        public ushort HazardGearBaseValue { get; private set; } = 40;
         public ushort GlowstoneBaseValue { get; private set; } = 30; // rare salvage from the hazard sectors (Epic 10 G2)
 
         /// <summary>Gold a crawler arrives with: one ration at the stall's default price (review §3.3 D6).</summary>
@@ -94,6 +94,12 @@ namespace Simpiens.Simulation.Economy
         public ushort StallHerbStock { get; private set; } = 10;
         /// <summary>What the stall pays for Glowstone, the rare salvage (Epic 10 G2); the caravan pays 70 (SupplyTuning).</summary>
         public ushort StallGlowstoneBuyPrice { get; private set; } = 45;
+        /// <summary>
+        /// What the stall sells hazard gear for (Epic 10 G3), and its opening stock. 30g is 0.75 of a neutral crawler's calm
+        /// gear value (40g), as the ration's 15g is of 20g: fair, and paid by crawlers up to greed +0.5.
+        /// </summary>
+        public ushort StallHazardGearPrice { get; private set; } = 30;
+        public ushort StallHazardGearStock { get; private set; } = 3;
         public uint StallTreasury { get; private set; } = 250;
 
         /// <summary>Salvage units of each type the stall holds at most; full, it stops buying that type until the caravan comes.</summary>
@@ -113,6 +119,9 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Strangers who arrive with their own gold and leave (Epic 10 G1).</summary>
         public DrifterTuning Drifters { get; private set; } = DrifterTuning.Default;
+
+        /// <summary>What hazard gear does and how long it lasts (Epic 10 G3).</summary>
+        public GearTuning Gear { get; private set; } = GearTuning.Default;
 
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
@@ -135,7 +144,7 @@ namespace Simpiens.Simulation.Economy
                 case ItemType.IronOre: return OreBaseValue;
                 case ItemType.MedicinalHerb: return HerbBaseValue;
                 case ItemType.ToolPickaxe: return PickaxeBaseValue;
-                case ItemType.BasicWeapon: return WeaponBaseValue;
+                case ItemType.HazardGear: return HazardGearBaseValue;
                 case ItemType.Glowstone: return GlowstoneBaseValue;
                 default: return 0;
             }
@@ -154,6 +163,21 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Drifters = drifters;
+            return copy;
+        }
+
+        public EconomyTuning WithGear(in GearTuning gear)
+        {
+            var copy = Copy();
+            copy.Gear = gear;
+            return copy;
+        }
+
+        public EconomyTuning WithStallHazardGear(ushort price, ushort stock)
+        {
+            var copy = Copy();
+            copy.StallHazardGearPrice = price;
+            copy.StallHazardGearStock = stock;
             return copy;
         }
 

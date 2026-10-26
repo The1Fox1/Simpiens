@@ -15,7 +15,7 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class MerchantWindow
     {
-        public const float Width = 660f; // 600 until Epic 10 G2's glowstone lengthened the stock line
+        public const float Width = 740f; // 600; 660 for Epic 10 G2's glowstone; 740 for G3's gear, with a four-digit treasury (TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest)
 
         private readonly MerchantModel _model;
         private readonly TextRuntime _status, _treasury, _stock, _feedback;
@@ -54,6 +54,7 @@ namespace Simpiens.Client.Ui
             OreSlider = AddPriceRow(body, "Iron Ore Buy Price:", "(Outpost purchases ore from salvagers)", v => _model.OrePrice = v, out OreValue);
             HerbSlider = AddPriceRow(body, "Herb Buy Price:", "(Outpost purchases medicinal flora)", v => _model.HerbPrice = v, out HerbValue);
             GlowstoneSlider = AddPriceRow(body, "Glowstone Buy Price:", "(Rare salvage from the hazard sectors)", v => _model.GlowstonePrice = v, out GlowstoneValue);
+            GearSlider = AddPriceRow(body, "Hazard Gear Sell Price:", "(Worn into danger: halves the harm, then wears out)", v => _model.GearPrice = v, out GearValue);
 
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
@@ -76,12 +77,17 @@ namespace Simpiens.Client.Ui
         public Slider OreSlider { get; }
         public Slider HerbSlider { get; }
         public Slider GlowstoneSlider { get; }
-        public readonly TextRuntime RationValue, OreValue, HerbValue, GlowstoneValue;
+        public Slider GearSlider { get; }
+        public readonly TextRuntime RationValue, OreValue, HerbValue, GlowstoneValue, GearValue;
         public Button ApplyButton { get; }
 
         public string StatusText => _status.Text;
         public string TreasuryText => _treasury.Text;
         public string FeedbackText => _feedback.Text;
+
+        /// <summary>Where the treasury's text ends and the stock line begins, on screen (they share the status bar).</summary>
+        public float TreasuryRight => _treasury.AbsoluteLeft + _treasury.AbsoluteWidth;
+        public float StockLeft => _stock.AbsoluteLeft;
 
         private Slider AddPriceRow(ContainerRuntime body, string title, string description, Action<int> set, out TextRuntime value)
         {
@@ -130,10 +136,12 @@ namespace Simpiens.Client.Ui
             OreSlider.Value = _model.OrePrice;
             HerbSlider.Value = _model.HerbPrice;
             GlowstoneSlider.Value = _model.GlowstonePrice;
+            GearSlider.Value = _model.GearPrice;
             RationValue.Text = MerchantModel.PriceText(_model.RationPrice);
             OreValue.Text = MerchantModel.PriceText(_model.OrePrice);
             HerbValue.Text = MerchantModel.PriceText(_model.HerbPrice);
             GlowstoneValue.Text = MerchantModel.PriceText(_model.GlowstonePrice);
+            GearValue.Text = MerchantModel.PriceText(_model.GearPrice);
             _binding = false;
         }
 

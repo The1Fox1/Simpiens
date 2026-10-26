@@ -44,8 +44,9 @@ namespace Simpiens.Testing.Economy
             ValidateZeroAllocSupplyTicks();
             ValidateActivityTally();
             ValidateCarriedFoodIsEaten();
+            ValidateCaravanRestocksGearAfterFood();
 
-            TestLog.Log("<color=green>[SupplyLoopValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SupplyLoopValidator] ALL 13 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // ---------------------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
             agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
             agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.ToolPickaxe, 1, 30), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(5, ItemType.BasicWeapon, 1, 40), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(5, ItemType.HazardGear, 1, 40), out _);
             Assert(agent.Inventory.OccupiedSlots == agent.Inventory.Capacity, "Inventory is full before harvest.");
 
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, herbId, null));
@@ -401,6 +402,44 @@ namespace Simpiens.Testing.Economy
         // ---------------------------------------------------------------------------------------------
         // 8. Zero GC bytes over 1,000 supply ticks (regrowth + restock exercised)
         // ---------------------------------------------------------------------------------------------
+        /// <summary>
+        /// Epic 10 G3: after the rations (food first), the caravan tops a stall's hazard gear up to its cap at the wholesale
+        /// price, as far as the treasury pays, under the "GearWholesale" sink; a stall at its cap buys none.
+        /// </summary>
+        private void ValidateCaravanRestocksGearAfterFood()
+        {
+            var registry = new WorldRegistry();
+            var ledger = new EconomyLedger();
+            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+                oreQuota: 0, herbQuota: 0, oreMarketPrice: 0, herbMarketPrice: 0, gearStockCap: 3, wholesaleGearCost: 20));
+            var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
+
+            var richId = NextGuid();
+            var poorId = NextGuid();
+            var hungryId = NextGuid();
+            var fullId = NextGuid();
+            sim.RegisterTradeStall(new TradeStallData(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500, hazardGearSellPrice: 40, hazardGearStock: 1));
+            sim.RegisterTradeStall(new TradeStallData(poorId, new Vec2(20f, 0f), rationStock: 45, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
+            sim.RegisterTradeStall(new TradeStallData(hungryId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
+            sim.RegisterTradeStall(new TradeStallData(fullId, new Vec2(60f, 0f), rationStock: 50, treasuryGold: 100, hazardGearSellPrice: 40, hazardGearStock: 3));
+            ledger.RecordFaucet(660, "InitialSeed");
+
+            while (sim.CurrentTick < 20) sim.Tick();
+
+            Assert(sim.TryGetTradeStall(richId, out var rich) && rich.RationStock == 50 && rich.HazardGearStock == 3 && rich.TreasuryGold == 380,
+                $"Rich: rations to 50 (80g), then 2 gear (40g) (stock {rich.RationStock}/{rich.HazardGearStock}, treasury {rich.TreasuryGold}g).");
+            Assert(sim.TryGetTradeStall(poorId, out var poor) && poor.RationStock == 50 && poor.HazardGearStock == 1 && poor.TreasuryGold == 0,
+                $"Poor: 5 rations (10g), then the one gear its last 20g pays for (stock {poor.RationStock}/{poor.HazardGearStock}, treasury {poor.TreasuryGold}g).");
+            Assert(sim.TryGetTradeStall(hungryId, out var hungry) && hungry.RationStock == 15 && hungry.HazardGearStock == 0 && hungry.TreasuryGold == 0,
+                $"Food first: 30g buys 15 rations and no gear (stock {hungry.RationStock}/{hungry.HazardGearStock}, treasury {hungry.TreasuryGold}g).");
+            Assert(sim.TryGetTradeStall(fullId, out var full) && full.HazardGearStock == 3 && full.TreasuryGold == 100, "A stall at its gear cap buys none.");
+            Assert(ledger.GetSinkTotal(SupplyService.GearSinkName) == 60, $"GearWholesale sank 40g + 20g (got {ledger.GetSinkTotal(SupplyService.GearSinkName)}).");
+            Assert(ledger.GetSinkTotal(SupplyService.CaravanSinkName) == 120, $"SupplyCaravan sank 80g + 10g + 30g (got {ledger.GetSinkTotal(SupplyService.CaravanSinkName)}).");
+            Assert(ledger.ValidateConservation(rich.TreasuryGold + poor.TreasuryGold + hungry.TreasuryGold + full.TreasuryGold, 0, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
+
+            TestLog.Log("[SupplyLoopValidator] Test 13 Passed: The caravan restocks hazard gear after food, as far as the treasury pays, under its own sink.");
+        }
+
         private void ValidateZeroAllocSupplyTicks()
         {
             var registry = new WorldRegistry();

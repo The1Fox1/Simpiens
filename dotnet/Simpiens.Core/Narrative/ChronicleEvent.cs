@@ -32,7 +32,8 @@ namespace Simpiens.Narrative
         DrifterArrived = 22,
         DrifterLeft = 23,
         CrawlerDowned = 24,
-        CrawlerRecovered = 25
+        CrawlerRecovered = 25,
+        GearWornOut = 26 // Epic 10 G3
     }
 
     /// <summary>

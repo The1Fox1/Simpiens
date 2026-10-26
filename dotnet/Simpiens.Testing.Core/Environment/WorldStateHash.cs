@@ -89,7 +89,10 @@ namespace Simpiens.Testing.Environment
                     Mix(ref h, inv.GetItemCount(ItemType.Ration));
                     Mix(ref h, inv.GetItemCount(ItemType.IronOre));
                     Mix(ref h, inv.GetItemCount(ItemType.MedicinalHerb));
+                    Mix(ref h, inv.GetItemCount(ItemType.Glowstone)); // the rare salvage (Epic 10 G2)
+                    Mix(ref h, inv.Gear.IsEmpty ? -1 : inv.Gear.Durability); // worn gear and its wear (G3)
                 }
+                Mix(ref h, Quantize(s.Health, 100f)); // health (G2)
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);
@@ -115,6 +118,8 @@ namespace Simpiens.Testing.Environment
                     Mix(ref economy, st.RationStock);
                     Mix(ref economy, st.OreStock);
                     Mix(ref economy, st.HerbStock);
+                    Mix(ref economy, st.GlowstoneStock); // Epic 10 G2
+                    Mix(ref economy, st.HazardGearStock); // Epic 10 G3
                     Mix(ref economy, st.TreasuryGold);
                 }
                 var ledger = sim.EconomyLedger;

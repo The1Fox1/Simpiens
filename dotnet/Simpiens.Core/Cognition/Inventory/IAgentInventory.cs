@@ -14,5 +14,11 @@ namespace Simpiens.Cognition.Inventory
         ItemInstance GetSlot(int index);
         bool HasItem(ItemType type, int count = 1);
         int GetItemCount(ItemType type);
+
+        /// <summary>
+        /// The gear the crawler wears (Epic 10 G3), beside the pack: <see cref="ItemInstance.Empty"/> when none. Its
+        /// <see cref="ItemInstance.Durability"/> counts the ticks it still protects in a hazard sector.
+        /// </summary>
+        ItemInstance Gear { get; }
     }
 }

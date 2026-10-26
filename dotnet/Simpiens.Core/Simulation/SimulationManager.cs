@@ -788,9 +788,10 @@ namespace Simpiens.Simulation
                     cmd.OreBuyPrice > 0 ? cmd.OreBuyPrice : stall.OreBuyPrice,
                     cmd.HerbBuyPrice > 0 ? cmd.HerbBuyPrice : stall.HerbBuyPrice);
                 if (cmd.GlowstoneBuyPrice > 0) _stalls[targetStallId] = _stalls[targetStallId].WithGlowstone(cmd.GlowstoneBuyPrice, stall.GlowstoneStock);
+                if (cmd.HazardGearSellPrice > 0) _stalls[targetStallId] = _stalls[targetStallId].WithHazardGear(cmd.HazardGearSellPrice, stall.HazardGearStock);
                 UpdateActiveStallsBuffer();
                 var updated = _stalls[targetStallId];
-                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: ration {updated.RationSellPrice}g, ore {updated.OreBuyPrice}g, herb {updated.HerbBuyPrice}g, glowstone {updated.GlowstoneBuyPrice}g");
+                SimLog.Intervention.ZLogInformation($"Stall {SimLog.Agent(targetStallId)} prices updated: ration {updated.RationSellPrice}g, ore {updated.OreBuyPrice}g, herb {updated.HerbBuyPrice}g, glowstone {updated.GlowstoneBuyPrice}g, hazard gear {updated.HazardGearSellPrice}g");
             }
         }
 

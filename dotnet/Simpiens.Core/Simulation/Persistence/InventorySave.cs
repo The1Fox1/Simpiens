@@ -12,5 +12,8 @@ namespace Simpiens.Simulation.Persistence
     {
         public int Gold { get; set; }
         public ItemInstance[] Slots { get; set; }
+
+        /// <summary>The worn gear, beside the pack (Epic 10 G3, format 4); empty when none.</summary>
+        public ItemInstance Gear { get; set; }
     }
 }

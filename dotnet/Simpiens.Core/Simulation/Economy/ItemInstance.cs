@@ -40,6 +40,11 @@ namespace Simpiens.Simulation.Economy
             return new ItemInstance(ItemId, Type, newQty, BaseValue, Quality, Durability);
         }
 
+        public ItemInstance WithDurability(ushort durability)
+        {
+            return new ItemInstance(ItemId, Type, Quantity, BaseValue, Quality, durability);
+        }
+
         public bool Equals(ItemInstance other)
         {
             return ItemId == other.ItemId &&

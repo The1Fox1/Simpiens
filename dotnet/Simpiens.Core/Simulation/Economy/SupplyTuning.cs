@@ -4,7 +4,8 @@ namespace Simpiens.Simulation.Economy
     /// The outpost's periodic economy (part of EconomyTuning): the supply caravan and the upkeep paid on its schedule.
     /// All durations are in logical simulation ticks (10 Hz). On each visit, in this order: the caravan buys salvage from
     /// the stall up to a quota per type (the "CaravanSalvageSales" faucet, review §3.3 D1), the stall pays its upkeep
-    /// (the "OutpostUpkeep" sink, D2), and the caravan tops the stall's rations up to the cap (the "SupplyCaravan" sink).
+    /// (the "OutpostUpkeep" sink, D2), the caravan tops the stall's rations up to the cap (the "SupplyCaravan" sink), then
+    /// its hazard gear (the "GearWholesale" sink, Epic 10 G3): food first.
     /// </summary>
     public readonly struct SupplyTuning
     {
@@ -36,6 +37,13 @@ namespace Simpiens.Simulation.Economy
         public readonly ushort GlowstoneQuota;
         public readonly ushort GlowstoneMarketPrice;
 
+        /// <summary>
+        /// Hazard gear (Epic 10 G3): the caravan tops each stall's gear up to this cap, at this wholesale price, which leaves
+        /// the economy as the "GearWholesale" sink. Few per visit: that is gear's scarcity (economy model §3).
+        /// </summary>
+        public readonly ushort GearStockCap;
+        public readonly ushort WholesaleGearCost;
+
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost)
             : this(restockIntervalTicks, rationStockCap, wholesaleRationCost, 0, 0, 0, 0, 0)
         {
@@ -43,8 +51,10 @@ namespace Simpiens.Simulation.Economy
 
         public SupplyTuning(uint restockIntervalTicks, ushort rationStockCap, ushort wholesaleRationCost,
             ushort oreQuota, ushort herbQuota, ushort oreMarketPrice, ushort herbMarketPrice, ushort upkeepPerVisit = 0,
-            ushort glowstoneQuota = 0, ushort glowstoneMarketPrice = 0)
+            ushort glowstoneQuota = 0, ushort glowstoneMarketPrice = 0, ushort gearStockCap = 0, ushort wholesaleGearCost = 0)
         {
+            GearStockCap = gearStockCap;
+            WholesaleGearCost = wholesaleGearCost;
             GlowstoneQuota = glowstoneQuota;
             GlowstoneMarketPrice = glowstoneMarketPrice;
             RestockIntervalTicks = restockIntervalTicks;
@@ -60,7 +70,7 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, rationStockCap: 50, wholesaleRationCost: 2,
             oreQuota: 2, herbQuota: 2, oreMarketPrice: 24, herbMarketPrice: 30, upkeepPerVisit: 80,
-            glowstoneQuota: 2, glowstoneMarketPrice: 70);
+            glowstoneQuota: 2, glowstoneMarketPrice: 70, gearStockCap: 3, wholesaleGearCost: 20);
 
         /// <summary>The most gold the caravan can pay a stall for salvage in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit => (uint)OreQuota * OreMarketPrice + (uint)HerbQuota * HerbMarketPrice + (uint)GlowstoneQuota * GlowstoneMarketPrice;

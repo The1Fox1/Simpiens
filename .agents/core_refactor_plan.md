@@ -1,6 +1,6 @@
 # Core refactor plan: SimulationManager's split, guards and the cleanup's loose ends
 
-- **Status (producer, 2026-10-25):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`); **R1–R6 come back after Epic 10 Part 1.** The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R6 are done or dropped, then close it out by the docs protocol.
+- **Status (producer, 2026-10-25):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`); **R1–R6 come back after Epic 10 Part 1**, and R7 (an item catalog, added 2026-10-26) before Epic 10 Part 2. The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R7 are done or dropped, then close it out by the docs protocol.
 - **Source:** a smaller agent's report, *Simpiens Solution Architecture & Code Smells Deep Dive* (2026-10-24, not in the repo), and its two commits on `feat/code-cleanliness`: `52f582f` (core fixes) and `e58073a` (Gum migration, 0 warnings). This plan re-checks the report against the code; §2 records which findings hold.
 - **Rule for every phase:** behaviour-preserving unless the phase says otherwise. The golden hashes are the proof: a phase that changes them is not a refactor; stop and report.
 
@@ -138,7 +138,15 @@ Pure moves, no edited lines, after the precedent of `SessionHost.Drifters.cs`:
 - **Measure first:** `PopulationScalingProbe` before and after, at 12, 16 and 24 crawlers. The headless step waits for cognition at each tick barrier, so the lock costs time only when evaluations overlap.
 - **The decision:** if the probe shows no gain, it still closes #8. Whether that's worth it now is the producer's call.
 
-Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6.
+### R7. The item system: replaced by `.agents/item_system_plan.md` (2026-10-26)
+- **History:** R7 was added on 2026-10-26 as an item catalog with categories. The same day the producer asked for more:
+  - easy adding and removing of items;
+  - groups;
+  - a rarity score as the groundwork for loot tables;
+  - a foundation for weapons that give stats and consumables that restore them.
+- **Now:** its own plan, phases I1–I8, about 5–6.5 agent days, after R1–R4 and before Epic 10 Part 2. The analysis that started it (each new item touched about 20 files) is in that plan's §2.
+
+Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6; the item system (R7) is estimated in its own plan.
 
 ---
 
@@ -155,7 +163,7 @@ Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6.
 
 ## 5. The producer's answers (2026-10-25)
 
-1. **When:** R0 now, before Epic 10 G3; R1–R6 after Epic 10 Part 1 ("we will circle back around to this after Epic 10").
+1. **When:** R0 now, before Epic 10 G3; R1–R6 after Epic 10 Part 1 ("we will circle back around to this after Epic 10"). R7 added by the producer on 2026-10-26 ("add R7 to the refactor plan"), to be done before Part 2's crafting multiplies the items.
 2. **Where:** no epic; this implementation plan.
 3. **Nullable:** not now (default). If wanted later, enable it one project at a time, smallest first (`Presentation`, `Hosting`), and `Core` last, keeping 0 warnings.
 4. **Bounty ids:** the default (refuse a finished bounty's id too) was reversed in R0.3, for the reason given there.

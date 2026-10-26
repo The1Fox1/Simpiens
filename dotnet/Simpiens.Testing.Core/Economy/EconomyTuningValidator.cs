@@ -37,7 +37,7 @@ namespace Simpiens.Testing.Economy
             // Item base values (were ItemTypeExtensions.BaseValue)
             Assert(e.BaseValue(ItemType.Ration) == 5 && e.BaseValue(ItemType.IronOre) == 8 && e.BaseValue(ItemType.MedicinalHerb) == 12,
                 "Base values: ration 5, ore 8, herb 12.");
-            Assert(e.BaseValue(ItemType.ToolPickaxe) == 30 && e.BaseValue(ItemType.BasicWeapon) == 40 && e.BaseValue(ItemType.None) == 0,
+            Assert(e.BaseValue(ItemType.ToolPickaxe) == 30 && e.BaseValue(ItemType.HazardGear) == 40 && e.BaseValue(ItemType.None) == 0,
                 "Base values: pickaxe 30, weapon 40, none 0.");
 
             // Crawlers (were AgentState / AgentInventory literals and Considerations.RationReferencePrice)

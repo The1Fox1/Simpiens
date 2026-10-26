@@ -30,7 +30,7 @@ namespace Simpiens.Client.Ui
         private readonly DashboardModel _model;
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
-        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
+        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty, _gear;
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
@@ -110,6 +110,8 @@ namespace Simpiens.Client.Ui
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
             _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
+            _gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small); // worn gear (Epic 10 G3)
+            _dossierDetails.Children.Add(_gear);
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
@@ -151,6 +153,7 @@ namespace Simpiens.Client.Ui
         public bool DossierShown => _dossierDetails.Visible;
         public float HungerShown => _hunger.Value;
         public float HealthShown => _health.Value;
+        public string GearShown => _gear.Text;
 
         public void Bind()
         {
@@ -230,6 +233,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
+            UiParts.SetText(_gear, "Gear: " + dossier.Gear);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);

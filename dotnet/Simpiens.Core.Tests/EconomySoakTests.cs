@@ -29,14 +29,14 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Drifters open the economy (Epic 10 G1). On every soak seed they leave gold behind (their purses exceed what they
-        /// take away), and over the soak's seeds a slightly greedy player ends the 30 minutes with more gold than the same
-        /// player in a closed outpost. Per seed, the two runs differ by more than the drifters' gold alone (a different run
-        /// of a chaotic day), so the treasury comparison is summed. Before drifters, greed only shrank the trade that fills
-        /// the caravan's quota (docs/economy-model.md §7).
+        /// Drifters open the economy (Epic 10 G1): for a slightly greedy player, on every soak seed they leave gold behind
+        /// (their purses exceed what they take away), and both runs, open and closed, stay sound. G1 also asserted that the
+        /// keen player's treasury, summed over the soak seeds, ends higher than in a closed outpost; since glowstone (G2)
+        /// that comparison is within the noise of a chaotic day (measured 2026-10-25 over seeds 1-15: 19,355g against
+        /// 19,249g, ahead on 8 of 15), so it is reported, not asserted (Epic 10 finding F4).
         /// </summary>
         [Fact]
-        public void AKeenPlayerDoesBetterWithDrifters()
+        public void DriftersLeaveGoldBehindForAKeenPlayer()
         {
             long open = 0, closed = 0;
             foreach (var seed in EconomySoak.DefaultSeeds)
@@ -51,7 +51,7 @@ namespace Simpiens.Core.Tests
                 open += withDrifters.Last.Treasury;
                 closed += withoutDrifters.Last.Treasury;
             }
-            Assert.True(open > closed, $"keen over the soak seeds: {open}g with drifters, {closed}g closed");
+            TestContext.Current.TestOutputHelper?.WriteLine($"keen over the soak seeds: {open}g with drifters, {closed}g closed (reported, not asserted: F4)");
         }
     }
 }

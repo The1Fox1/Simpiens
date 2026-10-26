@@ -27,9 +27,10 @@ namespace Simpiens.Hosting
         public const uint StarvingTicks = 300;
 
         // Pace bands (docs/economy-model.md §7; review §3.3 D5), as EconomySoakScenario asserts them
-        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors); was 375-875g (docs/economy-model.md §7)
+        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors), 1,000-2,000g by the producer on 2026-10-25;
+        // was 375-875g (docs/economy-model.md §7)
         public const uint FairTreasuryMin = 1000;
-        public const uint FairTreasuryMax = 2200;
+        public const uint FairTreasuryMax = 2000;
         public const int FairTrustUpMin = 8;
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8;
@@ -42,11 +43,15 @@ namespace Simpiens.Hosting
         {
             public readonly string Name;
             public readonly ushort RationPrice, OreBuyPrice, HerbBuyPrice;
+
+            /// <summary>What the player sells hazard gear for (Epic 10 G3).</summary>
+            public readonly ushort GearPrice;
             public readonly bool SendsCommand;
 
-            public Player(string name, ushort rationPrice, ushort oreBuyPrice, ushort herbBuyPrice, bool sendsCommand)
+            public Player(string name, ushort rationPrice, ushort oreBuyPrice, ushort herbBuyPrice, ushort gearPrice, bool sendsCommand)
             {
                 Name = name;
+                GearPrice = gearPrice;
                 RationPrice = rationPrice;
                 OreBuyPrice = oreBuyPrice;
                 HerbBuyPrice = herbBuyPrice;
@@ -59,11 +64,11 @@ namespace Simpiens.Hosting
         {
             switch ((name ?? "fair").Trim().ToLowerInvariant())
             {
-                case "fair": return new Player("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, sendsCommand: false);
-                case "greedy": return new Player("greedy", 30, 10, 12, sendsCommand: true);
-                case "generous": return new Player("generous", 5, 35, 40, sendsCommand: true);
+                case "fair": return new Player("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, economy.StallHazardGearPrice, sendsCommand: false);
+                case "greedy": return new Player("greedy", 30, 10, 12, 60, sendsCommand: true);
+                case "generous": return new Player("generous", 5, 35, 40, 20, sendsCommand: true);
                 // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
-                case "keen": return new Player("keen", 20, 18, 22, sendsCommand: true);
+                case "keen": return new Player("keen", 20, 18, 22, 35, sendsCommand: true);
                 default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, keen).", nameof(name));
             }
         }
@@ -182,7 +187,8 @@ namespace Simpiens.Hosting
                 interventions.QueueInfluence(new InfluenceEvent(
                     "EconomySoak:" + result.Player.Name,
                     InfluenceCommandType.UpdateStallPrices,
-                    updateStallPrices: new UpdateStallPricesCommand(manager.ActiveStalls[0].StallEntityId, result.Player.RationPrice, result.Player.OreBuyPrice, result.Player.HerbBuyPrice)));
+                    updateStallPrices: new UpdateStallPricesCommand(manager.ActiveStalls[0].StallEntityId, result.Player.RationPrice, result.Player.OreBuyPrice, result.Player.HerbBuyPrice,
+                        hazardGearSellPrice: result.Player.GearPrice)));
             }
 
             var crawlers = sim.Host.CrawlerStates;

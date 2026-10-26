@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23); the producer's look at G2 (danger on screen) and the re-set fair soak band (§7) are open. G3 (gear) is next; Unity was removed first (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25); G4 (the guild) is next. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -124,6 +124,41 @@ Each milestone also needs its validators, the golden check and the client's test
     - Golden hashes re-recorded in Unity `c6055f3`; the client's references and pins `2fcc2a0`.
     - Measured: the gate seeds 23/23, no stacking; seeds 1–120 with the golden seeds 120/123 (F3: 31 and 43; seed 73 one crawler's hunger peak); `dotnet test` 355/355 (core 90, client 265); the client's 265/265 exactly in the pinned image; golden 3/3 in both runtimes; Unity PlayMode 69/69 (2 explicit skipped); the soak 9/9 headless and in Unity with identical numbers (fair 1,545–1,594g in the re-set band).
 
+- [x] **G3. Gear** (2026-10-25, `feat/epic10-g3`, from `main`): the stall sells hazard gear; geared crawlers get hurt less.
+    - **The producer's defaults (D1–D3, accepted 2026-10-25):**
+        - **D1, one protective item, a deviation from §2.2's row,** which named the basic weapon and the pickaxe. A harvest takes 1.5 s against 15–30 s of exposure per trip, so a faster pickaxe cuts a trip's damage by 5% at most. The pickaxe and a weapon move to §5.
+        - **D2, a rename:** `BasicWeapon` becomes `HazardGear`, value 5 kept (placeholder name "hazard gear"; `StateFact.HasHazardGear`, `EconomyTuning.HazardGearBaseValue`) `906310e`.
+        - **D3, gear is worn in a slot of its own** beside the 4-slot pack (`AgentInventory.Gear`; save format 4) `47cc6f5`.
+    - **Gear in the economy** `c5870a5`:
+        - Worn gear halves hazard damage (`GearTuning.DamageReduction` 0.5).
+        - It lasts 500 ticks, 50 s, in danger: its durability counts the ticks down. At 0 it breaks (chronicle: worn out).
+        - The stall sells it at a player-set price, a fifth row in the merchant terminal and the price command. After the rations, the caravan tops it up to 3 at 20g wholesale under a new sink, `GearWholesale`.
+        - A purchase is judged against the buyer's calm gear value (40g × its greed factor), as a ration's is.
+    - **The decision** `6a116d9`: `OutfitForDangerGoal` and `BuyHazardGearAction`.
+        - **Who:** a crawler that would venture, knows where glowstone is and wears no gear buys it when it can still pay for a ration after. No new planner facts (39 of 64).
+        - **Price, a deviation from the plan's 40g:** the default is **30g**. At 40g nobody bought on three seeds, because any greed values gear below its base value. 30g is 0.75 of a neutral crawler's value, as the ration's 15g is of 20g.
+    - **Client** `5ba5ab0`:
+        - **Merchant terminal:** the gear row; the window is 740 wide, with a test that the treasury and the stock line never overlap.
+        - **Dossier:** "Gear: Hazard gear, 64% left".
+        - **Planner:** display names for the new goal and action.
+    - **Live scenario:** `TheGearedTakeLessDamageInTheSameSector`, the default seed's day with nothing injected.
+        - Two crawlers buy gear on their own.
+        - A tick of exposure costs 0.30 bare against 0.15 geared in the Sump (169 and 146 ticks), and 0.40 against 0.20 in the Glow Caves (244 and 207).
+        - The caravan restocks gear under its sink; the ledger balances; the day's checks hold.
+    - **Mechanism tests:**
+        - `HazardGearTests` (injected, on the real floor);
+        - `InventoryValidator` 8;
+        - `TradeTransactionValidator` 15–16;
+        - `SupplyLoopValidator` 13.
+    - **The drifters' test** became `DriftersLeaveGoldBehindForAKeenPlayer` (F4).
+    - **Re-recorded:** golden hashes `aac77e4` (the hash now also covers glowstone, health, worn gear and the stall's glowstone and gear stock); the client's references `9ff548c`.
+    - **Measured:**
+        - the gate seeds 23/23;
+        - seeds 1–120: 112/120, against 113/120 on `main` with the same failures plus seed 81's trust (F3, F5);
+        - `dotnet test` 376/376 (core 107, client 269); the client's 269/269 exactly in the pinned image; golden 3/3;
+        - the soak 9/9 (fair 1,499–1,564g in its band, 1,000–2,000g);
+        - 0 warnings.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -135,6 +170,10 @@ Each milestone also needs its validators, the golden check and the client's test
 | Tavern rumours written by a language model | Epic 11 |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
 | A planner per thread and a cognition budget (ROADMAP §3A #8) | Only if G1 or G5 measures a need |
+| The pickaxe (a harvest tool, a yield bonus) | Epic 10 Part 2, the workshops (Milestone 3) |
+| A weapon | Combat, with the descent (Part 3, Milestone 4) |
+| Gear per hazard kind (a respirator, a helmet), better grades, repair | Part 2, crafting |
+| Gear making more crawlers willing to venture | G5, where a party's outfit matters |
 | Art beyond the generated placeholders | Until the producer picks an art direction |
 | Multiplayer | After the MVP; this epic keeps it possible (ROADMAP §1A.1) |
 
@@ -159,8 +198,18 @@ Each milestone also needs its validators, the golden check and the client's test
     5. **Searching away from food.** A hungry crawler among empty plots explored the Road Gate and starved on the walk back; the food search now waits at the nearest plot it has seen, as the starvation reflex does.
 
     Measured: 23 of 23 gate seeds pass, with no pawn stacking; seeds 21–120, 96 of 100.
-- **F3 (2026-10-23): on some seeds trust rises for fewer than ⅔ of crawlers.** Seeds 31, 43, 61 and 69 (of 21–120) end with trust up for 6 or 7 of 12 (the day asks for 8). Those crawlers trade two or three times early, spend the day at the hearth, and their trust drifts back to neutral. A balance question, not a stuck crawler: G1 (drifters) and G4 (bounty fairness) add paths to trust; re-measure there. **Re-measured after G1:** seeds 61 and 64 (7 of 12); drifters, who pass through, do not count toward it. **After G2:** seeds 31 and 43 (7 of 12); seed 73 also fails, on one crawler's hunger peak (100) rather than trust, a borderline worth watching in G3.
-- **The fair soak band is re-set to 1,000–2,200g (G2, 2026-10-23; to confirm at the producer's look).** Glowstone is new money by design (the caravan's premium, Q9): with it the fair player ends at 1,545–1,594g, against the old band of 375–875g. The epic's G2 Definition of Done asked that the soak keep its bands; tuning glowstone down to fit would have made the hazards not worth the risk. Wages (G4) are the cost meant to meet it ([economy model](../economy-model.md) §7).
+- **F3 (2026-10-23): on some seeds trust rises for fewer than ⅔ of crawlers.** Seeds 31, 43, 61 and 69 (of 21–120) end with trust up for 6 or 7 of 12 (the day asks for 8). Those crawlers trade two or three times early, spend the day at the hearth, and their trust drifts back to neutral. A balance question, not a stuck crawler: G1 (drifters) and G4 (bounty fairness) add paths to trust; re-measure there. **Re-measured after G1:** seeds 61 and 64 (7 of 12); drifters, who pass through, do not count toward it. **After G2:** seeds 31 and 43 (7 of 12); seed 73 also fails, on one crawler's hunger peak (100) rather than trust, a borderline worth watching in G3. **After G3 (seeds 1–120):** trust on seeds 31, 43 and 81 (7 of 12); seed 73's hunger is unchanged (it fails the same way on `main`).
+- **The fair soak band is 1,000–2,000g (producer, 2026-10-25).** G2 re-set it to 1,000–2,200g on 2026-10-23, pending the producer's look; the producer set 1,000–2,000g. Glowstone is new money by design (the caravan's premium, Q9): with it the fair player ends at 1,545–1,594g, against the old band of 375–875g. The epic's G2 Definition of Done asked that the soak keep its bands; tuning glowstone down to fit would have made the hazards not worth the risk. Wages (G4) are the cost meant to meet it ([economy model](../economy-model.md) §7).
+- **F4 (2026-10-25): the drifters' benefit to a keen player is no longer measurable in the treasury.**
+    - **G1's claim:** G1 asserted that a slightly greedy player ends the soak richer with drifters than in a closed outpost, summed over the soak seeds (2,316g against 2,154g).
+    - **What changed:** glowstone (G2) made the treasury swing by ±300g a seed, while drifters leave 0–118g behind.
+    - **Measured over seeds 1–15 with gear:** 19,355g against 19,249g, ahead on only 8 of 15. On the soak seeds the sum was +18g before gear and −18g after.
+    - **The test now:** it asserts what is causal, that drifters leave gold behind on every soak seed, and reports the comparison (`DriftersLeaveGoldBehindForAKeenPlayer`). G4's wages are the next cost; re-measure at G6.
+- **F5 (2026-10-25): jitter fails the day on 4 of seeds 1–120** (56, 69, 74, 119), the same on `main` and with G3.
+    - Every case is early (t1008–1263): a crawler reverses three times in a few ticks among others.
+    - **Where:** three cases at the Hub–Bunkhouse door (near (2.2, −7.1)), one at (4.3, 4.9) on the Hub's north side.
+    - It counts since Unity's removal (Epic CLIENT M2.8), when the day began failing on jitter, penetration and breaches. No gate seed has it.
+    - A navigation question for G5, when parties walk together; the gate seeds still pass.
 - **The greedy soak band is judged at its lowest trust mean (2026-10-23).** With the G0 fixes, hungry crawlers eat at the Garden instead of buying gouged rations late in the run; at greedy prices nobody trades once the stall is empty, and trust drifts back to neutral by minute 30 (seed 2: mean 0.0). The band now asks that greed pushed the mean below 0 at some point, as the generous band is judged at its peak ([economy model](../economy-model.md) §7).
 
 ## History
@@ -169,3 +218,5 @@ Each milestone also needs its validators, the golden check and the client's test
 - 2026-10-23: G0 done: finding F2 resolved, the day gated on 23 seeds; findings F3 (trust on some seeds) and the greedy band recorded. Its working plan was deleted at close-out.
 - 2026-10-23: G1 done: drifters open the economy; four navigation and planning faults found and fixed with them; Vec2 rounds alike in both runtimes. Its working plan was deleted at close-out.
 - 2026-10-23: G2 done: health, the Sump and the Glow Caves, glowstone; the fair band re-set; A* rounds alike in both runtimes. Its working plan was deleted at close-out.
+- 2026-10-25: the producer's look at G2 passed ("hazards UI is fine for now"); the fair soak band set to 1,000–2,000g. G3 (gear) started on `feat/epic10-g3`, with a working plan in `.agents/`.
+- 2026-10-25: G3 done: hazard gear (one protective item, worn, halving hazard damage and wearing out), bought by bold crawlers at 30g; findings F4 (the drifters' benefit to a keen player) and F5 (early jitter on 4 of 120 seeds). Its working plan was deleted at close-out.

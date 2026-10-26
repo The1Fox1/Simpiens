@@ -6,6 +6,7 @@ using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Presentation.Dashboard;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Xunit;
 
@@ -116,6 +117,32 @@ namespace Simpiens.Client.Tests
             model.SelectCrawler(crawler.AgentId);
             Assert.Equal(30f, model.Dossier.Health);
             Assert.Equal(DossierModel.DownedBadge, model.Dossier.Badge);
+        }
+
+        /// <summary>Epic 10 G3: the terminal prices hazard gear and shows its stock; the dossier shows worn gear and its wear.</summary>
+        [Fact]
+        public void TheMerchantPricesGearAndTheDossierShowsItsWear()
+        {
+            using var sim = Outpost(0);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.OpenMerchant();
+            Assert.Equal(30, model.Merchant.GearPrice);
+            Assert.Contains("3 Gear", model.Merchant.Stock);
+            model.Merchant.GearPrice = 26;
+            model.Merchant.Apply();
+            sim.Step(1);
+            Assert.True(model.Context.TryGetStall(model.Merchant.StallId, out var stall));
+            Assert.Equal(26, stall.HazardGearSellPrice);
+            Assert.Equal(45, stall.GlowstoneBuyPrice); // the others keep their prices
+
+            var crawler = sim.Host.CrawlerStates[0];
+            model.SelectCrawler(crawler.AgentId);
+            Assert.Equal(DossierModel.NoGear, model.Dossier.Gear);
+            ushort life = sim.Simulation.Economy.Gear.LifeTicks;
+            crawler.Inventory.TryWear(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: (ushort)(life * 64 / 100)));
+            model.SelectCrawler(crawler.AgentId);
+            Assert.Equal("Hazard gear, 64% left", model.Dossier.Gear);
+            Assert.Equal("Hazard gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1), life));
         }
 
         [Fact]
