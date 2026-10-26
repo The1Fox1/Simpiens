@@ -21,6 +21,12 @@ namespace Simpiens.Cognition.Inventory
         public int Capacity => _capacity;
         public int Gold { get; set; }
 
+        /// <summary>The worn gear (Epic 10 G3): one item beside the pack, so gear never takes a pack slot.</summary>
+        public ItemInstance Gear { get; private set; }
+
+        /// <summary>True for an item worn in the gear slot rather than carried in the pack.</summary>
+        public static bool IsWearable(ItemType type) => type == ItemType.HazardGear;
+
         public AgentInventory(int capacity = DefaultCapacity, int startingGold = Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold)
         {
             _capacity = capacity > 0 ? capacity : DefaultCapacity;
@@ -175,6 +181,37 @@ namespace Simpiens.Cognition.Inventory
             return true;
         }
 
+        /// <summary>Puts gear on. Refused (false) for an item that isn't worn, or while gear is already worn.</summary>
+        public bool TryWear(in ItemInstance gear)
+        {
+            if (gear.IsEmpty || !IsWearable(gear.Type) || !Gear.IsEmpty) return false;
+            Gear = gear.WithQuantity(1);
+            return true;
+        }
+
+        /// <summary>Takes the worn gear off (a rolled-back purchase); what was worn, or empty.</summary>
+        public ItemInstance RemoveGear()
+        {
+            var worn = Gear;
+            Gear = ItemInstance.Empty;
+            return worn;
+        }
+
+        /// <summary>
+        /// Wears the gear by <paramref name="ticks"/> of hazard exposure. At 0 it breaks and is gone: returns true then.
+        /// </summary>
+        public bool WearGear(ushort ticks = 1)
+        {
+            if (Gear.IsEmpty) return false;
+            if (Gear.Durability > ticks)
+            {
+                Gear = Gear.WithDurability((ushort)(Gear.Durability - ticks));
+                return false;
+            }
+            Gear = ItemInstance.Empty;
+            return true;
+        }
+
         public void AddGold(int amount)
         {
             if (amount > 0)
@@ -195,18 +232,20 @@ namespace Simpiens.Cognition.Inventory
         public void Clear()
         {
             Array.Clear(_slots, 0, _capacity);
+            Gear = ItemInstance.Empty;
         }
 
-        /// <summary>Writes the purse and every slot into a save, reusing its slot array when the capacity matches.</summary>
+        /// <summary>Writes the purse, every slot and the worn gear into a save, reusing its slot array when the capacity matches.</summary>
         public void CaptureTo(InventorySave save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (save.Slots == null || save.Slots.Length != _capacity) save.Slots = new ItemInstance[_capacity];
             Array.Copy(_slots, save.Slots, _capacity);
             save.Gold = Gold;
+            save.Gear = Gear;
         }
 
-        /// <summary>Replaces the purse and the slots with a save's. The save must have this inventory's capacity.</summary>
+        /// <summary>Replaces the purse, the slots and the worn gear with a save's. The save must have this inventory's capacity.</summary>
         public void RestoreFrom(InventorySave save)
         {
             if (save?.Slots == null) throw new ArgumentNullException(nameof(save));
@@ -216,6 +255,7 @@ namespace Simpiens.Cognition.Inventory
             }
             Array.Copy(save.Slots, _slots, _capacity);
             Gold = save.Gold;
+            Gear = save.Gear;
         }
     }
 }

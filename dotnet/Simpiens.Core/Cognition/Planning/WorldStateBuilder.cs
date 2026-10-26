@@ -27,7 +27,7 @@ namespace Simpiens.Cognition.Planning
             bool hasTool = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.ToolPickaxe);
             bool hasSalvage = inv != null && (inv.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb) || inv.HasItem(Simpiens.Simulation.Economy.ItemType.Glowstone))
                 && !ResourceTargeting.StallRefusesHeldSalvage(context);
-            bool hasHazardGear = inv != null && inv.HasItem(Simpiens.Simulation.Economy.ItemType.HazardGear);
+            bool hasHazardGear = inv != null && inv.Gear.Type == Simpiens.Simulation.Economy.ItemType.HazardGear; // worn, not carried (Epic 10 G3)
 
             var state = BuildWorldState(context, hasFood, hasTool);
             state = state.With(StateFact.HasProvisions, hasFood);
@@ -63,7 +63,7 @@ namespace Simpiens.Cognition.Planning
                 }
                 bool hasSalvage = (context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.IronOre) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.MedicinalHerb) || context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.Glowstone))
                     && !ResourceTargeting.StallRefusesHeldSalvage(context);
-                bool hasHazardGear = context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.HazardGear);
+                bool hasHazardGear = context.Inventory.Gear.Type == Simpiens.Simulation.Economy.ItemType.HazardGear;
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
             }
