@@ -1013,3 +1013,15 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - `dotnet test` 376/376 (core 107, client 269); golden 3/3 re-recorded; the client's 269/269 exactly in the pinned image;
   - the gate seeds 23/23; the soak 9/9 (fair 1,499–1,564g);
   - the MonoGame and Android builds compile; 0 warnings.
+
+## 2026-10-26 — The item system reviewed; an item catalog planned (refactor R7)
+
+- **The question (producer, before merging Epic 10 G3):** is the item system extensible, and can items be grouped by tag or category?
+- **The answer:** not yet.
+  - **Generic:** the item record, the pack and resource nodes.
+  - **Not generic:** the stall (`TradeStallData`), the caravan (`SupplyTuning`), the price command, the stall's opening terms, the crawlers' salvage choices and the client name each item.
+  - **Categories** are hand-written checks.
+  - **Cost:** glowstone (G2) and hazard gear (G3) each touched about 20 files; `TradeStallData` alone took 16–17 edits and a save-format bump per item.
+- **Decision (producer, 2026-10-26):** add R7, an item catalog, to `.agents/core_refactor_plan.md`.
+  - **Design:** item definitions with bit-flag categories; per-item tables in the stall and the caravan; cognition looping over a category in a stated order.
+  - **Timing:** before Epic 10 Part 2, whose crafting multiplies the items, and alongside R4 (the stall's extraction into `Market`).
