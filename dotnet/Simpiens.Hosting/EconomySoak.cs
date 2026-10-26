@@ -27,9 +27,10 @@ namespace Simpiens.Hosting
         public const uint StarvingTicks = 300;
 
         // Pace bands (docs/economy-model.md §7; review §3.3 D5), as EconomySoakScenario asserts them
-        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors); was 375-875g (docs/economy-model.md §7)
+        // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors), 1,000-2,000g by the producer on 2026-10-25;
+        // was 375-875g (docs/economy-model.md §7)
         public const uint FairTreasuryMin = 1000;
-        public const uint FairTreasuryMax = 2200;
+        public const uint FairTreasuryMax = 2000;
         public const int FairTrustUpMin = 8;
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8;
