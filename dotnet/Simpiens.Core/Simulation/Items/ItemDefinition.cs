@@ -9,9 +9,12 @@ namespace Simpiens.Simulation.Items
     /// </summary>
     public sealed class ItemDefinition
     {
+        private readonly ConsumeEffect[] _consume;
+
         public ItemDefinition(ItemType id, string name, string displayName, ItemCategory categories, ItemRarity rarity,
-            ushort maxStack = 99, string spriteKey = null)
+            ushort maxStack = 99, string spriteKey = null, ConsumeEffect[] consume = null)
         {
+            _consume = consume != null ? (ConsumeEffect[])consume.Clone() : System.Array.Empty<ConsumeEffect>();
             Id = id;
             Name = name;
             DisplayName = displayName;
@@ -37,6 +40,10 @@ namespace Simpiens.Simulation.Items
 
         /// <summary>What the client draws.</summary>
         public string SpriteKey { get; }
+
+        /// <summary>What consuming it does, in order; none for an item that isn't consumed (§3.6).</summary>
+        public int ConsumeEffectCount => _consume.Length;
+        public ConsumeEffect GetConsumeEffect(int index) => _consume[index];
 
         /// <summary>True when the item is in every group of <paramref name="categories"/>.</summary>
         public bool Is(ItemCategory categories) => (Categories & categories) == categories;

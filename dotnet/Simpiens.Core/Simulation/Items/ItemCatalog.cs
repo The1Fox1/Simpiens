@@ -24,11 +24,13 @@ namespace Simpiens.Simulation.Items
         static ItemCatalog()
         {
             Define(new ItemDefinition(ItemType.Ration, "Ration", "Ration",
-                ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common, spriteKey: "Resource_BerryBush"));
+                ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common, spriteKey: "Resource_BerryBush",
+                consume: new[] { new ConsumeEffect(StatKind.Hunger, -40f) }));
             Define(new ItemDefinition(ItemType.IronOre, "IronOre", "Iron Ore",
                 ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common, spriteKey: "Resource_OreVein"));
             Define(new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
-                ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common, spriteKey: "Resource_HerbPatch"));
+                ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common, spriteKey: "Resource_HerbPatch",
+                consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }));
             Define(new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon)); // no source until Epic 10 Part 2
             Define(new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",

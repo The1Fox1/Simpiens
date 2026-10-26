@@ -23,11 +23,7 @@ namespace Simpiens.Core.Tests
             // Quirks kept on purpose (the plan's §5)
             ["Simpiens.Core/Simulation/ResourceData.cs"] = "§5: a node's default yield is a ration",
             ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "§5: an untyped node yields a ration",
-            // I3, consumables
-            ["Simpiens.Core/Cognition/AgentState.cs"] = "I3: HasFoodInInventory (§5)",
-            ["Simpiens.Core/Cognition/Evaluators/SurvivalUtilityEvaluator.cs"] = "I3: carried food",
-            ["Simpiens.Core/Cognition/Evaluators/MentalBreakEvaluator.cs"] = "I3: medicine",
-            ["Simpiens.Core/Cognition/Planning/Handlers/TreatWoundsIntentHandler.cs"] = "I3: medicine",
+            ["Simpiens.Core/Cognition/AgentState.cs"] = "§5: HasFoodInInventory packs a ration when set",
             // I5, the stall, the caravan and prices
             ["Simpiens.Core/Simulation/Economy/TradeStallData.cs"] = "I5: per-item stall fields",
             ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "I5: per-item terms",

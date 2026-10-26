@@ -1,3 +1,4 @@
+using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
@@ -60,10 +61,8 @@ namespace Simpiens.Cognition
                 agent.NavigationalStalls = 0;
 
                 // Eating carried food, whoever chose it: a plan step or a hunger reflex
-                if (intent is EatCarriedFoodIntent && agent.HasFoodInInventory)
+                if (intent is EatCarriedFoodIntent && ItemUse.Consume(agent, agent.Inventory.FirstHeld(Simpiens.Simulation.Items.ItemCategory.Food)))
                 {
-                    agent.Hunger = SimMath.Max(0f, agent.Hunger - 40f);
-                    agent.HasFoodInInventory = false;
                     agent.Activity.RecordMeal(currentTick);
                 }
 

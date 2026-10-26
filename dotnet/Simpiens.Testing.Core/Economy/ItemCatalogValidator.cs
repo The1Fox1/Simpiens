@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition.Inventory;
+using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 
@@ -22,8 +23,9 @@ namespace Simpiens.Testing.Economy
             ValidateGroupQueries();
             ValidateMapsYieldDefinedItems();
             ValidateRarityScores();
+            ValidateConsumables();
 
-            TestLog.Log("<color=green>[ItemCatalogValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[ItemCatalogValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDefinitionsAreConsistent()
@@ -124,6 +126,52 @@ namespace Simpiens.Testing.Economy
                 && ItemRarity.Epic.Score() == 10 && ItemRarity.Legendary.Score() == 2, "The tiers' scores are 1000, 250, 50, 10, 2.");
             Assert(ItemCatalog.Get(ItemType.Glowstone).Rarity == ItemRarity.Rare, "Glowstone is rare.");
             TestLog.Log("[PASS] Test 5: rarity scores fall with rarity.");
+        }
+
+        /// <summary>
+        /// I3: an item is consumable exactly when it has effects; food eases hunger and medicine heals. ItemUse reproduces
+        /// the code it replaced bit for bit (Max(0, hunger - 40), Min(100, health + 30)), and Consume takes one unit or
+        /// refuses.
+        /// </summary>
+        private void ValidateConsumables()
+        {
+            foreach (var item in ItemCatalog.All)
+            {
+                Assert(item.Is(ItemCategory.Consumable) == (item.ConsumeEffectCount > 0), $"{item.Name}: consumable exactly when it has effects.");
+                bool easesHunger = false, heals = false;
+                for (int i = 0; i < item.ConsumeEffectCount; i++)
+                {
+                    var effect = item.GetConsumeEffect(i);
+                    easesHunger |= effect.Stat == StatKind.Hunger && effect.Amount < 0f;
+                    heals |= effect.Stat == StatKind.Health && effect.Amount > 0f;
+                }
+                if (item.Is(ItemCategory.Food)) Assert(easesHunger, $"{item.Name}: food eases hunger.");
+                if (item.Is(ItemCategory.Medicine)) Assert(heals, $"{item.Name}: medicine heals.");
+            }
+
+            var ration = ItemCatalog.Get(ItemType.Ration);
+            var herb = ItemCatalog.Get(ItemType.MedicinalHerb);
+            var crawler = new Simpiens.Cognition.AgentState(new EntityId(1, 0, 0, 0));
+            for (int i = 0; i <= 1100; i++)
+            {
+                float value = i * 0.0937f; // 0 to about 103, off the round numbers
+                crawler.Hunger = value;
+                Simpiens.Cognition.ItemUse.Apply(crawler, ration);
+                Assert(BitConverter.SingleToInt32Bits(crawler.Hunger) == BitConverter.SingleToInt32Bits(Simpiens.SimMath.Max(0f, value - 40f)), $"A ration at hunger {value}: {crawler.Hunger}.");
+                crawler.Health = value;
+                Simpiens.Cognition.ItemUse.Apply(crawler, herb);
+                Assert(BitConverter.SingleToInt32Bits(crawler.Health) == BitConverter.SingleToInt32Bits(Simpiens.SimMath.Min(Simpiens.Cognition.Vitality.MaxHealth, value + 30f)), $"A herb at health {value}: {crawler.Health}.");
+            }
+
+            var eater = new Simpiens.Cognition.AgentState(new EntityId(2, 0, 0, 0));
+            eater.Inventory.Clear();
+            Assert(!Simpiens.Cognition.ItemUse.Consume(eater, ItemType.Ration), "Nothing to eat: refused.");
+            eater.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 2, 5), out _);
+            eater.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
+            eater.Hunger = 70f;
+            Assert(!Simpiens.Cognition.ItemUse.Consume(eater, ItemType.IronOre) && eater.Inventory.GetItemCount(ItemType.IronOre) == 1, "Ore isn't consumed.");
+            Assert(Simpiens.Cognition.ItemUse.Consume(eater, ItemType.Ration) && eater.Hunger == 30f && eater.Inventory.GetItemCount(ItemType.Ration) == 1, "A ration: hunger 70 -> 30, one left.");
+            TestLog.Log("[PASS] Test 6: consumables are defined by their effects, and using one is exactly the old arithmetic.");
         }
 
         private static void Assert(bool condition, string message)
