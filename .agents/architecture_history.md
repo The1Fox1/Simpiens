@@ -959,3 +959,22 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The ceiling:** KNI 4.3.9001 (the latest on NuGet) ships its desktop libraries for `net8.0` and its Android platform only for `net10.0-android36.0`; Gum's stable packages target `net8.0`; .NET 11 is at release candidate (GA expected November 2026). So: .NET 10, C# 14.
 - **Done (`fb86e80`):** the core dropped its `netstandard2.1` build; the C# 10 pin and the net10.0 "latest" override are gone, so every project uses its framework's default, C# 14. Nothing in the sources worked around netstandard2.1, so no code changed. Nullable reference types and implicit usings stay off: turning them on is a code-wide change of its own.
 - **Verification:** `dotnet test` 372/372; golden 3/3; the client's 267/267 exactly in the pinned image; the MonoGame and Android builds compile.
+
+## 2026-10-25 — A code-smell report checked; the cleanup before Epic 10 G3
+
+- **Source:** the producer had a smaller agent write a code-smell report (not in the repo) and make the small fixes on `feat/code-cleanliness`: `52f582f` (§1A.2 #17's exception boundary, #19's bounty ids, `PathResponse`'s double-return guard, succession ties broken by entity id, a dead field) and `e58073a` (Gum's types to `Gum.GueDeriving`: the build's 316 warnings to 0, renders unchanged byte for byte). Both were re-run before building on them.
+- **Decision (producer, 2026-10-25):** no epic. The plan `.agents/core_refactor_plan.md` holds the report's triage and the refactor (R0–R6); R0, the cleanup, is done now, and the rest comes back after Epic 10 Part 1.
+- **The report, checked:** `SimulationManager` as a god object (1,876 lines), the locked GOAP planner (#8), the A* cell cap and the 64-fact limit hold, and are in the plan. Rejected or narrowed:
+  - `Vec2 ==` stays approximate (the golden baselines depend on it).
+  - `MentalBreakEvaluator` edits only the agent's private snapshot buffer; the authoritative forgetting is on the main thread when the panic ends.
+  - Gossip through the spatial grid would change who gossips with whom (the first partner found wins), so it is a behaviour change, deferred to roadmap §3A #8 with the other scaling items.
+- **R0, what the cleanup added to the smaller agent's fixes:**
+  - **Faults are counted.** A caught fault was only logged, so a test would pass over a throwing handler. `ISimulationManager.IntentFaults` and `FirstIntentFault` count them for the simulation's lifetime; `OutpostWatch` fails the day on any, and the scenarios that don't judge the whole day assert zero.
+  - **Bounty ids.** The generator's skip loop could never end on a full board; it now gives up after one pass and the post is refused.
+  - **Deviation from the plan:** R0 proposed refusing a finished bounty's id as well. `EconomyZeroAllocValidator` reposts fixed ids every round to measure a steady state, and the bug was losing a *live* bounty's escrow, so only live ids are refused, as the smaller agent had it.
+  - **Counter not saved:** `_nextBountyId` is derived on load from the saved bounties, and a check pins it.
+  - **Tests moved:** the smaller agent's `CleanlinessTests` became validator tests by domain (navigation, economy, sociopolitical, environment, persistence).
+  - **Warnings are errors** in `Directory.Build.props`, except NuGet's audit advisories.
+- **Git identity:** every local commit since the start used the global config's `brandon.fox@gmail.com`; the producer's identity is `Brandon Fox <brandonslyfox@gmail.com>` (their GitHub account). The global config is fixed, and the branch's three unpushed commits were re-authored; published history keeps the old address (producer's choice: no force-push).
+
+- **Verification:** `dotnet test` 372/372 (core 105: the smaller agent's 5 tests now run inside the validator tests; client 267); golden 3/3, unchanged; the client's 267/267 exactly in the pinned image; the MonoGame and Android builds compile; 0 warnings everywhere.
