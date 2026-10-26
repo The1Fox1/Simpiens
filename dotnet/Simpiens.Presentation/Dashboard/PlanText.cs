@@ -24,6 +24,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(GatherAtAnchorGoal)] = "Gather at the hearth",
             [typeof(LiquidateSalvageGoal)] = "Sell salvage",
             [typeof(PurchaseProvisionsGoal)] = "Buy provisions",
+            [typeof(OutfitForDangerGoal)] = "Gear up for danger",
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
             [typeof(SocializeGoal)] = "Socialize",
@@ -31,6 +32,7 @@ namespace Simpiens.Presentation.Dashboard
 
             // Actions
             [typeof(BuyProvisionsAction)] = "Buying provisions",
+            [typeof(BuyHazardGearAction)] = "Buying hazard gear",
             [typeof(ClaimBountyAction)] = "Claiming a bounty",
             [typeof(ClaimGatherBountyAction)] = "Claiming a gather bounty",
             [typeof(ClaimScoutBountyAction)] = "Claiming a scout bounty",

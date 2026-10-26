@@ -37,6 +37,23 @@ namespace Simpiens.Client.Tests
             Assert.Equal($"{stall.HerbBuyPrice} Gold", window.HerbValue.Text);
         }
 
+        /// <summary>
+        /// The status bar's treasury and stock line never overlap, even with a four-digit treasury and every stock at its
+        /// most (Epic 10 G2 and G3 each lengthened the stock line).
+        /// </summary>
+        [Fact]
+        public void TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest()
+        {
+            var ui = OpenMerchant();
+            var sim = (Simpiens.Simulation.SimulationManager)ui.Game.Session.Simulation.Simulation;
+            var stall = sim.ActiveStalls[0];
+            sim.UpdateStall(stall.WithTreasury(9999).WithStock(50, 20, 20).WithGlowstoneStock(20).WithHazardGearStock(99));
+            ui.Frame();
+            var window = ui.Game.Play.Dashboard.Merchant;
+            Assert.Equal("Treasury: 9999 Gold", window.TreasuryText);
+            Assert.True(window.StockLeft >= window.TreasuryRight + 8f, $"The stock line starts at {window.StockLeft}, the treasury ends at {window.TreasuryRight}.");
+        }
+
         [Fact]
         public void DraggingASliderAndPressingApplyChangesTheStallOnTheNextTick()
         {
