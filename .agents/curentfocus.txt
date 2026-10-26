@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-25
+# Last reconciled: 2026-10-25 (G3 opened)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -20,12 +20,15 @@ CURRENT FOCUS
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
     merged into deleted branches; only G0, PR #7, reached main). From G3, one PR per milestone into main.
-  - Next: G3 gear, G4 the guild, G5 expeditions, G6 the gate. The producer looks at G2, G5 and G6.
+  - G3 gear: IN PROGRESS 2026-10-25 on feat/epic10-g3 (plan: .agents/epic10_g3_plan.md).
+  - Then G4 the guild, G5 expeditions, G6 the gate. The producer looks at G5 and G6.
 
 OPEN WITH THE PRODUCER
-- The look at G2 (danger on screen) and the fair soak band re-set to 1,000-2,200g (Epic 10 §7).
+- G3's design defaults (plan D1-D3): one protective item (the pickaxe to Part 2), named "hazard gear", worn in a
+  gear slot. Accepted unless the producer says otherwise.
 - The greedy soak band judged at its lowest trust mean (Epic 10 G0) and the drifter tuning (G1): accepted by
   default unless the producer says otherwise.
+- Closed 2026-10-25: the look at G2 ("hazards UI is fine for now"); the fair soak band, 1,000-2,000g.
 - Closed 2026-10-24: Milestone 1's save/load check at 1x; Epic CLIENT's side-by-side with Unity and the looks
   at M3, motion between ticks, and the header's pause and speed.
 

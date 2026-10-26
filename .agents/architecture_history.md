@@ -978,3 +978,14 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Git identity:** every local commit since the start used the global config's `brandon.fox@gmail.com`; the producer's identity is `Brandon Fox <brandonslyfox@gmail.com>` (their GitHub account). The global config is fixed, and the branch's three unpushed commits were re-authored; published history keeps the old address (producer's choice: no force-push).
 
 - **Verification:** `dotnet test` 372/372 (core 105: the smaller agent's 5 tests now run inside the validator tests; client 267); golden 3/3, unchanged; the client's 267/267 exactly in the pinned image; the MonoGame and Android builds compile; 0 warnings everywhere.
+
+## 2026-10-25 — Epic 10: G2 signed off, the fair band set, G3 planned
+
+- **Decisions (producer, 2026-10-25):**
+  - The look at G2 passed: "hazards UI is fine for now".
+  - The fair soak band is 1,000–2,000g, not G2's provisional 1,000–2,200g. `EconomySoak.FairTreasuryMax` is now 2,000; the fair runs measure 1,545–1,594g (the soak passes 10/10).
+- **G3 planned** (`.agents/epic10_g3_plan.md`, branch `feat/epic10-g3`). Three design defaults go to the producer by exception:
+  - **D1, one protective item.** A harvest takes 1.5 s against 15–30 s of exposure per trip, so a pickaxe can't cut a trip's damage by more than about 5%, and a yield bonus is an economy change better tuned with the workshops. The pickaxe moves to Part 2. This deviates from the epic's G3 row, which names the pickaxe and the weapon.
+  - **D2, the hazard-defence item renamed.** Epic 9's `BasicWeapon`, "equipped for hazard defense", becomes `HazardGear`, because Part 1 has no combat.
+  - **D3, gear worn in a slot of its own.** It never crowds salvage out of the 4-slot pack.
+- **Gear's place in the economy:** gear wear is the crawler sink Epic 9 D2 deferred. The caravan's wholesale gear is a new named sink (`GearWholesale`), and the counterweight to glowstone's money until wages (G4).
