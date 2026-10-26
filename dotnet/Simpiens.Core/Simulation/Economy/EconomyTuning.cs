@@ -94,8 +94,11 @@ namespace Simpiens.Simulation.Economy
         public ushort StallHerbStock { get; private set; } = 10;
         /// <summary>What the stall pays for Glowstone, the rare salvage (Epic 10 G2); the caravan pays 70 (SupplyTuning).</summary>
         public ushort StallGlowstoneBuyPrice { get; private set; } = 45;
-        /// <summary>What the stall sells hazard gear for (Epic 10 G3): its base value, fair to a neutral crawler; and its opening stock.</summary>
-        public ushort StallHazardGearPrice { get; private set; } = 40;
+        /// <summary>
+        /// What the stall sells hazard gear for (Epic 10 G3), and its opening stock. 30g is 0.75 of a neutral crawler's calm
+        /// gear value (40g), as the ration's 15g is of 20g: fair, and paid by crawlers up to greed +0.5.
+        /// </summary>
+        public ushort StallHazardGearPrice { get; private set; } = 30;
         public ushort StallHazardGearStock { get; private set; } = 3;
         public uint StallTreasury { get; private set; } = 250;
 

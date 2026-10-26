@@ -475,6 +475,19 @@ namespace Simpiens.Cognition.Planning
                 && stall.RationSellPrice <= Considerations.RationReservationPrice(context);
         }
 
+        /// <summary>
+        /// Epic 10 G3: the nearest reachable stall sells hazard gear at or below this crawler's price, and the crawler can
+        /// pay for it and still buy a ration after (gear never costs it a meal).
+        /// </summary>
+        public static bool CanBuyGear(in AgentContext context)
+        {
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            int gold = context.Inventory != null ? context.Inventory.Gold : 0;
+            return stall.HazardGearStock > 0 && stall.HazardGearSellPrice > 0
+                && stall.HazardGearSellPrice <= Considerations.GearReservationPrice(context)
+                && gold >= stall.HazardGearSellPrice + stall.RationSellPrice;
+        }
+
         /// <summary>Nearest stall the agent can walk to.</summary>
         public static bool TryGetNearestStall(in AgentContext context, out TradeStallData nearest)
         {

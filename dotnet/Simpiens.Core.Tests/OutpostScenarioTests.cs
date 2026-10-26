@@ -142,6 +142,65 @@ namespace Simpiens.Core.Tests
             Assert.True(failures.Count == 0, "The day failed:\n  " + string.Join("\n  ", failures));
         }
 
+        /// <summary>
+        /// Gear (Epic 10 G3's Definition of Done): on the real outpost, with nothing injected, a crawler buys hazard gear at
+        /// the stall on its own and, in the same hazard sector, loses health more slowly per tick of exposure than a crawler
+        /// without; its gear wears; the caravan restocks the stall's gear under its own sink, and the ledger balances; the
+        /// day's checks still hold.
+        /// </summary>
+        [Fact]
+        public void TheGearedTakeLessDamageInTheSameSector()
+        {
+            using var sim = Outpost();
+            var watch = new OutpostWatch(sim);
+            var map = sim.Host.World.Map;
+            // Per hazard sector: ticks and damage, bare and geared, from each crawler's tallies tick by tick
+            var bare = new Dictionary<byte, (int Ticks, float Damage)>();
+            var geared = new Dictionary<byte, (int Ticks, float Damage)>();
+            var last = new Dictionary<EntityId, Simpiens.Cognition.Contracts.AgentActivity>();
+            for (int t = 0; t < 9000; t++)
+            {
+                sim.Step(1);
+                watch.Observe();
+                foreach (var state in sim.Host.CrawlerStates)
+                {
+                    var now = state.Activity;
+                    if (last.TryGetValue(state.AgentId, out var before) && now.HazardTicks > before.HazardTicks)
+                    {
+                        byte sector = map.FindSector(state.Position).Id;
+                        bool wasGeared = now.GearedHazardTicks > before.GearedHazardTicks;
+                        var table = wasGeared ? geared : bare;
+                        table.TryGetValue(sector, out var sum);
+                        float damage = wasGeared ? now.GearedHazardDamage - before.GearedHazardDamage : (now.HazardDamage - before.HazardDamage) - (now.GearedHazardDamage - before.GearedHazardDamage);
+                        table[sector] = (sum.Ticks + 1, sum.Damage + damage);
+                    }
+                    last[state.AgentId] = now;
+                }
+            }
+            watch.Finish();
+            var output = TestContext.Current.TestOutputHelper;
+            output?.WriteLine(watch.Report());
+
+            int bought = sim.Host.CrawlerStates.Sum(s => s.Activity.GearPurchases);
+            var compared = bare.Keys.Where(geared.ContainsKey).ToList();
+            foreach (var sector in compared)
+            {
+                output?.WriteLine($"sector {sector}: bare {bare[sector].Damage / bare[sector].Ticks:F3} a tick over {bare[sector].Ticks} ticks, geared {geared[sector].Damage / geared[sector].Ticks:F3} over {geared[sector].Ticks}");
+            }
+            Assert.True(bought > 0, "Nobody bought hazard gear.");
+            Assert.True(compared.Count > 0, $"No hazard sector saw both a bare and a geared crawler (bare in {string.Join(",", bare.Keys)}, geared in {string.Join(",", geared.Keys)}).");
+            foreach (var sector in compared)
+            {
+                float bareRate = bare[sector].Damage / bare[sector].Ticks, gearedRate = geared[sector].Damage / geared[sector].Ticks;
+                Assert.True(gearedRate < bareRate, $"Sector {sector}: geared {gearedRate:F3} a tick, bare {bareRate:F3}.");
+            }
+            Assert.Contains(sim.Host.CrawlerStates, s => s.Activity.GearedHazardTicks > 0);
+            Assert.True(sim.Simulation.EconomyLedger.GetSinkTotal(SupplyService.GearSinkName) > 0, "The caravan restocked no gear.");
+            Assert.Equal(0, watch.ConservationViolations);
+            var failures = watch.DayFailures();
+            Assert.True(failures.Count == 0, "The day failed:\n  " + string.Join("\n  ", failures));
+        }
+
         /// <summary>The Milestone 1 supply loop: sale, scout, gather, restock and regrowth by their deadlines.</summary>
         [Fact]
         public void TheSupplyLoopEmergesWithoutInjection()

@@ -66,9 +66,9 @@ namespace Simpiens.Hosting
             {
                 case "fair": return new Player("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, economy.StallHazardGearPrice, sendsCommand: false);
                 case "greedy": return new Player("greedy", 30, 10, 12, 60, sendsCommand: true);
-                case "generous": return new Player("generous", 5, 35, 40, 25, sendsCommand: true);
+                case "generous": return new Player("generous", 5, 35, 40, 20, sendsCommand: true);
                 // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
-                case "keen": return new Player("keen", 20, 18, 22, 45, sendsCommand: true);
+                case "keen": return new Player("keen", 20, 18, 22, 35, sendsCommand: true);
                 default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, keen).", nameof(name));
             }
         }
