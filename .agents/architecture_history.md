@@ -989,3 +989,27 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - **D2, the hazard-defence item renamed.** Epic 9's `BasicWeapon`, "equipped for hazard defense", becomes `HazardGear`, because Part 1 has no combat.
   - **D3, gear worn in a slot of its own.** It never crowds salvage out of the 4-slot pack.
 - **Gear's place in the economy:** gear wear is the crawler sink Epic 9 D2 deferred. The caravan's wholesale gear is a new named sink (`GearWholesale`), and the counterweight to glowstone's money until wages (G4).
+
+## 2026-10-25 — Epic 10 G3: hazard gear
+
+- **Decisions:** the producer said "proceed" on the plan's defaults (D1–D3, by exception).
+  - **D1:** one protective item. The pickaxe moves to Part 2 and a weapon to the descent: a faster harvest cuts a hazard trip's damage by 5% at most.
+  - **D2:** `BasicWeapon` becomes `HazardGear`.
+  - **D3:** gear is worn in a slot of its own beside the pack.
+- **Built** (`906310e`..`9ff548c`):
+  - worn gear halves hazard damage and wears out after 500 ticks in danger (durability counts ticks: whole numbers, and the `ushort` already saved with an item);
+  - the stall sells gear; after the rations, the caravan restocks it under a new sink, `GearWholesale`;
+  - bold crawlers who know where glowstone is buy it (`OutfitForDangerGoal`, `BuyHazardGearAction`; no new planner facts);
+  - save format 4;
+  - a gear row in the merchant terminal; gear in the dossier.
+- **Deviations from the plan:**
+  - **The default gear price is 30g, not 40g.** At 40g, the base value, nobody bought in a day on three seeds: a crawler with any greed values gear below its base value. 30g keeps the ration's ratio (15g against a 20g neutral value: 0.75). Soak profiles: generous 20, keen 35, greedy 60.
+  - **Durability:** the plan's "100, losing 2 a second" became 500 ticks of life (the same 50 s).
+  - **The merchant window grew to 740.** The longer stock line ran into the treasury; a test now checks it with a four-digit treasury.
+  - **G1's keen comparison stopped holding** once gear tipped a fragile margin. Since glowstone it is within the noise: 15 seeds, 19,355g against 19,249g. `AKeenPlayerDoesBetterWithDrifters` became `DriftersLeaveGoldBehindForAKeenPlayer`, which asserts what is causal and reports the rest (Epic 10 F4).
+  - **The world hash** now covers glowstone, health, worn gear and the stall's glowstone and gear stock. G2 and G3 had added them without the hash seeing them.
+- **Found:** on seeds 1–120 the day fails on 7 seeds on `main` and on 8 with G3 (seed 81's trust, F3). Four of those are early jitter (Epic 10 F5). They fail only since Unity's removal made jitter fail the day; no gate seed is affected.
+- **Verification:**
+  - `dotnet test` 376/376 (core 107, client 269); golden 3/3 re-recorded; the client's 269/269 exactly in the pinned image;
+  - the gate seeds 23/23; the soak 9/9 (fair 1,499–1,564g);
+  - the MonoGame and Android builds compile; 0 warnings.
