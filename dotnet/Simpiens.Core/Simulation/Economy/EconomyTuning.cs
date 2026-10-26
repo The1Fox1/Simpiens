@@ -76,7 +76,7 @@ namespace Simpiens.Simulation.Economy
         public ushort OreBaseValue { get; private set; } = 8;
         public ushort HerbBaseValue { get; private set; } = 12;
         public ushort PickaxeBaseValue { get; private set; } = 30;
-        public ushort WeaponBaseValue { get; private set; } = 40;
+        public ushort HazardGearBaseValue { get; private set; } = 40;
         public ushort GlowstoneBaseValue { get; private set; } = 30; // rare salvage from the hazard sectors (Epic 10 G2)
 
         /// <summary>Gold a crawler arrives with: one ration at the stall's default price (review §3.3 D6).</summary>
@@ -135,7 +135,7 @@ namespace Simpiens.Simulation.Economy
                 case ItemType.IronOre: return OreBaseValue;
                 case ItemType.MedicinalHerb: return HerbBaseValue;
                 case ItemType.ToolPickaxe: return PickaxeBaseValue;
-                case ItemType.BasicWeapon: return WeaponBaseValue;
+                case ItemType.HazardGear: return HazardGearBaseValue;
                 case ItemType.Glowstone: return GlowstoneBaseValue;
                 default: return 0;
             }

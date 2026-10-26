@@ -189,7 +189,7 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 1, 8), out _);
             agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.MedicinalHerb, 1, 12), out _);
             agent.Inventory.TryAddItem(new ItemInstance(3, ItemType.ToolPickaxe, 1, 15), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.BasicWeapon, 1, 20), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.HazardGear, 1, 20), out _);
             registry.Register(node);
 
             var intentState = new ActiveIntentState

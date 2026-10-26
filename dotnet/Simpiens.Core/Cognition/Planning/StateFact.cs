@@ -14,7 +14,7 @@ namespace Simpiens.Cognition.Planning
         IsNearPeer = 5,
         HasExchangedGossip = 6,
         HasTool = 7,
-        HasWeapon = 8,
+        HasHazardGear = 8,
         IsThreatened = 9,
         AtHomeLocation = 10,
         IsResting = 11,

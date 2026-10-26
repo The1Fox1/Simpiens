@@ -92,7 +92,7 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
             agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
             agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.ToolPickaxe, 1, 30), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(5, ItemType.BasicWeapon, 1, 40), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(5, ItemType.HazardGear, 1, 40), out _);
             Assert(agent.Inventory.OccupiedSlots == agent.Inventory.Capacity, "Inventory is full before harvest.");
 
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, herbId, null));
