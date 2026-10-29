@@ -84,8 +84,8 @@ namespace Simpiens.Client.Tests
             foreach (var key in new[] { ArtKeys.TileWallLow, ArtKeys.PropHearth, ArtKeys.PropBunk, ArtKeys.SelectionRing, ArtKeys.Missing })
                 Assert.True(catalog.TryId(key, out _), key);
             Assert.Equal(mode == "isometric", catalog.TryId(ArtKeys.CrawlerShadow, out _));
-            // A node by its item's catalog sprite key; an unknown key is the missing art
-            Assert.Equal(catalog.Id(ArtKeys.Node("Resource_OreVein")), catalog.Node("Resource_OreVein"));
+            // A node by its item's art key; an unknown key is the missing art
+            Assert.Equal(catalog.Id(ArtKeys.Node("iron-ore")), catalog.Node("iron-ore"));
             Assert.Equal(catalog.Id(ArtKeys.Missing), catalog.Node("Item_Nothing"));
             Assert.Equal(catalog.Missing, catalog.Node(null));
         }

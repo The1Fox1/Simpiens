@@ -75,7 +75,7 @@ namespace Simpiens.Presentation.Art
         private readonly ArtDefinition[] _definitions;
         private readonly int[] _frames;
         private readonly Dictionary<string, ArtId> _byKey;
-        private readonly Dictionary<string, ArtId> _nodesBySpriteKey;
+        private readonly Dictionary<string, ArtId> _nodesByArtKey;
         private readonly ArtId _missing;
 
         private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Vec2 nameOffset, float nameHeight)
@@ -84,7 +84,7 @@ namespace Simpiens.Presentation.Art
             _definitions = definitions;
             _frames = frames;
             _byKey = byKey;
-            _nodesBySpriteKey = nodes;
+            _nodesByArtKey = nodes;
             _missing = byKey[ArtKeys.Missing];
             NameOffset = nameOffset;
             NameHeight = nameHeight;
@@ -123,11 +123,11 @@ namespace Simpiens.Presentation.Art
         public ArtId Missing => _missing;
 
         /// <summary>
-        /// The node that yields an item whose catalog sprite key is <paramref name="spriteKey"/> (<c>node/</c> + it), or
+        /// The node that yields an item whose art key is <paramref name="itemArtKey"/> (<c>node/</c> + it), or
         /// <see cref="Missing"/> when the catalogue has none. No string is built: allocation-free per frame.
         /// </summary>
-        public ArtId Node(string spriteKey)
-            => spriteKey != null && _nodesBySpriteKey.TryGetValue(spriteKey, out var id) ? id : _missing;
+        public ArtId Node(string itemArtKey)
+            => itemArtKey != null && _nodesByArtKey.TryGetValue(itemArtKey, out var id) ? id : _missing;
 
         /// <summary>The sprite index of <paramref name="id"/>'s <paramref name="frame"/> (wrapped to its frame count).</summary>
         public int Sprite(ArtId id, int frame)

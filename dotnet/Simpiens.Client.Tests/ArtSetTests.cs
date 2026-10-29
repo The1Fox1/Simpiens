@@ -36,10 +36,10 @@ namespace Simpiens.Client.Tests
             Row(ArtKeys.TileWall, 102);
             Row(ArtKeys.TileWallLow, 102); // top-down's: the wall
             Row(ArtKeys.Missing, 109); // never drawn on a shipped map
-            Row(ArtKeys.Node("Resource_BerryBush"), 110);
-            Row(ArtKeys.Node("Resource_OreVein"), 110);
-            Row(ArtKeys.Node("Resource_HerbPatch"), 110);
-            Row(ArtKeys.Node("Resource_Glowstone"), 110);
+            Row(ArtKeys.Node("ration"), 110);
+            Row(ArtKeys.Node("iron-ore"), 110);
+            Row(ArtKeys.Node("medicinal-herb"), 110);
+            Row(ArtKeys.Node("glowstone"), 110);
             Row(ArtKeys.PropHearth, 111, frames: 2);
             Row(ArtKeys.PropBunk, 112);
             foreach (AgentVisualState state in Enum.GetValues(typeof(AgentVisualState))) Row(ArtKeys.Crawler(state), 113, frames: 2);

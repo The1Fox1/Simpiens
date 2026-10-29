@@ -62,7 +62,7 @@ namespace Simpiens.Client.Tests
             {
                 Assert.NotEmpty(map.ResourceNodes);
                 foreach (var node in map.ResourceNodes)
-                    Assert.True(catalog.Node(ItemCatalog.Get(node.Item)?.SpriteKey) != fallback, $"{map.Name}: node '{node.Key}' yields {node.Item}, which has no node art (it draws the missing art).");
+                    Assert.True(catalog.Node(ItemCatalog.Get(node.Item)?.ArtKey) != fallback, $"{map.Name}: node '{node.Key}' yields {node.Item}, which has no node art (it draws the missing art).");
             }
         }
 
@@ -78,7 +78,7 @@ namespace Simpiens.Client.Tests
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));
-            foreach (var item in ItemCatalog.All) used.Add(catalog.Node(item.SpriteKey));
+            foreach (var item in ItemCatalog.All) used.Add(catalog.Node(item.ArtKey));
             var dead = catalog.Keys.Where(key => !used.Contains(catalog.Id(key))).ToList();
             Assert.True(dead.Count == 0, $"{mode}: rows nothing draws: {string.Join(", ", dead)}");
         }

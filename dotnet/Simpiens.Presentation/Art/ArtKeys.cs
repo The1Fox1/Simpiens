@@ -5,7 +5,7 @@ namespace Simpiens.Presentation.Art
 {
     /// <summary>
     /// The art keys code names (graphics V1): stable strings, resolved to <see cref="ArtId"/>s once per catalogue. A
-    /// resource node's key is <c>node/</c> and its item's catalog sprite key; a crawler's, <c>crawler/</c> and its state.
+    /// resource node's key is <c>node/</c> and its item's art key (<c>node/iron-ore</c>); a crawler's, <c>crawler/</c> and its state.
     /// </summary>
     public static class ArtKeys
     {
@@ -36,7 +36,7 @@ namespace Simpiens.Presentation.Art
             _ => TileWall,
         };
 
-        public static string Node(string itemSpriteKey) => NodePrefix + itemSpriteKey;
+        public static string Node(string itemArtKey) => NodePrefix + itemArtKey;
 
         private static string[] BuildCrawlers()
         {

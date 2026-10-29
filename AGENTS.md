@@ -136,7 +136,7 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   1. An `ItemType` value. Never reuse one: a removed item's id stays reserved.
   2. A definition in `ItemCatalog`: groups, rarity, and its consume or equipment block if it has one.
   3. Its terms in the session's economy, if the stall or the caravan trades it (`EconomyTuning`'s item terms, `SupplyTuning`'s caravan terms).
-  4. A sprite under its sprite key, if it lies on the map.
+  4. Its art, found by its art key (`ItemDefinition.ArtKey`, the name in kebab case): a node row if a map node yields it.
   5. The map nodes that yield it.
   6. Optionally, bespoke words in `ItemTexts`.
   - Nothing else: the stall, the caravan, the crawlers and the merchant terminal follow (`ItemSystemProofTests` adds one this way).

@@ -39,15 +39,15 @@ namespace Simpiens.Presentation.Art
         }
 
         /// <summary>
-        /// The resource nodes, by their items' catalog sprite keys (rations' is the berry bush); an item whose key has no
-        /// row draws the missing art. Shared with isometric, which stands the same sprites on their feet.
+        /// The resource nodes, by their items' art keys (rations grow on the berry bush); an item whose key has no row
+        /// draws the missing art. Shared with isometric, which stands the same sprites on their feet.
         /// </summary>
         internal static readonly (string Key, string Sprite)[] Nodes =
         {
-            (ArtKeys.Node("Resource_BerryBush"), "Resource_BerryBush"),
-            (ArtKeys.Node("Resource_OreVein"), "Resource_OreVein"),
-            (ArtKeys.Node("Resource_HerbPatch"), "Resource_HerbPatch"),
-            (ArtKeys.Node("Resource_Glowstone"), "Resource_Glowstone"),
+            (ArtKeys.Node("ration"), "Resource_BerryBush"),
+            (ArtKeys.Node("iron-ore"), "Resource_OreVein"),
+            (ArtKeys.Node("medicinal-herb"), "Resource_HerbPatch"),
+            (ArtKeys.Node("glowstone"), "Resource_Glowstone"),
         };
 
         /// <summary>Each crawler state's two frames. Shared with isometric.</summary>

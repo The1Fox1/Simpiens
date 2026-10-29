@@ -34,6 +34,7 @@ namespace Simpiens.Testing.Economy
             Assert(ItemCatalog.Get(ItemType.None) == null && !ItemCatalog.IsDefined(ItemType.None), "None is no item.");
             Assert(ItemCatalog.All.Count > 0, "The catalog defines items.");
             var names = new HashSet<string>();
+            var artKeys = new HashSet<string>(StringComparer.Ordinal);
             var economy = EconomyTuning.Default;
             ItemType previous = ItemType.None;
             foreach (var item in ItemCatalog.All)
@@ -42,7 +43,8 @@ namespace Simpiens.Testing.Economy
                 previous = item.Id;
                 Assert(ReferenceEquals(ItemCatalog.Get(item.Id), item), $"{item.Name}: looked up by its id.");
                 Assert(!string.IsNullOrEmpty(item.Name) && names.Add(item.Name), $"{item.Name}: a unique code name.");
-                Assert(!string.IsNullOrEmpty(item.DisplayName) && !string.IsNullOrEmpty(item.SpriteKey), $"{item.Name}: a display name and a sprite key.");
+                Assert(!string.IsNullOrEmpty(item.DisplayName), $"{item.Name}: a display name.");
+                Assert(IsKebabCase(item.ArtKey) && artKeys.Add(item.ArtKey), $"{item.Name}: a unique art key in kebab case ('{item.ArtKey}').");
                 Assert(item.MaxStack > 0, $"{item.Name}: stacks.");
                 Assert(item.Categories != ItemCategory.None, $"{item.Name}: in at least one group.");
                 Assert(economy.BaseValue(item.Id) > 0, $"{item.Name}: the default economy values it.");
@@ -199,6 +201,11 @@ namespace Simpiens.Testing.Economy
             Assert(CrawlerStats.Get(null, StatKind.Attack, 4f) == 4f, "No inventory: the base.");
             TestLog.Log("[PASS] Test 7: equipment stats are the base, plus adds, times multiplies.");
         }
+
+        /// <summary>Lower-case letters and digits in dash-separated words: "iron-ore" (graphics V3.4).</summary>
+        private static bool IsKebabCase(string key)
+            => !string.IsNullOrEmpty(key) && key[0] != '-' && key[key.Length - 1] != '-' && !key.Contains("--")
+               && System.Linq.Enumerable.All(key, c => c == '-' || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'));
 
         private static void Assert(bool condition, string message)
         {

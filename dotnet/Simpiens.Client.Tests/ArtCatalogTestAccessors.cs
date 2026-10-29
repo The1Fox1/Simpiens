@@ -13,7 +13,7 @@ namespace Simpiens.Presentation.Art
         {
             public ArtPiece Tile(TileKind kind) => catalog.Piece(catalog.Id(ArtKeys.Tile(kind)), 0f);
             public ArtPiece LowWall => catalog.Piece(catalog.Id(ArtKeys.TileWallLow), 0f);
-            public ArtPiece Resource(ItemType kind) => catalog.Piece(catalog.Node(ItemCatalog.Get(kind)?.SpriteKey), 0f);
+            public ArtPiece Resource(ItemType kind) => catalog.Piece(catalog.Node(ItemCatalog.Get(kind)?.ArtKey), 0f);
             public ArtPiece Hearth(float viewSeconds) => catalog.Piece(catalog.Id(ArtKeys.PropHearth), viewSeconds);
             public ArtPiece Bunk => catalog.Piece(catalog.Id(ArtKeys.PropBunk), 0f);
             public ArtPiece Crawler(in CrawlerPose pose) => catalog.Piece(catalog.Id(ArtKeys.Crawler(pose.State)), pose.Frame, pose.ScaleX, pose.ScaleY);

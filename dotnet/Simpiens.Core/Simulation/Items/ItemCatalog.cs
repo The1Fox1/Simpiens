@@ -49,16 +49,16 @@ namespace Simpiens.Simulation.Items
 
         private static volatile Tables _tables = new Tables(Definitions());
 
-        /// <summary>The game's items. Adding one: an <see cref="ItemType"/> value, a definition here, a sprite, and its nodes.</summary>
+        /// <summary>The game's items. Adding one: an <see cref="ItemType"/> value, a definition here, its art (by its art key), and its nodes.</summary>
         private static ItemDefinition[] Definitions() => new[]
         {
             new ItemDefinition(ItemType.Ration, "Ration", "Ration",
-                ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common, spriteKey: "Resource_BerryBush",
+                ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Hunger, -40f) }),
             new ItemDefinition(ItemType.IronOre, "IronOre", "Iron Ore",
-                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common, spriteKey: "Resource_OreVein"),
+                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common),
             new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
-                ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common, spriteKey: "Resource_HerbPatch",
+                ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }),
             // No source until Epic 10 Part 2; nothing reads HarvestSpeed yet
             new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
@@ -71,7 +71,7 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
-                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare, spriteKey: "Resource_Glowstone")
+                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare)
         };
 
         /// <summary>
