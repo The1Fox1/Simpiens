@@ -154,12 +154,13 @@ namespace Simpiens.Client.Tests
         // Epic 10 G2: the Sump and the Glow Caves replace the rock, with their names, their dangers under them ("FOUL AIR")
         // and tinted floors. Graphics V0 (2026-10-28): items hash their sprite's name instead of its sheet and index, so
         // the sheets can renumber; every item pin was re-pinned with no picture change (the renders exact in the pinned image,
-        // the labels' pins unchanged).
+        // the labels' pins unchanged). Graphics V3.1 (2026-10-29): standing pieces snap their anchors to whole pixels, so every
+        // pin with a crawler between pixels moved (tick 0's didn't: nothing is between pixels yet); labels unchanged.
         private static readonly (ulong, ulong) PinnedTick0 = (10935345238333633833UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (6646364000350061749UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (2535543618773285138UL, 10398974787805613629UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (1130535830903303977UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (11245280819837714760UL, 10398974787805613629UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (2237058836137134104UL, 16142742670942183276UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (10012836658246133146UL, 14081288791794121755UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (7720038657801975888UL, 16142742670942183276UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (8959153779911638498UL, 14081288791794121755UL);
     }
 }
