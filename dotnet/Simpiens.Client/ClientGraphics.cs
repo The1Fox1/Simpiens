@@ -30,6 +30,7 @@ namespace Simpiens.Client
                 _sheets[(int)sheet] = new SpriteAtlas(device, SpriteSheets.Contents(sheet), smooth, gutter: smooth ? 0 : 2, order);
             }
             Renderer = new WorldRenderer(_batch, _sheets);
+            Icons = new IconAtlas(device);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
             Fonts = FontLibrary.Load(TitleContainer.OpenStream);
             FontPages = new FontAtlases(device, Fonts, TitleContainer.OpenStream);
@@ -37,12 +38,15 @@ namespace Simpiens.Client
 
         public GraphicsDevice Device { get; }
         public WorldRenderer Renderer { get; }
+        /// <summary>The menus' item icons (graphics V4), magnified and drawn 1:1.</summary>
+        public IconAtlas Icons { get; }
         public FontLibrary Fonts { get; }
         public FontAtlases FontPages { get; }
 
         public void Dispose()
         {
             foreach (var sheet in _sheets) sheet.Dispose();
+            Icons.Dispose();
             FontPages.Dispose();
             _batch.Dispose();
         }

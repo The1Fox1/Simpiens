@@ -108,6 +108,32 @@ namespace Simpiens.Client.Ui
         }
 
         /// <summary>Sets a text only when it changed: Gum lays a text out again on every assignment (wrapped lines are costly).</summary>
+        /// <summary>
+        /// An item's icon (graphics V4): <see cref="IconAtlas.Size"/> square, drawn 1:1 from the icon atlas (so at whole
+        /// pixels it is the art, whatever Gum's texture filter). <paramref name="iconKey"/> null hides it.
+        /// </summary>
+        public static SpriteRuntime Icon(IconAtlas atlas, string iconKey)
+        {
+            var icon = new SpriteRuntime
+            {
+                Texture = atlas.Texture,
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Width = IconAtlas.Size,
+                Height = IconAtlas.Size,
+            };
+            SetIcon(icon, atlas, iconKey);
+            return icon;
+        }
+
+        /// <summary>Points <paramref name="icon"/> at <paramref name="iconKey"/>'s art, or hides it for null.</summary>
+        public static void SetIcon(SpriteRuntime icon, IconAtlas atlas, string iconKey)
+        {
+            icon.Visible = iconKey != null;
+            if (iconKey != null) icon.SourceRectangle = atlas.Source(iconKey);
+        }
+
         public static void SetText(TextRuntime text, string value)
         {
             value ??= string.Empty;
