@@ -5,6 +5,7 @@ using Simpiens.Core.Session.Layouts;
 using Simpiens.Entities;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Xunit;
 
 namespace Simpiens.Client.Tests
@@ -84,7 +85,7 @@ namespace Simpiens.Client.Tests
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
-                Assert.Equal(i, sprite.Index);
+                Assert.Equal(i, SpriteSheets.Sprites.IndexOf(sprite));
                 Assert.Equal(16, sprite.Width);
                 Assert.Equal(16, sprite.Height);
             }

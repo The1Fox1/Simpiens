@@ -8,7 +8,7 @@ namespace Simpiens.Client
 {
     /// <summary>
     /// Every generated sprite packed into one texture (Epic CLIENT M0), so a frame draws in one batch. Sprites sit on a
-    /// grid with a clear gutter between cells, and are found by <see cref="PixelSprite.Index"/>.
+    /// grid with a clear gutter between cells, and are found by their index in the sheet.
     /// </summary>
     public sealed class SpriteAtlas : IDisposable
     {
@@ -32,7 +32,7 @@ namespace Simpiens.Client
             {
                 var sprite = sprites[i];
                 int left = i % columns * pitch, top = i / columns * pitch;
-                _sources[sprite.Index] = new Rectangle(left, top, sprite.Width, sprite.Height);
+                _sources[i] = new Rectangle(left, top, sprite.Width, sprite.Height);
                 for (int y = 0; y < sprite.Height; y++)
                 {
                     for (int x = 0; x < sprite.Width; x++)

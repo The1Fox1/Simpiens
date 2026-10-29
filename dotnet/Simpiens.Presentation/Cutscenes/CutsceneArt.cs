@@ -29,7 +29,7 @@ namespace Simpiens.Presentation.Cutscenes
 
         private static void Add(string name, Rgba32[] pixels)
         {
-            var sprite = new PixelSprite(_backdrops.Count, "Backdrop_" + name, BackdropWidth, BackdropHeight, pixels);
+            var sprite = new PixelSprite("Backdrop_" + name, BackdropWidth, BackdropHeight, pixels);
             _backdrops.Add(sprite);
             _byName[name] = sprite;
         }
@@ -159,7 +159,7 @@ namespace Simpiens.Presentation.Cutscenes
             var projection = ScreenProjection.Instance;
             if (player != null && CutsceneArt.TryGetBackdrop(player.Backdrop, out var backdrop))
             {
-                Items.Add(projection.LayerOf(DrawRole.Floor), DrawRole.Floor, 0f, backdrop.Index, ScreenProjection.VirtualWidth * 0.5f, ScreenProjection.VirtualHeight * 0.5f,
+                Items.Add(projection.LayerOf(DrawRole.Floor), DrawRole.Floor, 0f, Art.SpriteSheets.Backdrop.IndexOf(backdrop), ScreenProjection.VirtualWidth * 0.5f, ScreenProjection.VirtualHeight * 0.5f,
                     ScreenProjection.VirtualWidth, ScreenProjection.VirtualHeight, White, 0f, DrawSheet.Backdrop);
             }
             if (player == null) return;
@@ -173,7 +173,7 @@ namespace Simpiens.Presentation.Cutscenes
                 float x = OffstageX(staged.Slot) + (SlotX(staged.Slot) - OffstageX(staged.Slot)) * t;
                 var sprite = ProceduralSprites.GetAgentSprite(staged.Pose, CrawlerAppearance.AnimationFrame(staged.Pose, player.Time));
                 var tint = player.Speaker == null || player.Speaker == staged.Character.Id ? White : Dimmed;
-                ref var item = ref Items.Add(projection.LayerOf(DrawRole.Crawler), DrawRole.Crawler, 0f, sprite.Index, x, FeetY,
+                ref var item = ref Items.Add(projection.LayerOf(DrawRole.Crawler), DrawRole.Crawler, 0f, Art.SpriteSheets.Sprites.IndexOf(sprite), x, FeetY,
                     sprite.Width * CharacterScale, sprite.Height * CharacterScale, tint, 0f, DrawSheet.Sprites);
                 item.PivotY = IsometricArt.FeetPivot;
                 item.FlipX = staged.FacingLeft;

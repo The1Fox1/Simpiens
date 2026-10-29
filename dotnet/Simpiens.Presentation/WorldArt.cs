@@ -1,4 +1,5 @@
 using System;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation.Economy;
 
 namespace Simpiens.Presentation
@@ -84,6 +85,10 @@ namespace Simpiens.Presentation
         public const float SelectionRingSize = 0.9f;
 
         private const float Art = TopDownProjection.BasePixelsPerUnit;
+        private static SpriteSheet Sprites => SpriteSheets.Sprites;
+        private static readonly int FloorIndex = Sprites.IndexOf(ProceduralSprites.FloorSprite), RockIndex = Sprites.IndexOf(ProceduralSprites.RockSprite);
+        private static readonly int WallIndex = Sprites.IndexOf(ProceduralSprites.WallSprite), BunkIndex = Sprites.IndexOf(ProceduralSprites.BunkSprite);
+        private static readonly int RingIndex = Sprites.IndexOf(ProceduralSprites.SelectionRing);
 
         public static TopDownArt Instance { get; } = new TopDownArt();
 
@@ -93,31 +98,31 @@ namespace Simpiens.Presentation
         {
             switch (kind)
             {
-                case TileKind.Floor: return new ArtPiece(ProceduralSprites.FloorSprite.Index, Art, Art);
-                case TileKind.Rock: return new ArtPiece(ProceduralSprites.RockSprite.Index, Art, Art);
-                default: return new ArtPiece(ProceduralSprites.WallSprite.Index, Art, Art);
+                case TileKind.Floor: return new ArtPiece(FloorIndex, Art, Art);
+                case TileKind.Rock: return new ArtPiece(RockIndex, Art, Art);
+                default: return new ArtPiece(WallIndex, Art, Art);
             }
         }
 
         public override ArtPiece Resource(ItemType kind)
-            => new ArtPiece(ProceduralSprites.GetResourceSprite(kind).Index, ResourceSize * Art, ResourceSize * Art);
+            => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetResourceSprite(kind)), ResourceSize * Art, ResourceSize * Art);
 
         /// <summary>Two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView).</summary>
         public override ArtPiece Hearth(float viewSeconds)
         {
             var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
             float size = HearthSize * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-            return new ArtPiece(sprite.Index, size * Art, size * Art);
+            return new ArtPiece(Sprites.IndexOf(sprite), size * Art, size * Art);
         }
 
-        public override ArtPiece Bunk => new ArtPiece(ProceduralSprites.BunkSprite.Index, BunkSize * Art, BunkSize * Art);
+        public override ArtPiece Bunk => new ArtPiece(BunkIndex, BunkSize * Art, BunkSize * Art);
 
         public override ArtPiece Crawler(in CrawlerPose pose)
-            => new ArtPiece(pose.Sprite.Index, CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
+            => new ArtPiece(Sprites.IndexOf(pose.Sprite), CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
 
         public override ArtPiece CrawlerShadow => ArtPiece.None;
 
-        public override ArtPiece SelectionRing => new ArtPiece(ProceduralSprites.SelectionRing.Index, SelectionRingSize * Art, SelectionRingSize * Art);
+        public override ArtPiece SelectionRing => new ArtPiece(RingIndex, SelectionRingSize * Art, SelectionRingSize * Art);
 
         /// <summary>Above the crawler on the map (Unity's CameraController).</summary>
         public override Vec2 NameOffset => new Vec2(0f, 0.65f);

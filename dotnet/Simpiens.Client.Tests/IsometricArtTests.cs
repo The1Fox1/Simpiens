@@ -5,6 +5,7 @@ using Simpiens.Entities;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation;
 using Xunit;
 
@@ -75,8 +76,8 @@ namespace Simpiens.Client.Tests
                     var sprite = ProceduralSprites.GetAgentSprite(state, frame);
                     Assert.NotNull(sprite);
                     var pose = new CrawlerPose(state, sprite, 0f, 1f, 1f);
-                    Assert.Same(sprite, ProceduralSprites.All[TopDownArt.Instance.Crawler(pose).Sprite]);
-                    Assert.Same(sprite, WorldSprites.All[Art.Crawler(pose).Sprite]);
+                    Assert.Same(sprite, SpriteSheets.Sprites[TopDownArt.Instance.Crawler(pose).Sprite]);
+                    Assert.Same(sprite, SpriteSheets.Isometric[Art.Crawler(pose).Sprite]);
                 }
             }
         }
@@ -90,15 +91,16 @@ namespace Simpiens.Client.Tests
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
             var items = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).ToList();
             Assert.All(items, i => Assert.Contains(i.Sheet, new[] { DrawSheet.Isometric, DrawSheet.Fog }));
-            Assert.Contains(items, i => i.SpriteIndex == IsometricSprites.Wall.Index);
-            Assert.All(items.Where(i => i.Sheet == DrawSheet.Isometric), i => Assert.InRange(i.SpriteIndex, 0, WorldSprites.All.Count - 1));
+            Assert.Contains(items, i => i.SpriteIndex == SpriteSheets.Isometric.IndexOf(IsometricSprites.Wall));
+            Assert.All(items.Where(i => i.Sheet == DrawSheet.Isometric), i => Assert.InRange(i.SpriteIndex, 0, SpriteSheets.Isometric.Count - 1));
         }
 
         [Fact]
         public void TheSheetsShareIndices()
         {
-            for (int i = 0; i < WorldSprites.All.Count; i++) Assert.Equal(i, WorldSprites.All[i].Index);
-            for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], WorldSprites.All[i]);
+            // Top-down's sprites at the same indices in both sheets, then the placeholders
+            Assert.Equal(ProceduralSprites.All.Count + IsometricSprites.All.Count, SpriteSheets.Isometric.Count);
+            for (int i = 0; i < SpriteSheets.Sprites.Count; i++) Assert.Same(SpriteSheets.Sprites[i], SpriteSheets.Isometric[i]);
         }
     }
 }

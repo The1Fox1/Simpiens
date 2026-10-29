@@ -7,8 +7,8 @@ using Xunit;
 namespace Simpiens.Client.Tests
 {
     /// <summary>
-    /// The sheets' table (graphics V0): every sheet has sprites, a name means one sprite (a sprite in two sheets is the
-    /// same sprite), and only the fog's cloud is sampled smoothly.
+    /// The sheets (graphics V0–V1): every sheet has sprites, a name means one sprite (a sprite in two sheets is the same
+    /// sprite), a sheet gives out its indices, and only the fog's cloud is sampled smoothly.
     /// </summary>
     public class SpriteSheetTests
     {
@@ -27,6 +27,32 @@ namespace Simpiens.Client.Tests
                     else byName[sprite.Name] = sprite;
                 }
             }
+        }
+
+        [Fact]
+        public void ASheetGivesOutItsIndicesByNameAndBySprite()
+        {
+            foreach (var sheet in SpriteSheets.All)
+            {
+                var sprites = SpriteSheets.Contents(sheet);
+                Assert.Equal(sheet, sprites.Id);
+                for (int i = 0; i < sprites.Count; i++)
+                {
+                    Assert.Equal(i, sprites.IndexOf(sprites[i].Name));
+                    Assert.Equal(i, sprites.IndexOf(sprites[i]));
+                }
+            }
+            Assert.Throws<KeyNotFoundException>(() => SpriteSheets.Fog.IndexOf("Agent_Idle_0"));
+            Assert.Throws<KeyNotFoundException>(() => SpriteSheets.Fog.IndexOf(ProceduralSprites.WallSprite));
+            Assert.False(SpriteSheets.Fog.TryIndexOf("Agent_Idle_0", out _));
+        }
+
+        [Fact]
+        public void ASheetRefusesTwoSpritesOfOneName()
+        {
+            var a = new PixelSprite("Twin", 1, 1, new[] { Rgba32.Clear });
+            var b = new PixelSprite("Twin", 1, 1, new[] { Rgba32.Clear });
+            Assert.Throws<System.ArgumentException>(() => new SpriteSheet(DrawSheet.Sprites, new[] { a, b }));
         }
 
         [Fact]

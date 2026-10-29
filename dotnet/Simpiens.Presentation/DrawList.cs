@@ -13,7 +13,7 @@ namespace Simpiens.Presentation
         /// <summary><see cref="FogCloud.Sprite"/>, sampled smoothly.</summary>
         Fog = 1,
         /// <summary>
-        /// <see cref="WorldSprites.All"/>: the 16x16 art and the isometric placeholders, by the same indices, so the isometric
+        /// <see cref="Art.SpriteSheets.Isometric"/>: the 16x16 art and the isometric placeholders, by the same indices, so the isometric
         /// World layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet, laid out as before.
         /// </summary>
         Isometric = 2,

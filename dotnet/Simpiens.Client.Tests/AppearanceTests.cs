@@ -2,6 +2,7 @@ using System.Linq;
 using Simpiens.Cognition;
 using Simpiens.Entities;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation.Spatial;
 using Xunit;
 
@@ -128,8 +129,8 @@ namespace Simpiens.Client.Tests
             int resources = shown.Count(e => e.Type == EntityType.Resource);
             Assert.True(bunks > 0 && hearths > 0 && resources > 0);
             Assert.Equal(bunks + hearths + resources, props.Count);
-            Assert.Equal(bunks, props.Count(p => p.SpriteIndex == ProceduralSprites.BunkSprite.Index && p.Width == TopDownArt.BunkSize * TopDownProjection.BasePixelsPerUnit));
-            Assert.Equal(hearths, props.Count(p => p.SpriteIndex == ProceduralSprites.GetCampfireSprite(0).Index)); // frame 0 at 0 s
+            Assert.Equal(bunks, props.Count(p => p.SpriteIndex == SpriteSheets.Sprites.IndexOf(ProceduralSprites.BunkSprite) && p.Width == TopDownArt.BunkSize * TopDownProjection.BasePixelsPerUnit));
+            Assert.Equal(hearths, props.Count(p => p.SpriteIndex == SpriteSheets.Sprites.IndexOf(ProceduralSprites.GetCampfireSprite(0)))); // frame 0 at 0 s
         }
     }
 }

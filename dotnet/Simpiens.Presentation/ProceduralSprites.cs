@@ -22,7 +22,7 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
-        /// <summary>Every generated sprite, in creation order; a sprite's <see cref="PixelSprite.Index"/> is its place here.</summary>
+        /// <summary>Every generated sprite, in creation order: top-down's sheet (<see cref="Art.SpriteSheets.Sprites"/>) in this order.</summary>
         public static IReadOnlyList<PixelSprite> All => _all;
 
         public static PixelSprite ResourceSprite => _resourceSprite;
@@ -275,7 +275,7 @@ namespace Simpiens.Presentation
                     pixels[y * size + x] = d >= 6.2f && d <= 7.6f ? gold : Rgba32.Clear;
                 }
             }
-            var sprite = new PixelSprite(_all.Count, "Selection_Ring", size, size, pixels);
+            var sprite = new PixelSprite("Selection_Ring", size, size, pixels);
             _all.Add(sprite);
             return sprite;
         }
@@ -333,7 +333,7 @@ namespace Simpiens.Presentation
                     pixels[y * width + x] = palette.TryGetValue(line[x], out var color) ? color : Rgba32.Clear;
                 }
             }
-            var sprite = new PixelSprite(_all.Count, name, width, height, pixels);
+            var sprite = new PixelSprite(name, width, height, pixels);
             _all.Add(sprite);
             _byName[name] = sprite;
             return sprite;
