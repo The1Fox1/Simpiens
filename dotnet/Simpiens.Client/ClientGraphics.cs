@@ -2,7 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Presentation;
-using Simpiens.Presentation.Cutscenes;
+using Simpiens.Presentation.Art;
 
 namespace Simpiens.Client
 {
@@ -20,14 +20,14 @@ namespace Simpiens.Client
         {
             Device = device;
             _batch = new SpriteBatch(device);
-            // By DrawSheet value: top-down's art, the fog's cloud, every sprite with the isometric placeholders, the backdrops
-            _sheets = new[]
+            // By DrawSheet value, from the sheets' table; a smooth sheet (the fog's cloud) takes no gutter, so linear sampling
+            // clamps at its own edge
+            _sheets = new SpriteAtlas[SpriteSheets.All.Count];
+            foreach (var sheet in SpriteSheets.All)
             {
-                new SpriteAtlas(device, ProceduralSprites.All),
-                new SpriteAtlas(device, new[] { FogCloud.Sprite }, smooth: true, gutter: 0),
-                new SpriteAtlas(device, WorldSprites.All),
-                new SpriteAtlas(device, CutsceneArt.Backdrops),
-            };
+                bool smooth = SpriteSheets.Smooth(sheet);
+                _sheets[(int)sheet] = new SpriteAtlas(device, SpriteSheets.Contents(sheet), smooth, gutter: smooth ? 0 : 2);
+            }
             Renderer = new WorldRenderer(_batch, _sheets);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
             Fonts = FontLibrary.Load(TitleContainer.OpenStream);
