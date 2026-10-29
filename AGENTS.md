@@ -149,6 +149,13 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Take out of the economy:** drop its stall and caravan terms (glowstone was taken out this way in `ItemSystemProofTests`).
 - **Remove from the game:** delete its definition and mark its `ItemType` value retired; saves holding it are refused on load.
 
+### Adding art
+- **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:
+  1. The sprite, by name, in a generator (`ProceduralSprites`, `IsometricSprites`; an item's come from `ItemArt`, above). A new generator's sprites go into their sheet in `SpriteSheets`. Generators never read a table or a sheet: an initialisation cycle crashes depending on which class loads first (`ArtInitialisationTests`).
+  2. A row under its `ArtKeys` key in each view mode's table (`TopDownArtTable`, `IsometricArtTable`): frames, size in units of a scale, pivot, frame rate, pulse. Layout that belongs to the art (where carried goods hang, the stall's display slots) is the catalogue's data too.
+- **A new kind of thing** also needs `EntityVisuals` to say which key it is drawn with.
+- **The checks:** `ArtCompletenessTests` (everything the frames carry has art, every row is used, every node on a shipped map has its own); `AtlasLayoutTests` (each sheet within its 2048 budget). Then look at the art review sheet, re-record the art pins in their own commit, and re-record the changed renders in the pinned image (see "Checking a change").
+
 ---
 
 ## Version Control (commit discipline)

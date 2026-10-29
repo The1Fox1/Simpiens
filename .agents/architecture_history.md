@@ -1181,3 +1181,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Frame time within 3% (F23).
 - **Both graphics plans are deleted;** their open items are in the epic.
 
+
+## 2026-10-29: the graphics look passed; V6 closed out
+
+- **The producer's look** at graphics V3–V5 (the art review sheet and the changed renders): "Visual inspection looks
+  good." Decisions D6–D11 stand as proposed. Whole-step zoom (D6's alternative) and the render target stay open in
+  Epic CLIENT §4.
+- **V6, finished before the pull request:**
+  - `AGENTS.md` gains the "Adding art" note the overview plan asked for (sprites, table rows, `EntityVisuals`, the
+    checks); the close-out of V3–V5 had only done the item's art line.
+  - Five doc comments that had slid off their declarations are put back. Three were this branch's: a type inserted
+    between a doc comment and what it described (`ArtKeys`, `HeaderModel`, `UiParts.SetText`). The other two were
+    older (`WorldScene` and its room names). The same slip in the core's `ResourceTargeting` (four comments) is
+    outside this branch and left as it is.
+- **V0–V5 go into `main` as one pull request** from `feat/graphics-catalogue`.
