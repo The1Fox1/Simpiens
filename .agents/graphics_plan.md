@@ -223,7 +223,7 @@ only makes sure the visual mapping has a slot for them (`item/<key>/map`, `DrawR
 | # | Improvement | Why | When |
 | :--- | :--- | :--- | :--- |
 | P1 | **One world atlas for both view modes.** Top-down draws from the world sheet, so `DrawSheet.Sprites` goes. | One texture, one index space, one fewer batch switch. Same pixels and sampling, so renders should stay byte-identical. | V1 |
-| P2 | **The atlas builder gives out indices and packs by size** (shelf packing, sorted by height), within a texture budget (2048² is the safe floor for M4 phones) checked by a test. | Today's square grid sizes every cell to the largest sprite, which wastes space once 16×16 icons sit beside 32×40 walls and M7's 64×64 art. | V1 |
+| P2 | **The atlas builder gives out indices and packs by size** (shelf packing, sorted by height), within a texture budget (2048² is the safe floor for M4 phones) checked by a test. | Today's square grid sizes every cell to the largest sprite, which wastes space once 16×16 icons sit beside 32×40 walls and M7's 64×64 art. | V3 |
 | P3 | **An art review sheet.** A test writes every catalogued sprite, named, on one PNG (`container-output/art-sheet.png`), and pins each sprite's pixels by key. | The producer reviews art in one picture. A changed sprite fails by name, not as "render t300 differs". | V0 |
 | P4 | **Measure Gum before adding icons.** Time the dossier panel's draw; look at Gum's batch count and text re-layout per refresh. | UiDraw is 70% of the most expensive frame, and icons add sprites to it. | V4 opens with it |
 | P5 | **Static tiles cached** (a chunked vertex buffer or render target per map, review R1's second half). | ~1,500 of ~1,600 items a frame are static tiles. But the world is 1 ms on a software renderer: **don't do this until a phone measures it** (M4, as the epic already says). | Deferred (M4) |
@@ -253,12 +253,14 @@ Rules for every phase:
 | Phase | What | Picture change | Gate |
 | :--- | :--- | :--- | :--- |
 | **V0** Review sheet | The art review sheet and per-sprite pins (P3), over today's sprites by today's names. | No | Sheet written; pins pass; renders byte-identical |
-| **V1** Catalogue and atlas | `ArtKey` → `ArtId` → `ArtDefinition`. The atlas builder gives out indices and packs (P2). One world sheet (P1). `ProceduralSprites` and `IsometricSprites` register by key; their static fields remain as thin aliases until V2. The missing-art placeholder. | No | Renders and pins byte-identical; texture budget test; `FrameAllocationTests` |
+| **V1** Catalogue and sheets | `ArtKey` → `ArtId` → `ArtDefinition`. Indices belong to sheets. One world sheet (P1). The art sets read the catalogue. | No | Renders and pins byte-identical; `FrameAllocationTests` |
 | **V2** Visuals as data | `Visual(entity)` replaces `AddProp`'s switch and `WorldArt`'s per-kind members. A view mode is a projection plus a catalogue. `ArtMotion` covers the hearth's pulse and the crawler's squash and tilt. Check P7. | No | Renders byte-identical; `ArtSetTests` rewritten over the catalogue; a test that every `EntityType` the frames carry has a visual |
-| **V3** Sprite kit and item art | `SpriteKit` (ramp, outline, frame, map and node treatments); shape silhouettes; `ItemArt` table. `ItemDefinition.SpriteKey` → `ArtKey`. An icon and a map sprite for every catalog item; nodes regenerated through the kit. The missing-art test over the catalog. | **Yes**: nodes may change look (kept as close as the kit allows) | Producer looks at the review sheet; renders re-recorded in their own commit |
+| **V3** Sprite kit and item art | The atlas packer with its texture budget test (P2) and the missing-art placeholder, moved from V1 because they change the atlas's layout. `SpriteKit` (ramp, outline, frame, map and node treatments); shape silhouettes; `ItemArt` table. `ItemDefinition.SpriteKey` → `ArtKey`. An icon and a map sprite for every catalog item; nodes regenerated through the kit. The missing-art test over the catalog. | **Yes**: nodes may change look (kept as close as the kit allows) | Producer looks at the review sheet; renders re-recorded in their own commit |
 | **V4** Icons in the menus | Measure Gum first (P4) and spike the texture filter. `IconKey` on the merchant, dossier and bounty board models; `IconAtlas`; `UiParts.Icon`. | **Yes**: the dashboard renders | Model tests; the UI frame time no worse than +10% on the dossier probe; renders re-recorded; producer look |
 | **V5** Items in the world | The stall as furniture with its goods on display. Worn gear on crawlers. Carried salvage. The frame gains the stall rows, the worn item and the carried item. | **Yes**: the map renders | `ViewsWriteNothingTests`; zero-allocation frame; renders re-recorded; producer look |
 | **V6** Close-out | `AGENTS.md`: "Adding an item" gains its art line, and a short "Adding art" section. The epic doc records what moved from M7. `architecture_history`. Delete this plan. | No | Docs reconciled |
+
+V0–V2 are broken into steps in `.agents/graphics_v0_v2_plan.md`.
 
 The size is about 5–8 agent days. V0–V2 are behaviour-preserving and can land together. V3–V5 change pictures and
 each needs a look.
