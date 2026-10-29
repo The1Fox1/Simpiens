@@ -14,6 +14,8 @@ namespace Simpiens.Presentation.Art
         public const float HearthSize = 0.9f;
         public const float BunkSize = 0.9f;
         public const float SelectionRingSize = 0.9f;
+        /// <summary>An item lying in the world (on the stall's counter), and the marker over its carrier: 8 texels at a whole 8 pixels.</summary>
+        public const float ItemMapSize = 0.75f, CarriedSize = 0.5f;
 
         /// <summary>The hearth: a two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView).</summary>
         public const float HearthFramesPerSecond = 6f, HearthPulseRate = 4f, HearthPulseAmplitude = 0.03f;
@@ -35,6 +37,11 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
+            foreach (var key in ItemSprites.Keys)
+            {
+                art.Add(ArtKeys.Item(key, ItemPicture.Map), Sheet, new[] { ItemSprites.MapName(key) }, ItemMapSize, ItemMapSize, Art);
+                art.Add(ArtKeys.Item(key, ItemPicture.Carried), Sheet, new[] { ItemSprites.CarriedName(key) }, CarriedSize, CarriedSize, Art);
+            }
             return art.Build();
         }
 

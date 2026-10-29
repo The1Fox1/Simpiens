@@ -96,11 +96,13 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArt()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItems()
         {
             var world = SpriteSheets.World;
-            Assert.Equal(ProceduralSprites.All.Count + IsometricSprites.All.Count + 1, world.Count);
-            Assert.Same(MissingArt.Sprite, world[world.Count - 1]);
+            int missing = ProceduralSprites.All.Count + IsometricSprites.All.Count;
+            Assert.Equal(missing + 1 + ItemSprites.World.Count, world.Count);
+            Assert.Same(MissingArt.Sprite, world[missing]);
+            for (int i = 0; i < ItemSprites.World.Count; i++) Assert.Same(ItemSprites.World[i], world[missing + 1 + i]);
             for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], world[i]);
             for (int i = 0; i < IsometricSprites.All.Count; i++) Assert.Same(IsometricSprites.All[i], world[ProceduralSprites.All.Count + i]);
         }

@@ -76,15 +76,17 @@ namespace Simpiens.Presentation.Art
         private readonly int[] _frames;
         private readonly Dictionary<string, ArtId> _byKey;
         private readonly Dictionary<string, ArtId> _nodesByArtKey;
+        private readonly Dictionary<string, ArtId>[] _items; // by ItemPicture, then the item's art key
         private readonly ArtId _missing;
 
-        private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Vec2 nameOffset, float nameHeight)
+        private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Dictionary<string, ArtId>[] items, Vec2 nameOffset, float nameHeight)
         {
             Name = name;
             _definitions = definitions;
             _frames = frames;
             _byKey = byKey;
             _nodesByArtKey = nodes;
+            _items = items;
             _missing = byKey[ArtKeys.Missing];
             NameOffset = nameOffset;
             NameHeight = nameHeight;
@@ -128,6 +130,10 @@ namespace Simpiens.Presentation.Art
         /// </summary>
         public ArtId Node(string itemArtKey)
             => itemArtKey != null && _nodesByArtKey.TryGetValue(itemArtKey, out var id) ? id : _missing;
+
+        /// <summary>An item's <paramref name="picture"/> (<see cref="ArtKeys.Item"/>), or <see cref="Missing"/>. One dictionary probe, no string built.</summary>
+        public ArtId Picture(string itemArtKey, ItemPicture picture)
+            => itemArtKey != null && _items[(int)picture].TryGetValue(itemArtKey, out var id) ? id : _missing;
 
         /// <summary>The sprite index of <paramref name="id"/>'s <paramref name="frame"/> (wrapped to its frame count).</summary>
         public int Sprite(ArtId id, int frame)
@@ -192,6 +198,8 @@ namespace Simpiens.Presentation.Art
                 var frames = new List<int>();
                 var byKey = new Dictionary<string, ArtId>(_rows.Count, StringComparer.Ordinal);
                 var nodes = new Dictionary<string, ArtId>(StringComparer.Ordinal);
+                var items = new Dictionary<string, ArtId>[3];
+                for (int p = 0; p < items.Length; p++) items[p] = new Dictionary<string, ArtId>(StringComparer.Ordinal);
                 for (int i = 0; i < _rows.Count; i++)
                 {
                     var row = _rows[i];
@@ -209,9 +217,24 @@ namespace Simpiens.Presentation.Art
                     definitions[i] = new ArtDefinition(row.Key, row.Sheet, first, row.Sprites.Length, row.Fps, row.Width, row.Height, row.UnitScale,
                         row.PivotX, row.PivotY, row.PulseRate, row.PulseAmplitude);
                     if (row.Key.StartsWith(ArtKeys.NodePrefix, StringComparison.Ordinal)) nodes[row.Key.Substring(ArtKeys.NodePrefix.Length)] = new ArtId(i);
+                    if (row.Key.StartsWith(ArtKeys.ItemPrefix, StringComparison.Ordinal)) IndexItem(items, row.Key, new ArtId(i));
                 }
                 if (!byKey.ContainsKey(ArtKeys.Missing)) throw new ArgumentException($"The {_name} art catalogue has no '{ArtKeys.Missing}': every catalogue draws something for art it lacks.");
-                return new ArtCatalog(_name, definitions, frames.ToArray(), byKey, nodes, NameOffset, NameHeight);
+                return new ArtCatalog(_name, definitions, frames.ToArray(), byKey, nodes, items, NameOffset, NameHeight);
+            }
+
+            /// <summary>Files an <c>item/&lt;art key&gt;/&lt;picture&gt;</c> row under its picture and art key; refuses an unknown picture.</summary>
+            private void IndexItem(Dictionary<string, ArtId>[] items, string key, ArtId id)
+            {
+                int slash = key.LastIndexOf('/');
+                string artKey = key.Substring(ArtKeys.ItemPrefix.Length, Math.Max(0, slash - ArtKeys.ItemPrefix.Length)), picture = key.Substring(slash + 1);
+                for (int p = 0; p < items.Length; p++)
+                {
+                    if (picture != ArtKeys.PictureName((ItemPicture)p)) continue;
+                    items[p][artKey] = id;
+                    return;
+                }
+                throw new ArgumentException($"The {_name} art catalogue's '{key}' names no item picture (icon, map, carried).");
             }
         }
     }

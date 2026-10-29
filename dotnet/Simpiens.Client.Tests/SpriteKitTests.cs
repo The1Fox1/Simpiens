@@ -97,6 +97,15 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void PlacingLetsClearPixelsFallOffButNotOpaqueOnes()
+        {
+            var pixels = new[] { new Rgba32(9, 9, 9), Rgba32.Clear };
+            var canvas = SpriteKit.Place(pixels, 1, 2, 1, 1, 0, 0); // the clear lower pixel falls off
+            Assert.Equal(new Rgba32(9, 9, 9), canvas[0]);
+            Assert.Throws<ArgumentException>(() => SpriteKit.Place(pixels, 1, 2, 1, 1, 0, -1));
+        }
+
+        [Fact]
         public void EachRarityHasItsOwnColour()
             => Assert.Equal(5, Enum.GetValues<ItemRarity>().Select(RarityColours.Of).Distinct().Count());
 

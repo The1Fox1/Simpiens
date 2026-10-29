@@ -78,9 +78,40 @@ namespace Simpiens.Client.Tests
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));
-            foreach (var item in ItemCatalog.All) used.Add(catalog.Node(item.ArtKey));
+            foreach (var item in ItemCatalog.All)
+            {
+                used.Add(catalog.Node(item.ArtKey));
+                used.Add(catalog.Picture(item.ArtKey, ItemPicture.Map));
+                used.Add(catalog.Picture(item.ArtKey, ItemPicture.Carried));
+            }
             var dead = catalog.Keys.Where(key => !used.Contains(catalog.Id(key))).ToList();
             Assert.True(dead.Count == 0, $"{mode}: rows nothing draws: {string.Join(", ", dead)}");
+        }
+
+        [Theory]
+        [MemberData(nameof(Modes))]
+        public void EveryItemCanStandInTheWorldAndBeCarried(string mode)
+        {
+            var catalog = Catalog(mode);
+            foreach (var item in ItemCatalog.All)
+            {
+                foreach (var picture in new[] { ItemPicture.Map, ItemPicture.Carried })
+                    Assert.True(catalog.Picture(item.ArtKey, picture) != catalog.Missing, $"{mode}: {item.Name} ('{item.ArtKey}') has no {picture} art.");
+            }
+        }
+
+        [Fact]
+        public void EveryItemHasAnIconAndTheIconsHaveNothingElse()
+        {
+            var icons = IconArtTable.Catalog;
+            var used = new HashSet<ArtId> { icons.Missing };
+            foreach (var item in ItemCatalog.All)
+            {
+                var icon = icons.Picture(item.ArtKey, ItemPicture.Icon);
+                Assert.True(icon != icons.Missing, $"{item.Name} ('{item.ArtKey}') has no icon.");
+                used.Add(icon);
+            }
+            Assert.Equal(icons.Count, used.Count);
         }
     }
 }

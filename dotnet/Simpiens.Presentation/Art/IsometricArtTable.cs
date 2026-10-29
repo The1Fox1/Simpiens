@@ -33,6 +33,12 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);
+            // Items stand at the bottom of their canvas; the carried marker hangs centred
+            foreach (var key in ItemSprites.Keys)
+            {
+                art.Add(ArtKeys.Item(key, ItemPicture.Map), Sheet, new[] { ItemSprites.MapName(key) }, ItemSprites.MapSize, ItemSprites.MapSize, pivotY: 1f);
+                art.Add(ArtKeys.Item(key, ItemPicture.Carried), Sheet, new[] { ItemSprites.CarriedName(key) }, ItemSprites.CarriedSize, ItemSprites.CarriedSize);
+            }
             return art.Build();
         }
     }

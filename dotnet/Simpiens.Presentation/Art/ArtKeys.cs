@@ -7,6 +7,14 @@ namespace Simpiens.Presentation.Art
     /// The art keys code names (graphics V1): stable strings, resolved to <see cref="ArtId"/>s once per catalogue. A
     /// resource node's key is <c>node/</c> and its item's art key (<c>node/iron-ore</c>); a crawler's, <c>crawler/</c> and its state.
     /// </summary>
+    /// <summary>An item's pictures (graphics V3.6): its menu icon, its map sprite, and the marker over a crawler carrying it.</summary>
+    public enum ItemPicture : byte
+    {
+        Icon = 0,
+        Map = 1,
+        Carried = 2,
+    }
+
     public static class ArtKeys
     {
         public const string TileFloor = "tile/floor";
@@ -37,6 +45,18 @@ namespace Simpiens.Presentation.Art
         };
 
         public static string Node(string itemArtKey) => NodePrefix + itemArtKey;
+
+        public const string ItemPrefix = "item/";
+
+        /// <summary>An item's picture: <c>item/iron-ore/icon</c>, <c>item/iron-ore/map</c>, <c>item/iron-ore/carried</c>.</summary>
+        public static string Item(string itemArtKey, ItemPicture picture) => ItemPrefix + itemArtKey + "/" + PictureName(picture);
+
+        public static string PictureName(ItemPicture picture) => picture switch
+        {
+            ItemPicture.Icon => "icon",
+            ItemPicture.Map => "map",
+            _ => "carried",
+        };
 
         private static string[] BuildCrawlers()
         {

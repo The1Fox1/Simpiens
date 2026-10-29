@@ -14,6 +14,8 @@ namespace Simpiens.Presentation
         Fog = 1,
         /// <summary><see cref="Cutscenes.CutsceneArt.Backdrops"/>: a hard cutscene's still backdrops, in their own index space.</summary>
         Backdrop = 2,
+        /// <summary>The items' menu icons (graphics V3.6): drawn by the dashboard, never by the world's renderer.</summary>
+        Icons = 3,
     }
 
     /// <summary>

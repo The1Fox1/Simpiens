@@ -101,7 +101,11 @@ namespace Simpiens.Presentation.Art
             return outlined;
         }
 
-        /// <summary><paramref name="pixels"/> on a clear canvas of <paramref name="canvasWidth"/> by <paramref name="canvasHeight"/>, their top-left at <paramref name="left"/>, <paramref name="top"/>.</summary>
+        /// <summary>
+        /// <paramref name="pixels"/> on a clear canvas of <paramref name="canvasWidth"/> by <paramref name="canvasHeight"/>,
+        /// their top-left at <paramref name="left"/>, <paramref name="top"/>. Clear pixels may fall off the canvas; an
+        /// opaque one can't.
+        /// </summary>
         public static Rgba32[] Place(Rgba32[] pixels, int width, int height, int canvasWidth, int canvasHeight, int left, int top)
         {
             var canvas = new Rgba32[canvasWidth * canvasHeight];
@@ -109,8 +113,13 @@ namespace Simpiens.Presentation.Art
                 for (int x = 0; x < width; x++)
                 {
                     int cx = left + x, cy = top + y;
-                    if (cx < 0 || cy < 0 || cx >= canvasWidth || cy >= canvasHeight) throw new ArgumentException("The pixels leave the canvas.");
-                    canvas[cy * canvasWidth + cx] = pixels[y * width + x];
+                    var p = pixels[y * width + x];
+                    if (cx < 0 || cy < 0 || cx >= canvasWidth || cy >= canvasHeight)
+                    {
+                        if (p.A != 0) throw new ArgumentException("An opaque pixel leaves the canvas.");
+                        continue;
+                    }
+                    canvas[cy * canvasWidth + cx] = p;
                 }
             return canvas;
         }

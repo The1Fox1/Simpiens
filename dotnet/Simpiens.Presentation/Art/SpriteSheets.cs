@@ -14,10 +14,10 @@ namespace Simpiens.Presentation.Art
     {
         /// <summary>
         /// The world's art, for both view modes (graphics V3.2): the generated 16x16 sprites, then the isometric
-        /// placeholders, then the missing art (V3.3), so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
+        /// placeholders, then the missing art (V3.3), then the items' map sprites and carried markers (V3.6), so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
         /// sampling rules made the picture independent of the atlas's layout (epic F12).
         /// </summary>
-        public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite));
+        public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite).Concat(ItemSprites.World));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });
@@ -25,12 +25,16 @@ namespace Simpiens.Presentation.Art
         /// <summary>A hard cutscene's still backdrops.</summary>
         public static SpriteSheet Backdrop { get; } = new SpriteSheet(DrawSheet.Backdrop, CutsceneArt.Backdrops);
 
+        /// <summary>The items' menu icons, then the missing art (graphics V3.6).</summary>
+        public static SpriteSheet Icons { get; } = new SpriteSheet(DrawSheet.Icons, ItemSprites.Icons.Append(MissingArt.Sprite));
+
         /// <summary>The sheet <paramref name="sheet"/>.</summary>
         public static SpriteSheet Contents(DrawSheet sheet) => sheet switch
         {
             DrawSheet.World => World,
             DrawSheet.Fog => Fog,
             DrawSheet.Backdrop => Backdrop,
+            DrawSheet.Icons => Icons,
             _ => throw new ArgumentOutOfRangeException(nameof(sheet), sheet, "No such sprite sheet."),
         };
 
