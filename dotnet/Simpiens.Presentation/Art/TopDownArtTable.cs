@@ -38,8 +38,8 @@ namespace Simpiens.Presentation.Art
         }
 
         /// <summary>
-        /// The resource nodes, by their items' catalog sprite keys; an item with no row (rations) draws the default, the
-        /// berry bush. Shared with isometric, which stands the same sprites on their feet.
+        /// The resource nodes, by their items' catalog sprite keys (rations' is the berry bush); an item whose key has no
+        /// row draws the default, the berry bush. Shared with isometric, which stands the same sprites on their feet.
         /// </summary>
         internal static readonly (string Key, string Sprite)[] Nodes =
         {
