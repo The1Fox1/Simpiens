@@ -35,7 +35,8 @@ namespace Simpiens.Client.Tests
             Row(ArtKeys.TileRock, 101);
             Row(ArtKeys.TileWall, 102);
             Row(ArtKeys.TileWallLow, 102); // top-down's: the wall
-            Row(ArtKeys.NodeDefault, 110);
+            Row(ArtKeys.Missing, 109); // never drawn on a shipped map
+            Row(ArtKeys.Node("Resource_BerryBush"), 110);
             Row(ArtKeys.Node("Resource_OreVein"), 110);
             Row(ArtKeys.Node("Resource_HerbPatch"), 110);
             Row(ArtKeys.Node("Resource_Glowstone"), 110);
@@ -71,6 +72,7 @@ namespace Simpiens.Client.Tests
             }).ToHashSet();
             // Floor and wall tiles; Floor 1 has no rock tiles since Epic 10 G2 (the rock became the hazard sectors)
             foreach (int mark in new[] { 100, 102, 110, 111, 112, 113, 114, 115 }) Assert.Contains(mark, marks);
+            Assert.DoesNotContain(109, marks); // nothing on Floor 1 lacks art
 
             var name = scene.Labels.Single(l => l.Kind == LabelKind.Name);
             Assert.True(selection.TryGetCrawlerPosition(out var at));

@@ -14,10 +14,10 @@ namespace Simpiens.Presentation.Art
     {
         /// <summary>
         /// The world's art, for both view modes (graphics V3.2): the generated 16x16 sprites, then the isometric
-        /// placeholders, so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
+        /// placeholders, then the missing art (V3.3), so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
         /// sampling rules made the picture independent of the atlas's layout (epic F12).
         /// </summary>
-        public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All));
+        public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });

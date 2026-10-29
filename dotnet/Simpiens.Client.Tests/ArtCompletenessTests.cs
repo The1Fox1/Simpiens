@@ -18,7 +18,7 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// The art is complete (graphics V2): everything the frames carry that the scene draws has a visual in both view
-    /// modes, every node on a shipped map has art of its own (not the default), and no catalogue row is dead.
+    /// modes, every node on a shipped map has art of its own (not the missing art), and no catalogue row is dead.
     /// </summary>
     public class ArtCompletenessTests
     {
@@ -57,12 +57,12 @@ namespace Simpiens.Client.Tests
         public void EveryNodeOnAShippedMapHasItsOwnArt(string mode)
         {
             var catalog = Catalog(mode);
-            var fallback = catalog.Id(ArtKeys.NodeDefault);
+            var fallback = catalog.Missing;
             foreach (var map in new[] { Floor1Layout.Definition, DevMapLayout.Definition })
             {
                 Assert.NotEmpty(map.ResourceNodes);
                 foreach (var node in map.ResourceNodes)
-                    Assert.True(catalog.Node(ItemCatalog.Get(node.Item)?.SpriteKey) != fallback, $"{map.Name}: node '{node.Key}' yields {node.Item}, which has no node art.");
+                    Assert.True(catalog.Node(ItemCatalog.Get(node.Item)?.SpriteKey) != fallback, $"{map.Name}: node '{node.Key}' yields {node.Item}, which has no node art (it draws the missing art).");
             }
         }
 
@@ -74,7 +74,7 @@ namespace Simpiens.Client.Tests
             var used = new HashSet<ArtId>
             {
                 catalog.Id(ArtKeys.TileFloor), catalog.Id(ArtKeys.TileRock), catalog.Id(ArtKeys.TileWall), catalog.Id(ArtKeys.TileWallLow),
-                catalog.Id(ArtKeys.PropHearth), catalog.Id(ArtKeys.PropBunk), catalog.Id(ArtKeys.SelectionRing), catalog.Id(ArtKeys.NodeDefault),
+                catalog.Id(ArtKeys.PropHearth), catalog.Id(ArtKeys.PropBunk), catalog.Id(ArtKeys.SelectionRing), catalog.Missing,
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));

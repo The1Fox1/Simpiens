@@ -76,7 +76,7 @@ namespace Simpiens.Presentation.Art
         private readonly int[] _frames;
         private readonly Dictionary<string, ArtId> _byKey;
         private readonly Dictionary<string, ArtId> _nodesBySpriteKey;
-        private readonly ArtId _defaultNode;
+        private readonly ArtId _missing;
 
         private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Vec2 nameOffset, float nameHeight)
         {
@@ -85,7 +85,7 @@ namespace Simpiens.Presentation.Art
             _frames = frames;
             _byKey = byKey;
             _nodesBySpriteKey = nodes;
-            _defaultNode = byKey.TryGetValue(ArtKeys.NodeDefault, out var node) ? node : ArtId.None;
+            _missing = byKey[ArtKeys.Missing];
             NameOffset = nameOffset;
             NameHeight = nameHeight;
         }
@@ -119,12 +119,15 @@ namespace Simpiens.Presentation.Art
             }
         }
 
+        /// <summary>What a thing without art of its own is drawn with (<see cref="ArtKeys.Missing"/>).</summary>
+        public ArtId Missing => _missing;
+
         /// <summary>
         /// The node that yields an item whose catalog sprite key is <paramref name="spriteKey"/> (<c>node/</c> + it), or
-        /// <see cref="ArtKeys.NodeDefault"/> when the catalogue has none. No string is built: allocation-free per frame.
+        /// <see cref="Missing"/> when the catalogue has none. No string is built: allocation-free per frame.
         /// </summary>
         public ArtId Node(string spriteKey)
-            => spriteKey != null && _nodesBySpriteKey.TryGetValue(spriteKey, out var id) ? id : _defaultNode;
+            => spriteKey != null && _nodesBySpriteKey.TryGetValue(spriteKey, out var id) ? id : _missing;
 
         /// <summary>The sprite index of <paramref name="id"/>'s <paramref name="frame"/> (wrapped to its frame count).</summary>
         public int Sprite(ArtId id, int frame)
@@ -182,7 +185,7 @@ namespace Simpiens.Presentation.Art
                 return this;
             }
 
-            /// <summary>Resolves every sprite name in its sheet; refuses a duplicate key, an unknown sprite, no frames or a negative size.</summary>
+            /// <summary>Resolves every sprite name in its sheet; refuses a duplicate key, an unknown sprite, no frames, a negative size, or no missing art.</summary>
             public ArtCatalog Build()
             {
                 var definitions = new ArtDefinition[_rows.Count];
@@ -205,8 +208,9 @@ namespace Simpiens.Presentation.Art
                     }
                     definitions[i] = new ArtDefinition(row.Key, row.Sheet, first, row.Sprites.Length, row.Fps, row.Width, row.Height, row.UnitScale,
                         row.PivotX, row.PivotY, row.PulseRate, row.PulseAmplitude);
-                    if (row.Key.StartsWith(ArtKeys.NodePrefix, StringComparison.Ordinal) && row.Key != ArtKeys.NodeDefault) nodes[row.Key.Substring(ArtKeys.NodePrefix.Length)] = new ArtId(i);
+                    if (row.Key.StartsWith(ArtKeys.NodePrefix, StringComparison.Ordinal)) nodes[row.Key.Substring(ArtKeys.NodePrefix.Length)] = new ArtId(i);
                 }
+                if (!byKey.ContainsKey(ArtKeys.Missing)) throw new ArgumentException($"The {_name} art catalogue has no '{ArtKeys.Missing}': every catalogue draws something for art it lacks.");
                 return new ArtCatalog(_name, definitions, frames.ToArray(), byKey, nodes, NameOffset, NameHeight);
             }
         }

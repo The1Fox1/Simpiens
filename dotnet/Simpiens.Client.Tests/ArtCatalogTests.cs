@@ -81,13 +81,13 @@ namespace Simpiens.Client.Tests
                 var crawler = catalog.Id(ArtKeys.Crawler(state));
                 Assert.Equal(2, catalog[crawler].FrameCount);
             }
-            foreach (var key in new[] { ArtKeys.TileWallLow, ArtKeys.PropHearth, ArtKeys.PropBunk, ArtKeys.SelectionRing, ArtKeys.NodeDefault })
+            foreach (var key in new[] { ArtKeys.TileWallLow, ArtKeys.PropHearth, ArtKeys.PropBunk, ArtKeys.SelectionRing, ArtKeys.Missing })
                 Assert.True(catalog.TryId(key, out _), key);
             Assert.Equal(mode == "isometric", catalog.TryId(ArtKeys.CrawlerShadow, out _));
-            // A node by its item's catalog sprite key; an unknown key is the default node
+            // A node by its item's catalog sprite key; an unknown key is the missing art
             Assert.Equal(catalog.Id(ArtKeys.Node("Resource_OreVein")), catalog.Node("Resource_OreVein"));
-            Assert.Equal(catalog.Id(ArtKeys.NodeDefault), catalog.Node("Item_Nothing"));
-            Assert.Equal(catalog.Id(ArtKeys.NodeDefault), catalog.Node(null));
+            Assert.Equal(catalog.Id(ArtKeys.Missing), catalog.Node("Item_Nothing"));
+            Assert.Equal(catalog.Missing, catalog.Node(null));
         }
 
         [Fact]
@@ -110,21 +110,27 @@ namespace Simpiens.Client.Tests
             Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, -1f, 1f), "a negative size");
             Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f, unitScale: 0f), "no scale");
             Refused(b => b.Add("", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f), "no key");
+            Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f), "no missing art", withMissing: false);
             Assert.Throws<KeyNotFoundException>(() => TopDownArtTable.Catalog.Id("prop/nothing"));
+            // The control: the same rows with the missing art build
+            var builds = new ArtCatalog.Builder("test").Add(ArtKeys.Missing, DrawSheet.World, new[] { MissingArt.Name }, 1f, 1f).Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f);
+            Assert.Equal(2, builds.Build().Count);
         }
 
-        private static void Refused(Action<ArtCatalog.Builder> rows, string what)
+        /// <summary>A catalogue with the missing art (unless <paramref name="withMissing"/> is false) and <paramref name="rows"/> is refused, for what the rows break.</summary>
+        private static void Refused(Action<ArtCatalog.Builder> rows, string what, bool withMissing = true)
         {
             var builder = new ArtCatalog.Builder("test");
+            if (withMissing) builder.Add(ArtKeys.Missing, DrawSheet.World, new[] { MissingArt.Name }, 1f, 1f);
             rows(builder);
             Assert.True(Record.Exception(() => builder.Build()) is ArgumentException, $"A catalogue with {what} is refused.");
         }
 
-        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3); isometric's re-pinned when the two world sheets became one (V3.2).</summary>
+        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3); isometric's re-pinned when the two world sheets became one (V3.2), both when missing art replaced the default node (V3.3); a dump of every piece showed only those fields move.</summary>
         private static readonly Dictionary<string, ulong> Pinned = new Dictionary<string, ulong>
         {
-            ["top-down"] = 14863390491918432379UL,
-            ["isometric"] = 16203008574417753068UL, // graphics V3.2: its sheet is World (0), not Isometric (2); every other field unchanged
+            ["top-down"] = 896956307945096979UL, // graphics V3.3: nodes of items no node yields draw the missing art, not the berry bush
+            ["isometric"] = 12408719331572149356UL, // V3.2: its sheet is World (0), not Isometric (2); V3.3: as top-down
         };
 
         private const ulong Start = 14695981039346656037UL;

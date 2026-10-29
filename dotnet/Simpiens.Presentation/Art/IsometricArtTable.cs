@@ -29,7 +29,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Iso_Bunk" }, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.BunkHeight, IsometricSprites.BunkRise))
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
-               .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height);
+               .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)
+               .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);
             return art.Build();

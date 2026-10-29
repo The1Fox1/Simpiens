@@ -20,8 +20,8 @@ namespace Simpiens.Presentation.Art
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";
         public const string NodePrefix = "node/";
-        /// <summary>A node whose item has no node art of its own (today: the berry bush).</summary>
-        public const string NodeDefault = "node/default";
+        /// <summary>What a thing without art of its own is drawn with (<see cref="MissingArt"/>); every catalogue has it.</summary>
+        public const string Missing = "fx/missing";
 
         private static readonly string[] _crawlers = BuildCrawlers();
 

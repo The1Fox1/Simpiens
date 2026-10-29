@@ -31,7 +31,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, HearthSize, HearthSize, Art,
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
-               .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art);
+               .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
+               .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
             return art.Build();
@@ -39,11 +40,10 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>
         /// The resource nodes, by their items' catalog sprite keys (rations' is the berry bush); an item whose key has no
-        /// row draws the default, the berry bush. Shared with isometric, which stands the same sprites on their feet.
+        /// row draws the missing art. Shared with isometric, which stands the same sprites on their feet.
         /// </summary>
         internal static readonly (string Key, string Sprite)[] Nodes =
         {
-            (ArtKeys.NodeDefault, "Resource_BerryBush"),
             (ArtKeys.Node("Resource_BerryBush"), "Resource_BerryBush"),
             (ArtKeys.Node("Resource_OreVein"), "Resource_OreVein"),
             (ArtKeys.Node("Resource_HerbPatch"), "Resource_HerbPatch"),
