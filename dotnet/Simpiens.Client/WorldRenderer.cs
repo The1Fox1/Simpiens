@@ -13,6 +13,15 @@ namespace Simpiens.Client
     /// </summary>
     public sealed class WorldRenderer
     {
+        /// <summary>
+        /// Screen pixels every point-sampled quad is shifted by, right and down (graphics V3.1, epic F12). At an in-between
+        /// scale a pixel's centre can land exactly on a texel's edge, and then float rounding, down to the atlas's width,
+        /// picks the texel: the picture changed when the atlas did. Shifted, the centre is decided by geometry. At a whole
+        /// scale it changes nothing (a centre is half a texel from any edge). Not a binary fraction, so a zoom step can't
+        /// line an edge up with it; large enough to survive a GPU's 8-bit sub-pixel rasterizer at the closest zoom.
+        /// </summary>
+        public const float SampleBias = 0.13f;
+
         private readonly SpriteBatch _batch;
         private readonly SpriteAtlas[] _sheets;
 
@@ -57,7 +66,7 @@ namespace Simpiens.Client
                 var origin = new Vector2(source.Width * item.PivotX, source.Height * item.PivotY);
                 var tint = new Color(item.Tint.R, item.Tint.G, item.Tint.B, item.Tint.A);
                 // World rotation is counter-clockwise with y up; on screen (y down) that is a negative angle
-                _batch.Draw(atlas.Texture, new Vector2(quad.Anchor.X, quad.Anchor.Y), source, tint, -item.Rotation, origin, scale, item.FlipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
+                _batch.Draw(atlas.Texture, new Vector2(quad.Anchor.X + SampleBias, quad.Anchor.Y + SampleBias), source, tint, -item.Rotation, origin, scale, item.FlipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
             }
             if (open >= 0) _batch.End();
         }

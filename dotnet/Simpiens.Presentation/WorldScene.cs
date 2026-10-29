@@ -326,6 +326,7 @@ namespace Simpiens.Presentation
             ref var item = ref Items.Add(_layers[(int)role], role, depth, piece.Sprite, at.X, at.Y, piece.Width, piece.Height, tint, rotation, piece.Sheet);
             item.PivotX = piece.PivotX;
             item.PivotY = piece.PivotY;
+            item.SnapToPixel = role is DrawRole.Prop or DrawRole.Crawler or DrawRole.Shadow or DrawRole.Selection; // standing pieces (F19)
             return ref item;
         }
 

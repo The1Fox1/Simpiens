@@ -54,6 +54,13 @@ namespace Simpiens.Presentation
         public ulong SortKey;
         /// <summary>What a click on it selects (<see cref="DrawList.PickedEntity"/>), or -1 when it can't be clicked.</summary>
         public int Pick;
+        /// <summary>
+        /// Its anchor lands on a whole screen pixel (graphics V3.1, epic F19): a standing piece (a prop, a crawler, its
+        /// shadow, the ring) then keeps one shape wherever it moves at a zoom, instead of shimmering as its sub-pixel
+        /// position changes which texels the point sampling picks. Tiles and walls don't snap: they tile, and snapping each
+        /// would open hairline gaps at in-between zooms.
+        /// </summary>
+        public bool SnapToPixel;
     }
 
     /// <summary>
@@ -86,7 +93,9 @@ namespace Simpiens.Presentation
         public static ScreenQuad Of(in DrawItem item, in View view)
         {
             if (item.OnFloor) return FloorBounds(item, view);
-            return new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
+            var anchor = view.WorldToScreen(new Vec2(item.X, item.Y), item.Z);
+            if (item.SnapToPixel) anchor = new Vec2(SimMath.Round(anchor.X), SimMath.Round(anchor.Y));
+            return new ScreenQuad(anchor, item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
         }
 
         /// <summary>A floor rectangle's screen bounds (the box round the shape the projection makes of it), centred on its centre's place.</summary>
