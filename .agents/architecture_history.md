@@ -1124,3 +1124,13 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - At the end: `dotnet test` 398/398 (core 112, client 286); the Android build compiles.
 - **The V0–V2 plan is deleted.** V3–V6 stay in `.agents/graphics_plan.md`.
 
+## 2026-10-29: correction to F19 (the art catalogue's shimmer finding)
+
+- **What was wrong:** the 2026-10-28 entry said isometric's crawlers don't shimmer, so anchor snapping (P7) wasn't needed in the game's view. That held only at whole zooms.
+- **What is true:** the wheel zooms continuously (0.85 a notch), so play is almost always at an in-between scale. There, isometric shimmers too: 14 shapes at 1.37×.
+- **What follows:** P7 is back in scope for both views. It is V3.1 of `.agents/graphics_v3_v5_plan.md`:
+  - standing pieces snap their anchors to whole pixels;
+  - a fixed sampling bias keeps pixel centres off texel edges (F12).
+
+  The epic's F19 carries the correction.
+

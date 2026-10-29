@@ -451,6 +451,7 @@ See the proposal's risk table. These matter for M0 and M1:
 - **F19: top-down's crawlers shimmer; isometric's don't** (2026-10-28, graphics V2.5, `ShimmerProbe`, an explicit test). Point sampling modelled on the CPU, a walking crawler moved by sixteenths of a pixel:
     - **Isometric** (the game's view) draws 16×16 sprites at whole scales: one shape at zooms 1, 2 and 3. It only shifts. Snapping anchors to pixels (plan item P7) isn't needed.
     - **Top-down** draws a crawler at 0.7 of a cell (11.2 px for 16 texels at zoom 1): 9 shapes at zoom 1 (47–55 pixels), 5 at zoom 2, 10 at zoom 3. The cause is the in-between scale, as in F12. Snapping its anchors, or whole-texel sizes, would steady it; it is the developers' view, so this waits for graphics V3.
+    - **Corrected 2026-10-29: isometric shimmers too, at the zooms players use.** The wheel zooms by 0.85 a notch and the rig doesn't snap, so play is almost always at an in-between scale. Measured with the probe at in-between zooms: isometric takes 4 shapes at 1.25×, 14 at 1.37×, 2 at 1.5× and 2.5× (one only at 1× and 2×). Snapping standing pieces' anchors to whole pixels (P7) is needed in both views after all, with a sampling bias for F12: graphics V3.1 (`.agents/graphics_v3_v5_plan.md`).
 - **F20: frame time after the art catalogue** (2026-10-28, `FrameTimeProbe`, llvmpipe, two runs). The screens' draw: top-down 1.59 ms (1.55 before), isometric 0.98 (0.98), the dossier panels 1.00 (1.01), the bounty board 0.86 (0.86). Whole frames within 4%.
 
 ---
