@@ -19,7 +19,7 @@ namespace Simpiens.Presentation.Art
             foreach (var (key, look) in ItemArt.All)
             {
                 if (look.Worn != Worn.Head) continue;
-                foreach (var (_, frames) in TopDownArtTable.Crawlers)
+                foreach (var (_, frames) in CrawlerFrames.All)
                     foreach (var frame in frames)
                         _all.Add(SpriteKit.Recolour(sheet[frame], ProceduralSprites.Hair, look.Primary, Name(frame, key)));
                 _keys.Add(key);

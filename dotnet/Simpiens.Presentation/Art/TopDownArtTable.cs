@@ -69,24 +69,8 @@ namespace Simpiens.Presentation.Art
             (ArtKeys.Node("glowstone"), "Resource_Glowstone"),
         };
 
-        /// <summary>Each crawler state's two frames. Shared with isometric.</summary>
-        public static IReadOnlyList<(AgentVisualState State, string[] Sprites)> Crawlers { get; } = new[]
-        {
-            (AgentVisualState.Idle, Frames("Idle")),
-            (AgentVisualState.Walking, Frames("Walk")),
-            (AgentVisualState.Harvesting, Frames("Harvest")),
-            (AgentVisualState.Gossiping, Frames("Gossip")),
-            (AgentVisualState.Panicking, Frames("Panic")),
-            (AgentVisualState.Thinking, Frames("Think")),
-            (AgentVisualState.Resting, Frames("Rest")),
-            (AgentVisualState.Yielding, Frames("Yield")),
-            (AgentVisualState.Sharing, Frames("Share")),
-            (AgentVisualState.Rallying, Frames("Rally")),
-            (AgentVisualState.Defiant, Frames("Defiant")),
-            (AgentVisualState.Sleeping, Frames("Sleep")),
-        };
-
-        private static string[] Frames(string stem) => new[] { "Agent_" + stem + "_0", "Agent_" + stem + "_1" };
+        /// <summary>Each crawler state's two frames (<see cref="CrawlerFrames"/>). Shared with isometric.</summary>
+        public static IReadOnlyList<(AgentVisualState State, string[] Sprites)> Crawlers => CrawlerFrames.All;
 
         // Last: static fields initialize in the order they are written, and the build reads the rows above
         public static ArtCatalog Catalog { get; } = Build();
