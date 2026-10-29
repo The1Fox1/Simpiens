@@ -66,8 +66,8 @@ The consequences:
 - **An item's `SpriteKey` names its node's sprite** (`Resource_OreVein`), not a picture of the item. "The thing on
   the map that yields ore" and "ore" are different pictures, and so are "ore in a menu" and "ore on the floor".
 - **The same 16×16 art sits in two textures.** `DrawSheet.Sprites` holds the top-down art; `DrawSheet.Isometric`
-  holds all of it again plus the placeholders. The two exist only because the isometric sheet was added beside
-  top-down's in M3.
+  holds all of it again plus the placeholders. (Correction, 2026-10-28: the split is deliberate. The epic's F12
+  records that top-down's point sampling depends on its texture's layout; V1.1 retried the merge and saw it again.)
 
 ### 1.3 Authoring
 
@@ -222,13 +222,13 @@ only makes sure the visual mapping has a slot for them (`item/<key>/map`, `DrawR
 
 | # | Improvement | Why | When |
 | :--- | :--- | :--- | :--- |
-| P1 | **One world atlas for both view modes.** Top-down draws from the world sheet, so `DrawSheet.Sprites` goes. | One texture, one index space, one fewer batch switch. Tried in V1 and reverted: top-down's point sampling hits texel ties, so its renders moved (finding F-T1). | V3 |
+| P1 | **One world atlas for both view modes.** Top-down draws from the world sheet, so `DrawSheet.Sprites` goes. | One texture, one index space, one fewer batch switch. Tried in V1 and reverted: top-down's point sampling hits texel ties, so its renders moved (the epic's F12, which M3 had already recorded and this plan missed). | V3 |
 | P2 | **The atlas builder gives out indices and packs by size** (shelf packing, sorted by height), within a texture budget (2048² is the safe floor for M4 phones) checked by a test. | Today's square grid sizes every cell to the largest sprite, which wastes space once 16×16 icons sit beside 32×40 walls and M7's 64×64 art. | V3 |
 | P3 | **An art review sheet.** A test writes every catalogued sprite, named, on one PNG (`container-output/art-sheet.png`), and pins each sprite's pixels by key. | The producer reviews art in one picture. A changed sprite fails by name, not as "render t300 differs". | V0 |
 | P4 | **Measure Gum before adding icons.** Time the dossier panel's draw; look at Gum's batch count and text re-layout per refresh. | UiDraw is 70% of the most expensive frame, and icons add sprites to it. | V4 opens with it |
 | P5 | **Static tiles cached** (a chunked vertex buffer or render target per map, review R1's second half). | ~1,500 of ~1,600 items a frame are static tiles. But the world is 1 ms on a software renderer: **don't do this until a phone measures it** (M4, as the epic already says). | Deferred (M4) |
 | P6 | **Premultiplied alpha** (review R4). | Linear sampling with non-premultiplied colours darkens edges (the fog's cloud). Pixel art is point-sampled, so it doesn't matter there. Changes renders. | With M7's imported art |
-| P7 | **Snap sprite anchors to whole screen pixels.** The view already snaps to pixels, but crawlers between ticks land on fractions. | With point sampling, a sprite on a fraction can shimmer by a pixel as it moves. Check first: if the picture pins show no shimmer at 1×/2×, drop it. | Check in V2 |
+| P7 | **Snap sprite anchors to whole screen pixels.** The view already snaps to pixels, but crawlers between ticks land on fractions. | With point sampling, a sprite on a fraction can shimmer by a pixel as it moves. Checked in V2 (epic F19): isometric doesn't shimmer (whole scales), so dropped there; top-down does (0.7-cell crawlers), which goes with V3's sampling rule. | Done (V2) |
 
 Things to keep as they are, deliberately:
 - the 64-bit sort key;
@@ -252,15 +252,15 @@ Rules for every phase:
 
 | Phase | What | Picture change | Gate |
 | :--- | :--- | :--- | :--- |
-| **V0** Review sheet | The art review sheet and per-sprite pins (P3), over today's sprites by today's names. | No | Sheet written; pins pass; renders byte-identical |
-| **V1** Catalogue and sheets | `ArtKey` → `ArtId` → `ArtDefinition`. Indices belong to sheets. The art sets read the catalogue. | No | Renders and pins byte-identical; `FrameAllocationTests` |
-| **V2** Visuals as data | `Visual(entity)` replaces `AddProp`'s switch and `WorldArt`'s per-kind members. A view mode is a projection plus a catalogue. `ArtMotion` covers the hearth's pulse and the crawler's squash and tilt. Check P7. | No | Renders byte-identical; `ArtSetTests` rewritten over the catalogue; a test that every `EntityType` the frames carry has a visual |
-| **V3** Sprite kit and item art | The atlas packer with its texture budget test (P2), the missing-art placeholder and one world sheet (P1), moved from V1 because they change the atlas's layout (finding F-T1: top-down's point sampling hits texel ties, so its picture depends on the atlas's width; choose a tie-free sampling rule here). `SpriteKit` (ramp, outline, frame, map and node treatments); shape silhouettes; `ItemArt` table. `ItemDefinition.SpriteKey` → `ArtKey`. An icon and a map sprite for every catalog item; nodes regenerated through the kit. The missing-art test over the catalog. | **Yes**: nodes may change look (kept as close as the kit allows) | Producer looks at the review sheet; renders re-recorded in their own commit |
+| **V0** Review sheet | The art review sheet and per-sprite pins (P3), over today's sprites by today's names. | No | **Done 2026-10-28** |
+| **V1** Catalogue and sheets | `ArtKey` → `ArtId` → `ArtDefinition`. Indices belong to sheets. The art sets read the catalogue. | No | **Done 2026-10-28**; one world sheet reverted (F12), moved to V3 |
+| **V2** Visuals as data | `EntityVisuals` replaces `AddProp`'s switch and `WorldArt`'s per-kind members. A view mode is a projection plus a catalogue. The pulse is a row's data; a crawler's squash and tilt stay its pose's. P7 checked (epic F19). | No | **Done 2026-10-28** |
+| **V3** Sprite kit and item art | The atlas packer with its texture budget test (P2), the missing-art placeholder and one world sheet (P1), moved from V1 because they change the atlas's layout (epic finding F12, rechecked in V1.1: top-down's point sampling hits texel ties, so its picture depends on the atlas's width; choose a tie-free sampling rule here, which also settles top-down's shimmer, F19). `SpriteKit` (ramp, outline, frame, map and node treatments); shape silhouettes; `ItemArt` table. `ItemDefinition.SpriteKey` → `ArtKey`. An icon and a map sprite for every catalog item; nodes regenerated through the kit. The missing-art test over the catalog. | **Yes**: nodes may change look (kept as close as the kit allows) | Producer looks at the review sheet; renders re-recorded in their own commit |
 | **V4** Icons in the menus | Measure Gum first (P4) and spike the texture filter. `IconKey` on the merchant, dossier and bounty board models; `IconAtlas`; `UiParts.Icon`. | **Yes**: the dashboard renders | Model tests; the UI frame time no worse than +10% on the dossier probe; renders re-recorded; producer look |
 | **V5** Items in the world | The stall as furniture with its goods on display. Worn gear on crawlers. Carried salvage. The frame gains the stall rows, the worn item and the carried item. | **Yes**: the map renders | `ViewsWriteNothingTests`; zero-allocation frame; renders re-recorded; producer look |
 | **V6** Close-out | `AGENTS.md`: "Adding an item" gains its art line, and a short "Adding art" section. The epic doc records what moved from M7. `architecture_history`. Delete this plan. | No | Docs reconciled |
 
-V0–V2 are broken into steps in `.agents/graphics_v0_v2_plan.md`.
+V0–V2 were done on 2026-10-28 (`feat/graphics-catalogue`; the epic's §3 lists the commits). Their deviations: V2.1 (the pose without a sprite) landed before V1.3, which needed it; V2.2 and V2.3 landed together, because the scene can't ask for catalogue visuals while it reads a `WorldArt`; one world sheet moved to V3 (F12); rations needed no exception, since their sprite key is the berry bush. Node art is looked up by the item's sprite key on each draw (one dictionary probe), not from a 256-entry table, so items a test adds to the catalogue still resolve.
 
 The size is about 5–8 agent days. V0–V2 are behaviour-preserving and can land together. V3–V5 change pictures and
 each needs a look.

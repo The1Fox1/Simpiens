@@ -20,7 +20,7 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>
         /// Isometric's: top-down's art at the same indices, then the isometric placeholders, so the isometric World
-        /// layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet (finding F-T1: its point
+        /// layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet (the epic's F12: its point
         /// sampling hits texel ties, so its picture depends on its texture's width; the sheets merge in graphics V3).
         /// </summary>
         public static SpriteSheet Isometric { get; } = new SpriteSheet(DrawSheet.Isometric, ProceduralSprites.All.Concat(IsometricSprites.All));

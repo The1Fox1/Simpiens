@@ -1,6 +1,6 @@
 # Epic CLIENT: KNI Client and Engine Rework
 
-- **Status**: ACTIVE (2026-10-28) for the art catalogue: graphics V0–V2, pulled forward from M7 (review R5's catalogue half and S10), with no picture changes; plan `.agents/graphics_v0_v2_plan.md`. Before that, PAUSED (2026-10-24), after M2.8–M2.9 removed Unity (producer: "remove Unity first"; ACTIVE again for that on 2026-10-24). It was PAUSED (2026-10-23): the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). **What exists**, merged into `main` as PR #6 on 2026-10-23: M0 and M1; M2.0–M2.7 (parity with Unity's game); the text cleanup, the client seams, M3 (isometric and cutscenes) and the architecture review's findings. **Producer sign-offs (2026-10-24):** the side-by-side with Unity, the look at M3, the motion between ticks and the header's pause and speed passed; the producer: "we can officially move away from Unity". **What does not exist:** Unity's removal (M2.8, M2.9: unblocked, see §4), M4 (Android, deferred) and M5–M7. Epic 10's new screens are built in this client. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: PAUSED (2026-10-28) after the art catalogue (graphics V0–V2, pulled forward from M7: review R5's catalogue half and S10; §3), with no picture changed. Graphics V3–V5 (item art, icons, items in the world; `.agents/graphics_plan.md`) wait for the producer. ACTIVE for the catalogue on 2026-10-28; before that, PAUSED (2026-10-24), after M2.8–M2.9 removed Unity (producer: "remove Unity first"; ACTIVE again for that on 2026-10-24). It was PAUSED (2026-10-23): the producer set Android and the other engine work aside for core gameplay ([Epic 10 Part 1](epic-10.md)). **What exists**, merged into `main` as PR #6 on 2026-10-23: M0 and M1; M2.0–M2.7 (parity with Unity's game); the text cleanup, the client seams, M3 (isometric and cutscenes) and the architecture review's findings. **Producer sign-offs (2026-10-24):** the side-by-side with Unity, the look at M3, the motion between ticks and the header's pause and speed passed; the producer: "we can officially move away from Unity". **What does not exist:** Unity's removal (M2.8, M2.9: unblocked, see §4), M4 (Android, deferred) and M5–M7. Epic 10's new screens are built in this client. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
@@ -350,6 +350,22 @@ flowchart TB
     - Measured: `dotnet test` 372/372; golden 3/3; the client's 267/267 exactly in the pinned image; the MonoGame and Android builds compile.
     - `fb86e80`: C# 14 on .NET 10 everywhere. The core dropped its `netstandard2.1` build and the C# 10 pin, which only Unity needed; nothing in the sources worked around them. Measured the same.
 
+- [x] Graphics V0–V2: the art as data (2026-10-28, `feat/graphics-catalogue`; pulled forward from M7, review R5's catalogue half and S10). No picture changed: every render exact in the pinned image at every step.
+    - **The safety net (V0):**
+        - `SpriteSheets`, the one table of what each sheet holds, `b789cce`;
+        - the picture pins hash a sprite's name instead of its sheet and index (re-pinned once, renders exact), `173d150`;
+        - every sprite pinned by name in `Baselines/art-pins.txt` (45 sprites; `SIMPIENS_RECORD_ART=1`), `629fab9`;
+        - the art review sheet, `render-output/art-sheet.png`, every sprite named, `43b0ece`.
+    - **The catalogue (V1):**
+        - sprite indices belong to their sheets (`SpriteSheet`; `PixelSprite` has no index), `5e8c6cf`;
+        - `ArtCatalog` per view mode: rows by key (`ArtKeys`), each an `ArtDefinition` (sheet, frames, frame rate, size in units of a scale, pivot, pulse), resolved once to `ArtId`s; the numbers are data in `TopDownArtTable` and `IsometricArtTable`, `89816d6`. `ArtCatalogTests` pins every piece of both modes (bits of sizes and pivots), recorded from the art sets before the catalogue.
+        - One world sheet for both modes was tried and reverted (F12 again): it moves to graphics V3.
+    - **Visuals as data (V2):**
+        - a crawler's pose is a state and a frame, not a sprite, `41bbdf3`;
+        - a view mode is a projection and a catalogue; `EntityVisuals` says which art each frame entity has; `WorldArt` and its art sets are gone; the cutscene stage draws from top-down's catalogue, `14ff1ea`;
+        - completeness: everything the frames carry has art, every node on a shipped map has its own, no row is dead, `3550e74`.
+    - Measured: `dotnet test` 398/398 (core 112, client 286); the client's 286/286 exactly in the pinned image; the MonoGame and Android builds compile; frame time unchanged (F20).
+
 ---
 
 ## 4. Deferred
@@ -357,11 +373,11 @@ flowchart TB
 - M4 to M7 and the developers' map designer: they wait for the producer.
 - **The story:** which cutscenes exist, what they say, and what starts a hard cutscene in play. Owned by the narrative work (producer P3); M3 ships the mechanisms and Debug-only demonstrations.
 - **Cutscene art:** real portraits and backdrops (M7). Text boxes at screen density (M6).
-- Isometric's real art (64×64, possibly 64×32 tiles), and the sprite catalogue as data with a packer (review R5): M7.
+- Isometric's real art (64×64, possibly 64×32 tiles), and the atlas packer (review R5's second half): M7. The catalogue as data is done (graphics V0–V2, §3); the packer, the missing-art placeholder and one world sheet for both view modes (F12) come with the item art (graphics V3).
 - The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
 - The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
 - The UI's scaling by display density (review U2) and a frame cap per platform (R6): M4.
-- Premultiplied alpha (R4), the sprite catalogue (R5), textures through `Texture2D.FromStream` (R7), sizes as data (S10): M7.
+- Premultiplied alpha (R4) and textures through `Texture2D.FromStream` (R7): M7. The sprite catalogue (R5) and sizes as data (S10) are done (graphics V0–V2).
 - (S5, comments naming Unity's code: done at M2.9 where they misled; notes on where code was ported from stay.)
 - Sound: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
@@ -422,6 +438,7 @@ See the proposal's risk table. These matter for M0 and M1:
 - **F10: frame time after the seams** (2026-10-21, `FrameTimeProbe`, llvmpipe, 800×600, a tick every frame, three alternating runs each): 2.14 ms against 2.09 ms on `main-kni`. The per-tick capture runs every frame in the probe but at 10 Hz in play at 1×. The budget is 33 ms.
 - **F11: frame time in isometric** (M3 step 2.4, `FrameTimeProbe`, 800×600, a tick every frame, two runs of each view): isometric 1.54–1.59 ms on llvmpipe and 1.65 ms on the RX 7900 XTX (1,577 draw items); top-down 2.33 ms and 1.68 ms (1,844). The isometric outpost is wider than the window at 1:1, so culling drops part of it. The budget is 33 ms.
 - **F12: point sampling depends on the atlas layout** (M3 step 1.2). Growing the shared sprite atlas changed which texels the zoomed top-down view picked at its in-between scale: 15,614 pixels moved, with nothing in the art changed. So each art set has its own sheet: top-down's laid out as before, isometric's holding every sprite by the same indices (one batch for its interleaved World layer).
+    - **Rechecked 2026-10-28 (graphics V1.1):** drawing top-down from the isometric sheet moved six renders in the pinned image (104–120 pixels at the normal zoom, 15,316 zoomed, 54 under the header). They are tie flips, not bleeding: a screen pixel's centre lands on a texel boundary, and the division by the texture's width picks the side (a bunk's frame pixel became its blanket's). The step was reverted. Merging the sheets waits for graphics V3, which changes the layout anyway and should pick a tie-free sampling rule (a quarter-texel inset on source rectangles, or whole-pixel scales for top-down's props and crawlers).
 - **F13: captures carry the fog's alpha** (M3 step 2.3). The fog's non-premultiplied blend leaves the render target's alpha below 255 (247 under a cloud, 197 mid-fade). An image viewer then shows covered rooms lighter over its own background; the colours are right and the window ignores alpha. Read a capture's colour channels, not how a viewer shows it.
 - **F14: the isometric outpost doesn't fit 1280×720 at 1:1** (M3 step 1.5); it would need 0.95. Framing is now crisp first: a map that doesn't fit at 1:1 is framed at 1:1 on its centre, and the zoom-out limit still shows all of it. Top-down at today's window sizes fits at 1:1 and is unchanged.
 - **F15: offscreen games can't be freed, so the tests reuse windows** (M3, 2026-10-21).
@@ -430,6 +447,11 @@ See the proposal's risk table. These matter for M0 and M1:
     - **The fix:** `SimpiensGame.Restart(options)` starts a new session in the same window and device. The harness restarts a window no running test holds. The suite peaks at about 750 MB and every reference holds on reused windows.
 - **F16: the tick is a small share of the frame** (2026-10-22, `FrameTimings`, llvmpipe, 800×600, a tick every frame). Isometric: the tick 0.10 ms mean (0.20 ms p99) of a 1.41 ms CPU frame; the screens' draw 0.97 ms. Top-down: the tick 0.16 ms (1.0 ms p99) of 2.36 ms. Drawing, not the simulation, is where frame time goes, so moving the simulation to its own thread (review D1's second half) can wait for a measured need.
 - **F17: Gum's update is gated on focus** (2026-10-22). `FormsUtilities.Update` returns at once while `Game.IsActive` is false, so an offscreen test game still needs KNI's private focus flag even with the client's own cursor. Gum's typed `GumService.Cursor` is null once a custom `ICursor` is installed (Gum's documented behaviour); the client reads its own `UiLayer.Cursor`.
+
+- **F19: top-down's crawlers shimmer; isometric's don't** (2026-10-28, graphics V2.5, `ShimmerProbe`, an explicit test). Point sampling modelled on the CPU, a walking crawler moved by sixteenths of a pixel:
+    - **Isometric** (the game's view) draws 16×16 sprites at whole scales: one shape at zooms 1, 2 and 3. It only shifts. Snapping anchors to pixels (plan item P7) isn't needed.
+    - **Top-down** draws a crawler at 0.7 of a cell (11.2 px for 16 texels at zoom 1): 9 shapes at zoom 1 (47–55 pixels), 5 at zoom 2, 10 at zoom 3. The cause is the in-between scale, as in F12. Snapping its anchors, or whole-texel sizes, would steady it; it is the developers' view, so this waits for graphics V3.
+- **F20: frame time after the art catalogue** (2026-10-28, `FrameTimeProbe`, llvmpipe, two runs). The screens' draw: top-down 1.59 ms (1.55 before), isometric 0.98 (0.98), the dossier panels 1.00 (1.01), the bounty board 0.86 (0.86). Whole frames within 4%.
 
 ---
 
@@ -444,3 +466,4 @@ See the proposal's risk table. These matter for M0 and M1:
 - 2026-10-23: PR #6 merged into `main`; the epic is PAUSED for core gameplay (Epic 10 Part 1).
 - 2026-10-24: the producer signed off the side-by-side with Unity and the open looks, and called the move away from Unity; M2.8–M2.9 are unblocked. The M2 plan (`.agents/client_m2_plan.md`) was deleted; its remaining scope is in §4.
 - 2026-10-24: "remove Unity first": M2.8 (every Unity test twinned in .NET) and M2.9 (Unity removed) done on `feat/remove-unity`, from `006975d` to the close-out; the epic is PAUSED again for Epic 10. The working plan was deleted at close-out.
+- 2026-10-28: ACTIVE for the art catalogue (graphics V0–V2, pulled forward from M7) before Epic 10 G4; done the same day on `feat/graphics-catalogue`, with no picture changed, and PAUSED again. The V0–V2 plan was deleted; V3–V5 stay in `.agents/graphics_plan.md`.

@@ -1097,3 +1097,30 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - `dotnet test` 381/381 (core 112, client 269);
   - the pinned image 269/269 byte for byte;
   - the MonoGame and Android builds compile.
+
+## 2026-10-28: the art catalogue (graphics V0–V2, Epic CLIENT, pulled forward from M7)
+
+- **Ask (producer):** revisit the UI and graphics before the end of Epic 10. Do walls, furniture, crawlers and items share an interface for rendering? Items need map sprites and menu icons. The answer was `.agents/graphics_plan.md` (V0–V6); the producer said go on V0–V2, the foundation with no picture change.
+- **Decision: art keys over C# fields, tables over classes.**
+  - What a view mode draws is an `ArtCatalog`: rows by stable key (`tile/wall`, `prop/hearth`, `crawler/<state>`, `node/<item sprite key>`), each an `ArtDefinition` (sheet, frames, frame rate, size in units of a scale, pivot, pulse).
+  - The numbers live in `TopDownArtTable` and `IsometricArtTable`.
+  - Keys resolve once to dense `ArtId`s, so a frame reads arrays and allocates nothing.
+- **Decision: sprite indices are the sheets' business.** `PixelSprite` is named pixels; a `SpriteSheet` alone gives out indices.
+- **Decision: one question per entity.** `EntityVisuals` maps a frame entity to its art; `WorldArt` and its art sets are gone. Entities stay plain data: "renderable" means "its frame row maps to an art key", which is presentation's call, so a multiplayer client fills the same frames.
+- **Invariant kept:** a piece's size is `(width × motion) × scale`, in the art sets' order, so every piece kept its bits. `ArtCatalogTests` pins them, recorded from the art sets before the catalogue.
+- **Safety net:**
+  - the picture pins hash sprite names, not sheet indices (re-pinned once, renders exact);
+  - every sprite is pinned by name (`Baselines/art-pins.txt`);
+  - the art review sheet (`art-sheet.png`) is written on every run.
+- **Deviations from the plan:**
+  - one world sheet for both modes was reverted, because the epic's F12 (M3) said it would move top-down's renders, and it did (the plan had missed F12). It moves to V3, with a tie-free sampling rule;
+  - the pose lost its sprite before the catalogue (V2.1 before V1.3);
+  - visuals and `WorldArt`'s removal landed together;
+  - rations needed no exception (their sprite key is the berry bush);
+  - node art is looked up by the item's sprite key on each draw, not from a fixed table, so items a test adds still resolve.
+- **Findings:** F12 rechecked; F19, top-down's crawlers shimmer at their 0.7-cell size and isometric's don't, so anchor snapping (P7) isn't needed in the game's view; F20, frame time unchanged.
+- **Verification:**
+  - every commit built with 0 warnings and passed `dotnet test`; the client's tests ran exactly in the pinned image; MonoGame compiled. No core change.
+  - At the end: `dotnet test` 398/398 (core 112, client 286); the Android build compiles.
+- **The V0–V2 plan is deleted.** V3–V6 stay in `.agents/graphics_plan.md`.
+
