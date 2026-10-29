@@ -192,65 +192,14 @@ namespace Simpiens.Presentation
         }
     }
 
-    /// <summary>
-    /// Isometric's art (M3 design D5): the placeholders on 32x16 tiles. Floor tiles are centred on their cells; walls,
-    /// props and crawlers stand on their feet, at one art pixel per pixel of their 16x16 sprites. Everything is drawn from
-    /// the isometric sheet (<see cref="DrawSheet.Isometric"/>), one batch.
-    /// </summary>
-    public sealed class IsometricArt : WorldArt
+    /// <summary>Isometric's art (M3 design D5), from its table (<see cref="IsometricArtTable"/>).</summary>
+    public sealed class IsometricArt : CatalogueArt
     {
         /// <summary>A 16x16 sprite's feet: the bottom of its last drawn row (row 14).</summary>
-        public const float FeetPivot = 15f / 16f;
-        private const float Standing = 16f;
-        private const DrawSheet Sheet = DrawSheet.Isometric;
-        private static SpriteSheet Sprites => SpriteSheets.Isometric;
-        private static readonly int FloorIndex = Sprites.IndexOf(IsometricSprites.Floor), RockIndex = Sprites.IndexOf(IsometricSprites.Rock);
-        private static readonly int BunkIndex = Sprites.IndexOf(IsometricSprites.Bunk), ShadowIndex = Sprites.IndexOf(IsometricSprites.Shadow);
-        private static readonly int RingIndex = Sprites.IndexOf(IsometricSprites.SelectionRing);
+        public const float FeetPivot = IsometricArtTable.FeetPivot;
 
         public static IsometricArt Instance { get; } = new IsometricArt();
 
-        private IsometricArt() { }
-
-        public override ArtPiece Tile(TileKind kind)
-        {
-            switch (kind)
-            {
-                case TileKind.Floor: return new ArtPiece(FloorIndex, IsometricSprites.TileWidth, IsometricSprites.TileHeight, sheet: Sheet);
-                case TileKind.Rock: return new ArtPiece(RockIndex, IsometricSprites.TileWidth, IsometricSprites.TileHeight, sheet: Sheet);
-                default: return Wall(IsometricSprites.Wall, IsometricSprites.WallRise);
-            }
-        }
-
-        /// <summary>A cut-away wall's stub (M3 design D7).</summary>
-        public override ArtPiece LowWall => Wall(IsometricSprites.LowWall, IsometricSprites.LowWallRise);
-
-        private static ArtPiece Wall(PixelSprite sprite, int rise)
-            => new ArtPiece(Sprites.IndexOf(sprite), sprite.Width, sprite.Height, 0.5f, IsometricSprites.BlockPivotY(IsometricSprites.TileHeight, rise), Sheet);
-
-        public override ArtPiece Resource(Simpiens.Simulation.Economy.ItemType kind)
-            => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetResourceSprite(kind)), Standing, Standing, 0.5f, FeetPivot, Sheet);
-
-        /// <summary>Top-down's two-frame flame and pulse, standing.</summary>
-        public override ArtPiece Hearth(float viewSeconds)
-        {
-            var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
-            float size = Standing * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-            return new ArtPiece(Sprites.IndexOf(sprite), size, size, 0.5f, FeetPivot, Sheet);
-        }
-
-        public override ArtPiece Bunk => new ArtPiece(BunkIndex, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,
-            0.5f, IsometricSprites.BlockPivotY(IsometricSprites.BunkHeight, IsometricSprites.BunkRise), Sheet);
-
-        public override ArtPiece Crawler(in CrawlerPose pose) => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetAgentSprite(pose.State, pose.Frame)), Standing * pose.ScaleX, Standing * pose.ScaleY, 0.5f, FeetPivot, Sheet);
-
-        public override ArtPiece CrawlerShadow => new ArtPiece(ShadowIndex, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height, sheet: Sheet);
-
-        public override ArtPiece SelectionRing => new ArtPiece(RingIndex, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height, sheet: Sheet);
-
-        public override Vec2 NameOffset => Vec2.Zero;
-
-        /// <summary>Just over the head: a crawler stands one world unit (16 art pixels) tall.</summary>
-        public override float NameHeight => 1.125f;
+        private IsometricArt() : base(IsometricArtTable.Catalog) { }
     }
 }

@@ -1,6 +1,8 @@
 using System;
+using Simpiens.Entities;
 using Simpiens.Presentation.Art;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 
 namespace Simpiens.Presentation
 {
@@ -72,62 +74,66 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
-    /// Top-down's art (Epic CLIENT M0–M1): the generated 16x16 sprites at Unity's sizes, centred on their points. Sizes
-    /// are Unity's, in world units at <see cref="TopDownProjection.BasePixelsPerUnit"/> art pixels each: crawlers 0.7 of
-    /// a cell, resource nodes 0.8, the hearth, bunks and the ring 0.9.
+    /// An art set read from an <see cref="ArtCatalog"/> (graphics V1): every member is a row of the catalogue, resolved
+    /// to its id once. Until the scene reads catalogues itself (graphics V2), the view modes' art sets are these.
     /// </summary>
-    public sealed class TopDownArt : WorldArt
+    public abstract class CatalogueArt : WorldArt
     {
-        public const float CrawlerSize = 0.7f;
-        public const float ResourceSize = 0.8f;
-        public const float HearthSize = 0.9f;
-        public const float BunkSize = 0.9f;
-        public const float SelectionRingSize = 0.9f;
+        private readonly ArtId[] _tiles;
+        private readonly ArtId[] _crawlers;
+        private readonly ArtId _lowWall, _hearth, _bunk, _ring, _shadow;
 
-        private const float Art = TopDownProjection.BasePixelsPerUnit;
-        private static SpriteSheet Sprites => SpriteSheets.Sprites;
-        private static readonly int FloorIndex = Sprites.IndexOf(ProceduralSprites.FloorSprite), RockIndex = Sprites.IndexOf(ProceduralSprites.RockSprite);
-        private static readonly int WallIndex = Sprites.IndexOf(ProceduralSprites.WallSprite), BunkIndex = Sprites.IndexOf(ProceduralSprites.BunkSprite);
-        private static readonly int RingIndex = Sprites.IndexOf(ProceduralSprites.SelectionRing);
+        protected CatalogueArt(ArtCatalog catalog)
+        {
+            Catalog = catalog;
+            var kinds = (TileKind[])Enum.GetValues(typeof(TileKind));
+            _tiles = new ArtId[kinds.Length];
+            foreach (var kind in kinds) _tiles[(int)kind] = catalog.Id(ArtKeys.Tile(kind));
+            var states = (AgentVisualState[])Enum.GetValues(typeof(AgentVisualState));
+            _crawlers = new ArtId[states.Length];
+            foreach (var state in states) _crawlers[(int)state] = catalog.Id(ArtKeys.Crawler(state));
+            _lowWall = catalog.Id(ArtKeys.TileWallLow);
+            _hearth = catalog.Id(ArtKeys.PropHearth);
+            _bunk = catalog.Id(ArtKeys.PropBunk);
+            _ring = catalog.Id(ArtKeys.SelectionRing);
+            _shadow = catalog.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+        }
+
+        public ArtCatalog Catalog { get; }
+
+        public override ArtPiece Tile(TileKind kind) => Catalog.Piece(_tiles[(int)kind], 0f);
+
+        public override ArtPiece LowWall => Catalog.Piece(_lowWall, 0f);
+
+        public override ArtPiece Resource(ItemType kind) => Catalog.Piece(Catalog.Node(ItemCatalog.Get(kind)?.SpriteKey), 0f);
+
+        public override ArtPiece Hearth(float viewSeconds) => Catalog.Piece(_hearth, viewSeconds);
+
+        public override ArtPiece Bunk => Catalog.Piece(_bunk, 0f);
+
+        public override ArtPiece Crawler(in CrawlerPose pose) => Catalog.Piece(_crawlers[(int)pose.State], pose.Frame, pose.ScaleX, pose.ScaleY);
+
+        public override ArtPiece CrawlerShadow => _shadow.IsNone ? ArtPiece.None : Catalog.Piece(_shadow, 0f);
+
+        public override ArtPiece SelectionRing => Catalog.Piece(_ring, 0f);
+
+        public override Vec2 NameOffset => Catalog.NameOffset;
+
+        public override float NameHeight => Catalog.NameHeight;
+    }
+
+    /// <summary>Top-down's art (Epic CLIENT M0–M1), from its table (<see cref="TopDownArtTable"/>).</summary>
+    public sealed class TopDownArt : CatalogueArt
+    {
+        public const float CrawlerSize = TopDownArtTable.CrawlerSize;
+        public const float ResourceSize = TopDownArtTable.ResourceSize;
+        public const float HearthSize = TopDownArtTable.HearthSize;
+        public const float BunkSize = TopDownArtTable.BunkSize;
+        public const float SelectionRingSize = TopDownArtTable.SelectionRingSize;
 
         public static TopDownArt Instance { get; } = new TopDownArt();
 
-        private TopDownArt() { }
-
-        public override ArtPiece Tile(TileKind kind)
-        {
-            switch (kind)
-            {
-                case TileKind.Floor: return new ArtPiece(FloorIndex, Art, Art);
-                case TileKind.Rock: return new ArtPiece(RockIndex, Art, Art);
-                default: return new ArtPiece(WallIndex, Art, Art);
-            }
-        }
-
-        public override ArtPiece Resource(ItemType kind)
-            => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetResourceSprite(kind)), ResourceSize * Art, ResourceSize * Art);
-
-        /// <summary>Two-frame flame at 6 Hz and a subtle pulse (Unity's CampfireView).</summary>
-        public override ArtPiece Hearth(float viewSeconds)
-        {
-            var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
-            float size = HearthSize * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-            return new ArtPiece(Sprites.IndexOf(sprite), size * Art, size * Art);
-        }
-
-        public override ArtPiece Bunk => new ArtPiece(BunkIndex, BunkSize * Art, BunkSize * Art);
-
-        public override ArtPiece Crawler(in CrawlerPose pose)
-            => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetAgentSprite(pose.State, pose.Frame)), CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
-
-        public override ArtPiece CrawlerShadow => ArtPiece.None;
-
-        public override ArtPiece SelectionRing => new ArtPiece(RingIndex, SelectionRingSize * Art, SelectionRingSize * Art);
-
-        /// <summary>Above the crawler on the map (Unity's CameraController).</summary>
-        public override Vec2 NameOffset => new Vec2(0f, 0.65f);
-
-        public override float NameHeight => 0f;
+        private TopDownArt() : base(TopDownArtTable.Catalog) { }
     }
 
     /// <summary>
@@ -156,6 +162,8 @@ namespace Simpiens.Presentation
         public string Name { get; }
         public IViewProjection Projection { get; }
         public WorldArt Art { get; }
+        /// <summary>The art as data, when the art set reads a catalogue (every view mode's does).</summary>
+        public ArtCatalog Catalog => (Art as CatalogueArt)?.Catalog;
 
         public override string ToString() => Name;
     }
