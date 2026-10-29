@@ -16,6 +16,8 @@ namespace Simpiens.Presentation
     /// </summary>
     public sealed class FogOfWar
     {
+        private static readonly int FogSprite = Art.SpriteSheets.Fog.IndexOf(FogCloud.Sprite);
+
         public const float FadeSeconds = 1.5f;
         public const float FogAlpha = 0.97f;
         public const string UnchartedText = "UNCHARTED";
@@ -121,7 +123,7 @@ namespace Simpiens.Presentation
                 float t = overlay.FadeStart == null ? 0f : SimMath.Clamp01((viewSeconds - overlay.FadeStart.Value) / FadeSeconds);
                 var area = overlay.Area;
                 var fog = new Rgba(FogColor.R, FogColor.G, FogColor.B, FogAlpha * (1f - t));
-                list.Add(layer, DrawRole.Fog, 0f, FogCloud.Sprite.Index, area.Center.X, area.Center.Y, area.Width, area.Height, Rgba32.From(fog), 0f, DrawSheet.Fog).OnFloor = true;
+                list.Add(layer, DrawRole.Fog, 0f, FogSprite, area.Center.X, area.Center.Y, area.Width, area.Height, Rgba32.From(fog), 0f, DrawSheet.Fog).OnFloor = true;
             }
         }
 
@@ -189,7 +191,7 @@ namespace Simpiens.Presentation
                     pixels[(Size - 1 - y) * Size + x] = new Rgba32(v, v, v, 255);
                 }
             }
-            return new PixelSprite(0, "Map_Fog", Size, Size, pixels);
+            return new PixelSprite("Map_Fog", Size, Size, pixels);
         }
 
         // Smooth value noise from a fixed integer hash (view only; no simulation randomness)

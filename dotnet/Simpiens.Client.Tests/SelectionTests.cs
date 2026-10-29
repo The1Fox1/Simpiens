@@ -2,6 +2,7 @@ using System.Linq;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Xunit;
@@ -15,7 +16,7 @@ namespace Simpiens.Client.Tests
 
         private static void AddCrawler(DrawList list, EntityId id, Vec2 at)
         {
-            float size = TopDownArt.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
+            float size = TopDownArtTable.CrawlerSize * TopDownProjection.BasePixelsPerUnit;
             list.Add(RenderLayer.Crawlers, DrawRole.Crawler, TopDownProjection.Instance.Depth(at), 0, at.X, at.Y, size, size, Rgba32.Clear).Pick = list.Pickable(id);
         }
 
@@ -114,7 +115,7 @@ namespace Simpiens.Client.Tests
             Assert.True(Vec2.Distance(game.World.Rig.Position, crawler.Position) < before, "the camera moved toward the followed crawler");
 
             var items = Enumerable.Range(0, game.World.Scene.Items.Count).Select(i => game.World.Scene.Items[i]).ToList();
-            Assert.Single(items, i => DrawSortKey.Layer(i.SortKey) == view.Projection.LayerOf(DrawRole.Selection) && i.SpriteIndex == view.Art.SelectionRing.Sprite);
+            Assert.Single(items, i => DrawSortKey.Layer(i.SortKey) == view.Projection.LayerOf(DrawRole.Selection) && i.SpriteIndex == view.Catalog.SelectionRing.Sprite);
             Assert.Single(game.World.Scene.Labels, l => l.Kind == LabelKind.Name);
         }
     }

@@ -150,7 +150,7 @@ namespace Simpiens.Client
 
         /// <summary>
         /// Isometric to top-down and back (M3 design D8). The camera keeps the floor point at the centre and its scale in
-        /// screen pixels per art pixel (both art sets have 16 art pixels a unit), clamped to the new view's limits.
+        /// screen pixels per art pixel (both view modes' catalogues have 16 art pixels a unit), clamped to the new view's limits.
         /// </summary>
         public void ToggleView() => Mode = ReferenceEquals(Mode, ViewMode.Isometric) ? ViewMode.TopDown : ViewMode.Isometric;
 

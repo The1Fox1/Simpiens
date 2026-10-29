@@ -5,6 +5,7 @@ using Simpiens.Core.Session.Layouts;
 using Simpiens.Entities;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Xunit;
 
 namespace Simpiens.Client.Tests
@@ -80,12 +81,12 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(35, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone
+            Assert.Equal(36, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone and graphics V5's stall
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
-                Assert.Equal(i, sprite.Index);
-                Assert.Equal(16, sprite.Width);
+                Assert.Equal(i, SpriteSheets.World.IndexOf(sprite));
+                Assert.Equal(ReferenceEquals(sprite, ProceduralSprites.StallSprite) ? 32 : 16, sprite.Width); // the stall is two cells wide
                 Assert.Equal(16, sprite.Height);
             }
             foreach (AgentVisualState state in Enum.GetValues(typeof(AgentVisualState)))
@@ -107,15 +108,12 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
-        /// Pins every generated pixel. The first 33 sprites were ported pixel for pixel from Unity's AgentSpriteLibrary
-        /// and keep their own pin; the whole set's pin moves only with a deliberate art change, in its own commit.
+        /// The first 33 sprites were ported pixel for pixel from Unity's AgentSpriteLibrary and keep their own pin, as
+        /// history; every sprite is pinned by name in Baselines/art-pins.txt (<see cref="ArtPinTests"/>).
         /// </summary>
         [Fact]
-        public void TheGeneratedArtIsUnchanged()
-        {
-            Assert.Equal(PortedArtHash, HashOf(ProceduralSprites.All.Take(PortedSpriteCount)));
-            Assert.Equal(PinnedArtHash, HashOf(ProceduralSprites.All));
-        }
+        public void TheArtPortedFromUnityIsUnchanged()
+            => Assert.Equal(PortedArtHash, HashOf(ProceduralSprites.All.Take(PortedSpriteCount)));
 
         private static ulong HashOf(System.Collections.Generic.IEnumerable<PixelSprite> sprites)
         {
@@ -136,8 +134,6 @@ namespace Simpiens.Client.Tests
         /// <summary>The sprites ported from Unity's AgentSpriteLibrary (M0.2), before the client's own additions.</summary>
         internal const int PortedSpriteCount = 33;
         internal const ulong PortedArtHash = 12981420596316165723UL; // recorded 2026-10-18 (M0.2) from the port of AgentSpriteLibrary
-        // Recorded 2026-10-18 (M1.5): the port plus the selection ring; again for Epic 10 G2: the glowstone sprite, made last
-        internal const ulong PinnedArtHash = 7875643926992335447UL;
     }
 
     public class MapTileTests
@@ -243,7 +239,7 @@ namespace Simpiens.Client.Tests
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count - textAndFog);
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)

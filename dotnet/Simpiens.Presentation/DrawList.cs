@@ -4,21 +4,18 @@ namespace Simpiens.Presentation
 {
     /// <summary>
     /// Which image a draw item's sprite index refers to. The renderer starts a new batch when the sheet changes;
-    /// each sheet has its own sampling (pixel art is point-sampled).
+    /// each sheet has its own sampling (pixel art is point-sampled). What each holds: <see cref="Art.SpriteSheets"/>.
     /// </summary>
     public enum DrawSheet : byte
     {
-        /// <summary><see cref="ProceduralSprites.All"/>: top-down's art.</summary>
-        Sprites = 0,
+        /// <summary>The world's art for both view modes: the 16x16 sprites and the isometric placeholders (graphics V3.2).</summary>
+        World = 0,
         /// <summary><see cref="FogCloud.Sprite"/>, sampled smoothly.</summary>
         Fog = 1,
-        /// <summary>
-        /// <see cref="WorldSprites.All"/>: the 16x16 art and the isometric placeholders, by the same indices, so the isometric
-        /// World layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet, laid out as before.
-        /// </summary>
-        Isometric = 2,
         /// <summary><see cref="Cutscenes.CutsceneArt.Backdrops"/>: a hard cutscene's still backdrops, in their own index space.</summary>
-        Backdrop = 3,
+        Backdrop = 2,
+        /// <summary>The items' menu icons (graphics V3.6): drawn by the dashboard, never by the world's renderer.</summary>
+        Icons = 3,
     }
 
     /// <summary>
@@ -54,6 +51,13 @@ namespace Simpiens.Presentation
         public ulong SortKey;
         /// <summary>What a click on it selects (<see cref="DrawList.PickedEntity"/>), or -1 when it can't be clicked.</summary>
         public int Pick;
+        /// <summary>
+        /// Its anchor lands on a whole screen pixel (graphics V3.1, epic F19): a standing piece (a prop, a crawler, its
+        /// shadow, the ring) then keeps one shape wherever it moves at a zoom, instead of shimmering as its sub-pixel
+        /// position changes which texels the point sampling picks. Tiles and walls don't snap: they tile, and snapping each
+        /// would open hairline gaps at in-between zooms.
+        /// </summary>
+        public bool SnapToPixel;
     }
 
     /// <summary>
@@ -86,7 +90,9 @@ namespace Simpiens.Presentation
         public static ScreenQuad Of(in DrawItem item, in View view)
         {
             if (item.OnFloor) return FloorBounds(item, view);
-            return new ScreenQuad(view.WorldToScreen(new Vec2(item.X, item.Y), item.Z), item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
+            var anchor = view.WorldToScreen(new Vec2(item.X, item.Y), item.Z);
+            if (item.SnapToPixel) anchor = new Vec2(SimMath.Round(anchor.X), SimMath.Round(anchor.Y));
+            return new ScreenQuad(anchor, item.Width * view.Zoom, item.Height * view.Zoom, item.PivotX, item.PivotY);
         }
 
         /// <summary>A floor rectangle's screen bounds (the box round the shape the projection makes of it), centred on its centre's place.</summary>
@@ -176,7 +182,7 @@ namespace Simpiens.Presentation
         /// Adds a sprite anchored at <paramref name="x"/>, <paramref name="y"/> on the floor, centred on it, sized in art
         /// pixels. Returns the item, to set what the defaults don't cover (height, pivot, <see cref="Pickable"/>).
         /// </summary>
-        public ref DrawItem Add(int layer, DrawRole role, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.Sprites)
+        public ref DrawItem Add(int layer, DrawRole role, float depth, int spriteIndex, float x, float y, float width, float height, Rgba32 tint, float rotation = 0f, DrawSheet sheet = DrawSheet.World)
         {
             if (Count == _items.Length)
             {

@@ -14,17 +14,17 @@ namespace Simpiens.Client.Ui
         private bool _merchantWasOpen, _bountiesWereOpen;
         private int _sessionVersion;
 
-        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds)
+        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons)
         {
             Model = model;
             _refreshSeconds = refreshSeconds;
-            Header = new HeaderBar();
-            Panels = new DashboardPanels(model);
+            Header = new HeaderBar(icons);
+            Panels = new DashboardPanels(model, icons);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
-            Merchant = new MerchantWindow(model.Merchant);
+            Merchant = new MerchantWindow(model.Merchant, icons);
             Merchant.Window.CloseButton.Click += (_, _) => { Model.Merchant.Close(); Refresh(); };
             ui.Root.Children.Add(Merchant.Window.Veil);
-            Bounties = new BountyBoardWindow(model.Bounties);
+            Bounties = new BountyBoardWindow(model.Bounties, icons);
             Bounties.Window.CloseButton.Click += (_, _) => { Model.Bounties.Close(); Refresh(); };
             ui.Root.Children.Add(Bounties.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };

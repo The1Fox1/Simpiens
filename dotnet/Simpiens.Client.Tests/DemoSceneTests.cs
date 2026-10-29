@@ -74,24 +74,6 @@ namespace Simpiens.Client.Tests
             Assert.All(gossip.Actors, a => Assert.True(game.Session.Frames.Current.TryGetIndex(a, out int i) && game.Session.Frames.Current[i].IsCrawler));
         }
 
-        [Fact]
-        public void TheBackdropsAreUnchanged()
-        {
-            ulong hash = 14695981039346656037UL;
-            foreach (var sprite in CutsceneArt.Backdrops)
-                foreach (var p in sprite.Pixels)
-                {
-                    hash = (hash ^ p.R) * 1099511628211UL;
-                    hash = (hash ^ p.G) * 1099511628211UL;
-                    hash = (hash ^ p.B) * 1099511628211UL;
-                    hash = (hash ^ p.A) * 1099511628211UL;
-                }
-            Assert.Equal(PinnedBackdrops, hash);
-        }
-
-        /// <summary>The placeholder backdrops' pixels, pinned after a look (2026-10-21); a deliberate art change re-pins in its own commit.</summary>
-        private const ulong PinnedBackdrops = 4721926688796089773UL;
-
         // The references: the hard demonstration at the outpost and at the deep seam, and the first gossip over the world
         private const int Width = 1280, Height = 720;
 

@@ -29,7 +29,7 @@ namespace Simpiens.Client
             Simulation.Respawn(Options.SessionId);
             _driver = new SimulationDriver(Simulation.Clock, Options.TicksPerUpdate);
             // What the views draw, copied when each tick completes (and afresh on every respawn, switch or load)
-            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock, Simulation.Chronicle);
+            Frames.Follow(Simulation.Host, Simulation.Registry, Simulation.Sectors, Simulation.Clock, Simulation.Chronicle, Simulation.Simulation);
 
             Identity = Simulation.Identity;
             Selection = new WorldSelection(Frames, Simulation.Sectors, Identity);

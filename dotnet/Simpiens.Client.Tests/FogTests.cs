@@ -101,7 +101,7 @@ namespace Simpiens.Client.Tests
             selection.SelectCrawler(crawler.Id, follow: true);
             scene.Build(map, frames, 0f, selection);
             List<DrawItem> Inside() => Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i])
-                .Where(i => i.Sheet == DrawSheet.Sprites && cloud.Area.Contains(new Vec2(i.X, i.Y)) && DrawSortKey.Role(i.SortKey) is DrawRole.Prop or DrawRole.Crawler or DrawRole.Selection).ToList();
+                .Where(i => i.Sheet == DrawSheet.World && cloud.Area.Contains(new Vec2(i.X, i.Y)) && DrawSortKey.Role(i.SortKey) is DrawRole.Prop or DrawRole.Crawler or DrawRole.Selection).ToList();
             Assert.Empty(Inside());
             Assert.DoesNotContain(scene.Labels, l => l.Kind == LabelKind.Name); // its name would give it away
             var view = new View(TopDownProjection.Instance, new ViewCamera(cloud.Area.Center, 32f, 800, 600));

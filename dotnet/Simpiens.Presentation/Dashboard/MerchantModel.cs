@@ -23,6 +23,8 @@ namespace Simpiens.Presentation.Dashboard
 
         public string Label => ItemTexts.PriceLabel(Item, Role);
         public string Hint => ItemTexts.Of(Item).MerchantHint;
+        /// <summary>The good's icon (graphics V4).</summary>
+        public string Icon => ItemIcons.Of(Item);
     }
 
     /// <summary>

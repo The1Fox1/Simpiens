@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-25 (G3 done)
+# Last reconciled: 2026-10-29 (graphics V0-V5 done; the producer's look passed)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -17,6 +17,10 @@ CURRENT FOCUS
   day, warnings as errors. On feat/code-cleanliness, PR into main. The rest of .agents/core_refactor_plan.md
   (R1-R6: guards, SimulationManager's split, planners per worker) comes back after Epic 10 Part 1; R7, the item
   system, was done 2026-10-26 (PR #15): catalog, groups, rarity, effects, equipment stats, loot tables.
+- Epic CLIENT [PAUSED 2026-10-29] after the graphics work, V0-V5 (2026-10-28/29): the art as data; the sampling
+  rules (F12, F19) with a packed world sheet; item icons and map sprites from a sprite kit, icons in the dashboard;
+  the stall with its goods, worn gear and carried salvage, in the live outpost. V3-V5 under the producer's
+  provisional authority; the producer's look passed 2026-10-29. On feat/graphics-catalogue: one PR into main.
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
@@ -32,6 +36,9 @@ OPEN WITH THE PRODUCER
   the test asserts what is causal) and F5 (early jitter fails 4 of seeds 1-120, on main too): Epic 10 §7.
 - The greedy soak band judged at its lowest trust mean (Epic 10 G0) and the drifter tuning (G1): accepted by
   default unless the producer says otherwise.
+- Closed 2026-10-29: the look at graphics V3-V5 ("Visual inspection looks good"), with D6-D11 as proposed (smooth
+  zoom kept, nodes kept, the helmet, header icons, the bundle, four display slots). Whole-step zoom, the render
+  target and the rest of the graphics work's open items wait in Epic CLIENT §4.
 - Closed 2026-10-25: the look at G2 ("hazards UI is fine for now"); the fair soak band, 1,000-2,000g.
 - Closed 2026-10-24: Milestone 1's save/load check at 1x; Epic CLIENT's side-by-side with Unity and the looks
   at M3, motion between ticks, and the header's pause and speed.
@@ -65,6 +72,6 @@ INDEPENDENT EPICS
 - Epic MAP: The Outpost Floor & Living Simulation Loop [COMPLETED 2026-10-13] (docs/epics/epic-map.md)
 - Epic CORE: Engine-Free Core and Headless .NET [COMPLETED 2026-10-17] (docs/epics/epic-core.md; PR #5)
   F1 (Mono vs CoreCLR float rounding) closed 2026-10-24 with Unity's removal.
-- Epic CLIENT: KNI Client and Engine Rework [PAUSED 2026-10-24, after M2.8-M2.9 removed Unity] (docs/epics/epic-client.md)
-  Done: M0, M1, M2 (Unity removed), text cleanup, seams, M3, the architecture findings. Remaining: M4 Android
-  (deferred), M5-M7, the map designer.
+- Epic CLIENT: KNI Client and Engine Rework [PAUSED 2026-10-29, after graphics V0-V5] (docs/epics/epic-client.md)
+  Done: M0, M1, M2 (Unity removed), text cleanup, seams, M3, the architecture findings, graphics V0-V5 (the art
+  as data, item art and icons, items in the world). Remaining: M4 Android (deferred), M5-M7, the map designer.

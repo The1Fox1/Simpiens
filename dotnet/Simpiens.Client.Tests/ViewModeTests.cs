@@ -16,7 +16,7 @@ namespace Simpiens.Client.Tests
             Assert.Same(ViewMode.Isometric, game.World.Mode);
             Assert.Same(game.World.Mode.Projection, game.World.Rig.Projection);
             Assert.Same(game.World.Mode.Projection, game.World.Scene.Projection);
-            Assert.Same(game.World.Mode.Art, game.World.Scene.Art);
+            Assert.Same(game.World.Mode.Catalog, game.World.Scene.Catalog);
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace Simpiens.Client.Tests
                 ui.Script.Keys = default;
                 Assert.Same(next, game.World.Mode);
                 Assert.True((game.World.Rig.Position - centre).Magnitude < 1e-3f, "the same floor point at the centre");
-                Assert.Equal(size, game.World.Rig.Size, 4); // the same pixels per art pixel: both art sets are 16 a unit
+                Assert.Equal(size, game.World.Rig.Size, 4); // the same pixels per art pixel: both catalogues are 16 a unit
             }
         }
 

@@ -1097,3 +1097,101 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - `dotnet test` 381/381 (core 112, client 269);
   - the pinned image 269/269 byte for byte;
   - the MonoGame and Android builds compile.
+
+## 2026-10-28: the art catalogue (graphics V0–V2, Epic CLIENT, pulled forward from M7)
+
+- **Ask (producer):** revisit the UI and graphics before the end of Epic 10. Do walls, furniture, crawlers and items share an interface for rendering? Items need map sprites and menu icons. The answer was `.agents/graphics_plan.md` (V0–V6); the producer said go on V0–V2, the foundation with no picture change.
+- **Decision: art keys over C# fields, tables over classes.**
+  - What a view mode draws is an `ArtCatalog`: rows by stable key (`tile/wall`, `prop/hearth`, `crawler/<state>`, `node/<item sprite key>`), each an `ArtDefinition` (sheet, frames, frame rate, size in units of a scale, pivot, pulse).
+  - The numbers live in `TopDownArtTable` and `IsometricArtTable`.
+  - Keys resolve once to dense `ArtId`s, so a frame reads arrays and allocates nothing.
+- **Decision: sprite indices are the sheets' business.** `PixelSprite` is named pixels; a `SpriteSheet` alone gives out indices.
+- **Decision: one question per entity.** `EntityVisuals` maps a frame entity to its art; `WorldArt` and its art sets are gone. Entities stay plain data: "renderable" means "its frame row maps to an art key", which is presentation's call, so a multiplayer client fills the same frames.
+- **Invariant kept:** a piece's size is `(width × motion) × scale`, in the art sets' order, so every piece kept its bits. `ArtCatalogTests` pins them, recorded from the art sets before the catalogue.
+- **Safety net:**
+  - the picture pins hash sprite names, not sheet indices (re-pinned once, renders exact);
+  - every sprite is pinned by name (`Baselines/art-pins.txt`);
+  - the art review sheet (`art-sheet.png`) is written on every run.
+- **Deviations from the plan:**
+  - one world sheet for both modes was reverted, because the epic's F12 (M3) said it would move top-down's renders, and it did (the plan had missed F12). It moves to V3, with a tie-free sampling rule;
+  - the pose lost its sprite before the catalogue (V2.1 before V1.3);
+  - visuals and `WorldArt`'s removal landed together;
+  - rations needed no exception (their sprite key is the berry bush);
+  - node art is looked up by the item's sprite key on each draw, not from a fixed table, so items a test adds still resolve.
+- **Findings:** F12 rechecked; F19, top-down's crawlers shimmer at their 0.7-cell size and isometric's don't, so anchor snapping (P7) isn't needed in the game's view; F20, frame time unchanged.
+- **Verification:**
+  - every commit built with 0 warnings and passed `dotnet test`; the client's tests ran exactly in the pinned image; MonoGame compiled. No core change.
+  - At the end: `dotnet test` 398/398 (core 112, client 286); the Android build compiles.
+- **The V0–V2 plan is deleted.** V3–V6 stay in `.agents/graphics_plan.md`.
+
+## 2026-10-29: correction to F19 (the art catalogue's shimmer finding)
+
+- **What was wrong:** the 2026-10-28 entry said isometric's crawlers don't shimmer, so anchor snapping (P7) wasn't needed in the game's view. That held only at whole zooms.
+- **What is true:** the wheel zooms continuously (0.85 a notch), so play is almost always at an in-between scale. There, isometric shimmers too: 14 shapes at 1.37×.
+- **What follows:** P7 is back in scope for both views. It is V3.1 of `.agents/graphics_v3_v5_plan.md`:
+  - standing pieces snap their anchors to whole pixels;
+  - a fixed sampling bias keeps pixel centres off texel edges (F12).
+
+  The epic's F19 carries the correction.
+
+## 2026-10-29: item art, icons in the menus, items in the world (graphics V3–V5, Epic CLIENT)
+
+- **Ask (producer):** "proceed. You are given provisional authority to complete this plan to the finish line" (the
+  V3–V5 plan). Done the same day on `feat/graphics-catalogue`, under the authority rules of 2026-10-14 (a local
+  directive and decision log, not committed; no push or merge). Decisions D6–D11 taken as proposed.
+- **Decision: two sampling rules, not a change of zoom.**
+  - Standing pieces snap their anchors to whole pixels (no motion shimmer at any zoom, F19).
+  - A fixed 0.13 px sampling bias keeps pixel centres off texel edges (F12).
+  - The proof: every sheet re-packed and the two world sheets merged, with every render byte-identical.
+  - Continuous zoom leaves a few generic near-ties at in-between zooms. The complete fix is a pixel-perfect render
+    target, or whole-step zoom (D6's alternative); both are open (epic §4).
+- **Decision: an item's look is one line of data.**
+  - `ItemDefinition.ArtKey` (the core's only change; golden and soak unchanged).
+  - `ItemArt`: a shape from `ItemShapes` and two colours.
+  - The sprite kit makes the icon (rarity rim), the map sprite and the carried marker.
+  - Missing art is loud and fails a test.
+- **Decision: icons drawn 1:1, like the fonts.**
+  - The icon atlas holds 1x and 2x copies; a test proves an icon is its art under either Gum filter.
+  - Windows snap to whole pixels, since an odd-height window sat half a pixel down.
+  - Gum's batch-grouped ordering was measured and declined (F21).
+- **Decision: items in the world without a core change.**
+  - Frames carry worn gear, carried salvage and the stalls (plain data).
+  - A helmet is the crawler's hair recoloured, so the art ported from Unity is untouched.
+  - The stall shows up to four goods in stock.
+  - A live check on the real outpost found the first carrier at tick 158 and the first helmet at tick 1034.
+- **Deviations and incidents:**
+  - V2.1 had already moved the pose to frames; Recolour moved from V3.5 to V5.2.
+  - The header and the dossier's gear line use 1x icons.
+  - The pieces' pins came to hash sprite names (indices moved with the stall).
+  - A static-initialisation cycle was found when one test ran alone; fixed, with a load-context test (F22).
+  - One commit message over-claimed a test count (b8c3c2b: the client suite alone ran); one local run was cut short
+    after 38 tests (not reproduced in eight reruns; the gate now flags short runs).
+  - A frame-time reading after an Android build was inflated by its build servers; re-measured back to back (F23).
+- **Open for the producer:** their own look at the art and the renders. Epic CLIENT §4 holds:
+  - the render target or step zoom;
+  - the stall's sorting;
+  - the dashboard's state-change begins;
+  - the stall click;
+  - dropdown icons;
+  - tools in hand;
+  - dropped items.
+- **Verification:**
+  - `dotnet test` 451/451 (core 112, client 339); the client's 339/339 exactly in the pinned image.
+  - Golden 3/3 and the soak identical at the core change; the MonoGame and Android builds compile.
+  - Frame time within 3% (F23).
+- **Both graphics plans are deleted;** their open items are in the epic.
+
+
+## 2026-10-29: the graphics look passed; V6 closed out
+
+- **The producer's look** at graphics V3–V5 (the art review sheet and the changed renders): "Visual inspection looks
+  good." Decisions D6–D11 stand as proposed. Whole-step zoom (D6's alternative) and the render target stay open in
+  Epic CLIENT §4.
+- **V6, finished before the pull request:**
+  - `AGENTS.md` gains the "Adding art" note the overview plan asked for (sprites, table rows, `EntityVisuals`, the
+    checks); the close-out of V3–V5 had only done the item's art line.
+  - Five doc comments that had slid off their declarations are put back. Three were this branch's: a type inserted
+    between a doc comment and what it described (`ArtKeys`, `HeaderModel`, `UiParts.SetText`). The other two were
+    older (`WorldScene` and its room names). The same slip in the core's `ResourceTargeting` (four comments) is
+    outside this branch and left as it is.
+- **V0–V5 go into `main` as one pull request** from `feat/graphics-catalogue`.

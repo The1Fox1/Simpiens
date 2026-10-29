@@ -34,23 +34,20 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
-    /// A generated image: pixels row by row from the top (as XNA textures store them). The renderer packs every sprite
-    /// into one atlas and refers to it by <see cref="Index"/>; nothing here knows about textures.
+    /// A generated image: a name, and pixels row by row from the top (as XNA textures store them). Where it sits in a
+    /// texture is its sheet's business (<see cref="Art.SpriteSheet"/>, graphics V1); nothing here knows about textures.
     /// </summary>
     public sealed class PixelSprite
     {
-        public PixelSprite(int index, string name, int width, int height, Rgba32[] pixels)
+        public PixelSprite(string name, int width, int height, Rgba32[] pixels)
         {
             if (pixels == null || pixels.Length != width * height) throw new ArgumentException($"{name}: expected {width * height} pixels.", nameof(pixels));
-            Index = index;
             Name = name;
             Width = width;
             Height = height;
             Pixels = pixels;
         }
 
-        /// <summary>Its place in <see cref="WorldSprites.All"/>: the world's one atlas.</summary>
-        public int Index { get; }
         public string Name { get; }
         public int Width { get; }
         public int Height { get; }

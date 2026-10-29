@@ -85,7 +85,7 @@ namespace Simpiens.Client
         /// <summary>Builds the dashboard's views, once the UI layer is up.</summary>
         public void LoadContent()
         {
-            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds);
+            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons);
             Scenes = new DynamicSceneView(_game);
             Scenes.LoadContent();
         }

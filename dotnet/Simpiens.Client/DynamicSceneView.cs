@@ -126,7 +126,7 @@ namespace Simpiens.Client
             var world = _game.World;
             if (!_game.Session.Frames.TryGetDrawnPosition(crawler, out var at)) return false;
             if (world.Scene.Fog.Visibility(at, _game.Session.ViewSeconds) <= 0f) return false;
-            head = world.Rig.ToView(width, height).WorldToScreen(at, world.Mode.Art.NameHeight + 0.25f);
+            head = world.Rig.ToView(width, height).WorldToScreen(at, world.Mode.Catalog.NameHeight + 0.25f);
             return head.X >= 0f && head.X < width && head.Y >= BubbleHeight * 0.5f && head.Y < height;
         }
     }

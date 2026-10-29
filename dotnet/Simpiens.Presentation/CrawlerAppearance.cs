@@ -5,23 +5,27 @@ using Simpiens.Entities;
 
 namespace Simpiens.Presentation
 {
-    /// <summary>How a crawler looks this frame: its sprite, and the tilt and squash of its micro-animation.</summary>
+    /// <summary>
+    /// How a crawler looks this frame: its state, its animation frame, and the tilt and squash of its micro-animation.
+    /// Which pixels that is, is the view mode's art (graphics V2): the pose decides no sprite.
+    /// </summary>
     public readonly struct CrawlerPose
     {
-        public CrawlerPose(AgentVisualState state, PixelSprite sprite, float tiltDegrees, float scaleX, float scaleY)
+        public CrawlerPose(AgentVisualState state, int frame, float tiltDegrees, float scaleX, float scaleY)
         {
             State = state;
-            Sprite = sprite;
+            Frame = frame;
             TiltDegrees = tiltDegrees;
             ScaleX = scaleX;
             ScaleY = scaleY;
         }
 
         public AgentVisualState State { get; }
-        public PixelSprite Sprite { get; }
+        /// <summary>The state's animation frame, 0 or 1 (<see cref="CrawlerAppearance.AnimationFrame"/>).</summary>
+        public int Frame { get; }
         /// <summary>Counter-clockwise, as Unity's z rotation.</summary>
         public float TiltDegrees { get; }
-        /// <summary>Multipliers of the crawler's size (<see cref="TopDownArt.CrawlerSize"/>).</summary>
+        /// <summary>Multipliers of the crawler's size (<see cref="Art.TopDownArtTable.CrawlerSize"/>).</summary>
         public float ScaleX { get; }
         public float ScaleY { get; }
     }
@@ -72,9 +76,8 @@ namespace Simpiens.Presentation
         public CrawlerPose Pose(EntityId id, AgentVisualState state, CrawlerFlags flags, float viewSeconds)
         {
             state = _shown.TryGetValue(id, out var shown) ? shown.State : Desired(state, flags);
-            var sprite = ProceduralSprites.GetAgentSprite(state, AnimationFrame(state, viewSeconds));
             MicroAnimation(state, viewSeconds, out float tilt, out float scaleX, out float scaleY);
-            return new CrawlerPose(state, sprite, tilt, scaleX, scaleY);
+            return new CrawlerPose(state, AnimationFrame(state, viewSeconds), tilt, scaleX, scaleY);
         }
 
         /// <summary>

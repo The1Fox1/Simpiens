@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Cognition.Inventory;
 using Simpiens.Core.Session;
 using Simpiens.Entities;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 
@@ -36,6 +38,10 @@ namespace Simpiens.Presentation
         public CrawlerFlags Flags;
         /// <summary>A crawler's sector at the end of the tick (for scenes started by entering a zone); -1 for props or with no sectors captured.</summary>
         public int SectorId;
+        /// <summary>What a crawler wears in its protection slot (graphics V5); None for none, and for props.</summary>
+        public ItemType Worn;
+        /// <summary>The first salvage a crawler holds, in id order (graphics V5): what it is seen carrying; None for none.</summary>
+        public ItemType Carried;
     }
 
     /// <summary>
@@ -46,6 +52,7 @@ namespace Simpiens.Presentation
     public sealed class WorldViewFrame
     {
         private EntityView[] _entities = new EntityView[128];
+        private TradeStallData[] _stalls = new TradeStallData[4];
         private readonly Dictionary<EntityId, int> _index = new Dictionary<EntityId, int>(128);
         private readonly bool[] _charted = new bool[256];
         private readonly List<ChronicleEvent> _events = new List<ChronicleEvent>(8);
@@ -58,6 +65,11 @@ namespace Simpiens.Presentation
         /// <summary>Bit i set when sector i (ids below 64) is charted, as <see cref="ISectorRegistry.ExploredMask"/>.</summary>
         public ulong ChartedMask { get; private set; }
         public int Count { get; private set; }
+
+        /// <summary>The stalls at the end of the tick (graphics V5): plain copies, goods and stock included.</summary>
+        public int StallCount { get; private set; }
+
+        public ref readonly TradeStallData Stall(int index) => ref _stalls[index];
 
         /// <summary>
         /// What the chronicle recorded during this tick (oldest first): crawlers' interactions with each other among them,
@@ -79,8 +91,15 @@ namespace Simpiens.Presentation
         /// Copies <paramref name="entities"/>, the charting of <paramref name="sectors"/> (null: unknown) and the tick's
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null)
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null)
         {
+            StallCount = 0;
+            if (stalls != null)
+            {
+                if (_stalls.Length < stalls.Count) Array.Resize(ref _stalls, Math.Max(stalls.Count, _stalls.Length * 2));
+                for (int i = 0; i < stalls.Count; i++) _stalls[StallCount++] = stalls[i];
+            }
+
             Tick = tick;
             Epoch = epoch;
             _events.Clear();
@@ -115,10 +134,18 @@ namespace Simpiens.Presentation
                     VisualState = agent != null ? agent.VisualState : AgentVisualState.Idle,
                     Flags = agent != null ? FlagsOf(agent) : CrawlerFlags.None,
                     SectorId = agent != null && sectors != null ? sectors.GetSectorAt(entity.Position).Id : -1,
+                    Worn = agent?.Inventory != null ? Worn(agent.Inventory) : ItemType.None,
+                    Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                 };
                 _index[entity.Id] = Count;
                 Count++;
             }
+        }
+
+        private static ItemType Worn(AgentInventory inventory)
+        {
+            var worn = inventory.GetEquipped(EquipmentSlot.Protection);
+            return worn.IsEmpty ? ItemType.None : worn.Type;
         }
 
         /// <summary>A crawler's passing moments, as a frame captures them.</summary>
@@ -150,6 +177,7 @@ namespace Simpiens.Presentation
         private ISectorRegistry _sectors;
         private ISimulationClock _clock;
         private INarrativeChronicleService _chronicle;
+        private ISimulationManager _simulation;
         private ulong _lastEventId;
         private readonly List<ChronicleEvent> _recent = new List<ChronicleEvent>(64);
         private readonly List<ChronicleEvent> _newEvents = new List<ChronicleEvent>(8);
@@ -216,9 +244,11 @@ namespace Simpiens.Presentation
         /// Captures the session's world from now on: after every completed tick, and afresh (a new epoch) on every
         /// respawn, switch or load. Captures once at once.
         /// </summary>
-        public void Follow(SessionHost host, IWorldRegistry registry, ISectorRegistry sectors, ISimulationClock clock, INarrativeChronicleService chronicle = null)
+        /// <param name="simulation">Where the stalls come from (graphics V5); none without it.</param>
+        public void Follow(SessionHost host, IWorldRegistry registry, ISectorRegistry sectors, ISimulationClock clock, INarrativeChronicleService chronicle = null, ISimulationManager simulation = null)
         {
             Dispose();
+            _simulation = simulation;
             _host = host;
             _registry = registry;
             _sectors = sectors;
@@ -229,32 +259,32 @@ namespace Simpiens.Presentation
                 _host.TickCompleted += OnTickCompleted;
                 _host.SessionChanged += OnSessionChanged;
             }
-            Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0);
+            Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls);
         }
 
         /// <summary>The next frame: <see cref="Current"/> becomes <see cref="Previous"/>, with the chronicle's new events.</summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null)
         {
-            CaptureFrame(entities, sectors, tick, TakeNewEvents());
+            CaptureFrame(entities, sectors, tick, TakeNewEvents(), stalls);
             Captured?.Invoke(this);
         }
 
         /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world (its chronicle's past included).</summary>
-        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick)
+        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null)
         {
             _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
             _lastEventId = NewestEventId();
-            CaptureFrame(entities, sectors, tick, null);
-            CaptureFrame(entities, sectors, tick, null);
+            CaptureFrame(entities, sectors, tick, null, stalls);
+            CaptureFrame(entities, sectors, tick, null, stalls);
             Captured?.Invoke(this);
         }
 
-        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events)
+        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events, IReadOnlyList<TradeStallData> stalls)
         {
             var next = _previous;
             _previous = _current;
             _current = next;
-            _current.Capture(entities, sectors, tick, _epoch, events);
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>
@@ -279,9 +309,9 @@ namespace Simpiens.Presentation
             return _recent.Count > 0 ? _recent[0].EventId : 0UL;
         }
 
-        private void OnTickCompleted(long tick) => Capture(_registry?.ActiveEntities, _sectors, tick);
+        private void OnTickCompleted(long tick) => Capture(_registry?.ActiveEntities, _sectors, tick, _simulation?.ActiveStalls);
 
-        private void OnSessionChanged(ISessionDefinition session) => Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0);
+        private void OnSessionChanged(ISessionDefinition session) => Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls);
 
         public void Dispose()
         {

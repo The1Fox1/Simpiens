@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Simpiens.Presentation.Art;
 
 namespace Simpiens.Presentation
 {
@@ -8,7 +9,7 @@ namespace Simpiens.Presentation
     /// art pixels: floor and rock diamonds, wall blocks full and low, a bunk, and the ring and shadow that lie on the
     /// floor. Every pixel is decided at its centre against the projection's exact diamond, so floor tiles meet with no gap
     /// and no overlap. Crawlers, the hearth and resource nodes stand as their 16x16 top-down sprites. Colours are top-down's.
-    /// Indices continue after <see cref="ProceduralSprites.All"/>, so both share one atlas (<see cref="WorldSprites"/>).
+    /// They follow the 16x16 sprites in the world sheet (<see cref="Art.SpriteSheets.World"/>).
     /// </summary>
     public static class IsometricSprites
     {
@@ -19,6 +20,8 @@ namespace Simpiens.Presentation
         /// <summary>A cut-away wall's stub (M3 design D7).</summary>
         public const int LowWallRise = 4;
         public const int BunkWidth = 24, BunkHeight = 12, BunkRise = 5;
+        /// <summary>The trade stall's counter (graphics V5): a block a tile and a half across, with a striped cloth on top.</summary>
+        public const int StallWidth = 48, StallHeight = 24, StallRise = 8;
 
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(8);
 
@@ -33,6 +36,7 @@ namespace Simpiens.Presentation
         public static PixelSprite SelectionRing { get; }
         /// <summary>A soft dark ellipse under a standing crawler.</summary>
         public static PixelSprite Shadow { get; }
+        public static PixelSprite Stall { get; }
 
         // Top-down's palette (ProceduralSprites): flagstone, rock, slate walls, the bunk's wood, pillow and blanket
         private static readonly Rgba32 Flagstone = new Rgba32(232, 232, 232), Speckle = new Rgba32(212, 212, 212), Joint = new Rgba32(190, 190, 190);
@@ -50,6 +54,7 @@ namespace Simpiens.Presentation
             Bunk = Add("Iso_Bunk", BunkPixels(), BunkWidth, BunkHeight + BunkRise);
             SelectionRing = Add("Iso_Selection_Ring", EllipsePixels(22, 12, 11f, 6f, ring: true, Gold), 22, 12);
             Shadow = Add("Iso_Shadow", EllipsePixels(12, 6, 6f, 3f, ring: false, new Rgba32(0, 0, 0, 90)), 12, 6);
+            Stall = Add("Iso_Stall", StallPixels(), StallWidth, StallHeight + StallRise);
         }
 
         /// <summary>The pivot of a block <paramref name="rise"/> pixels tall on a <paramref name="height"/>-pixel footprint: its footprint's centre.</summary>
@@ -57,7 +62,7 @@ namespace Simpiens.Presentation
 
         private static PixelSprite Add(string name, Rgba32[] pixels, int width, int height)
         {
-            var sprite = new PixelSprite(ProceduralSprites.All.Count + _all.Count, name, width, height, pixels);
+            var sprite = new PixelSprite(name, width, height, pixels);
             _all.Add(sprite);
             return sprite;
         }
@@ -154,6 +159,27 @@ namespace Simpiens.Presentation
             return py > footprintHeight * 0.5f - reach && py < footprintHeight * 0.5f + rise + reach;
         }
 
+        /// <summary>The stall's counter: a wooden block with a red-and-cream striped cloth over its top.</summary>
+        private static Rgba32[] StallPixels()
+        {
+            int width = StallWidth, height = StallHeight + StallRise;
+            var red = new Rgba32(220, 38, 38);
+            var cream = new Rgba32(254, 243, 199);
+            var pixels = new Rgba32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (!InBlock(x, y, width, StallHeight, StallRise)) continue;
+                    Rgba32 colour;
+                    if (InDiamond(x, y, width * 0.5f, StallHeight * 0.5f, width, StallHeight)) colour = (x + 2 * y) / 6 % 2 == 0 ? red : cream;
+                    else colour = x < width / 2 ? Wood : WoodShadow;
+                    pixels[y * width + x] = colour;
+                }
+            }
+            return pixels;
+        }
+
         /// <summary>A low wooden frame with a blanket on top and the pillow at its far end.</summary>
         private static Rgba32[] BunkPixels()
         {
@@ -189,79 +215,5 @@ namespace Simpiens.Presentation
             }
             return pixels;
         }
-    }
-
-    /// <summary>Every sprite in the world's one atlas: the top-down art, then the isometric placeholders. A sprite's index is its place here.</summary>
-    public static class WorldSprites
-    {
-        private static readonly List<PixelSprite> _all = Build();
-
-        public static IReadOnlyList<PixelSprite> All => _all;
-
-        private static List<PixelSprite> Build()
-        {
-            var all = new List<PixelSprite>(ProceduralSprites.All.Count + IsometricSprites.All.Count);
-            all.AddRange(ProceduralSprites.All);
-            all.AddRange(IsometricSprites.All);
-            return all;
-        }
-    }
-
-    /// <summary>
-    /// Isometric's art (M3 design D5): the placeholders on 32x16 tiles. Floor tiles are centred on their cells; walls,
-    /// props and crawlers stand on their feet, at one art pixel per pixel of their 16x16 sprites. Everything is drawn from
-    /// the isometric sheet (<see cref="DrawSheet.Isometric"/>), one batch.
-    /// </summary>
-    public sealed class IsometricArt : WorldArt
-    {
-        /// <summary>A 16x16 sprite's feet: the bottom of its last drawn row (row 14).</summary>
-        public const float FeetPivot = 15f / 16f;
-        private const float Standing = 16f;
-        private const DrawSheet Sheet = DrawSheet.Isometric;
-
-        public static IsometricArt Instance { get; } = new IsometricArt();
-
-        private IsometricArt() { }
-
-        public override ArtPiece Tile(TileKind kind)
-        {
-            switch (kind)
-            {
-                case TileKind.Floor: return new ArtPiece(IsometricSprites.Floor.Index, IsometricSprites.TileWidth, IsometricSprites.TileHeight, sheet: Sheet);
-                case TileKind.Rock: return new ArtPiece(IsometricSprites.Rock.Index, IsometricSprites.TileWidth, IsometricSprites.TileHeight, sheet: Sheet);
-                default: return Wall(IsometricSprites.Wall, IsometricSprites.WallRise);
-            }
-        }
-
-        /// <summary>A cut-away wall's stub (M3 design D7).</summary>
-        public override ArtPiece LowWall => Wall(IsometricSprites.LowWall, IsometricSprites.LowWallRise);
-
-        private static ArtPiece Wall(PixelSprite sprite, int rise)
-            => new ArtPiece(sprite.Index, sprite.Width, sprite.Height, 0.5f, IsometricSprites.BlockPivotY(IsometricSprites.TileHeight, rise), Sheet);
-
-        public override ArtPiece Resource(Simpiens.Simulation.Economy.ItemType kind)
-            => new ArtPiece(ProceduralSprites.GetResourceSprite(kind).Index, Standing, Standing, 0.5f, FeetPivot, Sheet);
-
-        /// <summary>Top-down's two-frame flame and pulse, standing.</summary>
-        public override ArtPiece Hearth(float viewSeconds)
-        {
-            var sprite = ProceduralSprites.GetCampfireSprite((int)(viewSeconds * 6f) & 1);
-            float size = Standing * (1f + MathF.Sin(viewSeconds * 4f) * 0.03f);
-            return new ArtPiece(sprite.Index, size, size, 0.5f, FeetPivot, Sheet);
-        }
-
-        public override ArtPiece Bunk => new ArtPiece(IsometricSprites.Bunk.Index, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,
-            0.5f, IsometricSprites.BlockPivotY(IsometricSprites.BunkHeight, IsometricSprites.BunkRise), Sheet);
-
-        public override ArtPiece Crawler(in CrawlerPose pose) => new ArtPiece(pose.Sprite.Index, Standing * pose.ScaleX, Standing * pose.ScaleY, 0.5f, FeetPivot, Sheet);
-
-        public override ArtPiece CrawlerShadow => new ArtPiece(IsometricSprites.Shadow.Index, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height, sheet: Sheet);
-
-        public override ArtPiece SelectionRing => new ArtPiece(IsometricSprites.SelectionRing.Index, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height, sheet: Sheet);
-
-        public override Vec2 NameOffset => Vec2.Zero;
-
-        /// <summary>Just over the head: a crawler stands one world unit (16 art pixels) tall.</summary>
-        public override float NameHeight => 1.125f;
     }
 }

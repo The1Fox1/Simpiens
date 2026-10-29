@@ -1,12 +1,13 @@
 using System.Linq;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Xunit;
 
 namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// Pins what the map draws as data, finer than the render references' tolerance (Epic CLIENT, plan step 1.1): every
-    /// draw item in draw order, as the screen sees it (sheet, sprite, layer, centre, size, turn, tint), and every placed
+    /// draw item in draw order, as the screen sees it (sprite by name, layer, centre, size, turn, tint), and every placed
     /// label. Refactors of the projection and the draw list must keep these hashes; when a render reference moves while
     /// they hold, the change is float rounding, not a different picture. A deliberate change of the picture re-records
     /// them in the same commit as the references.
@@ -87,8 +88,8 @@ namespace Simpiens.Client.Tests
                 var quad = ScreenQuad.Of(item, camera);
                 if (!quad.Touches(Width, Height)) continue;
                 var centre = quad.Anchor; // every item is centred on its anchor today
-                hash = Fnv.Add(hash, (long)item.Sheet);
-                hash = Fnv.Add(hash, item.SpriteIndex);
+                // The sprite by name, not by sheet and index (graphics V0): indices are the sheets' business
+                hash = Fnv.Add(hash, SpriteSheets.Contents(item.Sheet)[item.SpriteIndex].Name);
                 hash = Fnv.Add(hash, DrawSortKey.Layer(item.SortKey));
                 hash = Fnv.Add(hash, Fnv.Quantize(centre.X));
                 hash = Fnv.Add(hash, Fnv.Quantize(centre.Y));
@@ -129,6 +130,13 @@ namespace Simpiens.Client.Tests
                 return hash;
             }
 
+            public static ulong Add(ulong hash, string text)
+            {
+                hash = Add(hash, text.Length);
+                foreach (char c in text) hash = Add(hash, c);
+                return hash;
+            }
+
             public static long Quantize(float value) => (long)System.Math.Round(value * 64.0);
         }
 
@@ -144,12 +152,16 @@ namespace Simpiens.Client.Tests
         // the selected crawler's name moves with it, hence the zoomed views' labels. Re-pinned again for Epic 10 G1 (walkers
         // keep right around a crawler in the way; gathering prefers what the stall still buys). Re-pinned with the labels for
         // Epic 10 G2: the Sump and the Glow Caves replace the rock, with their names, their dangers under them ("FOUL AIR")
-        // and tinted floors.
-        private static readonly (ulong, ulong) PinnedTick0 = (6235278446463465821UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (4660904809810335205UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (9351933147033982476UL, 10398974787805613629UL);
+        // and tinted floors. Graphics V0 (2026-10-28): items hash their sprite's name instead of its sheet and index, so
+        // the sheets can renumber; every item pin was re-pinned with no picture change (the renders exact in the pinned image,
+        // the labels' pins unchanged). Graphics V3.1 (2026-10-29): standing pieces snap their anchors to whole pixels, so every
+        // pin with a crawler between pixels moved (tick 0's didn't: nothing is between pixels yet); labels unchanged.
+        // Graphics V5.3: the stall stands in the hub with its goods, and carriers show their bundles; every item pin re-pinned.
+        private static readonly (ulong, ulong) PinnedTick0 = (8627538318791238231UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (458419650849190911UL, 12863510669252587285UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8668556407383317760UL, 10398974787805613629UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (588843616322108427UL, 16142742670942183276UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (4937425532101275212UL, 14081288791794121755UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (12280833335970887450UL, 16142742670942183276UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13300003956712541319UL, 14081288791794121755UL);
     }
 }

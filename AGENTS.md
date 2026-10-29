@@ -25,9 +25,15 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
 
 **The game client** (Epic CLIENT):
 - **`Simpiens.Presentation`**, what is drawn, as data:
-  - generated sprites and map tiles;
+  - generated sprites (`ProceduralSprites`, `IsometricSprites`, named pixels) and map tiles;
+  - `Art/`, the art as data:
+    - **Sheets:** `SpriteSheets` says what each `DrawSheet` holds (World for both view modes, Fog, Backdrop, Icons); a sheet alone gives out sprite indices, and `AtlasLayout` packs it by shelves within a 2048 budget. The picture doesn't depend on the layout (epic F12): standing pieces snap to whole pixels (`DrawItem.SnapToPixel`) and `WorldRenderer.SampleBias` keeps pixel centres off texel edges.
+    - **Catalogues:** an `ArtCatalog` per view mode (`TopDownArtTable`, `IsometricArtTable`) and one for the menus (`IconArtTable`) map art keys (`ArtKeys`: `tile/wall`, `prop/hearth`, `prop/stall`, `crawler/<state>`, `crawler/<state>/<item art key>`, `node/<item art key>`, `item/<item art key>/icon|map|carried`) to frames, sizes, pivots and pulses, resolved to `ArtId`s once; missing art draws the loud `fx/missing` and fails a test. A catalogue also holds layout as data: where carried goods hang, the stall's display slots.
+    - **Who draws what:** `EntityVisuals` says which art each entity of a frame is drawn with (a crawler's worn gear included).
+    - **Generated art:** the sprite kit (`SpriteKit`: ramps, painting, outlines, icon plates with rarity rims) makes each item's icon, map sprite and carried marker from its look (`ItemArt`: a shape from `ItemShapes`, two colours, how it is worn); `WornSprites` makes crawlers wearing gear. Generators never read a table or a sheet (`ArtInitialisationTests`).
+    - New art for a known kind of thing is a table row;
   - the projections (`IViewProjection`: `TopDownProjection`, `IsometricProjection`). A `View` is a projection through a camera, and everything that maps world to screen takes one; `View.FloorToScreen` is its affine transform, under which what lies on the floor (`DrawItem.OnFloor`: the fog's cloud) is drawn;
-  - view modes (`ViewMode`: a projection with its art set, `WorldArt`). `TopDownArt` is the original art; `IsometricArt` stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
+  - view modes (`ViewMode`: a projection with its art catalogue). Top-down's is the original art; isometric's stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
   - screen space for hard cutscenes (`ScreenProjection`: a 640×360 virtual screen, letterboxed), and `Cutscenes/`: cutscenes written in code (`CutsceneBuilder`, `CutsceneScript`), played by `CutscenePlayer`. Hard ones are drawn by `CutsceneStage`; dynamic ones are started by `SceneDirector` from what the frames saw (a crawler entering a zone, or a chronicle interaction), once per tick;
   - the draw list and its sort key (draw roles; the projection picks their layers);
   - the views' per-tick frames (`WorldViewFrame`, captured on `SessionHost.TickCompleted`). The views read frames, never the live simulation, and draw crawlers between ticks;
@@ -40,7 +46,7 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
   - the input, read once per update into an `InputFrame` (keys become `InputAction`s through `KeyBindings`) that feeds both the top screen and Gum's cursor (`Ui/ClientCursor`);
   - `FrameTimings`, each frame's phases (F3 in Debug builds);
   - `WorldView`, how the world is drawn (projection, camera rig and controls, the scene, the map's text, picking): its state moves on in `Update`, and a draw only presents it;
-  - the renderer, and `Ui/`: the dashboard in Gum, views over the dashboard models that decide nothing.
+  - the renderer, and `Ui/`: the dashboard in Gum, views over the dashboard models that decide nothing. Item icons come from the `IconAtlas` (each icon at 1x and 2x, drawn 1:1, so no texture filter touches them); windows snap to whole pixels so icons land on them.
 - **Rules:** views read the simulation and never write it (a test enforces it), and only `XnaPlatform` may use an API that KNI and MonoGame don't share (`-p:XnaFramework=MonoGame` compiles the client against MonoGame to check).
 
 Namespaces kept the names of the Unity era (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Core.Session`, `Simpiens.Entities` for the visual-state enum, …). The directory notes below use the folder names inside `Simpiens.Core` and `Simpiens.Testing.Core`. Every project targets `net10.0` with its default C#, C# 14: .NET 10 is the newest .NET KNI supports (its Android platform targets `net10.0-android`), and the client references the core, so the solution moves to a newer .NET together, when KNI does.
@@ -52,12 +58,13 @@ Namespaces kept the names of the Unity era (`Simpiens.Cognition`, `Simpiens.Simu
 | All tests (validators, golden hashes, the live scenarios, the soak, the client's presentation, golden-hash and render tests) | `dotnet test dotnet/Simpiens.slnx` | .NET 10 SDK; for the client's tests, system SDL2 and Mesa (they run SDL's offscreen driver on llvmpipe, no display) |
 | Console host | `dotnet run --project dotnet/Simpiens.Host -- run`, `sweep --seeds 1..20`, `soak`, `golden check` (`-- help` lists the options) | .NET 10 SDK |
 | Golden hashes | `dotnet run --project dotnet/Simpiens.Host -- golden check`; re-record only for a deliberate behaviour change, in its own commit: `golden record --out Baselines/golden-world-hash.txt --seeds 424242,20261009,20261010` | .NET 10 SDK |
+| Art pins: every sprite's size and pixels, by name (`Baselines/art-pins.txt` in `Simpiens.Client.Tests`) | Part of `dotnet test`, which also writes the art review sheet, every sprite named: `render-output/art-sheet.png` under the client tests' output (`container-output/render-output/` from the pinned image). After a deliberate art change, look at the sheet, then, in its own commit: `SIMPIENS_RECORD_ART=1 dotnet test dotnet/Simpiens.Client.Tests --filter ArtPinTests`, and the renders re-recorded in the pinned image | .NET 10 SDK (exact on any machine: the pixels are generated on the CPU) |
 | The client's tests in the pinned image, as CI runs them: renders must match the references byte for byte | `scripts/test-client-in-container.sh`; record changed renders only here, with `--record` (look at `container-output/render-output/` first, commit them on their own) | podman (rootless), or `CONTAINER_ENGINE=docker` |
 | The game (desktop) | `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242` (`-- --help` lists the options) | A display |
 | The client against MonoGame (compile only) | `dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame` | .NET 10 SDK |
 | Re-bake the fonts after changing `FontSet` (commit the result on purpose; a test compares the committed atlases with a fresh bake) | `dotnet run --project dotnet/Simpiens.FontBaker` | .NET 10 SDK (KernSmith with FreeType, Linux x64 or Windows) |
 | The Android client (compile only) | `scripts/build-android.sh` | A user-local toolchain: `scripts/setup-android-toolchain.sh` installs a .NET SDK with the android workload, a JDK and the Android SDK under `~/.cache/simpiens-toolchains`, with no sudo |
-| Measurements (explicit tests): the client's frame time by phase (`FrameTimeGateTests` is the gate, with a generous budget), and the simulation's throughput by population | `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*MeasureFrameTime*" -explicit only -showLiveOutput`; `dotnet dotnet/Simpiens.Core.Tests/bin/Release/net10.0/Simpiens.Core.Tests.dll -method "*PopulationScaling*" -explicit only -showLiveOutput` | As the tests |
+| Measurements (explicit tests): the client's frame time by phase (`FrameTimeGateTests` is the gate, with a generous budget), and the simulation's throughput by population | `dotnet dotnet/Simpiens.Client.Tests/bin/Release/net10.0/Simpiens.Client.Tests.dll -method "*MeasureFrameTime*" -explicit only -showLiveOutput`; `dotnet dotnet/Simpiens.Core.Tests/bin/Release/net10.0/Simpiens.Core.Tests.dll -method "*PopulationScaling*" -explicit only -showLiveOutput`; whether a moving crawler shimmers, by view mode: `-method "*ShimmerProbe*"`; pixel centres near texel edges, by zoom: `-method "*MeasureTies*"`; the dashboard's draw by cause (Gum's counters): `-method "*UiDrawProbe*"` (all on the client's tests). Measure in a quiet sitting, never right after a build, and measure the comparison point alongside | As the tests |
 
 CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned image of `scripts/client-tests.Containerfile`), the golden check, the MonoGame compile and the Android compile on pushes to `main` and on pull requests.
 
@@ -99,7 +106,7 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
     - **Loot:** loot tables (`Loot.cs`: `LootTable`, `LootTables`, `LootRoller`) are deterministic on `SimRandom` and not yet wired into play.
     - **Code asks for groups, not items:** `ItemCatalog.Is`, `InCategory`, `InventoryGroups`. `ItemNamesTests` fails on production code that names an item outside content.
     - **How a session trades an item is its economy:** `EconomyTuning`'s `ItemTerms` (base value; the stall's role, opening price and stock) and `SupplyTuning`'s `CaravanTerms` (exports or supplies). A stall's goods are a table (`TradeStallData`'s `StallGoods`), and a price command carries (item, price) pairs.
-    - **The client's words for items** are `Simpiens.Presentation/ItemTexts` (an item without an entry gets words from its catalog name).
+    - **The client's words for items** are `Simpiens.Presentation/ItemTexts` (an item without an entry gets words from its catalog name); **its pictures** come from `ItemArt` by art key (graphics V3), its icons in the dashboard from `ItemIcons` (the models name an icon key; the client's `IconAtlas` draws it 1:1).
     - **A save** holding an item the catalog doesn't define is refused (`SaveItems`).
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), the session's economy numbers (`EconomyTuning`, with `SupplyTuning`, `DrifterTuning` and `GearTuning` nested), the trade fairness rule (`TradeFairness`), and the periodic economy (`ISupplyService`, `SupplyService`). The periodic economy covers dormant-node regrowth and the caravan visit: salvage quota faucet, then upkeep sink, then ration restock. `SimulationManager` ticks it via `ISupplyHost`. The model is in [`docs/economy-model.md`](docs/economy-model.md). Economy numbers live in `EconomyTuning` only: read them from the session's tuning (`IIntentExecutionContext.Economy`, or `Considerations.Economy` in cognition), never as literals.
   - `Persistence/`: session save and load.
@@ -134,13 +141,20 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   1. An `ItemType` value. Never reuse one: a removed item's id stays reserved.
   2. A definition in `ItemCatalog`: groups, rarity, and its consume or equipment block if it has one.
   3. Its terms in the session's economy, if the stall or the caravan trades it (`EconomyTuning`'s item terms, `SupplyTuning`'s caravan terms).
-  4. A sprite under its sprite key, if it lies on the map.
+  4. Its look: one line in `ItemArt`, by its art key (`ItemDefinition.ArtKey`, the name in kebab case): a shape from `ItemShapes` (draw a new 12x12 one only if none fits), its two colours, how it is worn. Its icon, map sprite and carried marker follow; a node row in the view modes' tables if a map node yields it. Look at the art review sheet, then re-record the art pins.
   5. The map nodes that yield it.
   6. Optionally, bespoke words in `ItemTexts`.
   - Nothing else: the stall, the caravan, the crawlers and the merchant terminal follow (`ItemSystemProofTests` adds one this way).
   - If the stall's goods would pass `TradeStallData.GoodsCapacity` (8), raise it: that changes the save format.
 - **Take out of the economy:** drop its stall and caravan terms (glowstone was taken out this way in `ItemSystemProofTests`).
 - **Remove from the game:** delete its definition and mark its `ItemType` value retired; saves holding it are refused on load.
+
+### Adding art
+- **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:
+  1. The sprite, by name, in a generator (`ProceduralSprites`, `IsometricSprites`; an item's come from `ItemArt`, above). A new generator's sprites go into their sheet in `SpriteSheets`. Generators never read a table or a sheet: an initialisation cycle crashes depending on which class loads first (`ArtInitialisationTests`).
+  2. A row under its `ArtKeys` key in each view mode's table (`TopDownArtTable`, `IsometricArtTable`): frames, size in units of a scale, pivot, frame rate, pulse. Layout that belongs to the art (where carried goods hang, the stall's display slots) is the catalogue's data too.
+- **A new kind of thing** also needs `EntityVisuals` to say which key it is drawn with.
+- **The checks:** `ArtCompletenessTests` (everything the frames carry has art, every row is used, every node on a shipped map has its own); `AtlasLayoutTests` (each sheet within its 2048 budget). Then look at the art review sheet, re-record the art pins in their own commit, and re-record the changed renders in the pinned image (see "Checking a change").
 
 ---
 

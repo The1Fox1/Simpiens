@@ -74,6 +74,9 @@ namespace Simpiens.Presentation.Dashboard
 
         public ItemType Item { get; set; } = GatherItems[0];
 
+        /// <summary>The chosen gather item's icon (graphics V4).</summary>
+        public string ItemIcon => ItemIcons.Of(Item);
+
         /// <summary>
         /// What a Gather bounty can ask for: the resources that aren't hazardous (iron ore, medicinal herbs), in id order
         /// (item system I6). Hazardous salvage (glowstone) is left to the crawlers who venture.

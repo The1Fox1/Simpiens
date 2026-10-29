@@ -12,7 +12,7 @@ namespace Simpiens.Simulation.Items
         private readonly ConsumeEffect[] _consume;
 
         public ItemDefinition(ItemType id, string name, string displayName, ItemCategory categories, ItemRarity rarity,
-            ushort maxStack = 99, string spriteKey = null, ConsumeEffect[] consume = null, EquipmentBlock equipment = null)
+            ushort maxStack = 99, string artKey = null, ConsumeEffect[] consume = null, EquipmentBlock equipment = null)
         {
             Equipment = equipment;
             _consume = consume != null ? (ConsumeEffect[])consume.Clone() : System.Array.Empty<ConsumeEffect>();
@@ -22,7 +22,7 @@ namespace Simpiens.Simulation.Items
             Categories = categories;
             Rarity = rarity;
             MaxStack = maxStack;
-            SpriteKey = spriteKey ?? "Item_" + name;
+            ArtKey = artKey ?? KebabCase(name);
         }
 
         public ItemType Id { get; }
@@ -39,8 +39,12 @@ namespace Simpiens.Simulation.Items
         /// <summary>Units in one pack slot.</summary>
         public ushort MaxStack { get; }
 
-        /// <summary>What the client draws.</summary>
-        public string SpriteKey { get; }
+        /// <summary>
+        /// The item's art key (graphics V3.4): a short, stable id the client finds its pictures by (its menu icon, its
+        /// map sprite, the node that yields it). Presentation data, the same in every session; the name in kebab case
+        /// unless the definition says otherwise ("IronOre": "iron-ore").
+        /// </summary>
+        public string ArtKey { get; }
 
         /// <summary>Its slot, stat modifiers and life when it is equipment (§3.7); null otherwise.</summary>
         public EquipmentBlock Equipment { get; }
@@ -53,5 +57,19 @@ namespace Simpiens.Simulation.Items
         public bool Is(ItemCategory categories) => (Categories & categories) == categories;
 
         public override string ToString() => Name;
+
+        /// <summary>"IronOre" to "iron-ore": a dash before each capital after the first, all lower case.</summary>
+        public static string KebabCase(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return name;
+            var text = new System.Text.StringBuilder(name.Length + 4);
+            for (int i = 0; i < name.Length; i++)
+            {
+                char c = name[i];
+                if (char.IsUpper(c) && i > 0) text.Append('-');
+                text.Append(char.ToLowerInvariant(c));
+            }
+            return text.ToString();
+        }
     }
 }

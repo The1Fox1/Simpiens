@@ -4,6 +4,7 @@ using Simpiens.Core.Session;
 using Simpiens.Entities;
 using Simpiens.Hosting;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Xunit;
@@ -133,7 +134,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(default, game.Session.Selection.SelectedCrawler);
         }
 
-        private static int Sprite(AgentVisualState state) => ProceduralSprites.GetAgentSprite(state, CrawlerAppearance.AnimationFrame(state, 10f)).Index;
+        private static int Sprite(AgentVisualState state) => SpriteSheets.World.IndexOf(ProceduralSprites.GetAgentSprite(state, CrawlerAppearance.AnimationFrame(state, 10f)));
 
         private static int CrawlerSprite(WorldScene scene, EntityId id)
             => Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Single(i => i.Pick >= 0 && scene.Items.PickedEntity(i.Pick) == id).SpriteIndex;

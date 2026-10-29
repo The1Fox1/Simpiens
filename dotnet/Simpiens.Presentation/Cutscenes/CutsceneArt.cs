@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Simpiens.Entities;
 
 namespace Simpiens.Presentation.Cutscenes
 {
@@ -29,7 +30,7 @@ namespace Simpiens.Presentation.Cutscenes
 
         private static void Add(string name, Rgba32[] pixels)
         {
-            var sprite = new PixelSprite(_backdrops.Count, "Backdrop_" + name, BackdropWidth, BackdropHeight, pixels);
+            var sprite = new PixelSprite("Backdrop_" + name, BackdropWidth, BackdropHeight, pixels);
             _backdrops.Add(sprite);
             _byName[name] = sprite;
         }
@@ -138,6 +139,18 @@ namespace Simpiens.Presentation.Cutscenes
     {
         /// <summary>A crawler sprite's pixels a virtual unit: six, so a 16x16 placeholder stands 96 units tall.</summary>
         public const float CharacterScale = 6f;
+
+        /// <summary>Characters are drawn with top-down's crawler art (graphics V2), each state's id resolved once.</summary>
+        private static readonly Art.ArtCatalog Characters = Art.TopDownArtTable.Catalog;
+        private static readonly Art.ArtId[] Crawlers = CrawlerIds();
+
+        private static Art.ArtId[] CrawlerIds()
+        {
+            var states = (AgentVisualState[])System.Enum.GetValues(typeof(AgentVisualState));
+            var ids = new Art.ArtId[states.Length];
+            foreach (var state in states) ids[(int)state] = Characters.Id(Art.ArtKeys.Crawler(state));
+            return ids;
+        }
         /// <summary>Where characters' feet rest: just above the text box (<see cref="TextBox"/>).</summary>
         public const float FeetY = 278f;
         /// <summary>The text box's place on the virtual screen, along its bottom.</summary>
@@ -159,7 +172,7 @@ namespace Simpiens.Presentation.Cutscenes
             var projection = ScreenProjection.Instance;
             if (player != null && CutsceneArt.TryGetBackdrop(player.Backdrop, out var backdrop))
             {
-                Items.Add(projection.LayerOf(DrawRole.Floor), DrawRole.Floor, 0f, backdrop.Index, ScreenProjection.VirtualWidth * 0.5f, ScreenProjection.VirtualHeight * 0.5f,
+                Items.Add(projection.LayerOf(DrawRole.Floor), DrawRole.Floor, 0f, Art.SpriteSheets.Backdrop.IndexOf(backdrop), ScreenProjection.VirtualWidth * 0.5f, ScreenProjection.VirtualHeight * 0.5f,
                     ScreenProjection.VirtualWidth, ScreenProjection.VirtualHeight, White, 0f, DrawSheet.Backdrop);
             }
             if (player == null) return;
@@ -171,11 +184,14 @@ namespace Simpiens.Presentation.Cutscenes
                 float t = player.SlideIn(staged);
                 t = 1f - (1f - t) * (1f - t); // eases to a stop
                 float x = OffstageX(staged.Slot) + (SlotX(staged.Slot) - OffstageX(staged.Slot)) * t;
-                var sprite = ProceduralSprites.GetAgentSprite(staged.Pose, CrawlerAppearance.AnimationFrame(staged.Pose, player.Time));
+                // Top-down's crawler art, magnified (its sprites at their own size)
+                var art = Crawlers[(int)staged.Pose];
+                int index = Characters.Sprite(art, CrawlerAppearance.AnimationFrame(staged.Pose, player.Time));
+                var sprite = Art.SpriteSheets.Contents(Characters[art].Sheet)[index];
                 var tint = player.Speaker == null || player.Speaker == staged.Character.Id ? White : Dimmed;
-                ref var item = ref Items.Add(projection.LayerOf(DrawRole.Crawler), DrawRole.Crawler, 0f, sprite.Index, x, FeetY,
-                    sprite.Width * CharacterScale, sprite.Height * CharacterScale, tint, 0f, DrawSheet.Sprites);
-                item.PivotY = IsometricArt.FeetPivot;
+                ref var item = ref Items.Add(projection.LayerOf(DrawRole.Crawler), DrawRole.Crawler, 0f, index, x, FeetY,
+                    sprite.Width * CharacterScale, sprite.Height * CharacterScale, tint, 0f, Characters[art].Sheet);
+                item.PivotY = Art.IsometricArtTable.FeetPivot;
                 item.FlipX = staged.FacingLeft;
             }
             Items.Sort();
