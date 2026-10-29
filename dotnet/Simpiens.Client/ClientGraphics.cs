@@ -16,7 +16,8 @@ namespace Simpiens.Client
         private readonly SpriteBatch _batch;
         private readonly SpriteAtlas[] _sheets;
 
-        public ClientGraphics(GraphicsDevice device)
+        /// <param name="order">How the sheets are packed; the picture doesn't depend on it (graphics V3.2: tests pack in reverse to prove it).</param>
+        public ClientGraphics(GraphicsDevice device, AtlasOrder order = AtlasOrder.TallestFirst)
         {
             Device = device;
             _batch = new SpriteBatch(device);
@@ -26,7 +27,7 @@ namespace Simpiens.Client
             foreach (var sheet in SpriteSheets.All)
             {
                 bool smooth = SpriteSheets.Smooth(sheet);
-                _sheets[(int)sheet] = new SpriteAtlas(device, SpriteSheets.Contents(sheet), smooth, gutter: smooth ? 0 : 2);
+                _sheets[(int)sheet] = new SpriteAtlas(device, SpriteSheets.Contents(sheet), smooth, gutter: smooth ? 0 : 2, order);
             }
             Renderer = new WorldRenderer(_batch, _sheets);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
