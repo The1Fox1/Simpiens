@@ -1134,3 +1134,50 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 
   The epic's F19 carries the correction.
 
+## 2026-10-29: item art, icons in the menus, items in the world (graphics V3–V5, Epic CLIENT)
+
+- **Ask (producer):** "proceed. You are given provisional authority to complete this plan to the finish line" (the
+  V3–V5 plan). Done the same day on `feat/graphics-catalogue`, under the authority rules of 2026-10-14 (a local
+  directive and decision log, not committed; no push or merge). Decisions D6–D11 taken as proposed.
+- **Decision: two sampling rules, not a change of zoom.**
+  - Standing pieces snap their anchors to whole pixels (no motion shimmer at any zoom, F19).
+  - A fixed 0.13 px sampling bias keeps pixel centres off texel edges (F12).
+  - The proof: every sheet re-packed and the two world sheets merged, with every render byte-identical.
+  - Continuous zoom leaves a few generic near-ties at in-between zooms. The complete fix is a pixel-perfect render
+    target, or whole-step zoom (D6's alternative); both are open (epic §4).
+- **Decision: an item's look is one line of data.**
+  - `ItemDefinition.ArtKey` (the core's only change; golden and soak unchanged).
+  - `ItemArt`: a shape from `ItemShapes` and two colours.
+  - The sprite kit makes the icon (rarity rim), the map sprite and the carried marker.
+  - Missing art is loud and fails a test.
+- **Decision: icons drawn 1:1, like the fonts.**
+  - The icon atlas holds 1x and 2x copies; a test proves an icon is its art under either Gum filter.
+  - Windows snap to whole pixels, since an odd-height window sat half a pixel down.
+  - Gum's batch-grouped ordering was measured and declined (F21).
+- **Decision: items in the world without a core change.**
+  - Frames carry worn gear, carried salvage and the stalls (plain data).
+  - A helmet is the crawler's hair recoloured, so the art ported from Unity is untouched.
+  - The stall shows up to four goods in stock.
+  - A live check on the real outpost found the first carrier at tick 158 and the first helmet at tick 1034.
+- **Deviations and incidents:**
+  - V2.1 had already moved the pose to frames; Recolour moved from V3.5 to V5.2.
+  - The header and the dossier's gear line use 1x icons.
+  - The pieces' pins came to hash sprite names (indices moved with the stall).
+  - A static-initialisation cycle was found when one test ran alone; fixed, with a load-context test (F22).
+  - One commit message over-claimed a test count (b8c3c2b: the client suite alone ran); one local run was cut short
+    after 38 tests (not reproduced in eight reruns; the gate now flags short runs).
+  - A frame-time reading after an Android build was inflated by its build servers; re-measured back to back (F23).
+- **Open for the producer:** their own look at the art and the renders. Epic CLIENT §4 holds:
+  - the render target or step zoom;
+  - the stall's sorting;
+  - the dashboard's state-change begins;
+  - the stall click;
+  - dropdown icons;
+  - tools in hand;
+  - dropped items.
+- **Verification:**
+  - `dotnet test` 451/451 (core 112, client 339); the client's 339/339 exactly in the pinned image.
+  - Golden 3/3 and the soak identical at the core change; the MonoGame and Android builds compile.
+  - Frame time within 3% (F23).
+- **Both graphics plans are deleted;** their open items are in the epic.
+
