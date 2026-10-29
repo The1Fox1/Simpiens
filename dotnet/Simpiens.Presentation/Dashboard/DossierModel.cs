@@ -48,6 +48,8 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The worn protection and its wear (Epic 10 G3): "Hazard Gear, 64% left", or "None".</summary>
         public string Gear { get; private set; } = string.Empty;
+        /// <summary>The worn gear's icon (graphics V4); null with none.</summary>
+        public string GearIcon { get; private set; }
         public const string NoGear = "None";
 
         public float Hunger { get; private set; }
@@ -86,6 +88,7 @@ namespace Simpiens.Presentation.Dashboard
             HasCrawler = agent != null;
             CrawlerId = HasCrawler ? node.Id : default;
             _affinities.Clear();
+            GearIcon = null;
             if (!HasCrawler) return;
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
@@ -97,7 +100,9 @@ namespace Simpiens.Presentation.Dashboard
             State = agent.VisualState;
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
-            Gear = GearText(agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default);
+            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
+            Gear = GearText(worn);
+            GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;

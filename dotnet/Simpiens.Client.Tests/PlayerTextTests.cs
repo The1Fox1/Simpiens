@@ -138,10 +138,12 @@ namespace Simpiens.Client.Tests
             var crawler = sim.Host.CrawlerStates[0];
             model.SelectCrawler(crawler.AgentId);
             Assert.Equal(DossierModel.NoGear, model.Dossier.Gear);
+            Assert.Null(model.Dossier.GearIcon);
             ushort life = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.Durability;
             crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: (ushort)(life * 64 / 100)));
             model.SelectCrawler(crawler.AgentId);
             Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear); // by its catalog name
+            Assert.Equal("item/hazard-gear/icon", model.Dossier.GearIcon);
             Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1)));
         }
 

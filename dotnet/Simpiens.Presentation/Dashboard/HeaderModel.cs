@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Simpiens.Simulation.Economy;
 using static System.FormattableString;
 
 namespace Simpiens.Presentation.Dashboard
@@ -7,6 +9,21 @@ namespace Simpiens.Presentation.Dashboard
     /// the pause and speed controls, whose clicks and keys leave as host commands (review D3). Unity's emoji are words
     /// here: the UI font has none (plan D5).
     /// </summary>
+    /// <summary>One good in the header's stock (graphics V4): its icon and how many the stall holds.</summary>
+    public readonly struct HeaderStock
+    {
+        public HeaderStock(ItemType item, string icon, int count)
+        {
+            Item = item;
+            Icon = icon;
+            Count = count;
+        }
+
+        public ItemType Item { get; }
+        public string Icon { get; }
+        public int Count { get; }
+    }
+
     public sealed class HeaderModel
     {
         public const string Title = "SIMPIENS FACILITY OS";
@@ -25,6 +42,14 @@ namespace Simpiens.Presentation.Dashboard
         public string Treasury { get; private set; } = "0 GOLD";
         public string Rations { get; private set; } = "0 RATIONS";
         public string Salvage { get; private set; } = "0 ORE | 0 HERB";
+
+        /// <summary>
+        /// The stall's stock as icons and counts (graphics V4, decision D9): the food it sells, then the resources it buys
+        /// that aren't hazardous, in id order. The words above stay, for tooltips and readers.
+        /// </summary>
+        public IReadOnlyList<HeaderStock> Stock => _stock;
+
+        private readonly List<HeaderStock> _stock = new List<HeaderStock>(4);
         public string Bounties { get; private set; } = "0 BOUNTIES";
         public string Tick { get; private set; } = "TICK: 00000";
 
@@ -61,12 +86,15 @@ namespace Simpiens.Presentation.Dashboard
             Treasury = open ? Invariant($"{stall.TreasuryGold} GOLD") : "0 GOLD";
             var food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
             Rations = Invariant($"{(open ? stall.StockOf(food) : 0)} {ItemTexts.Of(food).HeaderWord}");
+            _stock.Clear();
+            _stock.Add(new HeaderStock(food, ItemIcons.Of(food), open ? stall.StockOf(food) : 0));
             var resources = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource);
             var parts = new System.Collections.Generic.List<string>(resources.Count);
             for (int i = 0; i < resources.Count; i++)
             {
                 if (Simpiens.Simulation.Items.ItemCatalog.Is(resources[i], Simpiens.Simulation.Items.ItemCategory.Hazardous)) continue;
                 parts.Add(Invariant($"{(open ? stall.StockOf(resources[i]) : 0)} {ItemTexts.Of(resources[i]).HeaderWord}"));
+                _stock.Add(new HeaderStock(resources[i], ItemIcons.Of(resources[i]), open ? stall.StockOf(resources[i]) : 0));
             }
             Salvage = string.Join(" | ", parts);
 

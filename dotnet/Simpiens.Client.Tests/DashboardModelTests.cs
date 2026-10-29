@@ -341,5 +341,29 @@ namespace Simpiens.Client.Tests
             Assert.All(model.Sectors.Events, e => Assert.Matches(@"^\S.* \S", e));
             Assert.True(model.Sectors.Events.Count <= SectorPanelModel.MaxEvents);
         }
+
+        /// <summary>The models name their items' icons (graphics V4): the merchant's rows, the header's stock, the bounty board's choice; each resolves.</summary>
+        [Fact]
+        public void TheModelsNameTheirItemsIcons()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.Refresh();
+            var icons = Simpiens.Presentation.Art.IconArtTable.Catalog;
+            bool Resolves(string key) => key != null && icons.TryId(key, out var id) && id != icons.Missing;
+
+            model.OpenMerchant();
+            Assert.NotEmpty(model.Merchant.Rows);
+            Assert.All(model.Merchant.Rows, row => Assert.True(Resolves(row.Icon) && row.Icon == ItemIcons.Of(row.Item), $"{row.Item}: {row.Icon}"));
+
+            Assert.True(model.Context.TryGetStall(out var stall));
+            Assert.Equal(new[] { "item/ration/icon", "item/iron-ore/icon", "item/medicinal-herb/icon" }, model.Header.Stock.Select(s => s.Icon));
+            Assert.All(model.Header.Stock, s => Assert.Equal(stall.StockOf(s.Item), s.Count));
+
+            Assert.True(Resolves(model.Bounties.ItemIcon));
+            Assert.Equal(ItemIcons.Of(model.Bounties.Item), model.Bounties.ItemIcon);
+            Assert.Null(ItemIcons.Of(ItemType.None));
+        }
     }
 }
