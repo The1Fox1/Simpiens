@@ -2,6 +2,7 @@ using System.Linq;
 using Gum.Forms.Controls;
 using Simpiens.Presentation;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.Economy;
 using Xunit;
 
 namespace Simpiens.Client.Tests

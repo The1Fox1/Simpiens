@@ -35,20 +35,22 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             if (trade.ActionType == TradeActionType.BuyItem)
             {
-                // The stall sells rations and, since Epic 10 G3, hazard gear, which is worn rather than carried
-                bool gear = trade.ItemType == ItemType.HazardGear;
-                if (trade.ItemType != ItemType.Ration && !gear)
+                // What the stall sells (its goods table: rations, and hazard gear since Epic 10 G3). Equipment is equipped,
+                // one item per slot; anything else goes in the pack
+                if (!stall.TryGetGood(trade.ItemType, out var good) || good.Role != StallRole.Sells)
                 {
-                    return Reject(node, trade, "stall only sells rations and hazard gear");
+                    return Reject(node, trade, "the stall doesn't sell this item");
                 }
-                if (gear && (trade.Quantity != 1 || !agent.Inventory.Gear.IsEmpty))
+                var equipment = Simpiens.Simulation.Items.ItemCatalog.Get(trade.ItemType)?.Equipment;
+                bool gear = equipment != null;
+                if (gear && (trade.Quantity != 1 || !agent.Inventory.GetEquipped(equipment.Slot).IsEmpty))
                 {
                     return Reject(node, trade, "a crawler wears one piece of gear at a time");
                 }
 
                 if (stall.SellStockOf(trade.ItemType) < trade.Quantity)
                 {
-                    return Reject(node, trade, gear ? "stall out of hazard gear" : "stall out of rations");
+                    return Reject(node, trade, "the stall is out of it");
                 }
 
                 uint unitPrice = stall.SellPriceOf(trade.ItemType);
@@ -65,10 +67,10 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 if (gear)
                 {
-                    // New gear lasts the tuning's ticks of hazard exposure (its durability counts them down)
-                    agent.Inventory.TryWear(new ItemInstance(1, ItemType.HazardGear, 1, (ushort)unitPrice, durability: economy.Gear.LifeTicks));
+                    // New equipment starts at its definition's durability (hazard gear: ticks of hazard exposure)
+                    agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, durability: equipment.Durability));
                 }
-                else if (!agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, trade.Quantity, (ushort)unitPrice), out _))
+                else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
                 {
                     return Reject(node, trade, "inventory full");
                 }
@@ -79,8 +81,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                     if (!context.EconomyLedger.TryExecuteStallPurchase(stall.StallEntityId, ref stall, agent.Inventory, totalCost))
                     {
                         // Roll back what was added
-                        if (gear) agent.Inventory.RemoveGear();
-                        else agent.Inventory.TryRemoveItem(ItemType.Ration, trade.Quantity);
+                        if (gear) agent.Inventory.Unequip(equipment.Slot);
+                        else agent.Inventory.TryRemoveItem(trade.ItemType, trade.Quantity);
                         return Reject(node, trade, "ledger refused the purchase");
                     }
                 }
@@ -89,11 +91,11 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent.Inventory.Gold -= (int)totalCost;
                     stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
                 }
-                stall = stall.WithSellStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
+                stall = stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
-                float calmValue = gear ? Considerations.CalmGearValue(personality, economy) : Considerations.CalmRationValue(personality, economy);
+                float calmValue = gear ? Considerations.CalmGearValue(personality, economy, trade.ItemType) : Considerations.CalmRationValue(personality, economy);
                 var verdict = TradeFairness.ClassifyPurchase(unitPrice, calmValue, economy.TradeTrust);
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
@@ -115,7 +117,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
             else if (trade.ActionType == TradeActionType.SellItem)
             {
-                if (!trade.ItemType.IsSalvage()) return Reject(node, trade, "stall does not buy this item");
+                if (!trade.ItemType.IsSalvage() || !stall.TryGetGood(trade.ItemType, out var bought) || bought.Role != StallRole.Buys) return Reject(node, trade, "stall does not buy this item");
                 ushort unitBuyPrice = stall.BuyPriceOf(trade.ItemType);
 
                 if (!agent.Inventory.HasItem(trade.ItemType, trade.Quantity))
@@ -158,10 +160,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent.Inventory.Gold += (int)totalPayout;
                     stall = stall.WithTreasury(stall.TreasuryGold - totalPayout);
                 }
-                ushort newOre = trade.ItemType == ItemType.IronOre ? (ushort)(stall.OreStock + trade.Quantity) : stall.OreStock;
-                ushort newHerb = trade.ItemType == ItemType.MedicinalHerb ? (ushort)(stall.HerbStock + trade.Quantity) : stall.HerbStock;
-                stall = stall.WithStock(stall.RationStock, newOre, newHerb);
-                if (trade.ItemType == ItemType.Glowstone) stall = stall.WithGlowstoneStock((ushort)(stall.GlowstoneStock + trade.Quantity));
+                stall = stall.WithStock(trade.ItemType, (ushort)(stall.StockOf(trade.ItemType) + trade.Quantity));
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity valuation
@@ -171,7 +170,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var saleDelta = TradeFairness.SaleDelta(saleVerdict, economy.TradeTrust);
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, saleDelta.Warmth, saleDelta.Trust, 0, saleDelta.Respect, currentTradeTick);
                 if (agent != null) agent.Activity.RecordSalvageSale(currentTradeTick);
-                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (ore {stall.OreStock}, herb {stall.HerbStock}, treasury {stall.TreasuryGold}g, {saleVerdict} against a minimum of {minimumPrice}g, player trust delta {saleDelta.Trust})");
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} sold {trade.Quantity}x {trade.ItemType} for {totalPayout}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.StockOf(trade.ItemType)}, treasury {stall.TreasuryGold}g, {saleVerdict} against a minimum of {minimumPrice}g, player trust delta {saleDelta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(
                     ChronicleEventType.TradeTransaction,

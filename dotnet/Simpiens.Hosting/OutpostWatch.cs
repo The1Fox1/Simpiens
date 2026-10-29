@@ -6,6 +6,7 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Core.Session;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Hosting
@@ -292,7 +293,12 @@ namespace Simpiens.Hosting
         {
             int total = 0;
             var stalls = sim.ActiveStalls;
-            for (int i = 0; i < stalls.Count; i++) total += stalls[i].OreStock + stalls[i].HerbStock;
+            // Every resource the stall holds for the caravan (the item system's I5: ore and herbs as before, and glowstone)
+            var resources = ItemCatalog.InCategory(ItemCategory.Resource);
+            for (int i = 0; i < stalls.Count; i++)
+            {
+                for (int r = 0; r < resources.Count; r++) total += stalls[i].StockOf(resources[r]);
+            }
             return total;
         }
     }

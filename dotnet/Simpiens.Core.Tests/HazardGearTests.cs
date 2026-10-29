@@ -23,7 +23,8 @@ namespace Simpiens.Core.Tests
         {
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            var gear = sim.Simulation.Economy.Gear;
+            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
+            float resistance = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.GetModifier(0).Value; // 0.5
             var states = sim.Host.CrawlerStates;
             var bare = states[0];
             var geared = states[1];
@@ -32,8 +33,8 @@ namespace Simpiens.Core.Tests
             bare.Position = sump + new Vec2(-2f, 0f);
             geared.Position = sump;
             breaking.Position = sump + new Vec2(2f, 0f);
-            Assert.True(geared.Inventory.TryWear(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1000)), "Gear goes on.");
-            Assert.True(breaking.Inventory.TryWear(new ItemInstance(2, ItemType.HazardGear, 1, 40, durability: 5)), "Worn-down gear goes on.");
+            Assert.True(geared.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1000)), "Gear goes on.");
+            Assert.True(breaking.Inventory.TryEquip(new ItemInstance(2, ItemType.HazardGear, 1, 40, durability: 5)), "Worn-down gear goes on.");
 
             sim.Step(20);
 
@@ -45,11 +46,11 @@ namespace Simpiens.Core.Tests
             Assert.True(bare.Activity.HazardTicks > 0 && bare.Activity.GearedHazardTicks == 0, "The bare crawler was in the Sump, bare.");
             Assert.True(geared.Activity.GearedHazardTicks > 0 && geared.Activity.GearedHazardTicks == geared.Activity.HazardTicks, "The geared crawler was in the Sump, geared.");
             Assert.True(System.Math.Abs(bareRate - tick) < 1e-4f, $"Bare, the Sump takes {tick} a tick (got {bareRate}).");
-            Assert.True(System.Math.Abs(gearedRate - gear.DamageThrough(sumpPerSecond, true) * 0.1f) < 1e-4f && gearedRate < bareRate * 0.51f,
+            Assert.True(System.Math.Abs(gearedRate - (float)(sumpPerSecond * (float)(1f - resistance)) * 0.1f) < 1e-4f && gearedRate < bareRate * 0.51f,
                 $"Geared, it takes half (got {gearedRate} against {bareRate}).");
-            Assert.Equal(1000 - geared.Activity.GearedHazardTicks, geared.Inventory.Gear.Durability);
+            Assert.Equal(1000 - geared.Activity.GearedHazardTicks, geared.Inventory.GetEquipped(protection).Durability);
 
-            Assert.True(breaking.Inventory.Gear.IsEmpty, "Gear with 5 ticks of life is gone after 20 ticks in the Sump.");
+            Assert.True(breaking.Inventory.GetEquipped(protection).IsEmpty, "Gear with 5 ticks of life is gone after 20 ticks in the Sump.");
             Assert.Equal(1, breaking.Activity.GearWornOut);
             Assert.Equal(5, breaking.Activity.GearedHazardTicks);
             var told = new List<ChronicleEvent>();

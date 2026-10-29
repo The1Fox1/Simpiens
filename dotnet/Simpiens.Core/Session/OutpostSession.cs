@@ -73,13 +73,9 @@ namespace Simpiens.Core.Session
             }
 
             var economy = Economy;
-            var stallId = session.OpenStall(Floor1Layout.Stall, new StallTerms(
-                rationSellPrice: economy.StallRationPrice, rationStock: economy.StallRationStock,
-                oreBuyPrice: economy.StallOreBuyPrice, oreStock: economy.StallOreStock,
-                herbBuyPrice: economy.StallHerbBuyPrice, herbStock: economy.StallHerbStock,
-                treasuryGold: economy.StallTreasury,
-                glowstoneBuyPrice: economy.StallGlowstoneBuyPrice,
-                hazardGearSellPrice: economy.StallHazardGearPrice, hazardGearStock: economy.StallHazardGearStock));
+            var goods = new List<StallGood>(TradeStallData.GoodsCapacity);
+            economy.StallGoods(goods);
+            var stallId = session.OpenStall(Floor1Layout.Stall, economy.StallTreasury, goods);
 
             // Both seeded bounties go through the same escrow path as player-posted ones.
             // TargetLocation is left default so the simulation derives it from the target sector.

@@ -90,7 +90,18 @@ namespace Simpiens.Testing.Environment
                     Mix(ref h, inv.GetItemCount(ItemType.IronOre));
                     Mix(ref h, inv.GetItemCount(ItemType.MedicinalHerb));
                     Mix(ref h, inv.GetItemCount(ItemType.Glowstone)); // the rare salvage (Epic 10 G2)
-                    Mix(ref h, inv.Gear.IsEmpty ? -1 : inv.Gear.Durability); // worn gear and its wear (G3)
+                    // Equipment and its wear (G3): the protection slot as G3 hashed its one gear slot; the others only when filled
+                    // (item system I4), so hashes recorded before the slots existed still match
+                    var protection = inv.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+                    Mix(ref h, protection.IsEmpty ? -1 : protection.Durability);
+                    for (int slot = 1; slot < Simpiens.Cognition.Inventory.AgentInventory.EquipmentSlots; slot++)
+                    {
+                        var equipped = inv.GetEquipped((Simpiens.Simulation.Items.EquipmentSlot)slot);
+                        if (equipped.IsEmpty) continue;
+                        Mix(ref h, slot);
+                        Mix(ref h, (int)equipped.Type);
+                        Mix(ref h, equipped.Durability);
+                    }
                 }
                 Mix(ref h, Quantize(s.Health, 100f)); // health (G2)
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";

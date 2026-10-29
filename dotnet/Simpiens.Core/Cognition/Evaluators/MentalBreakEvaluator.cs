@@ -153,18 +153,28 @@ namespace Simpiens.Cognition.Evaluators
 
         private async ValueTask<AgentIntent> DangerReflexAsync(AgentContext context)
         {
-            if (context.Health < Vitality.TreatWoundsBelow && Simpiens.Cognition.Planning.ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
+            var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
+            if (context.Health < Vitality.TreatWoundsBelow)
             {
-                return new TreatWoundsIntent(context.AgentId);
+                for (int i = 0; i < medicines.Count; i++)
+                {
+                    if (Simpiens.Cognition.Planning.ResourceTargeting.HoldsSellable(context, medicines[i])) return new TreatWoundsIntent(context.AgentId);
+                }
             }
 
             bool inHazard = Vitality.HazardAt(context.Snapshot?.Map, context.Position).IsHazardous;
 
-            // Hurt but on its feet, out of danger and not hungry: it fetches a herb from a patch it knows, then eats it
-            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger
-                && Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, ItemType.MedicinalHerb, out var herb))
+            // Hurt but on its feet, out of danger and not hungry: it fetches medicine (a herb) from a patch it knows, then
+            // eats it; medicines in id order
+            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger)
             {
-                return await Simpiens.Cognition.Planning.ResourceTargeting.BuildHarvestIntentAsync(context, _pathfinder, herb, 1);
+                for (int i = 0; i < medicines.Count; i++)
+                {
+                    if (Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, medicines[i], out var herb))
+                    {
+                        return await Simpiens.Cognition.Planning.ResourceTargeting.BuildHarvestIntentAsync(context, _pathfinder, herb, 1);
+                    }
+                }
             }
 
             if (!context.IsDowned && !(inHazard && context.Health < Vitality.RetreatBelow)) return null;

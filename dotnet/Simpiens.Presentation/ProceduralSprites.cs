@@ -13,6 +13,7 @@ namespace Simpiens.Presentation
     public static class ProceduralSprites
     {
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(48);
+        private static readonly Dictionary<string, PixelSprite> _byName = new Dictionary<string, PixelSprite>(48);
         private static readonly PixelSprite[,] _agentSprites = new PixelSprite[12, 2];
         private static readonly PixelSprite _resourceSprite;
         private static readonly PixelSprite _oreVeinSprite;
@@ -284,13 +285,10 @@ namespace Simpiens.Presentation
         /// </summary>
         public static PixelSprite GetResourceSprite(ItemType yieldItem)
         {
-            switch (yieldItem)
-            {
-                case ItemType.IronOre: return _oreVeinSprite;
-                case ItemType.MedicinalHerb: return _herbPatchSprite;
-                case ItemType.Glowstone: return _glowstoneSprite;
-                default: return _resourceSprite;
-            }
+            // By the item's sprite key in the catalog (item system I6); untyped yields and items without a node sprite
+            // draw the berry bush
+            string key = Simpiens.Simulation.Items.ItemCatalog.Get(yieldItem)?.SpriteKey;
+            return key != null && _byName.TryGetValue(key, out var sprite) ? sprite : _resourceSprite;
         }
 
         public static PixelSprite GetAgentSprite(AgentVisualState state, int frame)
@@ -337,6 +335,7 @@ namespace Simpiens.Presentation
             }
             var sprite = new PixelSprite(_all.Count, name, width, height, pixels);
             _all.Add(sprite);
+            _byName[name] = sprite;
             return sprite;
         }
 

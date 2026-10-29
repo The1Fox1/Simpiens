@@ -10,6 +10,7 @@ using Simpiens.Core.Session;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 
 namespace Simpiens.Hosting
 {
@@ -39,36 +40,46 @@ namespace Simpiens.Hosting
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
         public static readonly string[] Profiles = { "fair", "greedy", "generous" };
 
+        /// <summary>A soak player: the prices it sets (item, price), as the typed command it sends on the first tick.</summary>
         public readonly struct Player
         {
             public readonly string Name;
-            public readonly ushort RationPrice, OreBuyPrice, HerbBuyPrice;
-
-            /// <summary>What the player sells hazard gear for (Epic 10 G3).</summary>
-            public readonly ushort GearPrice;
+            public readonly UpdateStallPricesCommand Prices;
             public readonly bool SendsCommand;
 
-            public Player(string name, ushort rationPrice, ushort oreBuyPrice, ushort herbBuyPrice, ushort gearPrice, bool sendsCommand)
+            public Player(string name, in UpdateStallPricesCommand prices, bool sendsCommand)
             {
                 Name = name;
-                GearPrice = gearPrice;
-                RationPrice = rationPrice;
-                OreBuyPrice = oreBuyPrice;
-                HerbBuyPrice = herbBuyPrice;
+                Prices = prices;
                 SendsCommand = sendsCommand;
+            }
+
+            /// <summary>"Ration 15g, IronOre 20g, …".</summary>
+            public string PriceText()
+            {
+                var parts = new List<string>(Prices.Count);
+                for (int i = 0; i < Prices.Count; i++) parts.Add($"{ItemCatalog.NameOf(Prices[i].Item)} {Prices[i].Price}g");
+                return string.Join(", ", parts);
             }
         }
 
-        /// <summary>The player the soak plays: fair keeps the session's prices; greedy and generous set their own.</summary>
+        /// <summary>
+        /// The player the soak plays: fair keeps the session's prices (rations, ore, herbs, hazard gear); greedy, generous
+        /// and keen set their own. The profiles are content: they name the goods they price.
+        /// </summary>
         public static Player Resolve(string name, EconomyTuning economy)
         {
+            static UpdateStallPricesCommand Prices(ushort ration, ushort ore, ushort herb, ushort gear) => new UpdateStallPricesCommand(default)
+                .With(ItemType.Ration, ration).With(ItemType.IronOre, ore).With(ItemType.MedicinalHerb, herb).With(ItemType.HazardGear, gear);
             switch ((name ?? "fair").Trim().ToLowerInvariant())
             {
-                case "fair": return new Player("fair", economy.StallRationPrice, economy.StallOreBuyPrice, economy.StallHerbBuyPrice, economy.StallHazardGearPrice, sendsCommand: false);
-                case "greedy": return new Player("greedy", 30, 10, 12, 60, sendsCommand: true);
-                case "generous": return new Player("generous", 5, 35, 40, 20, sendsCommand: true);
+                case "fair":
+                    return new Player("fair", Prices(economy.Terms(ItemType.Ration).StallPrice, economy.Terms(ItemType.IronOre).StallPrice,
+                        economy.Terms(ItemType.MedicinalHerb).StallPrice, economy.Terms(ItemType.HazardGear).StallPrice), sendsCommand: false);
+                case "greedy": return new Player("greedy", Prices(30, 10, 12, 60), sendsCommand: true);
+                case "generous": return new Player("generous", Prices(5, 35, 40, 20), sendsCommand: true);
                 // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
-                case "keen": return new Player("keen", 20, 18, 22, 35, sendsCommand: true);
+                case "keen": return new Player("keen", Prices(20, 18, 22, 35), sendsCommand: true);
                 default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, keen).", nameof(name));
             }
         }
@@ -104,7 +115,7 @@ namespace Simpiens.Hosting
                 var failures = new List<string>();
                 if (ObservedTicks < HorizonTicks) failures.Add($"ended at t{ObservedTicks}, before the horizon t{HorizonTicks}");
                 if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
-                if (!PricesApplied) failures.Add($"prices {Player.RationPrice}/{Player.OreBuyPrice}/{Player.HerbBuyPrice} not applied (stall {PricesSeen})");
+                if (!PricesApplied) failures.Add($"prices {Player.PriceText()} not applied (stall {PricesSeen})");
                 if (Rows.Count != HorizonTicks / SampleIntervalTicks + 1) failures.Add($"{Rows.Count} samples, expected {HorizonTicks / SampleIntervalTicks + 1}");
                 if (failures.Count > 0 || Rows.Count == 0) return failures;
 
@@ -187,8 +198,7 @@ namespace Simpiens.Hosting
                 interventions.QueueInfluence(new InfluenceEvent(
                     "EconomySoak:" + result.Player.Name,
                     InfluenceCommandType.UpdateStallPrices,
-                    updateStallPrices: new UpdateStallPricesCommand(manager.ActiveStalls[0].StallEntityId, result.Player.RationPrice, result.Player.OreBuyPrice, result.Player.HerbBuyPrice,
-                        hazardGearSellPrice: result.Player.GearPrice)));
+                    updateStallPrices: result.Player.Prices));
             }
 
             var crawlers = sim.Host.CrawlerStates;
@@ -236,8 +246,17 @@ namespace Simpiens.Hosting
                     if (rel > 0 && !result.PricesApplied && manager.ActiveStalls.Count > 0)
                     {
                         var stall = manager.ActiveStalls[0];
-                        result.PricesSeen = $"{stall.RationSellPrice}/{stall.OreBuyPrice}/{stall.HerbBuyPrice}";
-                        result.PricesApplied = stall.RationSellPrice == result.Player.RationPrice && stall.OreBuyPrice == result.Player.OreBuyPrice && stall.HerbBuyPrice == result.Player.HerbBuyPrice;
+                        var seen = new List<string>(result.Player.Prices.Count);
+                        bool applied = true;
+                        for (int i = 0; i < result.Player.Prices.Count; i++)
+                        {
+                            var wanted = result.Player.Prices[i];
+                            ushort price = stall.TryGetGood(wanted.Item, out var good) ? good.Price : (ushort)0;
+                            seen.Add($"{ItemCatalog.NameOf(wanted.Item)} {price}g");
+                            applied &= price == wanted.Price;
+                        }
+                        result.PricesSeen = string.Join(", ", seen);
+                        result.PricesApplied = applied;
                     }
                     result.Rows.Add(Sample(manager, crawlers, rel, sim.Clock.CurrentTick, crawlerGold, trustAtStart, starvingEpisodes, collapses));
                 }

@@ -143,15 +143,15 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2));
+            var supply = new SupplyService(TestSupply.Tuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2));
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
             var richId = NextGuid();
             var poorId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500));
+            sim.RegisterTradeStall(TestStalls.Stall(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500));
             var brokeId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(poorId, new Vec2(20f, 0f), rationStock: 0, treasuryGold: 10));
-            sim.RegisterTradeStall(new TradeStallData(brokeId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 1));
+            sim.RegisterTradeStall(TestStalls.Stall(poorId, new Vec2(20f, 0f), rationStock: 0, treasuryGold: 10));
+            sim.RegisterTradeStall(TestStalls.Stall(brokeId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 1));
             ledger.RecordFaucet(511, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
@@ -181,7 +181,7 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var tuning = new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+            var tuning = TestSupply.Tuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
                 oreQuota: 5, herbQuota: 5, oreMarketPrice: 24, herbMarketPrice: 30);
             var supply = new SupplyService(tuning);
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
@@ -189,7 +189,7 @@ namespace Simpiens.Testing.Economy
 
             // Broke stall holding salvage: the quota's revenue (5x24 + 5x30 = 270g) funds the 100g restock
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationStock: 0, oreStock: 12, herbStock: 7, treasuryGold: 0));
 
             while (sim.CurrentTick < 20) sim.Tick();
 
@@ -221,12 +221,12 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+            var supply = new SupplyService(TestSupply.Tuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
                 oreQuota: 0, herbQuota: 0, oreMarketPrice: 0, herbMarketPrice: 0, upkeepPerVisit: 100));
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 50, treasuryGold: 150));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationStock: 50, treasuryGold: 150));
             ledger.RecordFaucet(150, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
@@ -263,7 +263,7 @@ namespace Simpiens.Testing.Economy
 
             var stallId = NextGuid();
             var stallPos = new Vec2(0f, 9f);
-            sim.RegisterTradeStall(new TradeStallData(stallId, stallPos, treasuryGold: 200, interactionRadius: 3f));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, stallPos, treasuryGold: 200, interactionRadius: 3f));
             ledger.RecordFaucet(200 + 10, "InitialSeed");
 
             // Agent stands just west of Herb Hollow's bounds (x = 5)
@@ -300,7 +300,7 @@ namespace Simpiens.Testing.Economy
             Assert(ledger.ValidateConservation(stall.TreasuryGold, (uint)agent.Inventory.Gold, out int disc), $"Ledger conservation holds (discrepancy {disc}).");
 
             // F8: a bounty that cannot be escrowed is rejected instead of minting gold on delivery
-            var broke = new TradeStallData(NextGuid(), Vec2.Zero, treasuryGold: 5);
+            var broke = TestStalls.Stall(NextGuid(), Vec2.Zero, treasuryGold: 5);
             sim.RegisterTradeStall(broke);
             bool accepted = sim.TryRegisterBounty(new BountyContract(43, BountyType.GatherResource, 0, ItemType.IronOre, 1, 50, 0, 5000, creatorStallId: broke.StallEntityId));
             Assert(!accepted && !sim.TryGetBounty(43, out _), "Un-escrowable bounty rejected at registration.");
@@ -316,7 +316,7 @@ namespace Simpiens.Testing.Economy
         {
             var snapshot = new SharedWorldSnapshot(10, 10, 2.0f, 8, _ => { });
             snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
-            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(NextGuid(), new Vec2(20f, 20f)) }, 1);
 
             var memory = new AgentMemory();
             var inventory = new AgentInventory();
@@ -363,7 +363,7 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, grid);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, new Vec2(10f, 0f), treasuryGold: 300));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, new Vec2(10f, 0f), treasuryGold: 300));
             sim.RegisterBounty(new BountyContract(1, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(3f, 0f), creatorStallId: stallId));
 
             // A perceivable ore vein: knowledge comes from vision through the typed snapshot, not injection
@@ -410,7 +410,7 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
+            var supply = new SupplyService(TestSupply.Tuning(restockIntervalTicks: 20, rationStockCap: 50, wholesaleRationCost: 2,
                 oreQuota: 0, herbQuota: 0, oreMarketPrice: 0, herbMarketPrice: 0, gearStockCap: 3, wholesaleGearCost: 20));
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
@@ -418,10 +418,10 @@ namespace Simpiens.Testing.Economy
             var poorId = NextGuid();
             var hungryId = NextGuid();
             var fullId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500, hazardGearSellPrice: 40, hazardGearStock: 1));
-            sim.RegisterTradeStall(new TradeStallData(poorId, new Vec2(20f, 0f), rationStock: 45, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
-            sim.RegisterTradeStall(new TradeStallData(hungryId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
-            sim.RegisterTradeStall(new TradeStallData(fullId, new Vec2(60f, 0f), rationStock: 50, treasuryGold: 100, hazardGearSellPrice: 40, hazardGearStock: 3));
+            sim.RegisterTradeStall(TestStalls.Stall(richId, new Vec2(0f, 0f), rationStock: 10, treasuryGold: 500, hazardGearSellPrice: 40, hazardGearStock: 1));
+            sim.RegisterTradeStall(TestStalls.Stall(poorId, new Vec2(20f, 0f), rationStock: 45, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
+            sim.RegisterTradeStall(TestStalls.Stall(hungryId, new Vec2(40f, 0f), rationStock: 0, treasuryGold: 30, hazardGearSellPrice: 40, hazardGearStock: 0));
+            sim.RegisterTradeStall(TestStalls.Stall(fullId, new Vec2(60f, 0f), rationStock: 50, treasuryGold: 100, hazardGearSellPrice: 40, hazardGearStock: 3));
             ledger.RecordFaucet(660, "InitialSeed");
 
             while (sim.CurrentTick < 20) sim.Tick();
@@ -444,11 +444,11 @@ namespace Simpiens.Testing.Economy
         {
             var registry = new WorldRegistry();
             var ledger = new EconomyLedger();
-            var supply = new SupplyService(new SupplyTuning(restockIntervalTicks: 100, rationStockCap: 50, wholesaleRationCost: 1));
+            var supply = new SupplyService(TestSupply.Tuning(restockIntervalTicks: 100, rationStockCap: 50, wholesaleRationCost: 1));
             var sim = new SimulationManager(registry, null, economyLedger: ledger, supplyService: supply);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, rationStock: 0, treasuryGold: 100000));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationStock: 0, treasuryGold: 100000));
 
             // One dormant node regrows during warm-up; 16 more regrow inside the measured window
             RegisterDormantNode(sim, supply, 50);
@@ -494,7 +494,7 @@ namespace Simpiens.Testing.Economy
             var sim = new SimulationManager(registry, null);
 
             var stallId = NextGuid();
-            sim.RegisterTradeStall(new TradeStallData(stallId, Vec2.Zero, treasuryGold: 200, interactionRadius: 3f));
+            sim.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, treasuryGold: 200, interactionRadius: 3f));
             var oreId = CreateResourceNode(registry, sim, new Vec2(6f, 0f), ItemType.IronOre, yield: 3, regrowTicks: 0, out var oreGo);
             var foodId = CreateResourceNode(registry, sim, new Vec2(-6f, 0f), ItemType.Ration, yield: 3, regrowTicks: 0, out var foodGo);
             var agentGo = CreateAgent(registry, sim, new Vec2(1f, 0f), out var node, out var agent);

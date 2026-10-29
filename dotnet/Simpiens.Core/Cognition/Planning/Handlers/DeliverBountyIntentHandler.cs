@@ -91,13 +91,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, deliver, "inventory removal failed");
                 }
 
-                if (delBounty.TargetItemType == ItemType.IronOre)
+                // The delivered goods go on the stall's shelf when it buys them (ore and herbs, the bounty board's items)
+                if (delStall.TryGetGood(delBounty.TargetItemType, out var good) && good.Role == StallRole.Buys)
                 {
-                    delStall = delStall.WithOreStock((ushort)(delStall.OreStock + delBounty.TargetQuantity));
-                }
-                else if (delBounty.TargetItemType == ItemType.MedicinalHerb)
-                {
-                    delStall = delStall.WithHerbStock((ushort)(delStall.HerbStock + delBounty.TargetQuantity));
+                    delStall = delStall.WithStock(delBounty.TargetItemType, (ushort)(delStall.StockOf(delBounty.TargetItemType) + delBounty.TargetQuantity));
                 }
                 context.UpdateStall(delStall);
             }

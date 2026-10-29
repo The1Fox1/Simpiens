@@ -19,9 +19,6 @@ namespace Simpiens.Cognition
         /// <summary>Healing asleep in a bunk, per second.</summary>
         public const float BunkHealPerSecond = 4f;
 
-        /// <summary>What eating a medicinal herb heals.</summary>
-        public const float HerbHeal = 30f;
-
         /// <summary>A crawler under this eats a herb it carries.</summary>
         public const float TreatWoundsBelow = 60f;
 

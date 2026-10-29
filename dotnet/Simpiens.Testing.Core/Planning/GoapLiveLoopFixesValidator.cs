@@ -100,7 +100,7 @@ namespace Simpiens.Testing.Planning
             grid.EnsureRegions();
 
             var stallId = NextGuid();
-            var stall = new TradeStallData(stallId, CellCenter(15, 15), rationSellPrice: 5, rationStock: 20, treasuryGold: 200);
+            var stall = TestStalls.Stall(stallId, CellCenter(15, 15), rationSellPrice: 5, rationStock: 20, treasuryGold: 200);
             var bounty = new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, CellCenter(16, 3), creatorStallId: stallId);
 
             var snapshot = new SharedWorldSnapshot(GridSize, GridSize, 1f, 8, _ => { });
@@ -149,7 +149,7 @@ namespace Simpiens.Testing.Planning
 
             var withBounty = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
             withBounty.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
-            withBounty.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            withBounty.SetStalls(new[] { TestStalls.Stall(NextGuid(), new Vec2(20f, 20f)) }, 1);
             var solvable = Context(NextGuid(), Vec2.Zero, hunger: 10f, withBounty, new AgentMemory());
             state = WorldStateBuilder.BuildWorldState(solvable, solvable.Inventory);
 
@@ -171,7 +171,7 @@ namespace Simpiens.Testing.Planning
             var planner = new GoapPlanner();
             var snapshot = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
             snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
-            snapshot.SetStalls(new[] { new TradeStallData(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(NextGuid(), new Vec2(20f, 20f)) }, 1);
             var context = Context(NextGuid(), Vec2.Zero, hunger: 10f, snapshot, new AgentMemory());
             var state = WorldStateBuilder.BuildWorldState(context, context.Inventory);
             var goal = new FulfillBountyGoal();

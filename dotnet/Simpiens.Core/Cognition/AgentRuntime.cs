@@ -10,7 +10,8 @@ using Simpiens.Cognition.Planning;
 using Simpiens.Entities;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
-using Simpiens.Simulation.Economy;
+using Simpiens.Cognition.Inventory;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Cognition
@@ -99,27 +100,35 @@ namespace Simpiens.Cognition
             }
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
-            // Worn gear (G3) stops part of the damage and wears a tick for every tick in danger; at 0 it is gone
+            // Equipment's HazardResistance (G3's hazard gear) stops part of the damage; equipment that wears per hazard tick
+            // loses a unit for every tick in danger, and at 0 it is gone
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
             if (hazard.IsHazardous)
             {
                 State.Activity.HazardTicks++;
                 var inventory = State.Inventory;
-                bool geared = inventory != null && !inventory.Gear.IsEmpty;
-                var gearTuning = (_simulationManager?.Economy ?? EconomyTuning.Default).Gear;
+                float resistance = CrawlerStats.Get(inventory, StatKind.HazardResistance);
+                bool geared = resistance > 0f;
+                float damagePerSecond = geared ? (float)(hazard.DamagePerSecond * (float)(1f - resistance)) : hazard.DamagePerSecond;
                 float before = State.Health;
-                State.Health = SimMath.Max(0f, (float)(State.Health - (float)(gearTuning.DamageThrough(hazard.DamagePerSecond, geared) * FixedTickDeltaTime)));
+                State.Health = SimMath.Max(0f, (float)(State.Health - (float)(damagePerSecond * FixedTickDeltaTime)));
                 float taken = before - State.Health;
                 State.Activity.HazardDamage += taken;
                 if (geared)
                 {
                     State.Activity.GearedHazardTicks++;
                     State.Activity.GearedHazardDamage += taken;
-                    if (inventory.WearGear())
+                }
+                for (int s = 0; inventory != null && s < AgentInventory.EquipmentSlots; s++)
+                {
+                    var slot = (EquipmentSlot)s;
+                    var worn = inventory.GetEquipped(slot);
+                    if (worn.IsEmpty || ItemCatalog.Get(worn.Type)?.Equipment?.Wear != WearRule.PerHazardTick) continue;
+                    if (inventory.Wear(slot))
                     {
                         State.Activity.GearWornOut++;
-                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s hazard gear wore out in {hazard.Kind} at {State.Position}");
+                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s {ItemCatalog.NameOf(worn.Type)} wore out in {hazard.Kind} at {State.Position}");
                         RecordStory(ChronicleEventType.GearWornOut, ChronicleIntensity.Notable);
                     }
                 }

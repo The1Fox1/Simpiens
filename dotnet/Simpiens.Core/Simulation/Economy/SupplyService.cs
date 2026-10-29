@@ -4,6 +4,8 @@ using Simpiens.Narrative;
 using Simpiens.Simulation.Persistence;
 using ZLogger;
 
+using Simpiens.Simulation.Items;
+
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
@@ -208,37 +210,54 @@ namespace Simpiens.Simulation.Economy
 
             for (int i = 0; i < _stallScratch.Count; i++)
             {
-                var stall = BuySalvage(_stallScratch[i], host);
+                var stall = BuyExports(_stallScratch[i], host);
                 stall = PayUpkeep(stall, currentTick, host);
-                stall = RestockRations(stall, currentTick, host);
-                RestockGear(stall, host);
+                // What the caravan supplies: food first, then the rest, each in id order
+                stall = RestockSupplies(stall, currentTick, host, food: true);
+                RestockSupplies(stall, currentTick, host, food: false);
             }
         }
 
-        /// <summary>The caravan tops the stall's rations up to the cap, as far as the treasury pays (review §3.3 D6).</summary>
-        private TradeStallData RestockRations(TradeStallData stall, uint currentTick, ISupplyHost host)
+        private TradeStallData RestockSupplies(TradeStallData stall, uint currentTick, ISupplyHost host, bool food)
         {
-            if (stall.RationStock >= _tuning.RationStockCap) return stall;
+            var all = ItemCatalog.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var item = all[i].Id;
+                var terms = _tuning.Terms(item);
+                if (terms.Role != CaravanRole.Supplies || ItemCatalog.Is(item, ItemCategory.Food) != food || !stall.Trades(item)) continue;
+                stall = food ? RestockFood(stall, item, terms, currentTick, host) : RestockGoods(stall, item, terms, host);
+            }
+            return stall;
+        }
 
-            uint missing = (uint)(_tuning.RationStockCap - stall.RationStock);
-            uint affordable = _tuning.WholesaleRationCost > 0 ? stall.TreasuryGold / _tuning.WholesaleRationCost : missing;
+        /// <summary>
+        /// The caravan tops the stall's food up to the cap, as far as the treasury pays (review §3.3 D6: a poor stall still
+        /// gets some food); food restocks are counted and told in the chronicle.
+        /// </summary>
+        private TradeStallData RestockFood(TradeStallData stall, ItemType item, in CaravanTerms terms, uint currentTick, ISupplyHost host)
+        {
+            int stock = stall.StockOf(item);
+            if (stock >= terms.Limit) return stall;
+
+            uint missing = (uint)(terms.Limit - stock);
+            uint affordable = terms.Price > 0 ? stall.TreasuryGold / terms.Price : missing;
             uint units = missing < affordable ? missing : affordable;
 
-            // The caravan delivers what the stall can pay for (review §3.3 D6: a poor stall still gets some food)
             if (units == 0)
             {
                 SkippedRestockCount++;
-                SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g can't pay {_tuning.WholesaleRationCost}g for one ration (stock {stall.RationStock})");
+                SimLog.Supply.ZLogWarning($"Supply caravan skipped {SimLog.Agent(stall.StallEntityId)}: treasury {stall.TreasuryGold}g can't pay {terms.Price}g for one {ItemCatalog.NameOf(item)} (stock {stock})");
                 return stall;
             }
 
-            uint cost = units * _tuning.WholesaleRationCost;
-            var restocked = stall.WithTreasury(stall.TreasuryGold - cost).WithRationStock((ushort)(stall.RationStock + units));
+            uint cost = units * terms.Price;
+            var restocked = stall.WithTreasury(stall.TreasuryGold - cost).WithStock(item, (ushort)(stock + units));
             host.UpdateStall(restocked);
-            host.EconomyLedger?.RecordSink(cost, CaravanSinkName);
+            host.EconomyLedger?.RecordSink(cost, terms.FlowName);
             if (units < missing) PartialRestockCount++;
             RestockCount++;
-            SimLog.Supply.ZLogInformation($"Supply caravan restocked {SimLog.Agent(stall.StallEntityId)} with {units} rations for {cost}g (treasury now {stall.TreasuryGold - cost}g)");
+            SimLog.Supply.ZLogInformation($"Supply caravan restocked {SimLog.Agent(stall.StallEntityId)} with {units} {ItemCatalog.NameOf(item)} for {cost}g (treasury now {stall.TreasuryGold - cost}g)");
 
             host.ChronicleService?.RecordEvent(new ChronicleEvent(
                 ChronicleEventType.SupplyCaravanArrived,
@@ -252,46 +271,56 @@ namespace Simpiens.Simulation.Economy
         }
 
         /// <summary>
-        /// After the rations (food first), the caravan tops the stall's hazard gear up to its cap at the wholesale price, as
-        /// far as the treasury pays (Epic 10 G3): the "GearWholesale" sink. A poor stall gets what it can pay for.
+        /// After the food, the caravan tops up the other goods it supplies (hazard gear since Epic 10 G3) to their caps at
+        /// the wholesale price, as far as the treasury pays, under each one's ledger flow. A poor stall gets what it can pay for.
         /// </summary>
-        private void RestockGear(TradeStallData stall, ISupplyHost host)
+        private TradeStallData RestockGoods(TradeStallData stall, ItemType item, in CaravanTerms terms, ISupplyHost host)
         {
-            if (_tuning.GearStockCap == 0 || stall.HazardGearStock >= _tuning.GearStockCap) return;
-            uint missing = (uint)(_tuning.GearStockCap - stall.HazardGearStock);
-            uint affordable = _tuning.WholesaleGearCost > 0 ? stall.TreasuryGold / _tuning.WholesaleGearCost : missing;
+            int stock = stall.StockOf(item);
+            if (terms.Limit == 0 || stock >= terms.Limit) return stall;
+            uint missing = (uint)(terms.Limit - stock);
+            uint affordable = terms.Price > 0 ? stall.TreasuryGold / terms.Price : missing;
             uint units = missing < affordable ? missing : affordable;
-            if (units == 0) return;
+            if (units == 0) return stall;
 
-            uint cost = units * _tuning.WholesaleGearCost;
-            host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost).WithHazardGearStock((ushort)(stall.HazardGearStock + units)));
-            if (cost > 0) host.EconomyLedger?.RecordSink(cost, GearSinkName);
-            SimLog.Supply.ZLogInformation($"Supply caravan brought {SimLog.Agent(stall.StallEntityId)} {units} hazard gear for {cost}g (stock {stall.HazardGearStock + units}, treasury now {stall.TreasuryGold - cost}g)");
+            uint cost = units * terms.Price;
+            var restocked = stall.WithTreasury(stall.TreasuryGold - cost).WithStock(item, (ushort)(stock + units));
+            host.UpdateStall(restocked);
+            if (cost > 0) host.EconomyLedger?.RecordSink(cost, terms.FlowName);
+            SimLog.Supply.ZLogInformation($"Supply caravan brought {SimLog.Agent(stall.StallEntityId)} {units} {ItemCatalog.NameOf(item)} for {cost}g (stock {stock + units}, treasury now {stall.TreasuryGold - cost}g)");
+            return restocked;
         }
 
         /// <summary>
-        /// The caravan's market (review §3.3 D1): it buys up to its quota of each salvage type from the stall's stock at
-        /// the market price, before restocking, so salvage the stall bought from crawlers flows back out as gold. The
-        /// quota bounds the faucet: at most SupplyTuning.MaxSalvagePaymentPerVisit per stall per visit.
+        /// The caravan's market (review §3.3 D1): it buys what it exports from the stall's stock, up to each quota at the
+        /// market price, before restocking, so salvage the stall bought from crawlers flows back out as gold. The quotas
+        /// bound the faucet: at most SupplyTuning.MaxSalvagePaymentPerVisit per stall per visit.
         /// </summary>
-        private TradeStallData BuySalvage(TradeStallData stall, ISupplyHost host)
+        private TradeStallData BuyExports(TradeStallData stall, ISupplyHost host)
         {
-            uint oreUnits = _tuning.OreMarketPrice > 0 ? System.Math.Min(stall.OreStock, (uint)_tuning.OreQuota) : 0u;
-            uint herbUnits = _tuning.HerbMarketPrice > 0 ? System.Math.Min(stall.HerbStock, (uint)_tuning.HerbQuota) : 0u;
-            // Glowstone, the rare salvage (Epic 10 G2): the caravan takes it up to its own quota, at a premium
-            uint glowUnits = _tuning.GlowstoneMarketPrice > 0 ? System.Math.Min(stall.GlowstoneStock, (uint)_tuning.GlowstoneQuota) : 0u;
-            if (oreUnits == 0 && herbUnits == 0 && glowUnits == 0) return stall;
+            uint revenue = 0;
+            uint unitsBought = 0;
+            var updated = stall;
+            var all = ItemCatalog.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var item = all[i].Id;
+                var terms = _tuning.Terms(item);
+                if (terms.Role != CaravanRole.Exports || terms.Price == 0) continue;
+                int stock = updated.StockOf(item);
+                uint units = (uint)System.Math.Min(stock, (int)terms.Limit);
+                if (units == 0) continue;
+                updated = updated.WithStock(item, (ushort)(stock - units));
+                revenue += units * terms.Price;
+                unitsBought += units;
+            }
+            if (unitsBought == 0) return stall;
 
-            uint revenue = oreUnits * _tuning.OreMarketPrice + herbUnits * _tuning.HerbMarketPrice + glowUnits * _tuning.GlowstoneMarketPrice;
-            var updated = stall
-                .WithOreStock((ushort)(stall.OreStock - oreUnits))
-                .WithHerbStock((ushort)(stall.HerbStock - herbUnits))
-                .WithGlowstoneStock((ushort)(stall.GlowstoneStock - glowUnits))
-                .WithTreasury(stall.TreasuryGold + revenue);
+            updated = updated.WithTreasury(stall.TreasuryGold + revenue);
             host.UpdateStall(updated);
             host.EconomyLedger?.RecordFaucet(revenue, SalvageSalesFaucetName);
             SalvageSaleVisits++;
-            SimLog.Supply.ZLogInformation($"Supply caravan bought {oreUnits} ore + {herbUnits} herbs + {glowUnits} glowstone from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g, ore {updated.OreStock}, herbs {updated.HerbStock} left)");
+            SimLog.Supply.ZLogInformation($"Supply caravan bought {unitsBought} units of salvage from {SimLog.Agent(stall.StallEntityId)} for {revenue}g (treasury now {updated.TreasuryGold}g)");
             return updated;
         }
 

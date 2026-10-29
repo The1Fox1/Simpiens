@@ -55,19 +55,19 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// What this personality thinks a piece of hazard gear is worth (Epic 10 G3): its base value, lowered by greed
-        /// (neutral 40g with the default tuning, greedy 20g, generous 60g). No need pushes it higher, so it is also the most
-        /// the crawler will pay, and the fairness rule judges a purchase against it as for a ration.
+        /// What this personality thinks a piece of equipment is worth (Epic 10 G3's hazard gear): its base value, lowered
+        /// by greed (hazard gear: neutral 40g with the default tuning, greedy 20g, generous 60g). No need pushes it higher,
+        /// so it is also the most the crawler will pay, and the fairness rule judges a purchase against it as for a ration.
         /// </summary>
-        public static float CalmGearValue(in AgentPersonality personality, EconomyTuning economy)
+        public static float CalmGearValue(in AgentPersonality personality, EconomyTuning economy, ItemType item)
         {
-            return (economy ?? EconomyTuning.Default).HazardGearBaseValue * TraitFactor(personality.Greed, -GreedOnPrice);
+            return (economy ?? EconomyTuning.Default).BaseValue(item) * TraitFactor(personality.Greed, -GreedOnPrice);
         }
 
-        /// <summary>The most this crawler pays for a piece of hazard gear: its calm value, rounded.</summary>
-        public static ushort GearReservationPrice(in AgentContext context)
+        /// <summary>The most this crawler pays for a piece of equipment: its calm value, rounded.</summary>
+        public static ushort GearReservationPrice(in AgentContext context, ItemType item)
         {
-            return (ushort)SimMath.Clamp(SimMath.RoundToInt(CalmGearValue(context.Personality, Economy(context))), 0, ushort.MaxValue);
+            return (ushort)SimMath.Clamp(SimMath.RoundToInt(CalmGearValue(context.Personality, Economy(context), item)), 0, ushort.MaxValue);
         }
 
         /// <summary>

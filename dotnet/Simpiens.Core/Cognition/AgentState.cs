@@ -57,20 +57,23 @@ namespace Simpiens.Cognition
 
         public bool HasFoodInInventory
         {
-            get => Inventory != null && Inventory.HasItem(ItemType.Ration);
+            // Any food in the pack. Setting it true without food packs a ration (a quirk kept on purpose: a plot's harvest; .agents/core_refactor_plan.md, R7), false
+            // takes one food out
+            get => Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food);
             set
             {
                 if (Inventory == null) return;
                 if (value)
                 {
-                    if (!Inventory.HasItem(ItemType.Ration))
+                    if (!Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food))
                     {
                         Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
                     }
                 }
                 else
                 {
-                    Inventory.TryRemoveItem(ItemType.Ration, 1);
+                    var food = Inventory.FirstHeld(Simpiens.Simulation.Items.ItemCategory.Food);
+                    if (food != ItemType.None) Inventory.TryRemoveItem(food, 1);
                 }
             }
         }

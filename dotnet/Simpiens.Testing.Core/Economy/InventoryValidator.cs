@@ -217,12 +217,15 @@ namespace Simpiens.Testing.Economy
         }
 
         /// <summary>
-        /// Epic 10 G3 (D3): gear is worn in a slot of its own, so a full pack still takes gear and gear never takes a pack
-        /// slot. Only wearable items go on, one at a time; wear counts its durability down and breaks it at 0; the snapshot
-        /// and a save carry it.
+        /// Epic 10 G3 (D3), item system I4: equipment goes in slots beside the pack (protection, weapon, tool), so a full
+        /// pack still takes it and it never takes a pack slot. Only equipment goes on, in its own slot, one item per slot;
+        /// a pickaxe (a tool) and hazard gear (protection) are worn together. Wear counts a slot's durability down and
+        /// breaks it at 0; the snapshot and a save carry every slot.
         /// </summary>
         private void ValidateGearIsWornBesideThePack()
         {
+            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
+            var tool = Simpiens.Simulation.Items.EquipmentSlot.Tool;
             var inv = new AgentInventory(4, startingGold: 0);
             inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
             inv.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
@@ -230,31 +233,35 @@ namespace Simpiens.Testing.Economy
             inv.TryAddItem(new ItemInstance(4, ItemType.Glowstone, 1, 30), out _);
             Assert(inv.OccupiedSlots == 4, "The pack is full.");
 
-            Assert(!inv.TryWear(new ItemInstance(5, ItemType.Ration, 1, 5)), "A ration is not worn.");
-            Assert(inv.TryWear(new ItemInstance(6, ItemType.HazardGear, 1, 40, durability: 3)), "Gear goes on although the pack is full.");
-            Assert(inv.OccupiedSlots == 4 && !inv.HasItem(ItemType.HazardGear), "Worn gear takes no pack slot and isn't in the pack.");
-            Assert(!inv.TryWear(new ItemInstance(7, ItemType.HazardGear, 1, 40)), "A second piece of gear is refused while one is worn.");
+            Assert(!inv.TryEquip(new ItemInstance(5, ItemType.Ration, 1, 5)), "A ration is not equipment.");
+            Assert(inv.TryEquip(new ItemInstance(6, ItemType.HazardGear, 1, 40, durability: 3)), "Gear goes on although the pack is full.");
+            Assert(inv.OccupiedSlots == 4 && !inv.HasItem(ItemType.HazardGear), "Equipment takes no pack slot and isn't in the pack.");
+            Assert(inv.GetEquipped(protection).Type == ItemType.HazardGear, "Hazard gear goes in the protection slot.");
+            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HazardGear, 1, 40)), "A second piece of protection is refused while one is worn.");
+            Assert(inv.TryEquip(new ItemInstance(8, ItemType.ToolPickaxe, 1, 30, durability: 100)) && inv.GetEquipped(tool).Type == ItemType.ToolPickaxe,
+                "A pickaxe goes in the tool slot beside the protection.");
 
             var snapshot = (AgentInventorySnapshot)inv.GetSnapshot();
-            Assert(snapshot.Gear.Type == ItemType.HazardGear && snapshot.Gear.Durability == 3, "The snapshot carries the worn gear.");
+            Assert(snapshot.GetEquipped(protection).Durability == 3 && snapshot.GetEquipped(tool).Type == ItemType.ToolPickaxe, "The snapshot carries every slot.");
 
             var save = new Simpiens.Simulation.Persistence.InventorySave();
             inv.CaptureTo(save);
             var back = new AgentInventory(4, startingGold: 0);
             back.RestoreFrom(Simpiens.Simulation.Persistence.SaveSerializer.Deserialize<Simpiens.Simulation.Persistence.InventorySave>(Simpiens.Simulation.Persistence.SaveSerializer.Serialize(save)));
-            Assert(back.Gear == inv.Gear, "A save round trip keeps the worn gear and its durability.");
+            Assert(back.GetEquipped(protection) == inv.GetEquipped(protection) && back.GetEquipped(tool) == inv.GetEquipped(tool), "A save round trip keeps every slot and its durability.");
 
-            Assert(!inv.WearGear() && inv.Gear.Durability == 2, "Wear counts the durability down.");
-            Assert(!inv.WearGear() && inv.Gear.Durability == 1, "Wear counts the durability down again.");
-            Assert(inv.WearGear() && inv.Gear.IsEmpty, "At 0 the gear breaks and is gone.");
-            Assert(!inv.WearGear(), "Nothing worn, nothing breaks.");
-            Assert(inv.TryWear(new ItemInstance(8, ItemType.HazardGear, 1, 40)) && inv.RemoveGear().ItemId == 8 && inv.Gear.IsEmpty, "Gear comes off again (a rolled-back purchase).");
+            Assert(!inv.Wear(protection) && inv.GetEquipped(protection).Durability == 2, "Wear counts the durability down.");
+            Assert(!inv.Wear(protection) && inv.GetEquipped(protection).Durability == 1, "Wear counts the durability down again.");
+            Assert(inv.Wear(protection) && inv.GetEquipped(protection).IsEmpty, "At 0 the gear breaks and is gone.");
+            Assert(!inv.Wear(protection), "Nothing worn, nothing breaks.");
+            Assert(inv.GetEquipped(tool).Durability == 100, "Wearing one slot leaves the others.");
+            Assert(inv.TryEquip(new ItemInstance(9, ItemType.HazardGear, 1, 40)) && inv.Unequip(protection).ItemId == 9 && inv.GetEquipped(protection).IsEmpty, "Gear comes off again (a rolled-back purchase).");
 
-            inv.TryWear(new ItemInstance(9, ItemType.HazardGear, 1, 40));
+            inv.TryEquip(new ItemInstance(10, ItemType.HazardGear, 1, 40));
             inv.Clear();
-            Assert(inv.Gear.IsEmpty && inv.OccupiedSlots == 0, "Clear empties the pack and the gear slot.");
+            Assert(inv.GetEquipped(protection).IsEmpty && inv.GetEquipped(tool).IsEmpty && inv.OccupiedSlots == 0, "Clear empties the pack and every slot.");
 
-            TestLog.Log("[InventoryValidator] Test 8 Passed: Gear is worn beside the pack, wears out, and is snapshotted and saved.");
+            TestLog.Log("[InventoryValidator] Test 8 Passed: Equipment is worn beside the pack, a slot per kind, wears out, and is snapshotted and saved.");
         }
 
         private static void Assert(bool condition, string message)

@@ -92,9 +92,13 @@ namespace Simpiens.Client.Ui
 
             _itemGroup = FormGroup();
             _itemGroup.Children.Add(Label("Requested Salvage Item:"));
-            ItemBox = Dropdown(new[] { nameof(ItemType.IronOre), nameof(ItemType.MedicinalHerb) });
+            // The items a Gather bounty can ask for, by their catalog names, in the model's order
+            var gatherItems = BountyBoardModel.GatherItems;
+            var names = new string[gatherItems.Count];
+            for (int i = 0; i < names.Length; i++) names[i] = Simpiens.Simulation.Items.ItemCatalog.NameOf(gatherItems[i]);
+            ItemBox = Dropdown(names);
             _itemGroup.Children.Add(ItemBox.Visual);
-            ItemBox.SelectionChanged += (_, _) => { if (!_binding) _model.Item = ItemBox.SelectedIndex == 1 ? ItemType.MedicinalHerb : ItemType.IronOre; };
+            ItemBox.SelectionChanged += (_, _) => { if (!_binding && ItemBox.SelectedIndex >= 0) _model.Item = BountyBoardModel.GatherItems[ItemBox.SelectedIndex]; };
             form.Children.Add(_itemGroup);
 
             _quantityGroup = FormGroup();
@@ -183,7 +187,8 @@ namespace Simpiens.Client.Ui
         {
             _binding = true;
             TypeBox.SelectedIndex = _model.Type == BountyType.ScoutSector ? 1 : 0;
-            ItemBox.SelectedIndex = _model.Item == ItemType.MedicinalHerb ? 1 : 0;
+            int itemIndex = System.Array.IndexOf((ItemType[])BountyBoardModel.GatherItems, _model.Item);
+            ItemBox.SelectedIndex = itemIndex >= 0 ? itemIndex : 0;
             QuantitySlider.Value = _model.Quantity;
             RewardSlider.Value = _model.Reward;
             DurationSlider.Value = _model.Duration;

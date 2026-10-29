@@ -1,3 +1,4 @@
+using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
 
@@ -22,10 +23,10 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override bool IsValid(AgentContext context)
         {
-            if (context.Inventory == null || !context.Inventory.Gear.IsEmpty) return false;
+            if (context.Inventory == null || context.Inventory.IsWearing(Simpiens.Simulation.Items.ItemCategory.Protection)) return false;
             if (!Vitality.WouldVenture(context)) return false;
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            return ResourceTargeting.KnowsSalvage(context, ItemType.Glowstone) && ResourceTargeting.CanBuyGear(context);
+            return ResourceTargeting.KnowsHazardousSalvage(context) && ResourceTargeting.CanBuyGear(context);
         }
     }
 }

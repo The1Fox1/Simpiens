@@ -72,7 +72,25 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Item and quantity only mean something for Gather (Unity hid them for Scout).</summary>
         public bool ShowsItem => _type == BountyType.GatherResource;
 
-        public ItemType Item { get; set; } = ItemType.IronOre;
+        public ItemType Item { get; set; } = GatherItems[0];
+
+        /// <summary>
+        /// What a Gather bounty can ask for: the resources that aren't hazardous (iron ore, medicinal herbs), in id order
+        /// (item system I6). Hazardous salvage (glowstone) is left to the crawlers who venture.
+        /// </summary>
+        public static System.Collections.Generic.IReadOnlyList<ItemType> GatherItems => _gatherItems;
+
+        private static readonly ItemType[] _gatherItems = BuildGatherItems();
+
+        private static ItemType[] BuildGatherItems()
+        {
+            var items = new System.Collections.Generic.List<ItemType>();
+            foreach (var item in Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource))
+            {
+                if (!Simpiens.Simulation.Items.ItemCatalog.Is(item, Simpiens.Simulation.Items.ItemCategory.Hazardous)) items.Add(item);
+            }
+            return items.ToArray();
+        }
         public int Quantity { get; set; } = DefaultQuantity;
         public int Reward { get; set; } = DefaultReward;
         public int Duration { get; set; } = DefaultDuration;

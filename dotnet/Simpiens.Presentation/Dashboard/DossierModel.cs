@@ -3,6 +3,7 @@ using Simpiens.Entities;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using static System.FormattableString;
 
 namespace Simpiens.Presentation.Dashboard
@@ -45,7 +46,7 @@ namespace Simpiens.Presentation.Dashboard
         public float Health { get; private set; }
         public const string DownedBadge = "DOWNED";
 
-        /// <summary>The worn gear and its wear (Epic 10 G3): "Hazard gear, 64% left", or "None".</summary>
+        /// <summary>The worn protection and its wear (Epic 10 G3): "Hazard Gear, 64% left", or "None".</summary>
         public string Gear { get; private set; } = string.Empty;
         public const string NoGear = "None";
 
@@ -96,7 +97,7 @@ namespace Simpiens.Presentation.Dashboard
             State = agent.VisualState;
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
-            Gear = GearText(agent.Inventory?.Gear ?? default, (_context.Simulation?.Economy ?? EconomyTuning.Default).Gear.LifeTicks);
+            Gear = GearText(agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -120,12 +121,17 @@ namespace Simpiens.Presentation.Dashboard
             for (int i = 0; i < _rows.Count; i++) _affinities.Add(_rows[i].Line);
         }
 
-        /// <summary>Worn gear in words: what is left of its life, rounded up so gear that still protects never reads 0%.</summary>
-        public static string GearText(in ItemInstance gear, ushort lifeTicks)
+        /// <summary>
+        /// Equipment in words, by its catalog name: what is left of its life (its definition's durability), rounded up so
+        /// equipment that still works never reads 0%.
+        /// </summary>
+        public static string GearText(in ItemInstance gear)
         {
             if (gear.IsEmpty) return NoGear;
-            int left = lifeTicks > 0 ? (gear.Durability * 100 + lifeTicks - 1) / lifeTicks : 100;
-            return Invariant($"Hazard gear, {left}% left");
+            var definition = ItemCatalog.Get(gear.Type);
+            ushort life = definition?.Equipment?.Durability ?? 0;
+            int left = life > 0 ? (gear.Durability * 100 + life - 1) / life : 100;
+            return Invariant($"{definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type)}, {left}% left");
         }
 
         /// <summary>A drifter's stay in words, by the sim-minute (600 ticks); empty for a resident.</summary>

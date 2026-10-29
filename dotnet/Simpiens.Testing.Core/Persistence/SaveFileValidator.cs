@@ -109,7 +109,7 @@ namespace Simpiens.Testing.Persistence
                 Crawlers = Array.Empty<CrawlerSave>(),
                 Economy = new EconomySave
                 {
-                    Stalls = new[] { new TradeStallData(new EntityId(1u, 2u, 3u, 4u), Vec2.One, treasuryGold: 321) },
+                    Stalls = new[] { TestStalls.Stall(new EntityId(1u, 2u, 3u, 4u), Vec2.One, treasuryGold: 321) },
                     Bounties = Array.Empty<BountyContract>(),
                     Ledger = new LedgerSave()
                 },

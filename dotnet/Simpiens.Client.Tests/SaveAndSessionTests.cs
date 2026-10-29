@@ -8,6 +8,7 @@ using Simpiens.Simulation;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Testing.Sessions;
+using Simpiens.Simulation.Economy;
 using Xunit;
 
 namespace Simpiens.Client.Tests

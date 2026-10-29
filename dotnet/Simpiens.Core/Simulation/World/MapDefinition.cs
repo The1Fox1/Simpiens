@@ -93,13 +93,20 @@ namespace Simpiens.Simulation.World
         public readonly int Yield;
         public readonly uint RegrowTicks;
 
-        public ResourceNodeDefinition(string key, Vec2 position, ItemType item, int yield, uint regrowTicks)
+        /// <summary>
+        /// The loot table a harvest will roll (item system I7, a foundation): 0, the node yields <see cref="Item"/> as
+        /// today. No node sets one yet.
+        /// </summary>
+        public readonly ushort LootTableId;
+
+        public ResourceNodeDefinition(string key, Vec2 position, ItemType item, int yield, uint regrowTicks, ushort lootTableId = 0)
         {
             Key = key;
             Position = position;
             Item = item;
             Yield = yield;
             RegrowTicks = regrowTicks;
+            LootTableId = lootTableId;
         }
     }
 

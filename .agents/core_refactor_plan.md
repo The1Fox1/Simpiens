@@ -1,6 +1,6 @@
 # Core refactor plan: SimulationManager's split, guards and the cleanup's loose ends
 
-- **Status (producer, 2026-10-25):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`); **R1–R6 come back after Epic 10 Part 1**, and R7 (an item catalog, added 2026-10-26) before Epic 10 Part 2. The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R7 are done or dropped, then close it out by the docs protocol.
+- **Status (producer, 2026-10-25):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`); **R1–R6 come back after Epic 10 Part 1**; R7, the item system, was done on 2026-10-26. The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R6 are done or dropped, then close it out by the docs protocol.
 - **Source:** a smaller agent's report, *Simpiens Solution Architecture & Code Smells Deep Dive* (2026-10-24, not in the repo), and its two commits on `feat/code-cleanliness`: `52f582f` (core fixes) and `e58073a` (Gum migration, 0 warnings). This plan re-checks the report against the code; §2 records which findings hold.
 - **Rule for every phase:** behaviour-preserving unless the phase says otherwise. The golden hashes are the proof: a phase that changes them is not a refactor; stop and report.
 
@@ -138,15 +138,35 @@ Pure moves, no edited lines, after the precedent of `SessionHost.Drifters.cs`:
 - **Measure first:** `PopulationScalingProbe` before and after, at 12, 16 and 24 crawlers. The headless step waits for cognition at each tick barrier, so the lock costs time only when evaluations overlap.
 - **The decision:** if the probe shows no gain, it still closes #8. Whether that's worth it now is the producer's call.
 
-### R7. The item system: replaced by `.agents/item_system_plan.md` (2026-10-26)
-- **History:** R7 was added on 2026-10-26 as an item catalog with categories. The same day the producer asked for more:
-  - easy adding and removing of items;
-  - groups;
-  - a rarity score as the groundwork for loot tables;
-  - a foundation for weapons that give stats and consumables that restore them.
-- **Now:** its own plan, phases I1–I8, about 5–6.5 agent days, after R1–R4 and before Epic 10 Part 2. The analysis that started it (each new item touched about 20 files) is in that plan's §2.
+### R7. The item system — done 2026-10-26 (its own plan, deleted at close-out)
+- **History:**
+  - added on 2026-10-26 as an item catalog with categories;
+  - widened the same day into its own plan, `.agents/item_system_plan.md`, phases I1–I8: groups, rarity, consumable effects, equipment stats and loot tables;
+  - run at once, before Epic 10 G4, at the producer's word ("proceed with refactor plan"), on `feat/items-i1-catalog`, PR #15.
+- **The outcome:**
+  - code asks for groups, not items (`ItemNamesTests`);
+  - an item is added or taken out of the economy as data (`ItemSystemProofTests`);
+  - behaviour unchanged: golden 3/3, the soak identical to `main`, renders byte for byte.
+- **Decisions and deviations:** `architecture_history.md`, 2026-10-26. How to add or remove an item: `AGENTS.md`.
+- **Deferred:**
 
-Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6; the item system (R7) is estimated in its own plan.
+| Item | Owner |
+| :--- | :--- |
+| Loot in play: node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), expedition hauls, conditions (sector, danger, depth, a crawler's stats) | The milestone that first needs random drops (Epic 10 G5's haul, if the producer wants it; otherwise Part 2) |
+| Weapon stats in use (Attack, Defense), combat | The descent, Epic 10 Part 3 |
+| Tool stats in use (HarvestSpeed on the pickaxe), quality grades (`ItemInstance.Quality`), crafting recipes, repair | Epic 10 Part 2 |
+| Rarity in the client (colours, the merchant) | With the first rare drop the player sees |
+| Item data files (JSON) and content tools | The map designer (Epic CLIENT) |
+| "Salvage" as "a resource the stall buys": `IsSalvage` still means "a Resource"; the stall's role is checked where it trades | When an unsold resource appears (none today) |
+| The test conveniences for today's item names (`Simpiens.Testing.Core/Economy/LegacyItemAccessors.cs`, `MerchantTestAccessors`): validators could move to the generic API | Whenever a validator is next rewritten |
+
+- **Quirks kept on purpose, each a behaviour change to make deliberately, with its golden re-record:**
+  1. A ration takes 40 off hunger from the pack, but 50 when eaten at a Garden plot (a node rule).
+  2. `AgentState.HasFoodInInventory` set true packs a ration.
+  3. A node yielding `ItemType.None` counts as food.
+  4. `ItemInstance.ItemId` is stamped 1 everywhere.
+
+Estimate: R0–R5 about 3.5 agent days, plus 0.5 for R6 (R7 done).
 
 ---
 

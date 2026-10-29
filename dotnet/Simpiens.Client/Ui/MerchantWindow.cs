@@ -10,14 +10,18 @@ using Simpiens.Presentation.Dashboard;
 namespace Simpiens.Client.Ui
 {
     /// <summary>
-    /// The merchant terminal (Unity's merchant window, 600 px): the stall's status, treasury and stock, three price
-    /// sliders (1 to 50 gold), and Apply, which hands the prices to the model to queue.
+    /// The merchant terminal (Unity's merchant window, 600 px): the stall's status, treasury and stock, a price slider
+    /// (1 to 50 gold) per good the model lists (item system I6: rows from the stall's goods, not one field per item), and
+    /// Apply, which hands the prices to the model to queue.
     /// </summary>
     public sealed class MerchantWindow
     {
         public const float Width = 740f; // 600; 660 for Epic 10 G2's glowstone; 740 for G3's gear, with a four-digit treasury (TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest)
 
         private readonly MerchantModel _model;
+        private readonly System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType> _items = new System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType>(8);
+        private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, Slider> _sliders = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, Slider>();
+        private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime> _values = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime>();
         private readonly TextRuntime _status, _treasury, _stock, _feedback;
         private bool _binding;
 
@@ -50,11 +54,14 @@ namespace Simpiens.Client.Ui
 
             body.Children.Add(Window.SubHeader("COMMODITY EXCHANGE RATES"));
             body.Children.Add(Window.Gap(6f));
-            RationSlider = AddPriceRow(body, "Provision Sell Price:", "(Outpost sells rations to hungry agents)", v => _model.RationPrice = v, out RationValue);
-            OreSlider = AddPriceRow(body, "Iron Ore Buy Price:", "(Outpost purchases ore from salvagers)", v => _model.OrePrice = v, out OreValue);
-            HerbSlider = AddPriceRow(body, "Herb Buy Price:", "(Outpost purchases medicinal flora)", v => _model.HerbPrice = v, out HerbValue);
-            GlowstoneSlider = AddPriceRow(body, "Glowstone Buy Price:", "(Rare salvage from the hazard sectors)", v => _model.GlowstonePrice = v, out GlowstoneValue);
-            GearSlider = AddPriceRow(body, "Hazard Gear Sell Price:", "(Worn into danger: halves the harm, then wears out)", v => _model.GearPrice = v, out GearValue);
+            // A row per good, in the model's order; a slider sets the model's row for its item (rows are reloaded on open)
+            foreach (var row in _model.Rows)
+            {
+                var item = row.Item;
+                _items.Add(item);
+                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
+                _values[item] = value;
+            }
 
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
@@ -73,12 +80,12 @@ namespace Simpiens.Client.Ui
         }
 
         public Window Window { get; }
-        public Slider RationSlider { get; }
-        public Slider OreSlider { get; }
-        public Slider HerbSlider { get; }
-        public Slider GlowstoneSlider { get; }
-        public Slider GearSlider { get; }
-        public readonly TextRuntime RationValue, OreValue, HerbValue, GlowstoneValue, GearValue;
+        /// <summary>The goods the window prices, top to bottom.</summary>
+        public System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.ItemType> Items => _items;
+
+        /// <summary>A good's price slider and the price shown beside it.</summary>
+        public Slider PriceSlider(Simpiens.Simulation.Economy.ItemType item) => _sliders[item];
+        public TextRuntime PriceValue(Simpiens.Simulation.Economy.ItemType item) => _values[item];
         public Button ApplyButton { get; }
 
         public string StatusText => _status.Text;
@@ -132,16 +139,13 @@ namespace Simpiens.Client.Ui
         public void LoadPrices()
         {
             _binding = true;
-            RationSlider.Value = _model.RationPrice;
-            OreSlider.Value = _model.OrePrice;
-            HerbSlider.Value = _model.HerbPrice;
-            GlowstoneSlider.Value = _model.GlowstonePrice;
-            GearSlider.Value = _model.GearPrice;
-            RationValue.Text = MerchantModel.PriceText(_model.RationPrice);
-            OreValue.Text = MerchantModel.PriceText(_model.OrePrice);
-            HerbValue.Text = MerchantModel.PriceText(_model.HerbPrice);
-            GlowstoneValue.Text = MerchantModel.PriceText(_model.GlowstonePrice);
-            GearValue.Text = MerchantModel.PriceText(_model.GearPrice);
+            for (int i = 0; i < _items.Count; i++)
+            {
+                var row = _model.Row(_items[i]);
+                if (row == null) continue;
+                _sliders[_items[i]].Value = row.Price;
+                _values[_items[i]].Text = MerchantModel.PriceText(row.Price);
+            }
             _binding = false;
         }
 

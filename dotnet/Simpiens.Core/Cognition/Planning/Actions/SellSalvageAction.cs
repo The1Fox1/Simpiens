@@ -1,5 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 namespace Simpiens.Cognition.Planning.Actions
 {
@@ -70,8 +71,9 @@ namespace Simpiens.Cognition.Planning.Actions
                 }
             }
 
-            // Determine what salvage item the agent is carrying
-            ItemType salvageType = ItemType.IronOre;
+            // Determine what salvage item the agent is carrying (without an inventory: the first salvage kind)
+            var salvage = ItemCatalog.InCategory(ItemCategory.Resource);
+            ItemType salvageType = salvage[0];
             ushort quantity = 1;
 
             if (context.Inventory != null)
@@ -85,22 +87,18 @@ namespace Simpiens.Cognition.Planning.Actions
                 {
                     salvageType = affordable;
                 }
-                else if (ResourceTargeting.HoldsSellable(context, ItemType.IronOre))
-                {
-                    salvageType = ItemType.IronOre;
-                }
-                else if (ResourceTargeting.HoldsSellable(context, ItemType.MedicinalHerb))
-                {
-                    salvageType = ItemType.MedicinalHerb;
-                }
-                else if (ResourceTargeting.HoldsSellable(context, ItemType.Glowstone))
-                {
-                    salvageType = ItemType.Glowstone;
-                }
                 else
                 {
+                    // Otherwise the first sellable kind held, in ascending id (ore, herbs, glowstone: the order before the
+                    // item catalog)
+                    salvageType = ItemType.None;
+                    for (int i = 0; i < salvage.Count && salvageType == ItemType.None; i++)
+                    {
+                        if (ResourceTargeting.HoldsSellable(context, salvage[i])) salvageType = salvage[i];
+                    }
+
                     // Everything held is owed to a claimed bounty: nothing to sell
-                    return new IdleIntent(context.AgentId, 0.5f);
+                    if (salvageType == ItemType.None) return new IdleIntent(context.AgentId, 0.5f);
                 }
             }
 

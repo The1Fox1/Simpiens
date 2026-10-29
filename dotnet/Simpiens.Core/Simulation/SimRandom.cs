@@ -60,5 +60,6 @@ namespace Simpiens.Simulation
         public const uint Personality = 4;
         public const uint DrifterSchedule = 5;
         public const uint DrifterTraits = 6;
+        public const uint Loot = 7; // loot tables (item system I7)
     }
 }

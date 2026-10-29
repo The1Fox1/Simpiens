@@ -219,4 +219,5 @@ Each milestone also needs its validators, the golden check and the client's test
 - 2026-10-23: G1 done: drifters open the economy; four navigation and planning faults found and fixed with them; Vec2 rounds alike in both runtimes. Its working plan was deleted at close-out.
 - 2026-10-23: G2 done: health, the Sump and the Glow Caves, glowstone; the fair band re-set; A* rounds alike in both runtimes. Its working plan was deleted at close-out.
 - 2026-10-25: the producer's look at G2 passed ("hazards UI is fine for now"); the fair soak band set to 1,000–2,000g. G3 (gear) started on `feat/epic10-g3`, with a working plan in `.agents/`.
+- 2026-10-26: before G4, the item system refactor (not part of this epic; ROADMAP §3A): items are a catalog with groups and rarity, gear's protection and life are its definition's, and loot tables exist as a foundation. No behaviour change.
 - 2026-10-25: G3 done: hazard gear (one protective item, worn, halving hazard damage and wearing out), bought by bold crawlers at 30g; findings F4 (the drifters' benefit to a keen player) and F5 (early jitter on 4 of 120 seeds). Its working plan was deleted at close-out.

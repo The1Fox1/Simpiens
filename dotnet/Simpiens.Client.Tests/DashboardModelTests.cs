@@ -107,7 +107,7 @@ namespace Simpiens.Client.Tests
             var queue = new PlayerInterventionService();
             var sim = new SimulationManager(worldRegistry: null, spatialPartition: null, chronicleService: chronicle, sectors: sectors, interventionService: queue);
             var stall = new EntityId(9u, 9u, 9u, 9u);
-            sim.RegisterTradeStall(new TradeStallData(stall, Vec2.Zero, 15, 50, 20, 10, 25, 10, treasuryGold: treasury, interactionRadius: 3f));
+            sim.RegisterTradeStall(TestStalls.Stall(stall, Vec2.Zero, 15, 50, 20, 10, 25, 10, treasuryGold: treasury, interactionRadius: 3f));
             var model = new DashboardModel(new DashboardContext(simulation: sim, sectors: sectors, intervention: queue));
             return (sim, queue, stall, model);
         }

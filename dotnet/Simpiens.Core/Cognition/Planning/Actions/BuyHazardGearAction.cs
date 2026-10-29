@@ -21,9 +21,11 @@ namespace Simpiens.Cognition.Planning.Actions
         public override AgentIntent CreateIntent(AgentContext context)
         {
             ResourceTargeting.TryGetNearestStall(context, out var stall);
-            // The stall re-checks the price at execution, so a price raised after planning is refused, not paid
-            return new TradeIntent(context.AgentId, stall.StallEntityId, TradeActionType.BuyItem, ItemType.HazardGear, quantity: 1,
-                maxExpectedPricePerUnit: Considerations.GearReservationPrice(context));
+            // The protection the stall sells (hazard gear). The stall re-checks the price at execution, so a price raised
+            // after planning is refused, not paid
+            var protection = ResourceTargeting.ProtectionForSale(stall);
+            return new TradeIntent(context.AgentId, stall.StallEntityId, TradeActionType.BuyItem, protection, quantity: 1,
+                maxExpectedPricePerUnit: Considerations.GearReservationPrice(context, protection));
         }
     }
 }

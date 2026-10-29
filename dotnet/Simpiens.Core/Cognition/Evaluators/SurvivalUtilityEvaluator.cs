@@ -1,3 +1,4 @@
+using Simpiens.Cognition.Inventory;
 using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
@@ -60,6 +61,6 @@ namespace Simpiens.Cognition.Evaluators
         }
 
         public static bool CarriesFood(in AgentContext context) =>
-            context.Inventory != null && context.Inventory.HasItem(Simpiens.Simulation.Economy.ItemType.Ration);
+            context.Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food);
     }
 }

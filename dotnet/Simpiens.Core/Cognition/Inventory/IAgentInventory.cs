@@ -16,9 +16,9 @@ namespace Simpiens.Cognition.Inventory
         int GetItemCount(ItemType type);
 
         /// <summary>
-        /// The gear the crawler wears (Epic 10 G3), beside the pack: <see cref="ItemInstance.Empty"/> when none. Its
-        /// <see cref="ItemInstance.Durability"/> counts the ticks it still protects in a hazard sector.
+        /// What the crawler has equipped in a slot, beside the pack (protection since Epic 10 G3; weapon and tool reserved):
+        /// <see cref="ItemInstance.Empty"/> when nothing. Its <see cref="ItemInstance.Durability"/> counts the wear it still takes.
         /// </summary>
-        ItemInstance Gear { get; }
+        ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot);
     }
 }

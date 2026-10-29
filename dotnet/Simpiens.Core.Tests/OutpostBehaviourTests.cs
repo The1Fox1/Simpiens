@@ -8,6 +8,7 @@ using Simpiens.Entities;
 using Simpiens.Hosting;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Xunit;
 
 namespace Simpiens.Core.Tests
@@ -121,7 +122,7 @@ namespace Simpiens.Core.Tests
             for (int step = 0; step < prices.Length; step++)
             {
                 var stall = sim.Simulation.ActiveStalls[0];
-                intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", new UpdateStallPricesCommand(stall.StallEntityId, prices[step], stall.OreBuyPrice, stall.HerbBuyPrice)));
+                intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", TestPrices.Command(stall.StallEntityId, prices[step], stall.OreBuyPrice, stall.HerbBuyPrice)));
                 uint startPurchases = ledger.Flows.Purchases;
                 var lastGold = residents.Select(s => s.Inventory.Gold).ToArray();
                 var bought = new bool[residents.Count];

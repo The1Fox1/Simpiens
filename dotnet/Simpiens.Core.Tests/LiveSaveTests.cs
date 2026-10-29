@@ -5,6 +5,7 @@ using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Hosting;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Testing.Environment;
 using Xunit;
@@ -123,6 +124,7 @@ namespace Simpiens.Core.Tests
             TryBroken("another seed", s => s.Header.Seed = s.Header.Seed + 1);
             TryBroken("another map", s => s.Header.MapFingerprint = s.Header.MapFingerprint ^ 0xFFUL);
             TryBroken("a missing block", s => s.World = null);
+            TryBroken("an item the game doesn't have", s => s.Crawlers[0].Inventory.Slots[0] = new ItemInstance(1, (ItemType)77, 1, 1));
             Assert.Equal(50, sim.Clock.CurrentTick);
             Assert.Equal(before, SaveSerializer.Serialize(sim.Host.Capture()));
 
