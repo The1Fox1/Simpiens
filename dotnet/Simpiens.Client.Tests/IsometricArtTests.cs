@@ -95,11 +95,10 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheSheetsShareIndicesAndThePlaceholdersAreUnchanged()
+        public void TheSheetsShareIndices()
         {
             for (int i = 0; i < WorldSprites.All.Count; i++) Assert.Equal(i, WorldSprites.All[i].Index);
             for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], WorldSprites.All[i]);
-            Assert.Equal(PinnedPlaceholders, HashOf(IsometricSprites.All));
         }
 
         /// <summary>The placeholders, magnified, for a person (or an agent) to look at: render-output/iso-placeholders.png.</summary>
@@ -129,26 +128,5 @@ namespace Simpiens.Client.Tests
             }
             Png.Write(Path.Combine(AppContext.BaseDirectory, "render-output", "iso-placeholders.png"), width, height, rgba);
         }
-
-        private static ulong HashOf(System.Collections.Generic.IEnumerable<PixelSprite> sprites)
-        {
-            ulong hash = 14695981039346656037UL;
-            foreach (var sprite in sprites)
-            {
-                hash = (hash ^ (ulong)sprite.Width) * 1099511628211UL;
-                hash = (hash ^ (ulong)sprite.Height) * 1099511628211UL;
-                foreach (var p in sprite.Pixels)
-                {
-                    hash = (hash ^ p.R) * 1099511628211UL;
-                    hash = (hash ^ p.G) * 1099511628211UL;
-                    hash = (hash ^ p.B) * 1099511628211UL;
-                    hash = (hash ^ p.A) * 1099511628211UL;
-                }
-            }
-            return hash;
-        }
-
-        /// <summary>The placeholders' pixels, pinned after a look (2026-10-21); a deliberate art change re-pins in its own commit.</summary>
-        private const ulong PinnedPlaceholders = 14523392418641480320UL;
     }
 }

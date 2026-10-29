@@ -107,15 +107,12 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
-        /// Pins every generated pixel. The first 33 sprites were ported pixel for pixel from Unity's AgentSpriteLibrary
-        /// and keep their own pin; the whole set's pin moves only with a deliberate art change, in its own commit.
+        /// The first 33 sprites were ported pixel for pixel from Unity's AgentSpriteLibrary and keep their own pin, as
+        /// history; every sprite is pinned by name in Baselines/art-pins.txt (<see cref="ArtPinTests"/>).
         /// </summary>
         [Fact]
-        public void TheGeneratedArtIsUnchanged()
-        {
-            Assert.Equal(PortedArtHash, HashOf(ProceduralSprites.All.Take(PortedSpriteCount)));
-            Assert.Equal(PinnedArtHash, HashOf(ProceduralSprites.All));
-        }
+        public void TheArtPortedFromUnityIsUnchanged()
+            => Assert.Equal(PortedArtHash, HashOf(ProceduralSprites.All.Take(PortedSpriteCount)));
 
         private static ulong HashOf(System.Collections.Generic.IEnumerable<PixelSprite> sprites)
         {
@@ -136,8 +133,6 @@ namespace Simpiens.Client.Tests
         /// <summary>The sprites ported from Unity's AgentSpriteLibrary (M0.2), before the client's own additions.</summary>
         internal const int PortedSpriteCount = 33;
         internal const ulong PortedArtHash = 12981420596316165723UL; // recorded 2026-10-18 (M0.2) from the port of AgentSpriteLibrary
-        // Recorded 2026-10-18 (M1.5): the port plus the selection ring; again for Epic 10 G2: the glowstone sprite, made last
-        internal const ulong PinnedArtHash = 7875643926992335447UL;
     }
 
     public class MapTileTests
