@@ -3,10 +3,6 @@ using Simpiens.Entities;
 
 namespace Simpiens.Presentation.Art
 {
-    /// <summary>
-    /// The art keys code names (graphics V1): stable strings, resolved to <see cref="ArtId"/>s once per catalogue. A
-    /// resource node's key is <c>node/</c> and its item's art key (<c>node/iron-ore</c>); a crawler's, <c>crawler/</c> and its state.
-    /// </summary>
     /// <summary>An item's pictures (graphics V3.6): its menu icon, its map sprite, and the marker over a crawler carrying it.</summary>
     public enum ItemPicture : byte
     {
@@ -15,6 +11,10 @@ namespace Simpiens.Presentation.Art
         Carried = 2,
     }
 
+    /// <summary>
+    /// The art keys code names (graphics V1): stable strings, resolved to <see cref="ArtId"/>s once per catalogue. A
+    /// resource node's key is <c>node/</c> and its item's art key (<c>node/iron-ore</c>); a crawler's, <c>crawler/</c> and its state.
+    /// </summary>
     public static class ArtKeys
     {
         public const string TileFloor = "tile/floor";

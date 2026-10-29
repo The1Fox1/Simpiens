@@ -4,11 +4,6 @@ using static System.FormattableString;
 
 namespace Simpiens.Presentation.Dashboard
 {
-    /// <summary>
-    /// The header over the map (Unity's header bar): the outpost's treasury and stock, the active bounties, the tick, and
-    /// the pause and speed controls, whose clicks and keys leave as host commands (review D3). Unity's emoji are words
-    /// here: the UI font has none (plan D5).
-    /// </summary>
     /// <summary>One good in the header's stock (graphics V4): its icon and how many the stall holds.</summary>
     public readonly struct HeaderStock
     {
@@ -24,6 +19,11 @@ namespace Simpiens.Presentation.Dashboard
         public int Count { get; }
     }
 
+    /// <summary>
+    /// The header over the map (Unity's header bar): the outpost's treasury and stock, the active bounties, the tick, and
+    /// the pause and speed controls, whose clicks and keys leave as host commands (review D3). Unity's emoji are words
+    /// here: the UI font has none (plan D5).
+    /// </summary>
     public sealed class HeaderModel
     {
         public const string Title = "SIMPIENS FACILITY OS";

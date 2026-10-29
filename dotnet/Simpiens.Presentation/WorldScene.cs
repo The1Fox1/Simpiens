@@ -10,15 +10,6 @@ using Simpiens.Simulation.World;
 
 namespace Simpiens.Presentation
 {
-    /// <summary>
-    /// What the view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and room names,
-    /// the props (resource nodes, the hearth, bunks) and the crawlers with their animation. What stands in an uncharted
-    /// sector is hidden by its fog and fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's
-    /// frames (<see cref="WorldViewFrames"/>, review A3), never the live simulation. The map's tiles are built once per
-    /// map. What each thing looks like (sprite, size, pivot, frames) comes from the view mode's art catalogue
-    /// (<see cref="Catalog"/>, graphics V2), and which art a thing has, from its visuals (<see cref="EntityVisuals"/>);
-    /// where it goes and in what order, from the projection.
-    /// </summary>
     /// <summary>How the walls in front of rooms are drawn (M3 design D7, producer P2: cutaway).</summary>
     public enum WallStyle : byte
     {
@@ -30,6 +21,16 @@ namespace Simpiens.Presentation
         Low = 2,
     }
 
+    /// <summary>
+    /// What the view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and room names,
+    /// the props (resource nodes, the hearth, bunks, the stall with its goods) and the crawlers with their animation,
+    /// their worn gear and what they carry (graphics V5). What stands in an uncharted sector is hidden by its fog and
+    /// fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's frames (<see cref="WorldViewFrames"/>,
+    /// review A3), never the live simulation. The map's tiles are built once per map. What each thing looks like
+    /// (sprite, size, pivot, frames) comes from the view mode's art catalogue (<see cref="Catalog"/>, graphics V2), and
+    /// which art a thing has, from its visuals (<see cref="EntityVisuals"/>); where it goes and in what order, from the
+    /// projection.
+    /// </summary>
     public sealed class WorldScene
     {
         private MapTileLayer _tiles;
@@ -260,11 +261,6 @@ namespace Simpiens.Presentation
             }
         }
 
-        /// <summary>
-        /// The map's room names, hung on their points; drawn in screen space (<see cref="MapLabelLayout"/>). Each carries
-        /// the sector it stands in (the first that contains it, in map order), which pairs it with that sector's
-        /// "UNCHARTED".
-        /// </summary>
         /// <summary>The red a hazard sector's danger is written in.</summary>
         public static readonly Rgba HazardColor = new Rgba(0.98f, 0.45f, 0.40f, 1f);
 
@@ -295,6 +291,11 @@ namespace Simpiens.Presentation
             }
         }
 
+        /// <summary>
+        /// The map's room names, hung on their points; drawn in screen space (<see cref="MapLabelLayout"/>). Each carries
+        /// the sector it stands in (the first that contains it, in map order), which pairs it with that sector's
+        /// "UNCHARTED".
+        /// </summary>
         private void AddRoomNames(MapDefinition map)
         {
             if (!ReferenceEquals(_labelSectorsMap, map))

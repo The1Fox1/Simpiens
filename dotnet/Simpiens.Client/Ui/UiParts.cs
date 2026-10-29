@@ -107,7 +107,6 @@ namespace Simpiens.Client.Ui
             return pill;
         }
 
-        /// <summary>Sets a text only when it changed: Gum lays a text out again on every assignment (wrapped lines are costly).</summary>
         /// <summary>
         /// An item's icon (graphics V4): <see cref="IconAtlas.Size"/> square, drawn 1:1 from the icon atlas (so at whole
         /// pixels it is the art, whatever Gum's texture filter). <paramref name="iconKey"/> null hides it.
@@ -135,6 +134,7 @@ namespace Simpiens.Client.Ui
             if (iconKey != null) icon.SourceRectangle = atlas.Source(iconKey, icon.Width <= IconAtlas.SmallSize ? 1 : IconAtlas.Scale);
         }
 
+        /// <summary>Sets a text only when it changed: Gum lays a text out again on every assignment (wrapped lines are costly).</summary>
         public static void SetText(TextRuntime text, string value)
         {
             value ??= string.Empty;

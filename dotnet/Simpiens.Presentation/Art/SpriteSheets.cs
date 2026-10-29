@@ -14,8 +14,9 @@ namespace Simpiens.Presentation.Art
     {
         /// <summary>
         /// The world's art, for both view modes (graphics V3.2): the generated 16x16 sprites, then the isometric
-        /// placeholders, then the missing art (V3.3), then the items' map sprites and carried markers (V3.6), then crawlers wearing gear (V5), so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
-        /// sampling rules made the picture independent of the atlas's layout (epic F12).
+        /// placeholders, then the missing art (V3.3), then the items' map sprites and carried markers (V3.6), then
+        /// crawlers wearing gear (V5), so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet
+        /// since the sampling rules made the picture independent of the atlas's layout (epic F12).
         /// </summary>
         public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite).Concat(ItemSprites.World).Concat(WornSprites.All));
 
