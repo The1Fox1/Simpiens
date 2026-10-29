@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Simpiens.Entities;
 
 namespace Simpiens.Presentation.Art
@@ -25,7 +26,14 @@ namespace Simpiens.Presentation.Art
 
         private static ArtCatalog Build()
         {
-            var art = new ArtCatalog.Builder("top-down") { NameOffset = new Vec2(0f, 0.65f), NameHeight = 0f }; // above the crawler (Unity's CameraController)
+            var art = new ArtCatalog.Builder("top-down")
+            {
+                NameOffset = new Vec2(0f, 0.65f), NameHeight = 0f, // above the crawler (Unity's CameraController)
+                CarryOffset = new Vec2(0.25f, 0.3f), CarryHeight = 0f, // over its pack, at its upper right
+                // On the stall's counter, its lower half: four goods as their 8x8 markers (a 12-px map sprite would cover it)
+                DisplaySlots = new[] { (new Vec2(-0.69f, -0.22f), 0f), (new Vec2(-0.23f, -0.22f), 0f), (new Vec2(0.23f, -0.22f), 0f), (new Vec2(0.69f, -0.22f), 0f) },
+                DisplayPicture = ItemPicture.Carried,
+            };
             art.Add(ArtKeys.TileFloor, Sheet, new[] { "Map_Floor" }, 1f, 1f, Art)
                .Add(ArtKeys.TileRock, Sheet, new[] { "Map_Rock" }, 1f, 1f, Art)
                .Add(ArtKeys.TileWall, Sheet, new[] { "Obstacle_StoneWall" }, 1f, 1f, Art)
@@ -33,10 +41,14 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, HearthSize, HearthSize, Art,
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
+               .Add(ArtKeys.PropStall, Sheet, new[] { "Prop_Stall" }, 2f, 1f, Art) // two cells by one
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
+            foreach (var key in WornSprites.Keys)
+                foreach (var (state, sprites) in Crawlers)
+                    art.Add(ArtKeys.CrawlerWearing(state, key), Sheet, new[] { WornSprites.Name(sprites[0], key), WornSprites.Name(sprites[1], key) }, CrawlerSize, CrawlerSize, Art);
             foreach (var key in ItemSprites.Keys)
             {
                 art.Add(ArtKeys.Item(key, ItemPicture.Map), Sheet, new[] { ItemSprites.MapName(key) }, ItemMapSize, ItemMapSize, Art);
@@ -49,7 +61,7 @@ namespace Simpiens.Presentation.Art
         /// The resource nodes, by their items' art keys (rations grow on the berry bush); an item whose key has no row
         /// draws the missing art. Shared with isometric, which stands the same sprites on their feet.
         /// </summary>
-        internal static readonly (string Key, string Sprite)[] Nodes =
+        public static IReadOnlyList<(string Key, string Sprite)> Nodes { get; } = new[]
         {
             (ArtKeys.Node("ration"), "Resource_BerryBush"),
             (ArtKeys.Node("iron-ore"), "Resource_OreVein"),
@@ -58,7 +70,7 @@ namespace Simpiens.Presentation.Art
         };
 
         /// <summary>Each crawler state's two frames. Shared with isometric.</summary>
-        internal static readonly (AgentVisualState State, string[] Sprites)[] Crawlers =
+        public static IReadOnlyList<(AgentVisualState State, string[] Sprites)> Crawlers { get; } = new[]
         {
             (AgentVisualState.Idle, Frames("Idle")),
             (AgentVisualState.Walking, Frames("Walk")),

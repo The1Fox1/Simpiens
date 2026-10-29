@@ -20,6 +20,8 @@ namespace Simpiens.Presentation
         /// <summary>A cut-away wall's stub (M3 design D7).</summary>
         public const int LowWallRise = 4;
         public const int BunkWidth = 24, BunkHeight = 12, BunkRise = 5;
+        /// <summary>The trade stall's counter (graphics V5): a block a tile and a half across, with a striped cloth on top.</summary>
+        public const int StallWidth = 48, StallHeight = 24, StallRise = 8;
 
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(8);
 
@@ -34,6 +36,7 @@ namespace Simpiens.Presentation
         public static PixelSprite SelectionRing { get; }
         /// <summary>A soft dark ellipse under a standing crawler.</summary>
         public static PixelSprite Shadow { get; }
+        public static PixelSprite Stall { get; }
 
         // Top-down's palette (ProceduralSprites): flagstone, rock, slate walls, the bunk's wood, pillow and blanket
         private static readonly Rgba32 Flagstone = new Rgba32(232, 232, 232), Speckle = new Rgba32(212, 212, 212), Joint = new Rgba32(190, 190, 190);
@@ -51,6 +54,7 @@ namespace Simpiens.Presentation
             Bunk = Add("Iso_Bunk", BunkPixels(), BunkWidth, BunkHeight + BunkRise);
             SelectionRing = Add("Iso_Selection_Ring", EllipsePixels(22, 12, 11f, 6f, ring: true, Gold), 22, 12);
             Shadow = Add("Iso_Shadow", EllipsePixels(12, 6, 6f, 3f, ring: false, new Rgba32(0, 0, 0, 90)), 12, 6);
+            Stall = Add("Iso_Stall", StallPixels(), StallWidth, StallHeight + StallRise);
         }
 
         /// <summary>The pivot of a block <paramref name="rise"/> pixels tall on a <paramref name="height"/>-pixel footprint: its footprint's centre.</summary>
@@ -153,6 +157,27 @@ namespace Simpiens.Presentation
             float reach = footprintHeight * 0.5f * (1f - dx);
             float py = y + 0.5f;
             return py > footprintHeight * 0.5f - reach && py < footprintHeight * 0.5f + rise + reach;
+        }
+
+        /// <summary>The stall's counter: a wooden block with a red-and-cream striped cloth over its top.</summary>
+        private static Rgba32[] StallPixels()
+        {
+            int width = StallWidth, height = StallHeight + StallRise;
+            var red = new Rgba32(220, 38, 38);
+            var cream = new Rgba32(254, 243, 199);
+            var pixels = new Rgba32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (!InBlock(x, y, width, StallHeight, StallRise)) continue;
+                    Rgba32 colour;
+                    if (InDiamond(x, y, width * 0.5f, StallHeight * 0.5f, width, StallHeight)) colour = (x + 2 * y) / 6 % 2 == 0 ? red : cream;
+                    else colour = x < width / 2 ? Wood : WoodShadow;
+                    pixels[y * width + x] = colour;
+                }
+            }
+            return pixels;
         }
 
         /// <summary>A low wooden frame with a blanket on top and the pillow at its far end.</summary>

@@ -77,6 +77,9 @@ namespace Simpiens.Client.Tests
                 catalog.Id(ArtKeys.PropHearth), catalog.Id(ArtKeys.PropBunk), catalog.Id(ArtKeys.SelectionRing), catalog.Missing,
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
+            used.Add(catalog.Id(ArtKeys.PropStall));
+            foreach (var key in WornSprites.Keys)
+                foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.CrawlerWearing(state, key)));
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));
             foreach (var item in ItemCatalog.All)
             {
@@ -112,6 +115,25 @@ namespace Simpiens.Client.Tests
                 used.Add(icon);
             }
             Assert.Equal(icons.Count, used.Count);
+        }
+
+        /// <summary>Items in the world (graphics V5): each view mode has the stall, a worn variant of every crawler state for each item worn on the head, and four display slots.</summary>
+        [Theory]
+        [MemberData(nameof(Modes))]
+        public void TheStallAndWornGearHaveArt(string mode)
+        {
+            var catalog = Catalog(mode);
+            var visuals = new EntityVisuals(catalog);
+            Assert.False(visuals.Stall.IsNone);
+            Assert.Equal(4, catalog.DisplaySlots.Count);
+            foreach (var (key, look) in ItemArt.All)
+            {
+                if (look.Worn != Worn.Head) continue;
+                var item = ItemCatalog.All.Single(i => i.ArtKey == key).Id;
+                foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState)))
+                    Assert.NotEqual(visuals.Crawler(state), visuals.Crawler(state, item));
+            }
+            Assert.Equal(visuals.Crawler(AgentVisualState.Idle), visuals.Crawler(AgentVisualState.Idle, Simpiens.Simulation.Economy.ItemType.None));
         }
     }
 }

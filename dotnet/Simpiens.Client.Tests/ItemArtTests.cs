@@ -54,5 +54,26 @@ namespace Simpiens.Client.Tests
                 .Add("item/ration/hat", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f);
             Assert.Throws<ArgumentException>(() => builder.Build());
         }
+
+        /// <summary>A worn variant is its crawler frame with the hair, and only the hair, in its item's colour (graphics V5).</summary>
+        [Fact]
+        public void AWornVariantRecoloursOnlyTheHair()
+        {
+            Assert.NotEmpty(WornSprites.All);
+            foreach (var (key, look) in ItemArt.All.Where(l => l.Value.Worn == Worn.Head))
+                foreach (var (_, frames) in TopDownArtTable.Crawlers)
+                    foreach (var frame in frames)
+                    {
+                        var plain = SpriteSheets.World[SpriteSheets.World.IndexOf(frame)];
+                        var worn = SpriteSheets.World[SpriteSheets.World.IndexOf(WornSprites.Name(frame, key))];
+                        int hair = 0;
+                        for (int i = 0; i < plain.Pixels.Length; i++)
+                        {
+                            if (plain.Pixels[i] == ProceduralSprites.Hair) { Assert.Equal(look.Primary, worn.Pixels[i]); hair++; }
+                            else Assert.Equal(plain.Pixels[i], worn.Pixels[i]);
+                        }
+                        Assert.True(hair > 0, $"{frame} has no hair to wear a helmet on.");
+                    }
+        }
     }
 }

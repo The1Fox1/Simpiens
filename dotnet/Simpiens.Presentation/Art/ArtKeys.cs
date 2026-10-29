@@ -24,6 +24,8 @@ namespace Simpiens.Presentation.Art
         public const string TileWallLow = "tile/wall-low";
         public const string PropHearth = "prop/hearth";
         public const string PropBunk = "prop/bunk";
+        /// <summary>The trade stall, with its goods on display (graphics V5).</summary>
+        public const string PropStall = "prop/stall";
         public const string SelectionRing = "fx/selection-ring";
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";
@@ -35,6 +37,9 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>A crawler in <paramref name="state"/>: <c>crawler/idle</c>, <c>crawler/walking</c>, …</summary>
         public static string Crawler(AgentVisualState state) => _crawlers[(int)state];
+
+        /// <summary>A crawler in <paramref name="state"/> wearing the item <paramref name="itemArtKey"/>: <c>crawler/walking/hazard-gear</c> (setup only: builds a string).</summary>
+        public static string CrawlerWearing(AgentVisualState state, string itemArtKey) => _crawlers[(int)state] + "/" + itemArtKey;
 
         /// <summary>The tile of <paramref name="kind"/>.</summary>
         public static string Tile(TileKind kind) => kind switch

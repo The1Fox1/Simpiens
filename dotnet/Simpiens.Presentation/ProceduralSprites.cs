@@ -18,6 +18,13 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _oreVeinSprite;
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
+        private static readonly PixelSprite _stallSprite;
+
+        /// <summary>The crawlers' hair: one colour no other palette letter uses, so a helmet recolours it (graphics V5).</summary>
+        public static readonly Rgba32 Hair = new Rgba32(90, 55, 35, 255);
+
+        /// <summary>The trade stall from above (graphics V5): a striped awning over a counter, two cells by one.</summary>
+        public static PixelSprite StallSprite => _stallSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -49,7 +56,7 @@ namespace Simpiens.Presentation
             var skin = new Rgba32(245, 205, 175, 255);
             var white = new Rgba32(255, 255, 255, 255);
             var black = new Rgba32(20, 24, 33, 255);
-            var hair = new Rgba32(90, 55, 35, 255);
+            var hair = Hair;
             var tool = new Rgba32(148, 163, 184, 255);
             var exclamation = new Rgba32(254, 240, 138, 255);
             var question = new Rgba32(192, 132, 252, 255);
@@ -258,6 +265,22 @@ namespace Simpiens.Presentation
                 { 'R', new Rgba32(103, 232, 249, 255) }
             };
             _glowstoneSprite = CreateSprite(PatternBerryBush, glowPalette, "Resource_Glowstone");
+
+            // 16. The trade stall (graphics V5): made last so every earlier sprite keeps its place
+            var stallPalette = new Dictionary<char, Rgba32>
+            {
+                { '.', Rgba32.Clear },
+                { '#', new Rgba32(20, 24, 33, 255) },   // Outline
+                { 'R', new Rgba32(220, 38, 38, 255) },  // Awning red
+                { 'r', new Rgba32(153, 27, 27, 255) },  // Awning red, shaded
+                { 'c', new Rgba32(254, 243, 199, 255) }, // Awning cream
+                { 'C', new Rgba32(214, 196, 150, 255) }, // Awning cream, shaded
+                { 'L', new Rgba32(180, 120, 66, 255) },  // Counter top
+                { 'l', new Rgba32(150, 96, 50, 255) },   // Counter top's ends
+                { 'W', new Rgba32(120, 72, 32, 255) },   // Counter front
+                { 'w', new Rgba32(78, 45, 18, 255) }     // Planks and legs
+            };
+            _stallSprite = CreateSprite(PatternStall, stallPalette, "Prop_Stall");
         }
 
         private static PixelSprite CreateRing()
@@ -309,8 +332,7 @@ namespace Simpiens.Presentation
 
         private static PixelSprite CreateSprite(string[] lines, Dictionary<char, Rgba32> palette, string name)
         {
-            const int width = 16;
-            const int height = 16;
+            int height = lines.Length, width = lines[0].Length; // 16x16, but for the stall
             // Rows from the top, as XNA textures store them (lines[0] is the sprite's top row); unknown characters are clear
             var pixels = new Rgba32[width * height];
             for (int y = 0; y < height; y++)
@@ -327,6 +349,26 @@ namespace Simpiens.Presentation
         }
 
         #region ASCII Pattern Definitions (16x16)
+
+        private static readonly string[] PatternStall =
+        {
+            "................................",
+            ".##############################.",
+            ".#RRRRccccRRRRccccRRRRccccRRRR#.",
+            ".#RRRRccccRRRRccccRRRRccccRRRR#.",
+            ".#rrrrCCCCrrrrCCCCrrrrCCCCrrrr#.",
+            ".###..##..##..##..##..##..##..#.",
+            "................................",
+            ".##############################.",
+            ".#LLLLLLLLLLLLLLLLLLLLLLLLLLLL#.",
+            ".#lLLLLLLLLLLLLLLLLLLLLLLLLLLl#.",
+            ".#WWWWWWWWWWWWWWWWWWWWWWWWWWWW#.",
+            ".#WwWWWWWWWWwWWWWWWWWwWWWWWWWW#.",
+            ".#WWWWWWWWWWWWWWWWWWWWWWWWWWWW#.",
+            ".##############################.",
+            ".#ww#......................#ww#.",
+            "................................",
+        };
 
         private static readonly string[] PatternIdle0 =
         {

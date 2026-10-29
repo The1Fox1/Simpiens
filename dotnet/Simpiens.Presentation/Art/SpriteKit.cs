@@ -149,6 +149,15 @@ namespace Simpiens.Presentation.Art
             return icon;
         }
 
+        /// <summary><paramref name="sprite"/> again as <paramref name="name"/>, with every pixel of colour <paramref name="from"/> in <paramref name="to"/>.</summary>
+        public static PixelSprite Recolour(PixelSprite sprite, Rgba32 from, Rgba32 to, string name)
+        {
+            var pixels = (Rgba32[])sprite.Pixels.Clone();
+            for (int i = 0; i < pixels.Length; i++)
+                if (pixels[i] == from) pixels[i] = to;
+            return new PixelSprite(name, sprite.Width, sprite.Height, pixels);
+        }
+
         private static bool Opaque(Rgba32[] pixels, int width, int height, int x, int y)
             => x >= 0 && y >= 0 && x < width && y < height && pixels[y * width + x].A != 0;
 

@@ -79,8 +79,14 @@ namespace Simpiens.Presentation.Art
         private readonly Dictionary<string, ArtId>[] _items; // by ItemPicture, then the item's art key
         private readonly ArtId _missing;
 
-        private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Dictionary<string, ArtId>[] items, Vec2 nameOffset, float nameHeight)
+        private ArtCatalog(string name, ArtDefinition[] definitions, int[] frames, Dictionary<string, ArtId> byKey, Dictionary<string, ArtId> nodes, Dictionary<string, ArtId>[] items, Builder builder)
         {
+            CarryOffset = builder.CarryOffset;
+            CarryHeight = builder.CarryHeight;
+            DisplaySlots = builder.DisplaySlots ?? System.Array.Empty<(Vec2 Offset, float Height)>();
+            DisplayPicture = builder.DisplayPicture;
+            Vec2 nameOffset = builder.NameOffset;
+            float nameHeight = builder.NameHeight;
             Name = name;
             _definitions = definitions;
             _frames = frames;
@@ -103,6 +109,17 @@ namespace Simpiens.Presentation.Art
         public Vec2 NameOffset { get; }
 
         public float NameHeight { get; }
+
+        /// <summary>Where a crawler's carried goods hang (graphics V5): <see cref="CarryOffset"/> on the floor from it, <see cref="CarryHeight"/> units up.</summary>
+        public Vec2 CarryOffset { get; }
+
+        public float CarryHeight { get; }
+
+        /// <summary>Where the stall shows its goods (graphics V5): each slot a floor offset from the stall and a height.</summary>
+        public IReadOnlyList<(Vec2 Offset, float Height)> DisplaySlots { get; }
+
+        /// <summary>Which of an item's pictures the stall shows.</summary>
+        public ItemPicture DisplayPicture { get; }
 
         /// <summary>The id of <paramref name="key"/>; at setup only, never per frame. Throws for a key the catalogue doesn't have.</summary>
         public ArtId Id(string key)
@@ -180,6 +197,14 @@ namespace Simpiens.Presentation.Art
 
             public float NameHeight { get; set; }
 
+            public Vec2 CarryOffset { get; set; }
+
+            public float CarryHeight { get; set; }
+
+            public (Vec2 Offset, float Height)[] DisplaySlots { get; set; }
+
+            public ItemPicture DisplayPicture { get; set; } = ItemPicture.Map;
+
             /// <summary>
             /// A row: <paramref name="key"/> drawn from <paramref name="sprites"/> (by name, in <paramref name="sheet"/>),
             /// <paramref name="width"/> by <paramref name="height"/> in units of <paramref name="unitScale"/> art pixels.
@@ -220,7 +245,7 @@ namespace Simpiens.Presentation.Art
                     if (row.Key.StartsWith(ArtKeys.ItemPrefix, StringComparison.Ordinal)) IndexItem(items, row.Key, new ArtId(i));
                 }
                 if (!byKey.ContainsKey(ArtKeys.Missing)) throw new ArgumentException($"The {_name} art catalogue has no '{ArtKeys.Missing}': every catalogue draws something for art it lacks.");
-                return new ArtCatalog(_name, definitions, frames.ToArray(), byKey, nodes, items, NameOffset, NameHeight);
+                return new ArtCatalog(_name, definitions, frames.ToArray(), byKey, nodes, items, this);
             }
 
             /// <summary>Files an <c>item/&lt;art key&gt;/&lt;picture&gt;</c> row under its picture and art key; refuses an unknown picture.</summary>

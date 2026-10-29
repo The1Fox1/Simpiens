@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
@@ -16,6 +17,7 @@ namespace Simpiens.Presentation.Art
         private readonly ArtCatalog _catalog;
         private readonly ArtId[] _byType;
         private readonly ArtId[] _crawlers;
+        private readonly Dictionary<string, ArtId[]> _wearing = new Dictionary<string, ArtId[]>(StringComparer.Ordinal); // by the worn item's art key, then state
 
         public EntityVisuals(ArtCatalog catalog)
         {
@@ -28,6 +30,14 @@ namespace Simpiens.Presentation.Art
             var states = (AgentVisualState[])Enum.GetValues(typeof(AgentVisualState));
             _crawlers = new ArtId[states.Length];
             foreach (var state in states) _crawlers[(int)state] = catalog.Id(ArtKeys.Crawler(state));
+            foreach (var key in WornSprites.Keys)
+            {
+                var byState = new ArtId[states.Length];
+                bool all = true;
+                foreach (var state in states) all &= catalog.TryId(ArtKeys.CrawlerWearing(state, key), out byState[(int)state]);
+                if (all) _wearing[key] = byState;
+            }
+            Stall = catalog.TryId(ArtKeys.PropStall, out var stall) ? stall : ArtId.None;
         }
 
         /// <summary>A prop's art: a resource node, the hearth or a bunk; false for anything drawn otherwise, or not at all.</summary>
@@ -40,5 +50,22 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>A crawler in <paramref name="state"/>.</summary>
         public ArtId Crawler(AgentVisualState state) => _crawlers[(int)state];
+
+        /// <summary>
+        /// A crawler in <paramref name="state"/> wearing <paramref name="worn"/> (graphics V5): its variant when the catalogue
+        /// has one (a helmet), the plain crawler otherwise. One dictionary probe; no string built.
+        /// </summary>
+        public ArtId Crawler(AgentVisualState state, Simpiens.Simulation.Economy.ItemType worn)
+        {
+            if (worn != Simpiens.Simulation.Economy.ItemType.None)
+            {
+                var key = ItemCatalog.Get(worn)?.ArtKey;
+                if (key != null && _wearing.TryGetValue(key, out var byState)) return byState[(int)state];
+            }
+            return _crawlers[(int)state];
+        }
+
+        /// <summary>The trade stall's art; none when the catalogue has no stall.</summary>
+        public ArtId Stall { get; }
     }
 }

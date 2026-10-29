@@ -81,12 +81,12 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(35, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone
+            Assert.Equal(36, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone and graphics V5's stall
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
                 Assert.Equal(i, SpriteSheets.World.IndexOf(sprite));
-                Assert.Equal(16, sprite.Width);
+                Assert.Equal(ReferenceEquals(sprite, ProceduralSprites.StallSprite) ? 32 : 16, sprite.Width); // the stall is two cells wide
                 Assert.Equal(16, sprite.Height);
             }
             foreach (AgentVisualState state in Enum.GetValues(typeof(AgentVisualState)))
