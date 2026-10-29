@@ -85,7 +85,7 @@ namespace Simpiens.Client.Tests
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
-                Assert.Equal(i, SpriteSheets.Sprites.IndexOf(sprite));
+                Assert.Equal(i, SpriteSheets.World.IndexOf(sprite));
                 Assert.Equal(16, sprite.Width);
                 Assert.Equal(16, sprite.Height);
             }

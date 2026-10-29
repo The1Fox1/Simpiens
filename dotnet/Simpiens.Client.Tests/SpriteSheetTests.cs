@@ -52,7 +52,7 @@ namespace Simpiens.Client.Tests
         {
             var a = new PixelSprite("Twin", 1, 1, new[] { Rgba32.Clear });
             var b = new PixelSprite("Twin", 1, 1, new[] { Rgba32.Clear });
-            Assert.Throws<System.ArgumentException>(() => new SpriteSheet(DrawSheet.Sprites, new[] { a, b }));
+            Assert.Throws<System.ArgumentException>(() => new SpriteSheet(DrawSheet.World, new[] { a, b }));
         }
 
         [Fact]

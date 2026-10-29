@@ -104,12 +104,12 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void ABuilderRefusesBrokenRows()
         {
-            Refused(b => b.Add("a", DrawSheet.Sprites, new[] { "Map_Floor" }, 1f, 1f).Add("a", DrawSheet.Sprites, new[] { "Map_Floor" }, 1f, 1f), "a key twice");
-            Refused(b => b.Add("a", DrawSheet.Sprites, new[] { "Iso_Floor" }, 1f, 1f), "a sprite its sheet doesn't have");
-            Refused(b => b.Add("a", DrawSheet.Sprites, new string[0], 1f, 1f), "no frames");
-            Refused(b => b.Add("a", DrawSheet.Sprites, new[] { "Map_Floor" }, -1f, 1f), "a negative size");
-            Refused(b => b.Add("a", DrawSheet.Sprites, new[] { "Map_Floor" }, 1f, 1f, unitScale: 0f), "no scale");
-            Refused(b => b.Add("", DrawSheet.Sprites, new[] { "Map_Floor" }, 1f, 1f), "no key");
+            Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f).Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f), "a key twice");
+            Refused(b => b.Add("a", DrawSheet.World, new[] { "Backdrop_outpost" }, 1f, 1f), "a sprite its sheet doesn't have");
+            Refused(b => b.Add("a", DrawSheet.World, new string[0], 1f, 1f), "no frames");
+            Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, -1f, 1f), "a negative size");
+            Refused(b => b.Add("a", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f, unitScale: 0f), "no scale");
+            Refused(b => b.Add("", DrawSheet.World, new[] { "Map_Floor" }, 1f, 1f), "no key");
             Assert.Throws<KeyNotFoundException>(() => TopDownArtTable.Catalog.Id("prop/nothing"));
         }
 
@@ -120,11 +120,11 @@ namespace Simpiens.Client.Tests
             Assert.True(Record.Exception(() => builder.Build()) is ArgumentException, $"A catalogue with {what} is refused.");
         }
 
-        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3).</summary>
+        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3); isometric's re-pinned when the two world sheets became one (V3.2).</summary>
         private static readonly Dictionary<string, ulong> Pinned = new Dictionary<string, ulong>
         {
             ["top-down"] = 14863390491918432379UL,
-            ["isometric"] = 4992552654820548980UL,
+            ["isometric"] = 16203008574417753068UL, // graphics V3.2: its sheet is World (0), not Isometric (2); every other field unchanged
         };
 
         private const ulong Start = 14695981039346656037UL;

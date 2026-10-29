@@ -9,7 +9,7 @@ namespace Simpiens.Presentation
     /// art pixels: floor and rock diamonds, wall blocks full and low, a bunk, and the ring and shadow that lie on the
     /// floor. Every pixel is decided at its centre against the projection's exact diamond, so floor tiles meet with no gap
     /// and no overlap. Crawlers, the hearth and resource nodes stand as their 16x16 top-down sprites. Colours are top-down's.
-    /// They follow top-down's sprites in the isometric sheet (<see cref="Art.SpriteSheets.Isometric"/>).
+    /// They follow the 16x16 sprites in the world sheet (<see cref="Art.SpriteSheets.World"/>).
     /// </summary>
     public static class IsometricSprites
     {

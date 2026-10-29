@@ -62,7 +62,7 @@ namespace Simpiens.Client.Tests
             => Enumerable.Range(0, scene.Items.Count).Single(i => scene.Items[i].Pick >= 0 && scene.Items.PickedEntity(scene.Items[i].Pick) == id);
 
         private static int IndexOfSprite(WorldScene scene, PixelSprite sprite, Vec2 at)
-            => Enumerable.Range(0, scene.Items.Count).Single(i => scene.Items[i].Sheet == DrawSheet.Sprites && scene.Items[i].SpriteIndex == SpriteSheets.Sprites.IndexOf(sprite)
+            => Enumerable.Range(0, scene.Items.Count).Single(i => scene.Items[i].Sheet == DrawSheet.World && scene.Items[i].SpriteIndex == SpriteSheets.World.IndexOf(sprite)
                 && scene.Items[i].X == at.X && scene.Items[i].Y == at.Y);
 
         [Fact]
@@ -88,7 +88,7 @@ namespace Simpiens.Client.Tests
             var scene = Build(Iso);
             var items = Items(scene);
             int wall = IndexOfSprite(scene, ProceduralSprites.WallSprite, Vec2.Zero);
-            int ring = items.FindIndex(i => i.SpriteIndex == SpriteSheets.Sprites.IndexOf(ProceduralSprites.SelectionRing) && i.Sheet == DrawSheet.Sprites);
+            int ring = items.FindIndex(i => i.SpriteIndex == SpriteSheets.World.IndexOf(ProceduralSprites.SelectionRing) && i.Sheet == DrawSheet.World);
             int cloud = items.FindIndex(i => i.Sheet == DrawSheet.Fog);
             int lastFloor = items.FindLastIndex(i => DrawSortKey.Role(i.SortKey) == DrawRole.Floor || DrawSortKey.Role(i.SortKey) == DrawRole.Rock);
 

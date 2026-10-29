@@ -21,7 +21,7 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
-        /// <summary>Every generated sprite, in creation order: top-down's sheet (<see cref="Art.SpriteSheets.Sprites"/>) in this order.</summary>
+        /// <summary>Every generated sprite, in creation order: the start of the world sheet (<see cref="Art.SpriteSheets.World"/>), in this order.</summary>
         public static IReadOnlyList<PixelSprite> All => _all;
 
         public static PixelSprite ResourceSprite => _resourceSprite;

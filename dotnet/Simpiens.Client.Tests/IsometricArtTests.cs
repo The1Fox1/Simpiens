@@ -55,7 +55,7 @@ namespace Simpiens.Client.Tests
             {
                 Assert.True(piece.Width <= cell, $"a piece {piece.Width} wide");
                 Assert.True(piece.PivotY > 0.5f, "standing things hang above their point");
-                Assert.Equal(DrawSheet.Isometric, piece.Sheet);
+                Assert.Equal(DrawSheet.World, piece.Sheet);
             }
             Assert.Equal(15f / 16f, Art.Crawler(pose).PivotY); // the bottom of its feet, row 14
             // A wall block's pivot is its footprint's centre: the cell's diamond, at the bottom of the block
@@ -76,8 +76,8 @@ namespace Simpiens.Client.Tests
                     var sprite = ProceduralSprites.GetAgentSprite(state, frame);
                     Assert.NotNull(sprite);
                     var pose = new CrawlerPose(state, frame, 0f, 1f, 1f);
-                    Assert.Same(sprite, SpriteSheets.Sprites[TopDownArtTable.Catalog.Crawler(pose).Sprite]);
-                    Assert.Same(sprite, SpriteSheets.Isometric[Art.Crawler(pose).Sprite]);
+                    Assert.Same(sprite, SpriteSheets.World[TopDownArtTable.Catalog.Crawler(pose).Sprite]);
+                    Assert.Same(sprite, SpriteSheets.World[Art.Crawler(pose).Sprite]);
                 }
             }
         }
@@ -90,17 +90,18 @@ namespace Simpiens.Client.Tests
             var scene = new WorldScene { Mode = ViewMode.Isometric };
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
             var items = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).ToList();
-            Assert.All(items, i => Assert.Contains(i.Sheet, new[] { DrawSheet.Isometric, DrawSheet.Fog }));
-            Assert.Contains(items, i => i.SpriteIndex == SpriteSheets.Isometric.IndexOf(IsometricSprites.Wall));
-            Assert.All(items.Where(i => i.Sheet == DrawSheet.Isometric), i => Assert.InRange(i.SpriteIndex, 0, SpriteSheets.Isometric.Count - 1));
+            Assert.All(items, i => Assert.Contains(i.Sheet, new[] { DrawSheet.World, DrawSheet.Fog }));
+            Assert.Contains(items, i => i.SpriteIndex == SpriteSheets.World.IndexOf(IsometricSprites.Wall));
+            Assert.All(items.Where(i => i.Sheet == DrawSheet.World), i => Assert.InRange(i.SpriteIndex, 0, SpriteSheets.World.Count - 1));
         }
 
         [Fact]
-        public void TheSheetsShareIndices()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholders()
         {
-            // Top-down's sprites at the same indices in both sheets, then the placeholders
-            Assert.Equal(ProceduralSprites.All.Count + IsometricSprites.All.Count, SpriteSheets.Isometric.Count);
-            for (int i = 0; i < SpriteSheets.Sprites.Count; i++) Assert.Same(SpriteSheets.Sprites[i], SpriteSheets.Isometric[i]);
+            var world = SpriteSheets.World;
+            Assert.Equal(ProceduralSprites.All.Count + IsometricSprites.All.Count, world.Count);
+            for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], world[i]);
+            for (int i = 0; i < IsometricSprites.All.Count; i++) Assert.Same(IsometricSprites.All[i], world[ProceduralSprites.All.Count + i]);
         }
     }
 }

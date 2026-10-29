@@ -23,7 +23,7 @@ namespace Simpiens.Client.Tests
         private static (int Full, int Low) Walls(WorldScene scene)
         {
             var walls = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Role(i.SortKey) == DrawRole.Wall).ToList();
-            return (walls.Count(w => w.SpriteIndex == SpriteSheets.Isometric.IndexOf(IsometricSprites.Wall)), walls.Count(w => w.SpriteIndex == SpriteSheets.Isometric.IndexOf(IsometricSprites.LowWall)));
+            return (walls.Count(w => w.SpriteIndex == SpriteSheets.World.IndexOf(IsometricSprites.Wall)), walls.Count(w => w.SpriteIndex == SpriteSheets.World.IndexOf(IsometricSprites.LowWall)));
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace Simpiens.Client.Tests
                 var item = walls.Single(w => w.X == centre.X && w.Y == centre.Y);
                 // Behind, in the fixed isometric view (depth x + y): the cells one step down in x, in y, or both
                 bool floorBehind = tiles.IsFloor(tile.X - 1, tile.Y) || tiles.IsFloor(tile.X, tile.Y - 1) || tiles.IsFloor(tile.X - 1, tile.Y - 1);
-                Assert.Equal(floorBehind ? SpriteSheets.Isometric.IndexOf(IsometricSprites.LowWall) : SpriteSheets.Isometric.IndexOf(IsometricSprites.Wall), item.SpriteIndex);
+                Assert.Equal(floorBehind ? SpriteSheets.World.IndexOf(IsometricSprites.LowWall) : SpriteSheets.World.IndexOf(IsometricSprites.Wall), item.SpriteIndex);
                 if (!floorBehind) standing++;
             }
             Assert.InRange(standing, 1, walls.Count - 1); // the far walls stand, the rest are stubs
@@ -58,7 +58,7 @@ namespace Simpiens.Client.Tests
             {
                 var scene = Outpost(ViewMode.TopDown, style);
                 Assert.All(Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Role(i.SortKey) == DrawRole.Wall),
-                    w => Assert.Equal(SpriteSheets.Sprites.IndexOf(ProceduralSprites.WallSprite), w.SpriteIndex));
+                    w => Assert.Equal(SpriteSheets.World.IndexOf(ProceduralSprites.WallSprite), w.SpriteIndex));
             }
         }
 

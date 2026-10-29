@@ -29,7 +29,7 @@ namespace Simpiens.Client.Tests
             {
                 var sprites = new string[frames];
                 for (int f = 0; f < frames; f++) sprites[f] = "Map_Floor";
-                art.Add(key, DrawSheet.Sprites, sprites, mark / 10f, mark / 5f, pivotY: 1f);
+                art.Add(key, DrawSheet.World, sprites, mark / 10f, mark / 5f, pivotY: 1f);
             }
             Row(ArtKeys.TileFloor, 100);
             Row(ArtKeys.TileRock, 101);
@@ -60,7 +60,7 @@ namespace Simpiens.Client.Tests
             var scene = new WorldScene { Mode = new ViewMode("marked", TopDownProjection.Instance, Marked()) };
             scene.Build(sim.Host.Current.Map, frames, 0f, selection);
 
-            var items = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => i.Sheet == DrawSheet.Sprites).ToList();
+            var items = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => i.Sheet == DrawSheet.World).ToList();
             Assert.NotEmpty(items);
             var marks = items.Select(item =>
             {

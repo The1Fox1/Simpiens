@@ -3,7 +3,7 @@ namespace Simpiens.Presentation.Art
     /// <summary>
     /// Isometric's art as data (graphics V1; M3 design D5): the placeholders on 32x16 tiles. Floor tiles are centred on
     /// their cells; walls, props and crawlers stand on their feet, at one art pixel per pixel of their 16x16 sprites
-    /// (sizes here are art pixels). Everything is drawn from the isometric sheet, one batch.
+    /// (sizes here are art pixels). Everything is drawn from the world sheet, one batch.
     /// </summary>
     public static class IsometricArtTable
     {
@@ -12,7 +12,7 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>A 16x16 sprite standing, in art pixels.</summary>
         private const float Standing = 16f;
-        private const DrawSheet Sheet = DrawSheet.Isometric;
+        private const DrawSheet Sheet = DrawSheet.World;
 
         public static ArtCatalog Catalog { get; } = Build();
 

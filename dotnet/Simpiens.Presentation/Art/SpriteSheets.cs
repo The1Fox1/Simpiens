@@ -6,24 +6,21 @@ using Simpiens.Presentation.Cutscenes;
 namespace Simpiens.Presentation.Art
 {
     /// <summary>
-    /// Every sprite sheet and how it is sampled (graphics V0–V1): the one table the client builds its textures from,
+    /// Every sprite sheet and how it is sampled (graphics V0–V3): the one table the client builds its textures from,
     /// and the only place sprite indices come from (<see cref="SpriteSheet"/>). The generators make named pixels and
     /// never read a sheet, so no index exists before its sheet does.
     /// </summary>
     public static class SpriteSheets
     {
-        /// <summary>Top-down's art: the generated 16x16 sprites (<see cref="ProceduralSprites.All"/>).</summary>
-        public static SpriteSheet Sprites { get; } = new SpriteSheet(DrawSheet.Sprites, ProceduralSprites.All);
+        /// <summary>
+        /// The world's art, for both view modes (graphics V3.2): the generated 16x16 sprites, then the isometric
+        /// placeholders, so either mode's world (walls, props, crawlers interleaved) is one batch. One sheet since the
+        /// sampling rules made the picture independent of the atlas's layout (epic F12).
+        /// </summary>
+        public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });
-
-        /// <summary>
-        /// Isometric's: top-down's art at the same indices, then the isometric placeholders, so the isometric World
-        /// layer (walls, props, crawlers interleaved) is one batch. Top-down keeps its own sheet (the epic's F12: its point
-        /// sampling hits texel ties, so its picture depends on its texture's width; the sheets merge in graphics V3).
-        /// </summary>
-        public static SpriteSheet Isometric { get; } = new SpriteSheet(DrawSheet.Isometric, ProceduralSprites.All.Concat(IsometricSprites.All));
 
         /// <summary>A hard cutscene's still backdrops.</summary>
         public static SpriteSheet Backdrop { get; } = new SpriteSheet(DrawSheet.Backdrop, CutsceneArt.Backdrops);
@@ -31,9 +28,8 @@ namespace Simpiens.Presentation.Art
         /// <summary>The sheet <paramref name="sheet"/>.</summary>
         public static SpriteSheet Contents(DrawSheet sheet) => sheet switch
         {
-            DrawSheet.Sprites => Sprites,
+            DrawSheet.World => World,
             DrawSheet.Fog => Fog,
-            DrawSheet.Isometric => Isometric,
             DrawSheet.Backdrop => Backdrop,
             _ => throw new ArgumentOutOfRangeException(nameof(sheet), sheet, "No such sprite sheet."),
         };

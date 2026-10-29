@@ -64,7 +64,7 @@ namespace Simpiens.Client.Tests
             FrameCapture.Capture(game, 1280, 720);
             var items = Enumerable.Range(0, screen.Stage.Items.Count).Select(i => screen.Stage.Items[i]).ToList();
             Assert.Single(items, i => i.Sheet == DrawSheet.Backdrop);
-            Assert.Equal(2, items.Count(i => i.Sheet == DrawSheet.Sprites));
+            Assert.Equal(2, items.Count(i => i.Sheet == DrawSheet.World));
             Assert.Single(items, i => i.FlipX);
         }
 

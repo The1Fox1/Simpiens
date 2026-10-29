@@ -7,7 +7,7 @@ namespace Simpiens.Presentation
     /// </summary>
     public readonly struct ArtPiece
     {
-        public ArtPiece(int sprite, float width, float height, float pivotX = 0.5f, float pivotY = 0.5f, DrawSheet sheet = DrawSheet.Sprites)
+        public ArtPiece(int sprite, float width, float height, float pivotX = 0.5f, float pivotY = 0.5f, DrawSheet sheet = DrawSheet.World)
         {
             Sheet = sheet;
             Sprite = sprite;

@@ -19,7 +19,7 @@ namespace Simpiens.Presentation.Art
         public const float HearthFramesPerSecond = 6f, HearthPulseRate = 4f, HearthPulseAmplitude = 0.03f;
 
         private const float Art = TopDownProjection.BasePixelsPerUnit;
-        private const DrawSheet Sheet = DrawSheet.Sprites;
+        private const DrawSheet Sheet = DrawSheet.World;
 
         private static ArtCatalog Build()
         {
