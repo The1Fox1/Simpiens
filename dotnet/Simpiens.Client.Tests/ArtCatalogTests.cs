@@ -27,7 +27,7 @@ namespace Simpiens.Client.Tests
         [InlineData("isometric")]
         public void ThePiecesAreWhatTheArtSetsDrewBeforeTheCatalogue(string mode)
         {
-            var art = mode == "top-down" ? (WorldArt)TopDownArt.Instance : IsometricArt.Instance;
+            var art = mode == "top-down" ? TopDownArtTable.Catalog : IsometricArtTable.Catalog;
             var text = new StringBuilder();
             ulong hash = Start;
             void Piece(string what, ArtPiece p)

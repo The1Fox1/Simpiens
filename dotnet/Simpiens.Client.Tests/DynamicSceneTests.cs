@@ -178,7 +178,7 @@ namespace Simpiens.Client.Tests
         {
             FrameCapture.Capture(game, 1280, 720);
             game.Session.Frames.TryGetDrawnPosition(crawler, out var at);
-            var head = game.World.View.WorldToScreen(at, game.World.Mode.Art.NameHeight + 0.25f);
+            var head = game.World.View.WorldToScreen(at, game.World.Mode.Catalog.NameHeight + 0.25f);
             Assert.InRange(bubble.Root.X + DynamicSceneView.BubbleWidth / 2f, head.X - 1f, head.X + 1f);
             Assert.InRange(bubble.Root.Y + DynamicSceneView.BubbleHeight, head.Y - 1f, head.Y + 1f);
         }

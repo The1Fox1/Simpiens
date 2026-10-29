@@ -11,10 +11,10 @@ using Xunit;
 
 namespace Simpiens.Client.Tests
 {
-    /// <summary>The isometric placeholders and their art set (M3 design D5, plan step 1.2).</summary>
+    /// <summary>The isometric placeholders and their art catalogue (M3 design D5, plan step 1.2; graphics V2).</summary>
     public class IsometricArtTests
     {
-        private static readonly IsometricArt Art = IsometricArt.Instance;
+        private static readonly ArtCatalog Art = IsometricArtTable.Catalog;
 
         [Fact]
         public void FloorTilesMeetWithNoGapAndNoOverlap()
@@ -76,7 +76,7 @@ namespace Simpiens.Client.Tests
                     var sprite = ProceduralSprites.GetAgentSprite(state, frame);
                     Assert.NotNull(sprite);
                     var pose = new CrawlerPose(state, frame, 0f, 1f, 1f);
-                    Assert.Same(sprite, SpriteSheets.Sprites[TopDownArt.Instance.Crawler(pose).Sprite]);
+                    Assert.Same(sprite, SpriteSheets.Sprites[TopDownArtTable.Catalog.Crawler(pose).Sprite]);
                     Assert.Same(sprite, SpriteSheets.Isometric[Art.Crawler(pose).Sprite]);
                 }
             }

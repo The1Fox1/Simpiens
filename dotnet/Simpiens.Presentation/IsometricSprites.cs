@@ -191,15 +191,4 @@ namespace Simpiens.Presentation
             return pixels;
         }
     }
-
-    /// <summary>Isometric's art (M3 design D5), from its table (<see cref="IsometricArtTable"/>).</summary>
-    public sealed class IsometricArt : CatalogueArt
-    {
-        /// <summary>A 16x16 sprite's feet: the bottom of its last drawn row (row 14).</summary>
-        public const float FeetPivot = IsometricArtTable.FeetPivot;
-
-        public static IsometricArt Instance { get; } = new IsometricArt();
-
-        private IsometricArt() : base(IsometricArtTable.Catalog) { }
-    }
 }

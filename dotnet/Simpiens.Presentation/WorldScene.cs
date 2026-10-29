@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Entities;
+using Simpiens.Presentation.Art;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
@@ -12,7 +13,8 @@ namespace Simpiens.Presentation
     /// the props (resource nodes, the hearth, bunks) and the crawlers with their animation. What stands in an uncharted
     /// sector is hidden by its fog and fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's
     /// frames (<see cref="WorldViewFrames"/>, review A3), never the live simulation. The map's tiles are built once per
-    /// map. What each thing looks like (sprite, size, pivot) comes from the art set (<see cref="Art"/>, M3 design D4);
+    /// map. What each thing looks like (sprite, size, pivot, frames) comes from the view mode's art catalogue
+    /// (<see cref="Catalog"/>, graphics V2), and which art a thing has, from its visuals (<see cref="EntityVisuals"/>);
     /// where it goes and in what order, from the projection.
     /// </summary>
     /// <summary>How the walls in front of rooms are drawn (M3 design D7, producer P2: cutaway).</summary>
@@ -36,19 +38,41 @@ namespace Simpiens.Presentation
         /// <summary>How the view projects the world: it gives each item its depth and layer.</summary>
         public IViewProjection Projection { get; set; } = TopDownProjection.Instance;
 
-        /// <summary>What things look like in this view: their sprites, sizes in art pixels and pivots.</summary>
-        public WorldArt Art { get; set; } = TopDownArt.Instance;
+        /// <summary>What things look like in this view, as data: their sprites, frames, sizes and pivots. Setting it resolves the scene's art ids.</summary>
+        public ArtCatalog Catalog
+        {
+            get => _catalog;
+            set
+            {
+                _catalog = value ?? throw new ArgumentNullException(nameof(value));
+                _floor = value.Id(ArtKeys.TileFloor);
+                _rock = value.Id(ArtKeys.TileRock);
+                _wall = value.Id(ArtKeys.TileWall);
+                _lowWall = value.Id(ArtKeys.TileWallLow);
+                _ring = value.Id(ArtKeys.SelectionRing);
+                _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                Visuals = new EntityVisuals(value);
+            }
+        }
 
-        /// <summary>How walls in front of rooms are drawn; only art with a stub (isometric) shows a difference.</summary>
+        /// <summary>Which art each entity of the frames is drawn with, in <see cref="Catalog"/>.</summary>
+        public EntityVisuals Visuals { get; private set; }
+
+        private ArtCatalog _catalog;
+        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow;
+
+        public WorldScene() => Catalog = TopDownArtTable.Catalog;
+
+        /// <summary>How walls in front of rooms are drawn; only a catalogue with a stub (isometric) shows a difference.</summary>
         public WallStyle WallStyle { get; set; } = WallStyle.Cutaway;
 
-        /// <summary>The projection and the art together (<see cref="ViewMode"/>).</summary>
+        /// <summary>The projection and the art catalogue together (<see cref="ViewMode"/>).</summary>
         public ViewMode Mode
         {
             set
             {
                 Projection = value.Projection;
-                Art = value.Art;
+                Catalog = value.Catalog;
             }
         }
 
@@ -146,8 +170,8 @@ namespace Simpiens.Presentation
             if (!selection.TryGetCrawlerPosition(out var at)) return;
             float shown = Fog.Visibility(at, viewSeconds);
             if (shown <= 0f) return;
-            Add(DrawRole.Selection, 0f, Art.SelectionRing, at, Shown(White, shown));
-            Labels.Add(new WorldLabel(selection.CrawlerName(), at + Art.NameOffset, LabelKind.Name, Shown(NameColor, shown), Art.NameHeight));
+            Add(DrawRole.Selection, 0f, _catalog.Piece(_ring, viewSeconds), at, Shown(White, shown));
+            Labels.Add(new WorldLabel(selection.CrawlerName(), at + _catalog.NameOffset, LabelKind.Name, Shown(NameColor, shown), _catalog.NameHeight));
         }
 
         /// <summary><paramref name="colour"/> with its alpha scaled by how much shows through the fog.</summary>
@@ -161,33 +185,26 @@ namespace Simpiens.Presentation
             var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, viewSeconds);
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
-            var shadow = Art.CrawlerShadow;
-            if (!shadow.IsNone) Add(DrawRole.Shadow, 0f, shadow, position, Shown(White, shown));
-            Add(DrawRole.Crawler, Projection.Depth(position), Art.Crawler(pose), position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
+            if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
+            var art = _catalog.Piece(Visuals.Crawler(pose.State), pose.Frame, pose.ScaleX, pose.ScaleY);
+            Add(DrawRole.Crawler, Projection.Depth(position), art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
         }
 
-        /// <summary>The props Unity drew (resource nodes, the hearth, bunks); other kinds have no picture.</summary>
+        /// <summary>The props (resource nodes, the hearth, bunks), each as its visual says; other kinds have no picture.</summary>
         private void AddProp(in EntityView entity, float viewSeconds)
         {
             var position = entity.Position;
             float shown = Fog.Visibility(position, viewSeconds);
-            if (shown <= 0f) return;
-            var tint = Shown(White, shown);
-            float depth = Projection.Depth(position);
-            switch (entity.Type)
-            {
-                case EntityType.Resource: Add(DrawRole.Prop, depth, Art.Resource(entity.ResourceKind), position, tint); break;
-                case EntityType.Anchor: Add(DrawRole.Prop, depth, Art.Hearth(viewSeconds), position, tint); break;
-                case EntityType.Bunk: Add(DrawRole.Prop, depth, Art.Bunk, position, tint); break; // under its sleeper: the role orders a prop before a crawler
-            }
+            if (shown <= 0f || !Visuals.TryProp(entity, out var art)) return;
+            Add(DrawRole.Prop, Projection.Depth(position), _catalog.Piece(art, viewSeconds), position, Shown(White, shown));
         }
 
         private void AddTiles(MapTileLayer tiles)
         {
-            var floor = Art.Tile(TileKind.Floor);
-            var rock = Art.Tile(TileKind.Rock);
-            var wall = Art.Tile(TileKind.Wall);
-            var low = Art.LowWall;
+            var floor = _catalog.Piece(_floor, 0f);
+            var rock = _catalog.Piece(_rock, 0f);
+            var wall = _catalog.Piece(_wall, 0f);
+            var low = _catalog.Piece(_lowWall, 0f);
             var stands = WallsStanding(tiles);
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)

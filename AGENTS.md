@@ -25,9 +25,10 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
 
 **The game client** (Epic CLIENT):
 - **`Simpiens.Presentation`**, what is drawn, as data:
-  - generated sprites and map tiles;
+  - generated sprites (`ProceduralSprites`, `IsometricSprites`, named pixels) and map tiles;
+  - `Art/`: the sprite sheets (`SpriteSheets`: what each `DrawSheet` holds; a sheet alone gives out sprite indices) and the art as data: an `ArtCatalog` per view mode (`TopDownArtTable`, `IsometricArtTable`) maps art keys (`ArtKeys`: `tile/wall`, `prop/hearth`, `crawler/<state>`, `node/<item sprite key>`) to frames, sizes, pivots and pulses, resolved to `ArtId`s once; `EntityVisuals` says which art each entity of a frame is drawn with. New art for a known kind of thing is a table row;
   - the projections (`IViewProjection`: `TopDownProjection`, `IsometricProjection`). A `View` is a projection through a camera, and everything that maps world to screen takes one; `View.FloorToScreen` is its affine transform, under which what lies on the floor (`DrawItem.OnFloor`: the fog's cloud) is drawn;
-  - view modes (`ViewMode`: a projection with its art set, `WorldArt`). `TopDownArt` is the original art; `IsometricArt` stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
+  - view modes (`ViewMode`: a projection with its art catalogue). Top-down's is the original art; isometric's stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
   - screen space for hard cutscenes (`ScreenProjection`: a 640×360 virtual screen, letterboxed), and `Cutscenes/`: cutscenes written in code (`CutsceneBuilder`, `CutsceneScript`), played by `CutscenePlayer`. Hard ones are drawn by `CutsceneStage`; dynamic ones are started by `SceneDirector` from what the frames saw (a crawler entering a zone, or a chronicle interaction), once per tick;
   - the draw list and its sort key (draw roles; the projection picks their layers);
   - the views' per-tick frames (`WorldViewFrame`, captured on `SessionHost.TickCompleted`). The views read frames, never the live simulation, and draw crawlers between ticks;
