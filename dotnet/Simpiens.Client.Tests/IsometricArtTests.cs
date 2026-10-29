@@ -100,33 +100,5 @@ namespace Simpiens.Client.Tests
             for (int i = 0; i < WorldSprites.All.Count; i++) Assert.Equal(i, WorldSprites.All[i].Index);
             for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], WorldSprites.All[i]);
         }
-
-        /// <summary>The placeholders, magnified, for a person (or an agent) to look at: render-output/iso-placeholders.png.</summary>
-        [Fact(Explicit = true)]
-        public void WriteTheContactSheet()
-        {
-            const int scale = 6, gap = 4;
-            int width = IsometricSprites.All.Sum(s => s.Width * scale + gap) + gap;
-            int height = IsometricSprites.All.Max(s => s.Height) * scale + 2 * gap;
-            var rgba = new byte[width * height * 4];
-            for (int i = 0; i < width * height; i++) { rgba[i * 4] = 40; rgba[i * 4 + 1] = 44; rgba[i * 4 + 2] = 52; rgba[i * 4 + 3] = 255; }
-            int left = gap;
-            foreach (var sprite in IsometricSprites.All)
-            {
-                for (int y = 0; y < sprite.Height * scale; y++)
-                    for (int x = 0; x < sprite.Width * scale; x++)
-                    {
-                        var p = sprite.Pixels[y / scale * sprite.Width + x / scale];
-                        if (p.A == 0) continue;
-                        int o = ((gap + y) * width + left + x) * 4;
-                        float a = p.A / 255f;
-                        rgba[o] = (byte)(p.R * a + rgba[o] * (1 - a));
-                        rgba[o + 1] = (byte)(p.G * a + rgba[o + 1] * (1 - a));
-                        rgba[o + 2] = (byte)(p.B * a + rgba[o + 2] * (1 - a));
-                    }
-                left += sprite.Width * scale + gap;
-            }
-            Png.Write(Path.Combine(AppContext.BaseDirectory, "render-output", "iso-placeholders.png"), width, height, rgba);
-        }
     }
 }
