@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-25 (G3 done)
+# Last reconciled: 2026-10-28 (Epic CLIENT active for the art catalogue)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -17,6 +17,10 @@ CURRENT FOCUS
   day, warnings as errors. On feat/code-cleanliness, PR into main. The rest of .agents/core_refactor_plan.md
   (R1-R6: guards, SimulationManager's split, planners per worker) comes back after Epic 10 Part 1; R7, the item
   system, was done 2026-10-26 (PR #15): catalog, groups, rarity, effects, equipment stats, loot tables.
+- Epic CLIENT [ACTIVE 2026-10-28] for the art catalogue (graphics V0-V2, pulled forward from M7), before G4:
+  art keys and a catalogue per view mode, indices owned by sheets, visuals as data, every sprite pinned by
+  name; renders byte-identical throughout. On feat/graphics-catalogue (with the plans .agents/graphics_plan.md
+  and .agents/graphics_v0_v2_plan.md). V3-V5 (item icons and map sprites, items in the world) on the producer's word.
 - Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
   - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
   - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
