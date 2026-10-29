@@ -157,6 +157,20 @@ untouched.
   - **Fallback if a top-down or cutscene render differs:** revert this step and keep the separate top-down sheet
     until V3. Nothing later in V1–V2 depends on one sheet.
 - Commit: `refactor(client): one world sprite sheet for both view modes (graphics V1)`.
+- **Outcome (2026-10-28): fell back.** In the pinned image, five top-down renders and the header over the top-down map
+  differed:
+  - 104–120 of 480,000 pixels at the normal zoom;
+  - 15,316 in the zoomed view;
+  - 54 in the header.
+
+  These are **tie flips, not bleeding.** For example, a bunk's wooden frame pixel became its blanket's: a texel from
+  inside the same sprite. A destination pixel's centre lands exactly on a texel boundary, and the float division by
+  the atlas's width decides which side is sampled. In the zoomed view that happens across every tile.
+
+  **Finding F-T1: top-down's picture depends on its atlas's width.** The step was reverted, and the sheet merge moves
+  to V3 with the packer, which changes the layout anyway and re-records renders. V3 should also choose a tie-free
+  sampling rule (a quarter-texel inset on source rectangles, or whole-pixel scales for top-down), so that a layout
+  change can't move a picture again.
 
 ### V1.2 Sprites without indices
 - **`PixelSprite` loses `Index`.** It is a name, a size and pixels.
