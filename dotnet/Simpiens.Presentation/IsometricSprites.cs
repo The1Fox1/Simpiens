@@ -242,7 +242,7 @@ namespace Simpiens.Presentation
         public override ArtPiece Bunk => new ArtPiece(BunkIndex, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,
             0.5f, IsometricSprites.BlockPivotY(IsometricSprites.BunkHeight, IsometricSprites.BunkRise), Sheet);
 
-        public override ArtPiece Crawler(in CrawlerPose pose) => new ArtPiece(Sprites.IndexOf(pose.Sprite), Standing * pose.ScaleX, Standing * pose.ScaleY, 0.5f, FeetPivot, Sheet);
+        public override ArtPiece Crawler(in CrawlerPose pose) => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetAgentSprite(pose.State, pose.Frame)), Standing * pose.ScaleX, Standing * pose.ScaleY, 0.5f, FeetPivot, Sheet);
 
         public override ArtPiece CrawlerShadow => new ArtPiece(ShadowIndex, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height, sheet: Sheet);
 

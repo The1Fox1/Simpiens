@@ -50,7 +50,7 @@ namespace Simpiens.Client.Tests
         public void StandingThingsStandOnTheirFeetAndNothingIsWiderThanACell()
         {
             int cell = IsometricSprites.TileWidth;
-            var pose = new CrawlerPose(AgentVisualState.Idle, ProceduralSprites.GetAgentSprite(AgentVisualState.Idle, 0), 0f, 1f, 1f);
+            var pose = new CrawlerPose(AgentVisualState.Idle, 0, 0f, 1f, 1f);
             foreach (var piece in new[] { Art.Tile(TileKind.Wall), Art.LowWall, Art.Bunk, Art.Hearth(0f), Art.Resource(Simpiens.Simulation.Economy.ItemType.IronOre), Art.Crawler(pose) })
             {
                 Assert.True(piece.Width <= cell, $"a piece {piece.Width} wide");
@@ -75,7 +75,7 @@ namespace Simpiens.Client.Tests
                 {
                     var sprite = ProceduralSprites.GetAgentSprite(state, frame);
                     Assert.NotNull(sprite);
-                    var pose = new CrawlerPose(state, sprite, 0f, 1f, 1f);
+                    var pose = new CrawlerPose(state, frame, 0f, 1f, 1f);
                     Assert.Same(sprite, SpriteSheets.Sprites[TopDownArt.Instance.Crawler(pose).Sprite]);
                     Assert.Same(sprite, SpriteSheets.Isometric[Art.Crawler(pose).Sprite]);
                 }

@@ -118,7 +118,7 @@ namespace Simpiens.Presentation
         public override ArtPiece Bunk => new ArtPiece(BunkIndex, BunkSize * Art, BunkSize * Art);
 
         public override ArtPiece Crawler(in CrawlerPose pose)
-            => new ArtPiece(Sprites.IndexOf(pose.Sprite), CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
+            => new ArtPiece(Sprites.IndexOf(ProceduralSprites.GetAgentSprite(pose.State, pose.Frame)), CrawlerSize * pose.ScaleX * Art, CrawlerSize * pose.ScaleY * Art);
 
         public override ArtPiece CrawlerShadow => ArtPiece.None;
 
