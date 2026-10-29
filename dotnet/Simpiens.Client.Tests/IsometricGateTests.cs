@@ -109,7 +109,9 @@ namespace Simpiens.Client.Tests
             {
                 var items = Items(scene).Where(i => i.Pick >= 0).ToList();
                 int checkedHeads = 0;
-                foreach (var item in items)
+                // Each crawler's body; a carried bundle shares its carrier's pick but hangs above it (graphics V5), so it
+                // only counts as something else in the way
+                foreach (var item in items.Where(i => i.Z == 0f))
                 {
                     // The head: 12 art pixels above the feet, where only this crawler is drawn
                     var head = view.WorldToScreen(new Vec2(item.X, item.Y)) - new Vec2(0f, 12f * view.Zoom);

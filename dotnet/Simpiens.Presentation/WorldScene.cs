@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Presentation.Art;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Items;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 
@@ -149,6 +151,7 @@ namespace Simpiens.Presentation
                     if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
                     else AddProp(entity, viewSeconds);
                 }
+                for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
             }
 
             if (selection != null) AddSelection(selection, viewSeconds);
@@ -186,8 +189,44 @@ namespace Simpiens.Presentation
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
             if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
-            var art = _catalog.Piece(Visuals.Crawler(pose.State), pose.Frame, pose.ScaleX, pose.ScaleY);
-            Add(DrawRole.Crawler, Projection.Depth(position), art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = Items.Pickable(entity.Id);
+            // Wearing its gear (graphics V5): a helmet is the crawler's own variant
+            var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn), pose.Frame, pose.ScaleX, pose.ScaleY);
+            float depth = Projection.Depth(position);
+            int pick = Items.Pickable(entity.Id);
+            Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
+            if (entity.Carried == ItemType.None) return;
+            // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
+            var carried = _catalog.Piece(_catalog.Picture(ItemCatalog.Get(entity.Carried)?.ArtKey, ItemPicture.Carried), viewSeconds);
+            ref var bundle = ref Add(DrawRole.Crawler, depth, carried, position + _catalog.CarryOffset, Shown(White, shown));
+            bundle.Z = _catalog.CarryHeight;
+            bundle.Pick = pick;
+        }
+
+        /// <summary>
+        /// The trade stall (graphics V5): its counter at its place, and on it, in its display slots, the goods it holds in
+        /// stock, in its table's order, as the catalogue's display picture. Drawn at the stall's depth, after it, so they
+        /// stand on its counter; faded with the fog like any prop.
+        /// </summary>
+        private void AddStall(in TradeStallData stall, float viewSeconds)
+        {
+            if (Visuals.Stall.IsNone || !stall.IsActive) return;
+            var position = stall.Position;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var tint = Shown(White, shown);
+            float depth = Projection.Depth(position);
+            Add(DrawRole.Prop, depth, _catalog.Piece(Visuals.Stall, viewSeconds), position, tint);
+            var slots = _catalog.DisplaySlots;
+            int slot = 0;
+            for (int i = 0; i < TradeStallData.GoodsCapacity && slot < slots.Count; i++)
+            {
+                var good = stall.GoodAt(i);
+                if (good.Item == ItemType.None || good.Stock == 0) continue;
+                var picture = _catalog.Piece(_catalog.Picture(ItemCatalog.Get(good.Item)?.ArtKey, _catalog.DisplayPicture), viewSeconds);
+                ref var shownGood = ref Add(DrawRole.Prop, depth, picture, position + slots[slot].Offset, tint);
+                shownGood.Z = slots[slot].Height;
+                slot++;
+            }
         }
 
         /// <summary>The props (resource nodes, the hearth, bunks), each as its visual says; other kinds have no picture.</summary>

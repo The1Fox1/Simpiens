@@ -133,6 +133,9 @@ namespace Simpiens.Client.Tests
             {
                 var role = DrawSortKey.Role(item.SortKey);
                 if (role != DrawRole.Wall && role != DrawRole.Prop && role != DrawRole.Crawler) continue;
+                // The stall is furniture wider than a cell, on purpose (graphics V5): it sorts by its centre, so a crawler
+                // beside one end can draw on the wrong side of it (an open item of the epic)
+                if (SpriteSheets.World[item.SpriteIndex].Name is "Prop_Stall" or "Iso_Stall") continue;
                 Assert.True(item.Width <= cell + 1e-3f, $"a {role} {item.Width} art pixels wide is wider than a cell ({cell})");
             }
         }

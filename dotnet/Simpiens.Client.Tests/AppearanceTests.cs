@@ -128,7 +128,7 @@ namespace Simpiens.Client.Tests
             int hearths = shown.Count(e => e.Type == EntityType.Anchor);
             int resources = shown.Count(e => e.Type == EntityType.Resource);
             Assert.True(bunks > 0 && hearths > 0 && resources > 0);
-            Assert.Equal(bunks + hearths + resources, props.Count);
+            Assert.Equal(bunks + hearths + resources + SceneStalls.ShownPieces(sim), props.Count); // and the stall with its goods (graphics V5)
             Assert.Equal(bunks, props.Count(p => p.SpriteIndex == SpriteSheets.World.IndexOf(ProceduralSprites.BunkSprite) && p.Width == TopDownArtTable.BunkSize * TopDownProjection.BasePixelsPerUnit));
             Assert.Equal(hearths, props.Count(p => p.SpriteIndex == SpriteSheets.World.IndexOf(ProceduralSprites.GetCampfireSprite(0)))); // frame 0 at 0 s
         }

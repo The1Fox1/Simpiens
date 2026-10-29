@@ -239,7 +239,7 @@ namespace Simpiens.Client.Tests
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers, scene.Items.Count - textAndFog);
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)
