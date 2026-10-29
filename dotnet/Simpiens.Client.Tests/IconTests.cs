@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Gum.Wireframe;
 using Microsoft.Xna.Framework.Graphics;
@@ -69,6 +70,44 @@ namespace Simpiens.Client.Tests
                 Assert.NotEqual(missing, source);
             }
             Assert.Equal(missing, atlas.Source(null));
+        }
+
+        /// <summary>
+        /// The dashboard's icons (graphics V4.3): in the merchant's rows, the dossier's gear line, beside the bounty
+        /// board's picker and in the header's stock, each shows its item and lands on whole pixels (so it draws 1:1).
+        /// </summary>
+        [Fact]
+        public void TheDashboardsIconsShowTheirItemsAtWholePixels()
+        {
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 10 }, frames: 3, width: 1280, height: 720);
+            game.Options.DashboardRefreshSeconds = 0f;
+            var crawler = game.Session.Simulation.Host.CrawlerStates[0];
+            crawler.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.HazardGear, 1, 30, durability: 100));
+            var model = game.Session.DashboardModel;
+            model.SelectCrawler(crawler.AgentId);
+            model.OpenMerchant();
+            for (int i = 0; i < 3; i++) game.RunOneFrame();
+            var dashboard = game.Play.Dashboard;
+
+            var shown = new System.Collections.Generic.List<(string Where, Gum.GueDeriving.SpriteRuntime Icon, string Key)>();
+            for (int i = 0; i < model.Merchant.Rows.Count; i++) shown.Add(($"merchant row {i}", dashboard.Merchant.Icons[i], model.Merchant.Rows[i].Icon));
+            shown.Add(("dossier gear", dashboard.Panels.GearIcon, "item/hazard-gear/icon"));
+            for (int i = 0; i < model.Header.Stock.Count; i++) shown.Add(($"header stock {i}", dashboard.Header.StockEntries[i].Icon, model.Header.Stock[i].Icon));
+            Assert.Equal(model.Header.Stock.Count, dashboard.Header.StockEntries.Count);
+
+            model.ToggleMerchant();
+            model.OpenBounties();
+            for (int i = 0; i < 3; i++) game.RunOneFrame();
+            shown.Add(("bounty picker", dashboard.Bounties.ItemIcon, model.Bounties.ItemIcon));
+
+            foreach (var (where, icon, key) in shown)
+            {
+                Assert.True(icon.Visible, $"{where}: hidden.");
+                float left = icon.AbsoluteLeft, top = icon.AbsoluteTop;
+                Assert.True(left == MathF.Round(left) && top == MathF.Round(top), $"{where}: at {left}, {top}, not on whole pixels.");
+                int scale = icon.Width <= IconAtlas.SmallSize ? 1 : IconAtlas.Scale;
+                Assert.Equal(game.Graphics.Icons.Source(key, scale), icon.SourceRectangle);
+            }
         }
     }
 }

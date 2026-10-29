@@ -30,8 +30,9 @@ namespace Simpiens.Client.Ui
         private int _choicesShown = -1;
         private bool _binding;
 
-        public BountyBoardWindow(BountyBoardModel model)
+        public BountyBoardWindow(BountyBoardModel model, IconAtlas icons)
         {
+            _icons = icons;
             _model = model;
             Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, UiStyle.Gold);
 
@@ -97,7 +98,15 @@ namespace Simpiens.Client.Ui
             var names = new string[gatherItems.Count];
             for (int i = 0; i < names.Length; i++) names[i] = Simpiens.Simulation.Items.ItemCatalog.NameOf(gatherItems[i]);
             ItemBox = Dropdown(names);
-            _itemGroup.Children.Add(ItemBox.Visual);
+            // The chosen item's icon beside the picker (graphics V4); the picker keeps its words
+            var picker = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.Size };
+            ItemIcon = UiParts.Icon(icons, model.ItemIcon);
+            picker.Children.Add(ItemIcon);
+            ItemBox.Visual.X = IconAtlas.Size + 8f;
+            ItemBox.Width = -(IconAtlas.Size + 8f);
+            UiParts.CentreVertically(ItemBox.Visual);
+            picker.Children.Add(ItemBox.Visual);
+            _itemGroup.Children.Add(picker);
             ItemBox.SelectionChanged += (_, _) => { if (!_binding && ItemBox.SelectedIndex >= 0) _model.Item = BountyBoardModel.GatherItems[ItemBox.SelectedIndex]; };
             form.Children.Add(_itemGroup);
 
@@ -126,6 +135,11 @@ namespace Simpiens.Client.Ui
         public ComboBox TypeBox { get; }
         public ComboBox SectorBox { get; }
         public ComboBox ItemBox { get; }
+
+        /// <summary>The chosen gather item's icon.</summary>
+        public SpriteRuntime ItemIcon { get; }
+
+        private readonly IconAtlas _icons;
         public Slider QuantitySlider { get; }
         public Slider RewardSlider { get; }
         public Slider DurationSlider { get; }
@@ -203,6 +217,8 @@ namespace Simpiens.Client.Ui
             Window.IsShown = _model.IsOpen;
             UiParts.SetText(_count, _model.CountBadge);
             if (!_model.IsOpen) return;
+            Window.SnapToPixels();
+            UiParts.SetIcon(ItemIcon, _icons, _model.ItemIcon);
 
             _binding = true;
             // The sector choices change with the type and the chart: rebuild only when they did

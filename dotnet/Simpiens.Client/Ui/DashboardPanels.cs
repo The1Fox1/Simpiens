@@ -36,8 +36,9 @@ namespace Simpiens.Client.Ui
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
-        public DashboardPanels(DashboardModel model)
+        public DashboardPanels(DashboardModel model, IconAtlas icons)
         {
+            _icons = icons;
             _model = model;
             Root = new ContainerRuntime
             {
@@ -110,8 +111,15 @@ namespace Simpiens.Client.Ui
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
             _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
-            _gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small); // worn gear (Epic 10 G3)
-            _dossierDetails.Children.Add(_gear);
+            // Worn gear (Epic 10 G3): its icon at 1x (graphics V4), then its words
+            var gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize };
+            GearIcon = UiParts.Icon(icons, null, scale: 1);
+            gearLine.Children.Add(GearIcon);
+            _gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            _gear.X = IconAtlas.SmallSize + 6f;
+            UiParts.CentreVertically(_gear);
+            gearLine.Children.Add(_gear);
+            _dossierDetails.Children.Add(gearLine);
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
@@ -154,6 +162,11 @@ namespace Simpiens.Client.Ui
         public float HungerShown => _hunger.Value;
         public float HealthShown => _health.Value;
         public string GearShown => _gear.Text;
+
+        /// <summary>The worn gear's icon; hidden with none.</summary>
+        public SpriteRuntime GearIcon { get; }
+
+        private readonly IconAtlas _icons;
 
         public void Bind()
         {
@@ -234,6 +247,9 @@ namespace Simpiens.Client.Ui
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
             UiParts.SetText(_gear, "Gear: " + dossier.Gear);
+            UiParts.SetIcon(GearIcon, _icons, dossier.GearIcon);
+            float gearTextX = dossier.GearIcon != null ? IconAtlas.SmallSize + 6f : 0f; // no gap where no icon shows
+            if (_gear.X != gearTextX) _gear.X = gearTextX;
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);

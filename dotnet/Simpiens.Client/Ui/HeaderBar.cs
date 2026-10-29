@@ -1,4 +1,5 @@
 using Gum.Converters;
+using Gum.Managers;
 using Gum.DataTypes;
 using Gum.Forms.Controls;
 using Microsoft.Xna.Framework;
@@ -17,10 +18,14 @@ namespace Simpiens.Client.Ui
     {
         public const float Height = 52f;
 
-        private readonly TextRuntime _treasury, _rations, _salvage, _bounties, _saveStatus, _tick;
+        private readonly TextRuntime _treasury, _bounties, _saveStatus, _tick;
+        private readonly IconAtlas _icons;
+        private readonly ContainerRuntime _stock;
+        private readonly System.Collections.Generic.List<(SpriteRuntime Icon, TextRuntime Count)> _stockEntries = new System.Collections.Generic.List<(SpriteRuntime, TextRuntime)>(4);
 
-        public HeaderBar()
+        public HeaderBar(IconAtlas icons)
         {
+            _icons = icons;
             Root = new ContainerRuntime
             {
                 Name = "header-bar",
@@ -44,8 +49,12 @@ namespace Simpiens.Client.Ui
             left.Children.Add(new ContainerRuntime { Width = 10f, Height = 1f });
             left.Children.Add(centre);
             centre.Children.Add(UiParts.Pill(out _treasury, "0 GOLD", UiParts.Alpha(UiStyle.Gold, 0.15f), UiStyle.Gold, UiStyle.GoldText));
-            centre.Children.Add(UiParts.Pill(out _rations, "0 RATIONS", UiParts.Alpha(UiStyle.Stock, 0.15f), UiStyle.Stock, UiStyle.StockText));
-            centre.Children.Add(UiParts.Pill(out _salvage, "0 ORE | 0 HERB", UiParts.Alpha(UiStyle.Stock, 0.15f), UiStyle.Stock, UiStyle.StockText));
+            // The stall's stock as icons and counts (graphics V4, decision D9), in one pill: entries come with the first bind
+            var stockPill = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, HeightUnits = DimensionUnitType.RelativeToChildren, Width = 8f, Height = 3f };
+            UiParts.AddFill(stockPill, UiParts.Alpha(UiStyle.Stock, 0.15f), UiStyle.Stock);
+            _stock = new ContainerRuntime { ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = 10f, WidthUnits = DimensionUnitType.RelativeToChildren, HeightUnits = DimensionUnitType.RelativeToChildren, Width = 0f, Height = 0f, X = 6f, Y = 3f };
+            stockPill.Children.Add(_stock);
+            centre.Children.Add(stockPill);
             centre.Children.Add(UiParts.Pill(out _bounties, "0 BOUNTIES", UiParts.Alpha(UiStyle.Bounty, 0.15f), UiStyle.Bounty, UiStyle.BountyText));
 
             var right = UiParts.Row(4f); // 4 px apart: pause and speed took the room the speed's text left (1280 px)
@@ -98,6 +107,36 @@ namespace Simpiens.Client.Ui
         public Button TabButton { get; }
 
         public string TreasuryText => _treasury.Text;
+
+        /// <summary>The stock pill's icons and counts, left to right (tests read them).</summary>
+        public System.Collections.Generic.IReadOnlyList<(SpriteRuntime Icon, TextRuntime Count)> StockEntries => _stockEntries;
+
+        /// <summary>One entry per good the model lists: its icon at 1x and its count, built when the list's length changes.</summary>
+        private void BindStock(System.Collections.Generic.IReadOnlyList<HeaderStock> stock)
+        {
+            if (_stockEntries.Count != stock.Count)
+            {
+                _stock.Children.Clear();
+                _stockEntries.Clear();
+                for (int i = 0; i < stock.Count; i++)
+                {
+                    var entry = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, Width = 0f, Height = IconAtlas.SmallSize };
+                    var icon = UiParts.Icon(_icons, null, scale: 1);
+                    entry.Children.Add(icon);
+                    var count = UiParts.Text("0", UiStyle.StockText, UiText.SmallBold);
+                    count.X = IconAtlas.SmallSize + 4f;
+                    UiParts.CentreVertically(count);
+                    entry.Children.Add(count);
+                    _stock.Children.Add(entry);
+                    _stockEntries.Add((icon, count));
+                }
+            }
+            for (int i = 0; i < stock.Count; i++)
+            {
+                UiParts.SetIcon(_stockEntries[i].Icon, _icons, stock[i].Icon);
+                UiParts.SetText(_stockEntries[i].Count, stock[i].Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
         public string TickText => _tick.Text;
         public string SaveStatusText => _saveStatus.Text;
 
@@ -115,8 +154,7 @@ namespace Simpiens.Client.Ui
         {
             var header = model.Header;
             UiParts.SetText(_treasury, header.Treasury);
-            UiParts.SetText(_rations, header.Rations);
-            UiParts.SetText(_salvage, header.Salvage);
+            BindStock(header.Stock);
             UiParts.SetText(_bounties, header.Bounties);
             UiParts.SetText(_tick, header.Tick);
             if (PauseButton.Text != header.PauseLabel) PauseButton.Text = header.PauseLabel;

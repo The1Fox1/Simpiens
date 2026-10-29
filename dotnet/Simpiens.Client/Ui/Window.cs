@@ -76,6 +76,19 @@ namespace Simpiens.Client.Ui
 
         public Button CloseButton { get; }
 
+        /// <summary>
+        /// Keeps the window on whole pixels (graphics V4.3): centred in the area under the header, a window of odd height
+        /// would sit half a pixel down, and with it its icons, which then sample on texel edges. Moves it up or left by
+        /// the fraction, from where it would sit unsnapped, so the offset never drifts. Call after a layout (each bind).
+        /// </summary>
+        public void SnapToPixels()
+        {
+            float left = Frame.AbsoluteLeft - Frame.X, top = Frame.AbsoluteTop - Frame.Y;
+            float x = System.MathF.Floor(left) - left, y = System.MathF.Floor(top) - top;
+            if (Frame.X != x) Frame.X = x;
+            if (Frame.Y != y) Frame.Y = y;
+        }
+
         public bool IsShown
         {
             get => Veil.Visible;

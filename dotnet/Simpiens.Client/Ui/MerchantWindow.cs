@@ -24,10 +24,13 @@ namespace Simpiens.Client.Ui
         private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime> _values = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime>();
         private readonly TextRuntime _status, _treasury, _stock, _feedback;
         private bool _binding;
+        private readonly IconAtlas _icons;
+        private readonly System.Collections.Generic.List<SpriteRuntime> _iconViews = new System.Collections.Generic.List<SpriteRuntime>(8);
 
-        public MerchantWindow(MerchantModel model)
+        public MerchantWindow(MerchantModel model, IconAtlas icons)
         {
             _model = model;
+            _icons = icons;
             Window = new Window("merchant-terminal", "OUTPOST MERCHANT TERMINAL", "Stall inventory management & automated commodity pricing.", Width, UiStyle.Accent);
             var body = Window.Body;
 
@@ -59,7 +62,7 @@ namespace Simpiens.Client.Ui
             {
                 var item = row.Item;
                 _items.Add(item);
-                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
+                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
                 _values[item] = value;
             }
 
@@ -80,6 +83,11 @@ namespace Simpiens.Client.Ui
         }
 
         public Window Window { get; }
+
+        private const int RowHeight = 48;
+
+        /// <summary>The goods' icons, top to bottom (tests read where they land).</summary>
+        public System.Collections.Generic.IReadOnlyList<SpriteRuntime> Icons => _iconViews;
         /// <summary>The goods the window prices, top to bottom.</summary>
         public System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.ItemType> Items => _items;
 
@@ -96,12 +104,18 @@ namespace Simpiens.Client.Ui
         public float TreasuryRight => _treasury.AbsoluteLeft + _treasury.AbsoluteWidth;
         public float StockLeft => _stock.AbsoluteLeft;
 
-        private Slider AddPriceRow(ContainerRuntime body, string title, string description, Action<int> set, out TextRuntime value)
+        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, Action<int> set, out TextRuntime value)
         {
-            var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 48f };
+            var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };
             UiParts.AddFill(row, UiStyle.Card);
+            // The good's icon at the row's left, at whole pixels (graphics V4)
+            var picture = UiParts.Icon(_icons, icon);
+            picture.X = 12f;
+            picture.Y = (RowHeight - IconAtlas.Size) / 2;
+            row.Children.Add(picture);
+            _iconViews.Add(picture);
             var labels = UiParts.Column(2f);
-            labels.X = 12f;
+            labels.X = 12f + IconAtlas.Size + 10f;
             UiParts.CentreVertically(labels);
             labels.Children.Add(UiParts.Text(title, UiStyle.TextBright, UiText.BodyBold));
             labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiText.Small));
@@ -153,6 +167,7 @@ namespace Simpiens.Client.Ui
         {
             Window.IsShown = _model.IsOpen;
             if (!_model.IsOpen) return;
+            Window.SnapToPixels();
             UiParts.SetText(_status, _model.StallStatus);
             UiParts.SetText(_treasury, _model.Treasury);
             UiParts.SetText(_stock, _model.Stock);
