@@ -32,9 +32,11 @@ namespace Simpiens.Client.Tests
             ulong hash = Start;
             void Piece(string what, ArtPiece p)
             {
-                text.AppendLine($"{what}: sheet {p.Sheet} sprite {p.Sprite} {p.Width:R}x{p.Height:R} pivot {p.PivotX:R},{p.PivotY:R}");
+                // The sprite by name, not by index (graphics V5.2): indices move when a sheet gains a sprite
+                string sprite = p.IsNone ? "none" : SpriteSheets.Contents(p.Sheet)[p.Sprite].Name;
+                text.AppendLine($"{what}: sheet {p.Sheet} sprite {sprite} {p.Width:R}x{p.Height:R} pivot {p.PivotX:R},{p.PivotY:R}");
                 hash = Add(hash, (int)p.Sheet);
-                hash = Add(hash, p.Sprite);
+                foreach (char c in sprite) hash = Add(hash, c);
                 hash = Add(hash, BitConverter.SingleToInt32Bits(p.Width));
                 hash = Add(hash, BitConverter.SingleToInt32Bits(p.Height));
                 hash = Add(hash, BitConverter.SingleToInt32Bits(p.PivotX));
@@ -126,11 +128,11 @@ namespace Simpiens.Client.Tests
             Assert.True(Record.Exception(() => builder.Build()) is ArgumentException, $"A catalogue with {what} is refused.");
         }
 
-        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3); isometric's re-pinned when the two world sheets became one (V3.2), both when missing art replaced the default node (V3.3); a dump of every piece showed only those fields move.</summary>
+        /// <summary>Recorded from the art sets at 5e8c6cf, before the catalogue (graphics V1.3); isometric's re-pinned when the two world sheets became one (V3.2), both when missing art replaced the default node (V3.3) and when sprites came to be hashed by name, not index (V5.2); a dump of every piece showed only those fields move.</summary>
         private static readonly Dictionary<string, ulong> Pinned = new Dictionary<string, ulong>
         {
-            ["top-down"] = 896956307945096979UL, // graphics V3.3: nodes of items no node yields draw the missing art, not the berry bush
-            ["isometric"] = 12408719331572149356UL, // V3.2: its sheet is World (0), not Isometric (2); V3.3: as top-down
+            ["top-down"] = 3932200877087346453UL, // V3.3: nodes of items no node yields draw the missing art; V5.2: sprites hashed by name
+            ["isometric"] = 11286401426478506919UL, // V3.2: its sheet is World (0), not Isometric (2); V3.3, V5.2: as top-down
         };
 
         private const ulong Start = 14695981039346656037UL;
