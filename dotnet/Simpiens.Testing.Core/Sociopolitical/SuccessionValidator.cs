@@ -21,7 +21,7 @@ namespace Simpiens.Testing.Sociopolitical
         {
             public EntityId AgentId { get; set; }
             public AgentMemory Memory { get; set; }
-            public GroupMembership Membership { get; set; } = GroupMembership.None;
+            public MembershipSet Memberships { get; set; }
             public bool IsExhaustionCollapsed { get; set; }
             public bool IsStarvationPanicking { get; set; }
 
@@ -46,8 +46,9 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateZeroAllocationHotPath();
             ValidateOnlyRealChangesAreChronicled();
             ValidateTiedCandidatesResolveByEntityId();
+            ValidateSuccessionAmongGuildMembers();
 
-            TestLog.Log("<color=green>[SuccessionValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SuccessionValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateOrganicHearthEmergence()
@@ -89,11 +90,11 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(groupData.AnchorPosition == hearthPos, "Anchor position matches hearth location.");
 
             // Verify memberships
-            Assert(agentA.Membership.Role == RoleRank.Leader, "Agent A role is Leader.");
-            Assert(agentB.Membership.Role == RoleRank.Follower, "Agent B role is Follower.");
-            Assert(agentB.Membership.Allegiance == 70, "Agent B allegiance is 70.");
-            Assert(agentC.Membership.Role == RoleRank.Follower, "Agent C role is Follower.");
-            Assert(agentC.Membership.Allegiance == 70, "Agent C allegiance is 70.");
+            Assert(agentA.Memberships.First.Role == RoleRank.Leader, "Agent A role is Leader.");
+            Assert(agentB.Memberships.First.Role == RoleRank.Follower, "Agent B role is Follower.");
+            Assert(agentB.Memberships.First.Allegiance == 70, "Agent B allegiance is 70.");
+            Assert(agentC.Memberships.First.Role == RoleRank.Follower, "Agent C role is Follower.");
+            Assert(agentC.Memberships.First.Allegiance == 70, "Agent C allegiance is 70.");
 
             TestLog.Log("[PASS] Test 1: Organic hearth emergence verified.");
         }
@@ -162,7 +163,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             registry.TryGetGroup(groupId, out var updatedGroup);
             Assert(updatedGroup.LeaderId == officer.AgentId, "Registry leader ID updated to officer.");
-            registry.TryGetMembership(leader.AgentId, out var oldLeaderMem);
+            registry.TryGetOnlyMembership(leader.AgentId, out var oldLeaderMem);
             Assert(oldLeaderMem.Role == RoleRank.Follower, "Previous leader demoted to Follower.");
 
             TestLog.Log("[PASS] Test 2: Peaceful succession under institutional order verified.");
@@ -205,7 +206,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!result.LoserDeparted, "Loser did not depart because allegiance > 0.");
             Assert(result.NewCohesion == 30, "Cohesion penalized by -10 to 30.");
 
-            registry.TryGetMembership(followerA.AgentId, out var loserMem);
+            registry.TryGetOnlyMembership(followerA.AgentId, out var loserMem);
             Assert(loserMem.Allegiance == 60, $"Loser allegiance penalized by -10 to 60 (actual: {loserMem.Allegiance}).");
 
             TestLog.Log("[PASS] Test 3: Dominance challenge succession and loser penalty verified.");
@@ -241,8 +242,8 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(result.NewLeaderId == winner.AgentId, "Winner claimed leadership.");
             Assert(result.LoserDeparted, "Loser departed because allegiance dropped to 0!");
 
-            Assert(!registry.TryGetMembership(loser.AgentId, out _), "Loser removed from group registry roster.");
-            Assert(!loser.Membership.HasGroup, "Loser agent Membership reset to None.");
+            Assert(!registry.TryGetOnlyMembership(loser.AgentId, out _), "Loser removed from group registry roster.");
+            Assert(!loser.Memberships.First.HasGroup, "Loser agent Membership reset to None.");
 
             TestLog.Log("[PASS] Test 4: Dominance challenge loser departure on zero allegiance verified.");
         }
@@ -297,16 +298,61 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(groupB.Cohesion == 65, "Splinter group cohesion initialized to 65.");
 
             // Loyalist A remained in original group
-            registry.TryGetMembership(loyalistA.AgentId, out var memLoyalistA);
+            registry.TryGetOnlyMembership(loyalistA.AgentId, out var memLoyalistA);
             Assert(memLoyalistA.GroupId == originalGroupId, "Loyalist A stayed in original group with Contender A.");
             Assert(memLoyalistA.Allegiance == 60, "Loyalist A suffered -10 allegiance shock from schism.");
 
             // Loyalist B defected to splinter group
-            registry.TryGetMembership(loyalistB.AgentId, out var memLoyalistB);
+            registry.TryGetOnlyMembership(loyalistB.AgentId, out var memLoyalistB);
             Assert(memLoyalistB.GroupId == result.SplinterGroupId, "Loyalist B moved to splinter group with Contender B.");
             Assert(memLoyalistB.Allegiance == 60, "Loyalist B suffered -10 allegiance shock from schism.");
 
             TestLog.Log("[PASS] Test 5: Factional schism and splinter group partition verified.");
+        }
+
+        // Epic 10 G4, D1: succession and a schism in a settlement whose members are also in a guild change the settlement only
+        private void ValidateSuccessionAmongGuildMembers()
+        {
+            var registry = new GroupRegistry();
+            var leader = CreateTestAgent();
+            var contenderA = CreateTestAgent();
+            var contenderB = CreateTestAgent();
+            var follower = CreateTestAgent();
+            var agentMap = new Dictionary<EntityId, ISocialAgent>
+            {
+                { leader.AgentId, leader }, { contenderA.AgentId, contenderA }, { contenderB.AgentId, contenderB }, { follower.AgentId, follower }
+            };
+
+            byte settlement = registry.CreateGroup(GroupType.Settlement, leader.AgentId, new Vec2(5f, 5f), initialCohesion: 15);
+            registry.AddMember(settlement, contenderA.AgentId, RoleRank.Follower, 80);
+            registry.AddMember(settlement, contenderB.AgentId, RoleRank.Follower, 80);
+            registry.AddMember(settlement, follower.AgentId, RoleRank.Follower, 70);
+            byte guild = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), new Vec2(0f, 0f));
+            registry.AddMember(guild, contenderB.AgentId, RoleRank.Follower, 70);
+            registry.AddMember(guild, follower.AgentId, RoleRank.Follower, 70);
+            // No respect for anyone: the contenders tie on allegiance and A, the lower id, keeps the settlement; the follower
+            // prefers B, who founds the splinter
+            follower.Memory.SetAffinity(contenderB.AgentId, new AffinityRecord(warmth: 70, trust: 60, fear: 0, respect: 0, 1, 100));
+
+            var schism = SuccessionEngine.ResolveSuccession(settlement, registry, null, 100, id => agentMap[id]);
+            Assert(schism.Succeeded && schism.Mode == SuccessionMode.FactionalSchism, "Cohesion 15 splits the settlement.");
+            registry.TryGetGroup(schism.SplinterGroupId, out var splinter);
+            Assert(splinter.LeaderId == contenderB.AgentId, "Contender B leads the splinter settlement.");
+            Assert(registry.TryGetMembership(follower.AgentId, schism.SplinterGroupId, out _) && !registry.TryGetMembership(follower.AgentId, settlement, out _),
+                "The follower moved to the splinter settlement (one settlement at a time).");
+            Assert(registry.TryGetMembership(follower.AgentId, guild, out var followerGuild) && followerGuild.Allegiance == 70, "Its guild membership is untouched by the schism.");
+            Assert(registry.TryGetMembership(contenderB.AgentId, guild, out _), "The splinter leader is still in the guild.");
+            Assert(follower.Memberships.Count == 2 && follower.Memberships.Has(GroupType.FactionGuild), "The follower's own copy holds both groups.");
+
+            registry.SetCohesion(settlement, 90);
+            registry.TryGetGroup(settlement, out var before);
+            var peaceful = SuccessionEngine.ResolveSuccession(settlement, registry, null, 200, id => agentMap[id]);
+            Assert(peaceful.Succeeded && peaceful.Mode == SuccessionMode.Peaceful, "High cohesion passes leadership on peacefully.");
+            Assert(registry.TryGetMembership(contenderB.AgentId, guild, out _) && registry.TryGetMembership(follower.AgentId, guild, out _), "The guild's roster is untouched.");
+            registry.TryGetGroup(guild, out var guildData);
+            Assert(guildData.MemberCount == 3, $"The guild keeps its leader and two members ({guildData.MemberCount}).");
+
+            TestLog.Log("[PASS] Test 11: Succession and a schism in a settlement leave its members' guild as it was (Epic 10 G4, D1).");
         }
 
         private void ValidateIncapacitationAndLegitimacyWatchdog()

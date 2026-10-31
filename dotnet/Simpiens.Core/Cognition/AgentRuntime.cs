@@ -86,17 +86,10 @@ namespace Simpiens.Cognition
             // Advance biological drives and emotion timers on fixed logical tick dt
             State.Tick(FixedTickDeltaTime);
 
-            // Keep membership synced with authoritative main-thread group registry
-            if (_simulationManager?.Groups != null && State.Membership.HasGroup)
+            // Keep the crawler's copy of its memberships synced with the authoritative group registry (cognition reads the copy)
+            if (_simulationManager?.Groups != null)
             {
-                if (_simulationManager.Groups.TryGetMembership(State.AgentId, out var currentMem))
-                {
-                    State.Membership = currentMem;
-                }
-                else
-                {
-                    State.Membership = GroupMembership.None;
-                }
+                State.Memberships = _simulationManager.Groups.GetMemberships(State.AgentId);
             }
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.

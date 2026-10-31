@@ -20,10 +20,10 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override bool IsValid(AgentContext context)
         {
-            if (!context.Membership.HasGroup) return false;
+            if (!context.DirectiveMembership.HasGroup) return false;
             if (context.Snapshot == null) return false;
 
-            if (!context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData))
+            if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData))
             {
                 return false;
             }
@@ -40,8 +40,8 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override float CalculatePriority(AgentContext context)
         {
-            if (!context.Membership.HasGroup || context.Snapshot == null) return 0f;
-            if (!context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData)) return 0f;
+            if (!context.DirectiveMembership.HasGroup || context.Snapshot == null) return 0f;
+            if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData)) return 0f;
             if (!groupData.ActiveDirective.IsActive(context.CurrentTick)) return 0f;
 
             float utility = ComplianceUtility.CalculateUtility(context, groupData);

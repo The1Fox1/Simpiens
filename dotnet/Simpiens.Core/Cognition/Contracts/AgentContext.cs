@@ -23,7 +23,11 @@ namespace Simpiens.Cognition.Contracts
         public readonly float Frustration;
 
         // Sociopolitical & Identity standing
-        public readonly GroupMembership Membership;
+        /// <summary>
+        /// The membership whose orders the crawler follows (Epic 10 G4, D1): the first of its groups, in kind order (party,
+        /// guild, settlement), with an active directive; else its first group; None without any.
+        /// </summary>
+        public readonly GroupMembership DirectiveMembership;
         public readonly IdentityTag Identity;
 
         // Economic Inventory & Wallet (Epic 9)
@@ -49,7 +53,7 @@ namespace Simpiens.Cognition.Contracts
 
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
-                            in GroupMembership membership = default, in IdentityTag identity = default,
+                            in GroupMembership directiveMembership = default, in IdentityTag identity = default,
                             Simpiens.Cognition.Inventory.IAgentInventory inventory = null,
                             ushort scoutReportBountyId = 0,
                             in AgentPersonality personality = default,
@@ -69,7 +73,7 @@ namespace Simpiens.Cognition.Contracts
             Snapshot = snapshot;
             Memory = memory;
             CurrentTick = currentTick;
-            Membership = membership;
+            DirectiveMembership = directiveMembership;
             Identity = identity;
             Inventory = inventory;
         }

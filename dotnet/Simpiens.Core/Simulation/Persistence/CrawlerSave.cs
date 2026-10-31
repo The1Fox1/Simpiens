@@ -36,7 +36,6 @@ namespace Simpiens.Simulation.Persistence
         public AgentNeeds Needs;
         public float Frustration;
         public AgentActivity Activity;
-        public GroupMembership Membership;
         public IdentityTag Identity;
         public AgentPersonality Personality;
         public int NavigationalStalls;

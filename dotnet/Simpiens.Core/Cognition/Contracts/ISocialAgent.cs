@@ -11,7 +11,8 @@ namespace Simpiens.Cognition.Contracts
     {
         EntityId AgentId { get; }
         AgentMemory Memory { get; }
-        GroupMembership Membership { get; set; }
+        /// <summary>The agent's copy of its memberships (Epic 10 G4: many-to-many, one per kind); the group registry owns them.</summary>
+        MembershipSet Memberships { get; set; }
         bool IsExhaustionCollapsed { get; }
         bool IsStarvationPanicking { get; }
     }

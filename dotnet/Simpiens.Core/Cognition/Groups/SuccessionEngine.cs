@@ -121,7 +121,7 @@ namespace Simpiens.Cognition.Groups
             for (int i = 0; i < totalAgents; i++)
             {
                 var agent = agentsAtAnchor[i];
-                if (agent != null && !agent.Membership.HasGroup && !agent.IsExhaustionCollapsed)
+                if (agent != null && !agent.Memberships.Has(GroupType.Settlement) && !agent.IsExhaustionCollapsed) // no settlement: unaligned
                 {
                     _unalignedCluster.Add(agent);
                 }
@@ -189,7 +189,7 @@ namespace Simpiens.Cognition.Groups
             if (groupId == 0) return false;
 
             // Set leader membership & events
-            leaderCandidate.Membership = new GroupMembership(groupId, RoleRank.Leader, 100, currentTick);
+            leaderCandidate.Memberships = groupRegistry.GetMemberships(leaderCandidate.AgentId);
             leaderCandidate.Memory.RecordEvent(MemoryEventType.GroupFormed, leaderCandidate.AgentId, GridPoint.RoundToInt(anchorPosition), currentTick);
             leaderCandidate.Memory.RecordEvent(MemoryEventType.JoinedGroup, leaderCandidate.AgentId, GridPoint.RoundToInt(anchorPosition), currentTick);
             leaderCandidate.Memory.RecordEvent(MemoryEventType.LeadershipAssumed, leaderCandidate.AgentId, GridPoint.RoundToInt(anchorPosition), currentTick);
@@ -201,7 +201,7 @@ namespace Simpiens.Cognition.Groups
                 if (follower == leaderCandidate) continue;
 
                 groupRegistry.AddMember(groupId, follower.AgentId, RoleRank.Follower, initialAllegiance: 70);
-                follower.Membership = new GroupMembership(groupId, RoleRank.Follower, 70, currentTick);
+                follower.Memberships = groupRegistry.GetMemberships(follower.AgentId);
                 follower.Memory.RecordEvent(MemoryEventType.GroupFormed, leaderCandidate.AgentId, GridPoint.RoundToInt(anchorPosition), currentTick);
                 follower.Memory.RecordEvent(MemoryEventType.JoinedGroup, leaderCandidate.AgentId, GridPoint.RoundToInt(anchorPosition), currentTick);
             }
@@ -260,7 +260,7 @@ namespace Simpiens.Cognition.Groups
             for (int i = 0; i < _candidateBuffer.Count; i++)
             {
                 EntityId candidateId = _candidateBuffer[i];
-                groupRegistry.TryGetMembership(candidateId, out var mem);
+                groupRegistry.TryGetMembership(candidateId, groupId, out var mem);
 
                 int totalRespect = 0;
                 foreach (var m in members)
@@ -313,16 +313,15 @@ namespace Simpiens.Cognition.Groups
                     var winnerAgent = GetAgent(winnerId);
                     if (winnerAgent != null)
                     {
-                        groupRegistry.TryGetMembership(winnerId, out var winMem);
-                        winnerAgent.Membership = winMem;
+                        winnerAgent.Memberships = groupRegistry.GetMemberships(winnerId);
                         winnerAgent.Memory?.RecordEvent(MemoryEventType.LeadershipAssumed, winnerId, GridPoint.Zero, currentTick);
                         winnerAgent.Memory?.RecordEvent(MemoryEventType.Promoted, winnerId, GridPoint.Zero, currentTick);
                     }
 
                     var oldLeaderAgent = GetAgent(groupData.LeaderId);
-                    if (oldLeaderAgent != null && groupRegistry.TryGetMembership(groupData.LeaderId, out var oldMem))
+                    if (oldLeaderAgent != null && groupRegistry.TryGetMembership(groupData.LeaderId, groupId, out _))
                     {
-                        oldLeaderAgent.Membership = oldMem;
+                        oldLeaderAgent.Memberships = groupRegistry.GetMemberships(groupData.LeaderId);
                         oldLeaderAgent.Memory?.RecordEvent(MemoryEventType.Demoted, winnerId, GridPoint.Zero, currentTick);
                     }
 
@@ -362,9 +361,9 @@ namespace Simpiens.Cognition.Groups
 
                     groupRegistry.TransferLeadership(groupId, winnerId);
                     groupRegistry.SetRole(groupId, loserId, RoleRank.Follower);
-                    groupRegistry.UpdateAllegiance(loserId, -10);
+                    groupRegistry.UpdateAllegiance(loserId, groupId, -10);
 
-                    groupRegistry.TryGetMembership(loserId, out var loserMem);
+                    groupRegistry.TryGetMembership(loserId, groupId, out var loserMem);
                     bool loserDeparted = (loserMem.Allegiance == 0);
 
                     if (loserDeparted)
@@ -373,7 +372,7 @@ namespace Simpiens.Cognition.Groups
                         var loserAgent = GetAgent(loserId);
                         if (loserAgent != null)
                         {
-                            loserAgent.Membership = GroupMembership.None;
+                            loserAgent.Memberships = groupRegistry.GetMemberships(loserId);
                             loserAgent.Memory?.RecordEvent(MemoryEventType.DesertedGroup, winnerId, GridPoint.Zero, currentTick);
                         }
                     }
@@ -382,7 +381,7 @@ namespace Simpiens.Cognition.Groups
                         var loserAgent = GetAgent(loserId);
                         if (loserAgent != null)
                         {
-                            loserAgent.Membership = loserMem;
+                            loserAgent.Memberships = groupRegistry.GetMemberships(loserId);
                             loserAgent.Memory?.RecordEvent(MemoryEventType.DominanceChallenged, winnerId, GridPoint.Zero, currentTick);
                         }
                     }
@@ -393,16 +392,15 @@ namespace Simpiens.Cognition.Groups
                     var winnerAgent = GetAgent(winnerId);
                     if (winnerAgent != null)
                     {
-                        groupRegistry.TryGetMembership(winnerId, out var winMem);
-                        winnerAgent.Membership = winMem;
+                        winnerAgent.Memberships = groupRegistry.GetMemberships(winnerId);
                         winnerAgent.Memory?.RecordEvent(MemoryEventType.LeadershipAssumed, winnerId, GridPoint.Zero, currentTick);
                         winnerAgent.Memory?.RecordEvent(MemoryEventType.DominanceChallenged, loserId, GridPoint.Zero, currentTick);
                     }
 
                     var oldLeaderAgent = GetAgent(groupData.LeaderId);
-                    if (oldLeaderAgent != null && groupRegistry.TryGetMembership(groupData.LeaderId, out var oldMem))
+                    if (oldLeaderAgent != null && groupRegistry.TryGetMembership(groupData.LeaderId, groupId, out _))
                     {
-                        oldLeaderAgent.Membership = oldMem;
+                        oldLeaderAgent.Memberships = groupRegistry.GetMemberships(groupData.LeaderId);
                         oldLeaderAgent.Memory?.RecordEvent(MemoryEventType.Demoted, winnerId, GridPoint.Zero, currentTick);
                     }
 
@@ -444,11 +442,10 @@ namespace Simpiens.Cognition.Groups
                         else
                         {
                             // Stays in Group 1, suffers -10 allegiance from schism
-                            groupRegistry.UpdateAllegiance(m, -10);
-                            groupRegistry.TryGetMembership(m, out var updatedMem);
+                            groupRegistry.UpdateAllegiance(m, groupId, -10);
                             if (mAgent != null)
                             {
-                                mAgent.Membership = updatedMem;
+                                mAgent.Memberships = groupRegistry.GetMemberships(m);
                                 mAgent.Memory?.RecordEvent(MemoryEventType.GroupSchism, contenderB, GridPoint.Zero, currentTick);
                             }
                         }
@@ -458,15 +455,14 @@ namespace Simpiens.Cognition.Groups
                     for (int i = 0; i < _followersToMove.Count; i++)
                     {
                         EntityId followerId = _followersToMove[i];
-                        groupRegistry.TryGetMembership(followerId, out var curMem);
+                        groupRegistry.TryGetMembership(followerId, groupId, out var curMem);
                         byte remainingAllegiance = (byte)SimMath.Max(0, curMem.Allegiance - 10);
 
                         groupRegistry.AddMember(splinterGroupId, followerId, RoleRank.Follower, remainingAllegiance);
                         var fAgent = GetAgent(followerId);
                         if (fAgent != null)
                         {
-                            groupRegistry.TryGetMembership(followerId, out var newMem);
-                            fAgent.Membership = newMem;
+                            fAgent.Memberships = groupRegistry.GetMemberships(followerId);
                             fAgent.Memory?.RecordEvent(MemoryEventType.LeftGroup, contenderA, GridPoint.Zero, currentTick);
                             fAgent.Memory?.RecordEvent(MemoryEventType.JoinedGroup, contenderB, GridPoint.Zero, currentTick);
                             fAgent.Memory?.RecordEvent(MemoryEventType.GroupSchism, contenderA, GridPoint.Zero, currentTick);
@@ -480,8 +476,7 @@ namespace Simpiens.Cognition.Groups
                     var agentA = GetAgent(contenderA);
                     if (agentA != null)
                     {
-                        groupRegistry.TryGetMembership(contenderA, out var memA);
-                        agentA.Membership = memA;
+                        agentA.Memberships = groupRegistry.GetMemberships(contenderA);
                         agentA.Memory?.RecordEvent(MemoryEventType.LeadershipAssumed, contenderA, GridPoint.Zero, currentTick);
                         agentA.Memory?.RecordEvent(MemoryEventType.GroupSchism, contenderB, GridPoint.Zero, currentTick);
                     }
@@ -489,8 +484,7 @@ namespace Simpiens.Cognition.Groups
                     var agentB = GetAgent(contenderB);
                     if (agentB != null)
                     {
-                        groupRegistry.TryGetMembership(contenderB, out var memB);
-                        agentB.Membership = memB;
+                        agentB.Memberships = groupRegistry.GetMemberships(contenderB);
                         agentB.Memory?.RecordEvent(MemoryEventType.LeadershipAssumed, contenderB, GridPoint.Zero, currentTick);
                         agentB.Memory?.RecordEvent(MemoryEventType.GroupSchism, contenderA, GridPoint.Zero, currentTick);
                     }

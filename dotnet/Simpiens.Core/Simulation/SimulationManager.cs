@@ -1478,7 +1478,7 @@ namespace Simpiens.Simulation
                     {
                         var pawn = _hearthPawnsBuffer[p];
                         ISocialAgent ag = pawn.Agent != null ? (ISocialAgent)pawn.Agent : (ISocialAgent)pawn.Agent;
-                        if (ag != null && !ag.Membership.HasGroup)
+                        if (ag != null && !ag.Memberships.Has(GroupType.Settlement)) // no settlement: unaligned (Epic 10 G4, D1)
                         {
                             _hearthAgentsBuffer.Add(ag);
                         }

@@ -34,7 +34,7 @@ namespace Simpiens.Cognition.Groups
 
             float respect = affinity.Respect;
             float fear = affinity.Fear;
-            float allegiance = context.Membership.Allegiance;
+            float allegiance = context.DirectiveMembership.Allegiance;
             float warmth = affinity.Warmth;
             float hunger = context.Hunger;
             float frustration = context.Frustration;

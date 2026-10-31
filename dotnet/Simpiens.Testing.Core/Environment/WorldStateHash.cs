@@ -192,17 +192,16 @@ namespace Simpiens.Testing.Environment
                 }
                 for (int i = 0; i < ordered.Count; i++)
                 {
-                    var id = host.CrawlerStates[ordered[i]].AgentId;
-                    if (!registry.TryGetMembership(id, out var membership))
+                    var memberships = registry.GetMemberships(host.CrawlerStates[ordered[i]].AgentId);
+                    Mix(ref groups, memberships.Count);
+                    for (int m = 0; m < memberships.Count; m++)
                     {
-                        Mix(ref groups, 0);
-                        continue;
+                        var membership = memberships[m];
+                        Mix(ref groups, (int)membership.GroupId);
+                        Mix(ref groups, (int)membership.Role);
+                        Mix(ref groups, (int)membership.Allegiance);
+                        Mix(ref groups, (long)membership.JoinTick);
                     }
-                    Mix(ref groups, 1);
-                    Mix(ref groups, (int)membership.GroupId);
-                    Mix(ref groups, (int)membership.Role);
-                    Mix(ref groups, (int)membership.Allegiance);
-                    Mix(ref groups, (long)membership.JoinTick);
                 }
             }
 
