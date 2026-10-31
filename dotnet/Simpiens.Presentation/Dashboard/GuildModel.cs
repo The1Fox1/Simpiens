@@ -24,6 +24,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
 
+        /// <summary>Sent with the next party (the builder's toggle; every member at first).</summary>
+        public bool InParty { get; set; } = true;
+
         /// <summary>The wage the slider sets; Apply sends it.</summary>
         public int PendingWage { get; set; }
     }
@@ -41,7 +44,14 @@ namespace Simpiens.Presentation.Dashboard
         private readonly DashboardContext _context;
         private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(4);
 
-        internal GuildModel(DashboardContext context) => _context = context;
+        internal GuildModel(DashboardContext context)
+        {
+            _context = context;
+            Expedition = new ExpeditionModel(context, this);
+        }
+
+        /// <summary>The party builder and the tracker (Epic 10 G5).</summary>
+        public ExpeditionModel Expedition { get; }
 
         public bool IsOpen { get; private set; }
         public IReadOnlyList<GuildRosterRow> Rows => _rows;
@@ -70,7 +80,11 @@ namespace Simpiens.Presentation.Dashboard
             var tuning = _context.Simulation?.Economy?.Guild ?? Simpiens.Simulation.Economy.GuildTuning.Default;
             int members = guild?.Members.Count ?? 0;
             Count = Invariant($"{members}/{tuning.MaxMembers}");
-            if (!IsOpen || guild == null) return;
+            if (!IsOpen || guild == null)
+            {
+                Expedition.Refresh(); // the tracker shows with the window closed
+                return;
+            }
 
             int wages = 0;
             for (int i = 0; i < members; i++)
@@ -78,7 +92,11 @@ namespace Simpiens.Presentation.Dashboard
                 var contract = guild.Members[i];
                 if (i == _rows.Count) _rows.Add(new GuildRosterRow { PendingWage = contract.Wage });
                 var row = _rows[i];
-                if (row.CrawlerId != contract.CrawlerId) row.PendingWage = contract.Wage; // a new member in this place
+                if (row.CrawlerId != contract.CrawlerId)
+                {
+                    row.PendingWage = contract.Wage; // a new member in this place
+                    row.InParty = true;
+                }
                 row.CrawlerId = contract.CrawlerId;
                 row.Wage = contract.Wage;
                 row.UnpaidVisits = contract.UnpaidVisits;
@@ -98,6 +116,7 @@ namespace Simpiens.Presentation.Dashboard
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
             Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit");
+            Expedition.Refresh();
         }
 
         /// <summary>Apply: a <see cref="SetWageCommand"/> for each member whose slider moved.</summary>

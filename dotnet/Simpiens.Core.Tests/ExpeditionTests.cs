@@ -405,6 +405,22 @@ namespace Simpiens.Core.Tests
             Assert.False(o.Guild.HasExpedition, "Recalled before it set out, it ends.");
         }
 
+        [Fact]
+        public void TheChronicleTellsTheExpedition()
+        {
+            using var o = NewOutpost(2);
+            var formatter = new TemplateNarrativeFormatter(o.Sim.Identity, o.Sim.Sectors);
+            string first = o.Sim.Identity.GetFriendlyName(o.Members[0].AgentId);
+            const byte gallery = Floor1Layout.DrownedGallerySectorId;
+            string Say(ChronicleEventType type, float extra = 0f) =>
+                formatter.FormatEvent(new ChronicleEvent(type, o.Members[0].AgentId, WorldRegistry.PlayerEntityId, gallery, 10u, ChronicleIntensity.Dramatic, extra));
+            Assert.Equal($"{first} and 1 more set out for The Drowned Gallery.", Say(ChronicleEventType.ExpeditionSent, 2));
+            Assert.Equal($"{first} set out alone for The Drowned Gallery.", Say(ChronicleEventType.ExpeditionSent, 1));
+            Assert.Equal($"{first}'s party turned back from The Drowned Gallery.", Say(ChronicleEventType.ExpeditionTurnedBack));
+            Assert.Equal($"{first}'s party came back from The Drowned Gallery with a haul of 4.", Say(ChronicleEventType.ExpeditionReturned, 4));
+            Assert.Equal($"{first} was downed in The Drowned Gallery on an expedition.", Say(ChronicleEventType.ExpeditionDowned));
+        }
+
         // --- Members deciding for themselves (G5.4): the whole simulation runs ---
 
         /// <summary>The default seed after 30 s, four residents signed on at their own wages, with hazard gear for each if <paramref name="geared"/>.</summary>

@@ -79,6 +79,62 @@ namespace Simpiens.Client.Tests
             Assert.False(roster.Window.IsShown);
         }
 
+        /// <summary>The party builder (Epic 10 G5): it starts on the chamber, sends the party with gear from stock, and the tracker follows it on the map until Recall.</summary>
+        [Fact]
+        public void TheRosterSendsAPartyAndTheTrackerFollowsIt()
+        {
+            var (ui, recruit) = RecruitFromTheDossier();
+            var game = ui.Game;
+            var sim = game.Session.Simulation.Simulation;
+            var guild = sim.Guild;
+            var dashboard = game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            var roster = dashboard.Guild;
+            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(true), roster.PartyButton(0).Text);
+            Assert.Equal("The Drowned Gallery", roster.TargetButton.Text);
+            Assert.Equal("Send 1 to The Drowned Gallery for 4.", roster.DispatchText);
+            Assert.True(roster.DispatchButton.IsEnabled && !roster.RecallButton.IsEnabled);
+
+            ui.Click(Centre(roster.RuleButton));
+            Assert.Equal("BOLD", roster.RuleButton.Text);
+            var protection = Simpiens.Simulation.Items.ItemCategory.Protection;
+            bool inStock = sim.ActiveStalls[0].SellStockOf(Simpiens.Simulation.Economy.ItemType.HazardGear) > 0;
+            ui.Click(Centre(roster.DispatchButton));
+            ui.Ticks(1);
+            ui.Frame();
+            Assert.True(guild.HasExpedition && guild.Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
+            if (inStock) Assert.True(Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(game.Session.Simulation.Host.CrawlerStates.First(s => s.AgentId == recruit).Inventory, protection), "Outfitted from stock.");
+            Assert.False(roster.DispatchButton.IsEnabled);
+            Assert.True(roster.RecallButton.IsEnabled);
+
+            Assert.True(dashboard.CloseWindow());
+            dashboard.TogglePanels(); // the map
+            ui.Frame();
+            Assert.True(dashboard.Tracker.IsShown, "The tracker shows on the map while the party is out.");
+            Assert.Matches("^(Mustering at the stall|Marching to The Drowned Gallery) · ", dashboard.Tracker.StageText);
+
+            dashboard.TogglePanels();
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(roster.RecallButton));
+            ui.Ticks(1);
+            Assert.True(!guild.HasExpedition || guild.Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
+        }
+
+        [Fact]
+        public void TheExpeditionTrackerLooksAsRecorded()
+        {
+            var (ui, _) = RecruitFromTheDossier();
+            var dashboard = ui.Game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.DispatchButton));
+            ui.Ticks(100);
+            dashboard.CloseWindow();
+            dashboard.TogglePanels();
+            ui.Frame();
+            Assert.True(dashboard.Tracker.IsShown);
+            RenderTests.CompareWithReference("render-outpost-expedition", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
+        }
+
         [Fact]
         public void TheGuildRosterLooksAsRecorded()
         {

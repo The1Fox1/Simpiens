@@ -477,8 +477,8 @@ namespace Simpiens.Simulation.Guild
             return ItemType.None;
         }
 
-        /// <summary>What the members with the party gathered of the haul's item since they were sent.</summary>
-        private int Gathered(IGuildHost host)
+        /// <summary>What the members with the party gathered of the haul's item since they were sent (the tracker's haul).</summary>
+        public int Gathered(IGuildHost host)
         {
             int gathered = 0;
             for (int i = 0; i < _party.Count; i++)

@@ -127,7 +127,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
     - **Throughput** (12 crawlers, alternating with `main`): the branch 10,351–10,633 ticks a second, `main` 8,551–8,940.
     - **Jitter (F5):** 0 on seeds 1–120 since G5.2, and 0 on the gate seeds with parties out.
     - **The frame-time gate** passes. Nothing in the client draws an expedition yet; it is re-measured at G5.6.
-- [ ] **G5.6 The client:** the party builder, the tracker, the chronicle; tests and renders.
+- [x] **G5.6 The client:** the party builder, the tracker, the chronicle; tests and renders. Done 2026-10-31.
+  - **The party builder,** in the roster window (now 820 wide): each card's GOES/STAYS toggle; the target, cycling the charted hazard sectors and starting on the most dangerous; the goal; the retreat rule with its health spelled out; outfit from stock; DISPATCH, with the rule's reason when it can't; RECALL. While a party is out the window shows its stage, time out and haul.
+  - **The tracker:** a compact panel at the top right of the map view while a party is out: target and rule, stage and time out, the haul so far, each member's health and part.
+  - **The chronicle:** sent, turned back, came back with a haul, downed, in words (`ExpeditionTests.TheChronicleTellsTheExpedition`).
+  - **Models:** `ExpeditionModel` beside `GuildModel`; the views decide nothing. `GuildService.Gathered` is public for the tracker's haul.
 - [ ] **G5.7 Finish, as G4.10.** The economy model gains the shares and the chamber's glowstone. Then the PR into `main`.
   - **Stop for the producer's look at G5** before G6 starts.
 

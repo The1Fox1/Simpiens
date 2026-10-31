@@ -21,6 +21,8 @@ namespace Simpiens.Client.Ui
             Header = new HeaderBar(icons);
             Panels = new DashboardPanels(model, icons);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
+            Tracker = new ExpeditionTracker(model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
+            ui.Root.Children.Add(Tracker.Root);
             Merchant = new MerchantWindow(model.Merchant, icons);
             Merchant.Window.CloseButton.Click += (_, _) => { Model.Merchant.Close(); Refresh(); };
             ui.Root.Children.Add(Merchant.Window.Veil);
@@ -51,6 +53,9 @@ namespace Simpiens.Client.Ui
         public MerchantWindow Merchant { get; }
         public BountyBoardWindow Bounties { get; }
         public GuildWindow Guild { get; }
+
+        /// <summary>The expedition tracker on the map view while a party is out (Epic 10 G5).</summary>
+        public ExpeditionTracker Tracker { get; }
         public SessionSwitchBar Sessions { get; }
 
         /// <summary>True unless a hard cutscene hid it.</summary>
@@ -66,6 +71,7 @@ namespace Simpiens.Client.Ui
             Merchant.Window.IsShown = false;
             Bounties.Window.IsShown = false;
             Guild.Window.IsShown = false;
+            Tracker.Root.Visible = false;
             Sessions.Root.Visible = false;
         }
 
@@ -114,6 +120,7 @@ namespace Simpiens.Client.Ui
             _bountiesWereOpen = Model.Bounties.IsOpen;
             Bounties.Bind();
             Guild.Bind();
+            Tracker.Bind(Model.Guild.Expedition, mapView: !Model.PanelsVisible);
             Sessions?.Bind();
         }
     }
