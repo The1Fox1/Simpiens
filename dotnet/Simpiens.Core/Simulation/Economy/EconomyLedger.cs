@@ -20,11 +20,11 @@ namespace Simpiens.Simulation.Economy
         private readonly Dictionary<string, uint> _sinkTotals = new Dictionary<string, uint>(8);
         private uint _purchases, _purchaseGold, _sales, _saleGold;
         private uint _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold;
-        private uint _fees, _feeGold, _wages, _wageGold;
+        private uint _fees, _feeGold, _wages, _wageGold, _shares, _shareGold;
 
         public EconomyFlowTotals Flows => new EconomyFlowTotals(
             _purchases, _purchaseGold, _sales, _saleGold, _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold,
-            _fees, _feeGold, _wages, _wageGold);
+            _fees, _feeGold, _wages, _wageGold, _shares, _shareGold);
 
         public uint GetFaucetTotal(string faucetName) =>
             faucetName != null && _faucetTotals.TryGetValue(faucetName, out var total) ? total : 0u;
@@ -161,6 +161,11 @@ namespace Simpiens.Simulation.Economy
                 _fees++;
                 _feeGold += amount;
             }
+            else if (kind == StallPayment.GuildShare)
+            {
+                _shares++;
+                _shareGold += amount;
+            }
             else
             {
                 _wages++;
@@ -193,7 +198,7 @@ namespace Simpiens.Simulation.Economy
             _sinkTotals.Clear();
             _purchases = _purchaseGold = _sales = _saleGold = 0;
             _escrowLockedGold = _escrowReleasedGold = _escrowRefundedGold = 0;
-            _fees = _feeGold = _wages = _wageGold = 0;
+            _fees = _feeGold = _wages = _wageGold = _shares = _shareGold = 0;
         }
 
         public void CaptureTo(LedgerSave save)
@@ -215,7 +220,9 @@ namespace Simpiens.Simulation.Economy
                 Fees = _fees,
                 FeeGold = _feeGold,
                 Wages = _wages,
-                WageGold = _wageGold
+                WageGold = _wageGold,
+                Shares = _shares,
+                ShareGold = _shareGold
             };
 
             var escrows = new EscrowRecord[_bountyEscrows.Count];
@@ -252,6 +259,8 @@ namespace Simpiens.Simulation.Economy
             _feeGold = t.FeeGold;
             _wages = t.Wages;
             _wageGold = t.WageGold;
+            _shares = t.Shares;
+            _shareGold = t.ShareGold;
 
             if (save.Escrows != null)
             {

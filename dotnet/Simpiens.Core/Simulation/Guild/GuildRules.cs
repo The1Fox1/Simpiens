@@ -1,6 +1,8 @@
 using Simpiens.Cognition;
 using Simpiens.Cognition.Planning;
+using Simpiens.Intervention;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 
 namespace Simpiens.Simulation.Guild
 {
@@ -33,7 +35,25 @@ namespace Simpiens.Simulation.Guild
             CannotPayFee = 10,
             NotMember = 11,
             /// <summary>A wage of 0, or above the most a wage may be.</summary>
-            WageOutOfRange = 12
+            WageOutOfRange = 12,
+
+            // Expeditions (Epic 10 G5)
+            /// <summary>No party is out to recall.</summary>
+            NoExpedition = 13,
+            /// <summary>A party is already out: one at a time (D7).</summary>
+            ExpeditionOut = 14,
+            /// <summary>Not one to four distinct members of the guild, none downed.</summary>
+            BadParty = 15,
+            /// <summary>Not a charted hazard sector with nodes to work.</summary>
+            BadTarget = 16,
+            /// <summary>A goal of 0, or above the most an order may ask.</summary>
+            BadGoal = 17,
+            /// <summary>The item isn't something worn.</summary>
+            NotGear = 18,
+            /// <summary>The stall has none of it to give.</summary>
+            OutOfStock = 19,
+            /// <summary>The member already wears something in that slot.</summary>
+            AlreadyWearing = 20
         }
 
         /// <summary>The least wage per caravan visit a crawler of <paramref name="crawler"/>'s greed signs for: the reservation wage times its greed factor.</summary>
@@ -81,6 +101,49 @@ namespace Simpiens.Simulation.Guild
 
         public static Check CheckDismiss(GuildService guild, EntityId crawlerId) => guild.IsMember(crawlerId) ? Check.Ok : Check.NotMember;
 
+        /// <summary>
+        /// Whether a party may be sent (Epic 10 G5, D7): none out already; one to four distinct members, none downed; a
+        /// charted hazard sector whose nodes yield <paramref name="sectorYield"/>; a goal within the most an order asks; a
+        /// stall to muster at and bring the haul to. Checked in that order.
+        /// </summary>
+        public static Check CheckDispatch(GuildService guild, IGuildHost host, in DispatchExpeditionCommand order, ItemType sectorYield, in GuildTuning tuning)
+        {
+            if (guild.HasExpedition) return Check.ExpeditionOut;
+            if (order.Count < 1 || order.Count > DispatchExpeditionCommand.MaxMembers) return Check.BadParty;
+            for (int i = 0; i < order.Count; i++)
+            {
+                var id = order[i];
+                if (!guild.IsMember(id) || !host.TryGetCrawler(id, out var crawler) || crawler.IsDowned) return Check.BadParty;
+                for (int j = 0; j < i; j++)
+                {
+                    if (order[j] == id) return Check.BadParty;
+                }
+            }
+            if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
+                || sectorYield == ItemType.None)
+            {
+                return Check.BadTarget;
+            }
+            if (order.Goal == 0 || order.Goal > tuning.Expedition.MaxGoal) return Check.BadGoal;
+            if (host.ActiveStalls.Count == 0) return Check.NoStall;
+            return Check.Ok;
+        }
+
+        public static Check CheckRecall(GuildService guild) => guild.HasExpedition ? Check.Ok : Check.NoExpedition;
+
+        /// <summary>Whether a member may be given <paramref name="item"/> from the stall's stock (D12): a member, something worn, in stock, its slot free.</summary>
+        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item)
+        {
+            if (!guild.IsMember(crawlerId)) return Check.NotMember;
+            var equipment = ItemCatalog.Get(item)?.Equipment;
+            if (equipment == null) return Check.NotGear;
+            if (host.ActiveStalls.Count == 0) return Check.NoStall;
+            if (host.ActiveStalls[0].SellStockOf(item) < 1) return Check.OutOfStock;
+            if (!host.TryGetCrawler(crawlerId, out var crawler) || crawler.Inventory == null) return Check.NoCrawler;
+            if (!crawler.Inventory.GetEquipped(equipment.Slot).IsEmpty) return Check.AlreadyWearing;
+            return Check.Ok;
+        }
+
         /// <summary>A player-facing reason for a refusal (allocates; call only on the refusal path).</summary>
         public static string Describe(Check check, string name, AgentState crawler, GuildService guild, uint tick, in GuildTuning tuning)
         {
@@ -102,6 +165,14 @@ namespace Simpiens.Simulation.Guild
                 case Check.NoStall: return "There is no stall to pay the signing fee from.";
                 case Check.CannotPayFee: return $"The stall can't pay the {tuning.SigningFee}g signing fee.";
                 case Check.NotMember: return $"{name} isn't in the guild.";
+                case Check.NoExpedition: return "No party is out.";
+                case Check.ExpeditionOut: return "A party is already out: one at a time.";
+                case Check.BadParty: return $"Send one to {DispatchExpeditionCommand.MaxMembers} members of the guild, none of them downed.";
+                case Check.BadTarget: return "Send a party to a charted hazard sector with something to bring back.";
+                case Check.BadGoal: return $"Ask for 1 to {tuning.Expedition.MaxGoal}.";
+                case Check.NotGear: return "That isn't gear.";
+                case Check.OutOfStock: return "The stall has none in stock.";
+                case Check.AlreadyWearing: return $"{name} already wears gear.";
                 default: return string.Empty;
             }
         }

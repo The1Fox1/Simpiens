@@ -25,10 +25,16 @@ namespace Simpiens.Simulation.Economy
         public readonly uint Wages;
         public readonly uint WageGold;
 
+        /// <summary>Members' shares of expeditions' hauls, stall → member (Epic 10 G5, D13).</summary>
+        public readonly uint Shares;
+        public readonly uint ShareGold;
+
         public EconomyFlowTotals(uint purchases, uint purchaseGold, uint sales, uint saleGold,
             uint escrowLockedGold, uint escrowReleasedGold, uint escrowRefundedGold,
-            uint fees = 0, uint feeGold = 0, uint wages = 0, uint wageGold = 0)
+            uint fees = 0, uint feeGold = 0, uint wages = 0, uint wageGold = 0, uint shares = 0, uint shareGold = 0)
         {
+            Shares = shares;
+            ShareGold = shareGold;
             Fees = fees;
             FeeGold = feeGold;
             Wages = wages;

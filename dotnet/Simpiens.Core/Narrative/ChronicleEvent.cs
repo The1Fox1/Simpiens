@@ -37,7 +37,11 @@ namespace Simpiens.Narrative
         GuildJoined = 27, // Epic 10 G4
         GuildUnpaid = 28,
         GuildQuit = 29,
-        GuildDismissed = 30
+        GuildDismissed = 30,
+        ExpeditionSent = 31, // Epic 10 G5: ActorA is the party's first member; the extra is the party's size, or the haul
+        ExpeditionTurnedBack = 32,
+        ExpeditionReturned = 33,
+        ExpeditionDowned = 34
     }
 
     /// <summary>

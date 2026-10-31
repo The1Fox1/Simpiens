@@ -6,6 +6,7 @@ using Simpiens.Diagnostics;
 using Simpiens.Narrative;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
+using Simpiens.Simulation.World;
 using ZLogger;
 
 namespace Simpiens.Simulation.Guild
@@ -14,6 +15,14 @@ namespace Simpiens.Simulation.Guild
     public interface IGuildHost
     {
         bool TryGetCrawler(EntityId crawlerId, out AgentState crawler);
+
+        // The map, for expeditions (Epic 10 G5)
+        bool TryGetSector(byte sectorId, out SectorDefinition sector);
+        bool IsSectorCharted(byte sectorId);
+        /// <summary>The map's resource nodes in a sector, ready or dormant, by id.</summary>
+        void NodesIn(byte sectorId, List<EntityId> into);
+        bool TryGetResource(EntityId resourceId, out ResourceData resource);
+
         IGroupRegistry Groups { get; }
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
         void UpdateStall(TradeStallData stall);
@@ -30,7 +39,7 @@ namespace Simpiens.Simulation.Guild
     /// arrive typed, applied on the tick in queue order; <see cref="GuildRules"/> decides each and explains a refusal.
     /// Main thread.
     /// </summary>
-    public sealed class GuildService
+    public sealed partial class GuildService
     {
         private readonly List<GuildContract> _members = new List<GuildContract>(8);
         private readonly Dictionary<EntityId, uint> _cooldowns = new Dictionary<EntityId, uint>(8);
@@ -237,6 +246,7 @@ namespace Simpiens.Simulation.Guild
             _members.Clear();
             _cooldowns.Clear();
             _groupId = 0;
+            ResetExpedition();
         }
 
         public void CaptureTo(GuildSave save)
@@ -249,6 +259,8 @@ namespace Simpiens.Simulation.Guild
             foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
             Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
             save.Cooldowns = cooldowns;
+            save.Expedition = _expedition;
+            save.Party = _party.ToArray();
         }
 
         public void RestoreFrom(GuildSave save)
@@ -261,6 +273,8 @@ namespace Simpiens.Simulation.Guild
             {
                 for (int i = 0; i < save.Cooldowns.Length; i++) _cooldowns[save.Cooldowns[i].Id] = save.Cooldowns[i].Tick;
             }
+            _expedition = save.Expedition;
+            if (save.Party != null) _party.AddRange(save.Party);
         }
 
         private int IndexOf(EntityId crawlerId)

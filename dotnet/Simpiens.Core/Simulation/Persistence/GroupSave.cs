@@ -28,9 +28,10 @@ namespace Simpiens.Simulation.Persistence
         public byte GroupId;
         public GroupType Type;
         public byte Cohesion;
-        private byte _pad;
+        /// <summary>The group it belongs to, or 0 (Epic 10 G5, format 9; the byte was padding before).</summary>
+        public byte ParentGroupId;
 
-        public GroupRecord(byte groupId, GroupType type, EntityId leaderId, Vec2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount)
+        public GroupRecord(byte groupId, GroupType type, EntityId leaderId, Vec2 anchorPosition, in GroupDirective directive, byte cohesion, int memberStart, int memberCount, byte parentGroupId = 0)
         {
             LeaderId = leaderId;
             AnchorPosition = anchorPosition;
@@ -40,7 +41,7 @@ namespace Simpiens.Simulation.Persistence
             GroupId = groupId;
             Type = type;
             Cohesion = cohesion;
-            _pad = 0;
+            ParentGroupId = parentGroupId;
         }
     }
 

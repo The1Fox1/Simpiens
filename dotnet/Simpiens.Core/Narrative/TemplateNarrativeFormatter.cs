@@ -126,6 +126,18 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.GuildDismissed:
                     return $"{actorA} was let go from the guild.";
 
+                case ChronicleEventType.ExpeditionSent:
+                    return (int)evt.ExtraData > 1 ? $"{actorA} and {(int)evt.ExtraData - 1} more set out for {sector}." : $"{actorA} set out alone for {sector}.";
+
+                case ChronicleEventType.ExpeditionTurnedBack:
+                    return $"{actorA}'s party turned back from {sector}.";
+
+                case ChronicleEventType.ExpeditionReturned:
+                    return $"{actorA}'s party came back from {sector} with a haul of {(int)evt.ExtraData}.";
+
+                case ChronicleEventType.ExpeditionDowned:
+                    return $"{actorA} was downed in {sector} on an expedition.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

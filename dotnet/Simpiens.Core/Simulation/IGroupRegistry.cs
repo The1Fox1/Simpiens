@@ -11,7 +11,8 @@ namespace Simpiens.Simulation
     {
         int ActiveGroupCount { get; }
 
-        byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100);
+        /// <param name="parentGroupId">The group the new one belongs to (an expedition's party, its guild; Epic 10 G5), or 0.</param>
+        byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100, byte parentGroupId = 0);
         bool DisbandGroup(byte groupId);
         bool TryGetGroup(byte groupId, out GroupData groupData);
 

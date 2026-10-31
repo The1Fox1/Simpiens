@@ -120,6 +120,27 @@ namespace Simpiens.Simulation
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
 
+        bool Simpiens.Simulation.Guild.IGuildHost.TryGetSector(byte sectorId, out SectorDefinition sector)
+        {
+            sector = default;
+            return _sectors != null && _sectors.TryGetSector(sectorId, out sector);
+        }
+
+        bool Simpiens.Simulation.Guild.IGuildHost.IsSectorCharted(byte sectorId) => _sectors != null && _sectors.IsExplored(sectorId);
+
+        /// <summary>The resource nodes in a sector, ready (in the registry) or dormant (set aside until they regrow), by id.</summary>
+        void Simpiens.Simulation.Guild.IGuildHost.NodesIn(byte sectorId, List<EntityId> into)
+        {
+            into.Clear();
+            foreach (var kvp in _resources)
+            {
+                var node = _worldRegistry?.GetEntity(kvp.Key);
+                if (node == null) _dormantNodes.TryGetValue(kvp.Key, out node);
+                if (node != null && GetSectorForPosition(node.Position) == sectorId) into.Add(kvp.Key);
+            }
+            into.Sort((a, b) => a.CompareTo(b)); // the dictionary's order is not the simulation's
+        }
+
         TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
@@ -749,6 +770,19 @@ namespace Simpiens.Simulation
                 case InfluenceCommandType.SetWage:
                     Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
                     break;
+
+                // Expeditions (Epic 10 G5)
+                case InfluenceCommandType.DispatchExpedition:
+                    Guild.Dispatch(this, influence.DispatchExpedition, currentTick);
+                    break;
+
+                case InfluenceCommandType.RecallExpedition:
+                    Guild.Recall(this, currentTick);
+                    break;
+
+                case InfluenceCommandType.GiveGear:
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick);
+                    break;
             }
         }
 
@@ -1294,6 +1328,9 @@ namespace Simpiens.Simulation
 
             // Supply faucets (resource regrowth, stall caravan) in a fixed slot after intent execution
             _supplyService?.Tick(currentTick, this);
+
+            // The guild's expedition moves on from where the intents left its members (Epic 10 G5)
+            Guild.TickExpedition(this, currentTick);
 
             // Evaluate Hearth Dynamics, Proximity Bonding & Succession every 50 ticks
             if (currentTick % 50 == 0)

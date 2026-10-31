@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Guild;
 namespace Simpiens.Intervention
 {
     public enum InfluenceCommandType : byte
@@ -13,7 +14,11 @@ namespace Simpiens.Intervention
         /// <summary>The guild (Epic 10 G4): sign a crawler on at a wage, let a member go, set a member's wage.</summary>
         Recruit = 5,
         Dismiss = 6,
-        SetWage = 7
+        SetWage = 7,
+        /// <summary>Expeditions (Epic 10 G5): send a party, call it home, give a member gear from the stall's stock.</summary>
+        DispatchExpedition = 8,
+        RecallExpedition = 9,
+        GiveGear = 10
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -50,6 +55,61 @@ namespace Simpiens.Intervention
         {
             CrawlerId = crawlerId;
             Wage = wage;
+        }
+    }
+
+    /// <summary>
+    /// The player sends a party of guild members out (Epic 10 G5, D7): one to <see cref="MaxMembers"/> members, the
+    /// sector, how many of what its nodes yield to bring back, and when to turn back. Zero-allocation: four fields.
+    /// </summary>
+    public readonly struct DispatchExpeditionCommand
+    {
+        public const int MaxMembers = 4;
+
+        public readonly byte TargetSectorId;
+        public readonly byte Goal;
+        public readonly RetreatRule Rule;
+        public readonly int Count;
+        private readonly EntityId _member0, _member1, _member2, _member3;
+
+        public DispatchExpeditionCommand(byte targetSectorId, byte goal, RetreatRule rule, ReadOnlySpan<EntityId> members)
+        {
+            if (members.Length > MaxMembers) throw new ArgumentException($"A party has at most {MaxMembers} members.", nameof(members));
+            TargetSectorId = targetSectorId;
+            Goal = goal;
+            Rule = rule;
+            Count = members.Length;
+            _member0 = Count > 0 ? members[0] : default;
+            _member1 = Count > 1 ? members[1] : default;
+            _member2 = Count > 2 ? members[2] : default;
+            _member3 = Count > 3 ? members[3] : default;
+        }
+
+        public EntityId this[int index] => index switch
+        {
+            0 => _member0,
+            1 => _member1,
+            2 => _member2,
+            3 => _member3,
+            _ => throw new ArgumentOutOfRangeException(nameof(index)),
+        };
+    }
+
+    /// <summary>The player calls the party home (D7). One expedition at a time, so it names none.</summary>
+    public readonly struct RecallExpeditionCommand
+    {
+    }
+
+    /// <summary>The player gives a guild member gear from the stall's stock (D12): no gold changes hands.</summary>
+    public readonly struct GiveGearCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly ItemType Item;
+
+        public GiveGearCommand(EntityId crawlerId, ItemType item)
+        {
+            CrawlerId = crawlerId;
+            Item = item;
         }
     }
 
@@ -187,6 +247,8 @@ namespace Simpiens.Intervention
         public readonly RecruitCommand Recruit;
         public readonly DismissCommand Dismiss;
         public readonly SetWageCommand SetWage;
+        public readonly DispatchExpeditionCommand DispatchExpedition;
+        public readonly GiveGearCommand GiveGear;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -197,6 +259,9 @@ namespace Simpiens.Intervention
             InfluenceCommandType.Recruit => "Recruit",
             InfluenceCommandType.Dismiss => "Dismiss",
             InfluenceCommandType.SetWage => "SetWage",
+            InfluenceCommandType.DispatchExpedition => "DispatchExpedition",
+            InfluenceCommandType.RecallExpedition => "RecallExpedition",
+            InfluenceCommandType.GiveGear => "GiveGear",
             _ => string.Empty
         };
 
@@ -209,8 +274,12 @@ namespace Simpiens.Intervention
             in CalmCrawlerCommand calmCrawler = default,
             in RecruitCommand recruit = default,
             in DismissCommand dismiss = default,
-            in SetWageCommand setWage = default)
+            in SetWageCommand setWage = default,
+            in DispatchExpeditionCommand dispatchExpedition = default,
+            in GiveGearCommand giveGear = default)
         {
+            DispatchExpedition = dispatchExpedition;
+            GiveGear = giveGear;
             SourceId = sourceId;
             CommandType = commandType;
             PostBounty = postBounty;
@@ -235,6 +304,21 @@ namespace Simpiens.Intervention
         public static InfluenceEvent CreateSetWage(string sourceId, EntityId crawlerId, ushort wage)
         {
             return new InfluenceEvent(sourceId, InfluenceCommandType.SetWage, setWage: new SetWageCommand(crawlerId, wage));
+        }
+
+        public static InfluenceEvent CreateDispatchExpedition(string sourceId, in DispatchExpeditionCommand cmd)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.DispatchExpedition, dispatchExpedition: cmd);
+        }
+
+        public static InfluenceEvent CreateRecallExpedition(string sourceId)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition);
+        }
+
+        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)

@@ -112,9 +112,9 @@ namespace Simpiens.Testing.Persistence
             var d = new EntityId(4u, 0u, 0u, 1u);
             byte first = groups.CreateGroup(GroupType.Settlement, A, new Vec2(2f, 3f), 90);
             groups.AddMember(first, d);
-            byte second = groups.CreateGroup(GroupType.TemporaryParty, C, new Vec2(-1f, 0f), 40);
-            groups.SetDirective(second, new GroupDirective(DirectiveType.DefendAnchor, second, C, new Vec2(-1f, 0f), default, 5u, 900u));
             byte third = groups.CreateGroup(GroupType.FactionGuild, B, new Vec2(5f, 5f), 70);
+            byte second = groups.CreateGroup(GroupType.TemporaryParty, C, new Vec2(-1f, 0f), 40, parentGroupId: third); // a party inside the guild (Epic 10 G5)
+            groups.SetDirective(second, new GroupDirective(DirectiveType.DefendAnchor, second, C, new Vec2(-1f, 0f), default, 5u, 900u));
             groups.DisbandGroup(first); // slot 1 is free; groups 2 and 3 are active
             groups.AddMember(second, d, RoleRank.Officer, 55); // d in a party and a guild at once (Epic 10 G4, D1)
             groups.AddMember(third, d, RoleRank.Follower, 65);
@@ -132,6 +132,7 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(bytes, SaveSerializer.Serialize(again), "A group registry restored from its save");
             Assert(fresh.ActiveGroupCount == 2, $"Two groups are active after the load ({fresh.ActiveGroupCount}).");
             Assert(fresh.TryGetGroup(second, out var g2) && g2.LeaderId == C && g2.ActiveDirective.Type == DirectiveType.DefendAnchor, "Group ids, leaders and directives came back.");
+            Assert(g2.ParentGroupId == third && fresh.TryGetGroup(third, out var g3) && g3.ParentGroupId == 0, "A party's guild came back (Epic 10 G5).");
             Assert(fresh.TryGetOnlyMembership(B, out var m) && m.GroupId == third && m.Role == RoleRank.Leader, "Memberships came back.");
             var several = fresh.GetMemberships(d);
             Assert(several.Count == 2 && fresh.TryGetMembership(d, second, out var inParty) && inParty.Role == RoleRank.Officer && inParty.Allegiance == 55
@@ -150,7 +151,18 @@ namespace Simpiens.Testing.Persistence
             {
                 GroupId = 3,
                 Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
-                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } }
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } },
+                // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part
+                Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
+                {
+                    DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
+                    Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work
+                },
+                Party = new[]
+                {
+                    new Simpiens.Simulation.Guild.ExpeditionMember(C, 2) { NodeId = B },
+                    new Simpiens.Simulation.Guild.ExpeditionMember(A, 0) { NodeId = B, Status = Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed }
+                }
             };
             guild.RestoreFrom(save);
             var again = new GuildSave();
@@ -158,10 +170,13 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
             Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
             Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
+            Assert(guild.HasExpedition && guild.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && guild.Expedition.StageTick == 160u
+                && guild.Party.Count == 2 && guild.Party[0].CarriedAtDispatch == 2 && guild.Party[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
+                "The expedition comes back mid-stage, its party in the order sent (Epic 10 G5).");
             guild.RestoreFrom(null);
-            Assert(guild.GroupId == 0 && guild.Members.Count == 0, "A save made before the guild existed loads with none.");
+            Assert(guild.GroupId == 0 && guild.Members.Count == 0 && !guild.HasExpedition && guild.Party.Count == 0, "A save made before the guild existed loads with none.");
 
-            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns (Epic 10 G4.6).");
+            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, an expedition mid-stage (Epic 10 G4.6, G5.3).");
         }
 
         private void ValidateChronicleRoundTrips()

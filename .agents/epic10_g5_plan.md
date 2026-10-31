@@ -88,7 +88,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
     - The guild window tests wait for the first resident to qualify (t4101 on the new floor) instead of naming a tick.
     - Seeds 1–120 on the new floor: 119/120 (43: trust, F3); jitter 0.
     - `AnomalyDetectorTests.ObservingAllocatesNothingOnceWarm` failed once in 5 runs of the whole solution (a per-thread allocation count) and passed alone and in 3 reruns. Watch it; if it recurs, find what allocates.
-- [ ] **G5.3 Giving gear (D12); the party, its directive and the expedition's stages (D7, D9):**
+- [x] **G5.3 Giving gear (D12); the party, its directive and the expedition's stages (D7, D9):** done 2026-10-31. Deviations:
+  - **The tests** are `ExpeditionTests` in `Simpiens.Core.Tests`, on the real floor (as `HazardGearTests`), driving the guild's stage machine with members put in place. A Testing.Core validator would have no floor, sectors or nodes.
+  - **The hand-over** happens in the stage machine, on the main thread, when the party is back at the stall, not through a delivery intent: nothing for cognition to plan, and it can't be pre-empted. A member not home by the way home's time keeps what it carries.
+  - **The march** ends when every member stands in the target sector: maps have no door data per sector.
+  - **Safety limits:** the march, the work and the way home each have a time limit (3, 3 and 4 minutes), so a party that can't get on comes home. There is no Done stage: delivering ends the expedition.
+  - **The haul** is what the target sector's nodes yield (code names no item), counted above what each member carried when sent.
   - save format 9;
   - `ExpeditionValidator`:
     - the stages in order, recall, the retreat rule, a downed member;
