@@ -120,6 +120,8 @@ namespace Simpiens.Simulation
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
 
+        TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
+
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
         public string FirstIntentFault { get; private set; }

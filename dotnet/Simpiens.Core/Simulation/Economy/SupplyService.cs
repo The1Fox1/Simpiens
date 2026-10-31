@@ -212,8 +212,9 @@ namespace Simpiens.Simulation.Economy
             {
                 var stall = BuyExports(_stallScratch[i], host);
                 stall = PayUpkeep(stall, currentTick, host);
-                // What the caravan supplies: food first, then the rest, each in id order
+                // What the caravan supplies: food first, then the guild's wages (Epic 10 G4, D3), then the rest, each in id order
                 stall = RestockSupplies(stall, currentTick, host, food: true);
+                stall = host.PayGuildWages(stall, currentTick);
                 RestockSupplies(stall, currentTick, host, food: false);
             }
         }

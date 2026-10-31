@@ -197,7 +197,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - The three commands, their rule and the fee.
   - The contracts' save block.
   - **`GuildValidator`:** the rule and each refusal, the fee, four at most, the cooldown, dismissal, and a recruit keeping its settlement.
-- [ ] **G4.7 Wages and quitting (D3, D4):**
+- [x] **G4.7 Wages and quitting (D3, D4):** (the measurement needs the scripted player, so it runs at G4.8)
   - the visit's wages; trust and allegiance; unpaid visits; quitting; the chronicle;
   - `GuildWageValidator`: paid, unpaid, quitting after two, the trust floor, the ledger.
   - **Measure** a guild of four at 5g, played by the scripted player on the soak's seeds: the treasury, the members' purses (M4) and trust.

@@ -34,6 +34,7 @@ namespace Simpiens.Simulation.Guild
     {
         private readonly List<GuildContract> _members = new List<GuildContract>(8);
         private readonly Dictionary<EntityId, uint> _cooldowns = new Dictionary<EntityId, uint>(8);
+        private readonly List<GuildContract> _quitting = new List<GuildContract>(4);
         private byte _groupId;
 
         /// <summary>The guild's group, or 0 before the first recruit.</summary>
@@ -140,6 +141,72 @@ namespace Simpiens.Simulation.Guild
             _members[i] = _members[i].WithWage(wage);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)}'s guild wage is now {wage}g a visit");
             return GuildRules.Check.Ok;
+        }
+
+        /// <summary>
+        /// The caravan's visit pays every member's wage from <paramref name="stall"/>, in join order, each in full or not at
+        /// all (D3): no debt, as with upkeep. A paid member's trust, warmth and allegiance rise (the payment is an
+        /// interaction, so its trust doesn't drift back); an unpaid one's fall, and its unpaid visits count up. Then a
+        /// member quits below the trust floor or after too many unpaid visits in a row (D4), leaving the guild only.
+        /// Wages are transfers from the stall to the member, conserved. Returns the stall as it is after.
+        /// </summary>
+        public TradeStallData PayWages(IGuildHost host, TradeStallData stall, uint tick)
+        {
+            // The guild pays from the stall it pays its fees from (the first), once a visit
+            if (_members.Count == 0 || host.ActiveStalls.Count == 0 || stall.StallEntityId != host.ActiveStalls[0].StallEntityId) return stall;
+            var tuning = Tuning(host);
+            var groups = host.Groups;
+            bool changed = false;
+            for (int i = 0; i < _members.Count; i++)
+            {
+                var contract = _members[i];
+                if (!host.TryGetCrawler(contract.CrawlerId, out var member)) continue;
+                bool paid = stall.TreasuryGold >= contract.Wage && member.Inventory != null;
+                if (paid)
+                {
+                    if (host.EconomyLedger != null) host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, member.Inventory, contract.Wage, StallPayment.GuildWage);
+                    else
+                    {
+                        stall = stall.WithTreasury(stall.TreasuryGold - contract.Wage);
+                        member.Inventory.AddGold(contract.Wage);
+                    }
+                    changed = true;
+                    member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                    groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.PaidAllegiance);
+                    _members[i] = contract.WithUnpaidVisits(0);
+                }
+                else
+                {
+                    member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                    groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.UnpaidAllegiance);
+                    _members[i] = contract.WithUnpaidVisits((byte)Math.Min(byte.MaxValue, contract.UnpaidVisits + 1));
+                    SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} went unpaid ({contract.Wage}g; the treasury holds {stall.TreasuryGold}g), {_members[i].UnpaidVisits} visit(s) in a row");
+                    host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.GuildUnpaid, contract.CrawlerId, WorldRegistry.PlayerEntityId,
+                        host.GetSectorForPosition(member.Position), tick, ChronicleIntensity.Notable, contract.Wage));
+                }
+                if (groups != null) member.Memberships = groups.GetMemberships(contract.CrawlerId);
+            }
+            if (changed) host.UpdateStall(stall);
+
+            // Quitting, in join order: below the trust floor, or after too many unpaid visits in a row (D4)
+            _quitting.Clear();
+            for (int i = 0; i < _members.Count; i++)
+            {
+                var contract = _members[i];
+                if (!host.TryGetCrawler(contract.CrawlerId, out var member)) continue;
+                var (trust, _) = GuildRules.Standing(member, tick);
+                if (trust < tuning.QuitTrust || contract.UnpaidVisits >= tuning.MaxUnpaidVisits) _quitting.Add(contract);
+            }
+            for (int i = 0; i < _quitting.Count; i++)
+            {
+                var contract = _quitting[i];
+                host.TryGetCrawler(contract.CrawlerId, out var member);
+                Leave(host, contract.CrawlerId, tick, tuning);
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(contract.CrawlerId)} quit the guild (trust {GuildRules.Standing(member, tick).Trust}, {contract.UnpaidVisits} unpaid visit(s) in a row)");
+                host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.GuildQuit, contract.CrawlerId, WorldRegistry.PlayerEntityId,
+                    host.GetSectorForPosition(member.Position), tick, ChronicleIntensity.Dramatic));
+            }
+            return stall;
         }
 
         /// <summary>Takes a member out of the guild (quitting or dismissal): its contract ends, it leaves the guild's group only, and it can't sign again for a while.</summary>
