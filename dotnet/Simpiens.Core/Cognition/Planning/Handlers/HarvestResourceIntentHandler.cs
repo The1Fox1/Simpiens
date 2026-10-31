@@ -244,9 +244,11 @@ namespace Simpiens.Cognition.Planning.Handlers
             return reachResult;
         }
 
-        /// <summary>Party members work a node side by side, without rivalry (Epic 10 G5): an expedition's party shares its seam.</summary>
+        /// <summary>
+        /// The guild's party works a node side by side, without rivalry (Epic 10 G5): one expedition at a time, so two crawlers
+        /// both with it are in the same party. Epic 8's other parties keep their rivalries.
+        /// </summary>
         private static bool SameParty(Simpiens.Cognition.AgentState a, Simpiens.Cognition.AgentState b) =>
-            a != null && b != null && a.Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var mine)
-            && b.Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var theirs) && mine.GroupId == theirs.GroupId;
+            a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
     }
 }
