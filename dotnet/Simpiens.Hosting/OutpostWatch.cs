@@ -7,6 +7,7 @@ using Simpiens.Core.Session;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Hosting
@@ -14,7 +15,8 @@ namespace Simpiens.Hosting
     /// <summary>
     /// What the Definition-of-Done scenarios watch on the live outpost, checked every tick of a headless run (Unity's
     /// scenarios check every frame): ledger conservation, starvation, the fog of war before the scout's report, the
-    /// seeded bounties, the first sale, the supply faucets and each crawler's trust toward the player. Nothing is
+    /// seeded bounties, the first sale, the supply faucets, each crawler's trust toward the player, and that every crawler
+    /// has a look and a name of its own (Epic UI-Beta B1). Nothing is
     /// injected: it only reads. Shared by the headless DoD tests and the console host's seed sweep.
     /// </summary>
     public sealed class OutpostWatch
@@ -90,6 +92,14 @@ namespace Simpiens.Hosting
         private readonly int _driftersAtStart;
         private readonly int _faultsAtStart;
 
+        /// <summary>
+        /// Who's who (Epic UI-Beta B1), every crawler present, drifters included: ticks a crawler had no valid look or no
+        /// given name, and ticks two living crawlers shared a name; any fails the day.
+        /// </summary>
+        public int Faceless, SharedNames;
+        public string FirstIdentityFault;
+        private readonly HashSet<string> _livingNames = new HashSet<string>();
+
         /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
         public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
 
@@ -164,9 +174,21 @@ namespace Simpiens.Hosting
             DriftersArrived = _sim.Host.DriftersArrived - _driftersAtStart;
             uint agentGold = 0;
             var present = _sim.Host.CrawlerStates;
+            _livingNames.Clear();
             for (int i = 0; i < present.Count; i++)
             {
-                if (present[i].Inventory != null) agentGold += (uint)present[i].Inventory.Gold;
+                var state = present[i];
+                if (state.Inventory != null) agentGold += (uint)state.Inventory.Gold;
+                if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
+                {
+                    Faceless++;
+                    FirstIdentityFault ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} has look [{state.Look}] and name '{state.GivenName}'";
+                }
+                else if (!_livingNames.Add(state.GivenName))
+                {
+                    SharedNames++;
+                    FirstIdentityFault ??= $"t{rel}: two living crawlers are named {state.GivenName}";
+                }
             }
             for (int i = 0; i < Crawlers.Count; i++)
             {
@@ -245,6 +267,7 @@ namespace Simpiens.Hosting
             if (Anomalies.JitterCount + Anomalies.PenetrationCount + Anomalies.BoundaryBreachCount > 0)
                 failures.Add($"{Anomalies.Summary()}; first {Anomalies.First}");
             if (IntentFaults > 0) failures.Add($"{IntentFaults} intent handlers threw (first {_sim.Simulation.FirstIntentFault})");
+            if (Faceless + SharedNames > 0) failures.Add($"who's who: {Faceless} faceless or nameless, {SharedNames} shared names (first {FirstIdentityFault})");
             return failures;
         }
 
