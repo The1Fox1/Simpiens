@@ -6,8 +6,10 @@ using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
 using Simpiens.Diagnostics;
+using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
@@ -39,6 +41,7 @@ namespace Simpiens.Core.Session
         private readonly IEntityIdAllocator _idAllocator;
         private readonly SimulationSettings _settings;
         private readonly IWorldMap _worldMap;
+        private readonly IAgentIdentityService _identity;
 
         private readonly ActionGraph _actionGraph;
         private readonly List<GoapGoal> _goals;
@@ -67,8 +70,10 @@ namespace Simpiens.Core.Session
             SimulationSettings settings,
             IEntityIdAllocator idAllocator,
             IWorldMap worldMap,
-            IReadOnlyList<ISessionDefinition> sessions)
+            IReadOnlyList<ISessionDefinition> sessions,
+            IAgentIdentityService identity = null)
         {
+            _identity = identity;
             _idAllocator = idAllocator;
             _worldMap = worldMap ?? new WorldMap(spatialPartition, null);
             _settings = settings;
@@ -223,6 +228,8 @@ namespace Simpiens.Core.Session
             _states.Clear();
             _names.Clear();
             _labels.Clear();
+            _departed.Clear();
+            _identity?.ClearCustomNames(); // ids repeat per seed: a name belongs to this session's crawlers only
             _registry?.Clear();
             _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn
             SimLog.ClearAgentNames();
@@ -345,6 +352,8 @@ namespace Simpiens.Core.Session
             string name = string.IsNullOrEmpty(saved.Name) ? $"SwarmAgent_{_crawlers.Count}" : saved.Name;
             var state = SpawnCrawler(record.Position, record.Id, name, saved.Label ?? name).State;
             state.RestoreRecord(record);
+            state.GivenName = saved.GivenName;
+            if (!string.IsNullOrEmpty(state.GivenName)) _identity?.RegisterCustomName(state.AgentId, state.GivenName);
 
             if (saved.Inventory?.Slots != null)
             {
@@ -373,7 +382,33 @@ namespace Simpiens.Core.Session
                 state.Personality = Simpiens.Cognition.Contracts.AgentPersonality.Generate(seed, state.AgentId);
                 SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} personality: {state.Personality.ToString()}");
             }
+            GiveIdentity(state);
             return state;
+        }
+
+        /// <summary>
+        /// A spawned or arriving crawler's look and given name (Epic UI-Beta B1), each on its own random salt, so no
+        /// decision, path or price changes. The name fits the body frame and is not one anyone this session has seen holds
+        /// (plan D5); the identity service shows it.
+        /// </summary>
+        private void GiveIdentity(AgentState state)
+        {
+            ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
+            state.Look = CrawlerLook.Generate(seed, state.AgentId);
+
+            var living = new HashSet<string>(_states.Count);
+            for (int i = 0; i < _states.Count; i++)
+            {
+                if (_states[i] != state && _states[i].GivenName != null) living.Add(_states[i].GivenName);
+            }
+            var seen = new HashSet<string>(living);
+            for (int i = 0; i < _departed.Count; i++)
+            {
+                if (_departed[i].GivenName != null) seen.Add(_departed[i].GivenName);
+            }
+            state.GivenName = GivenNames.Draw(seed, state.AgentId, state.Look.Frame, seen, living);
+            _identity?.RegisterCustomName(state.AgentId, state.GivenName);
+            SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} is {state.GivenName}: {state.Look.ToString()}");
         }
 
         /// <summary>A crawler with a given id and names: its state, its entity in the world and its tick.</summary>
@@ -425,6 +460,7 @@ namespace Simpiens.Core.Session
                 {
                     Name = _names[i],
                     Label = _labels[i],
+                    GivenName = state.GivenName,
                     Record = state.CaptureRecord(),
                     Inventory = new InventorySave(),
                     Memory = new MemorySave()

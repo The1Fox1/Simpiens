@@ -27,11 +27,24 @@ namespace Simpiens.Simulation.Persistence
         public PopulationSave Population { get; set; }
     }
 
-    /// <summary>The drifters' schedule: the next arrival's tick (-1: none) and how many have come.</summary>
+    /// <summary>
+    /// The drifters' schedule (the next arrival's tick, -1 for none, and how many have come), and everyone who has left,
+    /// sorted by id: the chronicle still names them after they go (Epic UI-Beta B1, plan D4).
+    /// </summary>
     [MemoryPackable]
     public sealed partial class PopulationSave
     {
         public long NextDrifterTick { get; set; }
         public int DriftersArrived { get; set; }
+        public DepartedSave[] Departed { get; set; }
+    }
+
+    /// <summary>A crawler who has left the session: who it was and what it looked like.</summary>
+    [MemoryPackable]
+    public sealed partial class DepartedSave
+    {
+        public EntityId Id { get; set; }
+        public string GivenName { get; set; }
+        public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
     }
 }

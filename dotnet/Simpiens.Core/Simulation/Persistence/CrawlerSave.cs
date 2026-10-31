@@ -16,6 +16,9 @@ namespace Simpiens.Simulation.Persistence
         /// <summary>The log's label ("Crawler3").</summary>
         public string Label { get; set; }
 
+        /// <summary>The crawler's given name (Epic UI-Beta B1), as the player knows it ("Maya").</summary>
+        public string GivenName { get; set; }
+
         public CrawlerRecord Record { get; set; }
         public InventorySave Inventory { get; set; }
         public MemorySave Memory { get; set; }
@@ -23,7 +26,7 @@ namespace Simpiens.Simulation.Persistence
 
     /// <summary>
     /// A crawler's plain state, written and read by <see cref="Cognition.AgentState"/>. Its current intent, plan, goal,
-    /// last decision and look are work in progress and are not saved: the crawler decides afresh after a load.
+    /// last decision and visual state are work in progress and are not saved: the crawler decides afresh after a load.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct CrawlerRecord
@@ -54,6 +57,7 @@ namespace Simpiens.Simulation.Persistence
         public uint DepartsAtTick;
         public float Health;
         public bool IsDowned;
+        public Simpiens.Simulation.People.CrawlerLook Look; // Epic UI-Beta B1 (format 7)
     }
 
     /// <summary>
