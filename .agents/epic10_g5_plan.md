@@ -61,7 +61,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 - **Trust (D8, D10):**
   - downed under orders: −10 trust;
   - back with a haul: +3 trust and +5 allegiance for each member.
-- **Save format 8:** the group record's parent and the expedition's record. As today, intents and plans aren't saved: after a load, members decide afresh from the stage.
+- **Save format 9:** the group record's parent and the expedition's record. As today, intents and plans aren't saved: after a load, members decide afresh from the stage.
 - **The scripted player:** it outfits from stock and dispatches once the guild is full and the seam is ready (as the player sees it on the map), with the retreat rule set to Steady.
 - **Client:**
   - **The party builder,** in the roster window: the members; the target, among the charted hazard sectors; the goal; the retreat rule; "outfit from stock". Then Dispatch, and Recall.
@@ -76,13 +76,20 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 ## 4. Steps
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
 - [x] **G5.1 Docs:** D7–D13 into the epic, the roadmap line, the focus file.
-- [ ] **G5.2 The chamber (D11):**
+- [x] **G5.2 The chamber (D11):** done 2026-10-31.
   - the map data and the severity limit on going alone;
   - the map validators.
   - G2's danger scenario and the gate seeds still pass, with no lone crawler in the chamber.
   - The map changed, so re-record the golden hashes and the renders, each in a commit of its own.
+  - **What happened:**
+    - **F5 first** (`48cce56`, golden `a65e443`). The bigger floor moved F5's jitter onto gate seeds 9 and 424242, at the same rate as `main`, so F5 was fixed here rather than measured at G5.5: panics skip a blocked waypoint within reach, or one out of sight behind a wall; walkers pass a waypoint whose next leg turns back. Seeds 1–120: jitter 8 → 1. The proof day's tolerance is gone. The epic's F5 entry has the detail.
+    - **The chamber** (`112cbf1`, golden `81e56c9`, renders `d1f0413`): 16 by 6 below the Sump, not 16 by 12. Floor 1 is 48 by 42, so it still fits the 1280x720 window whole at 1:1 top-down (48 by 48 crops 6%); isometric already pans. The camera's input tests moved to 1280x720: at 800x600 the crisp view now crops the floor.
+    - `Vitality.LoneHazardLimit` (4 a second) and `WouldEnter`. `OutpostWatch` fails the day on any crawler-tick alone in the chamber; G5.3 exempts a party on an expedition.
+    - The guild window tests wait for the first resident to qualify (t4101 on the new floor) instead of naming a tick.
+    - Seeds 1–120 on the new floor: 119/120 (43: trust, F3); jitter 0.
+    - `AnomalyDetectorTests.ObservingAllocatesNothingOnceWarm` failed once in 5 runs of the whole solution (a per-thread allocation count) and passed alone and in 3 reruns. Watch it; if it recurs, find what allocates.
 - [ ] **G5.3 Giving gear (D12); the party, its directive and the expedition's stages (D7, D9):**
-  - save format 8;
+  - save format 9;
   - `ExpeditionValidator`:
     - the stages in order, recall, the retreat rule, a downed member;
     - the haul and the shares, the ledger;
@@ -114,7 +121,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
 | Cognition reads guild state off the main thread. | The snapshot carries copies; only the main thread writes (§1A.1 #6). |
 | Four members planning on orders every tick. | Measured at G5.5. Planners per worker only on a measured need. |
 | The chamber moves the golden hashes and the renders. | Re-recorded in their own commits at G5.2. |
-| The save format changes (8). | Old saves are refused with a reason. |
+| The save format changes (9). | Old saves are refused with a reason. |
 
 ## 7. Deferred (G5)
 | Left out | Owner |
