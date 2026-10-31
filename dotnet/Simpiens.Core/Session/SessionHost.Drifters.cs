@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.World;
 using ZLogger;
@@ -27,12 +29,16 @@ namespace Simpiens.Core.Session
 
         private long _nextDrifterTick = -1;
         private int _driftersArrived;
+        private readonly List<DepartedCrawler> _departed = new List<DepartedCrawler>(16);
 
         /// <summary>A crawler walked out by the Road Gate and was removed: views drop what they drew for it.</summary>
         public event Action<AgentRuntime, WorldEntity> CrawlerDeparted;
 
         /// <summary>Drifters admitted since the session started (also numbers their names).</summary>
         public int DriftersArrived => _driftersArrived;
+
+        /// <summary>Everyone who has left this session, in the order they left (Epic UI-Beta B1, plan D4).</summary>
+        public IReadOnlyList<DepartedCrawler> Departed => _departed;
 
         /// <summary>The tick of the next drifter's arrival, or -1 when the session admits none.</summary>
         public long NextDrifterTick => _nextDrifterTick;
@@ -50,7 +56,13 @@ namespace Simpiens.Core.Session
 
         private void CaptureDriftersTo(SessionSave save)
         {
-            save.Population = new PopulationSave { NextDrifterTick = _nextDrifterTick, DriftersArrived = _driftersArrived };
+            var departed = new DepartedSave[_departed.Count];
+            for (int i = 0; i < departed.Length; i++)
+            {
+                departed[i] = new DepartedSave { Id = _departed[i].Id, GivenName = _departed[i].GivenName, Look = _departed[i].Look };
+            }
+            Array.Sort(departed, (a, b) => a.Id.CompareTo(b.Id));
+            save.Population = new PopulationSave { NextDrifterTick = _nextDrifterTick, DriftersArrived = _driftersArrived, Departed = departed };
         }
 
         private void RestoreDriftersFrom(SessionSave save, MapDefinition map)
@@ -59,6 +71,12 @@ namespace Simpiens.Core.Session
             {
                 _nextDrifterTick = save.Population.NextDrifterTick;
                 _driftersArrived = save.Population.DriftersArrived;
+                var departed = save.Population.Departed ?? Array.Empty<DepartedSave>();
+                for (int i = 0; i < departed.Length; i++)
+                {
+                    _departed.Add(new DepartedCrawler(departed[i].Id, departed[i].GivenName, departed[i].Look));
+                    if (!string.IsNullOrEmpty(departed[i].GivenName)) _identity?.RegisterCustomName(departed[i].Id, departed[i].GivenName);
+                }
             }
             else
             {
@@ -101,6 +119,7 @@ namespace Simpiens.Core.Session
             var state = SpawnCrawler(gate, NextEntityId(), $"Drifter_{number}", $"Drifter{number}").State;
             ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
             state.Personality = AgentPersonality.Generate(seed, state.AgentId);
+            GiveIdentity(state);
 
             var rng = SimRandom.For(seed, state.AgentId, tick, SimRandomSalt.DrifterTraits);
             uint purse = (uint)SimMath.RoundToInt(Draw(ref rng, tuning.PurseMin, tuning.PurseMax));
@@ -119,6 +138,7 @@ namespace Simpiens.Core.Session
         {
             var runtime = _crawlers[index];
             var entity = _registry?.GetEntity(runtime.State.AgentId);
+            _departed.Add(new DepartedCrawler(runtime.State.AgentId, runtime.State.GivenName, runtime.State.Look));
             runtime.Dispose();
             if (entity != null) _registry.Unregister(entity);
             _crawlers.RemoveAt(index);

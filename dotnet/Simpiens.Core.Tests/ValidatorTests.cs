@@ -39,6 +39,12 @@ namespace Simpiens.Core.Tests
         public void Personality() => new Simpiens.Testing.Planning.PersonalityValidator().RunAllValidationTests();
 
         [Fact]
+        public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
+
+        [Fact]
+        public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
+
+        [Fact]
         public void AffinityMatrix() => new Simpiens.Testing.Sociopolitical.AffinityMatrixValidator().Start();
 
         [Fact]

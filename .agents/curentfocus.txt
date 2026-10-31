@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-29 (graphics V0-V5 done; the producer's look passed)
+# Last reconciled: 2026-10-30 (Epic UI-Beta B0 and B1 started)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -30,7 +30,14 @@ CURRENT FOCUS
   - Next: G4 the guild (it opens with a design note on the player as patron), G5 expeditions, G6 the gate.
     The producer looks at G5 and G6.
 
+- Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-10-30] (docs/epics/epic-ui-beta.md): B0 (spike,
+  people sheet, design note) and B1 (every crawler's look and given name, saved; save format 7; golden re-recorded
+  once, hashes only) done 2026-10-30, before Epic 10 G4, on feat/ui-beta, one PR into main. G4 and R1 rebase onto it.
+  Next: B2, bodies on the map.
+
 OPEN WITH THE PRODUCER
+- Epic UI-Beta B0's gate: the look at the people sheet (render-output/people-sheet.png from dotnet test); the lineage's
+  name and lore (Q4).
 - G3's defaults D1-D3 (one protective item, the pickaxe to Part 2; "hazard gear"; a worn slot) and its 30g
   default price: accepted by "proceed". Findings F4 (the drifters' benefit to a keen player is now in the noise:
   the test asserts what is causal) and F5 (early jitter fails 4 of seeds 1-120, on main too): Epic 10 §7.
@@ -58,6 +65,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
 ================================================================================
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
+- Epic UI-Beta: Crawler Identity and the Interface Pass [ACTIVE 2026-10-30; B0-B1 done, B2 next] (docs/epics/epic-ui-beta.md)
 - Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client.
 
 ================================================================================

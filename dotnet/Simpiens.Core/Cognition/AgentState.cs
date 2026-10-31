@@ -88,6 +88,15 @@ namespace Simpiens.Cognition
         /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>
         public Simpiens.Cognition.Contracts.AgentPersonality Personality { get; set; }
 
+        /// <summary>
+        /// What the crawler looks like (Epic UI-Beta B1): drawn at spawn on its own random salt and saved; views read it.
+        /// No decision reads it (CognitionReadsNoLookTests) until lineage traits are designed (Q5). Unset for a crawler built by hand.
+        /// </summary>
+        public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
+
+        /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
+        public string GivenName { get; set; }
+
         /// <summary>Why the current intent was chosen (main-thread copy of AgentIntent.Decision).</summary>
         public Simpiens.Cognition.Contracts.DecisionSummary LastDecision { get; set; }
 
@@ -157,7 +166,7 @@ namespace Simpiens.Cognition
             {
                 if (IsExhaustionCollapsed) return AgentVisualState.Resting;
                 if (TantrumTimer > 0f || IsStarvationPanicking) return AgentVisualState.Panicking;
-                // Asleep in a bunk: the brief social looks below don't sit the sleeper up
+                // Asleep in a bunk: the brief social poses below don't sit the sleeper up
                 if (_baseVisualState == AgentVisualState.Sleeping) return AgentVisualState.Sleeping;
                 if (DefiantTimer > 0f) return AgentVisualState.Defiant;
                 if (YieldingTimer > 0f) return AgentVisualState.Yielding;
@@ -272,7 +281,7 @@ namespace Simpiens.Cognition
             }
         }
 
-        // A social look replaces the base look, except a bunk sleeper's (only waking ends that)
+        // A social pose replaces the base pose, except a bunk sleeper's (only waking ends that)
         private void SetSocialVisual(AgentVisualState state)
         {
             if (_baseVisualState != AgentVisualState.Sleeping) _baseVisualState = state;
@@ -376,7 +385,7 @@ namespace Simpiens.Cognition
 
         /// <summary>
         /// This crawler's plain state for a save (Milestone 1 save/load). The current intent, plan, goal, last decision
-        /// and look are work in progress and are left out: the crawler decides afresh after a load.
+        /// and visual state are work in progress and are left out: the crawler decides afresh after a load.
         /// </summary>
         public CrawlerRecord CaptureRecord()
         {
@@ -407,13 +416,14 @@ namespace Simpiens.Cognition
                 CanBuyFoodAtStall = CanBuyFoodAtStall,
                 DepartsAtTick = DepartsAtTick,
                 Health = Health,
-                IsDowned = IsDowned
+                IsDowned = IsDowned,
+                Look = Look
             };
         }
 
         /// <summary>
         /// Puts a saved record back (a load). The crawler must have been spawned with the record's id. Work in progress
-        /// starts empty: no intent, plan, goal or last decision, and an idle look, so the crawler decides afresh.
+        /// starts empty: no intent, plan, goal or last decision, and an idle visual state, so the crawler decides afresh.
         /// </summary>
         public void RestoreRecord(in CrawlerRecord record)
         {
@@ -447,6 +457,7 @@ namespace Simpiens.Cognition
             DepartsAtTick = record.DepartsAtTick;
             Health = record.Health;
             IsDowned = record.IsDowned;
+            Look = record.Look;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();

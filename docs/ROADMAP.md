@@ -1,6 +1,6 @@
 # Simpiens Master Project Roadmap (Multi-Track Architecture)
 
-This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-24.*
+This document is the **highest source of truth** for project status, scope, sequencing, engineering invariants and the Definition of Done across the Simpiens simulation framework. *Last reconciled: 2026-10-30.*
 
 ## 0. Source of Truth & Documentation Protocol
 
@@ -55,6 +55,7 @@ flowchart LR
         B1["Epic UI-1\nFacility Dashboard\n(COMPLETED)"] --> BAlpha["Epic UI-Alpha\nNarrative Chronicle\n(COMPLETED)"]
         BAlpha --> B2["Epic UI-2\nMerchant Terminal\n& Bounty Board\n(COMPLETED)"]
         B2 --> B3["Epic UI-3\nGuild Roster &\nExpeditions\n(in Epic 10 Part 1)"]
+        B3 --> BBeta["Epic UI-Beta\nCrawler Identity &\nInterface Pass\n(ACTIVE: B0-B1 done)"]
     end
 
     subgraph Track C: Harness & Diagnostics (Verification Track)
@@ -213,6 +214,7 @@ To bridge low-level technical epics with high-level game design goals, developme
 | **Milestone 1** | **The Outpost Loop (MVP)** | Track A: Epic 9<br>Track B: Epic UI-2<br>Track C: Epic Test-2 | Single connected outpost floor (Epic MAP; sector count is data, not a target: producer 2026-10-11). Player manages a roadside trading post: sets buy/sell prices for salvaged materials and provisions, posts public bounties (Scout, Gather), and builds dyadic trust with visiting crawlers. Integrates MemoryPack serialization for unmanaged inventory/contracts and zero-alloc Grid A* navigation (Grid A* delivered 2026-10-09; MemoryPack delivered 2026-10-15 as a whole-session save and load with one quick-save slot). |
 | **Milestone 2** | **Guild Roster & Expeditions** | Track A: [Epic 10 Part 1](epics/epic-10.md), with Epic UI-3 folded in (its UI is the KNI client's) | High-affinity adventurers convert into the player's permanent Guild (up to four). The player outfits parties and issues expedition directives to high-hazard sectors; drifters open the economy. (The earlier `Unity.Collections` + Burst item is dropped: the core is engine-free, and speed-ups follow measurements.) |
 | **Milestone 3** | **Facility Workshops & Crafting** | Track A: Epic 10 (Part 2)<br>Track B: Epic UI-4 | Fixed outpost expansion stations (Forge, Alchemy Still). Hired non-combat artisans refine raw salvage into weapons, armor, and potions. |
+| *(interstitial)* | *Crawler identity* | Track B: [Epic UI-Beta](epics/epic-ui-beta.md) | Between Milestones 2 and 3, as UI-Alpha was between UI-1 and UI-2: every crawler gets a generated body, a saved look and a unique name, and a portrait wherever the player meets it. B0 and B1 started 2026-10-30, before Epic 10 G4, on the producer's word. |
 | **Milestone 4** | **Gatekeeper Descent & Floor Relocation** | Track A: Epic 10 (Part 3) & Epic 11<br>Track B: Epic UI-5 | Boss-guarded descent gate breach, roguelike forward operating base relocation loop (via MemoryPack state snapshotting), and LLM-powered MCP tavern chronicles. |
 
 ### Milestone 1 Status
@@ -345,6 +347,12 @@ Before Epic 10 the soak and scaling work (#8) was planned; the producer started 
   - 4-man expedition party builder assigning persistent `GroupDirective` contracts.
   - Expedition status tracker showing real-time party cohesion and sector progress.
 
+### Epic UI-Beta: [Crawler Identity and the Interface Pass](epics/epic-ui-beta.md) (ACTIVE)
+*Approved 2026-10-30 from the Claude Doc draft (Q5 as the draft reads: lineage traits later, as a design of their own). The producer started B0 and B1 on 2026-10-30, before Epic 10 G4, on one branch and one pull request.*
+* **Goal**: every crawler gets a body and a face of its own, shown wherever the player meets it; the core story is the selected crawler's portrait in the dossier. A look (lineage, body frame, build, skin, hair, face, clothes) is plain saved data drawn from the seed; generators draw it now, imported art can replace them later (Epic CLIENT M7).
+* **Milestones**: B0 spike and people sheet (the producer's look); B1 the look as data and names in the core (save format raised, golden re-recorded once, a live scenario); B2 bodies on the map; B3 portraits and the dossier (the producer's looks at B2 and B3); B4 faces everywhere and the map inspector; B5 the interface pass; B6 the gate (a play session).
+* **Status**: B0 and B1 done (2026-10-30) on `feat/ui-beta`, one pull request into `main`. Every crawler has a saved look and a never-shared given name; a live scenario on the 23 gate seeds proves it; the save format is 7; golden re-recorded once (only hashes moved). The producer's look at the people sheet (B0's gate) is open. Next: B2, bodies on the map. Looks change no play in this epic.
+
 ---
 
 ## Track C: Tooling, Diagnostics & Testing Harness (Branching Track)
@@ -399,7 +407,7 @@ Before Epic 10 the soak and scaling work (#8) was planned; the producer started 
 
 When working in parallel agent sessions:
 1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`; **Epic 10 Part 1 is `ACTIVE`** (Milestone 2, [epics/epic-10.md](epics/epic-10.md)), G0 (the day on every seed, Epic CORE's F2), G1 (drifters) and G2 (health and hazards) done 2026-10-23, the producer's look at G2 passed 2026-10-25; G3 (gear) done 2026-10-25; G4 (the guild) next; **Epic CORE** is `COMPLETED` and merged). The simulation lives in `dotnet/Simpiens.Core` (`Simpiens.Cognition`, `Simpiens.Simulation`, …), its validators in `dotnet/Simpiens.Testing.Core`.
-2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; no UI epic is `ACTIVE`; Epic UI-3 is folded into Epic 10 Part 1). New views and UI go into the KNI client (`dotnet/Simpiens.Presentation` for what is drawn, as data; `dotnet/Simpiens.Client` for Gum and XNA).
+2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; **Epic UI-Beta is `ACTIVE`**, B0 and B1 done 2026-10-30, B2 next ([epics/epic-ui-beta.md](epics/epic-ui-beta.md)); Epic UI-3 is folded into Epic 10 Part 1). New views and UI go into the KNI client (`dotnet/Simpiens.Presentation` for what is drawn, as data; `dotnet/Simpiens.Client` for Gum and XNA).
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). New live scenarios go headless into `dotnet/Simpiens.Core.Tests` (§1B); engine-free validators live in `Simpiens.Testing.Core`; the shared harness (`OutpostWatch`, `AnomalyDetector`, `EconomySoak`) in `Simpiens.Hosting`.
 4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`; **Epic CLIENT** is `PAUSED`: the KNI client in `dotnet/`, Unity removed, its art as data, items drawn in the world and the menus). Code lives in `Simpiens.Simulation.World` (map definition, sectors, hazards) and `Session/` (sessions, layouts) in `dotnet/Simpiens.Core`; views in the KNI client.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

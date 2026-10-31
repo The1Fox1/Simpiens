@@ -9,8 +9,8 @@ namespace Simpiens.Testing.Environment
 {
     /// <summary>
     /// One sample of the authoritative world, hashed (Epic MAP Phase 5 determinism check). FNV-1a over plain data
-    /// only, in id order: each agent's position (to 1/1000 unit), needs (to 0.01), gold, inventory, current intent
-    /// and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals. No view state.
+    /// only, in id order: each agent's position (to 1/1000 unit), needs (to 0.01), gold, inventory, health, look and
+    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals. No view state.
     /// Per-part hashes and per-agent descriptions name what differs when two samples disagree.
     /// </summary>
     public sealed class WorldStateSample
@@ -104,6 +104,10 @@ namespace Simpiens.Testing.Environment
                     }
                 }
                 Mix(ref h, Quantize(s.Health, 100f)); // health (G2)
+                // Who it is (Epic UI-Beta B1): its look and given name, drawn at spawn and saved
+                var look = s.Look;
+                for (int g = 0; g < Simpiens.Simulation.People.CrawlerLook.GeneCount; g++) Mix(ref h, (int)look[(Simpiens.Simulation.People.LookGene)g]);
+                Mix(ref h, s.GivenName ?? "-");
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);

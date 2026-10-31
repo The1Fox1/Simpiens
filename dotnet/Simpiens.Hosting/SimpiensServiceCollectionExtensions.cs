@@ -73,7 +73,8 @@ namespace Simpiens.Hosting
                 sp.GetRequiredService<SimulationSettings>(),
                 sp.GetRequiredService<IEntityIdAllocator>(),
                 sp.GetRequiredService<IWorldMap>(),
-                sp.GetServices<ISessionDefinition>().ToList()));
+                sp.GetServices<ISessionDefinition>().ToList(),
+                sp.GetService<IAgentIdentityService>()));
             services.AddSingleton<ISessionSwitcher>(sp => sp.GetRequiredService<SessionHost>());
             services.AddSingleton<ISessionPersistence>(sp => sp.GetRequiredService<SessionHost>());
             return services;

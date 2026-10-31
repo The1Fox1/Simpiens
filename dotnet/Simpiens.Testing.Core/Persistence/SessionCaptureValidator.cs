@@ -208,7 +208,8 @@ namespace Simpiens.Testing.Persistence
                 ScoutReportTick = 88u,
                 IsExhaustionCollapsed = true,
                 CanBuyFoodAtStall = true,
-                DepartsAtTick = 4321u
+                DepartsAtTick = 4321u,
+                Look = Simpiens.Simulation.People.CrawlerLook.Generate(9, A)
             };
             state.Activity.RecordSalvageHarvest(5u);
             state.Activity.RecordMeal(9u);
@@ -224,6 +225,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.ScoutReportBountyId == 2 && r.ScoutReportTick == 88u, "A scout's report is captured.");
             Assert(r.IsExhaustionCollapsed && r.CanBuyFoodAtStall, "Collapse and stall-food knowledge are captured.");
             Assert(r.DepartsAtTick == 4321u, "A drifter's departure tick is captured.");
+            Assert(r.Look == state.Look && r.Look.IsComplete, "The look is captured (Epic UI-Beta B1).");
 
             TestLog.Log("[PASS] Test 6: a crawler's record copies every saved field.");
         }

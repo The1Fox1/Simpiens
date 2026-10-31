@@ -28,6 +28,11 @@ namespace Simpiens.Narrative
         void RegisterCustomName(EntityId agentId, string name);
 
         /// <summary>
+        /// Forgets every registered name (a respawn or a load: entity ids repeat per seed); hashed names stay the fallback.
+        /// </summary>
+        void ClearCustomNames();
+
+        /// <summary>
         /// Allows registering or overriding an agent's title.
         /// </summary>
         void RegisterCustomTitle(EntityId agentId, string title);

@@ -88,6 +88,12 @@ namespace Simpiens.Narrative
             _nameCache[agentId] = name;
         }
 
+        public void ClearCustomNames()
+        {
+            _customNames.Clear();
+            _nameCache.Clear();
+        }
+
         public void RegisterCustomTitle(EntityId agentId, string title)
         {
             if (agentId == default || string.IsNullOrWhiteSpace(title)) return;

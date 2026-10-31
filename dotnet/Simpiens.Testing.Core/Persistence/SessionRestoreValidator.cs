@@ -202,7 +202,8 @@ namespace Simpiens.Testing.Persistence
                 ScoutReportBountyId = 2,
                 ScoutReportTick = 312u,
                 IsExhaustionCollapsed = true,
-                DepartsAtTick = 2750u
+                DepartsAtTick = 2750u,
+                Look = Simpiens.Simulation.People.CrawlerLook.Generate(11, A)
             };
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
@@ -223,6 +224,7 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.VisualState == Simpiens.Entities.AgentVisualState.Resting, "A collapsed crawler still looks collapsed; otherwise its look starts idle.");
             Assert(fresh.Activity.Cycles == 1 && fresh.Activity.FirstCycleTick == 95, "The activity tally came back.");
             Assert(fresh.IsDrifter && fresh.DepartsAtTick == 2750u, "A drifter is still a drifter, leaving at the same tick.");
+            Assert(fresh.Look == state.Look && fresh.Look.IsComplete, "The look came back (Epic UI-Beta B1).");
 
             bool refused = false;
             try

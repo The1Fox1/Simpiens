@@ -159,9 +159,10 @@ namespace Simpiens.Client.Tests
         // Graphics V5.3: the stall stands in the hub with its goods, and carriers show their bundles; every item pin re-pinned.
         private static readonly (ulong, ulong) PinnedTick0 = (8627538318791238231UL, 12863510669252587285UL);
         private static readonly (ulong, ulong) PinnedTick300 = (458419650849190911UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8668556407383317760UL, 10398974787805613629UL);
+        // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8668556407383317760UL, 12725545699461736391UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
         private static readonly (ulong, ulong) PinnedIsometricTick300 = (12280833335970887450UL, 16142742670942183276UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13300003956712541319UL, 14081288791794121755UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13300003956712541319UL, 9789658899688785632UL);
     }
 }
