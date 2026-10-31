@@ -157,12 +157,15 @@ namespace Simpiens.Client.Tests
         // the labels' pins unchanged). Graphics V3.1 (2026-10-29): standing pieces snap their anchors to whole pixels, so every
         // pin with a crawler between pixels moved (tick 0's didn't: nothing is between pixels yet); labels unchanged.
         // Graphics V5.3: the stall stands in the hub with its goods, and carriers show their bundles; every item pin re-pinned.
-        private static readonly (ulong, ulong) PinnedTick0 = (8627538318791238231UL, 12863510669252587285UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (458419650849190911UL, 12863510669252587285UL);
+        // Epic 10 G5.2 (2026-10-31): crawlers move differently (F5's navigation fix), and Floor 1 gains the Drowned Gallery
+        // below the Sump, with its name and "FLOODED", which moves the frame's centre down 3 units; every pin re-pinned with
+        // the labels, with the render references.
+        private static readonly (ulong, ulong) PinnedTick0 = (2089589081819500112UL, 14250960641362250661UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (1375790215383592990UL, 14250960641362250661UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8668556407383317760UL, 12725545699461736391UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (15534755532114119441UL, 9314585316717962577UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (12280833335970887450UL, 16142742670942183276UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13300003956712541319UL, 9789658899688785632UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (2426712770060885475UL, 5606140428678540481UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9538561654798750554UL, 3214430476125141426UL);
     }
 }
