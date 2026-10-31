@@ -19,6 +19,20 @@ namespace Simpiens.Client.Tests
         private static string Committed => Path.Combine(Repo.Root, "dotnet", "Simpiens.Client", "Content");
         private static string Shipped => Path.Combine(AppContext.BaseDirectory, FontSet.ContentFolder);
 
+        /// <summary>Every given name (Epic UI-Beta B1, plan D7) draws from every baked face with glyphs of its own, never the '?' fallback.</summary>
+        [Fact]
+        public void EveryGivenNameHasItsGlyphsInEveryFace()
+        {
+            var fonts = FontLibrary.LoadFrom(AppContext.BaseDirectory);
+            var names = Simpiens.Simulation.People.GivenNames.Feminine.Concat(Simpiens.Simulation.People.GivenNames.Masculine).Concat(Simpiens.Simulation.People.GivenNames.Neutral);
+            var missing = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (var face in FontSet.All)
+                foreach (var name in names)
+                    foreach (char c in name)
+                        if (!fonts[face].HasGlyph(c)) missing.Add($"'{c}' of {name} in {face}");
+            Assert.True(missing.Count == 0, "Names the baked fonts can't draw: " + string.Join("; ", missing.Take(10)));
+        }
+
         [Fact]
         public void FontSetNamesEveryFaceAsGumDoes()
         {
