@@ -61,7 +61,8 @@ namespace Simpiens.Testing.Environment
                             Total = Hex(f[3]),
                             Economy = Hex(f[5]),
                             Bounties = Hex(f[7]),
-                            Map = Hex(f[9])
+                            Map = Hex(f[9]),
+                            Groups = f.Length > 11 ? Hex(f[11]) : 0UL
                         };
                         current?.Samples.Add(sample);
                         break;
@@ -98,7 +99,7 @@ namespace Simpiens.Testing.Environment
             var sb = new StringBuilder(64 * 1024);
             sb.Append("# Simpiens golden world hashes (Epic CORE C2). Generated; do not edit by hand.\n");
             sb.Append("# Re-record only for a deliberate behaviour change, in its own commit: simpiens golden record --out Baselines/golden-world-hash.txt\n");
-            sb.Append("# t <tick> total/economy/bounties/map <WorldStateHash parts>; a <agent hash> <name> | <description, for diagnosis only>\n");
+            sb.Append("# t <tick> total/economy/bounties/map/groups <WorldStateHash parts>; a <agent hash> <name> | <description, for diagnosis only>\n");
             for (int s = 0; s < seeds.Count; s++)
             {
                 var b = all[seeds[s]];
@@ -110,7 +111,8 @@ namespace Simpiens.Testing.Environment
                       .Append(" total ").Append(x.Total.ToString("x16"))
                       .Append(" economy ").Append(x.Economy.ToString("x16"))
                       .Append(" bounties ").Append(x.Bounties.ToString("x16"))
-                      .Append(" map ").Append(x.Map.ToString("x16")).Append('\n');
+                      .Append(" map ").Append(x.Map.ToString("x16"))
+                      .Append(" groups ").Append(x.Groups.ToString("x16")).Append('\n');
                     for (int a = 0; a < x.AgentHashes.Count; a++)
                     {
                         sb.Append("  a ").Append(x.AgentHashes[a].ToString("x16")).Append(' ').Append(x.AgentNames[a])

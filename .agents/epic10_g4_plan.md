@@ -168,7 +168,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - **Epic 8's doc:** finding 1 gets its owner (G4.4).
   - **The roadmap:** the Epic 10 line (G4 under way, with this plan) and Epic CLIENT's line (PR #16 merged, 2026-10-29).
   - **The focus file.**
-- [ ] **G4.2 The world hash covers groups.** No behaviour change. The golden hashes are re-recorded in this commit, which says why.
+- [x] **G4.2 The world hash covers groups.** No behaviour change. The golden hashes are re-recorded in this commit, which says why.
 - [ ] **G4.3 Groups become many-to-many (D1):**
   - the set, the per-kind rule, the API, the registry as the one owner, the readers, the directive precedence;
   - save format 8 (the crawler's record drops its membership).
