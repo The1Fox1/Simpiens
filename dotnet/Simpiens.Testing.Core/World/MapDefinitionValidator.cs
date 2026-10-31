@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System;
+using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Economy;
@@ -226,20 +227,38 @@ namespace Simpiens.Testing.World
             }
             Assert(doors == Floor1Layout.Doors.Count, $"(d) Expected {Floor1Layout.Doors.Count} doorways, found {doors}.");
 
-            // The hazard sectors (Epic 10 G2) are dead ends, each opening onto its work room only, and only they hurt
+            // The hazard sectors (Epic 10 G2) are dead ends, each opening onto its work room only, and only they hurt. The
+            // Drowned Gallery (G5, D11) lies beyond the Sump, through it alone
             def.TryGetSector(Floor1Layout.SumpSectorId, out var sump);
             def.TryGetSector(Floor1Layout.GlowCavesSectorId, out var caves);
+            def.TryGetSector(Floor1Layout.DrownedGallerySectorId, out var gallery);
             def.TryGetSector(Floor1Layout.OreQuarrySectorId, out var quarry);
             def.TryGetSector(Floor1Layout.HerbGroveSectorId, out var grove);
             for (int i = 0; i < def.Sectors.Count; i++)
             {
                 var s = def.Sectors[i];
-                bool hazard = s.Id == Floor1Layout.SumpSectorId || s.Id == Floor1Layout.GlowCavesSectorId;
+                bool hazard = s.Id == Floor1Layout.SumpSectorId || s.Id == Floor1Layout.GlowCavesSectorId || s.Id == Floor1Layout.DrownedGallerySectorId;
                 Assert(s.Hazard.IsHazardous == hazard, $"(h) {s.Name} {(hazard ? "must" : "must not")} be hazardous.");
-                if (s.Id != Floor1Layout.OreQuarrySectorId && s.Id != Floor1Layout.SumpSectorId) Assert(DoorWidth(grid, sump.Bounds, s.Bounds) == 0, $"(h) The Sump must open only onto the Ore Quarry, not {s.Name}.");
+                if (s.Id != Floor1Layout.OreQuarrySectorId && s.Id != Floor1Layout.SumpSectorId && s.Id != Floor1Layout.DrownedGallerySectorId) Assert(DoorWidth(grid, sump.Bounds, s.Bounds) == 0, $"(h) The Sump must open only onto the Ore Quarry and the Drowned Gallery, not {s.Name}.");
                 if (s.Id != Floor1Layout.HerbGroveSectorId && s.Id != Floor1Layout.GlowCavesSectorId) Assert(DoorWidth(grid, caves.Bounds, s.Bounds) == 0, $"(h) The Glow Caves must open only onto the Herb Grove, not {s.Name}.");
+                if (s.Id != Floor1Layout.SumpSectorId && s.Id != Floor1Layout.DrownedGallerySectorId) Assert(DoorWidth(grid, gallery.Bounds, s.Bounds) == 0, $"(h) The Drowned Gallery must open only onto the Sump, not {s.Name}.");
             }
-            Assert(DoorWidth(grid, sump.Bounds, quarry.Bounds) >= 3 && DoorWidth(grid, caves.Bounds, grove.Bounds) >= 3, "(h) Each hazard sector has its door.");
+            Assert(DoorWidth(grid, sump.Bounds, quarry.Bounds) >= 3 && DoorWidth(grid, caves.Bounds, grove.Bounds) >= 3 && DoorWidth(grid, gallery.Bounds, sump.Bounds) >= 3, "(h) Each hazard sector has its door.");
+
+            // (g) The Drowned Gallery (D11): charted, too dangerous to go alone where the Sump and the Glow Caves are not, even
+            // with gear's halving; its one rich glowstone seam is the only node in it
+            Assert(gallery.StartsExplored, "(g) The Drowned Gallery starts charted: the player sees where to send a party.");
+            Assert(gallery.Hazard.DamagePerSecond > Vitality.LoneHazardLimit, "(g) The Drowned Gallery's hazard is past the lone limit.");
+            Assert(sump.Hazard.DamagePerSecond <= Vitality.LoneHazardLimit && caves.Hazard.DamagePerSecond <= Vitality.LoneHazardLimit, "(g) The Sump and the Glow Caves are within the lone limit.");
+            int galleryNodes = 0;
+            for (int i = 0; i < def.ResourceNodes.Count; i++)
+            {
+                var n = def.ResourceNodes[i];
+                if (def.FindSector(n.Position).Id != Floor1Layout.DrownedGallerySectorId) continue;
+                galleryNodes++;
+                Assert(n.Key == Floor1Layout.GallerySeam && n.Item == ItemType.Glowstone && n.Yield == Floor1Layout.GallerySeamYield, $"(g) The Drowned Gallery's node is its glowstone seam, not '{n.Key}'.");
+            }
+            Assert(galleryNodes == 1, $"(g) The Drowned Gallery holds one node (found {galleryNodes}).");
             def.TryGetSector(Floor1Layout.GardenSectorId, out var garden);
             def.TryGetSector(Floor1Layout.DeepSeamSectorId, out var seam);
             def.TryGetSector(Floor1Layout.OvergrowthSectorId, out var overgrowth);

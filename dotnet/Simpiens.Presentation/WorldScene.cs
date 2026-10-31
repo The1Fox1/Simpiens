@@ -269,6 +269,7 @@ namespace Simpiens.Presentation
         {
             HazardKind.FoulAir => "FOUL AIR",
             HazardKind.FallingRock => "FALLING ROCK",
+            HazardKind.Flooding => "FLOODED",
             _ => "DANGER",
         };
 

@@ -75,6 +75,10 @@ namespace Simpiens.Hosting
         public int GatherClaimantTrust;
         public int ConservationViolations, WorstDiscrepancy, FogLeaks;
         public string FirstFogLeak;
+
+        /// <summary>Crawler-ticks spent alone where a hazard is past the lone limit (Epic 10 G5, D11): the Drowned Gallery is an expedition's.</summary>
+        public int AloneInTheChamber;
+        public string FirstAloneInTheChamber;
         public long ObservedTicks;
 
         /// <summary>
@@ -174,11 +178,17 @@ namespace Simpiens.Hosting
             DriftersArrived = _sim.Host.DriftersArrived - _driftersAtStart;
             uint agentGold = 0;
             var present = _sim.Host.CrawlerStates;
+            var map = _sim.Host.World?.Map;
             _livingNames.Clear();
             for (int i = 0; i < present.Count; i++)
             {
                 var state = present[i];
                 if (state.Inventory != null) agentGold += (uint)state.Inventory.Gold;
+                if (Vitality.HazardAt(map, state.Position).DamagePerSecond > Vitality.LoneHazardLimit)
+                {
+                    AloneInTheChamber++;
+                    FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
+                }
                 if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
                 {
                     Faceless++;
@@ -258,6 +268,7 @@ namespace Simpiens.Hosting
             if (gatherings == 0) failures.Add("no hearth gathering");
             if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");
             if (FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({FogLeaks}; first {FirstFogLeak})");
+            if (AloneInTheChamber > 0) failures.Add($"crawlers went alone where only an expedition goes ({AloneInTheChamber} crawler-ticks; first {FirstAloneInTheChamber})");
             if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
             if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
             if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
@@ -301,7 +312,7 @@ namespace Simpiens.Hosting
         public string Report()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; intent faults {IntentFaults}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
+            sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; alone in the chamber {AloneInTheChamber}; intent faults {IntentFaults}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");

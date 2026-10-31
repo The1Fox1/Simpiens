@@ -123,13 +123,15 @@ namespace Simpiens.Client.Tests
             Assert.True(rig.Size <= rig.MaxSize + Eps && rig.Size >= CameraRig.MinSize - Eps);
         }
 
+        // In the game's window (1280x720). Since the Drowned Gallery (Epic 10 G5) Floor 1 is 42 tall, more than an 800x600
+        // screen shows at 1:1: there the crisp view crops it, and zooming out shows the rest
         [Fact]
         public void WithAPixelHeightReframeShowsTheWholeMapAtWholePixelsPerArtPixel()
         {
             var rig = new CameraRig();
-            rig.Configure(Floor1Layout.Definition.CameraFrame, 800f / 600f, 600);
+            rig.Configure(Floor1Layout.Definition.CameraFrame, 1280f / 720f, 720);
             Assert.True(rig.Size >= rig.FitSize - Eps, "The whole map is still visible.");
-            var camera = rig.ToView(800, 600);
+            var camera = rig.ToView(1280, 720);
             Assert.Equal(0f, camera.PixelsPerUnit % TopDownProjection.BasePixelsPerUnit, 3);
             rig.ZoomAt(rig.Frame.Center, 10f);
             Assert.Equal(rig.MaxSize, rig.Size, 4); // that crisp view is the zoom-out limit
@@ -139,26 +141,30 @@ namespace Simpiens.Client.Tests
     /// <summary>The camera controls on input snapshots (Epic CLIENT M1.4): Unity's CameraController rules.</summary>
     public class CameraInputTests
     {
+        /// <summary>The game's window, where Home shows the whole of Floor 1 at 1:1 (see <see cref="CameraRigTests"/>).</summary>
+        private const int ScreenWidth = 1280, ScreenHeight = 720;
+
         private static (CameraRig rig, CameraInput input) Setup()
         {
             var rig = new CameraRig();
-            rig.Configure(Floor1Layout.Definition.CameraFrame, 800f / 600f, 600);
+            rig.Configure(Floor1Layout.Definition.CameraFrame, (float)ScreenWidth / ScreenHeight, ScreenHeight);
             return (rig, new CameraInput());
         }
 
         private static CameraInputResult Step(CameraInput input, CameraRig rig, PointerInput pointer, KeyInput keys = default, float dt = 1f / 60f)
-            => input.Update(pointer, keys, dt, rig, rig.ToView(800, 600));
+            => input.Update(pointer, keys, dt, rig, rig.ToView(ScreenWidth, ScreenHeight));
 
         [Fact]
         public void ScrollZoomsTowardTheCursor()
         {
             var (rig, input) = Setup();
-            var at = new Vec2(200f, 150f);
-            var worldUnder = rig.ToView(800, 600).ScreenToFloor(at);
+            rig.ZoomAt(rig.Frame.Center, 0.5f); // the whole map's view is wider than the frame, which centres it
+            var at = new Vec2(ScreenWidth / 4f, ScreenHeight / 4f); // over the map
+            var worldUnder = rig.ToView(ScreenWidth, ScreenHeight).ScreenToFloor(at);
             float size = rig.Size;
             Step(input, rig, new PointerInput { Position = at, WheelNotches = 1 });
             Assert.Equal(size * CameraInput.ZoomStep, rig.Size, 3);
-            var stillUnder = rig.ToView(800, 600).ScreenToFloor(at);
+            var stillUnder = rig.ToView(ScreenWidth, ScreenHeight).ScreenToFloor(at);
             Assert.True(Vec2.Distance(worldUnder, stillUnder) < 0.1f, $"the point under the cursor moved ({worldUnder} -> {stillUnder})");
 
             Step(input, rig, new PointerInput { Position = at, WheelNotches = 1, OverUi = true });
@@ -173,7 +179,7 @@ namespace Simpiens.Client.Tests
             Step(input, rig, new PointerInput { Position = p, Left = true });
             var click = Step(input, rig, new PointerInput { Position = p + new Vec2(3f, 2f) });
             Assert.True(click.Clicked);
-            Assert.True(Vec2.Distance(rig.ToView(800, 600).ScreenToFloor(p + new Vec2(3f, 2f)), click.ClickWorld) < 1e-3f);
+            Assert.True(Vec2.Distance(rig.ToView(ScreenWidth, ScreenHeight).ScreenToFloor(p + new Vec2(3f, 2f)), click.ClickWorld) < 1e-3f);
 
             Step(input, rig, new PointerInput { Position = p, Left = true });
             Step(input, rig, new PointerInput { Position = p + new Vec2(20f, 0f), Left = true }); // beyond the 6 px slop

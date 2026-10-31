@@ -66,8 +66,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in (Epic 10 G2)
-                if (!Vitality.WouldVenture(context) && Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation).IsHazardous) continue;
+                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5)
+                if (!Vitality.WouldEnter(context, Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation))) continue;
                 return true;
             }
             return false;
@@ -103,8 +103,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // Danger is for the bold and healthy (Epic 10 G2): a hazard sector's nodes are left to them
-                if (!venture && Vitality.HazardAt(map, record.LastKnownLocation).IsHazardous) continue;
+                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions
+                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation))) continue;
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -288,7 +288,7 @@ namespace Simpiens.Cognition.Planning
         // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2)
         private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture)
         {
-            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && (venture || !sector.Hazard.IsHazardous);
+            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard);
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)

@@ -160,9 +160,10 @@ namespace Simpiens.Client.Tests
             var scene = new Simpiens.Presentation.WorldScene();
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
             var notes = Enumerable.Range(0, scene.Labels.Count).Select(i => scene.Labels[i]).Where(l => l.Kind == Simpiens.Presentation.LabelKind.Hazard).ToList();
-            Assert.Equal(2, notes.Count);
+            Assert.Equal(3, notes.Count);
             Assert.Contains(notes, l => l.Text == "FOUL AIR" && l.SectorId == Simpiens.Core.Session.Layouts.Floor1Layout.SumpSectorId);
             Assert.Contains(notes, l => l.Text == "FALLING ROCK" && l.SectorId == Simpiens.Core.Session.Layouts.Floor1Layout.GlowCavesSectorId);
+            Assert.Contains(notes, l => l.Text == "FLOODED" && l.SectorId == Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId);
         }
 
         [Fact]
