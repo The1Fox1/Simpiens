@@ -35,6 +35,7 @@ namespace Simpiens.Testing.Persistence
             ValidateMemoryRoundTrips();
             ValidateLedgerRoundTrips();
             ValidateGroupsRoundTrip();
+            ValidateGuildRoundTrips();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
@@ -139,6 +140,28 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.CreateGroup(GroupType.TemporaryParty, A, Vec2.Zero) == first, "The free slot is still the lowest one.");
 
             TestLog.Log("[PASS] Test 3: a group registry restores group ids, leaders, rosters, directives and memberships.");
+        }
+
+        // Epic 10 G4.6: the guild's group, its members' contracts in join order and the cooldowns come back exactly
+        private void ValidateGuildRoundTrips()
+        {
+            var guild = new Simpiens.Simulation.Guild.GuildService();
+            var save = new GuildSave
+            {
+                GroupId = 3,
+                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } }
+            };
+            guild.RestoreFrom(save);
+            var again = new GuildSave();
+            guild.CaptureTo(again);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
+            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
+            Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
+            guild.RestoreFrom(null);
+            Assert(guild.GroupId == 0 && guild.Members.Count == 0, "A save made before the guild existed loads with none.");
+
+            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns (Epic 10 G4.6).");
         }
 
         private void ValidateChronicleRoundTrips()

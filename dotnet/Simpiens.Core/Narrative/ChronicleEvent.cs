@@ -33,7 +33,11 @@ namespace Simpiens.Narrative
         DrifterLeft = 23,
         CrawlerDowned = 24,
         CrawlerRecovered = 25,
-        GearWornOut = 26 // Epic 10 G3
+        GearWornOut = 26, // Epic 10 G3
+        GuildJoined = 27, // Epic 10 G4
+        GuildUnpaid = 28,
+        GuildQuit = 29,
+        GuildDismissed = 30
     }
 
     /// <summary>

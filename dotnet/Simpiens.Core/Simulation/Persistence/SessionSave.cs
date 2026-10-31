@@ -25,6 +25,9 @@ namespace Simpiens.Simulation.Persistence
 
         /// <summary>The session host's: who comes in next (Epic 10 G1, drifters).</summary>
         public PopulationSave Population { get; set; }
+
+        /// <summary>The player's guild: its group, members' contracts and cooldowns (Epic 10 G4).</summary>
+        public GuildSave Guild { get; set; }
     }
 
     /// <summary>

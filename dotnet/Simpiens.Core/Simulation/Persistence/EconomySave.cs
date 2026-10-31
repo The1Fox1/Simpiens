@@ -45,6 +45,10 @@ namespace Simpiens.Simulation.Persistence
         public uint EscrowLocked;
         public uint EscrowReleased;
         public uint EscrowRefunded;
+        public uint Fees;      // the guild's signing fees and wages (Epic 10 G4, format 8)
+        public uint FeeGold;
+        public uint Wages;
+        public uint WageGold;
     }
 
     [StructLayout(LayoutKind.Sequential)]

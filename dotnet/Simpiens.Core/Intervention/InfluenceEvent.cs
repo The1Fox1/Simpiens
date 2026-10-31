@@ -9,7 +9,48 @@ namespace Simpiens.Intervention
         CancelBounty = 2,
         UpdateStallPrices = 3,
         /// <summary>The player calms a crawler: its frustration drops to zero and a tantrum or collapse ends (Epic CLIENT M2.2).</summary>
-        CalmCrawler = 4
+        CalmCrawler = 4,
+        /// <summary>The guild (Epic 10 G4): sign a crawler on at a wage, let a member go, set a member's wage.</summary>
+        Recruit = 5,
+        Dismiss = 6,
+        SetWage = 7
+    }
+
+    /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
+    public readonly struct RecruitCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly ushort Wage;
+
+        public RecruitCommand(EntityId crawlerId, ushort wage)
+        {
+            CrawlerId = crawlerId;
+            Wage = wage;
+        }
+    }
+
+    /// <summary>The player lets a guild member go (D4).</summary>
+    public readonly struct DismissCommand
+    {
+        public readonly EntityId CrawlerId;
+
+        public DismissCommand(EntityId crawlerId)
+        {
+            CrawlerId = crawlerId;
+        }
+    }
+
+    /// <summary>The player sets a guild member's wage per caravan visit.</summary>
+    public readonly struct SetWageCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly ushort Wage;
+
+        public SetWageCommand(EntityId crawlerId, ushort wage)
+        {
+            CrawlerId = crawlerId;
+            Wage = wage;
+        }
     }
 
     public readonly struct PostBountyCommand
@@ -143,6 +184,9 @@ namespace Simpiens.Intervention
         public readonly CancelBountyCommand CancelBounty;
         public readonly UpdateStallPricesCommand UpdateStallPrices;
         public readonly CalmCrawlerCommand CalmCrawler;
+        public readonly RecruitCommand Recruit;
+        public readonly DismissCommand Dismiss;
+        public readonly SetWageCommand SetWage;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -150,6 +194,9 @@ namespace Simpiens.Intervention
             InfluenceCommandType.CancelBounty => "CancelBounty",
             InfluenceCommandType.UpdateStallPrices => "UpdateStallPrices",
             InfluenceCommandType.CalmCrawler => "CalmCrawler",
+            InfluenceCommandType.Recruit => "Recruit",
+            InfluenceCommandType.Dismiss => "Dismiss",
+            InfluenceCommandType.SetWage => "SetWage",
             _ => string.Empty
         };
 
@@ -159,7 +206,10 @@ namespace Simpiens.Intervention
             in PostBountyCommand postBounty = default,
             in CancelBountyCommand cancelBounty = default,
             in UpdateStallPricesCommand updateStallPrices = default,
-            in CalmCrawlerCommand calmCrawler = default)
+            in CalmCrawlerCommand calmCrawler = default,
+            in RecruitCommand recruit = default,
+            in DismissCommand dismiss = default,
+            in SetWageCommand setWage = default)
         {
             SourceId = sourceId;
             CommandType = commandType;
@@ -167,6 +217,24 @@ namespace Simpiens.Intervention
             CancelBounty = cancelBounty;
             UpdateStallPrices = updateStallPrices;
             CalmCrawler = calmCrawler;
+            Recruit = recruit;
+            Dismiss = dismiss;
+            SetWage = setWage;
+        }
+
+        public static InfluenceEvent CreateRecruit(string sourceId, EntityId crawlerId, ushort wage)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.Recruit, recruit: new RecruitCommand(crawlerId, wage));
+        }
+
+        public static InfluenceEvent CreateDismiss(string sourceId, EntityId crawlerId)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.Dismiss, dismiss: new DismissCommand(crawlerId));
+        }
+
+        public static InfluenceEvent CreateSetWage(string sourceId, EntityId crawlerId, ushort wage)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.SetWage, setWage: new SetWageCommand(crawlerId, wage));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)
@@ -200,6 +268,9 @@ namespace Simpiens.Intervention
             CancelBounty = default;
             UpdateStallPrices = default;
             CalmCrawler = default;
+            Recruit = default;
+            Dismiss = default;
+            SetWage = default;
 
             if (string.Equals(commandType, "PostBounty", StringComparison.OrdinalIgnoreCase))
             {

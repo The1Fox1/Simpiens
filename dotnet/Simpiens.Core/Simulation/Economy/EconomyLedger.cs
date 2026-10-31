@@ -20,9 +20,11 @@ namespace Simpiens.Simulation.Economy
         private readonly Dictionary<string, uint> _sinkTotals = new Dictionary<string, uint>(8);
         private uint _purchases, _purchaseGold, _sales, _saleGold;
         private uint _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold;
+        private uint _fees, _feeGold, _wages, _wageGold;
 
         public EconomyFlowTotals Flows => new EconomyFlowTotals(
-            _purchases, _purchaseGold, _sales, _saleGold, _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold);
+            _purchases, _purchaseGold, _sales, _saleGold, _escrowLockedGold, _escrowReleasedGold, _escrowRefundedGold,
+            _fees, _feeGold, _wages, _wageGold);
 
         public uint GetFaucetTotal(string faucetName) =>
             faucetName != null && _faucetTotals.TryGetValue(faucetName, out var total) ? total : 0u;
@@ -149,6 +151,24 @@ namespace Simpiens.Simulation.Economy
             return true;
         }
 
+        public bool TryPayFromStall(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory payee, uint amount, StallPayment kind)
+        {
+            if (payee == null || stall.TreasuryGold < amount) return false;
+            stall = stall.WithTreasury(stall.TreasuryGold - amount);
+            payee.AddGold((int)amount);
+            if (kind == StallPayment.GuildFee)
+            {
+                _fees++;
+                _feeGold += amount;
+            }
+            else
+            {
+                _wages++;
+                _wageGold += amount;
+            }
+            return true;
+        }
+
         public void RecordFaucet(uint amount, string faucetName)
         {
             TotalFaucetedGold += amount;
@@ -173,6 +193,7 @@ namespace Simpiens.Simulation.Economy
             _sinkTotals.Clear();
             _purchases = _purchaseGold = _sales = _saleGold = 0;
             _escrowLockedGold = _escrowReleasedGold = _escrowRefundedGold = 0;
+            _fees = _feeGold = _wages = _wageGold = 0;
         }
 
         public void CaptureTo(LedgerSave save)
@@ -190,7 +211,11 @@ namespace Simpiens.Simulation.Economy
                 SaleGold = _saleGold,
                 EscrowLocked = _escrowLockedGold,
                 EscrowReleased = _escrowReleasedGold,
-                EscrowRefunded = _escrowRefundedGold
+                EscrowRefunded = _escrowRefundedGold,
+                Fees = _fees,
+                FeeGold = _feeGold,
+                Wages = _wages,
+                WageGold = _wageGold
             };
 
             var escrows = new EscrowRecord[_bountyEscrows.Count];
@@ -223,6 +248,10 @@ namespace Simpiens.Simulation.Economy
             _escrowLockedGold = t.EscrowLocked;
             _escrowReleasedGold = t.EscrowReleased;
             _escrowRefundedGold = t.EscrowRefunded;
+            _fees = t.Fees;
+            _feeGold = t.FeeGold;
+            _wages = t.Wages;
+            _wageGold = t.WageGold;
 
             if (save.Escrows != null)
             {

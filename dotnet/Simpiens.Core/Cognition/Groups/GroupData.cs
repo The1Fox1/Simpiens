@@ -30,5 +30,8 @@ namespace Simpiens.Cognition.Groups
         public static readonly GroupData Empty = new GroupData(0, GroupType.TemporaryParty, default, Vec2.Zero, GroupDirective.None, 0, 0);
 
         public bool IsActive => GroupId != 0;
+
+        /// <summary>Led by the player as patron (Epic 10 G4): the patron has no place on the roster, and nothing succeeds it.</summary>
+        public bool IsPatronLed => LeaderId == Simpiens.Simulation.WorldRegistry.PlayerEntityId;
     }
 }

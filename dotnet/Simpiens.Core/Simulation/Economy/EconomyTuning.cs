@@ -177,6 +177,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Strangers who arrive with their own gold and leave (Epic 10 G1).</summary>
         public DrifterTuning Drifters { get; private set; } = DrifterTuning.Default;
 
+        /// <summary>The player's guild: recruiting, the fee, wages and quitting (Epic 10 G4).</summary>
+        public GuildTuning Guild { get; private set; } = GuildTuning.Default;
+
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -212,6 +215,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Drifters = drifters;
+            return copy;
+        }
+
+        public EconomyTuning WithGuild(in GuildTuning guild)
+        {
+            var copy = Copy();
+            copy.Guild = guild;
             return copy;
         }
 

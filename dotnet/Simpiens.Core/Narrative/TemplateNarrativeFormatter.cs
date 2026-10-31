@@ -114,6 +114,18 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.GearWornOut:
                     return $"{actorA}'s hazard gear wore out in {sector}.";
 
+                case ChronicleEventType.GuildJoined:
+                    return $"{actorA} signed on with the guild, at {(int)evt.ExtraData}g a visit.";
+
+                case ChronicleEventType.GuildUnpaid:
+                    return $"{actorA} went unpaid this visit.";
+
+                case ChronicleEventType.GuildQuit:
+                    return $"{actorA} quit the guild.";
+
+                case ChronicleEventType.GuildDismissed:
+                    return $"{actorA} was let go from the guild.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

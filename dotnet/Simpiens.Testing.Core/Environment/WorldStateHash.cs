@@ -205,6 +205,21 @@ namespace Simpiens.Testing.Environment
                 }
             }
 
+            // The guild's contracts (Epic 10 G4.6), only once a guild exists, so runs without one hash as before
+            var guild = sim?.Guild;
+            if (guild != null && (guild.GroupId != 0 || guild.Members.Count > 0))
+            {
+                Mix(ref groups, (int)guild.GroupId);
+                for (int i = 0; i < guild.Members.Count; i++)
+                {
+                    var contract = guild.Members[i];
+                    Mix(ref groups, contract.CrawlerId.GetHashCode());
+                    Mix(ref groups, (int)contract.Wage);
+                    Mix(ref groups, (int)contract.UnpaidVisits);
+                    Mix(ref groups, (long)contract.JoinTick);
+                }
+            }
+
             Mix(ref total, economy);
             Mix(ref total, bounties);
             Mix(ref total, map);

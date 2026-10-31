@@ -191,7 +191,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - the rule, the handler and the tuning;
   - `BountyFulfillmentValidator`: generous, fair and stingy, by greed.
   - Re-measure F3 on seeds 1–120. Re-record the golden hashes in a commit of their own.
-- [ ] **G4.6 The guild (D2):**
+- [x] **G4.6 The guild (D2):**
   - **The patron:** succession skips it, and it leads without a place on the roster.
   - `GuildTuning` and `GuildContracts`.
   - The three commands, their rule and the fee.
