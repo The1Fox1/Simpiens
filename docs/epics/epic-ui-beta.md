@@ -158,6 +158,66 @@ Only the core writes a look; everything after it reads. The roadmap's invariants
 | Shared render states for the UI (F21) | Only on B4's measurement |
 | Sound in the interface | Unscheduled |
 
-## 9. B0 design note
+## 9. B0 design note (2026-10-30)
 
-Written at B0, from the spike.
+The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in the catalogue on today's poses and as a Hearthlight bust. It writes the people sheet, `render-output/people-sheet.png`, for the producer's look, and its counts to `people-sheet.txt`.
+
+**Genes and odds.** These are as `LookCatalog` holds them (§3.1's table, ids by place from 1). Humans are 80 in 100 and delvers 20. Over 10,000 draws every option turns up at its odds (`LookValidator`).
+
+| Gene | Odds |
+| :--- | :--- |
+| Frame | half each |
+| Skin tone | even: humans across their 10; delvers across all 12, two of them their own |
+| Build | humans: slight 20, average 45, broad 20, heavy 15. Delvers: average 30, broad 50, heavy 20 |
+| Hair style | by frame. Women are more often long, ponytail, bun or braids; men more often shaved, crop or side part. Delvers are more often braided |
+| Facial hair | women none. Human men: none 40, stubble 20, moustache 15, beard 25. Delver men: beard 70 |
+| Hair colour | 9 natural colours by weight, 3 dyes at 1 in 100 each |
+| Eyes | brown 30, blue 18, hazel 15, grey 15, green 12, amber 10 |
+| Face shape | even |
+| Clothes | even; the second colour never equals the first |
+| Outfit | even |
+| Accessory | none 50 |
+
+**Bodies on the map (for B2):**
+- **Colours are free.** Skin, hair and clothes are key colours in today's poses, so a palette option costs no art.
+- **The head is found from the hair's pixels in 42 of 48 frames.** It fails on Idle 1 and both Panicking frames, whose eyes are drawn differently. B2 should hold a head anchor per frame as data (24 rows) rather than infer it.
+- **Hair styles:**
+  - five are drawn by rule as overlays at the anchor: shaved, crop, long, bun and mohawk;
+  - the other five need their own small overlays: side part, ponytail, braids, curls and coils;
+  - the lying pose needs its own head row.
+- **Facial hair:** a face on the map is three rows. Hair across a whole row reads as a mask, so a beard hangs below the chin and a moustache is two pixels.
+- **Builds:** broad and heavy work as a column shift of the torso. Slight needs a narrowing transform. The sleeping pose takes no build.
+- **Delvers:** a trouser row removed reads as short and broad, with the head kept full size.
+- **State:** once clothes stop showing state, the marks over the head (!, ?, the bubble, Zzz), the tool and the arms still tell most poses apart. Idle and Walking differ only by the legs. That is for the producer's look; B2 adds the marks Q8 lists if they're needed.
+- **Budget:** a look's 24 frames are 6,144 pixels, or 12,288 with the helmet (48 KB). A 512×512 region of the world texture holds 21 looks with helmets: 12 residents, 3 drifters and room to spare.
+
+**Portraits (for B3):**
+- **The layers work in integer maths.** Each shape is a dome lit from the top left and banded into four tones; skin is softer. The look's `SpriteKit` ramps colour the tones. A warm rim lights the far edge, and the outline is the map's colour in shadow and the material's deepest tone where lit.
+- **What drives the cost:**
+  - the hair's silhouettes: 10 styles, each front and back;
+  - the features per mood, of which the spike draws content and tired;
+  - the outfits' cuts, of which the spike draws the tunic for all eight.
+- **The study's look isn't reached yet:** its faces are more modelled and its hair more textured. B3's 2–3 days stand, with the hair as the main risk.
+- **Budget:** a portrait at 1× and 2× is 11,520 pixels (46 KB). A 1024×1024 atlas holds 90.
+
+**The dossier's header and the inspector** (B3, B4; at 1:1):
+
+```
++-------------------------------------------+   +--------------------------------+
+| AGENT DOSSIER                             |   | [48x48] Maya       [HARVESTING] |
+| +--------+  Maya the Forager              |   |         health ####------      |
+| | 96x96  |  Human, average build. Resident|   |         needs  ## ## ## ##     |
+| | portrait| [HARVESTING]                  |   |         Mining ore in the Seam |
+| | iron   |  Content. Health 100%.         |   | [Open dossier]  [Follow]       |
+| +--------+                                |   +--------------------------------+
+| drives, gear, intent below                |      the map inspector, bottom left
++-------------------------------------------+
+```
+
+**Names (B1; plan D4–D7):**
+- Three lists (feminine, masculine and neutral) of at least 48 names each, Latin-1 only and at most 10 characters.
+- A crawler draws from its frame's list and the neutral one, on its own salt.
+- A name is never shared with anyone the session has seen while the lists last, then only with the living.
+- The register of everyone seen outlives a drifter's departure, so the chronicle still names it, and is saved.
+
+**Re-estimates:** B2 stays 3–4 days (the anchor table and five hair overlays are new work); B3 stays 2–3 days.
