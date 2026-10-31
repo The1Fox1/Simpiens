@@ -187,7 +187,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - `CreateGroup` takes its leader off the old roster (Epic 8 finding 1, closed);
   - a validator case for each: a drifter's departure, and a schism's splinter leader.
   - The golden hashes change only in their groups part, which the per-part descriptions name. They are re-recorded in a commit of their own.
-- [ ] **G4.5 Bounty fairness (D5):**
+- [x] **G4.5 Bounty fairness (D5):**
   - the rule, the handler and the tuning;
   - `BountyFulfillmentValidator`: generous, fair and stingy, by greed.
   - Re-measure F3 on seeds 1–120. Re-record the golden hashes in a commit of their own.
@@ -257,3 +257,10 @@ Headless, on the real outpost, with nothing injected. The scripted player acts o
   - G4.4 changes the groups part on 25 seeds, exactly those where a departed drifter stayed on a roster (up to 3 at once), and nothing else. Crawlers, the economy, bounties and the map are identical on all 43. Seed 18 gains a leader change: a departing leader now leaves its settlement, which then passes leadership on.
   - Golden doesn't change at G4.4, so there is no re-record.
 - **A tooling trap:** `dotnet run probe.cs` (a file-based app) reused its first build after the core changed, so a second run compared old code with itself. A new file name forces a fresh build. G4.3's probe was re-run that way and still matches.
+- **G4.5, F3 re-measured (seeds 1–120):** 112/120, the same 8 seeds failing the same way as before bounty fairness.
+  - Trust on 31, 43 and 81 is still 7 of 12. Bounty fairness changes only the claimant's trust, and the missing crawlers aren't claimants, so F3 stays open (G6).
+  - Jitter (F5) on 56, 69, 74 and 119; seed 73's hunger.
+- **G4.5 meets F5 off the gate:**
+  - The glowstone-free proof day (`ItemSystemProofTests`, the default seed) now has one jitter, at t2516 near the Garden (−10.5, 2.2): a crawler steps, waits and steps among others.
+  - The proof is about the economy, so it now judges every check of the day but F5's jitter, and only while there is no penetration or breach.
+  - The tolerance goes with F5, at G5.

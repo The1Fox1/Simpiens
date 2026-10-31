@@ -110,10 +110,14 @@ namespace Simpiens.Cognition.Planning.Handlers
             delBounty = delBounty.WithStatus(BountyStatus.Completed);
             context.UpdateBounty(delBounty);
             if (!isScout && agentState != null) agentState.Activity.RecordBountyDelivery(currentDeliverTick);
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} fulfilled bounty #{delBounty.BountyId} ({delBounty.Type}) for {reward}g at {SimLog.Agent(delStall.StallEntityId)}; player trust +15");
 
-            // Trade-to-Affinity boost toward Player (+15 Trust, +10 Warmth, +10 Respect)
-            agent.Memory?.RecordInteraction(context.PlayerEntityId, deltaWarmth: 10, deltaTrust: 15, deltaFear: 0, deltaRespect: 10, currentDeliverTick);
+            // Trust toward the player, judged as a sale is (Epic 10 G4, D5): the reward against the claimant's own minimum
+            var economy = context.Economy ?? EconomyTuning.Default;
+            float minimum = Considerations.BountyMinimum(agent.Personality, economy, delBounty);
+            var verdict = TradeFairness.ClassifyBounty(reward, minimum, economy.TradeTrust);
+            var delta = TradeFairness.BountyDelta(verdict, economy.TradeTrust);
+            agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentDeliverTick);
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} fulfilled bounty #{delBounty.BountyId} ({delBounty.Type}) for {reward}g at {SimLog.Agent(delStall.StallEntityId)}: {verdict} against its minimum {minimum:0.#}g, player trust {delta.Trust:+0;-0}");
 
             context.ChronicleService?.RecordEvent(new ChronicleEvent(
                 ChronicleEventType.BountyFulfilled,

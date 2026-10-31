@@ -124,6 +124,17 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
+        /// The least a crawler of <paramref name="personality"/> thinks <paramref name="bounty"/>'s work is worth (Epic 10 G4,
+        /// D5): a Gather's items at its minimum sale prices; a Scout's report at the scouting value times its greed factor.
+        /// </summary>
+        public static float BountyMinimum(in AgentPersonality personality, EconomyTuning economy, in BountyContract bounty)
+        {
+            economy ??= EconomyTuning.Default;
+            if (bounty.Type == BountyType.ScoutSector) return economy.TradeTrust.ScoutingValue * TraitFactor(personality.Greed, GreedOnPrice);
+            return (float)MinimumSalePrice(personality, economy, bounty.TargetItemType) * bounty.TargetQuantity;
+        }
+
+        /// <summary>
         /// Desirability of a bounty: greed-weighted reward over a distance cost (agent → target → redemption stall)
         /// that diligent agents mind less. Higher is better; only compared between bounties for one agent.
         /// </summary>

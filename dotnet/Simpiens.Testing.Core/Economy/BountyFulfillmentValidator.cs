@@ -35,8 +35,9 @@ namespace Simpiens.Testing.Economy
             ValidatePlayerInterventionCancelBounty();
             ValidateLiveBountyIdsAreNeverTakenOver();
             ValidateGeneratedBountyIdsSkipTakenOnes();
+            ValidateBountyFairnessByGreed();
 
-            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 10 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBountyContractLayoutAndZeroAlloc()
@@ -275,6 +276,59 @@ namespace Simpiens.Testing.Economy
 
             HeadlessEntities.Remove(registry, goCrawler);
             TestLog.Log("[BountyFulfillmentValidator] Test 6 Passed: Dyadic Trade-to-Affinity boost (+15 Trust, +10 Warmth, +10 Respect) verified.");
+        }
+
+        // Epic 10 G4, D5: a delivered bounty is judged as a sale is, against the claimant's own minimum for the work
+        private void ValidateBountyFairnessByGreed()
+        {
+            var economy = EconomyTuning.Default;
+            var tuning = economy.TradeTrust;
+            var neutral = AgentPersonality.Neutral;
+            var greedy = new AgentPersonality(1f, 0f, 0f, 0f, 0f);
+            var gather = new BountyContract(7, BountyType.GatherResource, 0, ItemType.IronOre, 1, 25, 0, 1000);
+            var scout = new BountyContract(8, BountyType.ScoutSector, 0, ItemType.None, 1, 15, 0, 1000);
+
+            float oreMinimum = Considerations.BountyMinimum(neutral, economy, gather);
+            Assert(oreMinimum == economy.BaseValue(ItemType.IronOre), $"A neutral crawler's minimum for one ore is its base value ({oreMinimum}).");
+            Assert(Considerations.BountyMinimum(greedy, economy, gather) > oreMinimum, "A greedy crawler's minimum is higher.");
+            Assert(Considerations.BountyMinimum(neutral, economy, scout) == tuning.ScoutingValue, "A neutral crawler's minimum for a scout report is the scouting value.");
+
+            // The seeded bounties stay generous to a neutral crawler; a greedy one judges them fair
+            Assert(TradeFairness.ClassifyBounty(25, oreMinimum, tuning) == TradeVerdict.Generous, "25g for an ore is generous to a neutral crawler.");
+            Assert(TradeFairness.ClassifyBounty(15, Considerations.BountyMinimum(neutral, economy, scout), tuning) == TradeVerdict.Generous, "15g for a scout is generous to a neutral crawler.");
+            Assert(TradeFairness.ClassifyBounty(25, Considerations.BountyMinimum(greedy, economy, gather), tuning) == TradeVerdict.Fair, "The same 25g is only fair to a greedy crawler.");
+
+            // Each verdict's delta, through the delivery handler
+            Assert(TrustAfterDelivery(BountyType.GatherResource, (uint)(oreMinimum * 3), neutral) == tuning.GenerousBounty.Trust, "Three times the minimum: generous trust.");
+            Assert(TrustAfterDelivery(BountyType.GatherResource, (uint)(oreMinimum * 2), neutral) == tuning.FairBounty.Trust, "Twice the minimum: fair trust.");
+            Assert(TrustAfterDelivery(BountyType.GatherResource, (uint)oreMinimum, neutral) == tuning.StingyBounty.Trust, "The bare minimum: stingy, trust falls.");
+            Assert(TrustAfterDelivery(BountyType.ScoutSector, 15, greedy) == tuning.FairBounty.Trust, "A greedy scout paid 15g trusts as for a fair deal.");
+
+            TestLog.Log("[BountyFulfillmentValidator] Test 11 Passed: Bounty fairness: generous, fair and stingy, judged by the claimant's greed (Epic 10 G4, D5).");
+        }
+
+        // The claimant's trust toward the player after one delivery of a claimed bounty
+        private static int TrustAfterDelivery(BountyType type, uint reward, AgentPersonality personality)
+        {
+            var registry = new WorldRegistry();
+            var clock = new SimulationClock();
+            var simManager = new SimulationManager(registry, null, clock);
+            var stallId = EntityId.Generate();
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, rationSellPrice: 5, rationStock: 50, treasuryGold: 500));
+
+            var crawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Fairness]", register: false);
+            crawler.Agent.Personality = personality;
+            const ushort bountyId = 9;
+            if (type == BountyType.ScoutSector) crawler.Agent.ScoutReportBountyId = bountyId;
+            else crawler.Agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 1, 10), out _);
+            registry.Register(crawler.Node);
+
+            simManager.RegisterBounty(new BountyContract(bountyId, type, 0, type == BountyType.ScoutSector ? ItemType.None : ItemType.IronOre, 1, (ushort)reward, 0, 1000,
+                claimantId: crawler.Node.Id, creatorStallId: stallId, status: BountyStatus.Claimed));
+            simManager.ExecuteIntent(crawler.Node, new ActiveIntentState { Intent = new DeliverBountyIntent(crawler.Node.Id, bountyId, stallId) });
+            int trust = crawler.Agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust;
+            HeadlessEntities.Remove(registry, crawler);
+            return trust;
         }
 
         private void ValidateGOAPBountyChainResolution()

@@ -103,14 +103,23 @@ namespace Simpiens.Core.Tests
                 loaded.Host.Departed.Select(d => (d.Id, d.GivenName, d.Look)));
             foreach (var left in loaded.Host.Departed) Assert.Equal(left.GivenName, loaded.Identity.GetFriendlyName(left.Id));
 
-            // The next drifter after the load is named and looks as it would have without the load
-            long until = sim.Host.NextDrifterTick + 1;
-            if (until > sim.Clock.CurrentTick)
-            {
-                sim.RunTo(until);
-                loaded.RunTo(until);
-                Assert.Equal(sim.Host.CrawlerStates.Select(s => (s.AgentId, s.GivenName, s.Look)), loaded.Host.CrawlerStates.Select(s => (s.AgentId, s.GivenName, s.Look)));
-            }
+            // The next drifter after the load gets the id, name and look it would have without the load. Crawlers decide afresh
+            // after a load, so the two games may part ways later; who the next arrival is doesn't depend on that
+            var next = NextArrival(sim);
+            var nextLoaded = NextArrival(loaded);
+            Assert.True(next != null && nextLoaded != null, "A drifter arrives after the save in both games.");
+            Assert.Equal((next.AgentId, next.GivenName, next.Look), (nextLoaded.AgentId, nextLoaded.GivenName, nextLoaded.Look));
+        }
+
+        // Plays on until the next crawler arrives (at most one sim-day), and returns it once the host has named it
+        private static Simpiens.Cognition.AgentState NextArrival(LocalSimulation sim)
+        {
+            Simpiens.Cognition.AgentState arrived = null;
+            void OnSpawned(Simpiens.Cognition.AgentRuntime runtime, Simpiens.Simulation.WorldEntity entity, string name) => arrived ??= runtime.State;
+            sim.Host.CrawlerSpawned += OnSpawned;
+            for (long end = sim.Clock.CurrentTick + 9000; arrived == null && sim.Clock.CurrentTick < end;) sim.Step(1);
+            sim.Host.CrawlerSpawned -= OnSpawned;
+            return arrived;
         }
     }
 }

@@ -38,6 +38,30 @@ namespace Simpiens.Simulation.Economy
             return TradeVerdict.Stingy;
         }
 
+        /// <summary>
+        /// Judges a delivered bounty's <paramref name="reward"/> against the claimant's own minimum for the work (Epic 10 G4,
+        /// D5), as a sale is judged: generous, fair or stingy.
+        /// </summary>
+        public static TradeVerdict ClassifyBounty(uint reward, float minimum, in TradeTrustTuning tuning)
+        {
+            if (minimum <= 0f) return TradeVerdict.Generous;
+            float ratio = reward / minimum;
+            if (ratio >= tuning.GenerousBountyRatio) return TradeVerdict.Generous;
+            if (ratio >= tuning.FairBountyRatio) return TradeVerdict.Fair;
+            return TradeVerdict.Stingy;
+        }
+
+        /// <summary>The affinity change the tuning assigns to a verdict on a bounty.</summary>
+        public static TrustDelta BountyDelta(TradeVerdict verdict, in TradeTrustTuning tuning)
+        {
+            switch (verdict)
+            {
+                case TradeVerdict.Generous: return tuning.GenerousBounty;
+                case TradeVerdict.Fair: return tuning.FairBounty;
+                default: return tuning.StingyBounty;
+            }
+        }
+
         /// <summary>The affinity change the tuning assigns to a verdict on a purchase.</summary>
         public static TrustDelta PurchaseDelta(TradeVerdict verdict, in TradeTrustTuning tuning)
         {
