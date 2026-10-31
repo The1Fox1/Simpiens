@@ -61,5 +61,7 @@ namespace Simpiens.Simulation
         public const uint DrifterSchedule = 5;
         public const uint DrifterTraits = 6;
         public const uint Loot = 7; // loot tables (item system I7)
+        public const uint Look = 8; // a crawler's look (Epic UI-Beta B1)
+        public const uint Name = 9; // a crawler's given name (Epic UI-Beta B1)
     }
 }
