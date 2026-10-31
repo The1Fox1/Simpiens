@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
@@ -296,6 +297,10 @@ namespace Simpiens.Testing.Sociopolitical
             registry.TryGetGroup(result.SplinterGroupId, out var groupB);
             Assert(groupB.LeaderId == contenderB.AgentId, "Contender B leads splinter group.");
             Assert(groupB.Cohesion == 65, "Splinter group cohesion initialized to 65.");
+            Assert(!registry.GetMembers(originalGroupId).Contains(contenderB.AgentId) && registry.GetMembers(result.SplinterGroupId).Contains(contenderB.AgentId),
+                "The splinter leader left the original roster (Epic 8 finding 1, closed at Epic 10 G4.4).");
+            Assert(registry.TryGetMembership(contenderB.AgentId, GroupType.Settlement, out var splinterLeader) && splinterLeader.GroupId == result.SplinterGroupId
+                && splinterLeader.Role == RoleRank.Leader, "Its one settlement is the splinter, which it leads.");
 
             // Loyalist A remained in original group
             registry.TryGetOnlyMembership(loyalistA.AgentId, out var memLoyalistA);

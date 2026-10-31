@@ -85,10 +85,11 @@ namespace Simpiens.Simulation
 
             _activeGroupCount++;
 
-            // If a valid leader ID was provided, register them automatically. Its group of the same kind is replaced, but it
-            // stays on that group's roster (Epic 8 finding 1, fixed at Epic 10 G4.4)
+            // If a valid leader ID was provided, register them automatically. Its group of the same kind is replaced, and it
+            // leaves that group's roster, as AddMember does (one per kind; Epic 8 finding 1, closed at Epic 10 G4.4)
             if (leaderId != default)
             {
+                if (TryGetMembership(leaderId, type, out var previous)) RemoveMember(previous.GroupId, leaderId);
                 slot.Members.Add(leaderId);
                 var set = MembershipsOf(leaderId);
                 set.Set(type, new GroupMembership(groupId, RoleRank.Leader, 100, 0));

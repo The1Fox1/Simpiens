@@ -287,6 +287,13 @@ namespace Simpiens.Simulation
             }
             for (int i = 0; i < _departingBunks.Count; i++) ReleaseBunk(_departingBunks[i], node.Id);
 
+            // Leaving the outpost leaves every group (Epic 10 G4.4): no departed crawler stays on a roster
+            if (_groupRegistry != null)
+            {
+                _groupRegistry.LeaveAllGroups(node.Id);
+                agent.Memberships = _groupRegistry.GetMemberships(node.Id);
+            }
+
             agent.HasLeft = true;
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({_departingClaims.Count} claim(s) released)");
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));

@@ -28,8 +28,37 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
             ValidateManyToManyOnePerKind();
+            ValidateLeavingIsWhole();
 
-            TestLog.Log("<color=green>[GroupPrimitiveValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GroupPrimitiveValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        // Epic 10 G4.4: a crawler who leaves the outpost leaves every group; a new group's leader leaves its old group of that
+        // kind (Epic 8 finding 1)
+        private void ValidateLeavingIsWhole()
+        {
+            var registry = new GroupRegistry();
+            var world = new WorldRegistry();
+            var sim = new SimulationManager(world, null, groupRegistry: registry);
+            var drifter = Simpiens.Testing.Environment.HeadlessEntities.Crawler(world, sim, null, Vec2.Zero);
+            byte settlement = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            byte guild = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), Vec2.Zero);
+            registry.AddMember(settlement, drifter.Node.Id);
+            registry.AddMember(guild, drifter.Node.Id);
+            sim.DepartOutpost(drifter.Node);
+            Assert(!registry.GetMemberships(drifter.Node.Id).HasAny && !drifter.Agent.Memberships.HasAny, "A crawler who left the outpost belongs to no group.");
+            Assert(!registry.GetMembers(settlement).Contains(drifter.Node.Id) && !registry.GetMembers(guild).Contains(drifter.Node.Id), "Nor is it on any roster.");
+
+            var founder = CreateGuid();
+            byte old = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            registry.AddMember(old, founder);
+            byte founded = registry.CreateGroup(GroupType.Settlement, founder, Vec2.Zero);
+            Assert(!registry.GetMembers(old).Contains(founder) && registry.TryGetMembership(founder, founded, out var leads) && leads.Role == RoleRank.Leader,
+                "Founding a settlement leaves the old one's roster (Epic 8 finding 1).");
+            registry.DisbandGroup(old);
+            Assert(registry.TryGetMembership(founder, founded, out _), "Disbanding the old settlement no longer takes the new one's membership with it.");
+
+            TestLog.Log("[PASS] Test 9: Leaving the outpost leaves every group; a founder leaves its old roster (Epic 10 G4.4).");
         }
 
         // Epic 10 G4, D1: a crawler belongs to a settlement, a guild and a party at once; a second group of a kind replaces

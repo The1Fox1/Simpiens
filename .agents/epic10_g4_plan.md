@@ -182,7 +182,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
     - `golden check` 3/3, **unchanged**;
     - the 23 gate seeds;
     - the probe's settlement counts and leader changes identical on its 43 seeds, recorded in the commit body.
-- [ ] **G4.4 Leaving, fixed (D1's two faults):**
+- [x] **G4.4 Leaving, fixed (D1's two faults):**
   - a departing crawler leaves every group;
   - `CreateGroup` takes its leader off the old roster (Epic 8 finding 1, closed);
   - a validator case for each: a drifter's departure, and a schism's splinter leader.
@@ -249,3 +249,11 @@ Headless, on the real outpost, with nothing injected. The scripted player acts o
 | A guild larger than four | Part 2, the guildhall (W5) |
 | Drifters signing on | Later: they pass through (Q7) |
 | Lodging fees or other crawler sinks | Only on G4.7's measurement; otherwise Part 2 (W5) |
+
+## 8. Findings (G4)
+- **G4.2–G4.4's proof needs a horizon past the golden one.** No group forms before t3000 on the golden seeds, so `golden check` can't see a groups change. The scratch probe samples the hash's groups part every 100 ticks to t18000 on the golden three and seeds 1–40.
+  - At G4.2: groups on 43 of 43 seeds, 124 formed, at most 4 at once, 7 leader changes.
+  - G4.3 reproduces it exactly.
+  - G4.4 changes the groups part on 25 seeds, exactly those where a departed drifter stayed on a roster (up to 3 at once), and nothing else. Crawlers, the economy, bounties and the map are identical on all 43. Seed 18 gains a leader change: a departing leader now leaves its settlement, which then passes leadership on.
+  - Golden doesn't change at G4.4, so there is no re-record.
+- **A tooling trap:** `dotnet run probe.cs` (a file-based app) reused its first build after the core changed, so a second run compared old code with itself. A new file name forces a fresh build. G4.3's probe was re-run that way and still matches.
