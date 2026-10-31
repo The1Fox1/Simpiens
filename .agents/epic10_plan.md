@@ -8,7 +8,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 | Plan | Covers | Status | Estimate (agent days) | The producer's stops |
 | :--- | :--- | :--- | :-: | :--- |
 | G4 | Part 1, G4: groups many-to-many (D1), then the guild | **Done 2026-10-30** (epic §4); its plan is deleted | 3–4 | — |
-| [`epic10_g5_plan.md`](epic10_g5_plan.md) | Part 1, G5: expeditions | Under way (go 2026-10-31) | 4–5 | A look at G5 |
+| G5 | Part 1, G5: expeditions | **Done 2026-10-31** (epic §4); its plan is deleted | 4–5 | A look at G5 (next) |
 | [`epic10_g6_plan.md`](epic10_g6_plan.md) | Part 1, G6: the gate, then Part 1's close-out | After the look at G5 | 1–2 | A play session |
 | [`core_refactor_plan.md`](core_refactor_plan.md) (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | Due after Part 1 (producer, 2026-10-25) | 3–3.5 | As that plan says |
 | [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in | A draft: its questions need the producer's answers | 14–19 | Answering the draft; a look at W3; a play session at W6 |

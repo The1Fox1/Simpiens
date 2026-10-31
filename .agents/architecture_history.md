@@ -1261,3 +1261,16 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The console's guild profile moves to G6's soak.
   - The glowstone-free proof day now tolerates F5's jitter only, until G5.
 - **Measured:** a guild of four costs the treasury 192–249g over 30 minutes on the soak's seeds, and members spend their wages. No crawler sink is needed.
+
+## 2026-10-31: Epic 10 G5, expeditions (`feat/epic10-g5`)
+
+- **F5 before the chamber.** The Drowned Gallery's bigger floor moved F5's jitter onto two gate seeds at `main`'s rate, so the navigation fault was fixed first, in its own commit with its own golden re-record: panics skip a blocked waypoint within reach or out of sight; walkers pass a waypoint whose next leg turns back. Jitter on seeds 1–120: 8 → 1.
+- **The chamber is low and long (16 by 6), not a full room.** A 48-by-48 floor no longer fits the 1280×720 window at 1:1 top-down; 48 by 42 does. Camera tests moved to the game's window; at 800×600 the crisp view crops Floor 1.
+- **A lone limit on danger (`Vitality.LoneHazardLimit`, 4 a second)** keeps the lone crawlers' economy unchanged: they brave the Sump and the Glow Caves, never the Gallery. The day's check fails on anyone alone in it.
+- **The expedition lives in the guild, not in cognition.** `GuildService.Expeditions` holds the order and moves the stages on the main thread from what members' states show; members follow one `Expedition` directive issued at dispatch, whose target moves with the stage, through Epic 8's travel and hold actions plus one work action. One new planner fact. The hand-over is the stage machine's, not an intent.
+- **Judged once, then held.** D8's compliance is judged at dispatch on the patron's weights (trust for fear). After that a member holds to the order (priority 120) whatever its loyalty; Epic 8's goal re-checked compliance each time, so rising hunger dropped the order mid-trip.
+- **The guild provisions and outfits its party from the stall's stock**, no gold: members can't fund two rations, and hunger (1.5 a second) costs about 90 a trip. The muster asks for hunger below 20 or two rations (D9 said below 50). Gear worn to half its life is replaced.
+- **The work starts with the first member in the sector,** so nobody waits in the flood; the march isn't in file. The goal met takes the party home as ordered before the retreat rule is judged.
+- **Side by side only for the guild's party.** A rule for any party moved the Dev Map's Epic 8 pens; it is now the expedition's alone.
+- **Measured, not built:** planners per worker (an expedition costs 28% more time over its 800 ticks, far within the tick).
+- Commits: `4704e02` docs; `48cce56`, `a65e443` F5; `112cbf1`, `81e56c9`, `d1f0413` the chamber; `5a1d503` the party and stages; `df602de` cognition; `19429a9` the live scenario; `939f2ca`, `884af57`, `628ec13` the client. Findings F6–F8 are in the epic.
