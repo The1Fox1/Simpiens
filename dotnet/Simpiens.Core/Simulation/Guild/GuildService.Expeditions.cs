@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Groups;
+using Simpiens.Cognition.Inventory;
 using Simpiens.Diagnostics;
 using Simpiens.Intervention;
 using Simpiens.Narrative;
@@ -34,6 +35,42 @@ namespace Simpiens.Simulation.Guild
         public IReadOnlyList<ExpeditionMember> Party => _party;
 
         public bool HasExpedition => _expedition.IsActive;
+
+        /// <summary>
+        /// <paramref name="crawlerId"/>'s part in the expedition, for cognition (Epic 10 G5.4): the stage, the sector and, at
+        /// work, its node. Default when it isn't with the party.
+        /// </summary>
+        public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId)
+        {
+            int i = PartyIndexOf(crawlerId);
+            if (i < 0 || !_party[i].IsWithParty) return default;
+            var member = _party[i];
+            return new Simpiens.Cognition.Contracts.ExpeditionOrder(_expedition.Stage, _expedition.TargetSectorId, member.NodeId, member.NodePosition);
+        }
+
+        /// <summary>
+        /// A member judged the order and refused it (D8, from cognition's directive evaluation): staying behind takes it off
+        /// the party; deserting takes it out of the guild too, keeping its settlement. Main thread.
+        /// </summary>
+        public void RefuseOrder(IGuildHost host, EntityId crawlerId, bool deserted, uint tick)
+        {
+            int i = PartyIndexOf(crawlerId);
+            if (i < 0 || !_party[i].IsWithParty) return;
+            var member = _party[i];
+            member.Status = deserted ? ExpeditionMemberStatus.Deserted : ExpeditionMemberStatus.StayedBehind;
+            _party[i] = member;
+            LeaveParty(host, crawlerId);
+            if (deserted)
+            {
+                Leave(host, crawlerId, tick, Tuning(host));
+                if (host.TryGetCrawler(crawlerId, out var crawler))
+                {
+                    host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.GuildQuit, crawlerId, WorldRegistry.PlayerEntityId,
+                        host.GetSectorForPosition(crawler.Position), tick, ChronicleIntensity.Dramatic));
+                }
+            }
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} {(deserted ? "deserted the guild rather than go" : "stayed behind")}");
+        }
 
         /// <summary>True when <paramref name="crawlerId"/> is with the party of the expedition out.</summary>
         public bool IsOnExpedition(EntityId crawlerId)
@@ -372,6 +409,7 @@ namespace Simpiens.Simulation.Guild
             {
                 var member = _party[_claimOrder[k]];
                 member.NodeId = _readyNodes[k % _readyNodes.Count];
+                host.TryGetNodePosition(member.NodeId, out member.NodePosition);
                 _party[_claimOrder[k]] = member;
             }
         }
@@ -425,8 +463,10 @@ namespace Simpiens.Simulation.Guild
             return false;
         }
 
+        /// <summary>At the stall, fed (below the muster's hunger, or carrying the trip's rations to eat on the way) and well.</summary>
         private static bool Mustered(AgentState crawler, Vec2 home, in ExpeditionTuning tuning) =>
-            Vec2.Distance(crawler.Position, home) <= tuning.MusterRadius && crawler.Hunger < tuning.MusterHunger
+            Vec2.Distance(crawler.Position, home) <= tuning.MusterRadius
+            && (crawler.Hunger < tuning.MusterHunger || crawler.Inventory.CountOf(ItemCategory.Food) >= tuning.Rations)
             && crawler.Health >= tuning.MusterHealth && !crawler.IsDowned;
 
         private enum PartyTest : byte { Mustered, InSector, Home }
@@ -443,7 +483,8 @@ namespace Simpiens.Simulation.Guild
                 {
                     PartyTest.Mustered => Mustered(crawler, home, tuning),
                     PartyTest.InSector => host.GetSectorForPosition(crawler.Position) == _expedition.TargetSectorId,
-                    _ => Vec2.Distance(crawler.Position, home) <= tuning.MusterRadius,
+                    // A downed member limps to the bunks (D10), not the stall: the way home doesn't wait for it
+                    _ => member.Status == ExpeditionMemberStatus.Downed || Vec2.Distance(crawler.Position, home) <= tuning.MusterRadius,
                 };
                 if (!passes) return false;
             }

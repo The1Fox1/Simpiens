@@ -100,7 +100,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
     - the haul and the shares, the ledger;
     - a round trip mid-stage;
     - the party disbanded, its members still in the guild and in their settlements.
-- [ ] **G5.4 Cognition (D8, D10):** the goal, the actions, the facts, compliance, the march.
+- [x] **G5.4 Cognition (D8, D10):** the goal, the actions, the facts, compliance, the march. Done 2026-10-31. What was built, and the deviations:
+  - **Compliance (D8):** a patron-led group is judged on trust in place of fear. A party member who won't go stays behind (−5 guild allegiance); one who deserts leaves the guild too, keeping its settlement.
+  - **The pipeline:** Epic 8's travel and hold actions serve the muster, the march and the way home, since the directive's target moves with the stage. One new fact (`AtExpeditionWork`, 39 → 40 of 64) and one new action (`WorkExpeditionNodeAction`, one unit at a time, so a turn-back takes within a gather). Members get a copy of their part each tick (`ExpeditionOrder`), as they do their memberships.
+  - **Party members work a node side by side,** without rivalry, so four empty the seam in one 1.5 s gather.
+  - **Fed for the trip (D9 changed):** hunger rises 1.5 a second and the trip takes about 60 s, so it costs about 90; a ration relieves 40. The muster asks for hunger below 20 or two rations carried (D9 said hunger below 50); a member short of them buys them at the stall first, at the stall's price. The first live probe, at D9's 50, had members leaving the party to eat on the way home.
+  - **A downed member** limps to the bunks; the way home doesn't wait for it.
+  - **The march in file** isn't built: the four walk to the same target and arrive within seconds of each other. F5's jitter is re-measured at G5.5.
+  - **Measured, default seed, injected trust:** geared, muster 20 s, march 18 s, work 6 s, home 18 s; 4 glowstone, four 21g shares, nobody downed. Bare, the party turns back 2 s into the work with 1.
+  - **Open for G5.5:** the stall stocks 3 hazard gear; a party of four needs 4.
   - Mechanism tests on the real floor with members put in place, as `HazardGearTests` does.
   - Each stage of the directive pipeline's first live use gets a validator case.
 - [ ] **G5.5 The live scenario, headless, and the measurements.**

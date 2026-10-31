@@ -87,6 +87,9 @@ namespace Simpiens.Cognition
         /// refreshed every tick (AgentRuntime) and after any change main-thread code makes, and it is not saved.
         /// </summary>
         public MembershipSet Memberships { get; set; }
+
+        /// <summary>Its part in the guild's expedition (Epic 10 G5), a copy refreshed every tick as the memberships are; not saved.</summary>
+        public ExpeditionOrder Expedition { get; set; }
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
         /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>
@@ -491,7 +494,8 @@ namespace Simpiens.Cognition
                 Personality,
                 DepartsAtTick,
                 Health,
-                IsDowned);
+                IsDowned,
+                Expedition);
         }
     }
 }

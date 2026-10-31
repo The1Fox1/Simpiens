@@ -25,6 +25,8 @@ namespace Simpiens.Cognition.Groups
         /// <summary>
         /// Computes the compliance utility equation:
         /// U_comply = (Respect * 0.35) + (Fear * 0.30) + (Allegiance * 0.25) + (Warmth * 0.10) - (SelfHunger * 0.30) - (SelfFrustration * 0.20)
+        /// A group the player leads as patron (Epic 10 G5, D8) is obeyed on trust in place of fear:
+        /// U_comply = (Trust * 0.35) + (Respect * 0.25) + (Allegiance * 0.25) + (Warmth * 0.15) - (SelfHunger * 0.30) - (SelfFrustration * 0.20)
         /// </summary>
         public static float CalculateUtility(in AgentContext context, in GroupData groupData)
         {
@@ -39,6 +41,10 @@ namespace Simpiens.Cognition.Groups
             float hunger = context.Hunger;
             float frustration = context.Frustration;
 
+            if (groupData.IsPatronLed)
+            {
+                return (affinity.Trust * 0.35f) + (respect * 0.25f) + (allegiance * 0.25f) + (warmth * 0.15f) - (hunger * 0.30f) - (frustration * 0.20f);
+            }
             return (respect * 0.35f) + (fear * 0.30f) + (allegiance * 0.25f) + (warmth * 0.10f) - (hunger * 0.30f) - (frustration * 0.20f);
         }
 

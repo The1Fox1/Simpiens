@@ -1,5 +1,6 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
+using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Cognition.Inventory;
@@ -32,7 +33,8 @@ namespace Simpiens.Cognition.Planning
             bool hasHazardGear = inv.IsWearing(ItemCategory.Protection);
 
             var state = BuildWorldState(context, hasFood, hasTool);
-            state = state.With(StateFact.HasProvisions, hasFood);
+            // At an expedition's muster, provisions are the trip's rations (Epic 10 G5)
+            state = state.With(StateFact.HasProvisions, hasFood && PurchaseProvisionsGoal.RationsToStockUp(context) <= 0);
             state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
             state = state.With(StateFact.HasHazardGear, hasHazardGear);
             return state;
@@ -70,7 +72,7 @@ namespace Simpiens.Cognition.Planning
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);
-            state = state.With(StateFact.HasProvisions, hasFoodInInventory);
+            state = state.With(StateFact.HasProvisions, hasFoodInInventory && PurchaseProvisionsGoal.RationsToStockUp(context) <= 0);
             state = state.With(StateFact.HasTool, hasTool);
 
             // 3. Psychological / Threat
@@ -195,6 +197,7 @@ namespace Simpiens.Cognition.Planning
 
             state = state.With(StateFact.HasActiveDirective, hasActiveDirective);
             state = state.With(StateFact.AtDirectiveLocation, atDirectiveLocation);
+            state = state.With(StateFact.AtExpeditionWork, hasActiveDirective && context.Expedition.IsWorking);
             state = state.With(StateFact.IsGroupLeader, isGroupLeader);
 
             // 7. Outpost Economy & Trade Stall State (Epic 9 Slice 2)

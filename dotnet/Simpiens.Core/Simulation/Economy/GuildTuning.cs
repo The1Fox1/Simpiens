@@ -95,9 +95,16 @@ namespace Simpiens.Simulation.Economy
     /// </summary>
     public readonly struct ExpeditionTuning
     {
-        /// <summary>The muster (D9): within this of the stall, hunger below this and health this or more, or the muster's time runs out (90 s).</summary>
+        /// <summary>
+        /// The muster (D9): within this of the stall, hunger below this and health this or more, or the muster's time runs out
+        /// (90 s). Hunger rises 1.5 a second, so a trip of about 30 s costs 45: from below 20 a member is home before
+        /// hunger takes over at 70 (D9 said 50; the live probe of G5.4 had members breaking off to eat on the way home).
+        /// Above it, a member carrying <see cref="Rations"/> counts as fed: it eats on the way (a ration relieves 40, the trip
+        /// costs about 90). One carrying fewer stocks up at the stall.
+        /// </summary>
         public readonly float MusterRadius;
         public readonly float MusterHunger;
+        public readonly byte Rations;
         public readonly float MusterHealth;
         public readonly uint MusterTicks;
 
@@ -122,12 +129,13 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The most an order may ask for.</summary>
         public readonly byte MaxGoal;
 
-        public ExpeditionTuning(float musterRadius, float musterHunger, float musterHealth, uint musterTicks, uint marchTicks, uint workTicks,
+        public ExpeditionTuning(float musterRadius, float musterHunger, byte rations, float musterHealth, uint musterTicks, uint marchTicks, uint workTicks,
             uint returnTicks, float cautiousHealth, float steadyHealth, float boldHealth, byte sharePercent, sbyte downedTrust,
             sbyte returnedTrust, sbyte returnedAllegiance, byte maxGoal)
         {
             MusterRadius = musterRadius;
             MusterHunger = musterHunger;
+            Rations = rations;
             MusterHealth = musterHealth;
             MusterTicks = musterTicks;
             MarchTicks = marchTicks;
@@ -145,7 +153,8 @@ namespace Simpiens.Simulation.Economy
 
         public static ExpeditionTuning Default => new ExpeditionTuning(
             musterRadius: 4f,
-            musterHunger: 50f,
+            musterHunger: 20f,
+            rations: 2,
             musterHealth: 80f,
             musterTicks: 900,
             marchTicks: 1800,

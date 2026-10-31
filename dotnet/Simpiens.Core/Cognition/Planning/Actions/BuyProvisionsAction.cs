@@ -57,6 +57,14 @@ namespace Simpiens.Cognition.Planning.Actions
             // The food the reachable stall sells (a ration); without one in sight, the first food there is
             var food = ResourceTargeting.TryGetNearestStall(context, out var seller) ? ResourceTargeting.FoodForSale(seller) : ItemType.None;
             if (food == ItemType.None) food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
+            // Stocking up for an expedition (Epic 10 G5): the trip's rations, as many as it can afford, at the stall's price
+            int rations = Simpiens.Cognition.Planning.Goals.PurchaseProvisionsGoal.RationsToStockUp(context);
+            if (rations > 0 && seller.SellPriceOf(food) > 0)
+            {
+                int affordable = context.Inventory.Gold / (int)seller.SellPriceOf(food);
+                return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, food, quantity: (ushort)SimMath.Max(1, SimMath.Min(rations, affordable)),
+                    maxExpectedPricePerUnit: seller.SellPriceOf(food));
+            }
             return new TradeIntent(context.AgentId, stallId, TradeActionType.BuyItem, food, quantity: 1,
                 maxExpectedPricePerUnit: Considerations.RationReservationPrice(context));
         }

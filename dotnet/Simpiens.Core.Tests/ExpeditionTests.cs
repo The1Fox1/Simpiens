@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Groups;
+using Simpiens.Cognition.Inventory;
 using Simpiens.Cognition.Social;
 using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
@@ -17,11 +18,13 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// Expeditions' mechanism on the real floor (Epic 10 G5.3, D7, D9, D10, D12, D13), with the preconditions injected:
-    /// members are signed on and put in place, and the guild's stage machine is driven tick by tick without the members'
-    /// own decisions (G5.4). The orders and their refusals; the party as a group inside the guild; the stages in order,
-    /// with the haul, the shares and the ledger; the muster's time; the retreat rule and a downed member; recall; a member
-    /// leaving; a save mid-stage; gear from stock. The live outcome is G5.5's scenario.
+    /// Expeditions' mechanism on the real floor (Epic 10 G5.3 and G5.4, D7–D13), with the preconditions injected: members
+    /// are signed on and put in place. The first tests drive the guild's stage machine tick by tick without the members'
+    /// own decisions: the orders and their refusals; the party as a group inside the guild; the stages in order, with the
+    /// haul, the shares and the ledger; the muster's time; the retreat rule and a downed member; recall; a member leaving;
+    /// a save mid-stage; gear from stock. The last run the whole simulation, members deciding for themselves (G5.4): a
+    /// geared party works the seam side by side and comes home, a bare one turns back, a member who distrusts the patron
+    /// won't go, and a hungry one stocks up first. The live outcome, with nothing injected, is G5.5's scenario.
     /// </summary>
     public class ExpeditionTests
     {
@@ -391,6 +394,148 @@ namespace Simpiens.Core.Tests
             commands.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Test"));
             o.Sim.Step(1);
             Assert.False(o.Guild.HasExpedition, "Recalled before it set out, it ends.");
+        }
+
+        // --- Members deciding for themselves (G5.4): the whole simulation runs ---
+
+        /// <summary>The default seed after 30 s, four residents signed on at their own wages, with hazard gear for each if <paramref name="geared"/>.</summary>
+        private static Outpost LiveOutpost(bool geared)
+        {
+            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            sim.Step(300);
+            var o = new Outpost { Sim = sim, Host = (IGuildHost)sim.Simulation, Guild = sim.Simulation.Guild, Members = new AgentState[4] };
+            var tuning = sim.Simulation.Economy.Guild;
+            uint tick = (uint)sim.Clock.CurrentTick;
+            int n = 0;
+            for (int i = 0; n < 4; i++)
+            {
+                var crawler = sim.Host.CrawlerStates[i];
+                if (crawler.IsDrifter) continue;
+                crawler.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(60, 80, 0, 0, 1, tick));
+                Assert.Equal(GuildRules.Check.Ok, o.Guild.Recruit(o.Host, crawler.AgentId, GuildRules.ReservationWage(crawler, tuning), tick));
+                o.Members[n++] = crawler;
+            }
+            o.Home = sim.Simulation.ActiveStalls[0].Position;
+            if (geared)
+            {
+                var stall = sim.Simulation.ActiveStalls[0];
+                if (stall.SellStockOf(ItemType.HazardGear) < 4) o.Host.UpdateStall(stall.WithStock(ItemType.HazardGear, 4)); // the stall stocks 3
+                var commands = Commands(o);
+                for (int i = 0; i < 4; i++) commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", o.Members[i].AgentId, ItemType.HazardGear));
+                sim.Step(1);
+            }
+            return o;
+        }
+
+        private static IPlayerInterventionService Commands(Outpost o) => (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
+
+        /// <summary>
+        /// Sends the party and runs until the expedition ends (or <paramref name="limit"/> ticks): the stages it went through,
+        /// in order, and whether it turned back (a crawler's chronicle keeps only its latest events).
+        /// </summary>
+        private static (List<ExpeditionStage> Stages, bool TurnedBack) SendAndRun(Outpost o, in DispatchExpeditionCommand order, int limit = 3000)
+        {
+            Commands(o).QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Test", order));
+            var stages = new List<ExpeditionStage>();
+            bool started = false, turnedBack = false;
+            for (int t = 0; t < limit; t++)
+            {
+                o.Sim.Step(1);
+                var stage = o.Guild.Expedition.Stage;
+                if (stage != ExpeditionStage.None && (stages.Count == 0 || stages[stages.Count - 1] != stage)) stages.Add(stage);
+                turnedBack |= o.Guild.Expedition.TurnedBack;
+                started |= o.Guild.HasExpedition;
+                if (started && !o.Guild.HasExpedition) break;
+            }
+            return (stages, turnedBack);
+        }
+
+        [Fact]
+        public void AGearedPartyWorksTheSeamSideBySideAndComesHome()
+        {
+            using var o = LiveOutpost(geared: true);
+            var shares = o.Sim.Simulation.EconomyLedger.Flows.Shares;
+            uint sent = (uint)o.Sim.Clock.CurrentTick;
+            var (stages, turnedBack) = SendAndRun(o, o.Order(goal: 4, rule: RetreatRule.Steady));
+            TestContext.Current.TestOutputHelper?.WriteLine(string.Join(" > ", stages));
+
+            Assert.False(o.Guild.HasExpedition, "The expedition ended.");
+            Assert.False(turnedBack, "Geared, it didn't turn back.");
+            // Delivering begins and ends within the tick the party is home, so it is never seen between ticks
+            Assert.Equal(new[] { ExpeditionStage.Muster, ExpeditionStage.March, ExpeditionStage.Work, ExpeditionStage.Return }, stages);
+            Assert.Contains(Told(o.Sim, o.Members[0].AgentId), e => e.EventType == ChronicleEventType.ExpeditionReturned && (int)e.ExtraData == 4);
+            Assert.Equal(shares + 4, o.Sim.Simulation.EconomyLedger.Flows.Shares);
+            for (int i = 0; i < 4; i++)
+            {
+                var mine = Told(o.Sim, o.Members[i].AgentId);
+                Assert.DoesNotContain(mine, e => e.SimulationTick >= sent && (e.EventType == ChronicleEventType.ExpeditionDowned
+                    || e.EventType == ChronicleEventType.TantrumStarted || e.EventType == ChronicleEventType.ResourceYielded));
+                Assert.True(o.Guild.IsMember(o.Members[i].AgentId), "Everyone is still in the guild.");
+            }
+        }
+
+        [Fact]
+        public void ABarePartyTurnsBack()
+        {
+            using var o = LiveOutpost(geared: false);
+            var (stages, turnedBack) = SendAndRun(o, o.Order(goal: 4, rule: RetreatRule.Steady));
+            TestContext.Current.TestOutputHelper?.WriteLine(string.Join(" > ", stages));
+            Assert.False(o.Guild.HasExpedition, "The expedition ended.");
+            Assert.Contains(ExpeditionStage.Work, stages);
+            Assert.True(turnedBack, "Bare, the Sump and the Gallery took the party below Steady's 55, and it turned back.");
+        }
+
+        [Fact]
+        public void AMemberWhoDistrustsThePatronWontGo()
+        {
+            using var o = LiveOutpost(geared: true);
+            uint tick = (uint)o.Sim.Clock.CurrentTick;
+            var groups = o.Sim.Simulation.Groups;
+            var unsure = o.Members[1];
+            var deserter = o.Members[2];
+            // Below 20 it stays behind; below 0 it deserts (D8): trust, warmth and respect toward the player, allegiance to the
+            // guild, less hunger and frustration. 30 x 0.35 + 10 x 0.25 - 10 x 0.30 = 10
+            unsure.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(0, 30, 0, 0, 1, tick));
+            groups.UpdateAllegiance(unsure.AgentId, o.Guild.GroupId, -60);
+            unsure.Hunger = 10f;
+            unsure.Frustration = 0f;
+            deserter.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(-40, -60, 0, -20, 1, tick));
+            groups.UpdateAllegiance(deserter.AgentId, o.Guild.GroupId, -60);
+            bool settled = groups.TryGetMembership(deserter.AgentId, GroupType.Settlement, out _);
+
+            Commands(o).QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Test", o.Order()));
+            o.Sim.Step(1);
+            Assert.True(o.Guild.IsOnExpedition(unsure.AgentId) && o.Guild.IsOnExpedition(deserter.AgentId), "All four are sent.");
+            for (int t = 0; t < 200 && (o.Guild.IsOnExpedition(unsure.AgentId) || o.Guild.IsOnExpedition(deserter.AgentId)); t++) o.Sim.Step(1);
+
+            Assert.True(o.Guild.HasExpedition, "The others go.");
+            Assert.Equal(ExpeditionMemberStatus.StayedBehind, o.Guild.Party[1].Status);
+            Assert.True(o.Guild.IsMember(unsure.AgentId), "Staying behind keeps it in the guild.");
+            Assert.Equal(ExpeditionMemberStatus.Deserted, o.Guild.Party[2].Status);
+            Assert.False(o.Guild.IsMember(deserter.AgentId), "Deserting takes it out of the guild.");
+            Assert.Equal(settled, groups.TryGetMembership(deserter.AgentId, GroupType.Settlement, out _));
+        }
+
+        [Fact]
+        public void AHungryMemberStocksUpAtTheMuster()
+        {
+            using var o = LiveOutpost(geared: true);
+            var hungry = o.Members[0];
+            var rations = Simpiens.Simulation.Items.ItemCategory.Food;
+            hungry.Hunger = 45f;
+            while (hungry.Inventory.CountOf(rations) > 0) hungry.Inventory.TryRemoveItem(hungry.Inventory.FirstHeld(rations), 1);
+            hungry.Inventory.Gold = 100;
+            int bought = hungry.Activity.RationPurchases;
+
+            Commands(o).QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Test", o.Order()));
+            for (int t = 0; t < 1200 && o.Guild.Expedition.Stage != ExpeditionStage.March; t++) o.Sim.Step(1);
+
+            Assert.Equal(ExpeditionStage.March, o.Guild.Expedition.Stage);
+            Assert.True(o.Guild.IsOnExpedition(hungry.AgentId), "It set out with the party.");
+            Assert.True(hungry.Activity.RationPurchases > bought, "It bought its rations at the stall.");
+            Assert.True(hungry.Hunger < o.Sim.Simulation.Economy.Guild.Expedition.MusterHunger
+                || hungry.Inventory.CountOf(rations) >= o.Sim.Simulation.Economy.Guild.Expedition.Rations, "It set out fed.");
         }
     }
 }

@@ -12,6 +12,8 @@ namespace Simpiens.Cognition.Planning.Goals
     public class ComplyDirectiveGoal : GoapGoal
     {
         public const float StarvationThreshold = 70f;
+
+        private static readonly PurchaseProvisionsGoal Provisions = new PurchaseProvisionsGoal();
         public const float IntimidationFearThreshold = 70f;
 
         public ComplyDirectiveGoal() : base("ComplyDirective", WorldState.Empty.With(StateFact.DirectiveFulfilled, true))
@@ -21,6 +23,9 @@ namespace Simpiens.Cognition.Planning.Goals
         public override bool IsValid(AgentContext context)
         {
             if (!context.DirectiveMembership.HasGroup) return false;
+            // An expedition's muster asks for members fed (Epic 10 G5, D9): a hungry one with nothing to eat on the way stocks
+            // up at the stall first, if it can, then joins it
+            if (PurchaseProvisionsGoal.StocksUpForExpedition(context) && Provisions.IsValid(context)) return false;
             if (context.Snapshot == null) return false;
 
             if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData))

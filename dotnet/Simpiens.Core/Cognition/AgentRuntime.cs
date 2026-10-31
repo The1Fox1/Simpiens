@@ -91,6 +91,8 @@ namespace Simpiens.Cognition
             {
                 State.Memberships = _simulationManager.Groups.GetMemberships(State.AgentId);
             }
+            // And of its part in the guild's expedition (Epic 10 G5)
+            State.Expedition = _simulationManager?.Guild != null ? _simulationManager.Guild.OrderFor(State.AgentId) : default;
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
             // Equipment's HazardResistance (G3's hazard gear) stops part of the damage; equipment that wears per hazard tick

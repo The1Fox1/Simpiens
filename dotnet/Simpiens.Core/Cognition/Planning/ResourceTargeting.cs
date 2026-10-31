@@ -140,14 +140,17 @@ namespace Simpiens.Cognition.Planning
         /// When the node is unreachable the intent carries no path, so the harvest handler reports PathBlocked
         /// and the consequence service blacklists the node — closing the feedback loop on the main thread.
         /// </summary>
-        public static async ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
+        public static ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
+            => BuildHarvestIntentAsync(context, pathfinder, target.EntityId, target.LastKnownLocation, targetUnits);
+
+        /// <summary>The same for a node known by id and place rather than from memory (an expedition's claim, Epic 10 G5).</summary>
+        public static async ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, EntityId nodeId, Vec2 targetPos, int targetUnits = 1)
         {
             if (pathfinder == null)
             {
-                return new HarvestResourceIntent(context.AgentId, target.EntityId, default, targetUnits: targetUnits);
+                return new HarvestResourceIntent(context.AgentId, nodeId, default, targetUnits: targetUnits);
             }
 
-            Vec2 targetPos = target.LastKnownLocation;
             var request = new PathRequest
             {
                 StartPosition = context.Position,
@@ -158,11 +161,11 @@ namespace Simpiens.Cognition.Planning
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
             if (IsReachable(pathResponse, targetPos))
             {
-                return new HarvestResourceIntent(context.AgentId, target.EntityId, pathResponse, targetUnits: targetUnits);
+                return new HarvestResourceIntent(context.AgentId, nodeId, pathResponse, targetUnits: targetUnits);
             }
 
             pathResponse?.ReturnToPool();
-            return new HarvestResourceIntent(context.AgentId, target.EntityId, null, targetUnits: targetUnits);
+            return new HarvestResourceIntent(context.AgentId, nodeId, null, targetUnits: targetUnits);
         }
 
         /// <summary>

@@ -128,6 +128,14 @@ namespace Simpiens.Simulation
 
         bool Simpiens.Simulation.Guild.IGuildHost.IsSectorCharted(byte sectorId) => _sectors != null && _sectors.IsExplored(sectorId);
 
+        bool Simpiens.Simulation.Guild.IGuildHost.TryGetNodePosition(EntityId resourceId, out Vec2 position)
+        {
+            var node = _worldRegistry?.GetEntity(resourceId);
+            if (node == null) _dormantNodes.TryGetValue(resourceId, out node);
+            position = node != null ? node.Position : default;
+            return node != null;
+        }
+
         /// <summary>The resource nodes in a sector, ready (in the registry) or dormant (set aside until they regrow), by id.</summary>
         void Simpiens.Simulation.Guild.IGuildHost.NodesIn(byte sectorId, List<EntityId> into)
         {

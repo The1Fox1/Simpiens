@@ -22,6 +22,7 @@ namespace Simpiens.Simulation.Guild
         /// <summary>The map's resource nodes in a sector, ready or dormant, by id.</summary>
         void NodesIn(byte sectorId, List<EntityId> into);
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
+        bool TryGetNodePosition(EntityId resourceId, out Vec2 position);
 
         IGroupRegistry Groups { get; }
         IReadOnlyList<TradeStallData> ActiveStalls { get; }

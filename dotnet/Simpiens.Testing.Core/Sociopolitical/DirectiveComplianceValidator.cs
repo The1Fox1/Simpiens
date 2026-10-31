@@ -170,7 +170,18 @@ namespace Simpiens.Testing.Sociopolitical
             var decision = ComplianceUtility.Evaluate(context, groupData);
             Assert(decision == ComplianceDecision.Comply, $"Decision must be Comply for U={actualU} >= 20.");
 
-            TestLog.Log("[PASS] Test 3: Compliance utility formula verified against analytical baseline.");
+            // The patron's weights (Epic 10 G5, D8): a party the player leads is obeyed on trust in place of fear
+            var playerId = Simpiens.Simulation.WorldRegistry.PlayerEntityId;
+            var party = new GroupData(groupId, GroupType.TemporaryParty, playerId, Vec2.Zero, GroupDirective.None, 2, 100);
+            memory.SetAffinity(playerId, new AffinityRecord(warmth: 20, trust: 60, fear: 10, respect: 40, 1, 100));
+            // U = (Trust * 0.35) + (Respect * 0.25) + (Allegiance * 0.25) + (Warmth * 0.15) - (Hunger * 0.30) - (Frustration * 0.20)
+            // U = 21.0 + 10.0 + 20.0 + 3.0 - 6.0 - 2.0 = 46.0
+            float patronU = ComplianceUtility.CalculateUtility(context, party);
+            Assert(SimMath.Abs(patronU - 46f) < 0.001f, $"The patron's compliance utility: expected 46, got {patronU}.");
+            memory.SetAffinity(playerId, new AffinityRecord(warmth: -20, trust: -40, fear: 90, respect: 0, 1, 100));
+            Assert(ComplianceUtility.Evaluate(context, party) == ComplianceDecision.ActiveDesertion, "Fear doesn't move a member the patron's way: distrust deserts.");
+
+            TestLog.Log("[PASS] Test 3: Compliance utility formula verified against analytical baseline, and the patron's on trust.");
         }
 
         private void ValidateComplianceThresholdsAndDecisionOutcomes()

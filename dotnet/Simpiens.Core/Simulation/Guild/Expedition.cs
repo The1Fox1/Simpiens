@@ -47,8 +47,9 @@ namespace Simpiens.Simulation.Guild
     {
         public EntityId CrawlerId;
 
-        /// <summary>The node it works, claimed when the party reaches the sector.</summary>
+        /// <summary>The node it works, claimed when the party reaches the sector, and where it is (cognition's snapshot can't look an entity up).</summary>
         public EntityId NodeId;
+        public Vec2 NodePosition;
 
         /// <summary>What it carried of the haul's item when sent: that isn't the haul.</summary>
         public ushort CarriedAtDispatch;
@@ -60,6 +61,7 @@ namespace Simpiens.Simulation.Guild
         {
             CrawlerId = crawlerId;
             NodeId = default;
+            NodePosition = default;
             CarriedAtDispatch = carriedAtDispatch;
             Status = ExpeditionMemberStatus.Going;
             _pad = 0;
