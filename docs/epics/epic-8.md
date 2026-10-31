@@ -404,4 +404,4 @@ IsGroupLeader       = 24  // Agent holds RoleRank.Leader in their group
 
 ## 11. Open findings
 
-1. **`GroupRegistry.CreateGroup` doesn't take a new leader off their old group's roster** (found 2026-10-15, Milestone 1 save/load). `AddMember` does. If the old group is then disbanded, the leader's new membership is deleted with the old roster. Latent: no live code path is known to create a group led by a member of another group. Fix: remove the leader from any previous group first, as `AddMember` does.
+1. **`GroupRegistry.CreateGroup` doesn't take a new leader off their old group's roster** (found 2026-10-15, Milestone 1 save/load). `AddMember` does. If the old group is then disbanded, the leader's new membership is deleted with the old roster. Latent: no live code path is known to create a group led by a member of another group. Fix: remove the leader from any previous group first, as `AddMember` does. **Owner: Epic 10 G4.4 (2026-10-30)**, with groups made many-to-many, one per kind; a schism's splinter leader reaches it.

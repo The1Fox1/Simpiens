@@ -7,13 +7,14 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - paid members stay, and unpaid ones quit;
   - a bounty's reward is judged as fairly as a trade.
 - **The design note first.** The epic's risk row asks for a note on the player as patron before any code. §2 (D1–D6) is that note; D1 answers the producer's view that groups should be many-to-many.
-- **Branch:** `feat/epic10-g4`, from `main` at `01a1321` (PR #16 merged); one PR into `main`.
+- **Branch:** `feat/epic10-g4`, rebased onto `main` at `b54ef83` (PR #17, Epic UI-Beta B0–B1, merged 2026-10-30); one PR into `main`.
 - **Estimate:** 3–4 agent days. The single plan said 2–3; the groups refactor (G4.2–G4.4) adds about one.
-- **The producer's stop:** the go on this plan. No code before it.
+- **The producer's go:** 2026-10-30, "proceed with epic 10 work". D1–D6 stand as proposed.
 
 ## 0. Before G4
 - [x] PR #16 (graphics V0–V6) is merged (`01a1321`, 2026-10-29). Its local folder is archived as `.agents/local/archive/graphics-v3-v5_2026-10-29.zip`.
-- [x] `feat/epic10-g4` is rebased onto `main`.
+- [x] `feat/epic10-g4` is rebased onto `main` (`b54ef83`, after PR #17).
+- PR #17 took save format 7 and made the world hash cover each crawler's look and name; G4's save change is format 8.
 - G3's defaults, the fair band (1,000–2,000g) and the drifter tuning stand.
 
 ## 1. Measured (2026-10-29)
@@ -129,7 +130,7 @@ Numbers live in `GuildTuning`, beside `DrifterTuning` and `GearTuning` in `Econo
 
 **Bounty fairness (D5):** `TradeFairness.ClassifyBounty`, with its deltas in `TradeTrustTuning`. `DeliverBountyIntentHandler` uses them in place of the flat +15.
 
-**Saves (format 7, raised once for G4):**
+**Saves (format 8, raised once for G4; Epic UI-Beta took 7):**
 - **Memberships:** the crawler's record drops its membership, so the groups' block holds the only copy, with several records per crawler, sorted by crawler and group.
 - **The guild's contracts:** a block of their own.
 - The round-trip validators check both.
@@ -159,7 +160,7 @@ Numbers live in `GuildTuning`, beside `DrifterTuning` and `GearTuning` in `Econo
 
 ## 4. Steps
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
-- [ ] **G4.1 Docs:**
+- [x] **G4.1 Docs:**
   - **The epic:**
     - D1–D6;
     - §2.3 gains "groups are many-to-many, one per kind";
@@ -170,7 +171,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
 - [ ] **G4.2 The world hash covers groups.** No behaviour change. The golden hashes are re-recorded in this commit, which says why.
 - [ ] **G4.3 Groups become many-to-many (D1):**
   - the set, the per-kind rule, the API, the registry as the one owner, the readers, the directive precedence;
-  - save format 7 (the crawler's record drops its membership).
+  - save format 8 (the crawler's record drops its membership).
   - **Validators:**
     - `GroupPrimitiveValidator`: a settlement and a guild at once; a second settlement replaces the first; disbanding one group leaves the others;
     - `SuccessionValidator`: succession and a schism in a settlement whose members are in a guild;
@@ -238,7 +239,7 @@ Headless, on the real outpost, with nothing injected. The scripted player acts o
 | The refactor changes behaviour unseen: the world hash doesn't cover groups. | G4.2 extends the hash first, and G4.3 must reproduce it exactly. |
 | Code that assumes a crawler leader meets a player-led group: succession, the legitimacy check, `CreateGroup` putting its leader on the roster. | The patron's rules in G4.6, each with a validator case. |
 | Wages are transfers. If members save them (M4), the treasury doesn't fall as the economy model expects. | Measure at G4.7. A crawler sink only on that measurement (economy model §8). |
-| The save format changes (7). | Old saves are refused with a reason, as today (epic §6). |
+| The save format changes (8). | Old saves are refused with a reason, as today (epic §6). |
 
 ## 7. Deferred (G4)
 | Left out | Owner |

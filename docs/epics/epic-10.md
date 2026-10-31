@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25); G4 (the guild) is next. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25). G4 (the guild) is under way since 2026-10-30, on `feat/epic10-g4` with the working plan `.agents/epic10_g4_plan.md`; its decisions D1–D6 are in §0. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -23,6 +23,20 @@ On 2026-10-23, after the KNI client merged into `main` (PR #6), the producer set
 - **Q8, where "done" is proven:** headless, in `dotnet test`, with live scenarios on the real session and nothing injected. ROADMAP §1B says so since 2026-10-23. Unity's PlayMode suite stayed a regression check on the core until Unity's removal (2026-10-24).
 - **Q9, the haul:** one new rare salvage, found only in hazard sectors and bought only by the caravan, at a premium. It has a placeholder name until art and naming are chosen.
 - **Q10, shipping:** one pull request into `main` per milestone, from a `feat/` branch, with its measured tests. The agent never merges. Each milestone has a working plan in `.agents/`, deleted when the milestone closes. **How G1 and G2 landed (2026-10-24):** their pull requests (#8, #9) were stacked on the previous milestone's branch and merged into those branches, which were then deleted, so only G0 (#7) reached `main`. G1 and G2 go into `main` in one pull request with the docs cleanup of 2026-10-24. From G3, each milestone's pull request targets `main` directly.
+
+### G4's decisions (2026-10-30)
+
+The design note on the player as patron (§6's risk row), from the working plan `.agents/epic10_g4_plan.md` (§2). The producer's go ("proceed with epic 10 work") accepted every default.
+
+- **D1, groups are many-to-many, one per kind.** The producer's view (2026-10-29): "Groups should be many to many relationship is my opinion". The plan argued for it, with one rule on top: a crawler holds at most one group of each kind, a limit held as data.
+  - The guild is a `FactionGuild` group with the player as patron (§2.3 as written), and a party a `TemporaryParty` inside it.
+  - A crawler follows the first active directive of its party, then its guild, then its settlement.
+  - A departing crawler leaves every group. `CreateGroup` takes its leader off the old roster (Epic 8 finding 1).
+- **D2, recruiting.** The Recruit command names a resident and a wage. It needs trust ≥ 60 and warmth ≥ 40 (Q5), room for four (Q4), and no quitting or dismissal in the last 5 minutes. The stall pays a 20g fee, and the crawler signs at a wage of at least its reservation wage. A recruit keeps its settlement.
+- **D3, wages.** Paid on each caravan visit after the rations, in join order, in full or not at all. A paid member gains trust, warmth and allegiance; an unpaid one loses them. Fees and wages are transfers, conserved in the ledger.
+- **D4, quitting.** A member quits below 30 trust, or after 2 unpaid visits in a row. The player can dismiss one. Either way it leaves the guild only, with a 5-minute cooldown.
+- **D5, bounty fairness (F3).** A delivery is judged as a sale is: generous, fair or stingy against the crawler's own minimum for the work.
+- **D6, the guild on screen.** Recruit is on the dossier. The roster is a window, opened by GUILD in the header beside an "n/4" count.
 
 ## 1. Goal
 
@@ -72,7 +86,7 @@ The roadmap's invariants (§1A) bind this epic.
 
 - **The rules live in the engine-free core** (`dotnet/Simpiens.Core`, .NET 10 and C# 14 since 2026-10-24; C# 10 and netstandard2.1 in `Assets/Simpiens.Core` until Unity's removal), tested with `dotnet test`. The client in `dotnet/` shows them and sends commands.
 - **The player's actions are typed commands** applied in a fixed order on the tick: recruit, dismiss, set a wage, give gear, form a party, dispatch and recall an expedition. Gear prices extend the existing price command.
-- **The guild and its parties reuse Epic 8's groups:** the guild is a `FactionGuild` group with the player as patron, a party a `TemporaryParty` inside it, an expedition a new kind of directive. Epic 8's directives come from a crawler leader, so the patron needs its own path of authority, with compliance weighted by trust in the player.
+- **The guild and its parties reuse Epic 8's groups:** the guild is a `FactionGuild` group with the player as patron, a party a `TemporaryParty` inside it, an expedition a new kind of directive. **Groups are many-to-many, one per kind** (G4's D1, 2026-10-30): a crawler holds at most one settlement, one guild and one party at once, the limit held as data. Epic 8's directives come from a crawler leader, so the patron needs its own path of authority, with compliance weighted by trust in the player.
 - **Numbers live in the session's tuning** (`EconomyTuning` or a tuning beside it), never as literals.
 - **Hazards and rare salvage are map data** on sectors and nodes in `MapDefinition`; Floor 1 grows by one or two sectors beyond the frontier.
 - **Durations are in ticks;** arrivals, hazard checks and injuries use the session's seeded random numbers.
@@ -183,7 +197,7 @@ Each milestone also needs its validators, the golden check and the client's test
 | :--- | :--- |
 | New money (drifters, rare salvage) and new costs (wages, gear wear) push the economy out of the soak's bands | Re-measure the bands at every milestone; update the economy model with each change |
 | Finding F2 has a deeper cause, in pathing or in the food supply | G0 is time-boxed at 3 days; a seed that still fails is recorded, with its cause, as its own finding |
-| Epic 8's directives assume a crawler leader, not the player | G4 opens with a short design note on the player as patron, before any code |
+| Epic 8's directives assume a crawler leader, not the player | Answered by G4's design note (D1–D6 in §0; the plan's §2–§3): the guild is a group led by the player as patron, who leads without a place on the roster and is never replaced by succession; a crawler follows its party's order, then its guild's, then its settlement's |
 | More crawlers cost more planning time (one locked planner, ROADMAP §1A.2 #8) | Measure at G1 and G5, headless and against the frame-time gate; build per-thread planning only on a measured need |
 | The dashboard is laid out for 1280×720; the roster and the tracker need room | Make them windows, like the merchant and the bounty board |
 | The save format changes at most milestones | Old saves are refused with a reason, as today; no migration before release |
@@ -220,4 +234,5 @@ Each milestone also needs its validators, the golden check and the client's test
 - 2026-10-23: G2 done: health, the Sump and the Glow Caves, glowstone; the fair band re-set; A* rounds alike in both runtimes. Its working plan was deleted at close-out.
 - 2026-10-25: the producer's look at G2 passed ("hazards UI is fine for now"); the fair soak band set to 1,000–2,000g. G3 (gear) started on `feat/epic10-g3`, with a working plan in `.agents/`.
 - 2026-10-26: before G4, the item system refactor (not part of this epic; ROADMAP §3A): items are a catalog with groups and rarity, gear's protection and life are its definition's, and loot tables exist as a foundation. No behaviour change.
+- 2026-10-30: G4 started on the producer's go ("proceed with epic 10 work"), after Epic UI-Beta B0–B1 merged (PR #17). Its decisions D1–D6 stand as proposed (§0).
 - 2026-10-25: G3 done: hazard gear (one protective item, worn, halving hazard damage and wearing out), bought by bold crawlers at 30g; findings F4 (the drifters' benefit to a keen player) and F5 (early jitter on 4 of 120 seeds). Its working plan was deleted at close-out.

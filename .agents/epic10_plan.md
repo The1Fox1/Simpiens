@@ -7,7 +7,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 ## The plans
 | Plan | Covers | Status | Estimate (agent days) | The producer's stops |
 | :--- | :--- | :--- | :-: | :--- |
-| [`epic10_g4_plan.md`](epic10_g4_plan.md) | Part 1, G4: groups become many-to-many (D1), then the guild | Next, on the producer's go | 3–4 | The go, with D1–D6 |
+| [`epic10_g4_plan.md`](epic10_g4_plan.md) | Part 1, G4: groups become many-to-many (D1), then the guild | Under way (go 2026-10-30) | 3–4 | None left: the go came with D1–D6 |
 | [`epic10_g5_plan.md`](epic10_g5_plan.md) | Part 1, G5: expeditions | After G4's PR merges | 4–5 | A look at G5 |
 | [`epic10_g6_plan.md`](epic10_g6_plan.md) | Part 1, G6: the gate, then Part 1's close-out | After the look at G5 | 1–2 | A play session |
 | [`core_refactor_plan.md`](core_refactor_plan.md) (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | Due after Part 1 (producer, 2026-10-25) | 3–3.5 | As that plan says |

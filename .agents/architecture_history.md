@@ -1218,3 +1218,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Commit B then hashed them. The re-record changed hex fields only, checked by script.
   - Commit C re-recorded the four renders that draw names.
 - **Deviation:** none from the epic. The plan's order changed with one branch: core data first, then the spike.
+
+
+## 2026-10-30: Epic UI-Beta paused after B0–B1; Epic 10 G4 starts
+
+- **B0's gate passed:** the producer's look at the people sheet ("People sheet looks good"). PR #17 (B0–B1) merged.
+- **UI-Beta is PAUSED** after B0–B1. Asked whether to continue it or move to Epic 10, the agent recommended Epic 10:
+  - B4 needs Epic 10's roster and tracker;
+  - Part 1 is the active milestone;
+  - G4's rebase stays to the one #17 caused.
+  The producer agreed ("proceed with epic 10 work"). B2 resumes after Part 1's gate (G6).
+- **UI-Beta's working plan is deleted.** Its findings are in the epic's §10 and its decisions in the entry above.
+- **G4 starts** on `feat/epic10-g4`, rebased onto `main` at `b54ef83`.
+  - D1–D6 stand as proposed, recorded in the epic's §0.
+  - G4's save change becomes format 8, since UI-Beta took 7.
