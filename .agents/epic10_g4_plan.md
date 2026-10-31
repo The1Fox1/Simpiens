@@ -202,7 +202,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - `GuildWageValidator`: paid, unpaid, quitting after two, the trust floor, the ledger.
   - **Measure** a guild of four at 5g, played by the scripted player on the soak's seeds: the treasury, the members' purses (M4) and trust.
   - If purses climb, carry it to G6. A crawler sink comes back only on that measurement (economy model §8).
-- [ ] **G4.8 The scripted player and the live scenarios,** headless.
+- [x] **G4.8 The scripted player and the live scenarios,** headless. The console's `run --player guild` and `soak --profile guild` come with G6's soak profile.
 - [ ] **G4.9 The client:**
   - the dossier, the roster window, the header;
   - `DashboardModelTests` for the guild's model, and render tests.
@@ -264,3 +264,19 @@ Headless, on the real outpost, with nothing injected. The scripted player acts o
   - The glowstone-free proof day (`ItemSystemProofTests`, the default seed) now has one jitter, at t2516 near the Garden (−10.5, 2.2): a crawler steps, waits and steps among others.
   - The proof is about the economy, so it now judges every check of the day but F5's jitter, and only while there is no penetration or breach.
   - The tolerance goes with F5, at G5.
+- **G4.7's measurement (run at G4.8):**
+  - **The setup:** a guild of four at 5g, recruited by `GuildPlayer` at fair prices, on the soak's seeds for 30 minutes, against the fair player with no guild.
+
+  | Seed | Members (signed at) | Treasury, guild vs none | Fees + wages | Members' purses (6, 12, 18, 24, 30 min) | Trust at the end |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | 20261009 | 4 (t1302, t4226, t9393, t14800) | 1,240g vs 1,489g | 80g + 360g | 15, 25, 70, 40, 45g | 96–100 |
+  | 1 | 4 (t4831, t7208, t7233, t12535) | 1,449g vs 1,641g | 80g + 340g | 0, 30, 55, 75, 90g | 100 |
+  | 2 | 1 (t6102; M1: few qualify) | 1,297g vs 1,518g | 20g + 100g | 0, 70, 20, 25, 55g | 100 |
+
+  - Members spend their wages: purses stay in M4's range, with a slow rise only on seed 1. So no crawler sink, as D3 expected.
+  - The treasury stays in the fair band (1,000–2,000g).
+  - A paid member's trust reaches 100, so while paid it doesn't quit on trust.
+  - G6 re-sets the bands with the guild.
+- **G4.8's scenarios:**
+  - *The trusted sign on and the paid stay:* the default seed signs at t1302 (M1: t1,250); 13 visits' wages are paid; the day holds.
+  - *The unpaid quit:* under generous prices from the sign-on on, the member is first unpaid at t12600 and quits at t13200 (two visits); the ledger balances.
