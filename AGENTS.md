@@ -108,6 +108,10 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
     - **How a session trades an item is its economy:** `EconomyTuning`'s `ItemTerms` (base value; the stall's role, opening price and stock) and `SupplyTuning`'s `CaravanTerms` (exports or supplies). A stall's goods are a table (`TradeStallData`'s `StallGoods`), and a price command carries (item, price) pairs.
     - **The client's words for items** are `Simpiens.Presentation/ItemTexts` (an item without an entry gets words from its catalog name); **its pictures** come from `ItemArt` by art key (graphics V3), its icons in the dashboard from `ItemIcons` (the models name an icon key; the client's `IconAtlas` draws it 1:1).
     - **A save** holding an item the catalog doesn't define is refused (`SaveItems`).
+  - `People/`: who crawlers are (Epic UI-Beta).
+    - `CrawlerLook` is 16 bytes of option ids, 0 = unset, drawn at spawn on its own salt and saved.
+    - `LookCatalog` holds the options and the lineages' odds; `GivenNames` holds the name lists and the draw; `DepartedCrawler` is who left.
+    - No decision reads a look (`CognitionReadsNoLookTests`) until lineage traits are designed.
   - `Economy/`: Unmanaged economy structs (`ItemInstance`, `TradeStallData`, `BountyContract`), authoritative gold tracking (`IEconomyLedger`, `EconomyLedger`), the session's economy numbers (`EconomyTuning`, with `SupplyTuning`, `DrifterTuning` and `GearTuning` nested), the trade fairness rule (`TradeFairness`), and the periodic economy (`ISupplyService`, `SupplyService`). The periodic economy covers dormant-node regrowth and the caravan visit: salvage quota faucet, then upkeep sink, then ration restock. `SimulationManager` ticks it via `ISupplyHost`. The model is in [`docs/economy-model.md`](docs/economy-model.md). Economy numbers live in `EconomyTuning` only: read them from the session's tuning (`IIntentExecutionContext.Economy`, or `Considerations.Economy` in cognition), never as literals.
   - `Persistence/`: session save and load.
     - `SessionSave` is a whole session at one tick: a header, then one block per owner (crawlers, economy, world, groups, chronicle). Each owner writes and reads its own block (`CaptureTo` / `RestoreFrom`, `AgentState.CaptureRecord` / `RestoreRecord`); `SessionHost.Capture` / `TryRestore` assemble them. Keyed records are sorted by id, so a capture doesn't depend on dictionary order.
@@ -155,6 +159,18 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   2. A row under its `ArtKeys` key in each view mode's table (`TopDownArtTable`, `IsometricArtTable`): frames, size in units of a scale, pivot, frame rate, pulse. Layout that belongs to the art (where carried goods hang, the stall's display slots) is the catalogue's data too.
 - **A new kind of thing** also needs `EntityVisuals` to say which key it is drawn with.
 - **The checks:** `ArtCompletenessTests` (everything the frames carry has art, every row is used, every node on a shipped map has its own); `AtlasLayoutTests` (each sheet within its 2048 budget). Then look at the art review sheet, re-record the art pins in their own commit, and re-record the changed renders in the pinned image (see "Checking a change").
+
+### Adding a look
+- **An option** (a hair style, a skin tone, a colour, an outfit) is a key at the end of its gene's list in `LookCatalog` and its odds in the lineages that offer it. Never reorder or remove one: retire it by giving it no odds anywhere, so a saved look keeps its meaning.
+- **A lineage** is a key at the end of the lineage list and a `LineageDefinition` with its odds per gene.
+- **A gene** goes last in `LookGene` and is drawn last, so every seed's earlier genes keep their values. It uses one of `CrawlerLook`'s spare bytes; a 17th gene changes the save format.
+- **Its picture:** a row in the people kits (B2 and B3).
+- **The checks:**
+  - `LookValidator`: the catalogue, and every option at its odds.
+  - The people sheet: look at it.
+  - `CrawlerIdentityTests`: every option turns up on the gate seeds.
+  - A change of odds changes every seed's looks: re-record golden in its own commit (only hashes move).
+- **A name** is a line in `GivenNames`: Latin-1 letters, at most 10 characters, in one list only (`GivenNamesValidator`; the client's `FontTests` checks the glyphs).
 
 ---
 

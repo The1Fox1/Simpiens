@@ -24,15 +24,15 @@ Working document (AGENTS.md, Documentation Protocol 6). The plan was written on 
 
 ## Steps
 1. [x] Docs: the roadmap (Track B, §3), the epic file, the focus file, this plan.
-2. [ ] B1.2–B1.3, the look as data, wired to nothing:
+2. [x] B1.2–B1.3, the look as data, wired to nothing:
    - `Simpiens.Core/Simulation/People/`: `CrawlerLook` (16 bytes, size pinned), `LookCatalog`, `CrawlerLook.Generate` on `SimRandomSalt.Look`;
    - validators: the catalogue, generation and odds.
-3. [ ] B0, the spike (test-only, D1) in `Simpiens.Client.Tests/People/`:
+3. [x] B0, the spike (test-only, D1) in `Simpiens.Client.Tests/People/`:
    - bodies recoloured from today's 24 pose frames by key colour, with three hair styles, a broad build and the delver transform;
    - a 48×48 Hearthlight bust in tones written in integer maths;
    - `PeopleSheetTests` writes `render-output/people-sheet.png`.
-4. [ ] B0's design note: §9 of the epic, from the spike's counts and timings.
-5. [ ] B1.4–B1.6, names, the crawler, the host and the save. This is commit A:
+4. [x] B0's design note: §9 of the epic, from the spike's counts and timings.
+5. [x] B1.4–B1.6, names, the crawler, the host and the save. This is commit A:
    - `NameLists` and the name draw on `SimRandomSalt.Name`;
    - `AgentState.Look` and `GivenName`;
    - the register (`SessionHost.People`, departed drifters in `PopulationSave`);
@@ -41,14 +41,23 @@ Working document (AGENTS.md, Documentation Protocol 6). The plan was written on 
    - round trips in the capture and restore validators;
    - the guard: no `Cognition/` file reads `Look`.
    - Gate: golden 3/3 and the soak unchanged.
-6. [ ] Commit B: `WorldStateHash` takes the look and name, golden re-recorded, and a script checks the diff is in hex fields only.
-7. [ ] Commit C: the renders that show names are looked at, then re-recorded in the pinned image.
-8. [ ] The live scenario `CrawlerIdentityTests`: the 23 gate seeds, and `OutpostWatch` checks names every tick.
-9. [ ] Docs close-out:
+6. [x] Commit B: `WorldStateHash` takes the look and name, golden re-recorded, and a script checks the diff is in hex fields only.
+7. [x] Commit C: the renders that show names are looked at, then re-recorded in the pinned image.
+8. [x] The live scenario `CrawlerIdentityTests`: the 23 gate seeds, and `OutpostWatch` checks names every tick.
+9. [x] Docs close-out:
    - the roadmap, the epic and the focus file;
    - `architecture_history.md`;
    - "Adding a look" (its core half) in `AGENTS.md`.
-10. [ ] The standing gate, then one pull request into `main` (B0 and B1).
+10. [x] The standing gate, then one pull request into `main` (B0 and B1).
 
 ## Findings
-(none yet)
+- `SessionHost.CrawlerSpawned` fires before a new crawler gets its personality, look and name, as it always did for restored state. B2 bakes from frames, not from the event.
+- The spike finds the head from the hair's pixels in 42 of 48 frames, failing on Idle 1 and both Panicking frames. B2 holds an anchor table.
+- Seeds 1–120: 112/120, the same 8 seeds as `main` at `01a1321` (Epic 10 F3, F5). Not this branch's.
+- Gate (2026-10-30):
+  - `dotnet test` 459/459, and the pinned image 341/341.
+  - Golden 3/3, re-recorded once, with only hashes changed.
+  - MonoGame and Android compile.
+
+## Open
+- The producer's look at the people sheet (B0's gate). This plan is deleted at B2's start, once its findings are in the epic (§10 holds them).

@@ -55,7 +55,7 @@ flowchart LR
         B1["Epic UI-1\nFacility Dashboard\n(COMPLETED)"] --> BAlpha["Epic UI-Alpha\nNarrative Chronicle\n(COMPLETED)"]
         BAlpha --> B2["Epic UI-2\nMerchant Terminal\n& Bounty Board\n(COMPLETED)"]
         B2 --> B3["Epic UI-3\nGuild Roster &\nExpeditions\n(in Epic 10 Part 1)"]
-        B3 --> BBeta["Epic UI-Beta\nCrawler Identity &\nInterface Pass\n(ACTIVE: B0-B1)"]
+        B3 --> BBeta["Epic UI-Beta\nCrawler Identity &\nInterface Pass\n(ACTIVE: B0-B1 done)"]
     end
 
     subgraph Track C: Harness & Diagnostics (Verification Track)
@@ -351,7 +351,7 @@ Before Epic 10 the soak and scaling work (#8) was planned; the producer started 
 *Approved 2026-10-30 from the Claude Doc draft (Q5 as the draft reads: lineage traits later, as a design of their own). The producer started B0 and B1 on 2026-10-30, before Epic 10 G4, on one branch and one pull request.*
 * **Goal**: every crawler gets a body and a face of its own, shown wherever the player meets it; the core story is the selected crawler's portrait in the dossier. A look (lineage, body frame, build, skin, hair, face, clothes) is plain saved data drawn from the seed; generators draw it now, imported art can replace them later (Epic CLIENT M7).
 * **Milestones**: B0 spike and people sheet (the producer's look); B1 the look as data and names in the core (save format raised, golden re-recorded once, a live scenario); B2 bodies on the map; B3 portraits and the dossier (the producer's looks at B2 and B3); B4 faces everywhere and the map inspector; B5 the interface pass; B6 the gate (a play session).
-* **Status**: B0 and B1 in progress (2026-10-30). Looks change no play in this epic.
+* **Status**: B0 and B1 done (2026-10-30) on `feat/ui-beta`, one pull request into `main`. Every crawler has a saved look and a never-shared given name; a live scenario on the 23 gate seeds proves it; the save format is 7; golden re-recorded once (only hashes moved). The producer's look at the people sheet (B0's gate) is open. Next: B2, bodies on the map. Looks change no play in this epic.
 
 ---
 
@@ -407,7 +407,7 @@ Before Epic 10 the soak and scaling work (#8) was planned; the producer started 
 
 When working in parallel agent sessions:
 1. **Engine Work**: Reference **Track A** (Milestone 1 is `COMPLETED`; **Epic 10 Part 1 is `ACTIVE`** (Milestone 2, [epics/epic-10.md](epics/epic-10.md)), G0 (the day on every seed, Epic CORE's F2), G1 (drifters) and G2 (health and hazards) done 2026-10-23, the producer's look at G2 passed 2026-10-25; G3 (gear) done 2026-10-25; G4 (the guild) next; **Epic CORE** is `COMPLETED` and merged). The simulation lives in `dotnet/Simpiens.Core` (`Simpiens.Cognition`, `Simpiens.Simulation`, …), its validators in `dotnet/Simpiens.Testing.Core`.
-2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; **Epic UI-Beta is `ACTIVE`**, B0 and B1 since 2026-10-30 ([epics/epic-ui-beta.md](epics/epic-ui-beta.md)); Epic UI-3 is folded into Epic 10 Part 1). New views and UI go into the KNI client (`dotnet/Simpiens.Presentation` for what is drawn, as data; `dotnet/Simpiens.Client` for Gum and XNA).
+2. **UI Work**: Reference **Track B** (Epic UI-2 `COMPLETED`; **Epic UI-Beta is `ACTIVE`**, B0 and B1 done 2026-10-30, B2 next ([epics/epic-ui-beta.md](epics/epic-ui-beta.md)); Epic UI-3 is folded into Epic 10 Part 1). New views and UI go into the KNI client (`dotnet/Simpiens.Presentation` for what is drawn, as data; `dotnet/Simpiens.Client` for Gum and XNA).
 3. **Testing Work**: Reference **Track C** (Epic Test-2 `COMPLETED` 2026-10-15; no Track C epic is `ACTIVE`). New live scenarios go headless into `dotnet/Simpiens.Core.Tests` (§1B); engine-free validators live in `Simpiens.Testing.Core`; the shared harness (`OutpostWatch`, `AnomalyDetector`, `EconomySoak`) in `Simpiens.Hosting`.
 4. **World & Environment Work**: Reference **Independent Epics** (**Epic MAP** is `COMPLETED`; **Epic CORE** is `COMPLETED`; **Epic CLIENT** is `PAUSED`: the KNI client in `dotnet/`, Unity removed, its art as data, items drawn in the world and the menus). Code lives in `Simpiens.Simulation.World` (map definition, sectors, hazards) and `Session/` (sessions, layouts) in `dotnet/Simpiens.Core`; views in the KNI client.
 5. **Every session**: follow §0 (document hierarchy and update order), §1A (invariants) and §1B (Definition of Done).

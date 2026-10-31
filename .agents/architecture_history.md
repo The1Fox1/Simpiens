@@ -1195,3 +1195,26 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
     older (`WorldScene` and its room names). The same slip in the core's `ResourceTargeting` (four comments) is
     outside this branch and left as it is.
 - **V0–V5 go into `main` as one pull request** from `feat/graphics-catalogue`.
+
+
+## 2026-10-30: Epic UI-Beta approved; B0 and B1 on one branch
+
+- **The epic.** The producer approved the Claude Doc draft. Q5 now reads "lineage traits, as a design of their own,
+  later": looks change no play in this epic. Then the producer said "start B0 and B1 on one branch one PR", before Epic 10 G4.
+  - The working plan (Claude Doc "Plan: Epic UI-Beta B0 and B1", copied to `.agents/ui_beta_b0_b1_plan.md`) had two PRs.
+  - One branch let B1's real look land first, so B0's spike draws real looks.
+- **The look is core data.** `CrawlerLook` is 16 bytes of option ids, 0 = unset (D3), drawn at spawn on its own salt
+  (`SimRandomSalt.Look`).
+  - It follows the item split: the core holds ids, keys and odds; the client holds pictures.
+  - Genes draw in a fixed order, and a new gene draws last, so a new gene doesn't move existing looks.
+  - `CognitionReadsNoLookTests` keeps every decision blind to looks until traits are designed.
+- **Names are saved, by frame and never shared.** Given names fit the body frame and are drawn on `SimRandomSalt.Name`.
+  - A name skips every name the session has seen while any is left, then only the living's (D5).
+  - The host registers names with the identity service; the hash stays the fallback (D6).
+  - The chronicle formats names when it shows a line. So who left, and how they looked, is kept and saved
+    (`SessionHost.Departed`, D4).
+- **Proving no behaviour change (D8):**
+  - Commit A made looks and names live while the hash ignored them; golden and the soak matched the old baselines.
+  - Commit B then hashed them. The re-record changed hex fields only, checked by script.
+  - Commit C re-recorded the four renders that draw names.
+- **Deviation:** none from the epic. The plan's order changed with one branch: core data first, then the spike.

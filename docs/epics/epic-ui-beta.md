@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-10-30): B0 and B1 on one branch and one pull request. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`; the working plan: `.agents/ui_beta_b0_b1_plan.md`.
+- **Status**: ACTIVE (2026-10-30). B0 and B1 are done on one branch and one pull request (§10); the producer's look at the people sheet is open; B2 is next. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`; the working plan: `.agents/ui_beta_b0_b1_plan.md`.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -221,3 +221,29 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
 - The register of everyone seen outlives a drifter's departure, so the chronicle still names it, and is saved.
 
 **Re-estimates:** B2 stays 3–4 days (the anchor table and five hair overlays are new work); B3 stays 2–3 days.
+
+## 10. Progress
+
+### B0 and B1 (done 2026-10-30, `feat/ui-beta`, one pull request)
+- **Delivered:**
+  - B0: the test-only spike (bodies on today's poses, Hearthlight busts), the people sheet, the design note (§9).
+  - B1, the core: `Simulation/People/` holds `CrawlerLook` (16 bytes, 0 = unset), `LookCatalog` (two lineages and their odds), `GivenNames` (three lists, Latin-1, at most 10 characters) and `DepartedCrawler`. Draws go on `SimRandomSalt.Look` and `SimRandomSalt.Name`.
+  - B1, the crawler and the host: `AgentState.Look` and `GivenName`, drawn at every spawn and arrival. The register of departed crawlers is `SessionHost.Departed`. The identity service shows given names, and a respawn clears them.
+  - B1, the save: format 7 (`CrawlerRecord.Look`, `CrawlerSave.GivenName`, `PopulationSave.Departed`).
+- **Checks:**
+  - `LookValidator`, `GivenNamesValidator`, the capture and restore validators, and `CognitionReadsNoLookTests` (no decision reads a look).
+  - `OutpostWatch` judges who's who every tick of the 23 gate seeds' days. `CrawlerIdentityTests` checks options across the seeds, no name given twice in a day, departed drifters still named, and a save and load keeping every look and name.
+  - The client: every name draws from the baked fonts.
+- **The proof that behaviour didn't change (plan D8):**
+  - Golden 3/3 and the soak were unchanged with looks and names live and the hash blind to them.
+  - The re-record then changed only hex fields (1,262 of 1,271 lines). The economy, bounty and map parts are identical.
+  - Four renders changed, and only where names are drawn: the dossier, the gossip bubble and two selected labels.
+- **Gate:**
+  - `dotnet test` 459/459 (core 118, client 341); the client's 341/341 exactly in the pinned image; golden 3/3.
+  - MonoGame and Android compile with 0 warnings.
+  - Seeds 1–120: 112/120, the same 8 seeds as `main` at `01a1321` (Epic 10 F3, F5).
+- **Findings:**
+  - `SessionHost.CrawlerSpawned` fires before the host gives a new crawler its personality, look and name, as it always has for restored state. Views read frames after the tick, so B2 bakes from frames, not from the event.
+  - The head is found from the hair's pixels in 42 of 48 frames; B2 holds an anchor table (§9).
+- **Open for the producer:** the look at the people sheet (B0's gate); the lineage's name and lore (Q4); names by lineage.
+
