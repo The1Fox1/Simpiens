@@ -21,6 +21,9 @@ namespace Simpiens.Cognition.Planning.Actions
             Effects = WorldState.Empty.With(StateFact.AtDirectiveLocation, true);
         }
 
+        /// <summary>A step planned before the party got to work is dropped there, so the member re-plans to work its node (Epic 10 G5).</summary>
+        public override bool IsValid(AgentContext context) => !context.Expedition.IsWorking;
+
         public override AgentIntent CreateIntent(AgentContext context)
         {
             return new WanderIntent(context.AgentId, new PathResponse());

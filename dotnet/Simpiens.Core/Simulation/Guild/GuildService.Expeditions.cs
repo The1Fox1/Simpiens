@@ -150,7 +150,10 @@ namespace Simpiens.Simulation.Guild
 
         public GuildRules.Check CanGiveGear(IGuildHost host, EntityId crawlerId, ItemType item) => GuildRules.CheckGiveGear(this, host, crawlerId, item);
 
-        /// <summary>The player gives a member <paramref name="item"/> from the stall's stock (D12): the stock falls by one, the member wears it, no gold moves.</summary>
+        /// <summary>
+        /// The player gives a member <paramref name="item"/> from the stall's stock (D12): the stock falls by one, the member
+        /// wears it (a worn-down piece in the slot is discarded), no gold moves.
+        /// </summary>
         public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick)
         {
             var check = CanGiveGear(host, crawlerId, item);
@@ -162,6 +165,7 @@ namespace Simpiens.Simulation.Guild
             host.TryGetCrawler(crawlerId, out var crawler);
             var equipment = ItemCatalog.Get(item).Equipment;
             var stall = host.ActiveStalls[0];
+            if (!crawler.Inventory.GetEquipped(equipment.Slot).IsEmpty) crawler.Inventory.Unequip(equipment.Slot);
             crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), durability: equipment.Durability));
             host.UpdateStall(stall.WithStock(item, (ushort)(stall.StockOf(item) - 1)));
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock");
@@ -172,7 +176,7 @@ namespace Simpiens.Simulation.Guild
         /// Moves the expedition on (D9, D10), every tick after the intents run. First who is still with the party: a member
         /// who left the guild or the outpost, or deserted the order (cognition takes it off the party's roster), is gone,
         /// and a member downed after the muster limps home with it and loses trust. Then the stage: the muster waits for
-        /// every member at the stall, fed and well, or its time; the march for every member in the sector; the work for
+        /// every member at the stall, fed and well, or its time; the march for the first member in the sector; the work for
         /// the goal, the nodes to be spent or the time; the way home for every member at the stall, or its time. On the way
         /// out and at work the retreat rule turns the party back.
         /// </summary>
@@ -218,6 +222,7 @@ namespace Simpiens.Simulation.Guild
             switch (_expedition.Stage)
             {
                 case ExpeditionStage.Muster:
+                    Provision(host, home, tuning);
                     if (AllWithParty(host, PartyTest.Mustered, home, tuning)) SetStage(host, ExpeditionStage.March, tick);
                     else if (elapsed >= tuning.MusterTicks)
                     {
@@ -237,14 +242,17 @@ namespace Simpiens.Simulation.Guild
                     break;
 
                 case ExpeditionStage.March:
+                    // The work starts when the first member reaches the sector, so nobody waits in danger for the rest
                     if (ShouldTurnBack(host, tuning)) TurnBack(host, tick);
-                    else if (AllWithParty(host, PartyTest.InSector, home, tuning)) SetStage(host, ExpeditionStage.Work, tick);
+                    else if (AnyInSector(host)) SetStage(host, ExpeditionStage.Work, tick);
                     else if (elapsed >= tuning.MarchTicks) TurnBack(host, tick);
                     break;
 
                 case ExpeditionStage.Work:
-                    if (ShouldTurnBack(host, tuning)) TurnBack(host, tick);
-                    else if (Gathered(host) >= _expedition.Goal || !FindReadyNodes(host) || elapsed >= tuning.WorkTicks) SetStage(host, ExpeditionStage.Return, tick);
+                    // The goal met or the nodes spent, the party goes home as ordered; short of them, the retreat rule turns it back
+                    if (Gathered(host) >= _expedition.Goal || !FindReadyNodes(host)) SetStage(host, ExpeditionStage.Return, tick);
+                    else if (ShouldTurnBack(host, tuning)) TurnBack(host, tick);
+                    else if (elapsed >= tuning.WorkTicks) SetStage(host, ExpeditionStage.Return, tick);
                     break;
 
                 case ExpeditionStage.Return:
@@ -320,6 +328,38 @@ namespace Simpiens.Simulation.Guild
             host.ChronicleService?.RecordEvent(new ChronicleEvent(_expedition.TurnedBack && haul == 0 ? ChronicleEventType.ExpeditionTurnedBack : ChronicleEventType.ExpeditionReturned,
                 FirstWithParty(), WorldRegistry.PlayerEntityId, _expedition.TargetSectorId, tick, ChronicleIntensity.Dramatic, haul));
             EndExpedition(host, tick);
+        }
+
+        /// <summary>
+        /// The guild provisions its party (D9, as D12 gears it): each member at the muster carrying fewer than the trip's
+        /// rations is given the rest from the stall's stock, no gold changing hands. Members can't fund a trip of about 90
+        /// hunger themselves (two rations cost 30g; a member earns 5g a visit), and eat on the way.
+        /// </summary>
+        private void Provision(IGuildHost host, Vec2 home, in ExpeditionTuning tuning)
+        {
+            if (host.ActiveStalls.Count == 0) return;
+            var stall = host.ActiveStalls[0];
+            var food = ItemType.None;
+            var foods = ItemCatalog.InCategory(ItemCategory.Food);
+            for (int i = 0; i < foods.Count && food == ItemType.None; i++)
+            {
+                if (stall.SellStockOf(foods[i]) > 0) food = foods[i];
+            }
+            if (food == ItemType.None) return;
+
+            bool changed = false;
+            for (int i = 0; i < _party.Count; i++)
+            {
+                var member = _party[i];
+                if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
+                if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue;
+                int given = Math.Min(tuning.Rations - crawler.Inventory.CountOf(ItemCategory.Food), stall.SellStockOf(food));
+                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance((ushort)food, food, (ushort)given, (ushort)stall.SellPriceOf(food)), out _)) continue;
+                stall = stall.WithStock(food, (ushort)(stall.StockOf(food) - given));
+                changed = true;
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} was given {given} {food} from the stall's stock for the trip");
+            }
+            if (changed) host.UpdateStall(stall);
         }
 
         private static bool PayDirect(ref TradeStallData stall, AgentState crawler, uint amount)
@@ -469,9 +509,19 @@ namespace Simpiens.Simulation.Guild
             && (crawler.Hunger < tuning.MusterHunger || crawler.Inventory.CountOf(ItemCategory.Food) >= tuning.Rations)
             && crawler.Health >= tuning.MusterHealth && !crawler.IsDowned;
 
-        private enum PartyTest : byte { Mustered, InSector, Home }
+        private enum PartyTest : byte { Mustered, Home }
 
-        /// <summary>True when every member with the party passes <paramref name="test"/>: at the muster, in the target sector, or home at the stall.</summary>
+        private bool AnyInSector(IGuildHost host)
+        {
+            for (int i = 0; i < _party.Count; i++)
+            {
+                if (_party[i].IsWithParty && host.TryGetCrawler(_party[i].CrawlerId, out var crawler)
+                    && host.GetSectorForPosition(crawler.Position) == _expedition.TargetSectorId) return true;
+            }
+            return false;
+        }
+
+        /// <summary>True when every member with the party passes <paramref name="test"/>: at the muster, or home at the stall.</summary>
         private bool AllWithParty(IGuildHost host, PartyTest test, Vec2 home, in ExpeditionTuning tuning)
         {
             for (int i = 0; i < _party.Count; i++)
@@ -482,7 +532,6 @@ namespace Simpiens.Simulation.Guild
                 bool passes = test switch
                 {
                     PartyTest.Mustered => Mustered(crawler, home, tuning),
-                    PartyTest.InSector => host.GetSectorForPosition(crawler.Position) == _expedition.TargetSectorId,
                     // A downed member limps to the bunks (D10), not the stall: the way home doesn't wait for it
                     _ => member.Status == ExpeditionMemberStatus.Downed || Vec2.Distance(crawler.Position, home) <= tuning.MusterRadius,
                 };

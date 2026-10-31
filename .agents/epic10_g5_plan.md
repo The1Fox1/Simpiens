@@ -108,10 +108,25 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - **A downed member** limps to the bunks; the way home doesn't wait for it.
   - **The march in file** isn't built: the four walk to the same target and arrive within seconds of each other. F5's jitter is re-measured at G5.5.
   - **Measured, default seed, injected trust:** geared, muster 20 s, march 18 s, work 6 s, home 18 s; 4 glowstone, four 21g shares, nobody downed. Bare, the party turns back 2 s into the work with 1.
-  - **Open for G5.5:** the stall stocks 3 hazard gear; a party of four needs 4.
+  - **The stall stocks 3 hazard gear;** a party of four needs 4. G5.5's player waits for the caravan's restock.
   - Mechanism tests on the real floor with members put in place, as `HazardGearTests` does.
   - Each stage of the directive pipeline's first live use gets a validator case.
-- [ ] **G5.5 The live scenario, headless, and the measurements.**
+- [x] **G5.5 The live scenario, headless, and the measurements.** Done 2026-10-31.
+  - **`ExpeditionScenarioTests.AGearedPartyBringsBackGlowstone`** (the default seed, nothing injected): the guild fills at t13604; the player outfits the four from stock and sends them at t13801; muster 2.5 s, march 22 s, work 9 s, home 17 s; 4 glowstone, four 21g shares, the caravan buys it; nobody downed, nobody alone in the chamber, the days' checks hold.
+  - **The scripted player** (`GuildPlayer.SendExpeditions`): outfits each member with no protection, or with protection worn to half its life; sends the whole guild when all are geared and well and the seam shows on the map; Steady.
+  - **What the live run changed** (each found by the scenario or the gate seeds):
+    - **The guild provisions its party:** at the muster each member is topped up to two rations from the stall's stock, no gold, as D12 does for gear. Two rations cost 30g, and members hold 0–35g. G5.4's stocking-up in cognition is reverted.
+    - **The order holds:** a member out on an expedition judged it at dispatch (D8) and follows it at priority 120, above the hearth and earning, whatever its loyalty. Epic 8's goal re-checked compliance every time, so a member whose hunger rose dropped the order mid-trip. Hunger from 70 and the reflexes still come first.
+    - **The work starts with the first member in the sector,** so nobody waits in the flood for the rest.
+    - **Steps planned before the work** (travel, hold) are dropped once the party is at work.
+    - **The goal met or the seam spent** takes the party home as ordered; only short of them does the retreat rule turn it back.
+    - **Gear worn to half its life** is replaced from stock (GiveGear discards the old piece); a member's old gear broke in the Gallery.
+  - **The gate seeds, 30 minutes with the player:** the guild fills on 10 of 23 (G4's trust at fair prices); 13 sent, 12 home, 3 turned back by Steady, nobody downed; about 47 glowstone; no jitter, nobody alone in the chamber, every seed's days hold.
+  - **Measured:**
+    - **An expedition's cost** (`PopulationScalingProbe.MeasureAnExpeditionsCost`): 800 ticks with the party out take 28% longer than with it home (13,835 against 17,713 ticks a second). No planners per worker needed.
+    - **Throughput** (12 crawlers, alternating with `main`): the branch 10,351–10,633 ticks a second, `main` 8,551–8,940.
+    - **Jitter (F5):** 0 on seeds 1–120 since G5.2, and 0 on the gate seeds with parties out.
+    - **The frame-time gate** passes. Nothing in the client draws an expedition yet; it is re-measured at G5.6.
 - [ ] **G5.6 The client:** the party builder, the tracker, the chronicle; tests and renders.
 - [ ] **G5.7 Finish, as G4.10.** The economy model gains the shares and the chamber's glowstone. Then the PR into `main`.
   - **Stop for the producer's look at G5** before G6 starts.

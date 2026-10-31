@@ -151,10 +151,19 @@ namespace Simpiens.Core.Tests
 
             o.Step(10);
             Assert.Equal(ExpeditionStage.Muster, o.Guild.Expedition.Stage);
-            o.PutAll(o.Home, hunger: 60f);
+            var food = Simpiens.Simulation.Items.ItemCategory.Food;
+            int rationsBefore = 0;
+            for (int i = 0; i < o.Members.Length; i++) rationsBefore += o.Members[i].Inventory.CountOf(food);
+            var stallAtMuster = sim.ActiveStalls[0];
+            o.PutAll(o.Home, hunger: 60f, health: 70f);
             o.Step();
-            Assert.Equal(ExpeditionStage.Muster, o.Guild.Expedition.Stage); // hungry: not ready
-            o.PutAll(o.Home);
+            Assert.Equal(ExpeditionStage.Muster, o.Guild.Expedition.Stage); // hurt: not ready
+            for (int i = 0; i < o.Members.Length; i++) Assert.True(o.Members[i].Inventory.CountOf(food) >= sim.Economy.Guild.Expedition.Rations, "At the muster, each member is given the trip's rations.");
+            int rationsAfter = 0;
+            for (int i = 0; i < o.Members.Length; i++) rationsAfter += o.Members[i].Inventory.CountOf(food);
+            Assert.Equal(stallAtMuster.TreasuryGold, sim.ActiveStalls[0].TreasuryGold); // from stock, no gold
+            Assert.True(rationsAfter > rationsBefore);
+            o.PutAll(o.Home, hunger: 60f); // hungry, but carrying its rations: fed
             o.Step();
             Assert.Equal(ExpeditionStage.March, o.Guild.Expedition.Stage);
             groups.TryGetGroup(expedition.PartyGroupId, out party);
@@ -417,6 +426,8 @@ namespace Simpiens.Core.Tests
                 o.Members[n++] = crawler;
             }
             o.Home = sim.Simulation.ActiveStalls[0].Position;
+            // Four signing fees took most of the stall's 105g; shares are paid in full or not at all, as wages
+            o.Host.UpdateStall(sim.Simulation.ActiveStalls[0].WithTreasury(300));
             if (geared)
             {
                 var stall = sim.Simulation.ActiveStalls[0];
@@ -518,24 +529,23 @@ namespace Simpiens.Core.Tests
         }
 
         [Fact]
-        public void AHungryMemberStocksUpAtTheMuster()
+        public void AHungryPennilessMemberIsProvisionedAtTheMuster()
         {
             using var o = LiveOutpost(geared: true);
             var hungry = o.Members[0];
             var rations = Simpiens.Simulation.Items.ItemCategory.Food;
             hungry.Hunger = 45f;
             while (hungry.Inventory.CountOf(rations) > 0) hungry.Inventory.TryRemoveItem(hungry.Inventory.FirstHeld(rations), 1);
-            hungry.Inventory.Gold = 100;
-            int bought = hungry.Activity.RationPurchases;
+            hungry.Inventory.Gold = 0;
 
             Commands(o).QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Test", o.Order()));
             for (int t = 0; t < 1200 && o.Guild.Expedition.Stage != ExpeditionStage.March; t++) o.Sim.Step(1);
 
             Assert.Equal(ExpeditionStage.March, o.Guild.Expedition.Stage);
             Assert.True(o.Guild.IsOnExpedition(hungry.AgentId), "It set out with the party.");
-            Assert.True(hungry.Activity.RationPurchases > bought, "It bought its rations at the stall.");
             Assert.True(hungry.Hunger < o.Sim.Simulation.Economy.Guild.Expedition.MusterHunger
-                || hungry.Inventory.CountOf(rations) >= o.Sim.Simulation.Economy.Guild.Expedition.Rations, "It set out fed.");
+                || hungry.Inventory.CountOf(rations) >= o.Sim.Simulation.Economy.Guild.Expedition.Rations, "It set out fed, from the stall's stock.");
+            Assert.Equal(0, hungry.Inventory.Gold);
         }
     }
 }

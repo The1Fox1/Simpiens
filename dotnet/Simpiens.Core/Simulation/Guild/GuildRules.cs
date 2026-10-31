@@ -52,7 +52,7 @@ namespace Simpiens.Simulation.Guild
             NotGear = 18,
             /// <summary>The stall has none of it to give.</summary>
             OutOfStock = 19,
-            /// <summary>The member already wears something in that slot.</summary>
+            /// <summary>The member already wears something in that slot, with more than half its life left.</summary>
             AlreadyWearing = 20
         }
 
@@ -131,7 +131,18 @@ namespace Simpiens.Simulation.Guild
 
         public static Check CheckRecall(GuildService guild) => guild.HasExpedition ? Check.Ok : Check.NoExpedition;
 
-        /// <summary>Whether a member may be given <paramref name="item"/> from the stall's stock (D12): a member, something worn, in stock, its slot free.</summary>
+        /// <summary>An empty slot, or a piece worn to half its life or less: it gets fresh gear (D12).</summary>
+        public static bool WornOut(in ItemInstance worn)
+        {
+            if (worn.IsEmpty) return true;
+            var equipment = ItemCatalog.Get(worn.Type)?.Equipment;
+            return equipment == null || equipment.Durability == 0 || worn.Durability * 2 <= equipment.Durability;
+        }
+
+        /// <summary>
+        /// Whether a member may be given <paramref name="item"/> from the stall's stock (D12): a member, something worn, in
+        /// stock, and its slot free or the piece in it worn to half its life or less (gear wears out with each trip).
+        /// </summary>
         public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item)
         {
             if (!guild.IsMember(crawlerId)) return Check.NotMember;
@@ -140,7 +151,7 @@ namespace Simpiens.Simulation.Guild
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
             if (host.ActiveStalls[0].SellStockOf(item) < 1) return Check.OutOfStock;
             if (!host.TryGetCrawler(crawlerId, out var crawler) || crawler.Inventory == null) return Check.NoCrawler;
-            if (!crawler.Inventory.GetEquipped(equipment.Slot).IsEmpty) return Check.AlreadyWearing;
+            if (!WornOut(crawler.Inventory.GetEquipped(equipment.Slot))) return Check.AlreadyWearing;
             return Check.Ok;
         }
 

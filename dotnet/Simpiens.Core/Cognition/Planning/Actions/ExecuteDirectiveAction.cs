@@ -16,6 +16,9 @@ namespace Simpiens.Cognition.Planning.Actions
             Effects = WorldState.Empty.With(StateFact.DirectiveFulfilled, true);
         }
 
+        /// <summary>A step planned before the party got to work is dropped there, rather than standing idle in danger (Epic 10 G5).</summary>
+        public override bool IsValid(AgentContext context) => !context.Expedition.IsWorking;
+
         public override AgentIntent CreateIntent(AgentContext context)
         {
             return new IdleIntent(context.AgentId, 2.5f);

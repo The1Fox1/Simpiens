@@ -100,7 +100,7 @@ namespace Simpiens.Simulation.Economy
         /// (90 s). Hunger rises 1.5 a second, so a trip of about 30 s costs 45: from below 20 a member is home before
         /// hunger takes over at 70 (D9 said 50; the live probe of G5.4 had members breaking off to eat on the way home).
         /// Above it, a member carrying <see cref="Rations"/> counts as fed: it eats on the way (a ration relieves 40, the trip
-        /// costs about 90). One carrying fewer stocks up at the stall.
+        /// costs about 90). The guild tops it up from the stall's stock at the muster.
         /// </summary>
         public readonly float MusterRadius;
         public readonly float MusterHunger;

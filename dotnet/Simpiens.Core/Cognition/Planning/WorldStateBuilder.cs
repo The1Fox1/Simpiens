@@ -1,6 +1,5 @@
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
-using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Cognition.Inventory;
@@ -33,8 +32,7 @@ namespace Simpiens.Cognition.Planning
             bool hasHazardGear = inv.IsWearing(ItemCategory.Protection);
 
             var state = BuildWorldState(context, hasFood, hasTool);
-            // At an expedition's muster, provisions are the trip's rations (Epic 10 G5)
-            state = state.With(StateFact.HasProvisions, hasFood && PurchaseProvisionsGoal.RationsToStockUp(context) <= 0);
+            state = state.With(StateFact.HasProvisions, hasFood);
             state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
             state = state.With(StateFact.HasHazardGear, hasHazardGear);
             return state;
@@ -72,7 +70,7 @@ namespace Simpiens.Cognition.Planning
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);
-            state = state.With(StateFact.HasProvisions, hasFoodInInventory && PurchaseProvisionsGoal.RationsToStockUp(context) <= 0);
+            state = state.With(StateFact.HasProvisions, hasFoodInInventory);
             state = state.With(StateFact.HasTool, hasTool);
 
             // 3. Psychological / Threat
