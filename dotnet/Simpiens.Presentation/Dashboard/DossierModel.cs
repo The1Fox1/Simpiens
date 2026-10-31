@@ -29,10 +29,30 @@ namespace Simpiens.Presentation.Dashboard
         };
 
         private readonly DashboardContext _context;
+        private readonly GuildModel _guild;
         private readonly List<string> _affinities = new List<string>(32);
         private readonly List<AffinityRow> _rows = new List<AffinityRow>(32);
 
-        internal DossierModel(DashboardContext context) => _context = context;
+        internal DossierModel(DashboardContext context, GuildModel guild = null)
+        {
+            _context = context;
+            _guild = guild;
+        }
+
+        /// <summary>The crawler's groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit", or "No groups".</summary>
+        public string Groups { get; private set; } = string.Empty;
+
+        /// <summary>Whether it would sign on with the guild now, in words; empty for a member.</summary>
+        public string RecruitText { get; private set; } = string.Empty;
+
+        /// <summary>The Recruit button works only when the guild's rule would let it sign on now.</summary>
+        public bool CanRecruit { get; private set; }
+
+        /// <summary>Recruit: a recruit command at the default wage; it signs on the next tick.</summary>
+        public void Recruit()
+        {
+            if (CanRecruit) _guild?.Recruit(CrawlerId);
+        }
 
         /// <summary>False: the empty state shows instead.</summary>
         public bool HasCrawler { get; private set; }
@@ -110,6 +130,10 @@ namespace Simpiens.Presentation.Dashboard
 
             Goal = PlanText.Goal(agent.ActiveGoal);
             Action = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
+
+            Groups = _guild != null ? _guild.GroupsOf(node.Id) : string.Empty;
+            RecruitText = _guild != null ? _guild.RecruitText(node.Id) : string.Empty;
+            CanRecruit = _guild != null && _guild.CanRecruit(node.Id);
 
             var map = agent.Memory?.AffinityMap;
             if (map == null) return;

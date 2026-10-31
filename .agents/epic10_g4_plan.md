@@ -203,7 +203,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - **Measure** a guild of four at 5g, played by the scripted player on the soak's seeds: the treasury, the members' purses (M4) and trust.
   - If purses climb, carry it to G6. A crawler sink comes back only on that measurement (economy model §8).
 - [x] **G4.8 The scripted player and the live scenarios,** headless. The console's `run --player guild` and `soak --profile guild` come with G6's soak profile.
-- [ ] **G4.9 The client:**
+- [x] **G4.9 The client:**
   - the dossier, the roster window, the header;
   - `DashboardModelTests` for the guild's model, and render tests.
 - [ ] **G4.10 Finish:**

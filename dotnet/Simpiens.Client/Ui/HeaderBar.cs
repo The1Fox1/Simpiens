@@ -63,10 +63,12 @@ namespace Simpiens.Client.Ui
             right.X = -16f;
             MerchantButton = UiParts.Button("MERCHANT", 78f);
             BountiesButton = UiParts.Button("BOUNTIES", 78f);
+            GuildButton = UiParts.Button("GUILD 0/4", 82f); // Epic 10 G4, D6
             SaveButton = UiParts.Button("SAVE", 48f);
             LoadButton = UiParts.Button("LOAD", 48f);
             right.Children.Add(MerchantButton.Visual);
             right.Children.Add(BountiesButton.Visual);
+            right.Children.Add(GuildButton.Visual);
             right.Children.Add(SaveButton.Visual);
             right.Children.Add(LoadButton.Visual);
             _tick = UiParts.Text("TICK: 00000", UiStyle.TextSecondary, UiText.SmallBold);
@@ -96,6 +98,9 @@ namespace Simpiens.Client.Ui
         public ContainerRuntime Status { get; }
         public Button MerchantButton { get; }
         public Button BountiesButton { get; }
+
+        /// <summary>Opens the guild roster; it reads "GUILD 2/4".</summary>
+        public Button GuildButton { get; }
         public Button SaveButton { get; }
         public Button LoadButton { get; }
 
@@ -157,6 +162,7 @@ namespace Simpiens.Client.Ui
             BindStock(header.Stock);
             UiParts.SetText(_bounties, header.Bounties);
             UiParts.SetText(_tick, header.Tick);
+            if (GuildButton.Text != header.Guild) GuildButton.Text = header.Guild;
             if (PauseButton.Text != header.PauseLabel) PauseButton.Text = header.PauseLabel;
             if (SpeedButton.Text != header.Speed) SpeedButton.Text = header.Speed;
             PauseButton.IsVisible = header.CanControlSpeed;

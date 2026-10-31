@@ -56,8 +56,9 @@ namespace Simpiens.Client.Tests
             var ui = MapView();
             var game = ui.Game;
 
-            // Under the header: the UI has the pointer; the map ignores the click
-            ui.Click(new Vec2(Width * 0.5f, HeaderBarHeight * 0.5f));
+            // Under the header, where no control is (its middle holds buttons since the guild's, Epic 10 G4): the UI has the
+            // pointer; the map ignores the click
+            ui.Click(new Vec2(8f, HeaderBarHeight * 0.5f));
             Assert.True(game.Ui.PointerOverUi);
             Assert.False(game.World.LastInput.Clicked);
 

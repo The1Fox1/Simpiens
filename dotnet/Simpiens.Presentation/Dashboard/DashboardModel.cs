@@ -25,8 +25,9 @@ namespace Simpiens.Presentation.Dashboard
             Header = new HeaderModel(_context);
             Merchant = new MerchantModel(_context);
             Bounties = new BountyBoardModel(_context);
+            Guild = new GuildModel(_context);
             Sectors = new SectorPanelModel(_context);
-            Dossier = new DossierModel(_context);
+            Dossier = new DossierModel(_context, Guild);
             Saves = new SaveSlotModel(_context.SaveGame, _context.HostCommands);
             Sessions = new SessionSwitchModel(_context.Sessions, _context.HostCommands);
             if (_selection != null) _selection.Changed += OnSelectionChanged;
@@ -37,6 +38,9 @@ namespace Simpiens.Presentation.Dashboard
         public HeaderModel Header { get; }
         public MerchantModel Merchant { get; }
         public BountyBoardModel Bounties { get; }
+
+        /// <summary>The guild's roster window and what the dossier says about recruiting (Epic 10 G4).</summary>
+        public GuildModel Guild { get; }
         public SectorPanelModel Sectors { get; }
         public DossierModel Dossier { get; }
         public SaveSlotModel Saves { get; }
@@ -60,13 +64,28 @@ namespace Simpiens.Presentation.Dashboard
         public void OpenMerchant()
         {
             Bounties.Close();
+            Guild.Close();
             Merchant.Open();
         }
 
         public void OpenBounties()
         {
             Merchant.Close();
+            Guild.Close();
             Bounties.Open();
+        }
+
+        public void OpenGuild()
+        {
+            Merchant.Close();
+            Bounties.Close();
+            Guild.Open();
+        }
+
+        public void ToggleGuild()
+        {
+            if (Guild.IsOpen) Guild.Close();
+            else OpenGuild();
         }
 
         public void ToggleMerchant()
@@ -84,9 +103,10 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Closes the open window, if any (Esc); false when none was open.</summary>
         public bool CloseWindow()
         {
-            if (!Merchant.IsOpen && !Bounties.IsOpen) return false;
+            if (!Merchant.IsOpen && !Bounties.IsOpen && !Guild.IsOpen) return false;
             Merchant.Close();
             Bounties.Close();
+            Guild.Close();
             return true;
         }
 
@@ -112,6 +132,7 @@ namespace Simpiens.Presentation.Dashboard
             Header.Refresh();
             Merchant.Refresh();
             Bounties.Refresh();
+            Guild.Refresh();
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);
             Dossier.Refresh(SelectedCrawler);
@@ -123,6 +144,7 @@ namespace Simpiens.Presentation.Dashboard
             _selectedCrawler = default;
             Merchant.Close();
             Bounties.Close();
+            Guild.Close();
             Bounties.Reset();
             Sectors.SelectedSectorId = -1;
             Sectors.EnsureSelection();

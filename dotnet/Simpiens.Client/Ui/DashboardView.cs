@@ -27,8 +27,12 @@ namespace Simpiens.Client.Ui
             Bounties = new BountyBoardWindow(model.Bounties, icons);
             Bounties.Window.CloseButton.Click += (_, _) => { Model.Bounties.Close(); Refresh(); };
             ui.Root.Children.Add(Bounties.Window.Veil);
+            Guild = new GuildWindow(model.Guild, icons, model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
+            Guild.Window.CloseButton.Click += (_, _) => { Model.Guild.Close(); Refresh(); };
+            ui.Root.Children.Add(Guild.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
+            Header.GuildButton.Click += (_, _) => { Model.ToggleGuild(); Refresh(); };
             Header.TabButton.Click += (_, _) => TogglePanels();
             Header.SaveButton.Click += (_, _) => { Model.Saves.Save(); Refresh(); };
             Header.LoadButton.Click += (_, _) => { Model.Saves.Load(); Refresh(); };
@@ -46,6 +50,7 @@ namespace Simpiens.Client.Ui
         public DashboardPanels Panels { get; }
         public MerchantWindow Merchant { get; }
         public BountyBoardWindow Bounties { get; }
+        public GuildWindow Guild { get; }
         public SessionSwitchBar Sessions { get; }
 
         /// <summary>True unless a hard cutscene hid it.</summary>
@@ -60,6 +65,7 @@ namespace Simpiens.Client.Ui
             Panels.IsShown = false;
             Merchant.Window.IsShown = false;
             Bounties.Window.IsShown = false;
+            Guild.Window.IsShown = false;
             Sessions.Root.Visible = false;
         }
 
@@ -107,6 +113,7 @@ namespace Simpiens.Client.Ui
             if (Model.Bounties.IsOpen && !_bountiesWereOpen) Bounties.LoadForm();
             _bountiesWereOpen = Model.Bounties.IsOpen;
             Bounties.Bind();
+            Guild.Bind();
             Sessions?.Bind();
         }
     }
