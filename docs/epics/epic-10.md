@@ -288,6 +288,11 @@ Each milestone also needs its validators, the golden check and the client's test
         - the glowstone-free proof day (`ItemSystemProofTests`, the default seed) meets one jitter, at t2516 near the Garden (−10.5, 2.2);
         - that test now judges every check of the day but F5's jitter, while there is no penetration or breach;
         - the tolerance goes with F5, at G5.
+    - **Resolved at G5.2 (2026-10-31).** The chamber's bigger floor moved the same jitter onto gate seeds 9 and 424242 (4 alerts in seeds 1–60 on both `main` and the branch). Every alert on seeds 1–120 was traced to one of two faults:
+        - **Panicking:** a crawler sidestepped round a pawn standing on a waypoint within reach, went past it and came back, every tick. Or, after skipping a crowded door's waypoint, it slid back and forth along the wall toward the next one, out of sight behind it. Now a blocked waypoint within reach (`NavConstants.ArrivalTolerance`) is skipped without a sidestep, and a waypoint out of sight behind a wall is skipped too.
+        - **Walking:** a crawler pushed past a corner walked onto its waypoint, then turned back toward the next one. Now a waypoint within reach whose next leg turns back counts as passed when the way to the next passes the path smoothing's checks.
+        - **Measured, seeds 1–120, before and after:** jitter alerts 8 → 1; crawler-ticks at hunger 100 8,538 → 7,995; panic ticks +2%. The one left (seed 81, t3743) is a stuck crawler's watchdog nudge followed by a new decision heading the other way.
+        - The proof day's tolerance is gone.
 - **The greedy soak band is judged at its lowest trust mean (2026-10-23).** With the G0 fixes, hungry crawlers eat at the Garden instead of buying gouged rations late in the run; at greedy prices nobody trades once the stall is empty, and trust drifts back to neutral by minute 30 (seed 2: mean 0.0). The band now asks that greed pushed the mean below 0 at some point, as the generous band is judged at its peak ([economy model](../economy-model.md) §7).
 
 ## History

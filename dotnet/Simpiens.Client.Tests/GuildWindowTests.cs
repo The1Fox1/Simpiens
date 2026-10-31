@@ -13,8 +13,11 @@ namespace Simpiens.Client.Tests
     {
         private const int Width = 1280, Height = 720;
 
-        /// <summary>On the default seed the first resident qualifies at t1302 (GuildScenarioTests).</summary>
-        private const long Qualified = 1400;
+        /// <summary>
+        /// How long the outpost may take for a resident to qualify: the default seed's first one does within its first few
+        /// minutes, at a tick that moves with every change of behaviour, so the tests wait for it rather than name it.
+        /// </summary>
+        private const long QualifiesWithin = 9000;
 
         private static Vec2 Centre(FrameworkElement control)
             => new Vec2(control.AbsoluteLeft + control.ActualWidth * 0.5f, control.AbsoluteTop + control.ActualHeight * 0.5f);
@@ -22,10 +25,15 @@ namespace Simpiens.Client.Tests
         private static (UiDriver Ui, EntityId Recruit) RecruitFromTheDossier()
         {
             var ui = UiDriver.Start(width: Width, height: Height);
-            ui.Ticks(Qualified);
             var model = ui.Game.Session.DashboardModel;
             var panels = ui.Game.Play.Dashboard.Panels;
-            var candidate = ui.Game.Session.Simulation.Host.CrawlerStates.First(s => model.Guild.CanRecruit(s.AgentId)).AgentId;
+            var crawlers = ui.Game.Session.Simulation.Host.CrawlerStates;
+            for (long waited = 0; !crawlers.Any(s => model.Guild.CanRecruit(s.AgentId)); waited += 100)
+            {
+                Assert.True(waited < QualifiesWithin, $"Nobody would sign on within {QualifiesWithin} ticks.");
+                ui.Ticks(100);
+            }
+            var candidate = crawlers.First(s => model.Guild.CanRecruit(s.AgentId)).AgentId;
             model.SelectCrawler(candidate);
             ui.Frame();
             Assert.StartsWith("Will join", panels.RecruitShown);
@@ -77,7 +85,7 @@ namespace Simpiens.Client.Tests
             var (ui, _) = RecruitFromTheDossier();
             ui.Click(Centre(ui.Game.Play.Dashboard.Header.GuildButton));
             ui.Frame();
-            RenderTests.CompareWithReference("render-outpost-guild-t1401", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
+            RenderTests.CompareWithReference("render-outpost-guild", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
         }
     }
 }
