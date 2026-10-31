@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25). G4 (the guild) is done (2026-10-30, §4); its decisions D1–D6 are in §0. G5 (expeditions) is next, after G4's pull request merges. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25). G4 (the guild) is done (2026-10-30, §4; merged as PR #18 on 2026-10-31); its decisions D1–D6 are in §0. G5 (expeditions) is under way since 2026-10-31, on `feat/epic10-g5` with the working plan `.agents/epic10_g5_plan.md`; its decisions D7–D13 are in §0. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -37,6 +37,27 @@ The design note on the player as patron (§6's risk row), from G4's working plan
 - **D4, quitting.** A member quits below 30 trust, or after 2 unpaid visits in a row. The player can dismiss one. Either way it leaves the guild only, with a 5-minute cooldown.
 - **D5, bounty fairness (F3).** A delivery is judged as a sale is: generous, fair or stingy against the crawler's own minimum for the work.
 - **D6, the guild on screen.** Recruit is on the dossier. The roster is a window, opened by GUILD in the header beside an "n/4" count.
+
+### G5's decisions (2026-10-31)
+
+From the working plan `.agents/epic10_g5_plan.md` (§2). The producer's go ("move onto the next phase", after PR #18 merged) accepted every default.
+
+- **D7, sending a party.** One Dispatch command carries the members (one to four), the target sector, the goal (up to N glowstone) and the retreat rule.
+  - It makes a `TemporaryParty` group led by the patron, inside the guild, and disbands it when the expedition ends. The members stay in the guild.
+  - Recall brings the party home. One expedition at a time.
+- **D8, obeying the patron (Q6).** Epic 8's compliance formula with the patron's weights: trust in place of fear.
+  - U = trust × 0.35 + respect × 0.25 + allegiance × 0.25 + warmth × 0.15 − hunger × 0.30 − frustration × 0.20.
+  - At 20 or more the member goes. From 0 to 20 it stays behind (−5 allegiance). Below 0 it deserts the guild, keeping its settlement.
+- **D9, an expedition.** Stages held by the simulation and saved: muster at the hub (fed, health 80, or 90 s), march together to the sector, work its nodes, return, deliver, done.
+  - The directive (`DirectiveType.Expedition`) is judged once, at dispatch.
+  - Members follow it through Epic 8's directive pipeline, extended by at most 4 planner facts.
+- **D10, danger under orders.** A complying member goes into danger whatever its boldness, from health 80.
+  - The player's retreat rule turns the party back: Cautious 70, Steady 55, Bold 40.
+  - A downed member limps home and the party retreats with it; its trust in the player falls by 10.
+- **D11, somewhere nobody else dares.** A new hazard chamber below the Sump, "the Drowned Gallery", takes 6 health a second (3 with gear), with one rich glowstone seam.
+  - A crawler goes alone only where a hazard takes 4 a second or less, so only an expedition works the seam.
+- **D12, giving gear.** The player gives a member hazard gear from the stall's stock; no gold changes hands.
+- **D13, the haul.** The haul belongs to the guild: members hand their glowstone to the stall without a sale and split 30% of its caravan value, paid on delivery as a transfer.
 
 ## 1. Goal
 
@@ -172,7 +193,7 @@ Each milestone also needs its validators, the golden check and the client's test
         - `dotnet test` 376/376 (core 107, client 269); the client's 269/269 exactly in the pinned image; golden 3/3;
         - the soak 9/9 (fair 1,499–1,564g in its band, 1,000–2,000g);
         - 0 warnings.
-- [x] **G4. The guild** (2026-10-30, `feat/epic10-g4`, from `main` at `b54ef83`): trusted crawlers sign on for a fee and a wage; paid members stay and unpaid ones quit; a bounty is judged as fairly as a trade. Decisions D1–D6 are in §0.
+- [x] **G4. The guild** (2026-10-30, `feat/epic10-g4-guild`, from `main` at `b54ef83`; merged as PR #18 on 2026-10-31): trusted crawlers sign on for a fee and a wage; paid members stay and unpaid ones quit; a bounty is judged as fairly as a trade. Decisions D1–D6 are in §0.
     - **The world hash covers groups** `000b788`. No group forms before t3000 on the golden seeds, so a scratch probe on 43 seeds to t18000 proves the next two steps.
     - **Groups are many-to-many, one per kind (D1)** `1e8263e`.
         - `MembershipSet` holds up to four memberships, ordered by kind. The registry owns them, and a crawler keeps a copy for cognition.
@@ -279,4 +300,5 @@ Each milestone also needs its validators, the golden check and the client's test
 - 2026-10-26: before G4, the item system refactor (not part of this epic; ROADMAP §3A): items are a catalog with groups and rarity, gear's protection and life are its definition's, and loot tables exist as a foundation. No behaviour change.
 - 2026-10-30: G4 started on the producer's go ("proceed with epic 10 work"), after Epic UI-Beta B0–B1 merged (PR #17). Its decisions D1–D6 stand as proposed (§0).
 - 2026-10-30: G4 done: groups are many-to-many (one per kind), leaving is whole, bounties are judged as trades, and the guild signs, pays and loses members. Its working plan was deleted at close-out.
+- 2026-10-31: G4 merged as PR #18 (from `feat/epic10-g4-guild`). G5 started on the producer's "move onto the next phase"; its decisions D7–D13 stand as proposed (§0).
 - 2026-10-25: G3 done: hazard gear (one protective item, worn, halving hazard damage and wearing out), bought by bold crawlers at 30g; findings F4 (the drifters' benefit to a keen player) and F5 (early jitter on 4 of 120 seeds). Its working plan was deleted at close-out.

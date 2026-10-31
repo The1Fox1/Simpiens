@@ -6,7 +6,9 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 - **Builds on G4's D1:**
   - the party is a `TemporaryParty` group inside the guild;
   - the expedition is a new kind of directive (epic §2.3 as written).
-- **Branch:** `feat/epic10-g5`, cut from `main` after G4's PR merges.
+- **Branch:** `feat/epic10-g5`, cut from `main` at `2314f82` after G4's PR (#18) merged on 2026-10-31.
+- **The producer's go:** 2026-10-31, "move onto the next phase". D7–D13 stand as proposed.
+- **Save format 9:** G4 took 8, so G5's raise is to 9 wherever this plan says 8.
 - **Estimate:** 4–5 agent days.
   - The epic said 3–4. The chamber (D11) and the tracker add about a day.
   - Making the party a group gives back about half a day.
@@ -73,7 +75,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 
 ## 4. Steps
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
-- [ ] **G5.1 Docs:** D7–D13 into the epic, the roadmap line, the focus file.
+- [x] **G5.1 Docs:** D7–D13 into the epic, the roadmap line, the focus file.
 - [ ] **G5.2 The chamber (D11):**
   - the map data and the severity limit on going alone;
   - the map validators.
