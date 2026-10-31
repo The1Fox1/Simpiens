@@ -252,7 +252,7 @@ namespace Simpiens.Core.Tests
                 _p1DominantHunger = dominantHunger;
 
                 // Pen 6: the compliant follower reaches the rally point
-                if (Near(P6Follower, P6RallyPoint, RallyRadius) && _agents[P6Follower].Membership.HasGroup) Mark(6, rel, "compliant follower reached the rally point");
+                if (Near(P6Follower, P6RallyPoint, RallyRadius) && _agents[P6Follower].Memberships.First.HasGroup) Mark(6, rel, "compliant follower reached the rally point");
 
                 // Pen 7: the starving follower harvests the bush outside the rally radius while the directive is active
                 if (_manager.TryGetResource(_pen7Bush, out var bush))
@@ -268,12 +268,12 @@ namespace Simpiens.Core.Tests
                 }
 
                 // Pen 8: a group formed with the respected candidate as leader
-                var candidate = _agents[P8Candidate].Membership;
+                var candidate = _agents[P8Candidate].Memberships.First;
                 if (_p8GroupFormed && candidate.HasGroup && candidate.Role == RoleRank.Leader) Mark(8, rel, "hearth group formed with the respected candidate as leader");
 
                 // Pen 9: the challenger leads; the collapsed incumbent no longer does
-                var challenger = _agents[P9Challenger].Membership;
-                var incumbent = _agents[P9Collapsed].Membership;
+                var challenger = _agents[P9Challenger].Memberships.First;
+                var incumbent = _agents[P9Collapsed].Memberships.First;
                 if (challenger.HasGroup && challenger.Role == RoleRank.Leader && !(incumbent.HasGroup && incumbent.Role == RoleRank.Leader && incumbent.GroupId == challenger.GroupId))
                     Mark(9, rel, "challenger displaced the collapsed leader");
 
@@ -284,7 +284,7 @@ namespace Simpiens.Core.Tests
                     bool split = false;
                     for (int i = P10Leader; i <= P10DissidentB; i++)
                     {
-                        var m = _agents[i].Membership;
+                        var m = _agents[i].Memberships.First;
                         if (!m.HasGroup) continue;
                         if (first == 0) first = m.GroupId;
                         else if (m.GroupId != first) split = true;

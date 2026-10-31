@@ -99,32 +99,27 @@ namespace Simpiens.Cognition
                     else if (completedAction is ExecuteDirectiveAction)
                     {
                         agent.TriggerRallyVisual(2.0f);
+
+                        // The group whose order was carried out: the first, in kind order, with an active directive (Epic 10 G4, D1)
+                        var snap = _spatialPartition?.GetActiveSnapshot();
+                        var obeyed = agent.Memberships.DirectiveMembership(snap, currentTick);
                         if (_groupRegistry != null)
                         {
-                            _groupRegistry.UpdateAllegiance(agent.AgentId, 3);
-                            if (_groupRegistry.TryGetMembership(agent.AgentId, out var updatedMem))
-                            {
-                                agent.Membership = updatedMem;
-                            }
+                            _groupRegistry.UpdateAllegiance(agent.AgentId, obeyed.GroupId, 3);
+                            agent.Memberships = _groupRegistry.GetMemberships(agent.AgentId);
                         }
                         else
                         {
-                            agent.Membership = new GroupMembership(
-                                agent.Membership.GroupId,
-                                agent.Membership.Role,
-                                (byte)SimMath.Min(100, agent.Membership.Allegiance + 3),
-                                agent.Membership.JoinTick);
+                            var memberships = agent.Memberships;
+                            memberships.Update(new GroupMembership(obeyed.GroupId, obeyed.Role, (byte)SimMath.Min(100, obeyed.Allegiance + 3), obeyed.JoinTick));
+                            agent.Memberships = memberships;
                         }
 
                         GridPoint agentPos = GridPoint.RoundToInt(agent.Position);
                         EntityId leaderId = default;
-                        if (_spatialPartition != null)
+                        if (snap != null && snap.TryGetGroup(obeyed.GroupId, out var gData) && gData.LeaderId != default)
                         {
-                            var snap = _spatialPartition.GetActiveSnapshot();
-                            if (snap != null && snap.TryGetGroup(agent.Membership.GroupId, out var gData) && gData.LeaderId != default)
-                            {
-                                leaderId = gData.LeaderId;
-                            }
+                            leaderId = gData.LeaderId;
                         }
 
                         if (leaderId != default)

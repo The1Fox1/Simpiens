@@ -9,7 +9,9 @@ namespace Simpiens.Simulation
 {
     /// <summary>
     /// Thread-safe main-thread implementation of IGroupRegistry.
-    /// Manages fixed-capacity group slots (up to 64) and agent memberships with zero GC allocations.
+    /// Manages fixed-capacity group slots (up to 64) and agent memberships with zero GC allocations. Groups are
+    /// many-to-many, one per kind (Epic 10 G4, D1): each crawler's memberships are a <see cref="MembershipSet"/>, and
+    /// joining a group leaves the crawler's other group of the same kind. The registry is the memberships' one owner.
     /// </summary>
     public class GroupRegistry : IGroupRegistry
     {
@@ -27,7 +29,7 @@ namespace Simpiens.Simulation
         }
 
         private readonly GroupSlot[] _slots;
-        private readonly Dictionary<EntityId, GroupMembership> _memberships;
+        private readonly Dictionary<EntityId, MembershipSet> _memberships;
         private int _activeGroupCount;
 
         public int ActiveGroupCount => _activeGroupCount;
@@ -48,7 +50,7 @@ namespace Simpiens.Simulation
                     Members = new HashSet<EntityId>()
                 };
             }
-            _memberships = new Dictionary<EntityId, GroupMembership>(256);
+            _memberships = new Dictionary<EntityId, MembershipSet>(256);
             _activeGroupCount = 0;
         }
 
@@ -83,11 +85,16 @@ namespace Simpiens.Simulation
 
             _activeGroupCount++;
 
-            // If a valid leader ID was provided, register them automatically
-            if (leaderId != default)
+            // If a valid leader ID was provided, register them automatically. Its group of the same kind is replaced, and it
+            // leaves that group's roster, as AddMember does (one per kind; Epic 8 finding 1, closed at Epic 10 G4.4). The
+            // player as patron leads without a place on the roster (Epic 10 G4)
+            if (leaderId != default && leaderId != WorldRegistry.PlayerEntityId)
             {
+                if (TryGetMembership(leaderId, type, out var previous)) RemoveMember(previous.GroupId, leaderId);
                 slot.Members.Add(leaderId);
-                _memberships[leaderId] = new GroupMembership(groupId, RoleRank.Leader, 100, 0);
+                var set = MembershipsOf(leaderId);
+                set.Set(type, new GroupMembership(groupId, RoleRank.Leader, 100, 0));
+                _memberships[leaderId] = set;
             }
 
             return groupId;
@@ -101,10 +108,10 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive) return false;
 
-            // Remove all member registrations
+            // Remove this group from every member's memberships
             foreach (var memberId in slot.Members)
             {
-                _memberships.Remove(memberId);
+                LeaveGroup(memberId, groupId);
             }
 
             slot.Members.Clear();
@@ -153,17 +160,17 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive) return false;
 
-            // If agent already in another group, remove from previous group
-            if (_memberships.TryGetValue(agentId, out var existing))
+            // One group per kind: joining leaves the agent's other group of this kind
+            var set = MembershipsOf(agentId);
+            if (set.TryGet(slot.Type, out var existing) && existing.GroupId != groupId)
             {
-                if (existing.GroupId != groupId)
-                {
-                    RemoveMember(existing.GroupId, agentId);
-                }
+                RemoveMember(existing.GroupId, agentId);
+                set = MembershipsOf(agentId);
             }
 
             slot.Members.Add(agentId);
-            _memberships[agentId] = new GroupMembership(groupId, role, initialAllegiance, 0);
+            set.Set(slot.Type, new GroupMembership(groupId, role, initialAllegiance, 0));
+            _memberships[agentId] = set;
 
             if (role == RoleRank.Leader)
             {
@@ -182,7 +189,7 @@ namespace Simpiens.Simulation
             if (!slot.IsActive) return false;
 
             bool removed = slot.Members.Remove(agentId);
-            _memberships.Remove(agentId);
+            LeaveGroup(agentId, groupId);
 
             if (slot.LeaderId == agentId)
             {
@@ -200,9 +207,9 @@ namespace Simpiens.Simulation
             ref var slot = ref _slots[index];
             if (!slot.IsActive || !slot.Members.Contains(agentId)) return false;
 
-            if (_memberships.TryGetValue(agentId, out var current))
+            if (TryGetMembership(agentId, groupId, out var current))
             {
-                _memberships[agentId] = new GroupMembership(groupId, newRole, current.Allegiance, current.JoinTick);
+                Replace(agentId, new GroupMembership(groupId, newRole, current.Allegiance, current.JoinTick));
                 if (newRole == RoleRank.Leader)
                 {
                     slot.LeaderId = agentId;
@@ -213,14 +220,14 @@ namespace Simpiens.Simulation
             return false;
         }
 
-        public bool UpdateAllegiance(EntityId agentId, int delta)
+        public bool UpdateAllegiance(EntityId agentId, byte groupId, int delta)
         {
             if (agentId == default) return false;
 
-            if (_memberships.TryGetValue(agentId, out var mem))
+            if (TryGetMembership(agentId, groupId, out var mem))
             {
                 int newAllegiance = SimMath.Clamp(mem.Allegiance + delta, 0, 100);
-                _memberships[agentId] = new GroupMembership(mem.GroupId, mem.Role, (byte)newAllegiance, mem.JoinTick);
+                Replace(agentId, new GroupMembership(mem.GroupId, mem.Role, (byte)newAllegiance, mem.JoinTick));
                 return true;
             }
 
@@ -265,16 +272,16 @@ namespace Simpiens.Simulation
             // Demote old leader to Follower if still in the group
             if (oldLeaderId != default && oldLeaderId != newLeaderId && slot.Members.Contains(oldLeaderId))
             {
-                if (_memberships.TryGetValue(oldLeaderId, out var oldMem))
+                if (TryGetMembership(oldLeaderId, groupId, out var oldMem))
                 {
-                    _memberships[oldLeaderId] = new GroupMembership(groupId, RoleRank.Follower, oldMem.Allegiance, oldMem.JoinTick);
+                    Replace(oldLeaderId, new GroupMembership(groupId, RoleRank.Follower, oldMem.Allegiance, oldMem.JoinTick));
                 }
             }
 
             // Promote new leader
-            if (_memberships.TryGetValue(newLeaderId, out var newMem))
+            if (TryGetMembership(newLeaderId, groupId, out var newMem))
             {
-                _memberships[newLeaderId] = new GroupMembership(groupId, RoleRank.Leader, newMem.Allegiance, newMem.JoinTick);
+                Replace(newLeaderId, new GroupMembership(groupId, RoleRank.Leader, newMem.Allegiance, newMem.JoinTick));
             }
 
             slot.LeaderId = newLeaderId;
@@ -284,15 +291,42 @@ namespace Simpiens.Simulation
             return true;
         }
 
-        public bool TryGetMembership(EntityId agentId, out GroupMembership membership)
+        public bool TryGetMembership(EntityId agentId, byte groupId, out GroupMembership membership)
         {
-            if (agentId == default)
-            {
-                membership = GroupMembership.None;
-                return false;
-            }
+            membership = GroupMembership.None;
+            return agentId != default && _memberships.TryGetValue(agentId, out var set) && set.TryGet(groupId, out membership);
+        }
 
-            return _memberships.TryGetValue(agentId, out membership);
+        public bool TryGetMembership(EntityId agentId, GroupType kind, out GroupMembership membership)
+        {
+            membership = GroupMembership.None;
+            return agentId != default && _memberships.TryGetValue(agentId, out var set) && set.TryGet(kind, out membership);
+        }
+
+        public MembershipSet GetMemberships(EntityId agentId) => MembershipsOf(agentId);
+
+        public void LeaveAllGroups(EntityId agentId)
+        {
+            if (agentId == default || !_memberships.TryGetValue(agentId, out var set)) return;
+            for (int i = set.Count - 1; i >= 0; i--) RemoveMember(set[i].GroupId, agentId);
+            _memberships.Remove(agentId);
+        }
+
+        private MembershipSet MembershipsOf(EntityId agentId) => agentId != default && _memberships.TryGetValue(agentId, out var set) ? set : MembershipSet.Empty;
+
+        // The agent's membership in membership's group, replaced in place
+        private void Replace(EntityId agentId, in GroupMembership membership)
+        {
+            var set = MembershipsOf(agentId);
+            if (set.Update(membership)) _memberships[agentId] = set;
+        }
+
+        // The agent's membership in groupId removed; an agent with none left has no entry
+        private void LeaveGroup(EntityId agentId, byte groupId)
+        {
+            if (!_memberships.TryGetValue(agentId, out var set) || !set.Remove(groupId)) return;
+            if (set.HasAny) _memberships[agentId] = set;
+            else _memberships.Remove(agentId);
         }
 
         public IReadOnlyCollection<EntityId> GetMembers(byte groupId)
@@ -401,11 +435,18 @@ namespace Simpiens.Simulation
             save.Groups = groups.ToArray();
             save.Members = members.ToArray();
 
-            var memberships = new MembershipRecord[_memberships.Count];
-            int n = 0;
-            foreach (var kvp in _memberships) memberships[n++] = new MembershipRecord { AgentId = kvp.Key, Membership = kvp.Value };
-            Array.Sort(memberships, (a, b) => a.AgentId.CompareTo(b.AgentId));
-            save.Memberships = memberships;
+            // Every membership, several per crawler, sorted by crawler and then group
+            var memberships = new List<MembershipRecord>(_memberships.Count);
+            foreach (var kvp in _memberships)
+            {
+                for (int i = 0; i < kvp.Value.Count; i++) memberships.Add(new MembershipRecord { AgentId = kvp.Key, Membership = kvp.Value[i] });
+            }
+            memberships.Sort((a, b) =>
+            {
+                int byAgent = a.AgentId.CompareTo(b.AgentId);
+                return byAgent != 0 ? byAgent : a.Membership.GroupId.CompareTo(b.Membership.GroupId);
+            });
+            save.Memberships = memberships.ToArray();
         }
 
         public void RestoreFrom(GroupSave save)
@@ -432,7 +473,15 @@ namespace Simpiens.Simulation
             }
             if (save.Memberships != null)
             {
-                for (int i = 0; i < save.Memberships.Length; i++) _memberships[save.Memberships[i].AgentId] = save.Memberships[i].Membership;
+                for (int i = 0; i < save.Memberships.Length; i++)
+                {
+                    var record = save.Memberships[i];
+                    byte groupId = record.Membership.GroupId;
+                    if (groupId == 0 || groupId > MaxGroups || !_slots[groupId - 1].IsActive) continue;
+                    var set = MembershipsOf(record.AgentId);
+                    set.Set(_slots[groupId - 1].Type, record.Membership);
+                    _memberships[record.AgentId] = set;
+                }
             }
         }
 

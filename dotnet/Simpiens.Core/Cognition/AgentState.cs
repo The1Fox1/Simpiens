@@ -82,7 +82,11 @@ namespace Simpiens.Cognition
         public AgentMemory Memory { get; set; }
 
         // Sociopolitical Collective Standing
-        public GroupMembership Membership { get; set; } = GroupMembership.None;
+        /// <summary>
+        /// This crawler's copy of its memberships, for cognition (Epic 10 G4, D1). The group registry owns them; the copy is
+        /// refreshed every tick (AgentRuntime) and after any change main-thread code makes, and it is not saved.
+        /// </summary>
+        public MembershipSet Memberships { get; set; }
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
         /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>
@@ -396,7 +400,6 @@ namespace Simpiens.Cognition
                 Needs = Needs,
                 Frustration = Frustration,
                 Activity = Activity,
-                Membership = Membership,
                 Identity = Identity,
                 Personality = Personality,
                 NavigationalStalls = NavigationalStalls,
@@ -436,7 +439,6 @@ namespace Simpiens.Cognition
             Needs = record.Needs;
             Frustration = record.Frustration;
             Activity = record.Activity;
-            Membership = record.Membership;
             Identity = record.Identity;
             Personality = record.Personality;
             NavigationalStalls = record.NavigationalStalls;
@@ -482,7 +484,7 @@ namespace Simpiens.Cognition
                 snapshot,
                 memorySnapshot,
                 currentTick,
-                Membership,
+                Memberships.DirectiveMembership(snapshot, currentTick),
                 Identity,
                 inventorySnapshot,
                 ScoutReportBountyId,

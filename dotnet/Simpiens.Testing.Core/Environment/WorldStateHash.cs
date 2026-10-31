@@ -10,7 +10,9 @@ namespace Simpiens.Testing.Environment
     /// <summary>
     /// One sample of the authoritative world, hashed (Epic MAP Phase 5 determinism check). FNV-1a over plain data
     /// only, in id order: each agent's position (to 1/1000 unit), needs (to 0.01), gold, inventory, health, look and
-    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals. No view state.
+    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals;
+    /// groups (each active group's kind, leader, cohesion, directive and sorted roster, then each crawler's memberships:
+    /// Epic 10 G4.2). No view state.
     /// Per-part hashes and per-agent descriptions name what differs when two samples disagree.
     /// </summary>
     public sealed class WorldStateSample
@@ -20,6 +22,9 @@ namespace Simpiens.Testing.Environment
         public ulong Economy;
         public ulong Bounties;
         public ulong Map;
+
+        /// <summary>Groups and memberships (Epic 10 G4.2); 0 in a baseline recorded before groups were hashed.</summary>
+        public ulong Groups;
         public readonly List<string> AgentNames = new List<string>(16);
         public readonly List<ulong> AgentHashes = new List<ulong>(16);
         public readonly List<string> AgentLines = new List<string>(16);
@@ -42,6 +47,7 @@ namespace Simpiens.Testing.Environment
             if (Economy != other.Economy) parts.Add("stalls or ledger");
             if (Bounties != other.Bounties) parts.Add("bounties");
             if (Map != other.Map) parts.Add("charted sectors");
+            if (Groups != other.Groups) parts.Add("groups or memberships");
             return string.Join("; ", parts);
         }
     }
@@ -163,12 +169,65 @@ namespace Simpiens.Testing.Environment
             ulong map = Offset;
             Mix(ref map, sectors != null ? sectors.ExploredMask : 0UL);
 
+            // Groups by id, each with its sorted roster; then each crawler's memberships, in id order. A crawler's memberships
+            // go as a count and then each one, so a crawler in several groups (Epic 10 G4.3) hashes as one in a single group did
+            ulong groups = Offset;
+            var registry = sim?.Groups;
+            if (registry != null)
+            {
+                var roster = new List<EntityId>(16);
+                for (int id = 1; id <= GroupRegistry.MaxGroups; id++)
+                {
+                    if (!registry.TryGetGroup((byte)id, out var group)) continue;
+                    Mix(ref groups, id);
+                    Mix(ref groups, (int)group.Type);
+                    Mix(ref groups, group.LeaderId.GetHashCode());
+                    Mix(ref groups, (int)group.Cohesion);
+                    Mix(ref groups, (int)group.ActiveDirective.Type);
+                    roster.Clear();
+                    roster.AddRange(registry.GetMembers((byte)id));
+                    roster.Sort((a, b) => a.CompareTo(b));
+                    Mix(ref groups, roster.Count);
+                    for (int m = 0; m < roster.Count; m++) Mix(ref groups, roster[m].GetHashCode());
+                }
+                for (int i = 0; i < ordered.Count; i++)
+                {
+                    var memberships = registry.GetMemberships(host.CrawlerStates[ordered[i]].AgentId);
+                    Mix(ref groups, memberships.Count);
+                    for (int m = 0; m < memberships.Count; m++)
+                    {
+                        var membership = memberships[m];
+                        Mix(ref groups, (int)membership.GroupId);
+                        Mix(ref groups, (int)membership.Role);
+                        Mix(ref groups, (int)membership.Allegiance);
+                        Mix(ref groups, (long)membership.JoinTick);
+                    }
+                }
+            }
+
+            // The guild's contracts (Epic 10 G4.6), only once a guild exists, so runs without one hash as before
+            var guild = sim?.Guild;
+            if (guild != null && (guild.GroupId != 0 || guild.Members.Count > 0))
+            {
+                Mix(ref groups, (int)guild.GroupId);
+                for (int i = 0; i < guild.Members.Count; i++)
+                {
+                    var contract = guild.Members[i];
+                    Mix(ref groups, contract.CrawlerId.GetHashCode());
+                    Mix(ref groups, (int)contract.Wage);
+                    Mix(ref groups, (int)contract.UnpaidVisits);
+                    Mix(ref groups, (long)contract.JoinTick);
+                }
+            }
+
             Mix(ref total, economy);
             Mix(ref total, bounties);
             Mix(ref total, map);
+            Mix(ref total, groups);
             sample.Economy = economy;
             sample.Bounties = bounties;
             sample.Map = map;
+            sample.Groups = groups;
             sample.Total = total;
             return sample;
         }

@@ -131,8 +131,8 @@ namespace Simpiens.Testing.Sessions
 
                 byte g6 = groupRegistry.CreateGroup(Simpiens.Cognition.Groups.GroupType.Settlement, a[10].AgentId, new Vec2(-8f, -9f), initialCohesion: 80);
                 groupRegistry.AddMember(g6, a[11].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 85);
-                a[10].Membership = new Simpiens.Cognition.Groups.GroupMembership(g6, Simpiens.Cognition.Groups.RoleRank.Leader, 100, 0);
-                a[11].Membership = new Simpiens.Cognition.Groups.GroupMembership(g6, Simpiens.Cognition.Groups.RoleRank.Follower, 85, 0);
+                a[10].Memberships = groupRegistry.GetMemberships(a[10].AgentId);
+                a[11].Memberships = groupRegistry.GetMemberships(a[11].AgentId);
 
                 var dir6 = new Simpiens.Cognition.Groups.GroupDirective(
                     Simpiens.Cognition.Groups.DirectiveType.RallyAtLocation,
@@ -155,8 +155,8 @@ namespace Simpiens.Testing.Sessions
 
                 byte g7 = groupRegistry.CreateGroup(Simpiens.Cognition.Groups.GroupType.TemporaryParty, a[12].AgentId, new Vec2(-4f, -9f), initialCohesion: 40);
                 groupRegistry.AddMember(g7, a[13].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 15);
-                a[12].Membership = new Simpiens.Cognition.Groups.GroupMembership(g7, Simpiens.Cognition.Groups.RoleRank.Leader, 100, 0);
-                a[13].Membership = new Simpiens.Cognition.Groups.GroupMembership(g7, Simpiens.Cognition.Groups.RoleRank.Follower, 15, 0);
+                a[12].Memberships = groupRegistry.GetMemberships(a[12].AgentId);
+                a[13].Memberships = groupRegistry.GetMemberships(a[13].AgentId);
 
                 var dir7 = new Simpiens.Cognition.Groups.GroupDirective(
                     Simpiens.Cognition.Groups.DirectiveType.RallyAtLocation,
@@ -176,9 +176,9 @@ namespace Simpiens.Testing.Sessions
                 a[15].Hunger = 20f;
                 a[16].Hunger = 20f;
 
-                a[14].Membership = Simpiens.Cognition.Groups.GroupMembership.None;
-                a[15].Membership = Simpiens.Cognition.Groups.GroupMembership.None;
-                a[16].Membership = Simpiens.Cognition.Groups.GroupMembership.None;
+                a[14].Memberships = groupRegistry.GetMemberships(a[14].AgentId);
+                a[15].Memberships = groupRegistry.GetMemberships(a[15].AgentId);
+                a[16].Memberships = groupRegistry.GetMemberships(a[16].AgentId);
 
                 a[14].Memory.SpatialMemoryMap[campfirePen8Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen8Id, EntityType.Anchor, new GridPoint(0, -9), 0);
                 a[15].Memory.SpatialMemoryMap[campfirePen8Id] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(campfirePen8Id, EntityType.Anchor, new GridPoint(0, -9), 0);
@@ -207,9 +207,9 @@ namespace Simpiens.Testing.Sessions
                 byte g9 = groupRegistry.CreateGroup(Simpiens.Cognition.Groups.GroupType.TemporaryParty, a[17].AgentId, new Vec2(4f, -9f), initialCohesion: 35);
                 groupRegistry.AddMember(g9, a[18].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 60);
                 groupRegistry.AddMember(g9, a[19].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 65);
-                a[17].Membership = new Simpiens.Cognition.Groups.GroupMembership(g9, Simpiens.Cognition.Groups.RoleRank.Leader, 100, 0);
-                a[18].Membership = new Simpiens.Cognition.Groups.GroupMembership(g9, Simpiens.Cognition.Groups.RoleRank.Follower, 60, 0);
-                a[19].Membership = new Simpiens.Cognition.Groups.GroupMembership(g9, Simpiens.Cognition.Groups.RoleRank.Follower, 65, 0);
+                a[17].Memberships = groupRegistry.GetMemberships(a[17].AgentId);
+                a[18].Memberships = groupRegistry.GetMemberships(a[18].AgentId);
+                a[19].Memberships = groupRegistry.GetMemberships(a[19].AgentId);
 
                 a[18].Memory.RecordInteraction(a[17].AgentId, deltaWarmth: -20, deltaTrust: -10, deltaFear: 0, deltaRespect: -20, 0);
                 a[17].Memory.RecordInteraction(a[18].AgentId, deltaWarmth: -10, deltaTrust: -10, deltaFear: 65, deltaRespect: 0, 0);
@@ -232,10 +232,10 @@ namespace Simpiens.Testing.Sessions
                 groupRegistry.AddMember(g10, a[21].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 75);
                 groupRegistry.AddMember(g10, a[22].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 30);
                 groupRegistry.AddMember(g10, a[23].AgentId, Simpiens.Cognition.Groups.RoleRank.Follower, initialAllegiance: 30);
-                a[20].Membership = new Simpiens.Cognition.Groups.GroupMembership(g10, Simpiens.Cognition.Groups.RoleRank.Leader, 100, 0);
-                a[21].Membership = new Simpiens.Cognition.Groups.GroupMembership(g10, Simpiens.Cognition.Groups.RoleRank.Follower, 75, 0);
-                a[22].Membership = new Simpiens.Cognition.Groups.GroupMembership(g10, Simpiens.Cognition.Groups.RoleRank.Follower, 30, 0);
-                a[23].Membership = new Simpiens.Cognition.Groups.GroupMembership(g10, Simpiens.Cognition.Groups.RoleRank.Follower, 30, 0);
+                a[20].Memberships = groupRegistry.GetMemberships(a[20].AgentId);
+                a[21].Memberships = groupRegistry.GetMemberships(a[21].AgentId);
+                a[22].Memberships = groupRegistry.GetMemberships(a[22].AgentId);
+                a[23].Memberships = groupRegistry.GetMemberships(a[23].AgentId);
 
                 // Agent 21 is loyal to Agent 20
                 a[21].Memory.RecordInteraction(a[20].AgentId, deltaWarmth: 80, deltaTrust: 80, deltaFear: 0, deltaRespect: 70, 0);

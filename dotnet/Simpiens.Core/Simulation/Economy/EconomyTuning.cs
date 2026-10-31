@@ -16,8 +16,9 @@ namespace Simpiens.Simulation.Economy
     }
 
     /// <summary>
-    /// How a completed trade at the player's stall moves the crawler's affinity toward the player (review §3.3 D3).
-    /// Ratios compare the stall's price with the crawler's own valuation (see TradeFairness).
+    /// How a completed trade at the player's stall moves the crawler's affinity toward the player (review §3.3 D3), and
+    /// how a delivered bounty does (Epic 10 G4, D5): judged as a sale is. Ratios compare the stall's price, or the
+    /// bounty's reward, with the crawler's own valuation (see TradeFairness).
     /// </summary>
     public readonly struct TradeTrustTuning
     {
@@ -40,10 +41,31 @@ namespace Simpiens.Simulation.Economy
         public readonly TrustDelta FairSale;
         public readonly TrustDelta StingySale;
 
+        /// <summary>A bounty's reward at or above this multiple of the claimant's minimum for the work is generous (D5).</summary>
+        public readonly float GenerousBountyRatio;
+
+        /// <summary>At or above this multiple it is fair; below it, stingy.</summary>
+        public readonly float FairBountyRatio;
+
+        /// <summary>What a scout report is worth to a neutral crawler, in gold: a Scout bounty's minimum, times the claimant's greed factor.</summary>
+        public readonly ushort ScoutingValue;
+
+        public readonly TrustDelta GenerousBounty;
+        public readonly TrustDelta FairBounty;
+        public readonly TrustDelta StingyBounty;
+
         public TradeTrustTuning(float generousBuyRatio, float fairBuyRatio, float generousSaleRatio, float fairSaleRatio,
             TrustDelta generousPurchase, TrustDelta fairPurchase, TrustDelta gougedPurchase,
-            TrustDelta generousSale, TrustDelta fairSale, TrustDelta stingySale)
+            TrustDelta generousSale, TrustDelta fairSale, TrustDelta stingySale,
+            float generousBountyRatio = 3f, float fairBountyRatio = 1.5f, ushort scoutingValue = 5,
+            TrustDelta generousBounty = default, TrustDelta fairBounty = default, TrustDelta stingyBounty = default)
         {
+            GenerousBountyRatio = generousBountyRatio;
+            FairBountyRatio = fairBountyRatio;
+            ScoutingValue = scoutingValue;
+            GenerousBounty = generousBounty;
+            FairBounty = fairBounty;
+            StingyBounty = stingyBounty;
             GenerousBuyRatio = generousBuyRatio;
             FairBuyRatio = fairBuyRatio;
             GenerousSaleRatio = generousSaleRatio;
@@ -155,6 +177,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Strangers who arrive with their own gold and leave (Epic 10 G1).</summary>
         public DrifterTuning Drifters { get; private set; } = DrifterTuning.Default;
 
+        /// <summary>The player's guild: recruiting, the fee, wages and quitting (Epic 10 G4).</summary>
+        public GuildTuning Guild { get; private set; } = GuildTuning.Default;
+
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -165,7 +190,14 @@ namespace Simpiens.Simulation.Economy
             gougedPurchase: new TrustDelta(warmth: -10, trust: -15, respect: 0),
             generousSale: new TrustDelta(warmth: 5, trust: 10, respect: 5),
             fairSale: new TrustDelta(warmth: 2, trust: 3, respect: 2),
-            stingySale: new TrustDelta(warmth: -3, trust: -5, respect: 0));
+            stingySale: new TrustDelta(warmth: -3, trust: -5, respect: 0),
+            // Bounties (Epic 10 G4, D5): the generous delta is the flat one every delivery got before
+            generousBountyRatio: 3.0f,
+            fairBountyRatio: 1.5f,
+            scoutingValue: 5,
+            generousBounty: new TrustDelta(warmth: 10, trust: 15, respect: 10),
+            fairBounty: new TrustDelta(warmth: 5, trust: 8, respect: 5),
+            stingyBounty: new TrustDelta(warmth: -3, trust: -5, respect: 0));
 
         /// <summary>Nominal per-unit value of an item type (0 for one the session doesn't value).</summary>
         public ushort BaseValue(ItemType type) => _items[(byte)type].BaseValue;
@@ -183,6 +215,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Drifters = drifters;
+            return copy;
+        }
+
+        public EconomyTuning WithGuild(in GuildTuning guild)
+        {
+            var copy = Copy();
+            copy.Guild = guild;
             return copy;
         }
 

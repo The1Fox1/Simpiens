@@ -8,6 +8,7 @@ using Simpiens.Cognition.Social;
 using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation;
+using Simpiens.Testing.Sociopolitical;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
@@ -34,6 +35,7 @@ namespace Simpiens.Testing.Persistence
             ValidateMemoryRoundTrips();
             ValidateLedgerRoundTrips();
             ValidateGroupsRoundTrip();
+            ValidateGuildRoundTrips();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
@@ -114,6 +116,8 @@ namespace Simpiens.Testing.Persistence
             groups.SetDirective(second, new GroupDirective(DirectiveType.DefendAnchor, second, C, new Vec2(-1f, 0f), default, 5u, 900u));
             byte third = groups.CreateGroup(GroupType.FactionGuild, B, new Vec2(5f, 5f), 70);
             groups.DisbandGroup(first); // slot 1 is free; groups 2 and 3 are active
+            groups.AddMember(second, d, RoleRank.Officer, 55); // d in a party and a guild at once (Epic 10 G4, D1)
+            groups.AddMember(third, d, RoleRank.Follower, 65);
 
             var fresh = new GroupRegistry();
             fresh.CreateGroup(GroupType.Settlement, new EntityId(9u, 9u, 9u, 9u), Vec2.Zero);
@@ -128,10 +132,36 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(bytes, SaveSerializer.Serialize(again), "A group registry restored from its save");
             Assert(fresh.ActiveGroupCount == 2, $"Two groups are active after the load ({fresh.ActiveGroupCount}).");
             Assert(fresh.TryGetGroup(second, out var g2) && g2.LeaderId == C && g2.ActiveDirective.Type == DirectiveType.DefendAnchor, "Group ids, leaders and directives came back.");
-            Assert(fresh.TryGetMembership(B, out var m) && m.GroupId == third && m.Role == RoleRank.Leader, "Memberships came back.");
+            Assert(fresh.TryGetOnlyMembership(B, out var m) && m.GroupId == third && m.Role == RoleRank.Leader, "Memberships came back.");
+            var several = fresh.GetMemberships(d);
+            Assert(several.Count == 2 && fresh.TryGetMembership(d, second, out var inParty) && inParty.Role == RoleRank.Officer && inParty.Allegiance == 55
+                && fresh.TryGetMembership(d, third, out var inGuild) && inGuild.Allegiance == 65, "A crawler's several memberships came back, each with its own role and allegiance.");
+            Assert(several.KindAt(0) == GroupType.TemporaryParty && several.KindAt(1) == GroupType.FactionGuild, "They come back in kind order.");
             Assert(fresh.CreateGroup(GroupType.TemporaryParty, A, Vec2.Zero) == first, "The free slot is still the lowest one.");
 
             TestLog.Log("[PASS] Test 3: a group registry restores group ids, leaders, rosters, directives and memberships.");
+        }
+
+        // Epic 10 G4.6: the guild's group, its members' contracts in join order and the cooldowns come back exactly
+        private void ValidateGuildRoundTrips()
+        {
+            var guild = new Simpiens.Simulation.Guild.GuildService();
+            var save = new GuildSave
+            {
+                GroupId = 3,
+                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } }
+            };
+            guild.RestoreFrom(save);
+            var again = new GuildSave();
+            guild.CaptureTo(again);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
+            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
+            Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
+            guild.RestoreFrom(null);
+            Assert(guild.GroupId == 0 && guild.Members.Count == 0, "A save made before the guild existed loads with none.");
+
+            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns (Epic 10 G4.6).");
         }
 
         private void ValidateChronicleRoundTrips()

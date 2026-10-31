@@ -31,6 +31,7 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty, _gear;
+        private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
@@ -120,6 +121,9 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(_gear);
             gearLine.Children.Add(_gear);
             _dossierDetails.Children.Add(gearLine);
+            // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
+            _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            _dossierDetails.Children.Add(_groups);
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
@@ -131,12 +135,29 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(Window.SubHeader("SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
-            _affinitiesList = Scroll(_dossierDetails, 120f, 3f); // Unity's max-height
+            _affinitiesList = Scroll(_dossierDetails, 92f, 3f); // Unity's max-height was 120: the guild's lines took the rest (Epic 10 G4)
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("PLAYER INTERVENTION"));
-            CalmButton = UiParts.Button("Calm Frustration", DossierWidth - 2f * Inner, 32f, UiText.BodyBold);
+            // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
+            _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
+            _dossierDetails.Children.Add(_recruitText);
+            // In the dossier's stack, so not UiParts.Row, which centres itself in its parent
+            var actions = new ContainerRuntime
+            {
+                ChildrenLayout = ChildrenLayout.LeftToRightStack,
+                StackSpacing = 8f,
+                WidthUnits = DimensionUnitType.RelativeToParent,
+                Width = 0f,
+                Height = 32f,
+            };
+            float half = (DossierWidth - 2f * Inner - 8f) / 2f;
+            CalmButton = UiParts.Button("Calm Frustration", half, 32f, UiText.BodyBold);
             CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
-            _dossierDetails.Children.Add(CalmButton.Visual);
+            RecruitButton = UiParts.Button("Recruit", half, 32f, UiText.BodyBold);
+            RecruitButton.Click += (_, _) => { _model.Dossier.Recruit(); };
+            actions.Children.Add(CalmButton.Visual);
+            actions.Children.Add(RecruitButton.Visual);
+            _dossierDetails.Children.Add(actions);
             dossierBody.Children.Add(_dossierDetails);
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
@@ -144,6 +165,9 @@ namespace Simpiens.Client.Ui
 
         public ContainerRuntime Root { get; }
         public Button CalmButton { get; }
+        public Button RecruitButton { get; }
+        public string GroupsShown => _groups.Text;
+        public string RecruitShown => _recruitText.Text;
 
         public bool IsShown
         {
@@ -271,6 +295,9 @@ namespace Simpiens.Client.Ui
             for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityRows[i].Visible = false;
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
+            UiParts.SetText(_groups, dossier.Groups);
+            UiParts.SetText(_recruitText, dossier.RecruitText);
+            RecruitButton.IsEnabled = dossier.CanRecruit;
         }
 
         private static ContainerRuntime Panel(float x, float width, string header, out ContainerRuntime body)

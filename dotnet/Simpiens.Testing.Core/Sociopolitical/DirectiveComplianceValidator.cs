@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
@@ -32,8 +33,9 @@ namespace Simpiens.Testing.Sociopolitical
             ValidatePassiveDefianceAndDesertionSideEffects();
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
+            ValidateDirectivePrecedence();
 
-            TestLog.Log("<color=green>[DirectiveComplianceValidator] ALL 8 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DirectiveComplianceValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateWorldStateBuilderFactMapping()
@@ -290,18 +292,18 @@ namespace Simpiens.Testing.Sociopolitical
             registry.AddMember(groupId, followerId, RoleRank.Follower, initialAllegiance: 70);
 
             // 1. Passive defiance: -5 allegiance
-            registry.UpdateAllegiance(followerId, -5);
-            registry.TryGetMembership(followerId, out var mem);
+            registry.UpdateAllegiance(followerId, groupId, -5);
+            registry.TryGetOnlyMembership(followerId, out var mem);
             Assert(mem.Allegiance == 65, $"Follower allegiance reduced to 65 after passive defiance (actual: {mem.Allegiance}).");
 
             // 2. Compliance reward: +3 allegiance
-            registry.UpdateAllegiance(followerId, +3);
-            registry.TryGetMembership(followerId, out mem);
+            registry.UpdateAllegiance(followerId, groupId, +3);
+            registry.TryGetOnlyMembership(followerId, out mem);
             Assert(mem.Allegiance == 68, $"Follower allegiance increased to 68 after compliance (actual: {mem.Allegiance}).");
 
             // 3. Desertion: member removed from registry
             registry.RemoveMember(groupId, followerId);
-            Assert(!registry.TryGetMembership(followerId, out _), "Deserter membership removed from registry.");
+            Assert(!registry.TryGetOnlyMembership(followerId, out _), "Deserter membership removed from registry.");
             registry.TryGetGroup(groupId, out var groupData);
             Assert(groupData.MemberCount == 1, "Group member count decremented to 1.");
 
@@ -421,6 +423,48 @@ namespace Simpiens.Testing.Sociopolitical
         }
 
         private static uint _guidCounter = 1;
+
+        // Epic 10 G4, D1: a crawler in several groups follows its party's order, then its guild's, then its settlement's;
+        // deserting one group leaves the others
+        private void ValidateDirectivePrecedence()
+        {
+            var partyLeader = CreateGuid();
+            var settlementLeader = CreateGuid();
+            var crawler = CreateGuid();
+            byte party = 1, settlement = 2;
+            var rally = new GroupDirective(DirectiveType.RallyAtLocation, settlement, settlementLeader, new Vec2(4f, 4f), default, issuedTick: 100, expirationTick: 500, targetRadius: 2f);
+            var snapshot = new SharedWorldSnapshot(20, 20, 1.0f, 16, _ => { });
+            var groups = new GroupData[SharedWorldSnapshot.MaxGroups];
+            groups[0] = new GroupData(party, GroupType.TemporaryParty, partyLeader, Vec2.Zero, GroupDirective.None, 2, 90);
+            groups[1] = new GroupData(settlement, GroupType.Settlement, settlementLeader, Vec2.Zero, rally, 2, 90);
+            snapshot.SetGroups(groups, 2);
+
+            var set = MembershipSet.Empty;
+            set.Set(GroupType.Settlement, new GroupMembership(settlement, RoleRank.Follower, 70, 0));
+            set.Set(GroupType.TemporaryParty, new GroupMembership(party, RoleRank.Follower, 60, 0));
+            Assert(set.DirectiveMembership(snapshot, 200).GroupId == settlement, "With no order from its party, the crawler follows its settlement's.");
+            Assert(set.DirectiveMembership(snapshot, 600).GroupId == party, "With no active order, the directive membership is the first by kind (the party).");
+            Assert(set.DirectiveMembership(null, 200).GroupId == party, "Without a snapshot, the first by kind.");
+
+            groups[0] = new GroupData(party, GroupType.TemporaryParty, partyLeader, Vec2.Zero,
+                new GroupDirective(DirectiveType.RallyAtLocation, party, partyLeader, new Vec2(8f, 8f), default, issuedTick: 150, expirationTick: 500, targetRadius: 2f), 2, 90);
+            snapshot.SetGroups(groups, 2);
+            Assert(set.DirectiveMembership(snapshot, 200).GroupId == party, "The party's order comes before the settlement's.");
+
+            var state = new AgentState(crawler) { Memberships = set };
+            var context = state.CreateContext(snapshot, 200);
+            Assert(context.DirectiveMembership.GroupId == party && context.DirectiveMembership.Allegiance == 60, "The context carries the obeyed group's membership.");
+
+            var registry = new GroupRegistry();
+            byte guild = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), Vec2.Zero);
+            byte home = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            registry.AddMember(guild, crawler);
+            registry.AddMember(home, crawler);
+            registry.RemoveMember(home, crawler);
+            Assert(registry.TryGetMembership(crawler, guild, out _) && !registry.TryGetMembership(crawler, home, out _), "Deserting the settlement keeps the guild.");
+
+            TestLog.Log("[PASS] Directive precedence (party, guild, settlement) and one-group desertion verified (Epic 10 G4, D1).");
+        }
 
         private static EntityId CreateGuid()
         {

@@ -1218,3 +1218,46 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Commit B then hashed them. The re-record changed hex fields only, checked by script.
   - Commit C re-recorded the four renders that draw names.
 - **Deviation:** none from the epic. The plan's order changed with one branch: core data first, then the spike.
+
+
+## 2026-10-30: Epic UI-Beta paused after B0–B1; Epic 10 G4 starts
+
+- **B0's gate passed:** the producer's look at the people sheet ("People sheet looks good"). PR #17 (B0–B1) merged.
+- **UI-Beta is PAUSED** after B0–B1. Asked whether to continue it or move to Epic 10, the agent recommended Epic 10:
+  - B4 needs Epic 10's roster and tracker;
+  - Part 1 is the active milestone;
+  - G4's rebase stays to the one #17 caused.
+  The producer agreed ("proceed with epic 10 work"). B2 resumes after Part 1's gate (G6).
+- **UI-Beta's working plan is deleted.** Its findings are in the epic's §10 and its decisions in the entry above.
+- **G4 starts** on `feat/epic10-g4`, rebased onto `main` at `b54ef83`.
+  - D1–D6 stand as proposed, recorded in the epic's §0.
+  - G4's save change becomes format 8, since UI-Beta took 7.
+
+
+## 2026-10-30: Epic 10 G4, the guild, on many-to-many groups
+
+- **D1 changes Epic 8's group primitive: groups are many-to-many, one per kind.**
+  - The producer's view (2026-10-29) was that groups should be many-to-many. The plan argued for it, with one per kind on top.
+  - The registry owns each crawler's memberships (`MembershipSet`, ordered by kind: party, guild, settlement). A crawler keeps a copy for cognition.
+  - Directives are obeyed in that order. Desertion and joining touch one group, and leaving the outpost leaves all.
+- **The proof was staged:**
+  1. The world hash first covered groups (re-recorded, hashes only).
+  2. The refactor reproduced golden and a 43-seed probe exactly.
+  3. The two faults it fixed (departed drifters left on rosters, and Epic 8 finding 1) changed only the groups part.
+  - **Lesson:** a file-based `dotnet run probe.cs` reused its first build. Name each run's probe anew.
+- **The player as patron:** a group the player leads has no roster seat for it, and succession skips it. The guild is such a group, made at the first recruit and kept while empty.
+- **The guild lives in `Simulation/Guild`, not `SimulationManager`** (the god object R2–R5 will split).
+  - `GuildService` is reached through `IGuildHost`, as supply is through `ISupplyHost`. It owns what the group primitive doesn't: contracts and cooldowns.
+  - `GuildRules` decides each typed command and explains a refusal, as `BountyRules` does.
+- **D2–D6 as proposed:**
+  - the 20g fee and the wages are conserved transfers;
+  - wages are paid at the caravan's visit after the rations;
+  - a member quits below 30 trust or after two unpaid visits;
+  - bounties are judged as sales are;
+  - Recruit is on the dossier, the roster is a window, and GUILD n/4 sits in the header.
+- **The save format went to 8:** memberships live only in the groups' block, and the guild has its own block.
+- **Deviations from the plan:**
+  - G4's save change is format 8, because Epic UI-Beta took 7.
+  - The console's guild profile moves to G6's soak.
+  - The glowstone-free proof day now tolerates F5's jitter only, until G5.
+- **Measured:** a guild of four costs the treasury 192–249g over 30 minutes on the soak's seeds, and members spend their wages. No crawler sink is needed.

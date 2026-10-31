@@ -51,6 +51,9 @@ namespace Simpiens.Presentation.Dashboard
 
         private readonly List<HeaderStock> _stock = new List<HeaderStock>(4);
         public string Bounties { get; private set; } = "0 BOUNTIES";
+
+        /// <summary>The guild button's words: "GUILD 2/4" (Epic 10 G4, D6).</summary>
+        public string Guild { get; private set; } = "GUILD 0/4";
         public string Tick { get; private set; } = "TICK: 00000";
 
         /// <summary>The world's clock is stopped: the pause control offers to play.</summary>
@@ -100,6 +103,8 @@ namespace Simpiens.Presentation.Dashboard
 
             int active = _context.Simulation?.ActiveBounties?.Count ?? 0;
             Bounties = Invariant($"{active} BOUNTIES");
+            int members = _context.Simulation?.Guild?.Members.Count ?? 0;
+            Guild = Invariant($"GUILD {members}/{(_context.Simulation?.Economy?.Guild ?? Simpiens.Simulation.Economy.GuildTuning.Default).MaxMembers}");
 
             var clock = _context.Clock;
             if (clock != null)

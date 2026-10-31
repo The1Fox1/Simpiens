@@ -46,8 +46,8 @@ namespace Simpiens.Cognition.Planning.Actions
 
         private Vec2 GetTargetLocation(AgentContext context)
         {
-            if (context.Snapshot != null && context.Membership.HasGroup &&
-                context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData) &&
+            if (context.Snapshot != null && context.DirectiveMembership.HasGroup &&
+                context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData) &&
                 groupData.ActiveDirective.IsActive(context.CurrentTick))
             {
                 return groupData.ActiveDirective.TargetLocation;

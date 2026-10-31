@@ -19,9 +19,20 @@ namespace Simpiens.Simulation.Economy
         public readonly uint EscrowReleasedGold;
         public readonly uint EscrowRefundedGold;
 
+        /// <summary>The guild's signing fees and wages paid from the stall to crawlers (Epic 10 G4).</summary>
+        public readonly uint Fees;
+        public readonly uint FeeGold;
+        public readonly uint Wages;
+        public readonly uint WageGold;
+
         public EconomyFlowTotals(uint purchases, uint purchaseGold, uint sales, uint saleGold,
-            uint escrowLockedGold, uint escrowReleasedGold, uint escrowRefundedGold)
+            uint escrowLockedGold, uint escrowReleasedGold, uint escrowRefundedGold,
+            uint fees = 0, uint feeGold = 0, uint wages = 0, uint wageGold = 0)
         {
+            Fees = fees;
+            FeeGold = feeGold;
+            Wages = wages;
+            WageGold = wageGold;
             Purchases = purchases;
             PurchaseGold = purchaseGold;
             Sales = sales;

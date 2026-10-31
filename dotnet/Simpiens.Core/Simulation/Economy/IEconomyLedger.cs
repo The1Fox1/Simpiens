@@ -2,6 +2,13 @@ using System;
 using Simpiens.Simulation;
 namespace Simpiens.Simulation.Economy
 {
+    /// <summary>What a stall pays a crawler for besides goods (Epic 10 G4).</summary>
+    public enum StallPayment : byte
+    {
+        GuildFee = 0,
+        GuildWage = 1
+    }
+
     /// <summary>
     /// Authoritative double-entry ledger tracking circulating gold,
     /// bounty escrow allocations, and named faucets/sinks.
@@ -28,6 +35,12 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>Stall sale against an inventory the caller already holds (intent handlers). Stall → agent.</summary>
         bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout);
+
+        /// <summary>
+        /// The stall pays a crawler what it isn't buying goods for (Epic 10 G4): a guild member's signing fee or wage. A
+        /// conserved transfer, stall → agent, counted under its kind; refused when the treasury can't cover it.
+        /// </summary>
+        bool TryPayFromStall(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory payee, uint amount, StallPayment kind);
 
         void RecordFaucet(uint amount, string faucetName);
         void RecordSink(uint amount, string sinkName);

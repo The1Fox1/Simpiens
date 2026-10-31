@@ -157,11 +157,13 @@ namespace Simpiens.Cognition
             return Task.Run(() => EvaluateAsync(agent, context, collapsed, hadPlan, planner, actionGraph, goals, evaluators, ct).AsTask(), ct);
         }
 
-        // Group directives & compliance evaluation (main thread)
+        // Group directives & compliance evaluation (main thread). A crawler follows the first of its groups, in kind order (party,
+        // guild, settlement), with an active directive (Epic 10 G4, D1); a group's leader issued it and doesn't evaluate it
         private static void EvaluateGroupDirective(AgentState agent, SharedWorldSnapshot snapshot, ISimulationManager simulationManager, GridPoint currentPosInt, uint tick)
         {
-            if (!agent.Membership.HasGroup || agent.Membership.Role == RoleRank.Leader) return;
-            if (!snapshot.TryGetGroup(agent.Membership.GroupId, out var groupData) || !groupData.ActiveDirective.IsActive(tick)) return;
+            var membership = agent.Memberships.DirectiveMembership(snapshot, tick);
+            if (!membership.HasGroup || membership.Role == RoleRank.Leader) return;
+            if (!snapshot.TryGetGroup(membership.GroupId, out var groupData) || !groupData.ActiveDirective.IsActive(tick)) return;
             if (groupData.ActiveDirective.IssuedTick == agent.LastEvaluatedDirectiveTick) return;
 
             agent.LastEvaluatedDirectiveTick = groupData.ActiveDirective.IssuedTick;
@@ -174,11 +176,15 @@ namespace Simpiens.Cognition
 
             if (decision == ComplianceDecision.ActiveDesertion)
             {
-                byte oldGroupId = agent.Membership.GroupId;
-                agent.Membership = GroupMembership.None;
+                // Desertion leaves that group only
+                byte oldGroupId = membership.GroupId;
+                var memberships = agent.Memberships;
+                memberships.Remove(oldGroupId);
+                agent.Memberships = memberships;
                 if (simulationManager.Groups != null)
                 {
                     simulationManager.Groups.RemoveMember(oldGroupId, agent.AgentId);
+                    agent.Memberships = simulationManager.Groups.GetMemberships(agent.AgentId);
                 }
                 agent.Memory.RecordEvent(MemoryEventType.DesertedGroup, groupData.LeaderId, currentPosInt, tick);
                 agent.TriggerDefiantVisual(2.5f);
@@ -187,19 +193,14 @@ namespace Simpiens.Cognition
             {
                 if (simulationManager.Groups != null)
                 {
-                    simulationManager.Groups.UpdateAllegiance(agent.AgentId, -5);
-                    if (simulationManager.Groups.TryGetMembership(agent.AgentId, out var updatedMem))
-                    {
-                        agent.Membership = updatedMem;
-                    }
+                    simulationManager.Groups.UpdateAllegiance(agent.AgentId, membership.GroupId, -5);
+                    agent.Memberships = simulationManager.Groups.GetMemberships(agent.AgentId);
                 }
                 else
                 {
-                    agent.Membership = new GroupMembership(
-                        agent.Membership.GroupId,
-                        agent.Membership.Role,
-                        (byte)SimMath.Max(0, agent.Membership.Allegiance - 5),
-                        agent.Membership.JoinTick);
+                    var memberships = agent.Memberships;
+                    memberships.Update(new GroupMembership(membership.GroupId, membership.Role, (byte)SimMath.Max(0, membership.Allegiance - 5), membership.JoinTick));
+                    agent.Memberships = memberships;
                 }
                 agent.TriggerDefiantVisual(1.5f);
             }

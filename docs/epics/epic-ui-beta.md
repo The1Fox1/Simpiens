@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-10-30). B0 and B1 are done on one branch and one pull request (§10); the producer's look at the people sheet is open; B2 is next. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`; the working plan: `.agents/ui_beta_b0_b1_plan.md`.
+- **Status**: PAUSED (2026-10-30) after B0 and B1, merged as PR #17 (§10). The producer's look at the people sheet passed. The producer then moved to Epic 10 Part 1; B2 resumes after its gate (G6). What exists: §10; what doesn't: B2–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -224,7 +224,7 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
 
 ## 10. Progress
 
-### B0 and B1 (done 2026-10-30, `feat/ui-beta`, one pull request)
+### B0 and B1 (done 2026-10-30, `feat/ui-beta`, merged as PR #17)
 - **Delivered:**
   - B0: the test-only spike (bodies on today's poses, Hearthlight busts), the people sheet, the design note (§9).
   - B1, the core: `Simulation/People/` holds `CrawlerLook` (16 bytes, 0 = unset), `LookCatalog` (two lineages and their odds), `GivenNames` (three lists, Latin-1, at most 10 characters) and `DepartedCrawler`. Draws go on `SimRandomSalt.Look` and `SimRandomSalt.Name`.
@@ -245,5 +245,6 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
 - **Findings:**
   - `SessionHost.CrawlerSpawned` fires before the host gives a new crawler its personality, look and name, as it always has for restored state. Views read frames after the tick, so B2 bakes from frames, not from the event.
   - The head is found from the hair's pixels in 42 of 48 frames; B2 holds an anchor table (§9).
-- **Open for the producer:** the look at the people sheet (B0's gate); the lineage's name and lore (Q4); names by lineage.
+- **B0's gate:** the producer's look at the people sheet passed ("People sheet looks good", 2026-10-30).
+- **Open for the producer:** the delvers' name and lore (Q4); names by lineage.
 

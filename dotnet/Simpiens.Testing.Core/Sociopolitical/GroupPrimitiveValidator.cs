@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Groups;
@@ -26,8 +27,86 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateAgentContextAndMemoryIntegration();
             ValidateDefensiveNullSafety();
             ValidateZeroAllocationHotPath();
+            ValidateManyToManyOnePerKind();
+            ValidateLeavingIsWhole();
 
-            TestLog.Log("<color=green>[GroupPrimitiveValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GroupPrimitiveValidator] ALL 9 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        // Epic 10 G4.4: a crawler who leaves the outpost leaves every group; a new group's leader leaves its old group of that
+        // kind (Epic 8 finding 1)
+        private void ValidateLeavingIsWhole()
+        {
+            var registry = new GroupRegistry();
+            var world = new WorldRegistry();
+            var sim = new SimulationManager(world, null, groupRegistry: registry);
+            var drifter = Simpiens.Testing.Environment.HeadlessEntities.Crawler(world, sim, null, Vec2.Zero);
+            byte settlement = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            byte guild = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), Vec2.Zero);
+            registry.AddMember(settlement, drifter.Node.Id);
+            registry.AddMember(guild, drifter.Node.Id);
+            sim.DepartOutpost(drifter.Node);
+            Assert(!registry.GetMemberships(drifter.Node.Id).HasAny && !drifter.Agent.Memberships.HasAny, "A crawler who left the outpost belongs to no group.");
+            Assert(!registry.GetMembers(settlement).Contains(drifter.Node.Id) && !registry.GetMembers(guild).Contains(drifter.Node.Id), "Nor is it on any roster.");
+
+            var founder = CreateGuid();
+            byte old = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            registry.AddMember(old, founder);
+            byte founded = registry.CreateGroup(GroupType.Settlement, founder, Vec2.Zero);
+            Assert(!registry.GetMembers(old).Contains(founder) && registry.TryGetMembership(founder, founded, out var leads) && leads.Role == RoleRank.Leader,
+                "Founding a settlement leaves the old one's roster (Epic 8 finding 1).");
+            registry.DisbandGroup(old);
+            Assert(registry.TryGetMembership(founder, founded, out _), "Disbanding the old settlement no longer takes the new one's membership with it.");
+
+            TestLog.Log("[PASS] Test 9: Leaving the outpost leaves every group; a founder leaves its old roster (Epic 10 G4.4).");
+        }
+
+        // Epic 10 G4, D1: a crawler belongs to a settlement, a guild and a party at once; a second group of a kind replaces
+        // the first of that kind only; disbanding or leaving one group leaves the others
+        private void ValidateManyToManyOnePerKind()
+        {
+            var registry = new GroupRegistry();
+            var crawler = CreateGuid();
+            byte settlement = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            byte guild = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), Vec2.Zero);
+            byte party = registry.CreateGroup(GroupType.TemporaryParty, CreateGuid(), Vec2.Zero);
+
+            Assert(registry.AddMember(settlement, crawler, RoleRank.Follower, 70), "Joins a settlement.");
+            Assert(registry.AddMember(guild, crawler, RoleRank.Follower, 70), "Joins a guild too.");
+            Assert(registry.AddMember(party, crawler, RoleRank.Officer, 60), "And a party.");
+            var set = registry.GetMemberships(crawler);
+            Assert(set.Count == 3, $"Three memberships at once ({set.Count}).");
+            Assert(set.KindAt(0) == GroupType.TemporaryParty && set.KindAt(1) == GroupType.FactionGuild && set.KindAt(2) == GroupType.Settlement,
+                "Memberships are ordered by kind: party, guild, settlement (the directive precedence).");
+            Assert(registry.GetMembers(settlement).Contains(crawler) && registry.GetMembers(guild).Contains(crawler) && registry.GetMembers(party).Contains(crawler),
+                "The crawler is on all three rosters.");
+            Assert(registry.TryGetMembership(crawler, party, out var inParty) && inParty.Role == RoleRank.Officer && inParty.Allegiance == 60, "Each membership keeps its own role and allegiance.");
+            Assert(registry.TryGetMembership(crawler, GroupType.FactionGuild, out var inGuild) && inGuild.GroupId == guild, "A membership is found by kind.");
+
+            registry.UpdateAllegiance(crawler, guild, -20);
+            Assert(registry.TryGetMembership(crawler, guild, out inGuild) && inGuild.Allegiance == 50, "Allegiance changes in one group only.");
+            Assert(registry.TryGetMembership(crawler, settlement, out var inSettlement) && inSettlement.Allegiance == 70, "The other groups' allegiance is untouched.");
+
+            byte second = registry.CreateGroup(GroupType.Settlement, CreateGuid(), Vec2.Zero);
+            registry.AddMember(second, crawler, RoleRank.Follower, 80);
+            Assert(!registry.GetMembers(settlement).Contains(crawler) && registry.GetMembers(second).Contains(crawler), "A second settlement replaces the first: one per kind.");
+            Assert(registry.GetMemberships(crawler).Count == 3 && registry.TryGetMembership(crawler, guild, out _) && registry.TryGetMembership(crawler, party, out _),
+                "Changing settlement keeps the guild and the party.");
+
+            registry.DisbandGroup(guild);
+            set = registry.GetMemberships(crawler);
+            Assert(set.Count == 2 && !set.Has(GroupType.FactionGuild) && set.Has(GroupType.TemporaryParty) && set.Has(GroupType.Settlement), "Disbanding the guild leaves the others.");
+
+            registry.RemoveMember(party, crawler);
+            Assert(registry.GetMemberships(crawler).Count == 1 && registry.TryGetMembership(crawler, second, out _), "Leaving the party leaves the settlement.");
+
+            byte guild2 = registry.CreateGroup(GroupType.FactionGuild, CreateGuid(), Vec2.Zero);
+            registry.AddMember(guild2, crawler);
+            registry.LeaveAllGroups(crawler);
+            Assert(!registry.GetMemberships(crawler).HasAny && !registry.GetMembers(second).Contains(crawler) && !registry.GetMembers(guild2).Contains(crawler),
+                "Leaving every group empties the memberships and the rosters.");
+
+            TestLog.Log("[PASS] Test 8: Groups are many-to-many, one per kind (Epic 10 G4, D1).");
         }
 
         private void ValidateUnmanagedStructSizesAndLayout()
@@ -68,7 +147,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(groupData.LeaderId == leaderId, "Leader ID matches.");
             Assert(groupData.AnchorPosition == anchorPos, "Anchor position matches.");
             Assert(groupData.MemberCount == 1, "Initial member count is 1.");
-            Assert(registry.TryGetMembership(leaderId, out var leaderMembership), "Leader membership registered.");
+            Assert(registry.TryGetOnlyMembership(leaderId, out var leaderMembership), "Leader membership registered.");
             Assert(leaderMembership.Role == RoleRank.Leader, "Leader has RoleRank.Leader.");
             Assert(leaderMembership.GroupId == groupId, "Leader GroupId matches.");
 
@@ -76,18 +155,18 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(registry.AddMember(groupId, followerId, RoleRank.Follower, initialAllegiance: 75), "AddMember succeeds.");
             Assert(registry.TryGetGroup(groupId, out groupData), "TryGetGroup succeeds.");
             Assert(groupData.MemberCount == 2, "Member count is now 2.");
-            Assert(registry.TryGetMembership(followerId, out var followerMembership), "Follower membership found.");
+            Assert(registry.TryGetOnlyMembership(followerId, out var followerMembership), "Follower membership found.");
             Assert(followerMembership.Role == RoleRank.Follower, "Follower has RoleRank.Follower.");
             Assert(followerMembership.Allegiance == 75, "Follower allegiance is 75.");
 
             // 4. Promote follower to Officer
             Assert(registry.SetRole(groupId, followerId, RoleRank.Officer), "SetRole to Officer succeeds.");
-            registry.TryGetMembership(followerId, out followerMembership);
+            registry.TryGetOnlyMembership(followerId, out followerMembership);
             Assert(followerMembership.Role == RoleRank.Officer, "Follower promoted to RoleRank.Officer.");
 
             // 5. Remove follower
             Assert(registry.RemoveMember(groupId, followerId), "RemoveMember succeeds.");
-            Assert(!registry.TryGetMembership(followerId, out _), "Follower membership removed.");
+            Assert(!registry.TryGetOnlyMembership(followerId, out _), "Follower membership removed.");
             registry.TryGetGroup(groupId, out groupData);
             Assert(groupData.MemberCount == 1, "Member count back to 1.");
 
@@ -95,7 +174,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(registry.DisbandGroup(groupId), "DisbandGroup succeeds.");
             Assert(registry.ActiveGroupCount == 0, "ActiveGroupCount is 0 after disband.");
             Assert(!registry.TryGetGroup(groupId, out _), "Disbanded group not found.");
-            Assert(!registry.TryGetMembership(leaderId, out _), "Leader membership unlinked after disband.");
+            Assert(!registry.TryGetOnlyMembership(leaderId, out _), "Leader membership unlinked after disband.");
 
             TestLog.Log("[PASS] Test 2: Group creation, roster management, role promotion, and disbanding verified.");
         }
@@ -194,14 +273,14 @@ namespace Simpiens.Testing.Sociopolitical
                 snapshot: null,
                 memory: memory,
                 currentTick: 100,
-                membership: membership,
+                directiveMembership: membership,
                 identity: identity
             );
 
-            Assert(context.Membership.HasGroup, "Context reflects active group membership.");
-            Assert(context.Membership.GroupId == 1, "Context membership GroupId is 1.");
-            Assert(context.Membership.Role == RoleRank.Officer, "Context role is Officer.");
-            Assert(context.Membership.Allegiance == 85, "Context allegiance is 85.");
+            Assert(context.DirectiveMembership.HasGroup, "Context reflects active group membership.");
+            Assert(context.DirectiveMembership.GroupId == 1, "Context membership GroupId is 1.");
+            Assert(context.DirectiveMembership.Role == RoleRank.Officer, "Context role is Officer.");
+            Assert(context.DirectiveMembership.Allegiance == 85, "Context allegiance is 85.");
             Assert(context.Identity.CultureId == 3, "Context CultureId is 3.");
             Assert(context.Identity.KinshipId == 7, "Context KinshipId is 7.");
 
@@ -217,7 +296,7 @@ namespace Simpiens.Testing.Sociopolitical
                 currentTick: 100
             );
 
-            Assert(!legacyContext.Membership.HasGroup, "Legacy context defaults to HasGroup == false.");
+            Assert(!legacyContext.DirectiveMembership.HasGroup, "Legacy context defaults to HasGroup == false.");
             Assert(legacyContext.Identity.CultureId == 0, "Legacy context defaults to CultureId == 0.");
 
             // Record group memory events
@@ -249,7 +328,7 @@ namespace Simpiens.Testing.Sociopolitical
             Assert(!registry.AddMember(1, default), "AddMember with default EntityId returns false.");
             Assert(!registry.RemoveMember(0, CreateGuid()), "RemoveMember with GroupId 0 returns false.");
             Assert(!registry.SetRole(0, CreateGuid(), RoleRank.Leader), "SetRole with GroupId 0 returns false.");
-            Assert(!registry.TryGetMembership(default, out _), "TryGetMembership with default EntityId returns false.");
+            Assert(!registry.TryGetOnlyMembership(default, out _), "TryGetMembership with default EntityId returns false.");
             Assert(registry.GetMembers(0).Count == 0, "GetMembers with GroupId 0 returns empty collection.");
             Assert(!registry.SetDirective(0, GroupDirective.None), "SetDirective with GroupId 0 returns false.");
             Assert(!registry.ClearDirective(0), "ClearDirective with GroupId 0 returns false.");

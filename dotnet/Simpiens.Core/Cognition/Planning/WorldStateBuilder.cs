@@ -174,11 +174,11 @@ namespace Simpiens.Cognition.Planning
             bool atDirectiveLocation = false;
             bool isGroupLeader = false;
 
-            if (context.Membership.HasGroup)
+            if (context.DirectiveMembership.HasGroup)
             {
-                isGroupLeader = context.Membership.Role == RoleRank.Leader;
+                isGroupLeader = context.DirectiveMembership.Role == RoleRank.Leader;
 
-                if (context.Snapshot != null && context.Snapshot.TryGetGroup(context.Membership.GroupId, out var groupData))
+                if (context.Snapshot != null && context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData))
                 {
                     if (groupData.ActiveDirective.IsActive(context.CurrentTick))
                     {

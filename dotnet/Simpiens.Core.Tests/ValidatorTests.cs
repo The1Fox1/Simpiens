@@ -45,6 +45,12 @@ namespace Simpiens.Core.Tests
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]
+        public void Guild() => new Simpiens.Testing.Economy.GuildValidator().RunAllValidationTests();
+
+        [Fact]
+        public void GuildWages() => new Simpiens.Testing.Economy.GuildWageValidator().RunAllValidationTests();
+
+        [Fact]
         public void AffinityMatrix() => new Simpiens.Testing.Sociopolitical.AffinityMatrixValidator().Start();
 
         [Fact]

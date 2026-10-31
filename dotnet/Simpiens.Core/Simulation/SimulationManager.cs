@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, System.IDisposable
+    public class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -106,6 +106,22 @@ namespace Simpiens.Simulation
         public IEconomyLedger EconomyLedger => _economyLedger;
         public ISupplyService Supply => _supplyService;
         public EconomyTuning Economy => _economy;
+
+        /// <summary>The player's guild (Epic 10 G4): its group, members' contracts and cooldowns.</summary>
+        public Simpiens.Simulation.Guild.GuildService Guild { get; } = new Simpiens.Simulation.Guild.GuildService();
+
+        bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
+        {
+            crawler = null;
+            if (_agentRegistry != null && _agentRegistry.TryGetAgent(crawlerId, out crawler)) return crawler != null;
+            crawler = _worldRegistry?.GetEntity(crawlerId)?.Agent;
+            return crawler != null;
+        }
+
+        int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+
+        TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
+
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
         public string FirstIntentFault { get; private set; }
@@ -286,6 +302,14 @@ namespace Simpiens.Simulation
                 if (kvp.Value == node.Id) _departingBunks.Add(kvp.Key);
             }
             for (int i = 0; i < _departingBunks.Count; i++) ReleaseBunk(_departingBunks[i], node.Id);
+
+            // Leaving the outpost leaves every group (Epic 10 G4.4): no departed crawler stays on a roster, nor in the guild
+            if (_groupRegistry != null)
+            {
+                _groupRegistry.LeaveAllGroups(node.Id);
+                agent.Memberships = _groupRegistry.GetMemberships(node.Id);
+            }
+            Guild.Forget(node.Id);
 
             agent.HasLeft = true;
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({_departingClaims.Count} claim(s) released)");
@@ -712,6 +736,19 @@ namespace Simpiens.Simulation
                 case InfluenceCommandType.CalmCrawler:
                     ExecuteCalmCrawlerCommand(influence.CalmCrawler);
                     break;
+
+                // The guild (Epic 10 G4): its service decides each by GuildRules and logs a refusal
+                case InfluenceCommandType.Recruit:
+                    Guild.Recruit(this, influence.Recruit.CrawlerId, influence.Recruit.Wage, currentTick);
+                    break;
+
+                case InfluenceCommandType.Dismiss:
+                    Guild.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
+                    break;
+
+                case InfluenceCommandType.SetWage:
+                    Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
+                    break;
             }
         }
 
@@ -951,6 +988,10 @@ namespace Simpiens.Simulation
             var chronicle = new Simpiens.Simulation.Persistence.ChronicleSave();
             _chronicleService?.CaptureTo(chronicle);
             save.Chronicle = chronicle;
+
+            var guild = new Simpiens.Simulation.Persistence.GuildSave();
+            Guild.CaptureTo(guild);
+            save.Guild = guild;
         }
 
         /// <summary>
@@ -1005,6 +1046,7 @@ namespace Simpiens.Simulation
             }
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
+            Guild.RestoreFrom(save.Guild);
             if (save.Chronicle != null) _chronicleService?.RestoreFrom(save.Chronicle);
         }
 
@@ -1091,6 +1133,7 @@ namespace Simpiens.Simulation
             {
                 _groupRegistry.Clear();
             }
+            Guild.Reset();
 
             // Walls from the torn-down world (including injected chaos walls) must not outlive it
             _spatialPartition?.ResetStatic();
@@ -1478,7 +1521,7 @@ namespace Simpiens.Simulation
                     {
                         var pawn = _hearthPawnsBuffer[p];
                         ISocialAgent ag = pawn.Agent != null ? (ISocialAgent)pawn.Agent : (ISocialAgent)pawn.Agent;
-                        if (ag != null && !ag.Membership.HasGroup)
+                        if (ag != null && !ag.Memberships.Has(GroupType.Settlement)) // no settlement: unaligned (Epic 10 G4, D1)
                         {
                             _hearthAgentsBuffer.Add(ag);
                         }
@@ -1510,6 +1553,7 @@ namespace Simpiens.Simulation
             for (byte g = 1; g <= Simpiens.Simulation.GroupRegistry.MaxGroups; g++)
             {
                 if (!_groupRegistry.TryGetGroup(g, out var groupData)) continue;
+                if (groupData.IsPatronLed) continue; // the player leads it: nothing succeeds a patron (Epic 10 G4)
 
                 if (SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(groupData.LeaderId, g, _worldRegistry, _groupRegistry, currentTick))
                 {

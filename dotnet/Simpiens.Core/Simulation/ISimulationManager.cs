@@ -27,6 +27,9 @@ namespace Simpiens.Simulation
         /// <summary>The session's economy tuning (never null; EconomyTuning.Default until a session applies one).</summary>
         Simpiens.Simulation.Economy.EconomyTuning Economy { get; }
 
+        /// <summary>The player's guild (Epic 10 G4).</summary>
+        Simpiens.Simulation.Guild.GuildService Guild { get; }
+
         /// <summary>Applies a session's economy tuning: the supply caravan, trade rules and the snapshot cognition reads.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);

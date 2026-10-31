@@ -193,7 +193,6 @@ namespace Simpiens.Testing.Persistence
                 Position = new Vec2(3.5f, -2.25f),
                 Needs = new AgentNeeds(61f, 42f, 33f),
                 Frustration = 12f,
-                Membership = new GroupMembership(3, RoleRank.Follower, 55, 400u),
                 Identity = new IdentityTag(1, 2, 3, 4),
                 Personality = new AgentPersonality(0.5f, -0.25f, 0.1f, 0f, -0.75f),
                 NavigationalStalls = 2,
@@ -219,7 +218,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.Id == A && r.Position == state.Position, "Id and position are captured.");
             Assert(r.Needs.Hunger == 61f && r.Needs.Energy == 42f && r.Needs.Social == 33f && r.Frustration == 12f, "Needs and frustration are captured.");
             Assert(r.Activity.SalvageHarvests == 1 && r.Activity.FirstMealTick == 9, "The activity tally is captured.");
-            Assert(r.Membership.GroupId == 3 && r.Identity.FaithId == 3 && SimMath.Approximately(r.Personality.Greed, 0.5f), "Membership, identity and personality are captured.");
+            Assert(r.Identity.FaithId == 3 && SimMath.Approximately(r.Personality.Greed, 0.5f), "Identity and personality are captured (memberships live in the groups' block since Epic 10 G4.3).");
             Assert(r.NavigationalStalls == 2 && r.TantrumTimer == 1.5f && r.DefiantTimer == 0.125f && r.GossipTimer == 1.5f, "Stalls and emotion timers are captured.");
             Assert(r.LastGossipTimestamp == 11f && r.LastEvaluatedDirectiveTick == 77u, "Timestamps are captured.");
             Assert(r.ScoutReportBountyId == 2 && r.ScoutReportTick == 88u, "A scout's report is captured.");
