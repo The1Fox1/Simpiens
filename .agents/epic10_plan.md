@@ -1,13 +1,13 @@
 # Epic 10: the implementation plans (index)
 
-Working document (AGENTS.md, Documentation Protocol 6). On 2026-10-29 the producer asked to "write up Epic 10 into several phased implementation plans", and gave a view on decision D1: "Groups should be many to many relationship is my opinion", asking for an argument for or against (the answer: [G4 plan](epic10_g4_plan.md) §2, D1).
+Working document (AGENTS.md, Documentation Protocol 6). On 2026-10-29 the producer asked to "write up Epic 10 into several phased implementation plans", and gave a view on decision D1: "Groups should be many to many relationship is my opinion", asking for an argument for or against (the answer: G4's D1, now in the epic's §0).
 
 This file maps those plans and holds what they share. It replaces `.agents/epic10_g4_g6_plan.md`, a single plan for G4–G6 written earlier the same day that never left this branch.
 
 ## The plans
 | Plan | Covers | Status | Estimate (agent days) | The producer's stops |
 | :--- | :--- | :--- | :-: | :--- |
-| [`epic10_g4_plan.md`](epic10_g4_plan.md) | Part 1, G4: groups become many-to-many (D1), then the guild | Under way (go 2026-10-30) | 3–4 | None left: the go came with D1–D6 |
+| G4 | Part 1, G4: groups many-to-many (D1), then the guild | **Done 2026-10-30** (epic §4); its plan is deleted | 3–4 | — |
 | [`epic10_g5_plan.md`](epic10_g5_plan.md) | Part 1, G5: expeditions | After G4's PR merges | 4–5 | A look at G5 |
 | [`epic10_g6_plan.md`](epic10_g6_plan.md) | Part 1, G6: the gate, then Part 1's close-out | After the look at G5 | 1–2 | A play session |
 | [`core_refactor_plan.md`](core_refactor_plan.md) (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | Due after Part 1 (producer, 2026-10-25) | 3–3.5 | As that plan says |

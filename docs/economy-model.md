@@ -2,7 +2,7 @@
 
 - **Owner:** review §3.3 / [ROADMAP §3A #10a](ROADMAP.md#3a-architecture-review-remediation-tracker). Status is owned by the roadmap.
 - **Evidence:** [Epic 9 §8](epics/epic-9.md) (Milestone 1); [Epic 10 §4 and §7](epics/epic-10.md) (drifters, glowstone, the bands since).
-- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../dotnet/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning` and `DrifterTuning`). Since the item system refactor (2026-10-26):
+- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../dotnet/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning`, `DrifterTuning` and `GuildTuning`). Since the item system refactor (2026-10-26):
   - each item's terms are a table: its base value and the stall's role, price and stock, plus the caravan's exports and supplies (`ItemTerms`, `CaravanTerms`);
   - what an item does (hazard gear's protection and life, a ration's or a herb's effect) is its definition in the item catalog. The Garden and the hazard sectors are map data (`Floor1Layout`).
 - **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15. Extended by Epic 10: drifters (G1), glowstone (G2) and hazard gear (G3).
@@ -12,13 +12,19 @@ Crawlers harvest ore and herbs and sell them to the player's stall. They spend t
 1. it buys a fixed quota of the stall's salvage at a market price (the main way new gold enters), glowstone from the hazard sectors at a premium since Epic 10 G2;
 2. the stall pays its upkeep (the main way gold leaves);
 3. the caravan sells the stall wholesale rations;
-4. then hazard gear, since Epic 10 G3: food comes first.
+4. the stall pays the guild's wages, since Epic 10 G4;
+5. then hazard gear, since Epic 10 G3: food, then people, then stock.
 
 The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, hazard gear since G3) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
 
 **Hazard gear (Epic 10 G3, 2026-10-25)** is the crawlers' own sink, deferred by Epic 9 D2.
 - **What it does:** a bold crawler buys gear at the stall before going into a hazard sector. Worn, it halves the damage and wears out after 50 s in danger, so the crawler buys again.
 - **Where the gold goes:** the crawler's gold goes to the stall, and the stall pays the caravan wholesale for the next piece.
+
+**The guild (Epic 10 G4, 2026-10-30)** is the player's cost of keeping people.
+- **Joining:** a trusted resident signs on for a 20g fee from the stall.
+- **Wages:** each visit pays every member its wage (5g by default) in join order, each in full or not at all.
+- **Where the gold goes:** both are transfers from the stall to members, who spend them. With four members on the soak's seeds, the treasury ends 192–249g below a guild-free run, with members' purses within what residents usually carry. No crawler sink is needed.
 
 **Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
 
@@ -34,6 +40,7 @@ The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, ha
 | Faucet | `DrifterPurses` | 20–26g per drifter, about one every 3.5 minutes from minute 2 | at most 3 drifters at once (`DrifterTuning`) |
 | Sink | `DrifterDepartures` | what a drifter still carries when it leaves | its purse plus what it earned |
 | Transfer | purchases, sales, bounty escrow | between the stall and crawlers | conserved |
+| Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; counted as `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
 
 **What follows:** the stall's net per visit ≈ salvage faucet − upkeep − wholesale − growth in crawler wallets.
 - Crawlers spend almost all they earn, so their gold passes through.
@@ -58,6 +65,11 @@ Only completed trades change trust; a refused trade changes nothing.
 | Crawler buys a ration | price ≤ 0.6 × calm value | ≤ 1 × calm value | **Gouged** (−15): above its calm value, so hunger made it pay |
 | Crawler buys hazard gear (Epic 10 G3) | price ≤ 0.6 × calm value | ≤ 1 × calm value | none: it never pays above its calm value |
 | Crawler sells salvage | price ≥ 3 × its minimum | ≥ 1.5 × minimum | **Stingy** (−5): at its minimum or just above |
+| Crawler delivers a bounty (Epic 10 G4) | reward ≥ 3 × its minimum for the work (+15 trust, +10 warmth, +10 respect) | ≥ 1.5 × (+8, +5, +5) | **Stingy** (−5 trust, −3 warmth) |
+
+**A bounty's minimum for the work:** a Gather's items at the crawler's minimum sale prices, and a Scout's report at 5g × its greed factor. The seeded bounties (25g for an ore, 15g for a scout) are generous to a neutral crawler and fair to a greedy one.
+
+**A guild member's trust:** each paid visit is +2 trust and +1 warmth; an unpaid one is −10 and −5. A member quits below 30 trust, or after two unpaid visits in a row.
 
 The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses toward neutral over time, so a player keeps trust only by keeping trade fair.
 

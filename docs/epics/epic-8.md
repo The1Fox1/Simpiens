@@ -404,4 +404,13 @@ IsGroupLeader       = 24  // Agent holds RoleRank.Leader in their group
 
 ## 11. Open findings
 
-1. **`GroupRegistry.CreateGroup` doesn't take a new leader off their old group's roster** (found 2026-10-15, Milestone 1 save/load). `AddMember` does. If the old group is then disbanded, the leader's new membership is deleted with the old roster. Latent: no live code path is known to create a group led by a member of another group. Fix: remove the leader from any previous group first, as `AddMember` does. **Owner: Epic 10 G4.4 (2026-10-30)**, with groups made many-to-many, one per kind; a schism's splinter leader reaches it.
+1. **Closed (Epic 10 G4.4, 2026-10-30):** ~~**`GroupRegistry.CreateGroup` doesn't take a new leader off their old group's roster** (found 2026-10-15, Milestone 1 save/load). `AddMember` does. If the old group is then disbanded, the leader's new membership is deleted with the old roster. Latent: no live code path is known to create a group led by a member of another group. Fix: remove the leader from any previous group first, as `AddMember` does. ~~ `CreateGroup` now takes its leader off its old group of the same kind, as `AddMember` does; a schism's splinter leader was the path that reached it.
+
+## 12. The membership model since Epic 10 G4 (2026-10-30)
+Groups are many-to-many, one per kind (Epic 10's D1, after the producer's view that they should be many-to-many).
+- **One per kind:** a crawler belongs to at most one settlement, one guild and one party at once.
+- **Who owns them:** the registry holds each crawler's memberships (`MembershipSet`, up to four inline, ordered by kind). A crawler keeps a copy for cognition, refreshed every tick and not saved.
+- **Joining** a group leaves the crawler's other group of the same kind only.
+- **Directives:** a crawler obeys its party's directive first, then its guild's, then its settlement's. Desertion leaves that group only.
+- **Leaving the outpost** leaves every group.
+- **The patron:** a group led by the player has no place for the patron on its roster, and succession never replaces it. The guild is one such group.
