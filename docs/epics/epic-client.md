@@ -5,6 +5,7 @@
 - **Source**: the engine proposal, [`docs/engine-proposal-kni.md`](../engine-proposal-kni.md). That is a repo copy of the Claude Docs proposal, including the producer's answers of 2026-10-18. The engine spike that led to it compared Godot, BRUTAL, MonoGame, FNA and staying on Unity.
 - **Builds on**: [Epic CORE](epic-core.md). The simulation is engine-free (`Assets/Simpiens.Core`), builds for .NET 10 (`dotnet/`) and runs headless through `Simpiens.Hosting`.
 - **Replaces**: Unity's views and dashboard. They were frozen from M0, and Unity was removed at M2.9 (2026-10-24).
+- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (M4–M7, the map designer), as an epic. Per milestone: §1's table; per deferred item: §4.
 
 ---
 
@@ -72,17 +73,17 @@ A KNI game client draws the simulation for players, replacing Unity, and the sim
 
 **Milestones** (estimates in agent days; proposal §Roadmap):
 
-| Milestone | Scope | Gate |
-| :--- | :--- | :--- |
-| M0 First pixels (1–2) | A desktop window; the host ticks the outpost; Floor 1 and its crawlers drawn top-down | Golden hashes 3 of 3 from inside the client; a render test in Linux CI; the MonoGame build compiles |
-| M1 Top-down parity (3–5) | Fog, props, labels, animation, camera, mouse picking; a compile-only Android build in CI | Render tests pass; screenshots reviewed beside Unity's |
-| M2 Dashboard (5–8) | Every panel in Gum (desktop layout); quick save and load; session switch; then Unity retired in its own chunk | The 7 view and UI scenarios pass |
-| M3 Isometric (3–5) | Projection, depth sorting, generated isometric placeholders, picking, cutscene mode | Depth-order tests; reviewed screenshots |
-| M4 Android, M5 iOS (3–5 each, after the MVP) | Touch, lifecycle, density, safe areas, the portrait phone layout; signing | Runs on devices (a person) |
-| M6 Screen sizes (1–3) | Desktop windows of any size, portrait phones | Render tests at five sizes |
-| M7 Art pipeline (2–3) | Sprite catalogue as data, 64×64 atlases, PNG and Aseprite import | New art is a data-only change |
+| Milestone | Scope | Gate | Complexity |
+| :--- | :--- | :--- | :--- |
+| M0 First pixels (1–2) | A desktop window; the host ticks the outpost; Floor 1 and its crawlers drawn top-down | Golden hashes 3 of 3 from inside the client; a render test in Linux CI; the MonoGame build compiles | Done |
+| M1 Top-down parity (3–5) | Fog, props, labels, animation, camera, mouse picking; a compile-only Android build in CI | Render tests pass; screenshots reviewed beside Unity's | Done |
+| M2 Dashboard (5–8) | Every panel in Gum (desktop layout); quick save and load; session switch; then Unity retired in its own chunk | The 7 view and UI scenarios pass | Done |
+| M3 Isometric (3–5) | Projection, depth sorting, generated isometric placeholders, picking, cutscene mode | Depth-order tests; reviewed screenshots | Done |
+| M4 Android, M5 iOS (3–5 each, after the MVP) | Touch, lifecycle, density, safe areas, the portrait phone layout; signing | Runs on devices (a person) | Very Complex: a new platform, touch, lifecycle and real devices |
+| M6 Screen sizes (1–3) | Desktop windows of any size, portrait phones | Render tests at five sizes | Possibly Complex: layouts at five sizes, renders re-recorded |
+| M7 Art pipeline (2–3) | Sprite catalogue as data, 64×64 atlases, PNG and Aseprite import | New art is a data-only change | Possibly Complex: premultiplied alpha and imported art move every render |
 
-The developers' map designer follows M2 as its own milestone.
+The developers' map designer follows M2 as its own milestone [Very Complex: a new tool with no design yet].
 
 **Done:** M0, M1, M2 (M2.8–M2.9 on 2026-10-24: Unity removed) and M3 (§3). **Remaining:** M4–M7 and the map designer (§4).
 
@@ -383,16 +384,16 @@ flowchart TB
 - **Cutscene art:** real portraits and backdrops (M7). Text boxes at screen density (M6).
 - Isometric's real art (64×64, possibly 64×32 tiles): M7. The catalogue as data, the packer, the missing art and one world sheet are done (graphics V0–V3, §3).
 - **From graphics V3–V5, open:**
-    - the pixel-perfect render target: the world drawn at a whole scale, then scaled once, would make in-between zooms exact and their texels even (F12's residual); M6 or M7, a change to the look at in-between zooms. Or whole-step zoom (1x, 2x, 3x, eased), decision D6's alternative, which the producer may still choose;
-    - the stall sorts by its centre (it is wider than a cell), so a crawler beside one end can draw on the wrong side of it: split it, or sort multi-tile props by their nearest point; with the real art (M7);
-    - the dashboard's ~205 render-state sprite-batch begins a frame (F21): renderables that share render states; when the UI's cost matters (M4);
-    - clicking the stall to open the merchant terminal; icons inside the bounty board's dropdown (Gum list templates); tools shown in hand when tools have a source (Epic 10 Part 2); dropped items as world entities (the epic that brings loot into play).
-- The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
-- The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
-- The UI's scaling by display density (review U2) and a frame cap per platform (R6): M4.
-- Premultiplied alpha (R4) and textures through `Texture2D.FromStream` (R7): M7, with PNG and Aseprite import overriding a key's generated sprite. The sprite catalogue (R5), its packer and sizes as data (S10) are done (graphics V0–V3).
+    - the pixel-perfect render target [Possibly Complex: it changes the look at in-between zooms, after the producer's decision]: the world drawn at a whole scale, then scaled once, would make in-between zooms exact and their texels even (F12's residual); M6 or M7, a change to the look at in-between zooms. Or whole-step zoom (1x, 2x, 3x, eased), decision D6's alternative, which the producer may still choose;
+    - [Possibly Complex] the stall sorts by its centre (it is wider than a cell), so a crawler beside one end can draw on the wrong side of it: split it, or sort multi-tile props by their nearest point; with the real art (M7);
+    - [Possibly Complex: measured against Gum's counters] the dashboard's ~205 render-state sprite-batch begins a frame (F21): renderables that share render states; when the UI's cost matters (M4);
+    - [Possibly Complex; the stall click alone is Basic, and is also Epic UI-Beta's B5] clicking the stall to open the merchant terminal; icons inside the bounty board's dropdown (Gum list templates); tools shown in hand when tools have a source (Epic 10 Part 2); dropped items as world entities (the epic that brings loot into play).
+- [Possibly Complex] The static floor pass in vertex buffers with chunk culling (review R1's second half): M4, measured first on a phone. Culling before sorting is done (M3 Phase 0).
+- [Very Complex: threading] The dashboard on a snapshot and the simulation on its own thread (review D1): after M3; the frames are built for it (three buffers behind one swap).
+- [Possibly Complex] The UI's scaling by display density (review U2) and a frame cap per platform (R6): M4.
+- [Possibly Complex: every render moves] Premultiplied alpha (R4) and textures through `Texture2D.FromStream` (R7): M7, with PNG and Aseprite import overriding a key's generated sprite. The sprite catalogue (R5), its packer and sizes as data (S10) are done (graphics V0–V3).
 - (S5, comments naming Unity's code: done at M2.9 where they misled; notes on where code was ported from stay.)
-- Sound: not in the proposal's milestones; unscheduled.
+- Sound [Very Complex: a new system with no design]: not in the proposal's milestones; unscheduled.
 - Touch controls: M4 (Android).
 
 ---

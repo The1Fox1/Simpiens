@@ -12,6 +12,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 - **The producer's go:** 2026-11-01, "Real playtest passes. Move onto G6". D14 stands as proposed.
 - **Since this plan was written (G5):** save format 9; the default seed's guild fills at t13604, and on seed 424242 at t8242; a seam regrows in 10 minutes after it is spent.
 - **Estimate:** 1–2 agent days.
+- **Complexity:** Basic for what is left (G6.6, G6.7). G6.1–G6.4 are done. G6.5's fixes are graded once the producer names them.
 - **The producer's stop:** the play session (G6.5).
 
 ## 1. Measured (2026-10-29)
@@ -54,12 +55,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - the full suite;
   - the 23 gate seeds, with and without the guild player;
   - seeds 1–120 for F3 and F5.
-- [ ] **G6.5 The producer's play session:** handed to the producer 2026-11-01.
+- [ ] **G6.5 The producer's play session:** [Possibly Complex: grade each fix when it is named] handed to the producer 2026-11-01.
   - **The build:** `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242`, where four crawlers qualify by t8,520 (M1). Re-measured on the G6 branch at the default wage: Rune at 3:14, Amara 9:49, Emil 10:01, Inès 11:57 (t7171).
   - **A short script:** earn trust, recruit, set a wage, outfit, send the party to the Drowned Gallery, recall it once, save mid-expedition and load.
   - **Stop** for the verdict. Each fix it asks for is a commit of its own; then the session again.
-- [ ] **G6.6 The G6 PR into `main`,** carrying the close-out.
-- [ ] **G6.7 Close-out,** in the docs protocol's order:
+- [ ] **G6.6 The G6 PR into `main`,** [Basic] carrying the close-out.
+- [ ] **G6.7 Close-out,** [Basic: the content is in the list below and §4's table; statuses use ROADMAP §0's words] in the docs protocol's order:
   1. **The roadmap:**
      - Epic 10's row: Part 1 COMPLETED, with the date; Parts 2 and 3 QUEUED, each with its draft plan;
      - Milestone 2's status, written as Milestone 1's is;

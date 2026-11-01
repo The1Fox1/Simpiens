@@ -195,6 +195,12 @@ Work is saved through regular, reviewable commits. Uncommitted progress spanning
    - move data still needed for a decision (soak numbers, measurements) to `docs/`;
    - summarise its decisions and deviations in `architecture_history.md`;
    - then delete the plan, and link nothing to it. Git keeps it (`git log --diff-filter=D -- .agents/`).
+7. **Every implementation plan is stamped with a complexity grade (hard rule).**
+   - The grades are `Basic`, `Possibly Complex` and `Very Complex`.
+   - The plan has one in its header. So do each of its phases and each of its steps, and the remaining milestones of an epic.
+   - A plan without stamps is not ready to execute.
+   - A Very Complex step or phase is split further, or is marked as supervised by the developer.
+   - The rubric and the rules are in [`.agents/rules/complexity-grading.md`](.agents/rules/complexity-grading.md).
 
 ## Definition of Done
 **"Done" means the feature *emerges in the live simulation*, not only that a validator passes.**

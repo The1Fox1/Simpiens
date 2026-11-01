@@ -5,6 +5,7 @@
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
 - **Milestones**: B0 to B6 (Part 3's draft uses L0 to L6).
+- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (B2–B6), as an epic. Each milestone is Possibly Complex (§4). Its plan stamps each step when B2 resumes.
 
 ---
 
@@ -98,15 +99,15 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 
 ## 4. Milestones
 
-| Milestone | Delivers | Estimate (agent days) | Gate |
-| :--- | :--- | :-: | :--- |
-| B0 | Spike: rough body and Hearthlight portrait kits (test-only), the people sheet, the design note (§9) | 1–1.5 | The producer's look at the sheet |
-| B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold |
-| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map |
-| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier |
-| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate |
-| B5 | The interface pass | 2–3 | Tests and renders |
-| B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session |
+| Milestone | Delivers | Estimate (agent days) | Gate | Complexity |
+| :--- | :--- | :-: | :--- | :--- |
+| B0 | Spike: rough body and Hearthlight portrait kits (test-only), the people sheet, the design note (§9) | 1–1.5 | The producer's look at the sheet | Done |
+| B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold | Done |
+| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Possibly Complex: generated pixel art with a head-anchor table; the art pins and map renders are re-recorded after the producer's look |
+| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Possibly Complex: the portrait kit's hair is the main risk (§9), and this milestone's gate is a question of taste |
+| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Possibly Complex: Gum draw cost (F21) under the frame-time gate |
+| B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
+| B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session | Possibly Complex |
 
 Every milestone passes the standing gate: a build with no warnings, `dotnet test`, the client's tests exact in the pinned image, and golden and the soak wherever the core changed.
 
