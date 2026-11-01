@@ -54,8 +54,8 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - the full suite;
   - the 23 gate seeds, with and without the guild player;
   - seeds 1–120 for F3 and F5.
-- [ ] **G6.5 The producer's play session:**
-  - **The build:** `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242`, where four crawlers qualify by t8,520 (M1).
+- [ ] **G6.5 The producer's play session:** handed to the producer 2026-11-01.
+  - **The build:** `dotnet run --project dotnet/Simpiens.Desktop -- --seed 424242`, where four crawlers qualify by t8,520 (M1). Re-measured on the G6 branch at the default wage: Rune at 3:14, Amara 9:49, Emil 10:01, Inès 11:57 (t7171).
   - **A short script:** earn trust, recruit, set a wage, outfit, send the party to the Drowned Gallery, recall it once, save mid-expedition and load.
   - **Stop** for the verdict. Each fix it asks for is a commit of its own; then the session again.
 - [ ] **G6.6 The G6 PR into `main`,** carrying the close-out.
