@@ -1274,3 +1274,30 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Side by side only for the guild's party.** A rule for any party moved the Dev Map's Epic 8 pens; it is now the expedition's alone.
 - **Measured, not built:** planners per worker (an expedition costs 28% more time over its 800 ticks, far within the tick).
 - Commits: `4704e02` docs; `48cce56`, `a65e443` F5; `112cbf1`, `81e56c9`, `d1f0413` the chamber; `5a1d503` the party and stages; `df602de` cognition; `19429a9` the live scenario; `939f2ca`, `884af57`, `628ec13` the client. Findings F6–F8 are in the epic.
+
+## 2026-11-01: complexity grades on every plan (producer)
+
+- **The rule (hard):** every implementation plan carries a complexity grade in its header, on each phase or milestone, and on each step. The grades are `Basic` (a small model can do it safely), `Possibly Complex` (the developer picks the model and effort) and `Very Complex` (a frontier model only, with the developer supervising). The rubric is in `.agents/rules/complexity-grading.md`. `AGENTS.md` (Documentation Protocol 7) and ROADMAP §0 point to it.
+- **Why:** so that the developer can match model size, reasoning effort and supervision to the work. An epic is expected to be Very Complex. A plan's job is to break it down below that, so a Very Complex step in a plan means it should be split, or supervised.
+- **Grades are not statuses.** They sit next to their work item and never go into the roadmap's status column.
+- **First pass, the same day:**
+  - **The G6 plan:** what is left is Basic.
+  - **The core refactor:** R1–R4 are Basic or Possibly Complex. R5 is Very Complex as one unit (to be run as three PRs). R6 is Very Complex (threading) and supervised.
+  - **Epic 10 Parts 2 and 3:** Very Complex as epics. W1, W5, L0, L1, L2 and L4 are to be split or supervised.
+  - **The paused epics:** Epic UI-Beta's B2–B6 are each Possibly Complex. Epic CLIENT's M4/M5 and the map designer are Very Complex; M6 and M7 are Possibly Complex.
+  - **The roadmap:** Epic 11 and §3A #8 are Very Complex.
+  - **Epic 10's open findings:** F3, F6, F7 and F8 are Possibly Complex.
+
+## 2026-11-01: Epic 10 G6, the gate; Part 1 COMPLETED (`feat/epic10-g6`)
+
+- **D14, the soak with a guild:** a `guild` profile (fair prices plus `GuildPlayer`) with its own band, set from the measurement: treasury 1,000–2,000g, trust up for at least 8, nobody starving, no wage unpaid, and a guild full by minute 25 brings an expedition home. The fair, greedy and generous bands are unchanged. The producer accepted the band at the play session ("Everything looks good").
+- **The whole loop runs 45 minutes, not 30.** The default seed's guild fills at t13604 and the seam regrows for 10 minutes, so only one haul fits into 30 minutes.
+- **`simpiens sweep --guild`** plays the gate seeds for 30 minutes with the guild player: 23/23, with parties home on the 9 seeds whose guild filled.
+- **Findings:** F4 closed (still within glowstone's noise; the causal claim stays asserted). F3 (seed 43's trust), F6 (Steady's turn-backs) and F7 (the guild's fill rate) handed on to Part 2. F8 unowned, not seen again.
+- **Shares owed when the treasury can't pay:** not built. The guild soak never left a wage unpaid.
+- **Part 1 in summary (G0–G6, 2026-10-23 to 2026-11-01):**
+  - a day that holds on every seed (F2), drifters, health and hazards with glowstone, hazard gear;
+  - groups many-to-many, one per kind, with the guild as an Epic 8 group led by the player as patron;
+  - expeditions run by the guild's stage machine on the main thread, not by cognition;
+  - save formats 7–9 (two from Epic 10 itself, one from UI-Beta).
+- Decisions D1–D6 went in at G4's close and D7–D13 at G5's; all fourteen are in the epic's §0. Commits: `382d12e` G6.1, `0dcd9ba` G6.2, `74aa79b` G6.3, `35b795f` G6.4. The working plan was deleted at close-out.

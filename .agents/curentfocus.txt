@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-31 (Epic 10 G5 done on feat/epic10-g5, awaiting the producer's look; Epic UI-Beta paused after B0-B1)
+# Last reconciled: 2026-11-01 (Epic 10 Part 1 COMPLETED: G6's play session passed; next the core refactor's R1-R6)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -21,19 +21,13 @@ CURRENT FOCUS
   rules (F12, F19) with a packed world sheet; item icons and map sprites from a sprite kit, icons in the dashboard;
   the stall with its goods, worn gear and carried salvage, in the live outpost. V3-V5 under the producer's
   provisional authority; the producer's look passed 2026-10-29. On feat/graphics-catalogue: one PR into main.
-- Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [ACTIVE 2026-10-23] (docs/epics/epic-10.md)
-  - G0 a day that holds on every seed, G1 drifters, G2 health and hazards: DONE 2026-10-23.
-  - G1 and G2 reach main in one pull request with the docs cleanup of 2026-10-24 (their stacked PRs #8, #9
-    merged into deleted branches; only G0, PR #7, reached main). From G3, one PR per milestone into main.
-  - G3 gear: DONE 2026-10-25 on feat/epic10-g3, PR into main: hazard gear, worn, halves hazard damage and
-    wears out; bold crawlers buy it at 30g; the caravan restocks it (GearWholesale sink).
-  - G4 the guild: DONE 2026-10-30, merged as PR #18 on 2026-10-31: groups many-to-many, one per kind (D1); leaving
-    is whole (Epic 8 finding 1 closed); bounties judged as trades (D5); recruiting, the fee, wages and quitting
-    (D2-D4); Recruit on the dossier, the roster, GUILD n/4 (D6). Save format 8.
-  - G5 expeditions: DONE 2026-10-31 on feat/epic10-g5 (producer: "move onto the next phase"): F5 resolved; the
-    Drowned Gallery, where nobody goes alone (D11); parties sent, followed and paid (D7-D10, D12, D13); the party
-    builder and the tracker. Save format 9. Findings F6-F8. Next: the producer's look at G5, a PR into main on the
-    producer's word, then G6 the gate (the producer looks at G6 too).
+- Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [COMPLETED 2026-11-01] (docs/epics/epic-10.md)
+  - G0-G6 done: the day on every seed, drifters, health and hazards, gear, the guild (PR #18), expeditions (PR #19),
+    and the gate (feat/epic10-g6, PR into main): the whole loop live, a save mid-expedition, the soak's guild profile
+    (D14), every scenario together. The producer's play session passed ("Everything looks good"). Save format 9.
+  - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
+- NEXT: the core refactor's R1-R6 (.agents/core_refactor_plan.md), then answering Epic 10 Part 2's draft
+  (.agents/epic10_plan.md, Order). Epic UI-Beta B2 is unblocked too: the producer picks the order.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [PAUSED 2026-10-30] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; the producer's look at the people
@@ -59,17 +53,18 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epics 1-6, Alpha, 7, Beta [COMPLETED] (foundations, GOAP, needs and watchdog, social affinity, interdependence)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
-- Epic 10: Part 1 The Guild and Its Expeditions [ACTIVE]; Part 2 workshops (Milestone 3), Part 3 the descent
-  (Milestone 4) [QUEUED]
+- Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 workshops (Milestone 3), Part 3 the
+  descent (Milestone 4) [QUEUED], each with a draft plan
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED]
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
+- Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
 
 ================================================================================
 TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
 ================================================================================
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
 - Epic UI-Beta: Crawler Identity and the Interface Pass [PAUSED 2026-10-30 after B0-B1; B2 after Epic 10 Part 1] (docs/epics/epic-ui-beta.md)
-- Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client.
+- Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client; delivered 2026-11-01.
 
 ================================================================================
 TRACK C: HARNESS & DIAGNOSTICS (Epic Test-X)

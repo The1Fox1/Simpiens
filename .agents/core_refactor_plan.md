@@ -2,6 +2,7 @@
 
 - **Status (producer, 2026-10-25):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`); **R1–R6 come back after Epic 10 Part 1**; R7, the item system, was done on 2026-10-26. The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R6 are done or dropped, then close it out by the docs protocol.
 - **Source:** a smaller agent's report, *Simpiens Solution Architecture & Code Smells Deep Dive* (2026-10-24, not in the repo), and its two commits on `feat/code-cleanliness`: `52f582f` (core fixes) and `e58073a` (Gum migration, 0 warnings). This plan re-checks the report against the code; §2 records which findings hold.
+- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as one plan, because R5 bundles three extractions. Run R5 as three PRs (R5.1, R5.2, R5.3). R1 and R2 are Basic apart from R1.4; R3 and R4 are Possibly Complex. R6 is Very Complex because it changes threading; it is too small to split, so the developer supervises it.
 - **Rule for every phase:** behaviour-preserving unless the phase says otherwise. The golden hashes are the proof: a phase that changes them is not a refactor; stop and report.
 
 ---
@@ -87,20 +88,22 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
    - `AGENTS.md`: warnings are errors.
 
 ### R1. Guards (~0.5 day; after Epic 10 Part 1)
-1. **GOAP facts.**
+**Complexity:** Possibly Complex, because of R1.4; R1.1–R1.3 are Basic.
+1. **GOAP facts.** [Basic]
    - A validator: every `StateFact` value is below 64.
    - A `Debug.Assert` in `WorldState`'s bit helpers (free in Release).
    - The roadmap's fact budget is updated.
-2. **The A* grid.**
+2. **The A* grid.** [Basic]
    - `WorldMap.Load` refuses a map whose grid exceeds the searcher's cells, with a message that names both numbers.
    - The searcher keeps its silent check only as a backstop.
    - A validator with an oversized map.
-3. **Ids.** `AgentState()` no longer calls `EntityId.Generate()`; the 5 validator callers pass ids. `EntityId.Generate` stays for tests and tools, and its comment already says so.
-4. **One crawler list.**
+3. **Ids.** [Basic] `AgentState()` no longer calls `EntityId.Generate()`; the 5 validator callers pass ids. `EntityId.Generate` stays for tests and tools, and its comment already says so.
+4. **One crawler list.** [Possibly Complex: the record's order is the spawn order, which the snapshot and the golden hashes depend on; drifters add and remove crawlers mid-session]
    - `SessionHost`'s four parallel lists become one list of a `Crawler` record (runtime, state, name, label).
    - `CrawlerStates` keeps its type: a read-only view over the states, so callers don't change.
 
 ### R2. `SimulationManager` into partial files (~0.5 day, moves only)
+**Complexity:** Basic. Moves only: the diff must contain no edited line, and the golden hashes and the tests prove it.
 Pure moves, no edited lines, after the precedent of `SessionHost.Drifters.cs`:
 - `SimulationManager.cs`: fields, constructor, tick, the intent queue;
 - `.Market.cs`: stalls, bounties, escrow;
@@ -113,27 +116,31 @@ Pure moves, no edited lines, after the precedent of `SessionHost.Drifters.cs`:
 **Why first:** each later extraction then diffs one file. Agents also stop loading 1,876 lines to touch one block (context size is a stated priority).
 
 ### R3. Extract locomotion (~0.5 day)
+**Complexity:** Possibly Complex: a hot path (no allocations), the façade's forwarding, and the null-safety rule; the golden hashes must stay unchanged.
 - **What moves:** `ExecutePathMovement`, `ExecutePanicMovement`, `TryStep`, `ApplyProgressiveUnstuckReflex`, `TryDisplacePawn`, `IsCrowdedMove` and `IsPositionBlocked`, into `Simulation/Movement/Locomotion`.
 - **Why it's the cleanest cut:** the block reads only the spatial partition, the registry and the clock, and owns no `SimulationManager` state.
 - **The interface stays:** `IIntentExecutionContext` keeps its members and forwards to `Locomotion`, so handlers don't change.
 - **Null-safety rule:** a null partition means "unblocked", as today.
 
 ### R4. Extract the market (~0.5 day)
+**Complexity:** Possibly Complex: escrow through the ledger, the save block moved with its byte layout kept, and the expiry order kept.
 - **What moves:** stalls, the bounty board (`_bounties`, `_nextBountyId`, the active and expired buffers), posting, cancelling, expiry, escrow through the ledger, and their save block, into `Simulation/Economy/Market`.
 - **Why stalls and bounties go together:** they're one unit, because escrow is drawn from a stall's treasury.
 - **Ordering:** the expiry and buffer order is kept exactly as it is.
 - **What it gains:** market validators can build a `Market` without a `SimulationManager`.
 
 ### R5. Extract lodging and social dynamics; tidy cognition (~1 day)
-1. **`Lodging`:** bunks, claims, sleeps, occupancy, departing claims.
-2. **`SocialDynamics`:** gossip, hearth proximity, group formation, the succession tick.
+**Complexity:** Very Complex as one unit (three Possibly Complex parts). Split it: one PR each for R5.1, R5.2 and R5.3.
+1. **`Lodging`:** [Possibly Complex] bunks, claims, sleeps, occupancy, departing claims.
+2. **`SocialDynamics`:** [Possibly Complex] gossip, hearth proximity, group formation, the succession tick.
    - `SuccessionEngine` becomes an instance that owns its buffers, held by `SocialDynamics`, so two simulations in one process don't share them.
-3. **Cognition:**
+3. **Cognition:** [Possibly Complex: the rename is Basic; the read-only snapshot view touches what off-thread evaluators may write (the single writer), with a decision that depends on the golden hashes]
    - `PruneStaleResourceMemories` is renamed `ForgetResourceSightings` (no tick argument).
    - The memory snapshot gives evaluators a read-only view. `MentalBreakEvaluator` filters instead of deleting, only if the golden hashes reproduce exactly. If they don't, keep the in-place edit on the private buffer and record why.
 4. **Expected result:** `SimulationManager` is down to the tick, the intent queue and the façade, around 500 lines.
 
 ### R6. Planners per worker (optional; ~0.5 day; §1A.2 #8)
+**Complexity:** Very Complex, supervised by the developer: planning on several threads. It is too small to split. `GridAStarSearcher`'s pool is the precedent, and the probe has to be read.
 - **The change:** a pool of `GoapPlanner`s, as with `GridAStarSearcher`, in place of the locked singleton.
 - **Measure first:** `PopulationScalingProbe` before and after, at 12, 16 and 24 crawlers. The headless step waits for cognition at each tick barrier, so the lock costs time only when evaluations overlap.
 - **The decision:** if the probe shows no gain, it still closes #8. Whether that's worth it now is the producer's call.

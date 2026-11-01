@@ -9,6 +9,7 @@ Read these before working; they replace the project's original bootstrap prompts
 - `AGENTS.md`: how to work in the code (layout, checks, commit discipline, documentation protocol, logging, multiplayer-readiness).
 - `docs/ROADMAP.md`: the highest source of truth for status, scope, invariants (§1A) and the Definition of Done (§1B).
 - `.agents/curentfocus.txt`: the current focus, and what is open with the producer.
+- `.agents/rules/complexity-grading.md`: the complexity scale (Basic, Possibly Complex, Very Complex) and its rubric. **Hard rule:** every implementation plan, and each of its phases and steps, is stamped with a grade before work on it starts.
 
 If anything here or elsewhere disagrees with `docs/ROADMAP.md`, the roadmap wins.
 

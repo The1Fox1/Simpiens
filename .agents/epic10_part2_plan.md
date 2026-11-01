@@ -13,6 +13,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - **The economy model §8:** crawler sinks.
 - **Starts:** after Part 1's close-out and the core refactor's R1–R6 (index, Order).
 - **Estimate:** 14–19 agent days: W0 2, W1 3–4, W2 2, W3 2–3, W4 2, W5 2–3, W6 1–2. The roughest of the plans: nothing is measured yet, and W0 measures first.
+- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as a whole: it is epic-sized, and §3 is unanswered. W0, W2, W3, W4 and W6 are Possibly Complex. W1 and W5 are Very Complex: split each before it starts (see their stamps).
 - **The producer's stops:**
   - answering §3, which is the go;
   - a look at W3, the first chain from the forge to an expedition;
@@ -68,15 +69,15 @@ What Part 1 leaves undone:
 | Q12 | **Shipping and done** | As in Part 1 (its Q8 and Q10): one PR per milestone; live scenarios headless, with nothing injected; the scripted player acts through commands. | — |
 
 ## 4. Milestones
-| Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-4) |
-| :--- | :--- | :--- | :--- |
-| **W0. Groundwork** | The two new rooms, empty | Measurements; recipes as item data; stations as map data; the crafting rule, engine-free; the `Workshop` group kind; save blocks | The rooms drawn and labelled |
-| **W1. The forge and its artisan** | Build the forge, hire an artisan, order pickaxes. Bold crawlers buy them and harvest faster. | Construction; hiring (Q3, Q4); shifts; crafting from the stall's stock; the pickaxe's `HarvestSpeed` in the harvest | The station window (build, hire, order, progress); a pickaxe row in the merchant terminal |
-| **W2. The still and draughts** | Draughts from herbs; members carry one and keep going | The still; the draught: carried, and drunk under orders below the retreat line | The still's window; draughts in the merchant terminal and the party builder |
-| **W3. Gear for each hazard** | Respirators and hard hats send the guild into the worst of the gallery | Gear with a hazard kind; recipes with glowstone; "outfit from stock" picks the target's gear; a lone crawler judges a hazard by what its gear leaves | Gear by hazard in the party builder |
-| **W4. Practice and repair** | Practised artisans make better grades; worn gear is mended | Grades (`ItemInstance.Quality`); practice on the artisan's contract; repair | Grades and rarity rims in the merchant terminal and the roster |
-| **W5. The guildhall** | A guild of eight, two parties out, members sleeping in barracks | The guild's limit from 4 to 8; barracks; lodging fees; FormParty; two expeditions at once | The roster at eight; two trackers |
-| **W6. The gate** | The whole loop, balanced | Every scenario; the soak with crafting; save and load mid-craft | The producer's play session |
+| Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-4) | Complexity |
+| :--- | :--- | :--- | :--- | :--- |
+| **W0. Groundwork** | The two new rooms, empty | Measurements; recipes as item data; stations as map data; the crafting rule, engine-free; the `Workshop` group kind; save blocks | The rooms drawn and labelled | Possibly Complex |
+| **W1. The forge and its artisan** | Build the forge, hire an artisan, order pickaxes. Bold crawlers buy them and harvest faster. | Construction; hiring (Q3, Q4); shifts; crafting from the stall's stock; the pickaxe's `HarvestSpeed` in the harvest | The station window (build, hire, order, progress); a pickaxe row in the merchant terminal | Very Complex (split it) |
+| **W2. The still and draughts** | Draughts from herbs; members carry one and keep going | The still; the draught: carried, and drunk under orders below the retreat line | The still's window; draughts in the merchant terminal and the party builder | Possibly Complex |
+| **W3. Gear for each hazard** | Respirators and hard hats send the guild into the worst of the gallery | Gear with a hazard kind; recipes with glowstone; "outfit from stock" picks the target's gear; a lone crawler judges a hazard by what its gear leaves | Gear by hazard in the party builder | Possibly Complex |
+| **W4. Practice and repair** | Practised artisans make better grades; worn gear is mended | Grades (`ItemInstance.Quality`); practice on the artisan's contract; repair | Grades and rarity rims in the merchant terminal and the roster | Possibly Complex |
+| **W5. The guildhall** | A guild of eight, two parties out, members sleeping in barracks | The guild's limit from 4 to 8; barracks; lodging fees; FormParty; two expeditions at once | The roster at eight; two trackers | Very Complex (split it) |
+| **W6. The gate** | The whole loop, balanced | Every scenario; the soak with crafting; save and load mid-craft | The producer's play session | Possibly Complex |
 
 **Order:** W0 first. W1 → W2 → W3 → W4 in order; W5 can follow W1, but one agent works them in order. The producer looks at W3 and plays W6.
 
@@ -84,41 +85,43 @@ What Part 1 leaves undone:
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Every milestone passes the index's gates and ends in its PR into `main`.
 
 ### W0. Groundwork (2 days)
-- [ ] **W0.1 Docs:**
+**Complexity:** Possibly Complex: new data shapes that later milestones build on, a grown map (golden hashes and renders re-recorded), a save block and a group kind.
+- [ ] **W0.1 Docs:** [Basic]
   - the answered draft into `docs/epics/epic-10-part-2.md` (Q1);
   - the roadmap: Epic 10 Part 2 ACTIVE, Epic UI-4 folded in;
   - the focus file.
-- [ ] **W0.2 Measure** on seeds 1–15, with G6's guild player:
+- [ ] **W0.2 Measure** [Possibly Complex] on seeds 1–15, with G6's guild player:
   - the treasury and the members' purses;
   - the stall's salvage stock at each caravan visit, which is the stations' input;
   - planning cost, and the planner's facts in use.
-- [ ] **W0.3 Recipes as item data:** a `Recipe` (station, inputs, output, ticks) beside the item catalog. `ItemSystemProofTests` adds a made item as data.
-- [ ] **W0.4 Stations as map data:**
+- [ ] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog. `ItemSystemProofTests` adds a made item as data.
+- [ ] **W0.4 Stations as map data:** [Possibly Complex: the map grows; the gate seeds may move]
   - `StationDefinition`: its kind, its slot, and the sizes of its input and output stock;
   - the two rooms (Q10) in `Floor1Layout`, with nothing built;
   - the map validators.
   - Re-record the golden hashes and the renders for the map, each in a commit of its own.
-- [ ] **W0.5 The crafting rule, engine-free:**
+- [ ] **W0.5 The crafting rule, engine-free:** [Possibly Complex: a save block]
   - a station's inputs, its progress per tick of an artisan's work, its output;
   - its save block;
   - `CraftingValidator`.
-- [ ] **W0.6 The `Workshop` group kind (Q4):** the per-kind rule, the one-role rule, its place in the directive precedence; validators.
+- [ ] **W0.6 The `Workshop` group kind (Q4):** [Possibly Complex: the membership order and the directive precedence (G4's D1)] the per-kind rule, the one-role rule, its place in the directive precedence; validators.
 - **DoD:** the 23 gate seeds and the soak hold on the grown floor with nothing built. Validators cover recipes, stations and crafting.
 
 ### W1. The forge and its artisan (3–4 days)
-- [ ] **W1.1 Construction:** `BuildStationCommand` and the `Construction` sink, counted in the ledger.
-- [ ] **W1.2 Hiring (Q3, Q4):**
+**Complexity:** Very Complex: it bundles construction, hiring, shifts, a new buy decision and a station window. Split it before starting: the forge (W1.1–W1.3, with its share of W1.5 and W1.6), then the pickaxe (W1.4) as a PR of its own. W1.3 stays Very Complex on its own, so the developer supervises it.
+- [ ] **W1.1 Construction:** [Possibly Complex: a built station is saved state] `BuildStationCommand` and the `Construction` sink, counted in the ledger.
+- [ ] **W1.2 Hiring (Q3, Q4):** [Possibly Complex]
   - **The commands:** Recruit gains a role (guild or a station); Dismiss and Set Wage work for artisans too.
   - **The artisan's contract:** a wage like a member's (G4's D3, D4), and its practice.
-- [ ] **W1.3 Shifts.** The workshop's standing directive is "work the station", through Epic 8's pipeline as the guild's orders go (G5).
+- [ ] **W1.3 Shifts.** [Very Complex, supervised by the developer: standing work through Epic 8's directives, after needs, which has to emerge live] The workshop's standing directive is "work the station", through Epic 8's pipeline as the guild's orders go (G5).
   - An artisan eats, sleeps and socializes first, as a member does (Part 1's Q6).
   - Crafting draws the station's inputs from the stall's stock and puts the output in it.
-- [ ] **W1.4 The pickaxe:**
+- [ ] **W1.4 The pickaxe:** [Possibly Complex: `HarvestSpeed` in the handler is Basic; the buy decision is a new goal]
   - `HarvestSpeed` in `HarvestResourceIntentHandler`;
   - a buy decision for crawlers who harvest, as `OutfitForDangerGoal` is for gear;
   - its stall row and its price.
-- [ ] **W1.5 The scripted player's workshop moves** (build, hire, order), and the live scenario.
-- [ ] **W1.6 The client:** the station window and the merchant terminal's row; tests and renders.
+- [ ] **W1.5 The scripted player's workshop moves** [Possibly Complex] (build, hire, order), and the live scenario.
+- [ ] **W1.6 The client:** [Possibly Complex] the station window and the merchant terminal's row; tests and renders.
 - **DoD `AForgeTurnsOreIntoPickaxes`:** on the default seed, within 30 minutes:
   - the scripted player builds the forge, hires an artisan when one qualifies and orders pickaxes;
   - at least two are made from the stall's ore;
@@ -126,41 +129,45 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - the construction sink shows in the ledger, which balances, and the day's checks hold.
 
 ### W2. The still and draughts (2 days)
-- [ ] **W2.1 The still,** built and staffed as the forge is.
-- [ ] **W2.2 The draught:** the recipe; carried in the pack.
+**Complexity:** Possibly Complex: the forge is the precedent for the still; the draught changes how an expedition retreats.
+- [ ] **W2.1 The still,** [Basic, once W1 is done: it copies the forge] built and staffed as the forge is.
+- [ ] **W2.2 The draught:** [Possibly Complex: the expedition's retreat rule] the recipe; carried in the pack.
   - **Under orders,** a member below the retreat line drinks one instead of turning back, once per stage of work.
   - **Elsewhere,** a hurt crawler may buy one, as it eats a herb today.
-- [ ] **W2.3 The client:** the still's window; draughts in the merchant terminal and the party builder.
+- [ ] **W2.3 The client:** [Possibly Complex] the still's window; draughts in the merchant terminal and the party builder.
 - **DoD `ADraughtKeepsAPartyWorking`:** two expeditions to the Drowned Gallery on the same seed, one carrying draughts. The one with draughts works longer and hauls more, with nobody downed.
 
 ### W3. Gear for each hazard (2–3 days), then the producer's look
-- [ ] **W3.1 Hazard kinds on gear:** item data, the reduction per kind, and the respirator and hard hat recipes, which use glowstone.
-- [ ] **W3.2 Outfitting:** "outfit from stock" picks gear for the target's hazard.
-- [ ] **W3.3 Lone crawlers judge a hazard by what their gear leaves** (Part 1's deferral). Through a respirator, the gallery's 6 a second is 1.5, under G5's limit of 4.
+**Complexity:** Possibly Complex: hazard kinds on equipment, and lone crawlers' venture rule, with the soak's cost measured.
+- [ ] **W3.1 Hazard kinds on gear:** [Possibly Complex] item data, the reduction per kind, and the respirator and hard hat recipes, which use glowstone.
+- [ ] **W3.2 Outfitting:** [Possibly Complex] "outfit from stock" picks gear for the target's hazard.
+- [ ] **W3.3 Lone crawlers judge a hazard by what their gear leaves** [Possibly Complex: it changes who ventures; measure the soak] (Part 1's deferral). Through a respirator, the gallery's 6 a second is 1.5, under G5's limit of 4.
   - So selling respirators opens the gallery to the bold, and giving them only to members keeps it the guild's: a choice for the player.
   - The soak shows its cost.
-- [ ] **W3.4 The client:** gear by hazard in the party builder.
+- [ ] **W3.4 The client:** [Possibly Complex] gear by hazard in the party builder.
 - **DoD `TheRightGearForTheRightHazard`:**
   - a party in respirators takes half the damage of a party in hazard gear in the gallery, and brings back more;
   - a bold crawler that bought a respirator works the gallery alone.
 - **Stop for the producer's look** before W4.
 
 ### W4. Practice and repair (2 days)
-- [ ] **W4.1 Grades:**
+**Complexity:** Possibly Complex: `ItemInstance.Quality` comes into use, and practice is saved on the contract.
+- [ ] **W4.1 Grades:** [Possibly Complex]
   - `ItemInstance.Quality` from the artisan's practice;
   - each grade's step of life and effect, as item data;
   - rarity rims in the merchant terminal and the roster.
-- [ ] **W4.2 Repair:** an order at the forge.
+- [ ] **W4.2 Repair:** [Possibly Complex] an order at the forge.
 - **DoD:**
   - **`PracticeMakesBetterGear`:** over 45 minutes an artisan's grade rises, and its later gear lasts longer;
   - **`TheForgeMendsWornGear`:** a worn piece comes back to full for half the ore of a new one.
 
 ### W5. The guildhall (2–3 days)
-- [ ] **W5.1 The guild's limit,** from 4 to 8, in `GuildTuning`.
-- [ ] **W5.2 Barracks:**
+**Complexity:** Very Complex: G5's one-expedition stage machine becomes several, and parties live on between expeditions. Split it: W5.1–W5.2, then FormParty, then two expeditions at once. The developer supervises the last of these.
+- [ ] **W5.1 The guild's limit,** [Basic] from 4 to 8, in `GuildTuning`.
+- [ ] **W5.2 Barracks:** [Possibly Complex]
   - bunks kept for members, in the guildhall;
   - a lodging fee taken from wages, as a transfer (economy model §8, if G4.7 or W0.2 measured the need).
-- [ ] **W5.3 Parties:**
+- [ ] **W5.3 Parties:** [Very Complex: split FormParty from two expeditions at once; the developer supervises the second]
   - FormParty: a party group lives on between expeditions;
   - two expeditions at once;
   - two trackers.
@@ -170,14 +177,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - every wage is paid, and members sleep in the barracks.
 
 ### W6. The gate (1–2 days)
-- [ ] **W6.1 `TheWorkshopLoopPlaysThrough`,** 45 minutes on the default seed: build, hire, make, outfit, two parties, hauls, sales.
-- [ ] **W6.2 A save mid-craft and mid-expedition** loads byte for byte and plays on.
-- [ ] **W6.3 The soak:**
+**Complexity:** Possibly Complex: the scenarios and the soak band (set with the producer); the close-out is Basic.
+- [ ] **W6.1 `TheWorkshopLoopPlaysThrough`,** [Possibly Complex] 45 minutes on the default seed: build, hire, make, outfit, two parties, hauls, sales.
+- [ ] **W6.2 A save mid-craft and mid-expedition** [Possibly Complex] loads byte for byte and plays on.
+- [ ] **W6.3 The soak:** [Possibly Complex]
   - a `crafting` profile's band, set with the producer;
   - the other bands re-checked.
-- [ ] **W6.4 Seeds 1–120,** and the gate seeds with and without the guild and workshop players.
-- [ ] **W6.5 The producer's play session.**
-- [ ] **W6.6 Close-out:**
+- [ ] **W6.4 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] and the gate seeds with and without the guild and workshop players.
+- [ ] **W6.5 The producer's play session.** [Possibly Complex: grade each fix it asks for]
+- [ ] **W6.6 Close-out:** [Basic]
   - **the roadmap:** Part 2 COMPLETED, Milestone 3, Epic UI-4 delivered;
   - **the epic, the focus file, `architecture_history.md`, the economy model and AGENTS.md;**
   - this plan is deleted.

@@ -15,6 +15,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - **The refactor plan:** A*'s 16,384-cell cap (R1 refuses a map past it); a `WorldState` wider than 64 facts, left to "the epic that plans the 61st fact".
 - **Starts:** after Part 2's close-out.
 - **Estimate:** 16–23 agent days: L0 2–3, L1 3–4, L2 3–4, L3 2–3, L4 3–4, L5 2–3, L6 1–2. As rough as Part 2's; L0 measures first.
+- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as a whole: it is epic-sized, its systems have no precedent (creatures, combat, floors, the move), and §3 is unanswered. L3, L5 and L6 are Possibly Complex. L0, L1, L2 and L4 are Very Complex: split each, and the developer supervises the steps stamped Very Complex.
 - **The producer's stops:**
   - answering §3, which is the go;
   - a look at L2, the first fights;
@@ -63,15 +64,15 @@ What Parts 1 and 2 leave undone:
 | Q12 | **Shipping and done** | As in Part 1 (its Q8 and Q10) | — |
 
 ## 4. Milestones
-| Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-5) |
-| :--- | :--- | :--- | :--- |
-| **L0. Groundwork** | Nothing new on Floor 1 | Measurements; floors as data (in the session, the save and its fingerprint); Floor 2's map authored and validated, not yet reachable; the creature entity; combat's rule, engine-free; the planner widened past 64 facts if Part 3 needs it | Floor 2's art keys (placeholders) |
-| **L1. Creatures** | Vermin in the uncharted sectors; a lone crawler that strays in is hurt and flees | Creatures, nests and their rule; crawlers' flight and avoidance (Q6); spawns on the seed | Creatures drawn; hits and flight readable on the map |
-| **L2. Armed parties** | The guild, armed, clears a nest together and carries its downed home | Weapons (Q5); the party's fight under its directive (focus fire, retreat); carrying the downed; loot | Weapons in the merchant terminal and the party builder; the fight in the tracker |
-| **L3. Scouting and the gate** | A party scouts, finds the gate and beats the gatekeeper | Scouting orders; the gate's sector; the gatekeeper; the breach | The scouting order in the party builder; the gate on the map; a hard cutscene for the breach |
-| **L4. The move** | Descend: the outpost moves to Floor 2 with its guild | The Descend command after the breach; the session rebuilt on Floor 2 with what moves (Q9); save and load across the move | The relocation screen (what moves, what stays); the descent's cutscene |
-| **L5. Floor 2's pressure** | A harder floor with its own day | Floor 2's economy and dangers tuned; its gate seeds and soak bands | Floor 2's look |
-| **L6. The gate** | The campaign, Floor 1 to Floor 2, played | Every scenario; the whole campaign headless | The producer's play session; Epic 10 closes |
+| Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-5) | Complexity |
+| :--- | :--- | :--- | :--- | :--- |
+| **L0. Groundwork** | Nothing new on Floor 1 | Measurements; floors as data (in the session, the save and its fingerprint); Floor 2's map authored and validated, not yet reachable; the creature entity; combat's rule, engine-free; the planner widened past 64 facts if Part 3 needs it | Floor 2's art keys (placeholders) | Very Complex (split it) |
+| **L1. Creatures** | Vermin in the uncharted sectors; a lone crawler that strays in is hurt and flees | Creatures, nests and their rule; crawlers' flight and avoidance (Q6); spawns on the seed | Creatures drawn; hits and flight readable on the map | Very Complex (split it) |
+| **L2. Armed parties** | The guild, armed, clears a nest together and carries its downed home | Weapons (Q5); the party's fight under its directive (focus fire, retreat); carrying the downed; loot | Weapons in the merchant terminal and the party builder; the fight in the tracker | Very Complex (split it) |
+| **L3. Scouting and the gate** | A party scouts, finds the gate and beats the gatekeeper | Scouting orders; the gate's sector; the gatekeeper; the breach | The scouting order in the party builder; the gate on the map; a hard cutscene for the breach | Possibly Complex |
+| **L4. The move** | Descend: the outpost moves to Floor 2 with its guild | The Descend command after the breach; the session rebuilt on Floor 2 with what moves (Q9); save and load across the move | The relocation screen (what moves, what stays); the descent's cutscene | Very Complex (supervised) |
+| **L5. Floor 2's pressure** | A harder floor with its own day | Floor 2's economy and dangers tuned; its gate seeds and soak bands | Floor 2's look | Possibly Complex |
+| **L6. The gate** | The campaign, Floor 1 to Floor 2, played | Every scenario; the whole campaign headless | The producer's play session; Epic 10 closes | Possibly Complex |
 
 **Order:** L0 to L6, in order. The producer looks at L2 and plays L6.
 
@@ -79,58 +80,61 @@ What Parts 1 and 2 leave undone:
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Every milestone passes the index's gates and ends in its PR into `main`.
 
 ### L0. Groundwork (2–3 days)
-- [ ] **L0.1 Docs:**
+**Complexity:** Very Complex: it bundles floors in the save's fingerprint, a second map, the first creature and the planner's width. Split it into three PRs: floors (L0.3–L0.4), the creature and combat's rule (L0.5), and the planner (L0.6).
+- [ ] **L0.1 Docs:** [Basic]
   - the answered draft into `docs/epics/epic-10-part-3.md` (Q1);
   - the roadmap: Epic 10 Part 3 ACTIVE, Epic UI-5 folded in;
   - the focus file.
-- [ ] **L0.2 Measure:**
+- [ ] **L0.2 Measure:** [Possibly Complex]
   - planning cost and the planner's facts in use;
   - the frame time;
   - where Part 2's economy stands.
-- [ ] **L0.3 Floors as data:**
+- [ ] **L0.3 Floors as data:** [Possibly Complex: the save's fingerprint and a format bump]
   - `FloorDefinition`: a floor's layout and its tuning;
   - the session's floor, which the save's fingerprint gains (a format bump).
-- [ ] **L0.4 Floor 2's map:**
+- [ ] **L0.4 Floor 2's map:** [Possibly Complex: a day that holds on a new map is tuning]
   - `Floor2Layout`, authored, with the map validators;
   - R1's A* guard holds;
   - a test session on Floor 2, with residents only, plays its day.
-- [ ] **L0.5 The creature and combat's rule:**
+- [ ] **L0.5 The creature and combat's rule:** [Very Complex, supervised by the developer: the first creature entity sets the pattern that L1–L4 follow]
   - the creature entity, as plain data;
   - `CombatRules`: reach, cooldown, `Attack` less `Defense`;
   - `CombatValidator`.
-- [ ] **L0.6 The planner's room:** if Part 3's facts would pass 60, widen `WorldState`, in a commit of its own, with the golden hashes unchanged.
+- [ ] **L0.6 The planner's room:** [Possibly Complex: the planner's hot path; the golden hashes stay unchanged] if Part 3's facts would pass 60, widen `WorldState`, in a commit of its own, with the golden hashes unchanged.
 - **DoD:**
   - Floor 1's 23 gate seeds and the soak are unchanged;
   - Floor 2's day holds on its own gate seeds, with residents only.
 
 ### L1. Creatures (3–4 days)
-- [ ] **L1.1 Nests:**
+**Complexity:** Very Complex, because of L1.3. Do L1.1, L1.2 and L1.4 as one PR first; then L1.3, supervised by the developer.
+- [ ] **L1.1 Nests:** [Possibly Complex]
   - map data in the uncharted sectors;
   - spawns on the seed, and their comeback time.
-- [ ] **L1.2 The creature's rule:**
+- [ ] **L1.2 The creature's rule:** [Possibly Complex: on L0.5's entity, on the main thread in id order]
   - patrol its sector, attack a crawler in reach, flee when hurt;
   - on the main thread, with no planner.
-- [ ] **L1.3 Crawlers:**
+- [ ] **L1.3 Crawlers:** [Very Complex, supervised by the developer: a new reflex beside retreat and panic, in the runtime's pre-emption]
   - flight, a reflex beside G2's retreat;
   - avoiding known nests, as `WouldVenture` avoids hazards;
   - a scout's report charts a nest.
-- [ ] **L1.4 The client:** creatures' art rows (placeholders), with hits readable.
+- [ ] **L1.4 The client:** [Basic: art rows by AGENTS.md's "Adding art"] creatures' art rows (placeholders), with hits readable.
 - **DoD `VerminDriveTheLoneAway`:** on the default seed's day:
   - a lone crawler that strays into a nest's sector is hurt and flees;
   - nobody else enters a known nest;
   - the day's checks hold.
 
 ### L2. Armed parties (3–4 days), then the producer's look
-- [ ] **L2.1 Weapons (Q5):**
+**Complexity:** Very Complex: a party's fight and carrying the downed are both new. Split it: weapons and loot (L2.1, L2.4), then the fight (L2.2), then carrying (L2.3). The developer supervises the last two.
+- [ ] **L2.1 Weapons (Q5):** [Possibly Complex: weapons as items are Basic; `Attack` and `Defense` in combat are not]
   - the items, the forge's recipes and the caravan's basic weapon;
   - `Attack` in combat;
   - `Defense` in the forge's grades.
-- [ ] **L2.2 The party's fight:**
+- [ ] **L2.2 The party's fight:** [Very Complex, supervised by the developer]
   - the expedition's work stage becomes clearing: focus fire on one creature at a time, the directive's target;
   - the retreat rule.
-- [ ] **L2.3 Carrying the downed** (Part 1's deferral): a member carries a downed member home, at half pace.
-- [ ] **L2.4 Loot** (Q11): creature drops from loot tables.
-- [ ] **L2.5 The client:** weapons in the merchant terminal and the party builder; the fight in the tracker.
+- [ ] **L2.3 Carrying the downed** [Very Complex, supervised by the developer: two crawlers' movement coupled, and saved] (Part 1's deferral): a member carries a downed member home, at half pace.
+- [ ] **L2.4 Loot** [Possibly Complex: deterministic rolls on `SimRandom`] (Q11): creature drops from loot tables.
+- [ ] **L2.5 The client:** [Possibly Complex] weapons in the merchant terminal and the party builder; the fight in the tracker.
 - **DoD `AnArmedPartyClearsANest`:**
   - the scripted player arms four and orders a clearing;
   - they fight together, clear the nest, carry anyone downed home and bring back loot;
@@ -138,44 +142,48 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 - **Stop for the producer's look** before L3.
 
 ### L3. Scouting and the gate (2–3 days)
-- [ ] **L3.1 Scouting orders** (Part 1's deferral): an expedition into an uncharted sector charts it with a scout's report.
-- [ ] **L3.2 The gate:**
+**Complexity:** Possibly Complex: G5's expedition stages and L1's creatures are the precedents.
+- [ ] **L3.1 Scouting orders** [Possibly Complex] (Part 1's deferral): an expedition into an uncharted sector charts it with a scout's report.
+- [ ] **L3.2 The gate:** [Possibly Complex]
   - its sector, as map data at the floor's edge;
   - the gatekeeper (Q7): its health, healing between attempts, beaten once.
-- [ ] **L3.3 The breach:**
+- [ ] **L3.3 The breach:** [Possibly Complex]
   - beating the gatekeeper opens the gate, a world flag that is saved;
   - the chronicle tells it, and a hard cutscene plays.
 - **DoD `ThePartyFindsAndBreachesTheGate`:** on the default seed, the scripted player scouts, finds the gate, arms and kits the guild, and breaches the gate. More than one attempt is allowed; the bound is set at L3's first measurement.
 
 ### L4. The move (3–4 days)
-- [ ] **L4.1 The Descend command,** after the breach:
+**Complexity:** Very Complex, supervised by the developer: the session is rebuilt mid-play with a carried record. L4.1 goes first; the rest are Possibly Complex.
+- [ ] **L4.1 The Descend command,** [Very Complex, supervised by the developer] after the breach:
   - what moves (Q9) is captured as a carried record, saved with MemoryPack, as the roadmap says;
   - the session is rebuilt on Floor 2 as a respawn is, with the carried record in place of part of `Populate`, in a new session epoch.
-- [ ] **L4.2 Arrival:**
+- [ ] **L4.2 Arrival:** [Possibly Complex]
   - Floor 2's residents spawn, with renown;
   - the guild arrives with its contracts and gear, and the treasury with it;
   - stations can be built again at half price.
-- [ ] **L4.3 Save and load across the move:** a save on Floor 2 loads on Floor 2, and a save from before the move still loads on Floor 1.
-- [ ] **L4.4 The client:** the relocation screen and the descent's cutscene.
+- [ ] **L4.3 Save and load across the move:** [Possibly Complex] a save on Floor 2 loads on Floor 2, and a save from before the move still loads on Floor 1.
+- [ ] **L4.4 The client:** [Possibly Complex] the relocation screen and the descent's cutscene.
 - **DoD `TheOutpostMovesDown`:** after the breach, the scripted player descends. On Floor 2:
   - the guild's members, contracts and gear are there;
   - the treasury has moved, and the artisans' practice is kept;
   - Floor 2's day passes its checks.
 
 ### L5. Floor 2's pressure (2–3 days)
-- [ ] **L5.1 Floor 2's tuning:** scarcer food (fewer plots), richer ore, a pack of creatures, its drifters.
-- [ ] **L5.2 Floor 2's gate seeds and soak bands,** set with the producer.
+**Complexity:** Possibly Complex: tuning, and bands set with the producer.
+- [ ] **L5.1 Floor 2's tuning:** [Possibly Complex] scarcer food (fewer plots), richer ore, a pack of creatures, its drifters.
+- [ ] **L5.2 Floor 2's gate seeds and soak bands,** [Possibly Complex] set with the producer.
 - **DoD `TheSecondFloorsDayHolds`:** on Floor 2's gate seeds:
   - nobody starves, and the ledger balances;
   - crawlers complete their cycles;
   - the guild works.
 
 ### L6. The gate (1–2 days)
-- [ ] **L6.1 `TheCampaignPlaysThrough`:** from Floor 1's start, through the breach and the move, to Floor 2's first day, headless.
-- [ ] **L6.2 Saves across the move,** byte for byte.
-- [ ] **L6.3 Seeds and soaks on both floors.**
-- [ ] **L6.4 The producer's play session.**
-- [ ] **L6.5 Epic 10's close-out:**
+**Complexity:** Possibly Complex: the campaign scenario and saves across the move; the close-out is Basic.
+- [ ] **L6.1 `TheCampaignPlaysThrough`:** [Possibly Complex] from Floor 1's start, through the breach and the move, to Floor 2's first day, headless.
+- [ ] **L6.2 Saves across the move,** [Possibly Complex] byte for byte.
+- [ ] **L6.3 Seeds and soaks on both floors.** [Basic to run; any failure it finds is graded on its own]
+- [ ] **L6.4 The producer's play session.** [Possibly Complex: grade each fix it asks for]
+- [ ] **L6.5 Epic 10's close-out:** [Basic]
   - **the roadmap:** Epic 10 COMPLETED; Milestone 4's Epic 10 share and Epic UI-5 delivered;
   - **the epic docs, the focus file, `architecture_history.md`, the economy model and AGENTS.md;**
   - every Epic 10 plan is deleted, the index too.

@@ -21,9 +21,11 @@ namespace Simpiens.Host
 
   simpiens run    [--session outpost] [--seed N] [--ticks 9000]
       Plays a session and prints one line per sim-minute, then its world hash.
-  simpiens sweep  [--seeds 1..20] [--ticks 9000] [--verbose]
+  simpiens sweep  [--seeds 1..20] [--ticks 9000] [--guild] [--verbose]
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
-  simpiens soak   [--profile fair|greedy|generous|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
+      --guild adds the scripted guild player (Epic 10 G6): four recruited as they qualify, outfitted and sent to the
+      Drowned Gallery whenever its seam is back; it reports expeditions sent and home.
+  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
       The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
       --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
@@ -114,6 +116,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
             long ticks = options.Long("ticks", 9000);
             bool verbose = options.Flag("verbose");
+            bool withGuild = options.Flag("guild");
             int failed = 0, runs = 0;
             var watch = Stopwatch.StartNew();
             foreach (var seed in seeds)
@@ -121,15 +124,24 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 if (ct.IsCancellationRequested) return 1;
                 using var sim = LocalSimulation.Create(seed);
                 sim.Respawn(OutpostSession.SessionId);
+                GuildPlayer player = null;
+                if (withGuild)
+                {
+                    player = new GuildPlayer(sim, targetSize: sim.Simulation.Economy.Guild.MaxMembers);
+                    player.SendExpeditions(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, Simpiens.Core.Session.Layouts.Floor1Layout.GallerySeamYield);
+                }
                 var day = new OutpostWatch(sim);
                 day.Run(ticks);
                 day.Finish();
+                string guild = player != null
+                    ? $"; guild {sim.Simulation.Guild.Members.Count}, sent {player.Dispatches}, shares {sim.Simulation.EconomyLedger?.Flows.ShareGold ?? 0}g, alone in the chamber {day.AloneInTheChamber}"
+                    : string.Empty;
                 var failures = day.DayFailures();
                 runs++;
                 if (failures.Count > 0) failed++;
                 Console.WriteLine($"{(failures.Count == 0 ? "PASS" : "FAIL")}  seed {seed,-9} scout t{day.ScoutTick}, gather t{day.GatherTick}, first sale t{day.SaleTick}; " +
                                   $"cycles {day.Crawlers.Sum(c => c.State.Activity.Cycles)}, meals {day.Crawlers.Sum(c => c.State.Activity.Meals)}, " +
-                                  $"trust up {day.Crawlers.Count(c => c.TrustEnd > c.TrustStart)}/{day.Crawlers.Count}, peak hunger {day.Crawlers.Max(c => c.PeakHunger):F0}, {day.Anomalies.Summary()}");
+                                  $"trust up {day.Crawlers.Count(c => c.TrustEnd > c.TrustStart)}/{day.Crawlers.Count}, peak hunger {day.Crawlers.Max(c => c.PeakHunger):F0}, {day.Anomalies.Summary()}{guild}");
                 foreach (var failure in failures) Console.WriteLine($"      {failure}");
                 if (verbose) Console.Write(day.Report());
             }
