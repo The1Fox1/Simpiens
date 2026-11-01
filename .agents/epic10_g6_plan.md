@@ -46,7 +46,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - measure the guild profile on the soak's seeds and set its band: treasury range, no unpaid visit, expeditions back, trust, nobody starving;
   - re-check the other three bands;
   - re-measure F4 with wages, then close it or keep it (epic §7).
-- [ ] **G6.4 Every milestone's scenario together** (epic §3, G6):
+- [x] **G6.4 Every milestone's scenario together** (epic §3, G6): done 2026-11-01.
+  - `dotnet test` 488/488 (core 143, client 345).
+  - **The gate seeds with the guild player** (`simpiens sweep --guild`, new: 30 minutes): 23/23. Parties went out and came home on the 9 seeds whose guild filled (one each; two on 12 and 15); no jitter; nobody alone in the chamber.
+  - **The gate seeds without it** (the day): 23/23.
+  - **Seeds 1–120:** 119/120. Seed 43's trust (F3) is the one left; no jitter (F5 stays resolved).
   - the full suite;
   - the 23 gate seeds, with and without the guild player;
   - seeds 1–120 for F3 and F5.
