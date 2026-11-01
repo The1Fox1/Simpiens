@@ -319,6 +319,7 @@ Each milestone also needs its validators, the golden check and the client's test
     - **What changed:** glowstone (G2) made the treasury swing by ±300g a seed, while drifters leave 0–118g behind.
     - **Measured over seeds 1–15 with gear:** 19,355g against 19,249g, ahead on only 8 of 15. On the soak seeds the sum was +18g before gear and −18g after.
     - **The test now:** it asserts what is causal, that drifters leave gold behind on every soak seed, and reports the comparison (`DriftersLeaveGoldBehindForAKeenPlayer`). G4's wages are the next cost; re-measure at G6.
+    - **Closed at G6.3 (2026-11-01).** Re-measured over seeds 1–15: 18,827g with drifters against 17,761g closed, ahead on 9 of 15. Still within glowstone's noise. The keen profile runs no guild, so wages never entered it. The causal claim stays asserted and the comparison stays a report.
 - **F5 (2026-10-25): jitter fails the day on 4 of seeds 1–120** (56, 69, 74, 119), the same on `main` and with G3.
     - Every case is early (t1008–1263): a crawler reverses three times in a few ticks among others.
     - **Where:** three cases at the Hub–Bunkhouse door (near (2.2, −7.1)), one at (4.3, 4.9) on the Hub's north side.

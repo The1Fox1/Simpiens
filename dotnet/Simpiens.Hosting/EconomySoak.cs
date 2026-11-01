@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Simpiens.Cognition;
 using Simpiens.Core.Session;
+using Simpiens.Core.Session.Layouts;
 using Simpiens.Intervention;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -36,9 +37,18 @@ namespace Simpiens.Hosting
         public const int GreedyTrustUpMax = 2;
         public const int GenerousTrustUpPeakMin = 8;
 
+        // The guild profile's band (Epic 10 G6, D14), from G6.3's measurement: over seeds 1-15 the fair player with a guild
+        // ended at 1,146-1,991g, never left a wage unpaid and brought a haul home on every seed whose guild filled
+        public const uint GuildTreasuryMin = 1000;
+        public const uint GuildTreasuryMax = 2000;
+        public const int GuildTrustUpMin = 8;
+
+        /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
+        public const long GuildSpareTicks = 3000;
+
         /// <summary>The soak's seeds.</summary>
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
-        public static readonly string[] Profiles = { "fair", "greedy", "generous" };
+        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild" };
 
         /// <summary>A soak player: the prices it sets (item, price), as the typed command it sends on the first tick.</summary>
         public readonly struct Player
@@ -65,7 +75,9 @@ namespace Simpiens.Hosting
 
         /// <summary>
         /// The player the soak plays: fair keeps the session's prices (rations, ore, herbs, hazard gear); greedy, generous
-        /// and keen set their own. The profiles are content: they name the goods they price.
+        /// and keen set their own; guild keeps fair prices and runs a guild (Epic 10 G6, D14: the scripted
+        /// <see cref="GuildPlayer"/> recruits four, outfits them and sends them to the Drowned Gallery whenever its seam is
+        /// back). The profiles are content: they name the goods they price.
         /// </summary>
         public static Player Resolve(string name, EconomyTuning economy)
         {
@@ -76,11 +88,14 @@ namespace Simpiens.Hosting
                 case "fair":
                     return new Player("fair", Prices(economy.Terms(ItemType.Ration).StallPrice, economy.Terms(ItemType.IronOre).StallPrice,
                         economy.Terms(ItemType.MedicinalHerb).StallPrice, economy.Terms(ItemType.HazardGear).StallPrice), sendsCommand: false);
+                case "guild":
+                    return new Player("guild", Prices(economy.Terms(ItemType.Ration).StallPrice, economy.Terms(ItemType.IronOre).StallPrice,
+                        economy.Terms(ItemType.MedicinalHerb).StallPrice, economy.Terms(ItemType.HazardGear).StallPrice), sendsCommand: false);
                 case "greedy": return new Player("greedy", Prices(30, 10, 12, 60), sendsCommand: true);
                 case "generous": return new Player("generous", Prices(5, 35, 40, 20), sendsCommand: true);
                 // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
                 case "keen": return new Player("keen", Prices(20, 18, 22, 35), sendsCommand: true);
-                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, keen).", nameof(name));
+                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, guild, keen).", nameof(name));
             }
         }
 
@@ -106,6 +121,14 @@ namespace Simpiens.Hosting
 
             /// <summary>Gold the drifters brought and took away (Epic 10 G1): the faucet and sink of that name.</summary>
             public uint DrifterPurses, DrifterDepartures;
+
+            /// <summary>
+            /// The guild profile's (Epic 10 G6): members at the end and signed in all, when the guild filled (or -1), the
+            /// worst run of unpaid visits, wages and shares paid, and expeditions home with glowstone.
+            /// </summary>
+            public int Members, Signed, WorstUnpaid, ExpeditionsHome;
+            public long GuildFullTick = -1;
+            public uint Wages, WageGold, Shares, ShareGold;
 
             public Row Last => Rows[Rows.Count - 1];
 
@@ -144,6 +167,16 @@ namespace Simpiens.Hosting
                         // trades, and trust drifts back to neutral by minute 30 (Epic 10 G0)
                         if (!(lowestTrustMean < 0f)) failures.Add($"greedy: trust mean never fell below 0 (lowest {lowestTrustMean:F1})");
                         break;
+                    case "guild":
+                        if (last.Treasury < GuildTreasuryMin || last.Treasury > GuildTreasuryMax) failures.Add($"guild: treasury {last.Treasury}g at 30 min, outside {GuildTreasuryMin}-{GuildTreasuryMax}g");
+                        if (last.TrustUp < GuildTrustUpMin) failures.Add($"guild: trust rose for only {last.TrustUp} crawlers (need {GuildTrustUpMin})");
+                        if (last.StarvingEpisodes != 0) failures.Add($"guild: {last.StarvingEpisodes} starving episodes (need 0)");
+                        if (WorstUnpaid != 0) failures.Add($"guild: a member went unpaid {WorstUnpaid} visit(s) in a row");
+                        if (GuildFullTick >= 0 && GuildFullTick <= HorizonTicks - GuildSpareTicks && ExpeditionsHome == 0)
+                        {
+                            failures.Add($"guild: full at t{GuildFullTick}, but no expedition came home with glowstone");
+                        }
+                        break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
                         if (peakTrustUp < GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak)");
@@ -156,7 +189,10 @@ namespace Simpiens.Hosting
             {
                 var last = Rows.Count > 0 ? Last : default;
                 string Treasury(int minute) => Rows.Count > minute ? Rows[minute].Treasury.ToString(CultureInfo.InvariantCulture) : "?";
-                return $"{Player.Name,-8} seed {Seed,-9} treasury T0 {Treasury(0)} T10 {Treasury(10)} T20 {Treasury(20)} T30 {Treasury(30)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}";
+                string guild = Player.Name == "guild"
+                    ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
+                    : string.Empty;
+                return $"{Player.Name,-8} seed {Seed,-9} treasury T0 {Treasury(0)} T10 {Treasury(10)} T20 {Treasury(20)} T30 {Treasury(30)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
             }
 
             public void WriteCsv(string path)
@@ -200,6 +236,17 @@ namespace Simpiens.Hosting
                     InfluenceCommandType.UpdateStallPrices,
                     updateStallPrices: result.Player.Prices));
             }
+
+            // The guild profile's player (D14), acting only through commands
+            GuildPlayer guildPlayer = null;
+            if (result.Player.Name == "guild")
+            {
+                guildPlayer = new GuildPlayer(sim, targetSize: manager.Economy.Guild.MaxMembers);
+                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
+            }
+            var guild = manager.Guild;
+            bool partyOut = false;
+            uint sharesSeen = 0;
 
             var crawlers = sim.Host.CrawlerStates;
             var trustAtStart = new Dictionary<EntityId, int>();
@@ -261,8 +308,34 @@ namespace Simpiens.Hosting
                     result.Rows.Add(Sample(manager, crawlers, rel, sim.Clock.CurrentTick, crawlerGold, trustAtStart, starvingEpisodes, collapses));
                 }
 
+                if (guildPlayer != null)
+                {
+                    for (int i = 0; i < guild.Members.Count; i++) result.WorstUnpaid = Math.Max(result.WorstUnpaid, guild.Members[i].UnpaidVisits);
+                    if (result.GuildFullTick < 0 && guild.Members.Count >= manager.Economy.Guild.MaxMembers) result.GuildFullTick = rel;
+                    if (guild.HasExpedition) partyOut = true;
+                    else if (partyOut)
+                    {
+                        partyOut = false;
+                        if (manager.EconomyLedger != null && manager.EconomyLedger.Flows.Shares > sharesSeen) result.ExpeditionsHome++;
+                    }
+                    if (manager.EconomyLedger != null) sharesSeen = manager.EconomyLedger.Flows.Shares;
+                }
+
                 if (rel >= horizonTicks) break;
                 sim.Step(1);
+            }
+            if (guildPlayer != null)
+            {
+                result.Members = guild.Members.Count;
+                result.Signed = guildPlayer.Recruited.Count;
+                if (manager.EconomyLedger != null)
+                {
+                    var flows = manager.EconomyLedger.Flows;
+                    result.Wages = flows.Wages;
+                    result.WageGold = flows.WageGold;
+                    result.Shares = flows.Shares;
+                    result.ShareGold = flows.ShareGold;
+                }
             }
             if (manager.EconomyLedger != null)
             {

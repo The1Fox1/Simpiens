@@ -23,7 +23,7 @@ namespace Simpiens.Host
       Plays a session and prints one line per sim-minute, then its world hash.
   simpiens sweep  [--seeds 1..20] [--ticks 9000] [--verbose]
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
-  simpiens soak   [--profile fair|greedy|generous|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
+  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
       The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
       --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]

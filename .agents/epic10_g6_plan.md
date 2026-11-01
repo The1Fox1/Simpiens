@@ -42,7 +42,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
   - The game is saved while the party works the seam, and loaded into a fresh session.
   - The capture is byte for byte, and the world hash is equal, groups and the guild included.
   - Then 3,000 more ticks: the party comes back with its haul, wages are paid, the ledger balances, and no intent faults.
-- [ ] **G6.3 The soak with a guild (D14):**
+- [x] **G6.3 The soak with a guild (D14):** done 2026-11-01. The `guild` profile (fair prices and `GuildPlayer`, four at the default wage, expeditions to the Drowned Gallery). Its band, from the measurement: treasury 1,000–2,000g, trust up ≥ 8, nobody starving, no wage unpaid, and a guild full by minute 25 brings an expedition home. Measured on the soak's seeds 1,146–1,630g; over seeds 1–15 1,146–1,991g, never unpaid, one starving episode (seed 11), a haul home on every seed whose guild filled. The other three bands are unchanged (12/12). F4 re-measured (open 18,827g against closed 17,761g over seeds 1–15, ahead on 9) and closed in the epic. The band is the agent's, from the measurement; the producer's word on it is asked at the play session.
   - measure the guild profile on the soak's seeds and set its band: treasury range, no unpaid visit, expeditions back, trust, nobody starving;
   - re-check the other three bands;
   - re-measure F4 with wages, then close it or keep it (epic §7).
