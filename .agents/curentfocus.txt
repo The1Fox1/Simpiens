@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-30 (Epic 10 G4 done, on feat/epic10-g4; Epic UI-Beta paused after B0-B1)
+# Last reconciled: 2026-10-31 (Epic 10 G5 done on feat/epic10-g5, awaiting the producer's look; Epic UI-Beta paused after B0-B1)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -27,11 +27,13 @@ CURRENT FOCUS
     merged into deleted branches; only G0, PR #7, reached main). From G3, one PR per milestone into main.
   - G3 gear: DONE 2026-10-25 on feat/epic10-g3, PR into main: hazard gear, worn, halves hazard damage and
     wears out; bold crawlers buy it at 30g; the caravan restocks it (GearWholesale sink).
-  - G4 the guild: DONE 2026-10-30 on feat/epic10-g4 (producer: "proceed with epic 10 work"): groups many-to-many,
-    one per kind (D1); leaving is whole (Epic 8 finding 1 closed); bounties judged as trades (D5); recruiting, the
-    fee, wages and quitting (D2-D4); Recruit on the dossier, the roster, GUILD n/4 (D6). Save format 8. One PR into
-    main, on the producer's word. Next: G5 expeditions (.agents/epic10_g5_plan.md), then G6 the gate. The producer
-    looks at G5 and G6.
+  - G4 the guild: DONE 2026-10-30, merged as PR #18 on 2026-10-31: groups many-to-many, one per kind (D1); leaving
+    is whole (Epic 8 finding 1 closed); bounties judged as trades (D5); recruiting, the fee, wages and quitting
+    (D2-D4); Recruit on the dossier, the roster, GUILD n/4 (D6). Save format 8.
+  - G5 expeditions: DONE 2026-10-31 on feat/epic10-g5 (producer: "move onto the next phase"): F5 resolved; the
+    Drowned Gallery, where nobody goes alone (D11); parties sent, followed and paid (D7-D10, D12, D13); the party
+    builder and the tracker. Save format 9. Findings F6-F8. Next: the producer's look at G5, a PR into main on the
+    producer's word, then G6 the gate (the producer looks at G6 too).
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [PAUSED 2026-10-30] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; the producer's look at the people

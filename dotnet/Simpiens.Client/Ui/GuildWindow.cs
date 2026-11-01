@@ -12,17 +12,19 @@ namespace Simpiens.Client.Ui
 {
     /// <summary>
     /// The guild roster (Epic 10 G4, D6), a window like the merchant terminal: a card per member (its name and what it is
-    /// doing, health, gear, standing with the outpost, unpaid visits, a wage slider and Dismiss), and Apply, which sends
-    /// the wages that moved. The cards are built once, as many as the guild can hold, and shown as members fill them.
+    /// doing, health, gear, standing with the outpost, unpaid visits, a wage slider, whether it goes with the next party,
+    /// and Dismiss), and Apply, which sends the wages that moved. The cards are built once, as many as the guild can hold,
+    /// and shown as members fill them. Under them, the party builder (Epic 10 G5, D7): the target, the goal, the retreat
+    /// rule, outfitting from stock, Dispatch and Recall, and while a party is out, where it is.
     /// </summary>
     public sealed class GuildWindow
     {
-        public const float Width = 740f;
+        public const float Width = 820f;
         private const float CardHeight = 64f;
 
         private readonly GuildModel _model;
         private readonly IconAtlas _icons;
-        private readonly TextRuntime _status, _empty, _feedback;
+        private readonly TextRuntime _status, _empty, _feedback, _goal, _ruleText, _dispatchText, _out;
         private readonly List<MemberCard> _cards = new List<MemberCard>(4);
         private bool _binding;
 
@@ -32,7 +34,7 @@ namespace Simpiens.Client.Ui
             public TextRuntime Name, Doing, Health, Gear, Standing, Unpaid, Wage;
             public SpriteRuntime GearIcon;
             public Slider WageSlider;
-            public Button Dismiss;
+            public Button Dismiss, Party;
             public int Index;
         }
 
@@ -57,6 +59,60 @@ namespace Simpiens.Client.Ui
             body.Children.Add(_empty);
             for (int i = 0; i < capacity; i++) _cards.Add(AddCard(body, i));
 
+            // The party builder (Epic 10 G5): where, how many, when to turn back, gear from stock; then send or call home
+            body.Children.Add(Window.Gap(6f));
+            body.Children.Add(Window.SubHeader("EXPEDITION"));
+            body.Children.Add(Window.Gap(6f));
+            var controls = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 30f };
+            TargetButton = UiParts.Button(string.Empty, 240f, 30f);
+            controls.Children.Add(TargetButton.Visual);
+            LessButton = UiParts.Button("-", 30f, 30f, UiText.BodyBold);
+            LessButton.X = 254f;
+            controls.Children.Add(LessButton.Visual);
+            _goal = UiParts.Text(string.Empty, UiStyle.Accent, UiText.BodyBold);
+            _goal.X = 294f;
+            UiParts.CentreVertically(_goal);
+            controls.Children.Add(_goal);
+            MoreButton = UiParts.Button("+", 30f, 30f, UiText.BodyBold);
+            MoreButton.X = 364f;
+            controls.Children.Add(MoreButton.Visual);
+            RuleButton = UiParts.Button(string.Empty, 110f, 30f);
+            RuleButton.X = 410f;
+            controls.Children.Add(RuleButton.Visual);
+            OutfitButton = UiParts.Button(string.Empty, 190f, 30f);
+            OutfitButton.X = 534f;
+            controls.Children.Add(OutfitButton.Visual);
+            body.Children.Add(controls);
+            body.Children.Add(Window.Gap(6f));
+            _ruleText = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            body.Children.Add(_ruleText);
+            _out = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
+            body.Children.Add(_out);
+            var send = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 40f };
+            _dispatchText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
+            UiParts.CentreVertically(_dispatchText);
+            send.Children.Add(_dispatchText);
+            DispatchButton = UiParts.Button("DISPATCH", 110f, 30f, UiText.BodyBold);
+            DispatchButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
+            DispatchButton.Visual.XOrigin = HorizontalAlignment.Right;
+            DispatchButton.X = -120f;
+            UiParts.CentreVertically(DispatchButton.Visual);
+            send.Children.Add(DispatchButton.Visual);
+            RecallButton = UiParts.Button("RECALL", 110f, 30f, UiText.BodyBold);
+            RecallButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
+            RecallButton.Visual.XOrigin = HorizontalAlignment.Right;
+            UiParts.CentreVertically(RecallButton.Visual);
+            send.Children.Add(RecallButton.Visual);
+            body.Children.Add(send);
+            var expedition = _model.Expedition;
+            TargetButton.Click += (_, _) => { expedition.NextTarget(); Bind(); };
+            LessButton.Click += (_, _) => { expedition.LessGoal(); Bind(); };
+            MoreButton.Click += (_, _) => { expedition.MoreGoal(); Bind(); };
+            RuleButton.Click += (_, _) => { expedition.NextRule(); Bind(); };
+            OutfitButton.Click += (_, _) => { expedition.ToggleOutfit(); Bind(); };
+            DispatchButton.Click += (_, _) => { expedition.Dispatch(); Bind(); };
+            RecallButton.Click += (_, _) => { expedition.Recall(); Bind(); };
+
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
             var footer = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 48f };
@@ -74,6 +130,14 @@ namespace Simpiens.Client.Ui
 
         public Window Window { get; }
         public Button ApplyButton { get; }
+        public Button TargetButton { get; }
+        public Button LessButton { get; }
+        public Button MoreButton { get; }
+        public Button RuleButton { get; }
+        public Button OutfitButton { get; }
+        public Button DispatchButton { get; }
+        public Button RecallButton { get; }
+        public string DispatchText => _dispatchText.Text;
 
         public string StatusText => _status.Text;
         public int CardsShown { get; private set; }
@@ -81,6 +145,7 @@ namespace Simpiens.Client.Ui
         public string CardStanding(int index) => _cards[index].Standing.Text;
         public Slider WageSlider(int index) => _cards[index].WageSlider;
         public Button DismissButton(int index) => _cards[index].Dismiss;
+        public Button PartyButton(int index) => _cards[index].Party;
 
         private MemberCard AddCard(ContainerRuntime body, int index)
         {
@@ -134,6 +199,18 @@ namespace Simpiens.Client.Ui
             card.Dismiss.X = -12f;
             UiParts.CentreVertically(card.Dismiss.Visual);
             card.Root.Children.Add(card.Dismiss.Visual);
+            card.Party = UiParts.Button(string.Empty, 70f, 28f);
+            card.Party.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
+            card.Party.Visual.XOrigin = HorizontalAlignment.Right;
+            card.Party.X = -98f;
+            UiParts.CentreVertically(card.Party.Visual);
+            card.Root.Children.Add(card.Party.Visual);
+            card.Party.Click += (_, _) =>
+            {
+                if (card.Index < _model.Rows.Count) _model.Rows[card.Index].InParty = !_model.Rows[card.Index].InParty;
+                _model.Expedition.Refresh();
+                Bind();
+            };
 
             card.WageSlider.ValueChanged += (_, _) =>
             {
@@ -154,6 +231,9 @@ namespace Simpiens.Client.Ui
         }
 
         public static string WageText(int gold) => Invariant($"{gold}g a visit");
+
+        /// <summary>The card's party toggle: it goes with the next party, or stays home.</summary>
+        public static string PartyText(bool inParty) => inParty ? "GOES" : "STAYS";
 
         public void Bind()
         {
@@ -185,8 +265,23 @@ namespace Simpiens.Client.Ui
                 card.Unpaid.Color = row.UnpaidVisits == 0 ? UiStyle.TextSecondary : UiStyle.Warning;
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;
                 UiParts.SetText(card.Wage, WageText(row.PendingWage));
+                string party = PartyText(row.InParty);
+                if (card.Party.Text != party) card.Party.Text = party;
             }
             _binding = false;
+
+            var expedition = _model.Expedition;
+            if (TargetButton.Text != expedition.TargetName) TargetButton.Text = expedition.TargetName;
+            UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
+            string rule = expedition.Rule.ToString().ToUpperInvariant();
+            if (RuleButton.Text != rule) RuleButton.Text = rule;
+            string outfit = expedition.Outfit ? "OUTFIT FROM STOCK" : "NO OUTFITTING";
+            if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
+            UiParts.SetText(_ruleText, expedition.RuleText);
+            UiParts.SetText(_out, expedition.IsOut ? Invariant($"{expedition.StageText} · {expedition.TimeOut} · {expedition.HaulText}") : string.Empty);
+            UiParts.SetText(_dispatchText, expedition.Feedback.Text.Length > 0 && !expedition.CanDispatch ? expedition.Feedback.Text : expedition.DispatchText);
+            DispatchButton.IsEnabled = expedition.CanDispatch;
+            RecallButton.IsEnabled = expedition.CanRecall;
             CardsShown = rows.Count;
             UiParts.SetText(_feedback, _model.Feedback.Text);
             _feedback.Color = UiStyle.ToneColor(_model.Feedback.Tone);

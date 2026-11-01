@@ -26,6 +26,12 @@ The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, ha
 - **Wages:** each visit pays every member its wage (5g by default) in join order, each in full or not at all.
 - **Where the gold goes:** both are transfers from the stall to members, who spend them. With four members on the soak's seeds, the treasury ends 192–249g below a guild-free run, with members' purses within what residents usually carry. No crawler sink is needed.
 
+**Expeditions (Epic 10 G5, 2026-10-31)** bring back what nobody gathers alone.
+- **The chamber:** the Drowned Gallery's one glowstone seam (yield 4, regrowing in 10 minutes) is worked only by a party: a crawler alone never braves more than 4 health a second.
+- **The haul:** it goes into the stall's stock without a sale, and the caravan buys it at its premium as any glowstone. The members split 30% of its caravan value (21g a glowstone), paid from the stall on delivery as transfers, each in full or not at all.
+- **What the stall gives from stock, no gold:** hazard gear for members who need it, and two rations each at the muster. The caravan restocks both at wholesale, so they are the expedition's cost.
+- **One trip:** about 280g of glowstone for the caravan, 84g in shares, gear and rations from stock. The soak doesn't play expeditions yet: G6's guild profile measures the bands with them.
+
 **Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
 
 ## 2. Faucets and sinks (all named in the ledger)
@@ -41,6 +47,8 @@ The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, ha
 | Sink | `DrifterDepartures` | what a drifter still carries when it leaves | its purse plus what it earned |
 | Transfer | purchases, sales, bounty escrow | between the stall and crawlers | conserved |
 | Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; counted as `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
+| Faucet | `CaravanSalvageSales` (the Gallery's glowstone, Epic 10 G5) | the haul of an expedition, up to 4 glowstone, sold 2 a visit at 70g | one seam, regrowing in 10 minutes; only a party works it |
+| Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party (21g a glowstone) | conserved; counted as `Shares` in the ledger's flows; a share the treasury can't cover isn't paid |
 
 **What follows:** the stall's net per visit ≈ salvage faucet − upkeep − wholesale − growth in crawler wallets.
 - Crawlers spend almost all they earn, so their gold passes through.
@@ -108,5 +116,6 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 ## 8. Deferred
 - ~~**Drifters** (outside buyers and churn): Milestone 2.~~ Delivered by Epic 10 G1 (2026-10-23): §1, §2, §7.
 - ~~**Gear, wear and gear-gated scarcity:** Epic 10 G3.~~ Delivered by Epic 10 G3 (2026-10-25): §1, §2, §3, §4, §7. Crafted gear, grades and repair: Epic 10 Part 2.
-- **Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).
+- ~~**Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).~~ Delivered by Epic 10 G4 (2026-10-30): §1, §2.
+- ~~**Expeditions and their shares:** Epic 10 G5.~~ Delivered by Epic 10 G5 (2026-10-31): §1, §2. Their effect on the soak's bands: G6.
 - **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.

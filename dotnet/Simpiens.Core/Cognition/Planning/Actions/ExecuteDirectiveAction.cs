@@ -5,16 +5,19 @@ namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
     /// Action: Executes/holds the group directive at the designated location (rallying, guarding, harvesting).
-    /// Preconditions: AtDirectiveLocation = true.
+    /// Preconditions: AtDirectiveLocation = true; not an expedition's work, which is <see cref="WorkExpeditionNodeAction"/>'s.
     /// Effects: DirectiveFulfilled = true.
     /// </summary>
     public class ExecuteDirectiveAction : GoapAction
     {
         public ExecuteDirectiveAction(float cost = 1.0f) : base("ExecuteDirective", cost)
         {
-            Preconditions = WorldState.Empty.With(StateFact.AtDirectiveLocation, true);
+            Preconditions = WorldState.Empty.With(StateFact.AtDirectiveLocation, true).With(StateFact.AtExpeditionWork, false);
             Effects = WorldState.Empty.With(StateFact.DirectiveFulfilled, true);
         }
+
+        /// <summary>A step planned before the party got to work is dropped there, rather than standing idle in danger (Epic 10 G5).</summary>
+        public override bool IsValid(AgentContext context) => !context.Expedition.IsWorking;
 
         public override AgentIntent CreateIntent(AgentContext context)
         {

@@ -1,4 +1,5 @@
 using System;
+using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
@@ -72,7 +73,8 @@ namespace Simpiens.Testing.Navigation
                     Assert(def.FindSector(ResourceTargeting.PickExplorationPoint(arrived)).Id != sector, $"An agent that reached sector {sector} picks a different one.");
                 }
             }
-            // The bold explore the hazard sectors too (Epic 10 G2); the agents above are neutral, so cautious
+            // The bold explore the hazard sectors too (Epic 10 G2), but only those within the lone limit: the Drowned Gallery
+            // is an expedition's (G5, D11). The agents above are neutral, so cautious
             var boldPicked = new bool[256];
             for (int a = 0; a < Agents; a++)
             {
@@ -89,7 +91,8 @@ namespace Simpiens.Testing.Navigation
                 if (s.Hazard.IsHazardous)
                 {
                     Assert(!picked[s.Id], $"A cautious agent never explores {s.Name}, a hazard sector.");
-                    Assert(boldPicked[s.Id], $"A bold agent explores {s.Name} at least once from the Hub.");
+                    bool alone = s.Hazard.DamagePerSecond <= Vitality.LoneHazardLimit;
+                    Assert(boldPicked[s.Id] == alone, alone ? $"A bold agent explores {s.Name} at least once from the Hub." : $"Not even a bold agent explores {s.Name} alone.");
                     continue;
                 }
                 Assert(picked[s.Id], $"Sector {s.Name} is picked at least once from the Hub.");

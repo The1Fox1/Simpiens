@@ -16,7 +16,9 @@ namespace Simpiens.Simulation.World
     {
         None = 0,
         FoulAir = 1,
-        FallingRock = 2
+        FallingRock = 2,
+        /// <summary>The Drowned Gallery's flooded air (Epic 10 G5, D11).</summary>
+        Flooding = 3
     }
 
     /// <summary>A sector's danger: every crawler standing in it loses health at this rate (G3's gear will soften it).</summary>

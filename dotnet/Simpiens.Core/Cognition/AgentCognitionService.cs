@@ -174,6 +174,21 @@ namespace Simpiens.Cognition
 
             SimLog.Groups.ZLogDebug($"{SimLog.Agent(agent.AgentId)} evaluated directive {groupData.ActiveDirective.Type} from group {groupData.GroupId}: {decision}");
 
+            // The guild's expedition (Epic 10 G5, D8): the guild owns the party. A member who won't go stays behind, losing
+            // allegiance to the guild; one who deserts leaves the guild as well, keeping its settlement
+            var guild = simulationManager.Guild;
+            if (decision != ComplianceDecision.Comply && guild != null && guild.HasExpedition && guild.Expedition.PartyGroupId == membership.GroupId
+                && simulationManager is Simpiens.Simulation.Guild.IGuildHost host)
+            {
+                bool deserted = decision == ComplianceDecision.ActiveDesertion;
+                if (!deserted) simulationManager.Groups?.UpdateAllegiance(agent.AgentId, guild.GroupId, -5);
+                guild.RefuseOrder(host, agent.AgentId, deserted, tick);
+                if (simulationManager.Groups != null) agent.Memberships = simulationManager.Groups.GetMemberships(agent.AgentId);
+                if (deserted) agent.Memory.RecordEvent(MemoryEventType.DesertedGroup, groupData.LeaderId, currentPosInt, tick);
+                agent.TriggerDefiantVisual(deserted ? 2.5f : 1.5f);
+                return;
+            }
+
             if (decision == ComplianceDecision.ActiveDesertion)
             {
                 // Desertion leaves that group only

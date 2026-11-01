@@ -66,8 +66,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in (Epic 10 G2)
-                if (!Vitality.WouldVenture(context) && Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation).IsHazardous) continue;
+                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5)
+                if (!Vitality.WouldEnter(context, Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation))) continue;
                 return true;
             }
             return false;
@@ -103,8 +103,8 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // Danger is for the bold and healthy (Epic 10 G2): a hazard sector's nodes are left to them
-                if (!venture && Vitality.HazardAt(map, record.LastKnownLocation).IsHazardous) continue;
+                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions
+                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation))) continue;
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -140,14 +140,17 @@ namespace Simpiens.Cognition.Planning
         /// When the node is unreachable the intent carries no path, so the harvest handler reports PathBlocked
         /// and the consequence service blacklists the node — closing the feedback loop on the main thread.
         /// </summary>
-        public static async ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
+        public static ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, SpatialMemoryRecord target, int targetUnits = 1)
+            => BuildHarvestIntentAsync(context, pathfinder, target.EntityId, target.LastKnownLocation, targetUnits);
+
+        /// <summary>The same for a node known by id and place rather than from memory (an expedition's claim, Epic 10 G5).</summary>
+        public static async ValueTask<AgentIntent> BuildHarvestIntentAsync(AgentContext context, IAsyncPathfinder pathfinder, EntityId nodeId, Vec2 targetPos, int targetUnits = 1)
         {
             if (pathfinder == null)
             {
-                return new HarvestResourceIntent(context.AgentId, target.EntityId, default, targetUnits: targetUnits);
+                return new HarvestResourceIntent(context.AgentId, nodeId, default, targetUnits: targetUnits);
             }
 
-            Vec2 targetPos = target.LastKnownLocation;
             var request = new PathRequest
             {
                 StartPosition = context.Position,
@@ -158,11 +161,11 @@ namespace Simpiens.Cognition.Planning
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
             if (IsReachable(pathResponse, targetPos))
             {
-                return new HarvestResourceIntent(context.AgentId, target.EntityId, pathResponse, targetUnits: targetUnits);
+                return new HarvestResourceIntent(context.AgentId, nodeId, pathResponse, targetUnits: targetUnits);
             }
 
             pathResponse?.ReturnToPool();
-            return new HarvestResourceIntent(context.AgentId, target.EntityId, null, targetUnits: targetUnits);
+            return new HarvestResourceIntent(context.AgentId, nodeId, null, targetUnits: targetUnits);
         }
 
         /// <summary>
@@ -288,7 +291,7 @@ namespace Simpiens.Cognition.Planning
         // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2)
         private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture)
         {
-            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && (venture || !sector.Hazard.IsHazardous);
+            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard);
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)

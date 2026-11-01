@@ -12,6 +12,13 @@ namespace Simpiens.Cognition.Planning.Goals
     public class ComplyDirectiveGoal : GoapGoal
     {
         public const float StarvationThreshold = 70f;
+
+        /// <summary>
+        /// A member out on the guild's expedition holds to it (Epic 10 G5): it judged the order once, at dispatch (D8), and
+        /// then follows it above the hearth (up to about 95 before personality) and earning, whatever its loyalty. The
+        /// reflexes and hunger from 70 still come first.
+        /// </summary>
+        public const float ExpeditionPriority = 120f;
         public const float IntimidationFearThreshold = 70f;
 
         public ComplyDirectiveGoal() : base("ComplyDirective", WorldState.Empty.With(StateFact.DirectiveFulfilled, true))
@@ -33,6 +40,10 @@ namespace Simpiens.Cognition.Planning.Goals
                 return false;
             }
 
+            // A member out on the guild's expedition judged the order once, at dispatch (Epic 10 G5, D8): still with the party,
+            // it complied, and holds to it
+            if (context.Expedition.IsActive) return true;
+
             // Subordinate only complies if compliance utility meets threshold (U >= 20)
             float utility = ComplianceUtility.CalculateUtility(context, groupData);
             return utility >= ComplianceUtility.ComplianceThreshold;
@@ -43,6 +54,7 @@ namespace Simpiens.Cognition.Planning.Goals
             if (!context.DirectiveMembership.HasGroup || context.Snapshot == null) return 0f;
             if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData)) return 0f;
             if (!groupData.ActiveDirective.IsActive(context.CurrentTick)) return 0f;
+            if (context.Expedition.IsActive) return context.Hunger >= StarvationThreshold ? 10f : ExpeditionPriority;
 
             float utility = ComplianceUtility.CalculateUtility(context, groupData);
             if (utility < ComplianceUtility.ComplianceThreshold)

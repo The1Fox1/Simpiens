@@ -44,6 +44,7 @@ namespace Simpiens.Cognition.Planning
         HasSoldSalvage = 35,
         KnowsBunkLocation = 36,
         AtBunk = 37,
-        HasLeftOutpost = 38 // a drifter's last goal (Epic 10 G1); never true in a built state: leaving ends the crawler
+        HasLeftOutpost = 38, // a drifter's last goal (Epic 10 G1); never true in a built state: leaving ends the crawler
+        AtExpeditionWork = 39 // a party member under orders, at work with a node to work (Epic 10 G5)
     }
 }

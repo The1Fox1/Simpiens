@@ -41,6 +41,19 @@ namespace Simpiens.Cognition
             context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && context.Health >= VentureHealth && !context.IsDowned;
 
         /// <summary>
+        /// The worst danger a crawler braves alone, in health a second (Epic 10 G5, D11): the Sump's 3 and the Glow Caves'
+        /// 4, not the Drowned Gallery's 6, which only an expedition enters.
+        /// </summary>
+        public const float LoneHazardLimit = 4f;
+
+        /// <summary>True when this crawler, alone, would go where <paramref name="hazard"/> is: anywhere safe, and danger within the lone limit if it would venture.</summary>
+        public static bool WouldEnter(in AgentContext context, in SectorHazard hazard) => WouldEnter(WouldVenture(context), hazard);
+
+        /// <summary>The same, for a crawler already known to venture or not.</summary>
+        public static bool WouldEnter(bool venture, in SectorHazard hazard) =>
+            !hazard.IsHazardous || (venture && hazard.DamagePerSecond <= LoneHazardLimit);
+
+        /// <summary>
         /// Where a hurt crawler heads: the floor plan's nearest bunk, free or not (the plan is common knowledge; a crawler
         /// that knew no free bunk stayed downed in a hazard sector all day). False on a map without bunks.
         /// </summary>

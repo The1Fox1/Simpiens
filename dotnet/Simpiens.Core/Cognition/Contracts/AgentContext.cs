@@ -51,6 +51,9 @@ namespace Simpiens.Cognition.Contracts
         public readonly float Health;
         public readonly bool IsDowned;
 
+        /// <summary>Its part in the guild's expedition, if any (Epic 10 G5).</summary>
+        public readonly ExpeditionOrder Expedition;
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership directiveMembership = default, in IdentityTag identity = default,
@@ -59,8 +62,10 @@ namespace Simpiens.Cognition.Contracts
                             in AgentPersonality personality = default,
                             uint departsAtTick = 0,
                             float health = Vitality.MaxHealth,
-                            bool isDowned = false)
+                            bool isDowned = false,
+                            in ExpeditionOrder expedition = default)
         {
+            Expedition = expedition;
             DepartsAtTick = departsAtTick;
             Health = health;
             IsDowned = isDowned;

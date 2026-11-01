@@ -17,6 +17,16 @@ namespace Simpiens.Cognition.Inventory
             return false;
         }
 
+        /// <summary>How many items of the group the pack holds (an expedition's provisions, Epic 10 G5).</summary>
+        public static int CountOf(this IAgentInventory inventory, ItemCategory group)
+        {
+            if (inventory == null) return 0;
+            var members = ItemCatalog.InCategory(group);
+            int count = 0;
+            for (int i = 0; i < members.Count; i++) count += inventory.GetItemCount(members[i]);
+            return count;
+        }
+
         /// <summary>The first item of the group the pack holds, in id order; None when it holds none.</summary>
         public static Simpiens.Simulation.Economy.ItemType FirstHeld(this IAgentInventory inventory, ItemCategory group)
         {

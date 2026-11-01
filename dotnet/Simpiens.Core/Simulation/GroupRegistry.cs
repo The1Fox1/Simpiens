@@ -25,6 +25,7 @@ namespace Simpiens.Simulation
             public Vec2 AnchorPosition;
             public GroupDirective ActiveDirective;
             public byte Cohesion;
+            public byte ParentGroupId;
             public HashSet<EntityId> Members;
         }
 
@@ -54,7 +55,7 @@ namespace Simpiens.Simulation
             _activeGroupCount = 0;
         }
 
-        public byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100)
+        public byte CreateGroup(GroupType type, EntityId leaderId, Vec2 anchorPosition, byte initialCohesion = 100, byte parentGroupId = 0)
         {
             // Find lowest available 1-indexed group ID
             int freeIndex = -1;
@@ -81,6 +82,7 @@ namespace Simpiens.Simulation
             slot.AnchorPosition = anchorPosition;
             slot.ActiveDirective = GroupDirective.None;
             slot.Cohesion = initialCohesion;
+            slot.ParentGroupId = parentGroupId;
             slot.Members.Clear();
 
             _activeGroupCount++;
@@ -119,6 +121,7 @@ namespace Simpiens.Simulation
             slot.LeaderId = default;
             slot.ActiveDirective = GroupDirective.None;
             slot.Cohesion = 0;
+            slot.ParentGroupId = 0;
 
             _activeGroupCount--;
             return true;
@@ -147,7 +150,8 @@ namespace Simpiens.Simulation
                 slot.AnchorPosition,
                 slot.ActiveDirective,
                 (ushort)slot.Members.Count,
-                slot.Cohesion
+                slot.Cohesion,
+                slot.ParentGroupId
             );
             return true;
         }
@@ -387,7 +391,8 @@ namespace Simpiens.Simulation
                         slot.AnchorPosition,
                         slot.ActiveDirective,
                         (ushort)slot.Members.Count,
-                        slot.Cohesion
+                        slot.Cohesion,
+                        slot.ParentGroupId
                     );
                     count++;
                 }
@@ -429,7 +434,7 @@ namespace Simpiens.Simulation
                 roster.Clear();
                 roster.AddRange(slot.Members);
                 roster.Sort((a, b) => a.CompareTo(b));
-                groups.Add(new GroupRecord((byte)(i + 1), slot.Type, slot.LeaderId, slot.AnchorPosition, slot.ActiveDirective, slot.Cohesion, members.Count, roster.Count));
+                groups.Add(new GroupRecord((byte)(i + 1), slot.Type, slot.LeaderId, slot.AnchorPosition, slot.ActiveDirective, slot.Cohesion, members.Count, roster.Count, slot.ParentGroupId));
                 members.AddRange(roster);
             }
             save.Groups = groups.ToArray();
@@ -467,6 +472,7 @@ namespace Simpiens.Simulation
                     slot.AnchorPosition = record.AnchorPosition;
                     slot.ActiveDirective = record.ActiveDirective;
                     slot.Cohesion = record.Cohesion;
+                    slot.ParentGroupId = record.ParentGroupId;
                     for (int m = 0; m < record.MemberCount; m++) slot.Members.Add(save.Members[record.MemberStart + m]);
                     _activeGroupCount++;
                 }
@@ -494,6 +500,7 @@ namespace Simpiens.Simulation
                 _slots[i].LeaderId = default;
                 _slots[i].ActiveDirective = GroupDirective.None;
                 _slots[i].Cohesion = 100;
+                _slots[i].ParentGroupId = 0;
             }
             _memberships.Clear();
             _activeGroupCount = 0;

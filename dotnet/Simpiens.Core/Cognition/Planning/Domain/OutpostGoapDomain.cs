@@ -27,6 +27,7 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new RelaxAtAnchorAction());
             graph.RegisterAction(new TravelToDirectiveAction(pathfinder));
             graph.RegisterAction(new ExecuteDirectiveAction());
+            graph.RegisterAction(new WorkExpeditionNodeAction(pathfinder));
             graph.RegisterAction(new TravelToStallAction(pathfinder));
             graph.RegisterAction(new BuyProvisionsAction());
             graph.RegisterAction(new BuyHazardGearAction());

@@ -1,6 +1,6 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25). G4 (the guild) is done (2026-10-30, §4); its decisions D1–D6 are in §0. G5 (expeditions) is next, after G4's pull request merges. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: ACTIVE (2026-10-23). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) are done (2026-10-23). The producer's look at G2 passed and the fair soak band is 1,000–2,000g (2026-10-25, §7). G3 (gear) is done (2026-10-25). G4 (the guild) is done (2026-10-30, §4; merged as PR #18 on 2026-10-31); its decisions D1–D6 are in §0. G5 (expeditions) is done (2026-10-31, §4, on `feat/epic10-g5`); its decisions D7–D13 are in §0, with what the live run changed in §4. The producer looks at G5 before G6. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24; producer: "remove Unity first"). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
@@ -37,6 +37,27 @@ The design note on the player as patron (§6's risk row), from G4's working plan
 - **D4, quitting.** A member quits below 30 trust, or after 2 unpaid visits in a row. The player can dismiss one. Either way it leaves the guild only, with a 5-minute cooldown.
 - **D5, bounty fairness (F3).** A delivery is judged as a sale is: generous, fair or stingy against the crawler's own minimum for the work.
 - **D6, the guild on screen.** Recruit is on the dossier. The roster is a window, opened by GUILD in the header beside an "n/4" count.
+
+### G5's decisions (2026-10-31)
+
+From G5's working plan (deleted at close-out; `git log --diff-filter=D -- .agents/` keeps it). The producer's go ("move onto the next phase", after PR #18 merged) accepted every default.
+
+- **D7, sending a party.** One Dispatch command carries the members (one to four), the target sector, the goal (up to N glowstone) and the retreat rule.
+  - It makes a `TemporaryParty` group led by the patron, inside the guild, and disbands it when the expedition ends. The members stay in the guild.
+  - Recall brings the party home. One expedition at a time.
+- **D8, obeying the patron (Q6).** Epic 8's compliance formula with the patron's weights: trust in place of fear.
+  - U = trust × 0.35 + respect × 0.25 + allegiance × 0.25 + warmth × 0.15 − hunger × 0.30 − frustration × 0.20.
+  - At 20 or more the member goes. From 0 to 20 it stays behind (−5 allegiance). Below 0 it deserts the guild, keeping its settlement.
+- **D9, an expedition.** Stages held by the simulation and saved: muster at the hub (fed, health 80, or 90 s), march together to the sector, work its nodes, return, deliver, done.
+  - The directive (`DirectiveType.Expedition`) is judged once, at dispatch.
+  - Members follow it through Epic 8's directive pipeline, extended by at most 4 planner facts.
+- **D10, danger under orders.** A complying member goes into danger whatever its boldness, from health 80.
+  - The player's retreat rule turns the party back: Cautious 70, Steady 55, Bold 40.
+  - A downed member limps home and the party retreats with it; its trust in the player falls by 10.
+- **D11, somewhere nobody else dares.** A new hazard chamber below the Sump, "the Drowned Gallery", takes 6 health a second (3 with gear), with one rich glowstone seam.
+  - A crawler goes alone only where a hazard takes 4 a second or less, so only an expedition works the seam.
+- **D12, giving gear.** The player gives a member hazard gear from the stall's stock; no gold changes hands.
+- **D13, the haul.** The haul belongs to the guild: members hand their glowstone to the stall without a sale and split 30% of its caravan value, paid on delivery as a transfer.
 
 ## 1. Goal
 
@@ -172,7 +193,7 @@ Each milestone also needs its validators, the golden check and the client's test
         - `dotnet test` 376/376 (core 107, client 269); the client's 269/269 exactly in the pinned image; golden 3/3;
         - the soak 9/9 (fair 1,499–1,564g in its band, 1,000–2,000g);
         - 0 warnings.
-- [x] **G4. The guild** (2026-10-30, `feat/epic10-g4`, from `main` at `b54ef83`): trusted crawlers sign on for a fee and a wage; paid members stay and unpaid ones quit; a bounty is judged as fairly as a trade. Decisions D1–D6 are in §0.
+- [x] **G4. The guild** (2026-10-30, `feat/epic10-g4-guild`, from `main` at `b54ef83`; merged as PR #18 on 2026-10-31): trusted crawlers sign on for a fee and a wage; paid members stay and unpaid ones quit; a bounty is judged as fairly as a trade. Decisions D1–D6 are in §0.
     - **The world hash covers groups** `000b788`. No group forms before t3000 on the golden seeds, so a scratch probe on 43 seeds to t18000 proves the next two steps.
     - **Groups are many-to-many, one per kind (D1)** `1e8263e`.
         - `MembershipSet` holds up to four memberships, ordered by kind. The registry owns them, and a crawler keeps a copy for cognition.
@@ -212,6 +233,40 @@ Each milestone also needs its validators, the golden check and the client's test
         - The gate seeds 23/23. Seeds 1–120: 112/120, the same 8 seeds as `main` (F3, F5).
         - `dotnet test` 465/465 (core 122, client 343); the client's 343/343 exactly in the pinned image; golden 3/3; the soak 9/9 (fair 1,489–1,641g); MonoGame and Android compile; 0 warnings.
 
+- [x] **G5. Expeditions** (2026-10-31, `feat/epic10-g5`, from `main` at `2314f82`): the player outfits up to four members and sends them where nobody else dares; they go, work, come back with glowstone and are paid their share. Decisions D7–D13 are in §0; what the live run changed from them is below.
+    - **F5 first** `48cce56`, golden `a65e443`: panics skip a blocked waypoint within reach or one out of sight behind a wall; walkers pass a waypoint whose next leg turns back. Jitter on seeds 1–120 went from 8 alerts to 1 (§7).
+    - **The Drowned Gallery (D11)** `112cbf1`, golden `81e56c9`, renders `d1f0413`:
+        - 16 by 6 below the Sump and reached only through it; 6 health a second (3 with gear); one glowstone seam at its far end (yield 4, regrowing in 10 minutes); charted.
+        - Floor 1 is 48 by 42, so it still fits 1280×720 whole at 1:1 top-down.
+        - `Vitality.LoneHazardLimit` (4 a second): a crawler alone braves the Sump and the Glow Caves, never the Gallery. `OutpostWatch` fails the day on anyone alone in it.
+    - **The party, its order and its stages (D7, D9, D12, D13)** `5a1d503`:
+        - Dispatch, Recall and GiveGear are typed commands; `GuildRules` decides and explains each.
+        - The party is a `TemporaryParty` group led by the patron, inside the guild (`ParentGroupId`). Its `Expedition` directive is issued once, at dispatch; its target moves with the stage.
+        - `GuildService.Expeditions` moves it on after the intents run: muster, march, work, return, deliver. The retreat rule (Cautious 70, Steady 55, Bold 40) or a downed member turns it back. A member downed under orders loses 10 trust.
+        - The haul goes into the stall's stock without a sale; members split 30% of its caravan value (21g a glowstone) as `GuildShare` transfers. With a haul, each member gains 3 trust and 5 allegiance.
+        - Save format 9.
+    - **Members follow the order (D8, D10)** `df602de`, `19429a9`, `884af57`:
+        - A patron-led group is obeyed on trust in place of fear. Below 20 a member stays behind (−5 allegiance); below 0 it deserts the guild, keeping its settlement.
+        - Once sent, a member holds to the order at priority 120, above the hearth and earning, whatever its loyalty; hunger from 70 and the reflexes still come first. Epic 8's goal re-checked compliance every time, so the order fell away as hunger rose.
+        - One new planner fact (`AtExpeditionWork`, 40 of 64) and one new action (`WorkExpeditionNodeAction`, a unit at a time). Epic 8's travel and hold actions serve the other stages. The guild's party works a node side by side; Epic 8's other parties keep their rivalries.
+    - **What the live run changed from the decisions:**
+        - **Fed for the trip:** hunger rises 1.5 a second and a trip costs about 90, so the muster asks for hunger below 20 or two rations carried (D9 said below 50). The guild tops members up to two rations from the stall's stock, no gold, as D12 gears them: members hold 0–35g and two rations cost 30g.
+        - **The work starts when the first member reaches the sector,** so nobody waits in the flood. The march isn't in file: members arrive within seconds of each other.
+        - **The hand-over** happens in the guild's stage machine when the party is home, not through a delivery intent.
+        - **Gear worn to half its life** is replaced from stock; a member's old gear broke in the Gallery.
+        - **The goal met** takes the party home as ordered; only short of it does the retreat rule turn it back.
+    - **Live scenario** `19429a9` (`ExpeditionScenarioTests.AGearedPartyBringsBackGlowstone`, with `GuildPlayer.SendExpeditions`, which acts only through commands): on the default seed with nothing injected, the guild fills at t13604; the player outfits the four from stock and sends them at t13801. Muster 2.5 s, march 22 s, work 9 s, home 17 s: 4 glowstone, four 21g shares; the caravan buys it; nobody downed, nobody alone in the chamber, the days hold.
+    - **Client (D7)** `939f2ca`, renders `628ec13`:
+        - the party builder in the roster window: GOES/STAYS on each card; the target, starting on the most dangerous charted sector; the goal; the retreat rule; outfit from stock; DISPATCH and RECALL;
+        - the tracker on the map view while a party is out;
+        - the chronicle: sent, turned back, came back with a haul, downed.
+    - **Mechanism tests:** `ExpeditionTests` 15 (the stage machine with members put in place; live runs with trust injected; the chronicle's words); `DirectiveComplianceValidator` (the patron's weights); the round trips.
+    - **Measured:**
+        - **The contrast (D10):** bare, the party turns back 2 s into the work with 1 glowstone (`ExpeditionTests.ABarePartyTurnsBack`).
+        - **The gate seeds, 30 minutes with the player:** the guild fills on 10 of 23 (F7); 13 sent, 12 home, 3 turned back by Steady, nobody downed, about 47 glowstone; no jitter, nobody alone in the chamber, every seed's days hold.
+        - **Cost:** an expedition's 800 ticks take 28% longer than with the party home (13,835 against 17,713 ticks a second); no planners per worker are needed. 12 crawlers run 10,351–10,633 ticks a second, `main` 8,551–8,940.
+        - **The checks:** the gate seeds 23/23; seeds 1–120 119/120 (43: trust, F3); `dotnet test` 483/483 (core 138, client 345); the client's 345/345 exactly in the pinned image; golden 3/3; the soak 9/9 (fair 1,146–1,566g); MonoGame and Android compile; 0 warnings.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -222,11 +277,17 @@ Each milestone also needs its validators, the golden check and the client's test
 | A guild larger than four, barracks and a guildhall | Milestone 3 |
 | Tavern rumours written by a language model | Epic 11 |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
-| A planner per thread and a cognition budget (ROADMAP §3A #8) | Only if G1 or G5 measures a need |
+| A planner per thread and a cognition budget (ROADMAP §3A #8) | Only on a measured need; G1 and G5 measured none (G5: an expedition costs 28% more time over its 800 ticks, far within the tick) |
 | The pickaxe (a harvest tool, a yield bonus) | Epic 10 Part 2, the workshops (Milestone 3) |
 | A weapon | Combat, with the descent (Part 3, Milestone 4) |
 | Gear per hazard kind (a respirator, a helmet), better grades, repair | Part 2, crafting |
-| Gear making more crawlers willing to venture | G5, where a party's outfit matters |
+| Gear making lone crawlers bolder (D10 settles it for parties) | Part 2, gear for each hazard (W3) |
+| Several parties at once; a FormParty command (parties that outlive one expedition) | Part 2, the guildhall (W5) |
+| Carrying a downed member | Part 3, with combat (L2) |
+| Expeditions into uncharted sectors (scouting as an order) | Part 3 (L3) |
+| Loot tables on the haul (the item refactor's foundation); the haul stays glowstone | Part 3, creature drops (L2) |
+| Marching in file | Only if a party's arrivals spread out; members reach the sector within seconds of each other |
+| Shares owed when the treasury can't pay (now each share is paid in full or not at all, as wages) | G6, with the soak's guild profile |
 | Art beyond the generated placeholders | Until the producer picks an art direction |
 | Multiplayer | After the MVP; this epic keeps it possible (ROADMAP §1A.1) |
 
@@ -237,7 +298,7 @@ Each milestone also needs its validators, the golden check and the client's test
 | New money (drifters, rare salvage) and new costs (wages, gear wear) push the economy out of the soak's bands | Re-measure the bands at every milestone; update the economy model with each change |
 | Finding F2 has a deeper cause, in pathing or in the food supply | G0 is time-boxed at 3 days; a seed that still fails is recorded, with its cause, as its own finding |
 | Epic 8's directives assume a crawler leader, not the player | Answered by G4's design note (D1–D6 in §0): the guild is a group led by the player as patron, who leads without a place on the roster and is never replaced by succession; a crawler follows its party's order, then its guild's, then its settlement's |
-| More crawlers cost more planning time (one locked planner, ROADMAP §1A.2 #8) | Measure at G1 and G5, headless and against the frame-time gate; build per-thread planning only on a measured need |
+| More crawlers cost more planning time (one locked planner, ROADMAP §1A.2 #8) | Measured at G1 and G5 (an expedition: +28% time over its 800 ticks); build per-thread planning only on a measured need |
 | The dashboard is laid out for 1280×720; the roster and the tracker need room | Make them windows, like the merchant and the bounty board |
 | The save format changes at most milestones | Old saves are refused with a reason, as today; no migration before release |
 
@@ -267,7 +328,16 @@ Each milestone also needs its validators, the golden check and the client's test
         - the glowstone-free proof day (`ItemSystemProofTests`, the default seed) meets one jitter, at t2516 near the Garden (−10.5, 2.2);
         - that test now judges every check of the day but F5's jitter, while there is no penetration or breach;
         - the tolerance goes with F5, at G5.
+    - **Resolved at G5.2 (2026-10-31).** The chamber's bigger floor moved the same jitter onto gate seeds 9 and 424242 (4 alerts in seeds 1–60 on both `main` and the branch). Every alert on seeds 1–120 was traced to one of two faults:
+        - **Panicking:** a crawler sidestepped round a pawn standing on a waypoint within reach, went past it and came back, every tick. Or, after skipping a crowded door's waypoint, it slid back and forth along the wall toward the next one, out of sight behind it. Now a blocked waypoint within reach (`NavConstants.ArrivalTolerance`) is skipped without a sidestep, and a waypoint out of sight behind a wall is skipped too.
+        - **Walking:** a crawler pushed past a corner walked onto its waypoint, then turned back toward the next one. Now a waypoint within reach whose next leg turns back counts as passed when the way to the next passes the path smoothing's checks.
+        - **Measured, seeds 1–120, before and after:** jitter alerts 8 → 1; crawler-ticks at hunger 100 8,538 → 7,995; panic ticks +2%. The one left (seed 81, t3743) is a stuck crawler's watchdog nudge followed by a new decision heading the other way.
+        - The proof day's tolerance is gone.
 - **The greedy soak band is judged at its lowest trust mean (2026-10-23).** With the G0 fixes, hungry crawlers eat at the Garden instead of buying gouged rations late in the run; at greedy prices nobody trades once the stall is empty, and trust drifts back to neutral by minute 30 (seed 2: mean 0.0). The band now asks that greed pushed the mean below 0 at some point, as the generous band is judged at its peak ([economy model](../economy-model.md) §7).
+
+- **F6 (2026-10-31): Steady turns back 3 of 12 geared trips on the gate seeds.** Nobody is downed; the haul mostly comes home. Crossing the Sump both ways costs about 20 health with gear, and a member who reaches the seam last, or eats a ration in the flood, can dip under 55 before the goal is met. A balance question for the producer's look: Bold (40) or a lower Gallery hazard would keep more trips whole.
+- **F7 (2026-10-31): within 30 minutes at fair prices the guild fills on 10 of the 23 gate seeds.** Trust 60 and warmth 40 come slowly (G4's thresholds, Q5); the scenario's default seed fills at t13604. G6's scenario plays the whole loop on the default seed; re-measure there.
+- **F8 (2026-10-31): `AnomalyDetectorTests.ObservingAllocatesNothingOnceWarm` failed once** in 5 runs of the whole solution (a per-thread allocation count) and passed alone and in 3 reruns since. Watch it; if it recurs, find what allocates.
 
 ## History
 
@@ -279,4 +349,6 @@ Each milestone also needs its validators, the golden check and the client's test
 - 2026-10-26: before G4, the item system refactor (not part of this epic; ROADMAP §3A): items are a catalog with groups and rarity, gear's protection and life are its definition's, and loot tables exist as a foundation. No behaviour change.
 - 2026-10-30: G4 started on the producer's go ("proceed with epic 10 work"), after Epic UI-Beta B0–B1 merged (PR #17). Its decisions D1–D6 stand as proposed (§0).
 - 2026-10-30: G4 done: groups are many-to-many (one per kind), leaving is whole, bounties are judged as trades, and the guild signs, pays and loses members. Its working plan was deleted at close-out.
+- 2026-10-31: G4 merged as PR #18 (from `feat/epic10-g4-guild`). G5 started on the producer's "move onto the next phase"; its decisions D7–D13 stand as proposed (§0).
+- 2026-10-31: G5 done: finding F5 resolved; the Drowned Gallery; parties sent, followed and paid; the party builder and tracker. Findings F6–F8 recorded. Its working plan was deleted at close-out. The producer looks at G5 before G6.
 - 2026-10-25: G3 done: hazard gear (one protective item, worn, halving hazard damage and wearing out), bought by bold crawlers at 30g; findings F4 (the drifters' benefit to a keen player) and F5 (early jitter on 4 of 120 seeds). Its working plan was deleted at close-out.

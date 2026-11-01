@@ -120,6 +120,35 @@ namespace Simpiens.Simulation
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
 
+        bool Simpiens.Simulation.Guild.IGuildHost.TryGetSector(byte sectorId, out SectorDefinition sector)
+        {
+            sector = default;
+            return _sectors != null && _sectors.TryGetSector(sectorId, out sector);
+        }
+
+        bool Simpiens.Simulation.Guild.IGuildHost.IsSectorCharted(byte sectorId) => _sectors != null && _sectors.IsExplored(sectorId);
+
+        bool Simpiens.Simulation.Guild.IGuildHost.TryGetNodePosition(EntityId resourceId, out Vec2 position)
+        {
+            var node = _worldRegistry?.GetEntity(resourceId);
+            if (node == null) _dormantNodes.TryGetValue(resourceId, out node);
+            position = node != null ? node.Position : default;
+            return node != null;
+        }
+
+        /// <summary>The resource nodes in a sector, ready (in the registry) or dormant (set aside until they regrow), by id.</summary>
+        void Simpiens.Simulation.Guild.IGuildHost.NodesIn(byte sectorId, List<EntityId> into)
+        {
+            into.Clear();
+            foreach (var kvp in _resources)
+            {
+                var node = _worldRegistry?.GetEntity(kvp.Key);
+                if (node == null) _dormantNodes.TryGetValue(kvp.Key, out node);
+                if (node != null && GetSectorForPosition(node.Position) == sectorId) into.Add(kvp.Key);
+            }
+            into.Sort((a, b) => a.CompareTo(b)); // the dictionary's order is not the simulation's
+        }
+
         TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
@@ -749,6 +778,19 @@ namespace Simpiens.Simulation
                 case InfluenceCommandType.SetWage:
                     Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
                     break;
+
+                // Expeditions (Epic 10 G5)
+                case InfluenceCommandType.DispatchExpedition:
+                    Guild.Dispatch(this, influence.DispatchExpedition, currentTick);
+                    break;
+
+                case InfluenceCommandType.RecallExpedition:
+                    Guild.Recall(this, currentTick);
+                    break;
+
+                case InfluenceCommandType.GiveGear:
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick);
+                    break;
             }
         }
 
@@ -1295,6 +1337,9 @@ namespace Simpiens.Simulation
             // Supply faucets (resource regrowth, stall caravan) in a fixed slot after intent execution
             _supplyService?.Tick(currentTick, this);
 
+            // The guild's expedition moves on from where the intents left its members (Epic 10 G5)
+            Guild.TickExpedition(this, currentTick);
+
             // Evaluate Hearth Dynamics, Proximity Bonding & Succession every 50 ticks
             if (currentTick % 50 == 0)
             {
@@ -1590,15 +1635,29 @@ namespace Simpiens.Simulation
                 return IntentResult.Success; // Reached end or empty
             }
 
+            // A waypoint out of sight behind a wall, once the one before it was skipped in a crowd, is skipped too: sliding
+            // along the wall toward it turned back and forth every tick (Epic 10 G5, finding F5)
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            if (snapshot != null && snapshot.IsStaticWalkable(node.Position))
+            {
+                while (currentIndex < path.Length && !snapshot.IsSegmentStaticClear(node.Position, path.Waypoints[currentIndex])) currentIndex++;
+                if (currentIndex >= path.Length) return IntentResult.Success;
+            }
+
             Vec2 targetPos = path.Waypoints[currentIndex];
 
             // Ignore occupied waypoints to physically break free from any deadlock, but never move into walls or onto pawns
             float speed = (node != null ? node.BaseSpeed : 2f) * 1.5f;
             float step = (float)(speed * FixedTickDeltaTime);
-            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)) && !TryStep(node, targetPos, step, SidestepTurns))
+            if (!TryDisplacePawn(node, Vec2.MoveTowards(node.Position, targetPos, step)))
             {
-                currentIndex++; // skip a blocked waypoint instead of grinding against the obstacle
-                return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
+                // Skip a blocked waypoint instead of grinding against the obstacle. One within reach is skipped without a
+                // sidestep: stepping round the pawn on it went past it and back (F5)
+                if (Vec2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance || !TryStep(node, targetPos, step, SidestepTurns))
+                {
+                    currentIndex++;
+                    return currentIndex >= path.Length ? IntentResult.Success : IntentResult.InProgress;
+                }
             }
 
             // Check if reached the current waypoint
@@ -1658,6 +1717,15 @@ namespace Simpiens.Simulation
             }
 
             Vec2 targetPos = path.Waypoints[state.CurrentWaypointIndex];
+
+            // 0. A waypoint within reach whose next leg turns back counts as passed when the way to the next is clear: a
+            // crawler pushed past a corner walked onto it and turned back, which reads as jitter (Epic 10 G5, finding F5)
+            if (state.CurrentWaypointIndex < path.Length - 1 && Vec2.Distance(node.Position, targetPos) <= NavConstants.ArrivalTolerance
+                && IsTurnBack(node.Position, targetPos, path.Waypoints[state.CurrentWaypointIndex + 1]))
+            {
+                state.CurrentWaypointIndex++;
+                targetPos = path.Waypoints[state.CurrentWaypointIndex];
+            }
 
             // 1. Motor Watchdog Progress Tracking
             float distMoved = Vec2.Distance(node.Position, state.LastSampledPosition);
@@ -1738,6 +1806,19 @@ namespace Simpiens.Simulation
             }
 
             return IntentResult.InProgress;
+        }
+
+        /// <summary>
+        /// True when walking on to <paramref name="waypoint"/> means turning back toward <paramref name="next"/> (more than a
+        /// right angle), and the leg from <paramref name="position"/> straight to <paramref name="next"/> passes the path
+        /// smoothing's checks: walls, sight and props.
+        /// </summary>
+        private bool IsTurnBack(Vec2 position, Vec2 waypoint, Vec2 next)
+        {
+            if (Vec2.Dot(waypoint - position, next - waypoint) >= 0f) return false;
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            return snapshot != null && snapshot.IsStaticWalkable(position) && snapshot.IsSegmentStaticClear(position, next)
+                && snapshot.HasLineOfSight(position, next) && snapshot.IsSegmentPropClear(position, next, GridAStarSearcher.PropClearance);
         }
 
         internal IntentResult ApplyProgressiveUnstuckReflex(WorldEntity node, Vec2 targetPos, ActiveIntentState state)

@@ -14,10 +14,14 @@ namespace Simpiens.Cognition.Groups
         public readonly ushort MemberCount;
         public readonly byte Cohesion; // 0 - 100 group morale/unity
 
+        /// <summary>The group this one belongs to, or 0: an expedition's party is its guild's (Epic 10 G5, D7).</summary>
+        public readonly byte ParentGroupId;
+
         public GroupData(byte groupId, GroupType type, EntityId leaderId,
                          Vec2 anchorPosition, in GroupDirective activeDirective,
-                         ushort memberCount, byte cohesion)
+                         ushort memberCount, byte cohesion, byte parentGroupId = 0)
         {
+            ParentGroupId = parentGroupId;
             GroupId = groupId;
             Type = type;
             LeaderId = leaderId;

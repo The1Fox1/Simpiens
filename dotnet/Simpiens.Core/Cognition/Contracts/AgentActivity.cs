@@ -43,6 +43,9 @@ namespace Simpiens.Cognition.Contracts
         public float HazardDamage;
         public float GearedHazardDamage;
 
+        /// <summary>Hauls handed to the guild's stall at an expedition's end (Epic 10 G5; saved from format 9).</summary>
+        public int GuildDeliveries;
+
         public static AgentActivity Empty => new AgentActivity
         {
             FirstHarvestTick = -1,
@@ -68,6 +71,13 @@ namespace Simpiens.Cognition.Contracts
         public void RecordBountyDelivery(uint tick)
         {
             BountyDeliveries++;
+            CloseCycle(tick);
+        }
+
+        /// <summary>An expedition's haul handed to the guild's stall (Epic 10 G5, D13): it closes a cycle as a sale does.</summary>
+        public void RecordGuildDelivery(uint tick)
+        {
+            GuildDeliveries++;
             CloseCycle(tick);
         }
 

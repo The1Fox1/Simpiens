@@ -35,7 +35,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     for (int i = 0; i < activeNodes.Count; i++)
                     {
                         var other = activeNodes[i];
-                        if (other.Id != node.Id && other.Type == EntityType.Pawn && Vec2.Distance(other.Position, node.Position) <= 2.5f)
+                        if (other.Id != node.Id && other.Type == EntityType.Pawn && Vec2.Distance(other.Position, node.Position) <= 2.5f && !SameParty(agent, other.Agent))
                         {
                             state.ContestedCompetitorId = other.Id;
                             break;
@@ -103,7 +103,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                             {
                                 // Lowest id wins ties so the outcome never depends on Dictionary order
                                 var otherNode = context.WorldRegistry.GetEntity(kvp.Key);
-                                if (otherNode != null && Vec2.Distance(otherNode.Position, node.Position) <= 2.5f &&
+                                if (otherNode != null && Vec2.Distance(otherNode.Position, node.Position) <= 2.5f && !SameParty(agent, otherNode.Agent) &&
                                     (competitorNode == null || otherNode.Id.CompareTo(competitorNode.Id) < 0))
                                 {
                                     competitorNode = otherNode;
@@ -243,5 +243,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
             return reachResult;
         }
+
+        /// <summary>
+        /// The guild's party works a node side by side, without rivalry (Epic 10 G5): one expedition at a time, so two crawlers
+        /// both with it are in the same party. Epic 8's other parties keep their rivalries.
+        /// </summary>
+        private static bool SameParty(Simpiens.Cognition.AgentState a, Simpiens.Cognition.AgentState b) =>
+            a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
     }
 }
