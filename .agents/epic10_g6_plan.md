@@ -8,7 +8,9 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - the economy holds with a guild;
   - the producer plays it.
   - Then Part 1 closes.
-- **Branch:** `feat/epic10-g6`, cut from `main` after G5's PR merges. One PR into `main`, carrying the close-out.
+- **Branch:** `feat/epic10-g6`, cut from `main` at `af344aa` after G5's PR (#19) merged on 2026-11-01. One PR into `main`, carrying the close-out.
+- **The producer's go:** 2026-11-01, "Real playtest passes. Move onto G6". D14 stands as proposed.
+- **Since this plan was written (G5):** save format 9; the default seed's guild fills at t13604, and on seed 424242 at t8242; a seam regrows in 10 minutes after it is spent.
 - **Estimate:** 1–2 agent days.
 - **The producer's stop:** the play session (G6.5).
 

@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-10-31 (Epic 10 G5 done on feat/epic10-g5, awaiting the producer's look; Epic UI-Beta paused after B0-B1)
+# Last reconciled: 2026-11-01 (Epic 10 G5 merged as PR #19, playtest passed; G6 under way; Epic UI-Beta paused after B0-B1)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -30,10 +30,12 @@ CURRENT FOCUS
   - G4 the guild: DONE 2026-10-30, merged as PR #18 on 2026-10-31: groups many-to-many, one per kind (D1); leaving
     is whole (Epic 8 finding 1 closed); bounties judged as trades (D5); recruiting, the fee, wages and quitting
     (D2-D4); Recruit on the dossier, the roster, GUILD n/4 (D6). Save format 8.
-  - G5 expeditions: DONE 2026-10-31 on feat/epic10-g5 (producer: "move onto the next phase"): F5 resolved; the
-    Drowned Gallery, where nobody goes alone (D11); parties sent, followed and paid (D7-D10, D12, D13); the party
-    builder and the tracker. Save format 9. Findings F6-F8. Next: the producer's look at G5, a PR into main on the
-    producer's word, then G6 the gate (the producer looks at G6 too).
+  - G5 expeditions: DONE 2026-10-31, merged as PR #19 on 2026-11-01; the producer's playtest passed: F5 resolved;
+    the Drowned Gallery, where nobody goes alone (D11); parties sent, followed and paid (D7-D10, D12, D13); the party
+    builder and the tracker. Save format 9. Findings F6-F8.
+  - G6 the gate: STARTED 2026-11-01 on feat/epic10-g6 (producer: "Real playtest passes. Move onto G6"), plan
+    .agents/epic10_g6_plan.md: the whole loop in one scenario, a save mid-expedition, the soak with a guild (D14),
+    every milestone's scenario together, the producer's play session, then Part 1's close-out.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [PAUSED 2026-10-30] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; the producer's look at the people
