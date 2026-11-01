@@ -30,7 +30,7 @@ The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, ha
 - **The chamber:** the Drowned Gallery's one glowstone seam (yield 4, regrowing in 10 minutes) is worked only by a party: a crawler alone never braves more than 4 health a second.
 - **The haul:** it goes into the stall's stock without a sale, and the caravan buys it at its premium as any glowstone. The members split 30% of its caravan value (21g a glowstone), paid from the stall on delivery as transfers, each in full or not at all.
 - **What the stall gives from stock, no gold:** hazard gear for members who need it, and two rations each at the muster. The caravan restocks both at wholesale, so they are the expedition's cost.
-- **One trip:** about 280g of glowstone for the caravan, 84g in shares, gear and rations from stock. The soak doesn't play expeditions yet: G6's guild profile measures the bands with them.
+- **One trip:** about 280g of glowstone for the caravan, 84g in shares, gear and rations from stock. Since Epic 10 G6 the soak's `guild` profile plays them: the treasury stays in the fair band, 1,000–2,000g, with four members' wages and one haul home on every seed whose guild fills (§7; D14).
 
 **Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
 
@@ -118,5 +118,5 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - ~~**Drifters** (outside buyers and churn): Milestone 2.~~ Delivered by Epic 10 G1 (2026-10-23): §1, §2, §7.
 - ~~**Gear, wear and gear-gated scarcity:** Epic 10 G3.~~ Delivered by Epic 10 G3 (2026-10-25): §1, §2, §3, §4, §7. Crafted gear, grades and repair: Epic 10 Part 2.
 - ~~**Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).~~ Delivered by Epic 10 G4 (2026-10-30): §1, §2.
-- ~~**Expeditions and their shares:** Epic 10 G5.~~ Delivered by Epic 10 G5 (2026-10-31): §1, §2. Their effect on the soak's bands: G6.
+- ~~**Expeditions and their shares:** Epic 10 G5.~~ Delivered by Epic 10 G5 (2026-10-31): §1, §2. Their effect on the soak's bands was measured at G6 (2026-11-01): the `guild` profile, §7.
 - **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.

@@ -1287,3 +1287,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - **The paused epics:** Epic UI-Beta's B2–B6 are each Possibly Complex. Epic CLIENT's M4/M5 and the map designer are Very Complex; M6 and M7 are Possibly Complex.
   - **The roadmap:** Epic 11 and §3A #8 are Very Complex.
   - **Epic 10's open findings:** F3, F6, F7 and F8 are Possibly Complex.
+
+## 2026-11-01: Epic 10 G6, the gate; Part 1 COMPLETED (`feat/epic10-g6`)
+
+- **D14, the soak with a guild:** a `guild` profile (fair prices plus `GuildPlayer`) with its own band, set from the measurement: treasury 1,000–2,000g, trust up for at least 8, nobody starving, no wage unpaid, and a guild full by minute 25 brings an expedition home. The fair, greedy and generous bands are unchanged. The producer accepted the band at the play session ("Everything looks good").
+- **The whole loop runs 45 minutes, not 30.** The default seed's guild fills at t13604 and the seam regrows for 10 minutes, so only one haul fits into 30 minutes.
+- **`simpiens sweep --guild`** plays the gate seeds for 30 minutes with the guild player: 23/23, with parties home on the 9 seeds whose guild filled.
+- **Findings:** F4 closed (still within glowstone's noise; the causal claim stays asserted). F3 (seed 43's trust), F6 (Steady's turn-backs) and F7 (the guild's fill rate) handed on to Part 2. F8 unowned, not seen again.
+- **Shares owed when the treasury can't pay:** not built. The guild soak never left a wage unpaid.
+- **Part 1 in summary (G0–G6, 2026-10-23 to 2026-11-01):**
+  - a day that holds on every seed (F2), drifters, health and hazards with glowstone, hazard gear;
+  - groups many-to-many, one per kind, with the guild as an Epic 8 group led by the player as patron;
+  - expeditions run by the guild's stage machine on the main thread, not by cognition;
+  - save formats 7–9 (two from Epic 10 itself, one from UI-Beta).
+- Decisions D1–D6 went in at G4's close and D7–D13 at G5's; all fourteen are in the epic's §0. Commits: `382d12e` G6.1, `0dcd9ba` G6.2, `74aa79b` G6.3, `35b795f` G6.4. The working plan was deleted at close-out.
