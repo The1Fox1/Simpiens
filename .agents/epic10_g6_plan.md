@@ -26,7 +26,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
 
 ## 3. Steps
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
-- [ ] **G6.1 `TheGuildLoopPlaysThrough`:** one scenario, 30 minutes on the default seed.
+- [x] **G6.1 `TheGuildLoopPlaysThrough`:** one scenario, 30 minutes on the default seed. Done 2026-11-01 (`ExpeditionScenarioTests`), over **45 minutes**: the guild fills at t13604 and a seam regrows for 10 minutes after it is spent, so within 30 minutes only one haul comes home (seed 424242 is the same: t12871, then t18992). On the default seed: four signed, 124 wages paid (620g), nobody unpaid, nobody quit or left a settlement; glowstone home at t14303 and t20876 (168g in shares); the days hold.
   - **The scripted player plays the whole loop:**
     - fair prices;
     - recruiting as crawlers qualify, with wages every visit;
