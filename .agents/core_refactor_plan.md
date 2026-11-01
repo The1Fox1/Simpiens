@@ -119,25 +119,251 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
 **Why first:** each later extraction then diffs one small partial file instead of a 2,022-line class, and agents stop loading 2,022 lines to touch one domain.
 
 ### R3. Extract locomotion (`feat/refactor-r3-locomotion`, ~0.5 day)
-**Complexity:** Possibly Complex: a hot path (zero allocations, exact float casts), the façade's forwarding, and the null-safety rule; the golden hashes must stay unchanged.
-- [ ] **R3.1 Create `Simulation/Movement/Locomotion.cs`.** [Possibly Complex: hot-path math and float casts]
-  - Holds `ISpatialPartition`, `IWorldRegistry` and `ISimulationClock`, plus `SidestepTurns`, `FlowTurns` and `CrowdSearchMargin`; owns no mutable state.
-  - Moves `ExecutePathMovement`, `ExecutePanicMovement`, `TryStep`, `IsTurnBack` (G5.2), `ApplyProgressiveUnstuckReflex`, `TryDisplacePawn`, `IsCrowdedMove` and `IsPositionBlocked` out of `SimulationManager.Movement.cs`.
-  - Preserves every `(float)` intermediate cast (Epic CORE F1), downed limp speed (`Vitality.DownedSpeedFactor`, G2), wall-sight and turn-back waypoint skips (G5.2), and the null-safety rule (a null `_spatialPartition` or `snapshot` means "unblocked", as today).
+**Complexity:** Possibly Complex by rubric (touches a zero-allocation hot path with exact float casts), with a complete mechanical blueprint below so a **Basic** agent can execute R3.1 and R3.2 with zero design calls.
+- **Branch note:** R3 depends on R2's `SimulationManager.Movement.cs` partial split (`0fa3555`). Confirm `dotnet/Simpiens.Core/Simulation/SimulationManager.Movement.cs` is present on the working branch before starting (either branched from `main` after R1–R2 merge, or on the branch the developer designates).
+
+- [ ] **R3.1 Create `dotnet/Simpiens.Core/Simulation/Movement/Locomotion.cs`.** [Possibly Complex: hot-path math and float casts; mechanical recipe below for Basic-agent execution]
+  - **Namespace & type:** `namespace Simpiens.Simulation.Movement`, `internal sealed class Locomotion` (`Simpiens.Core/AssemblyInfo.cs` already grants `InternalsVisibleTo` to `Simpiens.Testing.Core`, `Simpiens.Hosting` and `Simpiens.Core.Tests`, while keeping `Locomotion` hidden from client views).
+  - **Exact `using` directives:**
+    ```csharp
+    using Simpiens.Cognition;
+    using Simpiens.Cognition.Contracts;
+    using Simpiens.Cognition.Pathfinding;
+    using Simpiens.Diagnostics;
+    using Simpiens.Simulation.Spatial;
+    using ZLogger;
+    ```
+  - **Fields & constructor (owns no mutable state):**
+    ```csharp
+    private static readonly Vec2[] SidestepTurns =
+    {
+        new Vec2(0.70710677f, 0.70710677f), new Vec2(0.70710677f, -0.70710677f), new Vec2(0f, 1f), new Vec2(0f, -1f)
+    };
+
+    private static readonly Vec2[] FlowTurns =
+    {
+        new Vec2(0.70710677f, -0.70710677f), new Vec2(0.70710677f, 0.70710677f)
+    };
+
+    private const float CrowdSearchMargin = 0.5f;
+
+    private readonly ISpatialPartition _spatialPartition;
+    private readonly IWorldRegistry _worldRegistry;
+    private readonly ISimulationClock _clock;
+
+    public Locomotion(ISpatialPartition spatialPartition = null, IWorldRegistry worldRegistry = null, ISimulationClock clock = null)
+    {
+        _spatialPartition = spatialPartition;
+        _worldRegistry = worldRegistry;
+        _clock = clock;
+    }
+    ```
+  - **Methods moved verbatim from `SimulationManager.Movement.cs` (preserving all existing comments and XML docstrings):**
+    - `public IntentResult ExecutePanicMovement(WorldEntity node, PathResponse path, ref int currentIndex)`
+    - `private bool TryStep(WorldEntity node, Vec2 targetPos, float step, Vec2[] turns)`
+    - `public IntentResult ExecutePathMovement(WorldEntity node, PathResponse path, ActiveIntentState state)`
+    - `private bool IsTurnBack(Vec2 position, Vec2 waypoint, Vec2 next)`
+    - `public IntentResult ApplyProgressiveUnstuckReflex(WorldEntity node, Vec2 targetPos, ActiveIntentState state)`
+    - `public bool TryDisplacePawn(WorldEntity node, Vec2 candidate, bool respectPawns = true)`
+    - `public bool IsCrowdedMove(WorldEntity node, Vec2 candidate)`
+    - `public bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)`
+  - **Hard invariants (do NOT "clean up" or simplify any expression):**
+    1. **Constant qualification:** Replace the 3 unqualified `FixedTickDeltaTime` references (`ExecutePanicMovement` step, `ExecutePathMovement` `state.TimeSinceLastProgress += ...`, and `ExecutePathMovement` step) with `SimulationManager.FixedTickDeltaTime`.
+    2. **Exact float/vector casts (golden hashes depend on them):**
+       - `float step = (float)(speed * SimulationManager.FixedTickDeltaTime);` (both movement methods);
+       - `if (node?.Agent != null && node.Agent.IsDowned) speed = (float)(speed * Vitality.DownedSpeedFactor);`;
+       - `(Vec2)node.Position` casts in `TryStep` and `ApplyProgressiveUnstuckReflex`, and `Vec2 turned = dir * turn.X + new Vec2(-dir.Y, dir.X) * turn.Y;` in `TryStep`;
+       - `int cellX = SimMath.FloorToInt((float)((float)(targetPos.X + (float)(snapshot.Width * snapshot.CellSize * 0.5f)) / snapshot.CellSize));` (and `cellY`) in `IsPositionBlocked`.
+    3. **Null-safety rules:** `_spatialPartition == null` or `snapshot == null` means unblocked (`IsPositionBlocked` and `IsCrowdedMove` return `false`; `TryDisplacePawn` skips static/crowd checks and still calls `node.SetPosition(candidate)` when `node != null`); `node == null` returns `false` in `TryDisplacePawn` and `IsCrowdedMove`; `IsCrowdedMove` falls back to `entity.Position` when `_worldRegistry == null` or returns `null`; Tier 3 blacklisting uses `uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;`.
+
 - [ ] **R3.2 Forward from `SimulationManager.Movement.cs` and validate.** [Basic]
-  - `IIntentExecutionContext` and `SimulationManager`'s internal callers (`StepOntoBunk`, `SimulationManagerModularizationValidator`, `NavigationClearanceValidator`, `MotorWatchdogValidator`) forward to `_locomotion`, so handlers and existing tests don't change.
-  - Add a direct `Locomotion` unit check in `MotorWatchdogValidator` (or `NavigationClearanceValidator`) exercising `Locomotion` without a `SimulationManager`.
+  - **DI trap — do NOT add `Locomotion` to `SimulationManager`'s constructor parameters:** `SimpiensServiceCollectionExtensions.AddSimpiensCore` registers `services.AddSingleton<SimulationManager>()` without a factory lambda. Instead, in `dotnet/Simpiens.Core/Simulation/SimulationManager.cs`:
+    - Add `using Simpiens.Simulation.Movement;` and field `private readonly Locomotion _locomotion;`.
+    - Inside `SimulationManager(...)`, right after `_clock = clock;`, initialize `_locomotion = new Locomotion(_spatialPartition, _worldRegistry, _clock);`.
+  - **Replace `dotnet/Simpiens.Core/Simulation/SimulationManager.Movement.cs` with the 6 thin forwarding methods** (`TryStep`, `IsTurnBack`, `SidestepTurns`, `FlowTurns` and `CrowdSearchMargin` have zero external callers and stay only in `Locomotion.cs`):
+    ```csharp
+    using Simpiens.Cognition.Contracts;
+    using Simpiens.Cognition.Pathfinding;
+
+    namespace Simpiens.Simulation
+    {
+        public partial class SimulationManager
+        {
+            public IntentResult ExecutePanicMovement(WorldEntity node, PathResponse path, ref int currentIndex)
+                => _locomotion.ExecutePanicMovement(node, path, ref currentIndex);
+
+            public IntentResult ExecutePathMovement(WorldEntity node, PathResponse path, ActiveIntentState state)
+                => _locomotion.ExecutePathMovement(node, path, state);
+
+            internal IntentResult ApplyProgressiveUnstuckReflex(WorldEntity node, Vec2 targetPos, ActiveIntentState state)
+                => _locomotion.ApplyProgressiveUnstuckReflex(node, targetPos, state);
+
+            public bool TryDisplacePawn(WorldEntity node, Vec2 candidate, bool respectPawns = true)
+                => _locomotion.TryDisplacePawn(node, candidate, respectPawns);
+
+            internal bool IsCrowdedMove(WorldEntity node, Vec2 candidate)
+                => _locomotion.IsCrowdedMove(node, candidate);
+
+            internal bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
+                => _locomotion.IsPositionBlocked(targetPos, ignoreAgentId, pawnClearanceRadius);
+        }
+    }
+    ```
+    This satisfies `IIntentExecutionContext`, `StepOntoBunk` (`SimulationManager.Lodging.cs`), `DriveSystemValidator`, `MotorWatchdogValidator` and `NavigationClearanceValidator` with zero caller edits.
+  - **Add standalone validator test in `dotnet/Simpiens.Testing.Core/Navigation/MotorWatchdogValidator.cs`:**
+    - Add `using Simpiens.Simulation.Movement;`, add `ValidateStandaloneLocomotion()` to `Start()`, and update the summary log from `ALL 5 TESTS` to `ALL 6 TESTS`.
+    - Construct `WorldEntity` directly via `new WorldEntity(id, EntityType.Pawn, pos, 0.35f, agent: new AgentState(id))` (do NOT use `HeadlessEntities.Crawler`, which requires a `SimulationManager`) and verify on `Locomotion` alone:
+      1. `new Locomotion()` (null partition/registry/clock): `TryDisplacePawn` moves the pawn and returns `true`; `IsPositionBlocked` and `IsCrowdedMove` return `false`.
+      2. Wired `new Locomotion(grid, registry, clock)` (`SpatialHashGrid` `Initialize(20, 20, 1f)` with a wall cell set via `grid.StaticGrid.WorldToCell(new Vec2(0.5f, 0.5f), out int cx, out int cy)` + `grid.StaticGrid.SetWall(cx, cy)`, `occupant` registered at `(3f, 0f)`, `mover` registered at `(1f, 0f)`, `grid.UpdateFromRegistry(registry)`, `clock.AdvanceTicks(50)`):
+         - `locomotion.TryDisplacePawn(mover, new Vec2(0.5f, 0.5f))` returns `false` (wall rejected);
+         - with `mover` placed at `(2.7f, 0f)`, `IsCrowdedMove(mover, new Vec2(2.8f, 0f))` is `true` and `IsCrowdedMove(mover, new Vec2(2.5f, 0f))` is `false` (stepping apart allowed);
+         - resetting `mover` to `(1f, 0f)` and stepping `ExecutePathMovement` toward a 1-waypoint `PathResponse` at `(3f, 0f)` (calling `grid.UpdateFromRegistry(registry)` each tick) finishes `IntentResult.Success` with `Vec2.Distance(mover.Position, occupant.Position) >= 0.35f`;
+         - Tier 3 `ApplyProgressiveUnstuckReflex` (`StallCount = 4`, `Intent = new HarvestResourceIntent(mover.Id, resourceId, default)`) returns `IntentResult.PathBlocked` and blacklists `resourceId` until tick `350` (`mover.Agent.Memory.IsBlacklisted(resourceId, 349)` is `true`, `IsBlacklisted(resourceId, 350)` is `false`).
+  - **Verify all §3 gates** (`dotnet test dotnet/Simpiens.slnx`, `golden check` 3/3 unchanged, `scripts/test-client-in-container.sh`, MonoGame compile, Android compile, 0 warnings) and commit as `refactor(core): extract Locomotion from SimulationManager (R3)`.
 
 ### R4. Extract the market (`feat/refactor-r4-market`, ~0.5 day)
-**Complexity:** Possibly Complex: escrow through the ledger, the save block moved with its byte layout kept, and the expiry and buffer order kept.
-- [ ] **R4.1 Create `Simulation/Economy/Market.cs`.** [Possibly Complex: escrow, save block and deterministic buffer ordering]
-  - Owns `_stalls`, `_activeStallsBuffer`, `_bounties`, `_nextBountyId`, `_activeBountiesBuffer` and `_expiredBountiesBuffer`; takes `IEconomyLedger`, `ISectorRegistry` and `INarrativeChronicleService`.
-  - Moves stall registration, queries and price updates (`RegisterTradeStall`, `TryGetStall`, `UpdateStall`, `UpdateStallPrices`), bounty registration, queries, posting, cancellation and expiry (`RegisterBounty`, `TryRegisterBounty`, `TryGetBounty`, `UpdateBounty`, `PostBounty`, `CancelBounty`, `ExpireBounties`, `ReleaseClaimsForAgent`), and their `EconomySave` capture/restore and `Reset()`.
-  - Why stalls and bounties go together: escrow is locked from and refunded to a stall's treasury through `IEconomyLedger`.
-  - Ordering invariants kept exact: `SortStable` by `StallEntityId` / `BountyId` on active buffers, `SortStable` on `_expiredBountiesBuffer` before refunding in `ExpireBounties`, `Array.Sort` on `EconomySave.Stalls` and `EconomySave.Bounties`, and `_nextBountyId` derived on restore as `highest + 1`.
+**Complexity:** Possibly Complex by rubric (escrow through the ledger, the `EconomySave` block moved with its byte layout kept, and deterministic expiry/buffer order), with a complete mechanical blueprint below so a **Basic** agent can execute R4.1 and R4.2 with zero design calls.
+- **Branch note:** R4 depends on R2's partial split (`SimulationManager.Market.cs`, `SimulationManager.Lodging.cs`, `SimulationManager.Persistence.cs`). Confirm those files exist on the working branch before starting.
+
+- [ ] **R4.1 Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`.** [Possibly Complex: escrow, save block and deterministic buffer ordering; mechanical recipe below for Basic-agent execution]
+  - **Why stalls and bounties go together:** escrow is locked from and refunded to a stall's treasury through `IEconomyLedger`.
+  - **Step 1 — Expose `SimulationManager.SortStable` (`SimulationManager.cs:271`):** change `private static void SortStable<T>(List<T> list, System.Comparison<T> compare)` to `internal static void SortStable<T>(...)` so `Market` (and later `SocialDynamics` in R5.2) calls `SimulationManager.SortStable(...)` directly without duplicating it.
+  - **Step 2 — Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`:**
+    - **Namespace & type:** `namespace Simpiens.Simulation.Economy`, `internal sealed class Market`.
+    - **Exact `using` directives:**
+      ```csharp
+      using System;
+      using System.Collections.Generic;
+      using Simpiens.Diagnostics;
+      using Simpiens.Intervention;
+      using Simpiens.Narrative;
+      using Simpiens.Simulation.Items;
+      using Simpiens.Simulation.Persistence;
+      using Simpiens.Simulation.World;
+      using ZLogger;
+      ```
+    - **Hard architectural guard (`ItemNamesTests`):** `ItemNamesTests.ProductionCodeNamesItemsOnlyWhereAllowed` regex-scans the raw text of every `.cs` file in `Simpiens.Core` (comments included!) for `\bItemType\.<Name>\b` other than `ItemType.None`. **Never write `ItemType.IronOre`, `ItemType.Ration`, etc. anywhere in `Market.cs`, not even in a comment.** Keep the Gather default-item expression and its comment verbatim:
+      ```csharp
+      // A Gather bounty without an item asks for the first resource (iron ore)
+      itemType == ItemType.None && resolvedType == BountyType.GatherResource ? ItemCatalog.InCategory(ItemCategory.Resource)[0] : itemType,
+      ```
+    - **Fields & constructor:**
+      ```csharp
+      private readonly IEconomyLedger _economyLedger;
+      private readonly ISectorRegistry _sectors;
+      private readonly INarrativeChronicleService _chronicleService;
+
+      private readonly Dictionary<EntityId, TradeStallData> _stalls = new Dictionary<EntityId, TradeStallData>();
+      private readonly List<TradeStallData> _activeStallsBuffer = new List<TradeStallData>(8);
+      private readonly Dictionary<ushort, BountyContract> _bounties = new Dictionary<ushort, BountyContract>();
+      // The next generated bounty id. Not saved: a load derives it as the highest saved id + 1, which is exact because
+      // nothing removes a bounty from _bounties (finished ones stay, and are saved) and every id taken raises it (until
+      // the 65,535 ids run out and generation wraps to fill gaps)
+      private ushort _nextBountyId = 1;
+      private readonly List<BountyContract> _activeBountiesBuffer = new List<BountyContract>(16);
+      private readonly List<ushort> _expiredBountiesBuffer = new List<ushort>(16);
+      private readonly List<ushort> _departingClaims = new List<ushort>(2);
+
+      public Market(
+          IEconomyLedger economyLedger = null,
+          ISectorRegistry sectors = null,
+          INarrativeChronicleService chronicleService = null)
+      {
+          _economyLedger = economyLedger;
+          _sectors = sectors;
+          _chronicleService = chronicleService;
+      }
+      ```
+    - **Exact members moved into `Market` (preserving all existing comments, log lines and chronicle events):**
+      - Properties: `public IReadOnlyList<TradeStallData> ActiveStalls => _activeStallsBuffer;` and `public IReadOnlyList<BountyContract> ActiveBounties => _activeBountiesBuffer;`.
+      - Stall operations (from `SimulationManager.Market.cs`):
+        - `public void RegisterTradeStall(TradeStallData stallData)`
+        - `public bool TryGetStall(EntityId stallId, out TradeStallData stall)`
+        - `public void UpdateStall(TradeStallData stall)`
+        - `public void UpdateStallPrices(in UpdateStallPricesCommand cmd)` (body of `ExecuteUpdateStallPricesCommand`)
+        - `private void UpdateActiveStallsBuffer()` (calls `SimulationManager.SortStable(_activeStallsBuffer, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));`)
+      - Bounty operations (from `SimulationManager.Market.cs`):
+        - `public void RegisterBounty(BountyContract bounty)`
+        - `public bool TryRegisterBounty(BountyContract bounty)`
+        - `public bool TryGetBounty(ushort bountyId, out BountyContract bounty)`
+        - `public void UpdateBounty(BountyContract bounty)`
+        - `public void PostBounty(in PostBountyCommand cmd, uint currentTick)` (body of `ExecutePostBountyCommand`, calling `private bool TryTakeNextFreeBountyId(out ushort id)` and `private void PostBountyInternal(...)`; qualify `SimulationManager.PlayerEntityId` in the `ChronicleEvent`)
+        - `public void CancelBounty(ushort bountyId, uint currentTick)` (body of `CancelBountyInternal`; qualify `SimulationManager.PlayerEntityId` in the `ChronicleEvent`)
+        - `private Vec2 ResolveSectorTarget(byte sectorId)`
+        - `private void UpdateActiveBountiesBuffer()` (calls `SimulationManager.SortStable(_activeBountiesBuffer, (a, b) => a.BountyId.CompareTo(b.BountyId));`)
+      - Bounty expiry (moved verbatim from `SimulationManager.cs` `SimulateTick` lines 435–485):
+        - `public void ExpireBounties(uint currentTick)`: early-returns when `_bounties.Count == 0` or `_expiredBountiesBuffer.Count == 0`; sorts `_expiredBountiesBuffer` via `SimulationManager.SortStable(_expiredBountiesBuffer, (a, b) => a.CompareTo(b));`; refunds escrow (with the `else` fallback when `_economyLedger == null`), sets `BountyStatus.Expired`, logs, records `ChronicleEventType.BountyExpired` with `SimulationManager.PlayerEntityId`; and calls `UpdateActiveBountiesBuffer(); UpdateActiveStallsBuffer();` once after the loop.
+      - Departing drifter claim release (moved from `SimulationManager.Lodging.cs` `DepartOutpost` lines 78–87):
+        - `public int ReleaseClaimsForAgent(EntityId agentId)`: clears `_departingClaims`, collects claimed bounty ids in `_activeBountiesBuffer` where `bounty.Status == BountyStatus.Claimed && bounty.ClaimantId == agentId`, reopens each via `UpdateBounty(claimed.WithClaimant(default, BountyStatus.Open))`, and **returns `_departingClaims.Count`** so `DepartOutpost`'s log line keeps the exact released count.
+      - Persistence & reset (moved from `SimulationManager.Persistence.cs`):
+        - `public EconomySave Capture()`: copies `_stalls` to `TradeStallData[]` and `Array.Sort(stalls, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId))`; copies `_bounties` to `BountyContract[]` and `Array.Sort(bounties, (a, b) => a.BountyId.CompareTo(b.BountyId))`; captures `var ledger = new LedgerSave(); _economyLedger?.CaptureTo(ledger);`; returns `new EconomySave { Stalls = stalls, Bounties = bounties, Ledger = ledger }`.
+        - `public void RestoreFrom(EconomySave economy)`: clears `_stalls`, populates from `economy?.Stalls`, calls `UpdateActiveStallsBuffer()`; clears `_bounties`, resets `_nextBountyId = 1`, populates from `economy?.Bounties` advancing `if (b.BountyId >= _nextBountyId) _nextBountyId = (ushort)(b.BountyId + 1);`, calls `UpdateActiveBountiesBuffer()`; and calls `if (economy?.Ledger != null) _economyLedger?.RestoreFrom(economy.Ledger);`.
+        - `public void Reset()`: clears `_stalls`, `_activeStallsBuffer`, `_bounties`, sets `_nextBountyId = 1`, clears `_activeBountiesBuffer`, `_expiredBountiesBuffer` and `_departingClaims`.
+    - **Zero-allocation invariant (`EconomyZeroAllocValidator` measures 1,000 steady-state ticks expecting 0 bytes):** keep every `Comparison<T>` lambda passed to `SimulationManager.SortStable` stateless (capturing no local variables and no `this`) so the C# compiler caches each delegate in a static field.
+
 - [ ] **R4.2 Forward from `SimulationManager` and validate.** [Basic]
-  - `SimulationManager.Market.cs`, `SimulateTick` (bounty expiration step), `DepartOutpost` (releasing a departing drifter's claimed bounties), `CaptureTo`, `RestoreFrom` and `ResetState` delegate to `_market`.
-  - Add a direct `Market` test in `BountyFulfillmentValidator` that exercises stall escrow, posting, expiry and save/restore on `Market` without a `SimulationManager`.
+  - **Trap 1 — Constructor ordering & DI (`SimulationManager.cs`):**
+    - Do NOT add `Market` to `SimulationManager`'s constructor parameter list (`AddSingleton<SimulationManager>()` relies on DI).
+    - Add `private readonly Market _market;` on `SimulationManager`.
+    - Inside `SimulationManager(...)`, construct `_market = new Market(_economyLedger, _sectors, _chronicleService);` **AFTER** `_economyLedger = economyLedger ?? new EconomyLedger();`, passing the **`_economyLedger` field** (NEVER the raw `economyLedger` parameter, which is `null` in many callers — `_market` and `sim.EconomyLedger` must share the exact same fallback `EconomyLedger` instance!).
+  - **Trap 2 — Dual stall getters in `dotnet/Simpiens.Core/Simulation/SimulationManager.Market.cs`:**
+    - `ISimulationManager` requires `TryGetTradeStall` while `IIntentExecutionContext` requires `TryGetStall`. Forward **both** to `_market.TryGetStall(...)`. Replace the entire body of `SimulationManager.Market.cs` with:
+      ```csharp
+      using System.Collections.Generic;
+      using Simpiens.Intervention;
+      using Simpiens.Simulation.Economy;
+
+      namespace Simpiens.Simulation
+      {
+          public partial class SimulationManager
+          {
+              public IReadOnlyList<TradeStallData> ActiveStalls => _market.ActiveStalls;
+              public IReadOnlyList<BountyContract> ActiveBounties => _market.ActiveBounties;
+
+              public bool TryGetStall(EntityId stallId, out TradeStallData stall) => _market.TryGetStall(stallId, out stall);
+
+              public bool TryGetTradeStall(EntityId stallId, out TradeStallData stallData) => _market.TryGetStall(stallId, out stallData);
+
+              public void UpdateStall(TradeStallData stall) => _market.UpdateStall(stall);
+
+              public void UpdateBounty(BountyContract bounty) => _market.UpdateBounty(bounty);
+
+              public void RegisterTradeStall(TradeStallData stallData) => _market.RegisterTradeStall(stallData);
+
+              public void RegisterBounty(BountyContract bounty) => _market.RegisterBounty(bounty);
+
+              public bool TryRegisterBounty(BountyContract bounty) => _market.TryRegisterBounty(bounty);
+
+              public bool TryGetBounty(ushort bountyId, out BountyContract bounty) => _market.TryGetBounty(bountyId, out bounty);
+
+              private void ExecutePostBountyCommand(in PostBountyCommand cmd, uint currentTick) => _market.PostBounty(in cmd, currentTick);
+
+              private void ExecuteCancelBountyCommand(in CancelBountyCommand cmd, uint currentTick) => _market.CancelBounty(cmd.BountyId, currentTick);
+
+              private void ExecuteUpdateStallPricesCommand(in UpdateStallPricesCommand cmd) => _market.UpdateStallPrices(in cmd);
+          }
+      }
+      ```
+  - **Update `SimulateTick` in `dotnet/Simpiens.Core/Simulation/SimulationManager.cs`:**
+    - Replace the 50-line bounty expiration block (`if (_bounties.Count > 0) { ... }`) with `_market.ExpireBounties(currentTick);`.
+    - At the end of `SimulateTick`, update `_spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);` to pass `_market.ActiveStalls, _market.ActiveBounties`.
+  - **Trap 3 — Remove dead `_departingClaims` field in `dotnet/Simpiens.Core/Simulation/SimulationManager.Lodging.cs` (`TreatWarningsAsErrors`):**
+    - Delete `private readonly List<ushort> _departingClaims = new List<ushort>(2);` (and unused `using Simpiens.Simulation.Economy;`) from `SimulationManager.Lodging.cs` so `CS0414`/unused-field warnings never fire.
+    - In `DepartOutpost`, replace the `_departingClaims` loops with `int releasedClaims = _market.ReleaseClaimsForAgent(node.Id);` and update the log line at the end of `DepartOutpost` to `({releasedClaims} claim(s) released)`.
+  - **Trap 4 — Local `int n` in `dotnet/Simpiens.Core/Simulation/SimulationManager.Persistence.cs`:**
+    - In `CaptureTo`: replace the stalls/bounties/ledger lines (lines 17–29) with `save.Economy = _market.Capture();`, and change `n = 0;` right before the `resources` loop to **`int n = 0;`** (because `int n = 0;` was previously declared inside the removed stalls block!). Remove unused `using Simpiens.Simulation.Economy;` at line 1.
+    - In `RestoreFrom`: replace lines 79–102 with `_market.RestoreFrom(save.Economy);`.
+    - In `ResetState`: keep `_economyLedger?.Reset();` (the ledger also tracks non-market faucets/sinks) and replace `_stalls.Clear(); _activeStallsBuffer.Clear(); _bounties.Clear(); _nextBountyId = 1; _activeBountiesBuffer.Clear();` with `_market.Reset();`.
+  - **Add standalone validator test in `dotnet/Simpiens.Testing.Core/Economy/BountyFulfillmentValidator.cs`:**
+    - Add `ValidateStandaloneMarket()` to `Start()` and update the summary log from `ALL 11 DOMAIN TESTS` to `ALL 12 DOMAIN TESTS`.
+    - Exercise `new Market(ledger, sectors: null, new Simpiens.Narrative.NarrativeChronicleService())` directly with **no `SimulationManager`**:
+      1. Register two stalls out of `EntityId` order (`stallB = new EntityId(2, 0, 0, 0)` with `100g`, then `stallA = new EntityId(1, 0, 0, 0)` with `200g`); assert `market.ActiveStalls.Count == 2` and `market.ActiveStalls[0].StallEntityId == stallA`. Apply `market.UpdateStallPrices(new UpdateStallPricesCommand(stallA).With(ItemType.Ration, 19))` and assert `RationSellPrice == 19`.
+      2. Call `market.PostBounty(new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 50, durationTicks: 20, default, default), currentTick: 10)` -> auto-assigns id `1`, defaults `CreatorStallId` to `stallA`, deducts `50g` into `ledger.TotalEscrowGold == 50` (`stallA` treasury `150g`). Post a second bounty with explicit `bountyId: 3`, `rewardGold: 40`, `durationTicks: 100`, `creatorStallId: stallA` at `currentTick: 10` (`ledger.TotalEscrowGold == 90`, treasury `110g`), and claim `#3` for `drifterId = new EntityId(9, 0, 0, 0)` via `market.UpdateBounty(...)`.
+      3. Call `int released = market.ReleaseClaimsForAgent(drifterId);` -> assert `released == 1` and `market.TryGetBounty(3, out var reopened) && reopened.Status == BountyStatus.Open && reopened.ClaimantId == default`.
+      4. Call `market.ExpireBounties(35);` -> bounty `#1` expires, `50g` refunds to `stallA` (`treasury == 160`, `ledger.TotalEscrowGold == 40`), `market.ActiveBounties.Count == 1` (only `#3`), and `market.TryGetBounty(1, out var expired) && expired.Status == BountyStatus.Expired`.
+      5. Round-trip `var saved = market.Capture();` into a fresh `var restoredLedger = new EconomyLedger(); var restored = new Market(restoredLedger); restored.RestoreFrom(saved);` -> assert `restored.ActiveStalls.Count == 2`, `restored.ActiveBounties.Count == 1`, `restored.TryGetBounty(1, out var savedExp) && savedExp.Status == BountyStatus.Expired`, `restoredLedger.TotalEscrowGold == 40`, and a new `restored.PostBounty` with `bountyId: 0` receives id `4` (`highest + 1`).
+      6. Call `restored.Reset();` -> assert `restored.ActiveStalls.Count == 0`, `restored.ActiveBounties.Count == 0`, and `!restored.TryGetBounty(1, out _)`.
+  - **Verify all §3 gates** (`dotnet test dotnet/Simpiens.slnx`, `golden check` 3/3 unchanged, `scripts/test-client-in-container.sh`, MonoGame compile, Android compile, 0 warnings) and commit as `refactor(core): extract Market from SimulationManager (R4)`.
 
 ### R5.1. Extract lodging (`feat/refactor-r5-1-lodging`, ~0.3 day)
 **Complexity:** Possibly Complex: bunk claims, `StepOntoBunk` movement through `Locomotion`, and preemption stand-up in `ValidateOccupancy`.
