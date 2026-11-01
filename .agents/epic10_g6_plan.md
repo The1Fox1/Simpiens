@@ -38,7 +38,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`.
     - trust up for 8 or more of the 12;
     - recruiting, dispatching and disbanding a party never take a member out of its settlement (G4's D1);
     - nobody starving, the ledger balanced, and the day's checks.
-- [ ] **G6.2 `ASaveMidExpeditionLoadsAndPlaysOn`:**
+- [x] **G6.2 `ASaveMidExpeditionLoadsAndPlaysOn`:** done 2026-11-01 (`ExpeditionScenarioTests`): saved at t14046 while the party worked the seam; loaded into a fresh session byte for byte with the same world hash; home at t14297 with its haul (4 shares), 20 wages paid in the 3,000 ticks, the ledger balanced, no intent faults.
   - The game is saved while the party works the seam, and loaded into a fresh session.
   - The capture is byte for byte, and the world hash is equal, groups and the guild included.
   - Then 3,000 more ticks: the party comes back with its haul, wages are paid, the ledger balances, and no intent faults.

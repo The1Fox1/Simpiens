@@ -6,6 +6,8 @@ using Simpiens.Hosting;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Guild;
+using Simpiens.Simulation.Persistence;
+using Simpiens.Testing.Environment;
 using Xunit;
 
 namespace Simpiens.Core.Tests
@@ -148,6 +150,61 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, watch.AloneInTheChamber);
             var failures = watch.DayFailures(); // trust up for 8 or more of 12, nobody starving, the ledger balanced, the rest of the day
             Assert.True(failures.Count == 0, "The days failed:\n  " + string.Join("\n  ", failures));
+        }
+
+        /// <summary>
+        /// Epic 10 G6.2: the game saved while the party works the seam loads into a fresh session byte for byte, with the
+        /// same world hash (the groups and the guild included), and plays on: the party comes home with its haul, the
+        /// wages are paid, the ledger balances and no intent handler throws. The scripted player drives both sessions, as a
+        /// player would play on after loading.
+        /// </summary>
+        [Fact]
+        public void ASaveMidExpeditionLoadsAndPlaysOn()
+        {
+            const long PlaysOn = 3000;
+            using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            played.Respawn(OutpostSession.SessionId);
+            new GuildPlayer(played, targetSize: 4).SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield, RetreatRule.Steady);
+            while (played.Simulation.Guild.Expedition.Stage != ExpeditionStage.Work && played.Clock.CurrentTick < HalfAnHour) played.Step(1);
+            Assert.Equal(ExpeditionStage.Work, played.Simulation.Guild.Expedition.Stage);
+            long tick = played.Clock.CurrentTick;
+            byte[] saved = SaveSerializer.Serialize(played.Host.Capture());
+            var savedHash = WorldStateHash.Capture(tick, played.Host, played.Simulation, played.Sectors, includeWork: false);
+            var expedition = played.Simulation.Guild.Expedition;
+
+            // A fresh session, loaded
+            using var loaded = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            loaded.Respawn(OutpostSession.SessionId);
+            Assert.True(loaded.Host.TryRestore(SaveSerializer.Deserialize<SessionSave>(saved), out string refusal), $"The save was refused: {refusal}");
+            Assert.Equal(tick, loaded.Clock.CurrentTick);
+            Assert.Equal(saved, SaveSerializer.Serialize(loaded.Host.Capture()));
+            Assert.Null(savedHash.DescribeDifference(WorldStateHash.Capture(tick, loaded.Host, loaded.Simulation, loaded.Sectors, includeWork: false)));
+            var guild = loaded.Simulation.Guild;
+            Assert.True(guild.HasExpedition && guild.Expedition.Stage == ExpeditionStage.Work && guild.Expedition.StageTick == expedition.StageTick);
+            Assert.True(loaded.Simulation.Groups.TryGetGroup(expedition.PartyGroupId, out var party) && party.ParentGroupId == guild.GroupId
+                && party.ActiveDirective.Type == Simpiens.Cognition.Groups.DirectiveType.Expedition, "The party, its guild and its order came back.");
+
+            // It plays on
+            new GuildPlayer(loaded, targetSize: 4).SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield, RetreatRule.Steady);
+            var watch = new OutpostWatch(loaded);
+            var ledger = loaded.Simulation.EconomyLedger;
+            uint shares = ledger.Flows.Shares, wages = ledger.Flows.Wages;
+            long home = -1;
+            while (loaded.Clock.CurrentTick < tick + PlaysOn)
+            {
+                watch.Run(1);
+                if (home < 0 && !guild.HasExpedition) home = loaded.Clock.CurrentTick;
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"saved at t{tick} at work; home at t{home}; shares {ledger.Flows.Shares - shares}, wages {ledger.Flows.Wages - wages}");
+
+            Assert.True(home > tick, "The party came home.");
+            Assert.True(ledger.Flows.Shares > shares, "It came home with its haul, and the shares were paid.");
+            uint interval = loaded.Simulation.Economy.Supply.RestockIntervalTicks;
+            uint visits = (uint)((tick + PlaysOn) / interval - tick / interval);
+            Assert.Equal(visits * (uint)guild.Members.Count, ledger.Flows.Wages - wages);
+            for (int i = 0; i < guild.Members.Count; i++) Assert.Equal(0, guild.Members[i].UnpaidVisits);
+            Assert.Equal(0, watch.ConservationViolations);
+            Assert.Equal(0, watch.IntentFaults);
         }
     }
 }
