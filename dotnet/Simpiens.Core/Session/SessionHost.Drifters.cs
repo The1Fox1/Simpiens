@@ -89,15 +89,15 @@ namespace Simpiens.Core.Session
         {
             for (int i = _crawlers.Count - 1; i >= 0; i--)
             {
-                if (_states[i].HasLeft) RemoveCrawlerAt(i);
+                if (_crawlers[i].State.HasLeft) RemoveCrawlerAt(i);
             }
 
             if (_nextDrifterTick < 0 || tick < _nextDrifterTick) return;
             var tuning = Drifters;
             int present = 0;
-            for (int i = 0; i < _states.Count; i++)
+            for (int i = 0; i < _crawlers.Count; i++)
             {
-                if (_states[i].IsDrifter) present++;
+                if (_crawlers[i].State.IsDrifter) present++;
             }
             if (present >= tuning.MaxPresent)
             {
@@ -136,15 +136,13 @@ namespace Simpiens.Core.Session
 
         private void RemoveCrawlerAt(int index)
         {
-            var runtime = _crawlers[index];
+            var entry = _crawlers[index];
+            var runtime = entry.Runtime;
             var entity = _registry?.GetEntity(runtime.State.AgentId);
             _departed.Add(new DepartedCrawler(runtime.State.AgentId, runtime.State.GivenName, runtime.State.Look));
             runtime.Dispose();
             if (entity != null) _registry.Unregister(entity);
             _crawlers.RemoveAt(index);
-            _states.RemoveAt(index);
-            _names.RemoveAt(index);
-            _labels.RemoveAt(index);
             CrawlerDeparted?.Invoke(runtime, entity);
         }
 
@@ -178,9 +176,9 @@ namespace Simpiens.Core.Session
 
         private bool IsClearOfCrawlers(Vec2 position)
         {
-            for (int i = 0; i < _states.Count; i++)
+            for (int i = 0; i < _crawlers.Count; i++)
             {
-                if (Vec2.Distance(_states[i].Position, position) < ArrivalClearance) return false;
+                if (Vec2.Distance(_crawlers[i].State.Position, position) < ArrivalClearance) return false;
             }
             return true;
         }

@@ -185,21 +185,6 @@ namespace Simpiens.Cognition
             set => _baseVisualState = value;
         }
 
-        public AgentState()
-        {
-            try
-            {
-                AgentId = EntityId.Generate();
-            }
-            catch
-            {
-                AgentId = default;
-            }
-
-            Inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold);
-            Memory = new AgentMemory();
-        }
-
         public AgentState(EntityId id, AgentInventory inventory = null, AgentMemory memory = null)
         {
             AgentId = id;

@@ -126,7 +126,7 @@ namespace Simpiens.Testing.Economy
         private static AgentRegistry CreateRegistryWithAgent(out EntityId agentId, int gold)
         {
             var registry = new AgentRegistry();
-            var agent = new AgentState();
+            var agent = new AgentState(EntityId.Generate());
             agent.AgentId = new EntityId(1u, 2u, 3u, (uint)gold);
             agent.Inventory.Gold = gold;
             registry.RegisterAgent(agent);

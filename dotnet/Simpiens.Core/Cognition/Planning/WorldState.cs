@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace Simpiens.Cognition.Planning
 {
@@ -9,6 +10,8 @@ namespace Simpiens.Cognition.Planning
     /// </summary>
     public readonly struct WorldState : IEquatable<WorldState>
     {
+        public const int MaxFacts = 64;
+
         public readonly ulong Values;
         public readonly ulong Mask;
 
@@ -45,6 +48,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public WorldState With(StateFact fact, bool value)
         {
+            Debug.Assert((uint)fact < MaxFacts, "StateFact exceeds 64-bit bitmask capacity.");
             ulong bit = 1UL << (int)fact;
             ulong newValues = value ? (Values | bit) : (Values & ~bit);
             ulong newMask = Mask | bit;
@@ -56,6 +60,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public WorldState Without(StateFact fact)
         {
+            Debug.Assert((uint)fact < MaxFacts, "StateFact exceeds 64-bit bitmask capacity.");
             ulong bit = 1UL << (int)fact;
             return new WorldState(Values & ~bit, Mask & ~bit);
         }
@@ -65,6 +70,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public bool Get(StateFact fact)
         {
+            Debug.Assert((uint)fact < MaxFacts, "StateFact exceeds 64-bit bitmask capacity.");
             ulong bit = 1UL << (int)fact;
             return (Values & bit) != 0;
         }
@@ -74,6 +80,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public bool IsSet(StateFact fact)
         {
+            Debug.Assert((uint)fact < MaxFacts, "StateFact exceeds 64-bit bitmask capacity.");
             ulong bit = 1UL << (int)fact;
             return (Mask & bit) != 0;
         }

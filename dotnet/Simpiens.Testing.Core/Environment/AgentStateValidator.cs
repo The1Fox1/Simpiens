@@ -38,7 +38,7 @@ namespace Simpiens.Testing.Environment
         private void ValidateHeadlessLifecycle()
         {
             // Instantiate pure C# AgentState with ZERO GameObjects
-            var state = new AgentState();
+            var state = new AgentState(EntityId.Generate());
             state.Needs = new AgentNeeds(0f, 100f, 100f);
             state.Frustration = 10f;
 
@@ -67,7 +67,7 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateHeadlessContextAndCognition()
         {
-            var state = new AgentState();
+            var state = new AgentState(EntityId.Generate());
             state.Position = new Vec2(10f, 20f);
             var snapshot = new SharedWorldSnapshot(10, 10, 1.0f, 4, null);
             var context = state.CreateContext(snapshot, 100);
@@ -89,7 +89,7 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateConsequenceOwnership()
         {
-            var state = new AgentState();
+            var state = new AgentState(EntityId.Generate());
             state.Hunger = 60f;
             state.HasFoodInInventory = false;
 
@@ -130,7 +130,7 @@ namespace Simpiens.Testing.Environment
 
         private void ValidateZeroAllocationTickBenchmark()
         {
-            var state = new AgentState();
+            var state = new AgentState(EntityId.Generate());
             for (int i = 0; i < 500; i++)
             {
                 state.Tick(0.1f);

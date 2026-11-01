@@ -24,8 +24,30 @@ namespace Simpiens.Testing.World
             ValidateWorldMapLoad();
             ValidateSectorRegistry();
             ValidateNullDependencies();
+            ValidateOversizedMapRefused();
 
-            TestLog.Log("<color=green>[WorldMapValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorldMapValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        private void ValidateOversizedMapRefused()
+        {
+            var oversized = new MapDefinitionBuilder("Oversized", new RectF(-63f, -63f, 126f, 126f)).Build();
+            var worldMap = new WorldMap(null, null);
+
+            bool threw = false;
+            try
+            {
+                worldMap.Load(oversized);
+            }
+            catch (InvalidOperationException ex)
+            {
+                threw = true;
+                Assert(ex.Message.Contains("16900") && ex.Message.Contains("16384"),
+                    $"Exception message must name cell count (16900) and max cells (16384). Got: '{ex.Message}'");
+            }
+
+            Assert(threw, "WorldMap.Load must throw InvalidOperationException when map partition cells exceed GridAStarSearcher.MaxCells.");
+            TestLog.Log("[PASS] Test 5: Oversized map exceeding A* grid capacity is refused loudly at load.");
         }
 
         private void ValidatePartitionReconfigure()

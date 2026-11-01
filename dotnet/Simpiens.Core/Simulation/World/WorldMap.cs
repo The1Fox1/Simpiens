@@ -88,9 +88,15 @@ namespace Simpiens.Simulation.World
         {
             if (map == null) throw new System.ArgumentNullException(nameof(map));
 
+            var cells = map.PartitionCells(CellSize);
+            int totalCells = cells.X * cells.Y;
+            if (totalCells > Simpiens.Cognition.Pathfinding.GridAStarSearcher.MaxCells)
+            {
+                throw new System.InvalidOperationException($"Map '{map.Name}' exceeds A* navigation grid capacity: {cells.X}x{cells.Y} = {totalCells} cells (maximum {Simpiens.Cognition.Pathfinding.GridAStarSearcher.MaxCells}).");
+            }
+
             if (_partition != null)
             {
-                var cells = map.PartitionCells(CellSize);
                 bool resized = _partition.Configure(cells.X * CellSize, cells.Y * CellSize, CellSize);
                 var grid = _partition.StaticGrid;
                 if (grid != null)

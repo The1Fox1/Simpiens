@@ -17,12 +17,24 @@ namespace Simpiens.Testing.Planning
             TestLog.Log("[GoapDomainValidator] Beginning automated validation of GOAP Domain & ActionGraph...");
 
             ValidateWorldStateBitmask();
+            ValidateStateFactCapacity();
             ValidateActionPrerequisites();
             ValidateActionGraphResolution();
             ValidateGoalSatisfaction();
             ValidateZeroAllocationPerformance();
 
-            TestLog.Log("<color=green>[GoapDomainValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GoapDomainValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        private void ValidateStateFactCapacity()
+        {
+            var facts = (StateFact[])System.Enum.GetValues(typeof(StateFact));
+            for (int i = 0; i < facts.Length; i++)
+            {
+                Assert((int)facts[i] < WorldState.MaxFacts, $"StateFact.{facts[i]} ({(int)facts[i]}) must be < {WorldState.MaxFacts}.");
+            }
+
+            TestLog.Log($"[PASS] StateFact capacity validation passed: {facts.Length} facts all within 64-bit limit.");
         }
 
         private void ValidateWorldStateBitmask()

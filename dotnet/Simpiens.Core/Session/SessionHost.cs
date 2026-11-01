@@ -50,10 +50,8 @@ namespace Simpiens.Core.Session
         private readonly ICognitiveEvaluator _mentalBreakEvaluator;
         private readonly ICognitiveEvaluator _altruismEvaluator;
 
-        private readonly List<AgentRuntime> _crawlers = new List<AgentRuntime>(1000);
-        private readonly List<AgentState> _states = new List<AgentState>(1000);   // parallel to _crawlers
-        private readonly List<string> _names = new List<string>(1000);            // "SwarmAgent_3", parallel to _crawlers
-        private readonly List<string> _labels = new List<string>(1000);           // log labels, parallel to _crawlers
+        private readonly record struct CrawlerEntry(AgentRuntime Runtime, AgentState State, string Name, string Label);
+        private readonly List<CrawlerEntry> _crawlers = new List<CrawlerEntry>(1000);
 
         private readonly List<ISessionDefinition> _sessions = new List<ISessionDefinition>(2);
         private readonly ISessionDefinition _defaultSession;
@@ -109,6 +107,10 @@ namespace Simpiens.Core.Session
             // Production GOAP domain (Cognition/Planning/Domain)
             _actionGraph = Simpiens.Cognition.Planning.Domain.OutpostGoapDomain.BuildActionGraph(pathfinder);
             _goals = Simpiens.Cognition.Planning.Domain.OutpostGoapDomain.BuildGoals();
+
+            Crawlers = new CrawlerRuntimeView(_crawlers);
+            CrawlerStates = new CrawlerStateView(_crawlers);
+            CrawlerNames = new CrawlerNameView(_crawlers);
         }
 
         /// <summary>The world is about to be torn down (a respawn or a load): views destroy what they drew.</summary>
@@ -140,13 +142,13 @@ namespace Simpiens.Core.Session
         public ISectorRegistry Sectors => _worldMap?.Sectors;
 
         /// <summary>Every crawler of the session, in spawn order.</summary>
-        public IReadOnlyList<AgentRuntime> Crawlers => _crawlers;
+        public IReadOnlyList<AgentRuntime> Crawlers { get; }
 
         /// <summary>Every crawler's state, in spawn order.</summary>
-        public IReadOnlyList<AgentState> CrawlerStates => _states;
+        public IReadOnlyList<AgentState> CrawlerStates { get; }
 
         /// <summary>Every crawler's name ("SwarmAgent_3"), in spawn order.</summary>
-        public IReadOnlyList<string> CrawlerNames => _names;
+        public IReadOnlyList<string> CrawlerNames { get; }
 
         public IReadOnlyList<ISessionDefinition> Sessions => _sessions;
         public ISessionDefinition Default => _defaultSession;
@@ -193,9 +195,9 @@ namespace Simpiens.Core.Session
             if (_simulationManager != null)
             {
                 seededGold = builder.SeededStallGold;
-                for (int i = 0; i < _states.Count; i++)
+                for (int i = 0; i < _crawlers.Count; i++)
                 {
-                    var inv = _states[i].Inventory;
+                    var inv = _crawlers[i].State.Inventory;
                     if (inv != null) seededGold += (uint)inv.Gold;
                 }
                 _simulationManager.EconomyLedger?.RecordFaucet(seededGold, "InitialSeed");
@@ -222,12 +224,9 @@ namespace Simpiens.Core.Session
             _current = session;
 
             WorldTearingDown?.Invoke();
-            for (int i = 0; i < _crawlers.Count; i++) _crawlers[i].Dispose();
+            for (int i = 0; i < _crawlers.Count; i++) _crawlers[i].Runtime.Dispose();
 
             _crawlers.Clear();
-            _states.Clear();
-            _names.Clear();
-            _labels.Clear();
             _departed.Clear();
             _identity?.ClearCustomNames(); // ids repeat per seed: a name belongs to this session's crawlers only
             _registry?.Clear();
@@ -396,10 +395,11 @@ namespace Simpiens.Core.Session
             ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
             state.Look = CrawlerLook.Generate(seed, state.AgentId);
 
-            var living = new HashSet<string>(_states.Count);
-            for (int i = 0; i < _states.Count; i++)
+            var living = new HashSet<string>(_crawlers.Count);
+            for (int i = 0; i < _crawlers.Count; i++)
             {
-                if (_states[i] != state && _states[i].GivenName != null) living.Add(_states[i].GivenName);
+                var st = _crawlers[i].State;
+                if (st != state && st.GivenName != null) living.Add(st.GivenName);
             }
             var seen = new HashSet<string>(living);
             for (int i = 0; i < _departed.Count; i++)
@@ -420,10 +420,7 @@ namespace Simpiens.Core.Session
             SimLog.RegisterAgentName(id, label);
             var runtime = new AgentRuntime(state, _spatialPartition, new[] { _mentalBreakEvaluator, _altruismEvaluator, _evaluator }, _simulationManager, _clock, _planner, _actionGraph, _goals, _cognitionService);
 
-            _crawlers.Add(runtime);
-            _states.Add(state);
-            _names.Add(name);
-            _labels.Add(label);
+            _crawlers.Add(new CrawlerEntry(runtime, state, name, label));
             CrawlerSpawned?.Invoke(runtime, entity, name);
             return runtime;
         }
@@ -452,14 +449,15 @@ namespace Simpiens.Core.Session
             var crawlers = new List<CrawlerSave>(_crawlers.Count);
             for (int i = 0; i < _crawlers.Count; i++)
             {
-                var runtime = _crawlers[i];
+                var entry = _crawlers[i];
+                var runtime = entry.Runtime;
                 if (runtime.IsDisposed) continue; // stopped by a test
 
                 var state = runtime.State;
                 var crawler = new CrawlerSave
                 {
-                    Name = _names[i],
-                    Label = _labels[i],
+                    Name = entry.Name,
+                    Label = entry.Label,
                     GivenName = state.GivenName,
                     Record = state.CaptureRecord(),
                     Inventory = new InventorySave(),
@@ -528,7 +526,7 @@ namespace Simpiens.Core.Session
             int count = _crawlers.Count;
             for (int i = 0; i < count; i++)
             {
-                var crawler = _crawlers[i];
+                var crawler = _crawlers[i].Runtime;
                 if (!crawler.IsDisposed) crawler.Tick(currentTick);
             }
             TickPopulation(currentTick);
@@ -541,6 +539,45 @@ namespace Simpiens.Core.Session
             {
                 _clock.OnSimulationTick -= TickCrawlers;
             }
+        }
+
+        private sealed class CrawlerRuntimeView : IReadOnlyList<AgentRuntime>
+        {
+            private readonly List<CrawlerEntry> _list;
+            public CrawlerRuntimeView(List<CrawlerEntry> list) => _list = list;
+            public int Count => _list.Count;
+            public AgentRuntime this[int index] => _list[index].Runtime;
+            public IEnumerator<AgentRuntime> GetEnumerator()
+            {
+                for (int i = 0; i < _list.Count; i++) yield return _list[i].Runtime;
+            }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        private sealed class CrawlerStateView : IReadOnlyList<AgentState>
+        {
+            private readonly List<CrawlerEntry> _list;
+            public CrawlerStateView(List<CrawlerEntry> list) => _list = list;
+            public int Count => _list.Count;
+            public AgentState this[int index] => _list[index].State;
+            public IEnumerator<AgentState> GetEnumerator()
+            {
+                for (int i = 0; i < _list.Count; i++) yield return _list[i].State;
+            }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        private sealed class CrawlerNameView : IReadOnlyList<string>
+        {
+            private readonly List<CrawlerEntry> _list;
+            public CrawlerNameView(List<CrawlerEntry> list) => _list = list;
+            public int Count => _list.Count;
+            public string this[int index] => _list[index].Name;
+            public IEnumerator<string> GetEnumerator()
+            {
+                for (int i = 0; i < _list.Count; i++) yield return _list[i].Name;
+            }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
 }
