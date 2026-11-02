@@ -84,7 +84,7 @@ namespace Simpiens.Simulation.Economy
             {
                 _activeStallsBuffer.Add(kvp.Value);
             }
-            SimulationManager.SortStable(_activeStallsBuffer, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));
+            StableSort.Sort(_activeStallsBuffer, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));
         }
 
         public void UpdateBounty(BountyContract bounty)
@@ -204,7 +204,7 @@ namespace Simpiens.Simulation.Economy
                     _activeBountiesBuffer.Add(kvp.Value);
                 }
             }
-            SimulationManager.SortStable(_activeBountiesBuffer, (a, b) => a.BountyId.CompareTo(b.BountyId));
+            StableSort.Sort(_activeBountiesBuffer, (a, b) => a.BountyId.CompareTo(b.BountyId));
         }
 
         public void PostBounty(in PostBountyCommand cmd, uint currentTick)
@@ -352,7 +352,7 @@ namespace Simpiens.Simulation.Economy
 
             if (_expiredBountiesBuffer.Count > 0)
             {
-                SimulationManager.SortStable(_expiredBountiesBuffer, (a, b) => a.CompareTo(b));
+                StableSort.Sort(_expiredBountiesBuffer, (a, b) => a.CompareTo(b));
                 for (int i = 0; i < _expiredBountiesBuffer.Count; i++)
                 {
                     ushort expiredId = _expiredBountiesBuffer[i];

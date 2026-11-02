@@ -244,7 +244,7 @@ namespace Simpiens.Simulation
                 }
                 _pendingIntents.Add(queued);
             }
-            SortStable(_pendingIntents, (a, b) => a.AgentId.CompareTo(b.AgentId));
+            StableSort.Sort(_pendingIntents, (a, b) => a.AgentId.CompareTo(b.AgentId));
 
             for (int p = 0; p < _pendingIntents.Count; p++)
             {
@@ -272,22 +272,6 @@ namespace Simpiens.Simulation
                 };
             }
             _pendingIntents.Clear();
-        }
-
-        // Stable insertion sort: per-tick lists are small, it allocates nothing, and equal keys keep arrival order
-        internal static void SortStable<T>(List<T> list, System.Comparison<T> compare)
-        {
-            for (int i = 1; i < list.Count; i++)
-            {
-                var item = list[i];
-                int j = i - 1;
-                while (j >= 0 && compare(list[j], item) > 0)
-                {
-                    list[j + 1] = list[j];
-                    j--;
-                }
-                list[j + 1] = item;
-            }
         }
 
         private sealed class EntityIdComparer : IComparer<EntityId>

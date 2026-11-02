@@ -84,7 +84,7 @@ namespace Simpiens.Simulation
             _surveyBuffer.Clear();
             scoutMemory.TakeSurveyNotes((byte)sectorId, _surveyBuffer);
             if (_surveyBuffer.Count == 0) return 0;
-            SortStable(_surveyBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
+            StableSort.Sort(_surveyBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
 
             int recipients = 0;
             if (_agentRegistry != null)

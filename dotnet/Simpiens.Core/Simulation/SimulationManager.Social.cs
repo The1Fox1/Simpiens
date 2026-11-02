@@ -84,7 +84,7 @@ namespace Simpiens.Simulation
             {
                 _activeAnchorsBuffer.Add(kvp.Value);
             }
-            SortStable(_activeAnchorsBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
+            StableSort.Sort(_activeAnchorsBuffer, (a, b) => a.EntityId.CompareTo(b.EntityId));
 
             var activeNodes = _worldRegistry.ActiveEntities;
             int totalNodes = activeNodes.Count;
