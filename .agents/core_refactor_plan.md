@@ -225,7 +225,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
 **Complexity:** Possibly Complex by rubric (escrow through the ledger, the `EconomySave` block moved with its byte layout kept, and deterministic expiry/buffer order), with a complete mechanical blueprint below so a **Basic** agent can execute R4.1 and R4.2 with zero design calls.
 - **Branch note:** R4 depends on R2's partial split (`SimulationManager.Market.cs`, `SimulationManager.Lodging.cs`, `SimulationManager.Persistence.cs`). Confirm those files exist on the working branch before starting.
 
-- [ ] **R4.1 Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`.** [Possibly Complex: escrow, save block and deterministic buffer ordering; mechanical recipe below for Basic-agent execution]
+- [x] **R4.1 Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`.** [Possibly Complex: escrow, save block and deterministic buffer ordering; mechanical recipe below for Basic-agent execution]
   - **Why stalls and bounties go together:** escrow is locked from and refunded to a stall's treasury through `IEconomyLedger`.
   - **Step 1 — Expose `SimulationManager.SortStable` (`SimulationManager.cs:271`):** change `private static void SortStable<T>(List<T> list, System.Comparison<T> compare)` to `internal static void SortStable<T>(...)` so `Market` (and later `SocialDynamics` in R5.2) calls `SimulationManager.SortStable(...)` directly without duplicating it.
   - **Step 2 — Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`:**
@@ -301,7 +301,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
         - `public void Reset()`: clears `_stalls`, `_activeStallsBuffer`, `_bounties`, sets `_nextBountyId = 1`, clears `_activeBountiesBuffer`, `_expiredBountiesBuffer` and `_departingClaims`.
     - **Zero-allocation invariant (`EconomyZeroAllocValidator` measures 1,000 steady-state ticks expecting 0 bytes):** keep every `Comparison<T>` lambda passed to `SimulationManager.SortStable` stateless (capturing no local variables and no `this`) so the C# compiler caches each delegate in a static field.
 
-- [ ] **R4.2 Forward from `SimulationManager` and validate.** [Basic]
+- [x] **R4.2 Forward from `SimulationManager` and validate.** [Basic]
   - **Trap 1 — Constructor ordering & DI (`SimulationManager.cs`):**
     - Do NOT add `Market` to `SimulationManager`'s constructor parameter list (`AddSingleton<SimulationManager>()` relies on DI).
     - Add `private readonly Market _market;` on `SimulationManager`.

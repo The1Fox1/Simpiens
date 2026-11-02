@@ -1,5 +1,3 @@
-using Simpiens.Simulation.Economy;
-
 namespace Simpiens.Simulation
 {
     public partial class SimulationManager
@@ -14,22 +12,10 @@ namespace Simpiens.Simulation
         {
             if (save == null) throw new System.ArgumentNullException(nameof(save));
 
-            var stalls = new TradeStallData[_stalls.Count];
-            int n = 0;
-            foreach (var kvp in _stalls) stalls[n++] = kvp.Value;
-            System.Array.Sort(stalls, (a, b) => a.StallEntityId.CompareTo(b.StallEntityId));
-
-            var bounties = new BountyContract[_bounties.Count];
-            n = 0;
-            foreach (var kvp in _bounties) bounties[n++] = kvp.Value;
-            System.Array.Sort(bounties, (a, b) => a.BountyId.CompareTo(b.BountyId));
-
-            var ledger = new Simpiens.Simulation.Persistence.LedgerSave();
-            _economyLedger?.CaptureTo(ledger);
-            save.Economy = new Simpiens.Simulation.Persistence.EconomySave { Stalls = stalls, Bounties = bounties, Ledger = ledger };
+            save.Economy = _market.Capture();
 
             var resources = new Simpiens.Simulation.Persistence.ResourceRecord[_resources.Count];
-            n = 0;
+            int n = 0;
             foreach (var kvp in _resources) resources[n++] = new Simpiens.Simulation.Persistence.ResourceRecord(kvp.Value);
             System.Array.Sort(resources, (a, b) => a.EntityId.CompareTo(b.EntityId));
 
@@ -76,30 +62,7 @@ namespace Simpiens.Simulation
         {
             if (save == null) throw new System.ArgumentNullException(nameof(save));
 
-            var economy = save.Economy;
-            _stalls.Clear();
-            if (economy?.Stalls != null)
-            {
-                for (int i = 0; i < economy.Stalls.Length; i++) _stalls[economy.Stalls[i].StallEntityId] = economy.Stalls[i];
-            }
-            UpdateActiveStallsBuffer();
-
-            _bounties.Clear();
-            _nextBountyId = 1;
-            if (economy?.Bounties != null)
-            {
-                for (int i = 0; i < economy.Bounties.Length; i++)
-                {
-                    var b = economy.Bounties[i];
-                    _bounties[b.BountyId] = b;
-                    if (b.BountyId >= _nextBountyId)
-                    {
-                        _nextBountyId = (ushort)(b.BountyId + 1);
-                    }
-                }
-            }
-            UpdateActiveBountiesBuffer();
-            if (economy?.Ledger != null) _economyLedger?.RestoreFrom(economy.Ledger);
+            _market.RestoreFrom(save.Economy);
 
             var world = save.World;
             RestoreResources(world?.Resources);
@@ -193,11 +156,7 @@ namespace Simpiens.Simulation
             _occupiedBunks.Clear();
             _bunkSleeps.Clear();
             _harvested.Clear();
-            _stalls.Clear();
-            _activeStallsBuffer.Clear();
-            _bounties.Clear();
-            _nextBountyId = 1;
-            _activeBountiesBuffer.Clear();
+            _market.Reset();
             _keysToRemove.Clear();
             _hearthPawnsBuffer.Clear();
             _activeAnchorsBuffer.Clear();

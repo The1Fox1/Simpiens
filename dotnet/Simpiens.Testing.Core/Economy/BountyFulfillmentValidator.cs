@@ -8,6 +8,7 @@ using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Entities;
 using Simpiens.Intervention;
+using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Spatial;
@@ -36,8 +37,9 @@ namespace Simpiens.Testing.Economy
             ValidateLiveBountyIdsAreNeverTakenOver();
             ValidateGeneratedBountyIdsSkipTakenOnes();
             ValidateBountyFairnessByGreed();
+            ValidateStandaloneMarket();
 
-            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 11 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[BountyFulfillmentValidator] ALL 12 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateBountyContractLayoutAndZeroAlloc()
@@ -483,6 +485,73 @@ namespace Simpiens.Testing.Economy
             Assert(full.TryGetTradeStall(stallId, out var fullStall) && fullStall.TreasuryGold == 990, $"The second post is refused and escrows nothing (treasury {fullStall.TreasuryGold}g).");
 
             TestLog.Log("[BountyFulfillmentValidator] Test 10 Passed: Generated bounty ids skip every id taken, and a full board refuses a post.");
+        }
+
+        private void ValidateStandaloneMarket()
+        {
+            var ledger = new EconomyLedger();
+            var chronicle = new NarrativeChronicleService();
+            var market = new Market(ledger, sectors: null, chronicle);
+
+            // 1. Register stalls out of order; verify sorted buffer and price update
+            var stallB = new EntityId(2, 0, 0, 0);
+            var stallA = new EntityId(1, 0, 0, 0);
+            market.RegisterTradeStall(TestStalls.Stall(stallB, Vec2.Zero, treasuryGold: 100));
+            market.RegisterTradeStall(TestStalls.Stall(stallA, Vec2.Zero, treasuryGold: 200));
+
+            Assert(market.ActiveStalls.Count == 2, "2 active stalls in market");
+            Assert(market.ActiveStalls[0].StallEntityId == stallA, "Active stalls buffer sorted by StallEntityId");
+
+            market.UpdateStallPrices(new UpdateStallPricesCommand(stallA).With(ItemType.Ration, 19));
+            Assert(market.TryGetStall(stallA, out var updatedStallA) && updatedStallA.RationSellPrice == 19, "Stall A price updated to 19");
+
+            // 2. Post bounty with id 0 (auto-assign 1, default stallA, escrow 50g) and explicit bounty 3
+            market.PostBounty(new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 50, durationTicks: 20, default, default), currentTick: 10);
+            Assert(ledger.TotalEscrowGold == 50, "Ledger tracks 50g escrow");
+            Assert(market.TryGetStall(stallA, out var escrowedStallA) && escrowedStallA.TreasuryGold == 150, "Stall A treasury deducted to 150g");
+            Assert(market.TryGetBounty(1, out var bounty1) && bounty1.CreatorStallId == stallA && bounty1.RewardGold == 50, "Bounty 1 auto-assigned and created");
+
+            market.PostBounty(new PostBountyCommand(3, BountyType.GatherResource, 0, ItemType.IronOre, 1, 40, durationTicks: 100, default, stallA), currentTick: 10);
+            Assert(ledger.TotalEscrowGold == 90, "Ledger tracks 90g escrow after bounty 3");
+            Assert(market.TryGetStall(stallA, out var stallAAfterB3) && stallAAfterB3.TreasuryGold == 110, "Stall A treasury deducted to 110g");
+
+            var drifterId = new EntityId(9, 0, 0, 0);
+            Assert(market.TryGetBounty(3, out var bounty3), "Bounty 3 found");
+            market.UpdateBounty(bounty3.WithClaimant(drifterId));
+
+            // 3. Release claims for drifter
+            int released = market.ReleaseClaimsForAgent(drifterId);
+            Assert(released == 1, "1 claim released for drifter");
+            Assert(market.TryGetBounty(3, out var reopened) && reopened.Status == BountyStatus.Open && reopened.ClaimantId == default, "Bounty 3 reopened with default claimant");
+
+            // 4. Bounty expiration at tick 35 (bounty 1 duration was 20, issued 10 -> expired at 30)
+            market.ExpireBounties(35);
+            Assert(market.TryGetBounty(1, out var expired) && expired.Status == BountyStatus.Expired, "Bounty 1 expired");
+            Assert(market.TryGetStall(stallA, out var refundedStallA) && refundedStallA.TreasuryGold == 160, "Stall A refunded 50g escrow to 160g");
+            Assert(ledger.TotalEscrowGold == 40, "Ledger escrow reduced to 40g (bounty 3 remaining)");
+            Assert(market.ActiveBounties.Count == 1 && market.ActiveBounties[0].BountyId == 3, "Only active bounty 3 remains in active buffer");
+
+            // 5. Capture & restore into fresh Market
+            var saved = market.Capture();
+            var restoredLedger = new EconomyLedger();
+            var restored = new Market(restoredLedger);
+            restored.RestoreFrom(saved);
+
+            Assert(restored.ActiveStalls.Count == 2, "Restored market has 2 active stalls");
+            Assert(restored.ActiveBounties.Count == 1, "Restored market has 1 active bounty");
+            Assert(restored.TryGetBounty(1, out var savedExp) && savedExp.Status == BountyStatus.Expired, "Saved expired bounty 1 present in restored market");
+            Assert(restoredLedger.TotalEscrowGold == 40, "Restored ledger tracks 40g escrow");
+
+            restored.PostBounty(new PostBountyCommand(0, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, durationTicks: 50, default, stallA), currentTick: 40);
+            Assert(restored.TryGetBounty(4, out _), "Next generated bounty id is 4 (highest + 1)");
+
+            // 6. Reset
+            restored.Reset();
+            Assert(restored.ActiveStalls.Count == 0, "Reset cleared active stalls");
+            Assert(restored.ActiveBounties.Count == 0, "Reset cleared active bounties");
+            Assert(!restored.TryGetBounty(1, out _), "Reset cleared all bounties");
+
+            TestLog.Log("[BountyFulfillmentValidator] Test 12 Passed: Standalone Market validation verified without SimulationManager.");
         }
 
         private void Assert(bool condition, string message)

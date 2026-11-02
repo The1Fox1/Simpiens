@@ -68,6 +68,7 @@ namespace Simpiens.Simulation
         private readonly IIntentHandlerRegistry _intentRegistry;
         private readonly ISupplyService _supplyService;
         private readonly Locomotion _locomotion;
+        private readonly Market _market;
         private EconomyTuning _economy = EconomyTuning.Default;
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
@@ -169,6 +170,7 @@ namespace Simpiens.Simulation
             _agentRegistry = agentRegistry ?? new Simpiens.Simulation.AgentRegistry();
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);
             _economyLedger = economyLedger ?? new EconomyLedger();
+            _market = new Market(_economyLedger, _sectors, _chronicleService);
             _intentRegistry = intentRegistry ?? IntentHandlerRegistry.CreateDefault();
             _supplyService = supplyService ?? new SupplyService(); // keeps its own tuning until a session applies one
 
@@ -271,7 +273,7 @@ namespace Simpiens.Simulation
         }
 
         // Stable insertion sort: per-tick lists are small, it allocates nothing, and equal keys keep arrival order
-        private static void SortStable<T>(List<T> list, System.Comparison<T> compare)
+        internal static void SortStable<T>(List<T> list, System.Comparison<T> compare)
         {
             for (int i = 1; i < list.Count; i++)
             {
@@ -436,56 +438,7 @@ namespace Simpiens.Simulation
             }
 
             // Check bounty expirations
-            if (_bounties.Count > 0)
-            {
-                _expiredBountiesBuffer.Clear();
-                foreach (var kvp in _bounties)
-                {
-                    if (kvp.Value.IsExpired(currentTick))
-                    {
-                        _expiredBountiesBuffer.Add(kvp.Key);
-                    }
-                }
-
-                if (_expiredBountiesBuffer.Count > 0)
-                {
-                    SortStable(_expiredBountiesBuffer, (a, b) => a.CompareTo(b));
-                    for (int i = 0; i < _expiredBountiesBuffer.Count; i++)
-                    {
-                        ushort expiredId = _expiredBountiesBuffer[i];
-                        var b = _bounties[expiredId];
-
-                        if (b.CreatorStallId != default && _stalls.TryGetValue(b.CreatorStallId, out var stall))
-                        {
-                            if (_economyLedger != null)
-                            {
-                                if (_economyLedger.TryRefundEscrow(expiredId, b.CreatorStallId, ref stall, out _))
-                                {
-                                    _stalls[b.CreatorStallId] = stall;
-                                }
-                            }
-                            else
-                            {
-                                _stalls[b.CreatorStallId] = stall.WithTreasury(stall.TreasuryGold + b.RewardGold);
-                            }
-                        }
-
-                        _bounties[expiredId] = b.WithStatus(BountyStatus.Expired);
-                        SimLog.Intervention.ZLogInformation($"Bounty #{expiredId} expired unfulfilled (was {b.Status}, claimant {SimLog.Agent(b.ClaimantId)}); escrow refunded");
-
-                        _chronicleService?.RecordEvent(new ChronicleEvent(
-                            ChronicleEventType.BountyExpired,
-                            PlayerEntityId,
-                            b.ClaimantId,
-                            b.TargetSectorId,
-                            currentTick,
-                            ChronicleIntensity.Trivial));
-                    }
-
-                    UpdateActiveBountiesBuffer();
-                    UpdateActiveStallsBuffer();
-                }
-            }
+            _market.ExpireBounties(currentTick);
 
             // Tick group registry to handle directive expirations
             if (_groupRegistry != null)
@@ -566,7 +519,7 @@ namespace Simpiens.Simulation
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 ValidateBunkOccupancy();
                 _spatialPartition.SetOccupiedBunks(_occupiedBunks);
-                _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _activeStallsBuffer, _activeBountiesBuffer);
+                _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);
             }
         }
 

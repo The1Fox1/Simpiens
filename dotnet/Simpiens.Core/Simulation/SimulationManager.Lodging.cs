@@ -3,7 +3,6 @@ using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
-using Simpiens.Simulation.Economy;
 using ZLogger;
 
 namespace Simpiens.Simulation
@@ -23,7 +22,6 @@ namespace Simpiens.Simulation
         private readonly Dictionary<EntityId, int> _bunkSleeps = new Dictionary<EntityId, int>(16);
         private readonly List<EntityId> _bunkScratch = new List<EntityId>(16);
 
-        private readonly List<ushort> _departingClaims = new List<ushort>(2);
         private readonly List<EntityId> _departingBunks = new List<EntityId>(1);
 
         public void RegisterBunk(EntityId id, Vec2 position) => _bunks[id] = position;
@@ -75,16 +73,7 @@ namespace Simpiens.Simulation
                 inventory.Gold = 0;
             }
 
-            _departingClaims.Clear();
-            for (int i = 0; i < _activeBountiesBuffer.Count; i++)
-            {
-                var bounty = _activeBountiesBuffer[i];
-                if (bounty.Status == BountyStatus.Claimed && bounty.ClaimantId == node.Id) _departingClaims.Add(bounty.BountyId);
-            }
-            for (int i = 0; i < _departingClaims.Count; i++)
-            {
-                if (_bounties.TryGetValue(_departingClaims[i], out var claimed)) UpdateBounty(claimed.WithClaimant(default, BountyStatus.Open));
-            }
+            int releasedClaims = _market.ReleaseClaimsForAgent(node.Id);
 
             _departingBunks.Clear();
             foreach (var kvp in _bunkOccupants)
@@ -102,7 +91,7 @@ namespace Simpiens.Simulation
             Guild.Forget(node.Id);
 
             agent.HasLeft = true;
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({_departingClaims.Count} claim(s) released)");
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({releasedClaims} claim(s) released)");
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));
         }
 
