@@ -368,15 +368,16 @@ The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-
 - **Moves checked line by line:** R2's partials hold the old file's lines exactly (one comment dropped, `// Main thread tracking stores`); R3's `Locomotion` differs only by `SimulationManager.FixedTickDeltaTime`; R4's `Market` keeps the expiry, claim release, capture, restore and reset logic. `Market.Reset` also clears two scratch buffers the old reset left alone; both are cleared before every use.
 - **Carried into R5.2:** `Market` reaches back into `SimulationManager` for `SortStable` and `PlayerEntityId`. R5.2's `SocialDynamics` needs `SortStable` too, so it moves to its own helper first.
 
-### R5.1. Extract lodging (~0.3 day)
+### R5.1. Extract lodging (~0.3 day) — done 2026-11-02
 **Complexity:** Possibly Complex: bunk claims, `StepOntoBunk` movement through `Locomotion`, and preemption stand-up in `ValidateOccupancy`.
-- [ ] **R5.1.1 Create `Simulation/World/Lodging.cs`.** [Possibly Complex: occupancy validation mutates preempted sleepers' `VisualState`]
+- [x] **R5.1.1 Create `Simulation/World/Lodging.cs`.** [Possibly Complex: occupancy validation mutates preempted sleepers' `VisualState`]
   - Owns `BunkClaimTolerance` (`0.25f`), `BunkSettleDistance` (`0.02f`), `_bunks`, `_bunkOccupants`, `_occupiedBunks`, `_bunkSleeps`, `_bunkScratch` and `_departingBunks`.
   - Moves `RegisterBunk`, `BunkOccupants`, `BunkSleeps`, `OccupiedBunks`, `TryClaimBunk`, `StepOntoBunk` (calling `Locomotion.IsCrowdedMove` and `Locomotion.TryDisplacePawn`), `ReleaseBunk`, `ReleaseAllForAgent` (called by `DepartOutpost`), `RecordBunkSleep`, `ValidateOccupancy(IReadOnlyDictionary<EntityId, ActiveIntentState> activeIntents, IAgentRegistry agentRegistry)`, `CaptureSleeps`/`RestoreSleeps` (`IdCountRecord[]` sorted by `Id`), and `Reset()`.
   - `DepartOutpost(WorldEntity node)` stays on `SimulationManager` as the coordinator across `_economyLedger` (`DrifterDepartures`), `_market.ReleaseClaimsForAgent`, `_lodging.ReleaseAllForAgent`, `_groupRegistry.LeaveAllGroups`, `Guild.Forget` and `_chronicleService`.
-- [ ] **R5.1.2 Forward from `SimulationManager.Lodging.cs` and validate.** [Basic]
+- [x] **R5.1.2 Forward from `SimulationManager.Lodging.cs` and validate.** [Basic]
   - `SimulationManager` forwards `ISimulationManager` and `IIntentExecutionContext` bunk members to `_lodging`, and calls `_lodging.ValidateOccupancy` before updating `_spatialPartition` at the end of `SimulateTick`.
   - Add a direct `Lodging` check in `RestAnchorValidator`.
+- **As built:** `Lodging(Locomotion)` takes `SimulationManager`'s locomotion; the bunk constants stay public on `SimulationManager` as aliases of `Lodging`'s, since tests read them there. `OccupiedBunks` is always the same list, because `SetOccupiedBunks` keeps the reference. The gates: 0 warnings, core 143/143, client 345/345, golden 3/3 unchanged, pinned image 345/345, MonoGame and Android compile.
 
 ### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (~0.4 day)
 **Complexity:** Possibly Complex: hearth pair loops, emergent group formation, succession, and converting `SuccessionEngine`'s static scratch buffers to instance state.

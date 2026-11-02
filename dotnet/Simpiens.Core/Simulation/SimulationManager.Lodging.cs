@@ -1,63 +1,32 @@
 using System.Collections.Generic;
-using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
+using Simpiens.Simulation.World;
 using ZLogger;
 
 namespace Simpiens.Simulation
 {
     public partial class SimulationManager
     {
-        // --- Rest anchor: bunks (Epic MAP Phase 3) ---
+        // --- Rest anchor: bunks (Epic MAP Phase 3), kept by Lodging ---
         /// <summary>Slack on top of BunkTargeting.ReachDistance for a sleeper's final step onto the bunk.</summary>
-        public const float BunkClaimTolerance = 0.25f;
+        public const float BunkClaimTolerance = Lodging.BunkClaimTolerance;
 
         /// <summary>A sleeper this close to the bunk's position is lying in it.</summary>
-        public const float BunkSettleDistance = 0.02f;
+        public const float BunkSettleDistance = Lodging.BunkSettleDistance;
 
-        private readonly Dictionary<EntityId, Vec2> _bunks = new Dictionary<EntityId, Vec2>(16);
-        private readonly Dictionary<EntityId, EntityId> _bunkOccupants = new Dictionary<EntityId, EntityId>(16);
-        private readonly List<EntityId> _occupiedBunks = new List<EntityId>(16);
-        private readonly Dictionary<EntityId, int> _bunkSleeps = new Dictionary<EntityId, int>(16);
-        private readonly List<EntityId> _bunkScratch = new List<EntityId>(16);
-
-        private readonly List<EntityId> _departingBunks = new List<EntityId>(1);
-
-        public void RegisterBunk(EntityId id, Vec2 position) => _bunks[id] = position;
+        public void RegisterBunk(EntityId id, Vec2 position) => _lodging.RegisterBunk(id, position);
 
         /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
-        public IReadOnlyDictionary<EntityId, EntityId> BunkOccupants => _bunkOccupants;
+        public IReadOnlyDictionary<EntityId, EntityId> BunkOccupants => _lodging.BunkOccupants;
 
         /// <summary>Completed bunk sleeps per agent this session.</summary>
-        public IReadOnlyDictionary<EntityId, int> BunkSleeps => _bunkSleeps;
+        public IReadOnlyDictionary<EntityId, int> BunkSleeps => _lodging.BunkSleeps;
 
-        public bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vec2 agentPosition)
-        {
-            if (!_bunks.TryGetValue(bunkId, out var bunkPosition)) return false;
-            float reach = Simpiens.Cognition.Planning.BunkTargeting.ReachDistance + BunkClaimTolerance;
-            if ((bunkPosition - agentPosition).SqrMagnitude > reach * reach) return false;
-            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != agentId) return false;
-            _bunkOccupants[bunkId] = agentId;
-            RebuildOccupiedBunks();
-            return true;
-        }
+        public bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vec2 agentPosition) => _lodging.TryClaimBunk(bunkId, agentId, agentPosition);
 
-        public IntentResult StepOntoBunk(WorldEntity node, EntityId bunkId)
-        {
-            if (node == null || !_bunks.TryGetValue(bunkId, out var bunkPosition)) return IntentResult.TargetMissing;
-            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant != node.Id) return IntentResult.TargetMissing;
-
-            // Walk to the bunk's exact position (at walking speed, so the view never sees a jump): the sleeper lies in it
-            if ((bunkPosition - (Vec2)node.Position).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance) return IntentResult.Success;
-
-            Vec2 candidate = Vec2.MoveTowards(node.Position, bunkPosition, node.BaseSpeed * FixedTickDeltaTime);
-            // Someone still standing in it (a sleeper just up): wait, within the handler's bounded approach, rather than
-            // lie down on them (Epic 10 G0: walkers reach occupied bunks now, and stacked there)
-            if (IsCrowdedMove(node, candidate)) return IntentResult.InProgress;
-            if (!TryDisplacePawn(node, candidate, respectPawns: false)) return IntentResult.PathBlocked;
-            return (bunkPosition - candidate).SqrMagnitude <= BunkSettleDistance * BunkSettleDistance ? IntentResult.Success : IntentResult.InProgress;
-        }
+        public IntentResult StepOntoBunk(WorldEntity node, EntityId bunkId) => _lodging.StepOntoBunk(node, bunkId);
 
         public void DepartOutpost(WorldEntity node)
         {
@@ -74,13 +43,7 @@ namespace Simpiens.Simulation
             }
 
             int releasedClaims = _market.ReleaseClaimsForAgent(node.Id);
-
-            _departingBunks.Clear();
-            foreach (var kvp in _bunkOccupants)
-            {
-                if (kvp.Value == node.Id) _departingBunks.Add(kvp.Key);
-            }
-            for (int i = 0; i < _departingBunks.Count; i++) ReleaseBunk(_departingBunks[i], node.Id);
+            _lodging.ReleaseAllForAgent(node.Id);
 
             // Leaving the outpost leaves every group (Epic 10 G4.4): no departed crawler stays on a roster, nor in the guild
             if (_groupRegistry != null)
@@ -95,53 +58,14 @@ namespace Simpiens.Simulation
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));
         }
 
-        public void ReleaseBunk(EntityId bunkId, EntityId agentId)
-        {
-            if (_bunkOccupants.TryGetValue(bunkId, out var occupant) && occupant == agentId)
-            {
-                _bunkOccupants.Remove(bunkId);
-                RebuildOccupiedBunks();
-            }
-        }
+        public void ReleaseBunk(EntityId bunkId, EntityId agentId) => _lodging.ReleaseBunk(bunkId, agentId);
 
-        public void RecordBunkSleep(EntityId agentId)
-        {
-            _bunkSleeps.TryGetValue(agentId, out int n);
-            _bunkSleeps[agentId] = n + 1;
-        }
+        public void RecordBunkSleep(EntityId agentId) => _lodging.RecordBunkSleep(agentId);
 
         /// <summary>
         /// Drops every claim whose sleeper is no longer sleeping in that bunk (preempted, cancelled or removed), so a
         /// bunk can never stay taken by someone who left it. Runs every tick before the snapshot.
         /// </summary>
-        internal void ValidateBunkOccupancy()
-        {
-            if (_bunkOccupants.Count == 0) return;
-            _bunkScratch.Clear();
-            foreach (var kvp in _bunkOccupants)
-            {
-                bool sleeping = _activeIntents.TryGetValue(kvp.Value, out var state)
-                    && state.Intent is SleepAtBunkIntent sleep && sleep.BunkId == kvp.Key;
-                if (!sleeping) _bunkScratch.Add(kvp.Key);
-            }
-            if (_bunkScratch.Count == 0) return;
-            for (int i = 0; i < _bunkScratch.Count; i++)
-            {
-                // A sleeper pulled out of bed (preempted) gets up, unless its new intent already set its own look
-                if (_agentRegistry != null && _agentRegistry.TryGetAgent(_bunkOccupants[_bunkScratch[i]], out var sleeper)
-                    && sleeper.VisualState == Simpiens.Entities.AgentVisualState.Sleeping)
-                {
-                    sleeper.VisualState = Simpiens.Entities.AgentVisualState.Idle;
-                }
-                _bunkOccupants.Remove(_bunkScratch[i]);
-            }
-            RebuildOccupiedBunks();
-        }
-
-        private void RebuildOccupiedBunks()
-        {
-            _occupiedBunks.Clear();
-            foreach (var kvp in _bunkOccupants) _occupiedBunks.Add(kvp.Key);
-        }
+        internal void ValidateBunkOccupancy() => _lodging.ValidateOccupancy(_activeIntents, _agentRegistry);
     }
 }

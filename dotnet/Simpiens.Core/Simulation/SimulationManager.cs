@@ -69,6 +69,7 @@ namespace Simpiens.Simulation
         private readonly ISupplyService _supplyService;
         private readonly Locomotion _locomotion;
         private readonly Market _market;
+        private readonly Lodging _lodging;
         private EconomyTuning _economy = EconomyTuning.Default;
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
@@ -171,6 +172,7 @@ namespace Simpiens.Simulation
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);
             _economyLedger = economyLedger ?? new EconomyLedger();
             _market = new Market(_economyLedger, _sectors, _chronicleService);
+            _lodging = new Lodging(_locomotion);
             _intentRegistry = intentRegistry ?? IntentHandlerRegistry.CreateDefault();
             _supplyService = supplyService ?? new SupplyService(); // keeps its own tuning until a session applies one
 
@@ -518,7 +520,7 @@ namespace Simpiens.Simulation
             {
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 ValidateBunkOccupancy();
-                _spatialPartition.SetOccupiedBunks(_occupiedBunks);
+                _spatialPartition.SetOccupiedBunks(_lodging.OccupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);
             }
         }

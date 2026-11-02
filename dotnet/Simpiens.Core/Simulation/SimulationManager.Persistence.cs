@@ -22,11 +22,6 @@ namespace Simpiens.Simulation
             var supply = new Simpiens.Simulation.Persistence.SupplySave();
             _supplyService?.CaptureTo(supply);
 
-            var sleeps = new Simpiens.Simulation.Persistence.IdCountRecord[_bunkSleeps.Count];
-            n = 0;
-            foreach (var kvp in _bunkSleeps) sleeps[n++] = new Simpiens.Simulation.Persistence.IdCountRecord { Id = kvp.Key, Count = kvp.Value };
-            System.Array.Sort(sleeps, (a, b) => a.Id.CompareTo(b.Id));
-
             var harvested = new Simpiens.Simulation.Persistence.ItemCountRecord[_harvested.Count];
             n = 0;
             foreach (var kvp in _harvested) harvested[n++] = new Simpiens.Simulation.Persistence.ItemCountRecord(kvp.Key, kvp.Value);
@@ -36,7 +31,7 @@ namespace Simpiens.Simulation
             save.World.Resources = resources;
             save.World.Supply = supply;
             save.World.ExploredSectors = _sectors?.CaptureExplored();
-            save.World.BunkSleeps = sleeps;
+            save.World.BunkSleeps = _lodging.CaptureSleeps();
             save.World.Harvested = harvested;
 
             var groups = new Simpiens.Simulation.Persistence.GroupSave();
@@ -69,11 +64,7 @@ namespace Simpiens.Simulation
             if (world?.Supply != null) _supplyService?.RestoreFrom(world.Supply);
             if (world?.ExploredSectors != null) _sectors?.RestoreExplored(world.ExploredSectors);
 
-            _bunkSleeps.Clear();
-            if (world?.BunkSleeps != null)
-            {
-                for (int i = 0; i < world.BunkSleeps.Length; i++) _bunkSleeps[world.BunkSleeps[i].Id] = world.BunkSleeps[i].Count;
-            }
+            _lodging.RestoreSleeps(world?.BunkSleeps);
             _harvested.Clear();
             if (world?.Harvested != null)
             {
@@ -151,10 +142,7 @@ namespace Simpiens.Simulation
             _supplyService?.Reset();
             _economyLedger?.Reset();
             _anchors.Clear();
-            _bunks.Clear();
-            _bunkOccupants.Clear();
-            _occupiedBunks.Clear();
-            _bunkSleeps.Clear();
+            _lodging.Reset();
             _harvested.Clear();
             _market.Reset();
             _keysToRemove.Clear();
