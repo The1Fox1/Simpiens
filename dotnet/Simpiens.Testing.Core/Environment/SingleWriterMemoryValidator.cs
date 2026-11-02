@@ -133,7 +133,7 @@ namespace Simpiens.Testing.Environment
 
                 if (m % 50 == 0)
                 {
-                    memA.PruneStaleResourceMemories(tick);
+                    memA.ForgetResourceSightings();
                 }
             }
 

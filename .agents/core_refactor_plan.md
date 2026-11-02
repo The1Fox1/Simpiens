@@ -393,7 +393,7 @@ The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-
 
 ### R5.3. Tidy cognition memory snapshot and panic forgetting (~0.3 day)
 **Complexity:** Possibly Complex: the rename is Basic; exposing read-only memory maps to off-thread evaluators must preserve zero-allocation `foreach` enumeration and identical golden hashes.
-- [ ] **R5.3.1 Rename `AgentMemory.PruneStaleResourceMemories` to `ForgetResourceSightings`.** [Basic]
+- [x] **R5.3.1 Rename `AgentMemory.PruneStaleResourceMemories` to `ForgetResourceSightings`.** [Basic]
   - Rename `AgentMemory.PruneStaleResourceMemories(uint currentTick)` to `ForgetResourceSightings()` (dropping the unused `currentTick` parameter) in `Cognition/Memory/AgentMemory.cs`, `Cognition/AgentConsequenceService.cs:57` and `Simpiens.Testing.Core/Environment/SingleWriterMemoryValidator.cs:136`.
 - [ ] **R5.3.2 Zero-allocation read-only dictionary views on `IAgentMemory` and `AgentMemorySnapshot`.** [Possibly Complex: must not box `Dictionary.Enumerator` on hot paths, and golden hashes must reproduce 3/3]
   - Add a `readonly struct ReadOnlyMemoryMap<TKey, TValue>` in `Cognition/Memory/` wrapping `Dictionary<TKey, TValue>` with `Count`, `ContainsKey`, `TryGetValue`, indexer getter (`this[TKey]`) and `public Dictionary<TKey, TValue>.Enumerator GetEnumerator() => _map.GetEnumerator();` (duck-typed struct enumerator: 0 bytes allocated in `foreach`, unlike `IReadOnlyDictionary<K, V>` which boxes `IEnumerator<KeyValuePair<K, V>>`).

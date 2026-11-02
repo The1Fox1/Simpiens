@@ -373,7 +373,11 @@ namespace Simpiens.Cognition.Memory
             return SpatialMemoryMap.TryGetValue(entityId, out record);
         }
 
-        public void PruneStaleResourceMemories(uint currentTick)
+        /// <summary>
+        /// Forgets every resource sighting, so a crawler that panicked (starving, no food known) explores anew. Main thread,
+        /// when its <c>PanicIntent</c> completes.
+        /// </summary>
+        public void ForgetResourceSightings()
         {
             if (_keysToRemove == null)
             {
