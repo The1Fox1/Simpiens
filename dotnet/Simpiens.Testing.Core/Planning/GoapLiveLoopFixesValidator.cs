@@ -32,8 +32,9 @@ namespace Simpiens.Testing.Planning
             ValidateReachabilityAwarePlanning();
             ValidateRelevancePruning();
             ValidateZeroAllocation();
+            ValidatePlannerPool();
 
-            TestLog.Log("<color=green>[GoapLiveLoopFixesValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GoapLiveLoopFixesValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // 1. AidCompanion / ShareFood only when someone in view actually needs help
@@ -193,6 +194,73 @@ namespace Simpiens.Testing.Planning
 
             Assert(after - before == 0, $"Region queries + pruned planning allocated {after - before} bytes.");
             TestLog.Log("[GoapLiveLoopFixesValidator] Test 5 Passed: zero allocations in steady state.");
+        }
+
+        // 6. Planners per worker (ROADMAP §1A.2 #8, core refactor R6): the pool plans what one planner plans, on many
+        // threads at once, and allocates nothing in steady state
+        private void ValidatePlannerPool()
+        {
+            var graph = BuildWideGraph();
+            var snapshot = new SharedWorldSnapshot(10, 10, 2f, 8, _ => { });
+            snapshot.SetBounties(new[] { new BountyContract(1, BountyType.GatherResource, 12, ItemType.IronOre, 1, 25, 0, 5000, new Vec2(-8f, 10f)) }, 1);
+            snapshot.SetStalls(new[] { TestStalls.Stall(NextGuid(), new Vec2(20f, 20f)) }, 1);
+            var context = Context(NextGuid(), Vec2.Zero, hunger: 10f, snapshot, new AgentMemory());
+            var state = WorldStateBuilder.BuildWorldState(context, context.Inventory);
+            var goal = new FulfillBountyGoal();
+
+            var expected = new GoapPlan();
+            Assert(new GoapPlanner().Plan(state, goal, graph, context, expected) && expected.Actions.Count == 5, "Precondition: one planner finds the 5-step bounty plan.");
+
+            var pool = new GoapPlannerPool();
+            var pooled = new GoapPlan();
+            Assert(pool.Plan(state, goal, graph, context, pooled) && SamePlan(expected, pooled), "The pool plans what one planner plans.");
+
+            const int Workers = 16, PlansEach = 200;
+            var mismatches = new int[Workers];
+            var tasks = new System.Threading.Tasks.Task[Workers];
+            using (var start = new System.Threading.ManualResetEventSlim(false))
+            {
+                for (int w = 0; w < Workers; w++)
+                {
+                    int worker = w;
+                    tasks[w] = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        var plan = new GoapPlan();
+                        start.Wait();
+                        for (int i = 0; i < PlansEach; i++)
+                        {
+                            if (!pool.Plan(state, goal, graph, context, plan) || !SamePlan(expected, plan)) mismatches[worker]++;
+                        }
+                    });
+                }
+                start.Set();
+                System.Threading.Tasks.Task.WaitAll(tasks);
+            }
+            int wrong = 0;
+            for (int w = 0; w < Workers; w++) wrong += mismatches[w];
+            Assert(wrong == 0, $"{Workers} workers planning at once all get the same plan ({wrong} of {Workers * PlansEach} differed).");
+            Assert(pool.IdleCount >= 8 && pool.IdleCount <= 8 + Workers, $"Every rented planner came back, and the pool grew at most to the plans in flight ({pool.IdleCount} idle).");
+
+            pool.Plan(state, goal, graph, context, pooled); // warm-up on this thread
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 100; i++)
+            {
+                pool.Plan(state, goal, graph, context, pooled);
+            }
+            long after = GC.GetAllocatedBytesForCurrentThread();
+            Assert(after - before == 0, $"Planning through the pool allocated {after - before} bytes in steady state.");
+
+            TestLog.Log($"[GoapLiveLoopFixesValidator] Test 6 Passed: the planner pool matches one planner across {Workers} workers and allocates nothing.");
+        }
+
+        private static bool SamePlan(GoapPlan expected, GoapPlan actual)
+        {
+            if (expected.Actions.Count != actual.Actions.Count) return false;
+            for (int i = 0; i < expected.Actions.Count; i++)
+            {
+                if (!ReferenceEquals(expected.Actions[i], actual.Actions[i])) return false;
+            }
+            return true;
         }
 
         // ---------------------------------------------------------------------------------------------

@@ -402,11 +402,22 @@ The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-
   - Verify `golden check` 3/3 is identical. (If any test or seed ever depended on the in-evaluation snapshot edit, stop and report before changing behaviour.)
 - **As built:** R5.3.1 `8b2422d`. In R5.3.2 `ReadOnlyMemoryMap` is a sealed class, not a `readonly struct`: some 15 callers null-check the maps (`Memory.SpatialMemoryMap == null`), which doesn't compile against a struct. It is made once per memory and snapshot, never per read, and exposes the dictionary's struct enumerator, so `foreach` allocates nothing (`SingleWriterMemoryValidator` test 6 measures 0 bytes over 1,000 walks). With the interface read-only, the only compile error was the evaluator's own prune, so nothing else wrote memory through `IAgentMemory`. Before removing it: after `MentalBreakEvaluator` returns, the evaluation loop breaks, and `TryPickFoodPlotWaypoint` and `TryPickSectorWaypoint` read the map and sector visits, not `SpatialMemoryMap`. Golden 3/3 unchanged confirms it. `MentalBreakValidator` test 1 now asserts the evaluation forgets nothing and the completed panic does. Gates: 0 warnings, core 143/143, client 345/345, golden 3/3 unchanged, pinned image 345/345, MonoGame and Android compile.
 
-### R6. Planners per worker (optional; ~0.5 day; §1A.2 #8)
+### R6. Planners per worker (optional; ~0.5 day; §1A.2 #8) — done 2026-11-02
 **Complexity:** Very Complex, supervised by the developer: planning on several threads. It is too small to split. `GridAStarSearcher`'s pool is the precedent, and the probe has to be read.
 - **The change:** a pool of `GoapPlanner`s, as with `GridAStarSearcher`, in place of the locked singleton.
 - **Measure first:** `PopulationScalingProbe` before and after, at 12, 16 and 24 crawlers. The headless step waits for cognition at each tick barrier, so the lock costs time only when evaluations overlap.
 - **The decision:** if the probe shows no gain, it still closes #8. Whether that's worth it now is the producer's call.
+- **As built:** `GoapPlannerPool` (`Cognition/Planning/`), registered as the session's `IGoapPlanner`; `GoapPlanner` is unchanged and keeps its lock, now uncontended, for a planner shared by hand. Every search resets the planner's buffers (closed-table writes are tracked, the node pool, heap and scratch are read only below their counts), so a plan is a pure function of its inputs. `GoapLiveLoopFixesValidator` test 6: the pool's plan equals one planner's, 16 workers × 200 plans at once all match, every planner comes back, 0 bytes in steady state.
+- **The measurement** (`PopulationScalingProbe`, Release, a baseline worktree at `ff1a67e` against the pool, alternating A B for four rounds after a quiet minute, 16 cores), median ticks/s:
+
+| Crawlers | Locked singleton | Pool | Change |
+| :-: | :-: | :-: | :-: |
+| 12 | 11,472 (10,299–12,148) | 10,988 (9,071–12,535) | −4% |
+| 16 | 20,874 (19,955–21,889) | 21,518 (20,636–22,532) | +3% |
+| 24 | 20,198 (19,932–20,297) | 19,796 (19,645–20,035) | −2% |
+
+  No gain beyond the noise, as expected: the lock only costs when evaluations plan at the same moment, and most evaluations step a plan rather than make one. It closes #8 (the producer: "Proceed with R5-R6"); the gain would come with a server ticking several simulations, or a much larger population.
+- **The gates:** 0 warnings; core 143/143; client 345/345 (one native run's test host segfaulted in `libxcb-dri3` after 14 tests, the host's X/DRI stack, not the simulation; three full reruns were clean, and the pinned image passed 345/345); golden 3/3 unchanged; MonoGame and Android compile.
 
 ### R7. The item system — done 2026-10-26 (its own plan, deleted at close-out)
 - **History:**
