@@ -1,8 +1,8 @@
 # Core refactor plan: SimulationManager's split, guards and the cleanup's loose ends
 
-- **Status (producer, 2026-10-25; updated 2026-11-01 after Epic 10 Part 1):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`, PR #14); **R7, the item system, is done** (`feat/items-i1-catalog`, PR #15); **Epic 10 Part 1 (G0–G6) is `COMPLETED`** (2026-11-01). **R1–R5 are next**, before Epic 10 Part 2 starts. The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R6 are done or dropped, then close it out by the docs protocol.
+- **Status (producer, 2026-10-25; updated 2026-11-01 after Epic 10 Part 1):** an implementation plan, not an epic. **R0 is done** (`feat/code-cleanliness`, PR #14); **R7, the item system, is done** (`feat/items-i1-catalog`, PR #15); **Epic 10 Part 1 (G0–G6) is `COMPLETED`** (2026-11-01). **R1–R4 are done** (2026-11-01, `ab9f412`, `0fa3555`, `c49c3f7`, `fb23c51`); **R5–R6 are next** (the producer, 2026-11-02: "Proceed with R5-R6"), before Epic 10 Part 2 starts. **The whole plan, R1–R6, is one PR into `main` from `feat/core-refactor`, with a commit per phase or step** (the producer, 2026-11-02). The roadmap records this in §3A ("Core refactor"); keep this plan until R1–R6 are done or dropped, then close it out by the docs protocol.
 - **Source:** a smaller agent's report, *Simpiens Solution Architecture & Code Smells Deep Dive* (2026-10-24, not in the repo), and its two commits on `feat/code-cleanliness`: `52f582f` (core fixes) and `e58073a` (Gum migration, 0 warnings). This plan re-checks the report against the code (re-audited 2026-11-01 after Epic 10 G6); §2 records which findings hold.
-- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as one plan, because R5 bundles three extractions. Run R5 as three separate PRs (**R5.1**, **R5.2**, **R5.3**). R1 is Possibly Complex (R1.1–R1.3 are Basic; R1.4 is Possibly Complex); R2 is Basic; R3, R4, R5.1, R5.2 and R5.3 are Possibly Complex. R6 is optional and Very Complex because it changes threading; it is too small to split, so the developer supervises it if run.
+- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as one plan, because R5 bundles three extractions. Run R5 as three separate commits, each passing the gates (**R5.1**, **R5.2**, **R5.3**). R1 is Possibly Complex (R1.1–R1.3 are Basic; R1.4 is Possibly Complex); R2 is Basic; R3, R4, R5.1, R5.2 and R5.3 are Possibly Complex. R6 is optional and Very Complex because it changes threading; it is too small to split, so the developer supervises it if run.
 - **Rule for every phase:** behaviour-preserving unless the phase says otherwise. The golden hashes are the proof: a phase that changes them is not a refactor; stop and report.
 
 ---
@@ -39,7 +39,7 @@ What `52f582f` does, and what it leaves open:
 
 | Report § | Finding | Verdict | Action |
 | :-: | :--- | :--- | :--- |
-| 2.1 | `SimulationManager` is a god object | **Confirmed.** 2,022 lines after Epic 10 G6 (was 1,876 at G2); the next-largest core file is 616. Blocks: `IGuildHost` / `ISupplyHost` bridge 110–153, resources and surveys 163–250 & 357–367, bunks and departures 252–406, stalls and bounties 416–426 & 613–965, constructor and intent queue 429–600, persistence and reset 983–1182, tick 1184–1374, social (gossip, hearth, succession) 1376–1629, movement 1631–1981. | R2–R5.2 |
+| 2.1 | `SimulationManager` is a god object | **Confirmed.** 2,022 lines after Epic 10 G6 (was 1,876 at G2); the next-largest core file is 616. Blocks (lines in the 2026-11-01 file, before R2 split it into partials): `IGuildHost` / `ISupplyHost` bridge 110–153, resources and surveys 163–250 & 357–367, bunks and departures 252–406, stalls and bounties 416–426 & 613–965, constructor and intent queue 429–600, persistence and reset 983–1182, tick 1184–1374, social (gossip, hearth, succession) 1376–1629, movement 1631–1981. | R2–R5.2 |
 | 2.2 | §1A.2 #17, #19 | Fixed by `52f582f`, with the gaps in §1 | R0 (done) |
 | 2.2 | §1A.2 #8, the locked `GoapPlanner` singleton | **Confirmed** (`SimpiensServiceCollectionExtensions.cs:57`, `GoapPlanner.cs:97`). Plans depend only on their inputs, so planners per worker shouldn't change behaviour. G5 measured +28% tick time during an expedition (13,835 ticks/s), well within budget. | R6, optional |
 | 3.1 | `SuccessionEngine`'s plain `static` buffers | **Real, latent.** It runs on the simulation thread only, and `Simpiens.Core.Tests` disables parallelism (`TestSetup.cs`). It breaks only with two simulations ticking concurrently in one process, e.g. a future server. | R5.2 |
@@ -62,7 +62,7 @@ What `52f582f` does, and what it leaves open:
 
 ## 3. Phases
 
-Each phase is one PR into `main`, branched from `main` after the previous one merges (never stacked). Each must pass:
+The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-02), never stacked on another PR. Each phase, and each self-contained step within one, is its own commit, with the gates' results in its body. Each commit must pass:
 - `dotnet test dotnet/Simpiens.slnx`;
 - `golden check` 3/3, **unchanged**;
 - `scripts/test-client-in-container.sh` (byte for byte);
@@ -87,7 +87,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
    - An entry in `architecture_history`.
    - `AGENTS.md`: warnings are errors.
 
-### R1. Guards (`feat/refactor-r1-guards`, ~0.5 day)
+### R1. Guards (~0.5 day) — done 2026-11-01 (`ab9f412`)
 **Complexity:** Possibly Complex, because of R1.4; R1.1–R1.3 are Basic.
 - [x] **R1.1 GOAP facts (`StateFact` < 64).** [Basic]
   - Add `public const int MaxFacts = 64;` on `WorldState` (`Cognition/Planning/WorldState.cs`) and `System.Diagnostics.Debug.Assert((uint)fact < MaxFacts, ...)` in `With`, `Without`, `Get` and `IsSet` (zero cost in Release).
@@ -105,7 +105,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
   - Keep `public IReadOnlyList<AgentRuntime> Crawlers`, `public IReadOnlyList<AgentState> CrawlerStates` and `public IReadOnlyList<string> CrawlerNames` with their exact types via preallocated, zero-allocation `IReadOnlyList<T>` view wrappers over `_crawlers` initialized once in `SessionHost`'s constructor, so external callers (`SessionBuilder`, `WorldStateHash`, `GuildPlayer`, `OutpostWatch`) don't change.
   - Update the three mutation sites (`SpawnCrawler`, `RemoveCrawlerAt`, `BuildStaticWorld`) and internal loops (`Respawn` ledger baseline, `GiveIdentity`, `Capture`, `TickCrawlers`, `TickPopulation`, `IsClearOfCrawlers`) to index `_crawlers`.
 
-### R2. `SimulationManager` into partial files (`feat/refactor-r2-partials`, ~0.5 day, moves only)
+### R2. `SimulationManager` into partial files (~0.5 day, moves only) — done 2026-11-01 (`0fa3555`)
 **Complexity:** Basic. Moves only: no logic or signature changes, and the golden hashes and the tests prove it.
 - [x] **R2.1 Split `SimulationManager.cs` (2,022 lines) into 7 partial files** [Basic] under `Simulation/`, following the precedent of `SessionHost.Drifters.cs`:
   - `SimulationManager.cs` (~390 lines): `ActiveIntentState`, `AnchorData`, core fields, constructor, `Dispose`, `Pause`/`Resume`, `SessionEpoch`, `Cognition`, the intent queue (`EnqueueIntent`, `ProcessQueuedIntents`, `AbortIntent`, `ExecuteIntent`, `CompleteIntent`, `RecordIntentFault`, `SortStable`, `EntityIdComparer`, `InsertSorted`, `RemoveSorted`), `ProcessInfluenceEvent`, `ExecuteCalmCrawlerCommand`, `SetEconomy`, `Tick`/`SimulateTick`, and the explicit `IGuildHost` / `ISupplyHost.PayGuildWages` bridge members added in Epic 10 G4–G5.
@@ -118,9 +118,8 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
 
 **Why first:** each later extraction then diffs one small partial file instead of a 2,022-line class, and agents stop loading 2,022 lines to touch one domain.
 
-### R3. Extract locomotion (`feat/refactor-r3-locomotion`, ~0.5 day)
+### R3. Extract locomotion (~0.5 day) — done 2026-11-01 (`c49c3f7`)
 **Complexity:** Possibly Complex by rubric (touches a zero-allocation hot path with exact float casts), with a complete mechanical blueprint below so a **Basic** agent can execute R3.1 and R3.2 with zero design calls.
-- **Branch note:** R3 depends on R2's `SimulationManager.Movement.cs` partial split (`0fa3555`). Confirm `dotnet/Simpiens.Core/Simulation/SimulationManager.Movement.cs` is present on the working branch before starting (either branched from `main` after R1–R2 merge, or on the branch the developer designates).
 
 - [x] **R3.1 Create `dotnet/Simpiens.Core/Simulation/Movement/Locomotion.cs`.** [Possibly Complex: hot-path math and float casts; mechanical recipe below for Basic-agent execution]
   - **Namespace & type:** `namespace Simpiens.Simulation.Movement`, `internal sealed class Locomotion` (`Simpiens.Core/AssemblyInfo.cs` already grants `InternalsVisibleTo` to `Simpiens.Testing.Core`, `Simpiens.Hosting` and `Simpiens.Core.Tests`, while keeping `Locomotion` hidden from client views).
@@ -221,9 +220,8 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
          - Tier 3 `ApplyProgressiveUnstuckReflex` (`StallCount = 4`, `Intent = new HarvestResourceIntent(mover.Id, resourceId, default)`) returns `IntentResult.PathBlocked` and blacklists `resourceId` until tick `350` (`mover.Agent.Memory.IsBlacklisted(resourceId, 349)` is `true`, `IsBlacklisted(resourceId, 350)` is `false`).
   - **Verify all §3 gates** (`dotnet test dotnet/Simpiens.slnx`, `golden check` 3/3 unchanged, `scripts/test-client-in-container.sh`, MonoGame compile, Android compile, 0 warnings) and commit as `refactor(core): extract Locomotion from SimulationManager (R3)`.
 
-### R4. Extract the market (`feat/refactor-r4-market`, ~0.5 day)
+### R4. Extract the market (~0.5 day) — done 2026-11-01 (`fb23c51`)
 **Complexity:** Possibly Complex by rubric (escrow through the ledger, the `EconomySave` block moved with its byte layout kept, and deterministic expiry/buffer order), with a complete mechanical blueprint below so a **Basic** agent can execute R4.1 and R4.2 with zero design calls.
-- **Branch note:** R4 depends on R2's partial split (`SimulationManager.Market.cs`, `SimulationManager.Lodging.cs`, `SimulationManager.Persistence.cs`). Confirm those files exist on the working branch before starting.
 
 - [x] **R4.1 Create `dotnet/Simpiens.Core/Simulation/Economy/Market.cs`.** [Possibly Complex: escrow, save block and deterministic buffer ordering; mechanical recipe below for Basic-agent execution]
   - **Why stalls and bounties go together:** escrow is locked from and refunded to a stall's treasury through `IEconomyLedger`.
@@ -365,7 +363,12 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
       6. Call `restored.Reset();` -> assert `restored.ActiveStalls.Count == 0`, `restored.ActiveBounties.Count == 0`, and `!restored.TryGetBounty(1, out _)`.
   - **Verify all §3 gates** (`dotnet test dotnet/Simpiens.slnx`, `golden check` 3/3 unchanged, `scripts/test-client-in-container.sh`, MonoGame compile, Android compile, 0 warnings) and commit as `refactor(core): extract Market from SimulationManager (R4)`.
 
-### R5.1. Extract lodging (`feat/refactor-r5-1-lodging`, ~0.3 day)
+### R1–R4 verified (2026-11-01, on `fb23c51`)
+- **The gates:** 0 warnings (Release, no incremental); `dotnet test` core 143/143, client 345/345; `golden check` 3/3 unchanged; the pinned image 345/345, renders byte for byte; MonoGame and Android compile. The four commits' bodies are empty, so this is their record.
+- **Moves checked line by line:** R2's partials hold the old file's lines exactly (one comment dropped, `// Main thread tracking stores`); R3's `Locomotion` differs only by `SimulationManager.FixedTickDeltaTime`; R4's `Market` keeps the expiry, claim release, capture, restore and reset logic. `Market.Reset` also clears two scratch buffers the old reset left alone; both are cleared before every use.
+- **Carried into R5.2:** `Market` reaches back into `SimulationManager` for `SortStable` and `PlayerEntityId`. R5.2's `SocialDynamics` needs `SortStable` too, so it moves to its own helper first.
+
+### R5.1. Extract lodging (~0.3 day)
 **Complexity:** Possibly Complex: bunk claims, `StepOntoBunk` movement through `Locomotion`, and preemption stand-up in `ValidateOccupancy`.
 - [ ] **R5.1.1 Create `Simulation/World/Lodging.cs`.** [Possibly Complex: occupancy validation mutates preempted sleepers' `VisualState`]
   - Owns `BunkClaimTolerance` (`0.25f`), `BunkSettleDistance` (`0.02f`), `_bunks`, `_bunkOccupants`, `_occupiedBunks`, `_bunkSleeps`, `_bunkScratch` and `_departingBunks`.
@@ -375,7 +378,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
   - `SimulationManager` forwards `ISimulationManager` and `IIntentExecutionContext` bunk members to `_lodging`, and calls `_lodging.ValidateOccupancy` before updating `_spatialPartition` at the end of `SimulateTick`.
   - Add a direct `Lodging` check in `RestAnchorValidator`.
 
-### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (`feat/refactor-r5-2-social`, ~0.4 day)
+### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (~0.4 day)
 **Complexity:** Possibly Complex: hearth pair loops, emergent group formation, succession, and converting `SuccessionEngine`'s static scratch buffers to instance state.
 - [ ] **R5.2.1 Make `SuccessionEngine` an instance class owning its buffers.** [Possibly Complex]
   - In `Cognition/Groups/SuccessionEngine.cs`, change `public static class SuccessionEngine` to `public sealed class SuccessionEngine` and make `_candidateBuffer`, `_scoreBuffer`, `_followersToMove` and `_unalignedCluster` instance `readonly` fields so two simulations in one process never share scratch buffers.
@@ -386,7 +389,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
   - Moves `RegisterAnchor`, `CheckGossipOpportunity`, `EvaluateHearthProximity`, `EvaluateLeadershipSuccession` and `Reset()` out of `SimulationManager.Social.cs`.
   - After R5.2, `SimulationManager` is down to the tick pipeline, the intent queue, `DepartOutpost`, persistence orchestration and the façade (~500 lines).
 
-### R5.3. Tidy cognition memory snapshot and panic forgetting (`feat/refactor-r5-3-cognition-memory`, ~0.3 day)
+### R5.3. Tidy cognition memory snapshot and panic forgetting (~0.3 day)
 **Complexity:** Possibly Complex: the rename is Basic; exposing read-only memory maps to off-thread evaluators must preserve zero-allocation `foreach` enumeration and identical golden hashes.
 - [ ] **R5.3.1 Rename `AgentMemory.PruneStaleResourceMemories` to `ForgetResourceSightings`.** [Basic]
   - Rename `AgentMemory.PruneStaleResourceMemories(uint currentTick)` to `ForgetResourceSightings()` (dropping the unused `currentTick` parameter) in `Cognition/Memory/AgentMemory.cs`, `Cognition/AgentConsequenceService.cs:57` and `Simpiens.Testing.Core/Environment/SingleWriterMemoryValidator.cs:136`.

@@ -1301,3 +1301,12 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - expeditions run by the guild's stage machine on the main thread, not by cognition;
   - save formats 7–9 (two from Epic 10 itself, one from UI-Beta).
 - Decisions D1–D6 went in at G4's close and D7–D13 at G5's; all fourteen are in the epic's §0. Commits: `382d12e` G6.1, `0dcd9ba` G6.2, `74aa79b` G6.3, `35b795f` G6.4. The working plan was deleted at close-out.
+
+## 2026-11-01: core refactor R1–R4 (`feat/core-refactor`)
+
+- **R1, guards:** `WorldState.MaxFacts` with debug asserts and a validator over every `StateFact`; a map whose partition passes `GridAStarSearcher.MaxCells` is refused at load, headless loads included; `AgentState` has no unseeded constructor; `SessionHost` keeps one `CrawlerEntry` list, with read-only views for the old three lists.
+- **R2, partial files:** `SimulationManager` split by domain into seven files, moves only (checked line by line).
+- **R3 and R4, extractions:** `Simulation/Movement/Locomotion` and `Simulation/Economy/Market` are internal classes that `SimulationManager` builds in its constructor (not injected: `AddSingleton<SimulationManager>()` has no factory) and forwards to, so no caller changed. `Market` takes the ledger field after its fallback, so it and `EconomyLedger` share one instance.
+- **Behaviour unchanged:** golden 3/3, renders byte for byte in the pinned image.
+- **One PR for the whole plan (the producer, 2026-11-02),** with a commit per phase; the plan had said a PR per phase. The R1–R4 commits' bodies are empty; their gate record is in the plan.
+- Commits: `ab9f412` R1, `0fa3555` R2, `a3e3bc5` the R3/R4 blueprints, `c49c3f7` R3, `fb23c51` R4.
