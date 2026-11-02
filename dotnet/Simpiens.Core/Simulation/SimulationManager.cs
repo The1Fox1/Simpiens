@@ -9,6 +9,7 @@ using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Movement;
+using Simpiens.Simulation.Social;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using ZLogger;
@@ -70,6 +71,7 @@ namespace Simpiens.Simulation
         private readonly Locomotion _locomotion;
         private readonly Market _market;
         private readonly Lodging _lodging;
+        private readonly SocialDynamics _social;
         private EconomyTuning _economy = EconomyTuning.Default;
 
         private readonly ConcurrentQueue<AgentIntent> _intentQueue = new ConcurrentQueue<AgentIntent>();
@@ -167,6 +169,7 @@ namespace Simpiens.Simulation
             _groupRegistry = groupRegistry;
             _chronicleService = chronicleService;
             _sectors = sectors;
+            _social = new SocialDynamics(_worldRegistry, _groupRegistry, _sectors, _chronicleService, _clock);
             _interventionService = interventionService;
             _agentRegistry = agentRegistry ?? new Simpiens.Simulation.AgentRegistry();
             _consequenceService = consequenceService ?? new Simpiens.Cognition.AgentConsequenceService(_groupRegistry, _spatialPartition, _chronicleService);

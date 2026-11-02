@@ -141,13 +141,11 @@ namespace Simpiens.Simulation
             _dormantNodes.Clear();
             _supplyService?.Reset();
             _economyLedger?.Reset();
-            _anchors.Clear();
+            _social.Reset();
             _lodging.Reset();
             _harvested.Clear();
             _market.Reset();
             _keysToRemove.Clear();
-            _hearthPawnsBuffer.Clear();
-            _activeAnchorsBuffer.Clear();
             if (_groupRegistry != null)
             {
                 _groupRegistry.Clear();

@@ -379,16 +379,17 @@ The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-
   - Add a direct `Lodging` check in `RestAnchorValidator`.
 - **As built:** `Lodging(Locomotion)` takes `SimulationManager`'s locomotion; the bunk constants stay public on `SimulationManager` as aliases of `Lodging`'s, since tests read them there. `OccupiedBunks` is always the same list, because `SetOccupiedBunks` keeps the reference. The gates: 0 warnings, core 143/143, client 345/345, golden 3/3 unchanged, pinned image 345/345, MonoGame and Android compile.
 
-### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (~0.4 day)
+### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (~0.4 day) — done 2026-11-02
 **Complexity:** Possibly Complex: hearth pair loops, emergent group formation, succession, and converting `SuccessionEngine`'s static scratch buffers to instance state.
 - [x] **R5.2.1 Make `SuccessionEngine` an instance class owning its buffers.** [Possibly Complex]
   - In `Cognition/Groups/SuccessionEngine.cs`, change `public static class SuccessionEngine` to `public sealed class SuccessionEngine` and make `_candidateBuffer`, `_scoreBuffer`, `_followersToMove` and `_unalignedCluster` instance `readonly` fields so two simulations in one process never share scratch buffers.
   - Pure stateless helpers (`DetermineSuccessionMode`, `IsLeaderIncapacitatedOrDiscredited`) may stay `static`; `TryFormEmergentGroup` and `ResolveSuccession` become instance methods.
   - Update `SuccessionValidator` to instantiate `new SuccessionEngine()`.
-- [ ] **R5.2.2 Create `Simulation/Social/SocialDynamics.cs` and forward from `SimulationManager`.** [Possibly Complex]
+- [x] **R5.2.2 Create `Simulation/Social/SocialDynamics.cs` and forward from `SimulationManager`.** [Possibly Complex]
   - Owns `GossipRadius` (`2.5f`), `_anchors`, `_hearthPawnsBuffer`, `_hearthAgentsBuffer`, `_activeAnchorsBuffer` and a `SuccessionEngine` instance; takes `IWorldRegistry`, `IGroupRegistry`, `ISectorRegistry`, `INarrativeChronicleService` and `ISimulationClock`.
   - Moves `RegisterAnchor`, `CheckGossipOpportunity`, `EvaluateHearthProximity`, `EvaluateLeadershipSuccession` and `Reset()` out of `SimulationManager.Social.cs`.
   - After R5.2, `SimulationManager` is down to the tick pipeline, the intent queue, `DepartOutpost`, persistence orchestration and the façade (~500 lines).
+- **As built:** first `StableSort` (`c223c82`): `SortStable` moved unchanged out of `SimulationManager`, so `Market` and `SocialDynamics` don't reach back for it. Then R5.2.1 (`6d7a7c8`) and R5.2.2. `SocialDynamics` keeps its own one-line `GetSectorForPosition` (the sector registry's lookup), as `Market` keeps `ResolveSectorTarget`. `GatheringAnchorValidator` gains a check on `SocialDynamics` alone. `SimulationManager.cs` is 570 lines, 1,002 with its partials (2,022 before R2). Each commit's gates: 0 warnings, core 143/143, client 345/345, golden 3/3 unchanged, pinned image 345/345, MonoGame and Android compile.
 
 ### R5.3. Tidy cognition memory snapshot and panic forgetting (~0.3 day)
 **Complexity:** Possibly Complex: the rename is Basic; exposing read-only memory maps to off-thread evaluators must preserve zero-allocation `foreach` enumeration and identical golden hashes.
