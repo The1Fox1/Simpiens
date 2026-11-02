@@ -12,15 +12,19 @@ namespace Simpiens.Cognition.Memory
         private readonly Dictionary<EntityId, SpatialMemoryRecord> _spatialMap;
         private readonly Dictionary<EntityId, uint> _blacklistedEntities;
         private readonly Dictionary<EntityId, AffinityRecord> _affinityMap;
+        private readonly ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord> _spatialView;
+        private readonly ReadOnlyMemoryMap<EntityId, AffinityRecord> _affinityView;
 
-        public Dictionary<EntityId, SpatialMemoryRecord> SpatialMemoryMap => _spatialMap;
-        public Dictionary<EntityId, AffinityRecord> AffinityMap => _affinityMap;
+        public ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord> SpatialMemoryMap => _spatialView;
+        public ReadOnlyMemoryMap<EntityId, AffinityRecord> AffinityMap => _affinityView;
 
         public AgentMemorySnapshot(int initialSpatialCapacity = 64, int initialAffinityCapacity = 16)
         {
             _spatialMap = new Dictionary<EntityId, SpatialMemoryRecord>(initialSpatialCapacity);
             _blacklistedEntities = new Dictionary<EntityId, uint>(16);
             _affinityMap = new Dictionary<EntityId, AffinityRecord>(initialAffinityCapacity);
+            _spatialView = new ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord>(_spatialMap);
+            _affinityView = new ReadOnlyMemoryMap<EntityId, AffinityRecord>(_affinityMap);
         }
 
         /// <summary>

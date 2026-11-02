@@ -9,8 +9,9 @@ namespace Simpiens.Cognition.Memory
     /// </summary>
     public interface IAgentMemory
     {
-        Dictionary<EntityId, SpatialMemoryRecord> SpatialMemoryMap { get; }
-        Dictionary<EntityId, AffinityRecord> AffinityMap { get; }
+        // Read-only: cognition reads memory off-thread and never writes it (single writer, ROADMAP §1A.1)
+        ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord> SpatialMemoryMap { get; }
+        ReadOnlyMemoryMap<EntityId, AffinityRecord> AffinityMap { get; }
 
         bool IsBlacklisted(EntityId entityId, uint currentTick);
         AffinityRecord GetAffinity(EntityId peerId, uint currentTick);
