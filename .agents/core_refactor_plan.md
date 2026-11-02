@@ -381,7 +381,7 @@ The plan is one PR into `main` from `feat/core-refactor` (the producer, 2026-11-
 
 ### R5.2. Extract social dynamics and instance-ify `SuccessionEngine` (~0.4 day)
 **Complexity:** Possibly Complex: hearth pair loops, emergent group formation, succession, and converting `SuccessionEngine`'s static scratch buffers to instance state.
-- [ ] **R5.2.1 Make `SuccessionEngine` an instance class owning its buffers.** [Possibly Complex]
+- [x] **R5.2.1 Make `SuccessionEngine` an instance class owning its buffers.** [Possibly Complex]
   - In `Cognition/Groups/SuccessionEngine.cs`, change `public static class SuccessionEngine` to `public sealed class SuccessionEngine` and make `_candidateBuffer`, `_scoreBuffer`, `_followersToMove` and `_unalignedCluster` instance `readonly` fields so two simulations in one process never share scratch buffers.
   - Pure stateless helpers (`DetermineSuccessionMode`, `IsLeaderIncapacitatedOrDiscredited`) may stay `static`; `TryFormEmergentGroup` and `ResolveSuccession` become instance methods.
   - Update `SuccessionValidator` to instantiate `new SuccessionEngine()`.

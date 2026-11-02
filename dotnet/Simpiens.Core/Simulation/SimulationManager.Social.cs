@@ -14,6 +14,7 @@ namespace Simpiens.Simulation
         private readonly List<WorldEntity> _hearthPawnsBuffer = new List<WorldEntity>(32);
         private readonly List<ISocialAgent> _hearthAgentsBuffer = new List<ISocialAgent>(32);
         private readonly List<AnchorData> _activeAnchorsBuffer = new List<AnchorData>(16);
+        private readonly SuccessionEngine _successionEngine = new SuccessionEngine();
 
         private const float GossipRadius = 2.5f;
 
@@ -221,7 +222,7 @@ namespace Simpiens.Simulation
 
                     if (_hearthAgentsBuffer.Count >= 3)
                     {
-                        if (SuccessionEngine.TryFormEmergentGroup(anchor.Position, _hearthAgentsBuffer, _groupRegistry, currentTick, out byte newGroupId))
+                        if (_successionEngine.TryFormEmergentGroup(anchor.Position, _hearthAgentsBuffer, _groupRegistry, currentTick, out byte newGroupId))
                         {
                             _chronicleService?.RecordEvent(new ChronicleEvent(
                                 ChronicleEventType.GroupFormed,
@@ -249,7 +250,7 @@ namespace Simpiens.Simulation
 
                 if (SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(groupData.LeaderId, g, _worldRegistry, _groupRegistry, currentTick))
                 {
-                    var result = SuccessionEngine.ResolveSuccession(g, _groupRegistry, _worldRegistry, currentTick);
+                    var result = _successionEngine.ResolveSuccession(g, _groupRegistry, _worldRegistry, currentTick);
                     if (result.ChangesLeadership)
                     {
                         var eventType = result.Mode == SuccessionMode.FactionalSchism 

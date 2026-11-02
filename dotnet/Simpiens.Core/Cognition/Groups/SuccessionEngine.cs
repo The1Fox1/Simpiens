@@ -8,9 +8,10 @@ namespace Simpiens.Cognition.Groups
     /// <summary>
     /// Pure C# domain engine for bottom-up group emergence, leader incapacitation detection,
     /// and tripartite leadership succession (Peaceful, Dominance Challenge, Factional Schism) (Epic 8 Phase 3).
-    /// Engineered for defensive null-safety and strictly zero GC allocations in hot paths.
+    /// Engineered for defensive null-safety and strictly zero GC allocations in hot paths. Each simulation owns one: its
+    /// scratch buffers are the instance's, so two simulations in one process never share them.
     /// </summary>
-    public static class SuccessionEngine
+    public sealed class SuccessionEngine
     {
         private struct CandidateScore
         {
@@ -20,10 +21,10 @@ namespace Simpiens.Cognition.Groups
             public byte Allegiance;
         }
 
-        private static readonly List<EntityId> _candidateBuffer = new List<EntityId>(64);
-        private static readonly List<CandidateScore> _scoreBuffer = new List<CandidateScore>(64);
-        private static readonly List<EntityId> _followersToMove = new List<EntityId>(64);
-        private static readonly List<ISocialAgent> _unalignedCluster = new List<ISocialAgent>(16);
+        private readonly List<EntityId> _candidateBuffer = new List<EntityId>(64);
+        private readonly List<CandidateScore> _scoreBuffer = new List<CandidateScore>(64);
+        private readonly List<EntityId> _followersToMove = new List<EntityId>(64);
+        private readonly List<ISocialAgent> _unalignedCluster = new List<ISocialAgent>(16);
 
         /// <summary>
         /// Determines succession mode based on group cohesion:
@@ -100,7 +101,7 @@ namespace Simpiens.Cognition.Groups
         /// When >= 3 unaligned agents spend continuous ticks around the anchor accumulating Warmth >= 40 and Trust >= 30,
         /// a consensus candidate with the highest collective (Respect - Fear) standing is elected Leader.
         /// </summary>
-        public static bool TryFormEmergentGroup(
+        public bool TryFormEmergentGroup(
             Vec2 anchorPosition,
             IReadOnlyList<ISocialAgent> agentsAtAnchor,
             IGroupRegistry groupRegistry,
@@ -214,7 +215,7 @@ namespace Simpiens.Cognition.Groups
         /// Resolves leadership succession for a group with zero GC allocations.
         /// Executes Peaceful succession, Dominance Challenge, or Factional Schism according to group cohesion.
         /// </summary>
-        public static SuccessionResult ResolveSuccession(
+        public SuccessionResult ResolveSuccession(
             byte groupId,
             IGroupRegistry groupRegistry,
             IWorldRegistry worldRegistry,
