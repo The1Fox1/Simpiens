@@ -122,7 +122,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
 **Complexity:** Possibly Complex by rubric (touches a zero-allocation hot path with exact float casts), with a complete mechanical blueprint below so a **Basic** agent can execute R3.1 and R3.2 with zero design calls.
 - **Branch note:** R3 depends on R2's `SimulationManager.Movement.cs` partial split (`0fa3555`). Confirm `dotnet/Simpiens.Core/Simulation/SimulationManager.Movement.cs` is present on the working branch before starting (either branched from `main` after R1–R2 merge, or on the branch the developer designates).
 
-- [ ] **R3.1 Create `dotnet/Simpiens.Core/Simulation/Movement/Locomotion.cs`.** [Possibly Complex: hot-path math and float casts; mechanical recipe below for Basic-agent execution]
+- [x] **R3.1 Create `dotnet/Simpiens.Core/Simulation/Movement/Locomotion.cs`.** [Possibly Complex: hot-path math and float casts; mechanical recipe below for Basic-agent execution]
   - **Namespace & type:** `namespace Simpiens.Simulation.Movement`, `internal sealed class Locomotion` (`Simpiens.Core/AssemblyInfo.cs` already grants `InternalsVisibleTo` to `Simpiens.Testing.Core`, `Simpiens.Hosting` and `Simpiens.Core.Tests`, while keeping `Locomotion` hidden from client views).
   - **Exact `using` directives:**
     ```csharp
@@ -176,7 +176,7 @@ Each phase is one PR into `main`, branched from `main` after the previous one me
        - `int cellX = SimMath.FloorToInt((float)((float)(targetPos.X + (float)(snapshot.Width * snapshot.CellSize * 0.5f)) / snapshot.CellSize));` (and `cellY`) in `IsPositionBlocked`.
     3. **Null-safety rules:** `_spatialPartition == null` or `snapshot == null` means unblocked (`IsPositionBlocked` and `IsCrowdedMove` return `false`; `TryDisplacePawn` skips static/crowd checks and still calls `node.SetPosition(candidate)` when `node != null`); `node == null` returns `false` in `TryDisplacePawn` and `IsCrowdedMove`; `IsCrowdedMove` falls back to `entity.Position` when `_worldRegistry == null` or returns `null`; Tier 3 blacklisting uses `uint currentTick = _clock != null ? (uint)_clock.CurrentTick : 0;`.
 
-- [ ] **R3.2 Forward from `SimulationManager.Movement.cs` and validate.** [Basic]
+- [x] **R3.2 Forward from `SimulationManager.Movement.cs` and validate.** [Basic]
   - **DI trap — do NOT add `Locomotion` to `SimulationManager`'s constructor parameters:** `SimpiensServiceCollectionExtensions.AddSimpiensCore` registers `services.AddSingleton<SimulationManager>()` without a factory lambda. Instead, in `dotnet/Simpiens.Core/Simulation/SimulationManager.cs`:
     - Add `using Simpiens.Simulation.Movement;` and field `private readonly Locomotion _locomotion;`.
     - Inside `SimulationManager(...)`, right after `_clock = clock;`, initialize `_locomotion = new Locomotion(_spatialPartition, _worldRegistry, _clock);`.
