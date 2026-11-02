@@ -154,6 +154,11 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   - If the stall's goods would pass `TradeStallData.GoodsCapacity` (8), raise it: that changes the save format.
 - **Take out of the economy:** drop its stall and caravan terms (glowstone was taken out this way in `ItemSystemProofTests`).
 - **Remove from the game:** delete its definition and mark its `ItemType` value retired; saves holding it are refused on load.
+- **Quirks kept on purpose.** Each is a behaviour change to make deliberately, with its golden re-record in its own commit; `ItemNamesTests` lists where they name items.
+  1. A ration takes 40 off hunger from the pack, but 50 when eaten at a Garden plot (a node rule).
+  2. Setting `AgentState.HasFoodInInventory` true packs a ration.
+  3. A node yielding `ItemType.None` counts as food.
+  4. `ItemInstance.ItemId` is stamped 1 everywhere.
 
 ### Adding art
 - **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:

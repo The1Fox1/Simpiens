@@ -8,7 +8,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 | Plan | Covers | Status | Estimate (agent days) | Complexity | The producer's stops |
 | :--- | :--- | :--- | :-: | :--- | :--- |
 | Part 1 (G4–G6) | The guild, expeditions and the gate | **COMPLETED 2026-11-01** (epic §4); its plans are deleted | — | — | Play session passed 2026-11-01 |
-| [`core_refactor_plan.md`](core_refactor_plan.md) (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | Next: Part 1 is done (producer, 2026-10-25: after Part 1) | 3–3.5 | **Very Complex** as a whole: R5 bundles three extractions (split it), and R6 changes threading (the developer supervises it). R1–R4 are Basic or Possibly Complex | As that plan says |
+| The core refactor (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | **Done 2026-11-02** on `feat/core-refactor`, one PR into `main`; its plan is deleted (ROADMAP §3A) | — | — | — |
 | [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in | A draft: its questions need the producer's answers | 14–19 | **Very Complex** (epic-sized, open design). W1 and W5 need splitting | Answering the draft; a look at W3; a play session at W6 |
 | [`epic10_part3_plan.md`](epic10_part3_plan.md) | Part 3, Milestone 4: the descent, L0–L6, with Epic UI-5 folded in | A draft, as Part 2 | 16–23 | **Very Complex** (epic-sized; new systems). L0, L1, L2 and L4 need splitting or the developer's supervision | Answering the draft; a look at L2; a play session at L6 |
 
@@ -19,9 +19,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 
 ## Order
 1. ~~**Part 1:** G4, G5, G6.~~ Done 2026-11-01: Part 1 COMPLETED; Parts 2 and 3 stay QUEUED.
-2. **The core refactor's R1–R6** (next), before either draft is started:
-   - R5 moves group formation and succession into `SocialDynamics`, after G4 has changed them.
-   - R1's guards come before Parts 2 and 3 add planner facts and a larger floor: the planner's facts must stay below 64, and a map too large for A* must be refused.
+2. ~~**The core refactor's R1–R6**, before either draft is started.~~ Done 2026-11-02 (`feat/core-refactor`, one PR into `main`): R1's guards refuse a planner fact past 63 and a map too large for A*, which Parts 2 and 3 will need; group formation and succession now live in `SocialDynamics`.
 3. **Part 2:**
    - the producer answers the draft's questions;
    - the design part of the draft (§1–§4) moves into an epic doc, as Part 1's approved draft did;

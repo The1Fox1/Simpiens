@@ -1310,3 +1310,22 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Behaviour unchanged:** golden 3/3, renders byte for byte in the pinned image.
 - **One PR for the whole plan (the producer, 2026-11-02),** with a commit per phase; the plan had said a PR per phase. The R1–R4 commits' bodies are empty; their gate record is in the plan.
 - Commits: `ab9f412` R1, `0fa3555` R2, `a3e3bc5` the R3/R4 blueprints, `c49c3f7` R3, `fb23c51` R4.
+
+## 2026-11-02: core refactor R5–R6; the plan closed out (`feat/core-refactor`)
+
+- **R5.1, `Lodging`** (`Simulation/World/`): the bunks, their claims, the bunk sleeps and occupancy validation. `DepartOutpost` stays on `SimulationManager` as the coordinator (ledger, market claims, bunks, groups, guild, chronicle). `OccupiedBunks` is always one list, because the spatial partition keeps the reference it is given. The bunk constants stay public on `SimulationManager`, as aliases, since tests read them there.
+- **R5.2, `SocialDynamics`** (`Simulation/Social/`): gossip, the hearth, emergent settlements and succession. Before it, `SortStable` moved unchanged out of `SimulationManager` into `StableSort`, so the extracted classes stop reaching back into it. `SuccessionEngine` is an instance class owning its scratch buffers: they were plain statics shared by every simulation in the process. Each `SimulationManager` owns one, through its `SocialDynamics`.
+- **R5.3, memory:**
+  - `PruneStaleResourceMemories` became `ForgetResourceSightings`: it forgets every resource sighting, and never pruned by age.
+  - Through `IAgentMemory`, cognition sees the maps as `ReadOnlyMemoryMap` views. **Deviation:** a sealed class, not the plan's `readonly struct`, because some 15 callers null-check the maps. It is made once per memory or snapshot, and its `foreach` uses the dictionary's struct enumerator, so a walk allocates nothing (measured).
+  - With the views read-only, the compiler refused exactly one write: `MentalBreakEvaluator`'s prune of its own snapshot. It was removed after checking that nothing reads the snapshot after the reflex returns. Golden unchanged confirms it. This finishes ROADMAP §1A.2 #3.
+- **R6, planners per worker:**
+  - The session plans through a `GoapPlannerPool` (§1A.2 #8, the last open deviation). Each search resets the planner's buffers, so a plan depends only on its inputs.
+  - Measured against the locked singleton (alternating, four rounds, 12/16/24 crawlers): no gain beyond noise. The headless step's planning rarely overlaps. Kept anyway, since it closes #8; the plan had left that call to the producer, who said "Proceed with R5-R6".
+- **A one-off test-host crash:** once, the native client test host segfaulted in `libxcb-dri3` (the host's X/DRI stack) after 14 tests, and xUnit reported only the 14 that had passed. Three full reruns and the pinned image were clean. Check a test run's exit code, not only its "Passed!" line.
+- **Close-out (docs protocol 6):**
+  - The plan's own deferrals went to ROADMAP §3A ("Core refactor"). The item system's deferrals (R7, kept in the plan since 2026-10-26) went to Epic 10 §5. Its four kept quirks went to `AGENTS.md` ("Adding or removing an item").
+  - The R6 measurement is in ROADMAP §1A.2 #8.
+  - The plan is deleted.
+- **One PR for the whole plan (the producer, 2026-11-02),** with a commit per phase or step, each passing the six gates: 0 warnings; core 143/143; client 345/345; golden 3/3 unchanged; the pinned image byte for byte; MonoGame and Android compile.
+- Commits: `036b3a9` R5.1, `c223c82` `StableSort`, `6d7a7c8` R5.2.1, `5700f9a` R5.2.2, `8b2422d` R5.3.1, `ff1a67e` R5.3.2, `70353e3` R6.

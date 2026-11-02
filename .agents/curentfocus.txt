@@ -7,16 +7,16 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-02 (core refactor R1-R4 done; R5-R6 next, the whole plan one PR)
+# Last reconciled: 2026-11-02 (the core refactor R1-R6 done on feat/core-refactor, one PR; its plan closed out)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
 - Unity is gone (Epic CLIENT M2.8-M2.9, 2026-10-24; producer: "remove Unity first"): every Unity test has a .NET
   twin, the core lives in dotnet/Simpiens.Core, and the solution is .NET only, on C# 14 / .NET 10. Merged (PR #12).
-- A cleanup before G3 (2026-10-25, no epic): ROADMAP 1A.2 #17 and #19 fixed, intent faults counted and failing the
-  day, warnings as errors. On feat/code-cleanliness, PR into main. The rest of .agents/core_refactor_plan.md
-  (R1-R6: guards, SimulationManager's split, planners per worker) comes back after Epic 10 Part 1; R7, the item
-  system, was done 2026-10-26 (PR #15): catalog, groups, rarity, effects, equipment stats, loot tables.
+- The core refactor (no epic, 2026-10-25 to 2026-11-02) is done: R0, the cleanup (1A.2 #17, #19, warnings as
+  errors); R7, the item system (PR #15); R1-R6 on feat/core-refactor, one PR into main: guards, SimulationManager
+  split into partials and Locomotion, Market, Lodging, SocialDynamics, read-only memory views, planners per worker
+  (1A.2 #8, the last open deviation). Golden unchanged throughout. Deferred items: ROADMAP 3A, Epic 10 §5.
 - Epic CLIENT [PAUSED 2026-10-29] after the graphics work, V0-V5 (2026-10-28/29): the art as data; the sampling
   rules (F12, F19) with a packed world sheet; item icons and map sprites from a sprite kit, icons in the dashboard;
   the stall with its goods, worn gear and carried salvage, in the live outpost. V3-V5 under the producer's
@@ -26,9 +26,7 @@ CURRENT FOCUS
     and the gate (feat/epic10-g6, PR into main): the whole loop live, a save mid-expedition, the soak's guild profile
     (D14), every scenario together. The producer's play session passed ("Everything looks good"). Save format 9.
   - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
-- NOW: the core refactor (.agents/core_refactor_plan.md) on feat/core-refactor, one PR into main for R1-R6 with a
-  commit per phase. R1-R4 done 2026-11-01 (guards, partial files, Locomotion, Market; golden unchanged); R5 (lodging,
-  social dynamics, memory views) and R6 (planners per worker) next. Then answering Epic 10 Part 2's draft
+- NEXT: the core refactor's PR (feat/core-refactor into main), then answering Epic 10 Part 2's draft
   (.agents/epic10_plan.md, Order). Epic UI-Beta B2 is unblocked too: the producer picks the order.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [PAUSED 2026-10-30] (docs/epics/epic-ui-beta.md): B0 and B1
