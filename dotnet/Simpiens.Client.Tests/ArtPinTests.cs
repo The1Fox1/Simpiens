@@ -45,7 +45,7 @@ namespace Simpiens.Client.Tests
 
         /// <summary>
         /// Every sprite once (a sprite in two sheets is one sprite) but the body region's blank cells, and the pinned bodies
-        /// (<see cref="People.BodyPins"/>), by name in ordinal order: "width height hash".
+        /// and portraits (<see cref="People.BodyPins"/>, <see cref="People.PortraitPins"/>), by name in ordinal order: "width height hash".
         /// </summary>
         internal static SortedDictionary<string, string> CurrentPins()
         {
@@ -59,6 +59,7 @@ namespace Simpiens.Client.Tests
                 }
             }
             foreach (var body in People.BodyPins.All()) pins[body.Name] = $"{body.Width} {body.Height} {HashOf(body)}"; // the bodies the client bakes (UI-Beta B2)
+            foreach (var portrait in People.PortraitPins.All()) pins[portrait.Name] = $"{portrait.Width} {portrait.Height} {HashOf(portrait)}"; // and the portraits (B3)
             return pins;
         }
 
