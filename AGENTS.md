@@ -32,6 +32,7 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
     - **Who draws what:** `EntityVisuals` says which art each entity of a frame is drawn with (a crawler's worn gear included).
     - **Generated art:** the sprite kit (`SpriteKit`: ramps, painting, outlines, icon plates with rarity rims) makes each item's icon, map sprite and carried marker from its look (`ItemArt`: a shape from `ItemShapes`, two colours, how it is worn); `WornSprites` makes today's crawlers wearing gear. Generators never read a table or a sheet (`ArtInitialisationTests`).
     - **Bodies (`Art/People/`, Epic UI-Beta B2):** `BodyKit` bakes a crawler's 24 pose frames from its look (today's patterns in key letters, `HeadAnchors`, `LookPalettes`). The world sheet keeps a region of blank cells for them (`BodySlots`); `CrawlerBodies`, one per world texture, says which body is in which slot, and the client bakes new ones into the texture after the scene's update. A crawler with no look is drawn as today's figure.
+    - **Portraits (`Art/People/`, Epic UI-Beta B3):** `PortraitKit` bakes a 48×48 Hearthlight bust from a look, a `Mood` (`MoodRule`, held by a `MoodTracker`), a standing (the frame) and a helm. The client's `PortraitAtlas` (with `CrawlerPortraits`) bakes each portrait the first time it is shown and draws it 1:1 at 1× or 2×: the dossier's header, a dynamic scene's speaker.
     - New art for a known kind of thing is a table row;
   - the projections (`IViewProjection`: `TopDownProjection`, `IsometricProjection`). A `View` is a projection through a camera, and everything that maps world to screen takes one; `View.FloorToScreen` is its affine transform, under which what lies on the floor (`DrawItem.OnFloor`: the fog's cloud) is drawn;
   - view modes (`ViewMode`: a projection with its art catalogue). Top-down's is the original art; isometric's stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
@@ -174,7 +175,7 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **A gene** goes last in `LookGene` and is drawn last, so every seed's earlier genes keep their values. It uses one of `CrawlerLook`'s spare bytes; a 17th gene changes the save format.
 - **Its picture:**
   - on the map (`Simpiens.Presentation/Art/People/`): a colour is a row in `LookPalettes`; a hair style, facial hair or build is a case in `BodyKit`, drawn at each frame's head anchor (`HeadAnchors`; a new pose frame is a row there);
-  - in the portrait: the portrait kit (B3);
+  - in the portrait: a case in `PortraitKit` (a hair style's front and back, an outfit's cut, an accessory, a mood's features);
   - then look at the people sheet and re-record the art pins (they hold 146 bodies).
 - **The checks:**
   - `LookValidator`: the catalogue, and every option at its odds.

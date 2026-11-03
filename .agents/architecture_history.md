@@ -1344,3 +1344,12 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The producer's look passed** ("Looks good, passed inspection", 2026-11-02), with D1–D10 as inspected. The art pins of the bodies and the 18 changed renders were recorded after it, each in a commit of its own.
 - **Directive (2026-11-02):** the producer, going to sleep, directed B3–B5 to continue, each with a plan written before its work. Each milestone gets its own branch, cut from the last because nothing can merge overnight. Nothing is pushed.
 - Commits: `4898b1b` plan, `5a63d90` P1, `5a08fb8` P2.1, `82b8f66` P2.2, `55232b5` P2.3, `a26f65f` P2.4, `fa35037` body pins, `032309b` switch-on, `2c93a5d` renders, `9f1634c` the live proof.
+
+## 2026-11-03: Epic UI-Beta B3, portraits and the dossier (`feat/ui-beta-b3`)
+
+- **Under the producer's overnight directive** ("continue working through B3-B5 ... an implementation plan for each work chunk before executing"). The plan was written and committed first (`f036a29`). The branch is cut from `feat/ui-beta-b2`, because nothing could merge overnight. The producer's look at B3 is pending.
+- **The portrait kit is B0's spike made production code**, on the stack so a bake allocates nothing. It adds the seven moods, eight outfits, five accessories, the helm, the tabard and frames by standing. The hair keeps the spike's cap with textures. It is the open question of taste.
+- **Moods are presentation, with hysteresis and a hold on ticks** (`MoodTracker`), so faces don't flicker and a run shows the same faces. Deviation: a tantrum is checked before scared, because it shows as panicking.
+- **Portraits are baked on first showing into a 48-slot atlas** (1× and 2×, the least recently shown reused). This is the icon atlas's pattern, written at run time like B2's body region, with `SetData` and a rectangle.
+- **The dossier's header** took vertical room, so the affinities list shrank to three scrolling lines to keep Calm and Recruit in the window.
+- Commits: `f036a29` plan, `2098ef0` kit, `e989630` portrait pins, `b2beb4f` moods, `a8433e5`/`2cfe488` the dossier and its renders, `ef37dae`/`3013877` speakers and the gossip render.

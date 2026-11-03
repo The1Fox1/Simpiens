@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3–B5 continue under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B3–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10); its look is pending. B4–B5 continue under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B4–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -104,7 +104,7 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 | B0 | Spike: rough body and Hearthlight portrait kits (test-only), the people sheet, the design note (§9) | 1–1.5 | The producer's look at the sheet | Done |
 | B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold | Done |
 | B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Done (2026-11-03, §10) |
-| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Possibly Complex: the portrait kit's hair is the main risk (§9), and this milestone's gate is a question of taste |
+| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Done (2026-11-03, §10); the look is pending |
 | B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Possibly Complex: Gum draw cost (F21) under the frame-time gate |
 | B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
 | B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session | Possibly Complex |
@@ -275,4 +275,39 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
   - A delver's shortening once removed the harvester's tool row; it now skips rows holding a tool or a mark.
   - A beard over a delver's short torso can hide all of the tabard but its device; the tests count the device as the tabard.
 - **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 377). The pinned image was exact, except at the commit that switched bodies on, where the 16 render and picture-pin tests failed until the next commit re-recorded them. MonoGame and Android compile. The core is unchanged, so golden is unaffected.
+
+### B3 (done 2026-11-03, `feat/ui-beta-b3`; the producer's look pending)
+- **Delivered** (`Simpiens.Presentation/Art/People/`, the client):
+  - **`PortraitKit`:** B0's spike grown into the presentation. A 48×48 Hearthlight bust from the look, on the stack, in tones; it allocates nothing into a buffer. It has:
+    - seven moods;
+    - the eight outfit cuts and five accessories;
+    - the helm with its lamp lit, and the guild's tabard;
+    - frames by standing (iron, bronze, blued steel) over the hub's stonework.
+  - **`MoodRule` and `MoodTracker`:** the face from the shown state, health and needs, by priority. Each threshold has a way back past it, and a mood holds 30 ticks unless the next is asleep or hurt.
+  - **`CrawlerPortraits` and the client's `PortraitAtlas`:** 48 slots, 1× and 2×, the least recently shown reused. A portrait is baked the first time it is shown.
+  - **The dossier's header:** the portrait at 2×, then the name, "Human, slight build. Resident.", the badge, and "Hungry. Health 100%.". The affinities list is 52 px (three lines, scrolling), so the buttons fit.
+  - **Speakers:** a dynamic scene's bubble and box show the speaker's portrait at 1×.
+- **Decisions, defaults awaiting the producer's look** (the plan's D1–D10):
+  - **D1, the mood rule:** asleep > hurt (downed, or health under 40; back at 50) > frustrated by a tantrum or defiance > scared (panicking) > frustrated (60; back under 50) > hungry (70; back under 60) > tired (energy 25; back over 35) > content. A mood holds 30 ticks.
+    - *Deviation:* a tantrum shows as panicking on the map, so it is checked before scared.
+  - **D2, faces:** a smile; heavy lids; brows up and a small open mouth; knit brows and a frown; wide eyes and an open mouth; a squeezed eye, a frown and a bandage; closed eyes.
+  - **D3, outfits:** primary cloth with secondary trim.
+  - **D4, accessories:** as listed in the plan's D4.
+  - **D5–D6, the helm, the tabard and the frames:** as above.
+  - **D7, the atlas:** 48 slots, least recently shown reused.
+  - **D8, the header:** as above.
+  - **D9, speakers:** dynamic scenes only; hard cutscenes' characters have no look.
+  - **D10, the pins:** 169 portraits pinned by name.
+- **Checks:**
+  - `PortraitKitTests`: every option of every gene and every mood changes the portrait; the frames, helm and tabard show; 0 bytes a bake.
+  - `MoodRuleTests`: no flicker at any threshold; the hold.
+  - `DossierPortraitTests` (Q12): the selected crawler's portrait is its own look, mood and standing, read back from the atlas texture pixel for pixel, and a change of mood re-bakes.
+  - `DynamicSceneTests`: the speaker's face is its own.
+  - The art pins of 169 portraits.
+- **Renders re-recorded in the pinned image:** the dashboard, the guild roster and the gossip scene.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 403). The pinned image was exact, except at the two commits that changed the picture, which were followed by their re-records. MonoGame and Android compile. The core is unchanged.
+- **Open for the producer's look:**
+  - the portraits' taste, the hair above all (the epic's main risk);
+  - the outfits on muted clothes;
+  - D1–D10.
 
