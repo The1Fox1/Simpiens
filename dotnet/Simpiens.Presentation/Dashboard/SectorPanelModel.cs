@@ -124,7 +124,7 @@ namespace Simpiens.Presentation.Dashboard
             {
                 var zone = zones[i];
                 bool explored = _context.Zones.IsSectorExplored(zone.ZoneId);
-                string badge = explored ? _context.Zones.GetOccupancyCount(zone.ZoneId, _context.Registry).ToString(System.Globalization.CultureInfo.InvariantCulture) : "SHROUDED";
+                string badge = explored ? _context.Zones.GetOccupancyCount(zone.ZoneId, _context.Registry).ToString(System.Globalization.CultureInfo.InvariantCulture) : "UNCHARTED";
                 _sectors.Add(new SectorRow(zone.ZoneId, zone.Name, badge, !explored, zone.ZoneId == SelectedSectorId));
             }
 

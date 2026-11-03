@@ -101,11 +101,11 @@ namespace Simpiens.Presentation.Dashboard
             return false;
         }
 
-        /// <summary>Where a stall stands, for the player: "Outpost Stall @ " and its room's name on the loaded map.</summary>
+        /// <summary>Where a stall stands, for the player: "The stall in " and its room's name on the loaded map.</summary>
         public string StallLabel(in Simpiens.Simulation.Economy.TradeStallData stall)
         {
             string room = Sectors?.Map != null ? Sectors.GetSectorAt(stall.Position).Name : null;
-            return string.IsNullOrEmpty(room) ? "Outpost Stall" : "Outpost Stall @ " + room;
+            return string.IsNullOrEmpty(room) ? "The stall" : "The stall in " + room;
         }
 
         /// <summary>The outpost's stall (the first), if there is one.</summary>

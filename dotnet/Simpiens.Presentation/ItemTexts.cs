@@ -35,11 +35,11 @@ namespace Simpiens.Presentation
 
         static ItemTexts()
         {
-            _texts[(int)ItemType.Ration] = new ItemText("Provision", "(Outpost sells rations to hungry agents)", "Rations", "Ration", "RATIONS");
-            _texts[(int)ItemType.IronOre] = new ItemText("Iron Ore", "(Outpost purchases ore from salvagers)", "Ore", "Ore", "ORE");
-            _texts[(int)ItemType.MedicinalHerb] = new ItemText("Herb", "(Outpost purchases medicinal flora)", "Herb", "Herb", "HERB");
-            _texts[(int)ItemType.Glowstone] = new ItemText("Glowstone", "(Rare salvage from the hazard sectors)", "Glowstone", "Glowstone", "GLOWSTONE");
-            _texts[(int)ItemType.HazardGear] = new ItemText("Hazard Gear", "(Worn into danger: halves the harm, then wears out)", "Gear", "Gear", "GEAR");
+            _texts[(int)ItemType.Ration] = new ItemText("Rations", "Sold to hungry crawlers", "Rations", "Ration", "RATIONS");
+            _texts[(int)ItemType.IronOre] = new ItemText("Iron ore", "Bought from salvagers", "Ore", "Ore", "ORE");
+            _texts[(int)ItemType.MedicinalHerb] = new ItemText("Herbs", "Bought from foragers", "Herb", "Herb", "HERB");
+            _texts[(int)ItemType.Glowstone] = new ItemText("Glowstone", "Rare salvage from the hazards", "Glowstone", "Glowstone", "GLOWSTONE");
+            _texts[(int)ItemType.HazardGear] = new ItemText("Hazard gear", "Worn into danger: halves the harm, then wears out", "Gear", "Gear", "GEAR");
         }
 
         public static ItemText Of(ItemType item)
@@ -50,7 +50,14 @@ namespace Simpiens.Presentation
             return new ItemText(name, string.Empty, name, name, name.ToUpperInvariant());
         }
 
-        /// <summary>"Provision Sell Price:", "Iron Ore Buy Price:".</summary>
-        public static string PriceLabel(ItemType item, StallRole role) => $"{Of(item).MerchantName} {(role == StallRole.Sells ? "Sell" : "Buy")} Price:";
+        /// <summary>A merchant row's name: "Rations", "Iron ore" (the UI polish plan, U6: the hint says sold or bought).</summary>
+        public static string PriceLabel(ItemType item, StallRole role) => Of(item).MerchantName;
+
+        /// <summary>A merchant row's hint: the item's own words, or whether the stall sells or buys it.</summary>
+        public static string PriceHint(ItemType item, StallRole role)
+        {
+            string hint = Of(item).MerchantHint;
+            return !string.IsNullOrEmpty(hint) ? hint : role == StallRole.Sells ? "Sold by the stall" : "Bought by the stall";
+        }
     }
 }

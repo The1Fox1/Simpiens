@@ -174,7 +174,7 @@ namespace Simpiens.Client.Tests
             model.OpenMerchant();
             Assert.NotEqual(default, model.Merchant.StallId);
             Assert.True(model.Context.TryGetStall(model.Merchant.StallId, out var stall));
-            Assert.Equal("Outpost Stall @ " + sim.Sectors.GetSectorAt(stall.Position).Name, model.Merchant.StallStatus);
+            Assert.Equal("The stall in " + sim.Sectors.GetSectorAt(stall.Position).Name, model.Merchant.StallStatus);
             Assert.False(model.Context.TryGetStall(new EntityId(1u, 2u, 3u, 4u), out _));
         }
     }

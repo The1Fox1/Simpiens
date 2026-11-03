@@ -17,7 +17,7 @@ namespace Simpiens.Client.Ui
     /// The Tab dashboard (Unity's dashboard-root): three panels over the whole map under the header, opaque, so the map
     /// takes no clicks while they show.
     /// <list type="bullet">
-    /// <item><description>The facility's sectors, each with its crawler count or SHROUDED (260 px).</description></item>
+    /// <item><description>The facility's sectors, each with its crawler count or UNCHARTED (260 px).</description></item>
     /// <item><description>The selected room: name, description, residents and recent events (the rest of the width).</description></item>
     /// <item><description>The selected crawler's dossier (380 px).</description></item>
     /// </list>
@@ -59,7 +59,7 @@ namespace Simpiens.Client.Ui
             UiParts.AddFill(Root, UiStyle.Backdrop);
 
             // Column 1: the facility's sectors
-            var sectors = Panel(Outer + Margin, SectorsWidth, "FACILITY SECTORS", out var sectorsBody);
+            var sectors = Panel(Outer + Margin, SectorsWidth, "THE FLOOR", out var sectorsBody);
             sectors.Children.Add(sectorsBody);
             _sectorsList = Stack(sectorsBody, 6f);
             Root.Children.Add(sectors);
@@ -78,12 +78,12 @@ namespace Simpiens.Client.Ui
             description.Children.Add(_sectorDescription);
             detailBody.Children.Add(description);
             detailBody.Children.Add(Window.Gap(8f));
-            detailBody.Children.Add(Window.SubHeader("RESIDENTS IN SECTOR"));
+            detailBody.Children.Add(Window.SubHeader("WHO IS HERE"));
             _residentsEmpty = UiParts.Text("No residents in this sector.", UiStyle.TextMuted, UiText.Small);
             detailBody.Children.Add(_residentsEmpty);
             _residentsList = Scroll(detailBody, 240f, 6f); // Unity's max-height
             detailBody.Children.Add(Window.Gap(8f));
-            detailBody.Children.Add(Window.SubHeader("RECENT SECTOR EVENTS"));
+            detailBody.Children.Add(Window.SubHeader("WHAT HAPPENED HERE"));
             _eventsEmpty = UiParts.Text("Nothing has happened here yet.", UiStyle.TextMuted, UiText.Small);
             detailBody.Children.Add(_eventsEmpty);
             _eventsList = Scroll(detailBody, 0f, 4f, fill: true);
@@ -91,7 +91,7 @@ namespace Simpiens.Client.Ui
             Root.Children.Add(detail);
 
             // Column 3: the dossier
-            var dossier = Panel(0f, DossierWidth, "AGENT DOSSIER", out var dossierBody);
+            var dossier = Panel(0f, DossierWidth, "THE CRAWLER", out var dossierBody);
             dossier.XUnits = GeneralUnitType.PixelsFromLarge;
             dossier.XOrigin = HorizontalAlignment.Right;
             dossier.X = -(Outer + Margin);
@@ -133,7 +133,7 @@ namespace Simpiens.Client.Ui
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
             _dossierDetails.Children.Add(Window.Gap(2f));
-            _dossierDetails.Children.Add(Window.SubHeader("BIOLOGICAL DRIVES"));
+            _dossierDetails.Children.Add(Window.SubHeader("NEEDS"));
             _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
             _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
@@ -152,19 +152,19 @@ namespace Simpiens.Client.Ui
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _dossierDetails.Children.Add(_groups);
             _dossierDetails.Children.Add(Window.Gap(4f));
-            _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
+            _dossierDetails.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
             UiParts.AddFill(intent, UiStyle.Card);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
             _dossierDetails.Children.Add(intent);
             _dossierDetails.Children.Add(Window.Gap(4f));
-            _dossierDetails.Children.Add(Window.SubHeader("SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)"));
+            _dossierDetails.Children.Add(Window.SubHeader("FEELINGS (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
             _affinitiesList = Scroll(_dossierDetails, 70f, 2f); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
             _dossierDetails.Children.Add(Window.Gap(4f));
-            _dossierDetails.Children.Add(Window.SubHeader("PLAYER INTERVENTION"));
+            _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
             // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             _dossierDetails.Children.Add(_recruitText);

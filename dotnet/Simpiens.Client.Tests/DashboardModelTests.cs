@@ -258,7 +258,7 @@ namespace Simpiens.Client.Tests
 
             // Every sector is listed; the two frontier rooms are shrouded; the whole crew is at the Road Gate
             Assert.Equal(sim.Sectors.All.Count, model.Sectors.Sectors.Count);
-            Assert.Equal("SHROUDED", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.DeepSeamSectorId).Badge);
+            Assert.Equal("UNCHARTED", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.DeepSeamSectorId).Badge);
             Assert.Equal("12", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.RoadGateSectorId).Badge);
             Assert.NotEqual(0, model.Sectors.SelectedSectorId);
 

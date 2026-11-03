@@ -52,7 +52,7 @@ namespace Simpiens.Client.Ui
             _model = model;
             _icons = icons;
             _portraits = portraits;
-            Window = new Window("guild-roster", "GUILD ROSTER", "Your members, their wages and their standing with the outpost.", Width, Simpiens.Presentation.Art.UiKit.FrameSteel, Simpiens.Presentation.Art.UiKit.Shield);
+            Window = new Window("guild-roster", "The Guild", "Your members, their wages and their standing with the outpost.", Width, Simpiens.Presentation.Art.UiKit.FrameSteel, Simpiens.Presentation.Art.UiKit.Shield);
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
@@ -102,13 +102,13 @@ namespace Simpiens.Client.Ui
             _dispatchText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             UiParts.CentreVertically(_dispatchText);
             send.Children.Add(_dispatchText);
-            DispatchButton = UiParts.Button("DISPATCH", 110f, 30f, UiText.BodyBold);
+            DispatchButton = UiParts.Button("Dispatch", 110f, 30f, UiText.BodyBold);
             DispatchButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             DispatchButton.Visual.XOrigin = HorizontalAlignment.Right;
             DispatchButton.X = -120f;
             UiParts.CentreVertically(DispatchButton.Visual);
             send.Children.Add(DispatchButton.Visual);
-            RecallButton = UiParts.Button("RECALL", 110f, 30f, UiText.BodyBold);
+            RecallButton = UiParts.Button("Recall", 110f, 30f, UiText.BodyBold);
             RecallButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             RecallButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(RecallButton.Visual);
@@ -129,7 +129,7 @@ namespace Simpiens.Client.Ui
             _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.PrimaryButton("APPLY WAGES", 150f, 32f, UiText.BodyBold);
+            ApplyButton = UiParts.PrimaryButton("Set wages", 150f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);
@@ -212,7 +212,7 @@ namespace Simpiens.Client.Ui
             card.Wage.X = 540f;
             UiParts.CentreVertically(card.Wage);
             card.Root.Children.Add(card.Wage);
-            card.Dismiss = UiParts.Button("DISMISS", 78f, 28f);
+            card.Dismiss = UiParts.Button("Dismiss", 78f, 28f);
             card.Dismiss.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             card.Dismiss.Visual.XOrigin = HorizontalAlignment.Right;
             card.Dismiss.X = -12f;
@@ -252,7 +252,7 @@ namespace Simpiens.Client.Ui
         public static string WageText(int gold) => Invariant($"{gold}g a visit");
 
         /// <summary>The card's party toggle: it goes with the next party, or stays home.</summary>
-        public static string PartyText(bool inParty) => inParty ? "GOES" : "STAYS";
+        public static string PartyText(bool inParty) => inParty ? "Goes" : "Stays";
 
         public void Bind()
         {
@@ -295,7 +295,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
             string rule = expedition.Rule.ToString().ToUpperInvariant();
             if (RuleButton.Text != rule) RuleButton.Text = rule;
-            string outfit = expedition.Outfit ? "OUTFIT FROM STOCK" : "NO OUTFITTING";
+            string outfit = expedition.Outfit ? "Outfit from stock" : "No outfitting";
             if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
             UiParts.SetText(_ruleText, expedition.RuleText);
             UiParts.SetText(_out, expedition.IsOut ? Invariant($"{expedition.StageText} · {expedition.TimeOut} · {expedition.HaulText}") : string.Empty);

@@ -31,7 +31,7 @@ namespace Simpiens.Client.Ui
         {
             _model = model;
             _icons = icons;
-            Window = new Window("merchant-terminal", "OUTPOST MERCHANT TERMINAL", "Stall inventory management & automated commodity pricing.", Width, Simpiens.Presentation.Art.UiKit.FrameBronze, Simpiens.Presentation.Art.UiKit.Stall);
+            Window = new Window("merchant-terminal", "The Stall's Prices", "What the stall asks and pays. Every crawler judges each price.", Width, Simpiens.Presentation.Art.UiKit.FrameBronze, Simpiens.Presentation.Art.UiKit.Stall);
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
@@ -55,7 +55,7 @@ namespace Simpiens.Client.Ui
             body.Children.Add(statusBar);
             body.Children.Add(Window.Gap(14f));
 
-            body.Children.Add(Window.SubHeader("COMMODITY EXCHANGE RATES"));
+            body.Children.Add(Window.SubHeader("PRICES"));
             body.Children.Add(Window.Gap(6f));
             // A row per good, in the model's order; a slider sets the model's row for its item (rows are reloaded on open)
             foreach (var row in _model.Rows)
@@ -72,7 +72,7 @@ namespace Simpiens.Client.Ui
             _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.PrimaryButton("APPLY COMMODITY PRICES", 210f, 32f, UiText.BodyBold);
+            ApplyButton = UiParts.PrimaryButton("Set prices", 150f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);
