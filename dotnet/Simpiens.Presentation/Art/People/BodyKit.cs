@@ -77,6 +77,25 @@ namespace Simpiens.Presentation.Art.People
             return sprites;
         }
 
+        private static readonly bool[] _onHead = BuildOnHead();
+
+        private static bool[] BuildOnHead()
+        {
+            var items = (ItemType[])Enum.GetValues(typeof(ItemType));
+            int most = 0;
+            foreach (var item in items) most = Math.Max(most, (int)item);
+            var onHead = new bool[most + 1];
+            foreach (var item in items)
+                onHead[(int)item] = item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out var art) && art.Worn == Worn.Head;
+            return onHead;
+        }
+
+        /// <summary>Whether <paramref name="item"/> is worn on the head, and so drawn on a body and a portrait (a helm).</summary>
+        public static bool IsWornOnHead(ItemType item) => (uint)item < (uint)_onHead.Length && _onHead[(int)item];
+
+        /// <summary><paramref name="worn"/> if it is worn on the head, else None: what shows of a crawler's protection.</summary>
+        public static ItemType HeadGearOf(ItemType worn) => IsWornOnHead(worn) ? worn : ItemType.None;
+
         /// <summary>The hair styles that hang below the brow, and so show under a helm.</summary>
         public static bool HangsBelowTheBrow(string hairStyle) => hairStyle is "long" or "ponytail" or "braids";
 

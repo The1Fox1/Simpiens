@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Intervention;
+using Simpiens.Presentation.Art.People;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
@@ -30,14 +32,43 @@ namespace Simpiens.Presentation.Dashboard
 
         private readonly DashboardContext _context;
         private readonly GuildModel _guild;
+        private readonly MoodTracker _moods;
+        private CrawlerLook _describedLook;
+        private CrawlerStanding _describedStanding;
+        private Mood _moodShown;
+        private int _healthShown = -1;
         private readonly List<string> _affinities = new List<string>(32);
         private readonly List<AffinityRow> _rows = new List<AffinityRow>(32);
 
-        internal DossierModel(DashboardContext context, GuildModel guild = null)
+        internal DossierModel(DashboardContext context, GuildModel guild = null, MoodTracker moods = null)
         {
             _context = context;
             _guild = guild;
+            _moods = moods ?? new MoodTracker();
         }
+
+        /// <summary>Whether the crawler has a look to show (Epic UI-Beta B3): every crawler in play does; one built by hand may not.</summary>
+        public bool HasPortrait { get; private set; }
+
+        /// <summary>The portrait the header shows: its look, its mood now, its standing (the frame) and its helm.</summary>
+        public PortraitKey Portrait { get; private set; }
+
+        /// <summary>How it feels (<see cref="MoodRule"/>, held by the dashboard's tracker).</summary>
+        public Mood Mood { get; private set; }
+
+        /// <summary>"Human, average build. Resident."</summary>
+        public string Description { get; private set; } = string.Empty;
+
+        /// <summary>"Content. Health 100%."</summary>
+        public string MoodLine { get; private set; } = string.Empty;
+
+        /// <summary>A standing in words.</summary>
+        public static string StandingText(CrawlerStanding standing) => standing switch
+        {
+            CrawlerStanding.Drifter => "Drifter",
+            CrawlerStanding.GuildMember => "Guild member",
+            _ => "Resident",
+        };
 
         /// <summary>The crawler's groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit", or "No groups".</summary>
         public string Groups { get; private set; } = string.Empty;
@@ -121,6 +152,7 @@ namespace Simpiens.Presentation.Dashboard
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
             var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
+            Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
             Gear = GearText(worn);
             GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
             Hunger = agent.Hunger;
@@ -148,6 +180,32 @@ namespace Simpiens.Presentation.Dashboard
             }
             _rows.Sort(WarmestFirst);
             for (int i = 0; i < _rows.Count; i++) _affinities.Add(_rows[i].Line);
+        }
+
+        // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change
+        private void Describe(EntityId id, Simpiens.Cognition.AgentState agent, ItemType worn)
+        {
+            var look = agent.Look;
+            var standing = WorldViewFrame.StandingOf(agent);
+            HasPortrait = look.IsComplete;
+            Mood = _moods.Update(id, MoodSigns.Of(agent), _context.Clock?.CurrentTick ?? 0);
+            Portrait = new PortraitKey(look, Mood, standing, BodyKit.HeadGearOf(worn));
+            if (!look.Equals(_describedLook) || standing != _describedStanding || Description.Length == 0)
+            {
+                _describedLook = look;
+                _describedStanding = standing;
+                var lineage = LookCatalog.Lineage(look.Lineage);
+                Description = HasPortrait
+                    ? $"{lineage?.Name ?? "Unknown"}, {LookCatalog.Option(LookGene.Build, look.Build)?.Name ?? "unknown"} build. {StandingText(standing)}."
+                    : StandingText(standing) + ".";
+            }
+            int health = (int)System.MathF.Round(agent.Health);
+            if (Mood != _moodShown || health != _healthShown || MoodLine.Length == 0)
+            {
+                _moodShown = Mood;
+                _healthShown = health;
+                MoodLine = agent.IsDowned ? $"{Mood}. Downed." : Invariant($"{Mood}. Health {health}%.");
+            }
         }
 
         /// <summary>

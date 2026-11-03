@@ -32,14 +32,18 @@ namespace Simpiens.Client.Ui
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty, _gear;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
+        private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
+        private readonly PortraitAtlas _portraits;
+        private Rectangle _portraitShown;
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
-        public DashboardPanels(DashboardModel model, IconAtlas icons)
+        public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null)
         {
             _icons = icons;
+            _portraits = portraits;
             _model = model;
             Root = new ContainerRuntime
             {
@@ -96,15 +100,37 @@ namespace Simpiens.Client.Ui
             _dossierDetails = UiParts.Column(4f);
             _dossierDetails.WidthUnits = DimensionUnitType.RelativeToParent;
             _dossierDetails.Width = 0f;
-            var titleRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 26f };
-            _dossierName = UiParts.Text(string.Empty, UiStyle.TextTitle, UiText.Title);
-            UiParts.CentreVertically(_dossierName);
-            titleRow.Children.Add(_dossierName);
+            // The header (Epic UI-Beta B3, D8): the portrait at 2x, beside it the name, who it is, the state and how it feels
+            var header = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f };
+            Portrait = new SpriteRuntime
+            {
+                Texture = portraits?.Texture,
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Width = PortraitAtlas.Size,
+                Height = PortraitAtlas.Size,
+                Visible = false,
+            };
+            header.Children.Add(Portrait);
+            float words = portraits != null ? PortraitAtlas.Size + 10f : 0f;
+            var who = UiParts.Column(4f);
+            who.X = words;
+            who.WidthUnits = DimensionUnitType.RelativeToParent;
+            who.Width = -words;
+            _dossierName = Wrapped(string.Empty, UiStyle.TextTitle, UiText.Title);
+            who.Children.Add(_dossierName);
+            _description = Wrapped(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            who.Children.Add(_description);
             var badge = Badge(out _dossierBadge, out _dossierBadgeFill);
-            badge.XUnits = GeneralUnitType.PixelsFromLarge;
-            badge.XOrigin = HorizontalAlignment.Right;
-            titleRow.Children.Add(badge);
-            _dossierDetails.Children.Add(titleRow);
+            badge.YUnits = GeneralUnitType.PixelsFromSmall; // in the stack, not centred
+            badge.YOrigin = VerticalAlignment.Top;
+            badge.Y = 0f;
+            who.Children.Add(badge);
+            _moodLine = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
+            who.Children.Add(_moodLine);
+            header.Children.Add(who);
+            _dossierDetails.Children.Add(header);
             _dossierDetails.Children.Add(Window.Gap(6f));
             _dossierDetails.Children.Add(Window.SubHeader("BIOLOGICAL DRIVES"));
             _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
@@ -135,7 +161,7 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(Window.SubHeader("SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
-            _affinitiesList = Scroll(_dossierDetails, 92f, 3f); // Unity's max-height was 120: the guild's lines took the rest (Epic 10 G4)
+            _affinitiesList = Scroll(_dossierDetails, 52f, 3f); // Unity's max-height was 120: the guild's lines took some (Epic 10 G4), the portrait's header the rest (UI-Beta B3); it scrolls
             _dossierDetails.Children.Add(Window.Gap(8f));
             _dossierDetails.Children.Add(Window.SubHeader("PLAYER INTERVENTION"));
             // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
@@ -189,6 +215,13 @@ namespace Simpiens.Client.Ui
 
         /// <summary>The worn gear's icon; hidden with none.</summary>
         public SpriteRuntime GearIcon { get; }
+
+        /// <summary>The selected crawler's portrait at 2x (Epic UI-Beta B3); hidden for one with no look, or with no atlas.</summary>
+        public SpriteRuntime Portrait { get; }
+
+        /// <summary>The header's words: "Human, average build. Resident." and "Content. Health 100%."</summary>
+        public string DescriptionShown => _description.Text;
+        public string MoodShown => _moodLine.Text;
 
         private readonly IconAtlas _icons;
 
@@ -267,6 +300,15 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Visible = dossier.HasCrawler;
             if (!dossier.HasCrawler) return;
             UiParts.SetText(_dossierName, dossier.Name);
+            UiParts.SetText(_description, dossier.Description);
+            UiParts.SetText(_moodLine, dossier.MoodLine);
+            bool portrait = dossier.HasPortrait && _portraits != null;
+            if (Portrait.Visible != portrait) Portrait.Visible = portrait;
+            if (portrait)
+            {
+                var source = _portraits.Show(dossier.Portrait, PortraitAtlas.Scale);
+                if (source != _portraitShown) Portrait.SourceRectangle = _portraitShown = source;
+            }
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Simulation.Economy;
-using Simpiens.Simulation.Items;
 using Simpiens.Simulation.People;
 
 namespace Simpiens.Presentation.Art.People
@@ -25,17 +24,10 @@ namespace Simpiens.Presentation.Art.People
         private readonly int[] _cells = new int[BodySlots.Count * BodyKit.FrameCount]; // world sheet indices, slot by slot
         private readonly Queue<int> _pending = new Queue<int>(BodySlots.Count);
         private readonly bool[] _queued = new bool[BodySlots.Count];
-        private readonly bool[] _showsOnHead; // by ItemType: worn on the head, so drawn (a helm)
 
         public CrawlerBodies()
         {
             for (int i = 0; i < _cells.Length; i++) _cells[i] = SpriteSheets.World.IndexOf(BodySlots.All[i]);
-            var items = (ItemType[])Enum.GetValues(typeof(ItemType));
-            int most = 0;
-            foreach (var item in items) most = Math.Max(most, (int)item);
-            _showsOnHead = new bool[most + 1];
-            foreach (var item in items)
-                _showsOnHead[(int)item] = item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out var art) && art.Worn == Worn.Head;
         }
 
         /// <summary>Crawlers with a look that got no slot at the last update, so are drawn as today's figure (D2).</summary>
@@ -49,11 +41,7 @@ namespace Simpiens.Presentation.Art.People
 
         /// <summary>The body <paramref name="crawler"/> is drawn with: its look, its helm if it wears one, its tabard if it's in a guild.</summary>
         public BodyKey KeyOf(in EntityView crawler)
-        {
-            var worn = crawler.Worn;
-            bool helm = (uint)worn < (uint)_showsOnHead.Length && _showsOnHead[(int)worn];
-            return new BodyKey(crawler.Look, helm ? worn : ItemType.None, crawler.Standing == CrawlerStanding.GuildMember);
-        }
+            => new BodyKey(crawler.Look, BodyKit.HeadGearOf(crawler.Worn), crawler.Standing == CrawlerStanding.GuildMember);
 
         /// <summary>
         /// Moves the table on to <paramref name="frame"/>: bodies its crawlers show keep their slots, new ones take the

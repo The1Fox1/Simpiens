@@ -14,12 +14,12 @@ namespace Simpiens.Client.Ui
         private bool _merchantWasOpen, _bountiesWereOpen;
         private int _sessionVersion;
 
-        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons)
+        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons, PortraitAtlas portraits = null)
         {
             Model = model;
             _refreshSeconds = refreshSeconds;
             Header = new HeaderBar(icons);
-            Panels = new DashboardPanels(model, icons);
+            Panels = new DashboardPanels(model, icons, portraits);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
             Tracker = new ExpeditionTracker(model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
             ui.Root.Children.Add(Tracker.Root);

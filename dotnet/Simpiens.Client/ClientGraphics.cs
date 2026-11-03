@@ -34,6 +34,7 @@ namespace Simpiens.Client
             }
             Renderer = new WorldRenderer(_batch, _sheets);
             Icons = new IconAtlas(device);
+            Portraits = new PortraitAtlas(device);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
             Fonts = FontLibrary.Load(TitleContainer.OpenStream);
             FontPages = new FontAtlases(device, Fonts, TitleContainer.OpenStream);
@@ -43,6 +44,8 @@ namespace Simpiens.Client
         public WorldRenderer Renderer { get; }
         /// <summary>The menus' item icons (graphics V4), magnified and drawn 1:1.</summary>
         public IconAtlas Icons { get; }
+        /// <summary>Crawlers' portraits (Epic UI-Beta B3), baked as they are first shown and drawn 1:1.</summary>
+        public PortraitAtlas Portraits { get; }
         public FontLibrary Fonts { get; }
         public FontAtlases FontPages { get; }
 
@@ -68,6 +71,7 @@ namespace Simpiens.Client
         {
             foreach (var sheet in _sheets) sheet.Dispose();
             Icons.Dispose();
+            Portraits.Dispose();
             FontPages.Dispose();
             _batch.Dispose();
         }
