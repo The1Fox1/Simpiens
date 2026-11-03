@@ -160,12 +160,14 @@ namespace Simpiens.Client.Tests
         // Epic 10 G5.2 (2026-10-31): crawlers move differently (F5's navigation fix), and Floor 1 gains the Drowned Gallery
         // below the Sump, with its name and "FLOODED", which moves the frame's centre down 3 units; every pin re-pinned with
         // the labels, with the render references.
-        private static readonly (ulong, ulong) PinnedTick0 = (2089589081819500112UL, 14250960641362250661UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (1375790215383592990UL, 14250960641362250661UL);
+        // Epic UI-Beta B2 (2026-11-03): every crawler is drawn as its own body, a cell of the world sheet's body region, so
+        // every item pin was re-pinned with the render references after the producer's look; labels unchanged.
+        private static readonly (ulong, ulong) PinnedTick0 = (17641633296866019416UL, 14250960641362250661UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (5459232858451998362UL, 14250960641362250661UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (15534755532114119441UL, 9314585316717962577UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8048523018784521886UL, 9314585316717962577UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (2426712770060885475UL, 5606140428678540481UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9538561654798750554UL, 3214430476125141426UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (17091240611631339463UL, 5606140428678540481UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9986015466188299776UL, 3214430476125141426UL);
     }
 }
