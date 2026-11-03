@@ -114,6 +114,13 @@ namespace Simpiens.Presentation.Art.People
             return true;
         }
 
+        /// <summary>The slot holding <paramref name="crawler"/>'s body, when it has one.</summary>
+        public bool TrySlotOf(in EntityView crawler, out int slot)
+        {
+            slot = -1;
+            return crawler.Look.IsComplete && _slotOf.TryGetValue(KeyOf(crawler), out slot);
+        }
+
         /// <summary>The next slot whose bake the client must write, in the order they were seated.</summary>
         public bool TryTakePending(out int slot)
         {
