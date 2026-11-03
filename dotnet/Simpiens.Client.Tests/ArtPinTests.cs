@@ -43,7 +43,10 @@ namespace Simpiens.Client.Tests
             Assert.True(changes.Count == 0, "The art changed:\n" + string.Join("\n", changes));
         }
 
-        /// <summary>Every sprite once (a sprite in two sheets is one sprite) but the body region's blank cells, by name in ordinal order: "width height hash".</summary>
+        /// <summary>
+        /// Every sprite once (a sprite in two sheets is one sprite) but the body region's blank cells, and the pinned bodies
+        /// (<see cref="People.BodyPins"/>), by name in ordinal order: "width height hash".
+        /// </summary>
         internal static SortedDictionary<string, string> CurrentPins()
         {
             var pins = new SortedDictionary<string, string>(StringComparer.Ordinal);
@@ -55,6 +58,7 @@ namespace Simpiens.Client.Tests
                     pins[sprite.Name] = $"{sprite.Width} {sprite.Height} {HashOf(sprite)}";
                 }
             }
+            foreach (var body in People.BodyPins.All()) pins[body.Name] = $"{body.Width} {body.Height} {HashOf(body)}"; // the bodies the client bakes (UI-Beta B2)
             return pins;
         }
 
