@@ -5,7 +5,7 @@ namespace Simpiens.Presentation.Art.People
 {
     /// <summary>
     /// The world sheet's region for bodies (Epic UI-Beta B2, D1): blank 16x16 cells, a slot of 24 frames for each body,
-    /// which the client fills with bakes at run time (<c>CrawlerBodies</c> says which body is in which slot). In
+    /// which the client fills with bakes at run time (<see cref="CrawlerBodies"/> says which body is in which slot). In
     /// the world sheet, so a crawler stays one quad in the world's one batch. Blank by construction, so not pinned: the
     /// bodies' pins are the kit's.
     /// </summary>
