@@ -8,88 +8,92 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Client.Ui
 {
     /// <summary>
-    /// The dashboard's look (Epic CLIENT M2, D1): Gum's built-in controls in the palette of Unity's
-    /// <c>FacilityDashboard.uss</c> (Tailwind's slate, sky, emerald, amber and red), its text in Inter's baked faces
-    /// (<see cref="UiText"/>). Every colour the dashboard draws is a token here (review U3), so a designer's reskin
-    /// replaces this class and the panels don't change.
+    /// The dashboard's look: Lantern &amp; Stone (the UI polish plan, U1), the outpost's warm stone lit by the portraits'
+    /// lantern, with one accent, lantern amber, for what is live or valuable. Its text is Inter's baked faces
+    /// (<see cref="UiText"/>). Every colour the dashboard draws is a token here (review U3), so a reskin replaces this
+    /// class and the panels don't change. It replaced the palette of Unity's <c>FacilityDashboard.uss</c> (Tailwind's
+    /// slate and sky; Epic CLIENT M2, D1).
     /// </summary>
     public static class UiStyle
     {
-        // Surfaces
-        public static readonly Color Backdrop = Hex(0x090d16);      // behind the dashboard's panels
-        public static readonly Color Header = Hex(0x0d1322);        // the header bar
-        public static readonly Color Panel = Hex(0x0f172a);         // panels and windows
-        public static readonly Color Card = Hex(0x162032);          // rows in a list
-        public static readonly Color CardBorder = Hex(0x233149);
-        public static readonly Color Border = Hex(0x1e293b);
-        public static readonly Color Control = Hex(0x1e293b);       // buttons
-        public static readonly Color ControlBorder = Hex(0x475569);
-        public static readonly Color Inset = Hex(0x0b1322);          // a box sunk into a card or a status bar
-        public static readonly Color Veil = new Color(9, 13, 22, 209); // over the map under an open window: rgba(9, 13, 22, 0.82)
-        public static readonly Color SliderTrack = Hex(0x334155);
+        // Surfaces: warm grey stone, never brown (brown on brown reads as mud)
+        public static readonly Color Backdrop = Hex(0x14110f);      // behind the dashboard's panels
+        public static readonly Color Header = Hex(0x2a2420);        // the header bar: the lintel's stone
+        public static readonly Color Panel = Hex(0x1c1815);         // panels and windows
+        public static readonly Color Card = Hex(0x241f1b);          // rows in a list
+        public static readonly Color CardBorder = Hex(0x3a312a);
+        public static readonly Color Border = Hex(0x3b322b);
+        public static readonly Color Control = Hex(0x3a312a);       // buttons
+        public static readonly Color ControlBorder = Hex(0x5a4d42);
+        public static readonly Color Inset = Hex(0x14110f);          // a box sunk into a card or a status bar
+        public static readonly Color Veil = new Color(20, 14, 8, 115); // over the map under an open window: about 45%, so the map shows
+        public static readonly Color SliderTrack = Hex(0x14110f);
 
-        // Text
-        public static readonly Color Text = Hex(0xe2e8f0);
-        public static readonly Color TextBright = Hex(0xf1f5f9);
-        public static readonly Color TextTitle = Hex(0xf8fafc);      // a window's or the dossier's title
-        public static readonly Color TextLight = Hex(0xcbd5e1);      // event lines, form labels, values
-        public static readonly Color TextSecondary = Hex(0x94a3b8);  // descriptions, subtitles, the tick
-        public static readonly Color TextMuted = Hex(0x64748b);
-        public static readonly Color BadgeText = Color.White;      // on a coloured state badge
+        // Text: parchment on stone (13.7:1 on the panel; the muted text 5.3:1)
+        public static readonly Color Text = Hex(0xefe2c6);
+        public static readonly Color TextBright = Hex(0xf6ecd6);
+        public static readonly Color TextTitle = Hex(0xfbf3e2);      // a window's or the dossier's title
+        public static readonly Color TextLight = Hex(0xd9cbb0);      // event lines, form labels, values
+        public static readonly Color TextSecondary = Hex(0xb9a88a);  // descriptions, subtitles, the clock
+        public static readonly Color TextMuted = Hex(0x9a8a72);
+        public static readonly Color BadgeText = Hex(0xfbf3e2);      // on a state badge's plate
 
-        // Meaning
-        public static readonly Color Accent = Hex(0x38bdf8);        // sky
-        public static readonly Color Success = Hex(0x10b981);       // emerald
-        public static readonly Color Warning = Hex(0xf59e0b);       // amber
-        public static readonly Color Danger = Hex(0xef4444);        // red
-        public static readonly Color Operational = Hex(0x34d399);   // the status pill's words
+        // Meaning: one accent; the rest only for exceptions
+        public static readonly Color Accent = Hex(0xf0a73a);        // lantern amber
+        public static readonly Color Success = Hex(0x8fbf6a);
+        public static readonly Color Warning = Hex(0xe8b64c);
+        public static readonly Color Danger = Hex(0xd4573b);
+        public static readonly Color Operational = Hex(0x8fbf6a);   // the status pill's words
 
         // The outpost's numbers and the bounty board
-        public static readonly Color Gold = Hex(0xf59e0b);
-        public static readonly Color GoldText = Hex(0xfbbf24);
-        public static readonly Color Stock = Hex(0x3b82f6);         // rations and salvage
-        public static readonly Color StockText = Hex(0x93c5fd);
-        public static readonly Color Bounty = Hex(0xa855f7);
-        public static readonly Color BountyText = Hex(0xc084fc);
+        public static readonly Color Gold = Hex(0xf0a73a);
+        public static readonly Color GoldText = Hex(0xf6c66b);
+        public static readonly Color Stock = Hex(0x8a7a63);         // rations and salvage: neutral, the icons carry the colour
+        public static readonly Color StockText = Hex(0xefe2c6);
+        public static readonly Color Bounty = Hex(0xb9803f);        // bronze
+        public static readonly Color BountyText = Hex(0xe3b77a);
 
         // The sector cards' fog
-        public static readonly Color Shrouded = Hex(0x0b111e);
-        public static readonly Color ShroudedBorder = Hex(0x334155);
+        public static readonly Color Shrouded = Hex(0x14110f);
+        public static readonly Color ShroudedBorder = Hex(0x3a312a);
 
         // A crawler's drive bars
-        public static readonly Color DriveHealth = Hex(0x22c55e);  // green (Epic 10 G2)
-        public static readonly Color DriveHunger = Hex(0xf59e0b);
-        public static readonly Color DriveEnergy = Hex(0x3b82f6);
-        public static readonly Color DriveSocial = Hex(0x06b6d4);
+        public static readonly Color DriveHealth = Hex(0x8fbf6a);  // green (Epic 10 G2)
+        public static readonly Color DriveHunger = Hex(0xe0a040);
+        public static readonly Color DriveEnergy = Hex(0x5a7fa6);  // the guild's blued steel
+        public static readonly Color DriveSocial = Hex(0x5fa8a0);
 
         // The test-session banner (development builds)
         public static readonly Color TestBanner = Hex(0x7c2d12);
         public static readonly Color TestBannerBorder = Hex(0xf97316);
         public static readonly Color TestBannerText = Hex(0xffedd5);
 
-        /// <summary>A crawler's state badge, as Unity's dashboard coloured it.</summary>
+        /// <summary>
+        /// A crawler's state badge: a dark plate under light words, so a list of badges stays quiet and only panic, in
+        /// the danger red, stands out (the words say the state; colour only helps).
+        /// </summary>
         public static Color StateColor(AgentVisualState state) => state switch
         {
-            AgentVisualState.Walking => Hex(0x3b82f6),
-            AgentVisualState.Harvesting => Hex(0xf59e0b),
-            AgentVisualState.Resting => Hex(0x6366f1),
-            AgentVisualState.Sleeping => Hex(0x6366f1),
-            AgentVisualState.Gossiping => Hex(0x06b6d4),
-            AgentVisualState.Sharing => Hex(0x10b981),
-            AgentVisualState.Panicking => Hex(0xef4444),
-            AgentVisualState.Yielding => Hex(0xeab308),
-            _ => Hex(0x64748b),
+            AgentVisualState.Walking => Hex(0x2f3b4d),
+            AgentVisualState.Harvesting => Hex(0x4f3d1c),
+            AgentVisualState.Resting => Hex(0x3a3350),
+            AgentVisualState.Sleeping => Hex(0x3a3350),
+            AgentVisualState.Gossiping => Hex(0x24414a),
+            AgentVisualState.Sharing => Hex(0x2f4a2a),
+            AgentVisualState.Panicking => Hex(0xb8432c),
+            AgentVisualState.Yielding => Hex(0x4a4220),
+            _ => Hex(0x3a312a),
         };
 
         /// <summary>A bounty's status on its card: open, claimed, or done and gone.</summary>
         public static Color BountyStatusColor(BountyStatus status) => status == BountyStatus.Open ? Success : status == BountyStatus.Claimed ? Accent : TextMuted;
 
-        /// <summary>Unity's feedback colours: green (0.1, 0.8, 0.4), red (0.95, 0.3, 0.3), amber (0.95, 0.8, 0.2).</summary>
+        /// <summary>Feedback: green, red and amber, warmed to the palette.</summary>
         public static Color ToneColor(FeedbackTone tone) => tone switch
         {
-            FeedbackTone.Ok => new Color(0.1f, 0.8f, 0.4f),
-            FeedbackTone.Error => new Color(0.95f, 0.3f, 0.3f),
-            FeedbackTone.Notice => new Color(0.95f, 0.8f, 0.2f),
+            FeedbackTone.Ok => Success,
+            FeedbackTone.Error => Hex(0xe06a4a),
+            FeedbackTone.Notice => Hex(0xf0c060),
             _ => Text,
         };
 
