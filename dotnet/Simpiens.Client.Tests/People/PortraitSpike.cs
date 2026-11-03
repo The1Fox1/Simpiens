@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art.People;
 using Simpiens.Presentation.Art;
 using Simpiens.Simulation.People;
 
@@ -225,11 +226,11 @@ namespace Simpiens.Client.Tests.People
 
         private static Rgba32[] Paint(Canvas c, in CrawlerLook look)
         {
-            var skin = SpriteKit.RampOf(SpikePalettes.SkinOf(look));
-            var hair = SpriteKit.RampOf(SpikePalettes.HairOf(look));
-            var cloth = SpriteKit.RampOf(SpikePalettes.PrimaryOf(look));
-            var trim = SpriteKit.RampOf(SpikePalettes.SecondaryOf(look));
-            var iris = SpriteKit.RampOf(SpikePalettes.EyesOf(look));
+            var skin = SpriteKit.RampOf(LookPalettes.SkinOf(look));
+            var hair = SpriteKit.RampOf(LookPalettes.HairOf(look));
+            var cloth = SpriteKit.RampOf(LookPalettes.PrimaryOf(look));
+            var trim = SpriteKit.RampOf(LookPalettes.SecondaryOf(look));
+            var iris = SpriteKit.RampOf(LookPalettes.EyesOf(look));
             Ramp RampFor(Material m) => m switch { Material.Hair => hair, Material.Cloth => cloth, Material.Trim => trim, Material.Iris => iris, _ => skin };
 
             // The hairline: hair just above skin takes its deepest tone, so the face reads at 1x

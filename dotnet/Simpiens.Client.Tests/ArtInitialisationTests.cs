@@ -21,6 +21,7 @@ namespace Simpiens.Client.Tests
         [InlineData("Simpiens.Presentation.Art.WornSprites", "All")]
         [InlineData("Simpiens.Presentation.Art.ItemSprites", "Icons")]
         [InlineData("Simpiens.Presentation.ViewMode", "Isometric")]
+        [InlineData("Simpiens.Presentation.Art.People.HeadAnchors", "All")]
         public void EachEntryPointInitialisesFirst(string typeName, string property)
         {
             var context = new AssemblyLoadContext("fresh " + typeName, isCollectible: true);

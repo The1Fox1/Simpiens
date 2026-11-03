@@ -4,17 +4,19 @@ using System.IO;
 using System.Linq;
 using Simpiens.Entities;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.People;
 using Xunit;
 
 namespace Simpiens.Client.Tests.People
 {
     /// <summary>
-    /// The people sheet (Epic UI-Beta B0): the spike's bodies and Hearthlight portraits for the producer's look. A row per
-    /// gene with each option once, two moods, every pose, then a crowd of 64 looks drawn from a fixed seed, the sample B2's
-    /// and B3's pins will use. Written on every run to render-output/people-sheet.png, with the spike's counts in
-    /// people-sheet.txt; not pinned (B0 records no art pins).
+    /// The people sheet (Epic UI-Beta B0, B2): bodies on the map from the body kit (<see cref="BodyKit"/>, B2) beside B0's
+    /// Hearthlight portrait spike (B3 replaces it), for the producer's look. A row per gene with each option once, the
+    /// helm and the guild's tabard, two moods, every pose, then a crowd of 64 looks drawn from a fixed seed, the sample
+    /// the pins use. Written on every run to render-output/people-sheet.png, with its counts in people-sheet.txt.
     /// </summary>
     public class PeopleSheetTests
     {
@@ -38,8 +40,8 @@ namespace Simpiens.Client.Tests.People
         [Fact]
         public void WriteThePeopleSheet()
         {
-            Assert.True(SpikePalettes.CoversCatalogue(), "Every colour option needs a spike colour.");
-            var report = new List<string> { "Epic UI-Beta B0 spike: people sheet counts", "" };
+            Assert.True(LookPalettes.CoversCatalogue(), "Every colour option needs a colour.");
+            var report = new List<string> { "Epic UI-Beta people sheet counts (B2 bodies, B0 portrait spike)", "" };
 
             var basis = Look(("lineage", "human"), ("frame", "male"), ("build", "average"), ("skin", "tone-4"), ("hair", "crop"),
                 ("colour", "dark-brown"), ("facial", "none"), ("face", "oval"), ("outfit", "tunic"), ("accessory", "none"));
@@ -49,8 +51,7 @@ namespace Simpiens.Client.Tests.People
             foreach (var frame in new[] { "female", "male" })
             {
                 var framed = Set(basis, LookGene.Frame, frame);
-                Section($"Hair styles, {frame} (spike draws shaved, crop, long, bun, mohawk; the rest fall back)", LookCatalog.Options(LookGene.HairStyle).Select(o =>
-                    Make($"{o.Key} ({BodySpike.DrawnAs(o.Key)})", Set(framed, LookGene.HairStyle, o.Key))));
+                Section($"Hair styles, {frame}", LookCatalog.Options(LookGene.HairStyle).Select(o => Make(o.Key, Set(framed, LookGene.HairStyle, o.Key))));
             }
             Section("Hair colours", LookCatalog.Options(LookGene.HairColour).Select(o => Make(o.Key, Set(basis, LookGene.HairColour, o.Key))));
             Section("Facial hair and face shapes", LookCatalog.Options(LookGene.FacialHair).Select(o => Make(o.Key, Set(basis, LookGene.FacialHair, o.Key)))
@@ -62,23 +63,27 @@ namespace Simpiens.Client.Tests.People
             Section("Moods at 2x: content, tired", new[] { basis, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, "long"), delver }
                 .SelectMany(l => new[] { Make("content", l, scale: 2), Make("tired", l, scale: 2, mood: "tired") }));
 
-            // Every pose: does the head-finding hold, and do the overlays sit right?
-            var posed = new List<Cell>();
-            int found = 0, frames = 0;
-            var misses = new List<string>();
-            foreach (var look in new[] { Set(Set(basis, LookGene.HairStyle, "long"), LookGene.Build, "broad"), Set(delver, LookGene.HairStyle, "bun") })
+            // The helm over every hair style (D4), and the guild's tabard on every build (D8)
+            Section("The helm over each hair style", LookCatalog.Options(LookGene.HairStyle).Select(o =>
+                BodyOnly(o.Key, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, o.Key), AgentVisualState.Idle, 0, ItemType.HazardGear, tabard: false)));
+            Section("The guild's tabard on each build, then a delver", LookCatalog.Options(LookGene.Build).Select(o =>
+                BodyOnly(o.Key, Set(basis, LookGene.Build, o.Key), AgentVisualState.Idle, 0, ItemType.None, tabard: true))
+                .Concat(new[] { BodyOnly("delver", delver, AgentVisualState.Idle, 0, ItemType.None, tabard: true), BodyOnly("helm, tabard", delver, AgentVisualState.Walking, 0, ItemType.HazardGear, tabard: true) }));
+
+            // Every pose: do the overlays sit right at each frame's head anchor?
+            foreach (var (title, look, gear, tabard) in new[]
+            {
+                ("long hair, broad", Set(Set(basis, LookGene.HairStyle, "long"), LookGene.Build, "broad"), ItemType.None, false),
+                ("a delver with a bun", Set(delver, LookGene.HairStyle, "bun"), ItemType.None, false),
+                ("coils, slight, a guild member", Set(Set(Set(basis, LookGene.HairStyle, "coils"), LookGene.Build, "slight"), LookGene.SkinTone, "tone-9"), ItemType.None, true),
+                ("braids, heavy, in the helm", Set(Set(Set(basis, LookGene.HairStyle, "braids"), LookGene.Build, "heavy"), LookGene.Frame, "female"), ItemType.HazardGear, false),
+            })
+            {
+                var posed = new List<Cell>();
                 foreach (AgentVisualState state in Enum.GetValues<AgentVisualState>())
-                    for (int f = 0; f < 2; f++)
-                    {
-                        var body = BodySpike.Bake(look, state, f, out bool head);
-                        frames++;
-                        if (head) found++;
-                        else if (!misses.Contains($"{state} {f}")) misses.Add($"{state} {f}");
-                        posed.Add(new Cell { Label = $"{state} {f}", Body = body });
-                    }
-            Section("Every pose (long hair, broad; a delver with a bun)", posed);
-            report.Add($"Head found by the hair's pixels: {found} of {frames} frames (two looks x 12 states x 2 frames).");
-            report.Add($"Frames needing a hand-placed anchor: {(misses.Count == 0 ? "none" : string.Join(", ", misses))}.");
+                    for (int f = 0; f < 2; f++) posed.Add(BodyOnly($"{state} {f}", look, state, f, gear, tabard));
+                Section($"Every pose ({title})", posed);
+            }
 
             // The crowd: the sample B2's and B3's pins will use
             var crowd = new List<Cell>();
@@ -93,6 +98,8 @@ namespace Simpiens.Client.Tests.People
             }
             Section($"A crowd of {CrowdSize} looks, seed {CrowdSeed} (h/d human or delver, f/m frame; then hair style)", crowd);
             report.Add($"Crowd of {CrowdSize}: {string.Join(", ", counts.OrderBy(p => p.Key).Select(p => $"{p.Key} {p.Value}"))}.");
+            int distinct = crowd.Select(c => string.Join(",", c.Body.Pixels)).Distinct().Count();
+            report.Add($"Distinct bodies on the map in the crowd (idle, frame 0): {distinct} of {CrowdSize}.");
 
             Draw();
             File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "render-output", "people-sheet.txt"), report);
@@ -106,8 +113,18 @@ namespace Simpiens.Client.Tests.People
                 Label = label,
                 Portrait = PortraitSpike.Framed(PortraitSpike.Bake(look, mood)),
                 PortraitScale = scale,
-                Body = BodySpike.Bake(look, AgentVisualState.Idle, 0, out _),
+                Body = Body(label, look, AgentVisualState.Idle, 0, ItemType.None, tabard: false),
             };
+        }
+
+        private static Cell BodyOnly(string label, CrawlerLook look, AgentVisualState state, int frame, ItemType headGear, bool tabard)
+            => new Cell { Label = label, Body = Body(label, look, state, frame, headGear, tabard) };
+
+        private static PixelSprite Body(string label, CrawlerLook look, AgentVisualState state, int frame, ItemType headGear, bool tabard)
+        {
+            var pixels = new Rgba32[BodyKit.PixelsPerFrame];
+            BodyKit.BakeFrame(look, headGear, tabard, state, frame, pixels);
+            return new PixelSprite(label, BodyKit.Size, BodyKit.Size, pixels);
         }
 
         private void Section(string title, IEnumerable<Cell> cells) => _sections.Add((title, cells.ToList()));

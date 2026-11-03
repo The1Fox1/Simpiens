@@ -1,14 +1,14 @@
 using System.Collections.Generic;
-using Simpiens.Presentation;
 using Simpiens.Simulation.People;
 
-namespace Simpiens.Client.Tests.People
+namespace Simpiens.Presentation.Art.People
 {
     /// <summary>
-    /// Epic UI-Beta B0 spike: a colour for each colour option of <see cref="LookCatalog"/>, by key. Test-only (plan D1):
-    /// what passes the producer's look moves into Simpiens.Presentation/Art/People at B2 and B3.
+    /// A colour for each colour option of <see cref="LookCatalog"/>, by its key (Epic UI-Beta B2): the core holds ids,
+    /// the client the colours, as <see cref="ItemArt"/> does for items. B0's spike palettes, as the producer's look
+    /// passed them. A new colour option is a row here; the body kit and the portraits read them.
     /// </summary>
-    internal static class SpikePalettes
+    public static class LookPalettes
     {
         // Light to deep, evenly spaced in value, warm to neutral in hue; the delvers' two of their own last
         private static readonly Dictionary<string, Rgba32> Skin = new Dictionary<string, Rgba32>
@@ -47,13 +47,14 @@ namespace Simpiens.Client.Tests.People
         public static Rgba32 PrimaryOf(in CrawlerLook look) => Clothes[LookCatalog.KeyOf(LookGene.ClothesPrimary, look.ClothesPrimary)];
         public static Rgba32 SecondaryOf(in CrawlerLook look) => Clothes[LookCatalog.KeyOf(LookGene.ClothesSecondary, look.ClothesSecondary)];
 
-        /// <summary>Every colour option has a colour here (the sheet would throw on a missing key).</summary>
+        /// <summary>Every colour option has a colour here (a look would throw on a missing key).</summary>
         public static bool CoversCatalogue()
         {
             foreach (var o in LookCatalog.Options(LookGene.SkinTone)) if (!Skin.ContainsKey(o.Key)) return false;
             foreach (var o in LookCatalog.Options(LookGene.HairColour)) if (!Hair.ContainsKey(o.Key)) return false;
             foreach (var o in LookCatalog.Options(LookGene.EyeColour)) if (!Eyes.ContainsKey(o.Key)) return false;
             foreach (var o in LookCatalog.Options(LookGene.ClothesPrimary)) if (!Clothes.ContainsKey(o.Key)) return false;
+            foreach (var o in LookCatalog.Options(LookGene.ClothesSecondary)) if (!Clothes.ContainsKey(o.Key)) return false;
             return true;
         }
     }
