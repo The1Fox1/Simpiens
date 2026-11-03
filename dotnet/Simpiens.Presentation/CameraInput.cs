@@ -36,6 +36,7 @@ namespace Simpiens.Presentation
             TimingsPressed = pressed[(int)InputAction.Timings],
             PausePressed = pressed[(int)InputAction.Pause],
             SpeedKey = pressed[(int)InputAction.Speed1] ? 1 : pressed[(int)InputAction.Speed2] ? 2 : pressed[(int)InputAction.Speed3] ? 3 : pressed[(int)InputAction.Speed4] ? 4 : 0,
+            HelpPressed = pressed[(int)InputAction.Help],
         };
 
         public bool Left;
@@ -60,6 +61,8 @@ namespace Simpiens.Presentation
         public bool PausePressed;
         /// <summary>1 to 4 this frame: the world's speed, the n-th of the header's speeds; 0 when none was pressed.</summary>
         public int SpeedKey;
+        /// <summary>F1 this frame: show or hide the key help (Epic UI-Beta B5).</summary>
+        public bool HelpPressed;
     }
 
     /// <summary>

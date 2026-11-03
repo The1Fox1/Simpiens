@@ -50,6 +50,7 @@ namespace Simpiens.Client
             new KeyBinding(Keys.P, InputAction.Pause),
             new KeyBinding(Keys.D1, InputAction.Speed1), new KeyBinding(Keys.D2, InputAction.Speed2),
             new KeyBinding(Keys.D3, InputAction.Speed3), new KeyBinding(Keys.D4, InputAction.Speed4),
+            new KeyBinding(Keys.F1, InputAction.Help),
         });
 
         public IReadOnlyList<KeyBinding> All => _bindings;

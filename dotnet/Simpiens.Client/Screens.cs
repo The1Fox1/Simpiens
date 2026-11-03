@@ -83,11 +83,15 @@ namespace Simpiens.Client
         public bool AdvancesWorld => true;
 
         /// <summary>Builds the dashboard's views, once the UI layer is up.</summary>
+        /// <summary>The key help (Epic UI-Beta B5): F1 shows every binding.</summary>
+        public KeyHelpOverlay Help { get; private set; }
+
         public void LoadContent()
         {
             Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons, _game.Graphics.Portraits);
             Scenes = new DynamicSceneView(_game);
             Scenes.LoadContent();
+            Help = new KeyHelpOverlay(_game.Ui);
         }
 
         public void Update(float seconds, float cameraSeconds, bool active)
@@ -104,6 +108,7 @@ namespace Simpiens.Client
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();
                 if (keys.ViewTogglePressed) _game.World.ToggleView();
                 if (keys.TimingsPressed) _game.TimingsOverlay?.Toggle();
+                if (keys.HelpPressed) Help?.Toggle((_game.Input as ClientInput)?.Bindings);
                 if (keys.DemoCutscenePressed && _game.Options.DemoScenes)
                 {
                     _game.PlayCutscene(DemoScenes.Arrival);

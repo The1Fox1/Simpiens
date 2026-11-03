@@ -27,5 +27,6 @@ namespace Simpiens.Presentation
         Speed2,
         Speed3,
         Speed4,
+        Help, // Epic UI-Beta B5: the key help overlay; last, so no action's value moves
     }
 }
