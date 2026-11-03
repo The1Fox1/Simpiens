@@ -64,6 +64,12 @@ namespace Simpiens.Client
             return _sources[_catalog.Sprite(id, 0) + (scale == 1 ? 0 : SpriteSheets.Icons.Count)];
         }
 
+        /// <summary>
+        /// Where the interface's piece <paramref name="name"/> (a <see cref="UiKit"/> name) is in <see cref="Texture"/>, at
+        /// <paramref name="scale"/>: frames at 1 (nine-slices), glyphs at 1 or <see cref="Scale"/>.
+        /// </summary>
+        public Rectangle Kit(string name, int scale = 1) => _sources[SpriteSheets.Icons.IndexOf(name) + (scale == 1 ? 0 : SpriteSheets.Icons.Count)];
+
         public void Dispose() => Texture.Dispose();
 
         private static PixelSprite Magnified(PixelSprite sprite)

@@ -28,8 +28,8 @@ namespace Simpiens.Presentation.Art
         /// <summary>A hard cutscene's still backdrops.</summary>
         public static SpriteSheet Backdrop { get; } = new SpriteSheet(DrawSheet.Backdrop, CutsceneArt.Backdrops);
 
-        /// <summary>The items' menu icons, then the missing art (graphics V3.6).</summary>
-        public static SpriteSheet Icons { get; } = new SpriteSheet(DrawSheet.Icons, ItemSprites.Icons.Append(MissingArt.Sprite));
+        /// <summary>The items' menu icons, then the missing art (graphics V3.6), then the interface's pieces (<see cref="UiKit"/>, UI polish U2).</summary>
+        public static SpriteSheet Icons { get; } = new SpriteSheet(DrawSheet.Icons, ItemSprites.Icons.Append(MissingArt.Sprite).Concat(UiKit.All));
 
         /// <summary>The sheet <paramref name="sheet"/>.</summary>
         public static SpriteSheet Contents(DrawSheet sheet) => sheet switch

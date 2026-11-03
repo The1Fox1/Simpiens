@@ -20,6 +20,7 @@ namespace Simpiens.Client.Tests
         [InlineData("Simpiens.Presentation.Art.IconArtTable", "Catalog")]
         [InlineData("Simpiens.Presentation.Art.WornSprites", "All")]
         [InlineData("Simpiens.Presentation.Art.ItemSprites", "Icons")]
+        [InlineData("Simpiens.Presentation.Art.UiKit", "All")]
         [InlineData("Simpiens.Presentation.ViewMode", "Isometric")]
         [InlineData("Simpiens.Presentation.Art.People.HeadAnchors", "All")]
         public void EachEntryPointInitialisesFirst(string typeName, string property)
