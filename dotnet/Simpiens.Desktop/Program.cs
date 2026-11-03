@@ -52,6 +52,7 @@ more (AGENTS.md, Logging).";
             // the demonstration cutscenes (F9, and dynamic scenes over play) and the frame's timings (F3)
             options.DemoScenes = true;
             options.TimingsOverlay = true;
+            options.ShowDebugIds = true;
             options.ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Simpiens.Core.Session.ISessionDefinition>(services, new Simpiens.Testing.Sessions.CanaryPenSession());
 #endif
             ConsoleSimLogSink.Install();

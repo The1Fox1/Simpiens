@@ -44,6 +44,9 @@ namespace Simpiens.Client
         /// <summary>Development builds: F3 shows the frame's timings by phase in a corner (review D1).</summary>
         public bool TimingsOverlay { get; set; }
 
+        /// <summary>Development builds: names in the dashboard carry the entity's debug name, "[SwarmAgent_0]" (Epic UI-Beta B5).</summary>
+        public bool ShowDebugIds { get; set; }
+
         /// <summary>Extra registrations for the simulation (development builds add the Dev Map; tests add doubles).</summary>
         public System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> ConfigureServices { get; set; }
 

@@ -273,7 +273,13 @@ namespace Simpiens.Client.Tests
             Assert.True(model.Dossier.HasCrawler);
             var agent = sim.Registry.GetEntity(resident.CrawlerId).Agent;
             Assert.Equal(agent.Hunger, model.Dossier.Hunger);
-            Assert.Contains("[", model.Dossier.Name);
+            Assert.DoesNotContain("[", model.Dossier.Name); // debug ids only when the host asks (Epic UI-Beta B5)
+            model.Context.ShowDebugIds = true;
+            model.Refresh();
+            Assert.EndsWith("[" + sim.Registry.GetEntity(resident.CrawlerId).Name + "]", model.Dossier.Name);
+            Assert.EndsWith("]", model.Sectors.Residents.Single(r => r.CrawlerId == resident.CrawlerId).Name);
+            model.Context.ShowDebugIds = false;
+            model.Refresh();
             Assert.True(model.Sectors.Residents.Single(r => r.Selected).CrawlerId == resident.CrawlerId);
 
             // A click on the map moves the dashboard to the crawler's room

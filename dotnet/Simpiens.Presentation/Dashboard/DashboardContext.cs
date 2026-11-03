@@ -72,6 +72,15 @@ namespace Simpiens.Presentation.Dashboard
 
         public FacilityZoneService Zones { get; }
 
+        /// <summary>
+        /// Names carry the entity's debug name ("[SwarmAgent_0]") (Epic UI-Beta B5): development builds only, set by the
+        /// host. Off in tests and the pinned image, so renders don't depend on the build.
+        /// </summary>
+        public bool ShowDebugIds { get; set; }
+
+        /// <summary>" [SwarmAgent_0]" when <see cref="ShowDebugIds"/>, else nothing: what follows a crawler's name.</summary>
+        public string DebugSuffix(string debugName) => ShowDebugIds && !string.IsNullOrEmpty(debugName) ? " [" + debugName + "]" : string.Empty;
+
         /// <summary>The quick-save slot, if the host gives one.</summary>
         public ISaveGameService SaveGame { get; }
 

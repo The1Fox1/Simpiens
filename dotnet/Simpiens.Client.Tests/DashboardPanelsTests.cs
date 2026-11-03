@@ -53,7 +53,8 @@ namespace Simpiens.Client.Tests
             Assert.True(panels.DossierShown);
             var agent = game.Session.Simulation.Registry.GetEntity(resident.CrawlerId).Agent;
             Assert.Equal(agent.Hunger, panels.HungerShown);
-            Assert.Contains("[", panels.DossierName);
+            Assert.StartsWith(game.Session.DashboardModel.Context.FriendlyName(resident.CrawlerId, game.Session.Simulation.Registry.GetEntity(resident.CrawlerId).Name), panels.DossierName);
+            Assert.DoesNotContain("[", panels.DossierName); // debug ids only in development builds (Epic UI-Beta B5)
             Assert.True(panels.ResidentCards[3].Selected);
         }
 

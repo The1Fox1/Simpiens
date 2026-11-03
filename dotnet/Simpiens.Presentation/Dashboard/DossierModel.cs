@@ -153,7 +153,7 @@ namespace Simpiens.Presentation.Dashboard
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
             string title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
-            Name = string.IsNullOrEmpty(title) ? $"{friendly} [{node.Name}]" : $"{friendly} the {title} [{node.Name}]";
+            Name = (string.IsNullOrEmpty(title) ? friendly : $"{friendly} the {title}") + _context.DebugSuffix(node.Name);
             Residency = Stay(agent.DepartsAtTick, _context.Clock?.CurrentTick ?? 0);
             if (Residency.Length > 0) Name += " · " + Residency;
 

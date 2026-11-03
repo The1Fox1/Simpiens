@@ -36,7 +36,9 @@ namespace Simpiens.Client
             Scenes = new SceneDirector(Frames);
             if (Options.DemoScenes) DemoScenes.AddTo(Scenes);
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
-            DashboardModel = new DashboardModel(DashboardContext.From(Simulation.Services, SaveGame, HostCommands), Selection);
+            var context = DashboardContext.From(Simulation.Services, SaveGame, HostCommands);
+            context.ShowDebugIds = Options.ShowDebugIds;
+            DashboardModel = new DashboardModel(context, Selection);
             Simulation.Host.SessionChanged += OnSessionChanged;
         }
 

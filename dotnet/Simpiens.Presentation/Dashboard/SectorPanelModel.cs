@@ -129,7 +129,7 @@ namespace Simpiens.Presentation.Dashboard
                 var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
                 bool face = agent.Look.IsComplete;
                 var portrait = face ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
-                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned, face, portrait));
+                _residents.Add(new ResidentRow(node.Id, _context.FriendlyName(node.Id, node.Name) + _context.DebugSuffix(node.Name), ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned, face, portrait));
             }
 
             _events.Clear();
