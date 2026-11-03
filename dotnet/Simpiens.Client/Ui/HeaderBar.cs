@@ -27,7 +27,10 @@ namespace Simpiens.Client.Ui
         private static readonly Microsoft.Xna.Framework.Color Lamplight = UiStyle.Hex(0x5a3c1a); // a thread of light on the lintel's lower edge
 
         private readonly TextRuntime _place, _gold, _bounties, _saveStatus, _tick, _confirmText, _mapLabel, _ledgerLabel;
-        private readonly SpriteRuntime _merchantGlyph, _bountiesGlyph, _guildGlyph, _pauseGlyph, _clockGlyph;
+        private readonly SpriteRuntime _merchantGlyph, _bountiesGlyph, _guildGlyph, _pauseGlyph, _clockGlyph, _coin;
+        private static readonly Microsoft.Xna.Framework.Color CoinPulse = UiStyle.Hex(0xffd28a);
+        private long _goldTarget = -1;
+        private float _goldFrom, _goldRoll = -1f;
         private readonly RectangleRuntime _viewLamp;
         private readonly IconAtlas _icons;
         private readonly ContainerRuntime _stock, _confirm;
@@ -68,7 +71,7 @@ namespace Simpiens.Client.Ui
 
             // The outpost: gold, the stall's stock, the bounties, in one plaque; each figure takes hover for its tip
             left.Children.Add(UiParts.Plaque(out var outpost, Control, padding: 10f, spacing: 10f));
-            GoldCounter = Counter(UiKit.Coin, UiStyle.Accent, UiStyle.GoldText, out _gold);
+            GoldCounter = Counter(UiKit.Coin, UiStyle.Accent, UiStyle.GoldText, out _gold, out _coin);
             outpost.Children.Add(GoldCounter);
             outpost.Children.Add(Divider());
             _stock = UiParts.Row(10f);
@@ -278,7 +281,7 @@ namespace Simpiens.Client.Ui
         {
             var header = model.Header;
             UiParts.SetText(_place, header.Place);
-            UiParts.SetText(_gold, header.Gold);
+            BindGold(header);
             BindStock(header.Stock);
             UiParts.SetText(_bounties, header.BountyCount);
             UiParts.SetText(_tick, header.Clock);
@@ -306,6 +309,46 @@ namespace Simpiens.Client.Ui
 
             UiParts.SetText(_saveStatus, model.Saves.Status);
             ShowSaveButtons(model.Saves.Available);
+        }
+
+        /// <summary>The header moves (<see cref="ClientOptions.UiMotion"/>): the gold rolls to a new figure and its coin pulses.</summary>
+        public bool Motion { get; set; }
+
+        /// <summary>True while the gold's figure is rolling.</summary>
+        public bool Rolling => _goldRoll >= 0f;
+
+        /// <summary>Moves the gold's roll on by <paramref name="realSeconds"/>.</summary>
+        public void Animate(float realSeconds)
+        {
+            if (_goldRoll < 0f) return;
+            _goldRoll += realSeconds;
+            float t = _goldRoll / Ui.Motion.NumberRoll;
+            if (t >= 1f)
+            {
+                _goldRoll = -1f;
+                UiParts.SetText(_gold, _goldTarget.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                _coin.Color = UiStyle.Accent;
+                return;
+            }
+            float eased = Ui.Motion.EaseOut(t);
+            long shown = (long)System.MathF.Round(_goldFrom + (_goldTarget - _goldFrom) * eased);
+            UiParts.SetText(_gold, shown.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            _coin.Color = Microsoft.Xna.Framework.Color.Lerp(CoinPulse, UiStyle.Accent, eased);
+        }
+
+        private void BindGold(HeaderModel header)
+        {
+            if (header.GoldAmount == _goldTarget) return;
+            bool roll = Motion && _goldTarget >= 0;
+            float from = _goldRoll >= 0f && long.TryParse(_gold.Text, out long shown) ? shown : _goldTarget;
+            _goldTarget = header.GoldAmount;
+            if (!roll)
+            {
+                UiParts.SetText(_gold, header.Gold);
+                return;
+            }
+            _goldFrom = from;
+            _goldRoll = 0f;
         }
 
         private static void Lit(Button button, SpriteRuntime glyph, bool open)
@@ -347,12 +390,16 @@ namespace Simpiens.Client.Ui
 
         /// <summary>A glyph and a figure that take hover (for a tip) but no clicks of their own.</summary>
         private static ContainerRuntime Counter(string glyph, Microsoft.Xna.Framework.Color tint, Microsoft.Xna.Framework.Color words, out TextRuntime figure)
+            => Counter(glyph, tint, words, out figure, out _);
+
+        private static ContainerRuntime Counter(string glyph, Microsoft.Xna.Framework.Color tint, Microsoft.Xna.Framework.Color words, out TextRuntime figure, out SpriteRuntime mark)
         {
             var counter = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, Width = 0f, Height = Control - 8f, HasEvents = true };
             UiParts.CentreVertically(counter);
             var icon = UiParts.Glyph(glyph, tint);
             UiParts.CentreVertically(icon);
             counter.Children.Add(icon);
+            mark = icon;
             figure = UiParts.Text("0", words, UiText.BodyBold);
             figure.X = icon.Width + 5f;
             UiParts.CentreVertically(figure);

@@ -47,6 +47,12 @@ namespace Simpiens.Client
         /// <summary>Development builds: names in the dashboard carry the entity's debug name, "[SwarmAgent_0]" (Epic UI-Beta B5).</summary>
         public bool ShowDebugIds { get; set; }
 
+        /// <summary>
+        /// The interface moves (the UI polish plan, U7): windows arrive, figures roll. The desktop game turns it on; tests and
+        /// the pinned renders leave it off, so nothing they capture is mid-tween.
+        /// </summary>
+        public bool UiMotion { get; set; }
+
         /// <summary>Extra registrations for the simulation (development builds add the Dev Map; tests add doubles).</summary>
         public System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> ConfigureServices { get; set; }
 

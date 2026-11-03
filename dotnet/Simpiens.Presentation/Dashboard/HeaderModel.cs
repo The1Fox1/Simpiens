@@ -52,6 +52,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The stall's treasury as a figure ("135"), beside the coin.</summary>
         public string Gold { get; private set; } = "0";
 
+        /// <summary>The stall's treasury as a number (the header rolls its figure to it).</summary>
+        public long GoldAmount { get; private set; }
+
         public string Rations { get; private set; } = "0 RATIONS";
         public string Salvage { get; private set; } = "0 ORE | 0 HERB";
 
@@ -118,7 +121,8 @@ namespace Simpiens.Presentation.Dashboard
         {
             // The food the stall sells, and the resources it buys that aren't hazardous (ore, herbs), by the client's words
             bool open = _context.TryGetStall(out var stall);
-            Gold = open ? Invariant($"{stall.TreasuryGold}") : "0";
+            GoldAmount = open ? stall.TreasuryGold : 0;
+            Gold = Invariant($"{GoldAmount}");
             var food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
             Rations = Invariant($"{(open ? stall.StockOf(food) : 0)} {ItemTexts.Of(food).HeaderWord}");
             _stock.Clear();

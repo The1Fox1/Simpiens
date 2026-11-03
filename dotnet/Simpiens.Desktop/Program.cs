@@ -47,6 +47,7 @@ more (AGENTS.md, Logging).";
                 }
             }
 
+            options.UiMotion = true; // windows arrive and figures roll (the UI polish plan, U7)
 #if DEBUG
             // Development builds offer the Dev Map (the canary pens) through the session switch, as Unity's editor did,
             // the demonstration cutscenes (F9, and dynamic scenes over play) and the frame's timings (F3)

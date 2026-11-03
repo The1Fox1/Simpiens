@@ -91,7 +91,7 @@ namespace Simpiens.Client
 
         public void LoadContent()
         {
-            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons, _game.Graphics.Portraits);
+            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons, _game.Graphics.Portraits, _game.Options.UiMotion);
             Scenes = new DynamicSceneView(_game);
             Scenes.LoadContent();
             Help = new KeyHelpOverlay(_game.Ui);

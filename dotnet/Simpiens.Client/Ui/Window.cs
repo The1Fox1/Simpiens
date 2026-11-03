@@ -40,6 +40,7 @@ namespace Simpiens.Client.Ui
                 Visible = false,
             };
             UiParts.AddFill(Veil, UiStyle.Veil);
+            _veilFill = (RectangleRuntime)Veil.Children[0];
 
             Frame = new ContainerRuntime
             {
@@ -111,7 +112,7 @@ namespace Simpiens.Client.Ui
         public void SnapToPixels()
         {
             float left = Frame.AbsoluteLeft - Frame.X, top = Frame.AbsoluteTop - Frame.Y;
-            float x = System.MathF.Floor(left) - left, y = System.MathF.Floor(top) - top;
+            float x = System.MathF.Floor(left) - left, y = System.MathF.Floor(top) - top + Rise;
             if (Frame.X != x) Frame.X = x;
             if (Frame.Y != y) Frame.Y = y;
         }
@@ -119,8 +120,59 @@ namespace Simpiens.Client.Ui
         public bool IsShown
         {
             get => Veil.Visible;
-            set => Veil.Visible = value;
+            set
+            {
+                if (value && !Veil.Visible && Motion)
+                {
+                    _arriving = 0f; // it arrives (the UI polish plan, U7), from its first frame: veil clear, frame low
+                    Animate(0f);
+                }
+                if (!value) Settle();
+                Veil.Visible = value;
+            }
         }
+
+        /// <summary>The window arrives with motion when shown (<see cref="ClientOptions.UiMotion"/>).</summary>
+        public bool Motion { get; set; }
+
+        /// <summary>True while the window is still arriving.</summary>
+        public bool Arriving => _arriving >= 0f;
+
+        /// <summary>The frame's offset below where it rests, in whole pixels (0 at rest).</summary>
+        public float Rise { get; private set; }
+
+        /// <summary>Moves an arrival on by <paramref name="realSeconds"/>: the veil fades in, the frame rises to rest.</summary>
+        public void Animate(float realSeconds)
+        {
+            if (_arriving < 0f) return;
+            _arriving += realSeconds;
+            float t = _arriving / Ui.Motion.WindowIn;
+            if (t >= 1f)
+            {
+                Settle();
+                return;
+            }
+            float eased = Ui.Motion.EaseOut(t);
+            _veilFill.FillColor = new Color(UiStyle.Veil.R, UiStyle.Veil.G, UiStyle.Veil.B, (byte)(UiStyle.Veil.A * eased));
+            SetRise(System.MathF.Round(Ui.Motion.WindowRise * (1f - eased)));
+        }
+
+        private void Settle()
+        {
+            _arriving = -1f;
+            _veilFill.FillColor = UiStyle.Veil;
+            SetRise(0f);
+        }
+
+        private void SetRise(float rise)
+        {
+            if (Rise == rise) return;
+            Frame.Y += rise - Rise; // whole pixels on the snapped position
+            Rise = rise;
+        }
+
+        private readonly RectangleRuntime _veilFill;
+        private float _arriving = -1f;
 
         /// <summary>A 1 px line across the window.</summary>
         public static RectangleRuntime Rule() => new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Border, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 1f };

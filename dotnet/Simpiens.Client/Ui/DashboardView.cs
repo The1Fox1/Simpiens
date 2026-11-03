@@ -14,11 +14,12 @@ namespace Simpiens.Client.Ui
         private bool _merchantWasOpen, _bountiesWereOpen;
         private int _sessionVersion;
 
-        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons, PortraitAtlas portraits = null)
+        /// <param name="motion">The interface moves (<see cref="ClientOptions.UiMotion"/>): windows arrive, the gold rolls.</param>
+        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons, PortraitAtlas portraits = null, bool motion = false)
         {
             Model = model;
             _refreshSeconds = refreshSeconds;
-            Header = new HeaderBar(icons);
+            Header = new HeaderBar(icons) { Motion = motion };
             Panels = new DashboardPanels(model, icons, portraits);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
             Tracker = new ExpeditionTracker(model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
@@ -54,6 +55,9 @@ namespace Simpiens.Client.Ui
             }
             ui.Root.Children.Add(Header.Root);
             ui.Root.Children.Add(Header.Status);
+            Merchant.Window.Motion = motion;
+            Bounties.Window.Motion = motion;
+            Guild.Window.Motion = motion;
             Sessions = new SessionSwitchBar(model.Sessions);
             ui.Root.Children.Add(Sessions.Root);
             ui.Root.Children.Add(Header.Menu); // over everything but the tips: the session switch sits where it drops
@@ -126,6 +130,14 @@ namespace Simpiens.Client.Ui
         public void Update(float realSeconds)
         {
             Model.Saves.Poll();
+            if (realSeconds > 0f)
+            {
+                // Motion runs every frame on real time; the binds below stay at the refresh's rate
+                Header.Animate(realSeconds);
+                Merchant.Window.Animate(realSeconds);
+                Bounties.Window.Animate(realSeconds);
+                Guild.Window.Animate(realSeconds);
+            }
             if (realSeconds > 0f) _sinceRefresh += realSeconds;
             bool newSession = Model.SessionVersion != _sessionVersion; // a switch or a load shows at once, not at the next refresh
             if (!newSession && _refreshSeconds > 0f && _sinceRefresh < _refreshSeconds) return;
