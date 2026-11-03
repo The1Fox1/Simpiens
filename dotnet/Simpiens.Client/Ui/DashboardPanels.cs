@@ -154,7 +154,7 @@ namespace Simpiens.Client.Ui
             _dossierDetails.Children.Add(Window.Gap(4f));
             _dossierDetails.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
-            UiParts.AddFill(intent, UiStyle.Card);
+            UiParts.AddInset(intent);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
             _dossierDetails.Children.Add(intent);
@@ -383,7 +383,7 @@ namespace Simpiens.Client.Ui
                 Height = -2f * (Outer + Margin),
                 ClipsChildren = true,
             };
-            UiParts.AddFill(panel, UiStyle.Panel, UiStyle.Border);
+            UiParts.AddFrame(panel);
             body = UiParts.Column(4f);
             body.X = Inner;
             body.Y = Inner;
@@ -562,11 +562,15 @@ namespace Simpiens.Client.Ui
                 var name = UiParts.Text(label, UiStyle.TextSecondary, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);
-                var track = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Border, X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
+                // The bar runs in the kit's groove (the UI polish plan, U8), its fill inset by the groove's lip
+                var track = new ContainerRuntime { X = 80f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -(80f + 46f), Height = 14f };
+                UiParts.AddKitFill(track, Simpiens.Presentation.Art.UiKit.Groove, Simpiens.Presentation.Art.UiKit.GrooveCorner, UiStyle.Border);
                 UiParts.CentreVertically(track);
                 row.Children.Add(track);
+                var channel = new ContainerRuntime { X = 2f, Y = 2f, WidthUnits = DimensionUnitType.RelativeToParent, Width = -4f, HeightUnits = DimensionUnitType.RelativeToParent, Height = -4f };
+                track.Children.Add(channel);
                 _fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = color, WidthUnits = DimensionUnitType.PercentageOfParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f };
-                track.Children.Add(_fill);
+                channel.Children.Add(_fill);
                 _value = UiParts.Text("0%", UiStyle.TextLight, UiText.Small);
                 _value.XUnits = GeneralUnitType.PixelsFromLarge;
                 _value.XOrigin = HorizontalAlignment.Right;

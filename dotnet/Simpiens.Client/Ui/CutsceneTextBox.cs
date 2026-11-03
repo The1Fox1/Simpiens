@@ -18,7 +18,7 @@ namespace Simpiens.Client.Ui
         public CutsceneTextBox(string name)
         {
             Root = new ContainerRuntime { Name = name, Visible = false };
-            UiParts.AddFill(Root, UiParts.Alpha(UiStyle.Panel, 0.94f), UiStyle.Border);
+            UiParts.AddFrame(Root);
             Face = new SpriteRuntime
             {
                 TextureAddress = TextureAddress.Custom,

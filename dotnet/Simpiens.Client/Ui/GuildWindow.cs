@@ -56,7 +56,7 @@ namespace Simpiens.Client.Ui
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
-            UiParts.AddFill(statusBar, UiStyle.Inset, UiStyle.Border);
+            UiParts.AddInset(statusBar);
             _status = UiParts.Text(string.Empty, UiStyle.Text, UiText.StatusBold);
             _status.X = 12f;
             UiParts.CentreVertically(_status);

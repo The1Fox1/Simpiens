@@ -42,7 +42,7 @@ namespace Simpiens.Client.Ui
                 Visible = false,
                 HasEvents = true, // clicks on the card stay off the map
             };
-            UiParts.AddFill(Root, UiStyle.Panel, UiStyle.Border);
+            UiParts.AddFrame(Root);
             Portrait = new SpriteRuntime
             {
                 Texture = portraits?.Texture,

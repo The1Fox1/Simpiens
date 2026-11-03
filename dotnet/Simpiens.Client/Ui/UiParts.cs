@@ -199,12 +199,12 @@ namespace Simpiens.Client.Ui
         /// Fills <paramref name="parent"/> with the kit's <paramref name="piece"/> as a nine-slice whose corners are
         /// <paramref name="corner"/> pixels (the UI polish plan, U4); a plain <paramref name="fallback"/> fill without a kit.
         /// </summary>
-        public static void AddKitFill(GraphicalUiElement parent, string piece, int corner, Color fallback)
+        public static void AddKitFill(GraphicalUiElement parent, string piece, int corner, Color fallback, Color? fallbackBorder = null)
         {
             var kit = UiStyle.Kit;
             if (kit == null)
             {
-                AddFill(parent, fallback);
+                AddFill(parent, fallback, fallbackBorder);
                 return;
             }
             var source = kit.Kit(piece);
@@ -223,6 +223,14 @@ namespace Simpiens.Client.Ui
                 Height = 0f,
             });
         }
+
+        /// <summary>A panel's iron frame round its stone (the UI polish plan, U8): a plain panel with a border without a kit.</summary>
+        public static void AddFrame(GraphicalUiElement parent, string piece = Simpiens.Presentation.Art.UiKit.FrameIron)
+            => AddKitFill(parent, piece, Simpiens.Presentation.Art.UiKit.FrameCorner, UiStyle.Panel, UiStyle.Border);
+
+        /// <summary>A box sunk into a panel: the kit's recessed plaque, or a plain inset without a kit.</summary>
+        public static void AddInset(GraphicalUiElement parent)
+            => AddKitFill(parent, Simpiens.Presentation.Art.UiKit.Plaque, Simpiens.Presentation.Art.UiKit.Corner, UiStyle.Inset, UiStyle.Border);
 
         /// <summary>
         /// A recessed stone plaque <paramref name="height"/> tall, as wide as its content plus <paramref name="padding"/>

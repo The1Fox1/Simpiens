@@ -33,7 +33,7 @@ namespace Simpiens.Client.Ui
                 YOrigin = VerticalAlignment.Center,
                 Visible = false,
             };
-            UiParts.AddFill(Root, UiParts.Alpha(UiStyle.Panel, 0.96f), UiStyle.Border);
+            UiParts.AddFrame(Root);
             var column = UiParts.Column(8f);
             column.X = 16f;
             column.Y = 14f;

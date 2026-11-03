@@ -35,7 +35,7 @@ namespace Simpiens.Client.Ui
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
-            UiParts.AddFill(statusBar, UiStyle.Inset, UiStyle.Border);
+            UiParts.AddInset(statusBar);
             // Unity spread the three across the bar; at Inter's widths the treasury follows the status instead
             var left = UiParts.Row(14f);
             left.X = 12f;
