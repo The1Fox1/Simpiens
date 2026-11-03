@@ -225,7 +225,8 @@ namespace Simpiens.Presentation
             if (shown <= 0f) return;
             var tint = Shown(White, shown);
             float depth = Projection.Depth(position);
-            Add(DrawRole.Prop, depth, _catalog.Piece(Visuals.Stall, viewSeconds), position, tint);
+            // Pickable under the stall's own id (Epic UI-Beta B5): a click on it opens the merchant terminal
+            Add(DrawRole.Prop, depth, _catalog.Piece(Visuals.Stall, viewSeconds), position, tint).Pick = Items.Pickable(stall.StallEntityId);
             var slots = _catalog.DisplaySlots;
             int slot = 0;
             for (int i = 0; i < TradeStallData.GoodsCapacity && slot < slots.Count; i++)
