@@ -1,11 +1,11 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: PAUSED (2026-10-30) after B0 and B1, merged as PR #17 (§10). The producer's look at the people sheet passed. The producer then moved to Epic 10 Part 1; B2 resumes after its gate (G6). What exists: §10; what doesn't: B2–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02): B2, bodies on the map, on `feat/ui-beta-b2` (one PR); its working plan is `.agents/ui_beta_b2_plan.md`. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B2–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
 - **Milestones**: B0 to B6 (Part 3's draft uses L0 to L6).
-- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (B2–B6), as an epic. Each milestone is Possibly Complex (§4). Its plan stamps each step when B2 resumes.
+- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (B2–B6), as an epic. Each milestone is Possibly Complex (§4). B2's plan stamps each of its steps.
 
 ---
 
