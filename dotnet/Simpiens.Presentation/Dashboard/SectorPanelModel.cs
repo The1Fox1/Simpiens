@@ -68,10 +68,20 @@ namespace Simpiens.Presentation.Dashboard
         private readonly List<SectorRow> _sectors = new List<SectorRow>(16);
         private readonly List<ResidentRow> _residents = new List<ResidentRow>(32);
         private readonly List<string> _events = new List<string>(MaxEvents);
+        private readonly List<EntityId> _eventActors = new List<EntityId>(MaxEvents);
+        private string _lastNarrative;
+        private int _repeats;
         private readonly List<WorldEntity> _inZone = new List<WorldEntity>(32);
         private readonly List<ChronicleEvent> _chronicle = new List<ChronicleEvent>(MaxEvents);
 
         private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
+
+        // The last line takes its repeats: "×3"
+        private void CloseGroup()
+        {
+            if (_repeats > 0) _events[_events.Count - 1] += Invariant($" ×{_repeats + 1}");
+            _repeats = 0;
+        }
 
         internal SectorPanelModel(DashboardContext context, Simpiens.Presentation.Art.People.MoodTracker moods = null)
         {
@@ -87,6 +97,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Description { get; private set; } = string.Empty;
         public IReadOnlyList<ResidentRow> Residents => _residents;
         public IReadOnlyList<string> Events => _events;
+
+        /// <summary>Each event row's first actor (Epic UI-Beta B5): a click on the row finds it on the map; default for none.</summary>
+        public IReadOnlyList<EntityId> EventActors => _eventActors;
 
         /// <summary>Keeps the selection while it exists on this map; otherwise picks the map's first real sector (id 0 is transit).</summary>
         internal void EnsureSelection()
@@ -133,15 +146,28 @@ namespace Simpiens.Presentation.Dashboard
             }
 
             _events.Clear();
+            _eventActors.Clear();
             _chronicle.Clear();
             _context.Chronicle?.GetSectorEvents(SelectedSectorId, _chronicle, MaxEvents);
             uint now = _context.Clock != null ? (uint)_context.Clock.CurrentTick : 0u;
+            // Grouped (Epic UI-Beta B5): events in a row with the same words are one line, at the newest's time, "×N" after it
+            _lastNarrative = null;
+            _repeats = 0;
             for (int i = 0; i < _chronicle.Count; i++)
             {
                 var evt = _chronicle[i];
                 string narrative = _context.Formatter != null ? _context.Formatter.FormatEvent(evt) : Invariant($"{evt.EventType} (Sector {evt.SectorId})");
+                if (narrative == _lastNarrative)
+                {
+                    _repeats++;
+                    continue;
+                }
+                CloseGroup();
+                _lastNarrative = narrative;
                 _events.Add($"{RelativeTimeFormatter.Format(evt.SimulationTick, now)} {narrative}");
+                _eventActors.Add(evt.ActorAId);
             }
+            CloseGroup();
         }
 
         /// <summary>What a crawler is doing, in words (Unity's resident card).</summary>

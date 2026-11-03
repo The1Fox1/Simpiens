@@ -220,6 +220,9 @@ namespace Simpiens.Client.Ui
         /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds that crawler on the map.</summary>
         public Action<EntityId> FindOnMap { get; set; }
 
+        /// <summary>The recent events' rows, in order (tests click them).</summary>
+        public GraphicalUiElement EventRowBox(int index) => (GraphicalUiElement)_eventRows[index].Parent;
+
         /// <summary>The faces on the residents' cards and the affinities' rows, in order (tests click them).</summary>
         public ContainerRuntime ResidentFace(int index) => _residentCards[index].FaceBox;
         public ContainerRuntime AffinityFace(int index) => _affinityFaces[index].FaceBox;
@@ -430,7 +433,13 @@ namespace Simpiens.Client.Ui
 
         private TextRuntime EventRow()
         {
-            var box = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 6f };
+            var box = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 6f, HasEvents = true };
+            int index = _eventRows.Count;
+            box.Click += (_, _) => // the event finds its crawler (Epic UI-Beta B5)
+            {
+                var actors = _model.Sectors.EventActors;
+                if (index < actors.Count && actors[index] != default) FindOnMap?.Invoke(actors[index]);
+            };
             UiParts.AddFill(box, UiStyle.Inset);
             box.Children.Add(new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Stock, Width = 2f, HeightUnits = DimensionUnitType.RelativeToParent, Height = 0f });
             var text = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
