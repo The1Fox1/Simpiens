@@ -52,7 +52,7 @@ namespace Simpiens.Client.Ui
             _model = model;
             _icons = icons;
             _portraits = portraits;
-            Window = new Window("guild-roster", "GUILD ROSTER", "Your members, their wages and their standing with the outpost.", Width, UiStyle.Success);
+            Window = new Window("guild-roster", "GUILD ROSTER", "Your members, their wages and their standing with the outpost.", Width, Simpiens.Presentation.Art.UiKit.FrameSteel, Simpiens.Presentation.Art.UiKit.Shield);
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
@@ -129,7 +129,7 @@ namespace Simpiens.Client.Ui
             _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.Button("APPLY WAGES", 150f, 32f, UiText.BodyBold);
+            ApplyButton = UiParts.PrimaryButton("APPLY WAGES", 150f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);

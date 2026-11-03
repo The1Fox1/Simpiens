@@ -34,7 +34,7 @@ namespace Simpiens.Client.Ui
         {
             _icons = icons;
             _model = model;
-            Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, UiStyle.Gold);
+            Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, Simpiens.Presentation.Art.UiKit.FrameIron, Simpiens.Presentation.Art.UiKit.Notice);
 
             var columns = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = ColumnGap };
             Window.Body.Children.Add(columns);
@@ -123,7 +123,7 @@ namespace Simpiens.Client.Ui
             _feedback.Width = 0f;
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(_feedback);
-            PostButton = UiParts.Button("POST BOUNTY (ESCROW GOLD)", FormWidth, 34f, UiText.BodyBold);
+            PostButton = UiParts.PrimaryButton("POST BOUNTY (ESCROW GOLD)", FormWidth, 34f, UiText.BodyBold);
             form.Children.Add(PostButton.Visual);
             PostButton.Click += (_, _) => { _model.Post(); Bind(); };
             columns.Children.Add(form);

@@ -31,7 +31,7 @@ namespace Simpiens.Client.Ui
         {
             _model = model;
             _icons = icons;
-            Window = new Window("merchant-terminal", "OUTPOST MERCHANT TERMINAL", "Stall inventory management & automated commodity pricing.", Width, UiStyle.Accent);
+            Window = new Window("merchant-terminal", "OUTPOST MERCHANT TERMINAL", "Stall inventory management & automated commodity pricing.", Width, Simpiens.Presentation.Art.UiKit.FrameBronze, Simpiens.Presentation.Art.UiKit.Stall);
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
@@ -72,7 +72,7 @@ namespace Simpiens.Client.Ui
             _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.Button("APPLY COMMODITY PRICES", 210f, 32f, UiText.BodyBold);
+            ApplyButton = UiParts.PrimaryButton("APPLY COMMODITY PRICES", 210f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);
