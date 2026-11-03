@@ -9,11 +9,9 @@ using Xunit;
 namespace Simpiens.Client.Tests.People
 {
     /// <summary>
-    /// The live outpost drawn with bodies (Epic UI-Beta B2, P2.4), for the producer's look before the client draws them
-    /// for good (P3.2): the map at tick 300 in both view modes, framed and zoomed on the hub, written to
-    /// render-output/bodies-*.png. The scene is given the client's body table, the table is moved on to the frame and
-    /// the client bakes it into the world texture, as the world view's update will. Not references: the renders hold
-    /// today's figures until P3.2.
+    /// The live outpost drawn with bodies (Epic UI-Beta B2): the map at tick 300 in both view modes, framed and zoomed on
+    /// the hub, written to render-output/bodies-*.png (the producer's look passed on these, 2026-11-02). Every crawler
+    /// is drawn from the body region, none as today's figure, and every body the frame shows is baked.
     /// </summary>
     public class BodyMapReviewTests
     {
@@ -26,29 +24,20 @@ namespace Simpiens.Client.Tests.People
         {
             var game = Offscreen.Start(new ClientOptions { View = mode == "top-down" ? ViewMode.TopDown : ViewMode.Isometric, TicksPerUpdate = 100 }, frames: 3);
             var scene = game.World.Scene;
-            try
-            {
-                scene.Bodies = game.Graphics.Bodies;
-                scene.Bodies.Update(game.Session.Frames.Current);
-                game.Graphics.WriteBodies();
-                Assert.Equal(0, game.Graphics.Bodies.Overflow);
-                Assert.Equal(0, game.Graphics.Bodies.PendingCount);
-                Assert.True(game.Graphics.Bodies.InUse >= game.Session.Simulation.Host.CrawlerStates.Count, "A crawler has no body.");
+            Assert.Same(game.Graphics.Bodies, scene.Bodies);
+            Assert.Equal(0, game.Graphics.Bodies.Overflow);
+            Assert.Equal(0, game.Graphics.Bodies.PendingCount);
+            Assert.True(game.Graphics.Bodies.InUse >= game.Session.Simulation.Host.CrawlerStates.Count, "A crawler has no body.");
 
-                string output = Path.Combine(AppContext.BaseDirectory, "render-output");
-                Directory.CreateDirectory(output);
-                Png.Write(Path.Combine(output, $"bodies-{mode}-t300.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
-                AssertEveryCrawlerIsABody(scene);
+            string output = Path.Combine(AppContext.BaseDirectory, "render-output");
+            Directory.CreateDirectory(output);
+            Png.Write(Path.Combine(output, $"bodies-{mode}-t300.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
+            AssertEveryCrawlerIsABody(scene);
 
-                var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-                game.World.Rig.ZoomAt(hub, 0.3f);
-                Png.Write(Path.Combine(output, $"bodies-{mode}-t300-zoomed.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
-                AssertEveryCrawlerIsABody(scene);
-            }
-            finally
-            {
-                scene.Bodies = null; // the window is reused by other tests
-            }
+            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
+            game.World.Rig.ZoomAt(hub, 0.3f);
+            Png.Write(Path.Combine(output, $"bodies-{mode}-t300-zoomed.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
+            AssertEveryCrawlerIsABody(scene);
         }
 
         // No crawler is drawn as today's figure: each is a cell of the body region

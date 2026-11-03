@@ -102,8 +102,19 @@ namespace Simpiens.Client
         /// <summary>How the map's text was placed in the last frame drawn.</summary>
         public MapLabelLayout LabelLayout => _labelLayout;
 
-        /// <summary>What it draws with: the sheets, the renderer and the fonts, made by the shell once the device exists.</summary>
-        public void LoadContent(ClientGraphics graphics) => _graphics = graphics;
+        /// <summary>
+        /// What it draws with: the sheets, the renderer and the fonts, made by the shell once the device exists. The scene
+        /// draws crawlers as their bodies from the graphics' table (Epic UI-Beta B2); the bodies of the frame already
+        /// captured are baked into the new texture now, so a draw before the next update shows them.
+        /// </summary>
+        public void LoadContent(ClientGraphics graphics)
+        {
+            _graphics = graphics;
+            Scene.Bodies = graphics?.Bodies;
+            if (graphics == null) return;
+            graphics.Bodies.Update(_session.Frames.Current);
+            graphics.WriteBodies();
+        }
 
         /// <summary>
         /// One update of the view, in this order: the selection catches up with the frames, the rig follows the map and
