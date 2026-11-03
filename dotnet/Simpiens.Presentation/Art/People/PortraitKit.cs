@@ -22,6 +22,12 @@ namespace Simpiens.Presentation.Art.People
         /// <summary>A framed portrait's side: the bust and a two-pixel frame each side.</summary>
         public const int FramedSize = Size + 4;
 
+        /// <summary>A face for the lists (Epic UI-Beta B4, D1): the head cropped from a framed portrait, in a one-pixel frame.</summary>
+        public const int FaceSize = 32;
+
+        // Where the face's crop starts in a framed portrait: around the head, centred on (25, 22)
+        private const int FaceLeft = 10, FaceTop = 6;
+
         private const byte None = 0, Skin = 1, Hair = 2, Cloth = 3, Trim = 4, Iris = 5, Sclera = 6, Line = 7, Lip = 8,
             Gold = 9, Steel = 10, Helm = 11, Lamp = 12, Tabard = 13, Warpaint = 14, Bandage = 15;
 
@@ -555,6 +561,21 @@ namespace Simpiens.Presentation.Art.People
                     if (x == 1 || y == 1 || x == FramedSize - 2 || y == FramedSize - 2) { into[i] = inner; continue; }
                     var p = bust[(y - 2) * Size + (x - 2)];
                     into[i] = p.A != 0 ? p : Backdrop(x - 2, y - 2);
+                }
+        }
+
+        /// <summary>
+        /// The face of a <paramref name="framed"/> portrait (<see cref="FramedSize"/> square) into <paramref name="into"/>
+        /// (<see cref="FaceSize"/> square): its head, inside a one-pixel frame in <paramref name="standing"/>'s outer colour.
+        /// </summary>
+        public static void Face(ReadOnlySpan<Rgba32> framed, CrawlerStanding standing, Span<Rgba32> into)
+        {
+            var edge = FrameOf(standing).Outer;
+            for (int y = 0; y < FaceSize; y++)
+                for (int x = 0; x < FaceSize; x++)
+                {
+                    bool frame = x == 0 || y == 0 || x == FaceSize - 1 || y == FaceSize - 1;
+                    into[y * FaceSize + x] = frame ? edge : framed[(FaceTop + y - 1) * FramedSize + FaceLeft + x - 1];
                 }
         }
 

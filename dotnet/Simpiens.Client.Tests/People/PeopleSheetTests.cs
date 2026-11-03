@@ -31,7 +31,8 @@ namespace Simpiens.Client.Tests.People
         private sealed class Cell
         {
             public string Label;
-            public Rgba32[] Portrait; // framed, PortraitKit.FramedSize square
+            public Rgba32[] Portrait; // framed, PortraitSide square
+            public int PortraitSide = PortraitKit.FramedSize;
             public int PortraitScale = 1;
             public PixelSprite Body;
         }
@@ -71,6 +72,18 @@ namespace Simpiens.Client.Tests.People
                 Make("helm", basis, gear: ItemType.HazardGear), Make("helm, long hair", Set(basis, LookGene.HairStyle, "long"), gear: ItemType.HazardGear),
                 Make("guild, helm", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.HazardGear),
             });
+
+            // Faces for the lists (B4, D1): the head cropped from the portrait, at 2x
+            Section("Faces for the lists at 2x (B4)", Enumerable.Range(1, 12).Select(i =>
+            {
+                var look = CrawlerLook.Generate(CrowdSeed, new EntityId((uint)i, 0u, 0u, 0u));
+                var framedPortrait = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
+                var standing = (CrawlerStanding)(i % 3);
+                PortraitKit.BakeFramed(new PortraitKey(look, (Mood)(i % 7), standing, ItemType.None), framedPortrait);
+                var face = new Rgba32[PortraitKit.FaceSize * PortraitKit.FaceSize];
+                PortraitKit.Face(framedPortrait, standing, face);
+                return new Cell { Label = ((Mood)(i % 7)).ToString().ToLowerInvariant(), Portrait = face, PortraitSide = PortraitKit.FaceSize, PortraitScale = 2 };
+            }));
 
             // The helm over every hair style (D4), and the guild's tabard on every build (D8)
             Section("The helm over each hair style", LookCatalog.Options(LookGene.HairStyle).Select(o =>
@@ -146,7 +159,7 @@ namespace Simpiens.Client.Tests.People
             var fonts = FontLibrary.LoadFrom(AppContext.BaseDirectory);
             var names = fonts[FontSet.Regular(10)];
             var titles = fonts[FontSet.Bold(12)];
-            const int bodyScale = 3, framed = PortraitKit.FramedSize;
+            const int bodyScale = 3;
 
             // Lay out first, then draw
             var placed = new List<(Cell Cell, int X, int Y, int Width)>();
@@ -159,6 +172,7 @@ namespace Simpiens.Client.Tests.People
                 int x = Margin, rowHeight = 0;
                 foreach (var cell in cells)
                 {
+                    int framed = cell.PortraitSide;
                     int picture = (cell.Portrait != null ? framed * cell.PortraitScale + 4 : 0) + (cell.Body != null ? 16 * bodyScale : 0);
                     int width = Math.Max(picture, names.Measure(cell.Label));
                     int height = Math.Max(cell.Portrait != null ? framed * cell.PortraitScale : 0, 16 * bodyScale) + 4 + names.LineHeight;
@@ -179,6 +193,7 @@ namespace Simpiens.Client.Tests.People
             foreach (var (cell, x, top, width) in placed)
             {
                 int pen = x, pictureHeight = 16 * bodyScale;
+                int framed = cell.PortraitSide;
                 if (cell.Portrait != null)
                 {
                     canvas.Blit(cell.Portrait, framed, framed, pen, top, cell.PortraitScale);

@@ -57,6 +57,30 @@ namespace Simpiens.Client.Tests.People
             Assert.StartsWith("Hurt. Health 20%", game.Play.Dashboard.Panels.MoodShown);
         }
 
+        /// <summary>A crawler's face for the lists (Epic UI-Beta B4, D1) is its portrait's head, cropped from the same bake.</summary>
+        [Fact]
+        public void AFaceIsItsPortraitsHeadFromTheSameBake()
+        {
+            var game = Offscreen.Start(frames: 1);
+            var atlas = game.Graphics.Portraits;
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, Simpiens.Simulation.Economy.ItemType.None);
+            atlas.Show(key, PortraitAtlas.Scale);
+            int bakes = atlas.Table.Bakes;
+            var source = atlas.ShowFace(key);
+            Assert.Equal(bakes, atlas.Table.Bakes); // no second bake
+            Assert.Equal((PortraitAtlas.FaceSize, PortraitAtlas.FaceSize), (source.Width, source.Height));
+            var framed = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
+            PortraitKit.BakeFramed(key, framed);
+            var expected = new Rgba32[PortraitKit.FaceSize * PortraitKit.FaceSize];
+            PortraitKit.Face(framed, key.Standing, expected);
+            Assert.Equal(PortraitKit.FrameOf(CrawlerStanding.GuildMember).Outer, expected[0]);
+            var actual = new Color[expected.Length];
+            atlas.Texture.GetData(0, source, actual, 0, actual.Length);
+            for (int i = 0; i < actual.Length; i++)
+                Assert.Equal(new Color(expected[i].R, expected[i].G, expected[i].B, expected[i].A), actual[i]);
+        }
+
         // The atlas's pixels under the dossier's source rectangle are the key's portrait, magnified
         private static void AssertTheAtlasShows(PortraitAtlas atlas, in PortraitKey key, Rectangle source)
         {
