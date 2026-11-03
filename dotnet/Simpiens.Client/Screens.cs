@@ -83,6 +83,9 @@ namespace Simpiens.Client
         public bool AdvancesWorld => true;
 
         /// <summary>Builds the dashboard's views, once the UI layer is up.</summary>
+        /// <summary>Tooltips (Epic UI-Beta B5): a tip beside the cursor over a registered control.</summary>
+        public Tooltips Tooltips { get; private set; }
+
         /// <summary>The key help (Epic UI-Beta B5): F1 shows every binding.</summary>
         public KeyHelpOverlay Help { get; private set; }
 
@@ -92,6 +95,20 @@ namespace Simpiens.Client
             Scenes = new DynamicSceneView(_game);
             Scenes.LoadContent();
             Help = new KeyHelpOverlay(_game.Ui);
+            // Tooltips (Epic UI-Beta B5): over everything, on the header's and the inspector's buttons
+            Tooltips = new Tooltips(_game.Ui);
+            var header = Dashboard.Header;
+            Tooltips.Register(header.MerchantButton.Visual, "The merchant terminal: the stall's prices and stock");
+            Tooltips.Register(header.BountiesButton.Visual, "The bounty board: post and cancel bounties");
+            Tooltips.Register(header.GuildButton.Visual, "The guild roster: members, wages and expeditions");
+            Tooltips.Register(header.SaveButton.Visual, "Quick-save the outpost");
+            Tooltips.Register(header.LoadButton.Visual, "Load the quick-save");
+            Tooltips.Register(header.PauseButton.Visual, "Pause or resume the world (P)");
+            Tooltips.Register(header.SpeedButton.Visual, "The world's speed (1 to 4)");
+            Tooltips.Register(header.TabButton.Visual, "The dashboard or the map (Tab)");
+            Tooltips.Register(Dashboard.Inspector.OpenDossierButton.Visual, "Its dossier: drives, plan, affinities");
+            Tooltips.Register(Dashboard.Inspector.FollowButton.Visual, "The camera follows it, or stops (Esc stops too)");
+            _game.Ui.Root.Children.Add(Tooltips.Panel);
         }
 
         public void Update(float seconds, float cameraSeconds, bool active)
@@ -127,6 +144,7 @@ namespace Simpiens.Client
             _game.World.Update(cameraSeconds, viewport.Width, viewport.Height, pointer, keys, active);
             if (ui.IsOwner) Scenes?.Update(seconds, cameraSeconds, keys);
             if (ui.IsOwner) Dashboard?.Update(seconds);
+            if (ui.IsOwner) Tooltips?.Update(seconds, viewport.Width, viewport.Height); // real time: a tip shows paused too
         }
 
         public void Draw(int width, int height) => _game.World.Draw(width, height);
