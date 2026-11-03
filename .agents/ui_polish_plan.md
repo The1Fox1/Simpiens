@@ -1,0 +1,61 @@
+# UI polish: Lantern & Stone (working plan)
+
+- **Complexity:** Very Complex as a whole, for its breadth across every UI screen ([rubric](rules/complexity-grading.md)). No phase is Very Complex; each is graded below.
+- **Report:** the Claude Doc "Simpiens UI Polish Proposal" (2026-11-03): https://claude.ai/artifact/1j4DQU1gwKmEWPMAr6XXvk. It audits the header and menus, surveys four flavors (A Guildhall Ledger, B Lantern & Stone, C Facility Terminal, D Clear Glass) with mockups and sources, and recommends B.
+- **Authority:** the producer, 2026-11-03: "write up a proposal… commit to a new branch on top of the current one feat/ui-beta-b5 and begin working on your preferred design flavor… you have permission to run in my absence so long as you work on feature branch". The flavor is the agent's pick until the producer's look; the open questions (the doc's last section) run on their defaults.
+- **Branch:** `feat/ui-polish`, cut from `feat/ui-beta-b5` (321d9f7). One pull request for the plan, opened after B2–B5's; nothing pushed until the producer says.
+- **Scope:** `Simpiens.Presentation` and `Simpiens.Client` only. The core, the saves and the golden hashes don't change.
+
+## What Lantern & Stone is
+The UI is cut from the outpost's stone and lit by the portraits' lantern: a stone lintel for the header, recessed plaques with chamfered pixel corners, raised stone buttons that press in, stone panels in riveted iron frames, one accent (lantern amber). Light from the top left, as in Hearthlight. Frame metals reuse the portraits' standing metals (iron, bronze, blued steel). Inter stays, 1:1. Palette, rules and mockups: the doc's "Flavor B".
+
+## Phases
+
+### U0. The report, the plan, the branch — [Basic]
+1. **The report** [Basic]: the Claude Doc above. Done.
+2. **This plan and the branch** [Basic]. Done.
+
+### U1. The palette — [Possibly Complex: renders change and need a look]
+1. **`UiStyle`'s tokens to Lantern & Stone** [Basic: data in one class]: surfaces, text, the one accent, the meaning colours, the drive bars.
+2. **Muted state badges** [Basic]: every state a dark plate with light words; panic keeps the danger red.
+3. **A lighter, warmer veil** [Basic]: about 45% so the map shows under a window.
+4. **Renders re-recorded** [Possibly Complex: the look]: in the pinned image, in their own commit.
+
+### U2. The UI kit — [Possibly Complex: new generated art and pins]
+1. **`UiKit`** [Possibly Complex: a new generator, with `SpriteKit` as precedent]: in `Simpiens.Presentation/Art/`, named pixel sprites generated on the CPU, reading no table or sheet: the plaque, the raised button (idle, hover, pressed, disabled, active), the primary button, the iron frame in three metals, the slider's groove and thumb, the lintel's stone, and small glyphs (coin, notice, shield, stall, pause, play, menu, sun, close, lantern).
+2. **Into the icon sheet** [Basic]: appended to `SpriteSheets.Icons`, so `IconAtlas` packs them and `ArtPinTests` pins them; `IconAtlas` finds a kit piece by name at 1x.
+3. **Pins re-recorded** [Basic]: after a look at the art review sheet, in their own commit.
+
+### U3. Stone buttons — [Possibly Complex: Gum Forms visuals]
+1. **Buttons from the kit** [Possibly Complex]: `UiParts.Button` points the V3 button's background nine-slice at the kit and sets each state's source (enabled, highlighted, pushed, disabled); text colours per state.
+2. **An active state** [Basic]: a window's button stays lit while its window is open.
+3. **Tests** [Basic]: a button's source per state.
+
+### U4. The header in five clusters — [Possibly Complex: a new popup; tests read the header's words]
+1. **Clusters** [Possibly Complex]: identity (lantern, SIMPIENS, the floor); the outpost (coin and gold, the stock, the notice and bounties, in one plaque); the windows (Stall, Bounties, Guild, with glyphs); time (sun and clock, pause, speed pips 1× 2× 5× 10×); Map | Ledger and the menu.
+2. **The header model's figures** [Basic]: gold and bounties as figures; the plural bug goes.
+3. **The menu** [Possibly Complex: a new popup]: Save, Load (asks first), Key help.
+4. **Tooltips on the counters** [Basic]: B5's `Tooltips` on the outpost plaque's entries.
+5. **Tests** [Basic]: `HudTests`, `GuildWindowTests` and new header tests.
+
+### U5. One window chrome — [Possibly Complex: renders]
+1. **`Window`** [Possibly Complex]: the iron frame from the kit with the window's metal (bronze for the stall, iron for the bounties, blued steel for the guild), its glyph in the title band, a drawn close glyph.
+2. **Tests** [Basic].
+
+### U6. Copy in the world's voice — [Basic: strings and the tests that read them]
+1. **The rewrite table** [Basic]: the doc's "Shared foundations" table, in the models and windows.
+
+### U7. Motion — [Possibly Complex: real-time animation must not reach the renders or the frame gate]
+1. **A tween clock on real time** [Possibly Complex]: press 80 ms, hover 100 ms, window in 160 ms and out 120 ms, numbers rolling over 250 ms; settled at once when tests capture.
+2. **Tests and the gate** [Possibly Complex: measuring]: `FrameTimeGateTests`, `UiDrawProbe`.
+
+### U8. The dashboard and the inspector — [Possibly Complex: the largest render change]
+1. **Panels, cards and badges from the kit** [Possibly Complex].
+2. **The dossier and the inspector** [Possibly Complex].
+
+### U9. Close-out — [Basic]
+1. **Docs** [Basic]: `AGENTS.md`'s client notes (the kit), `.agents/architecture_history.md`; the roadmap once the producer says which epic owns this.
+2. **The producer's look** [Basic].
+
+## Log
+- 2026-11-03: U0 done.
