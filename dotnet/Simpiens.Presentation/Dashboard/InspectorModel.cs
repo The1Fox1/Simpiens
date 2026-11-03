@@ -1,7 +1,5 @@
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
-using Simpiens.Simulation.Economy;
-using Simpiens.Simulation.Items;
 
 namespace Simpiens.Presentation.Dashboard
 {
@@ -56,11 +54,9 @@ namespace Simpiens.Presentation.Dashboard
             Name = _context.FriendlyName(node.Id, node.Name);
             State = agent.VisualState;
             Badge = agent.IsDowned ? DossierModel.DownedBadge : State.ToString().ToUpperInvariant();
-            var mood = _moods.Update(node.Id, MoodSigns.Of(agent), _context.Clock?.CurrentTick ?? 0);
-            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
             HasPortrait = agent.Look.IsComplete;
-            Portrait = new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? ItemType.None : worn.Type));
-            MoodLine = DossierModel.MoodText(mood, agent.Health, agent.IsDowned);
+            Portrait = PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0);
+            MoodLine = DossierModel.MoodText(Portrait.Mood, agent.Health, agent.IsDowned);
             Health = agent.Health;
             Hunger = agent.Hunger;
             Energy = agent.Energy;

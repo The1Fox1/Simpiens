@@ -127,6 +127,36 @@ namespace Simpiens.Client.Ui
             return icon;
         }
 
+        /// <summary>
+        /// A crawler's face (Epic UI-Beta B4): <see cref="PortraitAtlas.FaceSize"/> square, drawn 1:1 from the portrait
+        /// atlas, in a box that takes clicks (a click finds the crawler on the map). Hidden until <see cref="SetFace"/> shows one.
+        /// </summary>
+        public static ContainerRuntime FaceBox(PortraitAtlas atlas, out SpriteRuntime face)
+        {
+            var box = new ContainerRuntime { Width = PortraitAtlas.FaceSize, Height = PortraitAtlas.FaceSize, HasEvents = true, Visible = false };
+            face = new SpriteRuntime
+            {
+                Texture = atlas?.Texture,
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Width = PortraitAtlas.FaceSize,
+                Height = PortraitAtlas.FaceSize,
+            };
+            box.Children.Add(face);
+            return box;
+        }
+
+        /// <summary>Shows <paramref name="key"/>'s face in <paramref name="box"/>, baked now if it wasn't; hides it when there is none to show.</summary>
+        public static void SetFace(ContainerRuntime box, SpriteRuntime face, PortraitAtlas atlas, bool hasFace, in Simpiens.Presentation.Art.People.PortraitKey key)
+        {
+            bool shown = hasFace && atlas != null;
+            if (box.Visible != shown) box.Visible = shown;
+            if (!shown) return;
+            var source = atlas.ShowFace(key);
+            if (face.SourceRectangle != source) face.SourceRectangle = source;
+        }
+
         /// <summary>Points <paramref name="icon"/> at <paramref name="iconKey"/>'s art, at the scale its size says, or hides it for null.</summary>
         public static void SetIcon(SpriteRuntime icon, IconAtlas atlas, string iconKey)
         {

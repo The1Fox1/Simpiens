@@ -38,6 +38,7 @@ namespace Simpiens.Client.Ui
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
+        private readonly List<(ContainerRuntime Row, ContainerRuntime FaceBox, SpriteRuntime Face)> _affinityFaces = new List<(ContainerRuntime, ContainerRuntime, SpriteRuntime)>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
         public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null)
@@ -131,7 +132,7 @@ namespace Simpiens.Client.Ui
             who.Children.Add(_moodLine);
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
-            _dossierDetails.Children.Add(Window.Gap(6f));
+            _dossierDetails.Children.Add(Window.Gap(2f));
             _dossierDetails.Children.Add(Window.SubHeader("BIOLOGICAL DRIVES"));
             _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
             _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
@@ -150,19 +151,19 @@ namespace Simpiens.Client.Ui
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _dossierDetails.Children.Add(_groups);
-            _dossierDetails.Children.Add(Window.Gap(8f));
+            _dossierDetails.Children.Add(Window.Gap(4f));
             _dossierDetails.Children.Add(Window.SubHeader("COGNITIVE INTENT (GOAP)"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
             UiParts.AddFill(intent, UiStyle.Card);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
             _dossierDetails.Children.Add(intent);
-            _dossierDetails.Children.Add(Window.Gap(8f));
+            _dossierDetails.Children.Add(Window.Gap(4f));
             _dossierDetails.Children.Add(Window.SubHeader("SOCIAL AFFINITIES (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
-            _affinitiesList = Scroll(_dossierDetails, 52f, 3f); // Unity's max-height was 120: the guild's lines took some (Epic 10 G4), the portrait's header the rest (UI-Beta B3); it scrolls
-            _dossierDetails.Children.Add(Window.Gap(8f));
+            _affinitiesList = Scroll(_dossierDetails, 70f, 2f); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
+            _dossierDetails.Children.Add(Window.Gap(4f));
             _dossierDetails.Children.Add(Window.SubHeader("PLAYER INTERVENTION"));
             // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
@@ -216,6 +217,13 @@ namespace Simpiens.Client.Ui
         /// <summary>The worn gear's icon; hidden with none.</summary>
         public SpriteRuntime GearIcon { get; }
 
+        /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds that crawler on the map.</summary>
+        public Action<EntityId> FindOnMap { get; set; }
+
+        /// <summary>The faces on the residents' cards and the affinities' rows, in order (tests click them).</summary>
+        public ContainerRuntime ResidentFace(int index) => _residentCards[index].FaceBox;
+        public ContainerRuntime AffinityFace(int index) => _affinityFaces[index].FaceBox;
+
         /// <summary>The selected crawler's portrait at 2x (Epic UI-Beta B3); hidden for one with no look, or with no atlas.</summary>
         public SpriteRuntime Portrait { get; }
 
@@ -261,7 +269,8 @@ namespace Simpiens.Client.Ui
             var residents = panel.Residents;
             while (_residentCards.Count < residents.Count)
             {
-                var card = new Card(46f, withDetail: true);
+                var card = new Card(46f, withDetail: true, faces: _portraits);
+                if (card.FaceBox != null) card.FaceBox.Click += (_, _) => { if (card.CrawlerId != default) FindOnMap?.Invoke(card.CrawlerId); };
                 card.Root.Click += (_, _) => { if (card.CrawlerId != default) _model.SelectCrawler(card.CrawlerId); Bind(); };
                 _residentCards.Add(card);
                 _residentsList.Children.Add(card.Root);
@@ -273,6 +282,7 @@ namespace Simpiens.Client.Ui
                 if (i >= residents.Count) continue;
                 var row = residents[i];
                 card.CrawlerId = row.CrawlerId;
+                if (card.FaceBox != null) UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait);
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Detail, row.Activity);
                 UiParts.SetText(card.Badge, row.Badge);
@@ -322,19 +332,36 @@ namespace Simpiens.Client.Ui
             _frustration.Set(dossier.Frustration);
             UiParts.SetText(_goal, dossier.Goal);
             UiParts.SetText(_action, dossier.Action);
-            var affinities = dossier.Affinities;
+            // Affinities as rows (Epic UI-Beta B4): the peer's face, then its line
+            var affinities = dossier.AffinityRows;
             for (int i = 0; i < affinities.Count; i++)
             {
                 if (i == _affinityRows.Count)
                 {
+                    var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = PortraitAtlas.FaceSize + 2f };
+                    var box = UiParts.FaceBox(_portraits, out var face);
+                    UiParts.CentreVertically(box);
+                    int index = _affinityRows.Count;
+                    box.Click += (_, _) =>
+                    {
+                        var rows = _model.Dossier.AffinityRows;
+                        if (index < rows.Count) FindOnMap?.Invoke(rows[index].PeerId);
+                    };
+                    row.Children.Add(box);
                     var text = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
+                    text.X = PortraitAtlas.FaceSize + 8f;
+                    UiParts.CentreVertically(text);
+                    row.Children.Add(text);
                     _affinityRows.Add(text);
-                    _affinitiesList.Children.Add(text);
+                    _affinityFaces.Add((row, box, face));
+                    _affinitiesList.Children.Add(row);
                 }
-                UiParts.SetText(_affinityRows[i], affinities[i]);
-                _affinityRows[i].Visible = true;
+                var (rowBox, faceBox, faceSprite) = _affinityFaces[i];
+                UiParts.SetText(_affinityRows[i], affinities[i].Line);
+                UiParts.SetFace(faceBox, faceSprite, _portraits, affinities[i].HasPortrait, affinities[i].Portrait);
+                rowBox.Visible = true;
             }
-            for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityRows[i].Visible = false;
+            for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityFaces[i].Row.Visible = false;
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
             UiParts.SetText(_groups, dossier.Groups);
@@ -448,7 +475,7 @@ namespace Simpiens.Client.Ui
             private readonly RectangleRuntime _fill, _bar;
             private readonly RectangleRuntime _outline;
 
-            public Card(float height, bool withDetail = false)
+            public Card(float height, bool withDetail = false, PortraitAtlas faces = null)
             {
                 Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = height, HasEvents = true };
                 _fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
@@ -472,6 +499,16 @@ namespace Simpiens.Client.Ui
                     UiParts.CentreVertically(Name);
                 }
                 Root.Children.Add(Name);
+                if (faces != null) // a face at the left (Epic UI-Beta B4); the words move over
+                {
+                    FaceBox = UiParts.FaceBox(faces, out var face);
+                    Face = face;
+                    FaceBox.X = 12f;
+                    UiParts.CentreVertically(FaceBox);
+                    Root.Children.Add(FaceBox);
+                    Name.X = 12f + PortraitAtlas.FaceSize + 8f;
+                    if (Detail != null) Detail.X = Name.X;
+                }
                 var badge = Badge(out var badgeText, out var badgeFill);
                 badge.XUnits = GeneralUnitType.PixelsFromLarge;
                 badge.XOrigin = HorizontalAlignment.Right;
@@ -482,6 +519,10 @@ namespace Simpiens.Client.Ui
             }
 
             public ContainerRuntime Root { get; }
+
+            /// <summary>The crawler's face, for a resident's card; null for a sector's. A click on it finds the crawler (<see cref="FindOnMap"/>).</summary>
+            public ContainerRuntime FaceBox { get; }
+            public SpriteRuntime Face { get; }
             public TextRuntime Name { get; }
             public TextRuntime Detail { get; }
             public TextRuntime Badge { get; }

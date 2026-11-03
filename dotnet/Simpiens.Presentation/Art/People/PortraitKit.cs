@@ -1,4 +1,5 @@
 using System;
+using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.People;
@@ -606,6 +607,18 @@ namespace Simpiens.Presentation.Art.People
 
         /// <summary>What it wears on its head; None for nothing, or for gear not worn on the head.</summary>
         public ItemType HeadGear { get; }
+
+        /// <summary>
+        /// <paramref name="agent"/>'s portrait now (Epic UI-Beta B4): its look, its mood as <paramref name="moods"/> shows it
+        /// at <paramref name="tick"/>, its standing and what shows on its head. Every face a view shows is keyed this way, so
+        /// a list, the dossier, the inspector and a scene agree. Reads the crawler; moves the tracker on.
+        /// </summary>
+        public static PortraitKey Of(EntityId id, Simpiens.Cognition.AgentState agent, MoodTracker moods, long tick)
+        {
+            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection) : default;
+            var mood = moods.Update(id, MoodSigns.Of(agent), tick);
+            return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? ItemType.None : worn.Type));
+        }
 
         public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && HeadGear == other.HeadGear;
 

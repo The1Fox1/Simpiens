@@ -39,6 +39,7 @@ namespace Simpiens.Presentation.Dashboard
         private int _healthShown = -1;
         private readonly List<string> _affinities = new List<string>(32);
         private readonly List<AffinityRow> _rows = new List<AffinityRow>(32);
+        private readonly List<AffinityRow> _shownRows = new List<AffinityRow>(32);
 
         internal DossierModel(DashboardContext context, GuildModel guild = null, MoodTracker moods = null)
         {
@@ -124,6 +125,9 @@ namespace Simpiens.Presentation.Dashboard
         /// </summary>
         public IReadOnlyList<string> Affinities => _affinities;
 
+        /// <summary>The affinities as rows (Epic UI-Beta B4): the peer, its face when it is a crawler with a look, and the line.</summary>
+        public IReadOnlyList<AffinityRow> AffinityRows => _shownRows;
+
         public static string Percent(float value) => Invariant($"{value:F0}%");
 
         /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
@@ -143,6 +147,7 @@ namespace Simpiens.Presentation.Dashboard
             HasCrawler = agent != null;
             CrawlerId = HasCrawler ? node.Id : default;
             _affinities.Clear();
+            _shownRows.Clear();
             GearIcon = null;
             if (!HasCrawler) return;
 
@@ -180,10 +185,17 @@ namespace Simpiens.Presentation.Dashboard
                 string peerName = pair.Key == WorldRegistry.PlayerEntityId ? PlayerName
                     : peer != null ? _context.FriendlyName(peer.Id, peer.Name) : UnknownName;
                 var rel = pair.Value;
-                _rows.Add(new AffinityRow(rel.Warmth, peerName, Invariant($"{peerName}: W:{rel.Warmth:+0;-#;0} | T:{rel.Trust:+0;-#;0} | F:{rel.Fear:+0;-#;0} | R:{rel.Respect:+0;-#;0} ({rel.InteractionCount}x)")));
+                var peerAgent = peer?.Agent;
+                bool face = peerAgent != null && peerAgent.Look.IsComplete;
+                var portrait = face ? PortraitKey.Of(peer.Id, peerAgent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
+                _rows.Add(new AffinityRow(pair.Key, rel.Warmth, peerName, Invariant($"{peerName}: W:{rel.Warmth:+0;-#;0} | T:{rel.Trust:+0;-#;0} | F:{rel.Fear:+0;-#;0} | R:{rel.Respect:+0;-#;0} ({rel.InteractionCount}x)"), face, portrait));
             }
             _rows.Sort(WarmestFirst);
-            for (int i = 0; i < _rows.Count; i++) _affinities.Add(_rows[i].Line);
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                _affinities.Add(_rows[i].Line);
+                _shownRows.Add(_rows[i]);
+            }
         }
 
         // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change
@@ -192,8 +204,8 @@ namespace Simpiens.Presentation.Dashboard
             var look = agent.Look;
             var standing = WorldViewFrame.StandingOf(agent);
             HasPortrait = look.IsComplete;
-            Mood = _moods.Update(id, MoodSigns.Of(agent), _context.Clock?.CurrentTick ?? 0);
-            Portrait = new PortraitKey(look, Mood, standing, BodyKit.HeadGearOf(worn));
+            Portrait = PortraitKey.Of(id, agent, _moods, _context.Clock?.CurrentTick ?? 0);
+            Mood = Portrait.Mood;
             if (!look.Equals(_describedLook) || standing != _describedStanding || Description.Length == 0)
             {
                 _describedLook = look;
@@ -235,18 +247,25 @@ namespace Simpiens.Presentation.Dashboard
             return minutes == 1 ? "drifter, leaves in 1 min" : Invariant($"drifter, leaves in {minutes} min");
         }
 
-        private readonly struct AffinityRow
+        /// <summary>One affinity: the peer (the player, a crawler, or one no longer in the world), its face if it has one, and the line.</summary>
+        public readonly struct AffinityRow
         {
-            public AffinityRow(float warmth, string name, string line)
+            public AffinityRow(EntityId peerId, float warmth, string name, string line, bool hasPortrait = false, PortraitKey portrait = default)
             {
+                PeerId = peerId;
                 Warmth = warmth;
                 Name = name;
                 Line = line;
+                HasPortrait = hasPortrait;
+                Portrait = portrait;
             }
 
+            public EntityId PeerId { get; }
             public float Warmth { get; }
             public string Name { get; }
             public string Line { get; }
+            public bool HasPortrait { get; }
+            public PortraitKey Portrait { get; }
         }
     }
 }

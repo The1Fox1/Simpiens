@@ -129,9 +129,7 @@ namespace Simpiens.Client
             source = default;
             var agent = crawler != default ? _game.Session.Simulation.Registry.GetEntity(crawler)?.Agent : null;
             if (agent == null || !agent.Look.IsComplete || _game.Graphics?.Portraits == null) return false;
-            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection) : default;
-            var mood = _game.Session.DashboardModel.Moods.Update(crawler, MoodSigns.Of(agent), _game.Session.Simulation.Clock.CurrentTick);
-            var key = new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? Simpiens.Simulation.Economy.ItemType.None : worn.Type));
+            var key = PortraitKey.Of(crawler, agent, _game.Session.DashboardModel.Moods, _game.Session.Simulation.Clock.CurrentTick);
             source = _game.Graphics.Portraits.Show(key, 1);
             return true;
         }

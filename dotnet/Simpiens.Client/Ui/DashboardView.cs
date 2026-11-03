@@ -25,13 +25,15 @@ namespace Simpiens.Client.Ui
             ui.Root.Children.Add(Tracker.Root);
             Inspector = new InspectorCard(model, portraits); // Epic UI-Beta B4: on the map, under the windows
             ui.Root.Children.Add(Inspector.Root);
+            Panels.FindOnMap = FindOnMap;
             Merchant = new MerchantWindow(model.Merchant, icons);
             Merchant.Window.CloseButton.Click += (_, _) => { Model.Merchant.Close(); Refresh(); };
             ui.Root.Children.Add(Merchant.Window.Veil);
             Bounties = new BountyBoardWindow(model.Bounties, icons);
             Bounties.Window.CloseButton.Click += (_, _) => { Model.Bounties.Close(); Refresh(); };
             ui.Root.Children.Add(Bounties.Window.Veil);
-            Guild = new GuildWindow(model.Guild, icons, model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
+            Guild = new GuildWindow(model.Guild, icons, model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers, portraits);
+            Guild.FindOnMap = FindOnMap;
             Guild.Window.CloseButton.Click += (_, _) => { Model.Guild.Close(); Refresh(); };
             ui.Root.Children.Add(Guild.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
@@ -86,6 +88,13 @@ namespace Simpiens.Client.Ui
         {
             Shown = true;
             Header.Root.Visible = true;
+            Refresh();
+        }
+
+        /// <summary>A click on a face (Epic UI-Beta B4, D4): the map, with that crawler selected and followed, and its card.</summary>
+        public void FindOnMap(EntityId crawler)
+        {
+            Model.FindOnMap(crawler);
             Refresh();
         }
 

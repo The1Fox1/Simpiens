@@ -21,6 +21,10 @@ namespace Simpiens.Presentation.Dashboard
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
 
+        /// <summary>Its face (Epic UI-Beta B4), when it has a look.</summary>
+        public bool HasPortrait { get; internal set; }
+        public Simpiens.Presentation.Art.People.PortraitKey Portrait { get; internal set; }
+
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
 
@@ -44,8 +48,11 @@ namespace Simpiens.Presentation.Dashboard
         private readonly DashboardContext _context;
         private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(4);
 
-        internal GuildModel(DashboardContext context)
+        private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
+
+        internal GuildModel(DashboardContext context, Simpiens.Presentation.Art.People.MoodTracker moods = null)
         {
+            _moods = moods ?? new Simpiens.Presentation.Art.People.MoodTracker();
             _context = context;
             Expedition = new ExpeditionModel(context, this);
         }
@@ -105,6 +112,8 @@ namespace Simpiens.Presentation.Dashboard
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
                 if (agent == null) continue;
+                row.HasPortrait = agent.Look.IsComplete;
+                row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
                 row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;

@@ -25,8 +25,8 @@ namespace Simpiens.Presentation.Dashboard
             Header = new HeaderModel(_context);
             Merchant = new MerchantModel(_context);
             Bounties = new BountyBoardModel(_context);
-            Guild = new GuildModel(_context);
-            Sectors = new SectorPanelModel(_context);
+            Guild = new GuildModel(_context, Moods);
+            Sectors = new SectorPanelModel(_context, Moods);
             Dossier = new DossierModel(_context, Guild, Moods);
             Inspector = new InspectorModel(_context, Moods);
             Saves = new SaveSlotModel(_context.SaveGame, _context.HostCommands);
@@ -39,6 +39,22 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The map inspector (Epic UI-Beta B4): the selected crawler's card while the panels are hidden.</summary>
         public InspectorModel Inspector { get; }
+
+        /// <summary>
+        /// A click on a crawler's face anywhere (Epic UI-Beta B4, D4): the windows and panels close and the map shows it,
+        /// selected, with the camera following, so the inspector shows it.
+        /// </summary>
+        public void FindOnMap(EntityId crawlerId)
+        {
+            if (crawlerId == default || _context.Registry?.GetEntity(crawlerId)?.Agent == null) return;
+            Merchant.Close();
+            Bounties.Close();
+            Guild.Close();
+            PanelsVisible = false;
+            _selectedCrawler = crawlerId;
+            _selection?.SelectCrawler(crawlerId, follow: true);
+            Refresh();
+        }
 
         /// <summary>The inspector's Open dossier: the panels, showing the selected crawler.</summary>
         public void OpenDossier()

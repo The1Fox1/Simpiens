@@ -32,16 +32,26 @@ namespace Simpiens.Client.Ui
         {
             public ContainerRuntime Root, Gap;
             public TextRuntime Name, Doing, Health, Gear, Standing, Unpaid, Wage;
-            public SpriteRuntime GearIcon;
+            public SpriteRuntime GearIcon, Face;
+            public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
             public int Index;
         }
 
-        public GuildWindow(GuildModel model, IconAtlas icons, int capacity)
+        private readonly PortraitAtlas _portraits;
+
+        /// <summary>A click on a member's face (Epic UI-Beta B4, D4): the dashboard view finds it on the map.</summary>
+        public Action<EntityId> FindOnMap { get; set; }
+
+        /// <summary>A member's face (tests click it).</summary>
+        public ContainerRuntime MemberFace(int index) => _cards[index].FaceBox;
+
+        public GuildWindow(GuildModel model, IconAtlas icons, int capacity, PortraitAtlas portraits = null)
         {
             _model = model;
             _icons = icons;
+            _portraits = portraits;
             Window = new Window("guild-roster", "GUILD ROSTER", "Your members, their wages and their standing with the outpost.", Width, UiStyle.Success);
             var body = Window.Body;
 
@@ -153,9 +163,18 @@ namespace Simpiens.Client.Ui
             card.Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = CardHeight };
             UiParts.AddFill(card.Root, UiStyle.Card, UiStyle.CardBorder);
 
-            // Left: who, and what it is doing; then its health and gear
+            // Left: its face (Epic UI-Beta B4), who, and what it is doing; then its health and gear
+            card.FaceBox = UiParts.FaceBox(_portraits, out card.Face);
+            card.FaceBox.Click += (_, _) =>
+            {
+                var rows = _model.Rows;
+                if (card.Index < rows.Count) FindOnMap?.Invoke(rows[card.Index].CrawlerId);
+            };
+            card.FaceBox.X = 12f;
+            UiParts.CentreVertically(card.FaceBox);
+            card.Root.Children.Add(card.FaceBox);
             var who = UiParts.Column(2f);
-            who.X = 12f;
+            who.X = _portraits != null ? 12f + PortraitAtlas.FaceSize + 8f : 12f;
             who.Y = 8f;
             card.Name = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             card.Doing = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
@@ -252,6 +271,7 @@ namespace Simpiens.Client.Ui
                 card.Gap.Visible = shown;
                 if (!shown) continue;
                 var row = rows[i];
+                UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait);
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));

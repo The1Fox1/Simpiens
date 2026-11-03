@@ -37,8 +37,15 @@ namespace Simpiens.Presentation.Dashboard
         public readonly string Badge;
         public readonly bool Selected;
 
-        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected, bool downed = false)
+        /// <summary>Its face (Epic UI-Beta B4), when it has a look.</summary>
+        public readonly bool HasPortrait;
+        public readonly Simpiens.Presentation.Art.People.PortraitKey Portrait;
+
+        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected, bool downed = false,
+            bool hasPortrait = false, Simpiens.Presentation.Art.People.PortraitKey portrait = default)
         {
+            HasPortrait = hasPortrait;
+            Portrait = portrait;
             CrawlerId = crawlerId;
             Name = name;
             Activity = activity;
@@ -64,7 +71,13 @@ namespace Simpiens.Presentation.Dashboard
         private readonly List<WorldEntity> _inZone = new List<WorldEntity>(32);
         private readonly List<ChronicleEvent> _chronicle = new List<ChronicleEvent>(MaxEvents);
 
-        internal SectorPanelModel(DashboardContext context) => _context = context;
+        private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
+
+        internal SectorPanelModel(DashboardContext context, Simpiens.Presentation.Art.People.MoodTracker moods = null)
+        {
+            _context = context;
+            _moods = moods ?? new Simpiens.Presentation.Art.People.MoodTracker();
+        }
 
         /// <summary>The sector shown in the detail column (the map's first real sector by default).</summary>
         public int SelectedSectorId { get; internal set; } = -1;
@@ -114,7 +127,9 @@ namespace Simpiens.Presentation.Dashboard
                 if (node == null) continue;
                 var agent = node.Agent;
                 var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
-                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned));
+                bool face = agent.Look.IsComplete;
+                var portrait = face ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
+                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned, face, portrait));
             }
 
             _events.Clear();
