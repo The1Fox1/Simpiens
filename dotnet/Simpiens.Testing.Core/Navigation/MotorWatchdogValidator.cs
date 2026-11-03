@@ -8,6 +8,7 @@ using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Entities;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Movement;
 
 namespace Simpiens.Testing.Navigation
 {
@@ -26,8 +27,9 @@ namespace Simpiens.Testing.Navigation
             ValidateTier2RelaxedClearance();
             ValidateTier3DisengageAndBlacklist();
             ValidateZeroAllocationWatchdog();
+            ValidateStandaloneLocomotion();
 
-            TestLog.Log("<color=green>[MotorWatchdogValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[MotorWatchdogValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateStallDetection()
@@ -163,6 +165,87 @@ namespace Simpiens.Testing.Navigation
             Assert(totalAlloc == 0, $"Zero allocation guarantee violated: allocated {totalAlloc} bytes across 1,000 watchdog checks.");
 
             TestLog.Log($"[PASS] Test 5: Zero allocation guarantee verified (0 bytes across 1,000 watchdog evaluations).");
+        }
+
+        private void ValidateStandaloneLocomotion()
+        {
+            // 1. Isolated locomotion with null partition, registry, and clock
+            var isolatedLocomotion = new Locomotion();
+            var isolatedId = EntityId.Generate();
+            var isolatedPawn = new WorldEntity(isolatedId, EntityType.Pawn, Vec2.Zero, 0.35f, agent: new AgentState(isolatedId));
+
+            Assert(isolatedLocomotion.TryDisplacePawn(isolatedPawn, new Vec2(1f, 1f)), "Unbounded pawn can displace");
+            Assert(isolatedPawn.Position == new Vec2(1f, 1f), "Pawn moved to target position");
+            Assert(!isolatedLocomotion.IsPositionBlocked(new Vec2(2f, 2f), isolatedId), "Position unblocked without spatial partition");
+            Assert(!isolatedLocomotion.IsCrowdedMove(isolatedPawn, new Vec2(2f, 2f)), "Movement uncrowded without spatial partition");
+
+            // 2. Wired locomotion with spatial grid, registry, and simulation clock
+            var registry = new WorldRegistry();
+            var grid = new SpatialHashGrid();
+            grid.Initialize(20, 20, 1f);
+            var clock = new SimulationClock();
+            clock.AdvanceTicks(50);
+
+            grid.StaticGrid.WorldToCell(new Vec2(0.5f, 0.5f), out int cx, out int cy);
+            grid.StaticGrid.SetWall(cx, cy);
+
+            var occupantId = EntityId.Generate();
+            var occupant = new WorldEntity(occupantId, EntityType.Pawn, new Vec2(3f, 0f), 0.35f, agent: new AgentState(occupantId));
+            registry.Register(occupant);
+
+            var moverId = EntityId.Generate();
+            var mover = new WorldEntity(moverId, EntityType.Pawn, new Vec2(1f, 0f), 0.35f, agent: new AgentState(moverId));
+            registry.Register(mover);
+
+            grid.UpdateFromRegistry(registry);
+
+            var wiredLocomotion = new Locomotion(grid, registry, clock);
+
+            // Wall collision rejection
+            Assert(!wiredLocomotion.TryDisplacePawn(mover, new Vec2(0.5f, 0.5f)), "Moving into wall cell is rejected");
+
+            // Crowding separation
+            mover.SetPosition(new Vec2(2.7f, 0f));
+            Assert(wiredLocomotion.IsCrowdedMove(mover, new Vec2(2.8f, 0f)), "Stepping closer to occupant is crowded");
+            Assert(!wiredLocomotion.IsCrowdedMove(mover, new Vec2(2.5f, 0f)), "Stepping apart is not crowded");
+
+            // Path movement arrival without stacking
+            mover.SetPosition(new Vec2(1f, 0f));
+            var path = new PathResponse
+            {
+                Waypoints = new[] { new Vec2(3f, 0f) },
+                Length = 1,
+                IsValid = true
+            };
+            var moveState = new ActiveIntentState
+            {
+                Intent = new WanderIntent(mover.Id, path),
+                CurrentWaypointIndex = 0,
+                LastSampledPosition = mover.Position
+            };
+            IntentResult stepResult = IntentResult.InProgress;
+            for (int i = 0; i < 40 && stepResult == IntentResult.InProgress; i++)
+            {
+                stepResult = wiredLocomotion.ExecutePathMovement(mover, path, moveState);
+                grid.UpdateFromRegistry(registry);
+            }
+            Assert(stepResult == IntentResult.Success, "Mover arrives successfully next to occupied destination");
+            float gap = Vec2.Distance(mover.Position, occupant.Position);
+            Assert(gap >= 0.35f, $"Mover did not stack on occupant (gap: {gap})");
+
+            // Tier 3 unstuck disengage and resource blacklist duration
+            var resourceId = EntityId.Generate();
+            var unstuckState = new ActiveIntentState
+            {
+                Intent = new HarvestResourceIntent(mover.Id, resourceId, default),
+                StallCount = 4
+            };
+            var unstuckResult = wiredLocomotion.ApplyProgressiveUnstuckReflex(mover, new Vec2(4f, 0f), unstuckState);
+            Assert(unstuckResult == IntentResult.PathBlocked, "Tier 3 unstuck returns PathBlocked");
+            Assert(mover.Agent.Memory.IsBlacklisted(resourceId, 349), "Resource is blacklisted at tick 349 (50 + 300 - 1)");
+            Assert(!mover.Agent.Memory.IsBlacklisted(resourceId, 350), "Resource blacklist expires at tick 350");
+
+            TestLog.Log("[PASS] Test 6: Standalone Locomotion validation verified without SimulationManager.");
         }
 
         private static void Assert(bool condition, string message)

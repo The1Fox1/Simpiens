@@ -8,7 +8,9 @@ using Simpiens.Cognition.Planning.Domain;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Core;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Persistence;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.World;
 
 namespace Simpiens.Testing.Drives
 {
@@ -34,8 +36,9 @@ namespace Simpiens.Testing.Drives
             ValidateSingleOccupancy();
             ValidateClaimsNeverOutliveTheSleep();
             ValidateLastStepOntoTheBunk();
+            ValidateStandaloneLodging();
 
-            TestLog.Log("<color=green>[RestAnchorValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[RestAnchorValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTiredCrawlerWalksToAFreeBunk()
@@ -157,6 +160,52 @@ namespace Simpiens.Testing.Drives
                 registry.Unregister(node);
             }
             TestLog.Log("[PASS] Test 6: A sleeper a step short walks onto a free bunk, never onto a taken one.");
+        }
+
+        /// <summary>The bunks without a SimulationManager (core refactor R5.1): claims, departures, preemption and the save.</summary>
+        private void ValidateStandaloneLodging()
+        {
+            var lodging = new Lodging();
+            var bunkPos = new Vec2(-6f, -8f);
+            var secondBunk = new EntityId(67u, 7u, 7u, 7u);
+            lodging.RegisterBunk(BunkId, bunkPos);
+            lodging.RegisterBunk(secondBunk, bunkPos + new Vec2(1f, 0f));
+            var occupied = lodging.OccupiedBunks;
+
+            Assert(lodging.TryClaimBunk(BunkId, AgentId, bunkPos) && lodging.TryClaimBunk(secondBunk, AgentId, bunkPos + new Vec2(1f, 0f)),
+                "Precondition: one crawler holds two bunks.");
+            Assert(ReferenceEquals(occupied, lodging.OccupiedBunks) && occupied.Count == 2, "The occupied list is one list, kept up to date (the partition holds it).");
+            lodging.ReleaseAllForAgent(AgentId);
+            Assert(lodging.BunkOccupants.Count == 0 && occupied.Count == 0, "A departing crawler releases every bunk it holds.");
+
+            var sleeper = new Simpiens.Cognition.AgentState(AgentId) { VisualState = Simpiens.Entities.AgentVisualState.Sleeping };
+            var agents = new AgentRegistry();
+            agents.RegisterAgent(sleeper);
+            var intents = new System.Collections.Generic.Dictionary<EntityId, ActiveIntentState>
+            {
+                [AgentId] = new ActiveIntentState { Intent = new SleepAtBunkIntent(AgentId, BunkId, 3f) }
+            };
+            Assert(lodging.TryClaimBunk(BunkId, AgentId, bunkPos), "Precondition: claimed.");
+            lodging.ValidateOccupancy(intents, agents);
+            Assert(lodging.BunkOccupants.ContainsKey(BunkId), "A crawler still sleeping keeps its bunk.");
+            intents[AgentId] = new ActiveIntentState { Intent = new IdleIntent(AgentId, 1f) };
+            lodging.ValidateOccupancy(intents, agents);
+            Assert(!lodging.BunkOccupants.ContainsKey(BunkId) && sleeper.VisualState == Simpiens.Entities.AgentVisualState.Idle,
+                "A preempted sleeper loses the bunk and gets up.");
+
+            var other = new EntityId(68u, 8u, 8u, 8u);
+            lodging.RecordBunkSleep(other);
+            lodging.RecordBunkSleep(AgentId);
+            lodging.RecordBunkSleep(other);
+            IdCountRecord[] saved = lodging.CaptureSleeps();
+            Assert(saved.Length == 2 && saved[0].Id.CompareTo(saved[1].Id) < 0, "The save's bunk sleeps are sorted by id.");
+            var restored = new Lodging();
+            restored.RestoreSleeps(saved);
+            Assert(restored.BunkSleeps.Count == 2 && restored.BunkSleeps[other] == 2 && restored.BunkSleeps[AgentId] == 1, "Bunk sleeps survive a round trip.");
+
+            lodging.Reset();
+            Assert(lodging.BunkSleeps.Count == 0 && !lodging.TryClaimBunk(BunkId, AgentId, bunkPos), "A reset forgets bunks, claims and sleeps.");
+            TestLog.Log("[PASS] Test 7: Lodging alone keeps one sleeper per bunk, frees a departing crawler's bunks and saves its sleeps.");
         }
 
         private static GoapPlan PlanRest(float energy, Vec2? bunkAt, bool occupied, Vec2? hearthAt)

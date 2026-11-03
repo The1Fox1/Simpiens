@@ -54,7 +54,7 @@ namespace Simpiens.Hosting
             services.AddSingleton<SimulationManager>();
             services.AddSingleton<ISimulationManager>(sp => sp.GetRequiredService<SimulationManager>());
             services.AddSingleton<IIntentExecutionContext>(sp => sp.GetRequiredService<SimulationManager>());
-            services.AddSingleton<IGoapPlanner>(sp => new GoapPlanner());
+            services.AddSingleton<IGoapPlanner>(sp => new GoapPlannerPool()); // one planner per evaluation in flight (§1A.2 #8)
             services.AddSingleton<IPlayerInterventionService, PlayerInterventionService>();
             services.AddSingleton<IEconomyLedger, EconomyLedger>();
             services.AddSingleton<ISupplyService>(sp => new SupplyService());

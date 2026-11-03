@@ -31,8 +31,9 @@ namespace Simpiens.Testing.Environment
             ValidateSideEffectFreeAffinityReads();
             ValidateInventorySnapshotIsolation();
             ValidateZeroAllocationSnapshotBenchmark();
+            ValidateReadOnlyMemoryMaps();
 
-            Log("<color=green>[SingleWriterMemoryValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            Log("<color=green>[SingleWriterMemoryValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateSnapshotLifetimeRetention()
@@ -133,7 +134,7 @@ namespace Simpiens.Testing.Environment
 
                 if (m % 50 == 0)
                 {
-                    memA.PruneStaleResourceMemories(tick);
+                    memA.ForgetResourceSightings();
                 }
             }
 
@@ -236,6 +237,47 @@ namespace Simpiens.Testing.Environment
 
             Assert(delta == 0, $"Snapshot benchmark allocated {delta} bytes across 1,000 snapshot creations (expected 0).");
             Log("[PASS] Test 5: Zero heap allocation verified for Memory and Inventory snapshots (0 bytes across 1,000 cycles).");
+        }
+
+        /// <summary>
+        /// Through IAgentMemory (what cognition holds) the maps are read-only views (core refactor R5.3): they show the
+        /// live state, can't be written, and are walked without allocating.
+        /// </summary>
+        private void ValidateReadOnlyMemoryMaps()
+        {
+            var memory = new AgentMemory();
+            for (int i = 0; i < 10; i++)
+            {
+                var id = CreateGuid((uint)(500 + i));
+                memory.SpatialMemoryMap[id] = new SpatialMemoryRecord(id, EntityType.Resource, new GridPoint(i, i), 10);
+            }
+            var peer = CreateGuid(600);
+            memory.RecordInteraction(peer, 10, 10, 0, 10, 10);
+
+            IAgentMemory live = memory;
+            IAgentMemory snapshot = memory.GetSnapshot(20);
+            Assert(live.SpatialMemoryMap.Count == 10 && live.AffinityMap.ContainsKey(peer), "The live memory's views show its maps.");
+            Assert(snapshot.SpatialMemoryMap.Count == 10 && snapshot.AffinityMap.TryGetValue(peer, out _), "The snapshot's views show what it copied.");
+            // That they can't be written is the compiler's to prove: ReadOnlyMemoryMap is sealed and has no setters
+
+            int walked = 0;
+            for (int warm = 0; warm < 50; warm++)
+            {
+                foreach (var kvp in snapshot.SpatialMemoryMap) walked++;
+                foreach (var kvp in live.AffinityMap) walked++;
+            }
+
+            long startAlloc = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 1000; i++)
+            {
+                foreach (var kvp in snapshot.SpatialMemoryMap) walked++;
+                foreach (var kvp in live.AffinityMap) walked++;
+            }
+            long delta = GC.GetAllocatedBytesForCurrentThread() - startAlloc;
+
+            Assert(walked == 1050 * 11, $"Every entry walked ({walked}).");
+            Assert(delta == 0, $"Walking the read-only views allocated {delta} bytes across 1,000 passes (expected 0).");
+            Log("[PASS] Test 6: Memory maps are read-only through IAgentMemory and walked with zero allocation.");
         }
 
         private static EntityId CreateGuid(uint id)

@@ -28,6 +28,13 @@ namespace Simpiens.Cognition.Memory
         private readonly AgentMemorySnapshot[] _snapshots;
         private int _snapshotIndex;
 
+        private readonly ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord> _spatialView;
+        private readonly ReadOnlyMemoryMap<EntityId, AffinityRecord> _affinityView;
+
+        // The live maps stay writable here, for the main thread; through IAgentMemory they are read-only
+        ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord> IAgentMemory.SpatialMemoryMap => _spatialView;
+        ReadOnlyMemoryMap<EntityId, AffinityRecord> IAgentMemory.AffinityMap => _affinityView;
+
         public Dictionary<EntityId, AffinityRecord> AffinityMap => _affinityMap;
         public IReadOnlyDictionary<EntityId, uint> BlacklistedEntities => _blacklistedEntities;
         public Dictionary<EntityId, uint> BlacklistMap => _blacklistedEntities;
@@ -39,6 +46,8 @@ namespace Simpiens.Cognition.Memory
             _blacklistedEntities = new Dictionary<EntityId, uint>();
             _lastGossipWithAgent = new Dictionary<EntityId, uint>();
             _affinityMap = new Dictionary<EntityId, AffinityRecord>(16);
+            _spatialView = new ReadOnlyMemoryMap<EntityId, SpatialMemoryRecord>(SpatialMemoryMap);
+            _affinityView = new ReadOnlyMemoryMap<EntityId, AffinityRecord>(_affinityMap);
 
             _snapshots = new AgentMemorySnapshot[2]
             {
@@ -373,7 +382,11 @@ namespace Simpiens.Cognition.Memory
             return SpatialMemoryMap.TryGetValue(entityId, out record);
         }
 
-        public void PruneStaleResourceMemories(uint currentTick)
+        /// <summary>
+        /// Forgets every resource sighting, so a crawler that panicked (starving, no food known) explores anew. Main thread,
+        /// when its <c>PanicIntent</c> completes.
+        /// </summary>
+        public void ForgetResourceSightings()
         {
             if (_keysToRemove == null)
             {

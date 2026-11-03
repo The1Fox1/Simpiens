@@ -57,7 +57,7 @@ namespace Simpiens.Cognition
 
         public bool HasFoodInInventory
         {
-            // Any food in the pack. Setting it true without food packs a ration (a quirk kept on purpose: a plot's harvest; .agents/core_refactor_plan.md, R7), false
+            // Any food in the pack. Setting it true without food packs a ration (a quirk kept on purpose: a plot's harvest; AGENTS.md, items), false
             // takes one food out
             get => Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food);
             set
@@ -183,21 +183,6 @@ namespace Simpiens.Cognition
                 return _baseVisualState;
             }
             set => _baseVisualState = value;
-        }
-
-        public AgentState()
-        {
-            try
-            {
-                AgentId = EntityId.Generate();
-            }
-            catch
-            {
-                AgentId = default;
-            }
-
-            Inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: Simpiens.Simulation.Economy.EconomyTuning.InventoryDefaultGold);
-            Memory = new AgentMemory();
         }
 
         public AgentState(EntityId id, AgentInventory inventory = null, AgentMemory memory = null)

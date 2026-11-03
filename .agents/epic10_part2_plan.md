@@ -9,7 +9,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - **The game design, Phase 3:** "Upgrading the outpost into a multi-slot facility (*Fallout Shelter* style), hiring non-combat artisans to process raw materials into weapons, armor, and potions". Deeper in the game the player has "a multi-room fortified guildhall housing personal artisans and barracks".
   - **Epic 10 §5's rows owned by Part 2 or Milestone 3:** the pickaxe; gear for each hazard kind, better grades, repair; a guild larger than four, barracks, a guildhall.
   - **Part 1's deferrals** (the G6 plan, §4).
-  - **The item refactor's deferrals** (`core_refactor_plan.md`, R7): tool stats in use, quality grades, crafting recipes, repair.
+  - **The item refactor's deferrals** (now in Epic 10 §5): tool stats in use, quality grades, crafting recipes, repair.
   - **The economy model §8:** crawler sinks.
 - **Starts:** after Part 1's close-out and the core refactor's R1–R6 (index, Order).
 - **Estimate:** 14–19 agent days: W0 2, W1 3–4, W2 2, W3 2–3, W4 2, W5 2–3, W6 1–2. The roughest of the plans: nothing is measured yet, and W0 measures first.

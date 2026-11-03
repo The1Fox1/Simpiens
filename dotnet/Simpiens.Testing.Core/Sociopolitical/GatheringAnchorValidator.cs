@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
+using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Memory;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Cognition.Planning;
@@ -10,6 +11,7 @@ using Simpiens.Cognition.Planning.Actions;
 using Simpiens.Cognition.Planning.Goals;
 using Simpiens.Entities;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Social;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Testing.Sociopolitical
@@ -30,8 +32,9 @@ namespace Simpiens.Testing.Sociopolitical
             ValidateHearthProximityBondingAndGossipAcceleration();
             ValidateHearthFrustrationAndSocialReplenishment();
             ValidateZeroAllocationHearthBondingTick();
+            ValidateStandaloneSocialDynamics();
 
-            TestLog.Log("<color=green>[GatheringAnchorValidator] ALL 6 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GatheringAnchorValidator] ALL 7 DOMAIN TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAnchorDetectionAndWorldStateMapping()
@@ -274,6 +277,63 @@ namespace Simpiens.Testing.Sociopolitical
             HeadlessEntities.Remove(worldRegistry, goACrawler);
             HeadlessEntities.Remove(worldRegistry, goBCrawler);
             TestLog.Log($"[PASS] Test 6: Zero allocation guarantee verified (0 bytes across 1,000 evaluations).");
+        }
+
+        /// <summary>
+        /// The hearth without a SimulationManager (core refactor R5.2): comfort, a settlement emerging from bonded
+        /// crawlers, gossip between two who meet, and a reset forgetting the anchors.
+        /// </summary>
+        private void ValidateStandaloneSocialDynamics()
+        {
+            var worldRegistry = new WorldRegistry();
+            var groups = new GroupRegistry();
+            var social = new SocialDynamics(worldRegistry, groups);
+            social.RegisterAnchor(EntityId.Generate(), Vec2.Zero, radius: 3.0f);
+
+            var nodes = new WorldEntity[3];
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                var id = EntityId.Generate();
+                nodes[i] = new WorldEntity(id, EntityType.Pawn, new Vec2(i - 1f, 0.5f), 0.35f, agent: new AgentState(id) { Social = 50f });
+                worldRegistry.Register(nodes[i]);
+            }
+            // Bonded enough to settle (warmth 40, trust 30), before the hearth's own +2 / +1
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                for (int j = 0; j < nodes.Length; j++)
+                {
+                    if (i != j) nodes[i].Agent.Memory.RecordInteraction(nodes[j].Id, deltaWarmth: 45, deltaTrust: 35, deltaFear: 0, deltaRespect: 0, 100);
+                }
+            }
+
+            social.EvaluateHearthProximity(100);
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                var agent = nodes[i].Agent;
+                Assert(agent.Social > 50f, $"Crawler {i} at the hearth with company gains social (actual: {agent.Social}).");
+                Assert(agent.Memberships.Has(GroupType.Settlement), $"Crawler {i} joins the settlement formed around the hearth.");
+            }
+
+            var loners = new WorldRegistry();
+            var talk = new SocialDynamics(loners);
+            var idA = EntityId.Generate();
+            var idB = EntityId.Generate();
+            var a = new WorldEntity(idA, EntityType.Pawn, Vec2.Zero, 0.35f, agent: new AgentState(idA) { Social = 10f });
+            var b = new WorldEntity(idB, EntityType.Pawn, new Vec2(1f, 0f), 0.35f, agent: new AgentState(idB) { Social = 10f });
+            loners.Register(a);
+            loners.Register(b);
+            talk.CheckGossipOpportunity(a);
+            Assert(a.Agent.Social == 35f && b.Agent.Social == 35f, $"Two crawlers who meet gossip, and both gain social (actual: {a.Agent.Social}, {b.Agent.Social}).");
+
+            social.Reset();
+            float before = nodes[0].Agent.Social;
+            social.EvaluateHearthProximity(150);
+            Assert(nodes[0].Agent.Social == before, "After a reset there is no hearth: nobody gains social there.");
+
+            for (int i = 0; i < nodes.Length; i++) worldRegistry.Unregister(nodes[i]);
+            loners.Unregister(a);
+            loners.Unregister(b);
+            TestLog.Log("[PASS] Test 7: SocialDynamics alone comforts and settles crawlers at the hearth, lets two who meet gossip, and resets.");
         }
 
         private static void Assert(bool condition, string message)

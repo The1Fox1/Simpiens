@@ -24,7 +24,7 @@ namespace Simpiens.Cognition.Pathfinding
     public class GridAStarSearcher
     {
         private const int MaxNodes = 8192;
-        private const int MaxCells = 16384;
+        public const int MaxCells = 16384;
         private const int MaxPathLength = 256;
         private const float Sqrt2 = 1.41421356f;
 

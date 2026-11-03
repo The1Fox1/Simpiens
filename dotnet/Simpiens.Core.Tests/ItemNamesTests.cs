@@ -24,7 +24,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Economy/SupplyTuning.cs"] = "the default caravan: what it exports and supplies",
             ["Simpiens.Hosting/EconomySoak.cs"] = "the soak's player profiles: the prices each one sets",
             ["Simpiens.Presentation/ItemTexts.cs"] = "the client's words for items: merchant rows, stock and header",
-            // Quirks kept on purpose (.agents/core_refactor_plan.md, R7)
+            // Quirks kept on purpose (AGENTS.md, "Adding or removing an item")
             ["Simpiens.Core/Simulation/ResourceData.cs"] = "quirk: a node's default yield is a ration",
             ["Simpiens.Core/Cognition/Planning/Handlers/HarvestResourceIntentHandler.cs"] = "quirk: an untyped node yields a ration",
             ["Simpiens.Core/Cognition/AgentState.cs"] = "quirk: HasFoodInInventory packs a ration when set",

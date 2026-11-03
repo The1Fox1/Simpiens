@@ -54,7 +54,7 @@ namespace Simpiens.Cognition
             if (intent is PanicIntent)
             {
                 agent.Frustration = 0f;
-                agent.Memory?.PruneStaleResourceMemories(currentTick);
+                agent.Memory?.ForgetResourceSightings();
             }
             else if (result == IntentResult.Success)
             {

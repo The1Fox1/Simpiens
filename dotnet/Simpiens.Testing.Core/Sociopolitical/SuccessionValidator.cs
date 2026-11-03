@@ -33,6 +33,9 @@ namespace Simpiens.Testing.Sociopolitical
             }
         }
 
+        // Each simulation owns its engine (core refactor R5.2): the scratch buffers are the instance's
+        private readonly SuccessionEngine _engine = new SuccessionEngine();
+
         public void Start()
         {
             TestLog.Log("[SuccessionValidator] Beginning automated validation of Epic 8 Phase 3...");
@@ -79,7 +82,7 @@ namespace Simpiens.Testing.Sociopolitical
             var agents = new ISocialAgent[] { agentA, agentB, agentC };
             Vec2 hearthPos = new Vec2(12f, 18f);
 
-            bool formed = SuccessionEngine.TryFormEmergentGroup(hearthPos, agents, registry, currentTick, out byte newGroupId);
+            bool formed = _engine.TryFormEmergentGroup(hearthPos, agents, registry, currentTick, out byte newGroupId);
             Assert(formed, "Emergent group formed successfully around hearth.");
             Assert(newGroupId > 0, "Valid non-zero group ID created.");
 
@@ -155,7 +158,7 @@ namespace Simpiens.Testing.Sociopolitical
                 "Leader correctly recognized as incapacitated.");
 
             // Execute succession
-            var result = SuccessionEngine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
+            var result = _engine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
 
             Assert(result.Succeeded, "Succession succeeded.");
             Assert(result.Mode == SuccessionMode.Peaceful, "Mode is Peaceful under Cohesion 80.");
@@ -199,7 +202,7 @@ namespace Simpiens.Testing.Sociopolitical
             // Submission of B to A = 0 => Dom(B) = 100
             // Follower B is overwhelmingly dominant!
 
-            var result = SuccessionEngine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
+            var result = _engine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
 
             Assert(result.Succeeded, "Succession succeeded.");
             Assert(result.Mode == SuccessionMode.DominanceChallenge, "Mode is DominanceChallenge under Cohesion 40.");
@@ -236,7 +239,7 @@ namespace Simpiens.Testing.Sociopolitical
             loser.Memory.SetAffinity(winner.AgentId, new AffinityRecord(warmth: 0, trust: 0, fear: 60, respect: 20, 1, 100));
             winner.Memory.SetAffinity(loser.AgentId, new AffinityRecord(warmth: 0, trust: 0, fear: 0, respect: 0, 1, 100));
 
-            var result = SuccessionEngine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
+            var result = _engine.ResolveSuccession(groupId, registry, null, 100, id => agentMap[id]);
 
             Assert(result.Succeeded, "Succession succeeded.");
             Assert(result.Mode == SuccessionMode.DominanceChallenge, "Mode is DominanceChallenge.");
@@ -281,7 +284,7 @@ namespace Simpiens.Testing.Sociopolitical
             loyalistB.Memory.SetAffinity(contenderA.AgentId, new AffinityRecord(warmth: 10, trust: 0, fear: 0, respect: 10, 1, 100));
             loyalistB.Memory.SetAffinity(contenderB.AgentId, new AffinityRecord(warmth: 70, trust: 60, fear: 0, respect: 50, 1, 100));
 
-            var result = SuccessionEngine.ResolveSuccession(originalGroupId, registry, null, 100, id => agentMap[id]);
+            var result = _engine.ResolveSuccession(originalGroupId, registry, null, 100, id => agentMap[id]);
 
             Assert(result.Succeeded, "Succession succeeded.");
             Assert(result.Mode == SuccessionMode.FactionalSchism, "Mode is FactionalSchism under Cohesion 15.");
@@ -339,7 +342,7 @@ namespace Simpiens.Testing.Sociopolitical
             // prefers B, who founds the splinter
             follower.Memory.SetAffinity(contenderB.AgentId, new AffinityRecord(warmth: 70, trust: 60, fear: 0, respect: 0, 1, 100));
 
-            var schism = SuccessionEngine.ResolveSuccession(settlement, registry, null, 100, id => agentMap[id]);
+            var schism = _engine.ResolveSuccession(settlement, registry, null, 100, id => agentMap[id]);
             Assert(schism.Succeeded && schism.Mode == SuccessionMode.FactionalSchism, "Cohesion 15 splits the settlement.");
             registry.TryGetGroup(schism.SplinterGroupId, out var splinter);
             Assert(splinter.LeaderId == contenderB.AgentId, "Contender B leads the splinter settlement.");
@@ -351,7 +354,7 @@ namespace Simpiens.Testing.Sociopolitical
 
             registry.SetCohesion(settlement, 90);
             registry.TryGetGroup(settlement, out var before);
-            var peaceful = SuccessionEngine.ResolveSuccession(settlement, registry, null, 200, id => agentMap[id]);
+            var peaceful = _engine.ResolveSuccession(settlement, registry, null, 200, id => agentMap[id]);
             Assert(peaceful.Succeeded && peaceful.Mode == SuccessionMode.Peaceful, "High cohesion passes leadership on peacefully.");
             Assert(registry.TryGetMembership(contenderB.AgentId, guild, out _) && registry.TryGetMembership(follower.AgentId, guild, out _), "The guild's roster is untouched.");
             registry.TryGetGroup(guild, out var guildData);
@@ -418,7 +421,7 @@ namespace Simpiens.Testing.Sociopolitical
             registry.AddMember(groupId, lowest, RoleRank.Follower);
             registry.AddMember(groupId, new EntityId(30, 0, 0, 0), RoleRank.Follower);
 
-            var result = SuccessionEngine.ResolveSuccession(groupId, registry, new WorldRegistry(), 0);
+            var result = _engine.ResolveSuccession(groupId, registry, new WorldRegistry(), 0);
             Assert(result.Mode == SuccessionMode.Peaceful, $"Cohesion 100 is a peaceful succession (got {result.Mode}).");
             Assert(result.NewLeaderId == lowest, $"The lowest id wins a tie (got {result.NewLeaderId}).");
 
@@ -434,14 +437,14 @@ namespace Simpiens.Testing.Sociopolitical
 
             Assert(SuccessionEngine.IsLeaderIncapacitatedOrDiscredited(default, 0, null, null, 0), "Null refs return true for leader check.");
 
-            bool formed = SuccessionEngine.TryFormEmergentGroup(Vec2.Zero, null, null, 0, out byte newGid);
+            bool formed = _engine.TryFormEmergentGroup(Vec2.Zero, null, null, 0, out byte newGid);
             Assert(!formed && newGid == 0, "TryFormEmergentGroup with null agents returns false.");
 
-            var res = SuccessionEngine.ResolveSuccession(0, null, null, 0);
+            var res = _engine.ResolveSuccession(0, null, null, 0);
             Assert(!res.Succeeded, "ResolveSuccession with null registry returns failed result.");
 
             var emptyRegistry = new GroupRegistry();
-            res = SuccessionEngine.ResolveSuccession(99, emptyRegistry, null, 0);
+            res = _engine.ResolveSuccession(99, emptyRegistry, null, 0);
             Assert(!res.Succeeded, "ResolveSuccession with invalid group ID returns failed result.");
 
             TestLog.Log("[PASS] Test 7: Defensive null safety for test isolation verified.");

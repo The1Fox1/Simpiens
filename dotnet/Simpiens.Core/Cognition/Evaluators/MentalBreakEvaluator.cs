@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Simpiens.Cognition.Contracts;
@@ -28,9 +27,6 @@ namespace Simpiens.Cognition.Evaluators
         private readonly IAsyncPathfinder _pathfinder;
         private readonly ulong _seed;
 
-        [System.ThreadStatic]
-        private static List<EntityId> _staleResourceKeys;
-
         public MentalBreakEvaluator(IAsyncPathfinder pathfinder, SimulationSettings settings = null)
         {
             _pathfinder = pathfinder;
@@ -58,8 +54,8 @@ namespace Simpiens.Cognition.Evaluators
 
                 if (!hasKnownFood)
                 {
-                    // Prune stale resource records from memory so agent explores anew
-                    PruneStaleResourceMemories(context);
+                    // The crawler forgets its resource sightings and explores anew when the panic completes, on the main
+                    // thread (AgentConsequenceService): this evaluation only reads memory
 
                     // A crawler that has seen food plots goes back to them and waits for regrowth: exploring away from
                     // the only free food it knows starved a broke crawler while the Garden regrew (review §3.3 D6)
@@ -220,31 +216,6 @@ namespace Simpiens.Cognition.Evaluators
             }
 
             return false;
-        }
-
-        public static void PruneStaleResourceMemories(in AgentContext context)
-        {
-            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return;
-
-            if (_staleResourceKeys == null)
-            {
-                _staleResourceKeys = new List<EntityId>(16);
-            }
-            _staleResourceKeys.Clear();
-
-            foreach (var kvp in context.Memory.SpatialMemoryMap)
-            {
-                if (kvp.Value.Type == EntityType.Resource)
-                {
-                    _staleResourceKeys.Add(kvp.Key);
-                }
-            }
-
-            int count = _staleResourceKeys.Count;
-            for (int i = 0; i < count; i++)
-            {
-                context.Memory.SpatialMemoryMap.Remove(_staleResourceKeys[i]);
-            }
         }
     }
 }

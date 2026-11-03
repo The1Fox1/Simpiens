@@ -94,8 +94,13 @@ namespace Simpiens.Testing.Drives
             var intent = evaluator.EvaluateAsync(context, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert(intent is PanicIntent, "MentalBreakEvaluator returned PanicIntent during starvation with no food.");
-            Assert(!memory.SpatialMemoryMap.ContainsKey(staleId), "Stale resource memory was pruned on starvation panic.");
-            TestLog.Log("[PASS] Test 1: Starvation Panic triggered and stale resource memories pruned.");
+            Assert(memory.SpatialMemoryMap.ContainsKey(staleId), "The evaluation only reads memory: nothing is forgotten off-thread (single writer).");
+
+            // The panic completing, on the main thread, is what forgets the sightings
+            var agent = new AgentState(context.AgentId, memory: memory);
+            new Simpiens.Cognition.AgentConsequenceService().ApplyConsequences(agent, intent, IntentResult.Success, 100);
+            Assert(!memory.SpatialMemoryMap.ContainsKey(staleId), "A completed panic forgets the crawler's resource sightings, so it explores anew.");
+            TestLog.Log("[PASS] Test 1: Starvation Panic triggered; its completion forgets the resource sightings.");
         }
 
         private void ValidateStarvationPanicSuppressedWhenFoodKnown()
