@@ -146,6 +146,7 @@ namespace Simpiens.Client
                 else if (selection.Following && selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, cameraSeconds);
             }
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
+            _graphics?.WriteBodies(); // the bodies the scene seated, baked into the world texture before the draw
         }
 
         /// <summary>

@@ -50,6 +50,24 @@ namespace Simpiens.Client
 
         public Rectangle Source(int spriteIndex) => _sources[spriteIndex];
 
+        /// <summary>
+        /// Writes <paramref name="pixels"/> over sprite <paramref name="spriteIndex"/>'s cell (a body baked into the world
+        /// sheet's region, UI-Beta B2), through <paramref name="scratch"/>, at least the cell's size. Only for cells the
+        /// sheet keeps blank for this: the art's own sprites are never written.
+        /// </summary>
+        public void Write(int spriteIndex, ReadOnlySpan<Rgba32> pixels, Color[] scratch)
+        {
+            var cell = _sources[spriteIndex];
+            int count = cell.Width * cell.Height;
+            if (pixels.Length < count || scratch.Length < count) throw new ArgumentException($"A cell of {cell.Width}x{cell.Height} needs {count} pixels.");
+            for (int i = 0; i < count; i++)
+            {
+                var p = pixels[i];
+                scratch[i] = new Color(p.R, p.G, p.B, p.A);
+            }
+            Texture.SetData(0, cell, scratch, 0, count);
+        }
+
         public void Dispose() => Texture.Dispose();
     }
 }

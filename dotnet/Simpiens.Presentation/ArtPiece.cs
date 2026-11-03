@@ -27,5 +27,8 @@ namespace Simpiens.Presentation
         public float PivotX { get; }
         public float PivotY { get; }
         public bool IsNone => Sprite < 0;
+
+        /// <summary>This piece drawn with another sprite of its sheet, at its size and pivot (a crawler's baked body, UI-Beta B2).</summary>
+        public ArtPiece WithSprite(int sprite) => new ArtPiece(sprite, Width, Height, PivotX, PivotY, Sheet);
     }
 }

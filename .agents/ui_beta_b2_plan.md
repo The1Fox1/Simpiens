@@ -94,3 +94,15 @@ Engine-free, in `Simpiens.Presentation/Art/People/`. Generators never read a tab
 | A larger atlas moves a render | The picture doesn't depend on the layout (epic F12); P2.2 proves it in the pinned image before any body is drawn |
 | Residents look alike once state no longer colours clothes | P3.3 measures; D7's marks are the fallback, on the producer's word |
 | `SetData` with a rectangle differs between KNI and MonoGame | The MonoGame and Android compiles run at P2.4; a difference goes through `XnaPlatform` |
+
+## 4. Progress
+- **P1 (done 2026-11-02, `5a63d90`):**
+  - the key frames, the head anchors, `LookPalettes`;
+  - `BodyKit` with all ten hair styles, facial hair, the helm, the builds, the delvers' height and the tabard;
+  - the people sheet on the kit. The crowd's 64 looks bake to 64 distinct bodies.
+- **P2 (done 2026-11-02):**
+  - looks and standing in the frames (`5a08fb8`);
+  - the body region: 64 × 24 cells, the world atlas 768x726, every render byte-identical (`82b8f66`). The F12 near-ties at in-between zooms grew from 1 to 10 pixels of 480,000, and the test now allows 16;
+  - `CrawlerBodies` (`55232b5`);
+  - the scene draws a crawler from its slot when given the table; the client writes bakes into the world texture (P2.4). The review renders are `render-output/bodies-*.png`.
+- **Deviation:** the tabard counts its gold device as tabard. A beard over a delver's short torso can cover all but the device.
