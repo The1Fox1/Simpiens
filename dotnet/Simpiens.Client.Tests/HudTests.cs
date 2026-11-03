@@ -29,9 +29,9 @@ namespace Simpiens.Client.Tests
         public void TheHeaderKeepsUpdatingOverTheMap()
         {
             var ui = MapView();
-            Assert.Equal("TICK: 00000", ui.Game.Play.Dashboard.Header.TickText);
-            ui.Ticks(50);
-            Assert.Equal("TICK: 00050", ui.Game.Play.Dashboard.Header.TickText);
+            Assert.Equal("DAY 1 · 06:00", ui.Game.Play.Dashboard.Header.TickText); // the time of day (Epic UI-Beta B5)
+            ui.Ticks(375);
+            Assert.Equal("DAY 1 · 07:00", ui.Game.Play.Dashboard.Header.TickText);
             Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
             Assert.Equal($"{stall.TreasuryGold} GOLD", ui.Game.Play.Dashboard.Header.TreasuryText);
         }

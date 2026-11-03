@@ -56,6 +56,12 @@ namespace Simpiens.Presentation.Dashboard
         public string Guild { get; private set; } = "GUILD 0/4";
         public string Tick { get; private set; } = "TICK: 00000";
 
+        /// <summary>The time of day (Epic UI-Beta B5): "DAY 1 · 06:30". The header shows it, or the tick in development builds.</summary>
+        public string TimeOfDay { get; private set; } = OutpostClock.Text(0);
+
+        /// <summary>What the header's clock shows: the tick when the host shows debug ids, the time of day otherwise.</summary>
+        public string Clock => _context.ShowDebugIds ? Tick : TimeOfDay;
+
         /// <summary>The world's clock is stopped: the pause control offers to play.</summary>
         public bool Paused { get; private set; }
 
@@ -110,6 +116,7 @@ namespace Simpiens.Presentation.Dashboard
             if (clock != null)
             {
                 Tick = Invariant($"TICK: {clock.CurrentTick:D5}");
+                TimeOfDay = OutpostClock.Text(clock.CurrentTick);
                 Paused = clock.TimeMultiplier <= 0f;
                 if (!Paused) _speedIndex = NearestSpeed(clock.TimeMultiplier); // a running clock says its speed; a paused one keeps the last
             }

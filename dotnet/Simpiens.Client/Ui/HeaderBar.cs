@@ -161,7 +161,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_treasury, header.Treasury);
             BindStock(header.Stock);
             UiParts.SetText(_bounties, header.Bounties);
-            UiParts.SetText(_tick, header.Tick);
+            UiParts.SetText(_tick, header.Clock);
             if (GuildButton.Text != header.Guild) GuildButton.Text = header.Guild;
             if (PauseButton.Text != header.PauseLabel) PauseButton.Text = header.PauseLabel;
             if (SpeedButton.Text != header.Speed) SpeedButton.Text = header.Speed;

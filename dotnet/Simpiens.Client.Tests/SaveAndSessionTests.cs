@@ -58,7 +58,7 @@ namespace Simpiens.Client.Tests
             ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(saved, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal($"Loaded the save from tick {saved}.", header.SaveStatusText);
-            Assert.Contains(saved.ToString("D5"), game.Play.Dashboard.Header.TickText);
+            Assert.Equal(Simpiens.Presentation.Dashboard.OutpostClock.Text(saved), game.Play.Dashboard.Header.TickText);
             Assert.Equal(OutpostSession.DefaultCrawlerCount, game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
             Assert.Equal(default, game.Session.Selection.SelectedCrawler); // ids are reissued: the selection is dropped
             Assert.False(game.Session.DashboardModel.Bounties.IsOpen, "A load closes the windows.");
