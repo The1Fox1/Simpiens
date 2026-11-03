@@ -30,7 +30,8 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
     - **Sheets:** `SpriteSheets` says what each `DrawSheet` holds (World for both view modes, Fog, Backdrop, Icons); a sheet alone gives out sprite indices, and `AtlasLayout` packs it by shelves within a 2048 budget. The picture doesn't depend on the layout (epic F12): standing pieces snap to whole pixels (`DrawItem.SnapToPixel`) and `WorldRenderer.SampleBias` keeps pixel centres off texel edges.
     - **Catalogues:** an `ArtCatalog` per view mode (`TopDownArtTable`, `IsometricArtTable`) and one for the menus (`IconArtTable`) map art keys (`ArtKeys`: `tile/wall`, `prop/hearth`, `prop/stall`, `crawler/<state>`, `crawler/<state>/<item art key>`, `node/<item art key>`, `item/<item art key>/icon|map|carried`) to frames, sizes, pivots and pulses, resolved to `ArtId`s once; missing art draws the loud `fx/missing` and fails a test. A catalogue also holds layout as data: where carried goods hang, the stall's display slots.
     - **Who draws what:** `EntityVisuals` says which art each entity of a frame is drawn with (a crawler's worn gear included).
-    - **Generated art:** the sprite kit (`SpriteKit`: ramps, painting, outlines, icon plates with rarity rims) makes each item's icon, map sprite and carried marker from its look (`ItemArt`: a shape from `ItemShapes`, two colours, how it is worn); `WornSprites` makes crawlers wearing gear. Generators never read a table or a sheet (`ArtInitialisationTests`).
+    - **Generated art:** the sprite kit (`SpriteKit`: ramps, painting, outlines, icon plates with rarity rims) makes each item's icon, map sprite and carried marker from its look (`ItemArt`: a shape from `ItemShapes`, two colours, how it is worn); `WornSprites` makes today's crawlers wearing gear. Generators never read a table or a sheet (`ArtInitialisationTests`).
+    - **Bodies (`Art/People/`, Epic UI-Beta B2):** `BodyKit` bakes a crawler's 24 pose frames from its look (today's patterns in key letters, `HeadAnchors`, `LookPalettes`). The world sheet keeps a region of blank cells for them (`BodySlots`); `CrawlerBodies`, one per world texture, says which body is in which slot, and the client bakes new ones into the texture after the scene's update. A crawler with no look is drawn as today's figure.
     - New art for a known kind of thing is a table row;
   - the projections (`IViewProjection`: `TopDownProjection`, `IsometricProjection`). A `View` is a projection through a camera, and everything that maps world to screen takes one; `View.FloorToScreen` is its affine transform, under which what lies on the floor (`DrawItem.OnFloor`: the fog's cloud) is drawn;
   - view modes (`ViewMode`: a projection with its art catalogue). Top-down's is the original art; isometric's stands the generated placeholders of `IsometricSprites` on their feet. Isometric is the game's view; V or `--view top` switches to top-down. Walls in front of rooms are cut away (`WallStyle`; C cycles);
@@ -171,7 +172,10 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **An option** (a hair style, a skin tone, a colour, an outfit) is a key at the end of its gene's list in `LookCatalog` and its odds in the lineages that offer it. Never reorder or remove one: retire it by giving it no odds anywhere, so a saved look keeps its meaning.
 - **A lineage** is a key at the end of the lineage list and a `LineageDefinition` with its odds per gene.
 - **A gene** goes last in `LookGene` and is drawn last, so every seed's earlier genes keep their values. It uses one of `CrawlerLook`'s spare bytes; a 17th gene changes the save format.
-- **Its picture:** a row in the people kits (B2 and B3).
+- **Its picture:**
+  - on the map (`Simpiens.Presentation/Art/People/`): a colour is a row in `LookPalettes`; a hair style, facial hair or build is a case in `BodyKit`, drawn at each frame's head anchor (`HeadAnchors`; a new pose frame is a row there);
+  - in the portrait: the portrait kit (B3);
+  - then look at the people sheet and re-record the art pins (they hold 146 bodies).
 - **The checks:**
   - `LookValidator`: the catalogue, and every option at its odds.
   - The people sheet: look at it.

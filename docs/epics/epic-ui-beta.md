@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-11-02): B2, bodies on the map, on `feat/ui-beta-b2` (one PR); its working plan is `.agents/ui_beta_b2_plan.md`. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B2–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3–B5 continue under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B3–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -103,7 +103,7 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 | :--- | :--- | :-: | :--- | :--- |
 | B0 | Spike: rough body and Hearthlight portrait kits (test-only), the people sheet, the design note (§9) | 1–1.5 | The producer's look at the sheet | Done |
 | B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold | Done |
-| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Possibly Complex: generated pixel art with a head-anchor table; the art pins and map renders are re-recorded after the producer's look |
+| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Done (2026-11-03, §10) |
 | B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Possibly Complex: the portrait kit's hair is the main risk (§9), and this milestone's gate is a question of taste |
 | B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Possibly Complex: Gum draw cost (F21) under the frame-time gate |
 | B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
@@ -248,4 +248,31 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
   - The head is found from the hair's pixels in 42 of 48 frames; B2 holds an anchor table (§9).
 - **B0's gate:** the producer's look at the people sheet passed ("People sheet looks good", 2026-10-30).
 - **Open for the producer:** the delvers' name and lore (Q4); names by lineage.
+
+### B2 (done 2026-11-03, `feat/ui-beta-b2`)
+- **Delivered:**
+  - **The body kit** (`Simpiens.Presentation/Art/People/`): `ProceduralSprites.CrawlerKeys` keeps today's 24 pose frames in their key letters, and `HeadAnchors` holds each frame's head as data. `BodyKit` bakes a look's 24 frames from the keys, in this order: the hair style (all ten), facial hair, the miner's helm, the build, the delvers' height, the guild's tabard, then the look's colours (`LookPalettes`, B0's spike colours). The bake is pure, on the stack, and allocates nothing into a buffer.
+  - **The body region:** `BodySlots` appends 64 slots of 24 blank cells to the world sheet. `CrawlerBodies`, one per world texture, seats a body (look, helm, tabard) in a slot, so crawlers that look alike share one, and frees it when no crawler shows it. The client bakes each new slot into the texture after the scene's update (`ClientGraphics.WriteBodies`, `SpriteAtlas.Write`). A crawler stays one quad in the world's one batch. A crawler with no look, or past 64 bodies, is drawn as today's figure.
+  - **Frames:** `EntityView` carries the crawler's look and standing (`CrawlerStanding`: resident, drifter, guild member), which B3's portrait frames reuse.
+- **Decisions** (the plan's D1–D10, accepted with the look):
+  - state shows by pose and the marks over the head, with no new marks;
+  - the helm is the hazard gear's colours, with a pale lamp;
+  - the tabard is deep blue with a gold device;
+  - a sleeper keeps the bunk's blanket and takes no build or height.
+- **Checks:**
+  - `HeadAnchorTests`;
+  - `BodyKitTests`: same look, same pixels; every option the map shows changes the body, the rest change nothing; no overlay covers a mark or the tool; the helm, the tabard and the blanket; 0 bytes a bake;
+  - `CrawlerBodiesTests` and `BodyMapReviewTests`;
+  - the art pins of 146 bodies;
+  - **live** (`LiveBodiesTests`, nothing injected, the guild player acting through commands): every crawler of the day is drawn as its own body; the first drifter (t1306) arrives with one; the first guild member (t4096) wears the tabard; no two residents of the 23 gate seeds look alike.
+- **The producer's look:** the people sheet and the body maps passed ("Looks good, passed inspection", 2026-11-02).
+- **Measurements:**
+  - the world atlas grows from 192x178 to 768x726;
+  - the default seed's day takes 15 bakes, with at most 14 bodies at once;
+  - all 64 crowd looks bake to distinct bodies.
+- **Findings:**
+  - Epic CLIENT F12's near-ties at in-between zooms grow with the atlas: 10 pixels of 480,000 when it is packed in reverse, against 1 before. `AtlasIndependenceTests` allows 16. Every render stayed byte-identical in the pinned image.
+  - A delver's shortening once removed the harvester's tool row; it now skips rows holding a tool or a mark.
+  - A beard over a delver's short torso can hide all of the tabard but its device; the tests count the device as the tabard.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 377). The pinned image was exact, except at the commit that switched bodies on, where the 16 render and picture-pin tests failed until the next commit re-recorded them. MonoGame and Android compile. The core is unchanged, so golden is unaffected.
 

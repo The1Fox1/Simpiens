@@ -1329,3 +1329,18 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The plan is deleted.
 - **One PR for the whole plan (the producer, 2026-11-02),** with a commit per phase or step, each passing the six gates: 0 warnings; core 143/143; client 345/345; golden 3/3 unchanged; the pinned image byte for byte; MonoGame and Android compile.
 - Commits: `036b3a9` R5.1, `c223c82` `StableSort`, `6d7a7c8` R5.2.1, `5700f9a` R5.2.2, `8b2422d` R5.3.1, `ff1a67e` R5.3.2, `70353e3` R6.
+
+## 2026-11-03: Epic UI-Beta B2, bodies on the map (`feat/ui-beta-b2`)
+
+- **A body is baked once per look, on the CPU, from today's 24 pose frames read as key letters** (design §3.2).
+  - The head of each frame is data (`HeadAnchors`), not found from the hair: B0 found that fails on a blink and on the panicking eyes.
+  - The kit applies the look to the keys in a fixed order (hair, facial hair, helm, build, height, tabard), then paints them.
+  - Today's figures stay for crawlers with no look and for cutscene actors.
+- **The bakes go into a region of the world sheet** (`BodySlots`, 64 slots of 24 cells), so a crawler stays one quad in one batch.
+  - A slot holds a body (look, helm, tabard), not a crawler, and is freed when no crawler shows it.
+  - The table lives with the world texture (`ClientGraphics.Bodies`); the client writes queued bakes after the scene's update, and when it loads a new texture.
+  - Rejected again: tinted layers and a palette shader (the epic's §3.2).
+- **The near-ties grew with the atlas.** The atlas is now 768x726. Epic CLIENT F12's near-ties at in-between zooms went from 1 to 10 pixels of 480,000 when it is packed in reverse; the test allows 16, and the renders stayed byte-identical. A whole-scale render target remains the cure.
+- **The producer's look passed** ("Looks good, passed inspection", 2026-11-02), with D1–D10 as inspected. The art pins of the bodies and the 18 changed renders were recorded after it, each in a commit of its own.
+- **Directive (2026-11-02):** the producer, going to sleep, directed B3–B5 to continue, each with a plan written before its work. Each milestone gets its own branch, cut from the last because nothing can merge overnight. Nothing is pushed.
+- Commits: `4898b1b` plan, `5a63d90` P1, `5a08fb8` P2.1, `82b8f66` P2.2, `55232b5` P2.3, `a26f65f` P2.4, `fa35037` body pins, `032309b` switch-on, `2c93a5d` renders, `9f1634c` the live proof.
