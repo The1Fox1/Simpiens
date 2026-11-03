@@ -135,7 +135,7 @@ namespace Simpiens.Client
         /// <summary>Starts the UI afresh: Gum, then what lives in it (the dashboard, the timings).</summary>
         private void InitializeUi()
         {
-            Ui.Initialize();
+            Ui.Initialize(Graphics.Icons);
             Play.LoadContent();
             TimingsOverlay = Options.TimingsOverlay ? new TimingsOverlay(Ui, Timings) : null;
         }

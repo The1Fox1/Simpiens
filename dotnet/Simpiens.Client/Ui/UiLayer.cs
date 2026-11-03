@@ -28,8 +28,11 @@ namespace Simpiens.Client.Ui
         /// <summary>The whole window. It lets clicks through: only the controls in it take them.</summary>
         public InteractiveGue Root => GumService.Default.Root;
 
-        /// <summary>Starts Gum for this game (taking it over from another game, if one had it).</summary>
-        public void Initialize()
+        /// <summary>
+        /// Starts Gum for this game (taking it over from another game, if one had it), its controls drawn from
+        /// <paramref name="kit"/> (the game's icon atlas; null keeps Gum's look).
+        /// </summary>
+        public void Initialize(IconAtlas kit = null)
         {
             if (GumService.Default.IsInitialized) GumService.Default.Uninitialize();
             GumService.Default.Initialize(_game, Gum.Forms.DefaultVisualsVersion.V3);
@@ -40,7 +43,7 @@ namespace Simpiens.Client.Ui
                 Gum.Wireframe.CustomSetPropertyOnRenderable.PropertyAssignmentError += message => SimLog.Bootstrap.ZLogWarning($"Gum: {message}");
                 _gumErrorsLogged = true;
             }
-            UiStyle.Apply();
+            UiStyle.Apply(kit);
             _owner = this;
         }
 

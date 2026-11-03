@@ -37,6 +37,7 @@ namespace Simpiens.Client.Ui
         public static readonly Color TextSecondary = Hex(0xb9a88a);  // descriptions, subtitles, the clock
         public static readonly Color TextMuted = Hex(0x9a8a72);
         public static readonly Color BadgeText = Hex(0xfbf3e2);      // on a state badge's plate
+        public static readonly Color TextOnAccent = Hex(0x2a1a08);   // on the amber primary button (8.2:1)
 
         // Meaning: one accent; the rest only for exceptions
         public static readonly Color Accent = Hex(0xf0a73a);        // lantern amber
@@ -97,9 +98,20 @@ namespace Simpiens.Client.Ui
             _ => Text,
         };
 
-        /// <summary>Sets Gum's built-in visuals to this palette and text size. Call once Gum is initialized, before building controls.</summary>
-        public static void Apply()
+        /// <summary>
+        /// The UI kit's pieces (<see cref="Simpiens.Presentation.Art.UiKit"/>) in the game's icon atlas, which
+        /// <see cref="StoneSkin"/> draws controls from; null keeps Gum's look. Gum keeps its style in statics, and so does
+        /// this: the game that initialized Gum last sets it (<see cref="UiLayer"/>).
+        /// </summary>
+        public static IconAtlas Kit { get; private set; }
+
+        /// <summary>
+        /// Sets Gum's built-in visuals to this palette and text size, and the kit controls are drawn from. Call once Gum is
+        /// initialized, before building controls.
+        /// </summary>
+        public static void Apply(IconAtlas kit)
         {
+            Kit = kit;
             var style = Styling.ActiveStyle;
             var colors = style.Colors;
             colors.Primary = Control;

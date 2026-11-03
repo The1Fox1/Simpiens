@@ -183,10 +183,19 @@ namespace Simpiens.Client.Ui
             button.Width = width;
             button.Height = height;
             SetTextStyle(button.Visual, style ?? UiText.SmallBold);
+            StoneSkin.Apply(button);
             return button;
         }
 
-        /// <summary>A slider whose thumb stands out: sky on a slate track (Gum's thumb is the dark button colour).</summary>
+        /// <summary>A window's main action: the amber primary button (one per window).</summary>
+        public static Button PrimaryButton(string text, float width, float height = 28f, UiText? style = null)
+        {
+            var button = Button(text, width, height, style);
+            StoneSkin.Apply(button, ButtonLook.Primary);
+            return button;
+        }
+
+        /// <summary>A slider: a stone thumb in the kit's groove (Gum's colours where there is no kit).</summary>
         public static Slider Slider(double minimum, double maximum, double step)
         {
             var slider = new Slider { Minimum = minimum, Maximum = maximum, IsSnapToTickEnabled = true, TicksFrequency = step, SmallChange = step, LargeChange = step * 5 };
@@ -195,6 +204,7 @@ namespace Simpiens.Client.Ui
                 visual.ThumbInstance.BackgroundColor = UiStyle.Accent;
                 visual.TrackBackgroundColor = UiStyle.SliderTrack;
             }
+            StoneSkin.Apply(slider);
             return slider;
         }
 
