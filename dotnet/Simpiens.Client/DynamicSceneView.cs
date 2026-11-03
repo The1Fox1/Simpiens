@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Simpiens.Client.Ui;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art.People;
 using Simpiens.Presentation.Cutscenes;
 
 namespace Simpiens.Client
@@ -101,6 +102,9 @@ namespace Simpiens.Client
             }
             _speaker = scene.ActorOf(player.Speaker);
             string name = _game.Session.Identity?.GetFriendlyName(_speaker) ?? player.Speaker;
+            bool face = TryFace(_speaker, out var source);
+            Bubble.ShowFace(face ? _game.Graphics.Portraits.Texture : null, source);
+            Box.ShowFace(face ? _game.Graphics.Portraits.Texture : null, source);
             var viewport = _game.GraphicsDevice.Viewport;
             if (TryGetHead(_speaker, viewport.Width, viewport.Height, out var head))
             {
@@ -114,6 +118,22 @@ namespace Simpiens.Client
                 Box.Show(Margin, viewport.Height - Margin - BoxHeight, viewport.Width - 2f * Margin, BoxHeight, name, player.Line, player.LettersShown);
                 Bubble.Hide();
             }
+        }
+
+        /// <summary>
+        /// The speaker's portrait at 1x (Epic UI-Beta B3, D9): its look, its mood now (the dashboard's tracker, so the
+        /// dossier agrees), its standing and its helm; false for a speaker with no look or no graphics.
+        /// </summary>
+        private bool TryFace(EntityId crawler, out Rectangle source)
+        {
+            source = default;
+            var agent = crawler != default ? _game.Session.Simulation.Registry.GetEntity(crawler)?.Agent : null;
+            if (agent == null || !agent.Look.IsComplete || _game.Graphics?.Portraits == null) return false;
+            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection) : default;
+            var mood = _game.Session.DashboardModel.Moods.Update(crawler, MoodSigns.Of(agent), _game.Session.Simulation.Clock.CurrentTick);
+            var key = new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? Simpiens.Simulation.Economy.ItemType.None : worn.Type));
+            source = _game.Graphics.Portraits.Show(key, 1);
+            return true;
         }
 
         /// <summary>

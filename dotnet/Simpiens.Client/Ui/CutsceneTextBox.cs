@@ -1,4 +1,5 @@
 using Gum.DataTypes;
+using Gum.Managers;
 using Gum.Wireframe;
 using Microsoft.Xna.Framework;
 using Gum.GueDeriving;
@@ -9,7 +10,8 @@ namespace Simpiens.Client.Ui
     /// <summary>
     /// A cutscene's text box (M3 design D9), Fire Emblem style: a dark panel with the speaker's name on top and the line
     /// below it, appearing letter by letter. It sits wherever its screen puts it each frame (the letterbox's bottom for a
-    /// hard cutscene, the window's bottom for a dynamic one), in baked Inter 16, drawn 1:1.
+    /// hard cutscene, the window's bottom for a dynamic one), in baked Inter 16, drawn 1:1. A speaker with a face shows
+    /// its portrait at 1x on the left (Epic UI-Beta B3, D9).
     /// </summary>
     public sealed class CutsceneTextBox
     {
@@ -17,7 +19,20 @@ namespace Simpiens.Client.Ui
         {
             Root = new ContainerRuntime { Name = name, Visible = false };
             UiParts.AddFill(Root, UiParts.Alpha(UiStyle.Panel, 0.94f), UiStyle.Border);
+            Face = new SpriteRuntime
+            {
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Width = PortraitAtlas.SmallSize,
+                Height = PortraitAtlas.SmallSize,
+                X = FaceMargin,
+                Y = FaceMargin,
+                Visible = false,
+            };
+            Root.Children.Add(Face);
             var column = UiParts.Column(6f);
+            _column = column;
             column.HasEvents = false; // a click lands on the box itself
             column.X = 14f;
             column.Y = 10f;
@@ -32,9 +47,31 @@ namespace Simpiens.Client.Ui
             Root.Children.Add(column);
         }
 
+        private const float FaceMargin = 11f;
+        private readonly ContainerRuntime _column;
+        private Rectangle _faceShown;
+
         public ContainerRuntime Root { get; }
         public TextRuntime Speaker { get; }
         public TextRuntime Line { get; }
+
+        /// <summary>The speaker's portrait at 1x; hidden for a speaker with no face.</summary>
+        public SpriteRuntime Face { get; }
+
+        /// <summary>Shows <paramref name="source"/> of <paramref name="texture"/> as the speaker's face, the text beside it; null hides it.</summary>
+        public void ShowFace(Microsoft.Xna.Framework.Graphics.Texture2D texture, Rectangle source)
+        {
+            bool shown = texture != null;
+            if (Face.Visible != shown)
+            {
+                Face.Visible = shown;
+                _column.X = shown ? FaceMargin + PortraitAtlas.SmallSize + 10f : 14f;
+                _column.Width = -(_column.X + 14f);
+            }
+            if (!shown) return;
+            if (!ReferenceEquals(Face.Texture, texture)) Face.Texture = texture;
+            if (source != _faceShown) Face.SourceRectangle = _faceShown = source;
+        }
 
         /// <summary>Places the box (screen pixels) and shows <paramref name="lettersShown"/> letters of <paramref name="line"/> under <paramref name="speaker"/>.</summary>
         public void Show(float x, float y, float width, float height, string speaker, string line, int lettersShown)
