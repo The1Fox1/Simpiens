@@ -1383,3 +1383,10 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Words:** only what the client owns changed. The chronicle's lines and its "[Just now]" stamps come from the core and stay, so the golden hashes don't move.
 - **Checks:** core 143/143; client 430/430 on the host and exact in the pinned image; golden 3/3; MonoGame and Android compile.
 - Commits: `2b9860d` plan, `ab2ad19` U1, `7a8a130`/`7132e82` U2 and its pins, `41c9861` U3, `6e42dd1` U4, `da683a4` U5, `5580b06` U6, `8b072c9` the renders.
+
+## 2026-11-03: UI polish, U7–U8 (`feat/ui-polish`)
+
+- **Frames everywhere a panel stands** (U8): the ledger, the inspector, key help and the cutscene box in iron, the expedition tracker in the guild's steel; insets as recessed plaques; drive bars in the groove. List cards, combo boxes and scroll bars stay flat in the palette for now.
+- **Motion is a host option, off in tests** (U7, `ClientOptions.UiMotion`, as `ShowDebugIds` is): the desktop game turns it on; tests and the pinned renders run without it, so no capture is caught mid-tween, and dedicated tests drive the tweens' clocks. A window starts its arrival on the frame it is shown (veil clear, frame low), so it never flashes at rest first; the rise is in whole pixels, so the icons stay on texel centres.
+- **The draw got cheaper:** frames replaced fill-and-outline pairs. `UiDrawProbe`: texture switches 380 → 337, sprite-batch begins 234 → 204 (B4 → U8).
+- Commits: `e3034fd` U8, `3c1a69d` its renders, `13466ab` U7.
