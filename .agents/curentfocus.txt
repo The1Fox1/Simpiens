@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-03 (Epic UI-Beta B2 and B3 done; B4-B5 under the producer's overnight directive)
+# Last reconciled: 2026-11-03 (Epic UI-Beta B2-B4 done; B5 under the producer's overnight directive)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -28,7 +28,8 @@ CURRENT FOCUS
   - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
 - NOW: Epic UI-Beta B3-B5 under the producer's directive (2026-11-02: "continue working through B3-B5. You must
   write an implementation plan for each work chunk before executing"). B2, bodies on the map, is done on
-  feat/ui-beta-b2 (look passed; PR not opened); B3, portraits and the dossier, on feat/ui-beta-b3 (look pending).
+  feat/ui-beta-b2 (look passed; PR not opened); B3, portraits and the dossier, on feat/ui-beta-b3 (look pending);
+  B4, faces everywhere (the inspector, faces in lists, click to find), on feat/ui-beta-b4.
   One branch per milestone, each cut from the last; nothing pushed.
 - NEXT: answering Epic 10 Part 2's draft (.agents/epic10_plan.md, Order).
 
@@ -66,7 +67,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
 ================================================================================
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
-- Epic UI-Beta: Crawler Identity and the Interface Pass [ACTIVE 2026-11-02: B2-B3 done; B4-B5] (docs/epics/epic-ui-beta.md)
+- Epic UI-Beta: Crawler Identity and the Interface Pass [ACTIVE 2026-11-02: B2-B4 done; B5] (docs/epics/epic-ui-beta.md)
 - Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client; delivered 2026-11-01.
 
 ================================================================================

@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10); its look is pending. B4–B5 continue under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B4–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10); its look is pending. B4, faces everywhere, is done (2026-11-03, `feat/ui-beta-b4`, §10). B5 continues under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B5–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -105,7 +105,7 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 | B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold | Done |
 | B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Done (2026-11-03, §10) |
 | B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Done (2026-11-03, §10); the look is pending |
-| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Possibly Complex: Gum draw cost (F21) under the frame-time gate |
+| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Done (2026-11-03, §10) |
 | B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
 | B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session | Possibly Complex |
 
@@ -310,4 +310,37 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
   - the portraits' taste, the hair above all (the epic's main risk);
   - the outfits on muted clothes;
   - D1–D10.
+
+### B4 (done 2026-11-03, `feat/ui-beta-b4`)
+- **Delivered:**
+  - **Faces:** a 32×32 crop of each portrait's head in a one-pixel frame by standing (`PortraitKit.Face`). It is a third cell of the portrait atlas's slot, so it costs no extra bake. `PortraitKey.Of` is the one way to key a crawler's portrait, so every face agrees.
+  - **The map inspector (Q10):** `InspectorModel` and `InspectorCard`, at the bottom left of the map while a crawler is selected. It shows:
+    - the portrait at 2×;
+    - the name, the badge and the mood line;
+    - health and the four needs, and the action;
+    - Open dossier, and Follow / Stop following.
+  - **Faces in the lists:**
+    - the residents in a sector;
+    - the guild roster's members;
+    - the dossier's affinities, now rows, two face-rows tall and scrolling. The dossier's gaps were tightened so the buttons fit.
+  - **Click to find:** `DashboardModel.FindOnMap`. A click on a face closes the windows and panels and selects the crawler on the map with the camera following.
+- **Decisions** (the plan's D1–D6, defaults for the producer's look): as above; the chronicle stays text.
+- **Checks:**
+  - a face is its portrait's head from the same bake;
+  - `InspectorTests`: the card, Follow, Open dossier, and click to find from a resident's and an affinity's face;
+  - renders re-recorded in the pinned image: the dashboard, the guild roster, the expedition (now with the inspector), and a new `render-iso-inspector-t300`.
+- **The gate:** `FrameTimeGateTests`, Debug, on this machine, at the existing budgets (mean 10 ms, p99 33 ms):
+
+  | View | Mean | p99 |
+  | :--- | :-: | :-: |
+  | The map alone | 2.31 ms | 3.01 ms |
+  | The map with the inspector | 2.57 ms | 2.87 ms |
+  | The dashboard with faces, 1280×720 | 5.29 ms | 8.78 ms |
+
+- **F21:** `UiDrawProbe`, Release, three alternating rounds against B3's tip, shows the UI's draw unchanged:
+  - median 3.08 ms (B3) against 3.12 ms (B4);
+  - texture switches 367 → 380, sprite-batch begins 234 → 234.
+  - Shared render states stay unneeded.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 409). The pinned image was exact after each re-record. MonoGame and Android compile. The core is unchanged.
+- **Open for the producer's look:** the inspector, faces in the lists, the affinities' rows.
 

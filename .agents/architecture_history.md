@@ -1353,3 +1353,12 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Portraits are baked on first showing into a 48-slot atlas** (1× and 2×, the least recently shown reused). This is the icon atlas's pattern, written at run time like B2's body region, with `SetData` and a rectangle.
 - **The dossier's header** took vertical room, so the affinities list shrank to three scrolling lines to keep Calm and Recruit in the window.
 - Commits: `f036a29` plan, `2098ef0` kit, `e989630` portrait pins, `b2beb4f` moods, `a8433e5`/`2cfe488` the dossier and its renders, `ef37dae`/`3013877` speakers and the gossip render.
+
+## 2026-11-03: Epic UI-Beta B4, faces everywhere (`feat/ui-beta-b4`)
+
+- **Under the producer's overnight directive**, with the plan committed first (`94d34cb`). The branch is cut from `feat/ui-beta-b3`.
+- **A face is a crop of the portrait**, kept as a third cell of the same atlas slot, so faces cost no bakes of their own. `PortraitKey.Of` is the one place a crawler's portrait is keyed, so the dossier, the inspector, the scene speakers and the lists agree on its mood.
+- **The inspector is a view over its own engine-free model.** Its commands (Open dossier, Follow) and click-to-find (`FindOnMap`) go through the dashboard model, which owns the panels, the windows and the selection. A face's click is the face box's own, so a card's body keeps selecting into the dossier.
+- **The dossier's vertical budget:** the affinities became face rows, two tall and scrolling, and the dossier's gaps were tightened to keep the buttons in the window.
+- **F21 measured:** no change in the UI's draw time from faces (texture switches 367 → 380). Shared render states stay unneeded.
+- Commits: `94d34cb` plan, `16d0959` faces, `c3f4050`/`b6198ff` the inspector and its renders, `ea119ae`/`c36eebe` faces in lists and click to find, and their renders, `97086fc` the gate.
