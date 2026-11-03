@@ -13,10 +13,11 @@ using Xunit;
 namespace Simpiens.Client.Tests.People
 {
     /// <summary>
-    /// The people sheet (Epic UI-Beta B0, B2): bodies on the map from the body kit (<see cref="BodyKit"/>, B2) beside B0's
-    /// Hearthlight portrait spike (B3 replaces it), for the producer's look. A row per gene with each option once, the
-    /// helm and the guild's tabard, two moods, every pose, then a crowd of 64 looks drawn from a fixed seed, the sample
-    /// the pins use. Written on every run to render-output/people-sheet.png, with its counts in people-sheet.txt.
+    /// The people sheet (Epic UI-Beta B0, B2, B3): bodies on the map from the body kit (<see cref="BodyKit"/>) beside
+    /// Hearthlight portraits from the portrait kit (<see cref="PortraitKit"/>), for the producer's look. A row per gene
+    /// with each option once, every mood, the outfits, the accessories, the frames by standing, the helm and the guild's
+    /// tabard, every pose, then a crowd of 64 looks drawn from a fixed seed, the sample the pins use. Written on every run
+    /// to render-output/people-sheet.png, with its counts in people-sheet.txt.
     /// </summary>
     public class PeopleSheetTests
     {
@@ -30,7 +31,7 @@ namespace Simpiens.Client.Tests.People
         private sealed class Cell
         {
             public string Label;
-            public Rgba32[] Portrait; // framed, PortraitSpike.Size + 4 square
+            public Rgba32[] Portrait; // framed, PortraitKit.FramedSize square
             public int PortraitScale = 1;
             public PixelSprite Body;
         }
@@ -41,7 +42,7 @@ namespace Simpiens.Client.Tests.People
         public void WriteThePeopleSheet()
         {
             Assert.True(LookPalettes.CoversCatalogue(), "Every colour option needs a colour.");
-            var report = new List<string> { "Epic UI-Beta people sheet counts (B2 bodies, B0 portrait spike)", "" };
+            var report = new List<string> { "Epic UI-Beta people sheet counts (B2 bodies, B3 portraits)", "" };
 
             var basis = Look(("lineage", "human"), ("frame", "male"), ("build", "average"), ("skin", "tone-4"), ("hair", "crop"),
                 ("colour", "dark-brown"), ("facial", "none"), ("face", "oval"), ("outfit", "tunic"), ("accessory", "none"));
@@ -60,8 +61,16 @@ namespace Simpiens.Client.Tests.People
             Section("Builds (humans), then delvers", LookCatalog.Options(LookGene.Build).Select(o => Make($"human {o.Key}", Set(basis, LookGene.Build, o.Key)))
                 .Concat(new[] { "average", "broad", "heavy" }.Select(b => Make($"delver {b}", Set(delver, LookGene.Build, b))))
                 .Concat(new[] { Make("delver female", Set(Set(Set(delver, LookGene.Frame, "female"), LookGene.FacialHair, "none"), LookGene.SkinTone, "ash")) }));
-            Section("Moods at 2x: content, tired", new[] { basis, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, "long"), delver }
-                .SelectMany(l => new[] { Make("content", l, scale: 2), Make("tired", l, scale: 2, mood: "tired") }));
+            foreach (var (who, l) in new[] { ("", basis), ("long hair", Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, "long")), ("delver", delver) })
+                Section($"Moods at 2x{(who.Length > 0 ? ", " + who : "")}", Enum.GetValues<Mood>().Select(m => Make(m.ToString().ToLowerInvariant(), l, scale: 2, mood: m)));
+            Section("Outfits", LookCatalog.Options(LookGene.Outfit).Select(o => Make(o.Key, Set(basis, LookGene.Outfit, o.Key))));
+            Section("Accessories", LookCatalog.Options(LookGene.Accessory).Select(o => Make(o.Key, Set(basis, LookGene.Accessory, o.Key))));
+            Section("Frames by standing, the helm and the tabard", new[]
+            {
+                Make("resident", basis), Make("drifter", basis, standing: CrawlerStanding.Drifter), Make("guild member", basis, standing: CrawlerStanding.GuildMember),
+                Make("helm", basis, gear: ItemType.HazardGear), Make("helm, long hair", Set(basis, LookGene.HairStyle, "long"), gear: ItemType.HazardGear),
+                Make("guild, helm", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.HazardGear),
+            });
 
             // The helm over every hair style (D4), and the guild's tabard on every build (D8)
             Section("The helm over each hair style", LookCatalog.Options(LookGene.HairStyle).Select(o =>
@@ -105,15 +114,18 @@ namespace Simpiens.Client.Tests.People
             File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "render-output", "people-sheet.txt"), report);
         }
 
-        private Cell Make(string label, CrawlerLook look, int scale = 1, string mood = "content")
+        private Cell Make(string label, CrawlerLook look, int scale = 1, Mood mood = Mood.Content, CrawlerStanding standing = CrawlerStanding.Resident, ItemType gear = ItemType.None)
         {
             Assert.True(LookCatalog.IsValid(look), $"{label}: {look} is not a valid look.");
+            var portrait = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
+            PortraitKit.BakeFramed(new PortraitKey(look, mood, standing, gear), portrait);
+            bool tabard = standing == CrawlerStanding.GuildMember;
             return new Cell
             {
                 Label = label,
-                Portrait = PortraitSpike.Framed(PortraitSpike.Bake(look, mood)),
+                Portrait = portrait,
                 PortraitScale = scale,
-                Body = Body(label, look, AgentVisualState.Idle, 0, ItemType.None, tabard: false),
+                Body = Body(label, look, mood == Mood.Asleep ? AgentVisualState.Sleeping : AgentVisualState.Idle, 0, gear, tabard),
             };
         }
 
@@ -134,7 +146,7 @@ namespace Simpiens.Client.Tests.People
             var fonts = FontLibrary.LoadFrom(AppContext.BaseDirectory);
             var names = fonts[FontSet.Regular(10)];
             var titles = fonts[FontSet.Bold(12)];
-            const int bodyScale = 3, framed = PortraitSpike.Size + 4;
+            const int bodyScale = 3, framed = PortraitKit.FramedSize;
 
             // Lay out first, then draw
             var placed = new List<(Cell Cell, int X, int Y, int Width)>();
