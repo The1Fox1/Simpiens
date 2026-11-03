@@ -59,3 +59,5 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 
 ## Log
 - 2026-11-03: U0 done.
+- 2026-11-03: U1–U6 done and their renders re-recorded in the pinned image (430/430 exact; core 143/143; golden 3/3; MonoGame and Android compile). Commits in `.agents/architecture_history.md`. Next: U7 (motion), U8 (the dashboard and the inspector), then U9 and the producer's look.
+- Open from U1–U6, for U8: the combo boxes, list scroll bars and text boxes still wear Gum's flat look in the palette's colours; the dashboard's panels and cards are flat fills; the merchant's status bar is a flat inset.
