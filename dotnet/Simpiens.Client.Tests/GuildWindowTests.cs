@@ -51,7 +51,7 @@ namespace Simpiens.Client.Tests
             var guild = game.Session.Simulation.Simulation.Guild;
             var dashboard = game.Play.Dashboard;
             Assert.True(guild.IsMember(recruit), "The Recruit button's command signed the crawler on.");
-            Assert.Equal("GUILD 1/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 1/4", dashboard.Header.GuildButton.Text);
             Assert.Contains("Guild: member, 5g a visit", dashboard.Panels.GroupsShown);
             Assert.Equal(string.Empty, dashboard.Panels.RecruitShown);
             Assert.False(dashboard.Panels.RecruitButton.IsEnabled, "A member can't be recruited again.");
@@ -73,7 +73,7 @@ namespace Simpiens.Client.Tests
             ui.Ticks(1);
             Assert.False(guild.IsMember(recruit), "Dismiss let the member go.");
             Assert.Equal(0, roster.CardsShown);
-            Assert.Equal("GUILD 0/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 0/4", dashboard.Header.GuildButton.Text);
 
             Assert.True(dashboard.CloseWindow(), "Esc closes the roster.");
             Assert.False(roster.Window.IsShown);

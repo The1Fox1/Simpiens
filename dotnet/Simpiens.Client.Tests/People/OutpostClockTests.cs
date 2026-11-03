@@ -7,12 +7,12 @@ namespace Simpiens.Client.Tests.People
     public class OutpostClockTests
     {
         [Theory]
-        [InlineData(0L, "DAY 1 · 06:00")]
-        [InlineData(375L, "DAY 1 · 07:00")] // an hour is 375 ticks
-        [InlineData(6750L, "DAY 2 · 00:00")] // midnight starts the next day
-        [InlineData(6749L, "DAY 1 · 23:59")]
-        [InlineData(9000L, "DAY 2 · 06:00")]
-        [InlineData(13604L, "DAY 2 · 18:16")]
+        [InlineData(0L, "Day 1 · 06:00")]
+        [InlineData(375L, "Day 1 · 07:00")] // an hour is 375 ticks
+        [InlineData(6750L, "Day 2 · 00:00")] // midnight starts the next day
+        [InlineData(6749L, "Day 1 · 23:59")]
+        [InlineData(9000L, "Day 2 · 06:00")]
+        [InlineData(13604L, "Day 2 · 18:16")]
         public void TicksReadAsTheTimeOfDay(long tick, string expected)
         {
             Assert.Equal(expected, OutpostClock.Text(tick));

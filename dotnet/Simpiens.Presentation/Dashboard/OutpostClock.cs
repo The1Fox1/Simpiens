@@ -22,11 +22,18 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Minutes after midnight at <paramref name="tick"/>.</summary>
         public static int MinuteOfDay(long tick) => (int)((StartMinute + (tick < 0 ? 0 : tick) * MinutesPerDay / TicksPerDay) % MinutesPerDay);
 
-        /// <summary>"DAY 1 · 06:30".</summary>
+        /// <summary>"Day 1 · 06:30".</summary>
         public static string Text(long tick)
         {
             int minute = MinuteOfDay(tick);
-            return Invariant($"DAY {Day(tick)} · {minute / 60:D2}:{minute % 60:D2}");
+            return Invariant($"Day {Day(tick)} · {minute / 60:D2}:{minute % 60:D2}");
+        }
+
+        /// <summary>Night, from 18:00 to 06:00: the header shows a moon instead of the sun (the UI polish plan, U4).</summary>
+        public static bool IsNight(long tick)
+        {
+            int minute = MinuteOfDay(tick);
+            return minute < 6 * 60 || minute >= 18 * 60;
         }
     }
 }

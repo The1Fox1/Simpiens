@@ -29,11 +29,11 @@ namespace Simpiens.Client.Tests
         public void TheHeaderKeepsUpdatingOverTheMap()
         {
             var ui = MapView();
-            Assert.Equal("DAY 1 · 06:00", ui.Game.Play.Dashboard.Header.TickText); // the time of day (Epic UI-Beta B5)
+            Assert.Equal("Day 1 · 06:00", ui.Game.Play.Dashboard.Header.TickText); // the time of day (Epic UI-Beta B5)
             ui.Ticks(375);
-            Assert.Equal("DAY 1 · 07:00", ui.Game.Play.Dashboard.Header.TickText);
+            Assert.Equal("Day 1 · 07:00", ui.Game.Play.Dashboard.Header.TickText);
             Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
-            Assert.Equal($"{stall.TreasuryGold} GOLD", ui.Game.Play.Dashboard.Header.TreasuryText);
+            Assert.Equal($"{stall.TreasuryGold}", ui.Game.Play.Dashboard.Header.GoldText);
         }
 
         [Fact]
@@ -80,12 +80,12 @@ namespace Simpiens.Client.Tests
             ui.Frame();
             ui.Script.Keys = default;
             Assert.True(game.Session.DashboardModel.PanelsVisible);
-            Assert.Equal("[TAB] MAP VIEW", game.Play.Dashboard.Header.TabButton.Text);
+            Assert.Equal("Ledger", game.Play.Dashboard.Header.CurrentView);
             ui.Script.Keys = new KeyInput { TabPressed = true };
             ui.Frame();
             ui.Script.Keys = default;
             Assert.False(game.Session.DashboardModel.PanelsVisible);
-            Assert.Equal("[TAB] DASHBOARD", game.Play.Dashboard.Header.TabButton.Text);
+            Assert.Equal("Map", game.Play.Dashboard.Header.CurrentView);
 
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             ui.Click(game.World.View.WorldToScreen(crawler.Position));

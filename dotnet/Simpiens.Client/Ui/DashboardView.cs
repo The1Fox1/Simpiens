@@ -40,14 +40,23 @@ namespace Simpiens.Client.Ui
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
             Header.GuildButton.Click += (_, _) => { Model.ToggleGuild(); Refresh(); };
             Header.TabButton.Click += (_, _) => TogglePanels();
-            Header.SaveButton.Click += (_, _) => { Model.Saves.Save(); Refresh(); };
-            Header.LoadButton.Click += (_, _) => { Model.Saves.Load(); Refresh(); };
+            Header.MenuButton.Click += (_, _) => Header.ToggleMenu();
+            Header.SaveButton.Click += (_, _) => { Header.CloseMenu(); Model.Saves.Save(); Refresh(); };
+            Header.LoadButton.Click += (_, _) => Header.AskToLoad(); // Load asks first (the UI polish plan, U4)
+            Header.ConfirmLoadButton.Click += (_, _) => { Header.CloseMenu(); Model.Saves.Load(); Refresh(); };
+            Header.CancelLoadButton.Click += (_, _) => Header.CancelLoad();
+            Header.KeyHelpButton.Click += (_, _) => Header.CloseMenu();
             Header.PauseButton.Click += (_, _) => Model.Header.TogglePause();
-            Header.SpeedButton.Click += (_, _) => { Model.Header.NextSpeed(); Refresh(); };
+            for (int i = 0; i < Header.SpeedButtons.Count; i++)
+            {
+                int step = i;
+                Header.SpeedButtons[i].Click += (_, _) => { Model.Header.SetSpeedStep(step); Refresh(); };
+            }
             ui.Root.Children.Add(Header.Root);
             ui.Root.Children.Add(Header.Status);
             Sessions = new SessionSwitchBar(model.Sessions);
             ui.Root.Children.Add(Sessions.Root);
+            ui.Root.Children.Add(Header.Menu); // over everything but the tips: the session switch sits where it drops
             Refresh();
         }
 
@@ -73,6 +82,7 @@ namespace Simpiens.Client.Ui
         {
             Shown = false;
             Header.Root.Visible = false;
+            Header.CloseMenu();
             Header.Status.Visible = false;
             Panels.IsShown = false;
             Merchant.Window.IsShown = false;
@@ -104,9 +114,10 @@ namespace Simpiens.Client.Ui
             Refresh();
         }
 
-        /// <summary>Esc: closes the open window; false when there was none (then Esc stops the camera following).</summary>
+        /// <summary>Esc: closes the menu or the open window; false when there was none (then Esc stops the camera following).</summary>
         public bool CloseWindow()
         {
+            if (Header.CloseMenu()) return true;
             if (!Model.CloseWindow()) return false;
             Refresh();
             return true;

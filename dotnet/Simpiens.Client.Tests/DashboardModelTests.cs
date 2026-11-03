@@ -249,10 +249,12 @@ namespace Simpiens.Client.Tests
             model.Refresh();
 
             Assert.True(model.Context.TryGetStall(out var stall));
-            Assert.Equal($"{stall.TreasuryGold} GOLD", model.Header.Treasury);
+            Assert.Equal($"{stall.TreasuryGold}", model.Header.Gold);
             Assert.Equal($"{stall.RationStock} RATIONS", model.Header.Rations);
             Assert.Equal("TICK: 00000", model.Header.Tick);
-            Assert.Equal($"{sim.Simulation.ActiveBounties.Count} BOUNTIES", model.Header.Bounties);
+            int bounties = sim.Simulation.ActiveBounties.Count;
+            Assert.Equal($"{bounties}", model.Header.BountyCount);
+            Assert.Equal(bounties == 1 ? "1 active bounty" : $"{bounties} active bounties", model.Header.Bounties);
 
             // Every sector is listed; the two frontier rooms are shrouded; the whole crew is at the Road Gate
             Assert.Equal(sim.Sectors.All.Count, model.Sectors.Sectors.Count);

@@ -98,14 +98,22 @@ namespace Simpiens.Client
             // Tooltips (Epic UI-Beta B5): over everything, on the header's and the inspector's buttons
             Tooltips = new Tooltips(_game.Ui);
             var header = Dashboard.Header;
-            Tooltips.Register(header.MerchantButton.Visual, "The merchant terminal: the stall's prices and stock");
+            Tooltips.Register(header.GoldCounter, "Gold in the stall's treasury");
+            Tooltips.Register(header.BountiesCounter, "Bounties on the board");
+            var stock = Dashboard.Model.Header.Stock;
+            for (int i = 0; i < header.StockCounters.Count && i < stock.Count; i++)
+                Tooltips.Register(header.StockCounters[i], $"{Simpiens.Presentation.ItemTexts.Of(stock[i].Item).StockWord} in the stall");
+            Tooltips.Register(header.MerchantButton.Visual, "The stall: its prices and stock");
             Tooltips.Register(header.BountiesButton.Visual, "The bounty board: post and cancel bounties");
             Tooltips.Register(header.GuildButton.Visual, "The guild roster: members, wages and expeditions");
+            Tooltips.Register(header.MenuButton.Visual, "Save, load and key help");
             Tooltips.Register(header.SaveButton.Visual, "Quick-save the outpost");
             Tooltips.Register(header.LoadButton.Visual, "Load the quick-save");
             Tooltips.Register(header.PauseButton.Visual, "Pause or resume the world (P)");
-            Tooltips.Register(header.SpeedButton.Visual, "The world's speed (1 to 4)");
-            Tooltips.Register(header.TabButton.Visual, "The dashboard or the map (Tab)");
+            for (int i = 0; i < header.SpeedButtons.Count; i++)
+                Tooltips.Register(header.SpeedButtons[i].Visual, $"Run the world at {Simpiens.Presentation.Dashboard.HeaderModel.SpeedText(i)} ({i + 1})");
+            Tooltips.Register(header.TabButton.Visual, "The map or the ledger (Tab)");
+            header.KeyHelpButton.Click += (_, _) => Help?.Toggle((_game.Input as ClientInput)?.Bindings);
             Tooltips.Register(Dashboard.Inspector.OpenDossierButton.Visual, "Its dossier: drives, plan, affinities");
             Tooltips.Register(Dashboard.Inspector.FollowButton.Visual, "The camera follows it, or stops (Esc stops too)");
             _game.Ui.Root.Children.Add(Tooltips.Panel);

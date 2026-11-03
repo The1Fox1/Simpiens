@@ -195,6 +195,99 @@ namespace Simpiens.Client.Ui
             return button;
         }
 
+        /// <summary>
+        /// Fills <paramref name="parent"/> with the kit's <paramref name="piece"/> as a nine-slice whose corners are
+        /// <paramref name="corner"/> pixels (the UI polish plan, U4); a plain <paramref name="fallback"/> fill without a kit.
+        /// </summary>
+        public static void AddKitFill(GraphicalUiElement parent, string piece, int corner, Color fallback)
+        {
+            var kit = UiStyle.Kit;
+            if (kit == null)
+            {
+                AddFill(parent, fallback);
+                return;
+            }
+            var source = kit.Kit(piece);
+            parent.Children.Add(new Gum.GueDeriving.NineSliceRuntime
+            {
+                Texture = kit.Texture,
+                TextureAddress = TextureAddress.Custom,
+                TextureLeft = source.X,
+                TextureTop = source.Y,
+                TextureWidth = source.Width,
+                TextureHeight = source.Height,
+                CustomFrameTextureCoordinateWidth = corner,
+                WidthUnits = DimensionUnitType.RelativeToParent,
+                HeightUnits = DimensionUnitType.RelativeToParent,
+                Width = 0f,
+                Height = 0f,
+            });
+        }
+
+        /// <summary>
+        /// A recessed stone plaque <paramref name="height"/> tall, as wide as its content plus <paramref name="padding"/>
+        /// each side: the content goes in the returned row, centred vertically.
+        /// </summary>
+        public static ContainerRuntime Plaque(out ContainerRuntime content, float height, float padding = 10f, float spacing = 8f)
+        {
+            var plaque = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, Width = padding, Height = height };
+            CentreVertically(plaque);
+            AddKitFill(plaque, Simpiens.Presentation.Art.UiKit.Plaque, Simpiens.Presentation.Art.UiKit.Corner, UiStyle.Panel);
+            content = Row(spacing);
+            content.X = padding;
+            plaque.Children.Add(content);
+            return plaque;
+        }
+
+        /// <summary>A kit glyph (white art) tinted <paramref name="tint"/>, at <paramref name="scale"/>, drawn 1:1; hidden without a kit.</summary>
+        public static SpriteRuntime Glyph(string piece, Color tint, int scale = IconAtlas.Scale)
+        {
+            var glyph = new SpriteRuntime
+            {
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Color = tint,
+            };
+            SetGlyph(glyph, piece, scale);
+            return glyph;
+        }
+
+        /// <summary>Points <paramref name="glyph"/> at the kit's <paramref name="piece"/>, sized to it.</summary>
+        public static void SetGlyph(SpriteRuntime glyph, string piece, int scale = IconAtlas.Scale)
+        {
+            var kit = UiStyle.Kit;
+            glyph.Visible = kit != null;
+            if (kit == null) return;
+            var source = kit.Kit(piece, scale);
+            if (!ReferenceEquals(glyph.Texture, kit.Texture)) glyph.Texture = kit.Texture;
+            if (glyph.SourceRectangle != source) glyph.SourceRectangle = source;
+            if (glyph.Width != source.Width) glyph.Width = source.Width;
+            if (glyph.Height != source.Height) glyph.Height = source.Height;
+        }
+
+        /// <summary>
+        /// A stone button with a glyph: at its left before <paramref name="text"/>, or centred when there are no words.
+        /// </summary>
+        public static Button GlyphButton(string text, string piece, float width, out SpriteRuntime glyph, float height = 28f)
+        {
+            var button = Button(text, width, height, UiText.StatusBold);
+            glyph = Glyph(piece, UiStyle.TextSecondary);
+            CentreVertically(glyph);
+            if (string.IsNullOrEmpty(text))
+            {
+                glyph.XUnits = GeneralUnitType.PixelsFromMiddle;
+                glyph.XOrigin = HorizontalAlignment.Center;
+            }
+            else
+            {
+                glyph.X = 9f;
+                if (button.Visual is Gum.Forms.DefaultVisuals.V3.ButtonVisual visual) visual.TextInstance.X += (glyph.Width + 4f) / 2f; // the centred words clear the glyph
+            }
+            button.Visual.Children.Add(glyph);
+            return button;
+        }
+
         /// <summary>A slider: a stone thumb in the kit's groove (Gum's colours where there is no kit).</summary>
         public static Slider Slider(double minimum, double maximum, double step)
         {
