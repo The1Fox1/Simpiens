@@ -28,6 +28,7 @@ namespace Simpiens.Presentation.Dashboard
             Guild = new GuildModel(_context);
             Sectors = new SectorPanelModel(_context);
             Dossier = new DossierModel(_context, Guild, Moods);
+            Inspector = new InspectorModel(_context, Moods);
             Saves = new SaveSlotModel(_context.SaveGame, _context.HostCommands);
             Sessions = new SessionSwitchModel(_context.Sessions, _context.HostCommands);
             if (_selection != null) _selection.Changed += OnSelectionChanged;
@@ -35,6 +36,26 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         public DashboardContext Context => _context;
+
+        /// <summary>The map inspector (Epic UI-Beta B4): the selected crawler's card while the panels are hidden.</summary>
+        public InspectorModel Inspector { get; }
+
+        /// <summary>The inspector's Open dossier: the panels, showing the selected crawler.</summary>
+        public void OpenDossier()
+        {
+            if (SelectedCrawler == default) return;
+            PanelsVisible = true;
+            Refresh();
+        }
+
+        /// <summary>The inspector's Follow: the camera follows the selected crawler, or stops.</summary>
+        public void ToggleFollow()
+        {
+            if (_selection == null || _selection.SelectedCrawler == default) return;
+            if (_selection.Following) _selection.StopFollowing();
+            else _selection.SelectCrawler(_selection.SelectedCrawler, follow: true);
+            Refresh();
+        }
 
         /// <summary>Each crawler's face over time (Epic UI-Beta B3): the dossier's portrait now, the inspector's and the lists' with B4.</summary>
         public Simpiens.Presentation.Art.People.MoodTracker Moods { get; } = new Simpiens.Presentation.Art.People.MoodTracker();
@@ -136,6 +157,7 @@ namespace Simpiens.Presentation.Dashboard
             Merchant.Refresh();
             Bounties.Refresh();
             Guild.Refresh();
+            Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following);
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);
             Dossier.Refresh(SelectedCrawler);
@@ -165,6 +187,7 @@ namespace Simpiens.Presentation.Dashboard
                 Sectors.Refresh(SelectedCrawler);
                 Dossier.Refresh(SelectedCrawler);
             }
+            else Inspector.Refresh(SelectedCrawler, _selection.Following);
         }
     }
 }

@@ -429,7 +429,7 @@ namespace Simpiens.Client.Ui
             return value;
         }
 
-        private static ContainerRuntime Badge(out TextRuntime text, out RectangleRuntime fill)
+        internal static ContainerRuntime Badge(out TextRuntime text, out RectangleRuntime fill)
         {
             var badge = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, HeightUnits = DimensionUnitType.RelativeToChildren, Width = 6f, Height = 2f };
             UiParts.CentreVertically(badge);
@@ -501,7 +501,7 @@ namespace Simpiens.Client.Ui
         }
 
         /// <summary>A drive's label, bar and percentage (Unity's drive row).</summary>
-        private sealed class DriveBar
+        internal sealed class DriveBar
         {
             private readonly RectangleRuntime _fill;
             private readonly TextRuntime _value;

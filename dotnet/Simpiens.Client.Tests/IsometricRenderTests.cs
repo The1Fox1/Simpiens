@@ -72,6 +72,20 @@ namespace Simpiens.Client.Tests
             Compare("render-iso-header-t300", game, withUi: true);
         }
 
+        /// <summary>The map inspector (Epic UI-Beta B4): a crawler selected on the map, its card at the bottom left.</summary>
+        [Fact]
+        public void TheInspectorOverTheIsometricMapLooksAsRecorded()
+        {
+            var game = Outpost(3);
+            game.Play.Dashboard.TogglePanels();
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == Simpiens.Simulation.Spatial.EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            game.Play.Dashboard.Refresh();
+            Assert.True(game.Play.Dashboard.Inspector.Root.Visible);
+            Compare("render-iso-inspector-t300", game, withUi: true);
+        }
+
         [Fact]
         public void TheIsometricDevMapLooksAsRecorded()
         {

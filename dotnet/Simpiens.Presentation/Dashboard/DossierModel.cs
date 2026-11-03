@@ -62,6 +62,10 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>"Content. Health 100%."</summary>
         public string MoodLine { get; private set; } = string.Empty;
 
+        /// <summary>How a crawler feels and its health, in words: "Content. Health 100%.", or "Hurt. Downed."</summary>
+        public static string MoodText(Mood mood, float health, bool downed)
+            => downed ? $"{mood}. Downed." : Invariant($"{mood}. Health {(int)System.MathF.Round(health)}%.");
+
         /// <summary>A standing in words.</summary>
         public static string StandingText(CrawlerStanding standing) => standing switch
         {
@@ -204,7 +208,7 @@ namespace Simpiens.Presentation.Dashboard
             {
                 _moodShown = Mood;
                 _healthShown = health;
-                MoodLine = agent.IsDowned ? $"{Mood}. Downed." : Invariant($"{Mood}. Health {health}%.");
+                MoodLine = MoodText(Mood, agent.Health, agent.IsDowned);
             }
         }
 
