@@ -1,6 +1,6 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10); its look is pending. B4, faces everywhere, is done (2026-11-03, `feat/ui-beta-b4`, §10). B5 continues under the producer's overnight directive (2026-11-02), each with a plan written before its work. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B5–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10); its look is pending. B4, faces everywhere, is done (2026-11-03, `feat/ui-beta-b4`, §10). B5, the interface pass, is done (2026-11-03, `feat/ui-beta-b5`, §10). B2–B5 were worked under the producer's overnight directive (2026-11-02), each with a plan written before its work. B6, the gate, remains. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
@@ -106,7 +106,7 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 | B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Done (2026-11-03, §10) |
 | B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Done (2026-11-03, §10); the look is pending |
 | B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Done (2026-11-03, §10) |
-| B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
+| B5 | The interface pass | 2–3 | Tests and renders | Done (2026-11-03, §10); two items deferred or struck |
 | B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session | Possibly Complex |
 
 Every milestone passes the standing gate: a build with no warnings, `dotnet test`, the client's tests exact in the pinned image, and golden and the soak wherever the core changed.
@@ -343,4 +343,25 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
   - Shared render states stay unneeded.
 - **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 409). The pinned image was exact after each re-record. MonoGame and Android compile. The core is unchanged.
 - **Open for the producer's look:** the inspector, faces in the lists, the affinities' rows.
+
+### B5 (done 2026-11-03, `feat/ui-beta-b5`)
+- **Delivered** (Q11's items, each a commit):
+  1. **Debug ids only in development builds:** `ClientOptions.ShowDebugIds` → `DashboardContext.ShowDebugIds`. The desktop exe sets it in Debug builds; tests and the pinned image run without it.
+  2. **The time of day:** `OutpostClock`, a 9,000-tick day (the live scenarios' 15 minutes) from 06:00, with midnight starting the next day. The header shows "DAY 1 · 07:04" where it showed the tick; development builds keep the tick.
+  3. **Key help:** F1 (`InputAction.Help`, last in the enum) shows `KeyHelpOverlay`, every binding read from `KeyBindings`.
+  4. **The stall opens the merchant terminal:** the stall's counter is pickable under its own entity id.
+  5. **A grouped chronicle:** consecutive events with the same words are one row, "×N" after it.
+  6. **Events find their crawler** (Q11's "alerts that find their crawler"): a click on an event's row finds its first actor on the map (B4's `FindOnMap`).
+  7. **Tooltips:** `Tooltips`, a tip after half a second over a registered control, on real time. Registered on the header's eight buttons and the inspector's two.
+- **Deferred or struck** (for the producer):
+  - **Item 8, icons inside the bounty board's open item list:** deferred. The chosen item's icon already shows beside the dropdown (graphics V4). Icons in the open list need Gum's ComboBox item templates.
+  - **Item 9, state marks that don't rely on colour:** struck. Every state badge says its state as a word, and the map shows state by pose and marks (B2's D7). New glyphs would need new font glyphs.
+  - **Tooltips on the header's counters and the dossier's drive bars:** not done. They take no events, and giving them events changes how clicks fall through.
+- **Checks:**
+  - `OutpostClockTests`, `KeyHelpTests`, `TooltipTests`;
+  - `InterfacePassTests`: the stall's click in both modes, the grouped chronicle, and an event's row finding its crawler;
+  - name tests updated to no ids (with the option bringing them back);
+  - renders re-recorded in the pinned image: the 11 with the header or names, and the dashboard with the grouped chronicle.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test`, the batched re-records aside, which each commit says (at the end, core 143 and client 421). The pinned image was 421/421 exact at the end. MonoGame and Android compile. The core is unchanged.
+- **Open for the producer's look:** the header's clock, the key help, the tooltips, the grouped chronicle; items 8 and 9.
 

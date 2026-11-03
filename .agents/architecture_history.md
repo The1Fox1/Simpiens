@@ -1362,3 +1362,13 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The dossier's vertical budget:** the affinities became face rows, two tall and scrolling, and the dossier's gaps were tightened to keep the buttons in the window.
 - **F21 measured:** no change in the UI's draw time from faces (texture switches 367 → 380). Shared render states stay unneeded.
 - Commits: `94d34cb` plan, `16d0959` faces, `c3f4050`/`b6198ff` the inspector and its renders, `ea119ae`/`c36eebe` faces in lists and click to find, and their renders, `97086fc` the gate.
+
+## 2026-11-03: Epic UI-Beta B5, the interface pass (`feat/ui-beta-b5`)
+
+- **Under the producer's overnight directive**, with the plan committed first (`93a35d3`). The branch is cut from `feat/ui-beta-b4`.
+- **Debug ids became a host option** rather than `#if DEBUG` in the presentation. Tests run Debug and the pinned image Release, so a build-dependent name would have split the renders between them. The desktop exe sets the option in Debug builds.
+- **The time of day is presentation only** (`OutpostClock`, a 9,000-tick day from 06:00). The simulation reads no clock of the day. It takes the tick's place in the header, which has no room for both at 1280 px; development builds keep the tick.
+- **The stall is picked like a crawler,** from what the last frame drew, under its own entity id, so a crawler in front still wins.
+- **Tooltips run on real time,** so a tip shows while paused. An offscreen frame passes almost no real time, so their test drives the clock directly.
+- **Deferred or struck, for the producer:** icons inside the bounty board's open list (they need Gum's ComboBox item templates; the chosen item's icon already shows beside it); colour-free state marks (the badges already say the state as a word); tooltips on the counters and drive bars (they take no events).
+- Commits: `93a35d3` plan, then the items, each with its renders (items 1–4 recorded together).
