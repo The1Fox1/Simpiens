@@ -10,8 +10,9 @@ namespace Simpiens.Client
         public string SessionId { get; set; } = OutpostSession.SessionId;
         public ulong Seed { get; set; } = SimulationSettings.DefaultSeed;
 
-        public int Width { get; set; } = 1280;
-        public int Height { get; set; } = 720;
+        /// <summary>The window's size: 1920 by 1080 unless the host asks for another (<see cref="WindowSizes"/>).</summary>
+        public int Width { get; set; } = WindowSizes.Default.X;
+        public int Height { get; set; } = WindowSizes.Default.Y;
         public bool VSync { get; set; } = true;
 
         /// <summary>How the world is looked at first: isometric, the main view (producer P4); V switches to top-down and back.</summary>
@@ -34,6 +35,12 @@ namespace Simpiens.Client
 
         /// <summary>The quick-save slot's folder; null: <c>Simpiens/Saves</c> under the user's local application data.</summary>
         public string SaveDirectory { get; set; }
+
+        /// <summary>
+        /// The player's settings file (<see cref="ClientSettings"/>): a window size picked in the menu is kept there. Null
+        /// (tests): nothing is kept. The desktop exe passes <see cref="ClientSettings.DefaultPath"/>.
+        /// </summary>
+        public string SettingsFile { get; set; }
 
         /// <summary>
         /// Development builds: the demonstration cutscenes (<see cref="DemoScenes"/>), F9 for the hard one and triggers for

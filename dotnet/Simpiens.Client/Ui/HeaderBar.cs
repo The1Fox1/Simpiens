@@ -15,7 +15,7 @@ namespace Simpiens.Client.Ui
     /// five clusters (the UI polish plan, U4), left to right: who and where; the outpost (gold, stock, bounties) in one
     /// plaque; the windows (stall, bounties, guild), lit while open; then, from the right, the menu (save, load, key help),
     /// the Map | Ledger switch, and time (the clock, pause, the speed pips) in a plaque. It takes clicks, so the map
-    /// ignores the pointer over it.
+    /// ignores the pointer over it. The menu also picks the window's size.
     /// </summary>
     public sealed class HeaderBar
     {
@@ -23,6 +23,9 @@ namespace Simpiens.Client.Ui
 
         /// <summary>How tall the clusters' plaques and buttons are.</summary>
         private const float Control = 30f;
+
+        /// <summary>The menu's size pips, three in a row, and so the width of its controls.</summary>
+        private const float SizePip = 78f, PipGap = 4f, MenuWidth = 3 * SizePip + 2 * PipGap;
 
         private static readonly Microsoft.Xna.Framework.Color Lamplight = UiStyle.Hex(0x5a3c1a); // a thread of light on the lintel's lower edge
 
@@ -36,6 +39,7 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _stock, _confirm;
         private readonly List<(SpriteRuntime Icon, TextRuntime Count)> _stockEntries = new List<(SpriteRuntime, TextRuntime)>(4);
         private readonly List<ContainerRuntime> _stockBoxes = new List<ContainerRuntime>(4);
+        private int _windowWidth, _windowHeight;
 
         public HeaderBar(IconAtlas icons)
         {
@@ -136,7 +140,7 @@ namespace Simpiens.Client.Ui
             Menu = new ContainerRuntime
             {
                 Name = "header-menu",
-                Width = 220f,
+                Width = MenuWidth + 28f,
                 HeightUnits = DimensionUnitType.RelativeToChildren,
                 Height = 14f,
                 XUnits = GeneralUnitType.PixelsFromLarge,
@@ -151,9 +155,9 @@ namespace Simpiens.Client.Ui
             items.X = 14f;
             items.Y = 14f;
             Menu.Children.Add(items);
-            SaveButton = UiParts.Button("Save the outpost", 192f, Control, UiText.StatusBold);
-            LoadButton = UiParts.Button("Load the quick-save", 192f, Control, UiText.StatusBold);
-            KeyHelpButton = UiParts.Button("Key help (F1)", 192f, Control, UiText.StatusBold);
+            SaveButton = UiParts.Button("Save the outpost", MenuWidth, Control, UiText.StatusBold);
+            LoadButton = UiParts.Button("Load the quick-save", MenuWidth, Control, UiText.StatusBold);
+            KeyHelpButton = UiParts.Button("Key help (F1)", MenuWidth, Control, UiText.StatusBold);
             items.Children.Add(SaveButton.Visual);
             items.Children.Add(LoadButton.Visual);
             items.Children.Add(KeyHelpButton.Visual);
@@ -161,15 +165,28 @@ namespace Simpiens.Client.Ui
             _confirm.Visible = false;
             _confirmText = UiParts.Text("Load the quick-save? Unsaved progress is lost.", UiStyle.TextLight, UiText.Small);
             _confirmText.WidthUnits = DimensionUnitType.Absolute;
-            _confirmText.Width = 192f;
+            _confirmText.Width = MenuWidth;
             _confirm.Children.Add(_confirmText);
-            var answers = UiParts.Row(6f);
-            ConfirmLoadButton = UiParts.PrimaryButton("Load", 93f, Control, UiText.StatusBold);
-            CancelLoadButton = UiParts.Button("Cancel", 93f, Control, UiText.StatusBold);
+            var answers = MenuRow(6f);
+            ConfirmLoadButton = UiParts.PrimaryButton("Load", (MenuWidth - 6f) / 2f, Control, UiText.StatusBold);
+            CancelLoadButton = UiParts.Button("Cancel", (MenuWidth - 6f) / 2f, Control, UiText.StatusBold);
             answers.Children.Add(ConfirmLoadButton.Visual);
             answers.Children.Add(CancelLoadButton.Visual);
             _confirm.Children.Add(answers);
             items.Children.Add(_confirm);
+
+            // The window's size: a pip per size, the window's own lit
+            items.Children.Add(new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Hex(0x4c4138), Width = MenuWidth, Height = 1f });
+            items.Children.Add(Window.SubHeader("WINDOW SIZE"));
+            var sizes = MenuRow(PipGap);
+            var sizeButtons = new Button[WindowSizes.All.Length];
+            for (int i = 0; i < sizeButtons.Length; i++)
+            {
+                sizeButtons[i] = UiParts.Button(WindowSizes.Text(WindowSizes.All[i]), SizePip, 26f, UiText.SmallBold);
+                sizes.Children.Add(sizeButtons[i].Visual);
+            }
+            WindowSizeButtons = sizeButtons;
+            items.Children.Add(sizes);
 
             // The save's message, under everything at the bottom left (Unity had it in the header; at 1280 px it doesn't fit there)
             Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, UiStyle.TextSecondary, UiText.Small);
@@ -214,6 +231,9 @@ namespace Simpiens.Client.Ui
         public Button ConfirmLoadButton { get; }
         public Button CancelLoadButton { get; }
         public Button KeyHelpButton { get; }
+
+        /// <summary>A pip per size in <see cref="WindowSizes.All"/>, in the menu; the window's own size is lit.</summary>
+        public IReadOnlyList<Button> WindowSizeButtons { get; }
 
         /// <summary>Pauses or resumes the world (P): its glyph is what it will do.</summary>
         public Button PauseButton { get; }
@@ -276,6 +296,16 @@ namespace Simpiens.Client.Ui
         }
 
         public void SetSaveStatus(string message) => _saveStatus.Text = message ?? string.Empty;
+
+        /// <summary>Lights the menu's pip for a window <paramref name="width"/> by <paramref name="height"/>; none for a dragged size.</summary>
+        public void BindWindowSize(int width, int height)
+        {
+            if (width == _windowWidth && height == _windowHeight) return;
+            _windowWidth = width;
+            _windowHeight = height;
+            for (int i = 0; i < WindowSizeButtons.Count; i++)
+                StoneSkin.SetActive(WindowSizeButtons[i], WindowSizes.All[i].X == width && WindowSizes.All[i].Y == height);
+        }
 
         public void Bind(DashboardModel model)
         {
@@ -405,6 +435,15 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(figure);
             counter.Children.Add(figure);
             return counter;
+        }
+
+        /// <summary>A row in the menu's column, stacked from its top (a centred row would ride up over the line above).</summary>
+        private static ContainerRuntime MenuRow(float spacing)
+        {
+            var row = UiParts.Row(spacing);
+            row.YUnits = GeneralUnitType.PixelsFromSmall;
+            row.YOrigin = VerticalAlignment.Top;
+            return row;
         }
 
         /// <summary>A 1 px upright line in a plaque between its groups.</summary>

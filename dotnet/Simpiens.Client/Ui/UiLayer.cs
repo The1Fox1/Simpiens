@@ -36,6 +36,7 @@ namespace Simpiens.Client.Ui
         {
             if (GumService.Default.IsInitialized) GumService.Default.Uninitialize();
             GumService.Default.Initialize(_game, Gum.Forms.DefaultVisualsVersion.V3);
+            GumService.Default.EnableExpandToWindow(); // the canvas follows the window at 1:1: a larger window is more room, never larger UI
             Gum.Forms.FormsUtilities.SetCursor(Cursor);
             if (!_gumErrorsLogged)
             {

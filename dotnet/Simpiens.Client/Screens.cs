@@ -106,7 +106,7 @@ namespace Simpiens.Client
             Tooltips.Register(header.MerchantButton.Visual, "The stall: its prices and stock");
             Tooltips.Register(header.BountiesButton.Visual, "The bounty board: post and cancel bounties");
             Tooltips.Register(header.GuildButton.Visual, "The guild roster: members, wages and expeditions");
-            Tooltips.Register(header.MenuButton.Visual, "Save, load and key help");
+            Tooltips.Register(header.MenuButton.Visual, "Save, load, key help and the window's size");
             Tooltips.Register(header.SaveButton.Visual, "Quick-save the outpost");
             Tooltips.Register(header.LoadButton.Visual, "Load the quick-save");
             Tooltips.Register(header.PauseButton.Visual, "Pause or resume the world (P)");
@@ -114,6 +114,11 @@ namespace Simpiens.Client
                 Tooltips.Register(header.SpeedButtons[i].Visual, $"Run the world at {Simpiens.Presentation.Dashboard.HeaderModel.SpeedText(i)} ({i + 1})");
             Tooltips.Register(header.TabButton.Visual, "The map or the ledger (Tab)");
             header.KeyHelpButton.Click += (_, _) => Help?.Toggle((_game.Input as ClientInput)?.Bindings);
+            for (int i = 0; i < header.WindowSizeButtons.Count; i++)
+            {
+                var size = WindowSizes.All[i];
+                header.WindowSizeButtons[i].Click += (_, _) => _game.RequestWindowSize(size.X, size.Y); // the menu stays open on the new size
+            }
             Tooltips.Register(Dashboard.Inspector.OpenDossierButton.Visual, "Its dossier: drives, plan, affinities");
             Tooltips.Register(Dashboard.Inspector.FollowButton.Visual, "The camera follows it, or stops (Esc stops too)");
             _game.Ui.Root.Children.Add(Tooltips.Panel);
@@ -152,6 +157,7 @@ namespace Simpiens.Client
             _game.World.Update(cameraSeconds, viewport.Width, viewport.Height, pointer, keys, active);
             if (ui.IsOwner) Scenes?.Update(seconds, cameraSeconds, keys);
             if (ui.IsOwner) Dashboard?.Update(seconds);
+            if (ui.IsOwner) Dashboard?.Header.BindWindowSize(viewport.Width, viewport.Height);
             if (ui.IsOwner) Tooltips?.Update(seconds, viewport.Width, viewport.Height); // real time: a tip shows paused too
         }
 

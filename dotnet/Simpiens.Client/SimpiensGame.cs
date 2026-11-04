@@ -14,6 +14,7 @@ namespace Simpiens.Client
     {
         private readonly GraphicsDeviceManager _graphics;
         private float _lastViewSeconds;
+        private Point? _requestedWindowSize;
 
         public SimpiensGame(ClientOptions options = null)
         {
@@ -32,6 +33,7 @@ namespace Simpiens.Client
             _graphics.PreferredBackBufferHeight = Options.Height;
             _graphics.SynchronizeWithVerticalRetrace = Options.VSync;
             _lastViewSeconds = 0f;
+            _requestedWindowSize = null;
             Session = new ClientSession(Options);
             World = new WorldView(Session);
             Play = new PlayScreen(this);
@@ -125,6 +127,32 @@ namespace Simpiens.Client
             _graphics.ApplyChanges();
         }
 
+        /// <summary>
+        /// Asks for a window <paramref name="width"/> by <paramref name="height"/> (the menu's sizes, <see cref="WindowSizes"/>).
+        /// It changes at the start of the next update, never inside the UI's click, and the host's settings file keeps it.
+        /// </summary>
+        public void RequestWindowSize(int width, int height)
+        {
+            if (width > 0 && height > 0) _requestedWindowSize = new Point(width, height);
+        }
+
+        private void ApplyRequestedWindowSize()
+        {
+            if (_requestedWindowSize is not Point size) return;
+            _requestedWindowSize = null;
+            if (size.X != _graphics.PreferredBackBufferWidth || size.Y != _graphics.PreferredBackBufferHeight)
+            {
+                _graphics.PreferredBackBufferWidth = size.X;
+                _graphics.PreferredBackBufferHeight = size.Y;
+                _graphics.ApplyChanges();
+            }
+            if (Options.SettingsFile == null) return;
+            var settings = ClientSettings.Load(Options.SettingsFile);
+            settings.WindowWidth = size.X;
+            settings.WindowHeight = size.Y;
+            settings.Save(Options.SettingsFile);
+        }
+
         protected override void LoadContent()
         {
             Graphics = new ClientGraphics(GraphicsDevice);
@@ -145,6 +173,7 @@ namespace Simpiens.Client
             // KNI can report a slightly negative frame time (seen offscreen, epic F5): time never runs backwards here
             var elapsed = gameTime.ElapsedGameTime < System.TimeSpan.Zero ? System.TimeSpan.Zero : gameTime.ElapsedGameTime;
             float seconds = (float)elapsed.TotalSeconds;
+            ApplyRequestedWindowSize(); // first: everything after lays out for the new window
             long start = FrameTimings.Start();
             Session.Update(elapsed, Screens.WorldAdvances);
             Timings.Add(FramePhase.Tick, start);
