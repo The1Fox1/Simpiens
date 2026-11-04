@@ -147,14 +147,26 @@ namespace Simpiens.Client.Ui
             return box;
         }
 
-        /// <summary>Shows <paramref name="key"/>'s face in <paramref name="box"/>, baked now if it wasn't; hides it when there is none to show.</summary>
-        public static void SetFace(ContainerRuntime box, SpriteRuntime face, PortraitAtlas atlas, bool hasFace, in Simpiens.Presentation.Art.People.PortraitKey key)
+        /// <summary>
+        /// Shows <paramref name="key"/>'s face in <paramref name="box"/>, at 1x or (<paramref name="scaled"/>) at the atlas's
+        /// face scale, baked now if it wasn't; hides it when there is none to show.
+        /// </summary>
+        public static void SetFace(ContainerRuntime box, SpriteRuntime face, PortraitAtlas atlas, bool hasFace, in Simpiens.Presentation.Art.People.PortraitKey key, bool scaled = false)
         {
             bool shown = hasFace && atlas != null;
             if (box.Visible != shown) box.Visible = shown;
             if (!shown) return;
-            var source = atlas.ShowFace(key);
+            var source = scaled ? atlas.ShowScaledFace(key) : atlas.ShowFace(key);
             if (face.SourceRectangle != source) face.SourceRectangle = source;
+        }
+
+        /// <summary>Sizes a face box and its face <paramref name="size"/> pixels square.</summary>
+        public static void SizeFace(ContainerRuntime box, SpriteRuntime face, int size)
+        {
+            box.Width = size;
+            box.Height = size;
+            face.Width = size;
+            face.Height = size;
         }
 
         /// <summary>Points <paramref name="icon"/> at <paramref name="iconKey"/>'s art, at the scale its size says, or hides it for null.</summary>

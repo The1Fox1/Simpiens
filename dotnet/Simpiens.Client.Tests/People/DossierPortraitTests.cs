@@ -59,18 +59,19 @@ namespace Simpiens.Client.Tests.People
 
         /// <summary>
         /// Portraits grow with the window in whole steps (the producer, 2026-11-03): 2x in a 720-row window, 3x at 1080, 4x
-        /// at 1440, the speaker's 1x then 2x. A new step bakes the seated portraits again, pixel for pixel, and the dossier
-        /// and the inspector widen by as much as their portrait grew.
+        /// at 1440, the speaker's and a sector's faces 1x then 2x. A new step bakes the seated portraits again, pixel for
+        /// pixel; the dossier and the inspector widen by as much as their portrait grew, and a resident's card grows to
+        /// hold its face.
         /// </summary>
         [Fact]
         public void PortraitsGrowWithTheWindowInWholeSteps()
         {
-            Assert.Equal((2, 1), PortraitAtlas.ScalesFor(600));
-            Assert.Equal((2, 1), PortraitAtlas.ScalesFor(720));
-            Assert.Equal((3, 2), PortraitAtlas.ScalesFor(1080));
-            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(1372)); // a 1440 screen less its panel
-            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(1440));
-            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(2160)); // never past the largest
+            Assert.Equal((2, 1, 1), PortraitAtlas.ScalesFor(600));
+            Assert.Equal((2, 1, 1), PortraitAtlas.ScalesFor(720));
+            Assert.Equal((3, 2, 2), PortraitAtlas.ScalesFor(1080));
+            Assert.Equal((4, 2, 2), PortraitAtlas.ScalesFor(1260)); // the menu's largest window
+            Assert.Equal((4, 2, 2), PortraitAtlas.ScalesFor(1440));
+            Assert.Equal((4, 2, 2), PortraitAtlas.ScalesFor(2160)); // never past the largest
 
             var ui = UiDriver.Start(width: Width, height: Height);
             var game = ui.Game;
@@ -79,11 +80,13 @@ namespace Simpiens.Client.Tests.People
             var atlas = game.Graphics.Portraits;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            game.Session.DashboardModel.SelectSector(Simpiens.Core.Session.Layouts.Floor1Layout.RoadGateSectorId); // where everyone starts
             ui.Frame();
             Assert.Equal(104, atlas.Size);
             float dossierWidth = DossierPanel(panels).Width, cardWidth = card.Root.Width;
+            Assert.Equal(46f, panels.ResidentCards[0].Root.Height);
 
-            foreach (var (width, height, scale) in new[] { (1920, 1080, 3), (2560, 1440, 4), (1280, 720, 2) })
+            foreach (var (width, height, scale, faceScale) in new[] { (1920, 1080, 3, 2), (2240, 1260, 4, 2), (1280, 720, 2, 1) })
             {
                 game.RequestWindowSize(width, height);
                 ui.Frame(2);
@@ -94,6 +97,25 @@ namespace Simpiens.Client.Tests.People
                 Assert.Equal(dossierWidth + size - 104, DossierPanel(panels).Width);
                 Assert.Equal(cardWidth + size - 104, card.Root.Width);
                 AssertTheAtlasShows(atlas, game.Session.DashboardModel.Dossier.Portrait, panels.Portrait.SourceRectangle);
+
+                // Who is in the sector: the face at its step, the card holding it
+                int face = 32 * faceScale;
+                Assert.Equal(faceScale, atlas.FaceScale);
+                Assert.Equal((float)face, panels.ResidentFace(0).Width);
+                Assert.Equal(System.Math.Max(46f, face + 14f), panels.ResidentCards[0].Root.Height);
+                var resident = game.Session.DashboardModel.Sectors.Residents[0];
+                var source = atlas.ShowScaledFace(resident.Portrait);
+                Assert.Equal((face, face), (source.Width, source.Height));
+                var framed = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
+                PortraitKit.BakeFramed(resident.Portrait, framed);
+                var head = new Rgba32[PortraitKit.FaceSize * PortraitKit.FaceSize];
+                PortraitKit.Face(framed, resident.Portrait.Standing, head);
+                var expected = new Rgba32[face * face];
+                PortraitKit.Magnify(head, PortraitKit.FaceSize, faceScale, expected);
+                var actual = new Color[face * face];
+                atlas.Texture.GetData(0, source, actual, 0, actual.Length);
+                for (int i = 0; i < actual.Length; i++)
+                    Assert.Equal(new Color(expected[i].R, expected[i].G, expected[i].B, expected[i].A), actual[i]);
             }
         }
 

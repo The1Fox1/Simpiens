@@ -10,7 +10,7 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// The window's size (the producer, 2026-11-03): 1920 by 1080 by default, and the header's menu picks 1280 by 720,
-    /// 1920 by 1080 or 2560 by 1440, or full screen. The window changes on the next update, the UI lays out for it, the
+    /// 1920 by 1080 or 2240 by 1260, or full screen. The window changes on the next update, the UI lays out for it, the
     /// pip of the window's size (or Full screen) is lit, and the host's settings file keeps the choice.
     /// </summary>
     public class WindowSizeTests
@@ -39,7 +39,7 @@ namespace Simpiens.Client.Tests
             var options = new ClientOptions();
             Assert.Equal((1920, 1080), (options.Width, options.Height));
             Assert.Null(options.SettingsFile); // nothing is kept unless the host asks
-            Assert.Equal(new[] { "1280 × 720", "1920 × 1080", "2560 × 1440" }, Array.ConvertAll(WindowSizes.All, WindowSizes.Text));
+            Assert.Equal(new[] { "1280 × 720", "1920 × 1080", "2240 × 1260" }, Array.ConvertAll(WindowSizes.All, WindowSizes.Text));
         }
 
         [Fact]
@@ -55,12 +55,12 @@ namespace Simpiens.Client.Tests
 
             ui.Click(Centre(header.WindowSizeButtons[2]));
             ui.Frame(); // the window changes at the start of the next update
-            Assert.Equal((2560, 1440), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
+            Assert.Equal((2240, 1260), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
             Assert.Equal(2, LitPip(header));
             Assert.True(header.MenuOpen, "The menu stays open on the new size.");
-            Assert.Equal(2560f - 16f, header.MenuButton.AbsoluteLeft + header.MenuButton.ActualWidth, 0.5f); // the header spans the new width
+            Assert.Equal(2240f - 16f, header.MenuButton.AbsoluteLeft + header.MenuButton.ActualWidth, 0.5f); // the header spans the new width
             var kept = ClientSettings.Load(settings);
-            Assert.Equal((2560, 1440), (kept.WindowWidth, kept.WindowHeight));
+            Assert.Equal((2240, 1260), (kept.WindowWidth, kept.WindowHeight));
 
             ui.Click(Centre(header.WindowSizeButtons[1]));
             ui.Frame();

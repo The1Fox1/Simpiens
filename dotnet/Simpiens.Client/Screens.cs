@@ -166,7 +166,7 @@ namespace Simpiens.Client
 
         public void Draw(int width, int height) => _game.World.Draw(width, height);
 
-        /// <summary>Portraits grow with the window in whole steps: a new step re-bakes them and lays the dossier and the inspector out for it.</summary>
+        /// <summary>Portraits grow with the window in whole steps: a new step re-bakes them and lays the dossier, the inspector and who is in the sector out for it.</summary>
         private void FitPortraits(int windowHeight)
         {
             var portraits = _game.Graphics?.Portraits;
@@ -174,6 +174,7 @@ namespace Simpiens.Client
             portraits.Fit(windowHeight);
             if (Dashboard == null) return;
             Dashboard.Panels.Fit(portraits.Size); // nothing to do unless the size changed
+            Dashboard.Panels.FitFaces(portraits.ScaledFaceSize);
             Dashboard.Inspector.Fit(portraits.Size);
         }
     }

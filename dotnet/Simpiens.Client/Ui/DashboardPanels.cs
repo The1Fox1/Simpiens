@@ -36,8 +36,12 @@ namespace Simpiens.Client.Ui
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
         private readonly ContainerRuntime _detail, _dossier, _who;
+        private readonly GraphicalUiElement _residentsScroll;
         private Rectangle _portraitShown;
-        private int _portraitSize;
+        private int _portraitSize, _residentFaceSize;
+
+        /// <summary>The residents' list's height with 1x faces, and a resident's card's (Unity's max-height and row).</summary>
+        private const float ResidentsHeight = 240f, ResidentHeight = 46f, ResidentSpacing = 6f;
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
@@ -84,7 +88,7 @@ namespace Simpiens.Client.Ui
             detailBody.Children.Add(Window.SubHeader("WHO IS HERE"));
             _residentsEmpty = UiParts.Text("No residents in this sector.", UiStyle.TextMuted, UiText.Small);
             detailBody.Children.Add(_residentsEmpty);
-            _residentsList = Scroll(detailBody, 240f, 6f); // Unity's max-height
+            _residentsList = Scroll(detailBody, ResidentsHeight, ResidentSpacing, out _residentsScroll); // Unity's max-height
             detailBody.Children.Add(Window.Gap(8f));
             detailBody.Children.Add(Window.SubHeader("WHAT HAPPENED HERE"));
             _eventsEmpty = UiParts.Text("Nothing has happened here yet.", UiStyle.TextMuted, UiText.Small);
@@ -188,6 +192,21 @@ namespace Simpiens.Client.Ui
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
             Fit(portraits?.Size ?? PortraitAtlas.FramedSize * PortraitAtlas.BaseScale);
+            FitFaces(portraits?.ScaledFaceSize ?? PortraitAtlas.FaceSize);
+        }
+
+        /// <summary>
+        /// Lays who is in the sector out for faces <paramref name="size"/> pixels square (the producer, 2026-11-03: 1x
+        /// faces were too small to make out in a large window): the cards grow to hold them, and the list with them, so it
+        /// shows as many cards as before.
+        /// </summary>
+        public void FitFaces(int size)
+        {
+            if (size == _residentFaceSize) return;
+            _residentFaceSize = size;
+            for (int i = 0; i < _residentCards.Count; i++) _residentCards[i].FitFace(size);
+            float card = Card.HeightFor(ResidentHeight, size);
+            _residentsScroll.Height = (float)System.Math.Round(ResidentsHeight * (card + ResidentSpacing) / (ResidentHeight + ResidentSpacing));
         }
 
         /// <summary>
@@ -293,7 +312,8 @@ namespace Simpiens.Client.Ui
             var residents = panel.Residents;
             while (_residentCards.Count < residents.Count)
             {
-                var card = new Card(46f, withDetail: true, faces: _portraits);
+                var card = new Card(ResidentHeight, withDetail: true, faces: _portraits);
+                card.FitFace(_residentFaceSize);
                 if (card.FaceBox != null) card.FaceBox.Click += (_, _) => { if (card.CrawlerId != default) FindOnMap?.Invoke(card.CrawlerId); };
                 card.Root.Click += (_, _) => { if (card.CrawlerId != default) _model.SelectCrawler(card.CrawlerId); Bind(); };
                 _residentCards.Add(card);
@@ -306,7 +326,7 @@ namespace Simpiens.Client.Ui
                 if (i >= residents.Count) continue;
                 var row = residents[i];
                 card.CrawlerId = row.CrawlerId;
-                if (card.FaceBox != null) UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait);
+                if (card.FaceBox != null) UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait, scaled: true);
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Detail, row.Activity);
                 UiParts.SetText(card.Badge, row.Badge);
@@ -422,8 +442,13 @@ namespace Simpiens.Client.Ui
 
         /// <summary>A scrolling list: a fixed height, or (<paramref name="fill"/>) the rest of its stack. Rows go into the returned panel.</summary>
         private static GraphicalUiElement Scroll(ContainerRuntime parent, float height, float spacing, bool fill = false)
+            => Scroll(parent, height, spacing, out _, fill);
+
+        /// <summary>A scrolling list; <paramref name="viewer"/> is the list's own box, whose height can change.</summary>
+        private static GraphicalUiElement Scroll(ContainerRuntime parent, float height, float spacing, out GraphicalUiElement viewer, bool fill = false)
         {
             var scroll = new ScrollViewer();
+            viewer = scroll.Visual;
             scroll.Visual.WidthUnits = DimensionUnitType.RelativeToParent;
             scroll.Width = 0f;
             scroll.Visual.HeightUnits = fill ? DimensionUnitType.Ratio : DimensionUnitType.Absolute;
@@ -504,9 +529,15 @@ namespace Simpiens.Client.Ui
         {
             private readonly RectangleRuntime _fill, _bar;
             private readonly RectangleRuntime _outline;
+            private readonly float _height;
+            private int _faceSize = PortraitAtlas.FaceSize;
+
+            /// <summary>Words above and below on a card with a detail line, at the card's base height.</summary>
+            private const float NameY = 7f, DetailY = 26f, FacePadding = 7f;
 
             public Card(float height, bool withDetail = false, PortraitAtlas faces = null)
             {
+                _height = height;
                 Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = height, HasEvents = true };
                 _fill = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
                 _outline = new RectangleRuntime { IsFilled = false, StrokeWidth = 1, WidthUnits = DimensionUnitType.RelativeToParent, HeightUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 0f };
@@ -518,10 +549,10 @@ namespace Simpiens.Client.Ui
                 Name.X = 12f;
                 if (withDetail)
                 {
-                    Name.Y = 7f;
+                    Name.Y = NameY;
                     Detail = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
                     Detail.X = 12f;
-                    Detail.Y = 26f;
+                    Detail.Y = DetailY;
                     Root.Children.Add(Detail);
                 }
                 else
@@ -546,6 +577,28 @@ namespace Simpiens.Client.Ui
                 Badge = badgeText;
                 BadgeFill = badgeFill;
                 Root.Children.Add(badge);
+            }
+
+            /// <summary>A card's height that holds a face <paramref name="faceSize"/> pixels square: its base height, or more.</summary>
+            public static float HeightFor(float height, int faceSize) => System.Math.Max(height, faceSize + 2f * FacePadding);
+
+            /// <summary>
+            /// Sizes the face <paramref name="size"/> pixels square: the card grows to hold it, the words move over and stay
+            /// centred on it.
+            /// </summary>
+            public void FitFace(int size)
+            {
+                if (FaceBox == null || size == _faceSize) return;
+                _faceSize = size;
+                UiParts.SizeFace(FaceBox, Face, size);
+                float height = HeightFor(_height, size);
+                Root.Height = height;
+                Name.X = 12f + size + 8f;
+                if (Detail == null) return;
+                Detail.X = Name.X;
+                float lift = (height - _height) / 2f;
+                Name.Y = NameY + lift;
+                Detail.Y = DetailY + lift;
             }
 
             public ContainerRuntime Root { get; }
