@@ -32,7 +32,7 @@ namespace Simpiens.Client.Tests.People
             var inspector = game.Session.DashboardModel.Inspector;
             Assert.Equal(crawler.Agent.Look, inspector.Portrait.Look);
             Assert.True(card.Portrait.Visible);
-            Assert.Equal(game.Graphics.Portraits.Show(inspector.Portrait, PortraitAtlas.Scale), card.Portrait.SourceRectangle);
+            Assert.Equal(game.Graphics.Portraits.Show(inspector.Portrait), card.Portrait.SourceRectangle);
             Assert.StartsWith(inspector.Portrait.Mood.ToString(), card.MoodShown);
 
             // Follow, then stop

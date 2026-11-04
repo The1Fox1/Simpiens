@@ -15,6 +15,9 @@ namespace Simpiens.Client
         public int Height { get; set; } = WindowSizes.Default.Y;
         public bool VSync { get; set; } = true;
 
+        /// <summary>Fill the screen (borderless, at its own size) from the first update; the menu switches it.</summary>
+        public bool FullScreen { get; set; }
+
         /// <summary>How the world is looked at first: isometric, the main view (producer P4); V switches to top-down and back.</summary>
         public ViewMode View { get; set; } = ViewMode.Isometric;
 

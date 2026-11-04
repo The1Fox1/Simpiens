@@ -57,6 +57,54 @@ namespace Simpiens.Client.Tests.People
             Assert.StartsWith("Hurt. Health 20%", game.Play.Dashboard.Panels.MoodShown);
         }
 
+        /// <summary>
+        /// Portraits grow with the window in whole steps (the producer, 2026-11-03): 2x in a 720-row window, 3x at 1080, 4x
+        /// at 1440, the speaker's 1x then 2x. A new step bakes the seated portraits again, pixel for pixel, and the dossier
+        /// and the inspector widen by as much as their portrait grew.
+        /// </summary>
+        [Fact]
+        public void PortraitsGrowWithTheWindowInWholeSteps()
+        {
+            Assert.Equal((2, 1), PortraitAtlas.ScalesFor(600));
+            Assert.Equal((2, 1), PortraitAtlas.ScalesFor(720));
+            Assert.Equal((3, 2), PortraitAtlas.ScalesFor(1080));
+            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(1372)); // a 1440 screen less its panel
+            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(1440));
+            Assert.Equal((4, 2), PortraitAtlas.ScalesFor(2160)); // never past the largest
+
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var panels = game.Play.Dashboard.Panels;
+            var card = game.Play.Dashboard.Inspector;
+            var atlas = game.Graphics.Portraits;
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            ui.Frame();
+            Assert.Equal(104, atlas.Size);
+            float dossierWidth = DossierPanel(panels).Width, cardWidth = card.Root.Width;
+
+            foreach (var (width, height, scale) in new[] { (1920, 1080, 3), (2560, 1440, 4), (1280, 720, 2) })
+            {
+                game.RequestWindowSize(width, height);
+                ui.Frame(2);
+                Assert.Equal(scale, atlas.Scale);
+                int size = 52 * scale;
+                Assert.Equal((float)size, panels.Portrait.Width);
+                Assert.Equal((float)size, card.Portrait.Width);
+                Assert.Equal(dossierWidth + size - 104, DossierPanel(panels).Width);
+                Assert.Equal(cardWidth + size - 104, card.Root.Width);
+                AssertTheAtlasShows(atlas, game.Session.DashboardModel.Dossier.Portrait, panels.Portrait.SourceRectangle);
+            }
+        }
+
+        // The dossier's column: the panel the portrait sits in
+        private static Gum.Wireframe.GraphicalUiElement DossierPanel(Simpiens.Client.Ui.DashboardPanels panels)
+        {
+            Gum.Wireframe.GraphicalUiElement element = panels.Portrait;
+            while (element.Parent is Gum.Wireframe.GraphicalUiElement parent && !ReferenceEquals(parent, panels.Root)) element = parent;
+            return element;
+        }
+
         /// <summary>A crawler's face for the lists (Epic UI-Beta B4, D1) is its portrait's head, cropped from the same bake.</summary>
         [Fact]
         public void AFaceIsItsPortraitsHeadFromTheSameBake()
@@ -65,7 +113,7 @@ namespace Simpiens.Client.Tests.People
             var atlas = game.Graphics.Portraits;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, Simpiens.Simulation.Economy.ItemType.None);
-            atlas.Show(key, PortraitAtlas.Scale);
+            atlas.Show(key);
             int bakes = atlas.Table.Bakes;
             var source = atlas.ShowFace(key);
             Assert.Equal(bakes, atlas.Table.Bakes); // no second bake
@@ -84,17 +132,18 @@ namespace Simpiens.Client.Tests.People
         // The atlas's pixels under the dossier's source rectangle are the key's portrait, magnified
         private static void AssertTheAtlasShows(PortraitAtlas atlas, in PortraitKey key, Rectangle source)
         {
-            Assert.Equal((PortraitAtlas.Size, PortraitAtlas.Size), (source.Width, source.Height));
+            int size = atlas.Size;
+            Assert.Equal((size, size), (source.Width, source.Height));
             var framed = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
             PortraitKit.BakeFramed(key, framed);
-            var expected = new Rgba32[PortraitAtlas.Size * PortraitAtlas.Size];
-            PortraitKit.Magnify(framed, PortraitKit.FramedSize, PortraitAtlas.Scale, expected);
-            var actual = new Color[PortraitAtlas.Size * PortraitAtlas.Size];
+            var expected = new Rgba32[size * size];
+            PortraitKit.Magnify(framed, PortraitKit.FramedSize, atlas.Scale, expected);
+            var actual = new Color[size * size];
             atlas.Texture.GetData(0, source, actual, 0, actual.Length);
             for (int i = 0; i < actual.Length; i++)
             {
                 var e = expected[i];
-                if (actual[i] != new Color(e.R, e.G, e.B, e.A)) throw new Xunit.Sdk.XunitException($"The atlas differs from the portrait at pixel {i % PortraitAtlas.Size}, {i / PortraitAtlas.Size}.");
+                if (actual[i] != new Color(e.R, e.G, e.B, e.A)) throw new Xunit.Sdk.XunitException($"The atlas differs from the portrait at pixel {i % size}, {i / size}.");
             }
         }
     }

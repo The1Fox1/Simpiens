@@ -14,7 +14,10 @@ namespace Simpiens.Client
     {
         private readonly GraphicsDeviceManager _graphics;
         private float _lastViewSeconds;
+        // A window size or full screen asked for, applied at the start of the next update; kept in the settings when the menu asked
         private Point? _requestedWindowSize;
+        private bool _requestedFullScreen, _keepRequest;
+        private Point _windowedSize;
 
         public SimpiensGame(ClientOptions options = null)
         {
@@ -32,8 +35,12 @@ namespace Simpiens.Client
             _graphics.PreferredBackBufferWidth = Options.Width;
             _graphics.PreferredBackBufferHeight = Options.Height;
             _graphics.SynchronizeWithVerticalRetrace = Options.VSync;
+            _graphics.IsFullScreen = false;
+            _windowedSize = new Point(Options.Width, Options.Height);
             _lastViewSeconds = 0f;
             _requestedWindowSize = null;
+            _requestedFullScreen = Options.FullScreen; // a window first, then the whole screen at the first update, once the device knows the screen
+            _keepRequest = false;
             Session = new ClientSession(Options);
             World = new WorldView(Session);
             Play = new PlayScreen(this);
@@ -121,36 +128,80 @@ namespace Simpiens.Client
         {
             var bounds = Window.ClientBounds;
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
+            if (!_graphics.IsFullScreen) _windowedSize = new Point(bounds.Width, bounds.Height); // a dragged window: full screen returns to it
             if (bounds.Width == _graphics.PreferredBackBufferWidth && bounds.Height == _graphics.PreferredBackBufferHeight) return;
             _graphics.PreferredBackBufferWidth = bounds.Width;
             _graphics.PreferredBackBufferHeight = bounds.Height;
             _graphics.ApplyChanges();
         }
 
+        /// <summary>True while the game fills the screen it is on (borderless, at the screen's own size).</summary>
+        public bool IsFullScreen => _graphics.IsFullScreen;
+
         /// <summary>
-        /// Asks for a window <paramref name="width"/> by <paramref name="height"/> (the menu's sizes, <see cref="WindowSizes"/>).
-        /// It changes at the start of the next update, never inside the UI's click, and the host's settings file keeps it.
+        /// Asks for a window <paramref name="width"/> by <paramref name="height"/> (the menu's sizes, <see cref="WindowSizes"/>),
+        /// leaving full screen. It changes at the start of the next update, never inside the UI's click, and the host's
+        /// settings file keeps it.
         /// </summary>
         public void RequestWindowSize(int width, int height)
         {
-            if (width > 0 && height > 0) _requestedWindowSize = new Point(width, height);
+            if (width <= 0 || height <= 0) return;
+            _requestedWindowSize = new Point(width, height);
+            _requestedFullScreen = false;
+            _keepRequest = true;
         }
 
-        private void ApplyRequestedWindowSize()
+        /// <summary>
+        /// Asks for the whole screen, or (<paramref name="on"/> false) the window it left, as <see cref="RequestWindowSize"/>
+        /// does: borderless at the screen's own size, for a screen too small to hold the window sizes with their title bar.
+        /// </summary>
+        public void RequestFullScreen(bool on)
         {
-            if (_requestedWindowSize is not Point size) return;
-            _requestedWindowSize = null;
-            if (size.X != _graphics.PreferredBackBufferWidth || size.Y != _graphics.PreferredBackBufferHeight)
+            if (!on)
             {
-                _graphics.PreferredBackBufferWidth = size.X;
-                _graphics.PreferredBackBufferHeight = size.Y;
-                _graphics.ApplyChanges();
+                RequestWindowSize(_windowedSize.X, _windowedSize.Y);
+                return;
             }
-            if (Options.SettingsFile == null) return;
+            _requestedFullScreen = true;
+            _requestedWindowSize = null;
+            _keepRequest = true;
+        }
+
+        private void ApplyRequestedWindow()
+        {
+            if (_requestedFullScreen) EnterFullScreen();
+            else if (_requestedWindowSize is Point size) EnterWindow(size);
+            else return;
+            _requestedFullScreen = false;
+            _requestedWindowSize = null;
+            if (!_keepRequest || Options.SettingsFile == null) return;
+            _keepRequest = false;
             var settings = ClientSettings.Load(Options.SettingsFile);
-            settings.WindowWidth = size.X;
-            settings.WindowHeight = size.Y;
+            settings.WindowWidth = _windowedSize.X;
+            settings.WindowHeight = _windowedSize.Y;
+            settings.FullScreen = _graphics.IsFullScreen;
             settings.Save(Options.SettingsFile);
+        }
+
+        private void EnterFullScreen()
+        {
+            if (_graphics.IsFullScreen) return;
+            var screen = GraphicsDevice.Adapter.CurrentDisplayMode; // the screen the window is on
+            _graphics.HardwareModeSwitch = false; // borderless at the screen's own size: the screen's mode never changes
+            _graphics.IsFullScreen = true;
+            _graphics.PreferredBackBufferWidth = screen.Width;
+            _graphics.PreferredBackBufferHeight = screen.Height;
+            _graphics.ApplyChanges();
+        }
+
+        private void EnterWindow(Point size)
+        {
+            _windowedSize = size;
+            if (!_graphics.IsFullScreen && size.X == _graphics.PreferredBackBufferWidth && size.Y == _graphics.PreferredBackBufferHeight) return;
+            _graphics.IsFullScreen = false;
+            _graphics.PreferredBackBufferWidth = size.X;
+            _graphics.PreferredBackBufferHeight = size.Y;
+            _graphics.ApplyChanges();
         }
 
         protected override void LoadContent()
@@ -173,7 +224,7 @@ namespace Simpiens.Client
             // KNI can report a slightly negative frame time (seen offscreen, epic F5): time never runs backwards here
             var elapsed = gameTime.ElapsedGameTime < System.TimeSpan.Zero ? System.TimeSpan.Zero : gameTime.ElapsedGameTime;
             float seconds = (float)elapsed.TotalSeconds;
-            ApplyRequestedWindowSize(); // first: everything after lays out for the new window
+            ApplyRequestedWindow(); // first: everything after lays out for the new window
             long start = FrameTimings.Start();
             Session.Update(elapsed, Screens.WorldAdvances);
             Timings.Add(FramePhase.Tick, start);

@@ -119,6 +119,8 @@ namespace Simpiens.Client
                 var size = WindowSizes.All[i];
                 header.WindowSizeButtons[i].Click += (_, _) => _game.RequestWindowSize(size.X, size.Y); // the menu stays open on the new size
             }
+            header.FullScreenButton.Click += (_, _) => _game.RequestFullScreen(!_game.IsFullScreen);
+            Tooltips.Register(header.FullScreenButton.Visual, "Fill the screen, or go back to the window");
             Tooltips.Register(Dashboard.Inspector.OpenDossierButton.Visual, "Its dossier: drives, plan, affinities");
             Tooltips.Register(Dashboard.Inspector.FollowButton.Visual, "The camera follows it, or stops (Esc stops too)");
             _game.Ui.Root.Children.Add(Tooltips.Panel);
@@ -154,13 +156,25 @@ namespace Simpiens.Client
             }
 
             var viewport = _game.GraphicsDevice.Viewport;
+            FitPortraits(viewport.Height);
             _game.World.Update(cameraSeconds, viewport.Width, viewport.Height, pointer, keys, active);
             if (ui.IsOwner) Scenes?.Update(seconds, cameraSeconds, keys);
             if (ui.IsOwner) Dashboard?.Update(seconds);
-            if (ui.IsOwner) Dashboard?.Header.BindWindowSize(viewport.Width, viewport.Height);
+            if (ui.IsOwner) Dashboard?.Header.BindWindowSize(viewport.Width, viewport.Height, _game.IsFullScreen);
             if (ui.IsOwner) Tooltips?.Update(seconds, viewport.Width, viewport.Height); // real time: a tip shows paused too
         }
 
         public void Draw(int width, int height) => _game.World.Draw(width, height);
+
+        /// <summary>Portraits grow with the window in whole steps: a new step re-bakes them and lays the dossier and the inspector out for it.</summary>
+        private void FitPortraits(int windowHeight)
+        {
+            var portraits = _game.Graphics?.Portraits;
+            if (portraits == null) return;
+            portraits.Fit(windowHeight);
+            if (Dashboard == null) return;
+            Dashboard.Panels.Fit(portraits.Size); // nothing to do unless the size changed
+            Dashboard.Inspector.Fit(portraits.Size);
+        }
     }
 }

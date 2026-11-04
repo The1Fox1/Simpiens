@@ -10,8 +10,8 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// The window's size (the producer, 2026-11-03): 1920 by 1080 by default, and the header's menu picks 1280 by 720,
-    /// 1920 by 1080 or 2560 by 1440. The window changes on the next update, the UI lays out for it, the pip of the window's
-    /// size is lit, and the host's settings file keeps the choice.
+    /// 1920 by 1080 or 2560 by 1440, or full screen. The window changes on the next update, the UI lays out for it, the
+    /// pip of the window's size (or Full screen) is lit, and the host's settings file keeps the choice.
     /// </summary>
     public class WindowSizeTests
     {
@@ -67,10 +67,48 @@ namespace Simpiens.Client.Tests
             Assert.Equal((1920, 1080), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
             Assert.Equal(1, LitPip(header));
             Assert.Equal(1920f - 16f, header.MenuButton.AbsoluteLeft + header.MenuButton.ActualWidth, 0.5f);
-            Assert.Equal("window=1920x1080\n", File.ReadAllText(settings));
+            Assert.Equal("window=1920x1080\nfullscreen=false\n", File.ReadAllText(settings));
 
-            header.BindWindowSize(1500, 900); // dragged to a size of its own: no pip lit
+            header.BindWindowSize(1500, 900, fullScreen: false); // dragged to a size of its own: no pip lit
             Assert.Equal(-1, LitPip(header));
+        }
+
+        [Fact]
+        public void FullScreenFillsTheScreenAndGivesBackTheWindow()
+        {
+            string settings = TempSettings();
+            var ui = UiDriver.Start(new ClientOptions { SettingsFile = settings }, 1280, 720);
+            var game = ui.Game;
+            var header = game.Play.Dashboard.Header;
+            ui.Click(Centre(header.MenuButton));
+            Assert.NotEqual(UiKit.ButtonActive, StoneSkin.PieceOf(header.FullScreenButton));
+
+            ui.Click(Centre(header.FullScreenButton));
+            ui.Frame();
+            Assert.True(game.IsFullScreen);
+            var screen = game.GraphicsDevice.Adapter.CurrentDisplayMode;
+            Assert.Equal((screen.Width, screen.Height), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
+            Assert.Equal(UiKit.ButtonActive, StoneSkin.PieceOf(header.FullScreenButton));
+            Assert.Equal(-1, LitPip(header)); // the screen's size isn't a window's
+            var kept = ClientSettings.Load(settings);
+            Assert.True(kept.FullScreen);
+            Assert.Equal((1280, 720), (kept.WindowWidth, kept.WindowHeight)); // the window it leaves for
+
+            ui.Click(Centre(header.FullScreenButton)); // back to the window it left
+            ui.Frame();
+            Assert.False(game.IsFullScreen);
+            Assert.Equal((1280, 720), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
+            Assert.Equal(0, LitPip(header));
+            Assert.False(ClientSettings.Load(settings).FullScreen);
+
+            game.RequestFullScreen(true); // and a size from full screen leaves it for that window
+            ui.Frame();
+            Assert.True(game.IsFullScreen);
+            ui.Click(Centre(header.WindowSizeButtons[1]));
+            ui.Frame();
+            Assert.False(game.IsFullScreen);
+            Assert.Equal((1920, 1080), (game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height));
+            Assert.Equal(1, LitPip(header));
         }
 
         [Fact]
@@ -94,6 +132,14 @@ namespace Simpiens.Client.Tests
             new ClientSettings { WindowWidth = 1280, WindowHeight = 720 }.Save(path);
             read = ClientSettings.Load(path);
             Assert.Equal((1280, 720), (read.WindowWidth, read.WindowHeight));
+            Assert.False(read.FullScreen);
+
+            new ClientSettings { WindowWidth = 1920, WindowHeight = 1080, FullScreen = true }.Save(path);
+            read = ClientSettings.Load(path);
+            Assert.True(read.FullScreen);
+            Assert.Equal((1920, 1080), (read.WindowWidth, read.WindowHeight));
+            File.WriteAllText(path, "fullscreen=maybe\n");
+            Assert.False(ClientSettings.Load(path).FullScreen);
         }
     }
 }

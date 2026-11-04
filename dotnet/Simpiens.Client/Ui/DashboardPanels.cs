@@ -24,6 +24,7 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class DashboardPanels
     {
+        /// <summary>The columns' widths; the dossier's is with a 2x portrait, and a larger portrait widens it by as much.</summary>
         public const float SectorsWidth = 260f, DossierWidth = 380f, Outer = 12f, Margin = 4f, Inner = 14f;
 
 
@@ -34,7 +35,9 @@ namespace Simpiens.Client.Ui
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
+        private readonly ContainerRuntime _detail, _dossier, _who;
         private Rectangle _portraitShown;
+        private int _portraitSize;
         private readonly RectangleRuntime _dossierBadgeFill;
         private readonly List<Card> _sectorCards = new List<Card>(16), _residentCards = new List<Card>(16);
         private readonly List<TextRuntime> _eventRows = new List<TextRuntime>(SectorPanelModel.MaxEvents), _affinityRows = new List<TextRuntime>(16);
@@ -67,8 +70,8 @@ namespace Simpiens.Client.Ui
             // Column 2: the selected sector
             float detailX = Outer + Margin + SectorsWidth + 2f * Margin;
             var detail = Panel(detailX, 0f, null, out var detailBody);
+            _detail = detail;
             detail.WidthUnits = DimensionUnitType.RelativeToParent;
-            detail.Width = -(2f * Outer + 6f * Margin + SectorsWidth + DossierWidth);
             detailBody.HeightUnits = DimensionUnitType.RelativeToParent; // the events fill what is left (Unity's flex-grow)
             detailBody.Height = -2f * Inner;
             _sectorTitle = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.Title);
@@ -92,6 +95,7 @@ namespace Simpiens.Client.Ui
 
             // Column 3: the dossier
             var dossier = Panel(0f, DossierWidth, "THE CRAWLER", out var dossierBody);
+            _dossier = dossier;
             dossier.XUnits = GeneralUnitType.PixelsFromLarge;
             dossier.XOrigin = HorizontalAlignment.Right;
             dossier.X = -(Outer + Margin);
@@ -101,7 +105,7 @@ namespace Simpiens.Client.Ui
             _dossierDetails = UiParts.Column(4f);
             _dossierDetails.WidthUnits = DimensionUnitType.RelativeToParent;
             _dossierDetails.Width = 0f;
-            // The header (Epic UI-Beta B3, D8): the portrait at 2x, beside it the name, who it is, the state and how it feels
+            // The header (Epic UI-Beta B3, D8): the portrait at the atlas's scale, beside it the name, who it is, the state and how it feels
             var header = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f };
             Portrait = new SpriteRuntime
             {
@@ -109,16 +113,12 @@ namespace Simpiens.Client.Ui
                 TextureAddress = TextureAddress.Custom,
                 WidthUnits = DimensionUnitType.Absolute,
                 HeightUnits = DimensionUnitType.Absolute,
-                Width = PortraitAtlas.Size,
-                Height = PortraitAtlas.Size,
                 Visible = false,
             };
             header.Children.Add(Portrait);
-            float words = portraits != null ? PortraitAtlas.Size + 10f : 0f;
             var who = UiParts.Column(4f);
-            who.X = words;
+            _who = who;
             who.WidthUnits = DimensionUnitType.RelativeToParent;
-            who.Width = -words;
             _dossierName = Wrapped(string.Empty, UiStyle.TextTitle, UiText.Title);
             who.Children.Add(_dossierName);
             _description = Wrapped(string.Empty, UiStyle.TextSecondary, UiText.Small);
@@ -177,10 +177,9 @@ namespace Simpiens.Client.Ui
                 Width = 0f,
                 Height = 32f,
             };
-            float half = (DossierWidth - 2f * Inner - 8f) / 2f;
-            CalmButton = UiParts.Button("Calm Frustration", half, 32f, UiText.BodyBold);
+            CalmButton = UiParts.Button("Calm Frustration", 0f, 32f, UiText.BodyBold);
             CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
-            RecruitButton = UiParts.Button("Recruit", half, 32f, UiText.BodyBold);
+            RecruitButton = UiParts.Button("Recruit", 0f, 32f, UiText.BodyBold);
             RecruitButton.Click += (_, _) => { _model.Dossier.Recruit(); };
             actions.Children.Add(CalmButton.Visual);
             actions.Children.Add(RecruitButton.Visual);
@@ -188,6 +187,28 @@ namespace Simpiens.Client.Ui
             dossierBody.Children.Add(_dossierDetails);
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
+            Fit(portraits?.Size ?? PortraitAtlas.FramedSize * PortraitAtlas.BaseScale);
+        }
+
+        /// <summary>
+        /// Lays the dossier out for a portrait <paramref name="size"/> pixels square: the column widens by as much as the
+        /// portrait grew, the words beside it move over, and the middle column gives up the room.
+        /// </summary>
+        public void Fit(int size)
+        {
+            if (size == _portraitSize) return;
+            _portraitSize = size;
+            Portrait.Width = size;
+            Portrait.Height = size;
+            float dossier = DossierWidth + size - PortraitAtlas.FramedSize * PortraitAtlas.BaseScale;
+            _dossier.Width = dossier;
+            _detail.Width = -(2f * Outer + 6f * Margin + SectorsWidth + dossier);
+            float words = _portraits != null ? size + 10f : 0f;
+            _who.X = words;
+            _who.Width = -words;
+            float half = (dossier - 2f * Inner - 8f) / 2f;
+            CalmButton.Width = half;
+            RecruitButton.Width = half;
         }
 
         public ContainerRuntime Root { get; }
@@ -319,7 +340,7 @@ namespace Simpiens.Client.Ui
             if (Portrait.Visible != portrait) Portrait.Visible = portrait;
             if (portrait)
             {
-                var source = _portraits.Show(dossier.Portrait, PortraitAtlas.Scale);
+                var source = _portraits.Show(dossier.Portrait);
                 if (source != _portraitShown) Portrait.SourceRectangle = _portraitShown = source;
             }
             UiParts.SetText(_dossierBadge, dossier.Badge);

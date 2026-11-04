@@ -11,12 +11,23 @@ namespace Simpiens.Client
     /// view time while the world runs. Its lines show in a speech bubble over the speaking crawler's head, following it as
     /// it moves; while the speaker is hidden by the fog or off screen, they show in a box at the bottom instead, and a
     /// click on that box brings the camera back to the speaker. The scene's focus sends the camera to an actor until the
-    /// player takes it back. Space or Enter hurries a line. It reads frames and writes nothing to the simulation.
+    /// player takes it back. Space or Enter hurries a line. The speaker's face, and with it the bubble and the box, grow
+    /// with the window (<see cref="PortraitAtlas.SpeakerScale"/>). It reads frames and writes nothing to the simulation.
     /// </summary>
     public sealed class DynamicSceneView
     {
-        public const float BubbleWidth = 300f, BubbleHeight = 74f;
-        public const float BoxHeight = 84f, Margin = 16f;
+        /// <summary>The bubble's and the box's sizes with the speaker's face at 1x; a larger face grows them by as much.</summary>
+        public const float BaseBubbleWidth = 300f, BaseBubbleHeight = 74f, BaseBoxHeight = 84f, Margin = 16f;
+
+        // How much larger than at 1x the speaker's face is
+        private float Growth => (_game.Graphics?.Portraits?.SpeakerSize ?? PortraitAtlas.FramedSize) - PortraitAtlas.FramedSize;
+
+        /// <summary>The speech bubble's size now: it holds the speaker's face at the atlas's speaker scale.</summary>
+        public float BubbleWidth => BaseBubbleWidth + Growth;
+        public float BubbleHeight => BaseBubbleHeight + Growth;
+
+        /// <summary>The box at the bottom's height now.</summary>
+        public float BoxHeight => BaseBoxHeight + Growth;
 
         private readonly SimpiensGame _game;
         private DynamicScene _scene;
@@ -106,22 +117,23 @@ namespace Simpiens.Client
             Bubble.ShowFace(face ? _game.Graphics.Portraits.Texture : null, source);
             Box.ShowFace(face ? _game.Graphics.Portraits.Texture : null, source);
             var viewport = _game.GraphicsDevice.Viewport;
+            float bubbleWidth = BubbleWidth, bubbleHeight = BubbleHeight, boxHeight = BoxHeight;
             if (TryGetHead(_speaker, viewport.Width, viewport.Height, out var head))
             {
-                float x = MathHelper.Clamp(head.X - BubbleWidth * 0.5f, Margin, viewport.Width - Margin - BubbleWidth);
-                float y = MathHelper.Clamp(head.Y - BubbleHeight, Margin, viewport.Height - Margin - BubbleHeight);
-                Bubble.Show(x, y, BubbleWidth, BubbleHeight, name, player.Line, player.LettersShown);
+                float x = MathHelper.Clamp(head.X - bubbleWidth * 0.5f, Margin, viewport.Width - Margin - bubbleWidth);
+                float y = MathHelper.Clamp(head.Y - bubbleHeight, Margin, viewport.Height - Margin - bubbleHeight);
+                Bubble.Show(x, y, bubbleWidth, bubbleHeight, name, player.Line, player.LettersShown);
                 Box.Hide();
             }
             else
             {
-                Box.Show(Margin, viewport.Height - Margin - BoxHeight, viewport.Width - 2f * Margin, BoxHeight, name, player.Line, player.LettersShown);
+                Box.Show(Margin, viewport.Height - Margin - boxHeight, viewport.Width - 2f * Margin, boxHeight, name, player.Line, player.LettersShown);
                 Bubble.Hide();
             }
         }
 
         /// <summary>
-        /// The speaker's portrait at 1x (Epic UI-Beta B3, D9): its look, its mood now (the dashboard's tracker, so the
+        /// The speaker's portrait at the atlas's speaker scale (Epic UI-Beta B3, D9): its look, its mood now (the dashboard's tracker, so the
         /// dossier agrees), its standing and its helm; false for a speaker with no look or no graphics.
         /// </summary>
         private bool TryFace(EntityId crawler, out Rectangle source)
@@ -130,7 +142,7 @@ namespace Simpiens.Client
             var agent = crawler != default ? _game.Session.Simulation.Registry.GetEntity(crawler)?.Agent : null;
             if (agent == null || !agent.Look.IsComplete || _game.Graphics?.Portraits == null) return false;
             var key = PortraitKey.Of(crawler, agent, _game.Session.DashboardModel.Moods, _game.Session.Simulation.Clock.CurrentTick);
-            source = _game.Graphics.Portraits.Show(key, 1);
+            source = _game.Graphics.Portraits.ShowSpeaker(key);
             return true;
         }
 

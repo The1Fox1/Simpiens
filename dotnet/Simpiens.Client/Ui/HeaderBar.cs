@@ -15,7 +15,7 @@ namespace Simpiens.Client.Ui
     /// five clusters (the UI polish plan, U4), left to right: who and where; the outpost (gold, stock, bounties) in one
     /// plaque; the windows (stall, bounties, guild), lit while open; then, from the right, the menu (save, load, key help),
     /// the Map | Ledger switch, and time (the clock, pause, the speed pips) in a plaque. It takes clicks, so the map
-    /// ignores the pointer over it. The menu also picks the window's size.
+    /// ignores the pointer over it. The menu also picks the window's size, or full screen.
     /// </summary>
     public sealed class HeaderBar
     {
@@ -40,6 +40,7 @@ namespace Simpiens.Client.Ui
         private readonly List<(SpriteRuntime Icon, TextRuntime Count)> _stockEntries = new List<(SpriteRuntime, TextRuntime)>(4);
         private readonly List<ContainerRuntime> _stockBoxes = new List<ContainerRuntime>(4);
         private int _windowWidth, _windowHeight;
+        private bool _fullScreen;
 
         public HeaderBar(IconAtlas icons)
         {
@@ -175,7 +176,7 @@ namespace Simpiens.Client.Ui
             _confirm.Children.Add(answers);
             items.Children.Add(_confirm);
 
-            // The window's size: a pip per size, the window's own lit
+            // The window's size: a pip per size, the window's own lit, and full screen under them
             items.Children.Add(new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Hex(0x4c4138), Width = MenuWidth, Height = 1f });
             items.Children.Add(Window.SubHeader("WINDOW SIZE"));
             var sizes = MenuRow(PipGap);
@@ -187,6 +188,8 @@ namespace Simpiens.Client.Ui
             }
             WindowSizeButtons = sizeButtons;
             items.Children.Add(sizes);
+            FullScreenButton = UiParts.Button("Full screen", MenuWidth, 26f, UiText.SmallBold);
+            items.Children.Add(FullScreenButton.Visual);
 
             // The save's message, under everything at the bottom left (Unity had it in the header; at 1280 px it doesn't fit there)
             Status = UiParts.Pill(out _saveStatus, string.Empty, UiStyle.Header, UiStyle.Border, UiStyle.TextSecondary, UiText.Small);
@@ -234,6 +237,9 @@ namespace Simpiens.Client.Ui
 
         /// <summary>A pip per size in <see cref="WindowSizes.All"/>, in the menu; the window's own size is lit.</summary>
         public IReadOnlyList<Button> WindowSizeButtons { get; }
+
+        /// <summary>Fills the screen, or goes back to the window; lit while the game fills the screen.</summary>
+        public Button FullScreenButton { get; }
 
         /// <summary>Pauses or resumes the world (P): its glyph is what it will do.</summary>
         public Button PauseButton { get; }
@@ -297,14 +303,19 @@ namespace Simpiens.Client.Ui
 
         public void SetSaveStatus(string message) => _saveStatus.Text = message ?? string.Empty;
 
-        /// <summary>Lights the menu's pip for a window <paramref name="width"/> by <paramref name="height"/>; none for a dragged size.</summary>
-        public void BindWindowSize(int width, int height)
+        /// <summary>
+        /// Lights the menu's pip for a window <paramref name="width"/> by <paramref name="height"/> (none for a dragged size),
+        /// or Full screen while the game fills the screen.
+        /// </summary>
+        public void BindWindowSize(int width, int height, bool fullScreen)
         {
-            if (width == _windowWidth && height == _windowHeight) return;
+            if (width == _windowWidth && height == _windowHeight && fullScreen == _fullScreen) return;
             _windowWidth = width;
             _windowHeight = height;
+            _fullScreen = fullScreen;
             for (int i = 0; i < WindowSizeButtons.Count; i++)
-                StoneSkin.SetActive(WindowSizeButtons[i], WindowSizes.All[i].X == width && WindowSizes.All[i].Y == height);
+                StoneSkin.SetActive(WindowSizeButtons[i], !fullScreen && WindowSizes.All[i].X == width && WindowSizes.All[i].Y == height);
+            StoneSkin.SetActive(FullScreenButton, fullScreen);
         }
 
         public void Bind(DashboardModel model)

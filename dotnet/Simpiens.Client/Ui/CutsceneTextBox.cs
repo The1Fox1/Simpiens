@@ -11,7 +11,7 @@ namespace Simpiens.Client.Ui
     /// A cutscene's text box (M3 design D9), Fire Emblem style: a dark panel with the speaker's name on top and the line
     /// below it, appearing letter by letter. It sits wherever its screen puts it each frame (the letterbox's bottom for a
     /// hard cutscene, the window's bottom for a dynamic one), in baked Inter 16, drawn 1:1. A speaker with a face shows
-    /// its portrait at 1x on the left (Epic UI-Beta B3, D9).
+    /// its portrait on the left (Epic UI-Beta B3, D9), at the size of the atlas's cell it is given.
     /// </summary>
     public sealed class CutsceneTextBox
     {
@@ -24,8 +24,6 @@ namespace Simpiens.Client.Ui
                 TextureAddress = TextureAddress.Custom,
                 WidthUnits = DimensionUnitType.Absolute,
                 HeightUnits = DimensionUnitType.Absolute,
-                Width = PortraitAtlas.SmallSize,
-                Height = PortraitAtlas.SmallSize,
                 X = FaceMargin,
                 Y = FaceMargin,
                 Visible = false,
@@ -55,20 +53,26 @@ namespace Simpiens.Client.Ui
         public TextRuntime Speaker { get; }
         public TextRuntime Line { get; }
 
-        /// <summary>The speaker's portrait at 1x; hidden for a speaker with no face.</summary>
+        /// <summary>The speaker's portrait, drawn 1:1 from its cell; hidden for a speaker with no face.</summary>
         public SpriteRuntime Face { get; }
 
-        /// <summary>Shows <paramref name="source"/> of <paramref name="texture"/> as the speaker's face, the text beside it; null hides it.</summary>
+        /// <summary>Shows <paramref name="source"/> of <paramref name="texture"/> as the speaker's face, 1:1, the text beside it; null hides it.</summary>
         public void ShowFace(Microsoft.Xna.Framework.Graphics.Texture2D texture, Rectangle source)
         {
             bool shown = texture != null;
-            if (Face.Visible != shown)
+            float columnX = shown ? FaceMargin + source.Width + 10f : 14f;
+            if (Face.Visible != shown) Face.Visible = shown;
+            if (_column.X != columnX)
             {
-                Face.Visible = shown;
-                _column.X = shown ? FaceMargin + PortraitAtlas.SmallSize + 10f : 14f;
-                _column.Width = -(_column.X + 14f);
+                _column.X = columnX;
+                _column.Width = -(columnX + 14f);
             }
             if (!shown) return;
+            if (Face.Width != source.Width)
+            {
+                Face.Width = source.Width;
+                Face.Height = source.Height;
+            }
             if (!ReferenceEquals(Face.Texture, texture)) Face.Texture = texture;
             if (source != _faceShown) Face.SourceRectangle = _faceShown = source;
         }

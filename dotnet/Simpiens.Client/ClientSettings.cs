@@ -8,8 +8,8 @@ using static System.FormattableString;
 namespace Simpiens.Client
 {
     /// <summary>
-    /// What the player chose that outlives a game: the window's size, picked in the header's menu. Kept as <c>key=value</c>
-    /// lines in a small text file; a missing, unreadable or odd file is no settings, never an error.
+    /// What the player chose that outlives a game: the window's size and full screen, picked in the header's menu. Kept as
+    /// <c>key=value</c> lines in a small text file; a missing, unreadable or odd file is no settings, never an error.
     /// </summary>
     public sealed class ClientSettings
     {
@@ -23,6 +23,9 @@ namespace Simpiens.Client
         public int WindowHeight { get; set; }
 
         public bool HasWindowSize => WindowWidth > 0 && WindowHeight > 0;
+
+        /// <summary>The game fills the screen; <see cref="WindowWidth"/> by <see cref="WindowHeight"/> is the window it leaves for.</summary>
+        public bool FullScreen { get; set; }
 
         /// <summary><c>Simpiens/settings.txt</c> under the user's local application data, beside the saves' folder.</summary>
         public static string DefaultPath()
@@ -53,6 +56,10 @@ namespace Simpiens.Client
                     settings.WindowWidth = width;
                     settings.WindowHeight = height;
                 }
+                else if (key == "fullscreen" && bool.TryParse(value, out bool fullScreen))
+                {
+                    settings.FullScreen = fullScreen;
+                }
             }
             return settings;
         }
@@ -63,7 +70,8 @@ namespace Simpiens.Client
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, HasWindowSize ? Invariant($"window={WindowWidth}x{WindowHeight}\n") : string.Empty);
+                string window = HasWindowSize ? Invariant($"window={WindowWidth}x{WindowHeight}\n") : string.Empty;
+                File.WriteAllText(path, window + (FullScreen ? "fullscreen=true\n" : "fullscreen=false\n"));
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
