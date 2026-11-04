@@ -53,6 +53,12 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 1. **Panels, cards and badges from the kit** [Possibly Complex].
 2. **The dossier and the inspector** [Possibly Complex].
 
+### U10. The window's size (the producer's look, 2026-11-03) — [Basic: a client option, a menu row, a settings file]
+1. **1920 by 1080 by default** [Basic]: `ClientOptions`' size from `WindowSizes`.
+2. **The menu picks the size** [Basic]: 1280 × 720, 1920 × 1080, 2560 × 1440 as pips, the window's own lit; the game changes the window at the start of its next update, never inside the click; Gum's canvas follows the window.
+3. **The choice is kept** [Basic]: `ClientSettings` (`settings.txt` beside the saves' folder), written only when the host passes a file (the desktop exe); the command line's size wins.
+4. **Tests** [Basic]: `WindowSizeTests`.
+
 ### U9. Close-out — [Basic]
 1. **Docs** [Basic]: `AGENTS.md`'s client notes (the kit), `.agents/architecture_history.md`; the roadmap once the producer says which epic owns this.
 2. **The producer's look** [Basic].
@@ -62,4 +68,5 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 - 2026-11-03: U1–U6 done and their renders re-recorded in the pinned image (430/430 exact; core 143/143; golden 3/3; MonoGame and Android compile). Commits in `.agents/architecture_history.md`. Next: U7 (motion), U8 (the dashboard and the inspector), then U9 and the producer's look.
 - Open from U1–U6, for U8: the combo boxes, list scroll bars and text boxes still wear Gum's flat look in the palette's colours; the dashboard's panels and cards are flat fills; the merchant's status bar is a flat inset.
 - 2026-11-03: U8 done (the ledger's panels, the inspector, the tracker, key help and the cutscene box in frames; insets as plaques; drive bars in grooves) and its renders re-recorded; U7 done (windows arrive, the gold rolls, behind `ClientOptions.UiMotion`, on in the desktop game). Client 433/433, exact in the pinned image. `UiDrawProbe` (Release, one run right after a build, so the time is indicative only): UiDraw 2.84 ms, texture switches 337, sprite-batch begins 204, against B4's 3.12 ms, 380 and 234.
+- 2026-11-03: the producer's look passed ("This is looking really good") and asked for U10: a 1920 by 1080 window by default, and a size picker in the menu. Done: Gum's canvas never followed the window before (a dragged window kept the UI at its first size); `EnableExpandToWindow` fixes both. The menu's rows now stack from their top: the load question's second line was hidden under its buttons since U4. Core 143/143, client 436/436 on the host, golden 3/3, MonoGame compiles.
 - Still open, for the producer's look or a later pass: the combo boxes, scroll bars and list cards keep Gum's flat look in the palette; no exit motion (a window closes at once); the lintel has no coursed mortar (an atlas region can't tile in Gum). Next: U9, the close-out, after the producer's look.

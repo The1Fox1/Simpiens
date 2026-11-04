@@ -1390,3 +1390,10 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Motion is a host option, off in tests** (U7, `ClientOptions.UiMotion`, as `ShowDebugIds` is): the desktop game turns it on; tests and the pinned renders run without it, so no capture is caught mid-tween, and dedicated tests drive the tweens' clocks. A window starts its arrival on the frame it is shown (veil clear, frame low), so it never flashes at rest first; the rise is in whole pixels, so the icons stay on texel centres.
 - **The draw got cheaper:** frames replaced fill-and-outline pairs. `UiDrawProbe`: texture switches 380 → 337, sprite-batch begins 234 → 204 (B4 → U8).
 - Commits: `e3034fd` U8, `3c1a69d` its renders, `13466ab` U7.
+
+## 2026-11-03: UI polish, the window's size (`feat/ui-polish`, U10)
+
+- **At the producer's look** (2026-11-03: the window "is too small, I would like it to be 1920 x 1080", with a size picker in the menu for "the current ratio, 1920x1080, and 2560×1440"): read as the first default, 1280 × 720, beside the two named; all three are 16:9. They are `WindowSizes`, one row of pips in the header's menu, the window's own size lit; a dragged size lights none.
+- **The UI gets more room, never larger.** Text is baked and drawn 1:1, so the canvas follows the window at zoom 1 (Gum's `EnableExpandToWindow`). Before it, Gum's canvas kept the size it started with, so a window dragged larger drew the UI in its old corner: the size picker would have shown it at once.
+- **The window changes between updates,** at the start of the next one (`SimpiensGame.RequestWindowSize`), as host commands apply before ticks: never inside Gum's click, mid-layout.
+- **The choice is kept in a settings file only the desktop exe opts into** (`ClientOptions.SettingsFile`, as `UiMotion` and `ShowDebugIds` are host options): `settings.txt`, `key=value` lines beside the saves' folder; tests keep nothing, and a missing or odd file is no setting. `--width`/`--height` win over it. Sizes larger than the display aren't refused: the display's size isn't known the same way offscreen, so the window manager clamps them.
