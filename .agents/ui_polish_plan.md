@@ -55,7 +55,7 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 
 ### U10. The window's size (the producer's look, 2026-11-03) — [Basic: a client option, a menu row, a settings file]
 1. **1920 by 1080 by default** [Basic]: `ClientOptions`' size from `WindowSizes`.
-2. **The menu picks the size** [Basic]: 1280 × 720, 1920 × 1080, 2560 × 1440 as pips, the window's own lit; the game changes the window at the start of its next update, never inside the click; Gum's canvas follows the window.
+2. **The menu picks the size** [Basic]: 1280 × 720, 1920 × 1080, 2560 × 1440 (2240 × 1260 since U12) as pips, the window's own lit; the game changes the window at the start of its next update, never inside the click; Gum's canvas follows the window.
 3. **The choice is kept** [Basic]: `ClientSettings` (`settings.txt` beside the saves' folder), written only when the host passes a file (the desktop exe); the command line's size wins.
 4. **Tests** [Basic]: `WindowSizeTests`.
 
@@ -63,6 +63,11 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 1. **Full screen** [Possibly Complex: KNI's SDL window]: a choice under the size pips, borderless at the screen's own size (no mode switch); the menu's sizes leave it; the settings keep it. On the producer's screen (3440 × 1440 at 1.05 under Wayland: 1372 logical rows), a 2560 × 1440 window can't fit with its title bar, and SDL can't tell beforehand.
 2. **Portraits in whole steps** [Possibly Complex: the atlas's cells and every view that sizes around a portrait]: `PortraitAtlas.ScalesFor(height)`: the dossier's and the inspector's 2x at 720 rows, 3x at 1080, 4x at 1440; the speaker's 1x, then 2x. Cells hold the largest step; a new step re-bakes the seated portraits. The dossier's column, the inspector card and the scene's bubble and box grow by as much as their portrait.
 3. **Tests** [Basic]: `WindowSizeTests` (full screen), `DossierPortraitTests` (the steps, pixel for pixel, and the widths).
+
+### U12. A window that fits, faces you can make out (the producer, 2026-11-03) — [Basic: a size in a table, the atlas's U11 pattern once more]
+1. **2240 × 1260 in place of 2560 × 1440** [Basic]: 16:9, held by a 1440-row screen with its 44-row panel and a Breeze title bar even at a 1.05 scale (1372 logical rows, about 1298 for the picture); portraits still 4x at 1260.
+2. **Who is here at the speaker's step** [Basic]: a sector's faces 1x at 720 rows, 2x from 1080 (`PortraitAtlas.FaceScale`, a face cell per slot at the largest step); the resident cards grow to hold them, the words centred beside, and the list grows with them so it shows as many cards. The guild roster's and the feelings list's faces stay 1x, as the producer chose for U11.
+3. **Tests** [Basic]: `DossierPortraitTests` (the face's step pixel for pixel, the card's height), `WindowSizeTests`.
 
 ### U9. Close-out — [Basic]
 1. **Docs** [Basic]: `AGENTS.md`'s client notes (the kit), `.agents/architecture_history.md`; the roadmap once the producer says which epic owns this.
@@ -75,4 +80,5 @@ The UI is cut from the outpost's stone and lit by the portraits' lantern: a ston
 - 2026-11-03: U8 done (the ledger's panels, the inspector, the tracker, key help and the cutscene box in frames; insets as plaques; drive bars in grooves) and its renders re-recorded; U7 done (windows arrive, the gold rolls, behind `ClientOptions.UiMotion`, on in the desktop game). Client 433/433, exact in the pinned image. `UiDrawProbe` (Release, one run right after a build, so the time is indicative only): UiDraw 2.84 ms, texture switches 337, sprite-batch begins 204, against B4's 3.12 ms, 380 and 234.
 - 2026-11-03: the producer's look passed ("This is looking really good") and asked for U10: a 1920 by 1080 window by default, and a size picker in the menu. Done: Gum's canvas never followed the window before (a dragged window kept the UI at its first size); `EnableExpandToWindow` fixes both. The menu's rows now stack from their top: the load question's second line was hidden under its buttons since U4. Core 143/143, client 436/436 on the host, golden 3/3, MonoGame compiles.
 - 2026-11-03: the producer found 2560 × 1440 only widened the window (their screen has 1372 logical rows) and wanted portraits to grow in larger windows; asked, they chose a Full screen choice and portraits only (text and list faces stay 1:1). U11 done. Client 438/438 on the host.
+- 2026-11-03: the producer couldn't make out the faces in who is here, and asked for a window size that fits their screen without being full screen. U12 done. Client 438/438 on the host.
 - Still open, for the producer's look or a later pass: the combo boxes, scroll bars and list cards keep Gum's flat look in the palette; no exit motion (a window closes at once); the lintel has no coursed mortar (an atlas region can't tile in Gum). Next: U9, the close-out, after the producer's look.
