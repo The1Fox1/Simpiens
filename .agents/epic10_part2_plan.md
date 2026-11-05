@@ -150,7 +150,14 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
       - **Done, behind the tuning:** in `DayTuning`, a hazard's damage scale (0.3), the wear interval (one unit every 3 ticks) and healing awake and in a bunk (10 an hour). The map's hazards keep their figures, so the lone crawler's rule is unchanged. `Legacy` reproduces today (scale 1, every tick, 0.05 and 4 a second): golden 3/3, and T0's whole day is identical.
       - **At the cut-over:** fold the scale into the map's hazards as damage per game hour, and drop it.
       - **Measured:** 32.5 health per glowstone on the new day, against 35.7 today; a venture costs 18 health and nobody is downed.
-   3. **T3.2b Who ventures, and the expedition** [Possibly Complex: measuring; the guild's live scenarios must hold]: the lone crawler's hazard limit (Part 1's G5) and the retreat floors re-measured on the guild player's seeds.
+   3. **[x] T3.2b Who ventures, and the expedition** (done 2026-11-04) [Possibly Complex: measuring; the guild's live scenarios must hold]: the lone crawler's hazard limit (Part 1's G5) and the retreat floors re-measured on the guild player's seeds.
+      - **Measured** on seeds 1–15 with the guild player for three days, every resident starting at the recruiting standing (trust from trade is T4's; `docs/time-model.md` §2).
+      - **The damage share:** at T3.2a's 0.3, a glowstone cost a party what it does today, but 30% of trips turned back (9% today). At **0.25**, 14% turn back, and a glowstone costs a party 22 health (26 today) and a lone crawler 28 (36).
+      - **Kept:** the stages' limits (a trip is about 2 game hours) and the muster (a 4-hour muster gained nothing).
+      - **Who ventures alone** is unchanged: the rule reads the sector's own figure.
+      - **The probes found, for T4:** on the quiet day nobody reaches the recruiting standing, and members who join quit unpaid (the treasury can't pay wages each visit).
+      - **For T5:** some musters end with nobody leaving (6 of 21), because the scripted player sends a party whatever its members are doing.
+      - **Probe tool:** `DayTuning.WithHazard` overrides the share and wear for measuring.
 5. **T4 The economy per day** [Very Complex, supervised by the developer: the food trade shrinks about tenfold; a re-derivation, not a tweak]: the ration's price and value, the Garden's yield, the caravan's quota, upkeep and wages, `EarnIncomeGoal.ComfortableGold`; the soak's horizon in days and its bands, proposed to the producer; `docs/economy-model.md` rewritten.
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.

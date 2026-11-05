@@ -80,6 +80,21 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **The new day, at per-second damage** (three days each): a venture lasts 15 s and costs 47 health. Crawlers retreat (under 40) before a 21-second harvest ends, so glowstone falls to 0.1 a day, at 667 health each.
   - **With a 0.3 share of the damage and gear worn every 3 ticks** (three days each): a venture lasts 22 s and costs 18 health (median 12); 32.5 health per glowstone; nobody downed and no retreats.
   - Ventures are fewer (2.1 a day against 8.8) and glowstone with them (1.0 a day): the quiet day's, T4's.
+- **T3.2b, the expedition on the day** (2026-11-04): the guild player on seeds 1–15 sending parties to the Drowned Gallery. Every resident starts at the recruiting standing toward the player (trust 60, warmth 40), because trust from trade is T4's: on the quiet day nobody qualifies for the guild.
+  - **Today's pace, 30 minutes:** 45 trips, 4 turned back (9%); 26.1 health per glowstone to the members.
+  - **The new day, three days, by the share of hazard damage taken:**
+
+| Share | Parties turned back | Party health per glowstone | Lone health per glowstone |
+| :--- | ---: | ---: | ---: |
+| 0.3 | 6 of 20 (30%) | 26.9 | 32.5 |
+| 0.25 | 3 of 21 (14%) | 22.4 | 28.1 |
+| 0.2 | 0 of 25 | 17.6 | 21.2 |
+| 0.15 | 0 of 25 | 12.9 | 15.3 |
+
+  - **Taken: 0.25.** At 0.3 a glowstone costs a party what it does today, but turn-backs triple: a party's damage comes in concentrated stretches of 21-second harvests, and members heal more slowly between trips.
+  - **A trip:** about 2 game hours. Its stages stay far inside their limits (longest march 182 of 1,800 ticks, work 457 of 1,800, return 274 of 2,400), so the limits are kept.
+  - **The muster:** some musters end with nobody leaving (6 of 21). A 4-hour muster limit left 4, the same 15 parties marching and the same haul, so the 2.1-hour limit is kept. A member eats on the way at about 1 hunger a trip, and the stall still gives the trip's rations at the muster.
+  - **Who ventures alone is unchanged:** the rule reads the sector's own damage figure.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -97,7 +112,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | Hunger | `DayTuning` | +1.5 a second: fed to starving in 67 s | D | +100 over 24 h (4.17 an hour): 2.4 meals a day measured | T2.1 ✓ |
 | Starting and arrival hunger | `OutpostSession.ArrivalHunger`; `DrifterTuning` | 20; drifters 40–70 | D | kept: they come off the road wanting a meal | T2.1 |
-| The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations` | below 20, or carrying 2 rations | D | re-set to the new trip's cost, which stretched work sets (a 30 s trip costs about 3 hunger; the work's harvests, hours) | T3.2b |
+| The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations`, `MusterTicks` | below 20, or carrying 2 rations; 900 ticks | D | kept: the stall still gives the trip's rations at the muster, and a 4-hour muster gained nothing | T3.2b ✓ |
 | Energy, standing | `DayTuning` | −0.2 a second | D | −2.75 an hour: 100 to the tired line (40) in about 16 hours of standing (re-measured at T2.4) | T2.2 ✓ |
 | Energy, walking | `DayTuning` | −1.0 a second | D | −8.25 an hour, three times standing (today five) | T2.2 ✓ |
 | Energy, working (new) | `DayTuning.EnergyWorkingPerSecond` (the harvesting pose; a station's work at W1.3) | as standing | D | the walking rate, 8.25 an hour: work tires as walking does (W1.3's D15) | T2.4 ✓ |
@@ -110,7 +125,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `DayTuning` (was `Vitality.RestingHealPerSecond`) | 0.05 a second (about 50 a day already) | D | 0.05 a second, about 50 a day (kept) | T3.2a ✓ |
 | Healing in a bunk | `DayTuning` (was `Vitality.BunkHealPerSecond`) | 4 a second (12 per 3-second nap) | D | +10 an hour: a night's sleep heals 80 | T3.2a ✓ |
-| Hazard damage | `Floor1Layout`'s hazards, times `DayTuning.HazardDamageScale` | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | 0.3 of it (38, 50 and 76 an hour): 32.5 health per glowstone measured, against 35.7 | T3.2a ✓ |
+| Hazard damage | `Floor1Layout`'s hazards, times `DayTuning.HazardDamageScale` | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | a quarter of it (32, 42 and 63 an hour): a glowstone costs a lone crawler 28 health (today 36) and a party 22 (today 26); parties turn back 14% of the time (today 9%) | T3.2a, T3.2b ✓ |
 | The lone crawler's hazard limit | `Vitality.LoneHazardLimit` | 4 a second | D | kept: judged on the sector's own figure, so who ventures alone doesn't change | T3.2a ✓ |
 | Hazard gear's life | `ItemCatalog` (protection, `PerHazardTick`), one unit every `DayTuning.HazardWearEveryTicks` | 500 ticks of exposure (50 s) | D | a unit every 3 ticks: 1,500 ticks of exposure (about 3.6 game hours), so gear lasts about as many ventures as today's | T3.2a ✓ |
 
@@ -143,7 +158,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | The guild's and the stations' cooldowns | `GuildTuning.RejoinCooldownTicks`, `WorkshopTuning.RehireCooldownTicks` | 3,000 (about 7 game hours) | D | kept: 7.1 game hours | T3.1 ✓ |
 | A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | kept: 14.3 game hours | T3.1 ✓ |
 | A posted bounty's life | `BountyBoardModel` | 500–3,000 ticks, 1,000 offered, shown in ticks | D | 4–24 h, 12 offered, shown in hours: the board's model and its words | T6 |
-| The expedition's stages (limits) | `ExpeditionTuning` | muster 900, march 1,800, work 1,800, return 2,400 | D | in hours, with room for stretched harvests in the work | T3.2b |
+| The expedition's stages (limits) | `ExpeditionTuning` | muster 900, march 1,800, work 1,800, return 2,400 | D | kept: a trip is about 2 game hours, its longest work stage 457 ticks | T3.2b ✓ |
 | Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept for now: the quiet day comes from purses (T4), not forgetting; looked at again with T4's busier day | T4 |
 | Exploration's choice, gossip's cooldown | `ResourceTargeting.SectorChoiceTicks`; `SocialDynamics` | 200; 100 | P | kept | |
 | Retries | `SleepAtBunkIntentHandler`, `SessionHost.Drifters` | 30, 100, 50 | P | kept | |

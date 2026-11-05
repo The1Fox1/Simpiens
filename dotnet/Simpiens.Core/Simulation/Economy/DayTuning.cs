@@ -88,6 +88,11 @@ namespace Simpiens.Simulation.Economy
             BunkHealPerSecond = bunkHealPerSecond;
         }
 
+        /// <summary>A copy with another share of hazard damage taken and gear's wear interval (measuring, T3.2).</summary>
+        public DayTuning WithHazard(float damageScale, int wearEveryTicks) => new DayTuning(HungerPerSecond, EnergyStandingPerSecond,
+            EnergyWalkingPerSecond, SocialPerSecond, BunkRecoveryPerSecond, RestRecoveryPerSecond, SleepSeconds, WakeEnergy, WakeHunger, SleepBonus,
+            RestSeconds, RestBonus, RelaxEnergyBonus, EnergyWorkingPerSecond, Actions, damageScale, wearEveryTicks, RestingHealPerSecond, BunkHealPerSecond);
+
         /// <summary>Whether a sleeper (in a bunk or rough) is up: rested, or too hungry to sleep on.</summary>
         public bool Wakes(float energy, float hunger) => energy >= WakeEnergy || hunger >= WakeHunger;
 
@@ -126,9 +131,9 @@ namespace Simpiens.Simulation.Economy
         /// starving (85): about 8 hours from the tired line;</item>
         /// <item>no bonus at a sleep's end, and the hearth restores company, not energy;</item>
         /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.FullDay"/>);</item>
-        /// <item>a hazard takes 0.3 of its damage a second, and gear wears a unit every 3 ticks of exposure, so a venture of about
-        /// 28 s (a 21-second harvest and the walk) costs the health and wear a 9-second one did; a bunk heals 10 an hour, a night
-        /// 80, and awake about 50 a day as before (T3.2a).</item>
+        /// <item>a hazard takes a quarter of its damage a second, and gear wears a unit every 3 ticks of exposure: a glowstone
+        /// costs a lone crawler about 28 health (36 before the day) and a party about 22 (26), and parties turn back about as
+        /// often; a bunk heals 10 an hour, a night 80, and awake about 50 a day as before (T3.2a, T3.2b).</item>
         /// </list>
         /// </summary>
         public static DayTuning FullDay => new DayTuning(
@@ -147,7 +152,7 @@ namespace Simpiens.Simulation.Economy
             relaxEnergyBonus: 0f,
             energyWorkingPerSecond: DayClock.PerSecond(8.25f),
             actions: ActionTuning.FullDay,
-            hazardDamageScale: 0.3f,
+            hazardDamageScale: 0.25f,
             hazardWearEveryTicks: 3,
             restingHealPerSecond: 0.05f,
             bunkHealPerSecond: DayClock.PerSecond(10f));
