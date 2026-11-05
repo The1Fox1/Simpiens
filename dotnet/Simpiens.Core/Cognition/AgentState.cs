@@ -193,9 +193,15 @@ namespace Simpiens.Cognition
         }
 
         /// <summary>
-        /// Advance biological drives and emotion timers on fixed logical tick delta.
+        /// Advance biological drives and emotion timers on fixed logical tick delta, at the default economy's pace.
         /// </summary>
-        public void Tick(float dt)
+        public void Tick(float dt) => Tick(dt, Simpiens.Simulation.Economy.EconomyTuning.Default.Day);
+
+        /// <summary>
+        /// Advance biological drives and emotion timers on fixed logical tick delta, at the session's pace
+        /// (<see cref="Simpiens.Simulation.Economy.DayTuning"/>, Epic 10 Part 2, milestone T).
+        /// </summary>
+        public void Tick(float dt, in Simpiens.Simulation.Economy.DayTuning day)
         {
             if (YieldingTimer > 0f) YieldingTimer -= dt;
             if (SharingTimer > 0f) SharingTimer -= dt;
@@ -221,14 +227,14 @@ namespace Simpiens.Cognition
             // Biological drive decay
             // Every step cast to float: Unity's Mono keeps a scalar chain's intermediates at double precision, CoreCLR
             // doesn't, and needs compared against thresholds then parted the golden seeds (Epic CORE F1, Epic 10 G2)
-            float hunger = SimMath.Min(100f, (float)(Needs.Hunger + (float)(dt * 1.5f)));
+            float hunger = SimMath.Min(100f, (float)(Needs.Hunger + (float)(dt * day.HungerPerSecond)));
             float energy = Needs.Energy;
 
             bool inBunk = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.SleepAtBunkAction;
             if (IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
             {
                 // A bunk restores energy faster than resting where you stand (Epic MAP Phase 3 rest anchor)
-                float rate = inBunk && !IsExhaustionCollapsed ? Simpiens.Cognition.Planning.Considerations.BunkRecoveryPerSecond : 15f;
+                float rate = inBunk && !IsExhaustionCollapsed ? day.BunkRecoveryPerSecond : day.RestRecoveryPerSecond;
                 energy = SimMath.Min(100f, (float)(energy + (float)(dt * rate)));
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
@@ -239,11 +245,11 @@ namespace Simpiens.Cognition
             }
             else if (VisualState == AgentVisualState.Walking)
             {
-                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 1.0f)));
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyWalkingPerSecond)));
             }
             else
             {
-                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 0.2f)));
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyStandingPerSecond)));
             }
 
             // Health (Epic 10 G2): heals slowly anywhere, fast asleep in a bunk; a downed crawler gets up at RecoveredAt.
@@ -256,7 +262,7 @@ namespace Simpiens.Cognition
                 SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} is back on its feet (health {Health:F0})");
             }
 
-            float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * 0.5f)));
+            float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
             Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * 1f)));
 

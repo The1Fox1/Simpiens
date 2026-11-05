@@ -34,6 +34,11 @@ namespace Simpiens.Cognition
             _chronicleService = chronicleService;
         }
 
+        /// <summary>The session's pace: what sleep and rest restore (the default economy's until a session sets one).</summary>
+        public DayTuning Day { get; private set; } = EconomyTuning.Default.Day;
+
+        public void SetPace(in DayTuning day) => Day = day;
+
         public void ApplyConsequences(AgentState agent, AgentIntent intent, IntentResult result, uint currentTick)
         {
             if (agent == null) return;
@@ -77,11 +82,11 @@ namespace Simpiens.Cognition
                     }
                     else if (completedAction is RestAction)
                     {
-                        agent.Energy = SimMath.Min(100f, agent.Energy + 30f);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + Day.RestBonus);
                     }
                     else if (completedAction is SleepAtBunkAction && intent is SleepAtBunkIntent)
                     {
-                        agent.Energy = SimMath.Min(100f, agent.Energy + Simpiens.Cognition.Planning.Considerations.BunkSleepBonus);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + Day.SleepBonus);
                     }
                     else if (completedAction is TravelToPeerAction)
                     {

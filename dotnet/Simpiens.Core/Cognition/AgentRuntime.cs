@@ -84,7 +84,7 @@ namespace Simpiens.Cognition
             if (_clock != null && _clock.IsPaused) return;
 
             // Advance biological drives and emotion timers on fixed logical tick dt
-            State.Tick(FixedTickDeltaTime);
+            State.Tick(FixedTickDeltaTime, _simulationManager != null ? _simulationManager.Economy.Day : Simpiens.Simulation.Economy.EconomyTuning.Default.Day);
 
             // Keep the crawler's copy of its memberships synced with the authoritative group registry (cognition reads the copy)
             if (_simulationManager?.Groups != null)

@@ -75,11 +75,7 @@ namespace Simpiens.Cognition.Planning
         /// Neutral: ore 8g, herb 12g (seeded stall buy prices are 20g / 25g, so neutral behaviour is unchanged).
         /// </summary>
         // --- Rest anchor (Epic MAP Phase 3) ---
-        /// <summary>Energy per second while asleep in a bunk (resting in place: 15).</summary>
-        public const float BunkRecoveryPerSecond = 30f;
-
-        /// <summary>Energy added when a bunk sleep completes (resting in place: 30).</summary>
-        public const float BunkSleepBonus = 40f;
+        // Sleep's and rest's numbers are the session's pace (DayTuning, Epic 10 Part 2, milestone T)
 
         /// <summary>Below this energy a crawler rests where it stands rather than walking to a bunk.</summary>
         public const float TooTiredToWalkEnergy = 15f;

@@ -10,9 +10,6 @@ namespace Simpiens.Cognition.Planning.Actions
     /// </summary>
     public class SleepAtBunkAction : GoapAction
     {
-        /// <summary>Seconds asleep per bunk visit.</summary>
-        public const float SleepSeconds = 3.0f;
-
         public SleepAtBunkAction(float cost = 0.5f) : base("SleepAtBunk", cost)
         {
             Preconditions = WorldState.Empty.With(StateFact.AtBunk, true);
@@ -28,7 +25,8 @@ namespace Simpiens.Cognition.Planning.Actions
             {
                 return new IdleIntent(context.AgentId, 0.5f);
             }
-            return new SleepAtBunkIntent(context.AgentId, bunkId, SleepSeconds);
+            // Asleep for the session's longest sleep, or until rested (DayTuning, Epic 10 Part 2, milestone T)
+            return new SleepAtBunkIntent(context.AgentId, bunkId, Considerations.Economy(context).Day.SleepSeconds);
         }
     }
 }

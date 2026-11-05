@@ -402,6 +402,7 @@ namespace Simpiens.Simulation
             _economy = economy ?? EconomyTuning.Default;
             _supplyService?.Configure(_economy.Supply);
             _spatialPartition?.SetEconomy(_economy);
+            _consequenceService?.SetPace(_economy.Day);
         }
 
         public void Tick()

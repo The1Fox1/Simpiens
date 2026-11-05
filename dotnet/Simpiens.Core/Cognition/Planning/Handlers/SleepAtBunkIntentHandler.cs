@@ -8,7 +8,8 @@ namespace Simpiens.Cognition.Planning.Handlers
 {
     /// <summary>
     /// Executes a SleepAtBunkIntent: claims the bunk on the first tick (one sleeper per bunk, the agent standing at
-    /// it), then sleeps for the intent's duration. Energy recovers in AgentState while the plan's current action is
+    /// it), then sleeps for the intent's duration, or until rested (the session's wake energy; a downed sleeper sleeps the
+    /// whole duration, for its health). Energy recovers in AgentState while the plan's current action is
     /// SleepAtBunk; the completion bonus is the consequence service's. Occupancy is released when the sleep ends, and
     /// the simulation drops any claim whose sleeper is no longer sleeping there (preempted or removed).
     /// </summary>
@@ -44,11 +45,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent != null) agent.VisualState = AgentVisualState.Sleeping;
 
-            if (state.ElapsedTime >= sleep.Duration)
+            bool rested = agent != null && !agent.IsDowned && agent.Energy >= context.Economy.Day.WakeEnergy;
+            if (state.ElapsedTime >= sleep.Duration || rested)
             {
                 context.ReleaseBunk(sleep.BunkId, node.Id);
                 context.RecordBunkSleep(node.Id);
-                if (agent != null && agent != null) agent.Activity.RecordBunkSleep(context.CurrentTick);
+                if (agent != null) agent.Activity.RecordBunkSleep(context.CurrentTick);
                 if (agent != null) agent.VisualState = AgentVisualState.Idle; // up and out of the bunk
                 SimLog.Drives.ZLogDebug($"{SimLog.Agent(node.Id)} slept in bunk {SimLog.Agent(sleep.BunkId)}");
                 return IntentResult.Success;

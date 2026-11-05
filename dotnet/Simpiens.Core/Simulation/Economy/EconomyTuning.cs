@@ -183,6 +183,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The stations and their artisans (Epic 10 Part 2).</summary>
         public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;
 
+        /// <summary>The pace of a crawler's day: needs, sleep and rest (Epic 10 Part 2, milestone T).</summary>
+        public DayTuning Day { get; private set; } = DayTuning.Default;
+
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -232,6 +235,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Workshops = workshops;
+            return copy;
+        }
+
+        public EconomyTuning WithDay(in DayTuning day)
+        {
+            var copy = Copy();
+            copy.Day = day;
             return copy;
         }
 
