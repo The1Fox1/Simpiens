@@ -329,7 +329,22 @@ namespace Simpiens.Testing.Economy
             smith.Energy = tuning.RestedEnergy;
             o.Sim.Tick(5);
             Assert(workshops.TryGetContract(smith.AgentId, out var back) && !back.OnBreak && workshops.OrderFor(smith.AgentId, 5).IsActive, "Rested, it is back on its shift.");
-            TestLog.Log($"[PASS] Test 10: At energy {tuning.BreakEnergy} on shift an artisan breaks down (trust {tuning.Break.Trust}, warmth {tuning.Break.Warmth}), off its shifts until rested to {tuning.RestedEnergy}.");
+
+            // D35: three blocks in a row break it whatever its energy; a gap starts the count again
+            smith.Energy = 90f;
+            uint t = 6;
+            for (; t < 6 + tuning.BreakAfterTicks - 2; t++) o.Sim.Tick(t);
+            Assert(workshops.TryGetContract(smith.AgentId, out var long9) && !long9.OnBreak && long9.ShiftRunTicks == tuning.BreakAfterTicks - 2, $"Nearly ten hours on shift in a row, rested, it works on ({long9.ShiftRunTicks} ticks).");
+            smith.Energy = 90f;
+            o.Sim.Tick(t++);
+            o.Sim.Tick(t++);
+            Assert(workshops.TryGetContract(smith.AgentId, out var long10) && long10.OnBreak && long10.ShiftRunTicks == 0, "Ten hours on shift in a row break it, energy or not.");
+            smith.Energy = tuning.RestedEnergy;
+            o.Sim.Tick(t++);
+            workshops.SetShifts(o.Sim, smith.AgentId, 0);
+            o.Sim.Tick(t++);
+            Assert(workshops.TryGetContract(smith.AgentId, out var gap) && !gap.OnBreak && gap.ShiftRunTicks == 0, "Off shift, the count starts again.");
+            TestLog.Log($"[PASS] Test 10: At energy {tuning.BreakEnergy}, or {tuning.BreakAfterTicks / DayClock.TicksPerHour} hours on shift in a row, an artisan breaks down (trust {tuning.Break.Trust}, warmth {tuning.Break.Warmth}), off its shifts until rested to {tuning.RestedEnergy}.");
         }
 
         private static Simpiens.Cognition.AgentState Crawler(Outpost o, sbyte trust, sbyte warmth, float risk = 0.1f, float greed = 0f)

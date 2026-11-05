@@ -376,8 +376,21 @@ namespace Simpiens.Simulation.Workshops
             {
                 if (host.TryGetCrawler(_artisans[i].CrawlerId, out var crawler) && crawler != null)
                 {
-                    if (_artisans[i].OnBreak && crawler.Energy >= tuning.RestedEnergy) _artisans[i] = _artisans[i].WithOnBreak(false);
-                    else if (!_artisans[i].OnBreak && crawler.Energy <= tuning.BreakEnergy && IsOnShift(_artisans[i], tick)) BreakDown(host, i, crawler, tick, tuning);
+                    if (_artisans[i].OnBreak)
+                    {
+                        if (crawler.Energy >= tuning.RestedEnergy) _artisans[i] = _artisans[i].WithOnBreak(false);
+                    }
+                    else if (IsOnShift(_artisans[i], tick))
+                    {
+                        // On shift without a gap: three blocks in a row break it whatever its energy, the break line sooner (D35)
+                        ushort run = (ushort)Math.Min(ushort.MaxValue, _artisans[i].ShiftRunTicks + 1);
+                        _artisans[i] = _artisans[i].WithShiftRun(run);
+                        if (run >= tuning.BreakAfterTicks || crawler.Energy <= tuning.BreakEnergy) BreakDown(host, i, crawler, tick, tuning);
+                    }
+                    else if (_artisans[i].ShiftRunTicks != 0)
+                    {
+                        _artisans[i] = _artisans[i].WithShiftRun(0);
+                    }
                 }
                 var contract = _artisans[i];
                 byte crew = contract.StationIndex < _stations.Length ? _stations[contract.StationIndex].CrewGroupId : (byte)0;
@@ -410,7 +423,7 @@ namespace Simpiens.Simulation.Workshops
             crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Break.Warmth, tuning.Break.Trust, 0, tuning.Break.Respect, tick);
             crawler.TriggerTantrumVisual();
             var kind = _stations[contract.StationIndex].Kind;
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(contract.CrawlerId)} broke down at the {kind}: overworked at energy {crawler.Energy:F0}");
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(contract.CrawlerId)} broke down at the {kind}: overworked, {contract.ShiftRunTicks / DayClock.TicksPerHour} h on shift at energy {crawler.Energy:F0}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanBrokeDown, contract.CrawlerId, WorldRegistry.PlayerEntityId,
                 host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Dramatic, (byte)kind));
         }

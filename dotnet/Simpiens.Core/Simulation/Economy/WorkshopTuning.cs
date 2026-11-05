@@ -53,11 +53,18 @@ namespace Simpiens.Simulation.Economy
         public readonly TrustDelta Break;
         public readonly float RestedEnergy;
 
+        /// <summary>
+        /// Hours on shift in a row that break an artisan whatever its energy (W1.3, D35): three blocks in a row deplete its
+        /// needs, two don't. In ticks.
+        /// </summary>
+        public readonly uint BreakAfterTicks;
+
         public WorkshopTuning(ushort constructionCost, sbyte hireTrust, sbyte hireWarmth, byte maxRiskTolerancePercent, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust,
-            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f)
+            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour)
         {
+            BreakAfterTicks = breakAfterTicks;
             BreakEnergy = breakEnergy;
             Break = breakCost;
             RestedEnergy = restedEnergy;
@@ -98,6 +105,7 @@ namespace Simpiens.Simulation.Economy
             dismissTrust: -5,
             breakEnergy: 15f,
             breakCost: new TrustDelta(warmth: -5, trust: -10, respect: 0),
-            restedEnergy: 60f);
+            restedEnergy: 60f,
+            breakAfterTicks: DayClock.Hours(10));
     }
 }
