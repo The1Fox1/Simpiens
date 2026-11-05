@@ -60,6 +60,11 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **Where:** 5.3 hours a day in a bunk and 2.0 sleeping rough. With 8 bunks for 12 residents and the drifters, a quarter of sleep is on the floor, which T2.3's beds answer.
   - **Hunger:** 61 of about 810 sleeps ended at the starvation line (85), and the sleeper went to eat. Nobody starved or collapsed.
   - **Walking:** 16% of waking time. Stretched work (T2.4) will change the mix, so the rates are re-measured there.
+- **T2.3, a bunk per resident** (2026-11-04): the same, on Floor 1 with 12 bunks (`Floor1Layout.FullDayDefinition`).
+  - **Sleep:** 7.8 hours a sleep, 7.7 per calendar day.
+  - **Where:** rough for 0.4 hours a day, down from 2.0.
+  - **When:** most crawlers wake at 07:00.
+  - **Hunger:** 34 sleeps ended by hunger, down from 61. Nobody starved or collapsed.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -85,6 +90,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Resting in place, and a collapse | `DayTuning` (was `RestAction`, the consequence service) | +15 a second; a rest is 2 s, then +30 | D | sleeping rough: +4 an hour, no bonus, up at the same lines as a bunk, for at most 12 hours; a collapse is up at 30 after 7.5 hours | T2.2 ✓ |
 | The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept: sleep begins at energy 37 on average | T2.2 ✓ |
 | Social | `DayTuning` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 ✓ |
+| Bunks | `Floor1Layout` | 8, two rows | — | 12, three rows filling the bunkhouse's walkable depth (`FullDayBunkCount`, `FullDayDefinition`); drifters sleep rough when they are full | T2.3 ✓ |
 | A spell at the hearth | the consequence service | +20 social, +10 energy | D | +20 social, no energy: at +10 a visit the hearth outran the waking day's drain, and nobody would sleep | T2.2 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `Vitality.RestingHealPerSecond` | 0.05 a second (about 50 a day already) | D | about 50 a day (kept in day terms) | T3.2a |

@@ -40,13 +40,18 @@ namespace Simpiens.Core.Session
 
         /// <summary>
         /// A crawler count other than the default is for measurement only (PopulationScalingProbe); so is a tuning other
-        /// than <see cref="EconomyTuning.Default"/> (the economy soak).
+        /// than <see cref="EconomyTuning.Default"/> (the economy soak), and a floor other than Floor 1's own (the 24-hour day's
+        /// probes, Epic 10 Part 2, T2.3).
         /// </summary>
-        public OutpostSession(int crawlerCount, EconomyTuning economy = null)
+        public OutpostSession(int crawlerCount, EconomyTuning economy = null, MapDefinition map = null)
         {
             CrawlerCount = crawlerCount;
             Economy = economy ?? EconomyTuning.Default;
+            _map = map;
         }
+
+        // A floor other than Floor 1's own: the 24-hour day's beds (Epic 10 Part 2, T2.3) until the cut-over
+        private readonly MapDefinition _map;
 
         public int CrawlerCount { get; }
 
@@ -54,7 +59,7 @@ namespace Simpiens.Core.Session
 
         public string Id => SessionId;
         public string DisplayName => "Main Map";
-        public MapDefinition Map => Floor1Layout.Definition;
+        public MapDefinition Map => _map ?? Floor1Layout.Definition;
 
         public void Populate(SessionBuilder session)
         {

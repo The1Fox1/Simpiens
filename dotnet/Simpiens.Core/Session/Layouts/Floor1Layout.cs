@@ -73,6 +73,12 @@ namespace Simpiens.Core.Session.Layouts
         public const int SpawnPointCount = 12;
         public const int BunkCount = 8;
 
+        /// <summary>
+        /// A bunk per resident (Epic 10 Part 2, T2.3, D21): on the 24-hour day a sleeper holds its bunk about 8 hours. The
+        /// day's probes use <see cref="FullDayDefinition"/> until the cut-over (T5) makes it the floor.
+        /// </summary>
+        public const int FullDayBunkCount = 12;
+
         /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
         public static readonly IReadOnlyList<Vec2> Doors = new[]
         {
@@ -93,11 +99,15 @@ namespace Simpiens.Core.Session.Layouts
         public static Vec2 HubBunkhouseDoor => Doors[5];
 
         private static MapDefinition _definition;
+        private static MapDefinition _fullDayDefinition;
 
         /// <summary>Built once; definitions are immutable.</summary>
-        public static MapDefinition Definition => _definition ??= Build();
+        public static MapDefinition Definition => _definition ??= Build(BunkCount);
 
-        private static MapDefinition Build()
+        /// <summary>The floor with a bunk per resident (T2.3), for the 24-hour day until the cut-over makes it <see cref="Definition"/>.</summary>
+        public static MapDefinition FullDayDefinition => _fullDayDefinition ??= Build(FullDayBunkCount);
+
+        private static MapDefinition Build(int bunkCount)
         {
             var b = new MapDefinitionBuilder("Floor1", new RectF(-24f, -24f, 48f, 42f));
 
@@ -177,10 +187,12 @@ namespace Simpiens.Core.Session.Layouts
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
             b.Poi(Hearth, PoiKind.Hearth, new Vec2(-4.5f, -3.5f), 3.0f);
 
-            // --- Bunkhouse: two rows of four in the west half, clear of the gate-to-hub lane (x 2..6) ---
-            for (int i = 0; i < BunkCount; i++)
+            // --- Bunkhouse: rows of four in the west half, clear of the gate-to-hub lane (x 2..6). Two rows for 8; for a bunk
+            // per resident (T2.3), three rows filling the walkable depth between the walls (y -7.5 to -11) ---
+            for (int i = 0; i < bunkCount; i++)
             {
-                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6f + (i % 4) * 2f, i < 4 ? -8f : -10f), 1.0f);
+                float y = bunkCount <= 8 ? (i < 4 ? -8f : -10f) : -7.5f - (i / 4) * 1.75f;
+                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6f + (i % 4) * 2f, y), 1.0f);
             }
 
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---

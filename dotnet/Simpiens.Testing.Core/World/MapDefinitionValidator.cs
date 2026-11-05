@@ -28,7 +28,8 @@ namespace Simpiens.Testing.World
             ValidatePlayableBounds();
             ValidatePartitionSizing();
             ValidateFloor1Layout();
-            ValidateFloor1LiveUse();
+            ValidateFloor1LiveUse(Floor1Layout.Definition, Floor1Layout.BunkCount);
+            ValidateFloor1LiveUse(Floor1Layout.FullDayDefinition, Floor1Layout.FullDayBunkCount);
             ValidateDevMapLayout();
 
             TestLog.Log("<color=green>[MapDefinitionValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
@@ -314,13 +315,12 @@ namespace Simpiens.Testing.World
         /// doors, and a hearth whose gathering ring keeps clear of every doorway and of the stall, so a crowd at
         /// the fire never jams a door. Bunks sit clear of the gate-to-hub lane through the Bunkhouse.
         /// </summary>
-        private void ValidateFloor1LiveUse()
+        private void ValidateFloor1LiveUse(MapDefinition def, int bunkCount)
         {
             const float HearthGatherRing = 2.0f;   // TravelToAnchorAction's perimeter distance
             const float DoorApron = 3.0f;          // room in front of a door that must stay clear
             const float LaneClearance = 1.5f;
 
-            var def = Floor1Layout.Definition;
             var grid = Rasterized(def);
 
             for (int i = 0; i < def.Sectors.Count; i++)
@@ -340,7 +340,10 @@ namespace Simpiens.Testing.World
             int spawns = CountPois(def, PoiKind.SpawnPoint, Floor1Layout.RoadGateSectorId, grid);
             Assert(spawns == Floor1Layout.SpawnPointCount, $"Floor1 has {Floor1Layout.SpawnPointCount} spawn points in the Road Gate (found {spawns}).");
             int bunks = CountPois(def, PoiKind.Bunk, Floor1Layout.BunkhouseSectorId, grid);
-            Assert(bunks == Floor1Layout.BunkCount, $"Floor1 has {Floor1Layout.BunkCount} bunks in the Bunkhouse (found {bunks}).");
+            Assert(bunks == bunkCount, $"Floor1 has {bunkCount} bunks in the Bunkhouse (found {bunks}).");
+            // A sleeper holds its bunk about 8 hours of the 24-hour day (Epic 10 Part 2, T2.3, D21): a bunk per resident
+            Assert(bunkCount < Floor1Layout.FullDayBunkCount || bunks >= Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount,
+                $"Floor1 for the 24-hour day has a bunk per resident ({bunks} for {Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount}).");
 
             Assert(def.TryGetPoi(Floor1Layout.Hearth, out var hearth) && def.FindSector(hearth.Position).Id == Floor1Layout.HubSectorId, "The hearth is in the Hub.");
             Assert(def.TryGetPoi(Floor1Layout.Stall, out var stall), "Floor1 has the stall.");
