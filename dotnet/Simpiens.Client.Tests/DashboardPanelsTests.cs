@@ -98,6 +98,23 @@ namespace Simpiens.Client.Tests
             Assert.Equal(0f, crawler.Agent.Frustration);
         }
 
+        /// <summary>A worn tool shows on its own line under the gear, only while there is one (Epic 10 Part 2, W1.6b).</summary>
+        [Fact]
+        public void TheDossierShowsAWornToolOnlyWhileThereIsOne()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            ui.Frame();
+            Assert.Equal(string.Empty, game.Play.Dashboard.Panels.ToolShown);
+            crawler.Agent.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.ToolPickaxe, 1, 30, durability: 32)); // by hand
+            game.Play.Dashboard.Refresh();
+            ui.Frame();
+            Assert.Equal("Tool: Pickaxe, 80% left", game.Play.Dashboard.Panels.ToolShown);
+            RenderTests.CompareWithReference("render-outpost-dossier-tool", FrameCapture.Capture(game, Width, Height), Width, Height);
+        }
+
         [Fact]
         public void TheDashboardLooksAsRecorded()
         {

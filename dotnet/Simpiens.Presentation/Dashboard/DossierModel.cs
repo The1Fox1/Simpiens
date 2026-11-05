@@ -108,6 +108,11 @@ namespace Simpiens.Presentation.Dashboard
         public string GearIcon { get; private set; }
         public const string NoGear = "None";
 
+        /// <summary>The worn tool and its wear (Epic 10 Part 2, W1.6b): "Pickaxe, 80% left"; empty with none, and the line hides.</summary>
+        public string Tool { get; private set; } = string.Empty;
+        /// <summary>The worn tool's icon; null with none.</summary>
+        public string ToolIcon { get; private set; }
+
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
         public float Social { get; private set; }
@@ -149,6 +154,8 @@ namespace Simpiens.Presentation.Dashboard
             _affinities.Clear();
             _shownRows.Clear();
             GearIcon = null;
+            Tool = string.Empty;
+            ToolIcon = null;
             if (!HasCrawler) return;
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
@@ -164,6 +171,9 @@ namespace Simpiens.Presentation.Dashboard
             Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
             Gear = GearText(worn);
             GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
+            var tool = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Tool) : default;
+            Tool = tool.IsEmpty ? string.Empty : GearText(tool);
+            ToolIcon = tool.IsEmpty ? null : ItemIcons.Of(tool.Type);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;

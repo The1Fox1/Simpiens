@@ -146,6 +146,15 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear); // by its catalog name
             Assert.Equal("item/hazard-gear/icon", model.Dossier.GearIcon);
             Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1)));
+
+            // A worn tool has its own line, shown only while there is one (Epic 10 Part 2, W1.6b)
+            Assert.Equal(string.Empty, model.Dossier.Tool);
+            Assert.Null(model.Dossier.ToolIcon);
+            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 32));
+            model.SelectCrawler(crawler.AgentId);
+            Assert.Equal("Pickaxe, 80% left", model.Dossier.Tool); // 32 of its 40
+            Assert.Equal("item/pickaxe/icon", model.Dossier.ToolIcon);
+            Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear);
         }
 
         [Fact]
