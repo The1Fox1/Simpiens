@@ -162,12 +162,15 @@ namespace Simpiens.Client.Tests
         // the labels, with the render references.
         // Epic UI-Beta B2 (2026-11-03): every crawler is drawn as its own body, a cell of the world sheet's body region, so
         // every item pin was re-pinned with the render references after the producer's look; labels unchanged.
-        private static readonly (ulong, ulong) PinnedTick0 = (17641633296866019416UL, 14250960641362250661UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (5459232858451998362UL, 14250960641362250661UL);
+        // Epic 10 Part 2 W0.4 (2026-11-04): the workshop row and the guildhall replace the rock beside the Drowned Gallery,
+        // with their floors, walls and names; the whole-floor pins moved, items and labels, and the zoomed views' labels
+        // (every placed label is hashed), while their items held: nothing a crawler does changed.
+        private static readonly (ulong, ulong) PinnedTick0 = (13810513833912911892UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (14479185192591091426UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8048523018784521886UL, 9314585316717962577UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8048523018784521886UL, 1239957284459108722UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (17091240611631339463UL, 5606140428678540481UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9986015466188299776UL, 3214430476125141426UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (15504138619723559082UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9986015466188299776UL, 9128535880043675920UL);
     }
 }
