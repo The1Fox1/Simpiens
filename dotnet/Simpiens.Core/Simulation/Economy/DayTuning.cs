@@ -27,20 +27,27 @@ namespace Simpiens.Simulation.Economy
         public readonly float RestRecoveryPerSecond;
 
         /// <summary>
-        /// The longest a bunk sleep lasts; it ends sooner once energy reaches <see cref="WakeEnergy"/>. Energy added when it
-        /// ends.
+        /// The longest a bunk sleep lasts; it ends sooner once energy reaches <see cref="WakeEnergy"/>, or hunger
+        /// <see cref="WakeHunger"/> (a sleeper doesn't starve in its bunk). Energy added when it ends.
         /// </summary>
         public readonly float SleepSeconds;
         public readonly float WakeEnergy;
+        public readonly float WakeHunger;
         public readonly float SleepBonus;
 
-        /// <summary>How long a rest where it stands lasts, and the energy added when it ends.</summary>
+        /// <summary>
+        /// The longest a rest where it stands lasts (sleeping rough: it ends at the same wake lines as a bunk sleep), and the
+        /// energy added when it ends.
+        /// </summary>
         public readonly float RestSeconds;
         public readonly float RestBonus;
 
+        /// <summary>Energy a spell at the hearth adds (its social is the hearth's own).</summary>
+        public readonly float RelaxEnergyBonus;
+
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
-            float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float sleepBonus,
-            float restSeconds, float restBonus)
+            float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
+            float restSeconds, float restBonus, float relaxEnergyBonus)
         {
             HungerPerSecond = hungerPerSecond;
             EnergyStandingPerSecond = energyStandingPerSecond;
@@ -50,14 +57,19 @@ namespace Simpiens.Simulation.Economy
             RestRecoveryPerSecond = restRecoveryPerSecond;
             SleepSeconds = sleepSeconds;
             WakeEnergy = wakeEnergy;
+            WakeHunger = wakeHunger;
             SleepBonus = sleepBonus;
             RestSeconds = restSeconds;
             RestBonus = restBonus;
+            RelaxEnergyBonus = relaxEnergyBonus;
         }
+
+        /// <summary>Whether a sleeper (in a bunk or rough) is up: rested, or too hungry to sleep on.</summary>
+        public bool Wakes(float energy, float hunger) => energy >= WakeEnergy || hunger >= WakeHunger;
 
         /// <summary>
         /// The pace before milestone T: hunger fills in 67 s, a bunk visit is a 3-second nap, resting a 2-second pause.
-        /// Nobody wakes early (<see cref="WakeEnergy"/> is never reached).
+        /// Nobody wakes early (the wake lines are never reached).
         /// </summary>
         public static DayTuning Legacy => new DayTuning(
             hungerPerSecond: 1.5f,
@@ -68,26 +80,37 @@ namespace Simpiens.Simulation.Economy
             restRecoveryPerSecond: 15f,
             sleepSeconds: 3.0f,
             wakeEnergy: float.MaxValue,
+            wakeHunger: float.MaxValue,
             sleepBonus: 40f,
             restSeconds: 2.0f,
-            restBonus: 30f);
+            restBonus: 30f,
+            relaxEnergyBonus: 10f);
 
         /// <summary>
-        /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default): hunger fills over a day
-        /// (D19) and social empties over 16 hours (T2.1). Sleep, rest and energy are still <see cref="Legacy"/>'s until T2.2.
+        /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default; <c>docs/time-model.md</c>):
+        /// <list type="bullet">
+        /// <item>hunger fills over a day (D19) and social empties over 16 hours (T2.1);</item>
+        /// <item>energy falls about 2.75 an hour standing and three times that walking, so a day of mostly standing reaches the
+        /// tired line (40) after about 16 hours (D20, T2.2);</item>
+        /// <item>a sleeper gains 8 an hour in a bunk and half that sleeping rough, for up to 12 hours, until rested (100) or
+        /// starving (85): about 8 hours from the tired line;</item>
+        /// <item>no bonus at a sleep's end, and the hearth restores company, not energy.</item>
+        /// </list>
         /// </summary>
         public static DayTuning FullDay => new DayTuning(
             hungerPerSecond: DayClock.PerSecond(100f / DayClock.HoursPerDay),
-            energyStandingPerSecond: 0.2f,
-            energyWalkingPerSecond: 1.0f,
+            energyStandingPerSecond: DayClock.PerSecond(2.75f),
+            energyWalkingPerSecond: DayClock.PerSecond(8.25f),
             socialPerSecond: DayClock.PerSecond(100f / 16f),
-            bunkRecoveryPerSecond: 30f,
-            restRecoveryPerSecond: 15f,
-            sleepSeconds: 3.0f,
-            wakeEnergy: float.MaxValue,
-            sleepBonus: 40f,
-            restSeconds: 2.0f,
-            restBonus: 30f);
+            bunkRecoveryPerSecond: DayClock.PerSecond(8f),
+            restRecoveryPerSecond: DayClock.PerSecond(4f),
+            sleepSeconds: 12 * DayClock.SecondsPerHour,
+            wakeEnergy: 100f,
+            wakeHunger: 85f,
+            sleepBonus: 0f,
+            restSeconds: 12 * DayClock.SecondsPerHour,
+            restBonus: 0f,
+            relaxEnergyBonus: 0f);
 
         public static DayTuning Default => Legacy;
     }

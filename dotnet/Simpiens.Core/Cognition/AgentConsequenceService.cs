@@ -95,7 +95,7 @@ namespace Simpiens.Cognition
                     else if (completedAction is RelaxAtAnchorAction)
                     {
                         agent.Social = SimMath.Min(100f, agent.Social + 20f);
-                        agent.Energy = SimMath.Min(100f, agent.Energy + 10f);
+                        agent.Energy = SimMath.Min(100f, agent.Energy + Day.RelaxEnergyBonus);
                     }
                     else if (completedAction is TravelToDirectiveAction)
                     {

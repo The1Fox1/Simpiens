@@ -117,7 +117,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 3. **T2 Needs on the day** [Very Complex as a whole: split into]
    0. **[x] T2.0 The pace as data** (done 2026-11-04) [Possibly Complex: cognition and consequences read the session's tuning; golden must hold]: `DayTuning` in `EconomyTuning` (`WithDay`): hunger, energy standing and walking, social, recovery in a bunk and in place, sleep's longest length, wake energy and bonus, rest's length and bonus. `AgentState.Tick` takes the session's pace from the runtime; the sleep and rest actions, the consequence service (`SetPace`, set with the economy) and the bunk's wake rule read it. `DayTuning.Legacy` is the default. Golden 3/3, and T0's probe gives the same whole day on all 23 gate seeds.
    1. **[x] T2.1 Hunger over 24 hours** (done 2026-11-04) [Possibly Complex: one rate behind the tuning; the measurement]: `DayTuning.FullDay`, the 24-hour day's preset, with hunger over 24 hours and social over 16; `DayPaceValidator`. Measured on the gate seeds for three days: 2.4 meals a day, nobody starved (`docs/time-model.md` §2). Drifters' arrival hunger is kept; the expedition's muster moves to T3.2b (stretched work sets the trip's cost); the watch's starving stretch is T5's.
-   2. **T2.2 Sleep** [Very Complex, supervised by the developer: a 3-second nap becomes an 8-hour state that must hold live: waking, interruption (starvation, a hazard), bunk claims held for hours, collapse, healing in a bunk]: the waking drain and the bunk's recovery, sleep until rested, the rates measured and asserted.
+   2. **[x] T2.2 Sleep** (done 2026-11-04, waiting for the developer's review) [Very Complex, supervised by the developer: a 3-second nap becomes an 8-hour state that must hold live: waking, interruption (starvation, a hazard), bunk claims held for hours, collapse, healing in a bunk]: the waking drain and the bunk's recovery, sleep until rested, the rates measured and asserted.
+      - **Done, behind `DayTuning.FullDay`:**
+        - Energy falls 2.75 an hour standing and 8.25 walking.
+        - A bunk restores 8 an hour; sleeping rough (a rest where it stands, or a collapse) restores half that.
+        - A sleeper is up when rested (100) or starving (85), after 12 hours at most, with no bonus at the end.
+        - The hearth restores company, not energy (`RelaxEnergyBonus`).
+        - `Legacy` never wakes a sleeper early: golden 3/3, and T0's whole day is identical.
+        - `DayPaceValidator` checks the drain, a bunk's night, a collapse and the wake lines.
+      - **Measured** (three days on the gate seeds; `docs/time-model.md` §2): one sleep a day of 8.3 hours, mostly begun 17:00–04:00, 8.6 hours asleep per calendar day; a quarter rough for want of bunks (T2.3); 61 of about 810 sleeps ended by hunger; nobody starved or collapsed.
    3. **T2.3 Beds** [Possibly Complex: a map change; golden and renders re-recorded]: 12 bunks; sleeping rough when they are full.
    4. **T2.4 Work stretched (D22)** [Possibly Complex: every handler's length from T0's table; nodes, plots and the stall held for minutes, not ticks (contention); the anomaly detector's checks see long stands; golden]: the actions' lengths in game minutes; a worked pose while an action runs.
 4. **T3 The day's schedules and its dangers** [Very Complex as a whole: split into]

@@ -54,6 +54,12 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **With little to do,** crawlers idle 83% of the day and harvest for 10 s.
   - **The stall** sells 27 times a day (from 137) and can't pay its upkeep in full: 704g a day of the 1,200g due.
   - Expected: actions (T2.4) and the economy per day (T4) answer it.
+- **T2.2, sleep** (2026-11-04): the same 69 seed-days at `DayTuning.FullDay`, with hunger, social and sleep on the day and actions still at today's lengths.
+  - **Sleep:** about one sleep a day, 8.3 hours long, begun at energy 37. On whole calendar days (days 2 and 3), 8.6 hours asleep.
+  - **When:** crawlers fall asleep from 17:00 to 04:00, most at 23:00; they wake from 00:00 to 12:00, most around 07:00 and noon.
+  - **Where:** 5.3 hours a day in a bunk and 2.0 sleeping rough. With 8 bunks for 12 residents and the drifters, a quarter of sleep is on the floor, which T2.3's beds answer.
+  - **Hunger:** 61 of about 810 sleeps ended at the starvation line (85), and the sleeper went to eat. Nobody starved or collapsed.
+  - **Walking:** 16% of waking time. Stretched work (T2.4) will change the mix, so the rates are re-measured there.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -72,13 +78,14 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Hunger | `DayTuning` | +1.5 a second: fed to starving in 67 s | D | +100 over 24 h (4.17 an hour): 2.4 meals a day measured | T2.1 ✓ |
 | Starting and arrival hunger | `OutpostSession.ArrivalHunger`; `DrifterTuning` | 20; drifters 40–70 | D | kept: they come off the road wanting a meal | T2.1 |
 | The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations` | below 20, or carrying 2 rations | D | re-set to the new trip's cost, which stretched work sets (a 30 s trip costs about 3 hunger; the work's harvests, hours) | T3.2b |
-| Energy, standing | `AgentState.Tick` | −0.2 a second | D | about −2.5 an hour | T2.2 |
-| Energy, walking | `AgentState.Tick` | −1.0 a second | D | about −7.5 an hour | T2.2 |
-| Energy, working (new) | the actions of D22 | as standing | D | the walking rate: work tires as walking does (W1.3's D15) | T2.2 |
-| Sleep in a bunk | `SleepAtBunkAction.SleepSeconds`, `Considerations.BunkRecoveryPerSecond`, `BunkSleepBonus` | 3 s at +30 a second, then +40 | D | until rested, at about +7.5 an hour: about 8 hours from the tired line | T2.2 |
-| Resting in place, and a collapse | `AgentState.Tick` | +15 a second | D | sleeping rough: half a bunk's rate | T2.2 |
-| The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept; measured so the average day is 16 hours awake and 8 asleep | T2.2 |
+| Energy, standing | `DayTuning` | −0.2 a second | D | −2.75 an hour: 100 to the tired line (40) in about 16 hours of standing (re-measured at T2.4) | T2.2 ✓ |
+| Energy, walking | `DayTuning` | −1.0 a second | D | −8.25 an hour, three times standing (today five) | T2.2 ✓ |
+| Energy, working (new) | the actions of D22 | as standing | D | the walking rate: work tires as walking does (W1.3's D15) | T2.4 |
+| Sleep in a bunk | `DayTuning` (was `SleepAtBunkAction.SleepSeconds`, `Considerations.BunkRecoveryPerSecond`, `BunkSleepBonus`) | 3 s at +30 a second, then +40 | D | +8 an hour, no bonus, until rested (100) or starving (85), for at most 12 hours: 8.3 hours measured | T2.2 ✓ |
+| Resting in place, and a collapse | `DayTuning` (was `RestAction`, the consequence service) | +15 a second; a rest is 2 s, then +30 | D | sleeping rough: +4 an hour, no bonus, up at the same lines as a bunk, for at most 12 hours; a collapse is up at 30 after 7.5 hours | T2.2 ✓ |
+| The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept: sleep begins at energy 37 on average | T2.2 ✓ |
 | Social | `DayTuning` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 ✓ |
+| A spell at the hearth | the consequence service | +20 social, +10 energy | D | +20 social, no energy: at +10 a visit the hearth outran the waking day's drain, and nobody would sleep | T2.2 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `Vitality.RestingHealPerSecond` | 0.05 a second (about 50 a day already) | D | about 50 a day (kept in day terms) | T3.2a |
 | Healing in a bunk | `Vitality.BunkHealPerSecond` | 4 a second (12 per 3-second nap) | D | about +10 an hour: a night's sleep heals 80 | T3.2a |
