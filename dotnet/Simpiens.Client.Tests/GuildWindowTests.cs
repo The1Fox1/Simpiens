@@ -98,12 +98,20 @@ namespace Simpiens.Client.Tests
 
             ui.Click(Centre(roster.RuleButton));
             Assert.Equal("BOLD", roster.RuleButton.Text);
+
+            // Draughts each (Epic 10 Part 2, W2.4): none, one, two and round; the line says when stock is short
+            Assert.Equal("No draughts", roster.DraughtsButton.Text);
+            ui.Click(Centre(roster.DraughtsButton));
+            ui.Click(Centre(roster.DraughtsButton));
+            Assert.Equal("2 draughts each", roster.DraughtsButton.Text);
+            Assert.Equal("Send 1 to The Drowned Gallery for 4. 0 of 2 draughts in stock.", roster.DispatchText);
             var protection = Simpiens.Simulation.Items.ItemCategory.Protection;
             bool inStock = sim.ActiveStalls[0].SellStockOf(Simpiens.Simulation.Economy.ItemType.HazardGear) > 0;
             ui.Click(Centre(roster.DispatchButton));
             ui.Ticks(1);
             ui.Frame();
             Assert.True(guild.HasExpedition && guild.Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
+            Assert.Equal(2, guild.Expedition.Draughts); // the order carries them; the muster gives what stock allows
             if (inStock) Assert.True(Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(game.Session.Simulation.Host.CrawlerStates.First(s => s.AgentId == recruit).Inventory, protection), "Outfitted from stock.");
             Assert.False(roster.DispatchButton.IsEnabled);
             Assert.True(roster.RecallButton.IsEnabled);

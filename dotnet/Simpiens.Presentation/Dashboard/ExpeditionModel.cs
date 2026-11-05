@@ -54,6 +54,12 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Outfit from stock: members without protection, or with it worn to half its life, are given some from the stall as the party is sent (D12).</summary>
         public bool Outfit { get; private set; } = true;
 
+        /// <summary>Draughts each member is given at the muster, as stock allows (Epic 10 Part 2, W2, D44): 0 to <see cref="DispatchExpeditionCommand.MaxDraughts"/>.</summary>
+        public byte Draughts { get; private set; }
+
+        /// <summary>"No draughts", "1 draught each", "2 draughts each".</summary>
+        public string DraughtsText => Draughts == 0 ? "No draughts" : Draughts == 1 ? "1 draught each" : Invariant($"{Draughts} draughts each");
+
         /// <summary>"Send 4 to The Drowned Gallery for 4 glowstone", or why not.</summary>
         public string DispatchText { get; private set; } = string.Empty;
         public bool CanDispatch { get; private set; }
@@ -87,6 +93,13 @@ namespace Simpiens.Presentation.Dashboard
         public void ToggleOutfit()
         {
             Outfit = !Outfit;
+            Refresh();
+        }
+
+        /// <summary>None, one or two draughts each, and round again.</summary>
+        public void NextDraughts()
+        {
+            Draughts = (byte)((Draughts + 1) % (DispatchExpeditionCommand.MaxDraughts + 1));
             Refresh();
         }
 
@@ -193,12 +206,24 @@ namespace Simpiens.Presentation.Dashboard
             var check = guild.CanDispatch(host, Order());
             CanDispatch = check == GuildRules.Check.Ok;
             DispatchText = CanDispatch
-                ? Invariant($"Send {_party.Count} to {TargetName} for {Goal}.")
+                ? Invariant($"Send {_party.Count} to {TargetName} for {Goal}.") + DraughtsInStock(host)
                 : GuildRules.Describe(check, string.Empty, null, guild, Tick, (_context.Simulation.Economy ?? EconomyTuning.Default).Guild);
         }
 
         private DispatchExpeditionCommand Order() =>
-            new DispatchExpeditionCommand(_targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, _party.ToArray());
+            new DispatchExpeditionCommand(_targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, _party.ToArray(), Draughts);
+
+        /// <summary>" 3 of 8 draughts in stock." when the party is to carry some and the stall can't give them all; empty otherwise.</summary>
+        private string DraughtsInStock(IGuildHost host)
+        {
+            if (Draughts == 0 || host.ActiveStalls.Count == 0) return string.Empty;
+            var stall = host.ActiveStalls[0];
+            int stock = 0;
+            var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
+            for (int i = 0; i < medicines.Count; i++) stock += stall.SellStockOf(medicines[i]);
+            int wanted = Draughts * _party.Count;
+            return stock >= wanted ? string.Empty : Invariant($" {stock} of {wanted} draughts in stock.");
+        }
 
         private void RefreshTracker()
         {

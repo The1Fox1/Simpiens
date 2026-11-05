@@ -74,24 +74,28 @@ namespace Simpiens.Client.Ui
             body.Children.Add(Window.SubHeader("EXPEDITION"));
             body.Children.Add(Window.Gap(6f));
             var controls = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 30f };
-            TargetButton = UiParts.Button(string.Empty, 240f, 30f);
+            // Where, how many, when to turn back, gear from stock, and draughts each (Epic 10 Part 2, W2): the row's full width
+            TargetButton = UiParts.Button(string.Empty, 200f, 30f);
             controls.Children.Add(TargetButton.Visual);
             LessButton = UiParts.Button("-", 30f, 30f, UiText.BodyBold);
-            LessButton.X = 254f;
+            LessButton.X = 210f;
             controls.Children.Add(LessButton.Visual);
             _goal = UiParts.Text(string.Empty, UiStyle.Accent, UiText.BodyBold);
-            _goal.X = 294f;
+            _goal.X = 248f;
             UiParts.CentreVertically(_goal);
             controls.Children.Add(_goal);
             MoreButton = UiParts.Button("+", 30f, 30f, UiText.BodyBold);
-            MoreButton.X = 364f;
+            MoreButton.X = 314f;
             controls.Children.Add(MoreButton.Visual);
-            RuleButton = UiParts.Button(string.Empty, 110f, 30f);
-            RuleButton.X = 410f;
+            RuleButton = UiParts.Button(string.Empty, 100f, 30f);
+            RuleButton.X = 354f;
             controls.Children.Add(RuleButton.Visual);
-            OutfitButton = UiParts.Button(string.Empty, 190f, 30f);
-            OutfitButton.X = 534f;
+            OutfitButton = UiParts.Button(string.Empty, 150f, 30f);
+            OutfitButton.X = 464f;
             controls.Children.Add(OutfitButton.Visual);
+            DraughtsButton = UiParts.Button(string.Empty, 164f, 30f); // its right edge on Recall's
+            DraughtsButton.X = 624f;
+            controls.Children.Add(DraughtsButton.Visual);
             body.Children.Add(controls);
             body.Children.Add(Window.Gap(6f));
             _ruleText = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
@@ -120,6 +124,7 @@ namespace Simpiens.Client.Ui
             MoreButton.Click += (_, _) => { expedition.MoreGoal(); Bind(); };
             RuleButton.Click += (_, _) => { expedition.NextRule(); Bind(); };
             OutfitButton.Click += (_, _) => { expedition.ToggleOutfit(); Bind(); };
+            DraughtsButton.Click += (_, _) => { expedition.NextDraughts(); Bind(); };
             DispatchButton.Click += (_, _) => { expedition.Dispatch(); Bind(); };
             RecallButton.Click += (_, _) => { expedition.Recall(); Bind(); };
 
@@ -145,6 +150,7 @@ namespace Simpiens.Client.Ui
         public Button MoreButton { get; }
         public Button RuleButton { get; }
         public Button OutfitButton { get; }
+        public Button DraughtsButton { get; }
         public Button DispatchButton { get; }
         public Button RecallButton { get; }
         public string DispatchText => _dispatchText.Text;
@@ -297,6 +303,7 @@ namespace Simpiens.Client.Ui
             if (RuleButton.Text != rule) RuleButton.Text = rule;
             string outfit = expedition.Outfit ? "Outfit from stock" : "No outfitting";
             if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
+            if (DraughtsButton.Text != expedition.DraughtsText) DraughtsButton.Text = expedition.DraughtsText;
             UiParts.SetText(_ruleText, expedition.RuleText);
             UiParts.SetText(_out, expedition.IsOut ? Invariant($"{expedition.StageText} · {expedition.TimeOut} · {expedition.HaulText}") : string.Empty);
             UiParts.SetText(_dispatchText, expedition.Feedback.Text.Length > 0 && !expedition.CanDispatch ? expedition.Feedback.Text : expedition.DispatchText);
