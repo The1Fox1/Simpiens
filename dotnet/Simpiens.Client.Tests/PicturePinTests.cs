@@ -168,12 +168,14 @@ namespace Simpiens.Client.Tests
         // Epic 10 Part 2 T5 (2026-11-05), the 24-hour day: 12 bunks in two rows of six, and every crawler spawns and moves
         // on the day's pace, so every item pin was re-pinned with the render references; the whole floor's labels held, the
         // zoomed views' moved with the selected crawler.
-        private static readonly (ulong, ulong) PinnedTick0 = (7830410799574478472UL, 14344167986805025999UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (9806281298368624573UL, 14344167986805025999UL);
+        // Epic 10 Part 2 W1.6a.1 (2026-11-05): the stations' plots lie in the workshop row, at the floor's lower edge; the
+        // whole-floor views' items re-pinned with the render references, labels unchanged, the zoomed views unchanged.
+        private static readonly (ulong, ulong) PinnedTick0 = (3278266317953728146UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (2305033242063241463UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
         private static readonly (ulong, ulong) PinnedSelectedZoomed = (2540631555451582028UL, 7072242001048544868UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (6257817241668511773UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (11639804497313262571UL, 7638092815957420050UL);
         private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15765990988924145470UL, 13206999959402381698UL);
     }
 }
