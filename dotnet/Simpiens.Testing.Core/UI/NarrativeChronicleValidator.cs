@@ -221,27 +221,19 @@ namespace Simpiens.Testing.UI
 
         public void ValidateRelativeTimeFormatting()
         {
-            // Event at tick 5000, current tick 5000 (0s delta) -> [Just now]
-            string t0 = RelativeTimeFormatter.Format(5000, 5000, 50f);
-            if (t0 != "[Just now]") throw new Exception($"Expected '[Just now]', got '{t0}'");
+            // In game time (Epic 10 Part 2, T6): a game minute is 7 ticks
+            Expect(RelativeTimeFormatter.Format(5000, 5000), "[Just now]", "the same tick");
+            Expect(RelativeTimeFormatter.Format(4994, 5000), "[Just now]", "under a game minute");
+            Expect(RelativeTimeFormatter.Format(5000 - 25 * 7, 5000), "[25 min ago]", "25 game minutes");
+            Expect(RelativeTimeFormatter.Format(5000 - 3 * 420 - 100, 5000), "[3 h ago]", "a little over 3 game hours");
+            Expect(RelativeTimeFormatter.Format(0, 2 * 10080 + 500), "[2 d ago]", "two game days");
 
-            // Event at tick 4750, current tick 5000 (5s delta) -> [Just now]
-            string t5 = RelativeTimeFormatter.Format(4750, 5000, 50f);
-            if (t5 != "[Just now]") throw new Exception($"Expected '[Just now]', got '{t5}'");
+            TestLog.Log("  ✔ ValidateRelativeTimeFormatting passed: ticks read as game time ago.");
+        }
 
-            // Event at tick 3750, current tick 5000 (25s delta) -> [25s ago]
-            string t25 = RelativeTimeFormatter.Format(3750, 5000, 50f);
-            if (t25 != "[25s ago]") throw new Exception($"Expected '[25s ago]', got '{t25}'");
-
-            // Event at tick 2000, current tick 5000 (60s delta) -> [1m ago]
-            string t60 = RelativeTimeFormatter.Format(2000, 5000, 50f);
-            if (t60 != "[1m ago]") throw new Exception($"Expected '[1m ago]', got '{t60}'");
-
-            // Event 12 minutes ago (36,000 ticks) -> [12m ago]
-            string t12m = RelativeTimeFormatter.Format(0, 36000, 50f);
-            if (t12m != "[12m ago]") throw new Exception($"Expected '[12m ago]', got '{t12m}'");
-
-            TestLog.Log("  ✔ ValidateRelativeTimeFormatting passed: Mathematical tick-to-human time translation verified.");
+        private static void Expect(string actual, string expected, string what)
+        {
+            if (actual != expected) throw new Exception($"Expected '{expected}' for {what}, got '{actual}'");
         }
 
         public void ValidateDefensiveNullSafety()
