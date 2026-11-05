@@ -75,18 +75,19 @@ namespace Simpiens.Client.Tests
             ui.MoveTo(new Vec2(track.AbsoluteLeft + track.AbsoluteWidth + 40f, thumb.Y));
             ui.Script.Left = false;
             ui.Frame();
-            Assert.Equal(MerchantModelMax, (int)slider.Value);
-            Assert.Equal($"{MerchantModelMax} Gold", window.RationValue.Text);
-            Assert.Equal(MerchantModelMax, game.Session.DashboardModel.Merchant.RationPrice);
+            int top = game.Session.DashboardModel.Merchant.Row(ItemType.Ration).MaxPrice; // the slider's range for rations: four times 15g
+            Assert.Equal(60, top);
+            Assert.Equal(top, (int)slider.Value);
+            Assert.Equal($"{top} Gold", window.RationValue.Text);
+            Assert.Equal(top, game.Session.DashboardModel.Merchant.RationPrice);
 
             ui.Click(Centre(window.ApplyButton));
-            Assert.StartsWith("Rates updated: Ration 50g", window.FeedbackText);
+            Assert.StartsWith($"Rates updated: Ration {top}g", window.FeedbackText);
             Assert.True(game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice == before.RationSellPrice, "Nothing changes before the tick.");
             ui.Ticks(1);
-            Assert.Equal(MerchantModelMax, (int)game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
+            Assert.Equal(top, (int)game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
         }
 
-        private const int MerchantModelMax = Simpiens.Presentation.Dashboard.MerchantModel.MaxPrice;
 
         [Fact]
         public void AnOpenWindowTakesTheClicksAndItsCloseButtonClosesIt()

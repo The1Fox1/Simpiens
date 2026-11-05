@@ -237,14 +237,13 @@ namespace Simpiens.Presentation.Dashboard
             return Invariant($"{definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type)}, {left}% left");
         }
 
-        /// <summary>A drifter's stay in words, by the sim-minute (600 ticks); empty for a resident.</summary>
+        /// <summary>A drifter's stay in words, in game time (Epic 10 Part 2, T6: "drifter, leaves in 3 h 20 min"); empty for a resident.</summary>
         public static string Stay(uint departsAtTick, long now)
         {
             if (departsAtTick == 0) return string.Empty;
             long left = departsAtTick - now;
             if (left <= 0) return "drifter, leaving";
-            long minutes = (left + 599) / 600;
-            return minutes == 1 ? "drifter, leaves in 1 min" : Invariant($"drifter, leaves in {minutes} min");
+            return "drifter, leaves in " + OutpostClock.Span(left);
         }
 
         /// <summary>One affinity: the peer (the player, a crawler, or one no longer in the world), its face if it has one, and the line.</summary>

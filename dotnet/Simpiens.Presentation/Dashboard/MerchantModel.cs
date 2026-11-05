@@ -7,19 +7,26 @@ using static System.FormattableString;
 
 namespace Simpiens.Presentation.Dashboard
 {
-    /// <summary>One priced good in the merchant terminal: the item, whether the stall buys or sells it, and the slider's price.</summary>
+    /// <summary>
+    /// One priced good in the merchant terminal: the item, whether the stall buys or sells it, the slider's price and its
+    /// range, from <see cref="MerchantModel.MinPrice"/> to <see cref="MaxPrice"/>.
+    /// </summary>
     public sealed class MerchantRow
     {
-        internal MerchantRow(ItemType item, StallRole role, int price)
+        internal MerchantRow(ItemType item, StallRole role, int price, int maxPrice)
         {
             Item = item;
             Role = role;
-            Price = price;
+            MaxPrice = maxPrice;
+            Price = MerchantModel.Clamp(price, maxPrice);
         }
 
         public ItemType Item { get; }
         public StallRole Role { get; }
         public int Price { get; set; }
+
+        /// <summary>The highest price the slider offers: four times the opening price or the stall's own, whichever is higher, at least 10 (Epic 10 Part 2, T6).</summary>
+        public int MaxPrice { get; }
 
         public string Label => ItemTexts.PriceLabel(Item, Role);
         public string Hint => ItemTexts.PriceHint(Item, Role);
@@ -37,7 +44,14 @@ namespace Simpiens.Presentation.Dashboard
     public sealed class MerchantModel
     {
         public const int MinPrice = 1;
-        public const int MaxPrice = 50;
+
+        /// <summary>
+        /// A good's slider reaches four times its opening price, at least 10 (Epic 10 Part 2, T6): wide enough for a greedy
+        /// stall's doubled rations or a generous one's 1.75 times the ore price, and fine enough to move a 5g price by one
+        /// gold. A fixed 1-50 left the 24-hour day's 5g ore at the slider's far end.
+        /// </summary>
+        public static int MaxPriceFor(int openingPrice) => openingPrice * 4 < MinRangeTop ? MinRangeTop : openingPrice * 4;
+        private const int MinRangeTop = 10;
 
         private readonly DashboardContext _context;
         private readonly List<MerchantRow> _rows = new List<MerchantRow>(8);
@@ -119,7 +133,7 @@ namespace Simpiens.Presentation.Dashboard
             var parts = new string[rows.Count];
             for (int i = 0; i < rows.Count; i++)
             {
-                ushort price = (ushort)Clamp(rows[i].Price);
+                ushort price = (ushort)Clamp(rows[i].Price, rows[i].MaxPrice);
                 prices = prices.With(rows[i].Item, price);
                 parts[i] = Invariant($"{ItemTexts.Of(rows[i].Item).ShortWord} {price}g");
             }
@@ -156,9 +170,15 @@ namespace Simpiens.Presentation.Dashboard
             var picked = new List<StallGood>();
             for (int i = 0; i < goods.Count; i++) if (which(goods[i])) picked.Add(goods[i]);
             picked.Sort((a, b) => a.Item.CompareTo(b.Item));
-            for (int i = 0; i < picked.Count; i++) _rows.Add(new MerchantRow(picked[i].Item, picked[i].Role, Clamp(picked[i].Price)));
+            var economy = _context.Simulation?.Economy ?? EconomyTuning.Default;
+            for (int i = 0; i < picked.Count; i++)
+            {
+                // The range covers the opening price and the stall's own, so a price the player raised is never cut back
+                int opening = economy.Terms(picked[i].Item).StallPrice;
+                _rows.Add(new MerchantRow(picked[i].Item, picked[i].Role, picked[i].Price, MaxPriceFor(opening > picked[i].Price ? opening : picked[i].Price)));
+            }
         }
 
-        private static int Clamp(int price) => price < MinPrice ? MinPrice : price > MaxPrice ? MaxPrice : price;
+        internal static int Clamp(int price, int maxPrice) => price < MinPrice ? MinPrice : price > maxPrice ? maxPrice : price;
     }
 }

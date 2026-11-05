@@ -62,7 +62,7 @@ namespace Simpiens.Client.Ui
             {
                 var item = row.Item;
                 _items.Add(item);
-                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
+                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
                 _values[item] = value;
             }
 
@@ -104,7 +104,7 @@ namespace Simpiens.Client.Ui
         public float TreasuryRight => _treasury.AbsoluteLeft + _treasury.AbsoluteWidth;
         public float StockLeft => _stock.AbsoluteLeft;
 
-        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, Action<int> set, out TextRuntime value)
+        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value)
         {
             var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };
             UiParts.AddFill(row, UiStyle.Card);
@@ -121,7 +121,7 @@ namespace Simpiens.Client.Ui
             labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiText.Small));
             row.Children.Add(labels);
 
-            var slider = UiParts.Slider(MerchantModel.MinPrice, MerchantModel.MaxPrice, 1);
+            var slider = UiParts.Slider(MerchantModel.MinPrice, maxPrice, 1);
             slider.Visual.WidthUnits = DimensionUnitType.Absolute;
             slider.Width = 220f;
             slider.Visual.XUnits = GeneralUnitType.PixelsFromLarge;

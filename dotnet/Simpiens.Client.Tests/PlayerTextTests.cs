@@ -80,8 +80,9 @@ namespace Simpiens.Client.Tests
         public void ADriftersDossierSaysWhenItMovesOn()
         {
             Assert.Equal(string.Empty, DossierModel.Stay(0, 100));
-            Assert.Equal("drifter, leaves in 2 min", DossierModel.Stay(1300, 200));
-            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1000));
+            Assert.Equal("drifter, leaves in 3 h 20 min", DossierModel.Stay(1500 + 3 * DayClock.TicksPerHour + 20 * DayClock.TicksPerMinute, 1500)); // in game time
+            Assert.Equal("drifter, leaves in 45 min", DossierModel.Stay(1300, 1300 - 45 * DayClock.TicksPerMinute));
+            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1299)); // a part of a minute rounds up
             Assert.Equal("drifter, leaving", DossierModel.Stay(1300, 1300));
 
             using var sim = Outpost(0);

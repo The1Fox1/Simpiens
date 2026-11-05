@@ -221,8 +221,7 @@ namespace Simpiens.Presentation.Dashboard
                 ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : "Coming home",
                 _ => "Delivering",
             };
-            uint seconds = (Tick - expedition.DispatchTick) / 10;
-            TimeOut = Invariant($"{seconds / 60}:{seconds % 60:00} out");
+            TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
             HaulText = Invariant($"Haul {guild.Gathered(host)} of {expedition.Goal}");
 
             var party = guild.Party;

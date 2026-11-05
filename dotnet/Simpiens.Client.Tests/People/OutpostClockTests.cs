@@ -19,5 +19,18 @@ namespace Simpiens.Client.Tests.People
         {
             Assert.Equal(expected, OutpostClock.Text(tick));
         }
+
+        /// <summary>A span of game time (Epic 10 Part 2, T6), by the whole game minute, a part of one rounding up.</summary>
+        [Theory]
+        [InlineData(0L, "0 min")]
+        [InlineData(1L, "1 min")]
+        [InlineData(315L, "45 min")]
+        [InlineData(420L, "1 h")]
+        [InlineData(435L, "1 h 3 min")] // 62.1 game minutes
+        [InlineData(1400L, "3 h 20 min")]
+        public void SpansReadInGameHoursAndMinutes(long ticks, string expected)
+        {
+            Assert.Equal(expected, OutpostClock.Span(ticks));
+        }
     }
 }
