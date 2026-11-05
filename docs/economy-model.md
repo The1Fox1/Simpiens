@@ -120,3 +120,4 @@ The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses
 - ~~**Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).~~ Delivered by Epic 10 G4 (2026-10-30): §1, §2.
 - ~~**Expeditions and their shares:** Epic 10 G5.~~ Delivered by Epic 10 G5 (2026-10-31): §1, §2. Their effect on the soak's bands was measured at G6 (2026-11-01): the `guild` profile, §7.
 - **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.
+- **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).

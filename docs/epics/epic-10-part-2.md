@@ -103,6 +103,7 @@ What Part 1 leaves undone:
 - **Economy numbers live in `EconomyTuning`:** construction costs, artisans' wages and made goods' terms. Recipes hold only what an item is made of and how long it takes.
 - **The planner's facts:** about 43 of 64 are used. R1's guard refuses a fact past 63, and the budget grows to about 48.
 - **Saves:** the format rises when a saved record changes shape. Old saves are refused with a reason.
+- **Toward placed buildings** (the producer's long-term direction, 2026-11-04, [Game Design Proposal §5](../Game%20Design%20Proposal.md)): later, the player places the shop (with its stations) and the guildhall in safe zones of their choosing and grows each as one building. Part 2's fixed rooms (D4) stand in for those buildings. So a building's state (built or not, its stations, crew and orders) stays its own, apart from the map's layout: when placement comes, a station's place moves from map data into that saved state, and nothing else should need to change. Facility sectors (D7) are what a placed building's footprint becomes; a safe zone is where one may stand.
 
 ### 2.4 The economy
 - **A new sink:** `Construction`, each station once (600g in all by default).
@@ -152,6 +153,7 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 | The caravan buying made goods | Q7's alternative |
 | Loot in play | Part 3 (L2) |
 | Combat and death | Part 3 (Q11) |
+| Safe zones; placing the shop and the guildhall where the player chooses, each grown as one building; rival shops and guilds | Unscheduled: the producer's long-term direction ([Game Design Proposal §5](../Game%20Design%20Proposal.md)) |
 
 ## 6. Risks
 

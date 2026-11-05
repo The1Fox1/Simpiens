@@ -1431,3 +1431,9 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Precedence, not the kind's value (D6).** `GroupType` is saved, so `Workshop` took the next value (3) and memberships are ordered by `MembershipSet.Precedence`, which puts a workshop with the guild. The existing kinds keep their order.
 - **One save format for the PR.** The stations' block raised the format to 10; later layout changes in this PR stay at 10, since no build saved 10 before it merges.
 - Commits: `8f6ed45` docs (W0.1), `77edc06` W0.2, `7fd1e45` W0.3, `41f7c4f` W0.4 with `87765c7` golden and `e006175` renders, `f099199` W0.5, `29cfb82` W0.6.
+
+## 2026-11-04: the producer's long-term direction for buildings (docs only)
+
+- **The vision** (the producer, before W1): floors have danger, neutral and, later, safe zones; the player places the shop (with its craft stations) and the guildhall in any safe zone they choose and grows each as one building; rival shops and guilds will compete with the player's as a sink. Not in scope; new work aims toward it.
+- **Where it lives:** the Game Design Proposal's new §5 (the old §5, open questions, is now §6), with pointers from the roadmap's milestone overview, Epic 10 Part 2 (§2.3's rules, §5's deferrals) and the economy model's deferred sinks.
+- **What it asks of the work in between:** Part 2's fixed rooms (D4) are stand-ins for placed buildings. A building's state stays its own, apart from the map, so placement later moves a station's place from map data into saved state and nothing else. Facility sectors (D7) are a building's footprint, not a safe zone.

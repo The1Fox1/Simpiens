@@ -219,6 +219,8 @@ To bridge low-level technical epics with high-level game design goals, developme
 | *(interstitial)* | *Crawler identity* | Track B: [Epic UI-Beta](epics/epic-ui-beta.md) | Between Milestones 2 and 3, as UI-Alpha was between UI-1 and UI-2: every crawler gets a generated body, a saved look and a unique name, and a portrait wherever the player meets it. B0 and B1 were done 2026-10-30, before Epic 10 G4, on the producer's word; B2–B6 follow Epic 10 Part 1; B2 to B5 done 2026-11-03, with the UI polish (Lantern & Stone), merged as PR #22; B6, the gate, remains. |
 | **Milestone 4** | **Gatekeeper Descent & Floor Relocation** | Track A: Epic 10 (Part 3) & Epic 11<br>Track B: Epic UI-5 | Boss-guarded descent gate breach, roguelike forward operating base relocation loop (via MemoryPack state snapshotting), and LLM-powered MCP tavern chronicles. |
 
+**Direction beyond these milestones** (producer, 2026-11-04; not scheduled): the player places the shop and the guildhall in safe zones of their choosing and grows each as one building, and rival shops and guilds compete with them as a sink. The vision and what new work must not block are in the [Game Design Proposal §5](Game%20Design%20Proposal.md).
+
 ### Milestone 1 Status
 
 **`COMPLETED` (2026-10-15).** The producer's check of save and load at 1× passed (recorded 2026-10-24).
