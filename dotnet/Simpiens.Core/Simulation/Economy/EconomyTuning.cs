@@ -144,6 +144,9 @@ namespace Simpiens.Simulation.Economy
             items[(int)ItemType.ToolPickaxe] = new ItemTerms(30, StallRole.Sells, 30, 0);
             items[(int)ItemType.HazardGear] = new ItemTerms(40, StallRole.Sells, 30, 3);
             items[(int)ItemType.Glowstone] = new ItemTerms(30, StallRole.Buys, 45, 0);
+            // The still's draught (Epic 10 Part 2, W2, D46): worth 25g to a neutral crawler, sold at 20g (two herbs at 6g and
+            // an hour's work), none to start
+            items[(int)ItemType.HealingDraught] = new ItemTerms(25, StallRole.Sells, 20, 0);
             return items;
         }
 

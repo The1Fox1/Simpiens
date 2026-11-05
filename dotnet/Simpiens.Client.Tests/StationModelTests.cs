@@ -181,10 +181,13 @@ namespace Simpiens.Client.Tests
             Assert.False(workshops[forge].HasOrder);
             Assert.Equal("No order.", station.OrderText);
 
-            // The still makes nothing until its draughts (W2)
+            // The still's tab shows the still's recipe (W2's draught), and no order
             dashboard.Stations.Show(workshops.IndexOf(StationKind.Still));
-            Assert.Empty(station.Recipes);
-            Assert.Equal("Nothing is made at the still yet.", station.OrderText);
+            var draught = Assert.Single(station.Recipes);
+            Assert.Equal(ItemType.HealingDraught, draught.Item);
+            Assert.Equal("Healing draught", draught.Name);
+            Assert.Equal("2 herbs · 1 h of work", draught.Recipe);
+            Assert.Equal("No order.", station.OrderText);
         }
 
         [Fact]

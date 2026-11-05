@@ -15,6 +15,7 @@ namespace Simpiens.Presentation.Art
         public const string Pack = "pack";
         public const string Helmet = "helmet";
         public const string Pick = "pick";
+        public const string Flask = "flask";
 
         public const int GlyphSize = 12;
 
@@ -100,6 +101,22 @@ namespace Simpiens.Presentation.Art
                 ".ab.........",
                 "ab..........",
                 "b...........",
+            },
+            // A round flask with a cork, full (draughts)
+            [Flask] = new[]
+            {
+                "....abb.....",
+                "....bbc.....",
+                "....1223....",
+                "....1223....",
+                "...112233...",
+                "..11222233..",
+                ".1112222333.",
+                ".1122222233.",
+                ".1222222333.",
+                "..22223333..",
+                "...333444...",
+                "............",
             },
         };
 

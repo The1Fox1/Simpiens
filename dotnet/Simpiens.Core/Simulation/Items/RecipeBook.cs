@@ -49,7 +49,9 @@ namespace Simpiens.Simulation.Items
         {
             // D2: two game hours of work at the forge (T3.1; it was a minute, 600 ticks) for three ore, which the stall holds
             // plenty of (F8)
-            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3))
+            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)),
+            // D42: an hour's work at the still for two herbs
+            new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2))
         };
 
         /// <summary>

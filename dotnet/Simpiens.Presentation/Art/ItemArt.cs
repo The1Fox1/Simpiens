@@ -42,6 +42,7 @@ namespace Simpiens.Presentation.Art
             ["pickaxe"] = new ItemLook(ItemShapes.Pick, new Rgba32(148, 163, 184), new Rgba32(120, 72, 32)),
             ["hazard-gear"] = new ItemLook(ItemShapes.Helmet, new Rgba32(250, 204, 21), new Rgba32(254, 240, 138), Worn.Head),
             ["glowstone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(251, 191, 36), new Rgba32(103, 232, 249)),
+            ["healing-draught"] = new ItemLook(ItemShapes.Flask, new Rgba32(225, 29, 72), new Rgba32(161, 112, 66)), // ruby in glass, a cork
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

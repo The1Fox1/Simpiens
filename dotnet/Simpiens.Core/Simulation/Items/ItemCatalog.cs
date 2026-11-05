@@ -73,7 +73,12 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
-                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare)
+                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
+            // Made at the still from two herbs; heals 80 at once (Epic 10 Part 2, W2, Q5, D42). Medicine, so the herb reflex
+            // drinks it under the treat line; not salvage: the stall doesn't buy it back
+            new ItemDefinition(ItemType.HealingDraught, "HealingDraught", "Healing Draught",
+                ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Uncommon, maxStack: 5,
+                consume: new[] { new ConsumeEffect(StatKind.Health, 80f) })
         };
 
         /// <summary>
