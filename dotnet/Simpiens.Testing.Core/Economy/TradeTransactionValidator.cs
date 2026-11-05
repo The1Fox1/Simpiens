@@ -120,7 +120,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            var result = simManager.ExecuteIntent(node, intentState);
+            var result = simManager.RunToCompletion(node, intentState);
             Assert(result == IntentResult.Success, $"ExecuteIntent returned {result} instead of Success.");
 
             // Verify agent wallet and inventory
@@ -159,7 +159,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            var result = simManager.ExecuteIntent(node, intentState);
+            var result = simManager.RunToCompletion(node, intentState);
             Assert(result == IntentResult.Failed, $"ExecuteIntent returned {result} instead of Failed for insufficient funds.");
 
             // Verify agent state untouched
@@ -204,7 +204,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            var result = simManager.ExecuteIntent(node, intentState);
+            var result = simManager.RunToCompletion(node, intentState);
             Assert(result == IntentResult.Failed, $"ExecuteIntent returned {result} instead of Failed for full inventory.");
 
             // Verify gold not deducted
@@ -239,7 +239,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            var result = simManager.ExecuteIntent(node, intentState);
+            var result = simManager.RunToCompletion(node, intentState);
             Assert(result == IntentResult.Success, $"ExecuteIntent returned {result} instead of Success.");
 
             // Verify agent gained 16 gold and lost ore
@@ -266,7 +266,7 @@ namespace Simpiens.Testing.Economy
 
         private static IntentResult BuyGear(SimulationManager simManager, WorldEntity node, EntityId stallId, ushort maxPrice = ushort.MaxValue)
         {
-            return simManager.ExecuteIntent(node, new ActiveIntentState
+            return simManager.RunToCompletion(node, new ActiveIntentState
             {
                 Intent = new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.HazardGear, quantity: 1, maxExpectedPricePerUnit: maxPrice),
                 LastSampledPosition = node.Position
@@ -402,7 +402,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            simManager.ExecuteIntent(node, intentState);
+            simManager.RunToCompletion(node, intentState);
 
             var postAffinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
             Assert(postAffinity.Trust == 10, $"Post-trade Trust is {postAffinity.Trust} instead of 10.");
@@ -437,7 +437,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            simManager.ExecuteIntent(node, intentState);
+            simManager.RunToCompletion(node, intentState);
 
             var postAffinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
             Assert(postAffinity.Trust == -15, $"Post-gouging Trust is {postAffinity.Trust} instead of -15.");
@@ -472,11 +472,13 @@ namespace Simpiens.Testing.Economy
             Assert(TradeFairness.ClassifyPurchase(30, Considerations.CalmRationValue(neutral, e), t) == TradeVerdict.Gouged, "30g gouges a neutral crawler.");
             Assert(TradeFairness.ClassifyPurchase(30, Considerations.CalmRationValue(generous, e), t) == TradeVerdict.Fair, "30g is fair to a generous crawler.");
 
-            // Sales against the minimum (neutral ore 8g, greedy ore 12g)
-            Assert(TradeFairness.ClassifySale(35, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Generous, "35g for ore is generous to a neutral seller.");
-            Assert(TradeFairness.ClassifySale(20, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Fair, "20g for ore (the default) is fair to a neutral seller.");
-            Assert(TradeFairness.ClassifySale(20, Considerations.MinimumSalePrice(greedy, e, ItemType.IronOre), t) == TradeVerdict.Fair, "20g for ore is fair to a greedy seller.");
-            Assert(TradeFairness.ClassifySale(10, Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), t) == TradeVerdict.Stingy, "10g for ore is stingy to a neutral seller.");
+            // Sales against each seller's own minimum, as multiples of it (on the day: neutral ore 2g, greedy 3g)
+            ushort neutralOre = Considerations.MinimumSalePrice(neutral, e, ItemType.IronOre), greedyOre = Considerations.MinimumSalePrice(greedy, e, ItemType.IronOre);
+            uint stallOre = e.Terms(ItemType.IronOre).StallPrice;
+            Assert(TradeFairness.ClassifySale((uint)(neutralOre * 4), neutralOre, t) == TradeVerdict.Generous, "Four times its minimum for ore is generous to a neutral seller.");
+            Assert(TradeFairness.ClassifySale(stallOre, neutralOre, t) == TradeVerdict.Fair, $"The stall's ore price ({stallOre}g) is fair to a neutral seller.");
+            Assert(TradeFairness.ClassifySale(stallOre, greedyOre, t) == TradeVerdict.Fair, $"The stall's ore price ({stallOre}g) is fair to a greedy seller.");
+            Assert(TradeFairness.ClassifySale((uint)(neutralOre * 5 / 4), neutralOre, t) == TradeVerdict.Stingy, "A quarter over its minimum for ore is stingy to a neutral seller.");
 
             AssertDeltaEquals(TradeFairness.PurchaseDelta(TradeVerdict.Gouged, t), t.GougedPurchase, "gouged purchase");
             AssertDeltaEquals(TradeFairness.SaleDelta(TradeVerdict.Stingy, t), t.StingySale, "stingy sale");
@@ -484,7 +486,7 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("[TradeTransactionValidator] Test 11 Passed: Fairness is judged by each crawler's own valuation.");
         }
 
-        /// <summary>The live handler applies the sale verdict: 10g for ore is stingy to a neutral seller (-5 trust).</summary>
+        /// <summary>The live handler applies the sale verdict: a quarter over its minimum for ore is stingy to a neutral seller (-5 trust).</summary>
         private void ValidateSaleTrustFollowsTheSellersMinimum()
         {
             var registry = new WorldRegistry();
@@ -492,7 +494,8 @@ namespace Simpiens.Testing.Economy
             var simManager = new SimulationManager(registry, null, clock);
 
             var stallId = EntityId.Generate();
-            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, oreBuyPrice: 10, treasuryGold: 500));
+            ushort price = (ushort)(Considerations.MinimumSalePrice(AgentPersonality.Neutral, EconomyTuning.Default, ItemType.IronOre) * 5 / 4);
+            simManager.RegisterTradeStall(TestStalls.Stall(stallId, Vec2.Zero, oreBuyPrice: price, treasuryGold: 500));
 
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_StingySale]", register: false);
             var node = goCrawler.Node;
@@ -506,11 +509,11 @@ namespace Simpiens.Testing.Economy
                 CurrentWaypointIndex = 0,
                 LastSampledPosition = node.Position
             };
-            simManager.ExecuteIntent(node, intentState);
+            simManager.RunToCompletion(node, intentState);
 
             var stingy = EconomyTuning.Default.TradeTrust.StingySale;
             var affinity = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
-            Assert(agent.Inventory.Gold == EconomyTuning.InventoryDefaultGold + 10, $"The sale completed (gold {agent.Inventory.Gold}).");
+            Assert(agent.Inventory.Gold == EconomyTuning.InventoryDefaultGold + price, $"The sale completed (gold {agent.Inventory.Gold}).");
             Assert(affinity.Trust == stingy.Trust && affinity.Warmth == stingy.Warmth, $"Stingy sale: trust {affinity.Trust} (expected {stingy.Trust}), warmth {affinity.Warmth} (expected {stingy.Warmth}).");
 
             HeadlessEntities.Remove(registry, goCrawler);
@@ -541,7 +544,7 @@ namespace Simpiens.Testing.Economy
                 CurrentWaypointIndex = 0,
                 LastSampledPosition = node.Position
             };
-            simManager.ExecuteIntent(node, intentState);
+            simManager.RunToCompletion(node, intentState);
 
             simManager.TryGetTradeStall(stallId, out var stall);
             Assert(agent.Inventory.Gold == goldBefore && agent.Inventory.HasItem(ItemType.IronOre, 1), "A full stall paid nothing and took nothing.");
@@ -569,14 +572,14 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             registry.Register(node);
 
-            simManager.ExecuteIntent(node, new ActiveIntentState
+            simManager.RunToCompletion(node, new ActiveIntentState
             {
                 Intent = new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, quantity: 1),
                 LastSampledPosition = node.Position
             });
             Assert(agent.Inventory.HasItem(ItemType.IronOre, 1) && agent.Inventory.Gold == 30, "A stall in arrears bought no salvage.");
 
-            simManager.ExecuteIntent(node, new ActiveIntentState
+            simManager.RunToCompletion(node, new ActiveIntentState
             {
                 Intent = new TradeIntent(node.Id, stallId, TradeActionType.BuyItem, ItemType.Ration, quantity: 1),
                 LastSampledPosition = node.Position

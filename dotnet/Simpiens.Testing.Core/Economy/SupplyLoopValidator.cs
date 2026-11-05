@@ -619,7 +619,7 @@ namespace Simpiens.Testing.Economy
         /// <summary>
         /// Enqueues an intent and ticks the simulation until it completes (consequences applied by the manager).
         /// </summary>
-        private static IntentResult RunIntent(SimulationManager sim, AgentIntent intent, int maxTicks = 200)
+        private static IntentResult RunIntent(SimulationManager sim, AgentIntent intent, int maxTicks = HeadlessIntents.MaxTicks)
         {
             IntentResult? outcome = null;
             intent.OnComplete = r => outcome = r;

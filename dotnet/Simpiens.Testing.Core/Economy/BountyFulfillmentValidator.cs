@@ -150,7 +150,7 @@ namespace Simpiens.Testing.Economy
             var node2 = HeadlessEntities.Prop(registry, EntityType.Pawn, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Claimant2]");
 
             var state1 = new ActiveIntentState { Intent = new ClaimBountyIntent(node1.Id, 1) };
-            var res1 = simManager.ExecuteIntent(node1, state1);
+            var res1 = simManager.RunToCompletion(node1, state1);
             Assert(res1 == IntentResult.Success, $"First claimant got {res1} instead of Success.");
 
             Assert(simManager.TryGetBounty(1, out var claimed), "Bounty retrieved.");
@@ -159,7 +159,7 @@ namespace Simpiens.Testing.Economy
 
             // Second claimant attempt on already claimed bounty must fail
             var state2 = new ActiveIntentState { Intent = new ClaimBountyIntent(node2.Id, 1) };
-            var res2 = simManager.ExecuteIntent(node2, state2);
+            var res2 = simManager.RunToCompletion(node2, state2);
             Assert(res2 == IntentResult.Failed, $"Second claimant got {res2} instead of Failed.");
 
             registry?.Unregister(node1);
@@ -229,7 +229,7 @@ namespace Simpiens.Testing.Economy
                 LastSampledPosition = node.Position
             };
 
-            var result = simManager.ExecuteIntent(node, deliverState);
+            var result = simManager.RunToCompletion(node, deliverState);
             Assert(result == IntentResult.Success, $"ExecuteIntent returned {result} instead of Success.");
 
             // Agent should have 0 IronOre, +60 Gold (10 + 60 = 70)
@@ -268,7 +268,7 @@ namespace Simpiens.Testing.Economy
             simManager.RegisterBounty(contract);
 
             var state = new ActiveIntentState { Intent = new DeliverBountyIntent(node.Id, 4, stallId) };
-            simManager.ExecuteIntent(node, state);
+            simManager.RunToCompletion(node, state);
 
             // Check affinity towards PlayerEntityId (+15 Trust, +10 Warmth, +10 Respect)
             var aff = agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0);
@@ -295,10 +295,14 @@ namespace Simpiens.Testing.Economy
             Assert(Considerations.BountyMinimum(greedy, economy, gather) > oreMinimum, "A greedy crawler's minimum is higher.");
             Assert(Considerations.BountyMinimum(neutral, economy, scout) == tuning.ScoutingValue, "A neutral crawler's minimum for a scout report is the scouting value.");
 
-            // The seeded bounties stay generous to a neutral crawler; a greedy one judges them fair
-            Assert(TradeFairness.ClassifyBounty(25, oreMinimum, tuning) == TradeVerdict.Generous, "25g for an ore is generous to a neutral crawler.");
-            Assert(TradeFairness.ClassifyBounty(15, Considerations.BountyMinimum(neutral, economy, scout), tuning) == TradeVerdict.Generous, "15g for a scout is generous to a neutral crawler.");
-            Assert(TradeFairness.ClassifyBounty(25, Considerations.BountyMinimum(greedy, economy, gather), tuning) == TradeVerdict.Fair, "The same 25g is only fair to a greedy crawler.");
+            // The seeded bounties are generous to a neutral crawler; each claimant judges a reward by its own minimum, so
+            // what is generous to a neutral crawler may be only fair to a greedy one
+            Assert(TradeFairness.ClassifyBounty(economy.SeedGatherBountyReward, oreMinimum, tuning) == TradeVerdict.Generous, $"The seeded Gather ({economy.SeedGatherBountyReward}g for an ore) is generous to a neutral crawler.");
+            Assert(TradeFairness.ClassifyBounty(economy.SeedScoutBountyReward, Considerations.BountyMinimum(neutral, economy, scout), tuning) == TradeVerdict.Generous, $"The seeded Scout ({economy.SeedScoutBountyReward}g) is generous to a neutral crawler.");
+            float greedyMinimum = Considerations.BountyMinimum(greedy, economy, gather);
+            uint twiceGreedy = (uint)(greedyMinimum * 2);
+            Assert(TradeFairness.ClassifyBounty(twiceGreedy, oreMinimum, tuning) == TradeVerdict.Generous && TradeFairness.ClassifyBounty(twiceGreedy, greedyMinimum, tuning) == TradeVerdict.Fair,
+                $"{twiceGreedy}g for an ore is generous to a neutral crawler and only fair to a greedy one.");
 
             // Each verdict's delta, through the delivery handler
             Assert(TrustAfterDelivery(BountyType.GatherResource, (uint)(oreMinimum * 3), neutral) == tuning.GenerousBounty.Trust, "Three times the minimum: generous trust.");
@@ -327,7 +331,7 @@ namespace Simpiens.Testing.Economy
 
             simManager.RegisterBounty(new BountyContract(bountyId, type, 0, type == BountyType.ScoutSector ? ItemType.None : ItemType.IronOre, 1, (ushort)reward, 0, 1000,
                 claimantId: crawler.Node.Id, creatorStallId: stallId, status: BountyStatus.Claimed));
-            simManager.ExecuteIntent(crawler.Node, new ActiveIntentState { Intent = new DeliverBountyIntent(crawler.Node.Id, bountyId, stallId) });
+            simManager.RunToCompletion(crawler.Node, new ActiveIntentState { Intent = new DeliverBountyIntent(crawler.Node.Id, bountyId, stallId) });
             int trust = crawler.Agent.Memory.GetAffinity(SimulationManager.PlayerEntityId, 0).Trust;
             HeadlessEntities.Remove(registry, crawler);
             return trust;

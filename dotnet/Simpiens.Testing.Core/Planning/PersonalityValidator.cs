@@ -65,9 +65,10 @@ namespace Simpiens.Testing.Planning
         {
             Assert(Considerations.TraitFactor(0f, 0.9f) == 1f, "A neutral trait must yield a factor of exactly 1.");
 
-            // EarnIncome's pre-personality formula: max(5, 25 + need - hunger*0.2), need = clamp(Comfortable - gold) * 0.5
+            // EarnIncome's pre-personality formula: max(5, 25 + need - hunger*0.2), need the share of the purse missing, 20 when empty (T5.1b)
             var context = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null);
-            float expected = SimMath.Max(5f, 25f + SimMath.Clamp(Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse - 10, 0, Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse) * 0.5f - 20f * 0.2f);
+            int comfortable = Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse;
+            float expected = SimMath.Max(5f, 25f + SimMath.Clamp(comfortable - 10, 0, comfortable) * (20f / comfortable) - 20f * 0.2f);
             Assert(SimMath.Approximately(new EarnIncomeGoal().CalculatePriority(context), expected), "Neutral EarnIncome priority must equal the pre-personality formula.");
 
             var social = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null, social: 30f);
@@ -111,10 +112,12 @@ namespace Simpiens.Testing.Planning
             var inventory = new AgentInventory();
             inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var holder = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, inventory: inventory);
-            var cheapStall = TestStalls.Stall(new EntityId(4u, 4u, 4u, 4u), Vec2.Zero, oreBuyPrice: 9, treasuryGold: 500);
-            var fairStall = TestStalls.Stall(new EntityId(5u, 5u, 5u, 5u), Vec2.Zero, oreBuyPrice: 20, treasuryGold: 500);
-            Assert(ResourceTargeting.AffordableHeldSalvage(holder, cheapStall) == ItemType.None, "A greedy seller refuses 9g ore (minimum 12g).");
-            Assert(ResourceTargeting.AffordableHeldSalvage(holder, fairStall) == ItemType.IronOre, "A greedy seller accepts 20g ore.");
+            ushort greedyMinimum = Considerations.MinimumSalePrice(holder, ItemType.IronOre);
+            ushort fairPrice = EconomyTuning.Default.Terms(ItemType.IronOre).StallPrice;
+            var cheapStall = TestStalls.Stall(new EntityId(4u, 4u, 4u, 4u), Vec2.Zero, oreBuyPrice: (ushort)(greedyMinimum - 1), treasuryGold: 500);
+            var fairStall = TestStalls.Stall(new EntityId(5u, 5u, 5u, 5u), Vec2.Zero, oreBuyPrice: fairPrice, treasuryGold: 500);
+            Assert(ResourceTargeting.AffordableHeldSalvage(holder, cheapStall) == ItemType.None, $"A greedy seller refuses {greedyMinimum - 1}g ore (minimum {greedyMinimum}g).");
+            Assert(ResourceTargeting.AffordableHeldSalvage(holder, fairStall) == ItemType.IronOre, $"A greedy seller accepts the stall's {fairPrice}g ore.");
 
             TestLog.Log("[PASS] Test 4: Minimum sale price follows greed and gates salvage sales.");
         }

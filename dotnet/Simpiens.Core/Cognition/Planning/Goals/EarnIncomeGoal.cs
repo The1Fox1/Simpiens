@@ -18,7 +18,9 @@ namespace Simpiens.Cognition.Planning.Goals
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
             int comfortable = Considerations.Economy(context).ComfortablePurse;
-            float need = SimMath.Clamp(comfortable - gold, 0, comfortable) * 0.5f;
+            // The need is a share of the purse, 20 when empty (Epic 10 Part 2, T5.1b): a bigger purse doesn't make a crawler
+            // more desperate, nor every bounty look smaller beside earning (before the day, 0.5 a gold short of 40g, as here)
+            float need = comfortable > 0 ? SimMath.Clamp(comfortable - gold, 0, comfortable) * (20f / comfortable) : 0f;
             float priority = SimMath.Max(5f, 25f + need - (context.Hunger * 0.2f));
             return priority * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome)
                             * Considerations.TraitFactor(context.Personality.Diligence, Considerations.DiligenceOnWork);
