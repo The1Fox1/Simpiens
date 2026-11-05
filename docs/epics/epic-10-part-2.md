@@ -1,6 +1,6 @@
 # Epic 10, Part 2: Workshops and the Guildhall
 
-- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4); W1, the forge and its artisan, is next, split before it starts. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
+- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4); W1.3, shifts, waits for the developer to supervise it. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-4 (the workshops' UI) is folded in, as Epic UI-3 was into Part 1, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
@@ -142,6 +142,10 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 - [x] **The `Workshop` group kind** (D6): ranked with the guild; the guild refuses an artisan. The directive, guild and restore validators.
 - [x] **Re-recorded once:** the golden hashes (only the map part moved: two more charted sectors), 18 renders and 5 picture pins (looked at first).
 - [x] **The gate:** core 146/146 and client 438/438; golden 3/3; the 23 gate seeds and the soak hold on the grown floor with nothing built; seeds 1–120 119/120 (seed 43's trust, F3, as before); the pinned image 438/438 exact; the MonoGame and Android compiles with 0 warnings. W0 has nothing a player does yet, so it has no live scenario of its own.
+
+### W1. The forge and its artisan (in progress)
+- [x] **W1.1, building a station** (D10): `BuildStationCommand`; `WorkshopRules.CheckBuild` with its words; 300g from the stall into the `Construction` sink; the chronicle. `WorkshopValidator`.
+- [x] **W1.2, hiring an artisan** (D8, D9, D11): `HireArtisanCommand`; Q3's resident; the station's crew, a patron-led `Workshop` group; contracts, wages after the guild's (`StallPayment.ArtisanWage`), quitting, dismissal and cooldowns, saved; Dismiss and SetWage by role. `WorkshopValidator`, the restore validator. Core 147/147, client 438/438, golden 3/3: nobody builds or hires in a live run until the scripted player (W1.5a).
 
 ## 5. Deferred and out of scope
 

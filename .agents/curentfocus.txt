@@ -30,7 +30,8 @@ CURRENT FOCUS
   the producer said "Begin Epic 10 part 2 work"; the draft's Q1-Q12 stand as proposed. W0, groundwork, done
   2026-11-04 on feat/epic10-part2 (one PR for all of Part 2, a commit per step; nothing pushed): recipes, stations,
   the workshop row and the guildhall (facilities: nobody explores them), crafting, the Workshop group; D1-D7 in the
-  epic. Plan: .agents/epic10_part2_plan.md.
+  epic. W1.1 (building a station) and W1.2 (hiring an artisan) done the same day; W1.3, shifts, waits for the
+  developer to supervise it. Plan: .agents/epic10_part2_plan.md.
 - Epic UI-Beta B2-B5 (bodies, portraits and the dossier, faces everywhere, the interface pass) and the UI polish,
   Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
   B6, the gate with a play session, waits.
@@ -61,7 +62,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0 done; W1 next]; Part 3 the descent (Milestone 4) [QUEUED], with a draft plan
+  (Milestone 3) [ACTIVE 2026-11-04: W0, W1.1-W1.2 done; W1.3 next, supervised]; Part 3 the descent (Milestone 4) [QUEUED], with a draft plan
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED]
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
