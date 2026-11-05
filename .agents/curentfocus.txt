@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-05 (Epic 10 Part 2 ACTIVE: W0, W1.1-W1.2, milestone T T0-T5; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
+# Last reconciled: 2026-11-05 (Epic 10 Part 2 ACTIVE: W0, W1.1-W1.2, milestone T done; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -46,8 +46,8 @@ CURRENT FOCUS
   2026-11-05, under the producer's AFK directive to finish Part 2 (.agents/local/): T5 done, the 24-hour day is
   the game (golden and renders re-recorded; seeds 1-120 120/120; D30 earning's need as a share of the purse, D31 a
   muster rouses a rested sleeper; F12 herbs unneeded on the day).
-  NEXT: T6 the client on the day, T7 docs; then W1.3 shifts on the new day, W1.4-W1.6, W2-W6; stretch: animated
-  hazards and the caravan as an agent.
+  T6 (the client on the day) and T7 (docs, the economy model rewritten) done: milestone T is done.
+  NEXT: W1.3 shifts on the new day, W1.4-W1.6, W2-W6; stretch: animated hazards and the caravan as an agent.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
