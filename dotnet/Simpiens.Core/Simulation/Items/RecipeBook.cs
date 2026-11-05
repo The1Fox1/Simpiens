@@ -47,8 +47,9 @@ namespace Simpiens.Simulation.Items
         /// <summary>The game's recipes (Part 2 Q5). Work times are placeholders until W1 measures output.</summary>
         private static Recipe[] Recipes() => new[]
         {
-            // D2: a minute of work at the forge for three ore, which the stall holds plenty of (F8)
-            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: 600, new RecipeInput(ItemType.IronOre, 3))
+            // D2: two game hours of work at the forge (T3.1; it was a minute, 600 ticks) for three ore, which the stall holds
+            // plenty of (F8)
+            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3))
         };
 
         /// <summary>

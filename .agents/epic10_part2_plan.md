@@ -142,7 +142,10 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
         - **Why:** crawlers stop earning at 40g and meals are cheap and rare. That is T4's.
       - **No worked pose yet:** a crawler at the stall or the board stands idle, and a harvester keeps its harvesting pose. A new pose is art (T6).
 4. **T3 The day's schedules and its dangers** [Very Complex as a whole: split into]
-   1. **T3.1 Schedules** [Possibly Complex: mechanical, each number from T0's table]: the caravan's cadence, regrowth, drifters' arrivals and stays, cooldowns, bounty expiries, the expedition's muster and stages, recipes' times, in game hours.
+   1. **[x] T3.1 Schedules** (done 2026-11-04) [Possibly Complex: mechanical, each number from T0's table]: the caravan's cadence, regrowth, drifters' arrivals and stays, cooldowns, bounty expiries, the expedition's muster and stages, recipes' times, in game hours.
+      - **Most are kept:** the day grew only 11%, so they already read as game hours: drifters every ~5 h staying 4–7 h, the cooldowns ~7 h, a seeded bounty ~14 h.
+      - **Changed:** the pickaxe's recipe is now 2 game hours (840 ticks, was 600). It's live: nothing crafts in a live run before W1.5a, so golden holds.
+      - **Owned elsewhere:** the caravan and regrowth are T4's; the board's bounty lives (in hours) are T6's; the expedition's stages are T3.2b's.
    2. **[x] T3.2a Damage, healing and wear per game hour** (done 2026-11-04) [Possibly Complex: Part 1's danger numbers (G2, G3) re-expressed; golden]: hazard damage, healing awake and in a bunk, a downed crawler's recovery, gear's wear per hour of exposure, set so a unit of glowstone costs about the health and wear it does today.
       - **Done, behind the tuning:** in `DayTuning`, a hazard's damage scale (0.3), the wear interval (one unit every 3 ticks) and healing awake and in a bunk (10 an hour). The map's hazards keep their figures, so the lone crawler's rule is unchanged. `Legacy` reproduces today (scale 1, every tick, 0.05 and 4 a second): golden 3/3, and T0's whole day is identical.
       - **At the cut-over:** fold the scale into the map's hazards as damage per game hour, and drop it.

@@ -145,9 +145,10 @@ namespace Simpiens.Testing.Economy
             var forge = Forge(ushort.MaxValue);
             Crafting.Work(ref forge, ref stall, out _); // warm
             long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int t = 0; t < 5000; t++) Crafting.Work(ref forge, ref stall, out _);
+            int ticks = 8 * (Pickaxe.WorkTicks + 1);
+            for (int t = 0; t < ticks; t++) Crafting.Work(ref forge, ref stall, out _);
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-            Assert(allocated == 0 && forge.Made >= 8, $"5,000 ticks of work, {forge.Made} makes, allocate nothing ({allocated} bytes).");
+            Assert(allocated == 0 && forge.Made >= 8, $"{ticks:N0} ticks of work, {forge.Made} makes, allocate nothing ({allocated} bytes).");
             TestLog.Log("  [Passed] The rule allocates nothing; a station's record is 16 bytes.");
         }
 

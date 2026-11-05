@@ -127,7 +127,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Share food | `ActionTuning` (an intent's `TransferDuration` overrides it) | 1 s | D | 10 min (70) | T2.4 ✓ |
 | A scout's survey | `ActionTuning` | on arrival | D | 30 min (210) at the target | T2.4 ✓ |
 | Treat wounds with a herb | `ActionTuning` | within the tick | D | 30 min (210); the herb eaten at the end | T2.4 ✓ |
-| The pickaxe at the forge | `RecipeBook` (D2) | 600 ticks | D | 2 h (840) | T3.1 |
+| The pickaxe at the forge | `RecipeBook` (D2) | 600 ticks | D | 2 h (840); live now, since nothing crafts in a live run before W1.5a | T3.1 ✓ |
 | A spell at the hearth | `ActionTuning` (was `RelaxAtAnchorAction`) | 3 s | D | 30 min (210) | T2.4 ✓ |
 | Idle pauses | `AmbientWanderEvaluator`, `AgentCognitionService` | 1.5–2 s | P | kept: ambient motion | |
 | Panic's sprint; the downed crawler's wait | `PanicIntentHandler.MaxSeconds`; `MentalBreakEvaluator.DownedSleepSeconds` | 6 s; 5 s | P | kept | |
@@ -139,10 +139,10 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | set with the economy per day: a few visits a day, or one | T4 |
 | Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | with the food balance per day (stall and Garden) | T4 |
 | Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | with the supply per day | T4 |
-| Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | first at 3 h, about every 6 h ± 1 h, staying 6–12 h (a meal and perhaps a night) | T3.1 |
-| The guild's and the stations' cooldowns | `GuildTuning.RejoinCooldownTicks`, `WorkshopTuning.RehireCooldownTicks` | 3,000 (about 7 game hours) | D | 7 h (2,940) | T3.1 |
-| A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | 14 h (5,880) | T3.1 |
-| A posted bounty's life | `BountyBoardModel` | 500–3,000 ticks, 1,000 offered, shown in ticks | D | 4–24 h, 12 offered, shown in hours | T3.1, T6 |
+| Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | kept: already the first at 2.9 h, about every 5 h ± 0.7, staying 4.3–7.1 h, long enough for a meal at two or three a day; T4 looks at their purses | T3.1 ✓ |
+| The guild's and the stations' cooldowns | `GuildTuning.RejoinCooldownTicks`, `WorkshopTuning.RehireCooldownTicks` | 3,000 (about 7 game hours) | D | kept: 7.1 game hours | T3.1 ✓ |
+| A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | kept: 14.3 game hours | T3.1 ✓ |
+| A posted bounty's life | `BountyBoardModel` | 500–3,000 ticks, 1,000 offered, shown in ticks | D | 4–24 h, 12 offered, shown in hours: the board's model and its words | T6 |
 | The expedition's stages (limits) | `ExpeditionTuning` | muster 900, march 1,800, work 1,800, return 2,400 | D | in hours, with room for stretched harvests in the work | T3.2b |
 | Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept for now: the quiet day comes from purses (T4), not forgetting; looked at again with T4's busier day | T4 |
 | Exploration's choice, gossip's cooldown | `ResourceTargeting.SectorChoiceTicks`; `SocialDynamics` | 200; 100 | P | kept | |
