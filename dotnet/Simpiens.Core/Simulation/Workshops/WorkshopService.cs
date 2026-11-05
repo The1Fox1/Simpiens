@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Diagnostics;
+using Simpiens.Narrative;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Persistence;
@@ -9,11 +10,15 @@ using ZLogger;
 
 namespace Simpiens.Simulation.Workshops
 {
-    /// <summary>What the workshops need from the simulation: the stall they work from (Q7).</summary>
+    /// <summary>What the workshops need from the simulation: the stall they work from and pay from (Q7), and the ledger.</summary>
     public interface IWorkshopHost
     {
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
         void UpdateStall(TradeStallData stall);
+        IEconomyLedger EconomyLedger { get; }
+        INarrativeChronicleService ChronicleService { get; }
+        EconomyTuning Economy { get; }
+        int GetSectorForPosition(Vec2 position);
     }
 
     /// <summary>
@@ -23,6 +28,9 @@ namespace Simpiens.Simulation.Workshops
     /// </summary>
     public sealed class WorkshopService
     {
+        /// <summary>The ledger's sink for building stations (D10).</summary>
+        public const string ConstructionSinkName = "Construction";
+
         private MapDefinition _map;
         private StationState[] _stations = Array.Empty<StationState>();
 
@@ -73,14 +81,40 @@ namespace Simpiens.Simulation.Workshops
             return -1;
         }
 
-        /// <summary>Builds the station (W1.1's command pays for it first). False when there is none, or it already stands.</summary>
-        public bool Build(int index)
+        /// <summary>The rule's verdict on building the station at <paramref name="index"/> now, without acting.</summary>
+        public WorkshopRules.Check CanBuild(IWorkshopHost host, int index)
         {
-            if ((uint)index >= (uint)_stations.Length || _stations[index].Built) return false;
-            _stations[index].Built = true;
-            SimLog.Economy.ZLogInformation($"The {_stations[index].Kind} was built at {_map.Stations[index].Key}");
-            return true;
+            bool hasStall = host?.ActiveStalls != null && host.ActiveStalls.Count > 0;
+            return WorkshopRules.CheckBuild(this, index, hasStall, hasStall ? host.ActiveStalls[0].TreasuryGold : 0, Tuning(host));
         }
+
+        /// <summary>
+        /// Builds the station at <paramref name="index"/> (D10): the stall pays the construction, which leaves the economy
+        /// as the <see cref="ConstructionSinkName"/> sink, and the station stands, ready for an artisan and an order.
+        /// Refused, it changes nothing.
+        /// </summary>
+        public WorkshopRules.Check Build(IWorkshopHost host, int index, uint tick)
+        {
+            var check = CanBuild(host, index);
+            if (check != WorkshopRules.Check.Ok)
+            {
+                SimLog.Economy.ZLogWarning($"Build refused for station {index}: {check} ({WorkshopRules.Describe(check, this, index, Tuning(host))})");
+                return check;
+            }
+            uint cost = Tuning(host).ConstructionCost;
+            var stall = host.ActiveStalls[0];
+            host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost));
+            host.EconomyLedger?.RecordSink(cost, ConstructionSinkName);
+            _stations[index].Built = true;
+
+            var station = _map.Stations[index];
+            SimLog.Economy.ZLogInformation($"The {_stations[index].Kind} was built at {station.Key} for {cost}g (treasury now {stall.TreasuryGold - cost}g)");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.StationBuilt, default, WorldRegistry.PlayerEntityId,
+                host.GetSectorForPosition(station.Position), tick, ChronicleIntensity.Notable, (byte)_stations[index].Kind));
+            return WorkshopRules.Check.Ok;
+        }
+
+        private static WorkshopTuning Tuning(IWorkshopHost host) => host?.Economy?.Workshops ?? WorkshopTuning.Default;
 
         /// <summary>
         /// Orders <paramref name="count"/> makes of <paramref name="item"/> at a built station whose recipe it is; the

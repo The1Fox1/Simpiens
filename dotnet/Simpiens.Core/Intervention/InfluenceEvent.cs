@@ -18,7 +18,9 @@ namespace Simpiens.Intervention
         /// <summary>Expeditions (Epic 10 G5): send a party, call it home, give a member gear from the stall's stock.</summary>
         DispatchExpedition = 8,
         RecallExpedition = 9,
-        GiveGear = 10
+        GiveGear = 10,
+        /// <summary>The workshops (Epic 10 Part 2): build a station.</summary>
+        BuildStation = 11
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -98,6 +100,17 @@ namespace Simpiens.Intervention
     /// <summary>The player calls the party home (D7). One expedition at a time, so it names none.</summary>
     public readonly struct RecallExpeditionCommand
     {
+    }
+
+    /// <summary>The player builds a station (Epic 10 Part 2, D10): the one at this index of the map's stations.</summary>
+    public readonly struct BuildStationCommand
+    {
+        public readonly byte StationIndex;
+
+        public BuildStationCommand(byte stationIndex)
+        {
+            StationIndex = stationIndex;
+        }
     }
 
     /// <summary>The player gives a guild member gear from the stall's stock (D12): no gold changes hands.</summary>
@@ -249,6 +262,7 @@ namespace Simpiens.Intervention
         public readonly SetWageCommand SetWage;
         public readonly DispatchExpeditionCommand DispatchExpedition;
         public readonly GiveGearCommand GiveGear;
+        public readonly BuildStationCommand BuildStation;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -262,6 +276,7 @@ namespace Simpiens.Intervention
             InfluenceCommandType.DispatchExpedition => "DispatchExpedition",
             InfluenceCommandType.RecallExpedition => "RecallExpedition",
             InfluenceCommandType.GiveGear => "GiveGear",
+            InfluenceCommandType.BuildStation => "BuildStation",
             _ => string.Empty
         };
 
@@ -276,8 +291,10 @@ namespace Simpiens.Intervention
             in DismissCommand dismiss = default,
             in SetWageCommand setWage = default,
             in DispatchExpeditionCommand dispatchExpedition = default,
-            in GiveGearCommand giveGear = default)
+            in GiveGearCommand giveGear = default,
+            in BuildStationCommand buildStation = default)
         {
+            BuildStation = buildStation;
             DispatchExpedition = dispatchExpedition;
             GiveGear = giveGear;
             SourceId = sourceId;
@@ -319,6 +336,11 @@ namespace Simpiens.Intervention
         public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item)
         {
             return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item));
+        }
+
+        public static InfluenceEvent CreateBuildStation(string sourceId, byte stationIndex)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.BuildStation, buildStation: new BuildStationCommand(stationIndex));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)

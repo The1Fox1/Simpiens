@@ -138,6 +138,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ExpeditionDowned:
                     return $"{actorA} was downed in {sector} on an expedition.";
 
+                case ChronicleEventType.StationBuilt:
+                    return $"The {Simpiens.Simulation.Workshops.WorkshopRules.StationName((Simpiens.Simulation.Items.StationKind)(byte)evt.ExtraData)} was built in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

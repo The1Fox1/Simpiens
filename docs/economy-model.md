@@ -49,6 +49,7 @@ The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, ha
 | Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; counted as `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
 | Faucet | `CaravanSalvageSales` (the Gallery's glowstone, Epic 10 G5) | the haul of an expedition, up to 4 glowstone, sold 2 a visit at 70g | one seam, regrowing in 10 minutes; only a party works it |
 | Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party (21g a glowstone) | conserved; counted as `Shares` in the ledger's flows; a share the treasury can't cover isn't paid |
+| Sink | `Construction` (Epic 10 Part 2) | 300g per station, the forge and the still (`WorkshopTuning`) | once per station; refused when the treasury can't pay |
 
 **What follows:** the stall's net per visit ≈ salvage faucet − upkeep − wholesale − growth in crawler wallets.
 - Crawlers spend almost all they earn, so their gold passes through.

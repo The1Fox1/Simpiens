@@ -63,14 +63,15 @@ namespace Simpiens.Core.Tests
             using var item = ItemCatalog.ExtendForTest(new ItemDefinition(Salve, "Salve", "Salve",
                 ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common, consume: new[] { new ConsumeEffect(StatKind.Health, 20f) }));
             using var recipe = RecipeBook.ExtendForTest(new Recipe(Salve, StationKind.Still, workTicks: 50, new RecipeInput(ItemType.MedicinalHerb, 2)));
-            var economy = EconomyTuning.Default.WithItemTerms(Salve, new ItemTerms(baseValue: 12, StallRole.Sells, stallPrice: 18, stallStock: 0));
+            var economy = EconomyTuning.Default.WithItemTerms(Salve, new ItemTerms(baseValue: 12, StallRole.Sells, stallPrice: 18, stallStock: 0))
+                .WithStallTreasury(EconomyTuning.Default.StallTreasury + EconomyTuning.Default.Workshops.ConstructionCost);
 
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Host.Respawn(new OutpostSession(OutpostSession.DefaultCrawlerCount, economy));
             var host = (IWorkshopHost)sim.Simulation;
             var workshops = sim.Simulation.Workshops;
             int still = workshops.IndexOf(StationKind.Still);
-            Assert.True(still >= 0 && workshops.Build(still), "The still is built.");
+            Assert.True(still >= 0 && workshops.Build(host, still, 0) == WorkshopRules.Check.Ok, "The still is built, paid for from the treasury.");
             Assert.True(workshops.SetOrder(host, still, Salve, 2), "The still takes an order for two salves: its recipe is data.");
 
             int herbsTaken = 0, mostStocked = 0;

@@ -41,7 +41,8 @@ namespace Simpiens.Narrative
         ExpeditionSent = 31, // Epic 10 G5: ActorA is the party's first member; the extra is the party's size, or the haul
         ExpeditionTurnedBack = 32,
         ExpeditionReturned = 33,
-        ExpeditionDowned = 34
+        ExpeditionDowned = 34,
+        StationBuilt = 35 // Epic 10 Part 2: ActorB is the player; the extra is the station's kind
     }
 
     /// <summary>

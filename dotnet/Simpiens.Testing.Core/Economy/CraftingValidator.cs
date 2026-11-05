@@ -36,7 +36,7 @@ namespace Simpiens.Testing.Economy
 
         private static TradeStallData Stall(ushort ore, bool sellsPickaxes = true)
         {
-            var stall = new TradeStallData(StallId, Vec2.Zero, 100u).WithGood(new StallGood(ItemType.IronOre, StallRole.Buys, 20, ore));
+            var stall = new TradeStallData(StallId, Vec2.Zero, 1000u).WithGood(new StallGood(ItemType.IronOre, StallRole.Buys, 20, ore));
             return sellsPickaxes ? stall.WithGood(new StallGood(ItemType.ToolPickaxe, StallRole.Sells, 30, 0)) : stall;
         }
 
@@ -105,9 +105,9 @@ namespace Simpiens.Testing.Economy
             Assert(forge >= 0 && still >= 0 && service.IndexOf(Floor1Layout.Forge) == forge, "Floor 1 has a forge and a still, found by kind and by key.");
 
             Assert(!service.SetOrder(host, forge, ItemType.ToolPickaxe, 2), "An unbuilt station takes no order.");
-            Assert(service.Build(forge) && !service.Build(forge) && service[forge].Built, "Built once.");
+            Assert(service.Build(host, forge, 0) == WorkshopRules.Check.Ok && service.Build(host, forge, 1) == WorkshopRules.Check.AlreadyBuilt && service[forge].Built, "Built once.");
             Assert(!service.SetOrder(host, forge, ItemType.IronOre, 1), "No order for an item with no recipe.");
-            service.Build(still);
+            service.Build(host, still, 0);
             Assert(!service.SetOrder(host, still, ItemType.ToolPickaxe, 1), "No order for another station's recipe.");
 
             Assert(service.SetOrder(host, forge, ItemType.ToolPickaxe, 2) && service[forge].Remaining == 2, "The forge takes an order for two pickaxes.");
@@ -129,7 +129,7 @@ namespace Simpiens.Testing.Economy
                 Assert(service[i].Kind == map.Stations[i].Kind && !service[i].Built && !service[i].HasOrder, $"Station {i} ({map.Stations[i].Key}): the map's kind, unbuilt, no order.");
                 Assert(service.DefinitionAt(i).Key == map.Stations[i].Key, $"Station {i}: its definition, in the map's order.");
             }
-            service.Build(0);
+            service.Build(new Host(Stall(ore: 0)), 0, 0);
             Assert(service.Follow(map)[0].Built, "Following the same map keeps the stations.");
             service.Reset();
             Assert(service.Count == 0, "A reset forgets every station.");
@@ -158,6 +158,10 @@ namespace Simpiens.Testing.Economy
             public Host(TradeStallData stall) => Stalls.Add(stall);
 
             public IReadOnlyList<TradeStallData> ActiveStalls => Stalls;
+            public IEconomyLedger EconomyLedger => null;
+            public Simpiens.Narrative.INarrativeChronicleService ChronicleService => null;
+            public EconomyTuning Economy => EconomyTuning.Default;
+            public int GetSectorForPosition(Vec2 position) => 0;
 
             public void UpdateStall(TradeStallData stall)
             {

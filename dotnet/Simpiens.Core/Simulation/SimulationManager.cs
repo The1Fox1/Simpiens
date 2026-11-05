@@ -112,6 +112,7 @@ namespace Simpiens.Simulation
         }
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        int Simpiens.Simulation.Workshops.IWorkshopHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
 
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetSector(byte sectorId, out SectorDefinition sector)
         {
@@ -359,6 +360,11 @@ namespace Simpiens.Simulation
 
                 case InfluenceCommandType.GiveGear:
                     Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick);
+                    break;
+
+                // The workshops (Epic 10 Part 2)
+                case InfluenceCommandType.BuildStation:
+                    Workshops.Build(this, influence.BuildStation.StationIndex, currentTick);
                     break;
             }
         }

@@ -101,6 +101,18 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     4. **W1.5a The scripted player's workshop moves** [Possibly Complex]: `WorkshopPlayer` in `Simpiens.Hosting`, acting only through commands, as `GuildPlayer` does: builds the forge once the treasury can pay, hires the first resident who qualifies, orders pickaxes.
     5. **W1.6a The client** [Possibly Complex: a Gum window and new art; renders and pins re-recorded after a look]: the station window (build, hire from those who qualify, the order and its progress), opened by clicking the station; the forge drawn on the map (built, and its empty plot), as a table row and a generated sprite.
     - **DoD `AForgeIsBuiltAndWorked`:** on the default seed, within 30 minutes, the scripted player builds the forge, hires an artisan when one qualifies and orders pickaxes; at least two are made from the stall's ore and stocked; the construction sink shows in the ledger, which balances, and the day's checks hold.
+  - **W1.1–W1.2's design (2026-11-04, before their code):**
+    - **D8, hiring is its own command:** `HireArtisanCommand` with its own rules (`WorkshopRules`). Dismiss and SetWage serve both roles, routed by who the crawler is: one role at a time (D6), so it is unambiguous.
+    - **D9, an artisan's terms mirror a member's** (Part 1's D2–D4), in `WorkshopTuning` inside `EconomyTuning`:
+      - Q3's thresholds: trust ≥ 50, warmth ≥ 30, risk tolerance under 30%;
+      - a reservation wage by greed (5g); 5g offered, up to 50g;
+      - wages paid at the caravan's visit, after the guild's members, in hire order, in full or not at all, as a conserved transfer counted on its own (`StallPayment.ArtisanWage`);
+      - paid, trust and warmth rise; unpaid, they fall; it quits after 2 unpaid visits in a row or below trust 30; a dismissal costs 5 trust; a crawler who quit or was let go can't be hired again for 5 minutes.
+      - **No signing fee:** Q3 names only a wage, and the station's construction is the up-front cost.
+    - **D10, construction:** 300g from the stall's treasury (Q2), a sink named `Construction`, refused with its reason for an unknown or built station, without a stall, or when the treasury can't pay.
+    - **D11, the crew:** a station's first hire makes its `Workshop` group, led by the patron and anchored at the station. The group stays while the station stands: patron-led groups are never succeeded. One artisan staffs a station (Q3). The group carries no order until W1.3's standing directive.
+    - **The chronicle** tells of a station built and an artisan hired, unpaid, quitting or let go.
+    - **Saves:** the contracts (hire order) and cooldowns (by id) go into `WorkshopSave`, and the artisans' wages into the ledger's totals. The format stays 10 (W0's D5).
   - **W1b, the pickaxe** [Possibly Complex]
     1. **W1.4 The pickaxe** [Possibly Complex: a stat in a handler, a new buy goal, a price that must fit purses (F9)]: `HarvestSpeed` in `HarvestResourceIntentHandler`; the stall's pickaxe row at a price that fits what crawlers carry; a buy decision for crawlers who harvest, as `OutfitForDangerGoal` is for gear; the tool slot's wear.
     2. **W1.5b The live scenario** `AForgeTurnsOreIntoPickaxes` [Possibly Complex]: the draft's DoD below.

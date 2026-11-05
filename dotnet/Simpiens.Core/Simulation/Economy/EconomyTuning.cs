@@ -180,6 +180,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The player's guild: recruiting, the fee, wages and quitting (Epic 10 G4).</summary>
         public GuildTuning Guild { get; private set; } = GuildTuning.Default;
 
+        /// <summary>The stations and their artisans (Epic 10 Part 2).</summary>
+        public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;
+
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -222,6 +225,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Guild = guild;
+            return copy;
+        }
+
+        public EconomyTuning WithWorkshops(in WorkshopTuning workshops)
+        {
+            var copy = Copy();
+            copy.Workshops = workshops;
             return copy;
         }
 
