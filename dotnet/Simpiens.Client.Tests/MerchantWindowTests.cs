@@ -39,11 +39,12 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
-        /// The status bar's treasury and stock line never overlap, even with a four-digit treasury and every stock at its
-        /// most (Epic 10 G2 and G3 each lengthened the stock line).
+        /// Each good shows its stock in its own row, and the line ends before its slider, even with every stock at its most:
+        /// a single stock line in the status bar ran into the treasury once Epic 10 G2, G3 and the forge's pickaxe had
+        /// lengthened it.
         /// </summary>
         [Fact]
-        public void TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest()
+        public void EachGoodShowsItsStockInItsRowAndTheLineFitsBeforeTheSlider()
         {
             var ui = OpenMerchant();
             var sim = (Simpiens.Simulation.SimulationManager)ui.Game.Session.Simulation.Simulation;
@@ -52,7 +53,14 @@ namespace Simpiens.Client.Tests
             ui.Frame();
             var window = ui.Game.Play.Dashboard.Merchant;
             Assert.Equal("Treasury: 9999 Gold", window.TreasuryText);
-            Assert.True(window.StockLeft >= window.TreasuryRight + 8f, $"The stock line starts at {window.StockLeft}, the treasury ends at {window.TreasuryRight}.");
+            foreach (var item in window.Items)
+            {
+                var hint = window.HintText(item);
+                Assert.Contains(" in stock", hint.Text);
+                float right = hint.AbsoluteLeft + hint.AbsoluteWidth;
+                Assert.True(right + 8f <= window.PriceSlider(item).Visual.AbsoluteLeft, $"{item}'s line ends at {right}, its slider starts at {window.PriceSlider(item).Visual.AbsoluteLeft}.");
+            }
+            Assert.EndsWith("99 in stock", window.HintText(ItemType.HazardGear).Text);
         }
 
         [Fact]

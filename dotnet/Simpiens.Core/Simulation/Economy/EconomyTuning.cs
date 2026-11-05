@@ -140,7 +140,8 @@ namespace Simpiens.Simulation.Economy
             items[(int)ItemType.Ration] = new ItemTerms(5, StallRole.Sells, 15, 50);
             items[(int)ItemType.IronOre] = new ItemTerms(2, StallRole.Buys, 5, 10);
             items[(int)ItemType.MedicinalHerb] = new ItemTerms(3, StallRole.Buys, 6, 10);
-            items[(int)ItemType.ToolPickaxe] = new ItemTerms(30);
+            // The forge's pickaxe (Epic 10 Part 2, W1): the stall sells what the forge makes, none to start; its price is W1.4's
+            items[(int)ItemType.ToolPickaxe] = new ItemTerms(30, StallRole.Sells, 30, 0);
             items[(int)ItemType.HazardGear] = new ItemTerms(40, StallRole.Sells, 30, 3);
             items[(int)ItemType.Glowstone] = new ItemTerms(30, StallRole.Buys, 45, 0);
             return items;

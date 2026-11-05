@@ -40,6 +40,7 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.MedicinalHerb] = new ItemText("Herbs", "Bought from foragers", "Herb", "Herb", "HERB");
             _texts[(int)ItemType.Glowstone] = new ItemText("Glowstone", "Rare salvage from the hazards", "Glowstone", "Glowstone", "GLOWSTONE");
             _texts[(int)ItemType.HazardGear] = new ItemText("Hazard gear", "Worn into danger: halves the harm, then wears out", "Gear", "Gear", "GEAR");
+            _texts[(int)ItemType.ToolPickaxe] = new ItemText("Pickaxe", "Made at the forge from three ore", "Pickaxe", "Pickaxe", "PICKAXE");
         }
 
         public static ItemText Of(ItemType item)

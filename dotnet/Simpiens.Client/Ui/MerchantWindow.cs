@@ -22,7 +22,8 @@ namespace Simpiens.Client.Ui
         private readonly System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType> _items = new System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType>(8);
         private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, Slider> _sliders = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, Slider>();
         private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime> _values = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime>();
-        private readonly TextRuntime _status, _treasury, _stock, _feedback;
+        private readonly System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime> _hints = new System.Collections.Generic.Dictionary<Simpiens.Simulation.Economy.ItemType, TextRuntime>();
+        private readonly TextRuntime _status, _treasury, _feedback;
         private bool _binding;
         private readonly IconAtlas _icons;
         private readonly System.Collections.Generic.List<SpriteRuntime> _iconViews = new System.Collections.Generic.List<SpriteRuntime>(8);
@@ -45,13 +46,7 @@ namespace Simpiens.Client.Ui
             UiParts.CentreVertically(_treasury);
             left.Children.Add(_status);
             left.Children.Add(_treasury);
-            _stock = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Status);
-            _stock.XUnits = GeneralUnitType.PixelsFromLarge;
-            _stock.XOrigin = HorizontalAlignment.Right;
-            _stock.X = -12f;
-            UiParts.CentreVertically(_stock);
             statusBar.Children.Add(left);
-            statusBar.Children.Add(_stock);
             body.Children.Add(statusBar);
             body.Children.Add(Window.Gap(14f));
 
@@ -62,8 +57,9 @@ namespace Simpiens.Client.Ui
             {
                 var item = row.Item;
                 _items.Add(item);
-                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value);
+                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value, out var hint);
                 _values[item] = value;
+                _hints[item] = hint;
             }
 
             body.Children.Add(Window.Gap(6f));
@@ -100,11 +96,10 @@ namespace Simpiens.Client.Ui
         public string TreasuryText => _treasury.Text;
         public string FeedbackText => _feedback.Text;
 
-        /// <summary>Where the treasury's text ends and the stock line begins, on screen (they share the status bar).</summary>
-        public float TreasuryRight => _treasury.AbsoluteLeft + _treasury.AbsoluteWidth;
-        public float StockLeft => _stock.AbsoluteLeft;
+        /// <summary>A good's line under its name: what it is to the stall, and the stall's stock of it.</summary>
+        public TextRuntime HintText(Simpiens.Simulation.Economy.ItemType item) => _hints[item];
 
-        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value)
+        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value, out TextRuntime hint)
         {
             var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };
             UiParts.AddFill(row, UiStyle.Card);
@@ -118,7 +113,8 @@ namespace Simpiens.Client.Ui
             labels.X = 12f + IconAtlas.Size + 10f;
             UiParts.CentreVertically(labels);
             labels.Children.Add(UiParts.Text(title, UiStyle.TextBright, UiText.BodyBold));
-            labels.Children.Add(UiParts.Text(description, UiStyle.TextMuted, UiText.Small));
+            hint = UiParts.Text(description, UiStyle.TextMuted, UiText.Small);
+            labels.Children.Add(hint);
             row.Children.Add(labels);
 
             var slider = UiParts.Slider(MerchantModel.MinPrice, maxPrice, 1);
@@ -170,7 +166,11 @@ namespace Simpiens.Client.Ui
             Window.SnapToPixels();
             UiParts.SetText(_status, _model.StallStatus);
             UiParts.SetText(_treasury, _model.Treasury);
-            UiParts.SetText(_stock, _model.Stock);
+            for (int i = 0; i < _items.Count; i++)
+            {
+                var row = _model.Row(_items[i]);
+                if (row != null) UiParts.SetText(_hints[_items[i]], row.Hint + " · " + row.Stock);
+            }
             UiParts.SetText(_feedback, _model.Feedback.Text);
             _feedback.Color = UiStyle.ToneColor(_model.Feedback.Tone);
         }

@@ -28,6 +28,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The highest price the slider offers: four times the opening price or the stall's own, whichever is higher, at least 10 (Epic 10 Part 2, T6).</summary>
         public int MaxPrice { get; }
 
+        /// <summary>The stall's stock of it in words, "10 in stock" (Epic 10 Part 2, W1.5a: shown in its row, as the goods outgrew one line).</summary>
+        public string Stock { get; internal set; } = string.Empty;
+
         public string Label => ItemTexts.PriceLabel(Item, Role);
         public string Hint => ItemTexts.PriceHint(Item, Role);
         /// <summary>The good's icon (graphics V4).</summary>
@@ -109,13 +112,21 @@ namespace Simpiens.Presentation.Dashboard
                 Treasury = stall.InArrears
                     ? Invariant($"Treasury: {stall.TreasuryGold} Gold (in arrears: not buying salvage)")
                     : Invariant($"Treasury: {stall.TreasuryGold} Gold");
-                for (int i = 0; i < rows.Count; i++) parts[i] = Invariant($"{stall.StockOf(rows[i].Item)} {ItemTexts.Of(rows[i].Item).StockWord}");
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    parts[i] = Invariant($"{stall.StockOf(rows[i].Item)} {ItemTexts.Of(rows[i].Item).StockWord}");
+                    rows[i].Stock = Invariant($"{stall.StockOf(rows[i].Item)} in stock");
+                }
             }
             else
             {
                 StallStatus = "No active stall established";
                 Treasury = "Treasury: 0 Gold";
-                for (int i = 0; i < rows.Count; i++) parts[i] = $"0 {ItemTexts.Of(rows[i].Item).StockWord}";
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    parts[i] = $"0 {ItemTexts.Of(rows[i].Item).StockWord}";
+                    rows[i].Stock = "0 in stock";
+                }
             }
             Stock = "Stock: " + string.Join(" | ", parts);
         }
