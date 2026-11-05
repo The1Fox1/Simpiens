@@ -52,6 +52,30 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, sim.Simulation.IntentFaults);
         }
 
+        /// <summary>
+        /// The bold buy their own (W2.3, D45), as Majesty's heroes buy potions: with draughts in the stall's stock and purses
+        /// that can spare them (by hand), crawlers who would go into danger buy one each and carry it; the cautious don't.
+        /// </summary>
+        [Fact]
+        public void TheBoldBuyADraughtToCarryAndTheCautiousDont()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            sim.Step(DayClock.TicksPerHour); // an hour in: they know the hazards' salvage
+            var stall = sim.Simulation.ActiveStalls[0];
+            ((SimulationManager)sim.Simulation).UpdateStall(stall.WithStock(ItemType.HealingDraught, 5)); // by hand: the still's are W2.5's
+            foreach (var crawler in sim.Host.CrawlerStates) crawler.Inventory.Gold = 100;
+            sim.Step(4 * DayClock.TicksPerHour);
+
+            var buyers = sim.Host.CrawlerStates.Where(s => s.Activity.MedicinePurchases > 0).ToList();
+            TestContext.Current.TestOutputHelper?.WriteLine($"{buyers.Count} bought: risk {string.Join(", ", buyers.Select(b => b.Personality.RiskTolerancePercent))}; stock left {sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught)}");
+            Assert.NotEmpty(buyers);
+            Assert.All(buyers, b => Assert.True(b.Personality.RiskTolerancePercent >= Simpiens.Cognition.Vitality.VentureRiskTolerancePercent, "Only the bold buy a draught to carry."));
+            Assert.All(buyers, b => Assert.Equal(1, b.Activity.MedicinePurchases));
+            Assert.Equal(5 - buyers.Count, sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught));
+            Assert.Equal(0, sim.Simulation.IntentFaults);
+        }
+
         [Fact]
         public void AHurtCrawlerDrinksItsDraughtAndHealsHerbsFirst()
         {

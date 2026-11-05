@@ -98,14 +98,17 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
-                float calmValue = gear ? Considerations.CalmGearValue(personality, economy, trade.ItemType) : Considerations.CalmRationValue(personality, economy);
+                // Food by the ration's calm value; anything else (gear, a tool, a draught) by its own (Epic 10 Part 2, W2.3)
+                bool food = Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Food);
+                float calmValue = food ? Considerations.CalmRationValue(personality, economy) : Considerations.CalmGearValue(personality, economy, trade.ItemType);
                 var verdict = TradeFairness.ClassifyPurchase(unitPrice, calmValue, economy.TradeTrust);
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
                 if (gear && equipment.Slot == Simpiens.Simulation.Items.EquipmentSlot.Tool) agent.Activity.ToolPurchases++;
                 else if (gear) agent.Activity.GearPurchases++;
-                else agent.Activity.RecordRationPurchase();
+                else if (food) agent.Activity.RecordRationPurchase();
+                else agent.Activity.MedicinePurchases++;
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x {trade.ItemType} for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.SellStockOf(trade.ItemType)}, treasury {stall.TreasuryGold}g, {verdict} against a calm value of {calmValue:0.#}g, player trust delta {delta.Trust})");
 
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(

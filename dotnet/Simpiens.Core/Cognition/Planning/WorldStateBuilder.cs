@@ -35,6 +35,7 @@ namespace Simpiens.Cognition.Planning
             state = state.With(StateFact.HasProvisions, hasFood);
             state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
             state = state.With(StateFact.HasHazardGear, hasHazardGear);
+            state = state.With(StateFact.HasMedicine, inv.HasAny(ItemCategory.Medicine));
             return state;
         }
 
@@ -67,6 +68,7 @@ namespace Simpiens.Cognition.Planning
                 bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection);
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
+                state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);

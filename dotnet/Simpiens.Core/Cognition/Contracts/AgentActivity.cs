@@ -51,8 +51,9 @@ namespace Simpiens.Cognition.Contracts
         public int ToolsWornOut;
         public int ToolMinedUnits;
 
-        /// <summary>Draughts drunk (Epic 10 Part 2, W2): medicine that isn't salvage, apart from the herbs eaten.</summary>
+        /// <summary>Draughts drunk (Epic 10 Part 2, W2): medicine that isn't salvage, apart from the herbs eaten; and bought.</summary>
         public int DraughtsDrunk;
+        public int MedicinePurchases;
 
         public static AgentActivity Empty => new AgentActivity
         {

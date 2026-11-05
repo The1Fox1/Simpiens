@@ -511,16 +511,19 @@ namespace Simpiens.Cognition.Planning
         /// Epic 10 G3: the nearest reachable stall sells hazard gear at or below this crawler's price, and the crawler can
         /// pay for it and still buy a ration after (gear never costs it a meal).
         /// </summary>
-        public static bool CanBuyGear(in AgentContext context) => CanBuyEquipment(context, ItemCategory.Protection);
+        public static bool CanBuyGear(in AgentContext context) => CanBuy(context, ItemCategory.Protection);
 
         /// <summary>Epic 10 Part 2, W1.4 (D38): as <see cref="CanBuyGear"/>, for the tool the stall sells (a pickaxe).</summary>
-        public static bool CanBuyTool(in AgentContext context) => CanBuyEquipment(context, ItemCategory.Tool);
+        public static bool CanBuyTool(in AgentContext context) => CanBuy(context, ItemCategory.Tool);
+
+        /// <summary>Epic 10 Part 2, W2.3 (D45): as <see cref="CanBuyGear"/>, for the medicine the stall sells (a draught; it buys herbs, so they don't count).</summary>
+        public static bool CanBuyMedicine(in AgentContext context) => CanBuy(context, ItemCategory.Medicine);
 
         /// <summary>
-        /// The nearest reachable stall has a piece of <paramref name="group"/> in stock at or below this crawler's price,
-        /// and the crawler can pay for it with a ration's price to spare.
+        /// The nearest reachable stall sells a piece of <paramref name="group"/>, has one in stock at or below this crawler's
+        /// price (the item's value to it), and the crawler can pay for it with a ration's price to spare.
         /// </summary>
-        private static bool CanBuyEquipment(in AgentContext context, ItemCategory group)
+        private static bool CanBuy(in AgentContext context, ItemCategory group)
         {
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
@@ -540,6 +543,9 @@ namespace Simpiens.Cognition.Planning
 
         /// <summary>The first tool the stall sells, in id order (a pickaxe, Epic 10 Part 2); None when it sells none.</summary>
         public static ItemType ToolForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Tool);
+
+        /// <summary>The first medicine the stall sells, in id order (a draught, Epic 10 Part 2; herbs it buys); None when it sells none.</summary>
+        public static ItemType MedicineForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Medicine);
 
         private static ItemType FirstForSale(in TradeStallData stall, ItemCategory group)
         {
