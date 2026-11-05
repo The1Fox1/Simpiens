@@ -58,6 +58,10 @@ Defaults, taken while doing W0; the producer answers by exception.
 - **D6, precedence is not the group kind's value:** kinds are saved, so `Workshop` takes the next value and a crawler's memberships are ordered by a precedence: party, then guild or workshop, then settlement.
 - **D7, the rooms are facilities** (found while doing W0.4): nobody explores them and no bounty targets them. Without it, exploration sent everyone down the two new dead ends, far from food, and 8 of 16 seeds starved someone. Artisans and members will go there under orders.
 
+### W1.3's direction: shifts (producer, 2026-11-04)
+
+Shifts make labour scarce: an artisan can't work around the clock. It has needs and must eventually rest and eat. The player assigns a hired artisan to 4-hour blocks across the day. Stacking three blocks in a row depletes its needs: it panics, breaks out of its shift to look after them, and loses affection (warmth) and trust toward the player. The proposed design (D12–D16: blocks, the standing order, eating on the job, energy as what stacked shifts spend, overwork costing trust) is in the plan's W1.3, waiting for the producer's answers before any code.
+
 ## 1. Goal
 
 **The player promise:** turn the haul into gear nobody sells. Staff a forge and a still with the outpost's careful hands, and send your guild deeper, better kitted.
@@ -158,6 +162,7 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 | Loot in play | Part 3 (L2) |
 | Combat and death | Part 3 (Q11) |
 | Safe zones; placing the shop and the guildhall where the player chooses, each grown as one building; rival shops and guilds | Unscheduled: the producer's long-term direction ([Game Design Proposal §5](../Game%20Design%20Proposal.md)) |
+| Quitting on soured feelings (the producer, 2026-11-04). Today a guild member (Part 1's D4) and an artisan (W1.2) quit at a caravan visit when trust toward the player is under 30, or after 2 unpaid visits in a row. Later: quitting on warmth (affection) as well as trust, thresholds per role as tuning, quitting at any time rather than only at a visit, and perhaps going to a rival (Game Design Proposal §5) | Unscheduled; any epic that reworks contracts |
 
 ## 6. Risks
 

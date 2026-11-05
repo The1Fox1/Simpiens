@@ -35,6 +35,7 @@ Player agency operates strictly through environmental and economic incentives th
 
 * **Bounty Contracts as Utility Injections:** Posting a bounty (e.g., "Scout Sector B-4" or "Harvest Iron Ore") injects a high-scoring directive into the public evaluation pool. Unaffiliated agents claim or ignore tasks based on their personal traits, risk tolerance, and reward sizing.
 * **The Social Conversion Pipeline:** Agents begin as unaligned independents. By offering trade discounts, stocking preferred items, and posting fair bounties, the player accumulates dyadic **Trust** and **Warmth**. Once loyalty thresholds are met, the player formally recruits the agent into their **Guild Group**, gaining the authority to organize dedicated 4-man parties and dictate target expeditions.
+* **Relationships can sour (producer, 2026-11-04):** the pipeline runs both ways. Guild members and artisans have needs and feelings; overworking or not paying them costs trust and affection. Past a threshold they quit: today on low trust or unpaid wages at a caravan visit; in time on affection too, at any moment, with thresholds the design sets per role.
 * **Sector Observation & LLM Chronicle:** Sectors remain shrouded under Fog of War until an agent completes a scouting contract. Cleared sectors permit direct camera observation of simulated micro-encounters (campfires, node disputes, combat). A background Model Context Protocol (MCP) narrator parses deterministic `MemoryLedger` events into dynamic tavern rumors and newspaper chronicles.
 
 ---
