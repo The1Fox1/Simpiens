@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-04 (Epic 10 Part 2 ACTIVE: W0; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
+# Last reconciled: 2026-11-04 (Epic 10 Part 2 ACTIVE: W0, W1.1-W1.2, milestone T proposed; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -30,12 +30,14 @@ CURRENT FOCUS
   the producer said "Begin Epic 10 part 2 work"; the draft's Q1-Q12 stand as proposed. W0, groundwork, done
   2026-11-04 on feat/epic10-part2 (one PR for all of Part 2, a commit per step; nothing pushed): recipes, stations,
   the workshop row and the guildhall (facilities: nobody explores them), crafting, the Workshop group; D1-D7 in the
-  epic. W1.1 (building a station) and W1.2 (hiring an artisan) done the same day; W1.3, shifts, waits for the
-  developer to supervise it. Plan: .agents/epic10_part2_plan.md.
+  epic. W1.1 (building a station) and W1.2 (hiring an artisan) done the same day. The producer then widened the
+  scope: milestone T, a 24-hour day (RimWorld-paced; hunger over a day, 8 hours' sleep), before W1.3's shifts;
+  D17-D22 proposed, waiting for answers. Plan: .agents/epic10_part2_plan.md.
 - Epic UI-Beta B2-B5 (bodies, portraits and the dossier, faces everywhere, the interface pass) and the UI polish,
   Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
   B6, the gate with a play session, waits.
-- NEXT: Part 2's W1, the forge and its artisan (split before it starts; the developer supervises W1.3, shifts).
+- NEXT: Part 2's milestone T, a 24-hour day, once the producer answers D17-D22 (the developer supervises sleep
+  and the economy's re-pacing); then W1.3, shifts, re-answered on the new day.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as

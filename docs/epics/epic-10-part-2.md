@@ -1,6 +1,6 @@
 # Epic 10, Part 2: Workshops and the Guildhall
 
-- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4); W1.3, shifts, waits for the developer to supervise it. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
+- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4). The producer widened the scope the same day with milestone T, a 24-hour day (§0, §2.2), proposed and awaiting answers; W1.3, shifts, follows it, supervised by the developer. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-4 (the workshops' UI) is folded in, as Epic UI-3 was into Part 1, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
@@ -83,6 +83,15 @@ What Part 1 leaves undone:
 5. **Outfit** the guild from what is made, or **sell** it at the stall.
 6. **Go deeper:** gear made for a hazard opens the worst of them.
 
+### Milestone T's direction: a 24-hour day (producer, 2026-11-04)
+
+Shifts exposed that time doesn't hold together: the dashboard's day is 9,000 ticks, but hunger fills in 67 seconds (about 1.8 game hours) and a bunk visit lasts 3 seconds (5 game minutes). The producer widened Part 2's scope to fix it first, following RimWorld's clock as a baseline (1,000 seconds a day at 1×):
+- time is a full 24-hour day;
+- a crawler needs 8 hours of sleep a day;
+- hunger goes from fed to starving over 24 hours.
+
+The proposed design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds, the pace of work) and its phases, T0–T7, are in the plan's milestone T, waiting for the producer's answers before any code. W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
+
 **The new verbs:** build, hire and dismiss an artisan, set an artisan's wage, order a recipe, price a made item, form a party. Each is a typed player command (ROADMAP §1A.1).
 
 ### 2.2 Milestones
@@ -90,6 +99,7 @@ What Part 1 leaves undone:
 | Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-4) | Complexity |
 | :--- | :--- | :--- | :--- | :--- |
 | **W0. Groundwork** | The two new rooms, empty | Measurements; recipes as item data; stations as map data; the crafting rule, engine-free; the `Workshop` group kind; save blocks | The rooms drawn and labelled | Possibly Complex |
+| **T. A 24-hour day** (added 2026-11-04, before W1.3) | A clock that means something: crawlers eat two or three times a day and sleep about 8 hours, mostly at night | The day's clock in the core (10,080 ticks, RimWorld's 1,000 s rounded to whole minutes); hunger over 24 hours; sleep until rested; beds for everyone; the day's schedules (caravan, regrowth, drifters, cooldowns, expeditions) in game hours; the economy re-paced per day | The clock from the core | Very Complex (the plan splits it; the developer supervises sleep and the economy's re-pacing) |
 | **W1. The forge and its artisan** | Build the forge, hire an artisan, order pickaxes. Bold crawlers buy them and harvest faster. | Construction; hiring (Q3, Q4); shifts; crafting from the stall's stock; the pickaxe's `HarvestSpeed` in the harvest | The station window (build, hire, order, progress); a pickaxe row in the merchant terminal | Very Complex (the plan splits it; the developer supervises shifts) |
 | **W2. The still and draughts** | Draughts from herbs; members carry one and keep going | The still; the draught, carried and drunk under orders below the retreat line | The still's window; draughts in the merchant terminal and the party builder | Possibly Complex |
 | **W3. Gear for each hazard** | Respirators and hard hats send the guild into the worst of the gallery | Gear with a hazard kind; recipes with glowstone; "outfit from stock" picks the target's gear; a lone crawler judges a hazard by what its gear leaves | Gear by hazard in the party builder | Possibly Complex |
@@ -97,7 +107,7 @@ What Part 1 leaves undone:
 | **W5. The guildhall** | A guild of eight, two parties out, members sleeping in barracks | The guild's limit from 4 to 8; barracks; lodging fees; FormParty; two expeditions at once | The roster at eight; two trackers | Very Complex (the plan splits it; the developer supervises two expeditions at once) |
 | **W6. The gate** | The whole loop, balanced | Every scenario; the soak with crafting; save and load mid-craft | The producer's play session | Possibly Complex |
 
-**Order:** W0 first, then W1 → W2 → W3 → W4 in order. W5 could follow W1, but one agent works them in order. The producer looks at W3 and plays W6.
+**Order:** W0 first, then W1.1–W1.2, then T, then the rest of W1 → W2 → W3 → W4 in order. W5 could follow W1, but one agent works them in order. The producer looks at W3 and plays W6.
 
 ### 2.3 Architecture and rules
 - **Stations are map data:** a `StationDefinition` in the layout gives each station's kind, place and stock sizes. Whether a station is built, who staffs it and what it holds is authoritative state in its owner's save block.
@@ -172,6 +182,7 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 | Artisans are cautious crawlers with their own needs, so output is slow. | Shifts come after needs (Part 1's Q6). W1 measures output per minute and tunes recipe times. |
 | The planner's facts grow: artisans' work, carrying a draught. | R1's guard. The budget goes from 43 to about 48 of 64. |
 | The map grows again (two rooms after G5's one). | Golden hashes and renders re-recorded in their own commits. Well within A*'s cap. |
+| The 24-hour day (T) changes every seed's day: food demand falls about tenfold, sleep holds a bunk for hours, and the expedition's muster and rations were tuned to hunger at 1.5 a second (a trip of about 30 s costs about 45 hunger today, about 3 after T). | T0 measures first and tables every duration; the economy's re-pacing and sleep are supervised by the developer; the soak's bands are re-set with the producer; the expedition's muster rules are re-timed in T3. |
 | Room on screen for stations and two trackers. | Windows, like the merchant and the bounty board (Part 1's rule). |
 | The save format changes at most milestones. | Old saves are refused with a reason. |
 
