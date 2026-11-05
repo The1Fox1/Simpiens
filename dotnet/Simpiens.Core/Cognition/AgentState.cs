@@ -95,6 +95,12 @@ namespace Simpiens.Cognition
         public StationOrder Station { get; set; }
 
         /// <summary>
+        /// It did a tick of a station's work this tick (W1.3, D15): its handler marks it, during the simulation's tick, and
+        /// the state's own tick, after it, drains the station's rate and clears it. Not saved: it lasts a tick.
+        /// </summary>
+        public bool WorkedStation { get; set; }
+
+        /// <summary>
         /// A muster call rouses this sleeper (Epic 10 Part 2, T5): it has slept past the tired line, and its party is
         /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
         /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
@@ -259,13 +265,15 @@ namespace Simpiens.Cognition
             }
             else if (VisualState == AgentVisualState.Harvesting)
             {
-                // Work tires as walking does on the 24-hour day (Epic 10 Part 2, T2.4); before it, as standing
-                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyWorkingPerSecond)));
+                // Work tires as walking does on the 24-hour day (Epic 10 Part 2, T2.4); a station's work less (W1.3, D15)
+                float rate = WorkedStation ? day.EnergyCraftingPerSecond : day.EnergyWorkingPerSecond;
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * rate)));
             }
             else
             {
                 energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyStandingPerSecond)));
             }
+            WorkedStation = false;
 
             // Health (Epic 10 G2): heals slowly anywhere, fast asleep in a bunk; a downed crawler gets up at RecoveredAt.
             // Hazard damage is the runtime's (it knows the map)

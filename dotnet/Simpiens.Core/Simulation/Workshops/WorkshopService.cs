@@ -364,13 +364,21 @@ namespace Simpiens.Simulation.Workshops
         /// Keeps each crew's standing order with its artisan's shift (D13), once a tick on the main thread, as the guild
         /// keeps its expedition's: on shift, the crew's directive is to work the station, issued at the start of each block
         /// and expiring at its end, so each block's order is judged anew (Epic 8); off shift, or on a break, there is none.
+        /// First, overwork (D15, D16): an artisan on shift at the break line breaks down, and one on a break is back once
+        /// rested.
         /// </summary>
         public void TickShifts(IWorkshopHost host, uint tick)
         {
             var groups = host?.Groups;
             if (groups == null) return;
+            var tuning = Tuning(host);
             for (int i = 0; i < _artisans.Count; i++)
             {
+                if (host.TryGetCrawler(_artisans[i].CrawlerId, out var crawler) && crawler != null)
+                {
+                    if (_artisans[i].OnBreak && crawler.Energy >= tuning.RestedEnergy) _artisans[i] = _artisans[i].WithOnBreak(false);
+                    else if (!_artisans[i].OnBreak && crawler.Energy <= tuning.BreakEnergy && IsOnShift(_artisans[i], tick)) BreakDown(host, i, crawler, tick, tuning);
+                }
                 var contract = _artisans[i];
                 byte crew = contract.StationIndex < _stations.Length ? _stations[contract.StationIndex].CrewGroupId : (byte)0;
                 if (crew == 0 || !groups.TryGetGroup(crew, out var group)) continue;
@@ -388,6 +396,23 @@ namespace Simpiens.Simulation.Workshops
                     groups.ClearDirective(crew);
                 }
             }
+        }
+
+        /// <summary>
+        /// An artisan worked past the end of its strength (D16): it breaks down, panicking as a tantrum does, loses trust and
+        /// warmth toward the player, and works no shift until rested. Repeated breaks bring it under the quit line, and it
+        /// quits at a caravan visit (W1.2's rule).
+        /// </summary>
+        private void BreakDown(IWorkshopHost host, int index, AgentState crawler, uint tick, in WorkshopTuning tuning)
+        {
+            var contract = _artisans[index];
+            _artisans[index] = contract.WithOnBreak(true);
+            crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Break.Warmth, tuning.Break.Trust, 0, tuning.Break.Respect, tick);
+            crawler.TriggerTantrumVisual();
+            var kind = _stations[contract.StationIndex].Kind;
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(contract.CrawlerId)} broke down at the {kind}: overworked at energy {crawler.Energy:F0}");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanBrokeDown, contract.CrawlerId, WorldRegistry.PlayerEntityId,
+                host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Dramatic, (byte)kind));
         }
 
         /// <summary>

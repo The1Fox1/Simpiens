@@ -41,8 +41,14 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Energy a spell at the hearth adds (its social is the hearth's own).</summary>
         public readonly float RelaxEnergyBonus;
 
-        /// <summary>Energy lost a second at work: harvesting (Epic 10 Part 2, T2.4; a station's work, W1.3).</summary>
+        /// <summary>Energy lost a second at work: harvesting (Epic 10 Part 2, T2.4).</summary>
         public readonly float EnergyWorkingPerSecond;
+
+        /// <summary>
+        /// Energy lost a second at a station's work (W1.3, D15): less than hauling and swinging at a seam, more than standing,
+        /// so two blocks of a shift leave a rested artisan tired but whole and a third breaks it.
+        /// </summary>
+        public readonly float EnergyCraftingPerSecond;
 
         /// <summary>How long a crawler's actions take (D22).</summary>
         public readonly ActionTuning Actions;
@@ -56,7 +62,7 @@ namespace Simpiens.Simulation.Economy
 
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
-            float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, in ActionTuning actions,
+            float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, float energyCraftingPerSecond, in ActionTuning actions,
             float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
         {
             HungerPerSecond = hungerPerSecond;
@@ -73,6 +79,7 @@ namespace Simpiens.Simulation.Economy
             RestBonus = restBonus;
             RelaxEnergyBonus = relaxEnergyBonus;
             EnergyWorkingPerSecond = energyWorkingPerSecond;
+            EnergyCraftingPerSecond = energyCraftingPerSecond;
             Actions = actions;
             RestingHealPerSecond = restingHealPerSecond;
             BunkHealPerSecond = bunkHealPerSecond;
@@ -113,6 +120,7 @@ namespace Simpiens.Simulation.Economy
             restBonus: 0f,
             relaxEnergyBonus: 0f,
             energyWorkingPerSecond: DayClock.PerSecond(8.25f),
+            energyCraftingPerSecond: DayClock.PerSecond(6f),
             actions: ActionTuning.Default,
             restingHealPerSecond: 0.05f,
             bunkHealPerSecond: DayClock.PerSecond(10f),

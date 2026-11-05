@@ -153,6 +153,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ArtisanDismissed:
                     return $"{actorA} was let go from the {Station(evt)}.";
 
+                case ChronicleEventType.ArtisanBrokeDown:
+                    return $"{actorA} broke down at the {Station(evt)}, worked past the end of their strength.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

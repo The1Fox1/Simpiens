@@ -52,8 +52,9 @@ namespace Simpiens.Testing.Economy
             ValidateCommandsReachAnArtisanByWhoItIs();
             ValidateOrdersAndShiftsAsCommands();
             ValidateShiftBlocks();
+            ValidateOverworkBreaksAnArtisan();
 
-            TestLog.Log("<color=green>[WorkshopValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorkshopValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateBuilding()
@@ -285,6 +286,50 @@ namespace Simpiens.Testing.Economy
             Assert(ShiftBlocks.LongestRun(0b100001) == 2 && ShiftBlocks.LongestRun(0b010101) == 1 && ShiftBlocks.LongestRun(0b000111) == 3 && ShiftBlocks.LongestRun(ShiftBlocks.All) == 6,
                 "Runs count around the day's turn: 02-06 runs on into 06-10.");
             TestLog.Log("[PASS] Test 9: Six blocks of four game hours from 06:00; the day shift is 10:00 to 18:00; runs wrap the day's turn.");
+        }
+
+        // W1.3c (D15, D16): an artisan on shift at the break line breaks down: it panics, loses trust and warmth toward the
+        // player, and its crew's order is lifted until it has rested; then it is back on its shifts
+        private static void ValidateOverworkBreaksAnArtisan()
+        {
+            var o = NewOutpost(treasury: 1000);
+            var workshops = o.Sim.Workshops;
+            var tuning = o.Sim.Economy.Workshops;
+            workshops.Build(o.Sim, o.Forge, 0);
+            var smith = Crawler(o, trust: 60, warmth: 40);
+            workshops.Hire(o.Sim, smith.AgentId, o.Forge, 5, 0);
+            workshops.Order(o.Sim, o.Forge, ItemType.ToolPickaxe, 2);
+            workshops.SetShifts(o.Sim, smith.AgentId, ShiftBlocks.All);
+            o.Sim.Tick(1);
+            byte crew = workshops[o.Forge].CrewGroupId;
+            Assert(workshops.OrderFor(smith.AgentId, 1).IsActive && o.Groups.TryGetGroup(crew, out var working) && working.ActiveDirective.Type == Simpiens.Cognition.Groups.DirectiveType.WorkStation,
+                "On shift at an ordered forge: the crew's order is to work it.");
+
+            smith.Energy = tuning.BreakEnergy + 1f;
+            o.Sim.Tick(2);
+            Assert(workshops.TryGetContract(smith.AgentId, out var tired) && !tired.OnBreak, "Tired is not broken: above the break line it works on.");
+
+            var before = smith.Memory.GetAffinity(WorldRegistry.PlayerEntityId, 3);
+            smith.Energy = tuning.BreakEnergy;
+            o.Sim.Tick(3);
+            var after = smith.Memory.GetAffinity(WorldRegistry.PlayerEntityId, 3);
+            Assert(workshops.TryGetContract(smith.AgentId, out var broke) && broke.OnBreak, "At the break line it breaks down.");
+            Assert(after.Trust == before.Trust + tuning.Break.Trust && after.Warmth == before.Warmth + tuning.Break.Warmth, $"It costs trust {tuning.Break.Trust} and warmth {tuning.Break.Warmth} toward the player.");
+            Assert(smith.IsInTantrum, "It panics, as a tantrum does.");
+            Assert(!workshops.OrderFor(smith.AgentId, 3).IsActive && o.Groups.TryGetGroup(crew, out var lifted) && lifted.ActiveDirective.Type == Simpiens.Cognition.Groups.DirectiveType.None,
+                "On a break it has no work, and the crew's order is lifted.");
+            var events = new List<ChronicleEvent>();
+            o.Chronicle.GetAllRecentEvents(events, 16);
+            var told = events.Find(e => e.EventType == ChronicleEventType.ArtisanBrokeDown && e.ActorAId == smith.AgentId);
+            Assert(told.EventType == ChronicleEventType.ArtisanBrokeDown, "The chronicle tells of the breakdown.");
+
+            smith.Energy = tuning.RestedEnergy - 1f;
+            o.Sim.Tick(4);
+            Assert(workshops.TryGetContract(smith.AgentId, out var resting) && resting.OnBreak, "Not yet rested, it stays off its shifts.");
+            smith.Energy = tuning.RestedEnergy;
+            o.Sim.Tick(5);
+            Assert(workshops.TryGetContract(smith.AgentId, out var back) && !back.OnBreak && workshops.OrderFor(smith.AgentId, 5).IsActive, "Rested, it is back on its shift.");
+            TestLog.Log($"[PASS] Test 10: At energy {tuning.BreakEnergy} on shift an artisan breaks down (trust {tuning.Break.Trust}, warmth {tuning.Break.Warmth}), off its shifts until rested to {tuning.RestedEnergy}.");
         }
 
         private static Simpiens.Cognition.AgentState Crawler(Outpost o, sbyte trust, sbyte warmth, float risk = 0.1f, float greed = 0f)

@@ -45,10 +45,22 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Trust toward the player an artisan who is let go loses.</summary>
         public readonly sbyte DismissTrust;
 
+        /// <summary>
+        /// Overwork (W1.3, D15, D16): an artisan on shift at or under this energy breaks down, at this cost in affinity
+        /// toward the player, and works no shift until rested to <see cref="RestedEnergy"/>.
+        /// </summary>
+        public readonly float BreakEnergy;
+        public readonly TrustDelta Break;
+        public readonly float RestedEnergy;
+
         public WorkshopTuning(ushort constructionCost, sbyte hireTrust, sbyte hireWarmth, byte maxRiskTolerancePercent, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
-            TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust)
+            TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust,
+            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f)
         {
+            BreakEnergy = breakEnergy;
+            Break = breakCost;
+            RestedEnergy = restedEnergy;
             ConstructionCost = constructionCost;
             HireTrust = hireTrust;
             HireWarmth = hireWarmth;
@@ -83,6 +95,9 @@ namespace Simpiens.Simulation.Economy
             paidAllegiance: 1,
             unpaid: new TrustDelta(warmth: -5, trust: -10, respect: 0),
             unpaidAllegiance: -5,
-            dismissTrust: -5);
+            dismissTrust: -5,
+            breakEnergy: 15f,
+            breakCost: new TrustDelta(warmth: -5, trust: -10, respect: 0),
+            restedEnergy: 60f);
     }
 }

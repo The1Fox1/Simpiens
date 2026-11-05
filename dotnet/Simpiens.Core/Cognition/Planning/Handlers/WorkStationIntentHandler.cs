@@ -7,7 +7,7 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// <summary>
     /// Executes a WorkStationIntent (Epic 10 Part 2, W1.3, D13): the artisan walks to its station on its path, then each
     /// tick it stands within the station's reach it does a tick of the station's work (<see cref="Simpiens.Simulation.Workshops.Crafting"/>),
-    /// posed at work, so it tires as harvesting does (the day's <c>EnergyWorkingPerSecond</c>). It ends after a game hour
+    /// posed at work, tiring at the station's rate (the day's <c>EnergyCraftingPerSecond</c>, D15). It ends after a game hour
     /// at the station, so the artisan decides afresh, or as soon as it is off shift: its block over, a break, the order done.
     /// </summary>
     public class WorkStationIntentHandler : IntentHandlerBase<WorkStationIntent>
@@ -32,7 +32,11 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if ((order.Position - node.Position).SqrMagnitude > reach) return IntentResult.PathBlocked;
             }
 
-            if (agent != null) agent.VisualState = AgentVisualState.Harvesting;
+            if (agent != null)
+            {
+                agent.VisualState = AgentVisualState.Harvesting; // the harvest's swing reads as the hammer's
+                agent.WorkedStation = true;
+            }
             context.WorkStation(work.StationIndex);
             state.ElapsedTime += context.FixedTickDeltaTime;
             if (state.ElapsedTime < DayClock.SecondsPerHour) return IntentResult.InProgress;

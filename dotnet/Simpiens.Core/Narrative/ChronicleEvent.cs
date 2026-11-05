@@ -46,7 +46,8 @@ namespace Simpiens.Narrative
         ArtisanHired = 36, // the extra is the wage; the sector is the station's
         ArtisanUnpaid = 37, // the extra is the station's kind, for this and the next two
         ArtisanQuit = 38,
-        ArtisanDismissed = 39
+        ArtisanDismissed = 39,
+        ArtisanBrokeDown = 40 // W1.3, D16: overworked on its shift; the extra is the station's kind
     }
 
     /// <summary>
