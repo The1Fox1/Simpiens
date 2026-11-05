@@ -30,7 +30,7 @@ namespace Simpiens.Client.Tests
         {
             var ui = MapView();
             Assert.Equal("Day 1 · 06:00", ui.Game.Play.Dashboard.Header.TickText); // the time of day (Epic UI-Beta B5)
-            ui.Ticks(375);
+            ui.Ticks(Simpiens.Simulation.DayClock.TicksPerHour);
             Assert.Equal("Day 1 · 07:00", ui.Game.Play.Dashboard.Header.TickText);
             Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
             Assert.Equal($"{stall.TreasuryGold}", ui.Game.Play.Dashboard.Header.GoldText);
