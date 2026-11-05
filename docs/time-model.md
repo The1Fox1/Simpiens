@@ -49,6 +49,8 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 - **Tasks:** stretched work takes them from about 190 a day to tens.
 
 ### Measured along the way
+Each step measured the new day before it was the default, so the names below are those of their time: `DayTuning.FullDay`, `ActionTuning.FullDay`, `EconomyTuning.FullDay` and `Floor1Layout.FullDayDefinition` became the defaults at the cut-over (T5, 2026-11-05).
+
 - **T2.1, hunger over 24 hours** (2026-11-04): the gate seeds for three days each (69 seed-days) at `DayTuning.FullDay`, with everything else still at today's pace.
   - **Meals:** 2.4 a resident-day; nobody starved.
   - **With little to do,** crawlers idle 83% of the day and harvest for 10 s.
@@ -157,10 +159,27 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **The treasuries are lower than today's 30 minutes:** a day pays 320g of upkeep, and salvage earns the stall about 1g a unit instead of 4–5g. The guild's wages, fees and outfitting take about 260g more over three days than the fair player's.
   - **Drifters work on the day:** they sell salvage, so they take away more than they bring (about 460g against 330g over three days at keen prices), and G1's check that they leave gold behind turns over. But the keen player's stall ends richer with them than closed on all 16 seeds (17,254g against 11,985g), a comparison G1's day left in the noise (Epic 10 F4). The day's test asserts that (`OnTheDayDriftersLeaveAKeenPlayersStallRicher`).
 
+- **T5, the cut-over** (2026-11-05): the day is the game. Every seed's day on the default floor and economy, one game day (10,080 ticks) on the 23 gate seeds:
+
+| Event | Earliest | Median | Latest | The scenario's deadline |
+| :--- | ---: | ---: | ---: | ---: |
+| The first salvage sale | t370 | t450 | t524 | 2 game hours |
+| The seeded Scout delivered | t637 | t656 | t679 | 2 game hours |
+| The seeded Gather delivered | t1093 | t1255 | t1658 | 6 game hours |
+| A node regrown | t947 | t1094 | t1511 | 6 game hours |
+| A caravan restock | t2520 | t2520 | t5040 | 12 game hours |
+| The third crawler asleep in a bunk | t7342 (23:30) | t7677 | t8521 (02:17) | |
+| The eighth | t7871 | t8420 | t8926 | the next dawn |
+| The first drifter in | t913 | t1183 | t1494 | |
+
+  - **Seeds 1–120:** the day holds on all 120 (Part 1's seed 43, short of trust, and F5's early jitter both pass on the day). The gate seeds with the guild player over three days: 23 of 23, every guild full and two parties sent on most.
+  - **Herbs** (F12): 3 eaten in 23 seed-days. A venture costs about 40 health and a night in a bunk heals 80, so a crawler rarely falls under the herb line.
+  - **The muster** (D31): a party sent at night found three of its four asleep, sleeping on to energy 100. A muster now rouses a member past the tired line; on 8 seeds every party left whole.
+
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
 
-**Proposed** is T0's starting point. The step that owns a row measures it and may move it; the table records where it lands. A ✓ marks a row in `DayTuning.FullDay` (or its step's home), which the cut-over (T5) makes the default.
+**Proposed** is T0's starting point. The step that owns a row measures it and may move it; the table records where it lands. A ✓ marks a row in the day's pace (or its step's home), the default since the cut-over (T5, 2026-11-05).
 
 ### 3.1 The clock
 | What | Where | Today | Kind | Proposed | Step |
@@ -181,14 +200,14 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Resting in place, and a collapse | `DayTuning` (was `RestAction`, the consequence service) | +15 a second; a rest is 2 s, then +30 | D | sleeping rough: +4 an hour, no bonus, up at the same lines as a bunk, for at most 12 hours; a collapse is up at 30 after 7.5 hours | T2.2 ✓ |
 | The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept: sleep begins at energy 37 on average | T2.2 ✓ |
 | Social | `DayTuning` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 ✓ |
-| Bunks | `Floor1Layout` | 8, two rows | — | 12, two rows of six 1.5 apart, leaving the strip along the north wall free (`FullDayBunkCount`, `FullDayDefinition`; three rows walled a crawler in, T4.2); drifters sleep rough when they are full | T2.3, T4.2 ✓ |
+| Bunks | `Floor1Layout` | 8, two rows | — | 12, two rows of six 1.5 apart, leaving the strip along the north wall free (`Floor1Layout.BunkCount`; three rows walled a crawler in, T4.2); drifters sleep rough when they are full | T2.3, T4.2 ✓ |
 | A spell at the hearth | the consequence service | +20 social, +10 energy | D | +20 social, no energy: at +10 a visit the hearth outran the waking day's drain, and nobody would sleep | T2.2 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `DayTuning` (was `Vitality.RestingHealPerSecond`) | 0.05 a second (about 50 a day already) | D | 0.05 a second, about 50 a day (kept) | T3.2a ✓ |
 | Healing in a bunk | `DayTuning` (was `Vitality.BunkHealPerSecond`) | 4 a second (12 per 3-second nap) | D | +10 an hour: a night's sleep heals 80 | T3.2a ✓ |
-| Hazard damage | `Floor1Layout`'s hazards, times `DayTuning.HazardDamageScale` | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | a quarter of it (32, 42 and 63 an hour): a glowstone costs a lone crawler 28 health (today 36) and a party 22 (today 26); parties turn back 14% of the time (today 9%) | T3.2a, T3.2b ✓ |
-| The lone crawler's hazard limit | `Vitality.LoneHazardLimit` | 4 a second | D | kept: judged on the sector's own figure, so who ventures alone doesn't change | T3.2a ✓ |
-| Hazard gear's life | `ItemCatalog` (protection, `PerHazardTick`), one unit every `DayTuning.HazardWearEveryTicks` | 500 ticks of exposure (50 s) | D | a unit every 3 ticks: 1,500 ticks of exposure (about 3.6 game hours), so gear lasts about as many ventures as today's | T3.2a ✓ |
+| Hazard damage | `Floor1Layout`'s hazards (a scale on the pace until T5 folded it into the map) | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | a quarter of it, 0.75, 1 and 1.5 a second (32, 42 and 63 an hour): a glowstone costs a lone crawler 28 health (today 36) and a party 22 (today 26); parties turn back 14% of the time (today 9%) | T3.2a, T3.2b, T5 ✓ |
+| The lone crawler's hazard limit | `Vitality.LoneHazardLimit` | 4 a second | D | a quarter with the hazards, 1 a second: who ventures alone doesn't change | T3.2a, T5 ✓ |
+| Hazard gear's life | `ItemCatalog` (protection, `PerHazardTick`) | 500 ticks of exposure (50 s) | D | 1,500 ticks of exposure, about 3.6 game hours, worn every tick (a unit every 3 ticks until T5 folded it into the catalog), so gear lasts about as many ventures as today's | T3.2a, T5 ✓ |
 
 ### 3.3 Actions (D22)
 | What | Where | Today | Kind | Proposed | Step |
@@ -214,7 +233,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | every 6 game hours (2,520 ticks: 12:00, 18:00, 00:00, 06:00), on the same terms a visit: a day's upkeep 320g, wages 4 rounds (D24) | T4.1 ✓ |
-| Salvage's prices and the caravan's lots | `EconomyTuning` (item terms), `SupplyTuning.FullDay` | ore worth 8g, the stall pays 20g, the caravan 24g for 2 a visit; herbs 12g, 25g, 30g for 2 | — | ore 2g, 5g, 6g for 16; herbs 3g, 6g, 7g for 12: a quarter of today's, so a day's meals take about 5 hours of work; glowstone kept (D29) | T4.2b ✓ |
+| Salvage's prices and the caravan's lots | `EconomyTuning` (item terms), `SupplyTuning.Default` | ore worth 8g, the stall pays 20g, the caravan 24g for 2 a visit; herbs 12g, 25g, 30g for 2 | — | ore 2g, 5g, 6g for 16; herbs 3g, 6g, 7g for 12: a quarter of today's, so a day's meals take about 5 hours of work; glowstone kept (D29) | T4.2b ✓ |
 | Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | kept: crawlers buy nine meals in ten at the stall, and 1 or 12 game hours made no difference; the Garden is the quick fallback | T4.2 ✓ |
 | Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | kept: the stall's buying (its cap and the caravan's quota), not the nodes, limits salvage | T4.2 ✓ |
 | Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | kept: already the first at 2.9 h, about every 5 h ± 0.7, staying 4.3–7.1 h, long enough for a meal at two or three a day; T4 looks at their purses | T3.1 ✓ |
@@ -230,7 +249,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 ### 3.5 The checks
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| The outpost's day | `OutpostScenarioTests`, `GuildScenarioTests`, `CrawlerIdentityTests` | 9,000 ticks | D | 10,080; food and sleep checks over three days | T5 |
-| Starving | `OutpostWatch`, `EconomySoak` | hunger 95 or more for 300 ticks | D | 95 or more for 2 game hours | T5 |
-| The soak's horizon and sample | `EconomySoak` (`Pace.Today`, `Pace.Day`) | 30 min (18,000), sampled each visit | D | three game days (30,240), sampled each visit (13 samples), starving at 95 for 2 game hours; bands proposed (D28); the day's soak becomes the soak at the cut-over | T4.4 ✓, T5 |
+| The outpost's day | `OutpostWatch.DayTicks`: `OutpostScenarioTests`, `GuildScenarioTests`, `CrawlerIdentityTests` | 9,000 ticks | D | 10,080 on the 23 gate seeds; food over three days in the soak (nobody starving for the fair and guild players) and the guild sweep; sleep: 8 sleepers by the next dawn (`OutpostBehaviourTests`); the supply loop's deadlines in game hours | T5 ✓ |
+| Starving | `OutpostWatch`, `EconomySoak` | hunger 95 or more for 300 ticks | D | 95 or more for 2 game hours | T5 ✓ |
+| The soak's horizon and sample | `EconomySoak` | 30 min (18,000), sampled each visit | D | three game days (30,240), sampled each visit (13 samples), starving at 95 for 2 game hours; bands proposed (D28), the soak's own since the cut-over | T4.4, T5 ✓ |
 | The anomaly detector | `AnomalyDetector` | stacking 1 s, thrashing 0.5 s, jitter 5 ticks | P | kept: stretched work's long stands raised no stacking (one jitter in 69 seed-days) | T2.4 ✓ |
