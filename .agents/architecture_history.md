@@ -1479,3 +1479,12 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Deviations:** W1.5a's scenario `AForgeIsBuiltAndWorked` was folded into W1.5b's `AForgeTurnsOreIntoPickaxes` (same seed and days; its stock-based stop no longer held once residents buy); one plot art for every station kind rather than one each.
 - **Finding F13:** a just-qualified artisan works about half its shift, its compliance falling with hunger at trust 50; watched at W6.
 - Commits: W1.3 `46327dc`, `a167054`, `fb45d26`, `cebc500`, `63f24f3`; W1.5a `35d310c`; W1.6a `3b7a036`, `6ffa1cc`; W1.4 `468593a`, `a5a7962`, `5008162`; W1.5b `66a3d74`; W1.6b `4f41663`; with their pins and renders.
+
+## 2026-11-05: W2, the still and draughts (`feat/epic10-part2`, under the producer's AFK directive)
+
+- **What already existed decided the design:** the herb reflex (tier 1, before any order) eats whatever a crawler carries of the `Medicine` group under 60 health, on an expedition too. So the draught is content in that group (D42), and drinking needs no new decision; the still needs no code of its own (D41).
+- **D43, under orders:** the retreat rule doesn't count a member, not downed, who still carries medicine; the draughts carried are how long a party works. *Deviation from the draft's "once per stage of work":* the count carried does that job with no new saved state, and it is the player's choice.
+- **D44, the order carries the number** (`DispatchExpeditionCommand.Draughts`, 0–2), kept in the expedition record's spare byte so its size didn't change; the muster gives rations and draughts through one rule.
+- **D45, Majesty's potion buyers:** the bold buy a draught to carry, as they buy gear; a new planner fact `HasMedicine` (41 of 64). *Fixed on the way:* the trade handler valued and counted any non-gear purchase as a ration.
+- **What the measurement showed:** on the day a geared party never turns back (0 of 13 trips, F6), so draughts matter for bare parties, as a cost per trip where gear lasts. The live scenario needed the guild player to wait for a stockpile, since a member without a draught turns the party back.
+- Commits: W2.1 `9440392`; W2.2 `f5f9eef`; W2.3 `2c61e53`; W2.4 `0e0fc02`; W2.5 `c976e4b`; with their pins and renders.

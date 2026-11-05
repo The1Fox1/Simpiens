@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-05 (Epic 10 Part 2 ACTIVE: W0, milestone T and W1 done; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
+# Last reconciled: 2026-11-05 (Epic 10 Part 2 ACTIVE: W0, milestone T, W1 and W2 done; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -51,8 +51,11 @@ CURRENT FOCUS
   pickaxe (D36-D40: faster mining, 40 units of wear, bought at 30g by residents who mine), the scripted workshop
   player, the stations on the map and the station window (Workshop button), the dossier's tool; live scenario
   AForgeTurnsOreIntoPickaxes. Finding F13 (a new artisan works half its shift) watched at W6.
-  NEXT: W2 the still and draughts, W3 gear per hazard (the producer's look pending), W4, W5 the guildhall, W6 the
-  gate (the producer's play session pending); stretch: animated hazards and the caravan as an agent.
+  W2, the still and draughts, done 2026-11-05: the healing draught (D41-D46: two herbs, heals 80, 20g), drunk by the
+  herb reflex; under orders a member with one drinks instead of turning the party back; the party builder's
+  draughts each; the bold buy their own; live scenario ADraughtKeepsAPartyWorking.
+  NEXT: W3 gear per hazard (the producer's look pending; the merchant terminal is full at 720), W4, W5 the
+  guildhall, W6 the gate (the producer's play session pending); stretch: animated hazards and the caravan as an agent.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
