@@ -25,9 +25,11 @@ namespace Simpiens.Host
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
       --guild adds the scripted guild player (Epic 10 G6): four recruited as they qualify, outfitted and sent to the
       Drowned Gallery whenever its seam is back; it reports expeditions sent and home.
-  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
+  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed] [--day]
       The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
       --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
+      --day plays the 24-hour day's soak instead (Epic 10 Part 2, T4.4): three game days on the day's economy, sampled
+      at each caravan visit.
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
       Compares headless runs with the golden world hashes (the default: every seed in the file).
   simpiens golden record --out PATH [--seeds 20261009]
@@ -154,7 +156,8 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             string profile = options.Text("profile", "all").ToLowerInvariant();
             var profiles = profile == "all" ? EconomySoak.Profiles : new[] { profile };
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
-            long ticks = options.Long("ticks", EconomySoak.HorizonTicks);
+            var pace = options.Flag("day") ? EconomySoak.Pace.Day : EconomySoak.Pace.Today;
+            long ticks = options.Long("ticks", pace.HorizonTicks);
             string csv = options.Text("csv");
             bool drifters = !options.Flag("closed");
 
@@ -165,13 +168,13 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 foreach (var seed in seeds)
                 {
                     if (ct.IsCancellationRequested) return 1;
-                    var result = EconomySoak.Run(seed, p, ticks, drifters);
+                    var result = EconomySoak.Run(seed, p, ticks, drifters, pace);
                     var failures = result.Failures();
                     runs++;
                     if (failures.Count > 0) failed++;
                     Console.WriteLine($"{(failures.Count == 0 ? "PASS" : "FAIL")}  {result.Summary()}");
                     foreach (var failure in failures) Console.WriteLine($"      {failure}");
-                    if (csv != null) result.WriteCsv(Path.Combine(csv, $"economy-soak-{result.Player.Name}-seed{seed}.csv"));
+                    if (csv != null) result.WriteCsv(Path.Combine(csv, $"economy-soak-{pace.Name}-{result.Player.Name}-seed{seed}.csv"));
                 }
             }
             Console.WriteLine($"{runs - failed}/{runs} soaks within their pace bands ({watch.ElapsedMilliseconds} ms)");

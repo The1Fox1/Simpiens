@@ -144,6 +144,18 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **On every run:** upkeep was paid in full and nobody starved. One run (a third, lots of 6) had one jitter anomaly (F5); the taken one had none.
   - **Trust follows the trades:** about 6 sales a resident-day instead of 1.7. Four residents reach the guild's standing (trust 60, warmth 40) at a median of day 1.8 (1.6–2.3), on every seed; before, the median was day 4.5, and 14 of 23 seeds never got there within 5 days. An artisan qualifies at a median of day 0.8.
   - **Drifters leave richer** (156g a day leaves against 110g brought): they sell salvage too.
+- **T4.4, the soak over three days** (D28): `EconomySoak.Pace.Day` plays each profile for three game days (30,240 ticks) on `EconomyTuning.FullDay` and its floor, sampled at each caravan visit; starving is hunger 95 for 2 game hours. Greedy, generous and keen price as shares of the fair prices, which on today's economy are exactly their old prices (today's soak is identical). Seeds 1–15 and 20261009:
+
+| Profile | Treasury at the end of day 3 | Trust rose for (of 12) | Also | Today's band | **Proposed band on the day** |
+| :--- | ---: | ---: | :--- | :--- | :--- |
+| Fair | 771–1,277g | 10–12 | nobody starved | 1,000–2,000g; trust up for 8 or more; nobody starving | **600–1,600g**; trust up for 8 or more; nobody starving |
+| Greedy (food and gear ×2, salvage ×½) | 512–729g | 0–3 | trust mean −29 to −71 | trust up for 2 at most; the mean below 0 at its lowest | **trust up for 3 at most**; the mean below 0 at its lowest |
+| Generous (food ×⅓, gear ×⅔, salvage ×1.75 and ×1.6) | broke by day 1–2 on every seed | 12 at its peak | | goes broke; trust up for 8 or more at its peak | the same |
+| Guild (fair prices, four recruited and sent out) | 578–998g | 10–12 | full on day 1.6–2.9 of every seed; every wage paid; 1–2 hauls home whenever full 8 game hours before the end | 1,000–2,000g; trust up for 8 or more; nobody starving; no wage unpaid; a haul home when full early | **400–1,200g**; the rest the same, "early" being 8 game hours |
+| Keen (food ×4⁄3, gear ×7⁄6, salvage ×0.9 and ×0.88) | 632–1,478g | 4–10 | | none | none |
+
+  - **The treasuries are lower than today's 30 minutes:** a day pays 320g of upkeep, and salvage earns the stall about 1g a unit instead of 4–5g. The guild's wages, fees and outfitting take about 260g more over three days than the fair player's.
+  - **Drifters work on the day:** they sell salvage, so they take away more than they bring (about 460g against 330g over three days at keen prices), and G1's check that they leave gold behind turns over. But the keen player's stall ends richer with them than closed on all 16 seeds (17,254g against 11,985g), a comparison G1's day left in the noise (Epic 10 F4). The day's test asserts that (`OnTheDayDriftersLeaveAKeenPlayersStallRicher`).
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -220,5 +232,5 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | The outpost's day | `OutpostScenarioTests`, `GuildScenarioTests`, `CrawlerIdentityTests` | 9,000 ticks | D | 10,080; food and sleep checks over three days | T5 |
 | Starving | `OutpostWatch`, `EconomySoak` | hunger 95 or more for 300 ticks | D | 95 or more for 2 game hours | T5 |
-| The soak's horizon and sample | `EconomySoak` | 30 min (18,000), sampled each visit | D | in days, sampled each visit | T4, T5 |
+| The soak's horizon and sample | `EconomySoak` (`Pace.Today`, `Pace.Day`) | 30 min (18,000), sampled each visit | D | three game days (30,240), sampled each visit (13 samples), starving at 95 for 2 game hours; bands proposed (D28); the day's soak becomes the soak at the cut-over | T4.4 ✓, T5 |
 | The anomaly detector | `AnomalyDetector` | stacking 1 s, thrashing 0.5 s, jitter 5 ticks | P | kept: stretched work's long stands raised no stacking (one jitter in 69 seed-days) | T2.4 ✓ |

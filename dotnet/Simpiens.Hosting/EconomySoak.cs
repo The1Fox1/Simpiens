@@ -19,7 +19,8 @@ namespace Simpiens.Hosting
     /// The economy soak, headless (Epic CORE C10): the outpost for 30 sim-minutes under one kind of player, sampled every
     /// sim-minute, judged against that player's pace band (docs/economy-model.md §7). The same profiles, samples and bands
     /// as Unity's EconomySoakScenario (Epic Test-2, §3.3), observed every tick instead of every frame; nothing is injected
-    /// except the player's prices, set by a typed command before the first tick.
+    /// except the player's prices, set by a typed command before the first tick. The 24-hour day's soak (Epic 10 Part 2,
+    /// T4.4) plays three game days on the day's economy, sampled at each caravan visit (<see cref="Pace.Day"/>).
     /// </summary>
     public static class EconomySoak
     {
@@ -27,6 +28,97 @@ namespace Simpiens.Hosting
         public const long SampleIntervalTicks = 600;   // one caravan cycle = one sim-minute
         public const float StarvingHunger = 95f;
         public const uint StarvingTicks = 300;
+
+        /// <summary>
+        /// What a soak plays and how it is judged: the session's economy and map, the horizon, the sample (a caravan
+        /// visit), how long at <see cref="StarvingHunger"/> is starving, and the pace bands. <see cref="Today"/> is the
+        /// soak before the 24-hour day; <see cref="Day"/> is the day's (Epic 10 Part 2, T4.4, D28).
+        /// </summary>
+        public sealed class Pace
+        {
+            public string Name { get; init; }
+
+            /// <summary>The session's economy and map (null: the outpost session's own).</summary>
+            public EconomyTuning Economy { get; init; }
+            public Simpiens.Simulation.World.MapDefinition Map { get; init; }
+
+            public long HorizonTicks { get; init; }
+            public long SampleIntervalTicks { get; init; }
+            public uint StarvingTicks { get; init; }
+
+            /// <summary>The summary's treasury every this many samples, labelled "T10" or "D1": the label, then the checkpoint times its step.</summary>
+            public int SamplesPerCheckpoint { get; init; }
+            public string CheckpointLabel { get; init; }
+            public int CheckpointStep { get; init; }
+
+            /// <summary>The horizon in words, for the failures: "30 min", "day 3".</summary>
+            public string HorizonText { get; init; }
+
+            public uint FairTreasuryMin { get; init; }
+            public uint FairTreasuryMax { get; init; }
+            public int FairTrustUpMin { get; init; }
+            public int GreedyTrustUpMax { get; init; }
+            public int GenerousTrustUpPeakMin { get; init; }
+            public uint GuildTreasuryMin { get; init; }
+            public uint GuildTreasuryMax { get; init; }
+            public int GuildTrustUpMin { get; init; }
+
+            /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
+            public long GuildSpareTicks { get; init; }
+
+            /// <summary>The soak before the 24-hour day: 30 sim-minutes, sampled each visit, today's bands.</summary>
+            public static readonly Pace Today = new Pace
+            {
+                Name = "today",
+                HorizonTicks = EconomySoak.HorizonTicks,
+                SampleIntervalTicks = EconomySoak.SampleIntervalTicks,
+                StarvingTicks = EconomySoak.StarvingTicks,
+                SamplesPerCheckpoint = 10,
+                CheckpointLabel = "T",
+                CheckpointStep = 10,
+                HorizonText = "30 min",
+                FairTreasuryMin = EconomySoak.FairTreasuryMin,
+                FairTreasuryMax = EconomySoak.FairTreasuryMax,
+                FairTrustUpMin = EconomySoak.FairTrustUpMin,
+                GreedyTrustUpMax = EconomySoak.GreedyTrustUpMax,
+                GenerousTrustUpPeakMin = EconomySoak.GenerousTrustUpPeakMin,
+                GuildTreasuryMin = EconomySoak.GuildTreasuryMin,
+                GuildTreasuryMax = EconomySoak.GuildTreasuryMax,
+                GuildTrustUpMin = EconomySoak.GuildTrustUpMin,
+                GuildSpareTicks = EconomySoak.GuildSpareTicks,
+            };
+
+            /// <summary>
+            /// The 24-hour day's soak (D28): three game days on <see cref="EconomyTuning.FullDay"/> and its floor, sampled at
+            /// each caravan visit (every 6 game hours); starving is hunger 95 for 2 game hours. The bands are proposed to the
+            /// producer from T4.4's measurement over seeds 1-15 and 20261009 (docs/time-model.md §2): the fair player ended
+            /// day 3 at 771-1,277g with trust risen for 10-12; the greedy one raised trust for 0-3; the generous one went
+            /// broke on every seed; the guild player ended at 578-998g, paid every wage, and brought 1-2 hauls home on every
+            /// seed whose guild filled 8 game hours before the end.
+            /// </summary>
+            public static readonly Pace Day = new Pace
+            {
+                Name = "day",
+                Economy = EconomyTuning.FullDay,
+                Map = Floor1Layout.FullDayDefinition,
+                HorizonTicks = 3 * DayClock.TicksPerDay,
+                SampleIntervalTicks = EconomyTuning.FullDay.Supply.RestockIntervalTicks,
+                StarvingTicks = DayClock.Hours(2),
+                SamplesPerCheckpoint = DayClock.TicksPerDay / (int)EconomyTuning.FullDay.Supply.RestockIntervalTicks,
+                CheckpointLabel = "D",
+                CheckpointStep = 1,
+                HorizonText = "day 3",
+                FairTreasuryMin = 600,
+                FairTreasuryMax = 1600,
+                FairTrustUpMin = 8,
+                GreedyTrustUpMax = 3,
+                GenerousTrustUpPeakMin = 8,
+                GuildTreasuryMin = 400,
+                GuildTreasuryMax = 1200,
+                GuildTrustUpMin = 8,
+                GuildSpareTicks = DayClock.Hours(8),
+            };
+        }
 
         // Pace bands (docs/economy-model.md §7; review §3.3 D5), as EconomySoakScenario asserts them
         // Re-set for Epic 10 G2's glowstone (new money from the hazard sectors), 1,000-2,000g by the producer on 2026-10-25;
@@ -75,28 +167,34 @@ namespace Simpiens.Hosting
 
         /// <summary>
         /// The player the soak plays: fair keeps the session's prices (rations, ore, herbs, hazard gear); greedy, generous
-        /// and keen set their own; guild keeps fair prices and runs a guild (Epic 10 G6, D14: the scripted
-        /// <see cref="GuildPlayer"/> recruits four, outfits them and sends them to the Drowned Gallery whenever its seam is
-        /// back). The profiles are content: they name the goods they price.
+        /// and keen set their own, as shares of the fair ones, so a profile means the same on any economy (Epic 10 Part 2,
+        /// T4.4: on today's economy the shares give exactly the prices they replaced); guild keeps fair prices and runs a
+        /// guild (Epic 10 G6, D14: the scripted <see cref="GuildPlayer"/> recruits four, outfits them and sends them to the
+        /// Drowned Gallery whenever its seam is back). The profiles are content: they name the goods they price.
         /// </summary>
         public static Player Resolve(string name, EconomyTuning economy)
         {
-            static UpdateStallPricesCommand Prices(ushort ration, ushort ore, ushort herb, ushort gear) => new UpdateStallPricesCommand(default)
-                .With(ItemType.Ration, ration).With(ItemType.IronOre, ore).With(ItemType.MedicinalHerb, herb).With(ItemType.HazardGear, gear);
+            UpdateStallPricesCommand Prices(float ration, float ore, float herb, float gear) => new UpdateStallPricesCommand(default)
+                .With(ItemType.Ration, Share(economy, ItemType.Ration, ration)).With(ItemType.IronOre, Share(economy, ItemType.IronOre, ore))
+                .With(ItemType.MedicinalHerb, Share(economy, ItemType.MedicinalHerb, herb)).With(ItemType.HazardGear, Share(economy, ItemType.HazardGear, gear));
             switch ((name ?? "fair").Trim().ToLowerInvariant())
             {
-                case "fair":
-                    return new Player("fair", Prices(economy.Terms(ItemType.Ration).StallPrice, economy.Terms(ItemType.IronOre).StallPrice,
-                        economy.Terms(ItemType.MedicinalHerb).StallPrice, economy.Terms(ItemType.HazardGear).StallPrice), sendsCommand: false);
-                case "guild":
-                    return new Player("guild", Prices(economy.Terms(ItemType.Ration).StallPrice, economy.Terms(ItemType.IronOre).StallPrice,
-                        economy.Terms(ItemType.MedicinalHerb).StallPrice, economy.Terms(ItemType.HazardGear).StallPrice), sendsCommand: false);
-                case "greedy": return new Player("greedy", Prices(30, 10, 12, 60), sendsCommand: true);
-                case "generous": return new Player("generous", Prices(5, 35, 40, 20), sendsCommand: true);
-                // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own
-                case "keen": return new Player("keen", Prices(20, 18, 22, 35), sendsCommand: true);
+                case "fair": return new Player("fair", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
+                case "guild": return new Player("guild", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
+                // Today: rations 30g, ore 10g, herbs 12g, gear 60g
+                case "greedy": return new Player("greedy", Prices(2f, 0.5f, 0.5f, 2f), sendsCommand: true);
+                // Today: rations 5g, ore 35g, herbs 40g, gear 20g
+                case "generous": return new Player("generous", Prices(1f / 3f, 1.75f, 1.6f, 2f / 3f), sendsCommand: true);
+                // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own. Today: rations
+                // 20g, ore 18g, herbs 22g, gear 35g
+                case "keen": return new Player("keen", Prices(4f / 3f, 0.9f, 0.88f, 7f / 6f), sendsCommand: true);
                 default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, guild, keen).", nameof(name));
             }
+        }
+
+        private static ushort Share(EconomyTuning economy, ItemType item, float share)
+        {
+            return (ushort)SimMath.RoundToInt(economy.Terms(item).StallPrice * share);
         }
 
         public struct Row
@@ -113,6 +211,7 @@ namespace Simpiens.Hosting
         {
             public Player Player;
             public ulong Seed;
+            public Pace Pace = Pace.Today;
             public readonly List<Row> Rows = new List<Row>(32);
             public long ObservedTicks;
             public int ConservationViolations, WorstDiscrepancy;
@@ -136,10 +235,10 @@ namespace Simpiens.Hosting
             public List<string> Failures()
             {
                 var failures = new List<string>();
-                if (ObservedTicks < HorizonTicks) failures.Add($"ended at t{ObservedTicks}, before the horizon t{HorizonTicks}");
+                if (ObservedTicks < Pace.HorizonTicks) failures.Add($"ended at t{ObservedTicks}, before the horizon t{Pace.HorizonTicks}");
                 if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
                 if (!PricesApplied) failures.Add($"prices {Player.PriceText()} not applied (stall {PricesSeen})");
-                if (Rows.Count != HorizonTicks / SampleIntervalTicks + 1) failures.Add($"{Rows.Count} samples, expected {HorizonTicks / SampleIntervalTicks + 1}");
+                if (Rows.Count != Pace.HorizonTicks / Pace.SampleIntervalTicks + 1) failures.Add($"{Rows.Count} samples, expected {Pace.HorizonTicks / Pace.SampleIntervalTicks + 1}");
                 if (failures.Count > 0 || Rows.Count == 0) return failures;
 
                 var last = Last;
@@ -157,29 +256,29 @@ namespace Simpiens.Hosting
                 switch (Player.Name)
                 {
                     case "fair":
-                        if (last.Treasury < FairTreasuryMin || last.Treasury > FairTreasuryMax) failures.Add($"fair: treasury {last.Treasury}g at 30 min, outside {FairTreasuryMin}-{FairTreasuryMax}g");
-                        if (last.TrustUp < FairTrustUpMin) failures.Add($"fair: trust rose for only {last.TrustUp} crawlers (need {FairTrustUpMin})");
+                        if (last.Treasury < Pace.FairTreasuryMin || last.Treasury > Pace.FairTreasuryMax) failures.Add($"fair: treasury {last.Treasury}g at {Pace.HorizonText}, outside {Pace.FairTreasuryMin}-{Pace.FairTreasuryMax}g");
+                        if (last.TrustUp < Pace.FairTrustUpMin) failures.Add($"fair: trust rose for only {last.TrustUp} crawlers (need {Pace.FairTrustUpMin})");
                         if (last.StarvingEpisodes != 0) failures.Add($"fair: {last.StarvingEpisodes} starving episodes (need 0)");
                         break;
                     case "greedy":
-                        if (last.TrustUp > GreedyTrustUpMax) failures.Add($"greedy: trust rose for {last.TrustUp} crawlers (at most {GreedyTrustUpMax})");
+                        if (last.TrustUp > Pace.GreedyTrustUpMax) failures.Add($"greedy: trust rose for {last.TrustUp} crawlers (at most {Pace.GreedyTrustUpMax})");
                         // At its lowest, as generous is judged at its peak: once greed has emptied the stall nobody
                         // trades, and trust drifts back to neutral by minute 30 (Epic 10 G0)
                         if (!(lowestTrustMean < 0f)) failures.Add($"greedy: trust mean never fell below 0 (lowest {lowestTrustMean:F1})");
                         break;
                     case "guild":
-                        if (last.Treasury < GuildTreasuryMin || last.Treasury > GuildTreasuryMax) failures.Add($"guild: treasury {last.Treasury}g at 30 min, outside {GuildTreasuryMin}-{GuildTreasuryMax}g");
-                        if (last.TrustUp < GuildTrustUpMin) failures.Add($"guild: trust rose for only {last.TrustUp} crawlers (need {GuildTrustUpMin})");
+                        if (last.Treasury < Pace.GuildTreasuryMin || last.Treasury > Pace.GuildTreasuryMax) failures.Add($"guild: treasury {last.Treasury}g at {Pace.HorizonText}, outside {Pace.GuildTreasuryMin}-{Pace.GuildTreasuryMax}g");
+                        if (last.TrustUp < Pace.GuildTrustUpMin) failures.Add($"guild: trust rose for only {last.TrustUp} crawlers (need {Pace.GuildTrustUpMin})");
                         if (last.StarvingEpisodes != 0) failures.Add($"guild: {last.StarvingEpisodes} starving episodes (need 0)");
                         if (WorstUnpaid != 0) failures.Add($"guild: a member went unpaid {WorstUnpaid} visit(s) in a row");
-                        if (GuildFullTick >= 0 && GuildFullTick <= HorizonTicks - GuildSpareTicks && ExpeditionsHome == 0)
+                        if (GuildFullTick >= 0 && GuildFullTick <= Pace.HorizonTicks - Pace.GuildSpareTicks && ExpeditionsHome == 0)
                         {
                             failures.Add($"guild: full at t{GuildFullTick}, but no expedition came home with glowstone");
                         }
                         break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
-                        if (peakTrustUp < GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak)");
+                        if (peakTrustUp < Pace.GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {Pace.GenerousTrustUpPeakMin} at its peak)");
                         break;
                 }
                 return failures;
@@ -188,11 +287,16 @@ namespace Simpiens.Hosting
             public string Summary()
             {
                 var last = Rows.Count > 0 ? Last : default;
-                string Treasury(int minute) => Rows.Count > minute ? Rows[minute].Treasury.ToString(CultureInfo.InvariantCulture) : "?";
+                var checkpoints = new List<string>(4);
+                for (int k = 0; k * Pace.SamplesPerCheckpoint <= Pace.HorizonTicks / Pace.SampleIntervalTicks; k++)
+                {
+                    int sample = k * Pace.SamplesPerCheckpoint;
+                    checkpoints.Add($"{Pace.CheckpointLabel}{k * Pace.CheckpointStep} {(Rows.Count > sample ? Rows[sample].Treasury.ToString(CultureInfo.InvariantCulture) : "?")}");
+                }
                 string guild = Player.Name == "guild"
                     ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
                     : string.Empty;
-                return $"{Player.Name,-8} seed {Seed,-9} treasury T0 {Treasury(0)} T10 {Treasury(10)} T20 {Treasury(20)} T30 {Treasury(30)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
+                return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
             }
 
             public void WriteCsv(string path)
@@ -201,7 +305,7 @@ namespace Simpiens.Hosting
                 foreach (var r in Rows)
                 {
                     sb.Append(Player.Name).Append(',').Append(Seed).Append(',').Append(r.Tick).Append(',')
-                      .Append((r.Tick / (double)SampleIntervalTicks).ToString("F1", CultureInfo.InvariantCulture)).Append(',')
+                      .Append((r.Tick / (double)EconomySoak.SampleIntervalTicks).ToString("F1", CultureInfo.InvariantCulture)).Append(',')
                       .Append(r.Treasury).Append(',').Append(r.InArrears ? 1 : 0).Append(',').Append(r.CrawlerGold).Append(',')
                       .Append(r.TrustMean.ToString("F2", CultureInfo.InvariantCulture)).Append(',').Append(r.TrustMin).Append(',').Append(r.TrustMax).Append(',')
                       .Append(r.TrustUp).Append(',').Append(r.TrustDown).Append(',').Append(r.StarvingEpisodes).Append(',').Append(r.Collapses).Append('\n');
@@ -213,19 +317,24 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>
-        /// Plays the outpost with <paramref name="seed"/> for <paramref name="horizonTicks"/> as one kind of player.
-        /// Without <paramref name="drifters"/> the outpost is closed, as it was before Epic 10 G1.
+        /// Plays the outpost with <paramref name="seed"/> at <paramref name="pace"/> (today's when null) as one kind of
+        /// player, to the pace's horizon unless <paramref name="horizonTicks"/> is given. Without <paramref name="drifters"/>
+        /// the outpost is closed, as it was before Epic 10 G1.
         /// </summary>
-        public static Result Run(ulong seed, string profile, long horizonTicks = HorizonTicks, bool drifters = true)
+        public static Result Run(ulong seed, string profile, long horizonTicks = 0, bool drifters = true, Pace pace = null)
         {
-            using var sim = LocalSimulation.Create(seed, drifters ? null : services =>
+            pace ??= Pace.Today;
+            if (horizonTicks <= 0) horizonTicks = pace.HorizonTicks;
+            var economy = pace.Economy ?? EconomyTuning.Default;
+            bool ownSession = pace.Economy != null || pace.Map != null || !drifters;
+            using var sim = LocalSimulation.Create(seed, !ownSession ? null : services =>
             {
                 services.RemoveAll<ISessionDefinition>();
-                services.AddSingleton<ISessionDefinition>(new OutpostSession(OutpostSession.DefaultCrawlerCount, EconomyTuning.Default.WithDrifters(DrifterTuning.None)));
+                services.AddSingleton<ISessionDefinition>(new OutpostSession(OutpostSession.DefaultCrawlerCount, drifters ? economy : economy.WithDrifters(DrifterTuning.None), pace.Map));
             });
             sim.Respawn(OutpostSession.SessionId);
             var manager = sim.Simulation;
-            var result = new Result { Player = Resolve(profile, manager.Economy), Seed = seed };
+            var result = new Result { Player = Resolve(profile, manager.Economy), Seed = seed, Pace = pace };
 
             // The player's prices, as a typed command applied on the first tick
             if (result.Player.SendsCommand && manager.ActiveStalls.Count > 0)
@@ -274,7 +383,7 @@ namespace Simpiens.Hosting
                     if (state.Needs.Hunger >= StarvingHunger)
                     {
                         if (!hungrySince.TryGetValue(state.AgentId, out long since)) hungrySince[state.AgentId] = since = rel;
-                        if (rel - since >= StarvingTicks && starvingNow.Add(state.AgentId)) starvingEpisodes++;
+                        if (rel - since >= pace.StarvingTicks && starvingNow.Add(state.AgentId)) starvingEpisodes++;
                     }
                     else
                     {
@@ -288,7 +397,7 @@ namespace Simpiens.Hosting
                     if (Math.Abs(discrepancy) > Math.Abs(result.WorstDiscrepancy)) result.WorstDiscrepancy = discrepancy;
                 }
 
-                if (rel % SampleIntervalTicks == 0)
+                if (rel % pace.SampleIntervalTicks == 0)
                 {
                     if (rel > 0 && !result.PricesApplied && manager.ActiveStalls.Count > 0)
                     {

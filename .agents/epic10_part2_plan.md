@@ -196,6 +196,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
         - **The guild fills in two days:** four residents reach its standing at a median of day 1.8 (1.6–2.3) on every seed, from 4.5 days and never on 14 seeds.
         - **D25 is near, not met:** about 5.7 hours of earning a day, against 6–8. Made goods to buy (W1.4, W2) bring the rest.
         - **Check:** `EconomyTuningValidator` test 6: the day's prices, every seller still sells, the fairness rule's verdicts as today, and food, purses and glowstone unchanged.
+     5. **[x] T4.4 The soak over three days** (done 2026-11-05; bands proposed to the producer) [Possibly Complex: the soak's pace as data; measuring]:
+        - **How:** `EconomySoak.Pace`, today's and the day's: the session (economy and floor), the horizon, the sample, the starving rule and the bands. The day's plays three game days, sampled at each caravan visit, starving at 95 for 2 game hours (D28). `simpiens soak --day`.
+        - **The profiles' prices are shares of the fair ones** (greedy: food and gear ×2, salvage ×½), so a profile means the same on any economy. On today's economy the shares give exactly the old prices: today's soak is identical, 12/12.
+        - **Proposed bands** (`docs/time-model.md` §2, measured over seeds 1–15 and 20261009): fair 600–1,600g at the end of day 3 (measured 771–1,277g); guild 400–1,200g (578–998g); greedy raises trust for 3 at most (0–3); the rest as today, a guild full 8 game hours before the end bringing a haul home.
+        - **Drifters work on the day** (Epic 10 Part 2 F11): they leave with more than they brought, but the keen player's stall ends richer with them on all 16 seeds. The day's test asserts that; G1's purse check stays with today's soak until the cut-over.
+        - **Tests:** `EconomySoakTests`, the day's soak on the soak's seeds (12 runs), the day's drifters, and each profile's prices on both economies.
 
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.
