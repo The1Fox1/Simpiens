@@ -139,12 +139,27 @@ namespace Simpiens.Narrative
                     return $"{actorA} was downed in {sector} on an expedition.";
 
                 case ChronicleEventType.StationBuilt:
-                    return $"The {Simpiens.Simulation.Workshops.WorkshopRules.StationName((Simpiens.Simulation.Items.StationKind)(byte)evt.ExtraData)} was built in {sector}.";
+                    return $"The {Station(evt)} was built in {sector}.";
+
+                case ChronicleEventType.ArtisanHired:
+                    return $"{actorA} took up work in {sector}, at {(int)evt.ExtraData}g a visit.";
+
+                case ChronicleEventType.ArtisanUnpaid:
+                    return $"{actorA} went unpaid at the {Station(evt)} this visit.";
+
+                case ChronicleEventType.ArtisanQuit:
+                    return $"{actorA} quit their work at the {Station(evt)}.";
+
+                case ChronicleEventType.ArtisanDismissed:
+                    return $"{actorA} was let go from the {Station(evt)}.";
 
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }
         }
+
+        /// <summary>The station an event's extra names (Epic 10 Part 2): "forge".</summary>
+        private static string Station(in ChronicleEvent evt) => Simpiens.Simulation.Workshops.WorkshopRules.StationName((Simpiens.Simulation.Items.StationKind)(byte)evt.ExtraData);
 
         private string ResolveActorName(EntityId actorId, string defaultName)
         {

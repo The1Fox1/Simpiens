@@ -8,7 +8,9 @@ namespace Simpiens.Simulation.Economy
         GuildFee = 0,
         GuildWage = 1,
         /// <summary>A member's share of an expedition's haul (Epic 10 G5, D13).</summary>
-        GuildShare = 2
+        GuildShare = 2,
+        /// <summary>A station's artisan's wage (Epic 10 Part 2, D9).</summary>
+        ArtisanWage = 3
     }
 
     /// <summary>
@@ -39,7 +41,7 @@ namespace Simpiens.Simulation.Economy
         bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory seller, uint totalPayout);
 
         /// <summary>
-        /// The stall pays a crawler what it isn't buying goods for (Epic 10 G4): a guild member's signing fee, wage or share of a haul (G5). A
+        /// The stall pays a crawler what it isn't buying goods for (Epic 10 G4): a guild member's signing fee, wage or share of a haul (G5), or an artisan's wage (Part 2). A
         /// conserved transfer, stall → agent, counted under its kind; refused when the treasury can't cover it.
         /// </summary>
         bool TryPayFromStall(EntityId stallId, ref TradeStallData stall, Simpiens.Cognition.Inventory.AgentInventory payee, uint amount, StallPayment kind);

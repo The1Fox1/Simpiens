@@ -1,4 +1,8 @@
+using Simpiens.Cognition;
+using Simpiens.Cognition.Groups;
+using Simpiens.Cognition.Planning;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Guild;
 
 namespace Simpiens.Simulation.Workshops
 {
@@ -18,7 +22,34 @@ namespace Simpiens.Simulation.Workshops
             /// <summary>No stall to pay from.</summary>
             NoStall = 3,
             /// <summary>The stall's treasury can't pay the construction.</summary>
-            CannotPay = 4
+            CannotPay = 4,
+
+            // Hiring (W1.2, Q3, D9)
+            /// <summary>The station isn't built yet.</summary>
+            NotBuilt = 5,
+            /// <summary>The station has its artisan: one per station (Q3).</summary>
+            Staffed = 6,
+            /// <summary>No crawler with that id in the session.</summary>
+            NoCrawler = 7,
+            /// <summary>Drifters pass through; they don't take work.</summary>
+            Drifter = 8,
+            Downed = 9,
+            /// <summary>It is in the guild: one role at a time (Q4, D6).</summary>
+            GuildMember = 10,
+            /// <summary>It already works a station.</summary>
+            AlreadyAnArtisan = 11,
+            /// <summary>Trust or warmth toward the player below the threshold (Q3).</summary>
+            NotYetTrusted = 12,
+            /// <summary>Its risk tolerance is at the threshold or above: it would rather go into danger (Q3).</summary>
+            TooBold = 13,
+            /// <summary>It quit or was let go too recently.</summary>
+            CoolingDown = 14,
+            /// <summary>A wage of 0, or above the most a wage may be.</summary>
+            WageOutOfRange = 15,
+            /// <summary>The wage is below the crawler's reservation wage.</summary>
+            WageTooLow = 16,
+            /// <summary>It works no station.</summary>
+            NotAnArtisan = 17
         }
 
         /// <summary>Whether the station at <paramref name="index"/> can be built now (D10): it exists, stands unbuilt, and the stall can pay. Checked in that order.</summary>
@@ -31,16 +62,77 @@ namespace Simpiens.Simulation.Workshops
             return Check.Ok;
         }
 
-        /// <summary>A refusal in the player's words (allocates; call only on the refusal path and in the window).</summary>
-        public static string Describe(Check check, WorkshopService workshops, int index, in WorkshopTuning tuning)
+        /// <summary>The least wage per caravan visit <paramref name="crawler"/> works a station for: the reservation wage times its greed factor, as a member's.</summary>
+        public static ushort ReservationWage(AgentState crawler, in WorkshopTuning tuning)
+        {
+            float wage = tuning.ReservationWage * Considerations.TraitFactor(crawler.Personality.Greed, Considerations.GreedOnPrice);
+            return (ushort)SimMath.Clamp(SimMath.RoundToInt(wage), 1, ushort.MaxValue);
+        }
+
+        /// <summary>
+        /// Whether <paramref name="crawler"/> takes work at the station at <paramref name="index"/> for
+        /// <paramref name="wage"/> now (Q3, D9). Checked in a fixed order, so a refusal names the first reason: the
+        /// station, who it is, its roles, its trust, its boldness, its cooldown, the wage.
+        /// </summary>
+        public static Check CheckHire(WorkshopService workshops, GuildService guild, AgentState crawler, int index, ushort wage, uint tick, in WorkshopTuning tuning)
+        {
+            if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
+            if (!workshops[index].Built) return Check.NotBuilt;
+            if (workshops.ArtisanAt(index) != default) return Check.Staffed;
+            if (crawler == null || crawler.HasLeft) return Check.NoCrawler;
+            if (crawler.IsDrifter) return Check.Drifter;
+            if (crawler.IsDowned) return Check.Downed;
+            if ((guild != null && guild.IsMember(crawler.AgentId)) || crawler.Memberships.Has(GroupType.FactionGuild)) return Check.GuildMember;
+            if (workshops.IsArtisan(crawler.AgentId)) return Check.AlreadyAnArtisan;
+            var (trust, warmth) = GuildRules.Standing(crawler, tick);
+            if (trust < tuning.HireTrust || warmth < tuning.HireWarmth) return Check.NotYetTrusted;
+            if (crawler.Personality.RiskTolerancePercent >= tuning.MaxRiskTolerancePercent) return Check.TooBold;
+            if (workshops.CooldownUntil(crawler.AgentId) > tick) return Check.CoolingDown;
+            if (wage == 0 || wage > tuning.MaxWage) return Check.WageOutOfRange;
+            if (wage < ReservationWage(crawler, tuning)) return Check.WageTooLow;
+            return Check.Ok;
+        }
+
+        public static Check CheckSetWage(WorkshopService workshops, EntityId crawlerId, ushort wage, in WorkshopTuning tuning)
+        {
+            if (!workshops.IsArtisan(crawlerId)) return Check.NotAnArtisan;
+            if (wage == 0 || wage > tuning.MaxWage) return Check.WageOutOfRange;
+            return Check.Ok;
+        }
+
+        public static Check CheckDismiss(WorkshopService workshops, EntityId crawlerId) => workshops.IsArtisan(crawlerId) ? Check.Ok : Check.NotAnArtisan;
+
+        /// <summary>
+        /// A refusal in the player's words (allocates; call only on the refusal path and in the window).
+        /// <paramref name="name"/> and <paramref name="crawler"/> are the crawler's, when the check concerns one.
+        /// </summary>
+        public static string Describe(Check check, WorkshopService workshops, int index, in WorkshopTuning tuning, string name = null, AgentState crawler = null, uint tick = 0)
         {
             string station = (uint)index < (uint)workshops.Count ? StationName(workshops[index].Kind) : "station";
+            name ??= "That crawler";
             switch (check)
             {
                 case Check.NoStation: return "There is no such station here.";
                 case Check.AlreadyBuilt: return $"The {station} already stands.";
                 case Check.NoStall: return "There is no stall to pay for it.";
                 case Check.CannotPay: return $"The stall can't pay the {tuning.ConstructionCost}g to build the {station}.";
+                case Check.NotBuilt: return $"Build the {station} first.";
+                case Check.Staffed: return $"The {station} has its artisan: one to a station.";
+                case Check.NoCrawler: return "There is no such crawler here.";
+                case Check.Drifter: return $"{name} is passing through: drifters don't take work.";
+                case Check.Downed: return $"{name} is downed; ask again once it's back on its feet.";
+                case Check.GuildMember: return $"{name} is in the guild: one role at a time.";
+                case Check.AlreadyAnArtisan: return $"{name} already works a station.";
+                case Check.NotYetTrusted:
+                    var (trust, warmth) = GuildRules.Standing(crawler, tick);
+                    return $"Not yet: trust {trust} of {tuning.HireTrust}, warmth {warmth} of {tuning.HireWarmth}.";
+                case Check.TooBold: return $"{name} would rather go out into danger than work the {station}.";
+                case Check.CoolingDown:
+                    uint until = crawler != null ? workshops.CooldownUntil(crawler.AgentId) : 0;
+                    return $"{name} left a station recently; ask again in {SimMath.CeilToInt((until - tick) / 600f)} min.";
+                case Check.WageOutOfRange: return $"A wage is 1 to {tuning.MaxWage}g a visit.";
+                case Check.WageTooLow: return $"{name} asks at least {(crawler != null ? ReservationWage(crawler, tuning) : tuning.ReservationWage)}g a visit.";
+                case Check.NotAnArtisan: return $"{name} works no station.";
                 default: return string.Empty;
             }
         }

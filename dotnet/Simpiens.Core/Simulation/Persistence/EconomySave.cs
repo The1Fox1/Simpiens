@@ -51,6 +51,8 @@ namespace Simpiens.Simulation.Persistence
         public uint WageGold;
         public uint Shares;    // expeditions' shares (Epic 10 G5, format 9)
         public uint ShareGold;
+        public uint ArtisanWages;    // artisans' wages (Epic 10 Part 2, format 10)
+        public uint ArtisanWageGold;
     }
 
     [StructLayout(LayoutKind.Sequential)]

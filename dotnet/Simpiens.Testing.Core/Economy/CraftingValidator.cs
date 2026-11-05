@@ -162,6 +162,14 @@ namespace Simpiens.Testing.Economy
             public Simpiens.Narrative.INarrativeChronicleService ChronicleService => null;
             public EconomyTuning Economy => EconomyTuning.Default;
             public int GetSectorForPosition(Vec2 position) => 0;
+            public IGroupRegistry Groups => null;
+            public Simpiens.Simulation.Guild.GuildService Guild => null;
+
+            public bool TryGetCrawler(EntityId crawlerId, out Simpiens.Cognition.AgentState crawler)
+            {
+                crawler = null;
+                return false;
+            }
 
             public void UpdateStall(TradeStallData stall)
             {

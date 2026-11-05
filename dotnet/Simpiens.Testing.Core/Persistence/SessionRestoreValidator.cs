@@ -163,7 +163,10 @@ namespace Simpiens.Testing.Persistence
                     {
                         Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, Made = 2
                     }
-                }
+                },
+                // The forge's artisan, unpaid once, and a crawler who can't be hired again yet (W1.2)
+                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1) },
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
             };
             var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
             workshops.RestoreFrom(save);
@@ -172,9 +175,11 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The stations restored from their save");
             Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1,
                 "A make in progress and a held make come back.");
+            Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
+                && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract and the cooldown come back.");
 
             workshops.RestoreFrom(null);
-            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built, "A save without the block loads every station unbuilt.");
+            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built && workshops.Artisans.Count == 0, "A save without the block loads every station unbuilt, nobody hired.");
             var swapped = new WorkshopSave { Stations = new[] { save.Stations[1], save.Stations[0] } };
             workshops.RestoreFrom(swapped);
             Assert(!workshops[0].Built && !workshops[1].Built, "A saved station whose kind isn't the map's is left unbuilt.");
@@ -197,7 +202,7 @@ namespace Simpiens.Testing.Persistence
             Assert(memberships.Count == 2 && memberships.KindAt(0) == GroupType.Workshop && memberships.KindAt(1) == GroupType.Settlement
                 && restored.TryGetMembership(artisan, crew, out var inCrew) && inCrew.Allegiance == 75, "The artisan's memberships come back, the workshop's before the settlement's (D6).");
 
-            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make, a crew (Epic 10 Part 2, W0.5, W0.6).");
+            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make, an artisan's contract, a cooldown, a crew (Epic 10 Part 2, W0.5, W0.6, W1.2).");
         }
 
         private void ValidateGuildRoundTrips()

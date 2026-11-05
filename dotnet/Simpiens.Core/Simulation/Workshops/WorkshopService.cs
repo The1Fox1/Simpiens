@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Simpiens.Cognition;
+using Simpiens.Cognition.Groups;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
 using Simpiens.Simulation.Economy;
@@ -10,7 +12,10 @@ using ZLogger;
 
 namespace Simpiens.Simulation.Workshops
 {
-    /// <summary>What the workshops need from the simulation: the stall they work from and pay from (Q7), and the ledger.</summary>
+    /// <summary>
+    /// What the workshops need from the simulation: the stall they work from and pay from (Q7), the ledger, the crawlers
+    /// they hire, the groups their crews are, and the guild (one role at a time, D6).
+    /// </summary>
     public interface IWorkshopHost
     {
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
@@ -19,6 +24,9 @@ namespace Simpiens.Simulation.Workshops
         INarrativeChronicleService ChronicleService { get; }
         EconomyTuning Economy { get; }
         int GetSectorForPosition(Vec2 position);
+        bool TryGetCrawler(EntityId crawlerId, out AgentState crawler);
+        IGroupRegistry Groups { get; }
+        Simpiens.Simulation.Guild.GuildService Guild { get; }
     }
 
     /// <summary>
@@ -33,6 +41,11 @@ namespace Simpiens.Simulation.Workshops
 
         private MapDefinition _map;
         private StationState[] _stations = Array.Empty<StationState>();
+
+        // The artisans' contracts in hire order (the order wages are paid in), and who can't be hired again yet (D9)
+        private readonly List<ArtisanContract> _artisans = new List<ArtisanContract>(4);
+        private readonly Dictionary<EntityId, uint> _cooldowns = new Dictionary<EntityId, uint>();
+        private readonly List<ArtisanContract> _quitting = new List<ArtisanContract>(4);
 
         /// <summary>The loaded map's stations.</summary>
         public int Count => _stations.Length;
@@ -59,7 +72,34 @@ namespace Simpiens.Simulation.Workshops
         {
             _map = null;
             _stations = Array.Empty<StationState>();
+            _artisans.Clear();
+            _cooldowns.Clear();
         }
+
+        /// <summary>Every artisan's contract, in hire order.</summary>
+        public IReadOnlyList<ArtisanContract> Artisans => _artisans;
+
+        public bool IsArtisan(EntityId crawlerId) => IndexOfArtisan(crawlerId) >= 0;
+
+        public bool TryGetContract(EntityId crawlerId, out ArtisanContract contract)
+        {
+            int i = IndexOfArtisan(crawlerId);
+            contract = i >= 0 ? _artisans[i] : default;
+            return i >= 0;
+        }
+
+        /// <summary>Who works the station at <paramref name="index"/>; default when nobody does.</summary>
+        public EntityId ArtisanAt(int index)
+        {
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                if (_artisans[i].StationIndex == index) return _artisans[i].CrawlerId;
+            }
+            return default;
+        }
+
+        /// <summary>The tick before which <paramref name="crawlerId"/> can't be hired again (0 when it can).</summary>
+        public uint CooldownUntil(EntityId crawlerId) => _cooldowns.TryGetValue(crawlerId, out uint until) ? until : 0;
 
         /// <summary>The station with <paramref name="key"/> on the map, or -1.</summary>
         public int IndexOf(string key)
@@ -116,6 +156,177 @@ namespace Simpiens.Simulation.Workshops
 
         private static WorkshopTuning Tuning(IWorkshopHost host) => host?.Economy?.Workshops ?? WorkshopTuning.Default;
 
+        /// <summary>The rule's verdict on hiring <paramref name="crawlerId"/> at the station at <paramref name="index"/> for <paramref name="wage"/> now, without acting.</summary>
+        public WorkshopRules.Check CanHire(IWorkshopHost host, EntityId crawlerId, int index, ushort wage, uint tick)
+        {
+            host.TryGetCrawler(crawlerId, out var crawler);
+            return WorkshopRules.CheckHire(this, host.Guild, crawler, index, wage, tick, Tuning(host));
+        }
+
+        /// <summary>
+        /// Hires <paramref name="crawlerId"/> to work the station at <paramref name="index"/> for <paramref name="wage"/>
+        /// a visit (D9, D11): it joins the station's crew, a Workshop group led by the patron and anchored at the station,
+        /// made with the station's first hire; it keeps its settlement; its contract starts. No fee changes hands.
+        /// Refused, it changes nothing.
+        /// </summary>
+        public WorkshopRules.Check Hire(IWorkshopHost host, EntityId crawlerId, int index, ushort wage, uint tick)
+        {
+            var check = CanHire(host, crawlerId, index, wage, tick);
+            if (check != WorkshopRules.Check.Ok)
+            {
+                SimLog.Economy.ZLogWarning($"Hire refused for {SimLog.Agent(crawlerId)} at station {index}: {check}");
+                return check;
+            }
+            host.TryGetCrawler(crawlerId, out var crawler);
+            var tuning = Tuning(host);
+            ref var station = ref _stations[index];
+            var place = _map.Stations[index];
+            var groups = host.Groups;
+            if (groups != null)
+            {
+                if (station.CrewGroupId == 0 || !groups.TryGetGroup(station.CrewGroupId, out _))
+                {
+                    station.CrewGroupId = groups.CreateGroup(GroupType.Workshop, WorldRegistry.PlayerEntityId, place.Position, initialCohesion: 100);
+                }
+                if (station.CrewGroupId != 0) groups.AddMember(station.CrewGroupId, crawlerId, RoleRank.Follower, tuning.InitialAllegiance);
+                crawler.Memberships = groups.GetMemberships(crawlerId);
+            }
+            _artisans.Add(new ArtisanContract(crawlerId, (byte)index, wage, tick));
+            _cooldowns.Remove(crawlerId);
+
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} took up work at the {station.Kind} for {wage}g a visit");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanHired, crawlerId, WorldRegistry.PlayerEntityId,
+                host.GetSectorForPosition(place.Position), tick, ChronicleIntensity.Dramatic, wage));
+            return WorkshopRules.Check.Ok;
+        }
+
+        /// <summary>The player lets an artisan go: it leaves its crew only, loses trust, and can't be hired again for a while.</summary>
+        public WorkshopRules.Check Dismiss(IWorkshopHost host, EntityId crawlerId, uint tick)
+        {
+            var check = WorkshopRules.CheckDismiss(this, crawlerId);
+            if (check != WorkshopRules.Check.Ok) return check;
+            var tuning = Tuning(host);
+            TryGetContract(crawlerId, out var contract);
+            Leave(host, crawlerId, tick, tuning);
+            if (host.TryGetCrawler(crawlerId, out var crawler))
+            {
+                crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, 0, tuning.DismissTrust, 0, 0, tick);
+            }
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was let go from the {_stations[contract.StationIndex].Kind}");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanDismissed, crawlerId, WorldRegistry.PlayerEntityId,
+                host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Notable, (byte)_stations[contract.StationIndex].Kind));
+            return WorkshopRules.Check.Ok;
+        }
+
+        /// <summary>The player sets an artisan's wage per caravan visit.</summary>
+        public WorkshopRules.Check SetWage(IWorkshopHost host, EntityId crawlerId, ushort wage, uint tick)
+        {
+            var check = WorkshopRules.CheckSetWage(this, crawlerId, wage, Tuning(host));
+            if (check != WorkshopRules.Check.Ok) return check;
+            int i = IndexOfArtisan(crawlerId);
+            _artisans[i] = _artisans[i].WithWage(wage);
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)}'s wage at the {_stations[_artisans[i].StationIndex].Kind} is now {wage}g a visit");
+            return WorkshopRules.Check.Ok;
+        }
+
+        /// <summary>
+        /// The caravan's visit pays every artisan's wage from <paramref name="stall"/>, after the guild's members, in hire
+        /// order, each in full or not at all (D9), as a member's is: a paid artisan's trust, warmth and allegiance rise; an
+        /// unpaid one's fall, and its unpaid visits count up. Then an artisan quits below the trust floor or after too
+        /// many unpaid visits in a row, leaving its crew only. Wages are conserved transfers. Returns the stall as it is after.
+        /// </summary>
+        public TradeStallData PayWages(IWorkshopHost host, TradeStallData stall, uint tick)
+        {
+            if (_artisans.Count == 0 || host.ActiveStalls.Count == 0 || stall.StallEntityId != host.ActiveStalls[0].StallEntityId) return stall;
+            var tuning = Tuning(host);
+            var groups = host.Groups;
+            bool changed = false;
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                var contract = _artisans[i];
+                if (!host.TryGetCrawler(contract.CrawlerId, out var artisan)) continue;
+                byte crew = _stations[contract.StationIndex].CrewGroupId;
+                bool paid = stall.TreasuryGold >= contract.Wage && artisan.Inventory != null;
+                if (paid)
+                {
+                    if (host.EconomyLedger != null) host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, artisan.Inventory, contract.Wage, StallPayment.ArtisanWage);
+                    else
+                    {
+                        stall = stall.WithTreasury(stall.TreasuryGold - contract.Wage);
+                        artisan.Inventory.AddGold(contract.Wage);
+                    }
+                    changed = true;
+                    artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                    if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.PaidAllegiance);
+                    _artisans[i] = contract.WithUnpaidVisits(0);
+                }
+                else
+                {
+                    artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                    if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.UnpaidAllegiance);
+                    _artisans[i] = contract.WithUnpaidVisits((byte)Math.Min(byte.MaxValue, contract.UnpaidVisits + 1));
+                    SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} went unpaid at the {_stations[contract.StationIndex].Kind} ({contract.Wage}g; the treasury holds {stall.TreasuryGold}g), {_artisans[i].UnpaidVisits} visit(s) in a row");
+                    host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanUnpaid, contract.CrawlerId, WorldRegistry.PlayerEntityId,
+                        host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Notable, (byte)_stations[contract.StationIndex].Kind));
+                }
+                if (groups != null) artisan.Memberships = groups.GetMemberships(contract.CrawlerId);
+            }
+            if (changed) host.UpdateStall(stall);
+
+            // Quitting, in hire order: below the trust floor, or after too many unpaid visits in a row
+            _quitting.Clear();
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                var contract = _artisans[i];
+                if (!host.TryGetCrawler(contract.CrawlerId, out var artisan)) continue;
+                var (trust, _) = Simpiens.Simulation.Guild.GuildRules.Standing(artisan, tick);
+                if (trust < tuning.QuitTrust || contract.UnpaidVisits >= tuning.MaxUnpaidVisits) _quitting.Add(contract);
+            }
+            for (int i = 0; i < _quitting.Count; i++)
+            {
+                var contract = _quitting[i];
+                var kind = _stations[contract.StationIndex].Kind;
+                Leave(host, contract.CrawlerId, tick, tuning);
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(contract.CrawlerId)} quit the {kind} ({contract.UnpaidVisits} unpaid visit(s) in a row)");
+                host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanQuit, contract.CrawlerId, WorldRegistry.PlayerEntityId,
+                    host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Dramatic, (byte)kind));
+            }
+            return stall;
+        }
+
+        /// <summary>Ends an artisan's contract (quitting or dismissal): it leaves its crew only, and can't be hired again for a while.</summary>
+        internal void Leave(IWorkshopHost host, EntityId crawlerId, uint tick, in WorkshopTuning tuning)
+        {
+            int i = IndexOfArtisan(crawlerId);
+            if (i < 0) return;
+            byte crew = _stations[_artisans[i].StationIndex].CrewGroupId;
+            _artisans.RemoveAt(i);
+            _cooldowns[crawlerId] = tick + tuning.RehireCooldownTicks;
+            var groups = host.Groups;
+            if (groups != null && crew != 0)
+            {
+                groups.RemoveMember(crew, crawlerId);
+                if (host.TryGetCrawler(crawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(crawlerId);
+            }
+        }
+
+        /// <summary>A crawler who left the outpost works no station; its contract ends with it (the groups already let it go).</summary>
+        public void Forget(EntityId crawlerId)
+        {
+            int i = IndexOfArtisan(crawlerId);
+            if (i >= 0) _artisans.RemoveAt(i);
+            _cooldowns.Remove(crawlerId);
+        }
+
+        private int IndexOfArtisan(EntityId crawlerId)
+        {
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                if (_artisans[i].CrawlerId == crawlerId) return i;
+            }
+            return -1;
+        }
+
         /// <summary>
         /// Orders <paramref name="count"/> makes of <paramref name="item"/> at a built station whose recipe it is; the
         /// same item again changes how many are left, the current make included. Another item, or none (a cancel), gives
@@ -162,20 +373,40 @@ namespace Simpiens.Simulation.Workshops
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             save.Stations = (StationState[])_stations.Clone();
+            save.Artisans = _artisans.ToArray();
+            var cooldowns = new IdTickRecord[_cooldowns.Count];
+            int n = 0;
+            foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
+            Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
+            save.Cooldowns = cooldowns;
         }
 
         /// <summary>
         /// Puts a save's stations back, after the map is followed: each station whose kind matches the map's, in the
-        /// map's order. A save without the block leaves every station unbuilt.
+        /// map's order; then the artisans' contracts, in hire order, and the cooldowns. A save without the block leaves
+        /// every station unbuilt and nobody hired.
         /// </summary>
         public void RestoreFrom(WorkshopSave save)
         {
             for (int i = 0; i < _stations.Length; i++) _stations[i] = StationState.Unbuilt(_stations[i].Kind);
+            _artisans.Clear();
+            _cooldowns.Clear();
             var saved = save?.Stations;
             if (saved == null) return;
             for (int i = 0; i < _stations.Length && i < saved.Length; i++)
             {
                 if (saved[i].Kind == _stations[i].Kind) _stations[i] = saved[i];
+            }
+            if (save.Artisans != null)
+            {
+                for (int i = 0; i < save.Artisans.Length; i++)
+                {
+                    if (save.Artisans[i].StationIndex < _stations.Length) _artisans.Add(save.Artisans[i]);
+                }
+            }
+            if (save.Cooldowns != null)
+            {
+                for (int i = 0; i < save.Cooldowns.Length; i++) _cooldowns[save.Cooldowns[i].Id] = save.Cooldowns[i].Tick;
             }
         }
 

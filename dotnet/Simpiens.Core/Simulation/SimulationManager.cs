@@ -113,6 +113,7 @@ namespace Simpiens.Simulation
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
         int Simpiens.Simulation.Workshops.IWorkshopHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        bool Simpiens.Simulation.Workshops.IWorkshopHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler) => ((Simpiens.Simulation.Guild.IGuildHost)this).TryGetCrawler(crawlerId, out crawler);
 
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetSector(byte sectorId, out SectorDefinition sector)
         {
@@ -143,7 +144,7 @@ namespace Simpiens.Simulation
             into.Sort((a, b) => a.CompareTo(b)); // the dictionary's order is not the simulation's
         }
 
-        TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
+        TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
@@ -341,12 +342,15 @@ namespace Simpiens.Simulation
                     Guild.Recruit(this, influence.Recruit.CrawlerId, influence.Recruit.Wage, currentTick);
                     break;
 
+                // A crawler holds one role at a time (Epic 10 Part 2, D6, D8): a member's or an artisan's terms
                 case InfluenceCommandType.Dismiss:
-                    Guild.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
+                    if (Workshops.IsArtisan(influence.Dismiss.CrawlerId)) Workshops.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
+                    else Guild.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
                     break;
 
                 case InfluenceCommandType.SetWage:
-                    Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
+                    if (Workshops.IsArtisan(influence.SetWage.CrawlerId)) Workshops.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
+                    else Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
                     break;
 
                 // Expeditions (Epic 10 G5)
@@ -365,6 +369,10 @@ namespace Simpiens.Simulation
                 // The workshops (Epic 10 Part 2)
                 case InfluenceCommandType.BuildStation:
                     Workshops.Build(this, influence.BuildStation.StationIndex, currentTick);
+                    break;
+
+                case InfluenceCommandType.HireArtisan:
+                    Workshops.Hire(this, influence.HireArtisan.CrawlerId, influence.HireArtisan.StationIndex, influence.HireArtisan.Wage, currentTick);
                     break;
             }
         }

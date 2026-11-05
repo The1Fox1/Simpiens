@@ -52,6 +52,7 @@ namespace Simpiens.Simulation
                 agent.Memberships = _groupRegistry.GetMemberships(node.Id);
             }
             Guild.Forget(node.Id);
+            _workshops.Forget(node.Id);
 
             agent.HasLeft = true;
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({releasedClaims} claim(s) released)");
