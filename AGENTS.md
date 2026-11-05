@@ -255,3 +255,13 @@ The code has violated some of the rules above and below in places; `docs/ROADMAP
 - **Zero Allocations in Hot Paths**: Use Structs, object pooling, and standard `for` loops in tick-critical areas.
 - **Dual-Loop System**: Use `SimulationManager` for the fixed logical tick, and `AgentCognitionService` for background cognition. Off-thread evaluation writes nothing on `AgentState`: it returns its decision, and the `CognitionScheduler` applies it on the main thread.
 - **Defensive Null-Safety for Test Isolation**: Core domain services (`SimulationManager`, `AgentRuntime`, `AgentCognitionService`) must be null-safe regarding their injected interfaces (`ISpatialPartition`, `IWorldRegistry`, `ISimulationClock`). Validators instantiate these services directly in isolation with `null` dependencies. Never dereference an injected dependency without a null guard or fallback (e.g., `_spatialPartition == null` returns unblocked/empty, `_clock == null` defaults to tick 0).
+
+
+
+## Refactor and Reevaluate always
+
+Whenever you are tasked with changing or editing an existing system and need to do a refactor always do 2 things:
+- 1) Determine the complexity of this refactor
+- 2) Determine if this task would be much less complex if the architecture was cleaner
+
+If you determine it is a complex task and that it would be much less complex if the code was structured in a better way then flag it. Do not simply complete the task as written but determine how much benefit you would be giving the repo by improving the architecture first. If the developer is around flag it for them to review or if you have a directive to complete a long sprint of work then use your best judgement and bring it up in your post done report.
