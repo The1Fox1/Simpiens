@@ -10,7 +10,12 @@ namespace Simpiens.Cognition.Memory
         public const uint DefaultDecayTicks = 1000;
         public const uint ResourceDecayTicks = 1500;
         public const uint PawnDecayTicks = 400;
-        public const uint AnchorDecayTicks = 5000;
+        /// <summary>
+        /// Fixtures (hearths and bunks) are remembered for three game days (Epic 10 Part 2, D33): they don't move. At 5,000
+        /// ticks (12 game hours on the 24-hour day) an artisan who worked the forge all day forgot half the bunkhouse,
+        /// found the rest taken, and slept rough.
+        /// </summary>
+        public const uint AnchorDecayTicks = 3 * Simpiens.Simulation.DayClock.TicksPerDay;
 
         public MemoryLedger EventLedger { get; }
         public Dictionary<EntityId, SpatialMemoryRecord> SpatialMemoryMap { get; }

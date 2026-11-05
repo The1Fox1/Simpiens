@@ -32,6 +32,13 @@ namespace Simpiens.Simulation.Economy
         public readonly float SleepBonus;
 
         /// <summary>
+        /// A tired crawler this hungry or more eats before it goes to sleep, unless it is too tired to walk (Epic 10 Part 2,
+        /// D34): a night's sleep adds about 33 hunger, so from 50 it sleeps until rested rather than until
+        /// <see cref="WakeHunger"/> cuts it short.
+        /// </summary>
+        public readonly float BedtimeHunger;
+
+        /// <summary>
         /// The longest a rest where it stands lasts (sleeping rough: it ends at the same wake lines as a bunk sleep), and the
         /// energy added when it ends.
         /// </summary>
@@ -61,7 +68,7 @@ namespace Simpiens.Simulation.Economy
         public readonly uint TrustFadeTicks;
 
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
-            float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
+            float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float bedtimeHunger, float sleepBonus,
             float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, float energyCraftingPerSecond, in ActionTuning actions,
             float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
         {
@@ -74,6 +81,7 @@ namespace Simpiens.Simulation.Economy
             SleepSeconds = sleepSeconds;
             WakeEnergy = wakeEnergy;
             WakeHunger = wakeHunger;
+            BedtimeHunger = bedtimeHunger;
             SleepBonus = sleepBonus;
             RestSeconds = restSeconds;
             RestBonus = restBonus;
@@ -115,6 +123,7 @@ namespace Simpiens.Simulation.Economy
             sleepSeconds: 12 * DayClock.SecondsPerHour,
             wakeEnergy: 100f,
             wakeHunger: 85f,
+            bedtimeHunger: 50f,
             sleepBonus: 0f,
             restSeconds: 12 * DayClock.SecondsPerHour,
             restBonus: 0f,

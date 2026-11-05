@@ -17,7 +17,8 @@ namespace Simpiens.Client.Tests
         /// How long the outpost may take for a resident to qualify: the default seed's first one does within its first few
         /// minutes, at a tick that moves with every change of behaviour, so the tests wait for it rather than name it.
         /// </summary>
-        private const long QualifiesWithin = 9000;
+        /// <summary>On the 24-hour day the first resident reaches the guild's standing in 0.4 to 1.8 game days (Epic 10 Part 2, T4.2b).</summary>
+        private const long QualifiesWithin = 2 * Simpiens.Simulation.DayClock.TicksPerDay;
 
         private static Vec2 Centre(FrameworkElement control)
             => new Vec2(control.AbsoluteLeft + control.ActualWidth * 0.5f, control.AbsoluteTop + control.ActualHeight * 0.5f);

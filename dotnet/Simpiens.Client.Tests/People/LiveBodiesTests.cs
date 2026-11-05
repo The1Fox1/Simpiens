@@ -18,7 +18,8 @@ namespace Simpiens.Client.Tests.People
     /// </summary>
     public class LiveBodiesTests
     {
-        private const long Day = 9000;
+        /// <summary>Two game days: the first resident reaches the guild's standing in 0.4 to 1.8 (Epic 10 Part 2, T4.2b).</summary>
+        private const long Day = 2 * Simpiens.Simulation.DayClock.TicksPerDay;
 
         [Fact]
         public void EveryCrawlerOfTheDayIsDrawnAsItsOwnBody()
@@ -64,8 +65,8 @@ namespace Simpiens.Client.Tests.People
                 }
             }
             TestContext.Current.TestOutputHelper?.WriteLine($"First drifter at t{drifterAt}, first guild member at t{memberAt}; {bakes} bakes, at most {mostBodies} bodies at once.");
-            Assert.True(drifterAt > 0, "No drifter arrived within the day.");
-            Assert.True(memberAt > 0, $"Nobody joined the guild within the day (asked at t{player.FirstRecruitTick}).");
+            Assert.True(drifterAt > 0, "No drifter arrived within two days.");
+            Assert.True(memberAt > 0, $"Nobody joined the guild within two days (asked at t{player.FirstRecruitTick}).");
         }
 
         /// <summary>No two residents of a gate seed bake to the same body (the epic's §7: two residents alike on the map).</summary>
