@@ -151,6 +151,7 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   1. An `ItemType` value. Never reuse one: a removed item's id stays reserved.
   2. A definition in `ItemCatalog`: groups, rarity, and its consume or equipment block if it has one.
   3. Its terms in the session's economy, if the stall or the caravan trades it (`EconomyTuning`'s item terms, `SupplyTuning`'s caravan terms).
+  - If a station makes it: its recipe in `RecipeBook` (its station, inputs and work time; one recipe per item, Epic 10 Part 2).
   4. Its look: one line in `ItemArt`, by its art key (`ItemDefinition.ArtKey`, the name in kebab case): a shape from `ItemShapes` (draw a new 12x12 one only if none fits), its two colours, how it is worn. Its icon, map sprite and carried marker follow; a node row in the view modes' tables if a map node yields it. Look at the art review sheet, then re-record the art pins.
   5. The map nodes that yield it.
   6. Optionally, bespoke words in `ItemTexts`.

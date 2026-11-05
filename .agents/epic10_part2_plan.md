@@ -51,17 +51,29 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     | Seeds 1–120, no guild (F3) | 119/120: seed 43's trust (7 of 12), as at G6 |
 
   - Findings F8 (salvage at the cap) and F9 (small purses) are in the epic's §7.
-- [ ] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog. `ItemSystemProofTests` adds a made item as data.
+- [ ] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog.
+  - **D1, a recipe is keyed by what it makes:** an item has at most one recipe, so an order, a save and a command name the item. `RecipeBook` is static and immutable beside `ItemCatalog`, with the same test hook. `StationKind` (Forge, Still) lives with it.
+  - **D2, the pickaxe's recipe:** 3 iron ore at the forge, 600 ticks (a minute) of an artisan's work. Placeholder numbers: W1 measures output and tunes them. Ore is plentiful (F8).
+  - `RecipeValidator` (every item defined, inputs and counts, one station, work time), `ItemNamesTests`' list, and `AGENTS.md`'s "Adding an item".
+  - *Deviation:* `ItemSystemProofTests`' made item moves to W0.5, where something can make it.
 - [ ] **W0.4 Stations as map data:** [Possibly Complex: the map grows; the gate seeds may move]
-  - `StationDefinition`: its kind, its slot, and the sizes of its input and output stock;
+  - `StationDefinition`: its key, kind, place and radius;
   - the two rooms (Q10) in `Floor1Layout`, with nothing built;
   - the map validators.
+  - **D3, a station holds no stock of its own** (the draft had input and output stock sizes): when work on an item begins, its inputs are taken from the stall's stock, and the finished item goes into the stall's stock (Q7). A station holds a finished item only while the stall has no room for it.
+  - **D4, the rooms go into the solid rock** under the Road Gate and the Glow Caves, so the floor's bounds don't change (it still fits a 1280×720 window top-down):
+    - the workshop row under the Road Gate (x −8..8, y −24..−18), with a door from the Road Gate;
+    - the guildhall beside it under the Glow Caves (x 8..24), reached only through the workshop row, never through a hazard.
+    - Both are safe and start charted. The stations stand unbuilt; the guildhall stays empty until W5 brings its barracks and yard.
   - Re-record the golden hashes and the renders for the map, each in a commit of its own.
 - [ ] **W0.5 The crafting rule, engine-free:** [Possibly Complex: a save block]
   - a station's inputs, its progress per tick of an artisan's work, its output;
   - its save block;
   - `CraftingValidator`.
+  - **D5, the owner:** a `WorkshopService` owns the stations' state, as `GuildService` owns the guild's, and saves it in a new block (`WorkshopSave`; save format 10). A station's state is plain data: built or not, its order (an item and how many), the current item's progress in ticks of work, whether its inputs are taken, and a finished item waiting for room. Inputs are taken from the stall when an item's work begins and are spent from then on.
+  - `ItemSystemProofTests`: a made item added as data (a test item, its recipe) is made by the rule from the stall's stock, with no other code knowing it.
 - [ ] **W0.6 The `Workshop` group kind (Q4):** [Possibly Complex: the membership order and the directive precedence (G4's D1)] the per-kind rule, the one-role rule, its place in the directive precedence; validators.
+  - **D6, precedence is not the kind's value:** group kinds are saved, so `Workshop` takes the next value (3), and a crawler's memberships are ordered by a precedence instead: party, then guild or workshop, then settlement. One role at a time: the guild's rule refuses a workshop member now; W1.2's hiring rule refuses a guild member.
 - **DoD:** the 23 gate seeds and the soak hold on the grown floor with nothing built. Validators cover recipes, stations and crafting.
 
 ### W1. The forge and its artisan (3–4 days)
