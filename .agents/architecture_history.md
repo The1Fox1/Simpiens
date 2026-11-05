@@ -1416,3 +1416,10 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The looks passed:** B3 to B5 ("with epic ui beta completed I have confirmed that it passes inspection", 2026-11-03), so their defaults stand (B3's D1–D10, B4's D1–D6, B5's deferred and struck items). The polish passed too ("This is looking really good"), and U10–U12 came from that look.
 - **The polish belongs to Epic UI-Beta by default,** between B5 and B6, as more of B5's interface pass. The producer named no epic; the roadmap and the epic's §10 say so, and the producer may move it.
 - **The plan is closed out and deleted** (`.agents/ui_polish_plan.md`): its record is the epic's §10 ("UI polish"), its open items are in the epic's §8, and its decisions are in the U0–U12 entries above.
+
+## 2026-11-04: Epic 10 Part 2 starts (`feat/epic10-part2`, W0.1)
+
+- **The go:** "Begin Epic 10 part 2 work" (2026-11-04). The producer answers by exception, so the draft's Q1–Q12 stand as proposed (`docs/epics/epic-10-part-2.md` §0).
+- **The draft's design moved into its own epic doc** (Q1), as Part 1's approved draft did: the goal, the loop, the answers, the milestones with their stamps, the economy, the risks and the deferrals. The plan keeps the steps.
+- **One PR for all of Part 2,** with a commit per step. The producer's rule of 2026-11-02 replaces the draft's one PR per milestone (Q12, and the Epic 10 plans' index).
+- **A correction to the draft:** its goal said wages "may pile up in purses". G4 measured purses staying within what residents carry, so the epic says made goods give wages something to buy, and W0.2 measures the purses again.

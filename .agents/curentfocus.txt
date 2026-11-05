@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-04 (Epic UI-Beta B2-B5 and the UI polish merged as PR #22; B6 remains)
+# Last reconciled: 2026-11-04 (Epic 10 Part 2 ACTIVE: W0; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -26,12 +26,13 @@ CURRENT FOCUS
     and the gate (feat/epic10-g6, PR into main): the whole loop live, a save mid-expedition, the soak's guild profile
     (D14), every scenario together. The producer's play session passed ("Everything looks good"). Save format 9.
   - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
-- NOW: Epic UI-Beta B6, the gate with a play session. B2-B5 (bodies, portraits and the dossier, faces everywhere,
-  the interface pass) were done overnight under the producer's directive (2026-11-02); their looks passed
-  (2026-11-03). Then the UI polish, Lantern & Stone (U0-U12, a proposal and its preferred flavor): the UI kit, the
-  header in five clusters, one window chrome, motion, the window's size and full screen, portraits that grow with
-  the window. It sits in Epic UI-Beta by default. All of it merged as one PR, #22 (2026-11-04).
-- NEXT: answering Epic 10 Part 2's draft (.agents/epic10_plan.md, Order).
+- NOW: Epic 10 Part 2, Workshops and the Guildhall (Milestone 3) [ACTIVE 2026-11-04] (docs/epics/epic-10-part-2.md):
+  the producer said "Begin Epic 10 part 2 work"; the draft's Q1-Q12 stand as proposed. W0, groundwork, on
+  feat/epic10-part2 (one PR for all of Part 2, a commit per step). Plan: .agents/epic10_part2_plan.md.
+- Epic UI-Beta B2-B5 (bodies, portraits and the dossier, faces everywhere, the interface pass) and the UI polish,
+  Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
+  B6, the gate with a play session, waits.
+- NEXT: Part 2's W1, the forge and its artisan (split before it starts; the developer supervises W1.3, shifts).
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
@@ -57,8 +58,8 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epics 1-6, Alpha, 7, Beta [COMPLETED] (foundations, GOAP, needs and watchdog, social affinity, interdependence)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
-- Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 workshops (Milestone 3), Part 3 the
-  descent (Milestone 4) [QUEUED], each with a draft plan
+- Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
+  (Milestone 3) [ACTIVE 2026-11-04: W0]; Part 3 the descent (Milestone 4) [QUEUED], with a draft plan
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED]
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.

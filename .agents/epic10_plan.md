@@ -9,7 +9,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 | :--- | :--- | :--- | :-: | :--- | :--- |
 | Part 1 (G4–G6) | The guild, expeditions and the gate | **COMPLETED 2026-11-01** (epic §4); its plans are deleted | — | — | Play session passed 2026-11-01 |
 | The core refactor (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | **Done 2026-11-02**, merged as PR #21; its plan is deleted (ROADMAP §3A) | — | — | — |
-| [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in | A draft: its questions need the producer's answers | 14–19 | **Very Complex** (epic-sized, open design). W1 and W5 need splitting | Answering the draft; a look at W3; a play session at W6 |
+| [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in ([epic](../docs/epics/epic-10-part-2.md)) | **ACTIVE 2026-11-04:** the draft's questions stand as proposed; W0 | 14–19 | **Very Complex** (epic-sized). W1 and W5 need splitting | A look at W3; a play session at W6 |
 | [`epic10_part3_plan.md`](epic10_part3_plan.md) | Part 3, Milestone 4: the descent, L0–L6, with Epic UI-5 folded in | A draft, as Part 2 | 16–23 | **Very Complex** (epic-sized; new systems). L0, L1, L2 and L4 need splitting or the developer's supervision | Answering the draft; a look at L2; a play session at L6 |
 
 **Left:** about 30–42 agent days (Part 2 14–19, Part 3 16–23).
@@ -21,15 +21,15 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 1. ~~**Part 1:** G4, G5, G6.~~ Done 2026-11-01: Part 1 COMPLETED; Parts 2 and 3 stay QUEUED.
 2. ~~**The core refactor's R1–R6**, before either draft is started.~~ Done 2026-11-02 (merged as PR #21): R1's guards refuse a planner fact past 63 and a map too large for A*, which Parts 2 and 3 will need; group formation and succession now live in `SocialDynamics`.
 3. **Part 2:**
-   - the producer answers the draft's questions;
-   - the design part of the draft (§1–§4) moves into an epic doc, as Part 1's approved draft did;
+   - ~~the producer answers the draft's questions;~~ 2026-11-04: "Begin Epic 10 part 2 work", Q1–Q12 as proposed;
+   - ~~the design part of the draft moves into an epic doc~~ (`docs/epics/epic-10-part-2.md`);
    - then W0–W6.
 4. **Part 3:** the same, then L0–L6. L6's close-out marks Epic 10 COMPLETED, and every plan here is deleted.
 
 Epic 11 (the MCP narrative) shares Milestone 4 with Part 3 but is its own epic. Nothing here waits for it.
 
 ## What every plan shares
-- **Branches:** one PR per milestone into `main`, from `feat/epic10-<milestone>` cut from `main` after the previous PR merges. Never stacked (epic Q10, and G1 and G2's stacked PRs).
+- **Branches:** one PR per plan into `main`, from one branch cut from `main` (`feat/epic10-part2`), with a commit per step: the producer's rule of 2026-11-02, which replaced one PR per milestone. Never stacked (epic Q10, and G1 and G2's stacked PRs).
 - **The agent never merges.**
   - Check `git branch --show-current` before every commit.
   - Push only on the producer's word, with an explicit refspec: `git push origin <branch>`.
