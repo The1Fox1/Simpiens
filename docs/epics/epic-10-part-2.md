@@ -99,7 +99,7 @@ The design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds,
   - D21, beds: one bunk per resident.
 - **D18 follows D22:** only motion and what is shown stay in physical ticks. Everything a crawler does or undergoes runs on the day's time, hazards included, because a half-hour harvest at today's damage per second would down anyone.
 
-T waits for the producer's go. W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
+The go came the same day ("Proceed with the time rework"). The model, with today's day measured and every duration's re-pacing, is [`docs/time-model.md`](../time-model.md). W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
 
 **The new verbs:** build, hire and dismiss an artisan, set an artisan's wage, order a recipe, price a made item, form a party. Each is a typed player command (ROADMAP §1A.1).
 
