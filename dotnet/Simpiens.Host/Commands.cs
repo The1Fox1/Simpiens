@@ -19,17 +19,15 @@ namespace Simpiens.Host
         public const string Usage =
 @"simpiens: the Simpiens simulation, headless (Epic CORE Phase 1)
 
-  simpiens run    [--session outpost] [--seed N] [--ticks 9000]
-      Plays a session and prints one line per sim-minute, then its world hash.
-  simpiens sweep  [--seeds 1..20] [--ticks 9000] [--guild] [--verbose]
+  simpiens run    [--session outpost] [--seed N] [--ticks 10080]
+      Plays a session (a game day by default) and prints one line per game hour, then its world hash.
+  simpiens sweep  [--seeds 1..20] [--ticks 10080] [--guild] [--verbose]
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
       --guild adds the scripted guild player (Epic 10 G6): four recruited as they qualify, outfitted and sent to the
       Drowned Gallery whenever its seam is back; it reports expeditions sent and home.
-  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed] [--day]
-      The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
+  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 30240] [--csv DIR] [--closed]
+      The economy soak: each profile and seed for three game days, judged against its pace band (docs/economy-model.md §7).
       --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
-      --day plays the 24-hour day's soak instead (Epic 10 Part 2, T4.4): three game days on the day's economy, sampled
-      at each caravan visit.
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
       Compares headless runs with the golden world hashes (the default: every seed in the file).
   simpiens golden record --out PATH [--seeds 20261009]
@@ -61,7 +59,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
         {
             string sessionId = options.Text("session", OutpostSession.SessionId);
             ulong seed = options.Seeds(new[] { SimulationSettings.DefaultSeed })[0];
-            long ticks = options.Long("ticks", 9000);
+            long ticks = options.Long("ticks", DayClock.TicksPerDay);
 
             using var sim = LocalSimulation.Create(seed);
             sim.Respawn(sessionId);
@@ -73,7 +71,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             long start = sim.Clock.CurrentTick;
             for (long rel = 0; rel <= ticks && !ct.IsCancellationRequested; rel++)
             {
-                if (rel % EconomySoak.SampleIntervalTicks == 0 || rel == ticks) Console.WriteLine(Line(sim, rel));
+                if (rel % DayClock.TicksPerHour == 0 || rel == ticks) Console.WriteLine(Line(sim, rel));
                 if (rel < ticks) sim.Step(1);
             }
             watch.Stop();
@@ -116,7 +114,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
         private static int Sweep(Options options, CancellationToken ct)
         {
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
-            long ticks = options.Long("ticks", 9000);
+            long ticks = options.Long("ticks", DayClock.TicksPerDay);
             bool verbose = options.Flag("verbose");
             bool withGuild = options.Flag("guild");
             int failed = 0, runs = 0;
@@ -156,8 +154,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             string profile = options.Text("profile", "all").ToLowerInvariant();
             var profiles = profile == "all" ? EconomySoak.Profiles : new[] { profile };
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
-            var pace = options.Flag("day") ? EconomySoak.Pace.Day : EconomySoak.Pace.Today;
-            long ticks = options.Long("ticks", pace.HorizonTicks);
+            long ticks = options.Long("ticks", EconomySoak.HorizonTicks);
             string csv = options.Text("csv");
             bool drifters = !options.Flag("closed");
 
@@ -168,13 +165,13 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 foreach (var seed in seeds)
                 {
                     if (ct.IsCancellationRequested) return 1;
-                    var result = EconomySoak.Run(seed, p, ticks, drifters, pace);
+                    var result = EconomySoak.Run(seed, p, ticks, drifters);
                     var failures = result.Failures();
                     runs++;
                     if (failures.Count > 0) failed++;
                     Console.WriteLine($"{(failures.Count == 0 ? "PASS" : "FAIL")}  {result.Summary()}");
                     foreach (var failure in failures) Console.WriteLine($"      {failure}");
-                    if (csv != null) result.WriteCsv(Path.Combine(csv, $"economy-soak-{pace.Name}-{result.Player.Name}-seed{seed}.csv"));
+                    if (csv != null) result.WriteCsv(Path.Combine(csv, $"economy-soak-{result.Player.Name}-seed{seed}.csv"));
                 }
             }
             Console.WriteLine($"{runs - failed}/{runs} soaks within their pace bands ({watch.ElapsedMilliseconds} ms)");

@@ -65,10 +65,11 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 100, WearRule.PerUse,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
-            // Halves hazard damage; lasts 500 ticks (50 s) in danger (Epic 10 G3)
+            // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
+            // longer ventures, Epic 10 Part 2, T3.2a)
             new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
                 ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare)

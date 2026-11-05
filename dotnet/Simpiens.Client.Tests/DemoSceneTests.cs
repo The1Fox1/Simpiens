@@ -55,21 +55,23 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void InRealPlayWithNothingInjectedBothDynamicDemonstrationsStartWithinAThousandTicks()
+        public void InRealPlayWithNothingInjectedBothDynamicDemonstrationsStartWithinFourGameHours()
         {
+            // On the 24-hour day the first gossip comes at about t1150 on the default seed (Epic 10 Part 2, T5; before, within 1,000 ticks)
+            const long Within = 4 * Simpiens.Simulation.DayClock.TicksPerHour;
             // The outpost as it plays: no hand-placed crawlers, no recorded events
             var ui = Running(demos: true);
             var game = ui.Game;
             var started = new System.Collections.Generic.List<DynamicScene>();
             game.Session.Scenes.Started += started.Add;
-            for (int i = 0; i < 100 && started.Count < 2; i++)
+            for (int i = 0; i < Within / 10 && started.Count < 2; i++)
             {
                 ui.Frame();
                 if (game.Session.Scenes.Current != null) Assert.True(game.Play.Scenes.Bubble.Shown || game.Play.Scenes.Box.Shown || game.Session.Scenes.Current.Player.Line == null);
             }
             Assert.Contains(started, s => s.Trigger.Script == DemoScenes.DeepSeamEntry);
             var gossip = Assert.Single(started, s => s.Trigger.Script == DemoScenes.FirstGossip);
-            Assert.InRange(started.Max(s => s.StartedTick), 1L, 1000L);
+            Assert.InRange(started.Max(s => s.StartedTick), 1L, Within);
             Assert.NotEqual(gossip.ActorOf("talker"), gossip.ActorOf("listener"));
             Assert.All(gossip.Actors, a => Assert.True(game.Session.Frames.Current.TryGetIndex(a, out int i) && game.Session.Frames.Current[i].IsCrawler));
         }
@@ -97,7 +99,7 @@ namespace Simpiens.Client.Tests
             var ui = Running(demos: true);
             var game = ui.Game;
             game.World.Rig.ZoomAt(game.World.Rig.Frame.Center, 0.4f);
-            for (int i = 0; i < 100 && game.Session.Scenes.Current?.Trigger.Script != DemoScenes.FirstGossip; i++) ui.Frame();
+            for (int i = 0; i < 4 * Simpiens.Simulation.DayClock.TicksPerHour / 10 && game.Session.Scenes.Current?.Trigger.Script != DemoScenes.FirstGossip; i++) ui.Frame();
             Assert.Equal(DemoScenes.FirstGossip, game.Session.Scenes.Current?.Trigger.Script);
             ui.Frame(6); // the camera on its way to the talker, the line appearing
             Assert.True(game.Play.Scenes.Bubble.Shown);

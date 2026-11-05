@@ -37,10 +37,11 @@ namespace Simpiens.Cognition
             context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && context.Health >= VentureHealth && !context.IsDowned;
 
         /// <summary>
-        /// The worst danger a crawler braves alone, in health a second (Epic 10 G5, D11): the Sump's 3 and the Glow Caves'
-        /// 4, not the Drowned Gallery's 6, which only an expedition enters.
+        /// The worst danger a crawler braves alone, in health a second (Epic 10 G5, D11): the Sump's 0.75 and the Glow
+        /// Caves' 1, not the Drowned Gallery's 1.5, which only an expedition enters (a quarter of Part 1's figures since the
+        /// 24-hour day, Epic 10 Part 2, T3.2a).
         /// </summary>
-        public const float LoneHazardLimit = 4f;
+        public const float LoneHazardLimit = 1f;
 
         /// <summary>True when this crawler, alone, would go where <paramref name="hazard"/> is: anywhere safe, and danger within the lone limit if it would venture.</summary>
         public static bool WouldEnter(in AgentContext context, in SectorHazard hazard) => WouldEnter(WouldVenture(context), hazard);

@@ -109,7 +109,7 @@ namespace Simpiens.Client.Tests
             sim.Step(1);
             Assert.True(model.Context.TryGetStall(model.Merchant.StallId, out var stall));
             Assert.Equal(38, stall.GlowstoneBuyPrice);
-            Assert.Equal(20, stall.OreBuyPrice); // the others keep their prices
+            Assert.Equal(EconomyTuning.Default.Terms(ItemType.IronOre).StallPrice, stall.OreBuyPrice); // the others keep their prices
 
             var crawler = sim.Host.CrawlerStates[0];
             crawler.Health = 30f;

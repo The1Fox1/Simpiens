@@ -35,9 +35,9 @@ namespace Simpiens.Testing.Economy
         {
             var e = EconomyTuning.Default;
 
-            // Item base values (were ItemTypeExtensions.BaseValue)
-            Assert(e.BaseValue(ItemType.Ration) == 5 && e.BaseValue(ItemType.IronOre) == 8 && e.BaseValue(ItemType.MedicinalHerb) == 12,
-                "Base values: ration 5, ore 8, herb 12.");
+            // Item base values (were ItemTypeExtensions.BaseValue); salvage at a quarter of Part 1's on the 24-hour day (D29)
+            Assert(e.BaseValue(ItemType.Ration) == 5 && e.BaseValue(ItemType.IronOre) == 2 && e.BaseValue(ItemType.MedicinalHerb) == 3,
+                "Base values: ration 5, ore 2, herb 3.");
             Assert(e.BaseValue(ItemType.ToolPickaxe) == 30 && e.BaseValue(ItemType.HazardGear) == 40 && e.BaseValue(ItemType.None) == 0,
                 "Base values: pickaxe 30, weapon 40, none 0.");
 
@@ -48,16 +48,18 @@ namespace Simpiens.Testing.Economy
 
             // Stall and seeded bounties (were OutpostSession literals)
             Assert(e.StallRationPrice == 15 && e.StallRationStock == 50, "Stall rations: 15g, stock 50.");
-            Assert(e.StallOreBuyPrice == 20 && e.StallOreStock == 10, "Stall ore: buys at 20g, stock 10.");
-            Assert(e.StallHerbBuyPrice == 25 && e.StallHerbStock == 10, "Stall herbs: buys at 25g, stock 10.");
+            Assert(e.StallOreBuyPrice == 5 && e.StallOreStock == 10, "Stall ore: buys at 5g, stock 10.");
+            Assert(e.StallHerbBuyPrice == 6 && e.StallHerbStock == 10, "Stall herbs: buys at 6g, stock 10.");
             Assert(e.StallTreasury == 250, "Stall treasury 250.");
             Assert(e.SeedGatherBountyReward == 25 && e.SeedScoutBountyReward == 15, "Seeded rewards: gather 25, scout 15.");
 
-            // Supply caravan (was SupplyTuning.Default via DI)
+            // Supply caravan (was SupplyTuning.Default via DI): every 6 game hours on the 24-hour day (D24), bigger lots of
+            // cheaper salvage (D29)
             var s = e.Supply;
-            Assert(s.RestockIntervalTicks == 600 && s.RationStockCap == 50 && s.WholesaleRationCost == 2, "Caravan: every 600 ticks, cap 50, 2g wholesale.");
-            Assert(s.OreQuota == 2 && s.HerbQuota == 2 && s.OreMarketPrice == 24 && s.HerbMarketPrice == 30, "Caravan market: 2 ore at 24g + 2 herbs at 30g per visit (§3.3 tuning).");
+            Assert(s.RestockIntervalTicks == DayClock.Hours(6) && s.RationStockCap == 50 && s.WholesaleRationCost == 2, "Caravan: every 6 game hours, cap 50, 2g wholesale.");
+            Assert(s.OreQuota == 16 && s.HerbQuota == 12 && s.OreMarketPrice == 6 && s.HerbMarketPrice == 7, "Caravan market: 16 ore at 6g + 12 herbs at 7g a visit.");
             Assert(s.UpkeepPerVisit == 80, "Upkeep 80g per visit (§3.3 tuning).");
+            Assert(e.ComfortablePurse == 80, "Crawlers earn toward 80g (D25).");
             Assert(e.StallSalvageCapacity == 20, "The stall holds at most 20 of each salvage type.");
             var full = TestStalls.Stall(new EntityId(1u, 1u, 1u, 1u), Vec2.Zero, oreStock: 20, herbStock: 19);
             Assert(!e.StallHasRoom(full, ItemType.IronOre) && e.StallHasRoom(full, ItemType.MedicinalHerb) && !e.StallHasRoom(full, ItemType.MedicinalHerb, 2),
@@ -119,7 +121,7 @@ namespace Simpiens.Testing.Economy
             var without = CreateContext(hunger: 50f, snapshot: null);
             Assert(ReferenceEquals(Considerations.Economy(without), EconomyTuning.Default), "No snapshot: the default tuning.");
             Assert(Considerations.RationReservationPrice(without) == 20, "Default reservation price at hunger 50 is 20g.");
-            Assert(Considerations.MinimumSalePrice(without, ItemType.IronOre) == 8, "Default minimum ore price is 8g.");
+            Assert(Considerations.MinimumSalePrice(without, ItemType.IronOre) == 2, "Default minimum ore price is 2g.");
 
             var snapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
             snapshot.SetEconomy(EconomyTuning.Default.WithRationReferencePrice(40f).WithBaseValues(ration: 5, ore: 16, herb: 12));
@@ -149,22 +151,18 @@ namespace Simpiens.Testing.Economy
                 "The copy carries its changes.");
             Assert(copy.StallRationStock == 50 && SimMath.Approximately(copy.RationReferencePrice, 20f), "Fields not changed are kept.");
             var d = EconomyTuning.Default;
-            Assert(d.StartingGold == 15 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 8 && d.Supply.RationStockCap == 50 && SimMath.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
+            Assert(d.StartingGold == 15 && d.StallTreasury == 250 && d.BaseValue(ItemType.IronOre) == 2 && d.Supply.RationStockCap == 50 && SimMath.Approximately(d.TradeTrust.GenerousBuyRatio, 0.6f),
                 "The default is never mutated by a copy.");
 
             TestLog.Log("[PASS] Test 5: With… copies leave the default untouched.");
         }
 
-        // Epic 10 Part 2, T4.2b (D29): on the 24-hour day salvage pays a quarter of today's price, in bigger lots. The
-        // fairness rule keeps its meaning, and food, purses and glowstone keep today's terms.
+        // Epic 10 Part 2, T4.2b (D29): on the 24-hour day salvage pays a quarter of Part 1's price, in bigger lots. The
+        // fairness rule keeps the meaning it had: every seller sells at the stall's price, a neutral seller finds it fair
+        // and a generous one generous; the caravan pays more than the stall; glowstone keeps Part 1's price.
         private void ValidateTheDaysSalvage()
         {
-            var day = EconomyTuning.FullDay;
-            var today = EconomyTuning.Default;
-            Assert(day.BaseValue(ItemType.IronOre) == 2 && day.Terms(ItemType.IronOre).StallPrice == 5 && day.Supply.Terms(ItemType.IronOre).Price == 6 && day.Supply.Terms(ItemType.IronOre).Limit == 16,
-                "Ore on the day: worth 2g, the stall pays 5g, the caravan 6g for up to 16 a visit.");
-            Assert(day.BaseValue(ItemType.MedicinalHerb) == 3 && day.Terms(ItemType.MedicinalHerb).StallPrice == 6 && day.Supply.Terms(ItemType.MedicinalHerb).Price == 7 && day.Supply.Terms(ItemType.MedicinalHerb).Limit == 12,
-                "Herbs on the day: worth 3g, the stall pays 6g, the caravan 7g for up to 12 a visit.");
+            var day = EconomyTuning.Default;
 
             var generous = new AgentPersonality(greed: -1f, riskTolerance: 0f, sociability: 0f, loyalty: 0f, diligence: 0f);
             var greedy = new AgentPersonality(greed: 1f, riskTolerance: 0f, sociability: 0f, loyalty: 0f, diligence: 0f);
@@ -173,18 +171,11 @@ namespace Simpiens.Testing.Economy
                 uint price = day.Terms(item).StallPrice;
                 Assert(day.Supply.Terms(item).Price > price, $"The caravan pays more than the stall for {item}, so the stall gains on what it passes on.");
                 Assert(Considerations.MinimumSalePrice(greedy, day, item) <= price, $"Even the greediest crawler sells {item} at the stall's price.");
-                Assert(Sale(price, AgentPersonality.Neutral, day, item) == TradeVerdict.Fair && Sale(today.Terms(item).StallPrice, AgentPersonality.Neutral, today, item) == TradeVerdict.Fair,
-                    $"A neutral crawler's sale of {item} is fair, as today.");
-                Assert(Sale(price, generous, day, item) == TradeVerdict.Generous && Sale(today.Terms(item).StallPrice, generous, today, item) == TradeVerdict.Generous,
-                    $"A generous crawler's sale of {item} is generous, as today.");
+                Assert(Sale(price, AgentPersonality.Neutral, day, item) == TradeVerdict.Fair, $"A neutral crawler's sale of {item} is fair.");
+                Assert(Sale(price, generous, day, item) == TradeVerdict.Generous, $"A generous crawler's sale of {item} is generous.");
             }
-
-            var ration = day.Terms(ItemType.Ration);
-            Assert(ration.StallPrice == today.Terms(ItemType.Ration).StallPrice && ration.BaseValue == today.BaseValue(ItemType.Ration) && day.StartingGold == today.StartingGold
-                && SimMath.Approximately(day.RationReferencePrice, today.RationReferencePrice), "Food and the purse a crawler arrives with keep today's terms.");
-            Assert(day.Terms(ItemType.Glowstone).StallPrice == today.Terms(ItemType.Glowstone).StallPrice && day.Supply.Terms(ItemType.Glowstone).Price == today.Supply.Terms(ItemType.Glowstone).Price
-                && day.Supply.Terms(ItemType.Glowstone).Limit == today.Supply.Terms(ItemType.Glowstone).Limit, "Glowstone, the reward for danger, keeps today's price.");
-            Assert(today.BaseValue(ItemType.IronOre) == 8 && today.Supply.Terms(ItemType.IronOre).Limit == 2, "The default economy is untouched.");
+            Assert(day.Terms(ItemType.Glowstone).StallPrice == 45 && day.Supply.Terms(ItemType.Glowstone).Price == 70 && day.Supply.Terms(ItemType.Glowstone).Limit == 2,
+                "Glowstone, the reward for danger, keeps Part 1's price: the stall 45g, the caravan 70g for 2 a visit.");
 
             TestLog.Log("[PASS] Test 6: the day's salvage pays for hours of work, and the fairness rule keeps its meaning.");
         }

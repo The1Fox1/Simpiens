@@ -1,14 +1,10 @@
 namespace Simpiens.Simulation.Economy
 {
     /// <summary>
-    /// The pace of a crawler's day (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>): how fast needs move, and how
-    /// sleep and rest restore energy. Part of the session's <see cref="EconomyTuning"/>, never literals. Rates are per
-    /// second of simulation time, as the needs are ticked; the day's are written per game hour through
-    /// <see cref="DayClock.PerSecond"/>.
-    /// <para>
-    /// <see cref="Legacy"/> is the pace before milestone T, kept, number for number, until the cut-over (T5) so that every
-    /// step before it can show the golden hashes unchanged; the cut-over makes the 24-hour day the default and deletes it.
-    /// </para>
+    /// The pace of a crawler's day (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>): how fast needs move, how
+    /// sleep and rest restore energy, how long actions take, how health mends and how fast trust fades. Part of the
+    /// session's <see cref="EconomyTuning"/>, never literals. Rates are per second of simulation time, as the needs are
+    /// ticked, and written per game hour through <see cref="DayClock.PerSecond"/>.
     /// </summary>
     public readonly struct DayTuning
     {
@@ -51,13 +47,6 @@ namespace Simpiens.Simulation.Economy
         /// <summary>How long a crawler's actions take (D22).</summary>
         public readonly ActionTuning Actions;
 
-        /// <summary>
-        /// Danger on the day (T3.2a): the share of a hazard sector's damage a second that is taken (who may venture alone is
-        /// judged on the sector's own figure), and one unit of hazard gear's life worn every this many ticks of exposure.
-        /// </summary>
-        public readonly float HazardDamageScale;
-        public readonly int HazardWearEveryTicks;
-
         /// <summary>Health healed a second awake, and asleep in a bunk.</summary>
         public readonly float RestingHealPerSecond;
         public readonly float BunkHealPerSecond;
@@ -68,7 +57,7 @@ namespace Simpiens.Simulation.Economy
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
             float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, in ActionTuning actions,
-            float hazardDamageScale, int hazardWearEveryTicks, float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
+            float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
         {
             HungerPerSecond = hungerPerSecond;
             EnergyStandingPerSecond = energyStandingPerSecond;
@@ -85,50 +74,16 @@ namespace Simpiens.Simulation.Economy
             RelaxEnergyBonus = relaxEnergyBonus;
             EnergyWorkingPerSecond = energyWorkingPerSecond;
             Actions = actions;
-            HazardDamageScale = hazardDamageScale;
-            HazardWearEveryTicks = hazardWearEveryTicks < 1 ? 1 : hazardWearEveryTicks;
             RestingHealPerSecond = restingHealPerSecond;
             BunkHealPerSecond = bunkHealPerSecond;
             TrustFadeTicks = trustFadeTicks;
         }
 
-        /// <summary>A copy with another share of hazard damage taken and gear's wear interval (measuring, T3.2).</summary>
-        public DayTuning WithHazard(float damageScale, int wearEveryTicks) => new DayTuning(HungerPerSecond, EnergyStandingPerSecond,
-            EnergyWalkingPerSecond, SocialPerSecond, BunkRecoveryPerSecond, RestRecoveryPerSecond, SleepSeconds, WakeEnergy, WakeHunger, SleepBonus,
-            RestSeconds, RestBonus, RelaxEnergyBonus, EnergyWorkingPerSecond, Actions, damageScale, wearEveryTicks, RestingHealPerSecond, BunkHealPerSecond,
-            TrustFadeTicks);
-
         /// <summary>Whether a sleeper (in a bunk or rough) is up: rested, or too hungry to sleep on.</summary>
         public bool Wakes(float energy, float hunger) => energy >= WakeEnergy || hunger >= WakeHunger;
 
         /// <summary>
-        /// The pace before milestone T: hunger fills in 67 s, a bunk visit is a 3-second nap, resting a 2-second pause.
-        /// Nobody wakes early (the wake lines are never reached).
-        /// </summary>
-        public static DayTuning Legacy => new DayTuning(
-            hungerPerSecond: 1.5f,
-            energyStandingPerSecond: 0.2f,
-            energyWalkingPerSecond: 1.0f,
-            socialPerSecond: 0.5f,
-            bunkRecoveryPerSecond: 30f,
-            restRecoveryPerSecond: 15f,
-            sleepSeconds: 3.0f,
-            wakeEnergy: float.MaxValue,
-            wakeHunger: float.MaxValue,
-            sleepBonus: 40f,
-            restSeconds: 2.0f,
-            restBonus: 30f,
-            relaxEnergyBonus: 10f,
-            energyWorkingPerSecond: 0.2f,
-            actions: ActionTuning.Legacy,
-            hazardDamageScale: 1f,
-            hazardWearEveryTicks: 1,
-            restingHealPerSecond: 0.05f,
-            bunkHealPerSecond: 4f,
-            trustFadeTicks: Simpiens.Cognition.Social.AffinityRecord.DefaultRegressionPeriod);
-
-        /// <summary>
-        /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default; <c>docs/time-model.md</c>):
+        /// The 24-hour day (milestone T, RimWorld-paced; <c>docs/time-model.md</c>):
         /// <list type="bullet">
         /// <item>hunger fills over a day (D19) and social empties over 16 hours (T2.1);</item>
         /// <item>energy falls about 2.75 an hour standing and three times that walking, so a day of mostly standing reaches the
@@ -136,15 +91,14 @@ namespace Simpiens.Simulation.Economy
         /// <item>a sleeper gains 8 an hour in a bunk and half that sleeping rough, for up to 12 hours, until rested (100) or
         /// starving (85): about 8 hours from the tired line;</item>
         /// <item>no bonus at a sleep's end, and the hearth restores company, not energy;</item>
-        /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.FullDay"/>);</item>
-        /// <item>a hazard takes a quarter of its damage a second, and gear wears a unit every 3 ticks of exposure: a glowstone
-        /// costs a lone crawler about 28 health (36 before the day) and a party about 22 (26), and parties turn back about as
-        /// often; a bunk heals 10 an hour, a night 80, and awake about 50 a day as before (T3.2a, T3.2b);</item>
+        /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.Default"/>);</item>
+        /// <item>a bunk heals 10 an hour, a night 80, and awake about 50 a day (T3.2a; hazards' damage is the map's, gear's
+        /// life the catalog's);</item>
         /// <item>trust and the other affinities fade 5 every 12 game hours since the last dealing, not every 2.4 (T4.3, D27: at 6
         /// trust rose for 8 of 12 residents on all but one gate seed; at 12, on all of them).</item>
         /// </list>
         /// </summary>
-        public static DayTuning FullDay => new DayTuning(
+        public static DayTuning Default => new DayTuning(
             hungerPerSecond: DayClock.PerSecond(100f / DayClock.HoursPerDay),
             energyStandingPerSecond: DayClock.PerSecond(2.75f),
             energyWalkingPerSecond: DayClock.PerSecond(8.25f),
@@ -159,20 +113,15 @@ namespace Simpiens.Simulation.Economy
             restBonus: 0f,
             relaxEnergyBonus: 0f,
             energyWorkingPerSecond: DayClock.PerSecond(8.25f),
-            actions: ActionTuning.FullDay,
-            hazardDamageScale: 0.25f,
-            hazardWearEveryTicks: 3,
+            actions: ActionTuning.Default,
             restingHealPerSecond: 0.05f,
             bunkHealPerSecond: DayClock.PerSecond(10f),
             trustFadeTicks: DayClock.Hours(12));
-
-        public static DayTuning Default => Legacy;
     }
 
     /// <summary>
     /// How long a crawler's actions take, in seconds of simulation time (Epic 10 Part 2, T2.4, D22: work is stretched
-    /// RimWorld-style, so a crawler does tens of tasks a day). An action of 0 seconds finishes within its tick, as the
-    /// trades and the bounty board's did before the day.
+    /// RimWorld-style, so a crawler does tens of tasks a day). An action of 0 seconds finishes within its tick.
     /// </summary>
     public readonly struct ActionTuning
     {
@@ -219,25 +168,11 @@ namespace Simpiens.Simulation.Economy
             return HarvestRockSeconds;
         }
 
-        /// <summary>Before the day: a harvest 1.5 s a unit, a meal 1 s, a hand-over 1 s, the hearth 3 s; trades, the board, a survey and treating wounds within the tick.</summary>
-        public static ActionTuning Legacy => new ActionTuning(
-            harvestRockSeconds: 1.5f,
-            harvestHerbSeconds: 1.5f,
-            harvestFoodSeconds: 1.5f,
-            eatSeconds: 1.0f,
-            waitAtPlotSeconds: 2f,
-            tradeSeconds: 0f,
-            boardSeconds: 0f,
-            shareSeconds: 1.0f,
-            surveySeconds: 0f,
-            treatSeconds: 0f,
-            relaxSeconds: 3.0f);
-
         /// <summary>
         /// The 24-hour day's (<c>docs/time-model.md</c> §3.3): a unit of ore or glowstone 30 game minutes, herbs 20, a Garden
         /// ration 15; a meal 15; a trade, the board and a hand-over 10; a survey, treating wounds and the hearth 30.
         /// </summary>
-        public static ActionTuning FullDay => new ActionTuning(
+        public static ActionTuning Default => new ActionTuning(
             harvestRockSeconds: Minutes(30),
             harvestHerbSeconds: Minutes(20),
             harvestFoodSeconds: Minutes(15),

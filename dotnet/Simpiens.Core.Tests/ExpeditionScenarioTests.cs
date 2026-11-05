@@ -21,7 +21,8 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class ExpeditionScenarioTests
     {
-        private const long HalfAnHour = 18000;
+        /// <summary>The soak's horizon: on the 24-hour day four residents qualify for the guild in about two days (Epic 10 Part 2, T4.2b).</summary>
+        private const long ThreeDays = 3 * DayClock.TicksPerDay;
 
         [Fact]
         public void AGearedPartyBringsBackGlowstone()
@@ -40,8 +41,8 @@ namespace Simpiens.Core.Tests
             var haulItem = ItemType.None;
             long ended = -1;
             int stockAtDelivery = 0;
-            uint caravanAtDelivery = 0;
-            while (sim.Clock.CurrentTick < HalfAnHour)
+            uint caravanAtDelivery = 0, sharesAtDelivery = 0, shareGoldAtDelivery = 0;
+            while (sim.Clock.CurrentTick < ThreeDays)
             {
                 watch.Run(1);
                 var expedition = guild.Expedition;
@@ -61,6 +62,8 @@ namespace Simpiens.Core.Tests
                 ended = sim.Clock.CurrentTick;
                 stockAtDelivery = sim.Simulation.ActiveStalls[0].StockOf(haulItem);
                 caravanAtDelivery = ledger.GetFaucetTotal("CaravanSalvageSales");
+                sharesAtDelivery = ledger.Flows.Shares;
+                shareGoldAtDelivery = ledger.Flows.ShareGold;
             }
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine($"recruited {player.Recruited.Count}, gear given {player.GearGiven}, sent at t{player.FirstDispatchTick}, " +
@@ -68,14 +71,14 @@ namespace Simpiens.Core.Tests
 
             Assert.Equal(4, guild.Members.Count);
             Assert.True(player.GearGiven >= 4, "The player outfitted the four from the stall's stock.");
-            Assert.True(player.FirstDispatchTick >= 0 && ended > player.FirstDispatchTick, "An expedition was sent and came home within half an hour.");
+            Assert.True(player.FirstDispatchTick >= 0 && ended > player.FirstDispatchTick, "An expedition was sent and came home within three days.");
             Assert.Equal(new[] { ExpeditionStage.Muster, ExpeditionStage.March, ExpeditionStage.Work, ExpeditionStage.Return }, stages);
             Assert.True(allWent, "All four set out and came home together.");
             Assert.False(turnedBack, "Geared, the party didn't turn back.");
             Assert.False(downed, "Nobody was downed.");
-            Assert.Equal(4u, ledger.Flows.Shares); // each member its share, paid on delivery
+            Assert.Equal(4u, sharesAtDelivery); // each member its share, paid on delivery
             uint value = sim.Simulation.Economy.Supply.Terms(haulItem).Price;
-            Assert.Equal(Floor1Layout.GallerySeamYield * value * sim.Simulation.Economy.Guild.Expedition.SharePercent / 100u, ledger.Flows.ShareGold);
+            Assert.Equal(Floor1Layout.GallerySeamYield * value * sim.Simulation.Economy.Guild.Expedition.SharePercent / 100u, shareGoldAtDelivery);
             Assert.True(sim.Simulation.ActiveStalls[0].StockOf(haulItem) < stockAtDelivery && ledger.GetFaucetTotal("CaravanSalvageSales") > caravanAtDelivery,
                 "The caravan bought the haul at its premium.");
             Assert.Equal(0, watch.AloneInTheChamber);
@@ -86,14 +89,12 @@ namespace Simpiens.Core.Tests
         /// <summary>
         /// Epic 10 G6.1: the whole loop plays through on the default seed, nothing injected. Playing fair prices, the
         /// scripted player recruits as crawlers qualify and pays every wage; once four have signed it outfits them and
-        /// sends them whenever the seam is back; the haul is sold and the loop goes round again. 45 minutes, not the plan's
-        /// 30: the guild fills at t13604 and the seam regrows for 10 minutes after it is spent, so the second haul comes
-        /// home at about t20900.
+        /// sends them whenever the seam is back; the haul is sold and the loop goes round again. Three game days on the
+        /// 24-hour day (Epic 10 Part 2, T5): the guild fills on day 2 and the hauls come home at about t21050 and t27670.
         /// </summary>
         [Fact]
         public void TheGuildLoopPlaysThrough()
         {
-            const long ThreeQuartersOfAnHour = 27000;
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var player = new GuildPlayer(sim, targetSize: 4);
@@ -109,7 +110,7 @@ namespace Simpiens.Core.Tests
             uint shares = 0;
             bool out_ = false;
             var homes = new List<long>();
-            while (sim.Clock.CurrentTick < ThreeQuartersOfAnHour)
+            while (sim.Clock.CurrentTick < ThreeDays)
             {
                 watch.Run(1);
                 for (int i = 0; i < guild.Members.Count; i++)
@@ -143,7 +144,7 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, unpaid);
             uint interval = sim.Simulation.Economy.Supply.RestockIntervalTicks;
             uint visits = 0;
-            for (int i = 0; i < guild.Members.Count; i++) visits += (uint)(ThreeQuartersOfAnHour / interval - guild.Members[i].JoinTick / interval);
+            for (int i = 0; i < guild.Members.Count; i++) visits += (uint)(ThreeDays / interval - guild.Members[i].JoinTick / interval);
             Assert.Equal(visits, ledger.Flows.Wages); // every visit's wage, for every member
             Assert.True(hauls >= 2, $"At least two expeditions came home with glowstone ({hauls}).");
             Assert.Equal(0, leftSettlement);
@@ -161,11 +162,11 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ASaveMidExpeditionLoadsAndPlaysOn()
         {
-            const long PlaysOn = 3000;
+            const long PlaysOn = 8 * DayClock.TicksPerHour; // home from the seam, through a caravan visit
             using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             played.Respawn(OutpostSession.SessionId);
             new GuildPlayer(played, targetSize: 4).SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield, RetreatRule.Steady);
-            while (played.Simulation.Guild.Expedition.Stage != ExpeditionStage.Work && played.Clock.CurrentTick < HalfAnHour) played.Step(1);
+            while (played.Simulation.Guild.Expedition.Stage != ExpeditionStage.Work && played.Clock.CurrentTick < ThreeDays) played.Step(1);
             Assert.Equal(ExpeditionStage.Work, played.Simulation.Guild.Expedition.Stage);
             long tick = played.Clock.CurrentTick;
             byte[] saved = SaveSerializer.Serialize(played.Host.Capture());

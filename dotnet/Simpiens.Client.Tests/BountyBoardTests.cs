@@ -18,8 +18,11 @@ namespace Simpiens.Client.Tests
     {
         private const int Width = 1280, Height = 720;
 
-        /// <summary>The Overgrowth is charted within this many ticks of the post (Unity's bound).</summary>
-        private const long ChartDeadlineTicks = 520;
+        /// <summary>
+        /// The Overgrowth is charted within two game hours of the post: on the 24-hour day the claim and the report at the
+        /// board take 10 game minutes each and the survey 30, besides the walks (Epic 10 Part 2, T5; Unity's bound was 520).
+        /// </summary>
+        private const long ChartDeadlineTicks = 2 * Simpiens.Simulation.DayClock.TicksPerHour;
         /// <summary>Its fog is gone within this much view time once charted (Unity's bound; the fade is 1.5 s).</summary>
         private const float LiftSeconds = 2f;
 

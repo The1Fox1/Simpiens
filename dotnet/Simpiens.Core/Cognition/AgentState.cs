@@ -90,6 +90,13 @@ namespace Simpiens.Cognition
 
         /// <summary>Its part in the guild's expedition (Epic 10 G5), a copy refreshed every tick as the memberships are; not saved.</summary>
         public ExpeditionOrder Expedition { get; set; }
+
+        /// <summary>
+        /// A muster call rouses this sleeper (Epic 10 Part 2, T5): it has slept past the tired line, and its party is
+        /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
+        /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
+        /// </summary>
+        public bool IsCalledFromSleep => Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Muster && Energy >= Considerations.TiredEnergy;
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
         /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>

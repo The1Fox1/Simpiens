@@ -45,26 +45,29 @@ namespace Simpiens.Core.Session.Layouts
         public const byte WorkshopRowSectorId = 12;
         public const byte GuildhallSectorId = 13;
 
-        /// <summary>The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them.</summary>
-        public static readonly SectorHazard SumpHazard = new SectorHazard(HazardKind.FoulAir, 3f);
-        public static readonly SectorHazard GlowCavesHazard = new SectorHazard(HazardKind.FallingRock, 4f);
+        /// <summary>
+        /// The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them. On the 24-hour day
+        /// (Epic 10 Part 2, T3.2a) a quarter of Part 1's figures, since ventures last game hours: the Sump about 32 health a
+        /// game hour, the Glow Caves 42.
+        /// </summary>
+        public static readonly SectorHazard SumpHazard = new SectorHazard(HazardKind.FoulAir, 0.75f);
+        public static readonly SectorHazard GlowCavesHazard = new SectorHazard(HazardKind.FallingRock, 1f);
 
-        /// <summary>6 health a second, 3 with gear: past the 4 a second a crawler braves alone (Vitality.LoneHazardLimit), so only an expedition goes (Epic 10 G5, D11).</summary>
-        public static readonly SectorHazard DrownedGalleryHazard = new SectorHazard(HazardKind.Flooding, 6f);
+        /// <summary>1.5 health a second, 0.75 with gear: past the 1 a second a crawler braves alone (Vitality.LoneHazardLimit), so only an expedition goes (Epic 10 G5, D11).</summary>
+        public static readonly SectorHazard DrownedGalleryHazard = new SectorHazard(HazardKind.Flooding, 1.5f);
 
         /// <summary>The Gallery's one rich glowstone seam (D11), at its far west end: a party crosses the flood to reach it.</summary>
         public const string GallerySeam = "gallery.seam";
         public const int GallerySeamYield = 4;
         public const uint GlowstoneRegrowTicks = 6000; // ten minutes: rare (Epic 10 G2)
 
-        public const uint FoodRegrowTicks = 300; // review §3.3 D6 (was 450)
-        public const int FoodPlotYield = 4;
         /// <summary>
-        /// The 24-hour day's Garden (T4.2, D26): today's. On the day crawlers buy nine meals in ten at the stall, and a plot
-        /// regrowing in 1 or 12 game hours made no difference, so the Garden stays the quick fallback it is.
+        /// The Garden (review §3.3 D6): 4 plots of 4 rations, regrowing in 300 ticks. On the 24-hour day crawlers buy nine
+        /// meals in ten at the stall, and regrowing in 1 or 12 game hours made no difference (Epic 10 Part 2, T4.2, D26),
+        /// so the Garden stays the quick fallback it was.
         /// </summary>
-        public const int FullDayFoodPlotYield = FoodPlotYield;
-        public const uint FullDayFoodRegrowTicks = FoodRegrowTicks;      // rations per plot between regrowths (review §3.3 D6; was 3): 4 plots, about 32 a minute at most
+        public const uint FoodRegrowTicks = 300;
+        public const int FoodPlotYield = 4;
         public const uint HerbRegrowTicks = 600;
         public const uint OreRegrowTicks = 900;
 
@@ -77,13 +80,9 @@ namespace Simpiens.Core.Session.Layouts
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
-        public const int BunkCount = 8;
 
-        /// <summary>
-        /// A bunk per resident (Epic 10 Part 2, T2.3, D21): on the 24-hour day a sleeper holds its bunk about 8 hours. The
-        /// day's probes use <see cref="FullDayDefinition"/> until the cut-over (T5) makes it the floor.
-        /// </summary>
-        public const int FullDayBunkCount = 12;
+        /// <summary>A bunk per resident (Epic 10 Part 2, T2.3, D21): on the 24-hour day a sleeper holds its bunk about 8 hours.</summary>
+        public const int BunkCount = 12;
 
         /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
         public static readonly IReadOnlyList<Vec2> Doors = new[]
@@ -105,21 +104,11 @@ namespace Simpiens.Core.Session.Layouts
         public static Vec2 HubBunkhouseDoor => Doors[5];
 
         private static MapDefinition _definition;
-        private static MapDefinition _fullDayDefinition;
 
         /// <summary>Built once; definitions are immutable.</summary>
-        public static MapDefinition Definition => _definition ??= Build(BunkCount, FoodPlotYield, FoodRegrowTicks);
+        public static MapDefinition Definition => _definition ??= Build();
 
-        /// <summary>
-        /// The floor for the 24-hour day until the cut-over makes it <see cref="Definition"/>: a bunk per resident (T2.3), and a
-        /// Garden that feeds about half the day's meals (T4.2, D26).
-        /// </summary>
-        public static MapDefinition FullDayDefinition => _fullDayDefinition ??= Build(FullDayBunkCount, FullDayFoodPlotYield, FullDayFoodRegrowTicks);
-
-        /// <summary>Floor 1 with other bunks and Garden plots, for measuring the 24-hour day (Epic 10 Part 2, T4.2).</summary>
-        public static MapDefinition Create(int bunkCount, int foodPlotYield, uint foodRegrowTicks) => Build(bunkCount, foodPlotYield, foodRegrowTicks);
-
-        private static MapDefinition Build(int bunkCount, int foodPlotYield, uint foodRegrowTicks)
+        private static MapDefinition Build()
         {
             var b = new MapDefinitionBuilder("Floor1", new RectF(-24f, -24f, 48f, 42f));
 
@@ -199,16 +188,12 @@ namespace Simpiens.Core.Session.Layouts
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
             b.Poi(Hearth, PoiKind.Hearth, new Vec2(-4.5f, -3.5f), 3.0f);
 
-            // --- Bunkhouse: two rows in the west half, clear of the gate-to-hub lane (x 2..6). Four to a row for 8. For a bunk
-            // per resident (T2.3), six to a row, 1.5 apart, with the walkable strip along the north wall (y -7.5) kept free: it
-            // is the way from the bunks to the hub door, and a sleeper lies in its bunk for hours (T4.2: a top row there
-            // walled a crawler in until it starved) ---
-            for (int i = 0; i < bunkCount; i++)
+            // --- Bunkhouse: two rows of six in the west half, 1.5 apart, clear of the gate-to-hub lane (x 2..6), with the
+            // walkable strip along the north wall (y -7.5) kept free: it is the way from the bunks to the hub door, and a
+            // sleeper lies in its bunk for hours (Epic 10 Part 2, T4.2: a top row there walled a crawler in until it starved) ---
+            for (int i = 0; i < BunkCount; i++)
             {
-                var at = bunkCount <= 8
-                    ? new Vec2(-6f + (i % 4) * 2f, i < 4 ? -8f : -10f)
-                    : new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f);
-                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, at, 1.0f);
+                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f), 1.0f);
             }
 
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---
@@ -222,10 +207,10 @@ namespace Simpiens.Core.Session.Layouts
             }
 
             // --- Resources: near sectors (explored) ---
-            b.Node("garden.1", new Vec2(-5f, 12f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
-            b.Node("garden.2", new Vec2(-2f, 10f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
-            b.Node("garden.3", new Vec2(2f, 10f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
-            b.Node("garden.4", new Vec2(5f, 12f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
+            b.Node("garden.1", new Vec2(-5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.2", new Vec2(-2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.3", new Vec2(2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.4", new Vec2(5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
             b.Node("quarry.1", new Vec2(-20f, 2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.2", new Vec2(-16f, -2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.3", new Vec2(-12f, 2f), ItemType.IronOre, 3, OreRegrowTicks);

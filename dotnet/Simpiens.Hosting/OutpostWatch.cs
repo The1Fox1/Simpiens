@@ -21,8 +21,12 @@ namespace Simpiens.Hosting
     /// </summary>
     public sealed class OutpostWatch
     {
+        /// <summary>The outpost's day (Epic MAP's DoD): a game day from 06:00, 10,080 ticks (Epic 10 Part 2, milestone T; 9,000 before).</summary>
+        public const long DayTicks = DayClock.TicksPerDay;
+
+        /// <summary>Starving: hunger 95 or more for 2 game hours (on the 24-hour day hunger fills over a day; Epic 10 Part 2, T5).</summary>
         public const float StarvingHunger = 95f;
-        public const uint StarvingTicks = 300;
+        public const uint StarvingTicks = 2 * DayClock.TicksPerHour;
 
         /// <summary>
         /// The seeds whose day must hold (Epic 10 G0, finding F2): the three golden seeds and 1 to 20. `dotnet test`

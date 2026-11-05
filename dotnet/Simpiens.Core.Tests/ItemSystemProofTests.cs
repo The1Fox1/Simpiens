@@ -42,7 +42,8 @@ namespace Simpiens.Core.Tests
             int mostHeld = 0;
             bool exported = false;
             long soldAt = -1;
-            for (long t = 1; t <= 2400 && !(exported && soldAt >= 0 && seller.Inventory.GetItemCount(Shard) == 0); t++)
+            // Two caravan visits: the crawler sells, and the caravan takes what the stall holds
+            for (long t = 1; t <= 2 * economy.Supply.RestockIntervalTicks && !(exported && soldAt >= 0 && seller.Inventory.GetItemCount(Shard) == 0); t++)
             {
                 sim.Step(1);
                 int stock = sim.Simulation.ActiveStalls[0].StockOf(Shard);
@@ -103,7 +104,7 @@ namespace Simpiens.Core.Tests
             Assert.False(sim.Simulation.ActiveStalls[0].Trades(ItemType.Glowstone), "The stall doesn't trade glowstone.");
 
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
             Assert.False(sim.Simulation.ActiveStalls[0].Trades(ItemType.Glowstone), "Glowstone stayed out of the stall.");

@@ -115,26 +115,17 @@ namespace Simpiens.Simulation.Economy
         /// <summary>AgentInventory's default gold, for agents no session spawned (validators). Sessions use StartingGold.</summary>
         public const int InventoryDefaultGold = 10;
 
-        public static readonly EconomyTuning Default = new EconomyTuning();
-
         /// <summary>
-        /// The 24-hour day's economy (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>), built a step at a time and
-        /// measured on <see cref="Simpiens.Core.Session.Layouts.Floor1Layout.FullDayDefinition"/>; the cut-over (T5) makes it
-        /// the default:
+        /// The 24-hour day's economy (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>, <c>docs/economy-model.md</c>):
         /// <list type="bullet">
-        /// <item>the day's pace (<see cref="DayTuning.FullDay"/>);</item>
-        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00 (T4.1, D24: <see cref="SupplyTuning.FullDay"/>);</item>
+        /// <item>the day's pace (<see cref="DayTuning.Default"/>);</item>
+        /// <item>the caravan every 6 game hours (T4.1, D24: <see cref="SupplyTuning.Default"/>);</item>
         /// <item>crawlers earn toward 80g, about two days' meals (T4.2, D25);</item>
-        /// <item>salvage pays a quarter of today's price, so a day's meals take hours of work (T4.2b, D29): ore 5g (worth
-        /// 2g to a neutral seller), herbs 6g (3g). Food, purses and glowstone keep today's terms.</item>
+        /// <item>salvage pays a quarter of Part 1's price, so a day's meals take hours of work (T4.2b, D29): ore 5g (worth 2g
+        /// to a neutral seller), herbs 6g (3g). Food, purses and glowstone kept Part 1's terms.</item>
         /// </list>
         /// </summary>
-        public static readonly EconomyTuning FullDay = Default
-            .WithDay(DayTuning.FullDay)
-            .WithSupply(SupplyTuning.FullDay)
-            .WithItemTerms(ItemType.IronOre, new ItemTerms(2, StallRole.Buys, 5, 10))
-            .WithItemTerms(ItemType.MedicinalHerb, new ItemTerms(3, StallRole.Buys, 6, 10))
-            .WithComfortablePurse(80);
+        public static readonly EconomyTuning Default = new EconomyTuning();
 
         // Each item's terms, by id (item system I5): the default economy's are below. Copies clone the table.
         private ItemTerms[] _items = DefaultItemTerms();
@@ -143,11 +134,12 @@ namespace Simpiens.Simulation.Economy
         {
             var items = new ItemTerms[Simpiens.Simulation.Items.ItemCatalog.Capacity];
             // The stall sells rations (15g, 50 to start) and hazard gear (Epic 10 G3: 30g, 0.75 of a neutral crawler's calm
-            // gear value, as the ration's 15g is of 20g; 3 to start); it buys ore (20g, 10 held), herbs (25g, 10 held) and
-            // glowstone, the hazard sectors' rare salvage (Epic 10 G2: 45g; the caravan pays 70, SupplyTuning)
+            // gear value, as the ration's 15g is of 20g; 3 to start); it buys ore (5g, worth 2g to a neutral seller; 10 held),
+            // herbs (6g, worth 3g; 10 held) and glowstone, the hazard sectors' rare salvage (Epic 10 G2: 45g; the caravan pays
+            // 70, SupplyTuning). Salvage is a quarter of Part 1's prices on the 24-hour day (Epic 10 Part 2, T4.2b, D29)
             items[(int)ItemType.Ration] = new ItemTerms(5, StallRole.Sells, 15, 50);
-            items[(int)ItemType.IronOre] = new ItemTerms(8, StallRole.Buys, 20, 10);
-            items[(int)ItemType.MedicinalHerb] = new ItemTerms(12, StallRole.Buys, 25, 10);
+            items[(int)ItemType.IronOre] = new ItemTerms(2, StallRole.Buys, 5, 10);
+            items[(int)ItemType.MedicinalHerb] = new ItemTerms(3, StallRole.Buys, 6, 10);
             items[(int)ItemType.ToolPickaxe] = new ItemTerms(30);
             items[(int)ItemType.HazardGear] = new ItemTerms(40, StallRole.Sells, 30, 3);
             items[(int)ItemType.Glowstone] = new ItemTerms(30, StallRole.Buys, 45, 0);
@@ -203,10 +195,10 @@ namespace Simpiens.Simulation.Economy
         public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;
 
         /// <summary>
-        /// The purse a crawler earns toward: below it, it works for gold (EarnIncomeGoal). Before the day, 40g, about three
-        /// meals' worth; on the 24-hour day (T4.2, D25), a day's needs and a margin.
+        /// The purse a crawler earns toward: below it, it works for gold (EarnIncomeGoal). 80g, a day's needs and a margin
+        /// (Epic 10 Part 2, T4.2, D25; 40g before the 24-hour day).
         /// </summary>
-        public int ComfortablePurse { get; private set; } = 40;
+        public int ComfortablePurse { get; private set; } = 80;
 
         /// <summary>The pace of a crawler's day: needs, sleep and rest (Epic 10 Part 2, milestone T).</summary>
         public DayTuning Day { get; private set; } = DayTuning.Default;

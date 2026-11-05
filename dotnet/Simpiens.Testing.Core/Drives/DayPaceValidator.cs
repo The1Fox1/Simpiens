@@ -7,8 +7,7 @@ namespace Simpiens.Testing.Drives
 {
     /// <summary>
     /// The 24-hour day's pace (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>): a real crawler's state, ticked at
-    /// <see cref="DayTuning.FullDay"/>, meets the day's targets. Until the cut-over the default pace is
-    /// <see cref="DayTuning.Legacy"/>, so this is where the new day is checked.
+    /// <see cref="DayTuning.Default"/>, meets the day's targets.
     /// </summary>
     public class DayPaceValidator
     {
@@ -30,16 +29,12 @@ namespace Simpiens.Testing.Drives
         // D19: fed to starving over 24 hours, so a crawler eating from 50 eats two or three times a day
         private void ValidateHungerFillsOverADay()
         {
-            var day = DayTuning.FullDay;
+            var day = DayTuning.Default;
             var state = Crawler(hunger: 0f);
             Run(state, day, DayClock.TicksPerDay / 2);
             Assert(Math.Abs(state.Hunger - 50f) < Tolerance, $"Half a day takes hunger from 0 to 50 (actual: {state.Hunger:F2})");
             Run(state, day, DayClock.TicksPerDay / 2);
             Assert(Math.Abs(state.Hunger - 100f) < Tolerance, $"A day takes hunger from 0 to 100 (actual: {state.Hunger:F2})");
-
-            var before = Crawler(hunger: 0f);
-            Run(before, DayTuning.Legacy, 670);
-            Assert(Math.Abs(before.Hunger - 100f) < Tolerance, $"Before the day, hunger filled in 67 s (actual: {before.Hunger:F2})");
             TestLog.Log("[PASS] Test 1: hunger fills over a day.");
         }
 
@@ -48,7 +43,7 @@ namespace Simpiens.Testing.Drives
         {
             var state = Crawler(hunger: 0f);
             state.Social = 100f;
-            Run(state, DayTuning.FullDay, 16 * DayClock.TicksPerHour);
+            Run(state, DayTuning.Default, 16 * DayClock.TicksPerHour);
             Assert(state.Social < Tolerance, $"Sixteen hours empty social (actual: {state.Social:F2})");
             TestLog.Log("[PASS] Test 2: social empties over sixteen hours.");
         }
@@ -57,7 +52,7 @@ namespace Simpiens.Testing.Drives
         // three times as fast); a collapse (energy 0), recovering where it fell at half a bunk's rate, is up at 30 after 7.5 hours
         private void ValidateEnergyLastsAWakingDay()
         {
-            var day = DayTuning.FullDay;
+            var day = DayTuning.Default;
             var state = Crawler(hunger: 0f);
             Run(state, day, 16 * DayClock.TicksPerHour);
             Assert(Math.Abs(state.Energy - 56f) < Tolerance, $"Sixteen hours standing take energy from 100 to 56 (actual: {state.Energy:F2})");
@@ -73,25 +68,24 @@ namespace Simpiens.Testing.Drives
             TestLog.Log("[PASS] Test 3: energy lasts a waking day.");
         }
 
-        // T2.2: a sleeper is up when rested, or when hunger reaches the starvation line; before the day, nobody woke early
+        // T2.2: a sleeper is up when rested, or when hunger reaches the starvation line
         private void ValidateSleepersWake()
         {
-            var day = DayTuning.FullDay;
+            var day = DayTuning.Default;
             Assert(!day.Wakes(energy: 99f, hunger: 60f) && day.Wakes(energy: 100f, hunger: 0f) && day.Wakes(energy: 50f, hunger: 85f), "Up when rested or starving");
-            Assert(!DayTuning.Legacy.Wakes(energy: 100f, hunger: 100f), "Before the day, a sleep ran its length");
             TestLog.Log("[PASS] Test 4: sleepers wake rested or starving.");
         }
 
-        // T4.3, D27: a crawler's memory fades affinities at the session's pace: 5 every 12 game hours on the day, every 1,000
-        // ticks before it
+        // T4.3, D27: a crawler's memory fades affinities at the session's pace, 5 every 12 game hours; a memory no session
+        // has set fades every 1,000 ticks
         private void ValidateTrustFadesOverDays()
         {
             var peer = EntityId.Generate();
             var memory = new Simpiens.Cognition.Memory.AgentMemory();
             memory.RecordInteraction(peer, deltaWarmth: 0, deltaTrust: 40, deltaFear: 0, deltaRespect: 0, currentTick: 0);
             uint halfDay = DayClock.Hours(12);
-            Assert(memory.GetAffinity(peer, halfDay).Trust == 40 - 5 * (int)(halfDay / 1000), "Before the day, trust fades 5 every 1,000 ticks");
-            memory.TrustFadeTicks = DayTuning.FullDay.TrustFadeTicks;
+            Assert(memory.GetAffinity(peer, halfDay).Trust == 40 - 5 * (int)(halfDay / 1000), "A memory no session has set fades 5 every 1,000 ticks");
+            memory.TrustFadeTicks = DayTuning.Default.TrustFadeTicks;
             Assert(memory.GetAffinity(peer, halfDay - 1).Trust == 40 && memory.GetAffinity(peer, halfDay).Trust == 35, "On the day, 5 every 12 game hours");
             var snapshot = memory.GetSnapshot(halfDay);
             Assert(snapshot.GetAffinity(peer, 2 * halfDay).Trust == 30, "Cognition's snapshot fades at the same pace");

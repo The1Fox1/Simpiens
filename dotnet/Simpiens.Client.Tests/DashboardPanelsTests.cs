@@ -66,10 +66,12 @@ namespace Simpiens.Client.Tests
             ui.Ticks(300);
             game.Play.Dashboard.TogglePanels();
             ui.Frame();
-            // A crawler out of the Road Gate with nobody beside it, so the click can only mean it (picking takes what is drawn on top)
+            // A crawler out of the Road Gate, in a charted sector (the fog hides the rest), with nobody beside it, so the click
+            // can only mean it (picking takes what is drawn on top)
+            var sectors = game.Session.Simulation.Sectors;
             var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
-            var walker = pawns.First(e => game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId
-                                          && pawns.All(o => o == e || Vec2.Distance(o.Position, e.Position) > 1f));
+            var walker = pawns.First(e => sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId && sectors.IsExplored(sectors.GetSectorAt(e.Position).Id)
+                                          && pawns.All(o => o == e || Vec2.Distance(o.Position, e.Position) > 2f));
             ui.Click(game.World.View.WorldToScreen(walker.Position));
             Assert.Equal(walker.Id, game.Session.Selection.SelectedCrawler);
 

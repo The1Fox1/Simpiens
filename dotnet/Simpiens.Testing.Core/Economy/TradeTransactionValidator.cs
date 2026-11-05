@@ -344,7 +344,7 @@ namespace Simpiens.Testing.Economy
         /// <summary>
         /// Item system I5: a stall's goods are a table. A good is added or replaced in place; prices answer by role (the
         /// stall buys or sells it); stock and price changes leave an untraded item alone; the table holds 8 goods. A price
-        /// command carries (item, price) pairs, 0 keeping a price, and the default caravan's exports pay at most 248g a visit.
+        /// command carries (item, price) pairs, 0 keeping a price, and the default caravan's exports pay at most 320g a visit.
         /// </summary>
         private void ValidateTheStallsGoodsTable()
         {
@@ -371,7 +371,7 @@ namespace Simpiens.Testing.Economy
             var prices = new Simpiens.Intervention.UpdateStallPricesCommand(default).With(ItemType.Ration, 18).With(ItemType.IronOre, 0).With(ItemType.Ration, 19);
             Assert(prices.Count == 2 && prices[0].Item == ItemType.Ration && prices[0].Price == 19 && prices[1].Price == 0, "A price command keeps one price per item, in order.");
 
-            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 248, $"The default caravan's exports: 2 ore x 24 + 2 herbs x 30 + 2 glowstone x 70 = 248g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
+            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 320, $"The default caravan's exports: 16 ore x 6 + 12 herbs x 7 + 2 glowstone x 70 = 320g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
             TestLog.Log("[TradeTransactionValidator] Test 17 Passed: A stall's goods are a table; prices answer by role; price commands carry pairs.");
         }
 
