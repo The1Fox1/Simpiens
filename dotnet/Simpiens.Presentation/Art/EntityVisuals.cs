@@ -17,6 +17,7 @@ namespace Simpiens.Presentation.Art
         private readonly ArtCatalog _catalog;
         private readonly ArtId[] _byType;
         private readonly ArtId[] _crawlers;
+        private readonly ArtId[] _stations; // by kind, then built
         private readonly Dictionary<string, ArtId[]> _wearing = new Dictionary<string, ArtId[]>(StringComparer.Ordinal); // by the worn item's art key, then state
 
         public EntityVisuals(ArtCatalog catalog)
@@ -38,6 +39,20 @@ namespace Simpiens.Presentation.Art
                 if (all) _wearing[key] = byState;
             }
             Stall = catalog.TryId(ArtKeys.PropStall, out var stall) ? stall : ArtId.None;
+            var kinds = (StationKind[])Enum.GetValues(typeof(StationKind));
+            _stations = new ArtId[kinds.Length * 2];
+            foreach (var kind in kinds)
+            {
+                _stations[(int)kind * 2] = catalog.TryId(ArtKeys.Station(kind, built: false), out var plot) ? plot : ArtId.None;
+                _stations[(int)kind * 2 + 1] = catalog.TryId(ArtKeys.Station(kind, built: true), out var built) ? built : ArtId.None;
+            }
+        }
+
+        /// <summary>A station's art (Epic 10 Part 2, W1.6a): its own once built, the plot where it may be built before.</summary>
+        public ArtId Station(StationKind kind, bool built)
+        {
+            int i = (int)kind * 2 + (built ? 1 : 0);
+            return (uint)i < (uint)_stations.Length ? _stations[i] : ArtId.None;
         }
 
         /// <summary>A prop's art: a resource node, the hearth or a bunk; false for anything drawn otherwise, or not at all.</summary>

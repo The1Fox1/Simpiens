@@ -42,6 +42,10 @@ namespace Simpiens.Presentation.Art
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
                .Add(ArtKeys.PropStall, Sheet, new[] { "Prop_Stall" }, 2f, 1f, Art) // two cells by one
+               // The stations (Epic 10 Part 2, W1.6a): a cell each at the art's own 16 pixels a unit, as isometric's
+               .Add(ArtKeys.PropForge, Sheet, new[] { "Prop_Forge" }, 1f, 1f, Art)
+               .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
+               .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);

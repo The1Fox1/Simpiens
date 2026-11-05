@@ -85,7 +85,8 @@ namespace Simpiens.Presentation
                 case DrawRole.Rock: return RenderLayer.Rock;
                 case DrawRole.Fog: return RenderLayer.FloorOverlay;
                 case DrawRole.Selection:
-                case DrawRole.Shadow: return RenderLayer.FloorMarks;
+                case DrawRole.Shadow:
+                case DrawRole.FloorMark: return RenderLayer.FloorMarks;
                 default: return RenderLayer.World;
             }
         }

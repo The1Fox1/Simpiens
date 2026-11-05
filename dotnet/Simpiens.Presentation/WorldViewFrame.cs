@@ -11,6 +11,7 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.People;
 using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.Workshops;
 using Simpiens.Simulation.World;
 
 namespace Simpiens.Presentation
@@ -62,6 +63,23 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
+    /// A station as the view draws it at the end of a tick (Epic 10 Part 2, W1.6a): where it stands, whether it is built,
+    /// what it is making. Stations aren't entities; the view picks one by <see cref="StationPick"/>.
+    /// </summary>
+    public struct StationView
+    {
+        /// <summary>Its index in the map's stations, which is the index commands name.</summary>
+        public int Index;
+        public StationKind Kind;
+        public Vec2 Position;
+        public bool Built;
+        /// <summary>What it has been ordered to make; None with no order.</summary>
+        public ItemType Order;
+        /// <summary>A make under way: its inputs taken, so the fire is lit.</summary>
+        public bool Lit;
+    }
+
+    /// <summary>
     /// The world as the view draws it, at the end of one tick (Epic CLIENT, review A3): every entity in the world, in
     /// registration order, and which sectors are charted. The views read frames, never the live simulation; a network
     /// client would fill the same structure from replicated state. Its buffers grow once and are reused.
@@ -70,6 +88,7 @@ namespace Simpiens.Presentation
     {
         private EntityView[] _entities = new EntityView[128];
         private TradeStallData[] _stalls = new TradeStallData[4];
+        private StationView[] _stations = new StationView[4];
         private readonly Dictionary<EntityId, int> _index = new Dictionary<EntityId, int>(128);
         private readonly bool[] _charted = new bool[256];
         private readonly List<ChronicleEvent> _events = new List<ChronicleEvent>(8);
@@ -87,6 +106,11 @@ namespace Simpiens.Presentation
         public int StallCount { get; private set; }
 
         public ref readonly TradeStallData Stall(int index) => ref _stalls[index];
+
+        /// <summary>The map's stations at the end of the tick (Epic 10 Part 2, W1.6a), in the map's order.</summary>
+        public int StationCount { get; private set; }
+
+        public ref readonly StationView Station(int index) => ref _stations[index];
 
         /// <summary>
         /// What the chronicle recorded during this tick (oldest first): crawlers' interactions with each other among them,
@@ -108,7 +132,7 @@ namespace Simpiens.Presentation
         /// Copies <paramref name="entities"/>, the charting of <paramref name="sectors"/> (null: unknown) and the tick's
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null)
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
         {
             StallCount = 0;
             if (stalls != null)
@@ -116,6 +140,7 @@ namespace Simpiens.Presentation
                 if (_stalls.Length < stalls.Count) Array.Resize(ref _stalls, Math.Max(stalls.Count, _stalls.Length * 2));
                 for (int i = 0; i < stalls.Count; i++) _stalls[StallCount++] = stalls[i];
             }
+            CaptureStations(workshops);
 
             Tick = tick;
             Epoch = epoch;
@@ -158,6 +183,26 @@ namespace Simpiens.Presentation
                 };
                 _index[entity.Id] = Count;
                 Count++;
+            }
+        }
+
+        private void CaptureStations(WorkshopService workshops)
+        {
+            StationCount = 0;
+            if (workshops == null) return;
+            if (_stations.Length < workshops.Count) Array.Resize(ref _stations, Math.Max(workshops.Count, _stations.Length * 2));
+            for (int i = 0; i < workshops.Count; i++)
+            {
+                var state = workshops[i];
+                _stations[StationCount++] = new StationView
+                {
+                    Index = i,
+                    Kind = state.Kind,
+                    Position = workshops.DefinitionAt(i).Position,
+                    Built = state.Built,
+                    Order = state.HasOrder ? state.Order : ItemType.None,
+                    Lit = state.Built && state.InputsTaken,
+                };
             }
         }
 
@@ -267,7 +312,7 @@ namespace Simpiens.Presentation
         /// Captures the session's world from now on: after every completed tick, and afresh (a new epoch) on every
         /// respawn, switch or load. Captures once at once.
         /// </summary>
-        /// <param name="simulation">Where the stalls come from (graphics V5); none without it.</param>
+        /// <param name="simulation">Where the stalls (graphics V5) and the stations (Epic 10 Part 2) come from; none without it.</param>
         public void Follow(SessionHost host, IWorldRegistry registry, ISectorRegistry sectors, ISimulationClock clock, INarrativeChronicleService chronicle = null, ISimulationManager simulation = null)
         {
             Dispose();
@@ -282,32 +327,32 @@ namespace Simpiens.Presentation
                 _host.TickCompleted += OnTickCompleted;
                 _host.SessionChanged += OnSessionChanged;
             }
-            Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls);
+            Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls, _simulation?.Workshops);
         }
 
         /// <summary>The next frame: <see cref="Current"/> becomes <see cref="Previous"/>, with the chronicle's new events.</summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null)
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
         {
-            CaptureFrame(entities, sectors, tick, TakeNewEvents(), stalls);
+            CaptureFrame(entities, sectors, tick, TakeNewEvents(), stalls, workshops);
             Captured?.Invoke(this);
         }
 
         /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world (its chronicle's past included).</summary>
-        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null)
+        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
         {
             _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
             _lastEventId = NewestEventId();
-            CaptureFrame(entities, sectors, tick, null, stalls);
-            CaptureFrame(entities, sectors, tick, null, stalls);
+            CaptureFrame(entities, sectors, tick, null, stalls, workshops);
+            CaptureFrame(entities, sectors, tick, null, stalls, workshops);
             Captured?.Invoke(this);
         }
 
-        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events, IReadOnlyList<TradeStallData> stalls)
+        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events, IReadOnlyList<TradeStallData> stalls, WorkshopService workshops)
         {
             var next = _previous;
             _previous = _current;
             _current = next;
-            _current.Capture(entities, sectors, tick, _epoch, events, stalls);
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>
@@ -332,9 +377,9 @@ namespace Simpiens.Presentation
             return _recent.Count > 0 ? _recent[0].EventId : 0UL;
         }
 
-        private void OnTickCompleted(long tick) => Capture(_registry?.ActiveEntities, _sectors, tick, _simulation?.ActiveStalls);
+        private void OnTickCompleted(long tick) => Capture(_registry?.ActiveEntities, _sectors, tick, _simulation?.ActiveStalls, _simulation?.Workshops);
 
-        private void OnSessionChanged(ISessionDefinition session) => Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls);
+        private void OnSessionChanged(ISessionDefinition session) => Restart(_registry?.ActiveEntities, _sectors, _clock != null ? _clock.CurrentTick : 0, _simulation?.ActiveStalls, _simulation?.Workshops);
 
         public void Dispose()
         {

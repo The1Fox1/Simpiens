@@ -1,5 +1,6 @@
 using System;
 using Simpiens.Entities;
+using Simpiens.Simulation.Items;
 
 namespace Simpiens.Presentation.Art
 {
@@ -26,6 +27,20 @@ namespace Simpiens.Presentation.Art
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>
         public const string PropStall = "prop/stall";
+
+        /// <summary>The workshop row's stations (Epic 10 Part 2, W1.6a): each built, and a station's empty plot.</summary>
+        public const string PropForge = "prop/forge";
+        public const string PropStill = "prop/still";
+        public const string PropStationPlot = "prop/station-plot";
+
+        /// <summary>A station's art: its own once built, the plot before.</summary>
+        public static string Station(StationKind kind, bool built) => !built ? PropStationPlot : kind switch
+        {
+            StationKind.Forge => PropForge,
+            StationKind.Still => PropStill,
+            _ => PropStationPlot
+        };
+
         public const string SelectionRing = "fx/selection-ring";
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";

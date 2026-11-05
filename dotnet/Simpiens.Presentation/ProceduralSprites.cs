@@ -21,12 +21,18 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _stallSprite;
+        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite;
 
         /// <summary>The crawlers' hair: one colour no other palette letter uses, so a helmet recolours it (graphics V5).</summary>
         public static readonly Rgba32 Hair = new Rgba32(90, 55, 35, 255);
 
         /// <summary>The trade stall from above (graphics V5): a striped awning over a counter, two cells by one.</summary>
         public static PixelSprite StallSprite => _stallSprite;
+
+        /// <summary>The workshop row's stations (Epic 10 Part 2, W1.6a): the forge and the still built, and a station's empty plot.</summary>
+        public static PixelSprite ForgeSprite => _forgeSprite;
+        public static PixelSprite StillSprite => _stillSprite;
+        public static PixelSprite StationPlotSprite => _stationPlotSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -285,6 +291,30 @@ namespace Simpiens.Presentation
                 { 'w', new Rgba32(78, 45, 18, 255) }     // Planks and legs
             };
             _stallSprite = CreateSprite(PatternStall, stallPalette, "Prop_Stall");
+
+            // 17. The stations (Epic 10 Part 2, W1.6a), after the stall: a stone hearth of coals with its anvil, a copper still
+            // over its fire, and the roped plot where one may be built
+            var stationPalette = new Dictionary<char, Rgba32>
+            {
+                { '.', Rgba32.Clear },
+                { '#', new Rgba32(20, 24, 33, 255) },    // Outline
+                { 'S', new Rgba32(71, 85, 105, 255) },   // Hearth stone
+                { 's', new Rgba32(96, 110, 131, 255) },  // Hearth stone, lit
+                { 'O', new Rgba32(234, 88, 12, 255) },   // Coals
+                { 'o', new Rgba32(153, 27, 27, 255) },   // Coals, dark
+                { 'Y', new Rgba32(250, 204, 21, 255) },  // Coals, white hot
+                { 'a', new Rgba32(55, 65, 81, 255) },    // Anvil
+                { 'c', new Rgba32(217, 119, 6, 255) },   // Copper, lit
+                { 'C', new Rgba32(180, 83, 9, 255) },    // Copper
+                { 'p', new Rgba32(148, 163, 184, 255) }, // Pipe
+                { 'g', new Rgba32(103, 232, 249, 255) }, // The draught's jar
+                { 'w', new Rgba32(78, 45, 18, 255) },    // Wood
+                { 'T', new Rgba32(120, 72, 32, 255) },   // Stakes
+                { 'r', new Rgba32(161, 98, 7, 255) }     // Rope
+            };
+            _forgeSprite = CreateSprite(PatternForge, stationPalette, "Prop_Forge");
+            _stillSprite = CreateSprite(PatternStill, stationPalette, "Prop_Still");
+            _stationPlotSprite = CreateSprite(PatternStationPlot, stationPalette, "Prop_StationPlot");
         }
 
         private static PixelSprite CreateRing()
@@ -379,6 +409,66 @@ namespace Simpiens.Presentation
         }
 
         #region ASCII Pattern Definitions (16x16)
+
+        private static readonly string[] PatternForge =
+        {
+            "................",
+            ".##########.....",
+            "#SsSsSsSsSs#....",
+            "#sOoYoOoYoS#....",
+            "#SoYOoYoOos#....",
+            "#sOoOYoOoOS#....",
+            "#SsSsSsSsSs#....",
+            "#ssssssssss#####",
+            "#SSSSSSSSSS#aaa#",
+            "#SSSSSSSSSS##a##",
+            "#SSSSSSSSSS#.a..",
+            "############aaa.",
+            "................",
+            "................",
+            "................",
+            "................",
+        };
+
+        private static readonly string[] PatternStill =
+        {
+            "................",
+            ".....####.......",
+            "....#cccc#.##...",
+            "...#cCCCCc#pp#..",
+            "..#cCCCCCCc#.p#.",
+            "..#cCCCCCCc#.p#.",
+            "..#cCCCCCCc#pp#.",
+            "..#ccCCCCcc#p#..",
+            "...#cccccc#.p#..",
+            "....######..p#..",
+            "....#w..w#.###..",
+            "....#wOOw#.#g#..",
+            "....######.###..",
+            "................",
+            "................",
+            "................",
+        };
+
+        private static readonly string[] PatternStationPlot =
+        {
+            "................",
+            ".TT..........TT.",
+            ".TTr.rr.rr.r.TT.",
+            "..r..........r..",
+            "................",
+            "..r..........r..",
+            "..r..........r..",
+            "................",
+            "................",
+            "..r..........r..",
+            "..r..........r..",
+            "................",
+            "..r..........r..",
+            ".TT.r.rr.rr.rTT.",
+            ".TT..........TT.",
+            "................",
+        };
 
         private static readonly string[] PatternStall =
         {

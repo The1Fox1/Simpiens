@@ -81,7 +81,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(36, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone and graphics V5's stall
+            Assert.Equal(39, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, and Part 2's forge, still and plot
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -241,7 +241,7 @@ namespace Simpiens.Client.Tests
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5)
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)

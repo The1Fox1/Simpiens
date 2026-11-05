@@ -37,6 +37,11 @@ namespace Simpiens.Presentation.Art
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.BunkHeight, IsometricSprites.BunkRise))
                .Add(ArtKeys.PropStall, Sheet, new[] { "Iso_Stall" }, IsometricSprites.StallWidth, IsometricSprites.StallHeight + IsometricSprites.StallRise,
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.StallHeight, IsometricSprites.StallRise))
+               .Add(ArtKeys.PropForge, Sheet, new[] { "Iso_Forge" }, IsometricSprites.ForgeWidth, IsometricSprites.ForgeHeight + IsometricSprites.ForgeRise,
+                   pivotY: IsometricSprites.BlockPivotY(IsometricSprites.ForgeHeight, IsometricSprites.ForgeRise))
+               .Add(ArtKeys.PropStill, Sheet, new[] { "Iso_Still" }, IsometricSprites.StillWidth, IsometricSprites.StillHeight + IsometricSprites.StillRise,
+                   pivotY: IsometricSprites.BlockPivotY(IsometricSprites.StillHeight, IsometricSprites.StillRise))
+               .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Iso_StationPlot" }, IsometricSprites.PlotWidth, IsometricSprites.PlotHeight)
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);

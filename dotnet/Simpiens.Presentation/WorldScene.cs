@@ -161,6 +161,7 @@ namespace Simpiens.Presentation
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
+                for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
             }
 
             if (selection != null) AddSelection(selection, viewSeconds);
@@ -238,6 +239,22 @@ namespace Simpiens.Presentation
                 shownGood.Z = slots[slot].Height;
                 slot++;
             }
+        }
+
+        /// <summary>
+        /// A station (Epic 10 Part 2, W1.6a): the forge or the still once built, standing at its place; before that its
+        /// empty plot, lying on the floor. Either is pickable under the station's own id (<see cref="StationPick"/>): a
+        /// click on it opens the station's window.
+        /// </summary>
+        private void AddStation(in StationView station, float viewSeconds)
+        {
+            var art = Visuals.Station(station.Kind, station.Built);
+            if (art.IsNone) return;
+            var position = station.Position;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var role = station.Built ? DrawRole.Prop : DrawRole.FloorMark;
+            Add(role, station.Built ? Projection.Depth(position) : 0f, _catalog.Piece(art, viewSeconds), position, Shown(White, shown)).Pick = Items.Pickable(StationPick.Of(station.Index));
         }
 
         /// <summary>The props (resource nodes, the hearth, bunks), each as its visual says; other kinds have no picture.</summary>
@@ -369,7 +386,7 @@ namespace Simpiens.Presentation
 
         private bool FloorBehind(MapTileLayer tiles, int x, int y, float depth) => tiles.IsFloor(x, y) && Projection.Depth(tiles.CellCentre(x, y)) < depth;
 
-        private readonly int[] _layers = new int[(int)DrawRole.Shadow + 1]; // each role's layer, this build
+        private readonly int[] _layers = new int[(int)DrawRole.FloorMark + 1]; // each role's layer, this build
 
         /// <summary>Adds <paramref name="piece"/> standing at <paramref name="at"/> as an item of <paramref name="role"/>, in the layer the projection gives that role.</summary>
         private ref DrawItem Add(DrawRole role, float depth, in ArtPiece piece, Vec2 at, Rgba32 tint, float rotation = 0f)
@@ -377,7 +394,7 @@ namespace Simpiens.Presentation
             ref var item = ref Items.Add(_layers[(int)role], role, depth, piece.Sprite, at.X, at.Y, piece.Width, piece.Height, tint, rotation, piece.Sheet);
             item.PivotX = piece.PivotX;
             item.PivotY = piece.PivotY;
-            item.SnapToPixel = role is DrawRole.Prop or DrawRole.Crawler or DrawRole.Shadow or DrawRole.Selection; // standing pieces (F19)
+            item.SnapToPixel = role is DrawRole.Prop or DrawRole.Crawler or DrawRole.Shadow or DrawRole.Selection or DrawRole.FloorMark; // standing pieces (F19)
             return ref item;
         }
 
