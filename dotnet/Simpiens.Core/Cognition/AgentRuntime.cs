@@ -84,7 +84,8 @@ namespace Simpiens.Cognition
             if (_clock != null && _clock.IsPaused) return;
 
             // Advance biological drives and emotion timers on fixed logical tick dt
-            State.Tick(FixedTickDeltaTime, _simulationManager != null ? _simulationManager.Economy.Day : Simpiens.Simulation.Economy.EconomyTuning.Default.Day);
+            var day = _simulationManager != null ? _simulationManager.Economy.Day : Simpiens.Simulation.Economy.EconomyTuning.Default.Day;
+            State.Tick(FixedTickDeltaTime, day);
 
             // Keep the crawler's copy of its memberships synced with the authoritative group registry (cognition reads the copy)
             if (_simulationManager?.Groups != null)
@@ -106,6 +107,8 @@ namespace Simpiens.Cognition
                 float resistance = CrawlerStats.Get(inventory, StatKind.HazardResistance);
                 bool geared = resistance > 0f;
                 float damagePerSecond = geared ? (float)(hazard.DamagePerSecond * (float)(1f - resistance)) : hazard.DamagePerSecond;
+                // The share a second taken on the day's pace (Epic 10 Part 2, T3.2a): ventures are longer, so each second costs less
+                damagePerSecond = (float)(damagePerSecond * day.HazardDamageScale);
                 float before = State.Health;
                 State.Health = SimMath.Max(0f, (float)(State.Health - (float)(damagePerSecond * FixedTickDeltaTime)));
                 float taken = before - State.Health;
@@ -115,7 +118,8 @@ namespace Simpiens.Cognition
                     State.Activity.GearedHazardTicks++;
                     State.Activity.GearedHazardDamage += taken;
                 }
-                for (int s = 0; inventory != null && s < AgentInventory.EquipmentSlots; s++)
+                bool wears = State.Activity.HazardTicks % day.HazardWearEveryTicks == 0;
+                for (int s = 0; wears && inventory != null && s < AgentInventory.EquipmentSlots; s++)
                 {
                     var slot = (EquipmentSlot)s;
                     var worn = inventory.GetEquipped(slot);

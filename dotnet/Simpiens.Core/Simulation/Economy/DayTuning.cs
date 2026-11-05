@@ -51,9 +51,21 @@ namespace Simpiens.Simulation.Economy
         /// <summary>How long a crawler's actions take (D22).</summary>
         public readonly ActionTuning Actions;
 
+        /// <summary>
+        /// Danger on the day (T3.2a): the share of a hazard sector's damage a second that is taken (who may venture alone is
+        /// judged on the sector's own figure), and one unit of hazard gear's life worn every this many ticks of exposure.
+        /// </summary>
+        public readonly float HazardDamageScale;
+        public readonly int HazardWearEveryTicks;
+
+        /// <summary>Health healed a second awake, and asleep in a bunk.</summary>
+        public readonly float RestingHealPerSecond;
+        public readonly float BunkHealPerSecond;
+
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
-            float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, in ActionTuning actions)
+            float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, in ActionTuning actions,
+            float hazardDamageScale, int hazardWearEveryTicks, float restingHealPerSecond, float bunkHealPerSecond)
         {
             HungerPerSecond = hungerPerSecond;
             EnergyStandingPerSecond = energyStandingPerSecond;
@@ -70,6 +82,10 @@ namespace Simpiens.Simulation.Economy
             RelaxEnergyBonus = relaxEnergyBonus;
             EnergyWorkingPerSecond = energyWorkingPerSecond;
             Actions = actions;
+            HazardDamageScale = hazardDamageScale;
+            HazardWearEveryTicks = hazardWearEveryTicks < 1 ? 1 : hazardWearEveryTicks;
+            RestingHealPerSecond = restingHealPerSecond;
+            BunkHealPerSecond = bunkHealPerSecond;
         }
 
         /// <summary>Whether a sleeper (in a bunk or rough) is up: rested, or too hungry to sleep on.</summary>
@@ -94,7 +110,11 @@ namespace Simpiens.Simulation.Economy
             restBonus: 30f,
             relaxEnergyBonus: 10f,
             energyWorkingPerSecond: 0.2f,
-            actions: ActionTuning.Legacy);
+            actions: ActionTuning.Legacy,
+            hazardDamageScale: 1f,
+            hazardWearEveryTicks: 1,
+            restingHealPerSecond: 0.05f,
+            bunkHealPerSecond: 4f);
 
         /// <summary>
         /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default; <c>docs/time-model.md</c>):
@@ -105,7 +125,10 @@ namespace Simpiens.Simulation.Economy
         /// <item>a sleeper gains 8 an hour in a bunk and half that sleeping rough, for up to 12 hours, until rested (100) or
         /// starving (85): about 8 hours from the tired line;</item>
         /// <item>no bonus at a sleep's end, and the hearth restores company, not energy;</item>
-        /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.FullDay"/>).</item>
+        /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.FullDay"/>);</item>
+        /// <item>a hazard takes 0.3 of its damage a second, and gear wears a unit every 3 ticks of exposure, so a venture of about
+        /// 28 s (a 21-second harvest and the walk) costs the health and wear a 9-second one did; a bunk heals 10 an hour, a night
+        /// 80, and awake about 50 a day as before (T3.2a).</item>
         /// </list>
         /// </summary>
         public static DayTuning FullDay => new DayTuning(
@@ -123,7 +146,11 @@ namespace Simpiens.Simulation.Economy
             restBonus: 0f,
             relaxEnergyBonus: 0f,
             energyWorkingPerSecond: DayClock.PerSecond(8.25f),
-            actions: ActionTuning.FullDay);
+            actions: ActionTuning.FullDay,
+            hazardDamageScale: 0.3f,
+            hazardWearEveryTicks: 3,
+            restingHealPerSecond: 0.05f,
+            bunkHealPerSecond: DayClock.PerSecond(10f));
 
         public static DayTuning Default => Legacy;
     }

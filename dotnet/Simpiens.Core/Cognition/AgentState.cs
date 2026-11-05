@@ -260,7 +260,7 @@ namespace Simpiens.Cognition
             // Health (Epic 10 G2): heals slowly anywhere, fast asleep in a bunk; a downed crawler gets up at RecoveredAt.
             // Hazard damage is the runtime's (it knows the map)
             bool sleepingInBunk = inBunk || CurrentIntent is SleepAtBunkIntent;
-            Health = SimMath.Min(Vitality.MaxHealth, (float)(Health + (float)(dt * (sleepingInBunk ? Vitality.BunkHealPerSecond : Vitality.RestingHealPerSecond))));
+            Health = SimMath.Min(Vitality.MaxHealth, (float)(Health + (float)(dt * (sleepingInBunk ? day.BunkHealPerSecond : day.RestingHealPerSecond))));
             if (IsDowned && Health >= Vitality.RecoveredAt)
             {
                 IsDowned = false;

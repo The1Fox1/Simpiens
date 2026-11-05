@@ -13,11 +13,7 @@ namespace Simpiens.Cognition
     {
         public const float MaxHealth = 100f;
 
-        /// <summary>Healing anywhere, per second: slow (a full recovery takes about half an hour).</summary>
-        public const float RestingHealPerSecond = 0.05f;
-
-        /// <summary>Healing asleep in a bunk, per second.</summary>
-        public const float BunkHealPerSecond = 4f;
+        // Healing's rates, awake and in a bunk, are the session's pace (DayTuning, Epic 10 Part 2, T3.2a)
 
         /// <summary>A crawler under this eats a herb it carries.</summary>
         public const float TreatWoundsBelow = 60f;

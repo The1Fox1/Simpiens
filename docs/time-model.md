@@ -75,6 +75,11 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
     - On 22 of 23 seed runs, trust toward the player rose for nobody (it needs 8 of 12), and for 1 of 12 on the 23rd. Trust comes from trades, and crawlers trade twice a day.
     - Long stands at nodes and the stall raised no stacking; one seed showed a jitter.
   - **Why the day is quiet:** a crawler earns until it carries 40g (`EarnIncomeGoal.ComfortableGold`), and a day's 2.3 meals cost at most 35g, much of it eaten free at the Garden. Its reasons to work are the economy's, and T4 sets them per day.
+- **T3.2a, danger on the day** (2026-11-04): the gate seeds, residents and drifters.
+  - **Today's pace, one day:** 8.8 ventures into hazard sectors a day, each 8.9 s long, costing 26 health; 36 health per glowstone; nobody downed.
+  - **The new day, at per-second damage** (three days each): a venture lasts 15 s and costs 47 health. Crawlers retreat (under 40) before a 21-second harvest ends, so glowstone falls to 0.1 a day, at 667 health each.
+  - **With a 0.3 share of the damage and gear worn every 3 ticks** (three days each): a venture lasts 22 s and costs 18 health (median 12); 32.5 health per glowstone; nobody downed and no retreats.
+  - Ventures are fewer (2.1 a day against 8.8) and glowstone with them (1.0 a day): the quiet day's, T4's.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -103,11 +108,11 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Bunks | `Floor1Layout` | 8, two rows | — | 12, three rows filling the bunkhouse's walkable depth (`FullDayBunkCount`, `FullDayDefinition`); drifters sleep rough when they are full | T2.3 ✓ |
 | A spell at the hearth | the consequence service | +20 social, +10 energy | D | +20 social, no energy: at +10 a visit the hearth outran the waking day's drain, and nobody would sleep | T2.2 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
-| Healing, awake | `Vitality.RestingHealPerSecond` | 0.05 a second (about 50 a day already) | D | about 50 a day (kept in day terms) | T3.2a |
-| Healing in a bunk | `Vitality.BunkHealPerSecond` | 4 a second (12 per 3-second nap) | D | about +10 an hour: a night's sleep heals 80 | T3.2a |
-| Hazard damage | `Floor1Layout`'s hazards | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | per game hour, set so a unit of glowstone costs about the health it does today | T3.2a |
-| The lone crawler's hazard limit | `Vitality.LoneHazardLimit` | 4 a second | D | in the same units as damage, re-measured | T3.2b |
-| Hazard gear's life | `ItemCatalog` (protection, `PerHazardTick`) | 500 ticks of exposure (50 s) | D | hours of exposure, set so gear lasts about as many trips as today | T3.2a |
+| Healing, awake | `DayTuning` (was `Vitality.RestingHealPerSecond`) | 0.05 a second (about 50 a day already) | D | 0.05 a second, about 50 a day (kept) | T3.2a ✓ |
+| Healing in a bunk | `DayTuning` (was `Vitality.BunkHealPerSecond`) | 4 a second (12 per 3-second nap) | D | +10 an hour: a night's sleep heals 80 | T3.2a ✓ |
+| Hazard damage | `Floor1Layout`'s hazards, times `DayTuning.HazardDamageScale` | Sump 3, Glow Caves 4, Drowned Gallery 6 a second | D | 0.3 of it (38, 50 and 76 an hour): 32.5 health per glowstone measured, against 35.7 | T3.2a ✓ |
+| The lone crawler's hazard limit | `Vitality.LoneHazardLimit` | 4 a second | D | kept: judged on the sector's own figure, so who ventures alone doesn't change | T3.2a ✓ |
+| Hazard gear's life | `ItemCatalog` (protection, `PerHazardTick`), one unit every `DayTuning.HazardWearEveryTicks` | 500 ticks of exposure (50 s) | D | a unit every 3 ticks: 1,500 ticks of exposure (about 3.6 game hours), so gear lasts about as many ventures as today's | T3.2a ✓ |
 
 ### 3.3 Actions (D22)
 | What | Where | Today | Kind | Proposed | Step |
