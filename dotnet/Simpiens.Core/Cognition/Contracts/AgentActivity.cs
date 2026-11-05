@@ -46,6 +46,11 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Hauls handed to the guild's stall at an expedition's end (Epic 10 G5; saved from format 9).</summary>
         public int GuildDeliveries;
 
+        /// <summary>Tools (Epic 10 Part 2, W1.4): bought, broken, and the mineral units mined with one.</summary>
+        public int ToolPurchases;
+        public int ToolsWornOut;
+        public int ToolMinedUnits;
+
         public static AgentActivity Empty => new AgentActivity
         {
             FirstHarvestTick = -1,

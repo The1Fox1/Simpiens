@@ -156,6 +156,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ArtisanBrokeDown:
                     return $"{actorA} broke down at the {Station(evt)}, worked past the end of their strength.";
 
+                case ChronicleEventType.ToolWornOut:
+                    return $"{actorA}'s {(Simpiens.Simulation.Items.ItemCatalog.Get((Simpiens.Simulation.Economy.ItemType)(byte)evt.ExtraData)?.DisplayName ?? "tool").ToLowerInvariant()} broke in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

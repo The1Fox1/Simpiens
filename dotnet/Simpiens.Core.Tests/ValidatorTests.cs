@@ -171,6 +171,9 @@ namespace Simpiens.Core.Tests
         public void Workshops() => new Simpiens.Testing.Economy.WorkshopValidator().RunAllValidationTests();
 
         [Fact]
+        public void Tools() => new Simpiens.Testing.Economy.ToolValidator().RunAllValidationTests();
+
+        [Fact]
         public void Loot() => new Simpiens.Testing.Economy.LootValidator().RunAllValidationTests();
     }
 }

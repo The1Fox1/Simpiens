@@ -47,7 +47,8 @@ namespace Simpiens.Narrative
         ArtisanUnpaid = 37, // the extra is the station's kind, for this and the next two
         ArtisanQuit = 38,
         ArtisanDismissed = 39,
-        ArtisanBrokeDown = 40 // W1.3, D16: overworked on its shift; the extra is the station's kind
+        ArtisanBrokeDown = 40, // W1.3, D16: overworked on its shift; the extra is the station's kind
+        ToolWornOut = 41 // W1.4, D37: a tool used to its end broke; the extra is the item
     }
 
     /// <summary>
