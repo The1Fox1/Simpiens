@@ -36,6 +36,17 @@ namespace Simpiens.Simulation.Items
             return value;
         }
 
+        /// <summary>
+        /// How much faster this inventory's wearer mines <paramref name="item"/> (Epic 10 Part 2, W1.4, D36): its
+        /// <see cref="StatKind.HarvestSpeed"/> (1.5 with a pickaxe) for a mineral; 1 for anything else, and with no inventory.
+        /// </summary>
+        public static float MiningSpeed(IAgentInventory inventory, Simpiens.Simulation.Economy.ItemType item)
+        {
+            if (inventory == null || !ItemCatalog.Is(item, ItemCategory.Mineral)) return 1f;
+            float speed = Get(inventory, StatKind.HarvestSpeed, 1f);
+            return speed > 0.1f ? speed : 0.1f;
+        }
+
         private static EquipmentBlock Equipment(IAgentInventory inventory, int slot)
         {
             var item = inventory.GetEquipped((EquipmentSlot)slot);

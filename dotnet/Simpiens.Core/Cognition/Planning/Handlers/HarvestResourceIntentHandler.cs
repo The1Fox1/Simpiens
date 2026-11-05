@@ -254,16 +254,8 @@ namespace Simpiens.Cognition.Planning.Handlers
         /// </summary>
         private static bool SameParty(Simpiens.Cognition.AgentState a, Simpiens.Cognition.AgentState b) =>
             a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
-            /// <summary>
-        /// How much faster <paramref name="harvester"/> mines <paramref name="item"/> (Epic 10 Part 2, W1.4, D36): its
-        /// <see cref="StatKind.HarvestSpeed"/> with what it wears (1.5 with a pickaxe) for a mineral; 1 for anything else.
-        /// </summary>
-        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item)
-        {
-            if (harvester?.Inventory == null || !ItemCatalog.Is(item, ItemCategory.Mineral)) return 1f;
-            float speed = CrawlerStats.Get(harvester.Inventory, StatKind.HarvestSpeed, 1f);
-            return speed > 0.1f ? speed : 0.1f;
-        }
+            /// <summary>How much faster <paramref name="harvester"/> mines <paramref name="item"/> with what it wears (<see cref="CrawlerStats.MiningSpeed"/>).</summary>
+        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) => CrawlerStats.MiningSpeed(harvester?.Inventory, item);
 
         /// <summary>A mineral unit mined wears the tool that is used by the unit (D37); a tool worn to its end breaks and is gone, told in the chronicle.</summary>
         private static void WearTool(Simpiens.Cognition.AgentState harvester, WorldEntity node, IIntentExecutionContext context)

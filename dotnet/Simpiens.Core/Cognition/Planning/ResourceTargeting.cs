@@ -76,7 +76,8 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// Selects the best remembered salvage node.
         /// With a required type (e.g. a Gather bounty's TargetItemType) only that type is considered and the nearest wins.
-        /// Otherwise nodes are scored by the nearest stall's buy price divided by distance.
+        /// Otherwise nodes are scored by the nearest stall's buy price, times how fast the crawler mines it with what it wears
+        /// (a pickaxe, Epic 10 Part 2), divided by distance.
         /// </summary>
         public static bool TrySelectSalvage(in AgentContext context, ItemType requiredType, out SpatialMemoryRecord best)
         {
@@ -121,7 +122,8 @@ namespace Simpiens.Cognition.Planning
                     // the ore shelf full, a crawler goes for herbs (Epic 10 G1; drifters sell too)
                     if (price > treasury) continue;
                     if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
-                    score = price / dist;
+                    // What it earns an hour, as near as distance tells: a pickaxe's owner mines faster, so ore pays it better (D36)
+                    score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind) / dist;
                 }
 
                 if (!found || score > bestScore || (score == bestScore && record.EntityId.CompareTo(best.EntityId) < 0))

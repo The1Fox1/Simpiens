@@ -60,10 +60,11 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
                 ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }),
-            // No source until Epic 10 Part 2; nothing reads HarvestSpeed yet
             new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 100, WearRule.PerUse,
+                // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
+                // miner's work while the stall's ore shelf sets how much it mines, so the forge sees its buyers again
+                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 40, WearRule.PerUse,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
             // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
             // longer ventures, Epic 10 Part 2, T3.2a)
