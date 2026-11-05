@@ -123,13 +123,17 @@ namespace Simpiens.Simulation.Economy
         /// the default:
         /// <list type="bullet">
         /// <item>the day's pace (<see cref="DayTuning.FullDay"/>);</item>
-        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00, on the same terms a visit (T4.1, D24);</item>
-        /// <item>crawlers earn toward 80g, about two days' meals (T4.2, D25).</item>
+        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00 (T4.1, D24: <see cref="SupplyTuning.FullDay"/>);</item>
+        /// <item>crawlers earn toward 80g, about two days' meals (T4.2, D25);</item>
+        /// <item>salvage pays a quarter of today's price, so a day's meals take hours of work (T4.2b, D29): ore 5g (worth
+        /// 2g to a neutral seller), herbs 6g (3g). Food, purses and glowstone keep today's terms.</item>
         /// </list>
         /// </summary>
         public static readonly EconomyTuning FullDay = Default
             .WithDay(DayTuning.FullDay)
-            .WithSupply(Default.Supply.WithRestockInterval(DayClock.Hours(6)))
+            .WithSupply(SupplyTuning.FullDay)
+            .WithItemTerms(ItemType.IronOre, new ItemTerms(2, StallRole.Buys, 5, 10))
+            .WithItemTerms(ItemType.MedicinalHerb, new ItemTerms(3, StallRole.Buys, 6, 10))
             .WithComfortablePurse(80);
 
         // Each item's terms, by id (item system I5): the default economy's are below. Copies clone the table.

@@ -126,6 +126,24 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 
   - **For comparison:** today's pace reaches a mean of 38.8 in one 15-minute day.
   - **Trust builds over days now:** the guild recruits at trust 60 (warmth 40), which takes several game days at fair prices (Part 1's F7, now on the day's scale).
+- **T4.2b, salvage at the day's price** (D29, the developer's option (c), 2026-11-05): the same runs with an 80g purse, 12-hour trust fade and cheaper salvage. A sale's price is the stall's; the caravan's price and its lot are per visit. Glowstone stays at 45g (70g, 2 a visit) throughout.
+
+| Salvage: the stall pays (the caravan pays; its lot) | Idle | Harvest trips + selling, h a day | Stall full of ore at a visit | The caravan pays a day | Treasury, end of day 3 | Mean trust, day 3 | Mean purse, day 3 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Today's: ore 20g, herbs 25g (24g, 30g; 2 each) | 38% | 1.4 + 0.4 | 76% | 645g | 516g | 32.2 | 52g |
+| A third: ore 7g, herbs 8g (8g, 10g; 6 each) | 23% | 2.9 + 0.8 | 94% | 711g | 755g | 50.3 | 46g |
+| A third; 10 each | 16% | 3.8 + 1.0 | 79% | 961g | 1,093g | 65.1 | 67g |
+| A third; 14 ore, 10 herbs | 18% | 4.2 + 1.0 | 53% | 1,044g | 1,213g | 68.7 | 72g |
+| A quarter: ore 5g, herbs 6g (6g, 7g; 12 each) | 13% | 4.2 + 1.1 | 73% | 836g | 976g | 68.5 | 53g |
+| **A quarter; 16 ore, 12 herbs (taken)** | 13% | 4.6 + 1.1 | 53% | 891g | 1,075g | 72.4 | 55g |
+| A fifth: ore 4g, herbs 5g (5g, 6g; 14 each) | 12% | 4.5 + 1.1 | 64% | 798g | 954g | 62.7 | 48g |
+
+  - **What sets the hours:** residents earn what they spend, about 35g a day (2.3 meals at 15g), so a cheaper unit means more units sold. Two things cap it: the stall, which stops buying a salvage type at 20 units until the caravan takes its lot (ore, harvested more, filled it), and the 80g purse.
+  - **Taken: a quarter, not the third proposed.** At a third, the stall was full of ore at most visits and residents idled 16%. A fifth gained nothing more, because ore still filled the stall. Raising ore's lot to 16 gave the most work.
+  - **D25 is near, not met:** about 5.7 hours of earning a day, against 6–8. Made goods to buy (W1.4, W2) bring the rest.
+  - **On every run:** upkeep was paid in full and nobody starved. One run (a third, lots of 6) had one jitter anomaly (F5); the taken one had none.
+  - **Trust follows the trades:** about 6 sales a resident-day instead of 1.7. Four residents reach the guild's standing (trust 60, warmth 40) at a median of day 1.8 (1.6–2.3), on every seed; before, the median was day 4.5, and 14 of 23 seeds never got there within 5 days. An artisan qualifies at a median of day 0.8.
+  - **Drifters leave richer** (156g a day leaves against 110g brought): they sell salvage too.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -184,6 +202,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | every 6 game hours (2,520 ticks: 12:00, 18:00, 00:00, 06:00), on the same terms a visit: a day's upkeep 320g, wages 4 rounds (D24) | T4.1 ✓ |
+| Salvage's prices and the caravan's lots | `EconomyTuning` (item terms), `SupplyTuning.FullDay` | ore worth 8g, the stall pays 20g, the caravan 24g for 2 a visit; herbs 12g, 25g, 30g for 2 | — | ore 2g, 5g, 6g for 16; herbs 3g, 6g, 7g for 12: a quarter of today's, so a day's meals take about 5 hours of work; glowstone kept (D29) | T4.2b ✓ |
 | Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | kept: crawlers buy nine meals in ten at the stall, and 1 or 12 game hours made no difference; the Garden is the quick fallback | T4.2 ✓ |
 | Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | kept: the stall's buying (its cap and the caravan's quota), not the nodes, limits salvage | T4.2 ✓ |
 | Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | kept: already the first at 2.9 h, about every 5 h ± 0.7, staying 4.3–7.1 h, long enough for a meal at two or three a day; T4 looks at their purses | T3.1 ✓ |

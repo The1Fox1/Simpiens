@@ -77,19 +77,24 @@ namespace Simpiens.Simulation.Economy
             return copy;
         }
 
-        /// <summary>A copy visiting every <paramref name="ticks"/> instead, on the same terms (Epic 10 Part 2, T4.1).</summary>
-        public SupplyTuning WithRestockInterval(uint ticks)
-        {
-            var copy = new SupplyTuning(ticks, UpkeepPerVisit);
-            if (_items != null) System.Array.Copy(_items, copy._items, _items.Length);
-            return copy;
-        }
-
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, upkeepPerVisit: 80,
             CaravanTerms.Supplies(ItemType.Ration, stockCap: 50, wholesaleCost: 2, SupplyService.CaravanSinkName),
             CaravanTerms.Exports(ItemType.IronOre, quota: 2, marketPrice: 24),
             CaravanTerms.Exports(ItemType.MedicinalHerb, quota: 2, marketPrice: 30),
+            CaravanTerms.Supplies(ItemType.HazardGear, stockCap: 3, wholesaleCost: 20, SupplyService.GearSinkName),
+            CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70));
+
+        /// <summary>
+        /// The caravan on the 24-hour day (Epic 10 Part 2, milestone T): every 6 game hours (T4.1, D24), on today's terms a
+        /// visit except salvage (T4.2b, D29): it pays about 20% above the day's stall prices (ore 5g, herbs 6g) and takes
+        /// bigger lots, 16 ore and 12 herbs, so the stall can keep buying what a day's work brings in (ore, harvested more,
+        /// filled the stall at 12). Glowstone, the reward for danger, keeps its price.
+        /// </summary>
+        public static SupplyTuning FullDay => new SupplyTuning(restockIntervalTicks: DayClock.Hours(6), upkeepPerVisit: 80,
+            CaravanTerms.Supplies(ItemType.Ration, stockCap: 50, wholesaleCost: 2, SupplyService.CaravanSinkName),
+            CaravanTerms.Exports(ItemType.IronOre, quota: 16, marketPrice: 6),
+            CaravanTerms.Exports(ItemType.MedicinalHerb, quota: 12, marketPrice: 7),
             CaravanTerms.Supplies(ItemType.HazardGear, stockCap: 3, wholesaleCost: 20, SupplyService.GearSinkName),
             CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70));
 

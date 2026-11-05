@@ -26,8 +26,9 @@ namespace Simpiens.Testing.Economy
             ValidateSupplyFollowsTheSessionTuning();
             ValidateCognitionReadsTheSnapshotTuning();
             ValidateCopiesLeaveTheDefaultUntouched();
+            ValidateTheDaysSalvage();
 
-            TestLog.Log("<color=green>[EconomyTuningValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EconomyTuningValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDefaultsMatchLegacyConstants()
@@ -152,6 +153,45 @@ namespace Simpiens.Testing.Economy
                 "The default is never mutated by a copy.");
 
             TestLog.Log("[PASS] Test 5: With… copies leave the default untouched.");
+        }
+
+        // Epic 10 Part 2, T4.2b (D29): on the 24-hour day salvage pays a quarter of today's price, in bigger lots. The
+        // fairness rule keeps its meaning, and food, purses and glowstone keep today's terms.
+        private void ValidateTheDaysSalvage()
+        {
+            var day = EconomyTuning.FullDay;
+            var today = EconomyTuning.Default;
+            Assert(day.BaseValue(ItemType.IronOre) == 2 && day.Terms(ItemType.IronOre).StallPrice == 5 && day.Supply.Terms(ItemType.IronOre).Price == 6 && day.Supply.Terms(ItemType.IronOre).Limit == 16,
+                "Ore on the day: worth 2g, the stall pays 5g, the caravan 6g for up to 16 a visit.");
+            Assert(day.BaseValue(ItemType.MedicinalHerb) == 3 && day.Terms(ItemType.MedicinalHerb).StallPrice == 6 && day.Supply.Terms(ItemType.MedicinalHerb).Price == 7 && day.Supply.Terms(ItemType.MedicinalHerb).Limit == 12,
+                "Herbs on the day: worth 3g, the stall pays 6g, the caravan 7g for up to 12 a visit.");
+
+            var generous = new AgentPersonality(greed: -1f, riskTolerance: 0f, sociability: 0f, loyalty: 0f, diligence: 0f);
+            var greedy = new AgentPersonality(greed: 1f, riskTolerance: 0f, sociability: 0f, loyalty: 0f, diligence: 0f);
+            foreach (var item in new[] { ItemType.IronOre, ItemType.MedicinalHerb })
+            {
+                uint price = day.Terms(item).StallPrice;
+                Assert(day.Supply.Terms(item).Price > price, $"The caravan pays more than the stall for {item}, so the stall gains on what it passes on.");
+                Assert(Considerations.MinimumSalePrice(greedy, day, item) <= price, $"Even the greediest crawler sells {item} at the stall's price.");
+                Assert(Sale(price, AgentPersonality.Neutral, day, item) == TradeVerdict.Fair && Sale(today.Terms(item).StallPrice, AgentPersonality.Neutral, today, item) == TradeVerdict.Fair,
+                    $"A neutral crawler's sale of {item} is fair, as today.");
+                Assert(Sale(price, generous, day, item) == TradeVerdict.Generous && Sale(today.Terms(item).StallPrice, generous, today, item) == TradeVerdict.Generous,
+                    $"A generous crawler's sale of {item} is generous, as today.");
+            }
+
+            var ration = day.Terms(ItemType.Ration);
+            Assert(ration.StallPrice == today.Terms(ItemType.Ration).StallPrice && ration.BaseValue == today.BaseValue(ItemType.Ration) && day.StartingGold == today.StartingGold
+                && SimMath.Approximately(day.RationReferencePrice, today.RationReferencePrice), "Food and the purse a crawler arrives with keep today's terms.");
+            Assert(day.Terms(ItemType.Glowstone).StallPrice == today.Terms(ItemType.Glowstone).StallPrice && day.Supply.Terms(ItemType.Glowstone).Price == today.Supply.Terms(ItemType.Glowstone).Price
+                && day.Supply.Terms(ItemType.Glowstone).Limit == today.Supply.Terms(ItemType.Glowstone).Limit, "Glowstone, the reward for danger, keeps today's price.");
+            Assert(today.BaseValue(ItemType.IronOre) == 8 && today.Supply.Terms(ItemType.IronOre).Limit == 2, "The default economy is untouched.");
+
+            TestLog.Log("[PASS] Test 6: the day's salvage pays for hours of work, and the fairness rule keeps its meaning.");
+        }
+
+        private static TradeVerdict Sale(uint price, in AgentPersonality seller, EconomyTuning economy, ItemType item)
+        {
+            return TradeFairness.ClassifySale(price, Considerations.MinimumSalePrice(seller, economy, item), economy.TradeTrust);
         }
 
         private static AgentContext CreateContext(float hunger, SharedWorldSnapshot snapshot)

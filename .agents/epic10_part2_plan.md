@@ -175,19 +175,27 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
      - **D28, the soak plays three days** (30,240 ticks), sampled at each visit. The pace bands are re-measured and proposed to the producer, who sets them.
    - **Approved by the developer (2026-11-04): D23–D28.** Split: T4.1 the caravan's cadence (D24); T4.2 motivation and food (D25, D26); T4.3 trust's pace (D27); T4.4 the soak and its bands (D28). Each is measured on the gate seeds at `EconomyTuning.FullDay` before the next.
      1. **[x] T4.1 The caravan every 6 game hours** (done 2026-11-04) [Possibly Complex: a tuning and its measurement]:
-        - `EconomyTuning.FullDay`, the day's economy, staged for the cut-over: the day's pace and `SupplyTuning.WithRestockInterval(DayClock.Hours(6))`.
+        - `EconomyTuning.FullDay`, the day's economy, staged for the cut-over: the day's pace and the caravan every 6 game hours (`SupplyTuning.FullDay` since T4.2b).
         - **Measured:** upkeep is paid in full (320g a day), and the treasury grows from day 2 (481g at the end of day 3).
         - **Trust doesn't build:** the mean stays near 2 (T4.3), and residents idle 42%.
      2. **[x] T4.2 Motivation and food** (done 2026-11-04) [Possibly Complex: tuning and its measurement; a layout fix]:
         - **The purse:** `EconomyTuning.ComfortablePurse` (was `EarnIncomeGoal.ComfortableGold`), 40g today and 80g on the day. Idle falls from 42% to 38%, but harvesting stays about an hour a day.
         - **The Garden is kept** (D26 answered by measuring): crawlers buy nine meals in ten at the stall, and regrowth made no difference.
         - **A bug from T2.3, found and fixed:** the three-row bunkhouse walled a crawler in until it starved. It is now two rows of six, leaving the wall strip free, and a validator rule holds it.
-        - **For the developer:** D25's 6–8 hours of work don't follow from D23's prices. A resident spends about 40g a day, and earns that in about an hour of harvesting. See the report.
+        - **For the developer:** D25's 6–8 hours of work don't follow from D23's prices. A resident spends about 40g a day, and earns that in about an hour of harvesting. Answered by T4.2b (D29, which revises D23's ore price on the day).
      3. **[x] T4.3 Trust's pace** (done 2026-11-04) [Possibly Complex: cognition reads it; measuring]:
         - **How:** `DayTuning.TrustFadeTicks` reaches each crawler's `AgentMemory` (set by its runtime each tick; not saved) and its snapshot. `Legacy` keeps 1,000 ticks.
         - **Taken: 12 game hours, not D27's 6.** At 6, trust rose for fewer than 8 of 12 residents on one gate seed; at 12, it rose on all of them, to a mean of 32 by day 3.
         - **Check:** `DayPaceValidator` test 5.
-        - **For the developer:** the guild recruits at trust 60, and on the day that takes several days (F7 at the day's scale).
+        - **For the developer:** the guild recruits at trust 60, and on the day that takes several days (F7 at the day's scale). Answered by T4.2b: with more trades, trust builds faster.
+     4. **[x] T4.2b Salvage at the day's price** (done 2026-11-05) [Possibly Complex: tuning and its measurement]:
+        - **The developer's answer (2026-11-05): option (c), D29.** Salvage pays less, and the caravan takes bigger lots, so a day's meals take hours of work. Food prices, purses and drifters stay as they are. The guild's thresholds stay (answered by exception).
+        - **Taken:** ore 5g (worth 2g to a neutral seller; the caravan pays 6g, up to 16 a visit) and herbs 6g (3g; 7g, up to 12): `SupplyTuning.FullDay` and `EconomyTuning.FullDay`. Glowstone keeps its price, as the reward for danger.
+        - **A quarter of today's prices, not the third proposed** (`docs/time-model.md` §2): at a third, the stall was full of ore at most visits and residents idled 16%. A quarter, with ore's lot raised to 16, came closest to D25.
+        - **Measured,** per resident-day: harvest trips 4.6 h and selling 1.1 h (from 1.4 and 0.4), idle 13% (from 38%). The treasury ends day 3 at 1,075g, and mean trust reaches 72 on day 3.
+        - **The guild fills in two days:** four residents reach its standing at a median of day 1.8 (1.6–2.3) on every seed, from 4.5 days and never on 14 seeds.
+        - **D25 is near, not met:** about 5.7 hours of earning a day, against 6–8. Made goods to buy (W1.4, W2) bring the rest.
+        - **Check:** `EconomyTuningValidator` test 6: the day's prices, every seller still sells, the fairness rule's verdicts as today, and food, purses and glowstone unchanged.
 
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.
