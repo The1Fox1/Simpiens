@@ -28,6 +28,9 @@ namespace Simpiens.Simulation.Persistence
 
         /// <summary>The player's guild: its group, members' contracts and cooldowns (Epic 10 G4).</summary>
         public GuildSave Guild { get; set; }
+
+        /// <summary>The stations: built or not, their orders and makes in progress (Epic 10 Part 2).</summary>
+        public WorkshopSave Workshops { get; set; }
     }
 
     /// <summary>

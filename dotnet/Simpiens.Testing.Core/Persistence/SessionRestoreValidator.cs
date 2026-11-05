@@ -36,13 +36,14 @@ namespace Simpiens.Testing.Persistence
             ValidateLedgerRoundTrips();
             ValidateGroupsRoundTrip();
             ValidateGuildRoundTrips();
+            ValidateWorkshopsRoundTrip();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
             ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -144,6 +145,43 @@ namespace Simpiens.Testing.Persistence
         }
 
         // Epic 10 G4.6: the guild's group, its members' contracts in join order and the cooldowns come back exactly
+        private void ValidateWorkshopsRoundTrip()
+        {
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            var save = new WorkshopSave
+            {
+                Stations = new[]
+                {
+                    // A forge mid-make (Epic 10 Part 2, W0.5): its order, its progress, its inputs taken, its crew
+                    new Simpiens.Simulation.Workshops.StationState
+                    {
+                        Kind = Simpiens.Simulation.Items.StationKind.Forge, Built = true, Order = ItemType.ToolPickaxe, Remaining = 3,
+                        Progress = 240, InputsTaken = true, CrewGroupId = 5, Made = 7
+                    },
+                    // A still holding a make the stall had no room for
+                    new Simpiens.Simulation.Workshops.StationState
+                    {
+                        Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, Made = 2
+                    }
+                }
+            };
+            var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
+            workshops.RestoreFrom(save);
+            var again = new WorkshopSave();
+            workshops.CaptureTo(again);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The stations restored from their save");
+            Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1,
+                "A make in progress and a held make come back.");
+
+            workshops.RestoreFrom(null);
+            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built, "A save without the block loads every station unbuilt.");
+            var swapped = new WorkshopSave { Stations = new[] { save.Stations[1], save.Stations[0] } };
+            workshops.RestoreFrom(swapped);
+            Assert(!workshops[0].Built && !workshops[1].Built, "A saved station whose kind isn't the map's is left unbuilt.");
+
+            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make (Epic 10 Part 2, W0.5).");
+        }
+
         private void ValidateGuildRoundTrips()
         {
             var guild = new Simpiens.Simulation.Guild.GuildService();

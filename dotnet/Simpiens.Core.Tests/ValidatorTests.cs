@@ -162,6 +162,9 @@ namespace Simpiens.Core.Tests
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]
+        public void Crafting() => new Simpiens.Testing.Economy.CraftingValidator().RunAllValidationTests();
+
+        [Fact]
         public void Loot() => new Simpiens.Testing.Economy.LootValidator().RunAllValidationTests();
     }
 }

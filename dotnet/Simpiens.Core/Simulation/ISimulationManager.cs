@@ -30,6 +30,9 @@ namespace Simpiens.Simulation
         /// <summary>The player's guild (Epic 10 G4).</summary>
         Simpiens.Simulation.Guild.GuildService Guild { get; }
 
+        /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
+        Simpiens.Simulation.Workshops.WorkshopService Workshops { get; }
+
         /// <summary>Applies a session's economy tuning: the supply caravan, trade rules and the snapshot cognition reads.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);

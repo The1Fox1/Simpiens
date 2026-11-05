@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, System.IDisposable
+    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -97,6 +97,11 @@ namespace Simpiens.Simulation
 
         /// <summary>The player's guild (Epic 10 G4): its group, members' contracts and cooldowns.</summary>
         public Simpiens.Simulation.Guild.GuildService Guild { get; } = new Simpiens.Simulation.Guild.GuildService();
+
+        private readonly Simpiens.Simulation.Workshops.WorkshopService _workshops = new Simpiens.Simulation.Workshops.WorkshopService();
+
+        /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
+        public Simpiens.Simulation.Workshops.WorkshopService Workshops => _workshops.Follow(_sectors?.Map);
 
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {

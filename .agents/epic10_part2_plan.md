@@ -51,12 +51,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     | Seeds 1–120, no guild (F3) | 119/120: seed 43's trust (7 of 12), as at G6 |
 
   - Findings F8 (salvage at the cap) and F9 (small purses) are in the epic's §7.
-- [ ] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog.
+- [x] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog.
   - **D1, a recipe is keyed by what it makes:** an item has at most one recipe, so an order, a save and a command name the item. `RecipeBook` is static and immutable beside `ItemCatalog`, with the same test hook. `StationKind` (Forge, Still) lives with it.
   - **D2, the pickaxe's recipe:** 3 iron ore at the forge, 600 ticks (a minute) of an artisan's work. Placeholder numbers: W1 measures output and tunes them. Ore is plentiful (F8).
   - `RecipeValidator` (every item defined, inputs and counts, one station, work time), `ItemNamesTests`' list, and `AGENTS.md`'s "Adding an item".
   - *Deviation:* `ItemSystemProofTests`' made item moves to W0.5, where something can make it.
-- [ ] **W0.4 Stations as map data:** [Possibly Complex: the map grows; the gate seeds may move]
+- [x] **W0.4 Stations as map data:** [Possibly Complex: the map grows; the gate seeds may move]
   - `StationDefinition`: its key, kind, place and radius;
   - the two rooms (Q10) in `Floor1Layout`, with nothing built;
   - the map validators.
@@ -67,7 +67,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     - Both are safe and start charted. The stations stand unbuilt; the guildhall stays empty until W5 brings its barracks and yard.
   - **D7, the rooms are facilities** (found while doing it): with the rooms open, exploration (which heads for the sector a crawler stood in least recently) sent everyone down the two new dead ends, far from food, and 8 of 16 seeds starved someone. A sector can now be a facility (map data, `SectorDefinition.Facility`): nobody explores it, and no bounty targets it (`BountyRules.TargetCheck.Facility`; the bounty board leaves it out). Artisans (W1) and members (W5) will go there under orders. With it, the golden seeds' crawlers, economy, bounties and groups hash the same to t3000; only the map part (two more charted sectors) moved.
   - Re-record the golden hashes and the renders for the map, each in a commit of its own.
-- [ ] **W0.5 The crafting rule, engine-free:** [Possibly Complex: a save block]
+- [x] **W0.5 The crafting rule, engine-free:** [Possibly Complex: a save block]
   - a station's inputs, its progress per tick of an artisan's work, its output;
   - its save block;
   - `CraftingValidator`.
@@ -163,3 +163,4 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.
 - 2026-11-04: W0.2 done (above): ore and herbs are plentiful, glowstone scarce, purses small; an artisan qualifies early on every seed.
+- 2026-11-04: W0.3 done (`7fd1e45`). W0.4 done (`41f7c4f`, golden `87765c7`, renders `e006175`), with D7 found on the way. W0.5 done: `Crafting`, `WorkshopService` (`SimulationManager.Workshops`), `WorkshopSave`, save format 10; the made item's proof. Core 146/146, client 438/438, golden 3/3.

@@ -45,6 +45,9 @@ namespace Simpiens.Simulation
             var guild = new Simpiens.Simulation.Persistence.GuildSave();
             Guild.CaptureTo(guild);
             save.Guild = guild;
+            var workshops = new Simpiens.Simulation.Persistence.WorkshopSave();
+            Workshops.CaptureTo(workshops);
+            save.Workshops = workshops;
         }
 
         /// <summary>
@@ -73,6 +76,7 @@ namespace Simpiens.Simulation
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
             Guild.RestoreFrom(save.Guild);
+            Workshops.RestoreFrom(save.Workshops);
             if (save.Chronicle != null) _chronicleService?.RestoreFrom(save.Chronicle);
         }
 
@@ -151,6 +155,7 @@ namespace Simpiens.Simulation
                 _groupRegistry.Clear();
             }
             Guild.Reset();
+            _workshops.Reset();
 
             // Walls from the torn-down world (including injected chaos walls) must not outlive it
             _spatialPartition?.ResetStatic();
