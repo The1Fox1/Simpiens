@@ -62,10 +62,13 @@ namespace Simpiens.Simulation.Economy
         public readonly float RestingHealPerSecond;
         public readonly float BunkHealPerSecond;
 
+        /// <summary>Ticks per step of 5 a remembered affinity (trust toward the player included) fades toward neutral since the last dealing (T4.3).</summary>
+        public readonly uint TrustFadeTicks;
+
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float sleepBonus,
             float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, in ActionTuning actions,
-            float hazardDamageScale, int hazardWearEveryTicks, float restingHealPerSecond, float bunkHealPerSecond)
+            float hazardDamageScale, int hazardWearEveryTicks, float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
         {
             HungerPerSecond = hungerPerSecond;
             EnergyStandingPerSecond = energyStandingPerSecond;
@@ -86,12 +89,14 @@ namespace Simpiens.Simulation.Economy
             HazardWearEveryTicks = hazardWearEveryTicks < 1 ? 1 : hazardWearEveryTicks;
             RestingHealPerSecond = restingHealPerSecond;
             BunkHealPerSecond = bunkHealPerSecond;
+            TrustFadeTicks = trustFadeTicks;
         }
 
         /// <summary>A copy with another share of hazard damage taken and gear's wear interval (measuring, T3.2).</summary>
         public DayTuning WithHazard(float damageScale, int wearEveryTicks) => new DayTuning(HungerPerSecond, EnergyStandingPerSecond,
             EnergyWalkingPerSecond, SocialPerSecond, BunkRecoveryPerSecond, RestRecoveryPerSecond, SleepSeconds, WakeEnergy, WakeHunger, SleepBonus,
-            RestSeconds, RestBonus, RelaxEnergyBonus, EnergyWorkingPerSecond, Actions, damageScale, wearEveryTicks, RestingHealPerSecond, BunkHealPerSecond);
+            RestSeconds, RestBonus, RelaxEnergyBonus, EnergyWorkingPerSecond, Actions, damageScale, wearEveryTicks, RestingHealPerSecond, BunkHealPerSecond,
+            TrustFadeTicks);
 
         /// <summary>Whether a sleeper (in a bunk or rough) is up: rested, or too hungry to sleep on.</summary>
         public bool Wakes(float energy, float hunger) => energy >= WakeEnergy || hunger >= WakeHunger;
@@ -119,7 +124,8 @@ namespace Simpiens.Simulation.Economy
             hazardDamageScale: 1f,
             hazardWearEveryTicks: 1,
             restingHealPerSecond: 0.05f,
-            bunkHealPerSecond: 4f);
+            bunkHealPerSecond: 4f,
+            trustFadeTicks: Simpiens.Cognition.Social.AffinityRecord.DefaultRegressionPeriod);
 
         /// <summary>
         /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default; <c>docs/time-model.md</c>):
@@ -133,7 +139,9 @@ namespace Simpiens.Simulation.Economy
         /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.FullDay"/>);</item>
         /// <item>a hazard takes a quarter of its damage a second, and gear wears a unit every 3 ticks of exposure: a glowstone
         /// costs a lone crawler about 28 health (36 before the day) and a party about 22 (26), and parties turn back about as
-        /// often; a bunk heals 10 an hour, a night 80, and awake about 50 a day as before (T3.2a, T3.2b).</item>
+        /// often; a bunk heals 10 an hour, a night 80, and awake about 50 a day as before (T3.2a, T3.2b);</item>
+        /// <item>trust and the other affinities fade 5 every 12 game hours since the last dealing, not every 2.4 (T4.3, D27: at 6
+        /// trust rose for 8 of 12 residents on all but one gate seed; at 12, on all of them).</item>
         /// </list>
         /// </summary>
         public static DayTuning FullDay => new DayTuning(
@@ -155,7 +163,8 @@ namespace Simpiens.Simulation.Economy
             hazardDamageScale: 0.25f,
             hazardWearEveryTicks: 3,
             restingHealPerSecond: 0.05f,
-            bunkHealPerSecond: DayClock.PerSecond(10f));
+            bunkHealPerSecond: DayClock.PerSecond(10f),
+            trustFadeTicks: DayClock.Hours(12));
 
         public static DayTuning Default => Legacy;
     }

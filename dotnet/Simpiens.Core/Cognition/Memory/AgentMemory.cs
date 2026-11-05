@@ -360,11 +360,17 @@ namespace Simpiens.Cognition.Memory
             return records;
         }
 
+        /// <summary>
+        /// Ticks per step of 5 an affinity fades toward neutral since the last dealing: the session's pace (DayTuning, Epic 10
+        /// Part 2, T4.3), set by the crawler's runtime each tick; not saved.
+        /// </summary>
+        public uint TrustFadeTicks { get; set; } = AffinityRecord.DefaultRegressionPeriod;
+
         public AffinityRecord GetAffinity(EntityId peerId, uint currentTick)
         {
             if (_affinityMap.TryGetValue(peerId, out var record))
             {
-                return record.RegressTowardNeutral(currentTick);
+                return record.RegressTowardNeutral(currentTick, TrustFadeTicks);
             }
             return AffinityRecord.Neutral;
         }

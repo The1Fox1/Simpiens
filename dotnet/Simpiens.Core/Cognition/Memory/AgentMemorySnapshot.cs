@@ -40,6 +40,7 @@ namespace Simpiens.Cognition.Memory
             System.Array.Clear(_sectorLastVisit, 0, _sectorLastVisit.Length);
 
             if (source == null) return;
+            _trustFadeTicks = source.TrustFadeTicks;
 
             foreach (var kvp in source.SpatialMemoryMap)
             {
@@ -79,11 +80,13 @@ namespace Simpiens.Cognition.Memory
         /// Side-effect-free affinity calculation. Returns the temporally regressed affinity
         /// without mutating the internal dictionary, making queries safe for concurrent readers.
         /// </summary>
+        private uint _trustFadeTicks = AffinityRecord.DefaultRegressionPeriod;
+
         public AffinityRecord GetAffinity(EntityId peerId, uint currentTick)
         {
             if (_affinityMap.TryGetValue(peerId, out var record))
             {
-                return record.RegressTowardNeutral(currentTick);
+                return record.RegressTowardNeutral(currentTick, _trustFadeTicks);
             }
             return AffinityRecord.Neutral;
         }

@@ -62,7 +62,10 @@ namespace Simpiens.Cognition.Social
         /// <summary>
         /// Slowly decays extreme emotional valences back toward the baseline neutral state over elapsed simulation ticks.
         /// </summary>
-        public AffinityRecord RegressTowardNeutral(uint currentTick, uint regressionPeriod = 1000)
+        /// <summary>Ticks per step of 5 toward neutral, before the day's pace sets its own (Epic 10 Part 2, T4.3).</summary>
+        public const uint DefaultRegressionPeriod = 1000;
+
+        public AffinityRecord RegressTowardNeutral(uint currentTick, uint regressionPeriod = DefaultRegressionPeriod)
         {
             if (currentTick <= LastInteractionTick || regressionPeriod == 0)
             {

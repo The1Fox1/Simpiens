@@ -115,6 +115,17 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **The Garden isn't the day's food.** On the new day crawlers buy about 24 rations a seed-day at the stall and harvest about 2.4 from the Garden. A plot regrowing in 1 or 12 game hours made no difference, so the Garden keeps today's numbers as the fallback (D26 was answered by measuring).
   - **An 80g purse adds a little work:** idle falls from 42% to 38%, and harvesting stays about an hour of the day. Crawlers earn what they spend, and on the new day a resident spends about 40g a day: 2.5 meals at 15g. D25's 6–8 hours of work need either more to spend on (W1.4's pickaxe, W2's draughts) or a dearer day, with more salvage the caravan takes. That decision is the developer's.
   - **Bug found and fixed:** on the 12-bunk floor of T2.3, the top row of bunks lay in the walkable strip along the bunkhouse's north wall. That strip is the way from the bunks to the hub door. Paths don't see pawns, and a sleeper lies there for hours, so a crawler re-planned the same blocked path from 21:00 until it starved. The bunks are now two rows of six, 1.5 apart (y −8.5 and −10.5), with the strip and an aisle free. The map validator now fails a full-day bunk set against the wall. Sleep on the new floor: 8.0 hours a sleep, rough sleep 0.8 hours a day.
+- **T4.3, trust's pace** (D27): the same runs, with trust and the other affinities fading 5 points every N game hours since a crawler's last dealing.
+
+| Fades 5 every | Mean trust toward the player, end of days 1 / 2 / 3 | Residents whose trust rose, day 3 | Seeds failing the day's trust check |
+| :--- | :--- | ---: | ---: |
+| 2.4 h (today's 1,000 ticks) | 3.8 / 3.3 / 3.3 | 6.0 of 12 | 18 of 23 |
+| 6 h | 8.6 / 14.3 / 16.3 | 9.9 of 12 | 1 |
+| **12 h (taken)** | 12.9 / 24.5 / 32.2 | 10.8 of 12 | 0 |
+| 24 h | 15.6 / 28.7 / 37.9 | 11.1 of 12 | 0 |
+
+  - **For comparison:** today's pace reaches a mean of 38.8 in one 15-minute day.
+  - **Trust builds over days now:** the guild recruits at trust 60 (warmth 40), which takes several game days at fair prices (Part 1's F7, now on the day's scale).
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -180,7 +191,8 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | kept: 14.3 game hours | T3.1 ✓ |
 | A posted bounty's life | `BountyBoardModel` | 500–3,000 ticks, 1,000 offered, shown in ticks | D | 4–24 h, 12 offered, shown in hours: the board's model and its words | T6 |
 | The expedition's stages (limits) | `ExpeditionTuning` | muster 900, march 1,800, work 1,800, return 2,400 | D | kept: a trip is about 2 game hours, its longest work stage 457 ticks | T3.2b ✓ |
-| Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept for now: the quiet day comes from purses (T4), not forgetting; looked at again with T4's busier day | T4 |
+| Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept: the quiet day comes from purses, not forgetting | T4.2 ✓ |
+| Trust's fade | `AffinityRecord.RegressTowardNeutral`, the period from `DayTuning.TrustFadeTicks` through `AgentMemory` | 5 every 1,000 ticks (2.4 game hours) | D | 5 every 12 game hours (D27; 6 failed the day's trust check on one seed) | T4.3 ✓ |
 | Exploration's choice, gossip's cooldown | `ResourceTargeting.SectorChoiceTicks`; `SocialDynamics` | 200; 100 | P | kept | |
 | Retries | `SleepAtBunkIntentHandler`, `SessionHost.Drifters` | 30, 100, 50 | P | kept | |
 

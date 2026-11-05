@@ -183,6 +183,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
         - **The Garden is kept** (D26 answered by measuring): crawlers buy nine meals in ten at the stall, and regrowth made no difference.
         - **A bug from T2.3, found and fixed:** the three-row bunkhouse walled a crawler in until it starved. It is now two rows of six, leaving the wall strip free, and a validator rule holds it.
         - **For the developer:** D25's 6–8 hours of work don't follow from D23's prices. A resident spends about 40g a day, and earns that in about an hour of harvesting. See the report.
+     3. **[x] T4.3 Trust's pace** (done 2026-11-04) [Possibly Complex: cognition reads it; measuring]:
+        - **How:** `DayTuning.TrustFadeTicks` reaches each crawler's `AgentMemory` (set by its runtime each tick; not saved) and its snapshot. `Legacy` keeps 1,000 ticks.
+        - **Taken: 12 game hours, not D27's 6.** At 6, trust rose for fewer than 8 of 12 residents on one gate seed; at 12, it rose on all of them, to a mean of 32 by day 3.
+        - **Check:** `DayPaceValidator` test 5.
+        - **For the developer:** the guild recruits at trust 60, and on the day that takes several days (F7 at the day's scale).
 
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.

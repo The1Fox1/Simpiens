@@ -22,8 +22,9 @@ namespace Simpiens.Testing.Drives
             ValidateSocialEmptiesOverSixteenHours();
             ValidateEnergyLastsAWakingDay();
             ValidateSleepersWake();
+            ValidateTrustFadesOverDays();
 
-            TestLog.Log("<color=green>[DayPaceValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[DayPaceValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         // D19: fed to starving over 24 hours, so a crawler eating from 50 eats two or three times a day
@@ -79,6 +80,22 @@ namespace Simpiens.Testing.Drives
             Assert(!day.Wakes(energy: 99f, hunger: 60f) && day.Wakes(energy: 100f, hunger: 0f) && day.Wakes(energy: 50f, hunger: 85f), "Up when rested or starving");
             Assert(!DayTuning.Legacy.Wakes(energy: 100f, hunger: 100f), "Before the day, a sleep ran its length");
             TestLog.Log("[PASS] Test 4: sleepers wake rested or starving.");
+        }
+
+        // T4.3, D27: a crawler's memory fades affinities at the session's pace: 5 every 12 game hours on the day, every 1,000
+        // ticks before it
+        private void ValidateTrustFadesOverDays()
+        {
+            var peer = EntityId.Generate();
+            var memory = new Simpiens.Cognition.Memory.AgentMemory();
+            memory.RecordInteraction(peer, deltaWarmth: 0, deltaTrust: 40, deltaFear: 0, deltaRespect: 0, currentTick: 0);
+            uint halfDay = DayClock.Hours(12);
+            Assert(memory.GetAffinity(peer, halfDay).Trust == 40 - 5 * (int)(halfDay / 1000), "Before the day, trust fades 5 every 1,000 ticks");
+            memory.TrustFadeTicks = DayTuning.FullDay.TrustFadeTicks;
+            Assert(memory.GetAffinity(peer, halfDay - 1).Trust == 40 && memory.GetAffinity(peer, halfDay).Trust == 35, "On the day, 5 every 12 game hours");
+            var snapshot = memory.GetSnapshot(halfDay);
+            Assert(snapshot.GetAffinity(peer, 2 * halfDay).Trust == 30, "Cognition's snapshot fades at the same pace");
+            TestLog.Log("[PASS] Test 5: trust fades over days.");
         }
 
         private static AgentState Crawler(float hunger)
