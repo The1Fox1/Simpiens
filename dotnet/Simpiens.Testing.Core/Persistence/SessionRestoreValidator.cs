@@ -179,7 +179,25 @@ namespace Simpiens.Testing.Persistence
             workshops.RestoreFrom(swapped);
             Assert(!workshops[0].Built && !workshops[1].Built, "A saved station whose kind isn't the map's is left unbuilt.");
 
-            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make (Epic 10 Part 2, W0.5).");
+            // A station's crew (W0.6): a patron-led Workshop group, anchored at its station, whose artisan also lives in a
+            // settlement; its memberships come back in precedence order
+            var groups = new GroupRegistry();
+            var artisan = new EntityId(5u, 0u, 0u, 2u);
+            byte home = groups.CreateGroup(GroupType.Settlement, A, Vec2.Zero, 80);
+            byte crew = groups.CreateGroup(GroupType.Workshop, Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Vec2(-5f, -21f), 90);
+            groups.AddMember(home, artisan);
+            groups.AddMember(crew, artisan, RoleRank.Follower, 75);
+            var groupSave = new GroupSave();
+            groups.CaptureTo(groupSave);
+            var restored = new GroupRegistry();
+            restored.RestoreFrom(SaveSerializer.Deserialize<GroupSave>(SaveSerializer.Serialize(groupSave)));
+            Assert(restored.TryGetGroup(crew, out var crewGroup) && crewGroup.Type == GroupType.Workshop && crewGroup.IsPatronLed && crewGroup.AnchorPosition == new Vec2(-5f, -21f),
+                "The crew comes back: a Workshop group, led by the patron, anchored at its station.");
+            var memberships = restored.GetMemberships(artisan);
+            Assert(memberships.Count == 2 && memberships.KindAt(0) == GroupType.Workshop && memberships.KindAt(1) == GroupType.Settlement
+                && restored.TryGetMembership(artisan, crew, out var inCrew) && inCrew.Allegiance == 75, "The artisan's memberships come back, the workshop's before the settlement's (D6).");
+
+            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make, a crew (Epic 10 Part 2, W0.5, W0.6).");
         }
 
         private void ValidateGuildRoundTrips()

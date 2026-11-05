@@ -53,7 +53,11 @@ namespace Simpiens.Simulation.Guild
             /// <summary>The stall has none of it to give.</summary>
             OutOfStock = 19,
             /// <summary>The member already wears something in that slot, with more than half its life left.</summary>
-            AlreadyWearing = 20
+            AlreadyWearing = 20,
+
+            // Workshops (Epic 10 Part 2)
+            /// <summary>It works a station: one role at a time (Q4).</summary>
+            WorksAStation = 21
         }
 
         /// <summary>The least wage per caravan visit a crawler of <paramref name="crawler"/>'s greed signs for: the reservation wage times its greed factor.</summary>
@@ -81,6 +85,7 @@ namespace Simpiens.Simulation.Guild
             if (crawler.IsDrifter) return Check.Drifter;
             if (crawler.IsDowned) return Check.Downed;
             if (guild.IsMember(crawler.AgentId)) return Check.AlreadyMember;
+            if (crawler.Memberships.Has(Simpiens.Cognition.Groups.GroupType.Workshop)) return Check.WorksAStation;
             var (trust, warmth) = Standing(crawler, tick);
             if (trust < tuning.RecruitTrust || warmth < tuning.RecruitWarmth) return Check.NotYetTrusted;
             if (guild.Members.Count >= tuning.MaxMembers) return Check.GuildFull;
@@ -164,6 +169,7 @@ namespace Simpiens.Simulation.Guild
                 case Check.Drifter: return $"{name} is passing through: drifters don't sign on.";
                 case Check.Downed: return $"{name} is downed; ask again once it's back on its feet.";
                 case Check.AlreadyMember: return $"{name} is already in the guild.";
+                case Check.WorksAStation: return $"{name} works a station: one role at a time.";
                 case Check.NotYetTrusted:
                     var (trust, warmth) = Standing(crawler, tick);
                     return $"Not yet: trust {trust} of {tuning.RecruitTrust}, warmth {warmth} of {tuning.RecruitWarmth}.";

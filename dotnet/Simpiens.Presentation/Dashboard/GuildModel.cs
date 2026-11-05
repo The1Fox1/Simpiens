@@ -170,6 +170,7 @@ namespace Simpiens.Presentation.Dashboard
                         : $"Settlement: led by {_context.FriendlyName(group.LeaderId, DossierModel.UnknownName)}",
                     GroupType.FactionGuild => _context.Simulation.Guild.TryGetContract(crawlerId, out var contract)
                         ? Invariant($"Guild: member, {contract.Wage}g a visit") : "Guild: member",
+                    GroupType.Workshop => "Workshop: artisan",
                     _ => "Party",
                 });
             }

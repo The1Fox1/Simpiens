@@ -19,9 +19,10 @@ namespace Simpiens.Cognition.Groups
 
     /// <summary>
     /// The groups a crawler belongs to (Epic 10 G4, decision D1: groups are many-to-many, one per kind). At most one
-    /// membership per <see cref="GroupType"/>, ordered by kind, which is also the order a crawler obeys directives in:
-    /// its party's, then its guild's, then its settlement's. Room for <see cref="Capacity"/>, inline, so copying a set
-    /// allocates nothing. The group registry owns the authoritative sets; a crawler holds a copy for cognition.
+    /// membership per <see cref="GroupType"/>, ordered by <see cref="Precedence"/>, which is also the order a crawler
+    /// obeys directives in: its party's, then its guild's or its workshop's, then its settlement's. Room for
+    /// <see cref="Capacity"/>, inline, so copying a set allocates nothing. The group registry owns the authoritative
+    /// sets; a crawler holds a copy for cognition.
     /// </summary>
     public struct MembershipSet
     {
@@ -33,6 +34,22 @@ namespace Simpiens.Cognition.Groups
         private int _count;
 
         public static MembershipSet Empty => default;
+
+        /// <summary>
+        /// Where a kind's orders rank, lowest first (Epic 10 Part 2, D6): a party's, then a guild's or a workshop's, then
+        /// a settlement's. Kinds are saved, so a new kind takes the next value and its rank comes from here.
+        /// </summary>
+        public static int Precedence(GroupType kind)
+        {
+            switch (kind)
+            {
+                case GroupType.TemporaryParty: return 0;
+                case GroupType.FactionGuild:
+                case GroupType.Workshop: return 1; // one role at a time: an artisan isn't a member (Q4)
+                case GroupType.Settlement: return 2;
+                default: return 3;
+            }
+        }
 
         public readonly int Count => _count;
         public readonly bool HasAny => _count > 0;
@@ -136,7 +153,7 @@ namespace Simpiens.Cognition.Groups
         {
             if (_count >= Capacity) throw new System.InvalidOperationException($"A crawler belongs to at most {Capacity} groups, one per kind.");
             int at = _count;
-            while (at > 0 && _kinds[at - 1] > kind) at--;
+            while (at > 0 && Precedence(_kinds[at - 1]) > Precedence(kind)) at--;
             for (int i = _count; i > at; i--)
             {
                 _memberships[i] = _memberships[i - 1];

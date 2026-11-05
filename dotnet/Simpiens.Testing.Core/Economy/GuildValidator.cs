@@ -53,6 +53,14 @@ namespace Simpiens.Testing.Economy
             downed.IsDowned = true;
             Expect(o, downed.AgentId, 5, GuildRules.Check.Downed, "a downed crawler doesn't sign");
 
+            // One role at a time (Epic 10 Part 2, Q4, D6): a station's artisan doesn't sign on, however trusted
+            var artisan = Crawler(o, trust: 80, warmth: 80);
+            byte workshop = o.Groups.CreateGroup(GroupType.Workshop, WorldRegistry.PlayerEntityId, Vec2.Zero);
+            o.Groups.AddMember(workshop, artisan.AgentId);
+            artisan.Memberships = o.Groups.GetMemberships(artisan.AgentId);
+            Expect(o, artisan.AgentId, 5, GuildRules.Check.WorksAStation, "an artisan works a station");
+            Assert(GuildRules.Describe(GuildRules.Check.WorksAStation, "Maya", artisan, o.Sim.Guild, 0, tuning) == "Maya works a station: one role at a time.", "The refusal says why.");
+
             var unsure = Crawler(o, trust: 45, warmth: 22);
             Expect(o, unsure.AgentId, 5, GuildRules.Check.NotYetTrusted, "trust 45 is below 60");
             string why = GuildRules.Describe(GuildRules.Check.NotYetTrusted, "Maya", unsure, o.Sim.Guild, 0, tuning);
@@ -72,7 +80,7 @@ namespace Simpiens.Testing.Economy
             Expect(poor, willing.AgentId, 5, GuildRules.Check.CannotPayFee, "a treasury of 10g can't pay the 20g fee");
             Assert(poor.Sim.ActiveStalls[0].TreasuryGold == 10 && willing.Inventory.Gold == 0, "A refusal changes nothing.");
 
-            TestLog.Log("[PASS] Test 1: Each refusal, in order, with its reason: drifter, downed, not yet trusted, wage, fee.");
+            TestLog.Log("[PASS] Test 1: Each refusal, in order, with its reason: drifter, downed, an artisan, not yet trusted, wage, fee.");
         }
 
         private static void ValidateRecruiting()

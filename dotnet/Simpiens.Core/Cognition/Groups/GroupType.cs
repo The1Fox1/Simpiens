@@ -8,6 +8,7 @@ namespace Simpiens.Cognition.Groups
     {
         TemporaryParty = 0, // Ad-hoc transient collective (hunting party, foraging band)
         FactionGuild   = 1, // Functional occupational collective (craft guild, military order)
-        Settlement     = 2  // Macro geographic collective (clan, village, town)
+        Settlement     = 2, // Macro geographic collective (clan, village, town)
+        Workshop       = 3  // A station's crew (Epic 10 Part 2, Q4): led by the patron, anchored at its station
     }
 }
