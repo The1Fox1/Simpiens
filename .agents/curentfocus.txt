@@ -36,8 +36,10 @@ CURRENT FOCUS
 - Epic UI-Beta B2-B5 (bodies, portraits and the dossier, faces everywhere, the interface pass) and the UI polish,
   Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
   B6, the gate with a play session, waits.
-- NEXT: Part 2's milestone T, a 24-hour day, once the producer answers D17-D22 (the developer supervises sleep
-  and the economy's re-pacing); then W1.3, shifts, re-answered on the new day.
+- NOW within Part 2: milestone T, a 24-hour day (go 2026-11-04). T0-T3 done behind DayTuning (Legacy stays the
+  default until the cut-over, T5): the clock, hunger, sleep (reviewed), beds, stretched work, schedules, danger.
+  NEXT: T4, the economy per day, supervised: D23-D28 proposed for review. Then T5 the cut-over, T6 client, T7 docs,
+  and W1.3 shifts re-answered on the new day.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as

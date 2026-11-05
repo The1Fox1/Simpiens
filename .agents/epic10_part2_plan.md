@@ -159,6 +159,22 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
       - **For T5:** some musters end with nobody leaving (6 of 21), because the scripted player sends a party whatever its members are doing.
       - **Probe tool:** `DayTuning.WithHazard` overrides the share and wear for measuring.
 5. **T4 The economy per day** [Very Complex, supervised by the developer: the food trade shrinks about tenfold; a re-derivation, not a tweak]: the ration's price and value, the Garden's yield, the caravan's quota, upkeep and wages, `EarnIncomeGoal.ComfortableGold`; the soak's horizon in days and its bands, proposed to the producer; `docs/economy-model.md` rewritten.
+   - **What the new day shows** (T2.4–T3.2b, `docs/time-model.md` §2): per resident a day, 64 tasks, 2.3 meals, idle 53%, 2 trades.
+     - **The stall** sells 19 times a day and buys 10, and pays 575g of the 1,200g of upkeep due.
+     - **Trust** rises for nobody, so nobody can be recruited, and members who join quit unpaid.
+   - **The causes:**
+     - **The caravan is paced by the real minute:** 15 visits a day, so 15 upkeeps and 15 rounds of wages.
+     - **A crawler stops earning at 40g** (`EarnIncomeGoal.ComfortableGold`), and a day's meals cost at most 35g, mostly eaten free: the Garden's 4 plots regrow every 0.7 game hours, about 550 rations a day for a demand of about 30.
+     - **Trust fades** 5 points every 1,000 ticks (2.4 game hours) since a crawler's last dealing with the player (`AffinityRecord.RegressTowardNeutral`). That is about 25 lost between two trades half a day apart.
+   - **Proposed, for the developer's review before any code:**
+     - **D23, prices stay; the volume per day is re-set.** A ration stays 15g and ore 20g, and the trust rules keep their calm values. What changes is how much is traded and owed in a day. *Alternative:* raise prices about tenfold, so a meal is a big purchase.
+     - **D24, the caravan visits every 6 game hours,** 4 a day at 06:00, 12:00, 18:00 and 00:00, keeping its per-visit terms: upkeep 80, the quota, restocks, a member's or an artisan's wage. A day's upkeep falls from 1,200g to 320g and wages from 15 to 4 a day. *Alternatives:* once a day (a market day), or 6 a day.
+     - **D25, crawlers work for more than a meal.** The purse a crawler stops earning at rises from 40g to about a day's needs and a margin (about 80g), measured so residents work 6–8 hours a day. Made goods (W1.4, the pickaxe; W2, draughts) are what that purse later buys.
+     - **D26, the Garden is the baseline, not the whole food supply.** Its plots regrow in game hours, set so the Garden covers about half the day's meals and the stall sells the rest (measured; the economy model's food rule).
+     - **D27, trust fades over days, not hours:** 5 points every 6 game hours since the last dealing (from every 2.4). Memory's other decays (where resources and pawns were seen) are measured with T4's busier day.
+     - **D28, the soak plays three days** (30,240 ticks), sampled at each visit. The pace bands are re-measured and proposed to the producer, who sets them.
+   - **Split when it starts:** T4.1 the caravan's cadence (D24); T4.2 motivation and food (D25, D26); T4.3 trust's pace (D27); T4.4 the soak and its bands (D28). Each is measured on the gate seeds at `FullDay` before the next.
+
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.
 8. **T7 Docs** [Basic]: `AGENTS.md` (the two kinds of time), the roadmap's §1A.1 (the day's durations through the `DayClock`), the economy model, the Game Design Proposal.
