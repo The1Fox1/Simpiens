@@ -21,7 +21,10 @@ namespace Simpiens.Intervention
         GiveGear = 10,
         /// <summary>The workshops (Epic 10 Part 2): build a station, hire an artisan to work one (Dismiss and SetWage serve artisans too).</summary>
         BuildStation = 11,
-        HireArtisan = 12
+        HireArtisan = 12,
+        /// <summary>Shifts (Epic 10 Part 2, W1.3): order makes at a station, set which blocks of the day an artisan works.</summary>
+        OrderStation = 13,
+        SetShifts = 14
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -126,6 +129,34 @@ namespace Simpiens.Intervention
             CrawlerId = crawlerId;
             StationIndex = stationIndex;
             Wage = wage;
+        }
+    }
+
+    /// <summary>The player orders makes at a station (Epic 10 Part 2, D32): this many of an item its recipe makes; none cancels.</summary>
+    public readonly struct OrderStationCommand
+    {
+        public readonly ItemType Item;
+        public readonly ushort Count;
+        public readonly byte StationIndex;
+
+        public OrderStationCommand(byte stationIndex, ItemType item, ushort count)
+        {
+            StationIndex = stationIndex;
+            Item = item;
+            Count = count;
+        }
+    }
+
+    /// <summary>The player sets which of the day's six blocks an artisan works (Epic 10 Part 2, D12): a mask, block 0 from 06:00.</summary>
+    public readonly struct SetShiftsCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly byte Shifts;
+
+        public SetShiftsCommand(EntityId crawlerId, byte shifts)
+        {
+            CrawlerId = crawlerId;
+            Shifts = shifts;
         }
     }
 
@@ -280,6 +311,8 @@ namespace Simpiens.Intervention
         public readonly GiveGearCommand GiveGear;
         public readonly BuildStationCommand BuildStation;
         public readonly HireArtisanCommand HireArtisan;
+        public readonly OrderStationCommand OrderStation;
+        public readonly SetShiftsCommand SetShifts;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -295,6 +328,8 @@ namespace Simpiens.Intervention
             InfluenceCommandType.GiveGear => "GiveGear",
             InfluenceCommandType.BuildStation => "BuildStation",
             InfluenceCommandType.HireArtisan => "HireArtisan",
+            InfluenceCommandType.OrderStation => "OrderStation",
+            InfluenceCommandType.SetShifts => "SetShifts",
             _ => string.Empty
         };
 
@@ -311,10 +346,14 @@ namespace Simpiens.Intervention
             in DispatchExpeditionCommand dispatchExpedition = default,
             in GiveGearCommand giveGear = default,
             in BuildStationCommand buildStation = default,
-            in HireArtisanCommand hireArtisan = default)
+            in HireArtisanCommand hireArtisan = default,
+            in OrderStationCommand orderStation = default,
+            in SetShiftsCommand setShifts = default)
         {
             BuildStation = buildStation;
             HireArtisan = hireArtisan;
+            OrderStation = orderStation;
+            SetShifts = setShifts;
             DispatchExpedition = dispatchExpedition;
             GiveGear = giveGear;
             SourceId = sourceId;
@@ -366,6 +405,16 @@ namespace Simpiens.Intervention
         public static InfluenceEvent CreateHireArtisan(string sourceId, EntityId crawlerId, byte stationIndex, ushort wage)
         {
             return new InfluenceEvent(sourceId, InfluenceCommandType.HireArtisan, hireArtisan: new HireArtisanCommand(crawlerId, stationIndex, wage));
+        }
+
+        public static InfluenceEvent CreateOrderStation(string sourceId, byte stationIndex, ItemType item, ushort count)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.OrderStation, orderStation: new OrderStationCommand(stationIndex, item, count));
+        }
+
+        public static InfluenceEvent CreateSetShifts(string sourceId, EntityId crawlerId, byte shifts)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.SetShifts, setShifts: new SetShiftsCommand(crawlerId, shifts));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)

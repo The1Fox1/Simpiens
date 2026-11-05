@@ -328,6 +328,34 @@ namespace Simpiens.Simulation.Workshops
         }
 
         /// <summary>
+        /// The player's order (D32): <paramref name="count"/> makes of <paramref name="item"/> at the station at
+        /// <paramref name="index"/>, through <see cref="WorkshopRules.CheckOrder"/>; none, or a count of 0, cancels.
+        /// </summary>
+        public WorkshopRules.Check Order(IWorkshopHost host, int index, ItemType item, ushort count)
+        {
+            var check = WorkshopRules.CheckOrder(this, index, item, count);
+            if (check != WorkshopRules.Check.Ok)
+            {
+                SimLog.Economy.ZLogWarning($"Order refused at station {index}: {count} {ItemCatalog.NameOf(item)} ({check})");
+                return check;
+            }
+            SetOrder(host, index, item, count);
+            SimLog.Economy.ZLogInformation($"The {_stations[index].Kind} is ordered to make {count} {ItemCatalog.NameOf(item)}");
+            return WorkshopRules.Check.Ok;
+        }
+
+        /// <summary>The player sets which blocks of the day an artisan works (D12), through <see cref="WorkshopRules.CheckSetShifts"/>.</summary>
+        public WorkshopRules.Check SetShifts(IWorkshopHost host, EntityId crawlerId, byte shifts)
+        {
+            var check = WorkshopRules.CheckSetShifts(this, crawlerId, shifts);
+            if (check != WorkshopRules.Check.Ok) return check;
+            int i = IndexOfArtisan(crawlerId);
+            _artisans[i] = _artisans[i].WithShifts(shifts);
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} works {ShiftBlocks.CountOf(shifts)} blocks a day at the {_stations[_artisans[i].StationIndex].Kind}");
+            return WorkshopRules.Check.Ok;
+        }
+
+        /// <summary>
         /// Orders <paramref name="count"/> makes of <paramref name="item"/> at a built station whose recipe it is; the
         /// same item again changes how many are left, the current make included. Another item, or none (a cancel), gives
         /// a started make's inputs back to the stall. Refused while a finished make waits for room.

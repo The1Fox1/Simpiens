@@ -22,17 +22,8 @@ namespace Simpiens.Presentation.Dashboard
             return Invariant($"Day {Day(tick)} · {minute / 60:D2}:{minute % 60:D2}");
         }
 
-        /// <summary>
-        /// A span of game time in words, by the whole game minute (Epic 10 Part 2, T6): "45 min", "2 h", "2 h 15 min"; a
-        /// part of a minute rounds up, so what is still to come never reads as 0.
-        /// </summary>
-        public static string Span(long ticks)
-        {
-            long minutes = ticks <= 0 ? 0 : (ticks + DayClock.TicksPerMinute - 1) / DayClock.TicksPerMinute;
-            long hours = minutes / 60, rest = minutes % 60;
-            if (hours == 0) return Invariant($"{rest} min");
-            return rest == 0 ? Invariant($"{hours} h") : Invariant($"{hours} h {rest} min");
-        }
+        /// <summary>A span of game time in words (<see cref="DayClock.SpanText"/>): "45 min", "2 h 15 min".</summary>
+        public static string Span(long ticks) => DayClock.SpanText(ticks);
 
         /// <summary>Night, from 18:00 to 06:00: the header shows a moon instead of the sun (the UI polish plan, U4).</summary>
         public static bool IsNight(long tick) => DayClock.IsNight(tick);

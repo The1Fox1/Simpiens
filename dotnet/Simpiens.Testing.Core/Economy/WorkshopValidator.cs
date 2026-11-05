@@ -50,8 +50,10 @@ namespace Simpiens.Testing.Economy
             ValidateHireRefusals();
             ValidateWagesAfterTheGuildsAndQuitting();
             ValidateCommandsReachAnArtisanByWhoItIs();
+            ValidateOrdersAndShiftsAsCommands();
+            ValidateShiftBlocks();
 
-            TestLog.Log("<color=green>[WorkshopValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorkshopValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateBuilding()
@@ -233,6 +235,56 @@ namespace Simpiens.Testing.Economy
             Assert(!o.Sim.Workshops.IsArtisan(brewer.AgentId) && o.Sim.Guild.IsMember(member.AgentId), "Dismiss lets the artisan go, and only it.");
             Assert(brewer.Memory.GetAffinity(WorldRegistry.PlayerEntityId, 2).Trust == trust + o.Sim.Economy.Workshops.DismissTrust, "Being let go costs trust.");
             TestLog.Log("[PASS] Test 7: HireArtisan arrives as a typed command; Dismiss and SetWage reach an artisan or a member by who it is.");
+        }
+
+        // W1.3a (D12, D32): the player orders makes at a station and sets an artisan's blocks of the day, as typed commands
+        // applied on the tick; each refusal comes with its words and changes nothing
+        private static void ValidateOrdersAndShiftsAsCommands()
+        {
+            var o = NewOutpost(treasury: 1000);
+            var tuning = o.Sim.Economy.Workshops;
+            var workshops = o.Sim.Workshops;
+            Assert(WorkshopRules.CheckOrder(workshops, o.Forge, ItemType.ToolPickaxe, 2) == WorkshopRules.Check.NotBuilt, "An unbuilt forge takes no order.");
+            workshops.Build(o.Sim, o.Forge, 0);
+            Assert(WorkshopRules.CheckOrder(workshops, 7, ItemType.ToolPickaxe, 2) == WorkshopRules.Check.NoStation, "No station 7.");
+            Assert(WorkshopRules.CheckOrder(workshops, o.Forge, ItemType.Ration, 2) == WorkshopRules.Check.NotThisStationsRecipe
+                && WorkshopRules.Describe(WorkshopRules.Check.NotThisStationsRecipe, workshops, o.Forge, tuning) == "That isn't made at the forge.", "A ration isn't the forge's to make, and the refusal says so.");
+
+            o.Commands.QueueInfluence(InfluenceEvent.CreateOrderStation("test", (byte)o.Forge, ItemType.ToolPickaxe, 3));
+            o.Commands.QueueInfluence(InfluenceEvent.CreateOrderStation("test", (byte)o.Forge, ItemType.Ration, 1));
+            Assert(!workshops[o.Forge].HasOrder, "Nothing happens before the tick.");
+            o.Sim.Tick(1);
+            Assert(workshops[o.Forge].Order == ItemType.ToolPickaxe && workshops[o.Forge].Remaining == 3, "On the tick the forge is ordered three pickaxes; the refused order changes nothing.");
+            o.Commands.QueueInfluence(InfluenceEvent.CreateOrderStation("test", (byte)o.Forge, ItemType.None, 0));
+            o.Sim.Tick(2);
+            Assert(!workshops[o.Forge].HasOrder, "An order for nothing cancels.");
+
+            var smith = Crawler(o, trust: 60, warmth: 40);
+            workshops.Hire(o.Sim, smith.AgentId, o.Forge, 5, 2);
+            Assert(workshops.TryGetContract(smith.AgentId, out var hired) && hired.Shifts == 0 && !hired.OnBreak, "A new hire works no block until the player sets its shifts (D12).");
+            Assert(WorkshopRules.CheckSetShifts(workshops, EntityId.Generate(), ShiftBlocks.DayShift) == WorkshopRules.Check.NotAnArtisan, "Shifts are an artisan's.");
+            Assert(WorkshopRules.CheckSetShifts(workshops, smith.AgentId, 0b1000000) == WorkshopRules.Check.NoSuchBlock
+                && WorkshopRules.Describe(WorkshopRules.Check.NoSuchBlock, workshops, o.Forge, tuning) == "A day has six blocks of four hours, from 06:00.", "A day has six blocks.");
+            o.Commands.QueueInfluence(InfluenceEvent.CreateSetShifts("test", smith.AgentId, ShiftBlocks.DayShift));
+            o.Sim.Tick(3);
+            Assert(workshops.TryGetContract(smith.AgentId, out var shifted) && shifted.Shifts == ShiftBlocks.DayShift && shifted.Wage == 5, "On the tick the smith works the day shift; the rest of its contract holds.");
+            TestLog.Log("[PASS] Test 8: OrderStation and SetShifts arrive as typed commands; refusals come in words and change nothing; a new hire works no block.");
+        }
+
+        // D12: six blocks of four game hours from 06:00; a mask of them; runs counted around the day's turn
+        private static void ValidateShiftBlocks()
+        {
+            Assert(ShiftBlocks.TicksEach == 4 * DayClock.TicksPerHour, "A block is four game hours.");
+            Assert(ShiftBlocks.At(0) == 0 && ShiftBlocks.At(ShiftBlocks.TicksEach - 1) == 0 && ShiftBlocks.At(ShiftBlocks.TicksEach) == 1, "Block 0 runs from 06:00 to 10:00.");
+            Assert(ShiftBlocks.At(DayClock.TicksPerDay - 1) == 5 && ShiftBlocks.At(DayClock.TicksPerDay) == 0, "Block 5, 02:00 to 06:00, ends the day; the next day starts block 0.");
+            Assert(ShiftBlocks.StartHour(1) == 10 && ShiftBlocks.StartHour(4) == 22 && ShiftBlocks.StartHour(5) == 2, "The blocks start at 06, 10, 14, 18, 22 and 02.");
+            long tenOClock = ShiftBlocks.TicksEach, sixInTheEvening = 3 * ShiftBlocks.TicksEach;
+            Assert(ShiftBlocks.Covers(ShiftBlocks.DayShift, tenOClock) && ShiftBlocks.Covers(ShiftBlocks.DayShift, sixInTheEvening - 1) && !ShiftBlocks.Covers(ShiftBlocks.DayShift, sixInTheEvening)
+                && !ShiftBlocks.Covers(ShiftBlocks.DayShift, 0), "The day shift covers 10:00 to 18:00.");
+            Assert(ShiftBlocks.CountOf(ShiftBlocks.DayShift) == 2 && ShiftBlocks.LongestRun(ShiftBlocks.DayShift) == 2, "The day shift is two blocks in a row.");
+            Assert(ShiftBlocks.LongestRun(0b100001) == 2 && ShiftBlocks.LongestRun(0b010101) == 1 && ShiftBlocks.LongestRun(0b000111) == 3 && ShiftBlocks.LongestRun(ShiftBlocks.All) == 6,
+                "Runs count around the day's turn: 02-06 runs on into 06-10.");
+            TestLog.Log("[PASS] Test 9: Six blocks of four game hours from 06:00; the day shift is 10:00 to 18:00; runs wrap the day's turn.");
         }
 
         private static Simpiens.Cognition.AgentState Crawler(Outpost o, sbyte trust, sbyte warmth, float risk = 0.1f, float greed = 0f)

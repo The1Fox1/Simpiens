@@ -34,6 +34,18 @@ namespace Simpiens.Simulation
         /// <summary>A rate per game hour as a rate per second of simulation time, for needs ticked with a delta in seconds.</summary>
         public static float PerSecond(float perHour) => perHour / SecondsPerHour;
 
+        /// <summary>
+        /// A span of game time in words, by the whole game minute: "45 min", "2 h", "2 h 15 min" (Epic 10 Part 2, T6). A part
+        /// of a minute rounds up, so what is still to come never reads as 0. Allocates: for refusals and the views.
+        /// </summary>
+        public static string SpanText(long ticks)
+        {
+            long minutes = ticks <= 0 ? 0 : (ticks + TicksPerMinute - 1) / TicksPerMinute;
+            long hours = minutes / MinutesPerHour, rest = minutes % MinutesPerHour;
+            if (hours == 0) return System.FormattableString.Invariant($"{rest} min");
+            return rest == 0 ? System.FormattableString.Invariant($"{hours} h") : System.FormattableString.Invariant($"{hours} h {rest} min");
+        }
+
         /// <summary>The day, from 1, at <paramref name="tick"/>.</summary>
         public static long Day(long tick) => (Clamp(tick) + (long)StartMinute * TicksPerMinute) / TicksPerDay + 1;
 

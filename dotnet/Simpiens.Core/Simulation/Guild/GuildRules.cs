@@ -176,7 +176,7 @@ namespace Simpiens.Simulation.Guild
                 case Check.GuildFull: return $"The guild is full ({guild.Members.Count} of {tuning.MaxMembers}).";
                 case Check.CoolingDown:
                     uint left = guild.CooldownUntil(crawler.AgentId) - tick;
-                    return $"{name} left the guild recently; it can sign again in {left / 600}:{left / 10 % 60:00}.";
+                    return $"{name} left the guild recently; it can sign again in {DayClock.SpanText(left)}.";
                 case Check.WageTooLow: return $"{name} asks at least {ReservationWage(crawler, tuning)}g a visit.";
                 case Check.WageOutOfRange: return $"A wage is 1 to {tuning.MaxWage}g a visit.";
                 case Check.NoStall: return "There is no stall to pay the signing fee from.";

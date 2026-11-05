@@ -374,6 +374,14 @@ namespace Simpiens.Simulation
                 case InfluenceCommandType.HireArtisan:
                     Workshops.Hire(this, influence.HireArtisan.CrawlerId, influence.HireArtisan.StationIndex, influence.HireArtisan.Wage, currentTick);
                     break;
+
+                case InfluenceCommandType.OrderStation:
+                    Workshops.Order(this, influence.OrderStation.StationIndex, influence.OrderStation.Item, influence.OrderStation.Count);
+                    break;
+
+                case InfluenceCommandType.SetShifts:
+                    Workshops.SetShifts(this, influence.SetShifts.CrawlerId, influence.SetShifts.Shifts);
+                    break;
             }
         }
 

@@ -49,7 +49,15 @@ namespace Simpiens.Simulation.Workshops
             /// <summary>The wage is below the crawler's reservation wage.</summary>
             WageTooLow = 16,
             /// <summary>It works no station.</summary>
-            NotAnArtisan = 17
+            NotAnArtisan = 17,
+
+            // Orders and shifts (W1.3, D12, D32)
+            /// <summary>The item isn't made at this station: no recipe, or another station's.</summary>
+            NotThisStationsRecipe = 18,
+            /// <summary>A finished make waits for room in the stall's stock; the order can't change until it is stocked.</summary>
+            HoldingOutput = 19,
+            /// <summary>A mask with bits past the day's six blocks.</summary>
+            NoSuchBlock = 20
         }
 
         /// <summary>Whether the station at <paramref name="index"/> can be built now (D10): it exists, stands unbuilt, and the stall can pay. Checked in that order.</summary>
@@ -103,6 +111,31 @@ namespace Simpiens.Simulation.Workshops
         public static Check CheckDismiss(WorkshopService workshops, EntityId crawlerId) => workshops.IsArtisan(crawlerId) ? Check.Ok : Check.NotAnArtisan;
 
         /// <summary>
+        /// Whether the station at <paramref name="index"/> takes an order for <paramref name="count"/> of
+        /// <paramref name="item"/> (D32): it exists and stands, the item is its recipe (none, or a count of 0, cancels), and
+        /// no finished make waits for room.
+        /// </summary>
+        public static Check CheckOrder(WorkshopService workshops, int index, ItemType item, ushort count)
+        {
+            if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
+            var station = workshops[index];
+            if (!station.Built) return Check.NotBuilt;
+            if (station.HeldOutput > 0) return Check.HoldingOutput;
+            if (item == ItemType.None || count == 0) return Check.Ok;
+            var recipe = Simpiens.Simulation.Items.RecipeBook.For(item);
+            if (recipe == null || recipe.Station != station.Kind) return Check.NotThisStationsRecipe;
+            return Check.Ok;
+        }
+
+        /// <summary>Whether an artisan's shifts can be <paramref name="shifts"/> (D12): it works a station, and the mask names only the day's blocks.</summary>
+        public static Check CheckSetShifts(WorkshopService workshops, EntityId crawlerId, byte shifts)
+        {
+            if (!workshops.IsArtisan(crawlerId)) return Check.NotAnArtisan;
+            if ((shifts & ~ShiftBlocks.All) != 0) return Check.NoSuchBlock;
+            return Check.Ok;
+        }
+
+        /// <summary>
         /// A refusal in the player's words (allocates; call only on the refusal path and in the window).
         /// <paramref name="name"/> and <paramref name="crawler"/> are the crawler's, when the check concerns one.
         /// </summary>
@@ -129,10 +162,13 @@ namespace Simpiens.Simulation.Workshops
                 case Check.TooBold: return $"{name} would rather go out into danger than work the {station}.";
                 case Check.CoolingDown:
                     uint until = crawler != null ? workshops.CooldownUntil(crawler.AgentId) : 0;
-                    return $"{name} left a station recently; ask again in {SimMath.CeilToInt((until - tick) / 600f)} min.";
+                    return $"{name} left a station recently; ask again in {DayClock.SpanText(until - tick)}.";
                 case Check.WageOutOfRange: return $"A wage is 1 to {tuning.MaxWage}g a visit.";
                 case Check.WageTooLow: return $"{name} asks at least {(crawler != null ? ReservationWage(crawler, tuning) : tuning.ReservationWage)}g a visit.";
                 case Check.NotAnArtisan: return $"{name} works no station.";
+                case Check.NotThisStationsRecipe: return $"That isn't made at the {station}.";
+                case Check.HoldingOutput: return $"The {station} holds a finished make until the stall has room for it.";
+                case Check.NoSuchBlock: return "A day has six blocks of four hours, from 06:00.";
                 default: return string.Empty;
             }
         }

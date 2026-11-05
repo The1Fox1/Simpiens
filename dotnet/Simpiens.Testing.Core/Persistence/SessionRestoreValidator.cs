@@ -164,8 +164,9 @@ namespace Simpiens.Testing.Persistence
                         Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, Made = 2
                     }
                 },
-                // The forge's artisan, unpaid once, and a crawler who can't be hired again yet (W1.2)
-                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1) },
+                // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
+                // be hired again yet
+                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true) },
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
             };
             var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
@@ -176,7 +177,8 @@ namespace Simpiens.Testing.Persistence
             Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1,
                 "A make in progress and a held make come back.");
             Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
-                && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract and the cooldown come back.");
+                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak
+                && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract, its shifts and its break, and the cooldown come back.");
 
             workshops.RestoreFrom(null);
             Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built && workshops.Artisans.Count == 0, "A save without the block loads every station unbuilt, nobody hired.");
