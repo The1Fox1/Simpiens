@@ -10,8 +10,6 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class EarnIncomeGoal : GoapGoal
     {
-        public const int ComfortableGold = 40;
-
         public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true))
         {
         }
@@ -19,7 +17,8 @@ namespace Simpiens.Cognition.Planning.Goals
         public override float CalculatePriority(AgentContext context)
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            float need = SimMath.Clamp(ComfortableGold - gold, 0, ComfortableGold) * 0.5f;
+            int comfortable = Considerations.Economy(context).ComfortablePurse;
+            float need = SimMath.Clamp(comfortable - gold, 0, comfortable) * 0.5f;
             float priority = SimMath.Max(5f, 25f + need - (context.Hunger * 0.2f));
             return priority * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome)
                             * Considerations.TraitFactor(context.Personality.Diligence, Considerations.DiligenceOnWork);
@@ -28,7 +27,7 @@ namespace Simpiens.Cognition.Planning.Goals
         public override bool IsValid(AgentContext context)
         {
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            if (context.Inventory == null || context.Inventory.Gold >= ComfortableGold) return false;
+            if (context.Inventory == null || context.Inventory.Gold >= Considerations.Economy(context).ComfortablePurse) return false;
             if (context.Snapshot == null || context.Snapshot.ActiveStallCount == 0) return false;
             if (!ResourceTargeting.NearestStallCanBuySalvage(context)) return false;
 

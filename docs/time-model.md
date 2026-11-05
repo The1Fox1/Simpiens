@@ -98,18 +98,23 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 
 - **T4, the economy per day** (2026-11-04): the gate seeds at `EconomyTuning.FullDay` on the 12-bunk floor, three days each, against today's economy over two 9,000-tick days.
 
-| Per day | Today | T4.1: the caravan every 6 h |
-| :--- | ---: | ---: |
-| Tasks a resident | 194 | 57 |
-| Idle | 29% | 42% |
-| Meals a resident | 31.6 | 2.6 |
-| Trades a resident | 15.0 | 3.6 |
-| The stall sells / buys | 121 / 73 | 30 / 23 |
-| Caravan's payment for exports | 1,996g | 600g |
-| Upkeep paid / due | 1,200g / 1,200g | 320g / 320g |
-| Treasury at the end of days 1, 2, 3 | 890g, 1,429g | 106g, 276g, 481g |
-| Mean trust toward the player at the end of day 1 | 38.8 | 2.0 |
-| Residents whose trust rose, at the end | 10.7 of 12 | 4.4 of 12 |
+| Per day | Today | T4.1: the caravan every 6 h | T4.2: and an 80g purse |
+| :--- | ---: | ---: | ---: |
+| Tasks a resident | 194 | 57 | 56 |
+| Idle | 29% | 42% | 38% |
+| Meals a resident | 31.6 | 2.6 | 2.5 |
+| Trades a resident | 15.0 | 3.6 | 3.8 |
+| The stall sells / buys | 121 / 73 | 30 / 23 | 30 / 24 |
+| Caravan's payment for exports | 1,996g | 600g | 645g |
+| Upkeep paid / due | 1,200g / 1,200g | 320g / 320g | 320g / 320g |
+| Treasury at the end of days 1, 2, 3 | 890g, 1,429g | 106g, 276g, 481g | 64g, 294g, 515g |
+| Mean trust toward the player at the end of day 1 | 38.8 | 2.0 | 3.8 |
+| Residents whose trust rose, at the end | 10.7 of 12 | 4.4 of 12 | 6.0 of 12 |
+
+- **T4.2's findings:**
+  - **The Garden isn't the day's food.** On the new day crawlers buy about 24 rations a seed-day at the stall and harvest about 2.4 from the Garden. A plot regrowing in 1 or 12 game hours made no difference, so the Garden keeps today's numbers as the fallback (D26 was answered by measuring).
+  - **An 80g purse adds a little work:** idle falls from 42% to 38%, and harvesting stays about an hour of the day. Crawlers earn what they spend, and on the new day a resident spends about 40g a day: 2.5 meals at 15g. D25's 6–8 hours of work need either more to spend on (W1.4's pickaxe, W2's draughts) or a dearer day, with more salvage the caravan takes. That decision is the developer's.
+  - **Bug found and fixed:** on the 12-bunk floor of T2.3, the top row of bunks lay in the walkable strip along the bunkhouse's north wall. That strip is the way from the bunks to the hub door. Paths don't see pawns, and a sleeper lies there for hours, so a crawler re-planned the same blocked path from 21:00 until it starved. The bunks are now two rows of six, 1.5 apart (y −8.5 and −10.5), with the strip and an aisle free. The map validator now fails a full-day bunk set against the wall. Sleep on the new floor: 8.0 hours a sleep, rough sleep 0.8 hours a day.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -135,7 +140,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Resting in place, and a collapse | `DayTuning` (was `RestAction`, the consequence service) | +15 a second; a rest is 2 s, then +30 | D | sleeping rough: +4 an hour, no bonus, up at the same lines as a bunk, for at most 12 hours; a collapse is up at 30 after 7.5 hours | T2.2 ✓ |
 | The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept: sleep begins at energy 37 on average | T2.2 ✓ |
 | Social | `DayTuning` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 ✓ |
-| Bunks | `Floor1Layout` | 8, two rows | — | 12, three rows filling the bunkhouse's walkable depth (`FullDayBunkCount`, `FullDayDefinition`); drifters sleep rough when they are full | T2.3 ✓ |
+| Bunks | `Floor1Layout` | 8, two rows | — | 12, two rows of six 1.5 apart, leaving the strip along the north wall free (`FullDayBunkCount`, `FullDayDefinition`; three rows walled a crawler in, T4.2); drifters sleep rough when they are full | T2.3, T4.2 ✓ |
 | A spell at the hearth | the consequence service | +20 social, +10 energy | D | +20 social, no energy: at +10 a visit the hearth outran the waking day's drain, and nobody would sleep | T2.2 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `DayTuning` (was `Vitality.RestingHealPerSecond`) | 0.05 a second (about 50 a day already) | D | 0.05 a second, about 50 a day (kept) | T3.2a ✓ |
@@ -157,6 +162,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | Share food | `ActionTuning` (an intent's `TransferDuration` overrides it) | 1 s | D | 10 min (70) | T2.4 ✓ |
 | A scout's survey | `ActionTuning` | on arrival | D | 30 min (210) at the target | T2.4 ✓ |
 | Treat wounds with a herb | `ActionTuning` | within the tick | D | 30 min (210); the herb eaten at the end | T2.4 ✓ |
+| A crawler's purse target | `EconomyTuning.ComfortablePurse` (was `EarnIncomeGoal.ComfortableGold`) | 40g | — | 80g, about two days' meals (D25) | T4.2 ✓ |
 | The pickaxe at the forge | `RecipeBook` (D2) | 600 ticks | D | 2 h (840); live now, since nothing crafts in a live run before W1.5a | T3.1 ✓ |
 | A spell at the hearth | `ActionTuning` (was `RelaxAtAnchorAction`) | 3 s | D | 30 min (210) | T2.4 ✓ |
 | Idle pauses | `AmbientWanderEvaluator`, `AgentCognitionService` | 1.5–2 s | P | kept: ambient motion | |
@@ -167,8 +173,8 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | every 6 game hours (2,520 ticks: 12:00, 18:00, 00:00, 06:00), on the same terms a visit: a day's upkeep 320g, wages 4 rounds (D24) | T4.1 ✓ |
-| Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | with the food balance per day (stall and Garden) | T4 |
-| Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | with the supply per day | T4 |
+| Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | kept: crawlers buy nine meals in ten at the stall, and 1 or 12 game hours made no difference; the Garden is the quick fallback | T4.2 ✓ |
+| Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | kept: the stall's buying (its cap and the caravan's quota), not the nodes, limits salvage | T4.2 ✓ |
 | Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | kept: already the first at 2.9 h, about every 5 h ± 0.7, staying 4.3–7.1 h, long enough for a meal at two or three a day; T4 looks at their purses | T3.1 ✓ |
 | The guild's and the stations' cooldowns | `GuildTuning.RejoinCooldownTicks`, `WorkshopTuning.RehireCooldownTicks` | 3,000 (about 7 game hours) | D | kept: 7.1 game hours | T3.1 ✓ |
 | A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | kept: 14.3 game hours | T3.1 ✓ |

@@ -386,6 +386,13 @@ namespace Simpiens.Testing.World
                 if (p.Kind != PoiKind.Bunk) continue;
                 float d = DistanceToSegment(p.Position, laneFrom, laneTo);
                 Assert(d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+                // On the 24-hour day a sleeper lies in its bunk for hours, and paths don't see pawns: a bunk against the north
+                // wall blocks the walkable strip there, the way to the hub door (Epic 10 Part 2, T4.2: it walled a crawler in)
+                if (bunkCount >= Floor1Layout.FullDayBunkCount)
+                {
+                    Assert(grid.WorldToCell(p.Position, out int bx, out int by) && grid.IsCellWalkable(bx, by + 1),
+                        $"Bunk '{p.Key}' at {p.Position} sits against the wall, in the way to the hub door.");
+                }
             }
 
             TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");

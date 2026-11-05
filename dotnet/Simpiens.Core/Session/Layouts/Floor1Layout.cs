@@ -58,7 +58,13 @@ namespace Simpiens.Core.Session.Layouts
         public const uint GlowstoneRegrowTicks = 6000; // ten minutes: rare (Epic 10 G2)
 
         public const uint FoodRegrowTicks = 300; // review §3.3 D6 (was 450)
-        public const int FoodPlotYield = 4;      // rations per plot between regrowths (review §3.3 D6; was 3): 4 plots, about 32 a minute at most
+        public const int FoodPlotYield = 4;
+        /// <summary>
+        /// The 24-hour day's Garden (T4.2, D26): today's. On the day crawlers buy nine meals in ten at the stall, and a plot
+        /// regrowing in 1 or 12 game hours made no difference, so the Garden stays the quick fallback it is.
+        /// </summary>
+        public const int FullDayFoodPlotYield = FoodPlotYield;
+        public const uint FullDayFoodRegrowTicks = FoodRegrowTicks;      // rations per plot between regrowths (review §3.3 D6; was 3): 4 plots, about 32 a minute at most
         public const uint HerbRegrowTicks = 600;
         public const uint OreRegrowTicks = 900;
 
@@ -102,12 +108,18 @@ namespace Simpiens.Core.Session.Layouts
         private static MapDefinition _fullDayDefinition;
 
         /// <summary>Built once; definitions are immutable.</summary>
-        public static MapDefinition Definition => _definition ??= Build(BunkCount);
+        public static MapDefinition Definition => _definition ??= Build(BunkCount, FoodPlotYield, FoodRegrowTicks);
 
-        /// <summary>The floor with a bunk per resident (T2.3), for the 24-hour day until the cut-over makes it <see cref="Definition"/>.</summary>
-        public static MapDefinition FullDayDefinition => _fullDayDefinition ??= Build(FullDayBunkCount);
+        /// <summary>
+        /// The floor for the 24-hour day until the cut-over makes it <see cref="Definition"/>: a bunk per resident (T2.3), and a
+        /// Garden that feeds about half the day's meals (T4.2, D26).
+        /// </summary>
+        public static MapDefinition FullDayDefinition => _fullDayDefinition ??= Build(FullDayBunkCount, FullDayFoodPlotYield, FullDayFoodRegrowTicks);
 
-        private static MapDefinition Build(int bunkCount)
+        /// <summary>Floor 1 with other bunks and Garden plots, for measuring the 24-hour day (Epic 10 Part 2, T4.2).</summary>
+        public static MapDefinition Create(int bunkCount, int foodPlotYield, uint foodRegrowTicks) => Build(bunkCount, foodPlotYield, foodRegrowTicks);
+
+        private static MapDefinition Build(int bunkCount, int foodPlotYield, uint foodRegrowTicks)
         {
             var b = new MapDefinitionBuilder("Floor1", new RectF(-24f, -24f, 48f, 42f));
 
@@ -187,12 +199,16 @@ namespace Simpiens.Core.Session.Layouts
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
             b.Poi(Hearth, PoiKind.Hearth, new Vec2(-4.5f, -3.5f), 3.0f);
 
-            // --- Bunkhouse: rows of four in the west half, clear of the gate-to-hub lane (x 2..6). Two rows for 8; for a bunk
-            // per resident (T2.3), three rows filling the walkable depth between the walls (y -7.5 to -11) ---
+            // --- Bunkhouse: two rows in the west half, clear of the gate-to-hub lane (x 2..6). Four to a row for 8. For a bunk
+            // per resident (T2.3), six to a row, 1.5 apart, with the walkable strip along the north wall (y -7.5) kept free: it
+            // is the way from the bunks to the hub door, and a sleeper lies in its bunk for hours (T4.2: a top row there
+            // walled a crawler in until it starved) ---
             for (int i = 0; i < bunkCount; i++)
             {
-                float y = bunkCount <= 8 ? (i < 4 ? -8f : -10f) : -7.5f - (i / 4) * 1.75f;
-                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6f + (i % 4) * 2f, y), 1.0f);
+                var at = bunkCount <= 8
+                    ? new Vec2(-6f + (i % 4) * 2f, i < 4 ? -8f : -10f)
+                    : new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f);
+                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, at, 1.0f);
             }
 
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---
@@ -206,10 +222,10 @@ namespace Simpiens.Core.Session.Layouts
             }
 
             // --- Resources: near sectors (explored) ---
-            b.Node("garden.1", new Vec2(-5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.2", new Vec2(-2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.3", new Vec2(2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.4", new Vec2(5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.1", new Vec2(-5f, 12f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
+            b.Node("garden.2", new Vec2(-2f, 10f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
+            b.Node("garden.3", new Vec2(2f, 10f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
+            b.Node("garden.4", new Vec2(5f, 12f), ItemType.Ration, foodPlotYield, foodRegrowTicks);
             b.Node("quarry.1", new Vec2(-20f, 2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.2", new Vec2(-16f, -2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.3", new Vec2(-12f, 2f), ItemType.IronOre, 3, OreRegrowTicks);

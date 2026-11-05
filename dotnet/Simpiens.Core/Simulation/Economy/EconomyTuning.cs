@@ -123,12 +123,14 @@ namespace Simpiens.Simulation.Economy
         /// the default:
         /// <list type="bullet">
         /// <item>the day's pace (<see cref="DayTuning.FullDay"/>);</item>
-        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00, on the same terms a visit (T4.1, D24).</item>
+        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00, on the same terms a visit (T4.1, D24);</item>
+        /// <item>crawlers earn toward 80g, about two days' meals (T4.2, D25).</item>
         /// </list>
         /// </summary>
         public static readonly EconomyTuning FullDay = Default
             .WithDay(DayTuning.FullDay)
-            .WithSupply(Default.Supply.WithRestockInterval(DayClock.Hours(6)));
+            .WithSupply(Default.Supply.WithRestockInterval(DayClock.Hours(6)))
+            .WithComfortablePurse(80);
 
         // Each item's terms, by id (item system I5): the default economy's are below. Copies clone the table.
         private ItemTerms[] _items = DefaultItemTerms();
@@ -196,6 +198,12 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The stations and their artisans (Epic 10 Part 2).</summary>
         public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;
 
+        /// <summary>
+        /// The purse a crawler earns toward: below it, it works for gold (EarnIncomeGoal). Before the day, 40g, about three
+        /// meals' worth; on the 24-hour day (T4.2, D25), a day's needs and a margin.
+        /// </summary>
+        public int ComfortablePurse { get; private set; } = 40;
+
         /// <summary>The pace of a crawler's day: needs, sleep and rest (Epic 10 Part 2, milestone T).</summary>
         public DayTuning Day { get; private set; } = DayTuning.Default;
 
@@ -248,6 +256,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Workshops = workshops;
+            return copy;
+        }
+
+        public EconomyTuning WithComfortablePurse(int gold)
+        {
+            var copy = Copy();
+            copy.ComfortablePurse = gold;
             return copy;
         }
 

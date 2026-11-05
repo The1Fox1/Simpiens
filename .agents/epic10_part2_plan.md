@@ -178,6 +178,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
         - `EconomyTuning.FullDay`, the day's economy, staged for the cut-over: the day's pace and `SupplyTuning.WithRestockInterval(DayClock.Hours(6))`.
         - **Measured:** upkeep is paid in full (320g a day), and the treasury grows from day 2 (481g at the end of day 3).
         - **Trust doesn't build:** the mean stays near 2 (T4.3), and residents idle 42%.
+     2. **[x] T4.2 Motivation and food** (done 2026-11-04) [Possibly Complex: tuning and its measurement; a layout fix]:
+        - **The purse:** `EconomyTuning.ComfortablePurse` (was `EarnIncomeGoal.ComfortableGold`), 40g today and 80g on the day. Idle falls from 42% to 38%, but harvesting stays about an hour a day.
+        - **The Garden is kept** (D26 answered by measuring): crawlers buy nine meals in ten at the stall, and regrowth made no difference.
+        - **A bug from T2.3, found and fixed:** the three-row bunkhouse walled a crawler in until it starved. It is now two rows of six, leaving the wall strip free, and a validator rule holds it.
+        - **For the developer:** D25's 6–8 hours of work don't follow from D23's prices. A resident spends about 40g a day, and earns that in about an hour of harvesting. See the report.
 
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.

@@ -67,7 +67,7 @@ namespace Simpiens.Testing.Planning
 
             // EarnIncome's pre-personality formula: max(5, 25 + need - hunger*0.2), need = clamp(Comfortable - gold) * 0.5
             var context = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null);
-            float expected = SimMath.Max(5f, 25f + SimMath.Clamp(EarnIncomeGoal.ComfortableGold - 10, 0, EarnIncomeGoal.ComfortableGold) * 0.5f - 20f * 0.2f);
+            float expected = SimMath.Max(5f, 25f + SimMath.Clamp(Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse - 10, 0, Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse) * 0.5f - 20f * 0.2f);
             Assert(SimMath.Approximately(new EarnIncomeGoal().CalculatePriority(context), expected), "Neutral EarnIncome priority must equal the pre-personality formula.");
 
             var social = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null, social: 30f);
