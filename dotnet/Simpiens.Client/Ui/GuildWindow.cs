@@ -32,21 +32,31 @@ namespace Simpiens.Client.Ui
         {
             public ContainerRuntime Root, Gap;
             public TextRuntime Name, Doing, Health, Gear, Standing, Unpaid, Wage;
-            public SpriteRuntime GearIcon;
+            public SpriteRuntime GearIcon, Face;
+            public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
             public int Index;
         }
 
-        public GuildWindow(GuildModel model, IconAtlas icons, int capacity)
+        private readonly PortraitAtlas _portraits;
+
+        /// <summary>A click on a member's face (Epic UI-Beta B4, D4): the dashboard view finds it on the map.</summary>
+        public Action<EntityId> FindOnMap { get; set; }
+
+        /// <summary>A member's face (tests click it).</summary>
+        public ContainerRuntime MemberFace(int index) => _cards[index].FaceBox;
+
+        public GuildWindow(GuildModel model, IconAtlas icons, int capacity, PortraitAtlas portraits = null)
         {
             _model = model;
             _icons = icons;
-            Window = new Window("guild-roster", "GUILD ROSTER", "Your members, their wages and their standing with the outpost.", Width, UiStyle.Success);
+            _portraits = portraits;
+            Window = new Window("guild-roster", "The Guild", "Your members, their wages and their standing with the outpost.", Width, Simpiens.Presentation.Art.UiKit.FrameSteel, Simpiens.Presentation.Art.UiKit.Shield);
             var body = Window.Body;
 
             var statusBar = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 34f };
-            UiParts.AddFill(statusBar, UiStyle.Inset, UiStyle.Border);
+            UiParts.AddInset(statusBar);
             _status = UiParts.Text(string.Empty, UiStyle.Text, UiText.StatusBold);
             _status.X = 12f;
             UiParts.CentreVertically(_status);
@@ -92,13 +102,13 @@ namespace Simpiens.Client.Ui
             _dispatchText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             UiParts.CentreVertically(_dispatchText);
             send.Children.Add(_dispatchText);
-            DispatchButton = UiParts.Button("DISPATCH", 110f, 30f, UiText.BodyBold);
+            DispatchButton = UiParts.Button("Dispatch", 110f, 30f, UiText.BodyBold);
             DispatchButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             DispatchButton.Visual.XOrigin = HorizontalAlignment.Right;
             DispatchButton.X = -120f;
             UiParts.CentreVertically(DispatchButton.Visual);
             send.Children.Add(DispatchButton.Visual);
-            RecallButton = UiParts.Button("RECALL", 110f, 30f, UiText.BodyBold);
+            RecallButton = UiParts.Button("Recall", 110f, 30f, UiText.BodyBold);
             RecallButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             RecallButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(RecallButton.Visual);
@@ -119,7 +129,7 @@ namespace Simpiens.Client.Ui
             _feedback = UiParts.Text(string.Empty, UiStyle.Success, UiText.Small);
             UiParts.CentreVertically(_feedback);
             footer.Children.Add(_feedback);
-            ApplyButton = UiParts.Button("APPLY WAGES", 150f, 32f, UiText.BodyBold);
+            ApplyButton = UiParts.PrimaryButton("Set wages", 150f, 32f, UiText.BodyBold);
             ApplyButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             ApplyButton.Visual.XOrigin = HorizontalAlignment.Right;
             UiParts.CentreVertically(ApplyButton.Visual);
@@ -153,9 +163,18 @@ namespace Simpiens.Client.Ui
             card.Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = CardHeight };
             UiParts.AddFill(card.Root, UiStyle.Card, UiStyle.CardBorder);
 
-            // Left: who, and what it is doing; then its health and gear
+            // Left: its face (Epic UI-Beta B4), who, and what it is doing; then its health and gear
+            card.FaceBox = UiParts.FaceBox(_portraits, out card.Face);
+            card.FaceBox.Click += (_, _) =>
+            {
+                var rows = _model.Rows;
+                if (card.Index < rows.Count) FindOnMap?.Invoke(rows[card.Index].CrawlerId);
+            };
+            card.FaceBox.X = 12f;
+            UiParts.CentreVertically(card.FaceBox);
+            card.Root.Children.Add(card.FaceBox);
             var who = UiParts.Column(2f);
-            who.X = 12f;
+            who.X = _portraits != null ? 12f + PortraitAtlas.FaceSize + 8f : 12f;
             who.Y = 8f;
             card.Name = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             card.Doing = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
@@ -193,7 +212,7 @@ namespace Simpiens.Client.Ui
             card.Wage.X = 540f;
             UiParts.CentreVertically(card.Wage);
             card.Root.Children.Add(card.Wage);
-            card.Dismiss = UiParts.Button("DISMISS", 78f, 28f);
+            card.Dismiss = UiParts.Button("Dismiss", 78f, 28f);
             card.Dismiss.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             card.Dismiss.Visual.XOrigin = HorizontalAlignment.Right;
             card.Dismiss.X = -12f;
@@ -233,7 +252,7 @@ namespace Simpiens.Client.Ui
         public static string WageText(int gold) => Invariant($"{gold}g a visit");
 
         /// <summary>The card's party toggle: it goes with the next party, or stays home.</summary>
-        public static string PartyText(bool inParty) => inParty ? "GOES" : "STAYS";
+        public static string PartyText(bool inParty) => inParty ? "Goes" : "Stays";
 
         public void Bind()
         {
@@ -252,6 +271,7 @@ namespace Simpiens.Client.Ui
                 card.Gap.Visible = shown;
                 if (!shown) continue;
                 var row = rows[i];
+                UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait);
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));
@@ -275,7 +295,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
             string rule = expedition.Rule.ToString().ToUpperInvariant();
             if (RuleButton.Text != rule) RuleButton.Text = rule;
-            string outfit = expedition.Outfit ? "OUTFIT FROM STOCK" : "NO OUTFITTING";
+            string outfit = expedition.Outfit ? "Outfit from stock" : "No outfitting";
             if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
             UiParts.SetText(_ruleText, expedition.RuleText);
             UiParts.SetText(_out, expedition.IsOut ? Invariant($"{expedition.StageText} · {expedition.TimeOut} · {expedition.HaulText}") : string.Empty);

@@ -30,6 +30,36 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
+        /// Frames carry who each crawler is (Epic UI-Beta B2): its look, for its body, and its standing; props carry
+        /// neither. A crawler that becomes a drifter is captured as one at the next tick.
+        /// </summary>
+        [Fact]
+        public void FramesCarryEachCrawlersLookAndStanding()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            using var frames = new Simpiens.Presentation.WorldViewFrames();
+            frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock, null, sim.Simulation);
+
+            var frame = frames.Current;
+            foreach (var state in sim.Host.CrawlerStates)
+            {
+                Assert.True(frame.TryGetIndex(state.AgentId, out int i));
+                Assert.True(frame[i].Look.IsComplete);
+                Assert.Equal(state.Look, frame[i].Look);
+                Assert.Equal(Simpiens.Presentation.CrawlerStanding.Resident, frame[i].Standing);
+            }
+            for (int i = 0; i < frame.Count; i++)
+                if (!frame[i].IsCrawler) Assert.Equal(default, frame[i].Look);
+
+            var leaving = sim.Host.CrawlerStates[0];
+            leaving.DepartsAtTick = 99999;
+            sim.Step(1);
+            Assert.True(frames.Current.TryGetIndex(leaving.AgentId, out int d));
+            Assert.Equal(Simpiens.Presentation.CrawlerStanding.Drifter, frames.Current[d].Standing);
+        }
+
+        /// <summary>
         /// Frames carry what items show in the world (graphics V5.1): each crawler's worn gear and the first salvage it
         /// holds, and every stall's goods and stock, as plain copies that follow the simulation tick by tick.
         /// </summary>

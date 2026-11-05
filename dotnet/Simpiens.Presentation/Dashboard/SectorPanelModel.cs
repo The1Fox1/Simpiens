@@ -37,8 +37,15 @@ namespace Simpiens.Presentation.Dashboard
         public readonly string Badge;
         public readonly bool Selected;
 
-        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected, bool downed = false)
+        /// <summary>Its face (Epic UI-Beta B4), when it has a look.</summary>
+        public readonly bool HasPortrait;
+        public readonly Simpiens.Presentation.Art.People.PortraitKey Portrait;
+
+        public ResidentRow(EntityId crawlerId, string name, string activity, AgentVisualState state, bool selected, bool downed = false,
+            bool hasPortrait = false, Simpiens.Presentation.Art.People.PortraitKey portrait = default)
         {
+            HasPortrait = hasPortrait;
+            Portrait = portrait;
             CrawlerId = crawlerId;
             Name = name;
             Activity = activity;
@@ -61,10 +68,26 @@ namespace Simpiens.Presentation.Dashboard
         private readonly List<SectorRow> _sectors = new List<SectorRow>(16);
         private readonly List<ResidentRow> _residents = new List<ResidentRow>(32);
         private readonly List<string> _events = new List<string>(MaxEvents);
+        private readonly List<EntityId> _eventActors = new List<EntityId>(MaxEvents);
+        private string _lastNarrative;
+        private int _repeats;
         private readonly List<WorldEntity> _inZone = new List<WorldEntity>(32);
         private readonly List<ChronicleEvent> _chronicle = new List<ChronicleEvent>(MaxEvents);
 
-        internal SectorPanelModel(DashboardContext context) => _context = context;
+        private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
+
+        // The last line takes its repeats: "×3"
+        private void CloseGroup()
+        {
+            if (_repeats > 0) _events[_events.Count - 1] += Invariant($" ×{_repeats + 1}");
+            _repeats = 0;
+        }
+
+        internal SectorPanelModel(DashboardContext context, Simpiens.Presentation.Art.People.MoodTracker moods = null)
+        {
+            _context = context;
+            _moods = moods ?? new Simpiens.Presentation.Art.People.MoodTracker();
+        }
 
         /// <summary>The sector shown in the detail column (the map's first real sector by default).</summary>
         public int SelectedSectorId { get; internal set; } = -1;
@@ -74,6 +97,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Description { get; private set; } = string.Empty;
         public IReadOnlyList<ResidentRow> Residents => _residents;
         public IReadOnlyList<string> Events => _events;
+
+        /// <summary>Each event row's first actor (Epic UI-Beta B5): a click on the row finds it on the map; default for none.</summary>
+        public IReadOnlyList<EntityId> EventActors => _eventActors;
 
         /// <summary>Keeps the selection while it exists on this map; otherwise picks the map's first real sector (id 0 is transit).</summary>
         internal void EnsureSelection()
@@ -98,7 +124,7 @@ namespace Simpiens.Presentation.Dashboard
             {
                 var zone = zones[i];
                 bool explored = _context.Zones.IsSectorExplored(zone.ZoneId);
-                string badge = explored ? _context.Zones.GetOccupancyCount(zone.ZoneId, _context.Registry).ToString(System.Globalization.CultureInfo.InvariantCulture) : "SHROUDED";
+                string badge = explored ? _context.Zones.GetOccupancyCount(zone.ZoneId, _context.Registry).ToString(System.Globalization.CultureInfo.InvariantCulture) : "UNCHARTED";
                 _sectors.Add(new SectorRow(zone.ZoneId, zone.Name, badge, !explored, zone.ZoneId == SelectedSectorId));
             }
 
@@ -114,19 +140,34 @@ namespace Simpiens.Presentation.Dashboard
                 if (node == null) continue;
                 var agent = node.Agent;
                 var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
-                _residents.Add(new ResidentRow(node.Id, $"{_context.FriendlyName(node.Id, node.Name)} [{node.Name}]", ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned));
+                bool face = agent.Look.IsComplete;
+                var portrait = face ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
+                _residents.Add(new ResidentRow(node.Id, _context.FriendlyName(node.Id, node.Name) + _context.DebugSuffix(node.Name), ActivityOf(agent), state, node.Id == selectedCrawler, agent.IsDowned, face, portrait));
             }
 
             _events.Clear();
+            _eventActors.Clear();
             _chronicle.Clear();
             _context.Chronicle?.GetSectorEvents(SelectedSectorId, _chronicle, MaxEvents);
             uint now = _context.Clock != null ? (uint)_context.Clock.CurrentTick : 0u;
+            // Grouped (Epic UI-Beta B5): events in a row with the same words are one line, at the newest's time, "×N" after it
+            _lastNarrative = null;
+            _repeats = 0;
             for (int i = 0; i < _chronicle.Count; i++)
             {
                 var evt = _chronicle[i];
                 string narrative = _context.Formatter != null ? _context.Formatter.FormatEvent(evt) : Invariant($"{evt.EventType} (Sector {evt.SectorId})");
+                if (narrative == _lastNarrative)
+                {
+                    _repeats++;
+                    continue;
+                }
+                CloseGroup();
+                _lastNarrative = narrative;
                 _events.Add($"{RelativeTimeFormatter.Format(evt.SimulationTick, now)} {narrative}");
+                _eventActors.Add(evt.ActorAId);
             }
+            CloseGroup();
         }
 
         /// <summary>What a crawler is doing, in words (Unity's resident card).</summary>

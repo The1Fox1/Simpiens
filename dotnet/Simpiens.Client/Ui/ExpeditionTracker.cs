@@ -33,7 +33,7 @@ namespace Simpiens.Client.Ui
                 Y = HeaderBar.Height + 12f,
                 Visible = false,
             };
-            UiParts.AddFill(Root, UiStyle.Panel, UiStyle.Border);
+            UiParts.AddFrame(Root, Simpiens.Presentation.Art.UiKit.FrameSteel); // the guild's blued steel
             var column = UiParts.Column(3f);
             column.X = 12f;
             column.Y = 10f;

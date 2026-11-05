@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Presentation.Art;
+using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Economy;
@@ -61,6 +62,12 @@ namespace Simpiens.Presentation
         /// <summary>Which art each entity of the frames is drawn with, in <see cref="Catalog"/>.</summary>
         public EntityVisuals Visuals { get; private set; }
 
+        /// <summary>
+        /// The bodies baked for the texture this scene is drawn with (Epic UI-Beta B2): with it, a crawler with a look is
+        /// drawn as its own body; without it (tests, tools), as today's figure. The client gives it its world texture's.
+        /// </summary>
+        public CrawlerBodies Bodies { get; set; }
+
         private ArtCatalog _catalog;
         private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow;
 
@@ -110,6 +117,7 @@ namespace Simpiens.Presentation
             }
             Fog.Update(frame, viewSeconds);
             if (frame == null) return;
+            Bodies?.Update(frame); // new bodies are seated and queued for the client to bake
             int crawlers = 0;
             for (int i = 0; i < frame.Count; i++)
             {
@@ -190,8 +198,9 @@ namespace Simpiens.Presentation
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
             if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
-            // Wearing its gear (graphics V5): a helmet is the crawler's own variant
+            // Wearing its gear (graphics V5): a helmet is the crawler's own variant. Its own body, when it has one (UI-Beta B2)
             var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn), pose.Frame, pose.ScaleX, pose.ScaleY);
+            if (Bodies != null && Bodies.TryCell(entity, pose.State, pose.Frame, out int body)) art = art.WithSprite(body);
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);
             Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
@@ -216,7 +225,8 @@ namespace Simpiens.Presentation
             if (shown <= 0f) return;
             var tint = Shown(White, shown);
             float depth = Projection.Depth(position);
-            Add(DrawRole.Prop, depth, _catalog.Piece(Visuals.Stall, viewSeconds), position, tint);
+            // Pickable under the stall's own id (Epic UI-Beta B5): a click on it opens the merchant terminal
+            Add(DrawRole.Prop, depth, _catalog.Piece(Visuals.Stall, viewSeconds), position, tint).Pick = Items.Pickable(stall.StallEntityId);
             var slots = _catalog.DisplaySlots;
             int slot = 0;
             for (int i = 0; i < TradeStallData.GoodsCapacity && slot < slots.Count; i++)

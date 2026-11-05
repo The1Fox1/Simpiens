@@ -102,8 +102,19 @@ namespace Simpiens.Client
         /// <summary>How the map's text was placed in the last frame drawn.</summary>
         public MapLabelLayout LabelLayout => _labelLayout;
 
-        /// <summary>What it draws with: the sheets, the renderer and the fonts, made by the shell once the device exists.</summary>
-        public void LoadContent(ClientGraphics graphics) => _graphics = graphics;
+        /// <summary>
+        /// What it draws with: the sheets, the renderer and the fonts, made by the shell once the device exists. The scene
+        /// draws crawlers as their bodies from the graphics' table (Epic UI-Beta B2); the bodies of the frame already
+        /// captured are baked into the new texture now, so a draw before the next update shows them.
+        /// </summary>
+        public void LoadContent(ClientGraphics graphics)
+        {
+            _graphics = graphics;
+            Scene.Bodies = graphics?.Bodies;
+            if (graphics == null) return;
+            graphics.Bodies.Update(_session.Frames.Current);
+            graphics.WriteBodies();
+        }
 
         /// <summary>
         /// One update of the view, in this order: the selection catches up with the frames, the rig follows the map and
@@ -146,6 +157,7 @@ namespace Simpiens.Client
                 else if (selection.Following && selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, cameraSeconds);
             }
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
+            _graphics?.WriteBodies(); // the bodies the scene seated, baked into the world texture before the draw
         }
 
         /// <summary>
@@ -159,13 +171,28 @@ namespace Simpiens.Client
 
         /// <summary>
         /// A left click on the map at a screen point: it picks what the last frame drew there (the picture the player
-        /// clicked on), and selects that crawler or the room under the point. Nothing is picked before the first frame.
+        /// clicked on), and selects that crawler or the room under the point; a click on the stall opens the merchant
+        /// terminal (Epic UI-Beta B5). Nothing is picked before the first frame.
         /// </summary>
         public void ClickMap(Vec2 screen)
         {
             if (View.Projection == null) return;
-            WorldPicker.TryPick(Scene.Items, View, screen, out var crawler);
-            _session.Selection.ClickAt(View.ScreenToFloor(screen), crawler);
+            WorldPicker.TryPick(Scene.Items, View, screen, out var picked);
+            if (picked != default && IsStall(picked))
+            {
+                _session.DashboardModel.OpenMerchant(); // the stall opens the merchant terminal (Epic UI-Beta B5)
+                return;
+            }
+            _session.Selection.ClickAt(View.ScreenToFloor(screen), picked);
+        }
+
+        // One of the frame's stalls
+        private bool IsStall(EntityId id)
+        {
+            var frame = _session.Frames.Current;
+            if (frame == null) return false;
+            for (int i = 0; i < frame.StallCount; i++) if (frame.Stall(i).StallEntityId == id) return true;
+            return false;
         }
 
         /// <summary>

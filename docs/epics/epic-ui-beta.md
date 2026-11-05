@@ -1,11 +1,11 @@
 # Epic UI-Beta: Crawler Identity and the Interface Pass
 
-- **Status**: PAUSED (2026-10-30) after B0 and B1, merged as PR #17 (§10). The producer's look at the people sheet passed. The producer then moved to Epic 10 Part 1; B2 resumes after its gate (G6). What exists: §10; what doesn't: B2–B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
+- **Status**: ACTIVE (2026-11-02). B2 to B5 and the UI polish are merged into `main` as one PR, #22 (2026-11-04). B2, bodies on the map, is done (2026-11-03, `feat/ui-beta-b2`, §10); the producer's look passed. B3, portraits and the dossier, is done (2026-11-03, `feat/ui-beta-b3`, §10). B4, faces everywhere, is done (2026-11-03, `feat/ui-beta-b4`, §10). B5, the interface pass, is done (2026-11-03, `feat/ui-beta-b5`, §10). The producer's looks at B3 to B5 passed (2026-11-03). The UI polish, Lantern & Stone, is done (2026-11-03, `feat/ui-polish`, §10), in this epic by default, between B5 and B6; its look passed. B2–B5 were worked under the producer's overnight directive (2026-11-02), each with a plan written before its work. B6, the gate, remains. PAUSED from 2026-10-30, after B0 and B1, merged as PR #17 (§10), while Epic 10 Part 1 ran. What exists: §10; what doesn't: B6 (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. B0–B1's working plan was deleted at close-out (2026-10-30); its findings are in §10.
 - **Track**: Track B: UI / UX & Player Interface. An interstitial, as UI-Alpha was: Epic UI-4 and UI-5 keep their places with Epic 10's Parts 2 and 3.
 - **Source**: the Claude Doc "Epic UI-Beta: Crawler Identity and the Interface Pass (draft)" (2026-10-29, Hearthlight added 2026-10-30), with the producer's answers below.
 - **Builds on**: Epic CLIENT (the KNI client; the graphics work's sprite kit, art catalogues and icon atlas), Epic 10 Part 1 (drifters, health, gear).
 - **Milestones**: B0 to B6 (Part 3's draft uses L0 to L6).
-- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (B2–B6), as an epic. Each milestone is Possibly Complex (§4). Its plan stamps each step when B2 resumes.
+- **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** for what remains (B2–B6), as an epic. Each milestone is Possibly Complex (§4). B2's plan stamps each of its steps.
 
 ---
 
@@ -103,10 +103,11 @@ B4 puts faces everywhere and adds the map inspector (Q10), affinities as rows, a
 | :--- | :--- | :-: | :--- | :--- |
 | B0 | Spike: rough body and Hearthlight portrait kits (test-only), the people sheet, the design note (§9) | 1–1.5 | The producer's look at the sheet | Done |
 | B1 | The look as data: `CrawlerLook`, `LookCatalog`, its own salt; names saved and unique; a register of everyone seen; save format raised; golden re-recorded once; a live scenario | 2–3 | The soak and the behaviour hashes hold | Done |
-| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Possibly Complex: generated pixel art with a head-anchor table; the art pins and map renders are re-recorded after the producer's look |
-| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Possibly Complex: the portrait kit's hair is the main risk (§9), and this milestone's gate is a question of taste |
-| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Possibly Complex: Gum draw cost (F21) under the frame-time gate |
-| B5 | The interface pass | 2–3 | Tests and renders | Possibly Complex as a whole. Its items are mostly Basic (the time of day, the stall opening the merchant terminal, debug ids in Debug builds only, the key help); tooltips, the grouped chronicle, icons in the bounty board's dropdown and marks that don't rely on colour are Possibly Complex. Stamp each item in the plan |
+| B2 | Bodies on the map: body kit, crawler region, art pins, map renders | 3–4 | The producer's look: the sheet and the map | Done (2026-11-03, §10) |
+| B3 | Portraits and the dossier: portrait kit and moods, atlas, header, cutscene speakers | 2–3 | The producer's look: portraits and the dossier | Done (2026-11-03, §10); the look passed |
+| B4 | Faces everywhere: inspector, faces in lists, click to find | 2 | The frame-time gate | Done (2026-11-03, §10) |
+| B5 | The interface pass | 2–3 | Tests and renders | Done (2026-11-03, §10); two items deferred or struck |
+| UI polish | Lantern & Stone: the UI kit, the header, one window chrome, motion, the window's size, portraits that grow | (not estimated) | The producer's look | Done (2026-11-03, §10) |
 | B6 | The gate: a client live test on the real outpost; docs | 1 | The producer's play session | Possibly Complex |
 
 Every milestone passes the standing gate: a build with no warnings, `dotnet test`, the client's tests exact in the pinned image, and golden and the soak wherever the core changed.
@@ -158,6 +159,8 @@ Only the core writes a look; everything after it reads. The roadmap's invariants
 | Animation beyond two-frame loops | M7 |
 | Shared render states for the UI (F21) | Only on B4's measurement |
 | Sound in the interface | Unscheduled |
+| The UI polish's flat leftovers: combo boxes, scroll bars and list cards in Gum's look; a window closing at once (no exit motion); the lintel's coursed mortar (an atlas region can't tile in Gum) | A later UI pass |
+| Tooltips on the header's counters and the dossier's drive bars (they take no events) | A later UI pass |
 
 ## 9. B0 design note (2026-10-30)
 
@@ -248,4 +251,137 @@ The spike is test-only (`Simpiens.Client.Tests/People/`). It draws every look in
   - The head is found from the hair's pixels in 42 of 48 frames; B2 holds an anchor table (§9).
 - **B0's gate:** the producer's look at the people sheet passed ("People sheet looks good", 2026-10-30).
 - **Open for the producer:** the delvers' name and lore (Q4); names by lineage.
+
+### B2 (done 2026-11-03, `feat/ui-beta-b2`, merged as PR #22)
+- **Delivered:**
+  - **The body kit** (`Simpiens.Presentation/Art/People/`): `ProceduralSprites.CrawlerKeys` keeps today's 24 pose frames in their key letters, and `HeadAnchors` holds each frame's head as data. `BodyKit` bakes a look's 24 frames from the keys, in this order: the hair style (all ten), facial hair, the miner's helm, the build, the delvers' height, the guild's tabard, then the look's colours (`LookPalettes`, B0's spike colours). The bake is pure, on the stack, and allocates nothing into a buffer.
+  - **The body region:** `BodySlots` appends 64 slots of 24 blank cells to the world sheet. `CrawlerBodies`, one per world texture, seats a body (look, helm, tabard) in a slot, so crawlers that look alike share one, and frees it when no crawler shows it. The client bakes each new slot into the texture after the scene's update (`ClientGraphics.WriteBodies`, `SpriteAtlas.Write`). A crawler stays one quad in the world's one batch. A crawler with no look, or past 64 bodies, is drawn as today's figure.
+  - **Frames:** `EntityView` carries the crawler's look and standing (`CrawlerStanding`: resident, drifter, guild member), which B3's portrait frames reuse.
+- **Decisions** (the plan's D1–D10, accepted with the look):
+  - state shows by pose and the marks over the head, with no new marks;
+  - the helm is the hazard gear's colours, with a pale lamp;
+  - the tabard is deep blue with a gold device;
+  - a sleeper keeps the bunk's blanket and takes no build or height.
+- **Checks:**
+  - `HeadAnchorTests`;
+  - `BodyKitTests`: same look, same pixels; every option the map shows changes the body, the rest change nothing; no overlay covers a mark or the tool; the helm, the tabard and the blanket; 0 bytes a bake;
+  - `CrawlerBodiesTests` and `BodyMapReviewTests`;
+  - the art pins of 146 bodies;
+  - **live** (`LiveBodiesTests`, nothing injected, the guild player acting through commands): every crawler of the day is drawn as its own body; the first drifter (t1306) arrives with one; the first guild member (t4096) wears the tabard; no two residents of the 23 gate seeds look alike.
+- **The producer's look:** the people sheet and the body maps passed ("Looks good, passed inspection", 2026-11-02).
+- **Measurements:**
+  - the world atlas grows from 192x178 to 768x726;
+  - the default seed's day takes 15 bakes, with at most 14 bodies at once;
+  - all 64 crowd looks bake to distinct bodies.
+- **Findings:**
+  - Epic CLIENT F12's near-ties at in-between zooms grow with the atlas: 10 pixels of 480,000 when it is packed in reverse, against 1 before. `AtlasIndependenceTests` allows 16. Every render stayed byte-identical in the pinned image.
+  - A delver's shortening once removed the harvester's tool row; it now skips rows holding a tool or a mark.
+  - A beard over a delver's short torso can hide all of the tabard but its device; the tests count the device as the tabard.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 377). The pinned image was exact, except at the commit that switched bodies on, where the 16 render and picture-pin tests failed until the next commit re-recorded them. MonoGame and Android compile. The core is unchanged, so golden is unaffected.
+
+### B3 (done 2026-11-03, `feat/ui-beta-b3`, merged as PR #22)
+- **Delivered** (`Simpiens.Presentation/Art/People/`, the client):
+  - **`PortraitKit`:** B0's spike grown into the presentation. A 48×48 Hearthlight bust from the look, on the stack, in tones; it allocates nothing into a buffer. It has:
+    - seven moods;
+    - the eight outfit cuts and five accessories;
+    - the helm with its lamp lit, and the guild's tabard;
+    - frames by standing (iron, bronze, blued steel) over the hub's stonework.
+  - **`MoodRule` and `MoodTracker`:** the face from the shown state, health and needs, by priority. Each threshold has a way back past it, and a mood holds 30 ticks unless the next is asleep or hurt.
+  - **`CrawlerPortraits` and the client's `PortraitAtlas`:** 48 slots, 1× and 2×, the least recently shown reused. A portrait is baked the first time it is shown.
+  - **The dossier's header:** the portrait at 2×, then the name, "Human, slight build. Resident.", the badge, and "Hungry. Health 100%.". The affinities list is 52 px (three lines, scrolling), so the buttons fit.
+  - **Speakers:** a dynamic scene's bubble and box show the speaker's portrait at 1×.
+- **Decisions, defaults awaiting the producer's look** (the plan's D1–D10):
+  - **D1, the mood rule:** asleep > hurt (downed, or health under 40; back at 50) > frustrated by a tantrum or defiance > scared (panicking) > frustrated (60; back under 50) > hungry (70; back under 60) > tired (energy 25; back over 35) > content. A mood holds 30 ticks.
+    - *Deviation:* a tantrum shows as panicking on the map, so it is checked before scared.
+  - **D2, faces:** a smile; heavy lids; brows up and a small open mouth; knit brows and a frown; wide eyes and an open mouth; a squeezed eye, a frown and a bandage; closed eyes.
+  - **D3, outfits:** primary cloth with secondary trim.
+  - **D4, accessories:** as listed in the plan's D4.
+  - **D5–D6, the helm, the tabard and the frames:** as above.
+  - **D7, the atlas:** 48 slots, least recently shown reused.
+  - **D8, the header:** as above.
+  - **D9, speakers:** dynamic scenes only; hard cutscenes' characters have no look.
+  - **D10, the pins:** 169 portraits pinned by name.
+- **Checks:**
+  - `PortraitKitTests`: every option of every gene and every mood changes the portrait; the frames, helm and tabard show; 0 bytes a bake.
+  - `MoodRuleTests`: no flicker at any threshold; the hold.
+  - `DossierPortraitTests` (Q12): the selected crawler's portrait is its own look, mood and standing, read back from the atlas texture pixel for pixel, and a change of mood re-bakes.
+  - `DynamicSceneTests`: the speaker's face is its own.
+  - The art pins of 169 portraits.
+- **Renders re-recorded in the pinned image:** the dashboard, the guild roster and the gossip scene.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 403). The pinned image was exact, except at the two commits that changed the picture, which were followed by their re-records. MonoGame and Android compile. The core is unchanged.
+- **The producer's look passed** (2026-11-03, with B4 and B5: "with epic ui beta completed I have confirmed that it passes inspection"), and with it D1–D10.
+
+### B4 (done 2026-11-03, `feat/ui-beta-b4`, merged as PR #22)
+- **Delivered:**
+  - **Faces:** a 32×32 crop of each portrait's head in a one-pixel frame by standing (`PortraitKit.Face`). It is a third cell of the portrait atlas's slot, so it costs no extra bake. `PortraitKey.Of` is the one way to key a crawler's portrait, so every face agrees.
+  - **The map inspector (Q10):** `InspectorModel` and `InspectorCard`, at the bottom left of the map while a crawler is selected. It shows:
+    - the portrait at 2×;
+    - the name, the badge and the mood line;
+    - health and the four needs, and the action;
+    - Open dossier, and Follow / Stop following.
+  - **Faces in the lists:**
+    - the residents in a sector;
+    - the guild roster's members;
+    - the dossier's affinities, now rows, two face-rows tall and scrolling. The dossier's gaps were tightened so the buttons fit.
+  - **Click to find:** `DashboardModel.FindOnMap`. A click on a face closes the windows and panels and selects the crawler on the map with the camera following.
+- **Decisions** (the plan's D1–D6, defaults for the producer's look): as above; the chronicle stays text.
+- **Checks:**
+  - a face is its portrait's head from the same bake;
+  - `InspectorTests`: the card, Follow, Open dossier, and click to find from a resident's and an affinity's face;
+  - renders re-recorded in the pinned image: the dashboard, the guild roster, the expedition (now with the inspector), and a new `render-iso-inspector-t300`.
+- **The gate:** `FrameTimeGateTests`, Debug, on this machine, at the existing budgets (mean 10 ms, p99 33 ms):
+
+  | View | Mean | p99 |
+  | :--- | :-: | :-: |
+  | The map alone | 2.31 ms | 3.01 ms |
+  | The map with the inspector | 2.57 ms | 2.87 ms |
+  | The dashboard with faces, 1280×720 | 5.29 ms | 8.78 ms |
+
+- **F21:** `UiDrawProbe`, Release, three alternating rounds against B3's tip, shows the UI's draw unchanged:
+  - median 3.08 ms (B3) against 3.12 ms (B4);
+  - texture switches 367 → 380, sprite-batch begins 234 → 234.
+  - Shared render states stay unneeded.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 409). The pinned image was exact after each re-record. MonoGame and Android compile. The core is unchanged.
+- **The producer's look passed** (2026-11-03), and with it D1–D6.
+
+### B5 (done 2026-11-03, `feat/ui-beta-b5`, merged as PR #22)
+- **Delivered** (Q11's items, each a commit):
+  1. **Debug ids only in development builds:** `ClientOptions.ShowDebugIds` → `DashboardContext.ShowDebugIds`. The desktop exe sets it in Debug builds; tests and the pinned image run without it.
+  2. **The time of day:** `OutpostClock`, a 9,000-tick day (the live scenarios' 15 minutes) from 06:00, with midnight starting the next day. The header shows "DAY 1 · 07:04" where it showed the tick; development builds keep the tick.
+  3. **Key help:** F1 (`InputAction.Help`, last in the enum) shows `KeyHelpOverlay`, every binding read from `KeyBindings`.
+  4. **The stall opens the merchant terminal:** the stall's counter is pickable under its own entity id.
+  5. **A grouped chronicle:** consecutive events with the same words are one row, "×N" after it.
+  6. **Events find their crawler** (Q11's "alerts that find their crawler"): a click on an event's row finds its first actor on the map (B4's `FindOnMap`).
+  7. **Tooltips:** `Tooltips`, a tip after half a second over a registered control, on real time. Registered on the header's eight buttons and the inspector's two.
+- **Deferred or struck** (for the producer):
+  - **Item 8, icons inside the bounty board's open item list:** deferred. The chosen item's icon already shows beside the dropdown (graphics V4). Icons in the open list need Gum's ComboBox item templates.
+  - **Item 9, state marks that don't rely on colour:** struck. Every state badge says its state as a word, and the map shows state by pose and marks (B2's D7). New glyphs would need new font glyphs.
+  - **Tooltips on the header's counters and the dossier's drive bars:** not done. They take no events, and giving them events changes how clicks fall through.
+- **Checks:**
+  - `OutpostClockTests`, `KeyHelpTests`, `TooltipTests`;
+  - `InterfacePassTests`: the stall's click in both modes, the grouped chronicle, and an event's row finding its crawler;
+  - name tests updated to no ids (with the option bringing them back);
+  - renders re-recorded in the pinned image: the 11 with the header or names, and the dashboard with the grouped chronicle.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test`, the batched re-records aside, which each commit says (at the end, core 143 and client 421). The pinned image was 421/421 exact at the end. MonoGame and Android compile. The core is unchanged.
+- **The producer's look passed** (2026-11-03); items 8 and 9 stand as deferred and struck.
+
+### UI polish, Lantern & Stone (done 2026-11-03, `feat/ui-polish`, merged as PR #22)
+- **Why:** at the look at B5 the producer asked for a UX pass on the menus and the header: a proposal with at least three flavors, then the preferred one built on a branch cut from `feat/ui-beta-b5`. The proposal is the Claude Doc "Simpiens UI Polish Proposal" (2026-11-03): https://claude.ai/artifact/1j4DQU1gwKmEWPMAr6XXvk. It audits the header and the menus and compares four flavors, with mockups and sources. It recommends B, Lantern & Stone: the UI cut from the outpost's stone and lit by the portraits' lantern. No epic was named for it; it sits here by default, between B5 and B6, as more of B5's interface pass.
+- **Delivered** (U0–U12, `Simpiens.Presentation` and `Simpiens.Client` only; the core, the saves and the golden hashes unchanged):
+  - **The palette** (U1): `UiStyle`'s tokens, muted state badges, a lighter veil.
+  - **The UI kit** (U2, `Art/UiKit`): plaques, stone buttons in their states, window frames in the standing metals, the slider's groove and glyphs, generated on the CPU into the icon sheet and pinned.
+  - **Stone buttons** (U3, `StoneSkin`, which runs after Gum's own state code): one amber primary action per window, and a button lit while its window is open.
+  - **The header in five clusters** (U4, `HeaderBar`): the outpost's figures, the windows, time, the view, and a menu with Save, Load (which asks first), key help and the window's size.
+  - **One window chrome** (U5), **copy in the world's voice** (U6), and **frames** on the dashboard's panels, the inspector, key help and the cutscene box (U8).
+  - **Motion** (U7, `Motion`): windows arrive and the gold rolls, behind `ClientOptions.UiMotion`, on in the desktop game and off in tests.
+  - **The window's size** (U10–U12, `WindowSizes`, `ClientSettings`): 1920 × 1080 by default; the menu picks 1280 × 720, 1920 × 1080, 2240 × 1260 or Full screen (borderless, at the screen's own size); the desktop exe keeps the choice. Gum's canvas follows the window at 1:1, so a larger window is more room, never larger UI.
+  - **Portraits that grow** (U11–U12, `PortraitAtlas.ScalesFor`): whole steps from the window's height. The dossier's and the inspector's are 2× at 720 rows, 3× at 1080 and 4× from 1260; the speakers' and who-is-here faces are 1×, then 2× from 1080. The panels around them grow by as much. The guild roster's and the feelings list's faces stay 1×.
+- **The producer's look passed** (2026-11-03: "This is looking really good"); U10–U12 came from it.
+- **Measurement:** `UiDrawProbe`, B4 → U8, one run right after a build, so the time is indicative only: the UI's draw 3.12 → 2.84 ms, texture switches 380 → 337, sprite-batch begins 234 → 204. The frames replaced fill-and-outline pairs.
+- **Findings:**
+  - Gum's canvas never followed the window before U10: a dragged window kept the UI at its first size. `EnableExpandToWindow` fixes it.
+  - The menu's load question hid its second line under its buttons from U4 until U10. Its rows now stack from the top.
+  - On the producer's screen (3440 × 1440 at a 1.05 Wayland scale: 1372 logical rows), a 2560 × 1440 window can't fit, and SDL reports the whole screen as usable, so the game can't tell beforehand.
+- **Left for later:** §8.
+- **Gate:** every commit built with 0 warnings and passed `dotnet test` (at the end, core 143 and client 438). The pinned image was 438/438 exact at the end, with renders and art pins re-recorded in their own commits. Golden 3/3. MonoGame compiles.
 

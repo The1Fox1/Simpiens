@@ -54,6 +54,11 @@ namespace Simpiens.Client.Tests
                 game.Session.DashboardModel.CloseWindow();
 
                 // A save's message, and the Dev Map with its banner
+                ui.Click(Centre(game.Play.Dashboard.Header.MenuButton));
+                Texts(game, seen); // the menu's words, and the load's question
+                ui.Click(Centre(game.Play.Dashboard.Header.LoadButton));
+                Texts(game, seen);
+                ui.Click(Centre(game.Play.Dashboard.Header.CancelLoadButton));
                 ui.Click(Centre(game.Play.Dashboard.Header.SaveButton));
                 ui.Frame(); // the host applies it before its next ticks (review D3)
                 for (int i = 0; i < 100 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();

@@ -20,15 +20,18 @@ namespace Simpiens.Presentation.Dashboard
     }
 
     /// <summary>
-    /// The header over the map (Unity's header bar): the outpost's treasury and stock, the active bounties, the tick, and
-    /// the pause and speed controls, whose clicks and keys leave as host commands (review D3). Unity's emoji are words
-    /// here: the UI font has none (plan D5).
+    /// The header over the map (Unity's header bar; Lantern &amp; Stone's clusters since the UI polish plan, U4): who and
+    /// where, the outpost's gold, stock and bounties as figures, the guild's count, the time of day, and the pause and speed
+    /// controls, whose clicks and keys leave as host commands (review D3).
     /// </summary>
     public sealed class HeaderModel
     {
-        public const string Title = "SIMPIENS FACILITY OS";
+        public const string Title = "SIMPIENS";
 
-        /// <summary>The speeds the player picks from, as multiples of real time: the speed control cycles them, keys 1 to 4 pick one.</summary>
+        /// <summary>The live outpost's place, under the title.</summary>
+        public const string OutpostPlace = "Floor 1 · The Outpost";
+
+        /// <summary>The speeds the player picks from, as multiples of real time: the speed pips pick one, keys 1 to 4 too.</summary>
         public static readonly float[] Speeds = { 1f, 2f, 5f, 10f };
 
         private readonly DashboardContext _context;
@@ -36,10 +39,22 @@ namespace Simpiens.Presentation.Dashboard
 
         internal HeaderModel(DashboardContext context) => _context = context;
 
-        /// <summary>The status pill: Unity's never changed.</summary>
-        public string Status { get; } = "OPERATIONAL";
+        /// <summary>Where the player is, under the title: the outpost's floor, or a test session's name.</summary>
+        public string Place
+        {
+            get
+            {
+                var session = _context.Sessions?.Current;
+                return session == null || session.Id == Simpiens.Core.Session.OutpostSession.SessionId ? OutpostPlace : session.DisplayName;
+            }
+        }
 
-        public string Treasury { get; private set; } = "0 GOLD";
+        /// <summary>The stall's treasury as a figure ("135"), beside the coin.</summary>
+        public string Gold { get; private set; } = "0";
+
+        /// <summary>The stall's treasury as a number (the header rolls its figure to it).</summary>
+        public long GoldAmount { get; private set; }
+
         public string Rations { get; private set; } = "0 RATIONS";
         public string Salvage { get; private set; } = "0 ORE | 0 HERB";
 
@@ -50,11 +65,25 @@ namespace Simpiens.Presentation.Dashboard
         public IReadOnlyList<HeaderStock> Stock => _stock;
 
         private readonly List<HeaderStock> _stock = new List<HeaderStock>(4);
-        public string Bounties { get; private set; } = "0 BOUNTIES";
 
-        /// <summary>The guild button's words: "GUILD 2/4" (Epic 10 G4, D6).</summary>
-        public string Guild { get; private set; } = "GUILD 0/4";
+        /// <summary>The active bounties as a figure ("1"), beside the notice.</summary>
+        public string BountyCount { get; private set; } = "0";
+
+        /// <summary>The active bounties in words: "1 active bounty", "3 active bounties".</summary>
+        public string Bounties { get; private set; } = "0 active bounties";
+
+        /// <summary>The guild button's words: "Guild 2/4" (Epic 10 G4, D6).</summary>
+        public string Guild { get; private set; } = "Guild 0/4";
         public string Tick { get; private set; } = "TICK: 00000";
+
+        /// <summary>The time of day (Epic UI-Beta B5): "Day 1 · 06:30". The header shows it, or the tick in development builds.</summary>
+        public string TimeOfDay { get; private set; } = OutpostClock.Text(0);
+
+        /// <summary>Night at the outpost: the clock's glyph is the moon.</summary>
+        public bool Night { get; private set; }
+
+        /// <summary>What the header's clock shows: the tick when the host shows debug ids, the time of day otherwise.</summary>
+        public string Clock => _context.ShowDebugIds ? Tick : TimeOfDay;
 
         /// <summary>The world's clock is stopped: the pause control offers to play.</summary>
         public bool Paused { get; private set; }
@@ -62,8 +91,14 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The speed the world runs at, or will run at when the player resumes ("1x" to "10x").</summary>
         public string Speed => Invariant($"{Speeds[_speedIndex]:0.#}x");
 
-        /// <summary>What the pause control says it will do.</summary>
-        public string PauseLabel => Paused ? "PLAY" : "PAUSE";
+        /// <summary>Which of <see cref="Speeds"/> the world runs at, or will when it resumes: the lit pip.</summary>
+        public int SpeedStep => _speedIndex;
+
+        /// <summary>A speed pip's words: "1×" to "10×".</summary>
+        public static string SpeedText(int step) => Invariant($"{Speeds[step]:0.#}×");
+
+        /// <summary>What the pause control will do: "Play" or "Pause".</summary>
+        public string PauseLabel => Paused ? "Play" : "Pause";
 
         /// <summary>The controls work only with a host to ask.</summary>
         public bool CanControlSpeed => _context.HostCommands != null;
@@ -86,7 +121,8 @@ namespace Simpiens.Presentation.Dashboard
         {
             // The food the stall sells, and the resources it buys that aren't hazardous (ore, herbs), by the client's words
             bool open = _context.TryGetStall(out var stall);
-            Treasury = open ? Invariant($"{stall.TreasuryGold} GOLD") : "0 GOLD";
+            GoldAmount = open ? stall.TreasuryGold : 0;
+            Gold = Invariant($"{GoldAmount}");
             var food = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Food)[0];
             Rations = Invariant($"{(open ? stall.StockOf(food) : 0)} {ItemTexts.Of(food).HeaderWord}");
             _stock.Clear();
@@ -102,14 +138,17 @@ namespace Simpiens.Presentation.Dashboard
             Salvage = string.Join(" | ", parts);
 
             int active = _context.Simulation?.ActiveBounties?.Count ?? 0;
-            Bounties = Invariant($"{active} BOUNTIES");
+            BountyCount = Invariant($"{active}");
+            Bounties = active == 1 ? "1 active bounty" : Invariant($"{active} active bounties");
             int members = _context.Simulation?.Guild?.Members.Count ?? 0;
-            Guild = Invariant($"GUILD {members}/{(_context.Simulation?.Economy?.Guild ?? Simpiens.Simulation.Economy.GuildTuning.Default).MaxMembers}");
+            Guild = Invariant($"Guild {members}/{(_context.Simulation?.Economy?.Guild ?? Simpiens.Simulation.Economy.GuildTuning.Default).MaxMembers}");
 
             var clock = _context.Clock;
             if (clock != null)
             {
                 Tick = Invariant($"TICK: {clock.CurrentTick:D5}");
+                TimeOfDay = OutpostClock.Text(clock.CurrentTick);
+                Night = OutpostClock.IsNight(clock.CurrentTick);
                 Paused = clock.TimeMultiplier <= 0f;
                 if (!Paused) _speedIndex = NearestSpeed(clock.TimeMultiplier); // a running clock says its speed; a paused one keeps the last
             }

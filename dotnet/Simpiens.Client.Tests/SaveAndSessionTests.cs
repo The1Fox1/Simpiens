@@ -33,13 +33,21 @@ namespace Simpiens.Client.Tests
             Assert.True(header.SaveButton.IsVisible && header.LoadButton.IsVisible, "Save and Load show with a slot.");
             Assert.StartsWith(Path.GetTempPath(), game.Session.SaveGame.QuickSavePath);
 
+            // Load is in the menu and asks first (the UI polish plan, U4)
+            ui.Click(Centre(header.MenuButton));
+            Assert.True(header.MenuOpen);
             ui.Click(Centre(header.LoadButton));
+            Assert.True(header.LoadPending, "Load asks before it replaces the session.");
+            ui.Click(Centre(header.ConfirmLoadButton));
+            Assert.False(header.MenuOpen);
             ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal("There is no quick save yet.", header.SaveStatusText);
 
             ui.Ticks(300);
             long saved = game.Session.Simulation.Clock.CurrentTick;
+            ui.Click(Centre(header.MenuButton));
             ui.Click(Centre(header.SaveButton));
+            Assert.False(header.MenuOpen);
             Assert.Equal("Saving...", game.Session.DashboardModel.Saves.Status);
             ui.Frame(); // the host applies it before its next ticks (review D3)
             for (int i = 0; i < 200 && game.Session.DashboardModel.Saves.IsSaving; i++) ui.Frame();
@@ -53,12 +61,19 @@ namespace Simpiens.Client.Tests
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             game.Session.DashboardModel.OpenBounties();
+            ui.Click(Centre(header.MenuButton));
             ui.Click(Centre(header.LoadButton));
+            ui.Click(Centre(header.CancelLoadButton)); // a second thought: nothing happens
+            Assert.False(header.LoadPending);
+            ui.Frame();
+            Assert.Equal(saved + 100, game.Session.Simulation.Clock.CurrentTick);
+            ui.Click(Centre(header.LoadButton));
+            ui.Click(Centre(header.ConfirmLoadButton));
             Assert.Equal(saved + 100, game.Session.Simulation.Clock.CurrentTick); // not inside the click: Gum is still dispatching it
             ui.Frame(); // the host applies it before its next ticks (review D3)
             Assert.Equal(saved, game.Session.Simulation.Clock.CurrentTick);
             Assert.Equal($"Loaded the save from tick {saved}.", header.SaveStatusText);
-            Assert.Contains(saved.ToString("D5"), game.Play.Dashboard.Header.TickText);
+            Assert.Equal(Simpiens.Presentation.Dashboard.OutpostClock.Text(saved), game.Play.Dashboard.Header.TickText);
             Assert.Equal(OutpostSession.DefaultCrawlerCount, game.Session.Simulation.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pawn));
             Assert.Equal(default, game.Session.Selection.SelectedCrawler); // ids are reissued: the selection is dropped
             Assert.False(game.Session.DashboardModel.Bounties.IsOpen, "A load closes the windows.");

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Simpiens.Presentation;
 using Simpiens.Presentation.Art;
+using Simpiens.Presentation.Art.People;
 using Xunit;
 
 namespace Simpiens.Client.Tests
@@ -42,14 +43,23 @@ namespace Simpiens.Client.Tests
             Assert.True(changes.Count == 0, "The art changed:\n" + string.Join("\n", changes));
         }
 
-        /// <summary>Every sprite once (a sprite in two sheets is one sprite), by name in ordinal order: "width height hash".</summary>
+        /// <summary>
+        /// Every sprite once (a sprite in two sheets is one sprite) but the body region's blank cells, and the pinned bodies
+        /// and portraits (<see cref="People.BodyPins"/>, <see cref="People.PortraitPins"/>), by name in ordinal order: "width height hash".
+        /// </summary>
         internal static SortedDictionary<string, string> CurrentPins()
         {
             var pins = new SortedDictionary<string, string>(StringComparer.Ordinal);
             foreach (var sheet in SpriteSheets.All)
             {
-                foreach (var sprite in SpriteSheets.Contents(sheet)) pins[sprite.Name] = $"{sprite.Width} {sprite.Height} {HashOf(sprite)}";
+                foreach (var sprite in SpriteSheets.Contents(sheet))
+                {
+                    if (BodySlots.IsSlot(sprite)) continue; // blank cells the client bakes bodies into (UI-Beta B2)
+                    pins[sprite.Name] = $"{sprite.Width} {sprite.Height} {HashOf(sprite)}";
+                }
             }
+            foreach (var body in People.BodyPins.All()) pins[body.Name] = $"{body.Width} {body.Height} {HashOf(body)}"; // the bodies the client bakes (UI-Beta B2)
+            foreach (var portrait in People.PortraitPins.All()) pins[portrait.Name] = $"{portrait.Width} {portrait.Height} {HashOf(portrait)}"; // and the portraits (B3)
             return pins;
         }
 

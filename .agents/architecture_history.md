@@ -1329,3 +1329,90 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - The plan is deleted.
 - **One PR for the whole plan (the producer, 2026-11-02),** with a commit per phase or step, each passing the six gates: 0 warnings; core 143/143; client 345/345; golden 3/3 unchanged; the pinned image byte for byte; MonoGame and Android compile.
 - Commits: `036b3a9` R5.1, `c223c82` `StableSort`, `6d7a7c8` R5.2.1, `5700f9a` R5.2.2, `8b2422d` R5.3.1, `ff1a67e` R5.3.2, `70353e3` R6.
+
+## 2026-11-03: Epic UI-Beta B2, bodies on the map (`feat/ui-beta-b2`)
+
+- **A body is baked once per look, on the CPU, from today's 24 pose frames read as key letters** (design §3.2).
+  - The head of each frame is data (`HeadAnchors`), not found from the hair: B0 found that fails on a blink and on the panicking eyes.
+  - The kit applies the look to the keys in a fixed order (hair, facial hair, helm, build, height, tabard), then paints them.
+  - Today's figures stay for crawlers with no look and for cutscene actors.
+- **The bakes go into a region of the world sheet** (`BodySlots`, 64 slots of 24 cells), so a crawler stays one quad in one batch.
+  - A slot holds a body (look, helm, tabard), not a crawler, and is freed when no crawler shows it.
+  - The table lives with the world texture (`ClientGraphics.Bodies`); the client writes queued bakes after the scene's update, and when it loads a new texture.
+  - Rejected again: tinted layers and a palette shader (the epic's §3.2).
+- **The near-ties grew with the atlas.** The atlas is now 768x726. Epic CLIENT F12's near-ties at in-between zooms went from 1 to 10 pixels of 480,000 when it is packed in reverse; the test allows 16, and the renders stayed byte-identical. A whole-scale render target remains the cure.
+- **The producer's look passed** ("Looks good, passed inspection", 2026-11-02), with D1–D10 as inspected. The art pins of the bodies and the 18 changed renders were recorded after it, each in a commit of its own.
+- **Directive (2026-11-02):** the producer, going to sleep, directed B3–B5 to continue, each with a plan written before its work. Each milestone gets its own branch, cut from the last because nothing can merge overnight. Nothing is pushed.
+- Commits: `4898b1b` plan, `5a63d90` P1, `5a08fb8` P2.1, `82b8f66` P2.2, `55232b5` P2.3, `a26f65f` P2.4, `fa35037` body pins, `032309b` switch-on, `2c93a5d` renders, `9f1634c` the live proof.
+
+## 2026-11-03: Epic UI-Beta B3, portraits and the dossier (`feat/ui-beta-b3`)
+
+- **Under the producer's overnight directive** ("continue working through B3-B5 ... an implementation plan for each work chunk before executing"). The plan was written and committed first (`f036a29`). The branch is cut from `feat/ui-beta-b2`, because nothing could merge overnight. The producer's look at B3 is pending.
+- **The portrait kit is B0's spike made production code**, on the stack so a bake allocates nothing. It adds the seven moods, eight outfits, five accessories, the helm, the tabard and frames by standing. The hair keeps the spike's cap with textures. It is the open question of taste.
+- **Moods are presentation, with hysteresis and a hold on ticks** (`MoodTracker`), so faces don't flicker and a run shows the same faces. Deviation: a tantrum is checked before scared, because it shows as panicking.
+- **Portraits are baked on first showing into a 48-slot atlas** (1× and 2×, the least recently shown reused). This is the icon atlas's pattern, written at run time like B2's body region, with `SetData` and a rectangle.
+- **The dossier's header** took vertical room, so the affinities list shrank to three scrolling lines to keep Calm and Recruit in the window.
+- Commits: `f036a29` plan, `2098ef0` kit, `e989630` portrait pins, `b2beb4f` moods, `a8433e5`/`2cfe488` the dossier and its renders, `ef37dae`/`3013877` speakers and the gossip render.
+
+## 2026-11-03: Epic UI-Beta B4, faces everywhere (`feat/ui-beta-b4`)
+
+- **Under the producer's overnight directive**, with the plan committed first (`94d34cb`). The branch is cut from `feat/ui-beta-b3`.
+- **A face is a crop of the portrait**, kept as a third cell of the same atlas slot, so faces cost no bakes of their own. `PortraitKey.Of` is the one place a crawler's portrait is keyed, so the dossier, the inspector, the scene speakers and the lists agree on its mood.
+- **The inspector is a view over its own engine-free model.** Its commands (Open dossier, Follow) and click-to-find (`FindOnMap`) go through the dashboard model, which owns the panels, the windows and the selection. A face's click is the face box's own, so a card's body keeps selecting into the dossier.
+- **The dossier's vertical budget:** the affinities became face rows, two tall and scrolling, and the dossier's gaps were tightened to keep the buttons in the window.
+- **F21 measured:** no change in the UI's draw time from faces (texture switches 367 → 380). Shared render states stay unneeded.
+- Commits: `94d34cb` plan, `16d0959` faces, `c3f4050`/`b6198ff` the inspector and its renders, `ea119ae`/`c36eebe` faces in lists and click to find, and their renders, `97086fc` the gate.
+
+## 2026-11-03: Epic UI-Beta B5, the interface pass (`feat/ui-beta-b5`)
+
+- **Under the producer's overnight directive**, with the plan committed first (`93a35d3`). The branch is cut from `feat/ui-beta-b4`.
+- **Debug ids became a host option** rather than `#if DEBUG` in the presentation. Tests run Debug and the pinned image Release, so a build-dependent name would have split the renders between them. The desktop exe sets the option in Debug builds.
+- **The time of day is presentation only** (`OutpostClock`, a 9,000-tick day from 06:00). The simulation reads no clock of the day. It takes the tick's place in the header, which has no room for both at 1280 px; development builds keep the tick.
+- **The stall is picked like a crawler,** from what the last frame drew, under its own entity id, so a crawler in front still wins.
+- **Tooltips run on real time,** so a tip shows while paused. An offscreen frame passes almost no real time, so their test drives the clock directly.
+- **Deferred or struck, for the producer:** icons inside the bounty board's open list (they need Gum's ComboBox item templates; the chosen item's icon already shows beside it); colour-free state marks (the badges already say the state as a word); tooltips on the counters and drive bars (they take no events).
+- Commits: `93a35d3` plan, then the items, each with its renders (items 1–4 recorded together).
+
+## 2026-11-03: UI polish, Lantern & Stone, U0–U6 (`feat/ui-polish`)
+
+- **Under the producer's direction** (2026-11-03: write a UX proposal with at least three flavors, then "begin working on your preferred design flavor" on a branch cut from `feat/ui-beta-b5`, while away). The report is a Claude Doc, "Simpiens UI Polish Proposal" (https://claude.ai/artifact/1j4DQU1gwKmEWPMAr6XXvk): an audit, sources, four flavors with mockups (Guildhall Ledger, Lantern & Stone, Facility Terminal, Clear Glass), a scored comparison. It recommends Lantern & Stone; the pick is the agent's until the producer's look. The plan (`.agents/ui_polish_plan.md`) was committed first (`2b9860d`).
+- **The kit's pieces live in the icon sheet,** after the items' icons, rather than in a sheet of their own: the icon atlas already packs, magnifies and pins that sheet, and it is the texture the menus draw from. `IconAtlas.Kit` finds a piece by name.
+- **Nine-slices that survive any filter.** Gum's renderer samples by point (probed: `TextureFilter=Point`), but each piece is still drawn so an edge is uniform along its length and a middle is one colour, so stretching never smears a seam.
+- **The skin follows Gum's states, never replaces them.** A V3 button's states are code (`StateSave.Apply`), not variables; `StoneSkin` wraps each state's code and runs after it, so Gum still decides hover, press and disable, and the kit picks the piece. The active state (a window open) is the kit's own flag. The kit reaches the controls through `UiStyle.Kit`, set where Gum is initialized, as Gum keeps its own style in statics.
+- **The header keeps its public members where they still mean the same** (the window buttons, pause, save, load, Tab), so wiring and tests moved little; speed became four pips, so its test reads the lit pip. Load moved into a menu and asks first. The menu is added last: the Dev Map's session switch sits where it drops, and took its clicks until then.
+- **Words:** only what the client owns changed. The chronicle's lines and its "[Just now]" stamps come from the core and stay, so the golden hashes don't move.
+- **Checks:** core 143/143; client 430/430 on the host and exact in the pinned image; golden 3/3; MonoGame and Android compile.
+- Commits: `2b9860d` plan, `ab2ad19` U1, `7a8a130`/`7132e82` U2 and its pins, `41c9861` U3, `6e42dd1` U4, `da683a4` U5, `5580b06` U6, `8b072c9` the renders.
+
+## 2026-11-03: UI polish, U7–U8 (`feat/ui-polish`)
+
+- **Frames everywhere a panel stands** (U8): the ledger, the inspector, key help and the cutscene box in iron, the expedition tracker in the guild's steel; insets as recessed plaques; drive bars in the groove. List cards, combo boxes and scroll bars stay flat in the palette for now.
+- **Motion is a host option, off in tests** (U7, `ClientOptions.UiMotion`, as `ShowDebugIds` is): the desktop game turns it on; tests and the pinned renders run without it, so no capture is caught mid-tween, and dedicated tests drive the tweens' clocks. A window starts its arrival on the frame it is shown (veil clear, frame low), so it never flashes at rest first; the rise is in whole pixels, so the icons stay on texel centres.
+- **The draw got cheaper:** frames replaced fill-and-outline pairs. `UiDrawProbe`: texture switches 380 → 337, sprite-batch begins 234 → 204 (B4 → U8).
+- Commits: `e3034fd` U8, `3c1a69d` its renders, `13466ab` U7.
+
+## 2026-11-03: UI polish, the window's size (`feat/ui-polish`, U10)
+
+- **At the producer's look** (2026-11-03: the window "is too small, I would like it to be 1920 x 1080", with a size picker in the menu for "the current ratio, 1920x1080, and 2560×1440"): read as the first default, 1280 × 720, beside the two named; all three are 16:9. They are `WindowSizes`, one row of pips in the header's menu, the window's own size lit; a dragged size lights none.
+- **The UI gets more room, never larger.** Text is baked and drawn 1:1, so the canvas follows the window at zoom 1 (Gum's `EnableExpandToWindow`). Before it, Gum's canvas kept the size it started with, so a window dragged larger drew the UI in its old corner: the size picker would have shown it at once.
+- **The window changes between updates,** at the start of the next one (`SimpiensGame.RequestWindowSize`), as host commands apply before ticks: never inside Gum's click, mid-layout.
+- **The choice is kept in a settings file only the desktop exe opts into** (`ClientOptions.SettingsFile`, as `UiMotion` and `ShowDebugIds` are host options): `settings.txt`, `key=value` lines beside the saves' folder; tests keep nothing, and a missing or odd file is no setting. `--width`/`--height` win over it. Sizes larger than the display aren't refused: the display's size isn't known the same way offscreen, so the window manager clamps them.
+
+## 2026-11-03: UI polish, full screen and portraits that grow (`feat/ui-polish`, U11)
+
+- **A 2560 × 1440 window can't fit a 1440-row screen.** On the producer's screen (3440 × 1440 under Wayland at a 1.05 scale: 1372 logical rows) KWin cut the window's height. SDL reports the whole screen as usable under Wayland, so the game can't refuse the size beforehand. Asked, the producer chose a **Full screen** choice in the menu: borderless at the screen's own size (`HardwareModeSwitch` off, so the screen's mode never changes), the back buffer the size of the screen the window is on (`GraphicsDevice.Adapter.CurrentDisplayMode`). A size pip leaves it; pressing it again goes back to the window it left; the settings file keeps it.
+- **Portraits grow in whole steps, nothing else** (the producer's pick over list faces or a 2x UI): text is baked and drawn 1:1, and portraits are pixel art, so scales are whole numbers from the window's height (`PortraitAtlas.ScalesFor`: the dossier's and the inspector's 2x at 720 rows, 3x at 1080, 4x at 1440; the speaker's 1x, then 2x). They stay baked on the CPU and drawn 1:1 (B3's D7): the atlas's cells hold the largest step, and a new step bakes the seated portraits again. The atlas is 2048 wide to stay inside the Reach profile's 2048 limit, which the game runs under.
+- **The panels around a portrait grow by as much as it does:** the dossier's column (the middle column gives up the room), the inspector card, the scene's bubble and box. Below 900 rows nothing changes, so the 720-row and 600-row renders are as they were.
+
+## 2026-11-03: UI polish, a window that fits and faces you can make out (`feat/ui-polish`, U12)
+
+- **2240 × 1260 replaces 2560 × 1440** at the producer's ask ("a screen size that would fit my monitor but isn't quite fullscreen"). Their screen has 1372 logical rows (1440 at a 1.05 scale), less a 44-row panel and a Breeze title bar of about 30: some 1298 rows for the picture. 2304 × 1296 would fit by two rows; 2240 × 1260 keeps 16:9 with room, and still gives 4x portraits (1260 rounds to 3.5 steps, half up).
+- **Faces in who is in a sector step up; the other lists' don't.** The producer had picked portraits only for U11, then found these faces too small to make out: so only this list follows the speaker's step (1x at 720 rows, 2x from 1080). The atlas keeps a 1x face cell for the guild roster and the feelings list, and a second cell at the step. The cards grow to hold their face and the list grows with them, so it still shows about four and a half cards.
+
+
+## 2026-11-04: Epic UI-Beta B2–B5 and the UI polish into `main` (PR #22)
+
+- **One PR for one line of branches.** B2–B5 were built each on the last (`feat/ui-beta-b2` → `-b5`), and the polish on B5 (`feat/ui-polish`). One PR from the polish's tip carries all of them, at the producer's "Open a PR and merge it", rather than five stacked PRs (the stacked #8 and #9 never reached `main`). This changes Q12's "later milestones one pull request each" for this stretch, as the producer's one-PR-per-plan rule (2026-11-02) did for plans.
+- **The looks passed:** B3 to B5 ("with epic ui beta completed I have confirmed that it passes inspection", 2026-11-03), so their defaults stand (B3's D1–D10, B4's D1–D6, B5's deferred and struck items). The polish passed too ("This is looking really good"), and U10–U12 came from that look.
+- **The polish belongs to Epic UI-Beta by default,** between B5 and B6, as more of B5's interface pass. The producer named no epic; the roadmap and the epic's §10 say so, and the producer may move it.
+- **The plan is closed out and deleted** (`.agents/ui_polish_plan.md`): its record is the epic's §10 ("UI polish"), its open items are in the epic's §8, and its decisions are in the U0–U12 entries above.

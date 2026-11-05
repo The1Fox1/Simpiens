@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Simpiens.Entities;
 using Simpiens.Intervention;
+using Simpiens.Presentation.Art.People;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
@@ -30,14 +32,48 @@ namespace Simpiens.Presentation.Dashboard
 
         private readonly DashboardContext _context;
         private readonly GuildModel _guild;
+        private readonly MoodTracker _moods;
+        private CrawlerLook _describedLook;
+        private CrawlerStanding _describedStanding;
+        private Mood _moodShown;
+        private int _healthShown = -1;
         private readonly List<string> _affinities = new List<string>(32);
         private readonly List<AffinityRow> _rows = new List<AffinityRow>(32);
+        private readonly List<AffinityRow> _shownRows = new List<AffinityRow>(32);
 
-        internal DossierModel(DashboardContext context, GuildModel guild = null)
+        internal DossierModel(DashboardContext context, GuildModel guild = null, MoodTracker moods = null)
         {
             _context = context;
             _guild = guild;
+            _moods = moods ?? new MoodTracker();
         }
+
+        /// <summary>Whether the crawler has a look to show (Epic UI-Beta B3): every crawler in play does; one built by hand may not.</summary>
+        public bool HasPortrait { get; private set; }
+
+        /// <summary>The portrait the header shows: its look, its mood now, its standing (the frame) and its helm.</summary>
+        public PortraitKey Portrait { get; private set; }
+
+        /// <summary>How it feels (<see cref="MoodRule"/>, held by the dashboard's tracker).</summary>
+        public Mood Mood { get; private set; }
+
+        /// <summary>"Human, average build. Resident."</summary>
+        public string Description { get; private set; } = string.Empty;
+
+        /// <summary>"Content. Health 100%."</summary>
+        public string MoodLine { get; private set; } = string.Empty;
+
+        /// <summary>How a crawler feels and its health, in words: "Content. Health 100%.", or "Hurt. Downed."</summary>
+        public static string MoodText(Mood mood, float health, bool downed)
+            => downed ? $"{mood}. Downed." : Invariant($"{mood}. Health {(int)System.MathF.Round(health)}%.");
+
+        /// <summary>A standing in words.</summary>
+        public static string StandingText(CrawlerStanding standing) => standing switch
+        {
+            CrawlerStanding.Drifter => "Drifter",
+            CrawlerStanding.GuildMember => "Guild member",
+            _ => "Resident",
+        };
 
         /// <summary>The crawler's groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit", or "No groups".</summary>
         public string Groups { get; private set; } = string.Empty;
@@ -89,6 +125,9 @@ namespace Simpiens.Presentation.Dashboard
         /// </summary>
         public IReadOnlyList<string> Affinities => _affinities;
 
+        /// <summary>The affinities as rows (Epic UI-Beta B4): the peer, its face when it is a crawler with a look, and the line.</summary>
+        public IReadOnlyList<AffinityRow> AffinityRows => _shownRows;
+
         public static string Percent(float value) => Invariant($"{value:F0}%");
 
         /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
@@ -108,12 +147,13 @@ namespace Simpiens.Presentation.Dashboard
             HasCrawler = agent != null;
             CrawlerId = HasCrawler ? node.Id : default;
             _affinities.Clear();
+            _shownRows.Clear();
             GearIcon = null;
             if (!HasCrawler) return;
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
             string title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
-            Name = string.IsNullOrEmpty(title) ? $"{friendly} [{node.Name}]" : $"{friendly} the {title} [{node.Name}]";
+            Name = (string.IsNullOrEmpty(title) ? friendly : $"{friendly} the {title}") + _context.DebugSuffix(node.Name);
             Residency = Stay(agent.DepartsAtTick, _context.Clock?.CurrentTick ?? 0);
             if (Residency.Length > 0) Name += " · " + Residency;
 
@@ -121,6 +161,7 @@ namespace Simpiens.Presentation.Dashboard
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
             var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
+            Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
             Gear = GearText(worn);
             GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
             Hunger = agent.Hunger;
@@ -144,10 +185,43 @@ namespace Simpiens.Presentation.Dashboard
                 string peerName = pair.Key == WorldRegistry.PlayerEntityId ? PlayerName
                     : peer != null ? _context.FriendlyName(peer.Id, peer.Name) : UnknownName;
                 var rel = pair.Value;
-                _rows.Add(new AffinityRow(rel.Warmth, peerName, Invariant($"{peerName}: W:{rel.Warmth:+0;-#;0} | T:{rel.Trust:+0;-#;0} | F:{rel.Fear:+0;-#;0} | R:{rel.Respect:+0;-#;0} ({rel.InteractionCount}x)")));
+                var peerAgent = peer?.Agent;
+                bool face = peerAgent != null && peerAgent.Look.IsComplete;
+                var portrait = face ? PortraitKey.Of(peer.Id, peerAgent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
+                _rows.Add(new AffinityRow(pair.Key, rel.Warmth, peerName, Invariant($"{peerName}: W:{rel.Warmth:+0;-#;0} | T:{rel.Trust:+0;-#;0} | F:{rel.Fear:+0;-#;0} | R:{rel.Respect:+0;-#;0} ({rel.InteractionCount}x)"), face, portrait));
             }
             _rows.Sort(WarmestFirst);
-            for (int i = 0; i < _rows.Count; i++) _affinities.Add(_rows[i].Line);
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                _affinities.Add(_rows[i].Line);
+                _shownRows.Add(_rows[i]);
+            }
+        }
+
+        // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change
+        private void Describe(EntityId id, Simpiens.Cognition.AgentState agent, ItemType worn)
+        {
+            var look = agent.Look;
+            var standing = WorldViewFrame.StandingOf(agent);
+            HasPortrait = look.IsComplete;
+            Portrait = PortraitKey.Of(id, agent, _moods, _context.Clock?.CurrentTick ?? 0);
+            Mood = Portrait.Mood;
+            if (!look.Equals(_describedLook) || standing != _describedStanding || Description.Length == 0)
+            {
+                _describedLook = look;
+                _describedStanding = standing;
+                var lineage = LookCatalog.Lineage(look.Lineage);
+                Description = HasPortrait
+                    ? $"{lineage?.Name ?? "Unknown"}, {LookCatalog.Option(LookGene.Build, look.Build)?.Name ?? "unknown"} build. {StandingText(standing)}."
+                    : StandingText(standing) + ".";
+            }
+            int health = (int)System.MathF.Round(agent.Health);
+            if (Mood != _moodShown || health != _healthShown || MoodLine.Length == 0)
+            {
+                _moodShown = Mood;
+                _healthShown = health;
+                MoodLine = MoodText(Mood, agent.Health, agent.IsDowned);
+            }
         }
 
         /// <summary>
@@ -173,18 +247,25 @@ namespace Simpiens.Presentation.Dashboard
             return minutes == 1 ? "drifter, leaves in 1 min" : Invariant($"drifter, leaves in {minutes} min");
         }
 
-        private readonly struct AffinityRow
+        /// <summary>One affinity: the peer (the player, a crawler, or one no longer in the world), its face if it has one, and the line.</summary>
+        public readonly struct AffinityRow
         {
-            public AffinityRow(float warmth, string name, string line)
+            public AffinityRow(EntityId peerId, float warmth, string name, string line, bool hasPortrait = false, PortraitKey portrait = default)
             {
+                PeerId = peerId;
                 Warmth = warmth;
                 Name = name;
                 Line = line;
+                HasPortrait = hasPortrait;
+                Portrait = portrait;
             }
 
+            public EntityId PeerId { get; }
             public float Warmth { get; }
             public string Name { get; }
             public string Line { get; }
+            public bool HasPortrait { get; }
+            public PortraitKey Portrait { get; }
         }
     }
 }

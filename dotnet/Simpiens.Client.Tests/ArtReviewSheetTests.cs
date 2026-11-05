@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Simpiens.Presentation;
 using Simpiens.Presentation.Art;
+using Simpiens.Presentation.Art.People;
 using Xunit;
 
 namespace Simpiens.Client.Tests
@@ -33,7 +34,7 @@ namespace Simpiens.Client.Tests
             int y = Margin;
             foreach (var sheet in SpriteSheets.All)
             {
-                var sprites = SpriteSheets.Contents(sheet).Where(shown.Add).ToList();
+                var sprites = SpriteSheets.Contents(sheet).Where(s => !BodySlots.IsSlot(s)).Where(shown.Add).ToList(); // the body region is blank
                 if (sprites.Count == 0) continue;
                 titlesAt.Add(($"{sheet} ({sprites.Count})", Margin, y));
                 y += titles.LineHeight + 6;
@@ -59,7 +60,7 @@ namespace Simpiens.Client.Tests
             int sheetHeight = y + Margin - Gap;
 
             // Every sprite once, and nothing on top of anything else
-            int distinct = SpriteSheets.All.SelectMany(SpriteSheets.Contents).Distinct(ReferenceEqualityComparer.Instance).Count();
+            int distinct = SpriteSheets.All.SelectMany(SpriteSheets.Contents).Where(s => !BodySlots.IsSlot(s)).Distinct(ReferenceEqualityComparer.Instance).Count();
             Assert.Equal(distinct, placed.Count);
             var boxes = placed.SelectMany(p => new[]
             {

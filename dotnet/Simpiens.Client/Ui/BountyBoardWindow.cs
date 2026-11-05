@@ -34,7 +34,7 @@ namespace Simpiens.Client.Ui
         {
             _icons = icons;
             _model = model;
-            Window = new Window("bounty-board", "PUBLIC BOUNTY BOARD", "Contract posting, automated escrow, and public agent directives.", Width, UiStyle.Gold);
+            Window = new Window("bounty-board", "The Bounty Board", "Work posted for any crawler. Its reward waits in escrow until it is done.", Width, Simpiens.Presentation.Art.UiKit.FrameIron, Simpiens.Presentation.Art.UiKit.Notice);
 
             var columns = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = ColumnGap };
             Window.Body.Children.Add(columns);
@@ -44,7 +44,7 @@ namespace Simpiens.Client.Ui
             list.WidthUnits = DimensionUnitType.Absolute;
             list.Width = ListWidth;
             var listHeader = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 22f };
-            listHeader.Children.Add(Window.SubHeader("ACTIVE CONTRACTS"));
+            listHeader.Children.Add(Window.SubHeader("ON THE BOARD"));
             var countPill = UiParts.Pill(out _count, "0 ACTIVE", UiParts.Alpha(UiStyle.Gold, 0.15f), UiStyle.Gold, UiStyle.GoldText);
             countPill.XUnits = GeneralUnitType.PixelsFromLarge;
             countPill.XOrigin = HorizontalAlignment.Right;
@@ -62,10 +62,10 @@ namespace Simpiens.Client.Ui
             var form = UiParts.Column(4f);
             form.WidthUnits = DimensionUnitType.Absolute;
             form.Width = FormWidth;
-            form.Children.Add(Window.SubHeader("POST NEW CONTRACT"));
+            form.Children.Add(Window.SubHeader("POST A BOUNTY"));
             form.Children.Add(Window.Gap(4f));
 
-            form.Children.Add(Label("Contract Directive Type:"));
+            form.Children.Add(Label("Kind of work:"));
             TypeBox = Dropdown(new[] { nameof(BountyType.GatherResource), nameof(BountyType.ScoutSector) });
             form.Children.Add(TypeBox.Visual);
             TypeBox.SelectionChanged += (_, _) =>
@@ -76,7 +76,7 @@ namespace Simpiens.Client.Ui
             };
 
             var sectorLabelRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 18f };
-            sectorLabelRow.Children.Add(Label("Target Sector:"));
+            sectorLabelRow.Children.Add(Label("Sector:"));
             _sectorState = UiParts.Text(string.Empty, UiStyle.Accent, UiText.SmallBold);
             _sectorState.XUnits = GeneralUnitType.PixelsFromLarge;
             _sectorState.XOrigin = HorizontalAlignment.Right;
@@ -92,7 +92,7 @@ namespace Simpiens.Client.Ui
             };
 
             _itemGroup = FormGroup();
-            _itemGroup.Children.Add(Label("Requested Salvage Item:"));
+            _itemGroup.Children.Add(Label("Salvage wanted:"));
             // The items a Gather bounty can ask for, by their catalog names, in the model's order
             var gatherItems = BountyBoardModel.GatherItems;
             var names = new string[gatherItems.Count];
@@ -111,10 +111,10 @@ namespace Simpiens.Client.Ui
             form.Children.Add(_itemGroup);
 
             _quantityGroup = FormGroup();
-            QuantitySlider = SliderRow(_quantityGroup, "Required Quantity:", BountyBoardModel.MinQuantity, BountyBoardModel.MaxQuantity, 1, v => _model.Quantity = v, BountyBoardModel.QuantityText, out _quantityValue);
+            QuantitySlider = SliderRow(_quantityGroup, "How many:", BountyBoardModel.MinQuantity, BountyBoardModel.MaxQuantity, 1, v => _model.Quantity = v, BountyBoardModel.QuantityText, out _quantityValue);
             form.Children.Add(_quantityGroup);
-            RewardSlider = SliderRow(form, "Reward Escrow (Gold):", BountyBoardModel.MinReward, BountyBoardModel.MaxReward, 1, v => _model.Reward = v, BountyBoardModel.RewardText, out _rewardValue);
-            DurationSlider = SliderRow(form, "Contract Duration:", BountyBoardModel.MinDuration, BountyBoardModel.MaxDuration, 50, v => _model.Duration = v, BountyBoardModel.DurationText, out _durationValue);
+            RewardSlider = SliderRow(form, "Reward, held in escrow:", BountyBoardModel.MinReward, BountyBoardModel.MaxReward, 1, v => _model.Reward = v, BountyBoardModel.RewardText, out _rewardValue);
+            DurationSlider = SliderRow(form, "Posted for:", BountyBoardModel.MinDuration, BountyBoardModel.MaxDuration, 50, v => _model.Duration = v, BountyBoardModel.DurationText, out _durationValue);
 
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(Window.Rule());
@@ -123,7 +123,7 @@ namespace Simpiens.Client.Ui
             _feedback.Width = 0f;
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(_feedback);
-            PostButton = UiParts.Button("POST BOUNTY (ESCROW GOLD)", FormWidth, 34f, UiText.BodyBold);
+            PostButton = UiParts.PrimaryButton("Post the bounty", FormWidth, 34f, UiText.BodyBold);
             form.Children.Add(PostButton.Visual);
             PostButton.Click += (_, _) => { _model.Post(); Bind(); };
             columns.Children.Add(form);
@@ -286,7 +286,7 @@ namespace Simpiens.Client.Ui
             _reward.X = 10f;
             _reward.Y = 42f;
             Root.Children.Add(_reward);
-            CancelButton = UiParts.Button("CANCEL", 70f, 22f);
+            CancelButton = UiParts.Button("Cancel", 70f, 22f);
             CancelButton.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             CancelButton.Visual.XOrigin = HorizontalAlignment.Right;
             CancelButton.X = -8f;

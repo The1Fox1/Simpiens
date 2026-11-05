@@ -14,6 +14,8 @@ namespace Simpiens.Presentation
     {
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(48);
         private static readonly PixelSprite[,] _agentSprites = new PixelSprite[12, 2];
+        private static readonly IReadOnlyList<string>[,] _agentPatterns = new IReadOnlyList<string>[12, 2];
+        private static readonly Dictionary<char, Rgba32> _crawlerKeys, _sleepKeys; // a standing crawler's palette (its fixed letters are every state's), and the sleeper's
         private static readonly PixelSprite _resourceSprite;
         private static readonly PixelSprite _oreVeinSprite;
         private static readonly PixelSprite _herbPatchSprite;
@@ -67,8 +69,9 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(14, 116, 144, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Idle, 0] = CreateSprite(PatternIdle0, idlePalette, "Agent_Idle_0");
-            _agentSprites[(int)AgentVisualState.Idle, 1] = CreateSprite(PatternIdle1, idlePalette, "Agent_Idle_1");
+            _crawlerKeys = idlePalette;
+            Agent(AgentVisualState.Idle, 0, PatternIdle0, idlePalette, "Agent_Idle_0");
+            Agent(AgentVisualState.Idle, 1, PatternIdle1, idlePalette, "Agent_Idle_1");
 
             // 2. Walking Sprites (Emerald Outfit)
             var walkPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -76,8 +79,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(21, 128, 61, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Walking, 0] = CreateSprite(PatternWalk0, walkPalette, "Agent_Walk_0");
-            _agentSprites[(int)AgentVisualState.Walking, 1] = CreateSprite(PatternWalk1, walkPalette, "Agent_Walk_1");
+            Agent(AgentVisualState.Walking, 0, PatternWalk0, walkPalette, "Agent_Walk_0");
+            Agent(AgentVisualState.Walking, 1, PatternWalk1, walkPalette, "Agent_Walk_1");
 
             // 3. Harvesting Sprites (Amber Outfit + Tool)
             var harvestPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -85,8 +88,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(180, 83, 9, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Harvesting, 0] = CreateSprite(PatternHarvest0, harvestPalette, "Agent_Harvest_0");
-            _agentSprites[(int)AgentVisualState.Harvesting, 1] = CreateSprite(PatternHarvest1, harvestPalette, "Agent_Harvest_1");
+            Agent(AgentVisualState.Harvesting, 0, PatternHarvest0, harvestPalette, "Agent_Harvest_0");
+            Agent(AgentVisualState.Harvesting, 1, PatternHarvest1, harvestPalette, "Agent_Harvest_1");
 
             // 4. Gossiping Sprites (Magenta Outfit + Speech Bubble)
             var gossipPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -94,8 +97,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(134, 25, 143, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Gossiping, 0] = CreateSprite(PatternGossip0, gossipPalette, "Agent_Gossip_0");
-            _agentSprites[(int)AgentVisualState.Gossiping, 1] = CreateSprite(PatternGossip1, gossipPalette, "Agent_Gossip_1");
+            Agent(AgentVisualState.Gossiping, 0, PatternGossip0, gossipPalette, "Agent_Gossip_0");
+            Agent(AgentVisualState.Gossiping, 1, PatternGossip1, gossipPalette, "Agent_Gossip_1");
 
             // 5. Panicking Sprites (Crimson Outfit + Exclamation)
             var panicPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -103,8 +106,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(153, 27, 27, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Panicking, 0] = CreateSprite(PatternPanic0, panicPalette, "Agent_Panic_0");
-            _agentSprites[(int)AgentVisualState.Panicking, 1] = CreateSprite(PatternPanic1, panicPalette, "Agent_Panic_1");
+            Agent(AgentVisualState.Panicking, 0, PatternPanic0, panicPalette, "Agent_Panic_0");
+            Agent(AgentVisualState.Panicking, 1, PatternPanic1, panicPalette, "Agent_Panic_1");
 
             // 6. Thinking Sprites (Indigo Outfit + Thought Cloud)
             var thinkPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -112,8 +115,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(67, 56, 202, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Thinking, 0] = CreateSprite(PatternThink0, thinkPalette, "Agent_Think_0");
-            _agentSprites[(int)AgentVisualState.Thinking, 1] = CreateSprite(PatternThink1, thinkPalette, "Agent_Think_1");
+            Agent(AgentVisualState.Thinking, 0, PatternThink0, thinkPalette, "Agent_Think_0");
+            Agent(AgentVisualState.Thinking, 1, PatternThink1, thinkPalette, "Agent_Think_1");
 
             // 7. Resting Sprites (Soft Blue / Nightcap Outfit + Zzz)
             var restPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -121,8 +124,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(29, 78, 216, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Resting, 0] = CreateSprite(PatternRest0, restPalette, "Agent_Rest_0");
-            _agentSprites[(int)AgentVisualState.Resting, 1] = CreateSprite(PatternRest1, restPalette, "Agent_Rest_1");
+            Agent(AgentVisualState.Resting, 0, PatternRest0, restPalette, "Agent_Rest_0");
+            Agent(AgentVisualState.Resting, 1, PatternRest1, restPalette, "Agent_Rest_1");
 
             // 8. Yielding Sprites (Warm Amber / Submissive Cower)
             var yieldPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -130,8 +133,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(217, 119, 6, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Yielding, 0] = CreateSprite(PatternYield0, yieldPalette, "Agent_Yield_0");
-            _agentSprites[(int)AgentVisualState.Yielding, 1] = CreateSprite(PatternYield1, yieldPalette, "Agent_Yield_1");
+            Agent(AgentVisualState.Yielding, 0, PatternYield0, yieldPalette, "Agent_Yield_0");
+            Agent(AgentVisualState.Yielding, 1, PatternYield1, yieldPalette, "Agent_Yield_1");
 
             // 9. Sharing Sprites (Compassionate Emerald/Mint Outfit + Extended Hands)
             var sharePalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -139,8 +142,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(16, 185, 129, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Sharing, 0] = CreateSprite(PatternShare0, sharePalette, "Agent_Share_0");
-            _agentSprites[(int)AgentVisualState.Sharing, 1] = CreateSprite(PatternShare1, sharePalette, "Agent_Share_1");
+            Agent(AgentVisualState.Sharing, 0, PatternShare0, sharePalette, "Agent_Share_0");
+            Agent(AgentVisualState.Sharing, 1, PatternShare1, sharePalette, "Agent_Share_1");
 
             // 10. Rallying Sprites (Gold / Amber livery + raised banner)
             var rallyPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -148,8 +151,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(161, 98, 7, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Rallying, 0] = CreateSprite(PatternRally0, rallyPalette, "Agent_Rally_0");
-            _agentSprites[(int)AgentVisualState.Rallying, 1] = CreateSprite(PatternRally1, rallyPalette, "Agent_Rally_1");
+            Agent(AgentVisualState.Rallying, 0, PatternRally0, rallyPalette, "Agent_Rally_0");
+            Agent(AgentVisualState.Rallying, 1, PatternRally1, rallyPalette, "Agent_Rally_1");
 
             // 11. Defiant Sprites (Crimson / Dark Red Outfit + crossed arms)
             var defiantPalette = CreatePalette(clear, outline, skin, white, black, hair,
@@ -157,8 +160,8 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(127, 29, 29, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Defiant, 0] = CreateSprite(PatternDefiant0, defiantPalette, "Agent_Defiant_0");
-            _agentSprites[(int)AgentVisualState.Defiant, 1] = CreateSprite(PatternDefiant1, defiantPalette, "Agent_Defiant_1");
+            Agent(AgentVisualState.Defiant, 0, PatternDefiant0, defiantPalette, "Agent_Defiant_0");
+            Agent(AgentVisualState.Defiant, 1, PatternDefiant1, defiantPalette, "Agent_Defiant_1");
 
             // 11b. Sleeping Sprites (head on the bunk's pillow, under a blanket in the bunk's colours). Drawn over the
             // bunk sprite (agent scale 0.7, bunk 0.9): the blanket covers the bunk's blanket and leaves its frame showing.
@@ -167,8 +170,9 @@ namespace Simpiens.Presentation
                 shadow: new Rgba32(55, 79, 150, 255),
                 tool: tool, ex: exclamation, q: question);
 
-            _agentSprites[(int)AgentVisualState.Sleeping, 0] = CreateSprite(PatternSleep0, sleepPalette, "Agent_Sleep_0");
-            _agentSprites[(int)AgentVisualState.Sleeping, 1] = CreateSprite(PatternSleep1, sleepPalette, "Agent_Sleep_1");
+            _sleepKeys = sleepPalette;
+            Agent(AgentVisualState.Sleeping, 0, PatternSleep0, sleepPalette, "Agent_Sleep_0");
+            Agent(AgentVisualState.Sleeping, 1, PatternSleep1, sleepPalette, "Agent_Sleep_1");
 
             // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Rgba32>
@@ -302,6 +306,25 @@ namespace Simpiens.Presentation
             return sprite;
         }
 
+        /// <summary>
+        /// A crawler frame's pattern in its key letters, rows from the top (Epic UI-Beta B2): '#' outline, 'K' skin,
+        /// 'H' hair, 'B' eyes, 'W' white, 'C' shirt, 'S' trousers (asleep, the blanket's two colours), 'T' tool, and the
+        /// marks '!', '?' and 'Z'. The body kit reads these keys, never the sprite's colours.
+        /// </summary>
+        public static IReadOnlyList<string> CrawlerKeys(AgentVisualState state, int frame)
+        {
+            int stateIdx = (int)state;
+            if (stateIdx < 0 || stateIdx >= _agentPatterns.GetLength(0)) stateIdx = 0;
+            return _agentPatterns[stateIdx, frame & 1];
+        }
+
+        /// <summary>
+        /// The colour today's frames give <paramref name="key"/> (Epic UI-Beta B2): for the letters no look recolours
+        /// (outline, eyes, white, tool, the marks), and asleep, for the blanket's 'C' and 'S'. Clear for an unknown key.
+        /// </summary>
+        public static Rgba32 CrawlerKeyColour(char key, bool asleep = false)
+            => (asleep ? _sleepKeys : _crawlerKeys).TryGetValue(key, out var colour) ? colour : Rgba32.Clear;
+
         public static PixelSprite GetAgentSprite(AgentVisualState state, int frame)
         {
             int stateIdx = (int)state;
@@ -328,6 +351,13 @@ namespace Simpiens.Presentation
                 { '?', q },
                 { 'Z', new Rgba32(147, 197, 253, 255) }
             };
+        }
+
+        // A crawler frame: its sprite, and its pattern kept in key letters for the body kit (Epic UI-Beta B2)
+        private static void Agent(AgentVisualState state, int frame, string[] pattern, Dictionary<char, Rgba32> palette, string name)
+        {
+            _agentPatterns[(int)state, frame] = System.Array.AsReadOnly(pattern);
+            _agentSprites[(int)state, frame] = CreateSprite(pattern, palette, name);
         }
 
         private static PixelSprite CreateSprite(string[] lines, Dictionary<char, Rgba32> palette, string name)

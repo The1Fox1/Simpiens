@@ -170,8 +170,21 @@ namespace Simpiens.Client.Tests
             Assert.Equal(talker, view.Speaker);
             Assert.Equal(game.Session.Identity.GetFriendlyName(talker), view.Bubble.Speaker.Text);
             AssertOverHead(game, talker, view.Bubble);
+            AssertTheFaceIsTheSpeakers(game, talker, view.Bubble);
             ui.Frame(5); // it walks; the bubble goes with it
             AssertOverHead(game, talker, view.Bubble);
+        }
+
+        // The speaker's face beside its line (Epic UI-Beta B3, D9): its own portrait at the speaker's scale, in the portrait atlas
+        private static void AssertTheFaceIsTheSpeakers(SimpiensGame game, EntityId speaker, Simpiens.Client.Ui.CutsceneTextBox box)
+        {
+            Assert.True(box.Face.Visible, "No face beside the line.");
+            var agent = game.Session.Simulation.Registry.GetEntity(speaker).Agent;
+            var atlas = game.Graphics.Portraits;
+            bool found = false;
+            for (int slot = 0; slot < Simpiens.Presentation.Art.People.CrawlerPortraits.Slots && !found; slot++)
+                found = atlas.Table.TryKeyIn(slot, out var key) && key.Look == agent.Look && atlas.ShowSpeaker(key) == box.Face.SourceRectangle;
+            Assert.True(found, "The face shown isn't the speaker's portrait.");
         }
 
         private static void AssertOverHead(SimpiensGame game, EntityId crawler, Simpiens.Client.Ui.CutsceneTextBox bubble)
@@ -179,8 +192,9 @@ namespace Simpiens.Client.Tests
             FrameCapture.Capture(game, 1280, 720);
             game.Session.Frames.TryGetDrawnPosition(crawler, out var at);
             var head = game.World.View.WorldToScreen(at, game.World.Mode.Catalog.NameHeight + 0.25f);
-            Assert.InRange(bubble.Root.X + DynamicSceneView.BubbleWidth / 2f, head.X - 1f, head.X + 1f);
-            Assert.InRange(bubble.Root.Y + DynamicSceneView.BubbleHeight, head.Y - 1f, head.Y + 1f);
+            var view = game.Play.Scenes;
+            Assert.InRange(bubble.Root.X + view.BubbleWidth / 2f, head.X - 1f, head.X + 1f);
+            Assert.InRange(bubble.Root.Y + view.BubbleHeight, head.Y - 1f, head.Y + 1f);
         }
 
         [Fact]

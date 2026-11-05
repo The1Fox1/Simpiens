@@ -249,14 +249,16 @@ namespace Simpiens.Client.Tests
             model.Refresh();
 
             Assert.True(model.Context.TryGetStall(out var stall));
-            Assert.Equal($"{stall.TreasuryGold} GOLD", model.Header.Treasury);
+            Assert.Equal($"{stall.TreasuryGold}", model.Header.Gold);
             Assert.Equal($"{stall.RationStock} RATIONS", model.Header.Rations);
             Assert.Equal("TICK: 00000", model.Header.Tick);
-            Assert.Equal($"{sim.Simulation.ActiveBounties.Count} BOUNTIES", model.Header.Bounties);
+            int bounties = sim.Simulation.ActiveBounties.Count;
+            Assert.Equal($"{bounties}", model.Header.BountyCount);
+            Assert.Equal(bounties == 1 ? "1 active bounty" : $"{bounties} active bounties", model.Header.Bounties);
 
             // Every sector is listed; the two frontier rooms are shrouded; the whole crew is at the Road Gate
             Assert.Equal(sim.Sectors.All.Count, model.Sectors.Sectors.Count);
-            Assert.Equal("SHROUDED", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.DeepSeamSectorId).Badge);
+            Assert.Equal("UNCHARTED", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.DeepSeamSectorId).Badge);
             Assert.Equal("12", model.Sectors.Sectors.First(r => r.SectorId == Floor1Layout.RoadGateSectorId).Badge);
             Assert.NotEqual(0, model.Sectors.SelectedSectorId);
 
@@ -273,7 +275,13 @@ namespace Simpiens.Client.Tests
             Assert.True(model.Dossier.HasCrawler);
             var agent = sim.Registry.GetEntity(resident.CrawlerId).Agent;
             Assert.Equal(agent.Hunger, model.Dossier.Hunger);
-            Assert.Contains("[", model.Dossier.Name);
+            Assert.DoesNotContain("[", model.Dossier.Name); // debug ids only when the host asks (Epic UI-Beta B5)
+            model.Context.ShowDebugIds = true;
+            model.Refresh();
+            Assert.EndsWith("[" + sim.Registry.GetEntity(resident.CrawlerId).Name + "]", model.Dossier.Name);
+            Assert.EndsWith("]", model.Sectors.Residents.Single(r => r.CrawlerId == resident.CrawlerId).Name);
+            model.Context.ShowDebugIds = false;
+            model.Refresh();
             Assert.True(model.Sectors.Residents.Single(r => r.Selected).CrawlerId == resident.CrawlerId);
 
             // A click on the map moves the dashboard to the crawler's room

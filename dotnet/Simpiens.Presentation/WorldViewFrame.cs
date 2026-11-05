@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Cognition;
+using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Inventory;
 using Simpiens.Core.Session;
 using Simpiens.Entities;
@@ -8,6 +9,7 @@ using Simpiens.Narrative;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
+using Simpiens.Simulation.People;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 
@@ -23,6 +25,17 @@ namespace Simpiens.Presentation
         Yielding = 4,
         Sharing = 8,
         Gossiping = 16,
+    }
+
+    /// <summary>
+    /// Who a crawler is to the outpost (Epic UI-Beta B2): a guild member wears the guild's tabard on the map, and B3's
+    /// portrait frame shows it (iron, bronze, blued steel).
+    /// </summary>
+    public enum CrawlerStanding : byte
+    {
+        Resident = 0,
+        Drifter = 1,
+        GuildMember = 2,
     }
 
     /// <summary>One entity as the view draws it at the end of a tick: plain data, with no reference into the simulation.</summary>
@@ -42,6 +55,10 @@ namespace Simpiens.Presentation
         public ItemType Worn;
         /// <summary>The first salvage a crawler holds, in id order (graphics V5): what it is seen carrying; None for none.</summary>
         public ItemType Carried;
+        /// <summary>A crawler's look (Epic UI-Beta B2), its body drawn from it; default (no look) for props and for crawlers given none.</summary>
+        public CrawlerLook Look;
+        /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
+        public CrawlerStanding Standing;
     }
 
     /// <summary>
@@ -136,6 +153,8 @@ namespace Simpiens.Presentation
                     SectorId = agent != null && sectors != null ? sectors.GetSectorAt(entity.Position).Id : -1,
                     Worn = agent?.Inventory != null ? Worn(agent.Inventory) : ItemType.None,
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
+                    Look = agent != null ? agent.Look : default,
+                    Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
                 };
                 _index[entity.Id] = Count;
                 Count++;
@@ -147,6 +166,10 @@ namespace Simpiens.Presentation
             var worn = inventory.GetEquipped(EquipmentSlot.Protection);
             return worn.IsEmpty ? ItemType.None : worn.Type;
         }
+
+        /// <summary>A crawler's standing: a member of a guild (the player's, in the live outpost), a drifter, or a resident.</summary>
+        public static CrawlerStanding StandingOf(AgentState agent)
+            => agent.Memberships.Has(GroupType.FactionGuild) ? CrawlerStanding.GuildMember : agent.IsDrifter ? CrawlerStanding.Drifter : CrawlerStanding.Resident;
 
         /// <summary>A crawler's passing moments, as a frame captures them.</summary>
         public static CrawlerFlags FlagsOf(AgentState agent)

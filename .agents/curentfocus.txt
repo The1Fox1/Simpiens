@@ -7,14 +7,14 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-02 (the core refactor R1-R6 done on feat/core-refactor, one PR; its plan closed out)
+# Last reconciled: 2026-11-04 (Epic UI-Beta B2-B5 and the UI polish merged as PR #22; B6 remains)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
 - Unity is gone (Epic CLIENT M2.8-M2.9, 2026-10-24; producer: "remove Unity first"): every Unity test has a .NET
   twin, the core lives in dotnet/Simpiens.Core, and the solution is .NET only, on C# 14 / .NET 10. Merged (PR #12).
 - The core refactor (no epic, 2026-10-25 to 2026-11-02) is done: R0, the cleanup (1A.2 #17, #19, warnings as
-  errors); R7, the item system (PR #15); R1-R6 on feat/core-refactor, one PR into main: guards, SimulationManager
+  errors); R7, the item system (PR #15); R1-R6 merged as PR #21 (2026-11-02): guards, SimulationManager
   split into partials and Locomotion, Market, Lodging, SocialDynamics, read-only memory views, planners per worker
   (1A.2 #8, the last open deviation). Golden unchanged throughout. Deferred items: ROADMAP 3A, Epic 10 §5.
 - Epic CLIENT [PAUSED 2026-10-29] after the graphics work, V0-V5 (2026-10-28/29): the art as data; the sampling
@@ -26,12 +26,16 @@ CURRENT FOCUS
     and the gate (feat/epic10-g6, PR into main): the whole loop live, a save mid-expedition, the soak's guild profile
     (D14), every scenario together. The producer's play session passed ("Everything looks good"). Save format 9.
   - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
-- NEXT: the core refactor's PR (feat/core-refactor into main), then answering Epic 10 Part 2's draft
-  (.agents/epic10_plan.md, Order). Epic UI-Beta B2 is unblocked too: the producer picks the order.
+- NOW: Epic UI-Beta B6, the gate with a play session. B2-B5 (bodies, portraits and the dossier, faces everywhere,
+  the interface pass) were done overnight under the producer's directive (2026-11-02); their looks passed
+  (2026-11-03). Then the UI polish, Lantern & Stone (U0-U12, a proposal and its preferred flavor): the UI kit, the
+  header in five clusters, one window chrome, motion, the window's size and full screen, portraits that grow with
+  the window. It sits in Epic UI-Beta by default. All of it merged as one PR, #22 (2026-11-04).
+- NEXT: answering Epic 10 Part 2's draft (.agents/epic10_plan.md, Order).
 
-- Epic UI-Beta, Crawler Identity and the Interface Pass [PAUSED 2026-10-30] (docs/epics/epic-ui-beta.md): B0 and B1
-  (every crawler's look and given name, saved; save format 7) merged as PR #17; the producer's look at the people
-  sheet passed. B2 (bodies on the map) resumes after Epic 10 Part 1's gate.
+- Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
+  (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
+  PR #22; every look passed. B6 remains.
 
 OPEN WITH THE PRODUCER
 - Epic UI-Beta: the delvers' name and lore (Q4). Closed 2026-10-30: the look at the people sheet ("looks good").
@@ -63,7 +67,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
 ================================================================================
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
-- Epic UI-Beta: Crawler Identity and the Interface Pass [PAUSED 2026-10-30 after B0-B1; B2 after Epic 10 Part 1] (docs/epics/epic-ui-beta.md)
+- Epic UI-Beta: Crawler Identity and the Interface Pass [ACTIVE 2026-11-02: B2-B5 and the UI polish merged; B6] (docs/epics/epic-ui-beta.md)
 - Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client; delivered 2026-11-01.
 
 ================================================================================

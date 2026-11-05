@@ -83,11 +83,47 @@ namespace Simpiens.Client
         public bool AdvancesWorld => true;
 
         /// <summary>Builds the dashboard's views, once the UI layer is up.</summary>
+        /// <summary>Tooltips (Epic UI-Beta B5): a tip beside the cursor over a registered control.</summary>
+        public Tooltips Tooltips { get; private set; }
+
+        /// <summary>The key help (Epic UI-Beta B5): F1 shows every binding.</summary>
+        public KeyHelpOverlay Help { get; private set; }
+
         public void LoadContent()
         {
-            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons);
+            Dashboard = new DashboardView(_game.Ui, _game.Session.DashboardModel, _game.Options.DashboardRefreshSeconds, _game.Graphics.Icons, _game.Graphics.Portraits, _game.Options.UiMotion);
             Scenes = new DynamicSceneView(_game);
             Scenes.LoadContent();
+            Help = new KeyHelpOverlay(_game.Ui);
+            // Tooltips (Epic UI-Beta B5): over everything, on the header's and the inspector's buttons
+            Tooltips = new Tooltips(_game.Ui);
+            var header = Dashboard.Header;
+            Tooltips.Register(header.GoldCounter, "Gold in the stall's treasury");
+            Tooltips.Register(header.BountiesCounter, "Bounties on the board");
+            var stock = Dashboard.Model.Header.Stock;
+            for (int i = 0; i < header.StockCounters.Count && i < stock.Count; i++)
+                Tooltips.Register(header.StockCounters[i], $"{Simpiens.Presentation.ItemTexts.Of(stock[i].Item).StockWord} in the stall");
+            Tooltips.Register(header.MerchantButton.Visual, "The stall: its prices and stock");
+            Tooltips.Register(header.BountiesButton.Visual, "The bounty board: post and cancel bounties");
+            Tooltips.Register(header.GuildButton.Visual, "The guild roster: members, wages and expeditions");
+            Tooltips.Register(header.MenuButton.Visual, "Save, load, key help and the window's size");
+            Tooltips.Register(header.SaveButton.Visual, "Quick-save the outpost");
+            Tooltips.Register(header.LoadButton.Visual, "Load the quick-save");
+            Tooltips.Register(header.PauseButton.Visual, "Pause or resume the world (P)");
+            for (int i = 0; i < header.SpeedButtons.Count; i++)
+                Tooltips.Register(header.SpeedButtons[i].Visual, $"Run the world at {Simpiens.Presentation.Dashboard.HeaderModel.SpeedText(i)} ({i + 1})");
+            Tooltips.Register(header.TabButton.Visual, "The map or the ledger (Tab)");
+            header.KeyHelpButton.Click += (_, _) => Help?.Toggle((_game.Input as ClientInput)?.Bindings);
+            for (int i = 0; i < header.WindowSizeButtons.Count; i++)
+            {
+                var size = WindowSizes.All[i];
+                header.WindowSizeButtons[i].Click += (_, _) => _game.RequestWindowSize(size.X, size.Y); // the menu stays open on the new size
+            }
+            header.FullScreenButton.Click += (_, _) => _game.RequestFullScreen(!_game.IsFullScreen);
+            Tooltips.Register(header.FullScreenButton.Visual, "Fill the screen, or go back to the window");
+            Tooltips.Register(Dashboard.Inspector.OpenDossierButton.Visual, "Its dossier: drives, plan, affinities");
+            Tooltips.Register(Dashboard.Inspector.FollowButton.Visual, "The camera follows it, or stops (Esc stops too)");
+            _game.Ui.Root.Children.Add(Tooltips.Panel);
         }
 
         public void Update(float seconds, float cameraSeconds, bool active)
@@ -104,6 +140,7 @@ namespace Simpiens.Client
                 if (keys.WallStylePressed) _game.World.CycleWallStyle();
                 if (keys.ViewTogglePressed) _game.World.ToggleView();
                 if (keys.TimingsPressed) _game.TimingsOverlay?.Toggle();
+                if (keys.HelpPressed) Help?.Toggle((_game.Input as ClientInput)?.Bindings);
                 if (keys.DemoCutscenePressed && _game.Options.DemoScenes)
                 {
                     _game.PlayCutscene(DemoScenes.Arrival);
@@ -119,11 +156,26 @@ namespace Simpiens.Client
             }
 
             var viewport = _game.GraphicsDevice.Viewport;
+            FitPortraits(viewport.Height);
             _game.World.Update(cameraSeconds, viewport.Width, viewport.Height, pointer, keys, active);
             if (ui.IsOwner) Scenes?.Update(seconds, cameraSeconds, keys);
             if (ui.IsOwner) Dashboard?.Update(seconds);
+            if (ui.IsOwner) Dashboard?.Header.BindWindowSize(viewport.Width, viewport.Height, _game.IsFullScreen);
+            if (ui.IsOwner) Tooltips?.Update(seconds, viewport.Width, viewport.Height); // real time: a tip shows paused too
         }
 
         public void Draw(int width, int height) => _game.World.Draw(width, height);
+
+        /// <summary>Portraits grow with the window in whole steps: a new step re-bakes them and lays the dossier, the inspector and who is in the sector out for it.</summary>
+        private void FitPortraits(int windowHeight)
+        {
+            var portraits = _game.Graphics?.Portraits;
+            if (portraits == null) return;
+            portraits.Fit(windowHeight);
+            if (Dashboard == null) return;
+            Dashboard.Panels.Fit(portraits.Size); // nothing to do unless the size changed
+            Dashboard.Panels.FitFaces(portraits.ScaledFaceSize);
+            Dashboard.Inspector.Fit(portraits.Size);
+        }
     }
 }

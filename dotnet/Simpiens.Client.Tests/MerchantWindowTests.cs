@@ -31,7 +31,7 @@ namespace Simpiens.Client.Tests
             var ui = OpenMerchant();
             var window = ui.Game.Play.Dashboard.Merchant;
             Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
-            Assert.Equal("Outpost Stall @ Outpost Hub", window.StatusText);
+            Assert.Equal("The stall in Outpost Hub", window.StatusText);
             Assert.Equal($"Treasury: {stall.TreasuryGold} Gold", window.TreasuryText);
             Assert.Equal((double)stall.RationSellPrice, window.RationSlider.Value);
             Assert.Equal((double)stall.OreBuyPrice, window.OreSlider.Value);

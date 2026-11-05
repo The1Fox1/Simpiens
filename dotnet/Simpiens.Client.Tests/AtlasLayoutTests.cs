@@ -60,15 +60,17 @@ namespace Simpiens.Client.Tests
     /// The picture doesn't depend on how the atlas is packed (graphics V3.2, epic F12): the same frame drawn with every
     /// sheet packed tallest first and packed in reverse is the same, byte for byte, at the framing. At an in-between zoom
     /// a pixel centre can still fall within a GPU's float error of a texel's edge (a generic near-tie, measured in
-    /// <see cref="SamplingTests.MeasureTies"/>), so a few pixels may differ there: 1 of 480,000 at isometric's 2.5x, where
-    /// the zoomed top-down view moved 15,316 before the sampling rules.
+    /// <see cref="SamplingTests.MeasureTies"/>), so a few pixels may differ there: 1 of 480,000 at isometric's 2.5x with
+    /// the world atlas at 192x178, 10 since the body region (UI-Beta B2) made it 768x726 (the error in a texture
+    /// coordinate is a fraction of the texture, so it grows with it). The zoomed top-down view moved 15,316 before the
+    /// sampling rules. A whole-scale render target would remove the rest (Epic CLIENT F12).
     /// </summary>
     public class AtlasIndependenceTests
     {
         private const int Width = 800, Height = 600;
 
-        /// <summary>Pixels an in-between zoom may change with the layout: generic near-ties, a few in a frame.</summary>
-        private const int NearTies = 4;
+        /// <summary>Pixels an in-between zoom may change with the layout: generic near-ties, a few in a frame (10 measured).</summary>
+        private const int NearTies = 16;
 
         [Theory]
         [InlineData("top-down", 1f)]

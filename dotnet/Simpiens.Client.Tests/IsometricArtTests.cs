@@ -96,14 +96,16 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWorn()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheBodies()
         {
             var world = SpriteSheets.World;
             int missing = ProceduralSprites.All.Count + IsometricSprites.All.Count;
-            Assert.Equal(missing + 1 + ItemSprites.World.Count + WornSprites.All.Count, world.Count);
+            int bodies = missing + 1 + ItemSprites.World.Count + WornSprites.All.Count;
+            Assert.Equal(bodies + Simpiens.Presentation.Art.People.BodySlots.All.Count, world.Count);
             Assert.Same(MissingArt.Sprite, world[missing]);
             for (int i = 0; i < ItemSprites.World.Count; i++) Assert.Same(ItemSprites.World[i], world[missing + 1 + i]);
             for (int i = 0; i < WornSprites.All.Count; i++) Assert.Same(WornSprites.All[i], world[missing + 1 + ItemSprites.World.Count + i]);
+            for (int i = 0; i < Simpiens.Presentation.Art.People.BodySlots.All.Count; i++) Assert.Same(Simpiens.Presentation.Art.People.BodySlots.All[i], world[bodies + i]);
             for (int i = 0; i < ProceduralSprites.All.Count; i++) Assert.Same(ProceduralSprites.All[i], world[i]);
             for (int i = 0; i < IsometricSprites.All.Count; i++) Assert.Same(IsometricSprites.All[i], world[ProceduralSprites.All.Count + i]);
         }

@@ -127,6 +127,48 @@ namespace Simpiens.Client.Ui
             return icon;
         }
 
+        /// <summary>
+        /// A crawler's face (Epic UI-Beta B4): <see cref="PortraitAtlas.FaceSize"/> square, drawn 1:1 from the portrait
+        /// atlas, in a box that takes clicks (a click finds the crawler on the map). Hidden until <see cref="SetFace"/> shows one.
+        /// </summary>
+        public static ContainerRuntime FaceBox(PortraitAtlas atlas, out SpriteRuntime face)
+        {
+            var box = new ContainerRuntime { Width = PortraitAtlas.FaceSize, Height = PortraitAtlas.FaceSize, HasEvents = true, Visible = false };
+            face = new SpriteRuntime
+            {
+                Texture = atlas?.Texture,
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Width = PortraitAtlas.FaceSize,
+                Height = PortraitAtlas.FaceSize,
+            };
+            box.Children.Add(face);
+            return box;
+        }
+
+        /// <summary>
+        /// Shows <paramref name="key"/>'s face in <paramref name="box"/>, at 1x or (<paramref name="scaled"/>) at the atlas's
+        /// face scale, baked now if it wasn't; hides it when there is none to show.
+        /// </summary>
+        public static void SetFace(ContainerRuntime box, SpriteRuntime face, PortraitAtlas atlas, bool hasFace, in Simpiens.Presentation.Art.People.PortraitKey key, bool scaled = false)
+        {
+            bool shown = hasFace && atlas != null;
+            if (box.Visible != shown) box.Visible = shown;
+            if (!shown) return;
+            var source = scaled ? atlas.ShowScaledFace(key) : atlas.ShowFace(key);
+            if (face.SourceRectangle != source) face.SourceRectangle = source;
+        }
+
+        /// <summary>Sizes a face box and its face <paramref name="size"/> pixels square.</summary>
+        public static void SizeFace(ContainerRuntime box, SpriteRuntime face, int size)
+        {
+            box.Width = size;
+            box.Height = size;
+            face.Width = size;
+            face.Height = size;
+        }
+
         /// <summary>Points <paramref name="icon"/> at <paramref name="iconKey"/>'s art, at the scale its size says, or hides it for null.</summary>
         public static void SetIcon(SpriteRuntime icon, IconAtlas atlas, string iconKey)
         {
@@ -153,10 +195,120 @@ namespace Simpiens.Client.Ui
             button.Width = width;
             button.Height = height;
             SetTextStyle(button.Visual, style ?? UiText.SmallBold);
+            StoneSkin.Apply(button);
             return button;
         }
 
-        /// <summary>A slider whose thumb stands out: sky on a slate track (Gum's thumb is the dark button colour).</summary>
+        /// <summary>A window's main action: the amber primary button (one per window).</summary>
+        public static Button PrimaryButton(string text, float width, float height = 28f, UiText? style = null)
+        {
+            var button = Button(text, width, height, style);
+            StoneSkin.Apply(button, ButtonLook.Primary);
+            return button;
+        }
+
+        /// <summary>
+        /// Fills <paramref name="parent"/> with the kit's <paramref name="piece"/> as a nine-slice whose corners are
+        /// <paramref name="corner"/> pixels (the UI polish plan, U4); a plain <paramref name="fallback"/> fill without a kit.
+        /// </summary>
+        public static void AddKitFill(GraphicalUiElement parent, string piece, int corner, Color fallback, Color? fallbackBorder = null)
+        {
+            var kit = UiStyle.Kit;
+            if (kit == null)
+            {
+                AddFill(parent, fallback, fallbackBorder);
+                return;
+            }
+            var source = kit.Kit(piece);
+            parent.Children.Add(new Gum.GueDeriving.NineSliceRuntime
+            {
+                Texture = kit.Texture,
+                TextureAddress = TextureAddress.Custom,
+                TextureLeft = source.X,
+                TextureTop = source.Y,
+                TextureWidth = source.Width,
+                TextureHeight = source.Height,
+                CustomFrameTextureCoordinateWidth = corner,
+                WidthUnits = DimensionUnitType.RelativeToParent,
+                HeightUnits = DimensionUnitType.RelativeToParent,
+                Width = 0f,
+                Height = 0f,
+            });
+        }
+
+        /// <summary>A panel's iron frame round its stone (the UI polish plan, U8): a plain panel with a border without a kit.</summary>
+        public static void AddFrame(GraphicalUiElement parent, string piece = Simpiens.Presentation.Art.UiKit.FrameIron)
+            => AddKitFill(parent, piece, Simpiens.Presentation.Art.UiKit.FrameCorner, UiStyle.Panel, UiStyle.Border);
+
+        /// <summary>A box sunk into a panel: the kit's recessed plaque, or a plain inset without a kit.</summary>
+        public static void AddInset(GraphicalUiElement parent)
+            => AddKitFill(parent, Simpiens.Presentation.Art.UiKit.Plaque, Simpiens.Presentation.Art.UiKit.Corner, UiStyle.Inset, UiStyle.Border);
+
+        /// <summary>
+        /// A recessed stone plaque <paramref name="height"/> tall, as wide as its content plus <paramref name="padding"/>
+        /// each side: the content goes in the returned row, centred vertically.
+        /// </summary>
+        public static ContainerRuntime Plaque(out ContainerRuntime content, float height, float padding = 10f, float spacing = 8f)
+        {
+            var plaque = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToChildren, Width = padding, Height = height };
+            CentreVertically(plaque);
+            AddKitFill(plaque, Simpiens.Presentation.Art.UiKit.Plaque, Simpiens.Presentation.Art.UiKit.Corner, UiStyle.Panel);
+            content = Row(spacing);
+            content.X = padding;
+            plaque.Children.Add(content);
+            return plaque;
+        }
+
+        /// <summary>A kit glyph (white art) tinted <paramref name="tint"/>, at <paramref name="scale"/>, drawn 1:1; hidden without a kit.</summary>
+        public static SpriteRuntime Glyph(string piece, Color tint, int scale = IconAtlas.Scale)
+        {
+            var glyph = new SpriteRuntime
+            {
+                TextureAddress = TextureAddress.Custom,
+                WidthUnits = DimensionUnitType.Absolute,
+                HeightUnits = DimensionUnitType.Absolute,
+                Color = tint,
+            };
+            SetGlyph(glyph, piece, scale);
+            return glyph;
+        }
+
+        /// <summary>Points <paramref name="glyph"/> at the kit's <paramref name="piece"/>, sized to it.</summary>
+        public static void SetGlyph(SpriteRuntime glyph, string piece, int scale = IconAtlas.Scale)
+        {
+            var kit = UiStyle.Kit;
+            glyph.Visible = kit != null;
+            if (kit == null) return;
+            var source = kit.Kit(piece, scale);
+            if (!ReferenceEquals(glyph.Texture, kit.Texture)) glyph.Texture = kit.Texture;
+            if (glyph.SourceRectangle != source) glyph.SourceRectangle = source;
+            if (glyph.Width != source.Width) glyph.Width = source.Width;
+            if (glyph.Height != source.Height) glyph.Height = source.Height;
+        }
+
+        /// <summary>
+        /// A stone button with a glyph: at its left before <paramref name="text"/>, or centred when there are no words.
+        /// </summary>
+        public static Button GlyphButton(string text, string piece, float width, out SpriteRuntime glyph, float height = 28f)
+        {
+            var button = Button(text, width, height, UiText.StatusBold);
+            glyph = Glyph(piece, UiStyle.TextSecondary);
+            CentreVertically(glyph);
+            if (string.IsNullOrEmpty(text))
+            {
+                glyph.XUnits = GeneralUnitType.PixelsFromMiddle;
+                glyph.XOrigin = HorizontalAlignment.Center;
+            }
+            else
+            {
+                glyph.X = 9f;
+                if (button.Visual is Gum.Forms.DefaultVisuals.V3.ButtonVisual visual) visual.TextInstance.X += (glyph.Width + 4f) / 2f; // the centred words clear the glyph
+            }
+            button.Visual.Children.Add(glyph);
+            return button;
+        }
+
+        /// <summary>A slider: a stone thumb in the kit's groove (Gum's colours where there is no kit).</summary>
         public static Slider Slider(double minimum, double maximum, double step)
         {
             var slider = new Slider { Minimum = minimum, Maximum = maximum, IsSnapToTickEnabled = true, TicksFrequency = step, SmallChange = step, LargeChange = step * 5 };
@@ -165,6 +317,7 @@ namespace Simpiens.Client.Ui
                 visual.ThumbInstance.BackgroundColor = UiStyle.Accent;
                 visual.TrackBackgroundColor = UiStyle.SliderTrack;
             }
+            StoneSkin.Apply(slider);
             return slider;
         }
 

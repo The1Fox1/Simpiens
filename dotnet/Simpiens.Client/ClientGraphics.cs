@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simpiens.Presentation;
 using Simpiens.Presentation.Art;
+using Simpiens.Presentation.Art.People;
 
 namespace Simpiens.Client
 {
@@ -15,6 +16,8 @@ namespace Simpiens.Client
     {
         private readonly SpriteBatch _batch;
         private readonly SpriteAtlas[] _sheets;
+        private readonly Rgba32[] _bake = new Rgba32[BodyKit.PixelsPerBody];
+        private readonly Color[] _cell = new Color[BodyKit.PixelsPerFrame];
 
         /// <param name="order">How the sheets are packed; the picture doesn't depend on it (graphics V3.2: tests pack in reverse to prove it).</param>
         public ClientGraphics(GraphicsDevice device, AtlasOrder order = AtlasOrder.TallestFirst)
@@ -31,6 +34,7 @@ namespace Simpiens.Client
             }
             Renderer = new WorldRenderer(_batch, _sheets);
             Icons = new IconAtlas(device);
+            Portraits = new PortraitAtlas(device);
             // The baked fonts (Simpiens.FontBaker), through the platform's content: the map's text is drawn from them
             Fonts = FontLibrary.Load(TitleContainer.OpenStream);
             FontPages = new FontAtlases(device, Fonts, TitleContainer.OpenStream);
@@ -40,13 +44,34 @@ namespace Simpiens.Client
         public WorldRenderer Renderer { get; }
         /// <summary>The menus' item icons (graphics V4), magnified and drawn 1:1.</summary>
         public IconAtlas Icons { get; }
+        /// <summary>Crawlers' portraits (Epic UI-Beta B3), baked as they are first shown and drawn 1:1.</summary>
+        public PortraitAtlas Portraits { get; }
         public FontLibrary Fonts { get; }
         public FontAtlases FontPages { get; }
+
+        /// <summary>The bodies baked into this world texture's region (Epic UI-Beta B2): one table per texture.</summary>
+        public CrawlerBodies Bodies { get; } = new CrawlerBodies();
+
+        /// <summary>
+        /// Bakes every body the table has queued and writes it into its slot's cells of the world texture. Called after
+        /// the scene's update, before a draw; nothing is queued but at spawn, arrival or a change of gear or standing.
+        /// </summary>
+        public void WriteBodies()
+        {
+            var world = _sheets[(int)DrawSheet.World];
+            while (Bodies.TryTakePending(out int slot))
+            {
+                Bodies.BakeSlot(slot, _bake);
+                for (int f = 0; f < BodyKit.FrameCount; f++)
+                    world.Write(Bodies.Cell(slot, f), _bake.AsSpan(f * BodyKit.PixelsPerFrame, BodyKit.PixelsPerFrame), _cell);
+            }
+        }
 
         public void Dispose()
         {
             foreach (var sheet in _sheets) sheet.Dispose();
             Icons.Dispose();
+            Portraits.Dispose();
             FontPages.Dispose();
             _batch.Dispose();
         }

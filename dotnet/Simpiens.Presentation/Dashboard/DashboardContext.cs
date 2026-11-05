@@ -72,6 +72,15 @@ namespace Simpiens.Presentation.Dashboard
 
         public FacilityZoneService Zones { get; }
 
+        /// <summary>
+        /// Names carry the entity's debug name ("[SwarmAgent_0]") (Epic UI-Beta B5): development builds only, set by the
+        /// host. Off in tests and the pinned image, so renders don't depend on the build.
+        /// </summary>
+        public bool ShowDebugIds { get; set; }
+
+        /// <summary>" [SwarmAgent_0]" when <see cref="ShowDebugIds"/>, else nothing: what follows a crawler's name.</summary>
+        public string DebugSuffix(string debugName) => ShowDebugIds && !string.IsNullOrEmpty(debugName) ? " [" + debugName + "]" : string.Empty;
+
         /// <summary>The quick-save slot, if the host gives one.</summary>
         public ISaveGameService SaveGame { get; }
 
@@ -92,11 +101,11 @@ namespace Simpiens.Presentation.Dashboard
             return false;
         }
 
-        /// <summary>Where a stall stands, for the player: "Outpost Stall @ " and its room's name on the loaded map.</summary>
+        /// <summary>Where a stall stands, for the player: "The stall in " and its room's name on the loaded map.</summary>
         public string StallLabel(in Simpiens.Simulation.Economy.TradeStallData stall)
         {
             string room = Sectors?.Map != null ? Sectors.GetSectorAt(stall.Position).Name : null;
-            return string.IsNullOrEmpty(room) ? "Outpost Stall" : "Outpost Stall @ " + room;
+            return string.IsNullOrEmpty(room) ? "The stall" : "The stall in " + room;
         }
 
         /// <summary>The outpost's stall (the first), if there is one.</summary>
