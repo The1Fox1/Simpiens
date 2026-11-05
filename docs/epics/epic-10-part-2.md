@@ -1,6 +1,6 @@
 # Epic 10, Part 2: Workshops and the Guildhall
 
-- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4). The producer widened the scope the same day with milestone T, a 24-hour day (§0, §2.2), proposed and awaiting answers; W1.3, shifts, follows it, supervised by the developer. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
+- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4). The producer widened the scope the same day with milestone T, a 24-hour day (§0, §2.2): approved, with T0–T4.3 done (2026-11-04/05) behind the day's tuning until the cut-over (T5); W1.3, shifts, follows it, supervised by the developer. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-4 (the workshops' UI) is folded in, as Epic UI-3 was into Part 1, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
@@ -100,6 +100,13 @@ The design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds,
 - **D18 follows D22:** only motion and what is shown stay in physical ticks. Everything a crawler does or undergoes runs on the day's time, hazards included, because a half-hour harvest at today's damage per second would down anyone.
 
 The go came the same day ("Proceed with the time rework"). The model, with today's day measured and every duration's re-pacing, is [`docs/time-model.md`](../time-model.md). W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
+
+**The economy per day (T4, supervised by the developer):** D23–D28 were approved on 2026-11-04: prices stay, the caravan visits every 6 game hours, crawlers earn toward a bigger purse, trust fades over days, and the soak plays three days. Measuring changed three of them:
+- **D26, the Garden:** kept as it is. On the new day crawlers buy nine meals in ten at the stall, so the Garden's regrowth made no difference.
+- **D27, trust's fade:** 5 points every 12 game hours, not 6. At 6, one gate seed failed the day's trust check.
+- **D23 and D25, the cost of living:** at today's prices a day's meals took about an hour of work. The developer chose to make salvage cheaper, with bigger caravan lots (D29, 2026-11-05: "go with option c"). Salvage pays a quarter of today's price on the day: ore 5g, herbs 6g, with lots of 16 and 12. Residents now earn for about 5.7 hours a day, and four reach the guild's standing by about day 2. The guild's thresholds stay.
+
+The measurements are in [`docs/time-model.md`](../time-model.md) §2.
 
 **The new verbs:** build, hire and dismiss an artisan, set an artisan's wage, order a recipe, price a made item, form a party. Each is a typed player command (ROADMAP §1A.1).
 

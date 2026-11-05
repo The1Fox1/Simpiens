@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-04 (Epic 10 Part 2 ACTIVE: W0, W1.1-W1.2, milestone T proposed; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
+# Last reconciled: 2026-11-05 (Epic 10 Part 2 ACTIVE: W0, W1.1-W1.2, milestone T T0-T4.3 and T4.2b; Epic UI-Beta B2-B5 and the UI polish merged as PR #22)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -38,8 +38,11 @@ CURRENT FOCUS
   B6, the gate with a play session, waits.
 - NOW within Part 2: milestone T, a 24-hour day (go 2026-11-04). T0-T3 done behind DayTuning (Legacy stays the
   default until the cut-over, T5): the clock, hunger, sleep (reviewed), beds, stretched work, schedules, danger.
-  NEXT: T4, the economy per day, supervised: D23-D28 proposed for review. Then T5 the cut-over, T6 client, T7 docs,
-  and W1.3 shifts re-answered on the new day.
+  T4, the economy per day (supervised): D23-D28 approved; T4.1-T4.3 done (the caravan every 6 h, an 80g purse,
+  trust fading over 12 h); T4.2b done 2026-11-05 (D29, the developer's option c: salvage at a quarter of today's
+  price, in bigger lots; about 5.7 h of earning a day, the guild's standing by about day 2).
+  NEXT: T4.4, the soak over three days and its bands, proposed to the producer. Then T5 the cut-over, T6 client,
+  T7 docs, and W1.3 shifts re-answered on the new day.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
