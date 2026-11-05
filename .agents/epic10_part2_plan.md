@@ -130,7 +130,17 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
       - **Staged, not live:** made live, the four new bunks re-rolled every seed's day at today's pace. Their ids come before the crawlers', so spawns shuffle. Golden failed at t0, along with 6 tests pinned to particular seeds' days: two soak guild bands, two hazard scenarios, a muster and the map validator. Those tests are re-timed at the cut-over anyway, so fixing them for a day about to be replaced would be wasted.
       - **How it's staged:** `Floor1Layout` builds a floor for a number of bunks. `Definition` keeps today's 8; `FullDayDefinition` has 12 in three rows (y −7.5, −9.25, −11, the bunkhouse's walkable depth). `OutpostSession` takes a floor for the day's probes. The map validator checks both.
       - **Measured** on the 12-bunk floor: rough sleep 0.4 hours a day (from 2.0); 7.8 hours a sleep.
-   4. **T2.4 Work stretched (D22)** [Possibly Complex: every handler's length from T0's table; nodes, plots and the stall held for minutes, not ticks (contention); the anomaly detector's checks see long stands; golden]: the actions' lengths in game minutes; a worked pose while an action runs.
+   4. **[x] T2.4 Work stretched (D22)** (done 2026-11-04) [Possibly Complex: every handler's length from T0's table; nodes, plots and the stall held for minutes, not ticks (contention); the anomaly detector's checks see long stands; golden]: the actions' lengths in game minutes; a worked pose while an action runs.
+      - **Done, behind the tuning:** `ActionTuning` in `DayTuning`, with `Legacy` and `FullDay`.
+        - The harvest's, meal's and hand-over's lengths come from the pace unless the intent sets one (validators do).
+        - Trades, the board, the survey and treating wounds work for their length before their effect. A shared `StillWorking` helper runs it, and their checks run again each tick.
+        - The hearth and the starving crawler's wait at a plot take the pace's length.
+        - Harvesting tires at the working rate.
+        - `Legacy` reproduces today: golden 3/3, and T0's whole day is identical.
+      - **Measured** (`docs/time-model.md` §2): 64 tasks a day, 2.3 meals, one sleep; no stacking from long stands.
+        - **A quiet day:** crawlers idle 53% of it, and trust toward the player rose for nobody on 22 of 23 seed runs (1 of 12 on the other).
+        - **Why:** crawlers stop earning at 40g and meals are cheap and rare. That is T4's.
+      - **No worked pose yet:** a crawler at the stall or the board stands idle, and a harvester keeps its harvesting pose. A new pose is art (T6).
 4. **T3 The day's schedules and its dangers** [Very Complex as a whole: split into]
    1. **T3.1 Schedules** [Possibly Complex: mechanical, each number from T0's table]: the caravan's cadence, regrowth, drifters' arrivals and stays, cooldowns, bounty expiries, the expedition's muster and stages, recipes' times, in game hours.
    2. **T3.2a Damage, healing and wear per game hour** [Possibly Complex: Part 1's danger numbers (G2, G3) re-expressed; golden]: hazard damage, healing awake and in a bunk, a downed crawler's recovery, gear's wear per hour of exposure, set so a unit of glowstone costs about the health and wear it does today.

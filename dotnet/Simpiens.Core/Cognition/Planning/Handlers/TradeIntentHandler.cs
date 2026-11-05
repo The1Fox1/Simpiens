@@ -29,6 +29,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return Reject(node, trade, "agent has no inventory");
             }
 
+            // The trade takes its time at the stall (D22); prices and stock are judged when it's done
+            if (StillWorking(node, state, context, context.Economy.Day.Actions.TradeSeconds)) return IntentResult.InProgress;
+
             uint currentTradeTick = context.CurrentTick;
             var economy = context.Economy ?? EconomyTuning.Default;
             var personality = agent != null ? agent.Personality : AgentPersonality.Neutral;

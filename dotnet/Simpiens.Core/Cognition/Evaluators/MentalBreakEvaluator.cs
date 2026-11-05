@@ -21,8 +21,8 @@ namespace Simpiens.Cognition.Evaluators
         /// <summary>Within this distance of a remembered food plot a starving crawler waits for it to regrow.</summary>
         public const float WaitAtPlotRadius = 1.5f;
 
-        /// <summary>How long one wait at a plot lasts before the crawler re-evaluates (it sees the plot regrow).</summary>
-        public const float WaitAtPlotSeconds = 2f;
+        /// <summary>How long one wait at a plot lasts before the crawler re-evaluates (it sees the plot regrow): the session's pace (Epic 10 Part 2, T2.4).</summary>
+        public static float WaitAtPlotSeconds(in AgentContext context) => Simpiens.Cognition.Planning.Considerations.Economy(context).Day.Actions.WaitAtPlotSeconds;
 
         private readonly IAsyncPathfinder _pathfinder;
         private readonly ulong _seed;
@@ -64,7 +64,7 @@ namespace Simpiens.Cognition.Evaluators
                     {
                         if ((plot - context.Position).SqrMagnitude <= WaitAtPlotRadius * WaitAtPlotRadius)
                         {
-                            return new IdleIntent(context.AgentId, WaitAtPlotSeconds);
+                            return new IdleIntent(context.AgentId, WaitAtPlotSeconds(context));
                         }
                         if (_pathfinder != null)
                         {

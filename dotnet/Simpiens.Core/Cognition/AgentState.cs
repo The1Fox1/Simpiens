@@ -247,6 +247,11 @@ namespace Simpiens.Cognition
             {
                 energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyWalkingPerSecond)));
             }
+            else if (VisualState == AgentVisualState.Harvesting)
+            {
+                // Work tires as walking does on the 24-hour day (Epic 10 Part 2, T2.4); before it, as standing
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyWorkingPerSecond)));
+            }
             else
             {
                 energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyStandingPerSecond)));

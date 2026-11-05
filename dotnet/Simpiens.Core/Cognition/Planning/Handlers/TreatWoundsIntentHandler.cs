@@ -15,6 +15,9 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             var medicine = agent?.Inventory != null ? agent.Inventory.FirstHeld(Simpiens.Simulation.Items.ItemCategory.Medicine) : ItemType.None;
             float before = agent?.Health ?? 0f;
+            if (medicine == ItemType.None) return IntentResult.TargetMissing;
+            // Treating wounds takes its time (D22); the herb is eaten at the end
+            if (StillWorking(node, state, context, context.Economy.Day.Actions.TreatSeconds)) return IntentResult.InProgress;
             if (!ItemUse.Consume(agent, medicine)) return IntentResult.TargetMissing;
             agent.Activity.HerbsEaten++;
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} ate {Simpiens.Simulation.Items.ItemCatalog.NameOf(medicine)}: health {before:F0} -> {agent.Health:F0}");

@@ -25,6 +25,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return IntentResult.Failed;
             }
 
+            // Signing for it at the board takes its time (D22); another may claim it first
+            if (StillWorking(node, state, context, context.Economy.Day.Actions.BoardSeconds)) return IntentResult.InProgress;
+
             bounty = bounty.WithClaimant(node.Id, BountyStatus.Claimed);
             context.UpdateBounty(bounty);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} claimed bounty #{bounty.BountyId} ({bounty.Type} {bounty.TargetItemType}x{bounty.TargetQuantity}, sector {bounty.TargetSectorId}, {bounty.RewardGold}g)");

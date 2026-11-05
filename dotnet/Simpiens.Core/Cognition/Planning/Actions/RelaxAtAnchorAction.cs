@@ -28,7 +28,8 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override AgentIntent CreateIntent(AgentContext context)
         {
-            return new IdleIntent(context.AgentId, 3.0f);
+            // A spell at the hearth of the session's length (DayTuning, Epic 10 Part 2, T2.4)
+            return new IdleIntent(context.AgentId, Considerations.Economy(context).Day.Actions.RelaxSeconds);
         }
     }
 }

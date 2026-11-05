@@ -168,7 +168,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 if (agent != null) agent.VisualState = AgentVisualState.Harvesting;
 
                 state.ElapsedTime += context.FixedTickDeltaTime;
-                if (state.ElapsedTime < harvest.GatherDuration)
+                float gatherDuration = harvest.GatherDuration >= 0f ? harvest.GatherDuration : context.Economy.Day.Actions.HarvestSeconds(resourceData.YieldItem);
+                if (state.ElapsedTime < gatherDuration)
                 {
                     return IntentResult.InProgress;
                 }

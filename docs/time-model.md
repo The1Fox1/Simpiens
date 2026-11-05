@@ -65,6 +65,16 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **Where:** rough for 0.4 hours a day, down from 2.0.
   - **When:** most crawlers wake at 07:00.
   - **Hunger:** 34 sleeps ended by hunger, down from 61. Nobody starved or collapsed.
+- **T2.4, work stretched** (2026-11-04): the same 69 seed-days on the 12-bunk floor, at `DayTuning.FullDay` with `ActionTuning.FullDay`. Per resident per day:
+  - **Tasks:** 64 started, down from about 190: tens a day, as D22 asks.
+  - **Needs:** 2.3 meals and one sleep, begun at energy 37.
+  - **Time:** idle 531 s (53%), asleep 280 s, wandering 118 s, harvesting 32 s (walks included), eating 17 s, trading 14 s (2 trades). Walking is 11% of the day.
+  - **The stall, per seed-day:** 19 sales to crawlers, 10 purchases of salvage, 575g of upkeep paid.
+  - **The watch:**
+    - Nobody starved, collapsed or broke the invariants.
+    - On 22 of 23 seed runs, trust toward the player rose for nobody (it needs 8 of 12), and for 1 of 12 on the 23rd. Trust comes from trades, and crawlers trade twice a day.
+    - Long stands at nodes and the stall raised no stacking; one seed showed a jitter.
+  - **Why the day is quiet:** a crawler earns until it carries 40g (`EarnIncomeGoal.ComfortableGold`), and a day's 2.3 meals cost at most 35g, much of it eaten free at the Garden. Its reasons to work are the economy's, and T4 sets them per day.
 
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
@@ -85,7 +95,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations` | below 20, or carrying 2 rations | D | re-set to the new trip's cost, which stretched work sets (a 30 s trip costs about 3 hunger; the work's harvests, hours) | T3.2b |
 | Energy, standing | `DayTuning` | −0.2 a second | D | −2.75 an hour: 100 to the tired line (40) in about 16 hours of standing (re-measured at T2.4) | T2.2 ✓ |
 | Energy, walking | `DayTuning` | −1.0 a second | D | −8.25 an hour, three times standing (today five) | T2.2 ✓ |
-| Energy, working (new) | the actions of D22 | as standing | D | the walking rate: work tires as walking does (W1.3's D15) | T2.4 |
+| Energy, working (new) | `DayTuning.EnergyWorkingPerSecond` (the harvesting pose; a station's work at W1.3) | as standing | D | the walking rate, 8.25 an hour: work tires as walking does (W1.3's D15) | T2.4 ✓ |
 | Sleep in a bunk | `DayTuning` (was `SleepAtBunkAction.SleepSeconds`, `Considerations.BunkRecoveryPerSecond`, `BunkSleepBonus`) | 3 s at +30 a second, then +40 | D | +8 an hour, no bonus, until rested (100) or starving (85), for at most 12 hours: 8.3 hours measured | T2.2 ✓ |
 | Resting in place, and a collapse | `DayTuning` (was `RestAction`, the consequence service) | +15 a second; a rest is 2 s, then +30 | D | sleeping rough: +4 an hour, no bonus, up at the same lines as a bunk, for at most 12 hours; a collapse is up at 30 after 7.5 hours | T2.2 ✓ |
 | The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept: sleep begins at energy 37 on average | T2.2 ✓ |
@@ -102,17 +112,18 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 ### 3.3 Actions (D22)
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| Harvest, a unit of ore or glowstone | `HarvestResourceIntent.GatherDuration` | 1.5 s | D | 30 min (210 ticks) | T2.4 |
-| Harvest, a unit of herbs | the same | 1.5 s | D | 20 min (140) | T2.4 |
-| Harvest, a ration from a Garden plot | the same | 1.5 s | D | 15 min (105) | T2.4 |
-| Eat a ration from the pack | `EatCarriedFoodIntent.DefaultDuration` | 1 s | D | 15 min (105) | T2.4 |
-| Wait at a Garden plot (starving) | `MentalBreakEvaluator.WaitAtPlotSeconds` | 2 s | D | 15 min (105) | T2.4 |
-| Trade at the stall | `TradeIntentHandler` | within the tick | D | 10 min (70) | T2.4 |
-| Claim or deliver at the board | `ClaimBountyIntentHandler`, `DeliverBountyIntentHandler` | within the tick | D | 10 min (70) | T2.4 |
-| Share food | `ShareResourceIntent` | 1 s | D | 10 min (70) | T2.4 |
-| A scout's survey | `ScoutIntentHandler` | on arrival | D | 30 min (210) at the target | T2.4 |
-| Treat wounds with a herb | `TreatWoundsIntentHandler` | within the tick | D | 30 min (210) | T2.4 |
+| Harvest, a unit of ore or glowstone | `ActionTuning` (an intent's `GatherDuration` overrides it) | 1.5 s | D | 30 min (210 ticks) | T2.4 ✓ |
+| Harvest, a unit of herbs | the same | 1.5 s | D | 20 min (140) | T2.4 ✓ |
+| Harvest, a ration from a Garden plot | the same | 1.5 s | D | 15 min (105) | T2.4 ✓ |
+| Eat a ration from the pack | `ActionTuning` (was `EatCarriedFoodIntent.DefaultDuration`) | 1 s | D | 15 min (105) | T2.4 ✓ |
+| Wait at a Garden plot (starving) | `ActionTuning` | 2 s | D | 15 min (105) | T2.4 ✓ |
+| Trade at the stall | `ActionTuning`, the handler's work before the trade | within the tick | D | 10 min (70); prices and stock judged at the end | T2.4 ✓ |
+| Claim or deliver at the board | `ActionTuning` | within the tick | D | 10 min (70); another may claim first | T2.4 ✓ |
+| Share food | `ActionTuning` (an intent's `TransferDuration` overrides it) | 1 s | D | 10 min (70) | T2.4 ✓ |
+| A scout's survey | `ActionTuning` | on arrival | D | 30 min (210) at the target | T2.4 ✓ |
+| Treat wounds with a herb | `ActionTuning` | within the tick | D | 30 min (210); the herb eaten at the end | T2.4 ✓ |
 | The pickaxe at the forge | `RecipeBook` (D2) | 600 ticks | D | 2 h (840) | T3.1 |
+| A spell at the hearth | `ActionTuning` (was `RelaxAtAnchorAction`) | 3 s | D | 30 min (210) | T2.4 ✓ |
 | Idle pauses | `AmbientWanderEvaluator`, `AgentCognitionService` | 1.5–2 s | P | kept: ambient motion | |
 | Panic's sprint; the downed crawler's wait | `PanicIntentHandler.MaxSeconds`; `MentalBreakEvaluator.DownedSleepSeconds` | 6 s; 5 s | P | kept | |
 | Poses: tantrum, gossip, yield, share, rally, defiance | `AgentState.Trigger…Visual` | 1.2–2.5 s | P | kept | |
@@ -128,7 +139,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | A seeded bounty's life | `OutpostSession.SeedBountyDurationTicks` | 6,000 | D | 14 h (5,880) | T3.1 |
 | A posted bounty's life | `BountyBoardModel` | 500–3,000 ticks, 1,000 offered, shown in ticks | D | 4–24 h, 12 offered, shown in hours | T3.1, T6 |
 | The expedition's stages (limits) | `ExpeditionTuning` | muster 900, march 1,800, work 1,800, return 2,400 | D | in hours, with room for stretched harvests in the work | T3.2b |
-| Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept unless crawlers forget what they use under stretched work (measured) | T2.4 |
+| Memory's decay | `AgentMemory` | resources 1,500, pawns 400, anchors 5,000, other 1,000 | D | kept for now: the quiet day comes from purses (T4), not forgetting; looked at again with T4's busier day | T4 |
 | Exploration's choice, gossip's cooldown | `ResourceTargeting.SectorChoiceTicks`; `SocialDynamics` | 200; 100 | P | kept | |
 | Retries | `SleepAtBunkIntentHandler`, `SessionHost.Drifters` | 30, 100, 50 | P | kept | |
 
@@ -138,4 +149,4 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 | The outpost's day | `OutpostScenarioTests`, `GuildScenarioTests`, `CrawlerIdentityTests` | 9,000 ticks | D | 10,080; food and sleep checks over three days | T5 |
 | Starving | `OutpostWatch`, `EconomySoak` | hunger 95 or more for 300 ticks | D | 95 or more for 2 game hours | T5 |
 | The soak's horizon and sample | `EconomySoak` | 30 min (18,000), sampled each visit | D | in days, sampled each visit | T4, T5 |
-| The anomaly detector | `AnomalyDetector` | stacking 1 s, thrashing 0.5 s, jitter 5 ticks | P | kept; stretched work's long stands at nodes are checked against it | T2.4 |
+| The anomaly detector | `AnomalyDetector` | stacking 1 s, thrashing 0.5 s, jitter 5 ticks | P | kept: stretched work's long stands raised no stacking (one jitter in 69 seed-days) | T2.4 ✓ |

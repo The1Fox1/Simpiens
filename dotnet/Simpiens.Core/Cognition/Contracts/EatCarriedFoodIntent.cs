@@ -8,11 +8,13 @@ namespace Simpiens.Cognition.Contracts
     /// </summary>
     public class EatCarriedFoodIntent : AgentIntent
     {
-        public const float DefaultDuration = 1.0f;
+        /// <summary>The session's pace for a meal (Epic 10 Part 2, T2.4).</summary>
+        public const float PaceDuration = -1f;
 
+        /// <summary>Seconds the meal takes; <see cref="PaceDuration"/> (the default) takes the session's pace.</summary>
         public readonly float Duration;
 
-        public EatCarriedFoodIntent(EntityId agentId, float duration = DefaultDuration) : base(agentId)
+        public EatCarriedFoodIntent(EntityId agentId, float duration = PaceDuration) : base(agentId)
         {
             Duration = duration;
         }
