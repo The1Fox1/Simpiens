@@ -18,7 +18,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans (
   - stats: `HazardResistance`, `HarvestSpeed`, `Attack`, `Defense`;
   - rarity, and `ItemInstance.Quality`, which is unused so far;
   - loot tables, not yet in play.
-- **The planner:** about 43 of 64 facts used. R1 guards the limit.
+- **The planner:** 40 of 64 facts used (W0.2; the draft said about 43). R1 guards the limit.
 
 ## 1. The milestones, phased
 Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Every milestone passes the index's gates; Part 2 ends in one PR into `main` (Q12).
@@ -29,10 +29,28 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - the answered draft into `docs/epics/epic-10-part-2.md` (Q1);
   - the roadmap: Epic 10 Part 2 ACTIVE, Epic UI-4 folded in;
   - the focus file.
-- [ ] **W0.2 Measure** [Possibly Complex] on seeds 1–15, with G6's guild player:
+- [x] **W0.2 Measure** [Possibly Complex] on seeds 1–15, with G6's guild player:
   - the treasury and the members' purses;
   - the stall's salvage stock at each caravan visit, which is the stations' input;
   - planning cost, and the planner's facts in use.
+  - **Done 2026-11-04** (a scratch probe, 30 sim-minutes a seed, as the soak's guild profile plays; `main` at `e74db29`):
+
+    | Measure | Seeds 1–15 |
+    | :--- | :--- |
+    | Treasury at minute 30 | 1,146–1,991g |
+    | Members' purses at minute 30 | 10–48g on average, at most 71g |
+    | Other residents' purses | 4–19g on average, at most 70g |
+    | Ore and herbs in the stall before a visit | 18.3–20.0 on average: at the cap (`StallSalvageCapacity`, 20) nearly always; the caravan takes 2 of each a visit (60 in 30 minutes) |
+    | Glowstone in the stall before a visit | 0.2–1.1 on average, at most 4; 6–25 exported in 30 minutes |
+    | Cautious residents (risk tolerance under 30%) | 6–11 of 12 |
+    | First artisan candidate (Q3: cautious, trust ≥ 50, warmth ≥ 30, not a member) | t899–t5639 (1.5–9.4 minutes) on every seed; 1–3 at minute 30 |
+    | Guild full within 30 minutes (F7) | 7 of 15 |
+    | Expeditions | 6 home with the haul, 2 turned back, 1 still out at minute 30 |
+    | Throughput (Release, one run a seed, this machine) | 20,000–45,000 ticks/s, the first seed's 8,000 aside (start-up) |
+    | Planner facts | 40 of 64 (`StateFact` 0–39), not the draft's 43 |
+    | Seeds 1–120, no guild (F3) | 119/120: seed 43's trust (7 of 12), as at G6 |
+
+  - Findings F8 (salvage at the cap) and F9 (small purses) are in the epic's §7.
 - [ ] **W0.3 Recipes as item data:** [Possibly Complex: a new data shape that W1–W4 rest on] a `Recipe` (station, inputs, output, ticks) beside the item catalog. `ItemSystemProofTests` adds a made item as data.
 - [ ] **W0.4 Stations as map data:** [Possibly Complex: the map grows; the gate seeds may move]
   - `StationDefinition`: its kind, its slot, and the sizes of its input and output stock;
@@ -131,3 +149,4 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.
+- 2026-11-04: W0.2 done (above): ore and herbs are plentiful, glowstone scarce, purses small; an artisan qualifies early on every seed.

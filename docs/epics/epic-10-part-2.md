@@ -147,7 +147,11 @@ Nothing is delivered yet.
 
 ## 7. Findings
 
-Handed on from Part 1 ([epic-10.md](epic-10.md) §7), each re-measured at W0.2:
-- **F3:** on some seeds trust rises for fewer than ⅔ of crawlers. At G6 only seed 43 of 1–120 was short. [Possibly Complex: balance research]
-- **F6:** Steady turns back 3 of 12 geared trips on the gate seeds. Draughts (W2) and gear for each hazard (W3) are the levers. [Possibly Complex: tuning]
-- **F7:** within 30 minutes at fair prices the guild fills on only 9 of the 23 gate seeds. The thresholds are the producer's (Q3 sets the artisans'). [Possibly Complex: a tuning choice]
+Handed on from Part 1 ([epic-10.md](epic-10.md) §7), each re-measured at W0.2 (2026-11-04, seeds 1–15 with the guild player for 30 minutes, and seeds 1–120 without it):
+- **F3:** on some seeds trust rises for fewer than ⅔ of crawlers. **At W0.2:** unchanged from G6, only seed 43 of 1–120 is short (7 of 12). [Possibly Complex: balance research]
+- **F6:** Steady turns back 3 of 12 geared trips on the gate seeds. **At W0.2:** 2 of 8 trips that ended turned back on seeds 1–15. Draughts (W2) and gear for each hazard (W3) are the levers. [Possibly Complex: tuning]
+- **F7:** within 30 minutes at fair prices the guild fills on only 9 of the 23 gate seeds. **At W0.2:** 7 of 15. The thresholds are the producer's (Q3 sets the artisans'). [Possibly Complex: a tuning choice]
+
+Found in Part 2:
+- **F8 (2026-11-04): ore and herbs sit at the stall's cap.** Before nearly every caravan visit the stall holds 20 ore and 20 herbs (`StallSalvageCapacity`), and the caravan takes 2 of each, so crawlers' later salvage is turned away. A station drawing on them costs no export and opens room for more sales. Glowstone is the scarce input (under 1 in stock on average; 6–25 exported in 30 minutes, at 70g each), so W3's glowstone recipes compete with the caravan. [Possibly Complex: recipe inputs and W3's economy]
+- **F9 (2026-11-04): purses are small.** At minute 30 members carry 10–48g on average and other residents 4–19g (the most anyone carries is about 70g). A pickaxe at its 30g base value is beyond most residents most of the time, so W1.4's price and buy decision must fit the purses that exist, or no crawler buys and Q7's sink never works. [Possibly Complex: W1.4's price]
