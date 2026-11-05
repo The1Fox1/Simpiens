@@ -48,10 +48,17 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 - **Sleep:** goes from 6 seconds a day in a bunk to 8 hours.
 - **Tasks:** stretched work takes them from about 190 a day to tens.
 
+### Measured along the way
+- **T2.1, hunger over 24 hours** (2026-11-04): the gate seeds for three days each (69 seed-days) at `DayTuning.FullDay`, with everything else still at today's pace.
+  - **Meals:** 2.4 a resident-day; nobody starved.
+  - **With little to do,** crawlers idle 83% of the day and harvest for 10 s.
+  - **The stall** sells 27 times a day (from 137) and can't pay its upkeep in full: 704g a day of the 1,200g due.
+  - Expected: actions (T2.4) and the economy per day (T4) answer it.
+
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
 
-**Proposed** is T0's starting point. The step that owns a row measures it and may move it; the table records where it lands.
+**Proposed** is T0's starting point. The step that owns a row measures it and may move it; the table records where it lands. A ✓ marks a row in `DayTuning.FullDay` (or its step's home), which the cut-over (T5) makes the default.
 
 ### 3.1 The clock
 | What | Where | Today | Kind | Proposed | Step |
@@ -62,16 +69,16 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 ### 3.2 Needs and health
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| Hunger | `AgentState.Tick` | +1.5 a second: fed to starving in 67 s | D | +100 over 24 h (4.17 an hour) | T2.1 |
+| Hunger | `DayTuning` | +1.5 a second: fed to starving in 67 s | D | +100 over 24 h (4.17 an hour): 2.4 meals a day measured | T2.1 ✓ |
 | Starting and arrival hunger | `OutpostSession.ArrivalHunger`; `DrifterTuning` | 20; drifters 40–70 | D | kept: they come off the road wanting a meal | T2.1 |
-| The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations` | below 20, or carrying 2 rations | D | re-set to the new trip's cost: a trip of about 30 s costs about 3 hunger | T2.1 |
+| The expedition's muster | `ExpeditionTuning.MusterHunger`, `Rations` | below 20, or carrying 2 rations | D | re-set to the new trip's cost, which stretched work sets (a 30 s trip costs about 3 hunger; the work's harvests, hours) | T3.2b |
 | Energy, standing | `AgentState.Tick` | −0.2 a second | D | about −2.5 an hour | T2.2 |
 | Energy, walking | `AgentState.Tick` | −1.0 a second | D | about −7.5 an hour | T2.2 |
 | Energy, working (new) | the actions of D22 | as standing | D | the walking rate: work tires as walking does (W1.3's D15) | T2.2 |
 | Sleep in a bunk | `SleepAtBunkAction.SleepSeconds`, `Considerations.BunkRecoveryPerSecond`, `BunkSleepBonus` | 3 s at +30 a second, then +40 | D | until rested, at about +7.5 an hour: about 8 hours from the tired line | T2.2 |
 | Resting in place, and a collapse | `AgentState.Tick` | +15 a second | D | sleeping rough: half a bunk's rate | T2.2 |
 | The lines | `Considerations.TiredEnergy`, `TooTiredToWalkEnergy`; `MentalBreakEvaluator.ExhaustionThreshold` | tired 40; too tired to walk 15; collapse 5 | D | kept; measured so the average day is 16 hours awake and 8 asleep | T2.2 |
-| Social | `AgentState.Tick` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 |
+| Social | `DayTuning` | −0.5 a second (empty in 200 s) | D | −100 over 16 h: company once or twice a day | T2.1 ✓ |
 | Frustration | `AgentState.Tick` | −1 a second | P | kept: it answers blocked moves, which are physical | |
 | Healing, awake | `Vitality.RestingHealPerSecond` | 0.05 a second (about 50 a day already) | D | about 50 a day (kept in day terms) | T3.2a |
 | Healing in a bunk | `Vitality.BunkHealPerSecond` | 4 a second (12 per 3-second nap) | D | about +10 an hour: a night's sleep heals 80 | T3.2a |

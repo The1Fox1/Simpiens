@@ -66,6 +66,9 @@ namespace Simpiens.Core.Tests
         public void DirectiveCompliance() => new Simpiens.Testing.Sociopolitical.DirectiveComplianceValidator().Start();
 
         [Fact]
+        public void DayPace() => new Simpiens.Testing.Drives.DayPaceValidator().Start();
+
+        [Fact]
         public void DriveDecay() => new Simpiens.Testing.Drives.DriveDecayValidator().Start();
 
         [Fact]

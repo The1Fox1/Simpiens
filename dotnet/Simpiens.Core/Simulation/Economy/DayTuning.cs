@@ -72,6 +72,23 @@ namespace Simpiens.Simulation.Economy
             restSeconds: 2.0f,
             restBonus: 30f);
 
+        /// <summary>
+        /// The 24-hour day (milestone T, built a step at a time; the cut-over makes it the default): hunger fills over a day
+        /// (D19) and social empties over 16 hours (T2.1). Sleep, rest and energy are still <see cref="Legacy"/>'s until T2.2.
+        /// </summary>
+        public static DayTuning FullDay => new DayTuning(
+            hungerPerSecond: DayClock.PerSecond(100f / DayClock.HoursPerDay),
+            energyStandingPerSecond: 0.2f,
+            energyWalkingPerSecond: 1.0f,
+            socialPerSecond: DayClock.PerSecond(100f / 16f),
+            bunkRecoveryPerSecond: 30f,
+            restRecoveryPerSecond: 15f,
+            sleepSeconds: 3.0f,
+            wakeEnergy: float.MaxValue,
+            sleepBonus: 40f,
+            restSeconds: 2.0f,
+            restBonus: 30f);
+
         public static DayTuning Default => Legacy;
     }
 }
