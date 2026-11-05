@@ -27,7 +27,7 @@ namespace Simpiens.Cognition.Planning
             var inv = inventory ?? context.Inventory;
             // Groups, not items (the item catalog): food, a tool, salvage to sell, and worn protection (Epic 10 G3)
             bool hasFood = inv.HasAny(ItemCategory.Food);
-            bool hasTool = inv.HasAny(ItemCategory.Tool);
+            bool hasTool = inv.HasAny(ItemCategory.Tool) || inv.IsWearing(ItemCategory.Tool); // worn in the tool slot, as a bought pickaxe is
             bool hasSalvage = inv.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
             bool hasHazardGear = inv.IsWearing(ItemCategory.Protection);
 
@@ -59,7 +59,7 @@ namespace Simpiens.Cognition.Planning
                 {
                     hasFoodInInventory = true;
                 }
-                if (!hasTool && context.Inventory.HasAny(ItemCategory.Tool))
+                if (!hasTool && (context.Inventory.HasAny(ItemCategory.Tool) || context.Inventory.IsWearing(ItemCategory.Tool)))
                 {
                     hasTool = true;
                 }

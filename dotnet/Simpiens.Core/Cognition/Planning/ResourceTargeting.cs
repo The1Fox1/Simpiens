@@ -509,14 +509,24 @@ namespace Simpiens.Cognition.Planning
         /// Epic 10 G3: the nearest reachable stall sells hazard gear at or below this crawler's price, and the crawler can
         /// pay for it and still buy a ration after (gear never costs it a meal).
         /// </summary>
-        public static bool CanBuyGear(in AgentContext context)
+        public static bool CanBuyGear(in AgentContext context) => CanBuyEquipment(context, ItemCategory.Protection);
+
+        /// <summary>Epic 10 Part 2, W1.4 (D38): as <see cref="CanBuyGear"/>, for the tool the stall sells (a pickaxe).</summary>
+        public static bool CanBuyTool(in AgentContext context) => CanBuyEquipment(context, ItemCategory.Tool);
+
+        /// <summary>
+        /// The nearest reachable stall has a piece of <paramref name="group"/> in stock at or below this crawler's price,
+        /// and the crawler can pay for it with a ration's price to spare.
+        /// </summary>
+        private static bool CanBuyEquipment(in AgentContext context, ItemCategory group)
         {
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            var protection = ProtectionForSale(stall);
-            ushort price = stall.SellPriceOf(protection);
-            return stall.SellStockOf(protection) > 0 && price > 0
-                && price <= Considerations.GearReservationPrice(context, protection)
+            var item = FirstForSale(stall, group);
+            if (item == ItemType.None) return false;
+            ushort price = stall.SellPriceOf(item);
+            return stall.SellStockOf(item) > 0 && price > 0
+                && price <= Considerations.GearReservationPrice(context, item)
                 && gold >= price + stall.SellPriceOf(FoodForSale(stall));
         }
 
@@ -526,6 +536,9 @@ namespace Simpiens.Cognition.Planning
         /// <summary>The first protection the stall sells, in id order (hazard gear, Epic 10 G3); None when it sells none.</summary>
         public static ItemType ProtectionForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Protection);
 
+        /// <summary>The first tool the stall sells, in id order (a pickaxe, Epic 10 Part 2); None when it sells none.</summary>
+        public static ItemType ToolForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Tool);
+
         private static ItemType FirstForSale(in TradeStallData stall, ItemCategory group)
         {
             var members = ItemCatalog.InCategory(group);
@@ -534,6 +547,20 @@ namespace Simpiens.Cognition.Planning
                 if (stall.TryGetGood(members[i], out var good) && good.Role == StallRole.Sells) return members[i];
             }
             return ItemType.None;
+        }
+
+        /// <summary>
+        /// True when the crawler knows a node of a mineral it would mine (iron ore; glowstone only for one who would go
+        /// into its hazard): what a pickaxe is for (Epic 10 Part 2, D38).
+        /// </summary>
+        public static bool KnowsMineral(in AgentContext context)
+        {
+            var minerals = ItemCatalog.InCategory(ItemCategory.Mineral);
+            for (int i = 0; i < minerals.Count; i++)
+            {
+                if (minerals[i].IsSalvage() && KnowsSalvage(context, minerals[i])) return true;
+            }
+            return false;
         }
 
         /// <summary>True when the crawler knows a node of a hazardous resource (glowstone, Epic 10 G2) it would go for.</summary>

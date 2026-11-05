@@ -103,7 +103,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
-                if (gear) agent.Activity.GearPurchases++;
+                if (gear && equipment.Slot == Simpiens.Simulation.Items.EquipmentSlot.Tool) agent.Activity.ToolPurchases++;
+                else if (gear) agent.Activity.GearPurchases++;
                 else agent.Activity.RecordRationPurchase();
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} bought {trade.Quantity}x {trade.ItemType} for {totalCost}g at {SimLog.Agent(stall.StallEntityId)} (stock {stall.SellStockOf(trade.ItemType)}, treasury {stall.TreasuryGold}g, {verdict} against a calm value of {calmValue:0.#}g, player trust delta {delta.Trust})");
 
