@@ -30,6 +30,7 @@ namespace Simpiens.Hosting
         private byte _target, _goal;
         private RetreatRule _rule;
         private bool _outfit;
+        private byte _draughts;
 
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
         public GuildPlayer(LocalSimulation sim, int targetSize, ushort wage = 0)
@@ -60,14 +61,16 @@ namespace Simpiens.Hosting
         /// Sends expeditions (Epic 10 G5): once the guild reaches its target size, every member not wearing protection is
         /// given some from the stall's stock (if <paramref name="outfit"/>), and when all wear it, no party is out and a node
         /// of <paramref name="sectorId"/> shows on the map (ready, not regrowing), the whole guild is sent for
-        /// <paramref name="goal"/> under <paramref name="rule"/>. Again each time the seam is back.
+        /// <paramref name="goal"/> under <paramref name="rule"/>, each member given <paramref name="draughts"/> draughts from
+        /// the stall's stock at the muster as stock allows (Epic 10 Part 2, W2). Again each time the seam is back.
         /// </summary>
-        public void SendExpeditions(byte sectorId, byte goal, RetreatRule rule = RetreatRule.Steady, bool outfit = true)
+        public void SendExpeditions(byte sectorId, byte goal, RetreatRule rule = RetreatRule.Steady, bool outfit = true, byte draughts = 0)
         {
             _target = sectorId;
             _goal = goal;
             _rule = rule;
             _outfit = outfit;
+            _draughts = draughts;
         }
 
         /// <summary>Stops acting (a scenario that takes over).</summary>
@@ -107,7 +110,7 @@ namespace Simpiens.Hosting
 
             _party.Clear();
             for (int i = 0; i < guild.Members.Count && _party.Count < DispatchExpeditionCommand.MaxMembers; i++) _party.Add(guild.Members[i].CrawlerId);
-            var order = new DispatchExpeditionCommand(_target, _goal, _rule, _party.ToArray());
+            var order = new DispatchExpeditionCommand(_target, _goal, _rule, _party.ToArray(), _draughts);
             if (guild.CanDispatch(host, order) != GuildRules.Check.Ok) return;
             _commands.QueueInfluence(InfluenceEvent.CreateDispatchExpedition(SourceId, order));
             Dispatches++;

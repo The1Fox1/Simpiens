@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Groups;
 using Simpiens.Cognition.Inventory;
@@ -56,12 +57,19 @@ namespace Simpiens.Core.Tests
                 }
             }
 
-            public DispatchExpeditionCommand Order(byte goal = 4, RetreatRule rule = RetreatRule.Steady, int count = -1, byte sector = Floor1Layout.DrownedGallerySectorId)
+            public DispatchExpeditionCommand Order(byte goal = 4, RetreatRule rule = RetreatRule.Steady, int count = -1, byte sector = Floor1Layout.DrownedGallerySectorId, byte draughts = 0)
             {
                 int n = count < 0 ? Members.Length : count;
                 var ids = new EntityId[n];
                 for (int i = 0; i < n; i++) ids[i] = Members[i].AgentId;
-                return new DispatchExpeditionCommand(sector, goal, rule, ids);
+                return new DispatchExpeditionCommand(sector, goal, rule, ids, draughts);
+            }
+
+            /// <summary>Draughts in the stall's stock, by hand (the still's are W2.5's).</summary>
+            public void StockDraughts(ushort count)
+            {
+                var stall = Sim.Simulation.ActiveStalls[0];
+                ((SimulationManager)Sim.Simulation).UpdateStall(stall.WithStock(ItemType.HealingDraught, count));
             }
         }
 
@@ -282,6 +290,39 @@ namespace Simpiens.Core.Tests
             o.Step();
             Assert.False(o.Guild.HasExpedition, "Home with nothing, it ends.");
             Assert.Contains(Told(o.Sim, o.Members[0].AgentId), e => e.EventType == ChronicleEventType.ExpeditionTurnedBack && e.SimulationTick == o.Tick - 1);
+        }
+
+        /// <summary>
+        /// Draughts (Epic 10 Part 2, W2.2, D43, D44): the muster gives each member the order's draughts from the stall's
+        /// stock, as stock allows; at work a member under the retreat line who still carries one doesn't turn the party
+        /// back (it drinks at the treat line); once it carries none, the rule turns the party back as before.
+        /// </summary>
+        [Fact]
+        public void TheMusterGivesTheOrdersDraughtsAndAMemberWithOneKeepsThePartyWorking()
+        {
+            using var o = NewOutpost();
+            o.StockDraughts(6);
+            Assert.Throws<ArgumentException>(() => o.Order(draughts: DispatchExpeditionCommand.MaxDraughts + 1));
+            o.PutAll(o.Home);
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, o.Order(rule: RetreatRule.Steady, draughts: 2), o.Tick));
+            Assert.Equal(2, o.Guild.Expedition.Draughts);
+            o.Step();
+            int given = o.Members.Sum(m => m.Inventory.GetItemCount(ItemType.HealingDraught));
+            Assert.Equal(6, given); // as stock allows: the first three members get two each
+            Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught));
+            Assert.Equal(2, o.Members[1].Inventory.GetItemCount(ItemType.HealingDraught));
+            Assert.Equal(0, o.Members[3].Inventory.GetItemCount(ItemType.HealingDraught));
+
+            o.PutAll(o.Gallery);
+            o.Step();
+            Assert.Equal(ExpeditionStage.Work, o.Guild.Expedition.Stage);
+            o.Members[1].Health = 50f; // under Steady's 55, with two draughts
+            o.Step();
+            Assert.Equal(ExpeditionStage.Work, o.Guild.Expedition.Stage);
+            Assert.False(o.Guild.Expedition.TurnedBack, "A member with a draught drinks instead of turning the party back.");
+            o.Members[1].Inventory.TryRemoveItem(ItemType.HealingDraught, 2); // drunk
+            o.Step();
+            Assert.True(o.Guild.Expedition.TurnedBack && o.Guild.Expedition.Stage == ExpeditionStage.Return, "With none left, the rule turns the party back.");
         }
 
         [Fact]

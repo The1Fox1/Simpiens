@@ -112,7 +112,8 @@ namespace Simpiens.Simulation.Guild
                 HaulItem = haul,
                 Goal = order.Goal,
                 Rule = order.Rule,
-                Stage = ExpeditionStage.Muster
+                Stage = ExpeditionStage.Muster,
+                Draughts = order.Draughts
             };
             _party.Clear();
             for (int i = 0; i < order.Count; i++)
@@ -127,7 +128,7 @@ namespace Simpiens.Simulation.Guild
             }
             Direct(host);
 
-            SimLog.Economy.ZLogInformation($"The guild sent {order.Count} to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}); party group {party}");
+            SimLog.Economy.ZLogInformation($"The guild sent {order.Count} to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}, {order.Draughts} draughts each); party group {party}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionSent, order[0], WorldRegistry.PlayerEntityId,
                 order.TargetSectorId, tick, ChronicleIntensity.Dramatic, order.Count));
             return GuildRules.Check.Ok;
@@ -335,17 +336,29 @@ namespace Simpiens.Simulation.Guild
         /// rations is given the rest from the stall's stock, no gold changing hands. Members can't fund a trip of about 90
         /// hunger themselves (two rations cost 30g; a member earns 5g a visit), and eat on the way.
         /// </summary>
+        /// <summary>
+        /// At the muster the guild gives each member at the stall what the trip needs from the stall's stock: its rations
+        /// (G5), and the order's draughts (Epic 10 Part 2, W2, D44), up to what it carries already. No gold moves (D12).
+        /// </summary>
         private void Provision(IGuildHost host, Vec2 home, in ExpeditionTuning tuning)
         {
             if (host.ActiveStalls.Count == 0) return;
             var stall = host.ActiveStalls[0];
-            var food = ItemType.None;
-            var foods = ItemCatalog.InCategory(ItemCategory.Food);
-            for (int i = 0; i < foods.Count && food == ItemType.None; i++)
+            bool changed = Give(host, ref stall, home, tuning, ItemCategory.Food, tuning.Rations);
+            if (_expedition.Draughts > 0) changed |= Give(host, ref stall, home, tuning, ItemCategory.Medicine, _expedition.Draughts);
+            if (changed) host.UpdateStall(stall);
+        }
+
+        /// <summary>Tops each member at the muster up to <paramref name="count"/> of the first <paramref name="group"/> the stall sells and holds.</summary>
+        private bool Give(IGuildHost host, ref TradeStallData stall, Vec2 home, in ExpeditionTuning tuning, ItemCategory group, int count)
+        {
+            var item = ItemType.None;
+            var members = ItemCatalog.InCategory(group);
+            for (int i = 0; i < members.Count && item == ItemType.None; i++)
             {
-                if (stall.SellStockOf(foods[i]) > 0) food = foods[i];
+                if (stall.SellStockOf(members[i]) > 0) item = members[i];
             }
-            if (food == ItemType.None) return;
+            if (item == ItemType.None) return false;
 
             bool changed = false;
             for (int i = 0; i < _party.Count; i++)
@@ -353,13 +366,13 @@ namespace Simpiens.Simulation.Guild
                 var member = _party[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                 if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue;
-                int given = Math.Min(tuning.Rations - crawler.Inventory.CountOf(ItemCategory.Food), stall.SellStockOf(food));
-                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance((ushort)food, food, (ushort)given, (ushort)stall.SellPriceOf(food)), out _)) continue;
-                stall = stall.WithStock(food, (ushort)(stall.StockOf(food) - given));
+                int given = Math.Min(count - crawler.Inventory.GetItemCount(item), stall.SellStockOf(item));
+                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance((ushort)item, item, (ushort)given, (ushort)stall.SellPriceOf(item)), out _)) continue;
+                stall = stall.WithStock(item, (ushort)(stall.StockOf(item) - given));
                 changed = true;
-                SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} was given {given} {food} from the stall's stock for the trip");
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} was given {given} {item} from the stall's stock for the trip");
             }
-            if (changed) host.UpdateStall(stall);
+            return changed;
         }
 
         private static bool PayDirect(ref TradeStallData stall, AgentState crawler, uint amount)
@@ -490,7 +503,11 @@ namespace Simpiens.Simulation.Guild
             return gathered;
         }
 
-        /// <summary>The retreat rule (D10): a member downed, or below the rule's health.</summary>
+        /// <summary>
+        /// The retreat rule (D10): a member downed, or below the rule's health. A member still carrying medicine (a draught,
+        /// Epic 10 Part 2, W2, D43) doesn't count: it drinks at the treat line instead of turning the party back, so what the
+        /// party carries is how long it keeps working.
+        /// </summary>
         private bool ShouldTurnBack(IGuildHost host, in ExpeditionTuning tuning)
         {
             float floor = tuning.RetreatHealth(_expedition.Rule);
@@ -498,7 +515,8 @@ namespace Simpiens.Simulation.Guild
             {
                 var member = _party[i];
                 if (member.Status == ExpeditionMemberStatus.Downed) return true;
-                if (member.IsWithParty && host.TryGetCrawler(member.CrawlerId, out var crawler) && crawler.Health < floor) return true;
+                if (member.IsWithParty && host.TryGetCrawler(member.CrawlerId, out var crawler) && crawler.Health < floor
+                    && !crawler.Inventory.HasAny(ItemCategory.Medicine)) return true;
             }
             return false;
         }

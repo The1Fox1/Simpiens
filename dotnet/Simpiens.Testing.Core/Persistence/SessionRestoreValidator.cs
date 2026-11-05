@@ -219,7 +219,8 @@ namespace Simpiens.Testing.Persistence
                 Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
                 {
                     DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
-                    Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work
+                    Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work,
+                    Draughts = 2 // each member's draughts (Epic 10 Part 2, W2)
                 },
                 Party = new[]
                 {
@@ -233,7 +234,7 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
             Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
             Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
-            Assert(guild.HasExpedition && guild.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && guild.Expedition.StageTick == 160u
+            Assert(guild.HasExpedition && guild.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && guild.Expedition.StageTick == 160u && guild.Expedition.Draughts == 2
                 && guild.Party.Count == 2 && guild.Party[0].CarriedAtDispatch == 2 && guild.Party[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
                 "The expedition comes back mid-stage, its party in the order sent (Epic 10 G5).");
             guild.RestoreFrom(null);

@@ -66,24 +66,31 @@ namespace Simpiens.Intervention
 
     /// <summary>
     /// The player sends a party of guild members out (Epic 10 G5, D7): one to <see cref="MaxMembers"/> members, the
-    /// sector, how many of what its nodes yield to bring back, and when to turn back. Zero-allocation: four fields.
+    /// sector, how many of what its nodes yield to bring back, when to turn back, and how many draughts each member
+    /// carries from the stall's stock (Epic 10 Part 2, W2, D44). Zero-allocation.
     /// </summary>
     public readonly struct DispatchExpeditionCommand
     {
         public const int MaxMembers = 4;
 
+        /// <summary>The most draughts a member is given to carry (D44).</summary>
+        public const byte MaxDraughts = 2;
+
         public readonly byte TargetSectorId;
         public readonly byte Goal;
         public readonly RetreatRule Rule;
         public readonly int Count;
+        public readonly byte Draughts;
         private readonly EntityId _member0, _member1, _member2, _member3;
 
-        public DispatchExpeditionCommand(byte targetSectorId, byte goal, RetreatRule rule, ReadOnlySpan<EntityId> members)
+        public DispatchExpeditionCommand(byte targetSectorId, byte goal, RetreatRule rule, ReadOnlySpan<EntityId> members, byte draughts = 0)
         {
             if (members.Length > MaxMembers) throw new ArgumentException($"A party has at most {MaxMembers} members.", nameof(members));
+            if (draughts > MaxDraughts) throw new ArgumentException($"A member carries at most {MaxDraughts} draughts.", nameof(draughts));
             TargetSectorId = targetSectorId;
             Goal = goal;
             Rule = rule;
+            Draughts = draughts;
             Count = members.Length;
             _member0 = Count > 0 ? members[0] : default;
             _member1 = Count > 1 ? members[1] : default;

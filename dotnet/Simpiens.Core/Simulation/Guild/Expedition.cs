@@ -96,7 +96,8 @@ namespace Simpiens.Simulation.Guild
         /// <summary>Set when the party turned back (the retreat rule, a downed member, the player's recall, time up).</summary>
         public bool TurnedBack;
 
-        private byte _pad;
+        /// <summary>Draughts each member is given to carry at the muster (Epic 10 Part 2, W2, D44): the record's spare byte.</summary>
+        public byte Draughts;
 
         public readonly bool IsActive => PartyGroupId != 0;
     }
