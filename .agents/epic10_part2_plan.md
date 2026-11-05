@@ -79,7 +79,9 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 - **Done 2026-11-04:** every step above. Core 146/146, client 438/438, golden 3/3 (re-recorded once, the map part only), seeds 1–120 119/120 as before; the pinned image 438/438 exact; MonoGame and Android compile. Finding F10 (the epic's §7): idle crawlers step over the workshop row's threshold, which moves the late day slightly on 33 of 120 seeds.
 
 ### T. A 24-hour day (added 2026-11-04, before W1.3; 4–6 days)
-**Complexity:** Very Complex: it re-paces every seed's day, the economy's cadence and the tests' horizons. Split below; the developer supervises T2.2 (sleep) and T4 (the economy per day). Proposed, waiting for the producer's answers before any code.
+**Complexity:** Very Complex: it re-paces every seed's day, the economy's cadence and the tests' horizons. Split below; the developer supervises T2.2 (sleep) and T4 (the economy per day). Answered 2026-11-04 (below); waiting for the producer's go before any code.
+
+- **The answers (2026-11-04):** D22, work is stretched RimWorld-style (the producer chose the alternative). D17, D19, D20 and D21 are accepted as proposed (by exception). D18 is revised to follow D22. Accepting is not a go.
 
 - **The producer's direction (2026-11-04):** time should be a full 24-hour day, with RimWorld's clock as the baseline (1,000 seconds a day at 1×). A crawler needs 8 hours of sleep a day, and hunger goes from fed to starving over 24 hours.
 - **What the numbers show today:**
@@ -89,14 +91,22 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **The economy** is paced by the minute: a caravan visit every 60 s, about 22 meals a minute for 12 crawlers (about 330 a day), the Garden regrowing in 30 s. At two or three meals a day, food demand falls to about 30 a day.
   - **The gate** (23 seeds × 9,000 ticks) runs in 8 s; three days of 10,080 ticks would take about 27 s.
 - **Proposed D17, the day:** 10,080 ticks, 1,008 s at 1×: RimWorld's 1,000 s rounded so a game minute is 7 ticks and an hour 420, and every duration in game time is a whole number of ticks. Tick 0 is 06:00 on day 1, as now. A core `DayClock` owns the arithmetic; the dashboard's `OutpostClock` reads it. *Alternative:* exactly 10,000 ticks, with hours of 416⅔ ticks and schedules rounded.
-- **Proposed D18, two kinds of time:**
-  - **Physical time** stays in ticks as today: moving, poses and their timers, perception, cognition's latency, the actions' lengths (harvest, trade, share), hazard exposure.
-  - **The day's time** is set in game hours through the `DayClock`: needs, sleep, the caravan, wages, regrowth, cooldowns, drifters' arrivals and stays, the expedition's muster, bounty expiries, recipes, shifts.
+- **D18, two kinds of time** (revised for D22's answer):
+  - **Physical time** stays in ticks as today, and covers only motion and what is shown: walking (2 units a second) and path steps, poses and their timers, panic's sprint, perception's cadence, cognition's latency, the motor watchdog, retries.
+  - **The day's time** covers everything a crawler does or undergoes, set in game minutes and hours through the `DayClock`: actions (D22), needs, sleep, hazard damage, healing, gear's wear, the caravan, wages, regrowth, cooldowns, drifters' arrivals and stays, the expedition's muster and stages, bounty expiries, recipes, shifts.
   - T0's table sorts every number into one or the other.
 - **Proposed D19, hunger:** rises 100 over 24 hours (100 / 10,080 a tick). The thresholds stay (hungry at 50, the reflex at 60, starving from 85), so a crawler eats two or three times a day, as RimWorld's colonists do. The core keeps counting up; the client may show the meter as "fed", falling from 100 to 0.
 - **Proposed D20, sleep is need-driven:** a crawler tires over about 16 waking hours and sleeps in a bunk until rested, about 8 hours. Walking still tires more than standing; the rates are set so the average day on the gate seeds is 16 hours awake and 8 asleep (asserted within an hour). Everyone wakes at 06:00 on day 1, so sleep settles at night, and a night-shift artisan sleeps by day. *Alternative:* scheduled nights (RimWorld's default schedule), which fights night shifts.
 - **Proposed D21, beds:** a sleeper holds its bunk a third of the day, so the bunkhouse grows to one bunk per resident (8 → 12). Drifters sleep rough when the bunks are full (resting in place, slower). *Alternative:* keep 8 and make bed scarcity the reason for the guildhall's barracks (W5).
-- **Proposed D22, the pace of work:** actions keep their physical lengths (a harvest is still 1.5 s a unit, about 2 game minutes); the economy's numbers are re-derived per day from T0's measurement. *Alternative:* stretch work into game time, RimWorld-like (a harvest of half an hour), so a crawler does tens of tasks a day rather than hundreds.
+- **D22, work is stretched RimWorld-style (the producer's answer):** a crawler does tens of tasks a day, not hundreds. Today most actions finish on arrival or within 1.5 s. Proposed lengths, tuned in T0's table:
+  - **harvest, per unit:** ore and glowstone 30 game minutes (210 ticks, 21 s at 1×), herbs 20 (140), a Garden ration 15 (105);
+  - **eat a ration:** 15 minutes;
+  - **trade at the stall, claim or deliver at the board, share food:** 10 minutes each;
+  - **a scout's survey, treating wounds with a herb:** 30 minutes each;
+  - **sleep:** until rested (D20); **the pickaxe** (D2's placeholder): 2 hours at the forge.
+  - **Walking stays physical:** crossing the floor (about 50 units) takes about 25 s, some 36 game minutes, roughly RimWorld's pace across a colony.
+  - **What it gives:** a working crawler's 16 waking hours, less meals and the hearth, hold some 10–20 units of salvage (a trip of a few units, with the walks, takes about 3 hours). Supply falls along with food demand, so the economy's shape per day may survive with the caravan re-paced; T0 measures both before T4.
+  - **What it forces:** hazard damage can't stay per second. A 21-second harvest in the Drowned Gallery (6 a second) costs 126 health, more than anyone has. Damage, healing and gear's wear move to the day's time (D18), re-tuned so a unit of glowstone costs about what it does today (T3.2).
 
 1. **T0 Measure, and the re-pacing table** [Possibly Complex: a probe and a design note, no game code]: on the gate seeds, per crawler and per day: meals (Garden, stall, pack), sleeps and time asleep, sales, bounty trips, idle time; the stall's flows per day. Then a table of every duration and rate in the core (needs, `Vitality`, `Considerations`, the tunings, the layout's regrowth, memory decay, cooldowns), old → new, physical or day time. The producer reviews the table with T4's numbers.
 2. **T1 The day's clock in the core** [Basic: arithmetic and a move, no behaviour change]: `DayClock` (ticks per day, hour and minute; the start at 06:00; day, minute of day, hour, night; hours to ticks). `OutpostClock` reads it. The header's time changes, so renders that show it are re-recorded in the pinned image; golden unchanged.
@@ -104,7 +114,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
    1. **T2.1 Hunger over 24 hours** [Possibly Complex: one rate, but every seed's day changes; golden re-recorded in its own commit], with what was tuned to it: the watch's starving stretch, drifters' arrival hunger, the expedition's muster hunger and rations.
    2. **T2.2 Sleep** [Very Complex, supervised by the developer: a 3-second nap becomes an 8-hour state that must hold live: waking, interruption (starvation, a hazard), bunk claims held for hours, collapse, healing in a bunk]: the waking drain and the bunk's recovery, sleep until rested, the rates measured and asserted.
    3. **T2.3 Beds** [Possibly Complex: a map change; golden and renders re-recorded]: 12 bunks; sleeping rough when they are full.
-4. **T3 The day's schedules** [Possibly Complex: mechanical, each number from T0's table]: the caravan's cadence, regrowth, drifters' arrivals and stays, cooldowns, bounty expiries, the expedition's muster, recipes' times, in game hours.
+   4. **T2.4 Work stretched (D22)** [Possibly Complex: every handler's length from T0's table; nodes, plots and the stall held for minutes, not ticks (contention); the anomaly detector's checks see long stands; golden]: the actions' lengths in game minutes; a worked pose while an action runs.
+4. **T3 The day's schedules and its dangers** [Very Complex as a whole: split into]
+   1. **T3.1 Schedules** [Possibly Complex: mechanical, each number from T0's table]: the caravan's cadence, regrowth, drifters' arrivals and stays, cooldowns, bounty expiries, the expedition's muster and stages, recipes' times, in game hours.
+   2. **T3.2a Damage, healing and wear per game hour** [Possibly Complex: Part 1's danger numbers (G2, G3) re-expressed; golden]: hazard damage, healing awake and in a bunk, a downed crawler's recovery, gear's wear per hour of exposure, set so a unit of glowstone costs about the health and wear it does today.
+   3. **T3.2b Who ventures, and the expedition** [Possibly Complex: measuring; the guild's live scenarios must hold]: the lone crawler's hazard limit (Part 1's G5) and the retreat floors re-measured on the guild player's seeds.
 5. **T4 The economy per day** [Very Complex, supervised by the developer: the food trade shrinks about tenfold; a re-derivation, not a tweak]: the ration's price and value, the Garden's yield, the caravan's quota, upkeep and wages, `EarnIncomeGoal.ComfortableGold`; the soak's horizon in days and its bands, proposed to the producer; `docs/economy-model.md` rewritten.
 6. **T5 The tests' horizons** [Possibly Complex]: the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.

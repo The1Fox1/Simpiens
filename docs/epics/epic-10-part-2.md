@@ -90,7 +90,16 @@ Shifts exposed that time doesn't hold together: the dashboard's day is 9,000 tic
 - a crawler needs 8 hours of sleep a day;
 - hunger goes from fed to starving over 24 hours.
 
-The proposed design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds, the pace of work) and its phases, T0–T7, are in the plan's milestone T, waiting for the producer's answers before any code. W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
+The design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds, the pace of work) and its phases, T0–T7, are in the plan's milestone T. **The answers (2026-11-04):**
+- **D22, the pace of work:** the producer chose to stretch work RimWorld-style, so a crawler does tens of tasks a day rather than hundreds (a unit of ore takes half a game hour to harvest).
+- **D17, D19, D20, D21** are accepted as proposed:
+  - D17, the day: 10,080 ticks, so a game minute is 7 ticks;
+  - D19, hunger: over 24 hours;
+  - D20, sleep: need-driven, about 8 hours;
+  - D21, beds: one bunk per resident.
+- **D18 follows D22:** only motion and what is shown stay in physical ticks. Everything a crawler does or undergoes runs on the day's time, hazards included, because a half-hour harvest at today's damage per second would down anyone.
+
+T waits for the producer's go. W1.3's shifts are re-answered after it: D14 (eating on the job) falls away with two meals a day, and D15 changes, since 12 hours of work fit inside a 16-hour waking day unless work tires faster than idling.
 
 **The new verbs:** build, hire and dismiss an artisan, set an artisan's wage, order a recipe, price a made item, form a party. Each is a typed player command (ROADMAP §1A.1).
 
@@ -99,7 +108,7 @@ The proposed design (D17–D22: the day's length, two kinds of time, hunger, sle
 | Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-4) | Complexity |
 | :--- | :--- | :--- | :--- | :--- |
 | **W0. Groundwork** | The two new rooms, empty | Measurements; recipes as item data; stations as map data; the crafting rule, engine-free; the `Workshop` group kind; save blocks | The rooms drawn and labelled | Possibly Complex |
-| **T. A 24-hour day** (added 2026-11-04, before W1.3) | A clock that means something: crawlers eat two or three times a day and sleep about 8 hours, mostly at night | The day's clock in the core (10,080 ticks, RimWorld's 1,000 s rounded to whole minutes); hunger over 24 hours; sleep until rested; beds for everyone; the day's schedules (caravan, regrowth, drifters, cooldowns, expeditions) in game hours; the economy re-paced per day | The clock from the core | Very Complex (the plan splits it; the developer supervises sleep and the economy's re-pacing) |
+| **T. A 24-hour day** (added 2026-11-04, before W1.3) | A clock that means something: crawlers eat two or three times a day and sleep about 8 hours, mostly at night | The day's clock in the core (10,080 ticks, RimWorld's 1,000 s rounded to whole minutes); hunger over 24 hours; sleep until rested; beds for everyone; the day's schedules (caravan, regrowth, drifters, cooldowns, expeditions) in game hours; actions stretched to game minutes (D22); hazards, healing and wear per game hour; the economy re-paced per day | The clock from the core; a worked pose while an action runs | Very Complex (the plan splits it; the developer supervises sleep and the economy's re-pacing) |
 | **W1. The forge and its artisan** | Build the forge, hire an artisan, order pickaxes. Bold crawlers buy them and harvest faster. | Construction; hiring (Q3, Q4); shifts; crafting from the stall's stock; the pickaxe's `HarvestSpeed` in the harvest | The station window (build, hire, order, progress); a pickaxe row in the merchant terminal | Very Complex (the plan splits it; the developer supervises shifts) |
 | **W2. The still and draughts** | Draughts from herbs; members carry one and keep going | The still; the draught, carried and drunk under orders below the retreat line | The still's window; draughts in the merchant terminal and the party builder | Possibly Complex |
 | **W3. Gear for each hazard** | Respirators and hard hats send the guild into the worst of the gallery | Gear with a hazard kind; recipes with glowstone; "outfit from stock" picks the target's gear; a lone crawler judges a hazard by what its gear leaves | Gear by hazard in the party builder | Possibly Complex |
@@ -182,7 +191,7 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 | Artisans are cautious crawlers with their own needs, so output is slow. | Shifts come after needs (Part 1's Q6). W1 measures output per minute and tunes recipe times. |
 | The planner's facts grow: artisans' work, carrying a draught. | R1's guard. The budget goes from 43 to about 48 of 64. |
 | The map grows again (two rooms after G5's one). | Golden hashes and renders re-recorded in their own commits. Well within A*'s cap. |
-| The 24-hour day (T) changes every seed's day: food demand falls about tenfold, sleep holds a bunk for hours, and the expedition's muster and rations were tuned to hunger at 1.5 a second (a trip of about 30 s costs about 45 hunger today, about 3 after T). | T0 measures first and tables every duration; the economy's re-pacing and sleep are supervised by the developer; the soak's bands are re-set with the producer; the expedition's muster rules are re-timed in T3. |
+| The 24-hour day (T) changes every seed's day: food demand falls about tenfold, sleep holds a bunk for hours, and the expedition's muster and rations were tuned to hunger at 1.5 a second (a trip of about 30 s costs about 45 hunger today, about 3 after T). | T0 measures first and tables every duration; the economy's re-pacing and sleep are supervised by the developer; the soak's bands are re-set with the producer; the expedition's muster rules are re-timed in T3. Stretched work (D22) puts hazards on the day's time too: damage, healing and gear's wear are re-tuned so a unit of glowstone costs what it does today, and the guild's scenarios re-measure who ventures (T3.2). |
 | Room on screen for stations and two trackers. | Windows, like the merchant and the bounty board (Part 1's rule). |
 | The save format changes at most milestones. | Old saves are refused with a reason. |
 
