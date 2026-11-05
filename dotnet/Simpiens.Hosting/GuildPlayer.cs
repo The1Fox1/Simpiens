@@ -31,6 +31,7 @@ namespace Simpiens.Hosting
         private RetreatRule _rule;
         private bool _outfit;
         private byte _draughts;
+        private int _stockpile;
 
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
         public GuildPlayer(LocalSimulation sim, int targetSize, ushort wage = 0)
@@ -62,15 +63,17 @@ namespace Simpiens.Hosting
         /// given some from the stall's stock (if <paramref name="outfit"/>), and when all wear it, no party is out and a node
         /// of <paramref name="sectorId"/> shows on the map (ready, not regrowing), the whole guild is sent for
         /// <paramref name="goal"/> under <paramref name="rule"/>, each member given <paramref name="draughts"/> draughts from
-        /// the stall's stock at the muster as stock allows (Epic 10 Part 2, W2). Again each time the seam is back.
+        /// the stall's stock at the muster as stock allows (Epic 10 Part 2, W2). With <paramref name="stockpile"/> it waits until
+        /// the stall holds that many draughts before sending, as it waits for gear. Again each time the seam is back.
         /// </summary>
-        public void SendExpeditions(byte sectorId, byte goal, RetreatRule rule = RetreatRule.Steady, bool outfit = true, byte draughts = 0)
+        public void SendExpeditions(byte sectorId, byte goal, RetreatRule rule = RetreatRule.Steady, bool outfit = true, byte draughts = 0, int stockpile = 0)
         {
             _target = sectorId;
             _goal = goal;
             _rule = rule;
             _outfit = outfit;
             _draughts = draughts;
+            _stockpile = stockpile;
         }
 
         /// <summary>Stops acting (a scenario that takes over).</summary>
@@ -101,11 +104,22 @@ namespace Simpiens.Hosting
             }
         }
 
+        /// <summary>The medicine the stall sells and holds (its draughts).</summary>
+        private int DraughtsInStock()
+        {
+            var stall = _sim.Simulation.ActiveStalls[0];
+            var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
+            int stock = 0;
+            for (int i = 0; i < medicines.Count; i++) stock += stall.SellStockOf(medicines[i]);
+            return stock;
+        }
+
         private void Expedition(GuildService guild, long tick)
         {
             if (guild.HasExpedition) return;
             var host = (IGuildHost)_sim.Simulation;
             if (_outfit && !Outfitted(guild, host)) return;
+            if (_stockpile > 0 && DraughtsInStock() < _stockpile) return;
             if (!SeamShows() || !AllWell(guild, host)) return;
 
             _party.Clear();
