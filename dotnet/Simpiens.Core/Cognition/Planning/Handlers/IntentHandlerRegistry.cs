@@ -60,6 +60,7 @@ namespace Simpiens.Cognition.Contracts
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.LeaveOutpostIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.RetreatIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.TreatWoundsIntentHandler());
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.WorkStationIntentHandler());
             return registry;
         }
     }

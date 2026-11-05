@@ -7,7 +7,7 @@ namespace Simpiens.Cognition.Planning.Actions
 {
     /// <summary>
     /// Action: Navigates toward the target location of an active group directive.
-    /// Preconditions: HasActiveDirective = true; not an expedition's work, which is <see cref="WorkExpeditionNodeAction"/>'s.
+    /// Preconditions: HasActiveDirective = true; not work at a site, which is <see cref="WorkExpeditionNodeAction"/>'s or <see cref="WorkStationAction"/>'s.
     /// Effects: AtDirectiveLocation = true.
     /// </summary>
     public class TravelToDirectiveAction : GoapAction
@@ -17,7 +17,7 @@ namespace Simpiens.Cognition.Planning.Actions
         public TravelToDirectiveAction(IAsyncPathfinder pathfinder = null, float cost = 2.0f) : base("TravelToDirective", cost)
         {
             _pathfinder = pathfinder;
-            Preconditions = WorldState.Empty.With(StateFact.HasActiveDirective, true).With(StateFact.AtExpeditionWork, false);
+            Preconditions = WorldState.Empty.With(StateFact.HasActiveDirective, true).With(StateFact.AtDirectiveWork, false);
             Effects = WorldState.Empty.With(StateFact.AtDirectiveLocation, true);
         }
 

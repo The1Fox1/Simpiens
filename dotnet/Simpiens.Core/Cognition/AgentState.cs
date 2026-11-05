@@ -91,6 +91,9 @@ namespace Simpiens.Cognition
         /// <summary>Its part in the guild's expedition (Epic 10 G5), a copy refreshed every tick as the memberships are; not saved.</summary>
         public ExpeditionOrder Expedition { get; set; }
 
+        /// <summary>Its part in its station's work (Epic 10 Part 2, W1.3), a copy refreshed every tick as the expedition's is; not saved.</summary>
+        public StationOrder Station { get; set; }
+
         /// <summary>
         /// A muster call rouses this sleeper (Epic 10 Part 2, T5): it has slept past the tired line, and its party is
         /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
@@ -498,7 +501,8 @@ namespace Simpiens.Cognition
                 DepartsAtTick,
                 Health,
                 IsDowned,
-                Expedition);
+                Expedition,
+                Station);
         }
     }
 }

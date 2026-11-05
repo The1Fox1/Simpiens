@@ -195,7 +195,7 @@ namespace Simpiens.Cognition.Planning
 
             state = state.With(StateFact.HasActiveDirective, hasActiveDirective);
             state = state.With(StateFact.AtDirectiveLocation, atDirectiveLocation);
-            state = state.With(StateFact.AtExpeditionWork, hasActiveDirective && context.Expedition.IsWorking);
+            state = state.With(StateFact.AtDirectiveWork, hasActiveDirective && (context.Expedition.IsWorking || context.Station.IsActive));
             state = state.With(StateFact.IsGroupLeader, isGroupLeader);
 
             // 7. Outpost Economy & Trade Stall State (Epic 9 Slice 2)

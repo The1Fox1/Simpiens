@@ -145,6 +145,7 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
+        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
@@ -522,6 +523,9 @@ namespace Simpiens.Simulation
 
             // The guild's expedition moves on from where the intents left its members (Epic 10 G5)
             Guild.TickExpedition(this, currentTick);
+
+            // The stations' crews: each one's order follows its artisan's shift (Epic 10 Part 2, W1.3)
+            Workshops.TickShifts(this, currentTick);
 
             // Evaluate Hearth Dynamics, Proximity Bonding & Succession every 50 ticks
             if (currentTick % 50 == 0)

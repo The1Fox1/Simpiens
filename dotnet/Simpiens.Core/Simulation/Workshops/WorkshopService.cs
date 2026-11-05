@@ -294,6 +294,20 @@ namespace Simpiens.Simulation.Workshops
             return stall;
         }
 
+        /// <summary>
+        /// An artisan walks out on its shift's order (D13: it deserted the crew's directive, Epic 8): it quits the station
+        /// as an unpaid one does, keeping its settlement, and the chronicle tells of it.
+        /// </summary>
+        public void Desert(IWorkshopHost host, EntityId crawlerId, uint tick)
+        {
+            if (!TryGetContract(crawlerId, out var contract)) return;
+            var kind = _stations[contract.StationIndex].Kind;
+            Leave(host, crawlerId, tick, Tuning(host));
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} walked out of the {kind}: it wouldn't work its shift");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ArtisanQuit, crawlerId, WorldRegistry.PlayerEntityId,
+                host.GetSectorForPosition(_map.Stations[contract.StationIndex].Position), tick, ChronicleIntensity.Dramatic, (byte)kind));
+        }
+
         /// <summary>Ends an artisan's contract (quitting or dismissal): it leaves its crew only, and can't be hired again for a while.</summary>
         internal void Leave(IWorkshopHost host, EntityId crawlerId, uint tick, in WorkshopTuning tuning)
         {
@@ -325,6 +339,55 @@ namespace Simpiens.Simulation.Workshops
                 if (_artisans[i].CrawlerId == crawlerId) return i;
             }
             return -1;
+        }
+
+        /// <summary>
+        /// <paramref name="crawlerId"/>'s part in its station's work at <paramref name="tick"/> (D13): on shift when it is an
+        /// artisan, not on a break, its station stands with an order, and the tick falls in one of its blocks. Default otherwise.
+        /// </summary>
+        public Simpiens.Cognition.Contracts.StationOrder OrderFor(EntityId crawlerId, uint tick)
+        {
+            int i = IndexOfArtisan(crawlerId);
+            if (i < 0 || !IsOnShift(_artisans[i], tick)) return default;
+            var place = _map.Stations[_artisans[i].StationIndex];
+            return new Simpiens.Cognition.Contracts.StationOrder(_artisans[i].StationIndex, place.Position, place.Radius);
+        }
+
+        private bool IsOnShift(in ArtisanContract contract, uint tick)
+        {
+            if (contract.OnBreak || contract.StationIndex >= _stations.Length) return false;
+            var station = _stations[contract.StationIndex];
+            return station.Built && station.HasOrder && ShiftBlocks.Covers(contract.Shifts, tick);
+        }
+
+        /// <summary>
+        /// Keeps each crew's standing order with its artisan's shift (D13), once a tick on the main thread, as the guild
+        /// keeps its expedition's: on shift, the crew's directive is to work the station, issued at the start of each block
+        /// and expiring at its end, so each block's order is judged anew (Epic 8); off shift, or on a break, there is none.
+        /// </summary>
+        public void TickShifts(IWorkshopHost host, uint tick)
+        {
+            var groups = host?.Groups;
+            if (groups == null) return;
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                var contract = _artisans[i];
+                byte crew = contract.StationIndex < _stations.Length ? _stations[contract.StationIndex].CrewGroupId : (byte)0;
+                if (crew == 0 || !groups.TryGetGroup(crew, out var group)) continue;
+                bool ordered = group.ActiveDirective.Type == DirectiveType.WorkStation;
+                if (IsOnShift(contract, tick))
+                {
+                    if (ordered && group.ActiveDirective.IsActive(tick)) continue;
+                    var place = _map.Stations[contract.StationIndex];
+                    uint blockEnd = tick - tick % ShiftBlocks.TicksEach + ShiftBlocks.TicksEach - 1;
+                    groups.SetDirective(crew, new GroupDirective(DirectiveType.WorkStation, crew, WorldRegistry.PlayerEntityId,
+                        place.Position, default, tick, blockEnd, place.Radius));
+                }
+                else if (ordered)
+                {
+                    groups.ClearDirective(crew);
+                }
+            }
         }
 
         /// <summary>

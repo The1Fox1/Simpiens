@@ -95,6 +95,8 @@ namespace Simpiens.Cognition
             }
             // And of its part in the guild's expedition (Epic 10 G5)
             State.Expedition = _simulationManager?.Guild != null ? _simulationManager.Guild.OrderFor(State.AgentId) : default;
+            // And of its station's work, on shift (Epic 10 Part 2, W1.3)
+            State.Station = _simulationManager?.Workshops != null ? _simulationManager.Workshops.OrderFor(State.AgentId, (uint)currentTick) : default;
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
             // Equipment's HazardResistance (G3's hazard gear) stops part of the damage; equipment that wears per hazard tick

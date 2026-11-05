@@ -54,6 +54,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(TravelToBunkAction)] = "Going to bed",
             [typeof(TravelToDirectiveAction)] = "Going to a directive's site",
             [typeof(WorkExpeditionNodeAction)] = "Working a seam on an expedition",
+            [typeof(WorkStationAction)] = "Working a shift at the station",
             [typeof(TravelToPeerAction)] = "Going to a peer",
             [typeof(TravelToResourceAction)] = "Going to a resource",
             [typeof(TravelToStallAction)] = "Going to the stall",
