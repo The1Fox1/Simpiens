@@ -1423,3 +1423,11 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The draft's design moved into its own epic doc** (Q1), as Part 1's approved draft did: the goal, the loop, the answers, the milestones with their stamps, the economy, the risks and the deferrals. The plan keeps the steps.
 - **One PR for all of Part 2,** with a commit per step. The producer's rule of 2026-11-02 replaces the draft's one PR per milestone (Q12, and the Epic 10 plans' index).
 - **A correction to the draft:** its goal said wages "may pile up in purses". G4 measured purses staying within what residents carry, so the epic says made goods give wages something to buy, and W0.2 measures the purses again.
+
+## 2026-11-04: Epic 10 Part 2, W0 groundwork (`feat/epic10-part2`)
+
+- **Decisions D1–D7** (the epic's §0, "W0's decisions"), taken as defaults. Two depart from the draft: a station holds no stock of its own (D3, the draft had input and output stock sizes), and the made item's proof moved from W0.3 to W0.5, where something can make it.
+- **The rooms needed a rule of their own (D7).** Exploration heads for the sector a crawler stood in least recently, so two new, never-visited dead ends drew everyone far from food: 8 of 16 seeds starved someone. Rather than tune exploration, a sector can be a facility (map data): nobody explores it and no bounty targets it. With it, the golden seeds hash the same as before to t3000 except the charted-sector mask; over a whole day, idle steps over the workshop row's threshold shift 33 of 120 seeds slightly (F10), with the gate unchanged.
+- **Precedence, not the kind's value (D6).** `GroupType` is saved, so `Workshop` took the next value (3) and memberships are ordered by `MembershipSet.Precedence`, which puts a workshop with the guild. The existing kinds keep their order.
+- **One save format for the PR.** The stations' block raised the format to 10; later layout changes in this PR stay at 10, since no build saved 10 before it merges.
+- Commits: `8f6ed45` docs (W0.1), `77edc06` W0.2, `7fd1e45` W0.3, `41f7c4f` W0.4 with `87765c7` golden and `e006175` renders, `f099199` W0.5, `29cfb82` W0.6.

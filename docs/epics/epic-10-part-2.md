@@ -1,6 +1,6 @@
 # Epic 10, Part 2: Workshops and the Guildhall
 
-- **Status**: ACTIVE (2026-11-04). W0, groundwork, is under way on `feat/epic10-part2`. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
+- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4); W1, the forge and its artisan, is next, split before it starts. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-4 (the workshops' UI) is folded in, as Epic UI-3 was into Part 1, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
@@ -46,6 +46,17 @@ On 2026-10-29 the producer asked for Epic 10 to be written up "into several phas
 - **Q12, shipping and done:**
   - Live scenarios run headless with nothing injected, and the scripted player acts only through commands, as in Part 1 (its Q8 and Q10).
   - **One PR for all of Part 2**, with a commit per step. This follows the producer's rule of 2026-11-02 ("one PR for the entire epic but frequent commits"), which replaced the draft's one PR per milestone.
+
+### W0's decisions (2026-11-04)
+
+Defaults, taken while doing W0; the producer answers by exception.
+- **D1, a recipe is keyed by what it makes:** an item has at most one recipe, so an order, a save and a command name the item. `RecipeBook` is static and immutable beside the item catalog.
+- **D2, the pickaxe's recipe:** 3 iron ore at the forge, 600 ticks (a minute) of work. Placeholder numbers, tuned at W1.
+- **D3, a station holds no stock of its own** (the draft had input and output stock sizes): a make takes its inputs from the stall's stock as it begins and puts its output into the stall's stock, holding it only while the stall has no room.
+- **D4, the two rooms go where the solid rock was,** under the Road Gate and the Glow Caves, so the floor's bounds don't change: the workshop row, its door in line with the lane, and the guildhall beside it, reached only through the row.
+- **D5, the owner:** a `WorkshopService` owns the stations' state, as the guild's service owns the guild's, in its own save block (save format 10, raised once for this PR).
+- **D6, precedence is not the group kind's value:** kinds are saved, so `Workshop` takes the next value and a crawler's memberships are ordered by a precedence: party, then guild or workshop, then settlement.
+- **D7, the rooms are facilities** (found while doing W0.4): nobody explores them and no bounty targets them. Without it, exploration sent everyone down the two new dead ends, far from food, and 8 of 16 seeds starved someone. Artisans and members will go there under orders.
 
 ## 1. Goal
 
@@ -121,7 +132,15 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 
 ## 4. Acceptance checklist (delivered work only)
 
-Nothing is delivered yet.
+### W0. Groundwork (done 2026-11-04, `feat/epic10-part2`)
+- [x] **Docs:** this file, the roadmap, the focus file; the plan keeps the steps.
+- [x] **Measurements** (W0.2, seeds 1–15 with the guild player, and 1–120 without): in the plan, with findings F8 and F9 below.
+- [x] **Recipes as item data** (D1, D2): `Recipe`, `RecipeBook`, `StationKind`; the pickaxe's at the forge. `RecipeValidator`.
+- [x] **Stations as map data and the two rooms** (D3, D4, D7): `StationDefinition`; the workshop row and the guildhall on Floor 1; facilities that nobody explores and no bounty targets. The map, exploration and charting validators check them.
+- [x] **The crafting rule and its owner** (D5): `Crafting`, `WorkshopService` (`SimulationManager.Workshops`), `WorkshopSave`, save format 10. `CraftingValidator`; the restore validator round-trips a make in progress and a held make; `ItemSystemProofTests` makes a test-only item, added as data, from the stall's stock.
+- [x] **The `Workshop` group kind** (D6): ranked with the guild; the guild refuses an artisan. The directive, guild and restore validators.
+- [x] **Re-recorded once:** the golden hashes (only the map part moved: two more charted sectors), 18 renders and 5 picture pins (looked at first).
+- [x] **The gate:** core 146/146 and client 438/438; golden 3/3; the 23 gate seeds and the soak hold on the grown floor with nothing built; seeds 1–120 119/120 (seed 43's trust, F3, as before); the pinned image 438/438 exact; the MonoGame and Android compiles with 0 warnings. W0 has nothing a player does yet, so it has no live scenario of its own.
 
 ## 5. Deferred and out of scope
 
@@ -154,4 +173,5 @@ Handed on from Part 1 ([epic-10.md](epic-10.md) §7), each re-measured at W0.2 (
 
 Found in Part 2:
 - **F8 (2026-11-04): ore and herbs sit at the stall's cap.** Before nearly every caravan visit the stall holds 20 ore and 20 herbs (`StallSalvageCapacity`), and the caravan takes 2 of each, so crawlers' later salvage is turned away. A station drawing on them costs no export and opens room for more sales. Glowstone is the scarce input (under 1 in stock on average; 6–25 exported in 30 minutes, at 70g each), so W3's glowstone recipes compete with the caravan. [Possibly Complex: recipe inputs and W3's economy]
+- **F10 (2026-11-04): idle crawlers step over the workshop row's threshold.** Nobody explores the row (D7 holds), but an idle wander's short step near the Road Gate lands just inside its door (y ≈ −18.1), for 6–20 crawler-seconds a day on 8 of 12 seeds probed. That shifts the late day slightly on 33 of seeds 1–120 (meals, cycles and anomaly counts); the first scout, gather and sale are the same on every seed, and the day's checks hold as before. No action: W1's artisans will cross it on purpose.
 - **F9 (2026-11-04): purses are small.** At minute 30 members carry 10–48g on average and other residents 4–19g (the most anyone carries is about 70g). A pickaxe at its 30g base value is beyond most residents most of the time, so W1.4's price and buy decision must fit the purses that exist, or no crawler buys and Q7's sink never works. [Possibly Complex: W1.4's price]
