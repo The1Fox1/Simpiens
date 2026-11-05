@@ -117,6 +117,19 @@ namespace Simpiens.Simulation.Economy
 
         public static readonly EconomyTuning Default = new EconomyTuning();
 
+        /// <summary>
+        /// The 24-hour day's economy (Epic 10 Part 2, milestone T; <c>docs/time-model.md</c>), built a step at a time and
+        /// measured on <see cref="Simpiens.Core.Session.Layouts.Floor1Layout.FullDayDefinition"/>; the cut-over (T5) makes it
+        /// the default:
+        /// <list type="bullet">
+        /// <item>the day's pace (<see cref="DayTuning.FullDay"/>);</item>
+        /// <item>the caravan every 6 game hours, at 12:00, 18:00, 00:00 and 06:00, on the same terms a visit (T4.1, D24).</item>
+        /// </list>
+        /// </summary>
+        public static readonly EconomyTuning FullDay = Default
+            .WithDay(DayTuning.FullDay)
+            .WithSupply(Default.Supply.WithRestockInterval(DayClock.Hours(6)));
+
         // Each item's terms, by id (item system I5): the default economy's are below. Copies clone the table.
         private ItemTerms[] _items = DefaultItemTerms();
 

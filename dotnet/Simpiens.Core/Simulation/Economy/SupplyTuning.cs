@@ -77,6 +77,14 @@ namespace Simpiens.Simulation.Economy
             return copy;
         }
 
+        /// <summary>A copy visiting every <paramref name="ticks"/> instead, on the same terms (Epic 10 Part 2, T4.1).</summary>
+        public SupplyTuning WithRestockInterval(uint ticks)
+        {
+            var copy = new SupplyTuning(ticks, UpkeepPerVisit);
+            if (_items != null) System.Array.Copy(_items, copy._items, _items.Length);
+            return copy;
+        }
+
         /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
         public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, upkeepPerVisit: 80,
             CaravanTerms.Supplies(ItemType.Ration, stockCap: 50, wholesaleCost: 2, SupplyService.CaravanSinkName),

@@ -173,7 +173,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
      - **D26, the Garden is the baseline, not the whole food supply.** Its plots regrow in game hours, set so the Garden covers about half the day's meals and the stall sells the rest (measured; the economy model's food rule).
      - **D27, trust fades over days, not hours:** 5 points every 6 game hours since the last dealing (from every 2.4). Memory's other decays (where resources and pawns were seen) are measured with T4's busier day.
      - **D28, the soak plays three days** (30,240 ticks), sampled at each visit. The pace bands are re-measured and proposed to the producer, who sets them.
-   - **Split when it starts:** T4.1 the caravan's cadence (D24); T4.2 motivation and food (D25, D26); T4.3 trust's pace (D27); T4.4 the soak and its bands (D28). Each is measured on the gate seeds at `FullDay` before the next.
+   - **Approved by the developer (2026-11-04): D23–D28.** Split: T4.1 the caravan's cadence (D24); T4.2 motivation and food (D25, D26); T4.3 trust's pace (D27); T4.4 the soak and its bands (D28). Each is measured on the gate seeds at `EconomyTuning.FullDay` before the next.
+     1. **[x] T4.1 The caravan every 6 game hours** (done 2026-11-04) [Possibly Complex: a tuning and its measurement]:
+        - `EconomyTuning.FullDay`, the day's economy, staged for the cut-over: the day's pace and `SupplyTuning.WithRestockInterval(DayClock.Hours(6))`.
+        - **Measured:** upkeep is paid in full (320g a day), and the treasury grows from day 2 (481g at the end of day 3).
+        - **Trust doesn't build:** the mean stays near 2 (T4.3), and residents idle 42%.
 
 6. **T5 The tests' horizons, and the cut-over** [Possibly Complex: every seed's day changes at once]: `DayTuning.FullDay` becomes the default and `Legacy` goes; `FullDayDefinition` becomes Floor 1 (golden, renders); the outpost's day becomes 10,080 ticks; the food and sleep checks run three days; seeds 1–120; golden.
 7. **T6 The client** [Basic]: the clock from the core; the needs as they are; renders.

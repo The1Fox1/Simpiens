@@ -96,6 +96,21 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
   - **The muster:** some musters end with nobody leaving (6 of 21). A 4-hour muster limit left 4, the same 15 parties marching and the same haul, so the 2.1-hour limit is kept. A member eats on the way at about 1 hunger a trip, and the stall still gives the trip's rations at the muster.
   - **Who ventures alone is unchanged:** the rule reads the sector's own damage figure.
 
+- **T4, the economy per day** (2026-11-04): the gate seeds at `EconomyTuning.FullDay` on the 12-bunk floor, three days each, against today's economy over two 9,000-tick days.
+
+| Per day | Today | T4.1: the caravan every 6 h |
+| :--- | ---: | ---: |
+| Tasks a resident | 194 | 57 |
+| Idle | 29% | 42% |
+| Meals a resident | 31.6 | 2.6 |
+| Trades a resident | 15.0 | 3.6 |
+| The stall sells / buys | 121 / 73 | 30 / 23 |
+| Caravan's payment for exports | 1,996g | 600g |
+| Upkeep paid / due | 1,200g / 1,200g | 320g / 320g |
+| Treasury at the end of days 1, 2, 3 | 890g, 1,429g | 106g, 276g, 481g |
+| Mean trust toward the player at the end of day 1 | 38.8 | 2.0 |
+| Residents whose trust rose, at the end | 10.7 of 12 | 4.4 of 12 |
+
 ## 3. The re-pacing table
 **Kind:** P is physical time (kept in ticks and seconds); D is the day's time.
 
@@ -151,7 +166,7 @@ The 23 gate seeds, residents only, one day of 9,000 ticks (the dashboard's day b
 ### 3.4 Schedules
 | What | Where | Today | Kind | Proposed | Step |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | set with the economy per day: a few visits a day, or one | T4 |
+| The caravan's visit | `SupplyTuning.RestockIntervalTicks` | 600 ticks (60 s, 15 a day) | D | every 6 game hours (2,520 ticks: 12:00, 18:00, 00:00, 06:00), on the same terms a visit: a day's upkeep 320g, wages 4 rounds (D24) | T4.1 ✓ |
 | Garden regrowth | `Floor1Layout.FoodRegrowTicks` | 300 | D | with the food balance per day (stall and Garden) | T4 |
 | Herb, ore and glowstone regrowth | `Floor1Layout` | 600, 900, 6,000 | D | with the supply per day | T4 |
 | Drifters: first, every, jitter, stay | `DrifterTuning` | 1,200; 2,100 ± 300; 1,800–3,000 | D | kept: already the first at 2.9 h, about every 5 h ± 0.7, staying 4.3–7.1 h, long enough for a meal at two or three a day; T4 looks at their purses | T3.1 ✓ |
