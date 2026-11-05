@@ -15,7 +15,9 @@ namespace Simpiens.Simulation.Economy
             /// <summary>No such sector on the loaded map.</summary>
             UnknownSector = 1,
             /// <summary>A Scout bounty on a sector that is already charted: there is nothing left to report.</summary>
-            AlreadyCharted = 2
+            AlreadyCharted = 2,
+            /// <summary>The player's own facility (Epic 10 Part 2, D7): nothing there to gather or chart.</summary>
+            Facility = 3
         }
 
         /// <summary>
@@ -26,7 +28,8 @@ namespace Simpiens.Simulation.Economy
         public static TargetCheck CheckTarget(BountyType type, int sectorId, ISectorRegistry sectors)
         {
             if (sectors == null || sectors.Map == null) return TargetCheck.Ok;
-            if (!sectors.TryGetSector(sectorId, out _)) return TargetCheck.UnknownSector;
+            if (!sectors.TryGetSector(sectorId, out var sector)) return TargetCheck.UnknownSector;
+            if (sector.Facility) return TargetCheck.Facility;
             if (type == BountyType.ScoutSector && sectors.IsExplored(sectorId)) return TargetCheck.AlreadyCharted;
             return TargetCheck.Ok;
         }
@@ -39,6 +42,7 @@ namespace Simpiens.Simulation.Economy
             {
                 case TargetCheck.UnknownSector: return $"There is no sector {sectorId} on this map.";
                 case TargetCheck.AlreadyCharted: return $"{name} is already charted: there is nothing left to scout.";
+                case TargetCheck.Facility: return $"{name} is the outpost's own: there is nothing there to gather or scout.";
                 default: return string.Empty;
             }
         }

@@ -288,10 +288,11 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>Another sector, and a charted one: uncharted sectors are a scout's job (fog of war).</summary>
-        // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2)
+        // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2); the player's
+        // facilities by nobody: nothing there is found by looking (Epic 10 Part 2, D7)
         private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture)
         {
-            return sector.Id != current && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard);
+            return sector.Id != current && !sector.Facility && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard);
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)

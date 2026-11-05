@@ -65,6 +65,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     - the workshop row under the Road Gate (x −8..8, y −24..−18), with a door from the Road Gate;
     - the guildhall beside it under the Glow Caves (x 8..24), reached only through the workshop row, never through a hazard.
     - Both are safe and start charted. The stations stand unbuilt; the guildhall stays empty until W5 brings its barracks and yard.
+  - **D7, the rooms are facilities** (found while doing it): with the rooms open, exploration (which heads for the sector a crawler stood in least recently) sent everyone down the two new dead ends, far from food, and 8 of 16 seeds starved someone. A sector can now be a facility (map data, `SectorDefinition.Facility`): nobody explores it, and no bounty targets it (`BountyRules.TargetCheck.Facility`; the bounty board leaves it out). Artisans (W1) and members (W5) will go there under orders. With it, the golden seeds' crawlers, economy, bounties and groups hash the same to t3000; only the map part (two more charted sectors) moved.
   - Re-record the golden hashes and the renders for the map, each in a commit of its own.
 - [ ] **W0.5 The crafting rule, engine-free:** [Possibly Complex: a save block]
   - a station's inputs, its progress per tick of an artisan's work, its output;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.World;
 
 namespace Simpiens.Core.Session.Layouts
@@ -19,9 +20,11 @@ namespace Simpiens.Core.Session.Layouts
     ///          | The Sump |bunks    D|Glow Caves|   one straight lane, gate to hub, along the east side;
     ///   y-12   | foul air +-------D--+ rockfall |   the Sump and the Glow Caves hurt whoever stays (Epic 10 G2)
     ///          |          | Road Gate|          |
-    ///   y-18   +----D-----+----------+----------+
-    ///          | Drowned  |   solid rock        |   the Drowned Gallery (Epic 10 G5, D11): low and long, below the
-    ///   y-24   +-Gallery--+---------------------+   Sump; too dangerous to go alone, its glowstone seam at the far end
+    ///   y-18   +----D-----+-------D--+----------+
+    ///          | Drowned  | Workshop D Guildhall|   the Drowned Gallery (Epic 10 G5, D11): low and long, below the
+    ///   y-24   +-Gallery--+---Row----+----------+   Sump; too dangerous to go alone, its glowstone seam at the far end.
+    ///                                               The workshop row and the guildhall (Epic 10 Part 2, D4), where the
+    ///                                               rock was: the lane runs on from the gate; the guildhall lies past it
     ///
     /// Wall centre lines sit on whole units; every doorway leaves 4 walkable cells after body inflation. Doors are
     /// placed so that no through-route crosses the hearth's gathering ring or the bunks (Epic MAP Phase 3).
@@ -39,6 +42,8 @@ namespace Simpiens.Core.Session.Layouts
         public const byte SumpSectorId = 9;
         public const byte GlowCavesSectorId = 10;
         public const byte DrownedGallerySectorId = 11;
+        public const byte WorkshopRowSectorId = 12;
+        public const byte GuildhallSectorId = 13;
 
         /// <summary>The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them.</summary>
         public static readonly SectorHazard SumpHazard = new SectorHazard(HazardKind.FoulAir, 3f);
@@ -60,6 +65,11 @@ namespace Simpiens.Core.Session.Layouts
         public const string Stall = "hub.stall";
         public const string Hearth = "hub.hearth";
 
+        /// <summary>Where the forge and the still may be built (Epic 10 Part 2, Q2, Q10): the workshop row's west half, clear of the lane.</summary>
+        public const string Forge = "workshop.forge";
+        public const string Still = "workshop.still";
+        public const float StationRadius = 1.5f;
+
         public const int SpawnPointCount = 12;
         public const int BunkCount = 8;
 
@@ -76,6 +86,8 @@ namespace Simpiens.Core.Session.Layouts
             new Vec2(-16f, -6f), // Ore Quarry - The Sump
             new Vec2(16f, -6f),  // Herb Grove - Glow Caves
             new Vec2(-16f, -18f), // The Sump - The Drowned Gallery (Epic 10 G5)
+            new Vec2(4f, -18f),   // Road Gate - Workshop Row (Epic 10 Part 2): the lane runs on from the gate
+            new Vec2(8f, -20.5f), // Workshop Row - Guildhall: the guildhall's only door
         };
 
         public static Vec2 HubBunkhouseDoor => Doors[5];
@@ -92,7 +104,7 @@ namespace Simpiens.Core.Session.Layouts
             // --- Outer walls of the 3x2 upper block ---
             b.WallRun(new Vec2(-24f, 18f), new Vec2(24f, 18f));
             b.WallRun(new Vec2(-24f, -24f), new Vec2(-24f, 17f));
-            b.WallRun(new Vec2(24f, -18f), new Vec2(24f, 17f));
+            b.WallRun(new Vec2(24f, -24f), new Vec2(24f, 17f));
 
             // y = 6: frontier row / work row. Doors: Deep Seam-Ore Quarry (x -16), Garden-Hub (x 0), Overgrowth-Herb Grove (x 16)
             b.WallRun(new Vec2(-24f, 6f), new Vec2(-19f, 6f));
@@ -118,14 +130,18 @@ namespace Simpiens.Core.Session.Layouts
             // side walls also close the Sump and the Glow Caves, which were solid rock before Epic 10 G2
             b.WallRun(new Vec2(-8f, -18f), new Vec2(-8f, -6f));
             b.WallRun(new Vec2(8f, -18f), new Vec2(8f, -6f));
-            // y = -18: the lower wing's floor, with the Sump's door down to the Drowned Gallery (x -19..-13, Epic 10 G5)
+            // y = -18: the lower wing's floor, with the Sump's door down to the Drowned Gallery (x -19..-13, Epic 10 G5) and
+            // the Road Gate's down to the workshop row (x 1..7, in line with the lane; Epic 10 Part 2). The Glow Caves keep
+            // a solid floor: the guildhall below them is reached only through the workshop row, never through a hazard
             b.WallRun(new Vec2(-24f, -18f), new Vec2(-19f, -18f));
-            b.WallRun(new Vec2(-13f, -18f), new Vec2(24f, -18f));
-            // The Drowned Gallery's east and south walls, and solid rock beside it under the Road Gate and the Glow Caves. Only
-            // 6 deep: Floor 1 still fits a 1280x720 window whole at one screen pixel per art pixel, top-down
+            b.WallRun(new Vec2(-13f, -18f), new Vec2(1f, -18f));
+            b.WallRun(new Vec2(7f, -18f), new Vec2(24f, -18f));
+            // The bottom row, 6 deep (Floor 1 still fits a 1280x720 window whole at one screen pixel per art pixel,
+            // top-down): the Drowned Gallery, walled off from the workshop row; the workshop row and the guildhall, where
+            // the solid rock was (D4), parted by a stub that leaves a door three cells wide (y -22..-19)
             b.WallRun(new Vec2(-8f, -24f), new Vec2(-8f, -18f));
-            b.WallRun(new Vec2(-24f, -24f), new Vec2(-8f, -24f));
-            b.Wall(new RectF(-7.45f, -24.55f, 32f, 6f));
+            b.WallRun(new Vec2(-24f, -24f), new Vec2(24f, -24f));
+            b.WallRun(new Vec2(8f, -24f), new Vec2(8f, -23f));
             b.WallRun(new Vec2(-8f, -12f), new Vec2(1f, -12f));
             b.WallRun(new Vec2(7f, -12f), new Vec2(8f, -12f));
 
@@ -152,6 +168,10 @@ namespace Simpiens.Core.Session.Layouts
                 new RectF(8f, -18f, 16f, 12f), hazard: GlowCavesHazard);
             b.Sector(DrownedGallerySectorId, "The Drowned Gallery", "A flooded gallery below the Sump, its air thick with water. Too dangerous to go alone; a rich glowstone seam rewards a party.",
                 new RectF(-24f, -24f, 16f, 6f), hazard: DrownedGalleryHazard);
+            b.Sector(WorkshopRowSectorId, "Workshop Row", "Plots for a forge and a still, where trusted hands turn the stall's salvage into tools, gear and draughts.",
+                new RectF(-8f, -24f, 16f, 6f), facility: true);
+            b.Sector(GuildhallSectorId, "Guildhall", "The guild's own hall past the workshop row, waiting for barracks and a muster yard.",
+                new RectF(8f, -24f, 16f, 6f), facility: true);
 
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
@@ -162,6 +182,10 @@ namespace Simpiens.Core.Session.Layouts
             {
                 b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6f + (i % 4) * 2f, i < 4 ? -8f : -10f), 1.0f);
             }
+
+            // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---
+            b.Station(Forge, StationKind.Forge, new Vec2(-5f, -21f), StationRadius);
+            b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)
@@ -210,6 +234,8 @@ namespace Simpiens.Core.Session.Layouts
             b.Label("The Sump", new Vec2(-16f, -7.4f), new Rgba(0.65f, 0.7f, 0.35f));
             b.Label("Glow Caves", new Vec2(16f, -7.4f), new Rgba(0.55f, 0.85f, 1f));
             b.Label("The Drowned Gallery", new Vec2(-16f, -19.4f), new Rgba(0.35f, 0.6f, 0.8f));
+            b.Label("Workshop Row", new Vec2(-3f, -19.4f), new Rgba(0.95f, 0.7f, 0.45f));
+            b.Label("Guildhall", new Vec2(16f, -19.4f), new Rgba(0.75f, 0.65f, 0.95f));
 
             return b.Build();
         }

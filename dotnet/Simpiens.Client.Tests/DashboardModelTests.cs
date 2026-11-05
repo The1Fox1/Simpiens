@@ -194,9 +194,11 @@ namespace Simpiens.Client.Tests
             Assert.False(model.Bounties.SelectSector(Floor1Layout.HubSectorId), "A charted room is not offered to scout.");
             Assert.Equal("Uncharted", model.Bounties.SectorState);
 
-            // Gather offers every sector, marking the uncharted ones
+            // Gather offers every sector but the player's own facilities (Epic 10 Part 2, D7), marking the uncharted ones
             model.Bounties.SetType(BountyType.GatherResource);
-            Assert.Equal(sectors.All.Count, model.Bounties.SectorChoiceIds.Count);
+            Assert.Equal(sectors.All.Count(s => !s.Facility), model.Bounties.SectorChoiceIds.Count);
+            Assert.DoesNotContain((int)Floor1Layout.WorkshopRowSectorId, model.Bounties.SectorChoiceIds);
+            Assert.DoesNotContain((int)Floor1Layout.GuildhallSectorId, model.Bounties.SectorChoiceIds);
             int deep = model.Bounties.SectorChoiceIds.ToList().IndexOf(Floor1Layout.DeepSeamSectorId);
             Assert.EndsWith(BountyBoardModel.AwaitsChartSuffix, model.Bounties.SectorChoiceLabels[deep]);
 

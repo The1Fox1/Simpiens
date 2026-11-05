@@ -199,6 +199,7 @@ namespace Simpiens.Presentation.Dashboard
             for (int i = 0; i < zones.Count; i++)
             {
                 var zone = zones[i];
+                if (zone.IsFacility) continue; // the player's own (BountyRules.TargetCheck.Facility)
                 if (_type == BountyType.ScoutSector && zone.IsExplored) continue;
                 _sectorIds.Add(zone.ZoneId);
                 _sectorLabels.Add(zone.IsExplored || _type == BountyType.ScoutSector ? zone.Name : zone.Name + AwaitsChartSuffix);

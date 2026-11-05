@@ -4,6 +4,7 @@ using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using Simpiens.Testing.Sessions;
@@ -265,6 +266,31 @@ namespace Simpiens.Testing.World
             Assert(DoorWidth(grid, seam.Bounds, garden.Bounds) == 0 && DoorWidth(grid, garden.Bounds, overgrowth.Bounds) == 0, "(d) The Garden must not open onto a frontier sector.");
             Assert(!seam.StartsExplored && !overgrowth.StartsExplored && garden.StartsExplored && hub.StartsExplored, "Frontier sectors start shrouded; near sectors explored.");
 
+            // (i) The workshop row and the guildhall (Epic 10 Part 2, D4): safe and charted, the only facilities (D7: nobody
+            // explores them); the row opens onto the Road Gate and the guildhall, the guildhall onto the row alone; the two
+            // stations stand, reachable, in the row
+            def.TryGetSector(Floor1Layout.WorkshopRowSectorId, out var workshops);
+            def.TryGetSector(Floor1Layout.GuildhallSectorId, out var guildhall);
+            def.TryGetSector(Floor1Layout.RoadGateSectorId, out var gate);
+            Assert(workshops.StartsExplored && guildhall.StartsExplored && !workshops.Hazard.IsHazardous && !guildhall.Hazard.IsHazardous, "(i) The workshop row and the guildhall are charted and safe.");
+            Assert(DoorWidth(grid, gate.Bounds, workshops.Bounds) >= 3 && DoorWidth(grid, workshops.Bounds, guildhall.Bounds) >= 3, "(i) The workshop row opens onto the Road Gate and the guildhall.");
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var s = def.Sectors[i];
+                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId;
+                Assert(s.Facility == facility, $"(i) {s.Name} {(facility ? "must" : "must not")} be a facility.");
+                if (!facility) Assert(DoorWidth(grid, guildhall.Bounds, s.Bounds) == 0, $"(i) The guildhall must open only onto the workshop row, not {s.Name}.");
+            }
+            var kinds = new HashSet<StationKind>();
+            for (int i = 0; i < def.Stations.Count; i++)
+            {
+                var station = def.Stations[i];
+                Assert(def.FindSector(station.Position).Id == Floor1Layout.WorkshopRowSectorId, $"(i) Station '{station.Key}' stands in the workshop row.");
+                Assert(grid.TryGetRegion(station.Position, out int r) && r == hubRegion, $"(i) Station '{station.Key}' at {station.Position} is reachable from the Hub.");
+                Assert(station.Radius > 0f && kinds.Add(station.Kind), $"(i) Station '{station.Key}': a radius, and the only {station.Kind}.");
+            }
+            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && def.Stations.Count == 2, "(i) Floor 1 has a forge and a still (Q2).");
+
             // (e) building twice gives identical walkability and region labels
             var again = Rasterized(def);
             for (int y = 0; y < grid.Height; y++)
@@ -280,7 +306,7 @@ namespace Simpiens.Testing.World
             }
 
             var cells = def.PartitionCells(1f);
-            TestLog.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
+            TestLog.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, {def.Stations.Count} stations, all entries reachable, deterministic.");
         }
 
         /// <summary>

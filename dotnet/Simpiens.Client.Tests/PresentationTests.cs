@@ -191,8 +191,9 @@ namespace Simpiens.Client.Tests
 
         // Recorded 2026-10-18 (M0.2) as 1175, 384, 254; Epic 10 G2 turned the two blocks of rock either side of the lower
         // wing into the Sump and the Glow Caves, so Floor 1 had no rock tiles; Epic 10 G5 added the Drowned Gallery below the
-        // Sump (80 floor tiles) and a block of rock beside it, 32 by 6
-        internal const int PinnedFloor = 1595, PinnedRock = 192, PinnedWalls = 320;
+        // Sump (80 floor tiles) and a block of rock beside it, 32 by 6; Epic 10 Part 2 (W0.4) turned that rock into the
+        // workshop row and the guildhall
+        internal const int PinnedFloor = 1754, PinnedRock = 0, PinnedWalls = 353;
     }
 
     public class TopDownProjectionTests

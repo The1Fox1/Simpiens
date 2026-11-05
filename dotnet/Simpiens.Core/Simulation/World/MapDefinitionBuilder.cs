@@ -24,6 +24,7 @@ namespace Simpiens.Simulation.World
         private readonly List<SectorDefinition> _sectors = new List<SectorDefinition>();
         private readonly List<ResourceNodeDefinition> _nodes = new List<ResourceNodeDefinition>();
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
+        private readonly List<StationDefinition> _stations = new List<StationDefinition>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
 
         public MapDefinitionBuilder(string name, RectF playableBounds)
@@ -69,9 +70,9 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
-        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default)
+        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default, bool facility = false)
         {
-            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored, hazard));
+            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored, hazard, facility));
             return this;
         }
 
@@ -84,6 +85,13 @@ namespace Simpiens.Simulation.World
         public MapDefinitionBuilder Poi(string key, PoiKind kind, Vec2 position, float radius = 0f)
         {
             _pois.Add(new PoiDefinition(key, kind, position, radius));
+            return this;
+        }
+
+        /// <summary>A place where the player may build a station (Epic 10 Part 2).</summary>
+        public MapDefinitionBuilder Station(string key, Simpiens.Simulation.Items.StationKind kind, Vec2 position, float radius)
+        {
+            _stations.Add(new StationDefinition(key, kind, position, radius));
             return this;
         }
 
@@ -120,6 +128,12 @@ namespace Simpiens.Simulation.World
                 RequireKey(keys, _pois[i].Key);
                 RequireInside(_pois[i].Position, _pois[i].Key);
             }
+            for (int i = 0; i < _stations.Count; i++)
+            {
+                RequireKey(keys, _stations[i].Key);
+                RequireInside(_stations[i].Position, _stations[i].Key);
+                if (_stations[i].Kind == Simpiens.Simulation.Items.StationKind.None) throw new InvalidOperationException($"Map '{_name}': station '{_stations[i].Key}' has no kind.");
+            }
 
             return new MapDefinition(
                 _name,
@@ -130,6 +144,7 @@ namespace Simpiens.Simulation.World
                 _fallback,
                 _nodes.ToArray(),
                 _pois.ToArray(),
+                _stations.ToArray(),
                 _labels.ToArray());
         }
 

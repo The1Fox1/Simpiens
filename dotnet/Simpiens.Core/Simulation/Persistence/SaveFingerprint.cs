@@ -6,8 +6,8 @@ namespace Simpiens.Simulation.Persistence
     /// <summary>
     /// Identifies the map a save was made on, so a load can refuse a save made on another map (Milestone 1, D4).
     /// FNV-1a over what the save's entity ids and positions rest on: the map's name and bounds, its walls, sectors,
-    /// resource nodes and points of interest, in definition order. Labels and the camera frame are presentation and
-    /// are left out.
+    /// resource nodes, points of interest and stations, in definition order. Labels and the camera frame are presentation
+    /// and are left out.
     /// </summary>
     public static class SaveFingerprint
     {
@@ -49,6 +49,15 @@ namespace Simpiens.Simulation.Persistence
                 Mix(ref h, poi.Position);
                 Mix(ref h, poi.Radius);
             }
+            Mix(ref h, map.Stations.Count);
+            for (int i = 0; i < map.Stations.Count; i++)
+            {
+                var station = map.Stations[i];
+                Mix(ref h, station.Key);
+                Mix(ref h, (int)station.Kind);
+                Mix(ref h, station.Position);
+                Mix(ref h, station.Radius);
+            }
             return h;
         }
 
@@ -60,6 +69,7 @@ namespace Simpiens.Simulation.Persistence
             Mix(ref h, sector.Anchor);
             Mix(ref h, sector.AnchorRadius);
             Mix(ref h, sector.StartsExplored ? 1 : 0);
+            Mix(ref h, sector.Facility ? 1 : 0);
         }
 
         private static void Mix(ref ulong h, RectF rect)

@@ -16,8 +16,12 @@ namespace Simpiens.Presentation.Dashboard
         public readonly float AnchorRadius;
         public readonly bool IsExplored;
 
-        public FacilityZone(int zoneId, string name, string description, RectF bounds, Vec2 anchorPosition = default, float anchorRadius = 0f, bool isExplored = true)
+        /// <summary>The player's facility (the workshop row, the guildhall: Epic 10 Part 2, D7), which no bounty targets.</summary>
+        public readonly bool IsFacility;
+
+        public FacilityZone(int zoneId, string name, string description, RectF bounds, Vec2 anchorPosition = default, float anchorRadius = 0f, bool isExplored = true, bool isFacility = false)
         {
+            IsFacility = isFacility;
             ZoneId = zoneId;
             Name = name;
             Description = description;
@@ -27,7 +31,7 @@ namespace Simpiens.Presentation.Dashboard
             IsExplored = isExplored;
         }
 
-        public FacilityZone WithExplored(bool explored) => new FacilityZone(ZoneId, Name, Description, Bounds, AnchorPosition, AnchorRadius, explored);
+        public FacilityZone WithExplored(bool explored) => new FacilityZone(ZoneId, Name, Description, Bounds, AnchorPosition, AnchorRadius, explored, IsFacility);
     }
 
     /// <summary>
@@ -99,7 +103,7 @@ namespace Simpiens.Presentation.Dashboard
         public bool IsSectorExplored(int zoneId) => _sectors.IsExplored(zoneId);
 
         private FacilityZone ToZone(in SectorDefinition sector)
-            => new FacilityZone(sector.Id, sector.Name, sector.Description, sector.Bounds, sector.Anchor, sector.AnchorRadius, _sectors.IsExplored(sector.Id));
+            => new FacilityZone(sector.Id, sector.Name, sector.Description, sector.Bounds, sector.Anchor, sector.AnchorRadius, _sectors.IsExplored(sector.Id), sector.Facility);
 
         private void RefreshZones()
         {
