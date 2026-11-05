@@ -35,7 +35,7 @@ namespace Simpiens.Presentation.Dashboard
     /// would refuse (<see cref="BountyRules"/>, the treasury) so the player gets the reason. Post and Cancel queue typed
     /// commands; nothing changes here until the simulation applies them.
     /// </summary>
-    public sealed class BountyBoardModel
+    public sealed class BountyBoardModel : IDashboardWindow
     {
         public const string AllChartedText = "Every sector is charted: there is nothing left to scout.";
         public const string AwaitsChartSuffix = " (claimable once charted)";

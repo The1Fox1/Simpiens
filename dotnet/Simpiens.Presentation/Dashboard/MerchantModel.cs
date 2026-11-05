@@ -44,7 +44,7 @@ namespace Simpiens.Presentation.Dashboard
     /// changes on the next tick. The window works on one stall, picked by id when it opens (the outpost has one), and
     /// names it by the room it stands in (review S7).
     /// </summary>
-    public sealed class MerchantModel
+    public sealed class MerchantModel : IDashboardWindow
     {
         public const int MinPrice = 1;
 

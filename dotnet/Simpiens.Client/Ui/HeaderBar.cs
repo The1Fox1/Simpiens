@@ -30,7 +30,7 @@ namespace Simpiens.Client.Ui
         private static readonly Microsoft.Xna.Framework.Color Lamplight = UiStyle.Hex(0x5a3c1a); // a thread of light on the lintel's lower edge
 
         private readonly TextRuntime _place, _gold, _bounties, _saveStatus, _tick, _confirmText, _mapLabel, _ledgerLabel;
-        private readonly SpriteRuntime _merchantGlyph, _bountiesGlyph, _guildGlyph, _pauseGlyph, _clockGlyph, _coin;
+        private readonly SpriteRuntime _merchantGlyph, _bountiesGlyph, _guildGlyph, _workshopGlyph, _pauseGlyph, _clockGlyph, _coin;
         private static readonly Microsoft.Xna.Framework.Color CoinPulse = UiStyle.Hex(0xffd28a);
         private long _goldTarget = -1;
         private float _goldFrom, _goldRoll = -1f;
@@ -40,6 +40,14 @@ namespace Simpiens.Client.Ui
         private readonly List<(SpriteRuntime Icon, TextRuntime Count)> _stockEntries = new List<(SpriteRuntime, TextRuntime)>(4);
         private readonly List<ContainerRuntime> _stockBoxes = new List<ContainerRuntime>(4);
         private int _windowWidth, _windowHeight;
+        private readonly ContainerRuntime _names;
+
+        /// <summary>
+        /// Below this width the identity keeps its lantern and drops its words (Epic 10 Part 2, W1.6a): at 1280 the five
+        /// window buttons, the outpost's plaque and the clock need the room, and the identity is the one cluster with
+        /// nothing to press or read off.
+        /// </summary>
+        public const float WordsFromWidth = 1440f;
         private bool _fullScreen;
 
         public HeaderBar(IconAtlas icons)
@@ -62,16 +70,17 @@ namespace Simpiens.Client.Ui
             var left = UiParts.Row(12f);
             left.X = 16f;
             Root.Children.Add(left);
+            Left = left;
 
             // Who and where
             var identity = UiParts.Row(8f);
             identity.Children.Add(UiParts.Glyph(UiKit.Lantern, UiStyle.Accent));
-            var names = UiParts.Column(1f);
-            UiParts.CentreVertically(names);
-            names.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiText.Heading));
+            _names = UiParts.Column(1f);
+            UiParts.CentreVertically(_names);
+            _names.Children.Add(UiParts.Text(HeaderModel.Title, UiStyle.Accent, UiText.Heading));
             _place = UiParts.Text(HeaderModel.OutpostPlace, UiStyle.TextSecondary, UiText.Small);
-            names.Children.Add(_place);
-            identity.Children.Add(names);
+            _names.Children.Add(_place);
+            identity.Children.Add(_names);
             left.Children.Add(identity);
 
             // The outpost: gold, the stall's stock, the bounties, in one plaque; each figure takes hover for its tip
@@ -93,6 +102,8 @@ namespace Simpiens.Client.Ui
             windows.Children.Add(MerchantButton.Visual);
             windows.Children.Add(BountiesButton.Visual);
             windows.Children.Add(GuildButton.Visual);
+            WorkshopButton = UiParts.GlyphButton("Workshop", UiKit.Anvil, 108f, out _workshopGlyph, Control); // Epic 10 Part 2, W1.6a
+            windows.Children.Add(WorkshopButton.Visual);
             left.Children.Add(windows);
 
             var right = UiParts.Row(12f);
@@ -100,6 +111,7 @@ namespace Simpiens.Client.Ui
             right.XOrigin = HorizontalAlignment.Right;
             right.X = -16f;
             Root.Children.Add(right);
+            Right = right;
 
             // Time: the clock, pause, and a pip per speed
             right.Children.Add(UiParts.Plaque(out var time, Control, padding: 8f, spacing: 6f));
@@ -225,6 +237,13 @@ namespace Simpiens.Client.Ui
         /// <summary>Opens the guild roster; it reads "Guild 2/4".</summary>
         public Button GuildButton { get; }
 
+        /// <summary>The clusters from the left (who, the outpost, the windows) and from the right (time, the view, the menu), which must not meet.</summary>
+        public ContainerRuntime Left { get; }
+        public ContainerRuntime Right { get; }
+
+        /// <summary>Opens the station window (Epic 10 Part 2, W1.6a) on the station shown last.</summary>
+        public Button WorkshopButton { get; }
+
         /// <summary>Opens the menu.</summary>
         public Button MenuButton { get; }
         public Button SaveButton { get; }
@@ -321,6 +340,8 @@ namespace Simpiens.Client.Ui
         public void Bind(DashboardModel model)
         {
             var header = model.Header;
+            bool words = Root.AbsoluteWidth >= WordsFromWidth;
+            if (_names.Visible != words) _names.Visible = words;
             UiParts.SetText(_place, header.Place);
             BindGold(header);
             BindStock(header.Stock);
@@ -332,6 +353,7 @@ namespace Simpiens.Client.Ui
             Lit(MerchantButton, _merchantGlyph, model.Merchant.IsOpen);
             Lit(BountiesButton, _bountiesGlyph, model.Bounties.IsOpen);
             Lit(GuildButton, _guildGlyph, model.Guild.IsOpen);
+            Lit(WorkshopButton, _workshopGlyph, model.Stations.IsOpen);
 
             PauseOffers = header.PauseLabel;
             UiParts.SetGlyph(_pauseGlyph, header.Paused ? UiKit.Play : UiKit.Pause);

@@ -41,7 +41,7 @@ namespace Simpiens.Presentation.Dashboard
     /// rule is the core's (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied on the next
     /// tick. Views decide nothing.
     /// </summary>
-    public sealed class GuildModel
+    public sealed class GuildModel : IDashboardWindow
     {
         public const string EmptyText = "No members yet. Recruit trusted crawlers from the dossier.";
 

@@ -172,7 +172,7 @@ namespace Simpiens.Client
         /// <summary>
         /// A left click on the map at a screen point: it picks what the last frame drew there (the picture the player
         /// clicked on), and selects that crawler or the room under the point; a click on the stall opens the merchant
-        /// terminal (Epic UI-Beta B5). Nothing is picked before the first frame.
+        /// terminal (Epic UI-Beta B5), and on a station its window (Epic 10 Part 2). Nothing is picked before the first frame.
         /// </summary>
         public void ClickMap(Vec2 screen)
         {
@@ -181,6 +181,11 @@ namespace Simpiens.Client
             if (picked != default && IsStall(picked))
             {
                 _session.DashboardModel.OpenMerchant(); // the stall opens the merchant terminal (Epic UI-Beta B5)
+                return;
+            }
+            if (picked != default && StationPick.TryIndex(picked, _session.Frames.Current, out int station))
+            {
+                _session.DashboardModel.OpenStation(station); // a station opens its window (Epic 10 Part 2, W1.6a)
                 return;
             }
             _session.Selection.ClickAt(View.ScreenToFloor(screen), picked);
