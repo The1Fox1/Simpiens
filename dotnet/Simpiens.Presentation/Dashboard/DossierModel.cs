@@ -242,7 +242,7 @@ namespace Simpiens.Presentation.Dashboard
         {
             if (gear.IsEmpty) return NoGear;
             var definition = ItemCatalog.Get(gear.Type);
-            ushort life = definition?.Equipment?.Durability ?? 0;
+            ushort life = definition?.Equipment != null ? definition.Equipment.DurabilityAt(gear.Quality) : (ushort)0; // a grade's life is its whole (Epic 10 Part 2, D56)
             int left = life > 0 ? (gear.Durability * 100 + life - 1) / life : 100;
             return Invariant($"{definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type)}, {left}% left");
         }

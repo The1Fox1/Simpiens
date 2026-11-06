@@ -53,8 +53,9 @@ namespace Simpiens.Testing.Economy
             ValidateOrdersAndShiftsAsCommands();
             ValidateShiftBlocks();
             ValidateOverworkBreaksAnArtisan();
+            ValidatePracticeRaisesTheGrade();
 
-            TestLog.Log("<color=green>[WorkshopValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorkshopValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateBuilding()
@@ -345,6 +346,30 @@ namespace Simpiens.Testing.Economy
             o.Sim.Tick(t++);
             Assert(workshops.TryGetContract(smith.AgentId, out var gap) && !gap.OnBreak && gap.ShiftRunTicks == 0, "Off shift, the count starts again.");
             TestLog.Log($"[PASS] Test 10: At energy {tuning.BreakEnergy}, or {tuning.BreakAfterTicks / DayClock.TicksPerHour} hours on shift in a row, an artisan breaks down (trust {tuning.Break.Trust}, warmth {tuning.Break.Warmth}), off its shifts until rested to {tuning.RestedEnergy}.");
+        }
+
+        /// <summary>
+        /// Practice (Epic 10 Part 2, W4, D55, D57): an artisan's makes count on its contract, and its grade rises every 10;
+        /// the forge stocks each make at its artisan's grade. Twenty-one pickaxes: ten Standard, ten Fine, one Masterwork.
+        /// </summary>
+        private void ValidatePracticeRaisesTheGrade()
+        {
+            var o = NewOutpost(1000);
+            o.Sim.UpdateStall(o.Sim.ActiveStalls[0].WithGood(new StallGood(ItemType.ToolPickaxe, StallRole.Sells, 30, 0)).WithStock(ItemType.IronOre, 200));
+            Assert(o.Sim.Workshops.Build(o.Sim, o.Forge, 0) == WorkshopRules.Check.Ok, "The forge is built.");
+            var smith = Crawler(o, 80, 60);
+            Assert(o.Sim.Workshops.Hire(o.Sim, smith.AgentId, o.Forge, 10, 0) == WorkshopRules.Check.Ok, "The smith is hired.");
+            Assert(o.Sim.Workshops.SetOrder(o.Sim, o.Forge, ItemType.ToolPickaxe, 21), "Twenty-one pickaxes are ordered.");
+            var tuning = WorkshopTuning.Default;
+            Assert(o.Sim.Workshops.TryGetContract(smith.AgentId, out var contract) && contract.Practice == 0 && WorkshopService.GradeOf(contract, tuning) == Grades.Standard, "A new artisan works at Standard.");
+            for (int t = 0; t < 30 * DayClock.TicksPerDay && o.Sim.Workshops[o.Forge].Made < 21; t++) o.Sim.Workshops.Work(o.Sim, o.Forge);
+            o.Sim.Workshops.TryGetContract(smith.AgentId, out contract);
+            o.Sim.ActiveStalls[0].TryGetGood(ItemType.ToolPickaxe, out var shelf);
+            Assert(o.Sim.Workshops[o.Forge].Made == 21 && contract.Practice == 21, $"Each make is practice ({contract.Practice} after {o.Sim.Workshops[o.Forge].Made}).");
+            Assert(WorkshopService.GradeOf(contract, tuning) == Grades.Masterwork, "From twenty makes, Masterwork.");
+            Assert(shelf.Stock == 21 && shelf.Fine == 10 && shelf.Masterwork == 1 && shelf.BestGrade == Grades.Masterwork,
+                $"The shelf holds them by grade: 10 Standard, 10 Fine, 1 Masterwork (stock {shelf.Stock}, Fine {shelf.Fine}, Masterwork {shelf.Masterwork}).");
+            TestLog.Log("[PASS] Test 11: practice raises an artisan's grade every 10 makes, and the forge stocks each make at it.");
         }
 
         private static Simpiens.Cognition.AgentState Crawler(Outpost o, sbyte trust, sbyte warmth, float risk = 0.1f, float greed = 0f)

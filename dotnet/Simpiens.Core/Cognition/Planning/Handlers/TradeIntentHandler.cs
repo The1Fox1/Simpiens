@@ -76,8 +76,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var tradedIn = tradeIn ? agent.Inventory.Unequip(equipment.Slot) : ItemInstance.Empty;
                 if (gear)
                 {
-                    // New equipment starts at its definition's durability (hazard gear: ticks of hazard exposure)
-                    agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, durability: equipment.Durability));
+                    // New equipment comes at the best grade on the shelf (Epic 10 Part 2, D57), its life the grade's (hazard
+                    // gear: ticks of hazard exposure)
+                    byte grade = stall.BestGradeOf(trade.ItemType);
+                    agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)));
                 }
                 else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
                 {
@@ -101,7 +103,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     agent.Inventory.Gold -= (int)totalCost;
                     stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
                 }
-                stall = stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
+                stall = gear ? stall.TakeBest(trade.ItemType, out _) : stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
                 // The old piece stays at the stall, back in its stock, no gold back (D53); one it doesn't trade is left with it all the same
                 if (!tradedIn.IsEmpty && stall.TryGetGood(tradedIn.Type, out _)) stall = stall.WithStock(tradedIn.Type, (ushort)(stall.StockOf(tradedIn.Type) + 1));
                 context.UpdateStall(stall);

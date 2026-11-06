@@ -161,12 +161,12 @@ namespace Simpiens.Testing.Persistence
                     // A still holding a make the stall had no room for
                     new Simpiens.Simulation.Workshops.StationState
                     {
-                        Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, Made = 2
+                        Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, HeldGrade = 1, Made = 2
                     }
                 },
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet
-                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234) },
+                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234, practice: 14) },
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
             };
             var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
@@ -174,10 +174,10 @@ namespace Simpiens.Testing.Persistence
             var again = new WorkshopSave();
             workshops.CaptureTo(again);
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The stations restored from their save");
-            Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1,
-                "A make in progress and a held make come back.");
+            Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1 && workshops[1].HeldGrade == 1,
+                "A make in progress and a held make, with its grade (Epic 10 Part 2, W4), come back.");
             Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
-                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234
+                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234 && contract.Practice == 14
                 && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract, its shifts and its break, and the cooldown come back.");
 
             workshops.RestoreFrom(null);

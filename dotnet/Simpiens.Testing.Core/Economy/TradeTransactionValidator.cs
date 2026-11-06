@@ -52,7 +52,8 @@ namespace Simpiens.Testing.Economy
             int stallSize = Marshal.SizeOf<TradeStallData>();
             // 96 since item system I5 (was 64): the stall's goods are a table of 8, so items can be added without changing its
             // layout; it is 84 bytes, and the outpost has one stall
-            Assert(stallSize <= 96, $"TradeStallData size ({stallSize} bytes) exceeds 96-byte threshold.");
+            // 136 since Epic 10 Part 2 (W3's ten goods, W4's grades and worn pieces on each): still a small copy for cognition
+            Assert(stallSize <= 136, $"TradeStallData size ({stallSize} bytes) exceeds 136-byte threshold.");
 
             // Verify default empty state
             Assert(!TradeStallData.Empty.IsActive, "TradeStallData.Empty has IsActive == false.");

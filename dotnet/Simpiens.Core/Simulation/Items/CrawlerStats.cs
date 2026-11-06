@@ -13,24 +13,25 @@ namespace Simpiens.Simulation.Items
         {
             float value = baseValue;
             if (inventory == null) return value;
+            // Each worn piece's modifiers at its grade (Epic 10 Part 2, W4, D56)
             for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
             {
-                var equipment = Equipment(inventory, s);
+                var equipment = Equipment(inventory, s, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
                     var modifier = equipment.GetModifier(m);
-                    if (modifier.Stat == stat && modifier.Op == ModifierOp.Add) value += modifier.Value;
+                    if (modifier.Stat == stat && modifier.Op == ModifierOp.Add) value += equipment.ValueAt(modifier, grade);
                 }
             }
             for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
             {
-                var equipment = Equipment(inventory, s);
+                var equipment = Equipment(inventory, s, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
                     var modifier = equipment.GetModifier(m);
-                    if (modifier.Stat == stat && modifier.Op == ModifierOp.Multiply) value *= modifier.Value;
+                    if (modifier.Stat == stat && modifier.Op == ModifierOp.Multiply) value *= equipment.ValueAt(modifier, grade);
                 }
             }
             return value;
@@ -93,9 +94,10 @@ namespace Simpiens.Simulation.Items
             _ => StatKind.None
         };
 
-        private static EquipmentBlock Equipment(IAgentInventory inventory, int slot)
+        private static EquipmentBlock Equipment(IAgentInventory inventory, int slot, out byte grade)
         {
             var item = inventory.GetEquipped((EquipmentSlot)slot);
+            grade = item.IsEmpty ? Grades.Standard : item.Quality;
             return item.IsEmpty ? null : ItemCatalog.Get(item.Type)?.Equipment;
         }
     }

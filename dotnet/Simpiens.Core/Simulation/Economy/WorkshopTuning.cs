@@ -59,11 +59,16 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly uint BreakAfterTicks;
 
+        /// <summary>Makes that raise an artisan's grade a step (W4, Q8, D55): Fine from 10, Masterwork from 20.</summary>
+        public readonly ushort MakesPerGrade;
+
         public WorkshopTuning(ushort constructionCost, sbyte hireTrust, sbyte hireWarmth, byte maxRiskTolerancePercent, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust,
-            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour)
+            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour,
+            ushort makesPerGrade = 10)
         {
+            MakesPerGrade = makesPerGrade;
             BreakAfterTicks = breakAfterTicks;
             BreakEnergy = breakEnergy;
             Break = breakCost;
@@ -106,6 +111,7 @@ namespace Simpiens.Simulation.Economy
             breakEnergy: 15f,
             breakCost: new TrustDelta(warmth: -5, trust: -10, respect: 0),
             restedEnergy: 60f,
-            breakAfterTicks: DayClock.Hours(10));
+            breakAfterTicks: DayClock.Hours(10),
+            makesPerGrade: 10);
     }
 }

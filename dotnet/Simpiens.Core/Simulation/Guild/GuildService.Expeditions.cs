@@ -175,8 +175,10 @@ namespace Simpiens.Simulation.Guild
                 crawler.Inventory.Unequip(equipment.Slot);
                 if (!GuildRules.WornOut(worn) && stall.TryGetGood(worn.Type, out _)) stall = stall.WithStock(worn.Type, (ushort)(stall.StockOf(worn.Type) + 1));
             }
-            crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), durability: equipment.Durability));
-            host.UpdateStall(stall.WithStock(item, (ushort)(stall.StockOf(item) - 1)));
+            // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's
+            stall = stall.TakeBest(item, out byte grade);
+            crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade)));
+            host.UpdateStall(stall);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock{(worn.IsEmpty ? string.Empty : $" in place of {worn.Type}")}");
             return GuildRules.Check.Ok;
         }

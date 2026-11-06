@@ -486,13 +486,27 @@ namespace Simpiens.Simulation.Workshops
         }
 
         /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
+        /// <summary>An artisan's grade from its practice (W4, Q8, D55): Standard, then Fine from 10 makes, Masterwork from 20.</summary>
+        public static byte GradeOf(in ArtisanContract contract, in WorkshopTuning tuning)
+        {
+            int per = tuning.MakesPerGrade > 0 ? tuning.MakesPerGrade : 10;
+            int grade = contract.Practice / per;
+            return (byte)(grade < Grades.Masterwork ? grade : Grades.Masterwork);
+        }
+
         public CraftStep Work(IWorkshopHost host, int index)
         {
             if ((uint)index >= (uint)_stations.Length || host?.ActiveStalls == null || host.ActiveStalls.Count == 0) return CraftStep.Idle;
             var stall = host.ActiveStalls[0]; // the session's one stall: what the stations draw on and stock (Q7)
             ref var station = ref _stations[index];
             var item = station.Order;
-            var step = Crafting.Work(ref station, ref stall, out bool stallChanged);
+            // The make is at its artisan's grade, and a finished one is practice (W4, D55)
+            int artisan = -1;
+            for (int i = 0; i < _artisans.Count && artisan < 0; i++) if (_artisans[i].StationIndex == index) artisan = i;
+            byte grade = artisan >= 0 ? GradeOf(_artisans[artisan], Tuning(host)) : Grades.Standard;
+            uint made = station.Made;
+            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, grade);
+            if (station.Made > made && artisan >= 0) _artisans[artisan] = _artisans[artisan].WithPractice((ushort)Math.Min(ushort.MaxValue, _artisans[artisan].Practice + 1));
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;

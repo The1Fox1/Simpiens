@@ -32,7 +32,10 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>The station's crew, a Workshop group (Q4); 0 while nobody is hired.</summary>
         public byte CrewGroupId;
 
-        private ushort _pad;
+        /// <summary>The grade of a held make (W4, D57).</summary>
+        public byte HeldGrade;
+
+        private byte _pad;
 
         /// <summary>Makes finished here, all told.</summary>
         public uint Made;

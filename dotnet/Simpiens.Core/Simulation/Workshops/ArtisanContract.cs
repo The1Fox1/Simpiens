@@ -29,8 +29,12 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>Ticks on shift without a gap (D35): 0 off shift and on a break.</summary>
         public readonly ushort ShiftRunTicks;
 
-        public ArtisanContract(EntityId crawlerId, byte stationIndex, ushort wage, uint joinTick, byte unpaidVisits = 0, byte shifts = 0, bool onBreak = false, ushort shiftRunTicks = 0)
+        /// <summary>Makes it has finished at its station (W4, D55): its practice, from which its grade.</summary>
+        public readonly ushort Practice;
+
+        public ArtisanContract(EntityId crawlerId, byte stationIndex, ushort wage, uint joinTick, byte unpaidVisits = 0, byte shifts = 0, bool onBreak = false, ushort shiftRunTicks = 0, ushort practice = 0)
         {
+            Practice = practice;
             ShiftRunTicks = shiftRunTicks;
             CrawlerId = crawlerId;
             StationIndex = stationIndex;
@@ -41,10 +45,11 @@ namespace Simpiens.Simulation.Workshops
             OnBreak = onBreak;
         }
 
-        public ArtisanContract WithWage(ushort wage) => new ArtisanContract(CrawlerId, StationIndex, wage, JoinTick, UnpaidVisits, Shifts, OnBreak, ShiftRunTicks);
-        public ArtisanContract WithUnpaidVisits(byte unpaidVisits) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, unpaidVisits, Shifts, OnBreak, ShiftRunTicks);
-        public ArtisanContract WithShifts(byte shifts) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, shifts, OnBreak, ShiftRunTicks);
-        public ArtisanContract WithOnBreak(bool onBreak) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, Shifts, onBreak, onBreak ? (ushort)0 : ShiftRunTicks);
-        public ArtisanContract WithShiftRun(ushort ticks) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, Shifts, OnBreak, ticks);
+        public ArtisanContract WithWage(ushort wage) => new ArtisanContract(CrawlerId, StationIndex, wage, JoinTick, UnpaidVisits, Shifts, OnBreak, ShiftRunTicks, Practice);
+        public ArtisanContract WithUnpaidVisits(byte unpaidVisits) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, unpaidVisits, Shifts, OnBreak, ShiftRunTicks, Practice);
+        public ArtisanContract WithShifts(byte shifts) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, shifts, OnBreak, ShiftRunTicks, Practice);
+        public ArtisanContract WithOnBreak(bool onBreak) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, Shifts, onBreak, onBreak ? (ushort)0 : ShiftRunTicks, Practice);
+        public ArtisanContract WithShiftRun(ushort ticks) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, Shifts, OnBreak, ticks, Practice);
+        public ArtisanContract WithPractice(ushort practice) => new ArtisanContract(CrawlerId, StationIndex, Wage, JoinTick, UnpaidVisits, Shifts, OnBreak, ShiftRunTicks, practice);
     }
 }

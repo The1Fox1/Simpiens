@@ -14,7 +14,7 @@ namespace Simpiens.Simulation.Workshops
         /// One tick of work at <paramref name="station"/>, drawing on and stocking <paramref name="stall"/>.
         /// <paramref name="stallChanged"/> says whether the stall's stock moved.
         /// </summary>
-        public static CraftStep Work(ref StationState station, ref TradeStallData stall, out bool stallChanged)
+        public static CraftStep Work(ref StationState station, ref TradeStallData stall, out bool stallChanged, byte grade = Grades.Standard)
         {
             stallChanged = false;
             if (!station.Built || !station.HasOrder) return CraftStep.Idle;
@@ -24,7 +24,7 @@ namespace Simpiens.Simulation.Workshops
             // A finished make waits for room before anything else is started
             if (station.HeldOutput > 0)
             {
-                if (!TryStock(ref stall, station.Order, station.HeldOutput)) return CraftStep.Holding;
+                if (!TryStock(ref stall, station.Order, station.HeldOutput, station.HeldGrade)) return CraftStep.Holding;
                 station.HeldOutput = 0;
                 stallChanged = true;
                 CloseIfDone(ref station);
@@ -51,9 +51,10 @@ namespace Simpiens.Simulation.Workshops
             station.Progress = 0;
             station.Remaining--;
             station.Made++;
-            if (!TryStock(ref stall, station.Order, recipe.OutputCount))
+            if (!TryStock(ref stall, station.Order, recipe.OutputCount, grade))
             {
                 station.HeldOutput = recipe.OutputCount;
+                station.HeldGrade = grade; // made at its artisan's grade, whenever it is stocked (D57)
                 return CraftStep.Holding;
             }
             stallChanged = true;
@@ -76,10 +77,11 @@ namespace Simpiens.Simulation.Workshops
         public static bool HasRoom(in TradeStallData stall, ItemType item, int count)
             => stall.Trades(item) && stall.StockOf(item) + count <= ushort.MaxValue;
 
-        private static bool TryStock(ref TradeStallData stall, ItemType item, int count)
+        private static bool TryStock(ref TradeStallData stall, ItemType item, int count, byte grade)
         {
             if (!HasRoom(stall, item, count)) return false;
-            stall = stall.WithStock(item, (ushort)(stall.StockOf(item) + count));
+            // Only what is worn takes a grade (D56): a draught is Standard whoever makes it
+            stall = stall.WithStocked(item, (ushort)count, ItemCatalog.Get(item)?.Equipment != null ? grade : Grades.Standard);
             return true;
         }
 
