@@ -77,8 +77,11 @@ namespace Simpiens.Simulation.Workshops
             return true;
         }
 
-        /// <summary>How many of an input a make takes: a repair half, rounded up (W4, Q8, D59: half the ore of a new piece).</summary>
-        public static int InputCount(in RecipeInput input, bool repair) => repair ? (input.Count + 1) / 2 : input.Count;
+        /// <summary>
+        /// How many of an input a make takes: a repair half, rounded down (W4, Q8, D59: half the ore of a new piece): a
+        /// pickaxe's 3 ore are 1, and a respirator's one glowstone none, so mending spares the rare input.
+        /// </summary>
+        public static int InputCount(in RecipeInput input, bool repair) => repair ? input.Count / 2 : input.Count;
 
         /// <summary>The work a make takes: a repair half (D59).</summary>
         public static int WorkTicks(Recipe recipe, bool repair) => repair ? (recipe.WorkTicks + 1) / 2 : recipe.WorkTicks;
