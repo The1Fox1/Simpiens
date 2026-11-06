@@ -40,10 +40,10 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.MedicinalHerb] = new ItemText("Herbs", "Bought from foragers", "Herb", "Herb", "HERB");
             _texts[(int)ItemType.Glowstone] = new ItemText("Glowstone", "Rare salvage from the hazards", "Glowstone", "Glowstone", "GLOWSTONE");
             _texts[(int)ItemType.HazardGear] = new ItemText("Hazard gear", "Worn into danger: halves the harm, then wears out", "Gear", "Gear", "GEAR");
-            _texts[(int)ItemType.ToolPickaxe] = new ItemText("Pickaxe", "Made at the forge from three ore", "Pickaxe", "Pickaxe", "PICKAXE");
+            _texts[(int)ItemType.ToolPickaxe] = new ItemText("Pickaxe", "Forged from three ore", "Pickaxe", "Pickaxe", "PICKAXE");
             _texts[(int)ItemType.HealingDraught] = new ItemText("Healing draught", "Made at the still from two herbs; heals 80 at once", "Draught", "Draught", "DRAUGHT");
-            _texts[(int)ItemType.Respirator] = new ItemText("Respirator", "Forged; stops most foul and flooded air", "Respirator", "Respirator", "RESPIRATOR");
-            _texts[(int)ItemType.HardHat] = new ItemText("Hard hat", "Forged; stops most falling rock", "Hard hat", "Hard hat", "HARD HAT");
+            _texts[(int)ItemType.Respirator] = new ItemText("Respirator", "Forged; for bad air", "Respirator", "Respirator", "RESPIRATOR");
+            _texts[(int)ItemType.HardHat] = new ItemText("Hard hat", "Forged; for falling rock", "Hard hat", "Hard hat", "HARD HAT");
         }
 
         public static ItemText Of(ItemType item)

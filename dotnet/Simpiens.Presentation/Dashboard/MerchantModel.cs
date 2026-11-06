@@ -33,8 +33,12 @@ namespace Simpiens.Presentation.Dashboard
 
         public string Label => ItemTexts.PriceLabel(Item, Role);
         public string Hint => ItemTexts.PriceHint(Item, Role);
-        /// <summary>The good's icon (graphics V4).</summary>
-        public string Icon => ItemIcons.Of(Item);
+
+        /// <summary>The best grade on the shelf (Epic 10 Part 2, W4): what a sale hands out first.</summary>
+        public byte Grade { get; internal set; }
+
+        /// <summary>The good's icon (graphics V4), rimmed for the best grade in stock (W4).</summary>
+        public string Icon => ItemIcons.Of(Item, Grade);
     }
 
     /// <summary>
@@ -115,7 +119,8 @@ namespace Simpiens.Presentation.Dashboard
                 for (int i = 0; i < rows.Count; i++)
                 {
                     parts[i] = Invariant($"{stall.StockOf(rows[i].Item)} {ItemTexts.Of(rows[i].Item).StockWord}");
-                    rows[i].Stock = Invariant($"{stall.StockOf(rows[i].Item)} in stock");
+                    rows[i].Stock = StockText(stall, rows[i].Item);
+                    rows[i].Grade = stall.BestGradeOf(rows[i].Item);
                 }
             }
             else
@@ -126,9 +131,21 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     parts[i] = $"0 {ItemTexts.Of(rows[i].Item).StockWord}";
                     rows[i].Stock = "0 in stock";
+                    rows[i].Grade = Grades.Standard;
                 }
             }
             Stock = "Stock: " + string.Join(" | ", parts);
+        }
+
+        /// <summary>"3 in stock", with the best grade on the shelf and the worn pieces waiting (W4): "3 in stock, best Fine, 2 worn".</summary>
+        public static string StockText(in Simpiens.Simulation.Economy.TradeStallData stall, ItemType item)
+        {
+            string text = Invariant($"{stall.StockOf(item)} in stock");
+            byte grade = stall.BestGradeOf(item);
+            if (grade != Grades.Standard) text += ", best " + Grades.NameOf(grade);
+            int worn = stall.WornOf(item);
+            if (worn > 0) text += Invariant($", {worn} worn");
+            return text;
         }
 
         /// <summary>Queues every row's price for the stall.</summary>

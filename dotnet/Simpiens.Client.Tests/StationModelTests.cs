@@ -193,6 +193,38 @@ namespace Simpiens.Client.Tests
             Assert.Equal("No order.", station.OrderText);
         }
 
+        /// <summary>
+        /// W4.3: the artisan's grade and practice show with its state; worn pieces on the shelf offer Mend, which orders
+        /// them repaired, and the order's line says it is mending.
+        /// </summary>
+        [Fact]
+        public void TheArtisansGradeShowsAndWornPiecesCanBeMended()
+        {
+            using var sim = Outpost();
+            var dashboard = new DashboardModel(DashboardContext.From(sim.Services));
+            var workshops = sim.Simulation.Workshops;
+            int forge = workshops.IndexOf(StationKind.Forge);
+            dashboard.OpenStation(forge);
+            var station = dashboard.Stations;
+            station.Build();
+            Step(sim, dashboard);
+            var smith = Willing(sim);
+            dashboard.Refresh();
+            station.Hire(smith.AgentId);
+            Step(sim, dashboard);
+            Assert.EndsWith("Standard, 0 made", station.ArtisanState);
+
+            var sm = (SimulationManager)sim.Simulation;
+            sm.UpdateStall(sm.ActiveStalls[0].WithWorn(ItemType.ToolPickaxe, 2)); // by hand: worn pieces handed back
+            dashboard.Refresh();
+            Assert.Equal(2, station.Recipes[0].Worn);
+            Assert.Equal(0, station.Recipes[1].Worn);
+            station.Mend(0);
+            Step(sim, dashboard);
+            Assert.True(workshops[forge].HasOrder && workshops[forge].Repair && workshops[forge].Remaining == 2, "Mend ordered both repaired.");
+            Assert.StartsWith("Mending pickaxe: 2 to go", station.OrderText);
+        }
+
         [Fact]
         public void WithoutACommandQueueTheWindowSendsNothing()
         {

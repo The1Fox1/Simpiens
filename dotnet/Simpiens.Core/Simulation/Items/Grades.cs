@@ -3,7 +3,8 @@ namespace Simpiens.Simulation.Items
     /// <summary>
     /// The grades a made piece comes in (Epic 10 Part 2, W4, Q8, D55): Standard, Fine and Masterwork, as
     /// <see cref="Simpiens.Simulation.Economy.ItemInstance.Quality"/> names them; shown with the rarity rims Common,
-    /// Uncommon and Rare. An artisan's grade rises with its practice; what a grade does to a piece is its equipment's.
+    /// rims a step above their item's own each. An artisan's grade rises with its practice; what a grade does to a piece
+    /// is its equipment's.
     /// </summary>
     public static class Grades
     {
@@ -19,12 +20,17 @@ namespace Simpiens.Simulation.Items
             _ => "Standard"
         };
 
-        /// <summary>The rarity rim a grade is shown with (D55): Common, Uncommon, Rare.</summary>
-        public static ItemRarity RimOf(byte grade) => grade switch
+        /// <summary>
+        /// The rarity rim a piece of <paramref name="grade"/> is shown with (D55): a step above its item's own rarity for each
+        /// grade, to Legendary (a Fine pickaxe, Uncommon, shows Rare's blue; a Masterwork respirator, Rare, Legendary's amber).
+        /// </summary>
+        public static ItemRarity RimOf(ItemRarity itemRarity, byte grade)
         {
-            Fine => ItemRarity.Uncommon,
-            >= Masterwork => ItemRarity.Rare,
-            _ => ItemRarity.Common
-        };
+            int rim = (int)itemRarity + grade;
+            return (ItemRarity)(rim < (int)ItemRarity.Legendary ? rim : (int)ItemRarity.Legendary);
+        }
+
+        /// <summary>Whether pieces of <paramref name="item"/> come in grades: something worn that a station makes.</summary>
+        public static bool Graded(Simpiens.Simulation.Economy.ItemType item) => ItemCatalog.Get(item)?.Equipment != null && RecipeBook.For(item) != null;
     }
 }

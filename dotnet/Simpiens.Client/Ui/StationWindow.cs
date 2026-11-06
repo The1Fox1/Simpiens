@@ -49,7 +49,7 @@ namespace Simpiens.Client.Ui
             public ContainerRuntime Root;
             public SpriteRuntime Icon;
             public TextRuntime Name, Recipe, Count;
-            public Button Less, More, Order;
+            public Button Less, More, Order, Mend;
         }
 
         /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds it on the map.</summary>
@@ -222,6 +222,7 @@ namespace Simpiens.Client.Ui
         public Button HireButton(int index) => _candidateCards[index].Hire;
         public Button OrderButton(int recipe) => _recipeRows[recipe].Order;
         public Button MoreCountButton(int recipe) => _recipeRows[recipe].More;
+        public Button MendButton(int recipe) => _recipeRows[recipe].Mend;
 
         public string StatusText => _status.Text;
         public string BuildNoteText => _buildNote.Text;
@@ -312,6 +313,13 @@ namespace Simpiens.Client.Ui
             row.Order = UiParts.PrimaryButton("Order", 90f, 28f, UiText.BodyBold);
             RightAligned(row.Order, 0f);
             row.Root.Children.Add(row.Order.Visual);
+            // Mend the worn pieces waiting on the shelf (Epic 10 Part 2, W4, D59), shown while there are some
+            row.Mend = UiParts.Button(string.Empty, 84f, 28f);
+            row.Mend.X = 374f;
+            UiParts.CentreVertically(row.Mend.Visual);
+            row.Mend.IsVisible = false;
+            row.Root.Children.Add(row.Mend.Visual);
+            row.Mend.Click += (_, _) => { _model.Mend(index); Bind(); };
             row.Less.Click += (_, _) => { _model.LessCount(index); Bind(); };
             row.More.Click += (_, _) => { _model.MoreCount(index); Bind(); };
             row.Order.Click += (_, _) => { _model.Order(index); Bind(); };
@@ -391,6 +399,14 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(row.Recipe, recipes[i].Recipe);
                 UiParts.SetText(row.Count, Invariant($"{recipes[i].PendingCount}"));
                 row.Order.IsEnabled = _model.CanOrder;
+                bool mend = recipes[i].Worn > 0;
+                row.Mend.IsVisible = mend;
+                if (mend)
+                {
+                    string label = Invariant($"Mend {recipes[i].Worn}");
+                    if (row.Mend.Text != label) row.Mend.Text = label;
+                    row.Mend.IsEnabled = _model.CanOrder;
+                }
             }
             UiParts.SetText(_orderText, _model.OrderText);
             _orderText.Color = _model.HasOrder ? UiStyle.Accent : UiStyle.TextMuted;

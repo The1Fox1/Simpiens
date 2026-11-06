@@ -170,10 +170,10 @@ namespace Simpiens.Presentation.Dashboard
             var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
             Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
             Gear = GearText(worn);
-            GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
+            GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
             var tool = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Tool) : default;
             Tool = tool.IsEmpty ? string.Empty : GearText(tool);
-            ToolIcon = tool.IsEmpty ? null : ItemIcons.Of(tool.Type);
+            ToolIcon = tool.IsEmpty ? null : ItemIcons.Of(tool.Type, tool.Quality);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -244,7 +244,9 @@ namespace Simpiens.Presentation.Dashboard
             var definition = ItemCatalog.Get(gear.Type);
             ushort life = definition?.Equipment != null ? definition.Equipment.DurabilityAt(gear.Quality) : (ushort)0; // a grade's life is its whole (Epic 10 Part 2, D56)
             int left = life > 0 ? (gear.Durability * 100 + life - 1) / life : 100;
-            return Invariant($"{definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type)}, {left}% left");
+            string name = definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type);
+            if (gear.Quality != Grades.Standard) name = Grades.NameOf(gear.Quality) + " " + name; // a graded piece (Epic 10 Part 2, W4)
+            return Invariant($"{name}, {left}% left");
         }
 
         /// <summary>A drifter's stay in words, in game time (Epic 10 Part 2, T6: "drifter, leaves in 3 h 20 min"); empty for a resident.</summary>

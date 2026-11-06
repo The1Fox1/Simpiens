@@ -119,7 +119,7 @@ namespace Simpiens.Presentation.Dashboard
                 row.Downed = agent.IsDowned;
                 var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
                 row.Gear = DossierModel.GearText(worn);
-                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
+                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
             }

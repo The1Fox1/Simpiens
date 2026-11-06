@@ -84,7 +84,7 @@ namespace Simpiens.Simulation.Workshops
         public static int WorkTicks(Recipe recipe, bool repair) => repair ? (recipe.WorkTicks + 1) / 2 : recipe.WorkTicks;
 
         /// <summary>Whether worn pieces of <paramref name="item"/> can be mended: something worn the stations make (D58); hazard gear, the caravan's, can't.</summary>
-        public static bool Repairable(ItemType item) => ItemCatalog.Get(item)?.Equipment != null && RecipeBook.For(item) != null;
+        public static bool Repairable(ItemType item) => Grades.Graded(item);
 
         /// <summary>
         /// A worn piece handed back at the stall (the guild's swap, D50; a trade-in, D53): onto the shelf of worn pieces if the

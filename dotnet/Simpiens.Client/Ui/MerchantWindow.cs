@@ -172,6 +172,7 @@ namespace Simpiens.Client.Ui
             {
                 var row = _model.Row(_items[i]);
                 if (row != null) UiParts.SetText(_hints[_items[i]], row.Hint + " · " + row.Stock);
+                if (row != null) UiParts.SetIcon(_iconViews[i], _icons, row.Icon); // rimmed for the best grade in stock (W4)
             }
             UiParts.SetText(_feedback, _model.Feedback.Text);
             _feedback.Color = UiStyle.ToneColor(_model.Feedback.Tone);

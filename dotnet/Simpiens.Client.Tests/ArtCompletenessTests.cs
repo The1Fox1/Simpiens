@@ -133,6 +133,12 @@ namespace Simpiens.Client.Tests
                 var icon = icons.Picture(item.ArtKey, ItemPicture.Icon);
                 Assert.True(icon != icons.Missing, $"{item.Name} ('{item.ArtKey}') has no icon.");
                 used.Add(icon);
+                // A piece that comes in grades has an icon for each (Epic 10 Part 2, W4)
+                for (byte grade = Grades.Fine; Grades.Graded(item.Id) && grade <= Grades.Masterwork; grade++)
+                {
+                    Assert.True(icons.TryId(ItemIcons.Of(item.Id, grade), out var graded) && graded != icon, $"{item.Name} has no {Grades.NameOf(grade)} icon.");
+                    used.Add(graded);
+                }
             }
             Assert.Equal(icons.Count, used.Count);
         }

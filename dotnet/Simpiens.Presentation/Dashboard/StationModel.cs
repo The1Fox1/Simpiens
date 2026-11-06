@@ -34,6 +34,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Recipe { get; internal set; } = string.Empty;
         /// <summary>How many the next order asks for.</summary>
         public int PendingCount { get; set; } = 1;
+
+        /// <summary>Worn pieces of it waiting on the stall's shelf for the forge to mend (Epic 10 Part 2, W4, D58).</summary>
+        public int Worn { get; internal set; }
     }
 
     /// <summary>
@@ -172,6 +175,8 @@ namespace Simpiens.Presentation.Dashboard
                 : WorkshopRules.Describe(build, workshops, Index, tuning);
 
             RefreshRecipes(state.Kind);
+            bool stocked = _context.TryGetStall(out var stall);
+            for (int i = 0; i < _recipes.Count; i++) _recipes[i].Worn = stocked ? stall.WornOf(_recipes[i].Item) : 0;
             RefreshArtisan(workshops, state, tuning);
             RefreshCandidates(workshops, host, tuning);
             RefreshOrder(state, station);
@@ -243,6 +248,15 @@ namespace Simpiens.Presentation.Dashboard
             Feedback = new Feedback(Invariant($"Ordered {row.PendingCount} × {row.Name.ToLowerInvariant()}."), FeedbackTone.Ok);
         }
 
+        /// <summary>Mend: an order to repair every worn piece of the recipe's item waiting on the shelf (W4, D59).</summary>
+        public void Mend(int recipe)
+        {
+            if (!CanOrder || (uint)recipe >= (uint)_recipes.Count || _recipes[recipe].Worn == 0) return;
+            var row = _recipes[recipe];
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateOrderStation(Source, (byte)Index, row.Item, (ushort)row.Worn, repair: true));
+            Feedback = new Feedback(Invariant($"Ordered {row.Worn} × {row.Name.ToLowerInvariant()} mended."), FeedbackTone.Ok);
+        }
+
         public void CancelOrder()
         {
             if (!CanOrder || !HasOrder) return;
@@ -309,6 +323,8 @@ namespace Simpiens.Presentation.Dashboard
             if (contract.OnBreak) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on a break until rested");
             else if (ShiftBlocks.Covers(contract.Shifts, Tick)) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on shift");
             else ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · {OffShiftText(contract.Shifts)}");
+            // Its grade and its practice (W4, D55)
+            ArtisanState += " · " + Grades.NameOf(WorkshopService.GradeOf(contract, tuning)) + Invariant($", {contract.Practice} made");
             DescribeShifts();
         }
 
@@ -376,27 +392,34 @@ namespace Simpiens.Presentation.Dashboard
             }
             string made = ItemTexts.Of(state.Order).MerchantName.ToLowerInvariant();
             var recipe = RecipeBook.For(state.Order);
-            int percent = recipe != null && recipe.WorkTicks > 0 && state.InputsTaken ? state.Progress * 100 / recipe.WorkTicks : 0;
-            OrderText = state.Remaining > 0 ? Invariant($"Making {made}: {state.Remaining} to go · {percent}%") : Invariant($"Making {made}: done");
+            int work = recipe != null ? Crafting.WorkTicks(recipe, state.Repair) : 0;
+            int percent = work > 0 && state.InputsTaken ? state.Progress * 100 / work : 0;
+            string doing = state.Repair ? "Mending" : "Making"; // a repair (W4, D59)
+            OrderText = state.Remaining > 0 ? Invariant($"{doing} {made}: {state.Remaining} to go · {percent}%") : Invariant($"{doing} {made}: done");
             if (state.HeldOutput > 0) OrderNote = Invariant($"A finished {made} waits for room in the stall.");
             else if (!HasArtisan) OrderNote = Invariant($"Nobody works the {station}: hire an artisan.");
             else if (ArtisanOnBreak) OrderNote = Invariant($"{ArtisanName} is on a break.");
             else if (Shifts == 0) OrderNote = Invariant($"{ArtisanName} has no shifts: give it a block.");
-            else if (!state.InputsTaken && recipe != null && LacksInputs(recipe, out string lacking)) OrderNote = lacking;
+            else if (!state.InputsTaken && recipe != null && LacksInputs(recipe, state.Repair, out string lacking)) OrderNote = lacking;
             else if (!ShiftBlocks.Covers(Shifts, Tick)) OrderNote = Capitalised(OffShiftText(Shifts)) + ".";
         }
 
         /// <summary>Whether the stall's stock lacks a make's inputs, and which: "Waiting for 3 iron ore in the stall (1 in stock)."</summary>
-        private bool LacksInputs(Recipe recipe, out string text)
+        private bool LacksInputs(Recipe recipe, bool repair, out string text)
         {
             text = string.Empty;
             if (!_context.TryGetStall(out var stall)) return false;
+            if (repair && stall.WornOf(recipe.Output) < 1)
+            {
+                text = "Waiting for a worn piece to mend.";
+                return true;
+            }
             for (int i = 0; i < recipe.InputCount; i++)
             {
                 var input = recipe.GetInput(i);
-                int have = stall.StockOf(input.Item);
-                if (have >= input.Count) continue;
-                text = Invariant($"Waiting for {input.Count} {ItemTexts.Of(input.Item).MerchantName.ToLowerInvariant()} in the stall ({have} in stock).");
+                int have = stall.StockOf(input.Item), need = Crafting.InputCount(input, repair);
+                if (have >= need) continue;
+                text = Invariant($"Waiting for {need} {ItemTexts.Of(input.Item).MerchantName.ToLowerInvariant()} in the stall ({have} in stock).");
                 return true;
             }
             return false;
