@@ -34,7 +34,7 @@ namespace Simpiens.Testing.Economy
 
             ValidateRefusals();
             ValidateRecruiting();
-            ValidateFourAtMostAndDismissal();
+            ValidateFullAtTheLimitAndDismissal();
             ValidateCommandsOnTheTick();
             ValidateThePatron();
 
@@ -112,27 +112,28 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("[PASS] Test 2: A recruit is paid the fee from the stall (conserved), joins the patron's guild and keeps its settlement.");
         }
 
-        private static void ValidateFourAtMostAndDismissal()
+        private static void ValidateFullAtTheLimitAndDismissal()
         {
             var o = NewOutpost(treasury: 500);
             var tuning = o.Sim.Economy.Guild;
-            var four = Enumerable.Range(0, 4).Select(_ => Crawler(o, trust: 80, warmth: 80)).ToArray();
-            foreach (var c in four) Assert(o.Sim.Guild.Recruit(o.Sim, c.AgentId, 5, 10) == GuildRules.Check.Ok, "Four sign on.");
-            var fifth = Crawler(o, trust: 80, warmth: 80);
-            Assert(o.Sim.Guild.Recruit(o.Sim, fifth.AgentId, 5, 10) == GuildRules.Check.GuildFull, "A fifth is refused: four at most (Q4).");
+            Assert(tuning.MaxMembers == 8, "Eight at most since the guildhall (Epic 10 Part 2, Q9, D61).");
+            var full = Enumerable.Range(0, tuning.MaxMembers).Select(_ => Crawler(o, trust: 80, warmth: 80)).ToArray();
+            foreach (var c in full) Assert(o.Sim.Guild.Recruit(o.Sim, c.AgentId, 5, 10) == GuildRules.Check.Ok, "Eight sign on.");
+            var ninth = Crawler(o, trust: 80, warmth: 80);
+            Assert(o.Sim.Guild.Recruit(o.Sim, ninth.AgentId, 5, 10) == GuildRules.Check.GuildFull, "A ninth is refused: eight at most.");
 
-            int trustBefore = four[0].Memory.GetAffinity(WorldRegistry.PlayerEntityId, 20).Trust;
-            Assert(o.Sim.Guild.Dismiss(o.Sim, four[0].AgentId, 20) == GuildRules.Check.Ok, "The player lets a member go.");
-            Assert(!o.Sim.Guild.IsMember(four[0].AgentId) && !o.Groups.TryGetMembership(four[0].AgentId, o.Sim.Guild.GroupId, out _), "It leaves the guild and its group.");
-            Assert(four[0].Memory.GetAffinity(WorldRegistry.PlayerEntityId, 21).Trust == trustBefore + tuning.DismissTrust, "Dismissal costs trust.");
-            Assert(o.Sim.Guild.Recruit(o.Sim, four[0].AgentId, 5, 21) == GuildRules.Check.CoolingDown, "It can't sign again at once.");
-            Assert(o.Sim.Guild.Recruit(o.Sim, four[0].AgentId, 5, 20 + tuning.RejoinCooldownTicks) == GuildRules.Check.Ok, "After the cooldown it can.");
-            Assert(o.Sim.Guild.Dismiss(o.Sim, fifth.AgentId, 30) == GuildRules.Check.NotMember, "Only a member can be dismissed.");
+            int trustBefore = full[0].Memory.GetAffinity(WorldRegistry.PlayerEntityId, 20).Trust;
+            Assert(o.Sim.Guild.Dismiss(o.Sim, full[0].AgentId, 20) == GuildRules.Check.Ok, "The player lets a member go.");
+            Assert(!o.Sim.Guild.IsMember(full[0].AgentId) && !o.Groups.TryGetMembership(full[0].AgentId, o.Sim.Guild.GroupId, out _), "It leaves the guild and its group.");
+            Assert(full[0].Memory.GetAffinity(WorldRegistry.PlayerEntityId, 21).Trust == trustBefore + tuning.DismissTrust, "Dismissal costs trust.");
+            Assert(o.Sim.Guild.Recruit(o.Sim, full[0].AgentId, 5, 21) == GuildRules.Check.CoolingDown, "It can't sign again at once.");
+            Assert(o.Sim.Guild.Recruit(o.Sim, full[0].AgentId, 5, 20 + tuning.RejoinCooldownTicks) == GuildRules.Check.Ok, "After the cooldown it can.");
+            Assert(o.Sim.Guild.Dismiss(o.Sim, ninth.AgentId, 30) == GuildRules.Check.NotMember, "Only a member can be dismissed.");
 
             o.Groups.TryGetGroup(o.Sim.Guild.GroupId, out var data);
-            Assert(data.MemberCount == 4, $"The roster holds the four members and not the patron ({data.MemberCount}).");
+            Assert(data.MemberCount == tuning.MaxMembers, $"The roster holds the eight members and not the patron ({data.MemberCount}).");
 
-            TestLog.Log("[PASS] Test 3: Four members at most; dismissal leaves the guild only, costs trust, and has a cooldown.");
+            TestLog.Log("[PASS] Test 3: Eight members at most; dismissal leaves the guild only, costs trust, and has a cooldown.");
         }
 
         private static void ValidateCommandsOnTheTick()

@@ -52,7 +52,7 @@ namespace Simpiens.Client.Tests
             var guild = game.Session.Simulation.Simulation.Guild;
             var dashboard = game.Play.Dashboard;
             Assert.True(guild.IsMember(recruit), "The Recruit button's command signed the crawler on.");
-            Assert.Equal("Guild 1/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 1/8", dashboard.Header.GuildButton.Text);
             Assert.Contains("Guild: member, 5g a visit", dashboard.Panels.GroupsShown);
             Assert.Equal(string.Empty, dashboard.Panels.RecruitShown);
             Assert.False(dashboard.Panels.RecruitButton.IsEnabled, "A member can't be recruited again.");
@@ -63,7 +63,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(1, roster.CardsShown);
             Assert.Equal(game.Session.Identity.GetFriendlyName(recruit), roster.CardName(0));
             Assert.StartsWith("Trust ", roster.CardStanding(0));
-            Assert.StartsWith("1 of 4 members", roster.StatusText);
+            Assert.StartsWith("1 of 8 members", roster.StatusText);
 
             roster.WageSlider(0).Value = 9;
             ui.Click(Centre(roster.ApplyButton));
@@ -74,7 +74,7 @@ namespace Simpiens.Client.Tests
             ui.Ticks(1);
             Assert.False(guild.IsMember(recruit), "Dismiss let the member go.");
             Assert.Equal(0, roster.CardsShown);
-            Assert.Equal("Guild 0/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 0/8", dashboard.Header.GuildButton.Text);
 
             Assert.True(dashboard.CloseWindow(), "Esc closes the roster.");
             Assert.False(roster.Window.IsShown);
@@ -92,6 +92,8 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(dashboard.Header.GuildButton));
             var roster = dashboard.Guild;
             Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(true), roster.PartyButton(0).Text);
+            ui.Click(Centre(roster.ExpeditionsTab)); // the builder's tab (Epic 10 Part 2, W5.1)
+            Assert.False(roster.Card(0).Visible && roster.Card(0).Parent.Visible, "The Expeditions tab hides the members' cards.");
             Assert.Equal("The Drowned Gallery", roster.TargetButton.Text);
             Assert.Equal("Send 1 to The Drowned Gallery for 4.", roster.DispatchText);
             Assert.True(roster.DispatchButton.IsEnabled && !roster.RecallButton.IsEnabled);
@@ -129,12 +131,59 @@ namespace Simpiens.Client.Tests
             Assert.True(!guild.HasExpedition || guild.Parties[0].Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
         }
 
+        /// <summary>
+        /// A guild of eight (Epic 10 Part 2, W5.1, D61): eight cards on the Members tab, and the Expeditions tab, each fit
+        /// a 1280×720 window. The standing that lets eight sign on at once is set by hand: this checks the layout, not play.
+        /// </summary>
+        [Fact]
+        public void EightMembersAndTheExpeditionsTabFitTheWindow()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var sim = game.Session.Simulation;
+            var guild = sim.Simulation.Guild;
+            var host = (Simpiens.Simulation.Guild.IGuildHost)sim.Simulation;
+            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+            const ushort wage = 20;
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter))
+            {
+                crawler.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(warmth: 60, trust: 80, fear: 0, respect: 40, interactionCount: 1, lastInteractionTick: 0));
+            }
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter).Take(8))
+            {
+                Assert.Equal(Simpiens.Simulation.Guild.GuildRules.Check.Ok, guild.CanRecruit(host, crawler.AgentId, wage, (uint)sim.Clock.CurrentTick));
+                commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateRecruit("test", crawler.AgentId, wage));
+            }
+            ui.Ticks(1);
+            Assert.Equal(8, guild.Members.Count);
+
+            var dashboard = game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Frame();
+            var roster = dashboard.Guild;
+            Assert.Equal(8, roster.CardsShown);
+            Assert.StartsWith("8 of 8 members", roster.StatusText);
+            float frameBottom = roster.Window.Frame.AbsoluteTop + roster.Window.Frame.AbsoluteHeight;
+            float lastCard = roster.Card(7).AbsoluteTop + roster.Card(7).AbsoluteHeight;
+            Assert.True(lastCard < frameBottom && frameBottom <= Height, $"The eighth card ends at {lastCard} and the window at {frameBottom}, within the screen's {Height} rows.");
+            Assert.True(roster.Window.Frame.AbsoluteTop >= dashboard.Header.GuildButton.AbsoluteTop + dashboard.Header.GuildButton.ActualHeight, "The window starts below the header.");
+            byte[] eight = FrameCapture.Capture(ui.Game, Width, Height);
+
+            ui.Click(Centre(roster.ExpeditionsTab));
+            ui.Frame();
+            frameBottom = roster.Window.Frame.AbsoluteTop + roster.Window.Frame.AbsoluteHeight;
+            Assert.True(roster.RecallButton.AbsoluteTop + roster.RecallButton.ActualHeight < frameBottom && frameBottom <= Height, "The Expeditions tab fits too.");
+            Assert.Equal("Send 4 to The Drowned Gallery for 4.", roster.DispatchText); // a party is four: the first four go
+            RenderTests.CompareWithReference("render-outpost-guild-eight", eight, Width, Height);
+        }
+
         [Fact]
         public void TheExpeditionTrackerLooksAsRecorded()
         {
             var (ui, _) = RecruitFromTheDossier();
             var dashboard = ui.Game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.ExpeditionsTab));
             ui.Click(Centre(dashboard.Guild.DispatchButton));
             ui.Ticks(100);
             dashboard.CloseWindow();

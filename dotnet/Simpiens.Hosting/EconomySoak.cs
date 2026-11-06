@@ -45,6 +45,12 @@ namespace Simpiens.Hosting
         public const uint GuildTreasuryMax = 1200;
         public const int GuildTrustUpMin = 8;
 
+        /// <summary>
+        /// The guild profile's size: Part 1's guild, one party of four (G6's band, D14). The guildhall's guild of eight
+        /// (Epic 10 Part 2, W5) gets its band at W6.
+        /// </summary>
+        public const int GuildProfileSize = Simpiens.Intervention.DispatchExpeditionCommand.MaxMembers;
+
         /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
         public const long GuildSpareTicks = 8 * DayClock.TicksPerHour;
 
@@ -254,7 +260,7 @@ namespace Simpiens.Hosting
             GuildPlayer guildPlayer = null;
             if (result.Player.Name == "guild")
             {
-                guildPlayer = new GuildPlayer(sim, targetSize: manager.Economy.Guild.MaxMembers);
+                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize);
                 guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
             }
             var guild = manager.Guild;
@@ -324,7 +330,7 @@ namespace Simpiens.Hosting
                 if (guildPlayer != null)
                 {
                     for (int i = 0; i < guild.Members.Count; i++) result.WorstUnpaid = Math.Max(result.WorstUnpaid, guild.Members[i].UnpaidVisits);
-                    if (result.GuildFullTick < 0 && guild.Members.Count >= manager.Economy.Guild.MaxMembers) result.GuildFullTick = rel;
+                    if (result.GuildFullTick < 0 && guild.Members.Count >= GuildProfileSize) result.GuildFullTick = rel;
                     if (guild.HasExpedition) partyOut = true;
                     else if (partyOut)
                     {

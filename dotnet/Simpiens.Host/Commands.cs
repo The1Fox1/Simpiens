@@ -127,7 +127,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 GuildPlayer player = null;
                 if (withGuild)
                 {
-                    player = new GuildPlayer(sim, targetSize: sim.Simulation.Economy.Guild.MaxMembers);
+                    player = new GuildPlayer(sim, targetSize: EconomySoak.GuildProfileSize);
                     player.SendExpeditions(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, Simpiens.Core.Session.Layouts.Floor1Layout.GallerySeamYield);
                 }
                 var day = new OutpostWatch(sim);

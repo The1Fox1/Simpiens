@@ -46,7 +46,7 @@ namespace Simpiens.Presentation.Dashboard
         public const string EmptyText = "No members yet. Recruit trusted crawlers from the dossier.";
 
         private readonly DashboardContext _context;
-        private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(4);
+        private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(8);
 
         private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
 
@@ -63,13 +63,24 @@ namespace Simpiens.Presentation.Dashboard
         public bool IsOpen { get; private set; }
         public IReadOnlyList<GuildRosterRow> Rows => _rows;
 
-        /// <summary>"2/4": members out of the most, for the header.</summary>
-        public string Count { get; private set; } = "0/4";
+        /// <summary>"2/8": members out of the most, for the header.</summary>
+        public string Count { get; private set; } = "0/8";
 
-        /// <summary>"2 of 4 members · 11g in wages a visit".</summary>
+        /// <summary>"2 of 8 members · 11g in wages a visit".</summary>
         public string Status { get; private set; } = string.Empty;
 
         public Feedback Feedback { get; private set; } = Feedback.None;
+
+        /// <summary>The window's tab (Epic 10 Part 2, W5.1): the members' cards, or the expeditions. Kept while the window closes.</summary>
+        public bool ShowingExpeditions { get; private set; }
+
+        public void ShowMembers() => ShowingExpeditions = false;
+
+        public void ShowExpeditions()
+        {
+            ShowingExpeditions = true;
+            Expedition.Refresh();
+        }
 
         public void Open()
         {
