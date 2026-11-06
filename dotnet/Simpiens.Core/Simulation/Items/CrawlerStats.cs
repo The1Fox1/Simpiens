@@ -47,6 +47,37 @@ namespace Simpiens.Simulation.Items
             return speed > 0.1f ? speed : 0.1f;
         }
 
+        /// <summary>The most of a hazard's harm worn protection can stop (D47).</summary>
+        public const float MaxHazardResistance = 0.9f;
+
+        /// <summary>
+        /// How much of a hazard of <paramref name="kind"/>'s harm this inventory's wearer is spared (Epic 10 Part 2, W3, D47):
+        /// its <see cref="StatKind.HazardResistance"/> (hazard gear's 0.5, against any hazard) plus its resistance to that
+        /// kind (a respirator's 0.75 against the air hazards, a hard hat's against falling rock), at most
+        /// <see cref="MaxHazardResistance"/>.
+        /// </summary>
+        public static float HazardResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind)
+        {
+            float resistance = Get(inventory, StatKind.HazardResistance) + KindResistance(inventory, kind);
+            return resistance < MaxHazardResistance ? resistance : MaxHazardResistance;
+        }
+
+        /// <summary>What gear made against <paramref name="kind"/> stops of it, apart from protection against any hazard (D51 judges by this).</summary>
+        public static float KindResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind)
+        {
+            var stat = StatAgainst(kind);
+            return stat == StatKind.None ? 0f : Get(inventory, stat);
+        }
+
+        /// <summary>The stat that cuts a hazard of <paramref name="kind"/>: the air hazards' or falling rock's; None for none.</summary>
+        public static StatKind StatAgainst(Simpiens.Simulation.World.HazardKind kind) => kind switch
+        {
+            Simpiens.Simulation.World.HazardKind.FoulAir => StatKind.AirResistance,
+            Simpiens.Simulation.World.HazardKind.Flooding => StatKind.AirResistance,
+            Simpiens.Simulation.World.HazardKind.FallingRock => StatKind.RockResistance,
+            _ => StatKind.None
+        };
+
         private static EquipmentBlock Equipment(IAgentInventory inventory, int slot)
         {
             var item = inventory.GetEquipped((EquipmentSlot)slot);

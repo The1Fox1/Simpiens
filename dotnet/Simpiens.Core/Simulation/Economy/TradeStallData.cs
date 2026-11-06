@@ -47,7 +47,7 @@ namespace Simpiens.Simulation.Economy
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct TradeStallData : IEquatable<TradeStallData>
     {
-        public const int GoodsCapacity = 8;
+        public const int GoodsCapacity = 10; // 8 until Epic 10 Part 2's W3 (D49): ten goods with the forge's protection by kind
 
         public readonly EntityId StallEntityId;
         public readonly Vec2 Position;

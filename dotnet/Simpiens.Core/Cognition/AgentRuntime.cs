@@ -99,7 +99,8 @@ namespace Simpiens.Cognition
             State.Station = _simulationManager?.Workshops != null ? _simulationManager.Workshops.OrderFor(State.AgentId, (uint)currentTick) : default;
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
-            // Equipment's HazardResistance (G3's hazard gear) stops part of the damage; equipment that wears per hazard tick
+            // Equipment's resistance stops part of the damage: hazard gear's against any hazard (G3), a respirator's or a hard
+            // hat's against its kind (Epic 10 Part 2, W3, D47); equipment that wears per hazard tick
             // loses a unit for every tick in danger, and at 0 it is gone
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
@@ -107,7 +108,7 @@ namespace Simpiens.Cognition
             {
                 State.Activity.HazardTicks++;
                 var inventory = State.Inventory;
-                float resistance = CrawlerStats.Get(inventory, StatKind.HazardResistance);
+                float resistance = CrawlerStats.HazardResistance(inventory, hazard.Kind);
                 bool geared = resistance > 0f;
                 float damagePerSecond = geared ? (float)(hazard.DamagePerSecond * (float)(1f - resistance)) : hazard.DamagePerSecond;
                 float before = State.Health;

@@ -51,7 +51,10 @@ namespace Simpiens.Simulation.Items
             // plenty of (F8)
             new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)),
             // D42: an hour's work at the still for two herbs
-            new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2))
+            new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2)),
+            // D48: protection by kind, two hours at the forge from a glowstone, with herbs for the filters or ore for the shell
+            new Recipe(ItemType.Respirator, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.MedicinalHerb, 2)),
+            new Recipe(ItemType.HardHat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.IronOre, 2))
         };
 
         /// <summary>

@@ -147,6 +147,10 @@ namespace Simpiens.Simulation.Economy
             // The still's draught (Epic 10 Part 2, W2, D46): worth 25g to a neutral crawler, sold at 20g (two herbs at 6g and
             // an hour's work), none to start
             items[(int)ItemType.HealingDraught] = new ItemTerms(25, StallRole.Sells, 20, 0);
+            // The forge's protection by kind (W3, D48): worth 80g to a neutral crawler, sold at 60g (a glowstone at 45g and its
+            // herbs or ore, two hours' work), none to start
+            items[(int)ItemType.Respirator] = new ItemTerms(80, StallRole.Sells, 60, 0);
+            items[(int)ItemType.HardHat] = new ItemTerms(80, StallRole.Sells, 60, 0);
             return items;
         }
 

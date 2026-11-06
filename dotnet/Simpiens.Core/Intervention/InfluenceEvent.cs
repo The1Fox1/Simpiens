@@ -251,7 +251,8 @@ namespace Simpiens.Intervention
     /// </summary>
     public readonly struct UpdateStallPricesCommand
     {
-        public const int Capacity = 8;
+        /// <summary>As many prices as a stall trades goods.</summary>
+        public const int Capacity = Simpiens.Simulation.Economy.TradeStallData.GoodsCapacity;
 
         public readonly EntityId StallId;
         public readonly int Count;

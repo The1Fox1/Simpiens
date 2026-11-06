@@ -78,7 +78,17 @@ namespace Simpiens.Simulation.Items
             // drinks it under the treat line; not salvage: the stall doesn't buy it back
             new ItemDefinition(ItemType.HealingDraught, "HealingDraught", "Healing Draught",
                 ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Uncommon, maxStack: 5,
-                consume: new[] { new ConsumeEffect(StatKind.Health, 80f) })
+                consume: new[] { new ConsumeEffect(StatKind.Health, 80f) }),
+            // Protection by kind (Epic 10 Part 2, W3, Q5, D47): each cuts its own hazards by three quarters, where hazard gear
+            // cuts any by half; worn in the protection slot and worn out by exposure, as hazard gear
+            new ItemDefinition(ItemType.Respirator, "Respirator", "Respirator",
+                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.AirResistance, ModifierOp.Add, 0.75f))),
+            new ItemDefinition(ItemType.HardHat, "HardHat", "Hard Hat",
+                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f)))
         };
 
         /// <summary>

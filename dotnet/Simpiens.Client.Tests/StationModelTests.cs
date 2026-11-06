@@ -160,7 +160,10 @@ namespace Simpiens.Client.Tests
             station.Build();
             Step(sim, dashboard);
 
-            var pickaxe = Assert.Single(station.Recipes);
+            // The forge's recipes in the order of what they make: the pickaxe (W1), the respirator and the hard hat (W3)
+            Assert.Equal(new[] { ItemType.ToolPickaxe, ItemType.Respirator, ItemType.HardHat }, station.Recipes.Select(r => r.Item).ToArray());
+            Assert.Equal("1 glowstone, 2 herbs · 2 h of work", station.Recipes[1].Recipe);
+            var pickaxe = station.Recipes[0];
             Assert.Equal(ItemType.ToolPickaxe, pickaxe.Item);
             Assert.Equal("Pickaxe", pickaxe.Name);
             Assert.Equal("3 iron ore · 2 h of work", pickaxe.Recipe);

@@ -80,7 +80,9 @@ namespace Simpiens.Client.Ui
 
         public Window Window { get; }
 
-        private const int RowHeight = 48;
+        /// <summary>A good's row and the gap under it: nine goods fit the window at 720 rows (Epic 10 Part 2, W3; 48 and 8 until then).</summary>
+        private const int RowHeight = 40;
+        private const float RowGap = 4f;
 
         /// <summary>The goods' icons, top to bottom (tests read where they land).</summary>
         public System.Collections.Generic.IReadOnlyList<SpriteRuntime> Icons => _iconViews;
@@ -141,7 +143,7 @@ namespace Simpiens.Client.Ui
                 if (!_binding) set(gold);
             };
             body.Children.Add(row);
-            body.Children.Add(Window.Gap(8f));
+            body.Children.Add(Window.Gap(RowGap));
             return slider;
         }
 

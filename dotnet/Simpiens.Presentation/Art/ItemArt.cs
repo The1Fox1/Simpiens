@@ -43,6 +43,10 @@ namespace Simpiens.Presentation.Art
             ["hazard-gear"] = new ItemLook(ItemShapes.Helmet, new Rgba32(250, 204, 21), new Rgba32(254, 240, 138), Worn.Head),
             ["glowstone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(251, 191, 36), new Rgba32(103, 232, 249)),
             ["healing-draught"] = new ItemLook(ItemShapes.Flask, new Rgba32(225, 29, 72), new Rgba32(161, 112, 66)), // ruby in glass, a cork
+            // Protection by kind (Epic 10 Part 2, W3, D52): the respirator's face is drawn on the wearer from W3.4; the hard hat
+            // is a steel helm on the head, as hazard gear's yellow one
+            ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191)),
+            ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);
