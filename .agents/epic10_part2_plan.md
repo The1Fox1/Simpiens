@@ -389,6 +389,18 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 - **DoD:**
   - **`PracticeMakesBetterGear`:** over 45 minutes an artisan's grade rises, and its later gear lasts longer;
   - **`TheForgeMendsWornGear`:** a worn piece comes back to full for half the ore of a new one.
+- **The design (2026-11-05, under the AFK directive; RimWorld's crafting skill and item quality, Majesty's smithy upgrades as the guide)** [Possibly Complex as a whole]:
+  - **What exists:** `ItemInstance.Quality` (0 Standard, 1 Fine, 2 Masterwork) stamped 0 everywhere; the stall's stock is a count per good, so the grade of what the forge makes has nowhere to live once stocked. Worn pieces replaced by the guild (D50) or traded in (D53) go back into stock *as new* today, which repair should end.
+  - **D55, practice:** the artisan's contract counts its makes (`ArtisanContract.Practice`, saved; inside format 10). Its grade is Standard until 10 made, Fine from 10, Masterwork from 20 (Q8: every 10 raise it, to three grades).
+  - **D56, the grade on the item:** for what is worn (tools and protection), each grade above Standard lengthens its life by a quarter and strengthens its effect by a tenth (item data on `EquipmentBlock`: `LifePerGrade`, `EffectPerGrade`): a Fine pickaxe lasts 50 units and mines 1.55×, a Masterwork respirator stops 0.9 (the cap). `CrawlerStats` reads the worn instance's grade. *Left out:* draughts have no grade (used once, no life to lengthen); their makes count toward the still's artisan's practice all the same, for when they do.
+  - **D57, the shelf by grade:** a stall's good counts its Fine and Masterwork pieces within its stock (`StallGood.Fine`, `.Masterwork`); the forge stocks a make at its artisan's grade (a held make keeps its grade, `StationState.HeldGrade`); a sale or a gift hands out the best grade first, at the good's one price (the player prices the good; a grade is the buyer's luck). The caravan's hazard gear is Standard.
+  - **D58, worn pieces wait on the shelf** (`StallGood.Worn`, not for sale): a sound piece the guild replaces (D50), one traded in (D53) and one a member hands in at half its life (D12) go there, no longer back into stock as new.
+  - **D59, repair is an order at the forge** (Q8): `OrderStationCommand` gains a repair flag; a repair takes one worn piece and half of each of its recipe's inputs (rounded up) and half its work, and stocks the piece full, at Standard. The station window offers it for goods with worn pieces waiting.
+- **Steps:**
+  1. **W4.1 Practice and grades** [Possibly Complex: a contract field, the shelf's layout, stats by instance]: D55–D57; validators (grade from practice, the shelf by grade, best first, a Fine piece's life and effect). Golden holds (nobody crafts in the golden runs).
+  2. **W4.2 Worn pieces and repair** [Possibly Complex: a command flag, a make that consumes a worn piece]: D58, D59; validators.
+  3. **W4.3 The client** [Possibly Complex: rims by grade; the window's repair; renders after a look]: rarity rims by grade in the merchant terminal and the roster; the stock line by grade; the station window's artisan grade and a repair row.
+  4. **W4.4 The live scenarios** [Possibly Complex: measured first]: `PracticeMakesBetterGear` (within some game days the artisan's grade rises and a later piece lasts longer) and `TheForgeMendsWornGear` (a worn piece comes back full for half the inputs).
 
 ### W5. The guildhall (2–3 days)
 **Complexity:** Very Complex: G5's one-expedition stage machine becomes several, and parties live on between expeditions. Split it: W5.1–W5.2, then FormParty, then two expeditions at once. The developer supervises the last of these.
