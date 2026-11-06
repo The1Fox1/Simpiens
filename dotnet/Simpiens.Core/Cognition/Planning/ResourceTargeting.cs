@@ -520,9 +520,23 @@ namespace Simpiens.Cognition.Planning
         /// it knows the Gallery's glowstone); else the first that lets it work hazardous salvage it knows (hazard gear, as
         /// G3). False when there is none.
         /// </summary>
-        public static bool TryChooseProtection(in AgentContext context, out ItemType protection)
+        public static bool TryChooseProtection(in AgentContext context, out ItemType protection) => TryChooseProtection(context, out protection, out _);
+
+        /// <summary>
+        /// True when a bold crawler wearing protection would trade it for a piece in stock that opens salvage it can't reach
+        /// as it is (Epic 10 Part 2, W3, D53): its world state then says it lacks the gear it needs.
+        /// </summary>
+        public static bool WouldUpgradeProtection(in AgentContext context)
+        {
+            if (context.Inventory == null || !Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(context.Inventory, ItemCategory.Protection) || !Vitality.WouldVenture(context)) return false;
+            return TryChooseProtection(context, out _, out bool opens) && opens;
+        }
+
+        /// <summary>As <see cref="TryChooseProtection(in AgentContext, out ItemType)"/>, saying whether the piece opens salvage it can't reach as it is.</summary>
+        public static bool TryChooseProtection(in AgentContext context, out ItemType protection, out bool opens)
         {
             protection = ItemType.None;
+            opens = false;
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
             ushort food = stall.SellPriceOf(FoodForSale(stall));
@@ -538,6 +552,7 @@ namespace Simpiens.Cognition.Planning
                 if (reach == 2)
                 {
                     protection = item;
+                    opens = true;
                     return true;
                 }
                 if (reach == 1 && usable == ItemType.None) usable = item;
@@ -548,13 +563,28 @@ namespace Simpiens.Cognition.Planning
 
         /// <summary>
         /// What wearing <paramref name="item"/> would do for this crawler's hazardous salvage: 2 when it would open a node it
-        /// knows but can't brave alone as it is, 1 when it knows one it could work with it, 0 otherwise.
+        /// can't brave alone as it is, 1 when it knows one it could work with it, 0 otherwise. For the first, what lies in
+        /// charted hazard sectors is known from the map's plan (D54: charted is mapped, as the bunks' plan is common
+        /// knowledge); the second is what it has seen, as G3's.
         /// </summary>
         private static int HazardousReach(in AgentContext context, ItemType item)
         {
-            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return 0;
             bool venture = Vitality.WouldVenture(context);
-            var map = context.Snapshot?.Map;
+            var snapshot = context.Snapshot;
+            var map = snapshot?.Map;
+            if (map != null && venture)
+            {
+                var nodes = map.ResourceNodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    if (!nodes[i].Item.IsSalvage() || !ItemCatalog.Is(nodes[i].Item, ItemCategory.Hazardous)) continue;
+                    var sector = map.FindSector(nodes[i].Position);
+                    if (!sector.Hazard.IsHazardous || !snapshot.IsSectorCharted(sector.Id)) continue;
+                    if (Vitality.WouldEnter(venture, sector.Hazard, context.Inventory)) continue;
+                    if (Vitality.LoneDanger(sector.Hazard, CrawlerStats.KindResistanceOf(item, sector.Hazard.Kind)) <= Vitality.LoneHazardLimit) return 2;
+                }
+            }
+            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return 0;
             int reach = 0;
             foreach (var kvp in context.Memory.SpatialMemoryMap)
             {

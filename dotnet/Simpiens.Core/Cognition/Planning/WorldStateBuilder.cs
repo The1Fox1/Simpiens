@@ -29,7 +29,8 @@ namespace Simpiens.Cognition.Planning
             bool hasFood = inv.HasAny(ItemCategory.Food);
             bool hasTool = inv.HasAny(ItemCategory.Tool) || inv.IsWearing(ItemCategory.Tool); // worn in the tool slot, as a bought pickaxe is
             bool hasSalvage = inv.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-            bool hasHazardGear = inv.IsWearing(ItemCategory.Protection);
+            // Worn protection counts unless a bold crawler would trade it for a piece that opens salvage it can't reach (D53)
+            bool hasHazardGear = inv.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
 
             var state = BuildWorldState(context, hasFood, hasTool);
             state = state.With(StateFact.HasProvisions, hasFood);
@@ -65,7 +66,7 @@ namespace Simpiens.Cognition.Planning
                     hasTool = true;
                 }
                 bool hasSalvage = context.Inventory.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-                bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection);
+                bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
                 state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));

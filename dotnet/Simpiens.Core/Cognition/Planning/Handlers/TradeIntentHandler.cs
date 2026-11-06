@@ -46,7 +46,12 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
                 var equipment = Simpiens.Simulation.Items.ItemCatalog.Get(trade.ItemType)?.Equipment;
                 bool gear = equipment != null;
-                if (gear && (trade.Quantity != 1 || !agent.Inventory.GetEquipped(equipment.Slot).IsEmpty))
+                // A crawler wears one piece at a time; protection it wears is traded in for another piece (Epic 10 Part 2, D53:
+                // the planner asks only for one that opens salvage it can't reach), never for the same again
+                var wornNow = gear ? agent.Inventory.GetEquipped(equipment.Slot) : ItemInstance.Empty;
+                bool tradeIn = gear && !wornNow.IsEmpty && wornNow.Type != trade.ItemType
+                    && Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Protection);
+                if (gear && (trade.Quantity != 1 || (!agent.Inventory.GetEquipped(equipment.Slot).IsEmpty && !tradeIn)))
                 {
                     return Reject(node, trade, "a crawler wears one piece of gear at a time");
                 }
@@ -68,6 +73,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "agent cannot afford the purchase");
                 }
 
+                var tradedIn = tradeIn ? agent.Inventory.Unequip(equipment.Slot) : ItemInstance.Empty;
                 if (gear)
                 {
                     // New equipment starts at its definition's durability (hazard gear: ticks of hazard exposure)
@@ -83,9 +89,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     if (!context.EconomyLedger.TryExecuteStallPurchase(stall.StallEntityId, ref stall, agent.Inventory, totalCost))
                     {
-                        // Roll back what was added
+                        // Roll back what was added, and give back what was traded in
                         if (gear) agent.Inventory.Unequip(equipment.Slot);
                         else agent.Inventory.TryRemoveItem(trade.ItemType, trade.Quantity);
+                        if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
                         return Reject(node, trade, "ledger refused the purchase");
                     }
                 }
@@ -95,6 +102,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                     stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
                 }
                 stall = stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
+                // The old piece stays at the stall, back in its stock, no gold back (D53); one it doesn't trade is left with it all the same
+                if (!tradedIn.IsEmpty && stall.TryGetGood(tradedIn.Type, out _)) stall = stall.WithStock(tradedIn.Type, (ushort)(stall.StockOf(tradedIn.Type) + 1));
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
