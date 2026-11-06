@@ -54,6 +54,21 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Outfit from stock: members without protection, or with it worn to half its life, are given some from the stall as the party is sent (D12).</summary>
         public bool Outfit { get; private set; } = true;
 
+        /// <summary>
+        /// The outfit button's words: "No outfitting", or the gear it gives for the target's hazard (Epic 10 Part 2, W3, D50):
+        /// "Outfit: respirator", "Outfit: hazard gear"; "Outfit from stock" while there is none.
+        /// </summary>
+        public string OutfitText
+        {
+            get
+            {
+                if (!Outfit) return "No outfitting";
+                var host = Host;
+                var gear = host != null && _targets.Count > 0 ? GuildRules.BestProtectionInStock(host, GuildRules.HazardOf(host, _targets[_target].Id)) : ItemType.None;
+                return gear == ItemType.None ? "Outfit from stock" : "Outfit: " + ItemTexts.Of(gear).MerchantName.ToLowerInvariant();
+            }
+        }
+
         /// <summary>Draughts each member is given at the muster, as stock allows (Epic 10 Part 2, W2, D44): 0 to <see cref="DispatchExpeditionCommand.MaxDraughts"/>.</summary>
         public byte Draughts { get; private set; }
 

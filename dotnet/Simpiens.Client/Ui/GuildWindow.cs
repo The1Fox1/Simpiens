@@ -301,7 +301,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
             string rule = expedition.Rule.ToString().ToUpperInvariant();
             if (RuleButton.Text != rule) RuleButton.Text = rule;
-            string outfit = expedition.Outfit ? "Outfit from stock" : "No outfitting";
+            string outfit = expedition.OutfitText;
             if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
             if (DraughtsButton.Text != expedition.DraughtsText) DraughtsButton.Text = expedition.DraughtsText;
             UiParts.SetText(_ruleText, expedition.RuleText);

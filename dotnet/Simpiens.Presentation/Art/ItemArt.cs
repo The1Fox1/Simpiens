@@ -8,6 +8,8 @@ namespace Simpiens.Presentation.Art
     {
         None = 0,
         Head = 1,
+        /// <summary>Over the lower face: a respirator's mask (Epic 10 Part 2, W3, D52).</summary>
+        Face = 2,
     }
 
     /// <summary>How an item looks: its shape, its primary and secondary colours, and how it is worn.</summary>
@@ -43,9 +45,9 @@ namespace Simpiens.Presentation.Art
             ["hazard-gear"] = new ItemLook(ItemShapes.Helmet, new Rgba32(250, 204, 21), new Rgba32(254, 240, 138), Worn.Head),
             ["glowstone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(251, 191, 36), new Rgba32(103, 232, 249)),
             ["healing-draught"] = new ItemLook(ItemShapes.Flask, new Rgba32(225, 29, 72), new Rgba32(161, 112, 66)), // ruby in glass, a cork
-            // Protection by kind (Epic 10 Part 2, W3, D52): the respirator's face is drawn on the wearer from W3.4; the hard hat
-            // is a steel helm on the head, as hazard gear's yellow one
-            ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191)),
+            // Protection by kind (Epic 10 Part 2, W3, D52): the respirator a mask over the mouth, its filters teal; the hard hat
+            // a steel helm on the head, as hazard gear's yellow one
+            ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191), Worn.Face),
             ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
         };
 

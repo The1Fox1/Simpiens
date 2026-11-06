@@ -157,6 +157,24 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear);
         }
 
+        /// <summary>The party builder's outfit names the gear it gives for the target's hazard (Epic 10 Part 2, W3.4, D50).</summary>
+        [Fact]
+        public void TheOutfitButtonNamesTheGearForTheTarget()
+        {
+            using var sim = Outpost(0);
+            sim.Sectors.SetExplored(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, true); // by hand: charted
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.OpenGuild();
+            var expedition = model.Guild.Expedition;
+            Assert.Equal("The Drowned Gallery", expedition.TargetName); // the builder starts on the most dangerous
+            Assert.Equal("Outfit: hazard gear", expedition.OutfitText);
+            var sm = (SimulationManager)sim.Simulation;
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 2));
+            Assert.Equal("Outfit: respirator", expedition.OutfitText);
+            expedition.ToggleOutfit();
+            Assert.Equal("No outfitting", expedition.OutfitText);
+        }
+
         [Fact]
         public void AHazardSectorReadsAsDangerous()
         {
