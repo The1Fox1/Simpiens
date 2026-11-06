@@ -116,11 +116,14 @@ namespace Simpiens.Presentation.Dashboard
             var host = Host;
             if (Outfit && host != null)
             {
-                var gear = GearInStock(out int stock);
+                // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50), for each member who needs it
+                var hazard = GuildRules.HazardOf(host, _targets[_target].Id);
+                var gear = GuildRules.BestProtectionInStock(host, hazard);
+                int stock = gear != ItemType.None ? host.ActiveStalls[0].SellStockOf(gear) : 0;
                 for (int i = 0; i < _party.Count && stock > 0; i++)
                 {
-                    if (Guild.CanGiveGear(host, _party[i], gear) != GuildRules.Check.Ok) continue;
-                    _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", _party[i], gear));
+                    if (Guild.CanGiveGear(host, _party[i], gear, hazard) != GuildRules.Check.Ok) continue;
+                    _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", _party[i], gear, hazard));
                     stock--;
                 }
             }
@@ -275,19 +278,5 @@ namespace Simpiens.Presentation.Dashboard
             }
         }
 
-        /// <summary>The first protection the stall has in stock, and how many.</summary>
-        private ItemType GearInStock(out int stock)
-        {
-            stock = 0;
-            var stalls = _context.Simulation?.ActiveStalls;
-            if (stalls == null || stalls.Count == 0) return ItemType.None;
-            var protection = ItemCatalog.InCategory(ItemCategory.Protection);
-            for (int i = 0; i < protection.Count; i++)
-            {
-                stock = stalls[0].SellStockOf(protection[i]);
-                if (stock > 0) return protection[i];
-            }
-            return ItemType.None;
-        }
     }
 }

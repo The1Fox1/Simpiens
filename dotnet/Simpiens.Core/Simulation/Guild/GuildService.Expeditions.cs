@@ -8,6 +8,7 @@ using Simpiens.Intervention;
 using Simpiens.Narrative;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
+using Simpiens.Simulation.World;
 using ZLogger;
 
 namespace Simpiens.Simulation.Guild
@@ -149,15 +150,17 @@ namespace Simpiens.Simulation.Guild
             return GuildRules.Check.Ok;
         }
 
-        public GuildRules.Check CanGiveGear(IGuildHost host, EntityId crawlerId, ItemType item) => GuildRules.CheckGiveGear(this, host, crawlerId, item);
+        public GuildRules.Check CanGiveGear(IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None)
+            => GuildRules.CheckGiveGear(this, host, crawlerId, item, against);
 
         /// <summary>
         /// The player gives a member <paramref name="item"/> from the stall's stock (D12): the stock falls by one, the member
-        /// wears it (a worn-down piece in the slot is discarded), no gold moves.
+        /// wears it, no gold moves. A worn-down piece in the slot is discarded; a sound one, replaced by gear better against
+        /// the trip's hazard (Epic 10 Part 2, D50), goes back into the stall's stock, as the guild gave it.
         /// </summary>
-        public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick)
+        public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick, HazardKind against = HazardKind.None)
         {
-            var check = CanGiveGear(host, crawlerId, item);
+            var check = CanGiveGear(host, crawlerId, item, against);
             if (check != GuildRules.Check.Ok)
             {
                 LogRefusal(host, "Give gear", crawlerId, check, tick);
@@ -166,10 +169,15 @@ namespace Simpiens.Simulation.Guild
             host.TryGetCrawler(crawlerId, out var crawler);
             var equipment = ItemCatalog.Get(item).Equipment;
             var stall = host.ActiveStalls[0];
-            if (!crawler.Inventory.GetEquipped(equipment.Slot).IsEmpty) crawler.Inventory.Unequip(equipment.Slot);
+            var worn = crawler.Inventory.GetEquipped(equipment.Slot);
+            if (!worn.IsEmpty)
+            {
+                crawler.Inventory.Unequip(equipment.Slot);
+                if (!GuildRules.WornOut(worn) && stall.TryGetGood(worn.Type, out _)) stall = stall.WithStock(worn.Type, (ushort)(stall.StockOf(worn.Type) + 1));
+            }
             crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), durability: equipment.Durability));
             host.UpdateStall(stall.WithStock(item, (ushort)(stall.StockOf(item) - 1)));
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock");
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock{(worn.IsEmpty ? string.Empty : $" in place of {worn.Type}")}");
             return GuildRules.Check.Ok;
         }
 

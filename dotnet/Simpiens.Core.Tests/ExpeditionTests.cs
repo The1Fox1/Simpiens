@@ -432,6 +432,47 @@ namespace Simpiens.Core.Tests
             Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, gear));
         }
 
+        /// <summary>
+        /// Outfitting by the target's hazard (Epic 10 Part 2, W3.2, D50): the best protection in stock for the Gallery's
+        /// flooding is a respirator, for the Glow Caves' falling rock a hard hat, and with neither, hazard gear. Given for
+        /// the Gallery, a respirator replaces sound hazard gear, which goes back into the stall's stock; a hard hat, no
+        /// better against flooding, is refused.
+        /// </summary>
+        [Fact]
+        public void GearIsGivenForTheTargetsHazardAndSoundGearGoesBackToStock()
+        {
+            using var o = NewOutpost(1);
+            var member = o.Members[0];
+            var flooding = GuildRules.HazardOf(o.Host, Floor1Layout.DrownedGallerySectorId);
+            var rock = GuildRules.HazardOf(o.Host, Floor1Layout.GlowCavesSectorId);
+            Assert.Equal(Simpiens.Simulation.World.HazardKind.Flooding, flooding);
+            Assert.Equal(Simpiens.Simulation.World.HazardKind.FallingRock, rock);
+            Assert.Equal(ItemType.HazardGear, GuildRules.BestProtectionInStock(o.Host, flooding)); // all the stall opens with
+
+            var sm = (SimulationManager)o.Sim.Simulation;
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1).WithStock(ItemType.HardHat, 1)); // by hand: the forge's are W3.5's
+            Assert.Equal(ItemType.Respirator, GuildRules.BestProtectionInStock(o.Host, flooding));
+            Assert.Equal(ItemType.HardHat, GuildRules.BestProtectionInStock(o.Host, rock));
+            Assert.Equal(0.75f, GuildRules.ProtectionAgainst(ItemType.Respirator, flooding), 3);
+            Assert.Equal(0.5f, GuildRules.ProtectionAgainst(ItemType.HazardGear, flooding), 3);
+            Assert.Equal(0f, GuildRules.ProtectionAgainst(ItemType.HardHat, flooding), 3);
+
+            var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
+            commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.HazardGear));
+            o.Sim.Step(1);
+            int gearStock = o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear);
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator)); // for no hazard, as G3
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, flooding));
+
+            commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator, flooding));
+            o.Sim.Step(1);
+            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
+            Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(protection).Type);
+            Assert.Equal(gearStock + 1, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // the sound gear went back
+            Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.Respirator));
+            Assert.Equal(GuildRules.Check.OutOfStock, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator, flooding));
+        }
+
         [Fact]
         public void ADispatchCommandAppliesOnTheTick()
         {

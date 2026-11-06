@@ -364,7 +364,7 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.GiveGear:
-                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick);
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against);
                     break;
 
                 // The workshops (Epic 10 Part 2)

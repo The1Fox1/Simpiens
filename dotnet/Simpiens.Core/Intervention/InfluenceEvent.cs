@@ -173,10 +173,14 @@ namespace Simpiens.Intervention
         public readonly EntityId CrawlerId;
         public readonly ItemType Item;
 
-        public GiveGearCommand(EntityId crawlerId, ItemType item)
+        /// <summary>The hazard it is given for (Epic 10 Part 2, W3, D50): gear that cuts it more may replace what the member wears; None for none.</summary>
+        public readonly Simpiens.Simulation.World.HazardKind Against;
+
+        public GiveGearCommand(EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
         {
             CrawlerId = crawlerId;
             Item = item;
+            Against = against;
         }
     }
 
@@ -400,9 +404,9 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition);
         }
 
-        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item)
+        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item));
+            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item, against));
         }
 
         public static InfluenceEvent CreateBuildStation(string sourceId, byte stationIndex)

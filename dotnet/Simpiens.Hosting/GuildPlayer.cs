@@ -131,25 +131,29 @@ namespace Simpiens.Hosting
             if (FirstDispatchTick < 0) FirstDispatchTick = tick;
         }
 
-        /// <summary>Gives protection from the stall's stock to each member without, or with it worn to half its life (the roster shows it); true when every member wears some good for a trip.</summary>
+        /// <summary>
+        /// Gives protection from the stall's stock to each member without, or with it worn to half its life (the roster shows
+        /// it), or wearing gear that cuts the target's hazard less than the best in stock (Epic 10 Part 2, D50); true when
+        /// every member wears some good for a trip.
+        /// </summary>
         private bool Outfitted(GuildService guild, IGuildHost host)
         {
             var stall = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0] : default;
-            var gear = ItemType.None;
-            var protection = ItemCatalog.InCategory(ItemCategory.Protection);
-            for (int i = 0; i < protection.Count && gear == ItemType.None; i++)
-            {
-                if (stall.SellStockOf(protection[i]) > 0) gear = protection[i];
-            }
+            // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50)
+            var hazard = GuildRules.HazardOf(host, _target);
+            var gear = GuildRules.BestProtectionInStock(host, hazard);
             int stock = gear != ItemType.None ? stall.SellStockOf(gear) : 0;
             bool all = true;
             for (int i = 0; i < guild.Members.Count; i++)
             {
                 var id = guild.Members[i].CrawlerId;
-                if (!host.TryGetCrawler(id, out var member) || member.Inventory == null || !GuildRules.WornOut(member.Inventory.GetEquipped(EquipmentSlot.Protection))) continue;
-                all = false;
-                if (stock == 0 || guild.CanGiveGear(host, id, gear) != GuildRules.Check.Ok) continue;
-                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, id, gear));
+                if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
+                var worn = member.Inventory.GetEquipped(EquipmentSlot.Protection);
+                bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > GuildRules.ProtectionAgainst(worn.Type, hazard);
+                if (!GuildRules.WornOut(worn) && !better) continue;
+                if (GuildRules.WornOut(worn)) all = false; // a member with sound gear can go; better gear is given when there is some
+                if (stock == 0 || guild.CanGiveGear(host, id, gear, hazard) != GuildRules.Check.Ok) continue;
+                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, id, gear, hazard));
                 GearGiven++;
                 stock--;
             }

@@ -3,6 +3,7 @@ using Simpiens.Cognition.Planning;
 using Simpiens.Intervention;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
+using Simpiens.Simulation.World;
 
 namespace Simpiens.Simulation.Guild
 {
@@ -148,7 +149,12 @@ namespace Simpiens.Simulation.Guild
         /// Whether a member may be given <paramref name="item"/> from the stall's stock (D12): a member, something worn, in
         /// stock, and its slot free or the piece in it worn to half its life or less (gear wears out with each trip).
         /// </summary>
-        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item)
+        /// <summary>
+        /// Whether <paramref name="item"/> from the stall's stock may go to member <paramref name="crawlerId"/>: a member, gear,
+        /// in stock; and the member wears none in that slot, or it is worn to half its life, or (given for a hazard,
+        /// Epic 10 Part 2, D50) what it wears cuts <paramref name="against"/> less than the item does.
+        /// </summary>
+        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None)
         {
             if (!guild.IsMember(crawlerId)) return Check.NotMember;
             var equipment = ItemCatalog.Get(item)?.Equipment;
@@ -156,9 +162,57 @@ namespace Simpiens.Simulation.Guild
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
             if (host.ActiveStalls[0].SellStockOf(item) < 1) return Check.OutOfStock;
             if (!host.TryGetCrawler(crawlerId, out var crawler) || crawler.Inventory == null) return Check.NoCrawler;
-            if (!WornOut(crawler.Inventory.GetEquipped(equipment.Slot))) return Check.AlreadyWearing;
+            var worn = crawler.Inventory.GetEquipped(equipment.Slot);
+            if (!WornOut(worn) && (against == HazardKind.None || ProtectionAgainst(item, against) <= ProtectionAgainst(worn.Type, against))) return Check.AlreadyWearing;
             return Check.Ok;
         }
+
+        /// <summary>
+        /// How much of a hazard of <paramref name="kind"/> a piece of protection stops, from its definition (D47): its
+        /// resistance to any hazard plus its kind's; 0 for no item, or one that isn't protection.
+        /// </summary>
+        public static float ProtectionAgainst(ItemType item, HazardKind kind)
+        {
+            var equipment = item != ItemType.None ? ItemCatalog.Get(item)?.Equipment : null;
+            if (equipment == null) return 0f;
+            var against = CrawlerStats.StatAgainst(kind);
+            float stopped = 0f;
+            for (int i = 0; i < equipment.ModifierCount; i++)
+            {
+                var modifier = equipment.GetModifier(i);
+                if (modifier.Op == ModifierOp.Add && (modifier.Stat == StatKind.HazardResistance || (against != StatKind.None && modifier.Stat == against))) stopped += modifier.Value;
+            }
+            return stopped < CrawlerStats.MaxHazardResistance ? stopped : CrawlerStats.MaxHazardResistance;
+        }
+
+        /// <summary>
+        /// The protection in the stall's stock that cuts a hazard of <paramref name="kind"/> most (D50: a respirator for the
+        /// Gallery, a hard hat for the Glow Caves, hazard gear when there is no better); the first in id order on a tie;
+        /// None when there is none in stock.
+        /// </summary>
+        public static ItemType BestProtectionInStock(IGuildHost host, HazardKind kind)
+        {
+            if (host == null || host.ActiveStalls.Count == 0) return ItemType.None;
+            var stall = host.ActiveStalls[0];
+            var protection = ItemCatalog.InCategory(ItemCategory.Protection);
+            var best = ItemType.None;
+            float most = 0f;
+            for (int i = 0; i < protection.Count; i++)
+            {
+                if (stall.SellStockOf(protection[i]) < 1) continue;
+                float stopped = ProtectionAgainst(protection[i], kind);
+                if (best == ItemType.None || stopped > most)
+                {
+                    best = protection[i];
+                    most = stopped;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>The hazard of the sector <paramref name="sectorId"/>, from the loaded map; None for a safe sector or none found.</summary>
+        public static HazardKind HazardOf(IGuildHost host, byte sectorId)
+            => host != null && host.TryGetSector(sectorId, out var sector) ? sector.Hazard.Kind : HazardKind.None;
 
         /// <summary>A player-facing reason for a refusal (allocates; call only on the refusal path).</summary>
         public static string Describe(Check check, string name, AgentState crawler, GuildService guild, uint tick, in GuildTuning tuning)
