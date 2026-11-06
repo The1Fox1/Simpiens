@@ -35,7 +35,8 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>The grade of a held make (W4, D57).</summary>
         public byte HeldGrade;
 
-        private byte _pad;
+        /// <summary>The order mends worn pieces instead of making new ones (W4, D59).</summary>
+        public bool Repair;
 
         /// <summary>Makes finished here, all told.</summary>
         public uint Made;

@@ -432,16 +432,16 @@ namespace Simpiens.Simulation.Workshops
         /// The player's order (D32): <paramref name="count"/> makes of <paramref name="item"/> at the station at
         /// <paramref name="index"/>, through <see cref="WorkshopRules.CheckOrder"/>; none, or a count of 0, cancels.
         /// </summary>
-        public WorkshopRules.Check Order(IWorkshopHost host, int index, ItemType item, ushort count)
+        public WorkshopRules.Check Order(IWorkshopHost host, int index, ItemType item, ushort count, bool repair = false)
         {
-            var check = WorkshopRules.CheckOrder(this, index, item, count);
+            var check = WorkshopRules.CheckOrder(this, index, item, count, repair);
             if (check != WorkshopRules.Check.Ok)
             {
-                SimLog.Economy.ZLogWarning($"Order refused at station {index}: {count} {ItemCatalog.NameOf(item)} ({check})");
+                SimLog.Economy.ZLogWarning($"Order refused at station {index}: {count} {ItemCatalog.NameOf(item)}{(repair ? " to mend" : string.Empty)} ({check})");
                 return check;
             }
-            SetOrder(host, index, item, count);
-            SimLog.Economy.ZLogInformation($"The {_stations[index].Kind} is ordered to make {count} {ItemCatalog.NameOf(item)}");
+            SetOrder(host, index, item, count, repair);
+            SimLog.Economy.ZLogInformation($"The {_stations[index].Kind} is ordered to {(repair ? "mend" : "make")} {count} {ItemCatalog.NameOf(item)}");
             return WorkshopRules.Check.Ok;
         }
 
@@ -461,7 +461,7 @@ namespace Simpiens.Simulation.Workshops
         /// same item again changes how many are left, the current make included. Another item, or none (a cancel), gives
         /// a started make's inputs back to the stall. Refused while a finished make waits for room.
         /// </summary>
-        public bool SetOrder(IWorkshopHost host, int index, ItemType item, ushort count)
+        public bool SetOrder(IWorkshopHost host, int index, ItemType item, ushort count, bool repair = false)
         {
             if ((uint)index >= (uint)_stations.Length) return false;
             ref var station = ref _stations[index];
@@ -472,20 +472,20 @@ namespace Simpiens.Simulation.Workshops
                 var recipe = RecipeBook.For(item);
                 if (recipe == null || recipe.Station != station.Kind) return false;
             }
-            if (!cancel && item == station.Order)
+            if (!cancel && item == station.Order && repair == station.Repair)
             {
                 station.Remaining = count;
                 return true;
             }
-            if (station.InputsTaken) GiveBackInputs(host, station.Order);
+            if (station.InputsTaken) GiveBackInputs(host, station.Order, station.Repair);
             station.Order = cancel ? ItemType.None : item;
+            station.Repair = !cancel && repair;
             station.Remaining = cancel ? (ushort)0 : count;
             station.Progress = 0;
             station.InputsTaken = false;
             return true;
         }
 
-        /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
         /// <summary>An artisan's grade from its practice (W4, Q8, D55): Standard, then Fine from 10 makes, Masterwork from 20.</summary>
         public static byte GradeOf(in ArtisanContract contract, in WorkshopTuning tuning)
         {
@@ -494,6 +494,7 @@ namespace Simpiens.Simulation.Workshops
             return (byte)(grade < Grades.Masterwork ? grade : Grades.Masterwork);
         }
 
+        /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
         public CraftStep Work(IWorkshopHost host, int index)
         {
             if ((uint)index >= (uint)_stations.Length || host?.ActiveStalls == null || host.ActiveStalls.Count == 0) return CraftStep.Idle;
@@ -553,15 +554,16 @@ namespace Simpiens.Simulation.Workshops
             }
         }
 
-        private static void GiveBackInputs(IWorkshopHost host, ItemType order)
+        private static void GiveBackInputs(IWorkshopHost host, ItemType order, bool repair)
         {
             var recipe = RecipeBook.For(order);
             if (recipe == null || host?.ActiveStalls == null || host.ActiveStalls.Count == 0) return;
             var stall = host.ActiveStalls[0];
+            if (repair && stall.Trades(order)) stall = stall.WithWorn(order, (byte)Math.Min(byte.MaxValue, stall.WornOf(order) + 1)); // the worn piece back on the shelf
             for (int i = 0; i < recipe.InputCount; i++)
             {
                 var input = recipe.GetInput(i);
-                if (stall.Trades(input.Item)) stall = stall.WithStock(input.Item, (ushort)Math.Min(ushort.MaxValue, stall.StockOf(input.Item) + input.Count));
+                if (stall.Trades(input.Item)) stall = stall.WithStock(input.Item, (ushort)Math.Min(ushort.MaxValue, stall.StockOf(input.Item) + Crafting.InputCount(input, repair)));
             }
             host.UpdateStall(stall);
         }

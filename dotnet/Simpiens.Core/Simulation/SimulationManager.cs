@@ -377,7 +377,7 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.OrderStation:
-                    Workshops.Order(this, influence.OrderStation.StationIndex, influence.OrderStation.Item, influence.OrderStation.Count);
+                    Workshops.Order(this, influence.OrderStation.StationIndex, influence.OrderStation.Item, influence.OrderStation.Count, influence.OrderStation.Repair);
                     break;
 
                 case InfluenceCommandType.SetShifts:

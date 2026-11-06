@@ -146,11 +146,15 @@ namespace Simpiens.Intervention
         public readonly ushort Count;
         public readonly byte StationIndex;
 
-        public OrderStationCommand(byte stationIndex, ItemType item, ushort count)
+        /// <summary>Mend worn pieces of the item instead of making new ones (Epic 10 Part 2, W4, D59).</summary>
+        public readonly bool Repair;
+
+        public OrderStationCommand(byte stationIndex, ItemType item, ushort count, bool repair = false)
         {
             StationIndex = stationIndex;
             Item = item;
             Count = count;
+            Repair = repair;
         }
     }
 
@@ -419,9 +423,9 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.HireArtisan, hireArtisan: new HireArtisanCommand(crawlerId, stationIndex, wage));
         }
 
-        public static InfluenceEvent CreateOrderStation(string sourceId, byte stationIndex, ItemType item, ushort count)
+        public static InfluenceEvent CreateOrderStation(string sourceId, byte stationIndex, ItemType item, ushort count, bool repair = false)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.OrderStation, orderStation: new OrderStationCommand(stationIndex, item, count));
+            return new InfluenceEvent(sourceId, InfluenceCommandType.OrderStation, orderStation: new OrderStationCommand(stationIndex, item, count, repair));
         }
 
         public static InfluenceEvent CreateSetShifts(string sourceId, EntityId crawlerId, byte shifts)

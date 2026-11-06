@@ -473,6 +473,24 @@ namespace Simpiens.Core.Tests
             Assert.Equal(GuildRules.Check.OutOfStock, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator, flooding));
         }
 
+        /// <summary>A worn piece the guild replaces waits on the stall's shelf for the forge to mend it (Epic 10 Part 2, W4.2, D58).</summary>
+        [Fact]
+        public void AWornPieceTheGuildReplacesWaitsForRepair()
+        {
+            using var o = NewOutpost(1);
+            var member = o.Members[0];
+            var sm = (SimulationManager)o.Sim.Simulation;
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1)); // by hand
+            Assert.True(member.Inventory.TryEquip(new ItemInstance(1, ItemType.Respirator, 1, 60, durability: 500)), "A respirator worn under half its life.");
+            var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
+            commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator));
+            o.Sim.Step(1);
+            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+            Assert.Equal(1500, worn.Durability);
+            Assert.Equal(1, o.Sim.Simulation.ActiveStalls[0].WornOf(ItemType.Respirator));
+            Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].StockOf(ItemType.Respirator));
+        }
+
         [Fact]
         public void ADispatchCommandAppliesOnTheTick()
         {

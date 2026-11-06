@@ -33,24 +33,27 @@ namespace Simpiens.Simulation.Workshops
 
             if (!station.InputsTaken)
             {
-                if (!HasInputs(stall, recipe)) return CraftStep.WaitingForInputs;
+                if (!HasInputs(stall, recipe, station.Repair)) return CraftStep.WaitingForInputs;
                 for (int i = 0; i < recipe.InputCount; i++)
                 {
                     var input = recipe.GetInput(i);
-                    stall = stall.WithStock(input.Item, (ushort)(stall.StockOf(input.Item) - input.Count));
+                    stall = stall.WithStock(input.Item, (ushort)(stall.StockOf(input.Item) - InputCount(input, station.Repair)));
                 }
+                // A repair takes the worn piece too (W4, D59)
+                if (station.Repair) stall = stall.WithWorn(station.Order, (byte)(stall.WornOf(station.Order) - 1));
                 station.InputsTaken = true;
                 station.Progress = 0;
                 stallChanged = true;
             }
 
             station.Progress++;
-            if (station.Progress < recipe.WorkTicks) return CraftStep.Working;
+            if (station.Progress < WorkTicks(recipe, station.Repair)) return CraftStep.Working;
 
             station.InputsTaken = false;
             station.Progress = 0;
             station.Remaining--;
-            station.Made++;
+            if (station.Repair) grade = Grades.Standard; // mended to full, at Standard; a repair isn't a make, so no practice (D59)
+            else station.Made++;
             if (!TryStock(ref stall, station.Order, recipe.OutputCount, grade))
             {
                 station.HeldOutput = recipe.OutputCount;
@@ -62,15 +65,38 @@ namespace Simpiens.Simulation.Workshops
             return CraftStep.Made;
         }
 
-        /// <summary>The stall holds every input of one make.</summary>
-        public static bool HasInputs(in TradeStallData stall, Recipe recipe)
+        /// <summary>The stall holds every input of one make; of a repair, a worn piece too (D59).</summary>
+        public static bool HasInputs(in TradeStallData stall, Recipe recipe, bool repair = false)
         {
+            if (repair && stall.WornOf(recipe.Output) < 1) return false;
             for (int i = 0; i < recipe.InputCount; i++)
             {
                 var input = recipe.GetInput(i);
-                if (stall.StockOf(input.Item) < input.Count) return false;
+                if (stall.StockOf(input.Item) < InputCount(input, repair)) return false;
             }
             return true;
+        }
+
+        /// <summary>How many of an input a make takes: a repair half, rounded up (W4, Q8, D59: half the ore of a new piece).</summary>
+        public static int InputCount(in RecipeInput input, bool repair) => repair ? (input.Count + 1) / 2 : input.Count;
+
+        /// <summary>The work a make takes: a repair half (D59).</summary>
+        public static int WorkTicks(Recipe recipe, bool repair) => repair ? (recipe.WorkTicks + 1) / 2 : recipe.WorkTicks;
+
+        /// <summary>Whether worn pieces of <paramref name="item"/> can be mended: something worn the stations make (D58); hazard gear, the caravan's, can't.</summary>
+        public static bool Repairable(ItemType item) => ItemCatalog.Get(item)?.Equipment != null && RecipeBook.For(item) != null;
+
+        /// <summary>
+        /// A worn piece handed back at the stall (the guild's swap, D50; a trade-in, D53): onto the shelf of worn pieces if the
+        /// forge can mend it (D58); otherwise back into stock while sound (above half its life), and discarded when worn down.
+        /// </summary>
+        public static TradeStallData HandBack(in TradeStallData stall, in ItemInstance piece)
+        {
+            var equipment = piece.IsEmpty ? null : ItemCatalog.Get(piece.Type)?.Equipment;
+            if (equipment == null || !stall.Trades(piece.Type)) return stall;
+            if (Repairable(piece.Type)) return stall.WithWorn(piece.Type, (byte)System.Math.Min(byte.MaxValue, stall.WornOf(piece.Type) + 1));
+            bool sound = piece.Durability * 2 > equipment.DurabilityAt(piece.Quality);
+            return sound ? stall.WithStock(piece.Type, (ushort)System.Math.Min(ushort.MaxValue, stall.StockOf(piece.Type) + 1)) : stall;
         }
 
         /// <summary>The stall has room for <paramref name="count"/> more of <paramref name="item"/>: it trades it, and the stock fits.</summary>

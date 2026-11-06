@@ -155,8 +155,9 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// The player gives a member <paramref name="item"/> from the stall's stock (D12): the stock falls by one, the member
-        /// wears it, no gold moves. A worn-down piece in the slot is discarded; a sound one, replaced by gear better against
-        /// the trip's hazard (Epic 10 Part 2, D50), goes back into the stall's stock, as the guild gave it.
+        /// wears it, no gold moves. The piece it replaces, worn down or replaced by gear better against the trip's hazard
+        /// (Epic 10 Part 2, D50), is handed back (<see cref="Simpiens.Simulation.Workshops.Crafting.HandBack"/>): to the shelf
+        /// of worn pieces for the forge to mend (D58), or, hazard gear, back into stock while sound.
         /// </summary>
         public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick, HazardKind against = HazardKind.None)
         {
@@ -173,7 +174,7 @@ namespace Simpiens.Simulation.Guild
             if (!worn.IsEmpty)
             {
                 crawler.Inventory.Unequip(equipment.Slot);
-                if (!GuildRules.WornOut(worn) && stall.TryGetGood(worn.Type, out _)) stall = stall.WithStock(worn.Type, (ushort)(stall.StockOf(worn.Type) + 1));
+                stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn);
             }
             // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's
             stall = stall.TakeBest(item, out byte grade);

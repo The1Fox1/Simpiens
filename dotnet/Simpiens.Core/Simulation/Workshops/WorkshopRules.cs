@@ -57,7 +57,11 @@ namespace Simpiens.Simulation.Workshops
             /// <summary>A finished make waits for room in the stall's stock; the order can't change until it is stocked.</summary>
             HoldingOutput = 19,
             /// <summary>A mask with bits past the day's six blocks.</summary>
-            NoSuchBlock = 20
+            NoSuchBlock = 20,
+
+            // Repair (W4, D59)
+            /// <summary>Only what is worn wears, and only what a station makes is mended there.</summary>
+            NotRepairable = 21
         }
 
         /// <summary>Whether the station at <paramref name="index"/> can be built now (D10): it exists, stands unbuilt, and the stall can pay. Checked in that order.</summary>
@@ -115,7 +119,7 @@ namespace Simpiens.Simulation.Workshops
         /// <paramref name="item"/> (D32): it exists and stands, the item is its recipe (none, or a count of 0, cancels), and
         /// no finished make waits for room.
         /// </summary>
-        public static Check CheckOrder(WorkshopService workshops, int index, ItemType item, ushort count)
+        public static Check CheckOrder(WorkshopService workshops, int index, ItemType item, ushort count, bool repair = false)
         {
             if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
             var station = workshops[index];
@@ -124,6 +128,7 @@ namespace Simpiens.Simulation.Workshops
             if (item == ItemType.None || count == 0) return Check.Ok;
             var recipe = Simpiens.Simulation.Items.RecipeBook.For(item);
             if (recipe == null || recipe.Station != station.Kind) return Check.NotThisStationsRecipe;
+            if (repair && !Crafting.Repairable(item)) return Check.NotRepairable; // only what is worn wears (W4, D59)
             return Check.Ok;
         }
 
@@ -169,6 +174,7 @@ namespace Simpiens.Simulation.Workshops
                 case Check.NotThisStationsRecipe: return $"That isn't made at the {station}.";
                 case Check.HoldingOutput: return $"The {station} holds a finished make until the stall has room for it.";
                 case Check.NoSuchBlock: return "A day has six blocks of four hours, from 06:00.";
+                case Check.NotRepairable: return $"Nothing of that wears out to mend at the {station}.";
                 default: return string.Empty;
             }
         }

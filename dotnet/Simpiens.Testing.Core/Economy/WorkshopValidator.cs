@@ -54,8 +54,9 @@ namespace Simpiens.Testing.Economy
             ValidateShiftBlocks();
             ValidateOverworkBreaksAnArtisan();
             ValidatePracticeRaisesTheGrade();
+            ValidateRepair();
 
-            TestLog.Log("<color=green>[WorkshopValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorkshopValidator] ALL 12 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateBuilding()
@@ -370,6 +371,43 @@ namespace Simpiens.Testing.Economy
             Assert(shelf.Stock == 21 && shelf.Fine == 10 && shelf.Masterwork == 1 && shelf.BestGrade == Grades.Masterwork,
                 $"The shelf holds them by grade: 10 Standard, 10 Fine, 1 Masterwork (stock {shelf.Stock}, Fine {shelf.Fine}, Masterwork {shelf.Masterwork}).");
             TestLog.Log("[PASS] Test 11: practice raises an artisan's grade every 10 makes, and the forge stocks each make at it.");
+        }
+
+        /// <summary>
+        /// Repair (Epic 10 Part 2, W4, Q8, D59): an order to mend takes a worn piece from the stall's shelf, half of each input
+        /// (rounded up: 2 of a pickaxe's 3 ore) and half the work, and stocks the piece full at Standard; it isn't a make, so
+        /// no practice. Cancelled mid-way it gives the worn piece and the inputs back. Only what a station makes and wears is
+        /// mended there.
+        /// </summary>
+        private void ValidateRepair()
+        {
+            var o = NewOutpost(1000);
+            var shelf = new StallGood(ItemType.ToolPickaxe, StallRole.Sells, 30, 0) { Worn = 3 };
+            o.Sim.UpdateStall(o.Sim.ActiveStalls[0].WithGood(shelf).WithStock(ItemType.IronOre, 10));
+            Assert(o.Sim.Workshops.Build(o.Sim, o.Forge, 0) == WorkshopRules.Check.Ok, "The forge is built.");
+            var smith = Crawler(o, 80, 60);
+            Assert(o.Sim.Workshops.Hire(o.Sim, smith.AgentId, o.Forge, 10, 0) == WorkshopRules.Check.Ok, "The smith is hired.");
+            Assert(o.Sim.Workshops.Order(o.Sim, o.Forge, ItemType.HazardGear, 1, repair: true) == WorkshopRules.Check.NotThisStationsRecipe, "Hazard gear isn't the forge's to mend: no recipe.");
+            o.Sim.Workshops.Build(o.Sim, o.Still, 0);
+            Assert(o.Sim.Workshops.Order(o.Sim, o.Still, ItemType.HealingDraught, 1, repair: true) == WorkshopRules.Check.NotRepairable, "A draught doesn't wear.");
+            Assert(o.Sim.Workshops.Order(o.Sim, o.Forge, ItemType.ToolPickaxe, 2, repair: true) == WorkshopRules.Check.Ok, "Two pickaxes are ordered mended.");
+
+            var recipe = RecipeBook.For(ItemType.ToolPickaxe);
+            int ticks = 0;
+            while (o.Sim.Workshops[o.Forge].HasOrder && ticks < 3 * recipe.WorkTicks) { o.Sim.Workshops.Work(o.Sim, o.Forge); ticks++; }
+            var stall = o.Sim.ActiveStalls[0];
+            o.Sim.Workshops.TryGetContract(smith.AgentId, out var contract);
+            Assert(!o.Sim.Workshops[o.Forge].HasOrder && ticks <= recipe.WorkTicks + 2, $"Two repairs take about one make's work ({ticks} ticks against {recipe.WorkTicks} a make).");
+            Assert(stall.StockOf(ItemType.ToolPickaxe) == 2 && stall.WornOf(ItemType.ToolPickaxe) == 1 && stall.BestGradeOf(ItemType.ToolPickaxe) == Grades.Standard, "Two worn pieces are mended, full, at Standard.");
+            Assert(stall.StockOf(ItemType.IronOre) == 6, $"Half the ore each, rounded up: 2 of 3 (ore left {stall.StockOf(ItemType.IronOre)} of 10).");
+            Assert(contract.Practice == 0 && o.Sim.Workshops[o.Forge].Made == 0, "A repair isn't a make: no practice.");
+
+            Assert(o.Sim.Workshops.Order(o.Sim, o.Forge, ItemType.ToolPickaxe, 1, repair: true) == WorkshopRules.Check.Ok, "One more mend is ordered.");
+            for (int t = 0; t < 10; t++) o.Sim.Workshops.Work(o.Sim, o.Forge);
+            Assert(o.Sim.ActiveStalls[0].WornOf(ItemType.ToolPickaxe) == 0 && o.Sim.ActiveStalls[0].StockOf(ItemType.IronOre) == 4, "Begun, it took the last worn piece and its ore.");
+            Assert(o.Sim.Workshops.Order(o.Sim, o.Forge, ItemType.None, 0) == WorkshopRules.Check.Ok, "The order is cancelled.");
+            Assert(o.Sim.ActiveStalls[0].WornOf(ItemType.ToolPickaxe) == 1 && o.Sim.ActiveStalls[0].StockOf(ItemType.IronOre) == 6, "Cancelled, the worn piece and the ore come back.");
+            TestLog.Log("[PASS] Test 12: a repair mends a worn piece for half its inputs and half the work, at Standard, with no practice.");
         }
 
         private static Simpiens.Cognition.AgentState Crawler(Outpost o, sbyte trust, sbyte warmth, float risk = 0.1f, float greed = 0f)

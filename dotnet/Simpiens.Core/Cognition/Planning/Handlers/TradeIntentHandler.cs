@@ -104,8 +104,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                     stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
                 }
                 stall = gear ? stall.TakeBest(trade.ItemType, out _) : stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
-                // The old piece stays at the stall, back in its stock, no gold back (D53); one it doesn't trade is left with it all the same
-                if (!tradedIn.IsEmpty && stall.TryGetGood(tradedIn.Type, out _)) stall = stall.WithStock(tradedIn.Type, (ushort)(stall.StockOf(tradedIn.Type) + 1));
+                // The old piece stays at the stall, no gold back (D53): on its shelf of worn pieces if the forge can mend it (D58),
+                // back in stock while sound if not
+                if (!tradedIn.IsEmpty) stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, tradedIn);
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
