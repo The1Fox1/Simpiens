@@ -1488,3 +1488,13 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **D45, Majesty's potion buyers:** the bold buy a draught to carry, as they buy gear; a new planner fact `HasMedicine` (41 of 64). *Fixed on the way:* the trade handler valued and counted any non-gear purchase as a ration.
 - **What the measurement showed:** on the day a geared party never turns back (0 of 13 trips, F6), so draughts matter for bare parties, as a cost per trip where gear lasts. The live scenario needed the guild player to wait for a stockpile, since a member without a draught turns the party back.
 - Commits: W2.1 `9440392`; W2.2 `f5f9eef`; W2.3 `2c61e53`; W2.4 `0e0fc02`; W2.5 `c976e4b`; with their pins and renders.
+
+## 2026-11-05: W3, gear for each hazard (`feat/epic10-part2`, under the producer's AFK directive)
+
+- **D47–D49, protection by kind as item data:** two stats beside `HazardResistance`, read through `CrawlerStats.HazardResistance(inventory, kind)`; the respirator and the hard hat made at the forge from glowstone. The stall's goods table grew from 8 to 10 inside the unreleased format 10, and the price command follows the stall's capacity.
+- **D50, one outfitting rule in the core:** `GuildRules.BestProtectionInStock` and a give-gear command that names the hazard, so the party builder and the guild player agree; a sound piece replaced goes back to stock.
+- **D51, the producer's review ("D51 is fine"):** a lone crawler judges a hazard by gear made against its kind. The draft's plain rule would have let 30g hazard gear open the Gallery to every bold crawler; the player's lever is selling respirators.
+- **D53–D54, found by measuring the live scenario:** the bold wore hazard gear from day 1 and never knew the Gallery's node, so a bold crawler now trades its gear in for a piece that opens salvage it can't reach (Majesty's upgrades), and knows a charted hazard sector's salvage from the map's plan (as the bunks' plan is common knowledge).
+- **D52, a new way to wear:** `Worn.Face`, drawn by all three generators from the head anchor's mouth row; `BodyKit.HeadGearOf` admits it, so the body and portrait caches key on it with no new key.
+- **Rounding, not change:** twice a zoomed render moved by one or two pixels at a figure's edge when the world texture grew; the picture pins held, as their doc says to read it.
+- Commits: W3.1 `8cae51e`; W3.2 `ad6ecc1`; W3.3 `7880ff5`; W3.4 `3b508a2`; W3.5a `a67038e`; W3.5 `72dd630`; with their tests, pins and renders.

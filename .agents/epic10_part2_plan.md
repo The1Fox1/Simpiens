@@ -347,7 +347,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 
 - **A risk for W3, found at W2.1:** seven goods fill the merchant terminal at 720 rows, and the stall holds 8 (`TradeStallData.GoodsCapacity`). W3's respirator and hard hat make nine: the terminal needs to scroll or compact its rows, and the goods capacity rises (a save format change, unreleased within format 10). [Possibly Complex: plan it in W3]
 
-### W3. Gear for each hazard (2–3 days), then the producer's look
+### W3. Gear for each hazard (2–3 days), then the producer's look — done 2026-11-05, the look pending
 **Complexity:** Possibly Complex: hazard kinds on equipment, and lone crawlers' venture rule, with the soak's cost measured.
 - [ ] **W3.1 Hazard kinds on gear:** [Possibly Complex] item data, the reduction per kind, and the respirator and hard hat recipes, which use glowstone.
 - [ ] **W3.2 Outfitting:** [Possibly Complex] "outfit from stock" picks gear for the target's hazard.
@@ -375,9 +375,9 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **What W3.5's probe found (6 seeds, six days):** with the guild outfitting for the Gallery, the forge's respirators (2–9) all went to members, trips moving from hazard gear to mixed to respirators, every one hauling the seam's 4; no lone crawler. Sold to the public with no guild, nobody bought one: the default seed's two bold residents wear hazard gear from day 1 (the gear goal wants none worn), and nobody knows the Gallery's one node (seen only from inside, and a bold crawler won't explore the Gallery without a respirator: it can't learn that one would open it).
   - **D53, the bold upgrade** (Majesty's heroes buying better kit at the smith): a crawler wearing protection still wants the piece in stock that would open salvage it can't reach as it is; its world state says it lacks the gear it needs (`HasHazardGear` false then). Buying it, the old piece goes back to the stall as a trade-in, no gold back, as the guild's swap (D50).
   - **D54, what is charted is known:** for that choice, a crawler knows the salvage of charted hazard sectors from the map's plan (its nodes, as the bunks' plan is common knowledge), not only what it has seen. Once it wears the respirator it explores the Gallery and finds the node.
-  5. **W3.5a The bold upgrade and know the charted** [Possibly Complex: a planner fact read differently, the trade handler's trade-in]: D53, D54; golden holds (no respirator in stock in the golden runs).
-  6. **W3.5 The live scenario `TheRightGearForTheRightHazard`** [Possibly Complex: measured first]: a party in respirators takes about half the harm of one in hazard gear in the Gallery and brings home at least as much; a bold crawler that bought a respirator works the Gallery alone.
-  7. **The producer's look** [Basic: prepared, not held]: the art and people sheets and the renders, left for the producer; W4 goes on under the directive.
+  5. **[x] W3.5a The bold upgrade and know the charted** (done 2026-11-05, `a67038e`) [Possibly Complex: a planner fact read differently, the trade handler's trade-in]: D53, D54; golden holds (no respirator in stock in the golden runs). Measured with respirators sold and no guild: bold residents buy one on 5 of 6 seeds (day 1.3 to 2.7) and work the Gallery alone. The trade-in never takes the same piece again (G3's refusal stands).
+  6. **[x] W3.5 The live scenario `TheRightGearForTheRightHazard`** (done 2026-11-05, `72dd630`) [Possibly Complex: measured first]: a party in respirators takes about half the harm of one in hazard gear in the Gallery and brings home at least as much; a bold crawler that bought a respirator works the Gallery alone.
+  7. **The producer's look** (prepared 2026-11-05, pending; the epic's §4 lists what to look at) [Basic: prepared, not held]: the art and people sheets and the renders, left for the producer; W4 goes on under the directive.
 
 ### W4. Practice and repair (2 days)
 **Complexity:** Possibly Complex: `ItemInstance.Quality` comes into use, and practice is saved on the contract.
