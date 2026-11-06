@@ -69,6 +69,21 @@ namespace Simpiens.Simulation.Items
             return stat == StatKind.None ? 0f : Get(inventory, stat);
         }
 
+        /// <summary>What <paramref name="item"/>, worn, stops of a hazard of <paramref name="kind"/> by its kind alone, from its definition (D51).</summary>
+        public static float KindResistanceOf(Simpiens.Simulation.Economy.ItemType item, Simpiens.Simulation.World.HazardKind kind)
+        {
+            var stat = StatAgainst(kind);
+            var equipment = stat != StatKind.None && item != Simpiens.Simulation.Economy.ItemType.None ? ItemCatalog.Get(item)?.Equipment : null;
+            if (equipment == null) return 0f;
+            float value = 0f;
+            for (int m = 0; m < equipment.ModifierCount; m++)
+            {
+                var modifier = equipment.GetModifier(m);
+                if (modifier.Stat == stat && modifier.Op == ModifierOp.Add) value += modifier.Value;
+            }
+            return value;
+        }
+
         /// <summary>The stat that cuts a hazard of <paramref name="kind"/>: the air hazards' or falling rock's; None for none.</summary>
         public static StatKind StatAgainst(Simpiens.Simulation.World.HazardKind kind) => kind switch
         {

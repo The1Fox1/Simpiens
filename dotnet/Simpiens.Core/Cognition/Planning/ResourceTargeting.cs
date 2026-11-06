@@ -105,7 +105,7 @@ namespace Simpiens.Cognition.Planning
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
                 // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions
-                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation))) continue;
+                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation), context.Inventory)) continue;
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -252,7 +252,7 @@ namespace Simpiens.Cognition.Planning
             int candidates = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
-                if (IsExplorable(snapshot, sectors[i], current, venture)) candidates++;
+                if (IsExplorable(snapshot, sectors[i], current, venture, context.Inventory)) candidates++;
             }
             if (candidates == 0) return false;
 
@@ -262,7 +262,7 @@ namespace Simpiens.Cognition.Planning
             int tied = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
-                if (!IsExplorable(snapshot, sectors[i], current, venture)) continue;
+                if (!IsExplorable(snapshot, sectors[i], current, venture, context.Inventory)) continue;
                 uint visit = context.Memory != null ? context.Memory.LastSectorVisit(sectors[i].Id) : 0u;
                 if (visit < oldest) { oldest = visit; tied = 1; }
                 else if (visit == oldest) tied++;
@@ -273,7 +273,7 @@ namespace Simpiens.Cognition.Planning
             for (int i = 0; i < sectors.Count; i++)
             {
                 var sector = sectors[i];
-                if (!IsExplorable(snapshot, sector, current, venture)) continue;
+                if (!IsExplorable(snapshot, sector, current, venture, context.Inventory)) continue;
                 uint lastVisit = context.Memory != null ? context.Memory.LastSectorVisit(sector.Id) : 0u;
                 if (lastVisit != oldest) continue;
                 if (pick-- > 0) continue;
@@ -292,9 +292,9 @@ namespace Simpiens.Cognition.Planning
         /// <summary>Another sector, and a charted one: uncharted sectors are a scout's job (fog of war).</summary>
         // A hazard sector is explored only by a crawler who would go into danger anyway (Epic 10 G2); the player's
         // facilities by nobody: nothing there is found by looking (Epic 10 Part 2, D7)
-        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture)
+        private static bool IsExplorable(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, in Simpiens.Simulation.World.SectorDefinition sector, byte current, bool venture, Simpiens.Cognition.Inventory.IAgentInventory worn)
         {
-            return sector.Id != current && !sector.Facility && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard);
+            return sector.Id != current && !sector.Facility && (snapshot == null || snapshot.IsSectorCharted(sector.Id)) && Vitality.WouldEnter(venture, sector.Hazard, worn);
         }
 
         private static uint ExplorationHash(in AgentContext context, uint windowTicks)
@@ -512,6 +512,63 @@ namespace Simpiens.Cognition.Planning
         /// pay for it and still buy a ration after (gear never costs it a meal).
         /// </summary>
         public static bool CanBuyGear(in AgentContext context) => CanBuy(context, ItemCategory.Protection);
+
+        /// <summary>
+        /// The protection this crawler would buy for danger now (Epic 10 G3; by kind since Epic 10 Part 2, W3, D51): among
+        /// the protection the nearest reachable stall has in stock at or under its price with a ration's price to spare,
+        /// the first (id order) that opens hazardous salvage it knows but can't brave alone as it is (a respirator, once
+        /// it knows the Gallery's glowstone); else the first that lets it work hazardous salvage it knows (hazard gear, as
+        /// G3). False when there is none.
+        /// </summary>
+        public static bool TryChooseProtection(in AgentContext context, out ItemType protection)
+        {
+            protection = ItemType.None;
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            int gold = context.Inventory != null ? context.Inventory.Gold : 0;
+            ushort food = stall.SellPriceOf(FoodForSale(stall));
+            var usable = ItemType.None;
+            var items = ItemCatalog.InCategory(ItemCategory.Protection);
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                if (!stall.TryGetGood(item, out var good) || good.Role != StallRole.Sells || stall.SellStockOf(item) < 1) continue;
+                ushort price = stall.SellPriceOf(item);
+                if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
+                int reach = HazardousReach(context, item);
+                if (reach == 2)
+                {
+                    protection = item;
+                    return true;
+                }
+                if (reach == 1 && usable == ItemType.None) usable = item;
+            }
+            protection = usable;
+            return usable != ItemType.None;
+        }
+
+        /// <summary>
+        /// What wearing <paramref name="item"/> would do for this crawler's hazardous salvage: 2 when it would open a node it
+        /// knows but can't brave alone as it is, 1 when it knows one it could work with it, 0 otherwise.
+        /// </summary>
+        private static int HazardousReach(in AgentContext context, ItemType item)
+        {
+            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return 0;
+            bool venture = Vitality.WouldVenture(context);
+            var map = context.Snapshot?.Map;
+            int reach = 0;
+            foreach (var kvp in context.Memory.SpatialMemoryMap)
+            {
+                var record = kvp.Value;
+                if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage() || !ItemCatalog.Is(record.ResourceKind, ItemCategory.Hazardous)) continue;
+                if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
+                var hazard = Vitality.HazardAt(map, record.LastKnownLocation);
+                bool with = !hazard.IsHazardous || (venture && Vitality.LoneDanger(hazard, CrawlerStats.KindResistanceOf(item, hazard.Kind)) <= Vitality.LoneHazardLimit);
+                if (!with) continue;
+                if (!Vitality.WouldEnter(venture, hazard, context.Inventory)) return 2;
+                reach = 1;
+            }
+            return reach;
+        }
 
         /// <summary>Epic 10 Part 2, W1.4 (D38): as <see cref="CanBuyGear"/>, for the tool the stall sells (a pickaxe).</summary>
         public static bool CanBuyTool(in AgentContext context) => CanBuy(context, ItemCategory.Tool);
