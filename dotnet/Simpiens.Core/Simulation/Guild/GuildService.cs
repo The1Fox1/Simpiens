@@ -247,7 +247,7 @@ namespace Simpiens.Simulation.Guild
             _members.Clear();
             _cooldowns.Clear();
             _groupId = 0;
-            ResetExpedition();
+            ResetParties();
         }
 
         public void CaptureTo(GuildSave save)
@@ -260,8 +260,21 @@ namespace Simpiens.Simulation.Guild
             foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
             Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
             save.Cooldowns = cooldowns;
-            save.Expedition = _expedition;
-            save.Party = _party.ToArray();
+
+            // The parties with a group or a roster, in slot order (Epic 10 Part 2, W5, D60)
+            int formed = 0;
+            for (int i = 0; i < _parties.Length; i++)
+            {
+                if (_parties[i].GroupId != 0 || _parties[i].Roster.Count > 0) formed++;
+            }
+            var parties = new GuildPartySave[formed];
+            for (int i = 0, next = 0; i < _parties.Length; i++)
+            {
+                var party = _parties[i];
+                if (party.GroupId == 0 && party.Roster.Count == 0) continue;
+                parties[next++] = new GuildPartySave { Slot = party.Slot, GroupId = party.GroupId, Expedition = party.Record, Members = party.Roster.ToArray() };
+            }
+            save.Parties = parties;
         }
 
         public void RestoreFrom(GuildSave save)
@@ -274,8 +287,16 @@ namespace Simpiens.Simulation.Guild
             {
                 for (int i = 0; i < save.Cooldowns.Length; i++) _cooldowns[save.Cooldowns[i].Id] = save.Cooldowns[i].Tick;
             }
-            _expedition = save.Expedition;
-            if (save.Party != null) _party.AddRange(save.Party);
+            if (save.Parties == null) return;
+            for (int i = 0; i < save.Parties.Length; i++)
+            {
+                var saved = save.Parties[i];
+                if (saved == null || saved.Slot < 1 || saved.Slot > _parties.Length) throw new ArgumentException($"A saved guild party has slot {saved?.Slot}, outside 1 to {_parties.Length}.", nameof(save));
+                var party = _parties[saved.Slot - 1];
+                party.GroupId = saved.GroupId;
+                party.Record = saved.Expedition;
+                if (saved.Members != null) party.Roster.AddRange(saved.Members);
+            }
         }
 
         private int IndexOf(EntityId crawlerId)

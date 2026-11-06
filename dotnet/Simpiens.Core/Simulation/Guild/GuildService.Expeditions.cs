@@ -18,35 +18,67 @@ namespace Simpiens.Simulation.Guild
     /// musters at the stall, marches, works the sector's nodes, comes back and hands its haul to the stall's stock, and
     /// each member is paid a share. The party is a <see cref="GroupType.TemporaryParty"/> group inside the guild, led by
     /// the patron, with an <see cref="DirectiveType.Expedition"/> directive issued once at dispatch, whose target moves
-    /// with the stage. One expedition at a time. Main thread: the stages are judged every tick after the intents run,
-    /// from what the members' states show.
+    /// with the stage. The guild holds its parties in slots (<see cref="GuildParty"/>, Epic 10 Part 2, W5, D60), each
+    /// with its own expedition; one is out at a time. Main thread: the stages are judged every tick after the intents
+    /// run, from what the members' states show.
     /// </summary>
     public sealed partial class GuildService
     {
-        private ExpeditionRecord _expedition;
-        private readonly List<ExpeditionMember> _party = new List<ExpeditionMember>(DispatchExpeditionCommand.MaxMembers);
+        /// <summary>The guild's party slots (D61): parties 1 and 2.</summary>
+        public const int PartySlots = 2;
+
+        private readonly GuildParty[] _parties = { new GuildParty(1), new GuildParty(2) };
         private readonly List<EntityId> _nodes = new List<EntityId>(8);
         private readonly List<EntityId> _readyNodes = new List<EntityId>(8);
         private readonly List<int> _claimOrder = new List<int>(DispatchExpeditionCommand.MaxMembers);
 
-        /// <summary>The expedition out, if any (<see cref="ExpeditionRecord.IsActive"/>).</summary>
-        public ExpeditionRecord Expedition => _expedition;
+        /// <summary>The guild's parties, in slot order.</summary>
+        public IReadOnlyList<GuildParty> Parties => _parties;
 
-        /// <summary>Its party, in the order it was sent, with each member's part.</summary>
-        public IReadOnlyList<ExpeditionMember> Party => _party;
+        /// <summary>True while a party is out.</summary>
+        public bool HasExpedition
+        {
+            get
+            {
+                for (int i = 0; i < _parties.Length; i++)
+                {
+                    if (_parties[i].IsOut) return true;
+                }
+                return false;
+            }
+        }
 
-        public bool HasExpedition => _expedition.IsActive;
+        /// <summary>The party <paramref name="crawlerId"/> is on the roster of, or null.</summary>
+        public GuildParty PartyOf(EntityId crawlerId)
+        {
+            for (int i = 0; i < _parties.Length; i++)
+            {
+                if (_parties[i].IndexOf(crawlerId) >= 0) return _parties[i];
+            }
+            return null;
+        }
+
+        /// <summary>The party whose group is <paramref name="groupId"/>, or null.</summary>
+        public GuildParty PartyByGroup(byte groupId)
+        {
+            for (int i = 0; groupId != 0 && i < _parties.Length; i++)
+            {
+                if (_parties[i].GroupId == groupId) return _parties[i];
+            }
+            return null;
+        }
 
         /// <summary>
-        /// <paramref name="crawlerId"/>'s part in the expedition, for cognition (Epic 10 G5.4): the stage, the sector and, at
-        /// work, its node. Default when it isn't with the party.
+        /// <paramref name="crawlerId"/>'s part in an expedition, for cognition (Epic 10 G5.4): the stage, the sector and, at
+        /// work, its node. Default when it isn't with a party out.
         /// </summary>
         public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId)
         {
-            int i = PartyIndexOf(crawlerId);
-            if (i < 0 || !_party[i].IsWithParty) return default;
-            var member = _party[i];
-            return new Simpiens.Cognition.Contracts.ExpeditionOrder(_expedition.Stage, _expedition.TargetSectorId, member.NodeId, member.NodePosition);
+            var party = PartyOf(crawlerId);
+            if (party == null || !party.IsOut) return default;
+            var member = party.Roster[party.IndexOf(crawlerId)];
+            if (!member.IsWithParty) return default;
+            return new Simpiens.Cognition.Contracts.ExpeditionOrder(party.Record.Stage, party.Record.TargetSectorId, member.NodeId, member.NodePosition);
         }
 
         /// <summary>
@@ -55,12 +87,14 @@ namespace Simpiens.Simulation.Guild
         /// </summary>
         public void RefuseOrder(IGuildHost host, EntityId crawlerId, bool deserted, uint tick)
         {
-            int i = PartyIndexOf(crawlerId);
-            if (i < 0 || !_party[i].IsWithParty) return;
-            var member = _party[i];
+            var party = PartyOf(crawlerId);
+            if (party == null || !party.IsOut) return;
+            int i = party.IndexOf(crawlerId);
+            if (!party.Roster[i].IsWithParty) return;
+            var member = party.Roster[i];
             member.Status = deserted ? ExpeditionMemberStatus.Deserted : ExpeditionMemberStatus.StayedBehind;
-            _party[i] = member;
-            LeaveParty(host, crawlerId);
+            party.Roster[i] = member;
+            LeaveParty(host, party, crawlerId);
             if (deserted)
             {
                 Leave(host, crawlerId, tick, Tuning(host));
@@ -73,11 +107,11 @@ namespace Simpiens.Simulation.Guild
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} {(deserted ? "deserted the guild rather than go" : "stayed behind")}");
         }
 
-        /// <summary>True when <paramref name="crawlerId"/> is with the party of the expedition out.</summary>
+        /// <summary>True when <paramref name="crawlerId"/> is with a party out.</summary>
         public bool IsOnExpedition(EntityId crawlerId)
         {
-            int i = PartyIndexOf(crawlerId);
-            return i >= 0 && _party[i].IsWithParty;
+            var party = PartyOf(crawlerId);
+            return party != null && party.IsOut && party.Roster[party.IndexOf(crawlerId)].IsWithParty;
         }
 
         /// <summary>The rule's verdict on <paramref name="order"/> now, without acting.</summary>
@@ -92,10 +126,10 @@ namespace Simpiens.Simulation.Guild
         {
             var check = CanDispatch(host, order);
             var groups = host.Groups;
-            byte party = check == GuildRules.Check.Ok && groups != null
+            byte group = check == GuildRules.Check.Ok && groups != null
                 ? groups.CreateGroup(GroupType.TemporaryParty, WorldRegistry.PlayerEntityId, host.ActiveStalls[0].Position, 100, _groupId)
                 : (byte)0;
-            if (check == GuildRules.Check.Ok && party == 0) check = GuildRules.Check.BadParty; // no group to make it with
+            if (check == GuildRules.Check.Ok && group == 0) check = GuildRules.Check.BadParty; // no group to make it with
             if (check != GuildRules.Check.Ok)
             {
                 LogRefusal(host, "Dispatch", order.Count > 0 ? order[0] : default, check, tick);
@@ -104,11 +138,13 @@ namespace Simpiens.Simulation.Guild
 
             var tuning = Tuning(host);
             var haul = SectorYield(host, order.TargetSectorId);
-            _expedition = new ExpeditionRecord
+            var party = _parties[0];
+            party.GroupId = group;
+            party.Record = new ExpeditionRecord
             {
                 DispatchTick = tick,
                 StageTick = tick,
-                PartyGroupId = party,
+                PartyGroupId = group,
                 TargetSectorId = order.TargetSectorId,
                 HaulItem = haul,
                 Goal = order.Goal,
@@ -116,20 +152,20 @@ namespace Simpiens.Simulation.Guild
                 Stage = ExpeditionStage.Muster,
                 Draughts = order.Draughts
             };
-            _party.Clear();
+            party.Roster.Clear();
             for (int i = 0; i < order.Count; i++)
             {
                 var id = order[i];
                 host.TryGetCrawler(id, out var crawler);
                 byte allegiance = groups.TryGetMembership(id, _groupId, out var guild) ? guild.Allegiance : tuning.InitialAllegiance;
-                groups.AddMember(party, id, RoleRank.Follower, allegiance);
+                groups.AddMember(group, id, RoleRank.Follower, allegiance);
                 crawler.Memberships = groups.GetMemberships(id);
                 int carried = crawler.Inventory != null ? crawler.Inventory.GetItemCount(haul) : 0;
-                _party.Add(new ExpeditionMember(id, (ushort)Math.Min(ushort.MaxValue, carried)));
+                party.Roster.Add(new ExpeditionMember(id, (ushort)Math.Min(ushort.MaxValue, carried)));
             }
-            Direct(host);
+            Direct(host, party);
 
-            SimLog.Economy.ZLogInformation($"The guild sent {order.Count} to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}, {order.Draughts} draughts each); party group {party}");
+            SimLog.Economy.ZLogInformation($"The guild sent {order.Count} to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}, {order.Draughts} draughts each); party group {group}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionSent, order[0], WorldRegistry.PlayerEntityId,
                 order.TargetSectorId, tick, ChronicleIntensity.Dramatic, order.Count));
             return GuildRules.Check.Ok;
@@ -144,9 +180,14 @@ namespace Simpiens.Simulation.Guild
                 LogRefusal(host, "Recall", default, check, tick);
                 return check;
             }
-            SimLog.Economy.ZLogInformation($"The player recalled the party ({_expedition.Stage})");
-            if (_expedition.Stage == ExpeditionStage.Muster) EndExpedition(host, tick);
-            else if (_expedition.Stage == ExpeditionStage.March || _expedition.Stage == ExpeditionStage.Work) TurnBack(host, tick);
+            for (int i = 0; i < _parties.Length; i++)
+            {
+                var party = _parties[i];
+                if (!party.IsOut) continue;
+                SimLog.Economy.ZLogInformation($"The player recalled party {party.Slot} ({party.Record.Stage})");
+                if (party.Record.Stage == ExpeditionStage.Muster) EndExpedition(host, party, tick);
+                else if (party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) TurnBack(host, party, tick);
+            }
             return GuildRules.Check.Ok;
         }
 
@@ -184,34 +225,43 @@ namespace Simpiens.Simulation.Guild
             return GuildRules.Check.Ok;
         }
 
-        /// <summary>
-        /// Moves the expedition on (D9, D10), every tick after the intents run. First who is still with the party: a member
-        /// who left the guild or the outpost, or deserted the order (cognition takes it off the party's roster), is gone,
-        /// and a member downed after the muster limps home with it and loses trust. Then the stage: the muster waits for
-        /// every member at the stall, fed and well, or its time; the march for the first member in the sector; the work for
-        /// the goal, the nodes to be spent or the time; the way home for every member at the stall, or its time. On the way
-        /// out and at work the retreat rule turns the party back.
-        /// </summary>
+        /// <summary>Moves every party out on (D9, D10), in slot order, every tick after the intents run.</summary>
         public void TickExpedition(IGuildHost host, uint tick)
         {
-            if (!_expedition.IsActive) return;
+            for (int i = 0; i < _parties.Length; i++)
+            {
+                if (_parties[i].IsOut) TickParty(host, _parties[i], tick);
+            }
+        }
+
+        /// <summary>
+        /// Moves <paramref name="party"/>'s expedition on. First who is still with the party: a member who left the guild or
+        /// the outpost, or deserted the order (cognition takes it off the party's roster), is gone, and a member downed
+        /// after the muster limps home with it and loses trust. Then the stage: the muster waits for every member at the
+        /// stall, fed and well, or its time; the march for the first member in the sector; the work for the goal, the
+        /// nodes to be spent or the time; the way home for every member at the stall, or its time. On the way out and at
+        /// work the retreat rule turns the party back.
+        /// </summary>
+        private void TickParty(IGuildHost host, GuildParty party, uint tick)
+        {
             var tuning = Tuning(host).Expedition;
+            var roster = party.Roster;
 
             int withParty = 0;
-            for (int i = 0; i < _party.Count; i++)
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (!member.IsWithParty) continue;
                 if (!host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.HasLeft || !IsMember(member.CrawlerId))
                 {
                     member.Status = ExpeditionMemberStatus.Left;
-                    LeaveParty(host, member.CrawlerId);
+                    LeaveParty(host, party, member.CrawlerId);
                 }
-                else if (!InParty(host, member.CrawlerId))
+                else if (!InParty(host, party, member.CrawlerId))
                 {
                     member.Status = ExpeditionMemberStatus.Deserted;
                 }
-                else if (crawler.IsDowned && member.Status == ExpeditionMemberStatus.Going && _expedition.Stage != ExpeditionStage.Muster)
+                else if (crawler.IsDowned && member.Status == ExpeditionMemberStatus.Going && party.Record.Stage != ExpeditionStage.Muster)
                 {
                     member.Status = ExpeditionMemberStatus.Downed;
                     crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, 0, tuning.DownedTrust, 0, 0, tick);
@@ -219,59 +269,59 @@ namespace Simpiens.Simulation.Guild
                     host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionDowned, member.CrawlerId, WorldRegistry.PlayerEntityId,
                         host.GetSectorForPosition(crawler.Position), tick, ChronicleIntensity.Dramatic));
                 }
-                _party[i] = member;
+                roster[i] = member;
                 if (member.IsWithParty) withParty++;
             }
             if (withParty == 0)
             {
-                if (_expedition.Stage != ExpeditionStage.Muster) _expedition.TurnedBack = true;
-                EndExpedition(host, tick);
+                if (party.Record.Stage != ExpeditionStage.Muster) party.Record.TurnedBack = true;
+                EndExpedition(host, party, tick);
                 return;
             }
 
-            uint elapsed = tick - _expedition.StageTick;
+            uint elapsed = tick - party.Record.StageTick;
             var home = host.ActiveStalls.Count > 0 ? host.ActiveStalls[0].Position : Vec2.Zero;
-            switch (_expedition.Stage)
+            switch (party.Record.Stage)
             {
                 case ExpeditionStage.Muster:
-                    Provision(host, home, tuning);
-                    if (AllWithParty(host, PartyTest.Mustered, home, tuning)) SetStage(host, ExpeditionStage.March, tick);
+                    Provision(host, party, home, tuning);
+                    if (AllWithParty(host, party, PartyTest.Mustered, home, tuning)) SetStage(host, party, ExpeditionStage.March, tick);
                     else if (elapsed >= tuning.MusterTicks)
                     {
                         // Whoever isn't there, fed and well, stays behind; the rest set out
-                        for (int i = 0; i < _party.Count; i++)
+                        for (int i = 0; i < roster.Count; i++)
                         {
-                            var member = _party[i];
+                            var member = roster[i];
                             if (!member.IsWithParty || (host.TryGetCrawler(member.CrawlerId, out var c) && Mustered(c, home, tuning))) continue;
                             member.Status = ExpeditionMemberStatus.StayedBehind;
-                            _party[i] = member;
-                            LeaveParty(host, member.CrawlerId);
+                            roster[i] = member;
+                            LeaveParty(host, party, member.CrawlerId);
                             SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} stayed behind: not at the muster, fed and well");
                         }
-                        if (CountWithParty() == 0) EndExpedition(host, tick);
-                        else SetStage(host, ExpeditionStage.March, tick);
+                        if (party.CountWithParty() == 0) EndExpedition(host, party, tick);
+                        else SetStage(host, party, ExpeditionStage.March, tick);
                     }
                     break;
 
                 case ExpeditionStage.March:
                     // The work starts when the first member reaches the sector, so nobody waits in danger for the rest
-                    if (ShouldTurnBack(host, tuning)) TurnBack(host, tick);
-                    else if (AnyInSector(host)) SetStage(host, ExpeditionStage.Work, tick);
-                    else if (elapsed >= tuning.MarchTicks) TurnBack(host, tick);
+                    if (ShouldTurnBack(host, party, tuning)) TurnBack(host, party, tick);
+                    else if (AnyInSector(host, party)) SetStage(host, party, ExpeditionStage.Work, tick);
+                    else if (elapsed >= tuning.MarchTicks) TurnBack(host, party, tick);
                     break;
 
                 case ExpeditionStage.Work:
                     // The goal met or the nodes spent, the party goes home as ordered; short of them, the retreat rule turns it back
-                    if (Gathered(host) >= _expedition.Goal || !FindReadyNodes(host)) SetStage(host, ExpeditionStage.Return, tick);
-                    else if (ShouldTurnBack(host, tuning)) TurnBack(host, tick);
-                    else if (elapsed >= tuning.WorkTicks) SetStage(host, ExpeditionStage.Return, tick);
+                    if (party.Gathered(host) >= party.Record.Goal || !FindReadyNodes(host, party)) SetStage(host, party, ExpeditionStage.Return, tick);
+                    else if (ShouldTurnBack(host, party, tuning)) TurnBack(host, party, tick);
+                    else if (elapsed >= tuning.WorkTicks) SetStage(host, party, ExpeditionStage.Return, tick);
                     break;
 
                 case ExpeditionStage.Return:
-                    if (AllWithParty(host, PartyTest.Home, home, tuning) || elapsed >= tuning.ReturnTicks)
+                    if (AllWithParty(host, party, PartyTest.Home, home, tuning) || elapsed >= tuning.ReturnTicks)
                     {
-                        SetStage(host, ExpeditionStage.Deliver, tick);
-                        Deliver(host, tick, home, tuning);
+                        SetStage(host, party, ExpeditionStage.Deliver, tick);
+                        Deliver(host, party, tick, home, tuning);
                     }
                     break;
             }
@@ -283,13 +333,14 @@ namespace Simpiens.Simulation.Guild
         /// caravan value, paid from the stall as transfers (each in full or not at all, as wages), and with a haul each
         /// gains trust and allegiance. Then the expedition ends.
         /// </summary>
-        private void Deliver(IGuildHost host, uint tick, Vec2 home, in ExpeditionTuning tuning)
+        private void Deliver(IGuildHost host, GuildParty party, uint tick, Vec2 home, in ExpeditionTuning tuning)
         {
-            var item = _expedition.HaulItem;
+            var roster = party.Roster;
+            var item = party.Record.HaulItem;
             int haul = 0;
-            for (int i = 0; i < _party.Count; i++)
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                 if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue; // not home: it keeps what it carries
                 int gathered = crawler.Inventory.GetItemCount(item) - member.CarriedAtDispatch;
@@ -309,13 +360,13 @@ namespace Simpiens.Simulation.Guild
                 var terms = economy.Supply.Terms(item);
                 uint value = terms.Role == CaravanRole.Exports ? terms.Price : stall.BuyPriceOf(item);
                 uint pool = (uint)haul * value * tuning.SharePercent / 100u;
-                int payees = CountWithParty();
+                int payees = party.CountWithParty();
                 if (pool > 0 && payees > 0)
                 {
                     uint each = pool / (uint)payees, remainder = pool % (uint)payees;
-                    for (int i = 0; i < _party.Count; i++)
+                    for (int i = 0; i < roster.Count; i++)
                     {
-                        var member = _party[i];
+                        var member = roster[i];
                         if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                         uint share = each + (remainder > 0 ? 1u : 0u);
                         if (remainder > 0) remainder--;
@@ -328,40 +379,36 @@ namespace Simpiens.Simulation.Guild
                 host.UpdateStall(stall);
             }
 
-            for (int i = 0; i < _party.Count && haul > 0; i++)
+            for (int i = 0; i < roster.Count && haul > 0; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                 crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, 0, tuning.ReturnedTrust, 0, 0, tick);
                 host.Groups?.UpdateAllegiance(member.CrawlerId, _groupId, tuning.ReturnedAllegiance);
             }
 
-            SimLog.Economy.ZLogInformation($"The party came back with {haul} {item}{(_expedition.TurnedBack ? " (turned back)" : "")}");
-            host.ChronicleService?.RecordEvent(new ChronicleEvent(_expedition.TurnedBack && haul == 0 ? ChronicleEventType.ExpeditionTurnedBack : ChronicleEventType.ExpeditionReturned,
-                FirstWithParty(), WorldRegistry.PlayerEntityId, _expedition.TargetSectorId, tick, ChronicleIntensity.Dramatic, haul));
-            EndExpedition(host, tick);
+            SimLog.Economy.ZLogInformation($"Party {party.Slot} came back with {haul} {item}{(party.Record.TurnedBack ? " (turned back)" : "")}");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(party.Record.TurnedBack && haul == 0 ? ChronicleEventType.ExpeditionTurnedBack : ChronicleEventType.ExpeditionReturned,
+                party.FirstWithParty(), WorldRegistry.PlayerEntityId, party.Record.TargetSectorId, tick, ChronicleIntensity.Dramatic, haul));
+            EndExpedition(host, party, tick);
         }
 
         /// <summary>
-        /// The guild provisions its party (D9, as D12 gears it): each member at the muster carrying fewer than the trip's
-        /// rations is given the rest from the stall's stock, no gold changing hands. Members can't fund a trip of about 90
-        /// hunger themselves (two rations cost 30g; a member earns 5g a visit), and eat on the way.
-        /// </summary>
-        /// <summary>
         /// At the muster the guild gives each member at the stall what the trip needs from the stall's stock: its rations
-        /// (G5), and the order's draughts (Epic 10 Part 2, W2, D44), up to what it carries already. No gold moves (D12).
+        /// (G5: members can't fund a trip themselves, and eat on the way), and the order's draughts (Epic 10 Part 2, W2,
+        /// D44), up to what it carries already. No gold moves (D12).
         /// </summary>
-        private void Provision(IGuildHost host, Vec2 home, in ExpeditionTuning tuning)
+        private void Provision(IGuildHost host, GuildParty party, Vec2 home, in ExpeditionTuning tuning)
         {
             if (host.ActiveStalls.Count == 0) return;
             var stall = host.ActiveStalls[0];
-            bool changed = Give(host, ref stall, home, tuning, ItemCategory.Food, tuning.Rations);
-            if (_expedition.Draughts > 0) changed |= Give(host, ref stall, home, tuning, ItemCategory.Medicine, _expedition.Draughts);
+            bool changed = Give(host, party, ref stall, home, tuning, ItemCategory.Food, tuning.Rations);
+            if (party.Record.Draughts > 0) changed |= Give(host, party, ref stall, home, tuning, ItemCategory.Medicine, party.Record.Draughts);
             if (changed) host.UpdateStall(stall);
         }
 
         /// <summary>Tops each member at the muster up to <paramref name="count"/> of the first <paramref name="group"/> the stall sells and holds.</summary>
-        private bool Give(IGuildHost host, ref TradeStallData stall, Vec2 home, in ExpeditionTuning tuning, ItemCategory group, int count)
+        private static bool Give(IGuildHost host, GuildParty party, ref TradeStallData stall, Vec2 home, in ExpeditionTuning tuning, ItemCategory group, int count)
         {
             var item = ItemType.None;
             var members = ItemCatalog.InCategory(group);
@@ -372,9 +419,10 @@ namespace Simpiens.Simulation.Guild
             if (item == ItemType.None) return false;
 
             bool changed = false;
-            for (int i = 0; i < _party.Count; i++)
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                 if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue;
                 int given = Math.Min(count - crawler.Inventory.GetItemCount(item), stall.SellStockOf(item));
@@ -395,74 +443,70 @@ namespace Simpiens.Simulation.Guild
         }
 
         /// <summary>The expedition ends: the directive is cleared and the party disbanded; its members stay in the guild.</summary>
-        private void EndExpedition(IGuildHost host, uint tick)
+        private void EndExpedition(IGuildHost host, GuildParty party, uint tick)
         {
             var groups = host.Groups;
-            byte party = _expedition.PartyGroupId;
-            if (groups != null && party != 0)
+            byte group = party.GroupId;
+            if (groups != null && group != 0)
             {
-                groups.ClearDirective(party);
-                groups.DisbandGroup(party);
+                groups.ClearDirective(group);
+                groups.DisbandGroup(group);
             }
-            for (int i = 0; i < _party.Count; i++)
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
             {
-                if (groups != null && host.TryGetCrawler(_party[i].CrawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(_party[i].CrawlerId);
+                if (groups != null && host.TryGetCrawler(roster[i].CrawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(roster[i].CrawlerId);
             }
-            SimLog.Economy.ZLogInformation($"The expedition ended at t{tick} ({_expedition.Stage}, {(_expedition.TurnedBack ? "turned back" : "as ordered")})");
-            ResetExpedition();
+            SimLog.Economy.ZLogInformation($"Party {party.Slot}'s expedition ended at t{tick} ({party.Record.Stage}, {(party.Record.TurnedBack ? "turned back" : "as ordered")})");
+            party.Clear();
         }
 
-        private void ResetExpedition()
+        private void TurnBack(IGuildHost host, GuildParty party, uint tick)
         {
-            _expedition = default;
-            _party.Clear();
+            party.Record.TurnedBack = true;
+            SimLog.Economy.ZLogInformation($"Party {party.Slot} turned back from sector {party.Record.TargetSectorId} ({party.Record.Stage})");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionTurnedBack, party.FirstWithParty(), WorldRegistry.PlayerEntityId,
+                party.Record.TargetSectorId, tick, ChronicleIntensity.Notable));
+            SetStage(host, party, ExpeditionStage.Return, tick);
         }
 
-        private void TurnBack(IGuildHost host, uint tick)
+        private void SetStage(IGuildHost host, GuildParty party, ExpeditionStage stage, uint tick)
         {
-            _expedition.TurnedBack = true;
-            SimLog.Economy.ZLogInformation($"The party turned back from sector {_expedition.TargetSectorId} ({_expedition.Stage})");
-            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionTurnedBack, FirstWithParty(), WorldRegistry.PlayerEntityId,
-                _expedition.TargetSectorId, tick, ChronicleIntensity.Notable));
-            SetStage(host, ExpeditionStage.Return, tick);
-        }
-
-        private void SetStage(IGuildHost host, ExpeditionStage stage, uint tick)
-        {
-            _expedition.Stage = stage;
-            _expedition.StageTick = tick;
-            if (stage == ExpeditionStage.Work) ClaimNodes(host);
-            Direct(host);
+            party.Record.Stage = stage;
+            party.Record.StageTick = tick;
+            if (stage == ExpeditionStage.Work) ClaimNodes(host, party);
+            Direct(host, party);
         }
 
         /// <summary>The party's directive, issued at dispatch (so members judge it once) and aimed at the stage's place: the stall, or the sector.</summary>
-        private void Direct(IGuildHost host)
+        private static void Direct(IGuildHost host, GuildParty party)
         {
             var groups = host.Groups;
-            if (groups == null || !_expedition.IsActive) return;
+            if (groups == null || !party.IsOut) return;
             var target = host.ActiveStalls.Count > 0 ? host.ActiveStalls[0].Position : Vec2.Zero;
-            if ((_expedition.Stage == ExpeditionStage.March || _expedition.Stage == ExpeditionStage.Work) && host.TryGetSector(_expedition.TargetSectorId, out var sector))
+            if ((party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) && host.TryGetSector(party.Record.TargetSectorId, out var sector))
             {
                 target = sector.TargetPoint;
             }
-            groups.SetDirective(_expedition.PartyGroupId, new GroupDirective(DirectiveType.Expedition, _expedition.PartyGroupId, WorldRegistry.PlayerEntityId,
-                target, default, _expedition.DispatchTick, uint.MaxValue, Tuning(host).Expedition.MusterRadius));
+            groups.SetDirective(party.GroupId, new GroupDirective(DirectiveType.Expedition, party.GroupId, WorldRegistry.PlayerEntityId,
+                target, default, party.Record.DispatchTick, uint.MaxValue, Tuning(host).Expedition.MusterRadius));
         }
 
         /// <summary>Each member with the party takes a ready node of the haul's item, in member id order, sharing when there are fewer nodes than members.</summary>
-        private void ClaimNodes(IGuildHost host)
+        private void ClaimNodes(IGuildHost host, GuildParty party)
         {
-            if (!FindReadyNodes(host)) return;
+            if (!FindReadyNodes(host, party)) return;
+            var roster = party.Roster;
             _claimOrder.Clear();
-            for (int i = 0; i < _party.Count; i++)
+            for (int i = 0; i < roster.Count; i++)
             {
-                if (_party[i].IsWithParty) _claimOrder.Add(i);
+                if (roster[i].IsWithParty) _claimOrder.Add(i);
             }
             // In member id order (an insertion sort: four at most, and no delegate)
             for (int k = 1; k < _claimOrder.Count; k++)
             {
                 int index = _claimOrder[k], j = k - 1;
-                while (j >= 0 && _party[_claimOrder[j]].CrawlerId.CompareTo(_party[index].CrawlerId) > 0)
+                while (j >= 0 && roster[_claimOrder[j]].CrawlerId.CompareTo(roster[index].CrawlerId) > 0)
                 {
                     _claimOrder[j + 1] = _claimOrder[j];
                     j--;
@@ -471,21 +515,21 @@ namespace Simpiens.Simulation.Guild
             }
             for (int k = 0; k < _claimOrder.Count; k++)
             {
-                var member = _party[_claimOrder[k]];
+                var member = roster[_claimOrder[k]];
                 member.NodeId = _readyNodes[k % _readyNodes.Count];
                 host.TryGetNodePosition(member.NodeId, out member.NodePosition);
-                _party[_claimOrder[k]] = member;
+                roster[_claimOrder[k]] = member;
             }
         }
 
         /// <summary>Fills the target sector's ready nodes of the haul's item, by id; true when there is one.</summary>
-        private bool FindReadyNodes(IGuildHost host)
+        private bool FindReadyNodes(IGuildHost host, GuildParty party)
         {
             _readyNodes.Clear();
-            host.NodesIn(_expedition.TargetSectorId, _nodes);
+            host.NodesIn(party.Record.TargetSectorId, _nodes);
             for (int i = 0; i < _nodes.Count; i++)
             {
-                if (host.TryGetResource(_nodes[i], out var node) && !node.IsDormant && node.RemainingYield > 0 && node.YieldItem == _expedition.HaulItem) _readyNodes.Add(_nodes[i]);
+                if (host.TryGetResource(_nodes[i], out var node) && !node.IsDormant && node.RemainingYield > 0 && node.YieldItem == party.Record.HaulItem) _readyNodes.Add(_nodes[i]);
             }
             return _readyNodes.Count > 0;
         }
@@ -501,30 +545,18 @@ namespace Simpiens.Simulation.Guild
             return ItemType.None;
         }
 
-        /// <summary>What the members with the party gathered of the haul's item since they were sent (the tracker's haul).</summary>
-        public int Gathered(IGuildHost host)
-        {
-            int gathered = 0;
-            for (int i = 0; i < _party.Count; i++)
-            {
-                var member = _party[i];
-                if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
-                gathered += Math.Max(0, crawler.Inventory.GetItemCount(_expedition.HaulItem) - member.CarriedAtDispatch);
-            }
-            return gathered;
-        }
-
         /// <summary>
         /// The retreat rule (D10): a member downed, or below the rule's health. A member still carrying medicine (a draught,
         /// Epic 10 Part 2, W2, D43) doesn't count: it drinks at the treat line instead of turning the party back, so what the
         /// party carries is how long it keeps working.
         /// </summary>
-        private bool ShouldTurnBack(IGuildHost host, in ExpeditionTuning tuning)
+        private static bool ShouldTurnBack(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
-            float floor = tuning.RetreatHealth(_expedition.Rule);
-            for (int i = 0; i < _party.Count; i++)
+            float floor = tuning.RetreatHealth(party.Record.Rule);
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (member.Status == ExpeditionMemberStatus.Downed) return true;
                 if (member.IsWithParty && host.TryGetCrawler(member.CrawlerId, out var crawler) && crawler.Health < floor
                     && !crawler.Inventory.HasAny(ItemCategory.Medicine)) return true;
@@ -540,22 +572,24 @@ namespace Simpiens.Simulation.Guild
 
         private enum PartyTest : byte { Mustered, Home }
 
-        private bool AnyInSector(IGuildHost host)
+        private static bool AnyInSector(IGuildHost host, GuildParty party)
         {
-            for (int i = 0; i < _party.Count; i++)
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
             {
-                if (_party[i].IsWithParty && host.TryGetCrawler(_party[i].CrawlerId, out var crawler)
-                    && host.GetSectorForPosition(crawler.Position) == _expedition.TargetSectorId) return true;
+                if (roster[i].IsWithParty && host.TryGetCrawler(roster[i].CrawlerId, out var crawler)
+                    && host.GetSectorForPosition(crawler.Position) == party.Record.TargetSectorId) return true;
             }
             return false;
         }
 
         /// <summary>True when every member with the party passes <paramref name="test"/>: at the muster, or home at the stall.</summary>
-        private bool AllWithParty(IGuildHost host, PartyTest test, Vec2 home, in ExpeditionTuning tuning)
+        private static bool AllWithParty(IGuildHost host, GuildParty party, PartyTest test, Vec2 home, in ExpeditionTuning tuning)
         {
-            for (int i = 0; i < _party.Count; i++)
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = _party[i];
+                var member = roster[i];
                 if (!member.IsWithParty) continue;
                 if (!host.TryGetCrawler(member.CrawlerId, out var crawler)) return false;
                 bool passes = test switch
@@ -569,43 +603,20 @@ namespace Simpiens.Simulation.Guild
             return true;
         }
 
-        private int CountWithParty()
-        {
-            int n = 0;
-            for (int i = 0; i < _party.Count; i++)
-            {
-                if (_party[i].IsWithParty) n++;
-            }
-            return n;
-        }
+        private static bool InParty(IGuildHost host, GuildParty party, EntityId crawlerId) =>
+            host.Groups == null || host.Groups.TryGetMembership(crawlerId, party.GroupId, out _);
 
-        private EntityId FirstWithParty()
-        {
-            for (int i = 0; i < _party.Count; i++)
-            {
-                if (_party[i].IsWithParty) return _party[i].CrawlerId;
-            }
-            return _party.Count > 0 ? _party[0].CrawlerId : default;
-        }
-
-        private bool InParty(IGuildHost host, EntityId crawlerId) =>
-            host.Groups == null || host.Groups.TryGetMembership(crawlerId, _expedition.PartyGroupId, out _);
-
-        private void LeaveParty(IGuildHost host, EntityId crawlerId)
+        private static void LeaveParty(IGuildHost host, GuildParty party, EntityId crawlerId)
         {
             var groups = host.Groups;
             if (groups == null) return;
-            groups.RemoveMember(_expedition.PartyGroupId, crawlerId);
+            groups.RemoveMember(party.GroupId, crawlerId);
             if (host.TryGetCrawler(crawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(crawlerId);
         }
 
-        private int PartyIndexOf(EntityId crawlerId)
+        private void ResetParties()
         {
-            for (int i = 0; i < _party.Count; i++)
-            {
-                if (_party[i].CrawlerId == crawlerId) return i;
-            }
-            return -1;
+            for (int i = 0; i < _parties.Length; i++) _parties[i].Clear();
         }
     }
 }

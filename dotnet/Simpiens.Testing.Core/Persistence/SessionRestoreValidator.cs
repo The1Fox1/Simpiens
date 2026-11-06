@@ -215,17 +215,26 @@ namespace Simpiens.Testing.Persistence
                 GroupId = 3,
                 Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } },
-                // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part
-                Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
+                // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part; held by
+                // the guild's second party, its slot kept (Epic 10 Part 2, W5, D60)
+                Parties = new[]
                 {
-                    DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
-                    Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work,
-                    Draughts = 2 // each member's draughts (Epic 10 Part 2, W2)
-                },
-                Party = new[]
-                {
-                    new Simpiens.Simulation.Guild.ExpeditionMember(C, 2) { NodeId = B },
-                    new Simpiens.Simulation.Guild.ExpeditionMember(A, 0) { NodeId = B, Status = Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed }
+                    new GuildPartySave
+                    {
+                        Slot = 2,
+                        GroupId = 4,
+                        Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
+                        {
+                            DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
+                            Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work,
+                            Draughts = 2 // each member's draughts (Epic 10 Part 2, W2)
+                        },
+                        Members = new[]
+                        {
+                            new Simpiens.Simulation.Guild.ExpeditionMember(C, 2) { NodeId = B },
+                            new Simpiens.Simulation.Guild.ExpeditionMember(A, 0) { NodeId = B, Status = Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed }
+                        }
+                    }
                 }
             };
             guild.RestoreFrom(save);
@@ -234,13 +243,16 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
             Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
             Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
-            Assert(guild.HasExpedition && guild.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && guild.Expedition.StageTick == 160u && guild.Expedition.Draughts == 2
-                && guild.Party.Count == 2 && guild.Party[0].CarriedAtDispatch == 2 && guild.Party[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
+            var party = guild.Parties[1];
+            Assert(guild.HasExpedition && !guild.Parties[0].IsOut && party.GroupId == 4 && guild.PartyOf(C) == party && guild.PartyByGroup(4) == party,
+                "The party comes back in its slot, with its group (Epic 10 Part 2, W5).");
+            Assert(party.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && party.Expedition.StageTick == 160u && party.Expedition.Draughts == 2
+                && party.Members.Count == 2 && party.Members[0].CarriedAtDispatch == 2 && party.Members[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
                 "The expedition comes back mid-stage, its party in the order sent (Epic 10 G5).");
             guild.RestoreFrom(null);
-            Assert(guild.GroupId == 0 && guild.Members.Count == 0 && !guild.HasExpedition && guild.Party.Count == 0, "A save made before the guild existed loads with none.");
+            Assert(guild.GroupId == 0 && guild.Members.Count == 0 && !guild.HasExpedition && guild.Parties[1].Members.Count == 0 && guild.Parties[1].GroupId == 0, "A save made before the guild existed loads with none.");
 
-            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, an expedition mid-stage (Epic 10 G4.6, G5.3).");
+            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, a party in its slot with its expedition mid-stage (Epic 10 G4.6, G5.3; W5).");
         }
 
         private void ValidateChronicleRoundTrips()

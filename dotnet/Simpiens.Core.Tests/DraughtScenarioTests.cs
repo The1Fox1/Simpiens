@@ -50,16 +50,16 @@ namespace Simpiens.Core.Tests
             while (sim.Clock.CurrentTick < Horizon && !trip.Ended)
             {
                 if (watch != null) watch.Run(1); else sim.Step(1);
-                var expedition = guild.Expedition;
+                var expedition = guild.Parties[0].Expedition;
                 if (expedition.IsActive)
                 {
                     if (trip.Dispatched < 0) trip.Dispatched = sim.Clock.CurrentTick;
                     if (expedition.Stage == ExpeditionStage.March && last == ExpeditionStage.Muster)
-                        trip.Carried = guild.Party.Where(m => m.IsWithParty).Sum(m => host.TryGetCrawler(m.CrawlerId, out var c) ? c.Inventory.GetItemCount(ItemType.HealingDraught) : 0);
+                        trip.Carried = guild.Parties[0].Members.Where(m => m.IsWithParty).Sum(m => host.TryGetCrawler(m.CrawlerId, out var c) ? c.Inventory.GetItemCount(ItemType.HealingDraught) : 0);
                     if (expedition.Stage == ExpeditionStage.Work && last != ExpeditionStage.Work) workStart = sim.Clock.CurrentTick;
                     if (expedition.Stage == ExpeditionStage.Return && last == ExpeditionStage.Work) trip.Work = sim.Clock.CurrentTick - workStart;
-                    if (expedition.Stage == ExpeditionStage.Work || expedition.Stage == ExpeditionStage.Return) trip.Haul = System.Math.Max(trip.Haul, guild.Gathered(host));
-                    foreach (var member in guild.Party) if (member.Status == ExpeditionMemberStatus.Downed) downed.Add(member.CrawlerId);
+                    if (expedition.Stage == ExpeditionStage.Work || expedition.Stage == ExpeditionStage.Return) trip.Haul = System.Math.Max(trip.Haul, guild.Parties[0].Gathered(host));
+                    foreach (var member in guild.Parties[0].Members) if (member.Status == ExpeditionMemberStatus.Downed) downed.Add(member.CrawlerId);
                     trip.TurnedBack = expedition.TurnedBack;
                     last = expedition.Stage;
                 }

@@ -247,7 +247,12 @@ namespace Simpiens.Presentation.Dashboard
         {
             var guild = Guild;
             var host = Host;
-            var expedition = guild != null ? guild.Expedition : default;
+            GuildParty party = null;
+            for (int i = 0; guild != null && i < guild.Parties.Count && party == null; i++)
+            {
+                if (guild.Parties[i].IsOut) party = guild.Parties[i];
+            }
+            var expedition = party != null ? party.Expedition : default;
             IsOut = expedition.IsActive;
             if (!IsOut || host == null)
             {
@@ -265,14 +270,14 @@ namespace Simpiens.Presentation.Dashboard
                 _ => "Delivering",
             };
             TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
-            HaulText = Invariant($"Haul {guild.Gathered(host)} of {expedition.Goal}");
+            HaulText = Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
 
-            var party = guild.Party;
-            while (_members.Count < party.Count) _members.Add(new ExpeditionMemberRow());
-            if (_members.Count > party.Count) _members.RemoveRange(party.Count, _members.Count - party.Count);
-            for (int i = 0; i < party.Count; i++)
+            var roster = party.Members;
+            while (_members.Count < roster.Count) _members.Add(new ExpeditionMemberRow());
+            if (_members.Count > roster.Count) _members.RemoveRange(roster.Count, _members.Count - roster.Count);
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = party[i];
+                var member = roster[i];
                 var row = _members[i];
                 row.Name = _context.FriendlyName(member.CrawlerId, DossierModel.UnknownName);
                 row.WithParty = member.IsWithParty;

@@ -110,8 +110,8 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(roster.DispatchButton));
             ui.Ticks(1);
             ui.Frame();
-            Assert.True(guild.HasExpedition && guild.Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
-            Assert.Equal(2, guild.Expedition.Draughts); // the order carries them; the muster gives what stock allows
+            Assert.True(guild.HasExpedition && guild.Parties[0].Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
+            Assert.Equal(2, guild.Parties[0].Expedition.Draughts); // the order carries them; the muster gives what stock allows
             if (inStock) Assert.True(Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(game.Session.Simulation.Host.CrawlerStates.First(s => s.AgentId == recruit).Inventory, protection), "Outfitted from stock.");
             Assert.False(roster.DispatchButton.IsEnabled);
             Assert.True(roster.RecallButton.IsEnabled);
@@ -126,7 +126,7 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(dashboard.Header.GuildButton));
             ui.Click(Centre(roster.RecallButton));
             ui.Ticks(1);
-            Assert.True(!guild.HasExpedition || guild.Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
+            Assert.True(!guild.HasExpedition || guild.Parties[0].Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
         }
 
         [Fact]

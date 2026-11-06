@@ -45,17 +45,17 @@ namespace Simpiens.Core.Tests
             while (sim.Clock.CurrentTick < ThreeDays)
             {
                 watch.Run(1);
-                var expedition = guild.Expedition;
+                var expedition = guild.Parties[0].Expedition;
                 if (ended >= 0 || (!expedition.IsActive && stages.Count == 0)) continue;
                 if (expedition.IsActive)
                 {
                     haulItem = expedition.HaulItem;
                     if (stages.Count == 0 || stages[stages.Count - 1] != expedition.Stage) stages.Add(expedition.Stage);
                     turnedBack |= expedition.TurnedBack;
-                    for (int i = 0; i < guild.Party.Count; i++)
+                    for (int i = 0; i < guild.Parties[0].Members.Count; i++)
                     {
-                        downed |= guild.Party[i].Status == ExpeditionMemberStatus.Downed;
-                        if (expedition.Stage != ExpeditionStage.Muster) allWent &= guild.Party[i].IsWithParty;
+                        downed |= guild.Parties[0].Members[i].Status == ExpeditionMemberStatus.Downed;
+                        if (expedition.Stage != ExpeditionStage.Muster) allWent &= guild.Parties[0].Members[i].IsWithParty;
                     }
                     continue;
                 }
@@ -166,12 +166,12 @@ namespace Simpiens.Core.Tests
             using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             played.Respawn(OutpostSession.SessionId);
             new GuildPlayer(played, targetSize: 4).SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield, RetreatRule.Steady);
-            while (played.Simulation.Guild.Expedition.Stage != ExpeditionStage.Work && played.Clock.CurrentTick < ThreeDays) played.Step(1);
-            Assert.Equal(ExpeditionStage.Work, played.Simulation.Guild.Expedition.Stage);
+            while (played.Simulation.Guild.Parties[0].Expedition.Stage != ExpeditionStage.Work && played.Clock.CurrentTick < ThreeDays) played.Step(1);
+            Assert.Equal(ExpeditionStage.Work, played.Simulation.Guild.Parties[0].Expedition.Stage);
             long tick = played.Clock.CurrentTick;
             byte[] saved = SaveSerializer.Serialize(played.Host.Capture());
             var savedHash = WorldStateHash.Capture(tick, played.Host, played.Simulation, played.Sectors, includeWork: false);
-            var expedition = played.Simulation.Guild.Expedition;
+            var expedition = played.Simulation.Guild.Parties[0].Expedition;
 
             // A fresh session, loaded
             using var loaded = LocalSimulation.Create(SimulationSettings.DefaultSeed);
@@ -181,7 +181,7 @@ namespace Simpiens.Core.Tests
             Assert.Equal(saved, SaveSerializer.Serialize(loaded.Host.Capture()));
             Assert.Null(savedHash.DescribeDifference(WorldStateHash.Capture(tick, loaded.Host, loaded.Simulation, loaded.Sectors, includeWork: false)));
             var guild = loaded.Simulation.Guild;
-            Assert.True(guild.HasExpedition && guild.Expedition.Stage == ExpeditionStage.Work && guild.Expedition.StageTick == expedition.StageTick);
+            Assert.True(guild.HasExpedition && guild.Parties[0].Expedition.Stage == ExpeditionStage.Work && guild.Parties[0].Expedition.StageTick == expedition.StageTick);
             Assert.True(loaded.Simulation.Groups.TryGetGroup(expedition.PartyGroupId, out var party) && party.ParentGroupId == guild.GroupId
                 && party.ActiveDirective.Type == Simpiens.Cognition.Groups.DirectiveType.Expedition, "The party, its guild and its order came back.");
 

@@ -219,10 +219,12 @@ namespace Simpiens.Testing.Environment
                     Mix(ref groups, (long)contract.JoinTick);
                 }
 
-                // The expedition out (Epic 10 G5), only while there is one
-                var expedition = guild.Expedition;
-                if (expedition.IsActive)
+                // Each party's expedition out (Epic 10 G5; per party since Epic 10 Part 2, W5), only while there is one
+                for (int p = 0; p < guild.Parties.Count; p++)
                 {
+                    var party = guild.Parties[p];
+                    var expedition = party.Expedition;
+                    if (!expedition.IsActive) continue;
                     Mix(ref groups, (int)expedition.PartyGroupId);
                     Mix(ref groups, (int)expedition.TargetSectorId);
                     Mix(ref groups, (int)expedition.HaulItem);
@@ -232,9 +234,9 @@ namespace Simpiens.Testing.Environment
                     Mix(ref groups, expedition.TurnedBack ? 1 : 0);
                     Mix(ref groups, (long)expedition.DispatchTick);
                     Mix(ref groups, (long)expedition.StageTick);
-                    for (int i = 0; i < guild.Party.Count; i++)
+                    for (int i = 0; i < party.Members.Count; i++)
                     {
-                        var member = guild.Party[i];
+                        var member = party.Members[i];
                         Mix(ref groups, member.CrawlerId.GetHashCode());
                         Mix(ref groups, member.NodeId.GetHashCode());
                         Mix(ref groups, (int)member.CarriedAtDispatch);

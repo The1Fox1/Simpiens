@@ -46,7 +46,7 @@ namespace Simpiens.Core.Tests
                 while (sim.Clock.CurrentTick < Horizon && !(harm.ContainsKey(ItemType.Respirator) && harm.ContainsKey(ItemType.HazardGear) && trips.Any(t => t.Respirators == 0) && trips.Any(t => t.Respirators == 4)))
                 {
                     watch.Run(1);
-                    var expedition = guild.Expedition;
+                    var expedition = guild.Parties[0].Expedition;
                     if (!expedition.IsActive)
                     {
                         if (active) trips.Add((respiratorsOnTrip, haul, back));
@@ -54,7 +54,7 @@ namespace Simpiens.Core.Tests
                         continue;
                     }
                     if (!active) { active = true; respiratorsOnTrip = 0; haul = 0; }
-                    foreach (var member in guild.Party)
+                    foreach (var member in guild.Parties[0].Members)
                     {
                         if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                         float before = lastDamage.TryGetValue(member.CrawlerId, out var d) ? d : crawler.Activity.HazardDamage;
@@ -67,8 +67,8 @@ namespace Simpiens.Core.Tests
                         }
                     }
                     if (expedition.Stage == ExpeditionStage.Work && respiratorsOnTrip == 0)
-                        respiratorsOnTrip = guild.Party.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
-                    if (expedition.Stage == ExpeditionStage.Work || expedition.Stage == ExpeditionStage.Return) haul = System.Math.Max(haul, guild.Gathered(host));
+                        respiratorsOnTrip = guild.Parties[0].Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+                    if (expedition.Stage == ExpeditionStage.Work || expedition.Stage == ExpeditionStage.Return) haul = System.Math.Max(haul, guild.Parties[0].Gathered(host));
                     back = expedition.TurnedBack;
                 }
                 watch.Finish();
