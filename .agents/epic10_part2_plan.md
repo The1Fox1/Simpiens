@@ -379,7 +379,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   6. **[x] W3.5 The live scenario `TheRightGearForTheRightHazard`** (done 2026-11-05, `72dd630`) [Possibly Complex: measured first]: a party in respirators takes about half the harm of one in hazard gear in the Gallery and brings home at least as much; a bold crawler that bought a respirator works the Gallery alone.
   7. **The producer's look** (prepared 2026-11-05, pending; the epic's §4 lists what to look at) [Basic: prepared, not held]: the art and people sheets and the renders, left for the producer; W4 goes on under the directive.
 
-### W4. Practice and repair (2 days)
+### W4. Practice and repair (2 days) — done 2026-11-05
 **Complexity:** Possibly Complex: `ItemInstance.Quality` comes into use, and practice is saved on the contract.
 - [ ] **W4.1 Grades:** [Possibly Complex]
   - `ItemInstance.Quality` from the artisan's practice;
@@ -397,10 +397,10 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **D58, worn pieces wait on the shelf** (`StallGood.Worn`, not for sale): a sound piece the guild replaces (D50), one traded in (D53) and one a member hands in at half its life (D12) go there, no longer back into stock as new.
   - **D59, repair is an order at the forge** (Q8): `OrderStationCommand` gains a repair flag; a repair takes one worn piece and half of each of its recipe's inputs (rounded up) and half its work, and stocks the piece full, at Standard. The station window offers it for goods with worn pieces waiting.
 - **Steps:**
-  1. **W4.1 Practice and grades** [Possibly Complex: a contract field, the shelf's layout, stats by instance]: D55–D57; validators (grade from practice, the shelf by grade, best first, a Fine piece's life and effect). Golden holds (nobody crafts in the golden runs).
-  2. **W4.2 Worn pieces and repair** [Possibly Complex: a command flag, a make that consumes a worn piece]: D58, D59; validators.
-  3. **W4.3 The client** [Possibly Complex: rims by grade; the window's repair; renders after a look]: rarity rims by grade in the merchant terminal and the roster; the stock line by grade; the station window's artisan grade and a repair row.
-  4. **W4.4 The live scenarios** [Possibly Complex: measured first]: `PracticeMakesBetterGear` (within some game days the artisan's grade rises and a later piece lasts longer) and `TheForgeMendsWornGear` (a worn piece comes back full for half the inputs).
+  1. **[x] W4.1 Practice and grades** (done 2026-11-05, `2297af8`) [Possibly Complex: a contract field, the shelf's layout, stats by instance]: D55–D57; validators (grade from practice, the shelf by grade, best first, a Fine piece's life and effect). Golden holds (nobody crafts in the golden runs).
+  2. **[x] W4.2 Worn pieces and repair** (done 2026-11-05, `abcf11c`, rounding `2499069`) [Possibly Complex: a command flag, a make that consumes a worn piece]: D58, D59; validators. *Changed in the doing:* one rule for a piece handed back (`Crafting.HandBack`): the shelf's worn count for what the forge can mend, back into stock while sound for hazard gear as before; a repair's inputs are halved rounded down, so a respirator is mended without glowstone.
+  3. **[x] W4.3 The client** (done 2026-11-05: `cb648be`, pins `040bfbe`, renders `9c9d78c`) [Possibly Complex: rims by grade; the window's repair; renders after a look]: rarity rims by grade in the merchant terminal and the roster; the stock line by grade; the station window's artisan grade and a repair row.
+  4. **[x] W4.4 The live scenarios** (done 2026-11-05, `39eee16`) [Possibly Complex: measured first]: `PracticeMakesBetterGear` (within some game days the artisan's grade rises and a later piece lasts longer) and `TheForgeMendsWornGear` (a worn piece comes back full for half the inputs).
 
 ### W5. The guildhall (2–3 days)
 **Complexity:** Very Complex: G5's one-expedition stage machine becomes several, and parties live on between expeditions. Split it: W5.1–W5.2, then FormParty, then two expeditions at once. The developer supervises the last of these.

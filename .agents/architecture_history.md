@@ -1498,3 +1498,11 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **D52, a new way to wear:** `Worn.Face`, drawn by all three generators from the head anchor's mouth row; `BodyKit.HeadGearOf` admits it, so the body and portrait caches key on it with no new key.
 - **Rounding, not change:** twice a zoomed render moved by one or two pixels at a figure's edge when the world texture grew; the picture pins held, as their doc says to read it.
 - Commits: W3.1 `8cae51e`; W3.2 `ad6ecc1`; W3.3 `7880ff5`; W3.4 `3b508a2`; W3.5a `a67038e`; W3.5 `72dd630`; with their tests, pins and renders.
+
+## 2026-11-05: W4, practice and repair (`feat/epic10-part2`, under the producer's AFK directive)
+
+- **D55–D57, grades where the goods are:** the stall's stock was a count per good, so a made piece's grade had nowhere to live once stocked. Each good now counts its Fine and Masterwork pieces within its stock, kept consistent by `StallGood.WithStock`; the forge stocks at the artisan's grade (a held make keeps it in `StationState.HeldGrade`), and a sale or a gift takes the best first. Practice is a count on the contract; `ItemInstance.Quality` came into use. A grade's step of life and effect is equipment data, read by `CrawlerStats` from the worn piece.
+- **D58–D59, worn pieces and repair:** pieces handed back (the guild's swaps, trade-ins) wait on the shelf for the forge when it can mend them; hazard gear, which no station makes, keeps its old rule (`Crafting.HandBack`). A repair order takes a worn piece, half its inputs rounded down (rounding up left a respirator's glowstone in, so mending saved nothing) and half the work.
+- **Rims a step rarer a grade:** grades didn't map onto rarity rims directly, since items already wear rims by base rarity; a graded piece's rim is its item's rarity plus its grade.
+- **Deviation:** draughts have no grade; their makes count as practice all the same.
+- Commits: W4.1 `2297af8`; W4.2 `abcf11c`, `2499069`; W4.3 `cb648be`; W4.4 `39eee16`; with pins and renders.
