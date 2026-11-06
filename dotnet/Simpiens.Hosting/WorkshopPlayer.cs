@@ -51,6 +51,9 @@ namespace Simpiens.Hosting
         public IReadOnlyList<EntityId> Hired => _hired;
         public int Orders { get; private set; }
 
+        /// <summary>Orders to mend worn pieces it gave (Epic 10 Part 2, W4).</summary>
+        public int Repairs { get; private set; }
+
         /// <summary>Stops acting (a scenario that takes over).</summary>
         public void Stop() => _sim.Host.TickCompleted -= Act;
 
@@ -92,7 +95,16 @@ namespace Simpiens.Hosting
                 return;
             }
 
-            if (!workshops[index].HasOrder && WorkshopRules.CheckOrder(workshops, index, _make, _batch) == WorkshopRules.Check.Ok)
+            if (workshops[index].HasOrder) return;
+            // Worn pieces of its make waiting on the shelf are mended first (Epic 10 Part 2, W4, D59): half the inputs, no glowstone
+            int worn = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0].WornOf(_make) : 0;
+            if (worn > 0 && WorkshopRules.CheckOrder(workshops, index, _make, (ushort)worn, repair: true) == WorkshopRules.Check.Ok)
+            {
+                _commands.QueueInfluence(InfluenceEvent.CreateOrderStation(SourceId, (byte)index, _make, (ushort)worn, repair: true));
+                Repairs++;
+                return;
+            }
+            if (WorkshopRules.CheckOrder(workshops, index, _make, _batch) == WorkshopRules.Check.Ok)
             {
                 _commands.QueueInfluence(InfluenceEvent.CreateOrderStation(SourceId, (byte)index, _make, _batch));
                 Orders++;
