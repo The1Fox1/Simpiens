@@ -58,7 +58,7 @@ namespace Simpiens.Simulation
                 _groupRegistry.LeaveAllGroups(node.Id);
                 agent.Memberships = _groupRegistry.GetMemberships(node.Id);
             }
-            Guild.Forget(node.Id);
+            Guild.Forget(this, node.Id);
             _workshops.Forget(node.Id);
 
             agent.HasLeft = true;

@@ -72,9 +72,10 @@ namespace Simpiens.Core.Tests
                 if (send)
                 {
                     var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+                    commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateFormParty("Probe", new Simpiens.Intervention.FormPartyCommand(1, members.ToArray())));
                     commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateDispatchExpedition("Probe",
-                        new Simpiens.Intervention.DispatchExpeditionCommand(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, 4,
-                            Simpiens.Simulation.Guild.RetreatRule.Steady, members.ToArray())));
+                        new Simpiens.Intervention.DispatchExpeditionCommand(1, Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, 4,
+                            Simpiens.Simulation.Guild.RetreatRule.Steady)));
                 }
                 var watch = Stopwatch.StartNew();
                 sim.Step(Window);

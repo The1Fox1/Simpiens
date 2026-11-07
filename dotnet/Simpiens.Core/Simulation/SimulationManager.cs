@@ -360,7 +360,12 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.RecallExpedition:
-                    Guild.Recall(this, currentTick);
+                    Guild.Recall(this, influence.RecallExpedition.PartySlot, currentTick);
+                    break;
+
+                // The guildhall's parties (Epic 10 Part 2, W5)
+                case InfluenceCommandType.FormParty:
+                    Guild.FormParty(this, influence.FormParty, currentTick);
                     break;
 
                 case InfluenceCommandType.GiveGear:

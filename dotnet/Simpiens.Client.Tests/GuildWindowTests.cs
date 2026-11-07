@@ -91,11 +91,17 @@ namespace Simpiens.Client.Tests
             var dashboard = game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
             var roster = dashboard.Guild;
-            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(true), roster.PartyButton(0).Text);
+            // Into party 1 from its card (Epic 10 Part 2, W5, D65): a FormParty command, applied on the next tick
+            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(0), roster.PartyButton(0).Text);
+            ui.Click(Centre(roster.PartyButton(0)));
+            ui.Ticks(1);
+            ui.Frame();
+            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(1), roster.PartyButton(0).Text);
             ui.Click(Centre(roster.ExpeditionsTab)); // the builder's tab (Epic 10 Part 2, W5.1)
             Assert.False(roster.Card(0).Visible && roster.Card(0).Parent.Visible, "The Expeditions tab hides the members' cards.");
+            Assert.Equal("Party 1 · 1", roster.PartySelectButton.Text);
             Assert.Equal("The Drowned Gallery", roster.TargetButton.Text);
-            Assert.Equal("Send 1 to The Drowned Gallery for 4.", roster.DispatchText);
+            Assert.Equal("Send party 1, 1 strong, to The Drowned Gallery for 4.", roster.DispatchText);
             Assert.True(roster.DispatchButton.IsEnabled && !roster.RecallButton.IsEnabled);
 
             ui.Click(Centre(roster.RuleButton));
@@ -106,7 +112,7 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(roster.DraughtsButton));
             ui.Click(Centre(roster.DraughtsButton));
             Assert.Equal("2 draughts each", roster.DraughtsButton.Text);
-            Assert.Equal("Send 1 to The Drowned Gallery for 4. 0 of 2 draughts in stock.", roster.DispatchText);
+            Assert.Equal("Send party 1, 1 strong, to The Drowned Gallery for 4. 0 of 2 draughts in stock.", roster.DispatchText);
             var protection = Simpiens.Simulation.Items.ItemCategory.Protection;
             bool inStock = sim.ActiveStalls[0].SellStockOf(Simpiens.Simulation.Economy.ItemType.HazardGear) > 0;
             ui.Click(Centre(roster.DispatchButton));
@@ -167,13 +173,25 @@ namespace Simpiens.Client.Tests
             float lastCard = roster.Card(7).AbsoluteTop + roster.Card(7).AbsoluteHeight;
             Assert.True(lastCard < frameBottom && frameBottom <= Height, $"The eighth card ends at {lastCard} and the window at {frameBottom}, within the screen's {Height} rows.");
             Assert.True(roster.Window.Frame.AbsoluteTop >= dashboard.Header.GuildButton.AbsoluteTop + dashboard.Header.GuildButton.ActualHeight, "The window starts below the header.");
+
+            // Two parties of four from the cards (Epic 10 Part 2, W5, D65): each click joins the first party with room
+            for (int i = 0; i < 8; i++)
+            {
+                ui.Click(Centre(roster.PartyButton(i)));
+                ui.Ticks(1);
+            }
+            ui.Frame();
+            for (int i = 0; i < 8; i++) Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(i < 4 ? (byte)1 : (byte)2), roster.PartyButton(i).Text);
+            Assert.True(guild.Parties[0].Members.Count == 4 && guild.Parties[1].Members.Count == 4, "Two parties of four.");
             byte[] eight = FrameCapture.Capture(ui.Game, Width, Height);
 
             ui.Click(Centre(roster.ExpeditionsTab));
             ui.Frame();
             frameBottom = roster.Window.Frame.AbsoluteTop + roster.Window.Frame.AbsoluteHeight;
             Assert.True(roster.RecallButton.AbsoluteTop + roster.RecallButton.ActualHeight < frameBottom && frameBottom <= Height, "The Expeditions tab fits too.");
-            Assert.Equal("Send 4 to The Drowned Gallery for 4.", roster.DispatchText); // a party is four: the first four go
+            Assert.Equal("Send party 1, 4 strong, to The Drowned Gallery for 4.", roster.DispatchText);
+            ui.Click(Centre(roster.PartySelectButton));
+            Assert.Equal("Party 2 · 4", roster.PartySelectButton.Text);
             RenderTests.CompareWithReference("render-outpost-guild-eight", eight, Width, Height);
         }
 
@@ -183,6 +201,8 @@ namespace Simpiens.Client.Tests
             var (ui, _) = RecruitFromTheDossier();
             var dashboard = ui.Game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.PartyButton(0)));
+            ui.Ticks(1);
             ui.Click(Centre(dashboard.Guild.ExpeditionsTab));
             ui.Click(Centre(dashboard.Guild.DispatchButton));
             ui.Ticks(100);

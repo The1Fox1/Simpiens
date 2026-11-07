@@ -221,7 +221,10 @@ namespace Simpiens.Simulation.Guild
             return stall;
         }
 
-        /// <summary>Takes a member out of the guild (quitting or dismissal): its contract ends, it leaves the guild's group only, and it can't sign again for a while.</summary>
+        /// <summary>
+        /// Takes a member out of the guild (quitting or dismissal): its contract ends, it leaves the guild's group and its
+        /// party (Epic 10 Part 2, W5, D65; a party out marks it gone on its next tick), and it can't sign again for a while.
+        /// </summary>
         internal void Leave(IGuildHost host, EntityId crawlerId, uint tick, in GuildTuning tuning)
         {
             int i = IndexOf(crawlerId);
@@ -234,14 +237,25 @@ namespace Simpiens.Simulation.Guild
                 groups.RemoveMember(_groupId, crawlerId);
                 if (host.TryGetCrawler(crawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(crawlerId);
             }
+            var party = PartyOf(crawlerId);
+            if (party != null && !party.IsOut) RemoveFromParty(host, party, crawlerId);
         }
 
-        /// <summary>A crawler who left the outpost is no longer a member; its contract ends with it (the groups already let it go).</summary>
-        public void Forget(EntityId crawlerId)
+        /// <summary>
+        /// A crawler who left the outpost is no longer a member; its contract ends with it, and its place in a party at home
+        /// (the groups already let it go; a party out marks it gone on its next tick).
+        /// </summary>
+        public void Forget(IGuildHost host, EntityId crawlerId)
         {
             int i = IndexOf(crawlerId);
             if (i >= 0) _members.RemoveAt(i);
             _cooldowns.Remove(crawlerId);
+            var party = PartyOf(crawlerId);
+            if (party != null && !party.IsOut)
+            {
+                party.Roster.RemoveAt(party.IndexOf(crawlerId));
+                if (party.Roster.Count == 0) DisbandParty(host, party);
+            }
         }
 
         /// <summary>Forgets everything, the barracks too (a respawn: the next map's bunks are added as it spawns).</summary>

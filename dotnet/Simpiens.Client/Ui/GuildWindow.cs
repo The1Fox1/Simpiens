@@ -103,26 +103,30 @@ namespace Simpiens.Client.Ui
             // Part 2, W2); then send or call home, and where the party is
             _expeditionsPage = Page();
             var controls = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 30f };
+            // Which party (Epic 10 Part 2, W5): its members are chosen on the Members tab
+            PartySelectButton = UiParts.Button(string.Empty, 100f, 30f, UiText.BodyBold);
+            controls.Children.Add(PartySelectButton.Visual);
             TargetButton = UiParts.Button(string.Empty, 200f, 30f);
+            TargetButton.X = 110f;
             controls.Children.Add(TargetButton.Visual);
             LessButton = UiParts.Button("-", 30f, 30f, UiText.BodyBold);
-            LessButton.X = 210f;
+            LessButton.X = 320f;
             controls.Children.Add(LessButton.Visual);
             _goal = UiParts.Text(string.Empty, UiStyle.Accent, UiText.BodyBold);
-            _goal.X = 248f;
+            _goal.X = 358f;
             UiParts.CentreVertically(_goal);
             controls.Children.Add(_goal);
             MoreButton = UiParts.Button("+", 30f, 30f, UiText.BodyBold);
-            MoreButton.X = 314f;
+            MoreButton.X = 424f;
             controls.Children.Add(MoreButton.Visual);
             RuleButton = UiParts.Button(string.Empty, 100f, 30f);
-            RuleButton.X = 354f;
+            RuleButton.X = 464f;
             controls.Children.Add(RuleButton.Visual);
             OutfitButton = UiParts.Button(string.Empty, 150f, 30f);
-            OutfitButton.X = 464f;
+            OutfitButton.X = 574f;
             controls.Children.Add(OutfitButton.Visual);
             DraughtsButton = UiParts.Button(string.Empty, 164f, 30f);
-            DraughtsButton.X = 624f;
+            DraughtsButton.X = 734f;
             controls.Children.Add(DraughtsButton.Visual);
             _expeditionsPage.Children.Add(controls);
             _expeditionsPage.Children.Add(Window.Gap(6f));
@@ -149,6 +153,7 @@ namespace Simpiens.Client.Ui
             _expeditionsPage.Children.Add(Window.Gap(6f));
             body.Children.Add(_expeditionsPage);
             var expedition = _model.Expedition;
+            PartySelectButton.Click += (_, _) => { expedition.NextParty(); Bind(); };
             TargetButton.Click += (_, _) => { expedition.NextTarget(); Bind(); };
             LessButton.Click += (_, _) => { expedition.LessGoal(); Bind(); };
             MoreButton.Click += (_, _) => { expedition.MoreGoal(); Bind(); };
@@ -172,6 +177,7 @@ namespace Simpiens.Client.Ui
         public Button MembersTab { get; }
         public Button ExpeditionsTab { get; }
         public Button ApplyButton { get; }
+        public Button PartySelectButton { get; }
         public Button TargetButton { get; }
         public Button LessButton { get; }
         public Button MoreButton { get; }
@@ -265,7 +271,7 @@ namespace Simpiens.Client.Ui
             card.Root.Children.Add(card.Party.Visual);
             card.Party.Click += (_, _) =>
             {
-                if (card.Index < _model.Rows.Count) _model.Rows[card.Index].InParty = !_model.Rows[card.Index].InParty;
+                if (card.Index < _model.Rows.Count) _model.CycleParty(_model.Rows[card.Index].CrawlerId);
                 _model.Expedition.Refresh();
                 Bind();
             };
@@ -304,8 +310,8 @@ namespace Simpiens.Client.Ui
         /// <summary>Beside the name, in warning colour: "Unpaid 2 visits"; nothing while every visit is paid.</summary>
         public static string UnpaidText(int visits) => visits == 0 ? string.Empty : visits == 1 ? "Unpaid 1 visit" : Invariant($"Unpaid {visits} visits");
 
-        /// <summary>The card's party toggle: it goes with the next party, or stays home.</summary>
-        public static string PartyText(bool inParty) => inParty ? "Goes" : "Stays";
+        /// <summary>The card's party button (Epic 10 Part 2, W5): its party, or none.</summary>
+        public static string PartyText(byte party) => party == 0 ? "No party" : Invariant($"Party {party}");
 
         public void Bind()
         {
@@ -342,12 +348,13 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Unpaid, UnpaidText(row.UnpaidVisits));
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;
                 UiParts.SetText(card.Wage, WageText(row.PendingWage));
-                string party = PartyText(row.InParty);
+                string party = PartyText(row.Party);
                 if (card.Party.Text != party) card.Party.Text = party;
             }
             _binding = false;
 
             var expedition = _model.Expedition;
+            if (PartySelectButton.Text != expedition.PartyText) PartySelectButton.Text = expedition.PartyText;
             if (TargetButton.Text != expedition.TargetName) TargetButton.Text = expedition.TargetName;
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
             string rule = expedition.Rule.ToString().ToUpperInvariant();

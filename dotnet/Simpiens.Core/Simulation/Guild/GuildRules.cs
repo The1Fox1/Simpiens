@@ -39,11 +39,11 @@ namespace Simpiens.Simulation.Guild
             WageOutOfRange = 12,
 
             // Expeditions (Epic 10 G5)
-            /// <summary>No party is out to recall.</summary>
+            /// <summary>That party isn't out to recall.</summary>
             NoExpedition = 13,
             /// <summary>A party is already out: one at a time (D7).</summary>
             ExpeditionOut = 14,
-            /// <summary>Not one to four distinct members of the guild, none downed.</summary>
+            /// <summary>Not one to four distinct members of the guild (to form a party), or a party none of them downed (to send it).</summary>
             BadParty = 15,
             /// <summary>Not a charted hazard sector with nodes to work.</summary>
             BadTarget = 16,
@@ -58,7 +58,13 @@ namespace Simpiens.Simulation.Guild
 
             // Workshops (Epic 10 Part 2)
             /// <summary>It works a station: one role at a time (Q4).</summary>
-            WorksAStation = 21
+            WorksAStation = 21,
+
+            // The guildhall's parties (Epic 10 Part 2, W5, D65)
+            /// <summary>No party with that slot.</summary>
+            BadSlot = 22,
+            /// <summary>The party, or a member's party, is out: its members change once it is home.</summary>
+            PartyOut = 23
         }
 
         /// <summary>The least wage per caravan visit a crawler of <paramref name="crawler"/>'s greed signs for: the reservation wage times its greed factor.</summary>
@@ -108,22 +114,47 @@ namespace Simpiens.Simulation.Guild
         public static Check CheckDismiss(GuildService guild, EntityId crawlerId) => guild.IsMember(crawlerId) ? Check.Ok : Check.NotMember;
 
         /// <summary>
-        /// Whether a party may be sent (Epic 10 G5, D7): none out already; one to four distinct members, none downed; a
-        /// charted hazard sector whose nodes yield <paramref name="sectorYield"/>; a goal within the most an order asks; a
-        /// stall to muster at and bring the haul to. Checked in that order.
+        /// Whether a party may be formed as <paramref name="order"/> says (Epic 10 Part 2, W5, D65): one of the guild's slots;
+        /// no more than four distinct members of the guild (none empties it); the party home, and each member's own party
+        /// home. Checked in that order.
+        /// </summary>
+        public static Check CheckFormParty(GuildService guild, in FormPartyCommand order)
+        {
+            if (order.PartySlot < 1 || order.PartySlot > guild.Parties.Count) return Check.BadSlot;
+            if (order.Count < 0 || order.Count > DispatchExpeditionCommand.MaxMembers) return Check.BadParty;
+            for (int i = 0; i < order.Count; i++)
+            {
+                if (!guild.IsMember(order[i])) return Check.BadParty;
+                for (int j = 0; j < i; j++)
+                {
+                    if (order[j] == order[i]) return Check.BadParty;
+                }
+            }
+            var party = guild.Parties[order.PartySlot - 1];
+            if (party.IsOut) return Check.PartyOut;
+            for (int i = 0; i < order.Count; i++)
+            {
+                var from = guild.PartyOf(order[i]);
+                if (from != null && from.IsOut) return Check.PartyOut;
+            }
+            return Check.Ok;
+        }
+
+        /// <summary>
+        /// Whether a party may be sent (Epic 10 G5, D7): one of the guild's slots; none out already; the party formed, its
+        /// members all in the guild and none downed; a charted hazard sector whose nodes yield <paramref name="sectorYield"/>;
+        /// a goal within the most an order asks; a stall to muster at and bring the haul to. Checked in that order.
         /// </summary>
         public static Check CheckDispatch(GuildService guild, IGuildHost host, in DispatchExpeditionCommand order, ItemType sectorYield, in GuildTuning tuning)
         {
+            if (order.PartySlot < 1 || order.PartySlot > guild.Parties.Count) return Check.BadSlot;
             if (guild.HasExpedition) return Check.ExpeditionOut;
-            if (order.Count < 1 || order.Count > DispatchExpeditionCommand.MaxMembers) return Check.BadParty;
-            for (int i = 0; i < order.Count; i++)
+            var members = guild.Parties[order.PartySlot - 1].Members;
+            if (members.Count < 1) return Check.BadParty;
+            for (int i = 0; i < members.Count; i++)
             {
-                var id = order[i];
+                var id = members[i].CrawlerId;
                 if (!guild.IsMember(id) || !host.TryGetCrawler(id, out var crawler) || crawler.IsDowned) return Check.BadParty;
-                for (int j = 0; j < i; j++)
-                {
-                    if (order[j] == id) return Check.BadParty;
-                }
             }
             if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
                 || sectorYield == ItemType.None)
@@ -135,7 +166,8 @@ namespace Simpiens.Simulation.Guild
             return Check.Ok;
         }
 
-        public static Check CheckRecall(GuildService guild) => guild.HasExpedition ? Check.Ok : Check.NoExpedition;
+        public static Check CheckRecall(GuildService guild, byte partySlot) =>
+            partySlot >= 1 && partySlot <= guild.Parties.Count && guild.Parties[partySlot - 1].IsOut ? Check.Ok : Check.NoExpedition;
 
         /// <summary>An empty slot, or a piece worn to half its life or less: it gets fresh gear (D12).</summary>
         public static bool WornOut(in ItemInstance worn)
@@ -236,9 +268,11 @@ namespace Simpiens.Simulation.Guild
                 case Check.NoStall: return "There is no stall to pay the signing fee from.";
                 case Check.CannotPayFee: return $"The stall can't pay the {tuning.SigningFee}g signing fee.";
                 case Check.NotMember: return $"{name} isn't in the guild.";
-                case Check.NoExpedition: return "No party is out.";
+                case Check.NoExpedition: return "That party isn't out.";
                 case Check.ExpeditionOut: return "A party is already out: one at a time.";
-                case Check.BadParty: return $"Send one to {DispatchExpeditionCommand.MaxMembers} members of the guild, none of them downed.";
+                case Check.BadParty: return $"A party is one to {DispatchExpeditionCommand.MaxMembers} members of the guild; it goes with none of them downed.";
+                case Check.BadSlot: return $"The guild has parties 1 to {guild.Parties.Count}.";
+                case Check.PartyOut: return "That party is out: change it when it is home.";
                 case Check.BadTarget: return "Send a party to a charted hazard sector with something to bring back.";
                 case Check.BadGoal: return $"Ask for 1 to {tuning.Expedition.MaxGoal}.";
                 case Check.NotGear: return "That isn't gear.";

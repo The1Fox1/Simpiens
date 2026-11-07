@@ -57,12 +57,17 @@ namespace Simpiens.Core.Tests
                 }
             }
 
+            /// <summary>
+            /// Forms party 1 of the first <paramref name="count"/> members (all by default; refused while it is out, which
+            /// leaves it as it is), and returns the order that sends it (Epic 10 Part 2, W5, D65).
+            /// </summary>
             public DispatchExpeditionCommand Order(byte goal = 4, RetreatRule rule = RetreatRule.Steady, int count = -1, byte sector = Floor1Layout.DrownedGallerySectorId, byte draughts = 0)
             {
                 int n = count < 0 ? Members.Length : count;
                 var ids = new EntityId[n];
                 for (int i = 0; i < n; i++) ids[i] = Members[i].AgentId;
-                return new DispatchExpeditionCommand(sector, goal, rule, ids, draughts);
+                Guild.FormParty(Host, new FormPartyCommand(1, ids), Tick);
+                return new DispatchExpeditionCommand(1, sector, goal, rule, draughts);
             }
 
             /// <summary>Draughts in the stall's stock, by hand (the still's are W2.5's).</summary>
@@ -112,8 +117,11 @@ namespace Simpiens.Core.Tests
             var tuning = o.Sim.Simulation.Economy.Guild;
             var outsider = o.Sim.Host.CrawlerStates[6];
             Assert.Equal(GuildRules.Check.BadParty, o.Guild.CanDispatch(o.Host, o.Order(count: 0)));
-            Assert.Equal(GuildRules.Check.BadParty, o.Guild.CanDispatch(o.Host, new DispatchExpeditionCommand(Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady, new[] { outsider.AgentId })));
-            Assert.Equal(GuildRules.Check.BadParty, o.Guild.CanDispatch(o.Host, new DispatchExpeditionCommand(Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady, new[] { o.Members[0].AgentId, o.Members[0].AgentId })));
+            // A party is formed of guild members, each once, in one of the guild's slots (Epic 10 Part 2, W5, D65)
+            Assert.Equal(GuildRules.Check.BadParty, o.Guild.FormParty(o.Host, new FormPartyCommand(1, new[] { outsider.AgentId }), o.Tick));
+            Assert.Equal(GuildRules.Check.BadParty, o.Guild.FormParty(o.Host, new FormPartyCommand(1, new[] { o.Members[0].AgentId, o.Members[0].AgentId }), o.Tick));
+            Assert.Equal(GuildRules.Check.BadSlot, o.Guild.FormParty(o.Host, new FormPartyCommand(3, new[] { o.Members[0].AgentId }), o.Tick));
+            Assert.Equal(GuildRules.Check.BadSlot, o.Guild.CanDispatch(o.Host, new DispatchExpeditionCommand(0, Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady)));
             o.Members[1].IsDowned = true;
             Assert.Equal(GuildRules.Check.BadParty, o.Guild.CanDispatch(o.Host, o.Order()));
             o.Members[1].IsDowned = false;
@@ -121,7 +129,7 @@ namespace Simpiens.Core.Tests
             Assert.Equal(GuildRules.Check.BadTarget, o.Guild.CanDispatch(o.Host, o.Order(sector: Floor1Layout.DeepSeamSectorId)));
             Assert.Equal(GuildRules.Check.BadGoal, o.Guild.CanDispatch(o.Host, o.Order(goal: 0)));
             Assert.Equal(GuildRules.Check.BadGoal, o.Guild.CanDispatch(o.Host, o.Order(goal: (byte)(tuning.Expedition.MaxGoal + 1))));
-            Assert.Equal(GuildRules.Check.NoExpedition, o.Guild.Recall(o.Host, o.Tick));
+            Assert.Equal(GuildRules.Check.NoExpedition, o.Guild.Recall(o.Host, 1, o.Tick));
 
             Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
             Assert.Equal(GuildRules.Check.ExpeditionOut, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
@@ -230,11 +238,12 @@ namespace Simpiens.Core.Tests
                 Assert.True(groups.TryGetMembership(o.Members[i].AgentId, guildGroup, out var inGuild), "Members stay in the guild.");
                 Assert.Equal(Math.Min(100, allegiance[i] + sim.Economy.Guild.Expedition.ReturnedAllegiance), inGuild.Allegiance);
                 Assert.Equal(settlements[i], groups.TryGetMembership(o.Members[i].AgentId, GroupType.Settlement, out _));
-                Assert.False(groups.TryGetMembership(o.Members[i].AgentId, GroupType.TemporaryParty, out _), "The party is disbanded.");
+                Assert.True(groups.TryGetMembership(o.Members[i].AgentId, expedition.PartyGroupId, out _), "The party outlives its trip (Epic 10 Part 2, D65).");
+                Assert.Equal(new ExpeditionMember(o.Members[i].AgentId, 0), o.Guild.Parties[0].Members[i]); // each part reset for the next trip
             }
             Assert.Equal(1, o.Members[0].Activity.GuildDeliveries);
             Assert.Equal(0, o.Members[2].Activity.GuildDeliveries); // carried nothing
-            Assert.False(groups.TryGetGroup(expedition.PartyGroupId, out _));
+            Assert.True(groups.TryGetGroup(expedition.PartyGroupId, out var partyGroup) && partyGroup.ActiveDirective.Type == DirectiveType.None, "Its group stands, its order lifted.");
             Assert.Contains(Told(o.Sim, o.Members[0].AgentId), e => e.EventType == ChronicleEventType.ExpeditionReturned && (int)e.ExtraData == 4);
         }
 
@@ -341,21 +350,72 @@ namespace Simpiens.Core.Tests
             Assert.Equal(ExpeditionMemberStatus.Downed, o.Guild.Parties[0].Members[0].Status);
         }
 
+        /// <summary>
+        /// FormParty (Epic 10 Part 2, W5, D65): a party is formed of guild members into a group of its own; a member named for
+        /// another party moves over, one no longer named leaves, and an emptied party is disbanded, as it is when its last
+        /// member is dismissed. While it is out its members can't change. After its trip it stands: a member who stayed
+        /// behind rejoins it, every part reset.
+        /// </summary>
+        [Fact]
+        public void APartyIsFormedAndOutlivesItsTrips()
+        {
+            using var o = NewOutpost();
+            var groups = o.Sim.Simulation.Groups;
+            var tuning = o.Sim.Simulation.Economy.Guild.Expedition;
+            EntityId a = o.Members[0].AgentId, b = o.Members[1].AgentId, c = o.Members[2].AgentId, d = o.Members[3].AgentId;
+
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(1, new[] { a, b }), o.Tick));
+            var first = o.Guild.Parties[0];
+            byte group = first.GroupId;
+            Assert.True(group != 0 && groups.TryGetGroup(group, out var data) && data.Type == GroupType.TemporaryParty && data.IsPatronLed, "Formed: a party group, led by the patron.");
+            Assert.True(groups.TryGetMembership(a, group, out _) && groups.TryGetMembership(b, group, out _) && o.Guild.PartyOf(a) == first && !first.IsOut, "Its members are in it; it is home.");
+
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(2, new[] { b, c }), o.Tick));
+            Assert.True(first.Members.Count == 1 && first.Members[0].CrawlerId == a && !groups.TryGetMembership(b, group, out _), "Named for party 2, b left party 1.");
+            Assert.True(o.Guild.PartyOf(b) == o.Guild.Parties[1] && o.Guild.PartyOf(c) == o.Guild.Parties[1], "Party 2 holds b and c.");
+            byte second = o.Guild.Parties[1].GroupId;
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(2, System.Array.Empty<EntityId>()), o.Tick));
+            Assert.True(o.Guild.Parties[1].GroupId == 0 && !groups.TryGetGroup(second, out _) && o.Guild.PartyOf(c) == null, "Emptied, party 2 is disbanded.");
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Dismiss(o.Host, a, o.Tick));
+            Assert.True(first.Members.Count == 0 && first.GroupId == 0 && !groups.TryGetGroup(group, out _), "Its last member dismissed, party 1 is disbanded.");
+
+            // Out, its members can't change; one late to the muster stays behind
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(1, new[] { b, c, d }), o.Tick));
+            group = first.GroupId;
+            o.PutAll(o.Home);
+            o.Members[3].Position = o.Gallery; // d is far from the muster
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, new DispatchExpeditionCommand(1, Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady), o.Tick));
+            Assert.Equal(GuildRules.Check.PartyOut, o.Guild.FormParty(o.Host, new FormPartyCommand(1, new[] { b }), o.Tick));
+            Assert.Equal(GuildRules.Check.PartyOut, o.Guild.FormParty(o.Host, new FormPartyCommand(2, new[] { c }), o.Tick));
+            o.Step(tuning.MusterTicks + 1); // the dispatch's own tick is 0 into the muster
+            Assert.Equal(ExpeditionStage.March, first.Expedition.Stage);
+            Assert.True(first.Members[2].Status == ExpeditionMemberStatus.StayedBehind && !groups.TryGetMembership(d, group, out _), "Late, d stayed behind, out of the party's group for the trip.");
+
+            // Home again, it stands: d rejoins, every part reset
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, 1, o.Tick));
+            o.Step();
+            Assert.False(first.IsOut);
+            Assert.True(first.GroupId == group && first.Members.Count == 3 && groups.TryGetMembership(d, group, out _), "The party stands, and d is back in it.");
+            for (int i = 0; i < 3; i++) Assert.Equal(ExpeditionMemberStatus.Going, first.Members[i].Status);
+            Assert.True(groups.TryGetGroup(group, out data) && data.ActiveDirective.Type == DirectiveType.None, "Its order is lifted.");
+        }
+
         [Fact]
         public void RecallEndsAMusterAndTurnsAMarchBack()
         {
             using var o = NewOutpost();
             Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
             byte party = o.Guild.Parties[0].Expedition.PartyGroupId;
-            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, o.Tick));
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, 1, o.Tick));
             Assert.False(o.Guild.HasExpedition);
-            Assert.False(o.Sim.Simulation.Groups.TryGetGroup(party, out _), "Recalled at the muster, the party is disbanded.");
+            Assert.True(o.Sim.Simulation.Groups.TryGetGroup(party, out var standing) && standing.ActiveDirective.Type == DirectiveType.None && o.Guild.Parties[0].Members.Count == 4,
+                "Recalled at the muster, the expedition ends; the party stands (Epic 10 Part 2, D65).");
 
             o.PutAll(o.Home);
             Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
             o.Step();
             Assert.Equal(ExpeditionStage.March, o.Guild.Parties[0].Expedition.Stage);
-            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, o.Tick));
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, 1, o.Tick));
             Assert.Equal(ExpeditionStage.Return, o.Guild.Parties[0].Expedition.Stage);
             Assert.True(o.Guild.Parties[0].Expedition.TurnedBack);
             o.Sim.Simulation.Groups.TryGetGroup(o.Guild.Parties[0].Expedition.PartyGroupId, out var group);
@@ -395,7 +455,7 @@ namespace Simpiens.Core.Tests
             var expedition = o.Guild.Parties[0].Expedition;
             var save = o.Sim.Host.Capture();
 
-            Assert.True(o.Guild.Recall(o.Host, o.Tick) == GuildRules.Check.Ok && o.Guild.Parties[0].Expedition.Stage == ExpeditionStage.Return, "The world moves on after the save.");
+            Assert.True(o.Guild.Recall(o.Host, 1, o.Tick) == GuildRules.Check.Ok && o.Guild.Parties[0].Expedition.Stage == ExpeditionStage.Return, "The world moves on after the save.");
             Assert.True(o.Sim.Host.TryRestore(save, out var refusal), refusal);
             var after = WorldStateHash.Capture(tick, o.Sim.Host, o.Sim.Simulation, o.Sim.Sectors, includeWork: false);
             Assert.True(before.Total == after.Total, before.DescribeDifference(after));
@@ -500,7 +560,7 @@ namespace Simpiens.Core.Tests
             Assert.False(o.Guild.HasExpedition);
             o.Sim.Step(1);
             Assert.True(o.Guild.HasExpedition && o.Guild.Parties[0].Members.Count == 4);
-            commands.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Test"));
+            commands.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Test", 1));
             o.Sim.Step(1);
             Assert.False(o.Guild.HasExpedition, "Recalled before it set out, it ends.");
         }

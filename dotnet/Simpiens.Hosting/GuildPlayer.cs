@@ -13,9 +13,9 @@ namespace Simpiens.Hosting
     /// A scripted player for the guild (Epic 10 G4): it acts only through the typed commands a real player sends, as the
     /// economy soak's profiles do. After every tick it looks at what the dossier shows (the guild's own rule, read-only)
     /// and recruits the first resident, in spawn order, who would sign on at its wage, until the guild reaches its target
-    /// size. With <see cref="SendExpeditions"/> (Epic 10 G5) it then outfits the members from the stall's stock and sends
-    /// them out whenever the target's seam shows on the map. Shared by the Definition-of-Done scenarios, the soak's guild
-    /// profile (G6) and the console.
+    /// size. With <see cref="SendExpeditions"/> (Epic 10 G5) it then forms party 1 of its first four members (Epic 10
+    /// Part 2, W5, D65), outfits them from the stall's stock and sends them out whenever the target's seam shows on the
+    /// map. Shared by the Definition-of-Done scenarios, the soak's guild profile (G6) and the console.
     /// </summary>
     public sealed class GuildPlayer
     {
@@ -114,21 +114,44 @@ namespace Simpiens.Hosting
             return stock;
         }
 
+        /// <summary>The party it sends.</summary>
+        public const byte Party = 1;
+
         private void Expedition(GuildService guild, long tick)
         {
             if (guild.HasExpedition) return;
             var host = (IGuildHost)_sim.Simulation;
+
+            // Its party: the first four members, in join order, formed once (and again if one left)
+            _party.Clear();
+            for (int i = 0; i < guild.Members.Count && _party.Count < DispatchExpeditionCommand.MaxMembers; i++) _party.Add(guild.Members[i].CrawlerId);
+            if (!IsFormed(guild.Parties[Party - 1], _party))
+            {
+                var form = new FormPartyCommand(Party, _party.ToArray());
+                if (guild.CanFormParty(form) == GuildRules.Check.Ok) _commands.QueueInfluence(InfluenceEvent.CreateFormParty(SourceId, form));
+                return; // the command applies at the start of the next tick
+            }
+
             if (_outfit && !Outfitted(guild, host)) return;
             if (_stockpile > 0 && DraughtsInStock() < _stockpile) return;
             if (!SeamShows() || !AllWell(guild, host)) return;
 
-            _party.Clear();
-            for (int i = 0; i < guild.Members.Count && _party.Count < DispatchExpeditionCommand.MaxMembers; i++) _party.Add(guild.Members[i].CrawlerId);
-            var order = new DispatchExpeditionCommand(_target, _goal, _rule, _party.ToArray(), _draughts);
+            var order = new DispatchExpeditionCommand(Party, _target, _goal, _rule, _draughts);
             if (guild.CanDispatch(host, order) != GuildRules.Check.Ok) return;
             _commands.QueueInfluence(InfluenceEvent.CreateDispatchExpedition(SourceId, order));
             Dispatches++;
             if (FirstDispatchTick < 0) FirstDispatchTick = tick;
+        }
+
+        /// <summary>The party's members are <paramref name="members"/>, in that order.</summary>
+        private static bool IsFormed(GuildParty party, List<EntityId> members)
+        {
+            if (party.Members.Count != members.Count) return false;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (party.Members[i].CrawlerId != members[i]) return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -144,9 +167,9 @@ namespace Simpiens.Hosting
             var gear = GuildRules.BestProtectionInStock(host, hazard);
             int stock = gear != ItemType.None ? stall.SellStockOf(gear) : 0;
             bool all = true;
-            for (int i = 0; i < guild.Members.Count; i++)
+            for (int i = 0; i < _party.Count; i++)
             {
-                var id = guild.Members[i].CrawlerId;
+                var id = _party[i];
                 if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
                 var worn = member.Inventory.GetEquipped(EquipmentSlot.Protection);
                 bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > GuildRules.ProtectionAgainst(worn.Type, hazard);
@@ -160,13 +183,13 @@ namespace Simpiens.Hosting
             return all;
         }
 
-        /// <summary>Every member well enough for the muster, as the roster's health bars show.</summary>
+        /// <summary>Every member of its party well enough for the muster, as the roster's health bars show.</summary>
         private bool AllWell(GuildService guild, IGuildHost host)
         {
             float well = _sim.Simulation.Economy.Guild.Expedition.MusterHealth;
-            for (int i = 0; i < guild.Members.Count; i++)
+            for (int i = 0; i < _party.Count; i++)
             {
-                if (!host.TryGetCrawler(guild.Members[i].CrawlerId, out var member) || member.IsDowned || member.Health < well) return false;
+                if (!host.TryGetCrawler(_party[i], out var member) || member.IsDowned || member.Health < well) return false;
             }
             return true;
         }

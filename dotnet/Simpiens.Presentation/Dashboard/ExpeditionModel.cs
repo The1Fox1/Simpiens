@@ -22,11 +22,12 @@ namespace Simpiens.Presentation.Dashboard
     }
 
     /// <summary>
-    /// Expeditions on screen (Epic 10 G5, D7): the party builder in the roster window (the members to send, the target
-    /// among the charted hazard sectors, the goal, the retreat rule, outfitting from the stall's stock; Dispatch and
-    /// Recall) and the tracker while a party is out (the stage, the time out, the haul, each member's health, gear and
-    /// part). The rules are the guild's (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied
-    /// on the next tick. Views decide nothing.
+    /// Expeditions on screen (Epic 10 G5, D7): the party builder in the roster window (which of the guild's parties, the
+    /// target among the charted hazard sectors, the goal, the retreat rule, outfitting from the stall's stock; Dispatch
+    /// and Recall) and the tracker while a party is out (the stage, the time out, the haul, each member's health, gear and
+    /// part). A party's members are chosen on the roster's cards (Epic 10 Part 2, W5, D65). The rules are the guild's
+    /// (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied on the next tick. Views decide
+    /// nothing.
     /// </summary>
     public sealed class ExpeditionModel
     {
@@ -44,6 +45,19 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         // --- The builder ---
+
+        /// <summary>The party it sends (Epic 10 Part 2, W5): 1 or 2.</summary>
+        public byte PartySlot { get; private set; } = 1;
+
+        /// <summary>"Party 1 · 4": the party and how many it holds.</summary>
+        public string PartyText { get; private set; } = "Party 1";
+
+        /// <summary>The next party, and round again.</summary>
+        public void NextParty()
+        {
+            PartySlot = (byte)(PartySlot % GuildService.PartySlots + 1);
+            Refresh();
+        }
 
         /// <summary>Where a party can go: the charted hazard sectors, in map order. The builder starts on the most dangerous, where nobody goes alone (D11).</summary>
         public IReadOnlyList<(byte Id, string Name)> Targets => _targets;
@@ -78,7 +92,7 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>"Send 4 to The Drowned Gallery for 4 glowstone", or why not.</summary>
         public string DispatchText { get; private set; } = string.Empty;
         public bool CanDispatch { get; private set; }
-        public bool CanRecall => Guild?.HasExpedition == true && _context.Intervention != null;
+        public bool CanRecall => Guild != null && Guild.Parties[PartySlot - 1].IsOut && _context.Intervention != null;
         public Feedback Feedback { get; private set; } = Feedback.None;
 
         public void NextTarget()
@@ -143,14 +157,14 @@ namespace Simpiens.Presentation.Dashboard
                 }
             }
             _context.Intervention.QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Player", Order()));
-            Feedback = new Feedback(Invariant($"{_party.Count} set out for {TargetName}."), FeedbackTone.Ok);
+            Feedback = new Feedback(Invariant($"Party {PartySlot} sets out for {TargetName}, {_party.Count} strong."), FeedbackTone.Ok);
         }
 
         public void Recall()
         {
             if (!CanRecall) return;
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Player"));
-            Feedback = new Feedback("The party is called home.", FeedbackTone.Ok);
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Player", PartySlot));
+            Feedback = new Feedback(Invariant($"Party {PartySlot} is called home."), FeedbackTone.Ok);
         }
 
         // --- The tracker ---
@@ -210,26 +224,33 @@ namespace Simpiens.Presentation.Dashboard
             var guild = Guild;
             var host = Host;
             _party.Clear();
-            var rows = _guild.Rows;
-            for (int i = 0; i < rows.Count && _party.Count < DispatchExpeditionCommand.MaxMembers; i++)
+            if (guild != null)
             {
-                if (rows[i].InParty) _party.Add(rows[i].CrawlerId);
+                var members = guild.Parties[PartySlot - 1].Members;
+                for (int i = 0; i < members.Count; i++) _party.Add(members[i].CrawlerId);
             }
+            PartyText = _party.Count == 0 ? Invariant($"Party {PartySlot}") : Invariant($"Party {PartySlot} · {_party.Count}");
             if (guild == null || host == null || _context.Intervention == null || _targets.Count == 0)
             {
                 CanDispatch = false;
                 DispatchText = _targets.Count == 0 ? "Chart a hazard sector to send a party there." : string.Empty;
                 return;
             }
+            if (_party.Count == 0)
+            {
+                CanDispatch = false;
+                DispatchText = Invariant($"Party {PartySlot} has no members: choose them on the Members tab.");
+                return;
+            }
             var check = guild.CanDispatch(host, Order());
             CanDispatch = check == GuildRules.Check.Ok;
             DispatchText = CanDispatch
-                ? Invariant($"Send {_party.Count} to {TargetName} for {Goal}.") + DraughtsInStock(host)
+                ? Invariant($"Send party {PartySlot}, {_party.Count} strong, to {TargetName} for {Goal}.") + DraughtsInStock(host)
                 : GuildRules.Describe(check, string.Empty, null, guild, Tick, (_context.Simulation.Economy ?? EconomyTuning.Default).Guild);
         }
 
         private DispatchExpeditionCommand Order() =>
-            new DispatchExpeditionCommand(_targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, _party.ToArray(), Draughts);
+            new DispatchExpeditionCommand(PartySlot, _targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, Draughts);
 
         /// <summary>" 3 of 8 draughts in stock." when the party is to carry some and the stall can't give them all; empty otherwise.</summary>
         private string DraughtsInStock(IGuildHost host)
@@ -247,7 +268,8 @@ namespace Simpiens.Presentation.Dashboard
         {
             var guild = Guild;
             var host = Host;
-            GuildParty party = null;
+            // The builder's party when it is out, or else the first out
+            GuildParty party = guild != null && guild.Parties[PartySlot - 1].IsOut ? guild.Parties[PartySlot - 1] : null;
             for (int i = 0; guild != null && i < guild.Parties.Count && party == null; i++)
             {
                 if (guild.Parties[i].IsOut) party = guild.Parties[i];

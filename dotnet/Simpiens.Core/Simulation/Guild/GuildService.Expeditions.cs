@@ -19,8 +19,9 @@ namespace Simpiens.Simulation.Guild
     /// each member is paid a share. The party is a <see cref="GroupType.TemporaryParty"/> group inside the guild, led by
     /// the patron, with an <see cref="DirectiveType.Expedition"/> directive issued once at dispatch, whose target moves
     /// with the stage. The guild holds its parties in slots (<see cref="GuildParty"/>, Epic 10 Part 2, W5, D60), each
-    /// with its own expedition; one is out at a time. Main thread: the stages are judged every tick after the intents
-    /// run, from what the members' states show.
+    /// with its own expedition; one is out at a time. A party is formed by the player and outlives its trips (D65): its
+    /// group is made when it is formed and disbanded when it is emptied. Main thread: the stages are judged every tick
+    /// after the intents run, from what the members' states show.
     /// </summary>
     public sealed partial class GuildService
     {
@@ -114,37 +115,91 @@ namespace Simpiens.Simulation.Guild
             return party != null && party.IsOut && party.Roster[party.IndexOf(crawlerId)].IsWithParty;
         }
 
+        /// <summary>The rule's verdict on forming a party as <paramref name="order"/> says, without acting.</summary>
+        public GuildRules.Check CanFormParty(in FormPartyCommand order) => GuildRules.CheckFormParty(this, order);
+
+        /// <summary>
+        /// Sets a party's members (D65), in the order given: a member in another party leaves it, one no longer named leaves
+        /// this one, and the rest join its group (made now if it has none: a <see cref="GroupType.TemporaryParty"/> inside the
+        /// guild, led by the patron), each at its guild allegiance. A party emptied is disbanded. Refused, it changes nothing.
+        /// </summary>
+        public GuildRules.Check FormParty(IGuildHost host, in FormPartyCommand order, uint tick)
+        {
+            var check = CanFormParty(order);
+            if (check != GuildRules.Check.Ok)
+            {
+                LogRefusal(host, "Form party", order.Count > 0 ? order[0] : default, check, tick);
+                return check;
+            }
+            var party = _parties[order.PartySlot - 1];
+
+            // Who leaves: this party's members no longer named, and the named members' other parties
+            for (int i = party.Roster.Count - 1; i >= 0; i--)
+            {
+                if (!Names(order, party.Roster[i].CrawlerId)) RemoveFromParty(host, party, party.Roster[i].CrawlerId);
+            }
+            for (int i = 0; i < order.Count; i++)
+            {
+                var from = PartyOf(order[i]);
+                if (from != null && from != party) RemoveFromParty(host, from, order[i]);
+            }
+
+            // Who joins, then the roster in the order given
+            var groups = host.Groups;
+            var tuning = Tuning(host);
+            if (order.Count > 0 && party.GroupId == 0 && groups != null)
+            {
+                var anchor = host.ActiveStalls.Count > 0 ? host.ActiveStalls[0].Position : Vec2.Zero;
+                party.GroupId = groups.CreateGroup(GroupType.TemporaryParty, WorldRegistry.PlayerEntityId, anchor, 100, _groupId);
+            }
+            for (int i = 0; i < order.Count; i++)
+            {
+                var id = order[i];
+                if (party.IndexOf(id) >= 0) continue;
+                JoinParty(host, party, id, tuning);
+            }
+            party.Roster.Clear();
+            for (int i = 0; i < order.Count; i++) party.Roster.Add(new ExpeditionMember(order[i], 0));
+            if (party.Roster.Count == 0) DisbandParty(host, party);
+
+            SimLog.Economy.ZLogInformation($"Party {party.Slot} is formed of {order.Count}{(party.GroupId != 0 ? $" (group {party.GroupId})" : string.Empty)}");
+            return GuildRules.Check.Ok;
+        }
+
+        private static bool Names(in FormPartyCommand order, EntityId crawlerId)
+        {
+            for (int i = 0; i < order.Count; i++)
+            {
+                if (order[i] == crawlerId) return true;
+            }
+            return false;
+        }
+
         /// <summary>The rule's verdict on <paramref name="order"/> now, without acting.</summary>
         public GuildRules.Check CanDispatch(IGuildHost host, in DispatchExpeditionCommand order)
             => GuildRules.CheckDispatch(this, host, order, SectorYield(host, order.TargetSectorId), Tuning(host));
 
         /// <summary>
-        /// Sends a party (D7): the party's group, inside the guild and led by the patron, with each member at its guild
-        /// allegiance; the order's directive; the muster. Refused, it changes nothing.
+        /// Sends a party (D7): its members, each with what it carries of the haul's item noted; the order's directive on
+        /// the party's group; the muster. Refused, it changes nothing.
         /// </summary>
         public GuildRules.Check Dispatch(IGuildHost host, in DispatchExpeditionCommand order, uint tick)
         {
             var check = CanDispatch(host, order);
-            var groups = host.Groups;
-            byte group = check == GuildRules.Check.Ok && groups != null
-                ? groups.CreateGroup(GroupType.TemporaryParty, WorldRegistry.PlayerEntityId, host.ActiveStalls[0].Position, 100, _groupId)
-                : (byte)0;
-            if (check == GuildRules.Check.Ok && group == 0) check = GuildRules.Check.BadParty; // no group to make it with
+            var party = check == GuildRules.Check.Ok ? _parties[order.PartySlot - 1] : null;
+            if (check == GuildRules.Check.Ok && party.GroupId == 0 && host.Groups != null) check = GuildRules.Check.BadParty; // no group to direct
             if (check != GuildRules.Check.Ok)
             {
-                LogRefusal(host, "Dispatch", order.Count > 0 ? order[0] : default, check, tick);
+                LogRefusal(host, "Dispatch", party != null && party.Roster.Count > 0 ? party.Roster[0].CrawlerId : default, check, tick);
                 return check;
             }
 
-            var tuning = Tuning(host);
             var haul = SectorYield(host, order.TargetSectorId);
-            var party = _parties[0];
-            party.GroupId = group;
             party.Record = new ExpeditionRecord
             {
                 DispatchTick = tick,
                 StageTick = tick,
-                PartyGroupId = group,
+                PartyGroupId = party.GroupId,
                 TargetSectorId = order.TargetSectorId,
                 HaulItem = haul,
                 Goal = order.Goal,
@@ -152,42 +207,34 @@ namespace Simpiens.Simulation.Guild
                 Stage = ExpeditionStage.Muster,
                 Draughts = order.Draughts
             };
-            party.Roster.Clear();
-            for (int i = 0; i < order.Count; i++)
+            for (int i = 0; i < party.Roster.Count; i++)
             {
-                var id = order[i];
+                var id = party.Roster[i].CrawlerId;
                 host.TryGetCrawler(id, out var crawler);
-                byte allegiance = groups.TryGetMembership(id, _groupId, out var guild) ? guild.Allegiance : tuning.InitialAllegiance;
-                groups.AddMember(group, id, RoleRank.Follower, allegiance);
-                crawler.Memberships = groups.GetMemberships(id);
-                int carried = crawler.Inventory != null ? crawler.Inventory.GetItemCount(haul) : 0;
-                party.Roster.Add(new ExpeditionMember(id, (ushort)Math.Min(ushort.MaxValue, carried)));
+                int carried = crawler?.Inventory != null ? crawler.Inventory.GetItemCount(haul) : 0;
+                party.Roster[i] = new ExpeditionMember(id, (ushort)Math.Min(ushort.MaxValue, carried));
             }
             Direct(host, party);
 
-            SimLog.Economy.ZLogInformation($"The guild sent {order.Count} to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}, {order.Draughts} draughts each); party group {group}");
-            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionSent, order[0], WorldRegistry.PlayerEntityId,
-                order.TargetSectorId, tick, ChronicleIntensity.Dramatic, order.Count));
+            SimLog.Economy.ZLogInformation($"The guild sent party {party.Slot}, {party.Roster.Count} strong, to sector {order.TargetSectorId} for {order.Goal} {haul} ({order.Rule}, {order.Draughts} draughts each)");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ExpeditionSent, party.Roster[0].CrawlerId, WorldRegistry.PlayerEntityId,
+                order.TargetSectorId, tick, ChronicleIntensity.Dramatic, party.Roster.Count));
             return GuildRules.Check.Ok;
         }
 
-        /// <summary>The player calls the party home (D7): before it sets out, the expedition ends; on the way or at work, it turns back.</summary>
-        public GuildRules.Check Recall(IGuildHost host, uint tick)
+        /// <summary>The player calls a party home (D7): before it sets out, the expedition ends; on the way or at work, it turns back.</summary>
+        public GuildRules.Check Recall(IGuildHost host, byte partySlot, uint tick)
         {
-            var check = GuildRules.CheckRecall(this);
+            var check = GuildRules.CheckRecall(this, partySlot);
             if (check != GuildRules.Check.Ok)
             {
                 LogRefusal(host, "Recall", default, check, tick);
                 return check;
             }
-            for (int i = 0; i < _parties.Length; i++)
-            {
-                var party = _parties[i];
-                if (!party.IsOut) continue;
-                SimLog.Economy.ZLogInformation($"The player recalled party {party.Slot} ({party.Record.Stage})");
-                if (party.Record.Stage == ExpeditionStage.Muster) EndExpedition(host, party, tick);
-                else if (party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) TurnBack(host, party, tick);
-            }
+            var party = _parties[partySlot - 1];
+            SimLog.Economy.ZLogInformation($"The player recalled party {party.Slot} ({party.Record.Stage})");
+            if (party.Record.Stage == ExpeditionStage.Muster) EndExpedition(host, party, tick);
+            else if (party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) TurnBack(host, party, tick);
             return GuildRules.Check.Ok;
         }
 
@@ -442,22 +489,59 @@ namespace Simpiens.Simulation.Guild
             return true;
         }
 
-        /// <summary>The expedition ends: the directive is cleared and the party disbanded; its members stay in the guild.</summary>
+        /// <summary>
+        /// The expedition ends (D65): the directive is cleared and the party stays formed. A member who stayed behind rejoins
+        /// its group; one who deserted, or left the guild or the outpost, is off the roster; every part is reset. A party
+        /// left with nobody is disbanded.
+        /// </summary>
         private void EndExpedition(IGuildHost host, GuildParty party, uint tick)
         {
             var groups = host.Groups;
-            byte group = party.GroupId;
-            if (groups != null && group != 0)
-            {
-                groups.ClearDirective(group);
-                groups.DisbandGroup(group);
-            }
+            if (groups != null && party.GroupId != 0) groups.ClearDirective(party.GroupId);
+            var tuning = Tuning(host);
             var roster = party.Roster;
-            for (int i = 0; i < roster.Count; i++)
+            for (int i = roster.Count - 1; i >= 0; i--)
             {
-                if (groups != null && host.TryGetCrawler(roster[i].CrawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(roster[i].CrawlerId);
+                var member = roster[i];
+                bool stays = member.Status != ExpeditionMemberStatus.Deserted && member.Status != ExpeditionMemberStatus.Left && IsMember(member.CrawlerId)
+                    && host.TryGetCrawler(member.CrawlerId, out var crawler) && !crawler.HasLeft;
+                if (!stays)
+                {
+                    roster.RemoveAt(i);
+                    continue;
+                }
+                if (member.Status == ExpeditionMemberStatus.StayedBehind) JoinParty(host, party, member.CrawlerId, tuning);
+                roster[i] = new ExpeditionMember(member.CrawlerId, 0);
             }
             SimLog.Economy.ZLogInformation($"Party {party.Slot}'s expedition ended at t{tick} ({party.Record.Stage}, {(party.Record.TurnedBack ? "turned back" : "as ordered")})");
+            party.Record = default;
+            if (roster.Count == 0) DisbandParty(host, party);
+        }
+
+        /// <summary>A member joins <paramref name="party"/>'s group at its guild allegiance; its copy of its memberships follows.</summary>
+        private void JoinParty(IGuildHost host, GuildParty party, EntityId crawlerId, in GuildTuning tuning)
+        {
+            var groups = host.Groups;
+            if (groups == null || party.GroupId == 0) return;
+            byte allegiance = groups.TryGetMembership(crawlerId, _groupId, out var guild) ? guild.Allegiance : tuning.InitialAllegiance;
+            groups.AddMember(party.GroupId, crawlerId, RoleRank.Follower, allegiance);
+            if (host.TryGetCrawler(crawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(crawlerId);
+        }
+
+        /// <summary>A member leaves a party that is home: off its roster and out of its group; a party emptied is disbanded.</summary>
+        private void RemoveFromParty(IGuildHost host, GuildParty party, EntityId crawlerId)
+        {
+            int i = party.IndexOf(crawlerId);
+            if (i < 0) return;
+            party.Roster.RemoveAt(i);
+            if (party.GroupId != 0) LeaveParty(host, party, crawlerId);
+            if (party.Roster.Count == 0 && !party.IsOut) DisbandParty(host, party);
+        }
+
+        /// <summary>The party's group is disbanded and its slot freed.</summary>
+        private static void DisbandParty(IGuildHost host, GuildParty party)
+        {
+            if (host.Groups != null && party.GroupId != 0) host.Groups.DisbandGroup(party.GroupId);
             party.Clear();
         }
 

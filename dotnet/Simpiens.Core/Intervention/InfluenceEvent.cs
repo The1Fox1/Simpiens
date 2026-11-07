@@ -24,7 +24,9 @@ namespace Simpiens.Intervention
         HireArtisan = 12,
         /// <summary>Shifts (Epic 10 Part 2, W1.3): order makes at a station, set which blocks of the day an artisan works.</summary>
         OrderStation = 13,
-        SetShifts = 14
+        SetShifts = 14,
+        /// <summary>The guildhall (Epic 10 Part 2, W5, D65): set one of the guild's parties' members.</summary>
+        FormParty = 15
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -65,32 +67,61 @@ namespace Simpiens.Intervention
     }
 
     /// <summary>
-    /// The player sends a party of guild members out (Epic 10 G5, D7): one to <see cref="MaxMembers"/> members, the
-    /// sector, how many of what its nodes yield to bring back, when to turn back, and how many draughts each member
-    /// carries from the stall's stock (Epic 10 Part 2, W2, D44). Zero-allocation.
+    /// The player sends one of the guild's parties out (Epic 10 G5, D7; the party by its slot since Epic 10 Part 2, W5,
+    /// D65): the sector, how many of what its nodes yield to bring back, when to turn back, and how many draughts each
+    /// member carries from the stall's stock (W2, D44). Its members are the party's. Zero-allocation.
     /// </summary>
     public readonly struct DispatchExpeditionCommand
     {
+        /// <summary>A party's members at most.</summary>
         public const int MaxMembers = 4;
 
         /// <summary>The most draughts a member is given to carry (D44).</summary>
         public const byte MaxDraughts = 2;
 
+        public readonly byte PartySlot;
         public readonly byte TargetSectorId;
         public readonly byte Goal;
         public readonly RetreatRule Rule;
-        public readonly int Count;
         public readonly byte Draughts;
-        private readonly EntityId _member0, _member1, _member2, _member3;
 
-        public DispatchExpeditionCommand(byte targetSectorId, byte goal, RetreatRule rule, ReadOnlySpan<EntityId> members, byte draughts = 0)
+        public DispatchExpeditionCommand(byte partySlot, byte targetSectorId, byte goal, RetreatRule rule, byte draughts = 0)
         {
-            if (members.Length > MaxMembers) throw new ArgumentException($"A party has at most {MaxMembers} members.", nameof(members));
             if (draughts > MaxDraughts) throw new ArgumentException($"A member carries at most {MaxDraughts} draughts.", nameof(draughts));
+            PartySlot = partySlot;
             TargetSectorId = targetSectorId;
             Goal = goal;
             Rule = rule;
             Draughts = draughts;
+        }
+    }
+
+    /// <summary>The player calls one of the guild's parties home (D7), by its slot.</summary>
+    public readonly struct RecallExpeditionCommand
+    {
+        public readonly byte PartySlot;
+
+        public RecallExpeditionCommand(byte partySlot)
+        {
+            PartySlot = partySlot;
+        }
+    }
+
+    /// <summary>
+    /// The player sets the members of one of the guild's parties (Epic 10 Part 2, W5, D65): up to
+    /// <see cref="DispatchExpeditionCommand.MaxMembers"/> guild members, in order; a member in another party moves over,
+    /// and none empties the party. The party outlives its expeditions. Zero-allocation.
+    /// </summary>
+    public readonly struct FormPartyCommand
+    {
+        public readonly byte PartySlot;
+        public readonly int Count;
+        private readonly EntityId _member0, _member1, _member2, _member3;
+
+        public FormPartyCommand(byte partySlot, ReadOnlySpan<EntityId> members)
+        {
+            if (members.Length > DispatchExpeditionCommand.MaxMembers) throw new ArgumentException($"A party has at most {DispatchExpeditionCommand.MaxMembers} members.", nameof(members));
+            PartySlot = partySlot;
             Count = members.Length;
             _member0 = Count > 0 ? members[0] : default;
             _member1 = Count > 1 ? members[1] : default;
@@ -106,11 +137,6 @@ namespace Simpiens.Intervention
             3 => _member3,
             _ => throw new ArgumentOutOfRangeException(nameof(index)),
         };
-    }
-
-    /// <summary>The player calls the party home (D7). One expedition at a time, so it names none.</summary>
-    public readonly struct RecallExpeditionCommand
-    {
     }
 
     /// <summary>The player builds a station (Epic 10 Part 2, D10): the one at this index of the map's stations.</summary>
@@ -324,6 +350,8 @@ namespace Simpiens.Intervention
         public readonly DismissCommand Dismiss;
         public readonly SetWageCommand SetWage;
         public readonly DispatchExpeditionCommand DispatchExpedition;
+        public readonly RecallExpeditionCommand RecallExpedition;
+        public readonly FormPartyCommand FormParty;
         public readonly GiveGearCommand GiveGear;
         public readonly BuildStationCommand BuildStation;
         public readonly HireArtisanCommand HireArtisan;
@@ -346,6 +374,7 @@ namespace Simpiens.Intervention
             InfluenceCommandType.HireArtisan => "HireArtisan",
             InfluenceCommandType.OrderStation => "OrderStation",
             InfluenceCommandType.SetShifts => "SetShifts",
+            InfluenceCommandType.FormParty => "FormParty",
             _ => string.Empty
         };
 
@@ -364,8 +393,12 @@ namespace Simpiens.Intervention
             in BuildStationCommand buildStation = default,
             in HireArtisanCommand hireArtisan = default,
             in OrderStationCommand orderStation = default,
-            in SetShiftsCommand setShifts = default)
+            in SetShiftsCommand setShifts = default,
+            in RecallExpeditionCommand recallExpedition = default,
+            in FormPartyCommand formParty = default)
         {
+            RecallExpedition = recallExpedition;
+            FormParty = formParty;
             BuildStation = buildStation;
             HireArtisan = hireArtisan;
             OrderStation = orderStation;
@@ -403,9 +436,14 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.DispatchExpedition, dispatchExpedition: cmd);
         }
 
-        public static InfluenceEvent CreateRecallExpedition(string sourceId)
+        public static InfluenceEvent CreateRecallExpedition(string sourceId, byte partySlot)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition);
+            return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition, recallExpedition: new RecallExpeditionCommand(partySlot));
+        }
+
+        public static InfluenceEvent CreateFormParty(string sourceId, in FormPartyCommand cmd)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.FormParty, formParty: cmd);
         }
 
         public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)

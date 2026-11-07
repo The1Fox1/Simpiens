@@ -31,8 +31,8 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
 
-        /// <summary>Sent with the next party (the builder's toggle; every member at first).</summary>
-        public bool InParty { get; set; } = true;
+        /// <summary>Its party, 1 or 2, or 0 for none (Epic 10 Part 2, W5, D65), as the guild holds it.</summary>
+        public byte Party { get; internal set; }
 
         /// <summary>The wage the slider sets; Apply sends it.</summary>
         public int PendingWage { get; set; }
@@ -113,11 +113,8 @@ namespace Simpiens.Presentation.Dashboard
                 var contract = guild.Members[i];
                 if (i == _rows.Count) _rows.Add(new GuildRosterRow { PendingWage = contract.Wage });
                 var row = _rows[i];
-                if (row.CrawlerId != contract.CrawlerId)
-                {
-                    row.PendingWage = contract.Wage; // a new member in this place
-                    row.InParty = true;
-                }
+                if (row.CrawlerId != contract.CrawlerId) row.PendingWage = contract.Wage; // a new member in this place
+                row.Party = guild.PartyOf(contract.CrawlerId)?.Slot ?? 0;
                 row.CrawlerId = contract.CrawlerId;
                 row.Wage = contract.Wage;
                 row.UnpaidVisits = contract.UnpaidVisits;
@@ -156,6 +153,45 @@ namespace Simpiens.Presentation.Dashboard
                 sent++;
             }
             Feedback = sent > 0 ? new Feedback(Invariant($"{sent} wage(s) set for the next visit."), FeedbackTone.Ok) : Feedback.None;
+        }
+
+        /// <summary>
+        /// A card's party button (Epic 10 Part 2, W5, D65): the member moves to the next party with room, or out of parties
+        /// after the last, sent as a <see cref="FormPartyCommand"/> for the party it joins (which takes it out of its old one)
+        /// or the party it leaves. A party out keeps its members.
+        /// </summary>
+        public void CycleParty(EntityId crawlerId)
+        {
+            var guild = _context.Simulation?.Guild;
+            if (guild == null || _context.Intervention == null) return;
+            var from = guild.PartyOf(crawlerId);
+            if (from != null && from.IsOut)
+            {
+                Feedback = new Feedback(Invariant($"Party {from.Slot} is out: change it when it is home."), FeedbackTone.Notice);
+                return;
+            }
+            int slot = from?.Slot ?? 0;
+            for (int step = 1; step <= GuildService.PartySlots; step++)
+            {
+                int next = (slot + step) % (GuildService.PartySlots + 1);
+                if (next == 0) break; // out of parties
+                var to = guild.Parties[next - 1];
+                if (to.IsOut || to.Members.Count >= DispatchExpeditionCommand.MaxMembers) continue;
+                var members = new EntityId[to.Members.Count + 1];
+                for (int i = 0; i < to.Members.Count; i++) members[i] = to.Members[i].CrawlerId;
+                members[to.Members.Count] = crawlerId;
+                _context.Intervention.QueueInfluence(InfluenceEvent.CreateFormParty("Player", new FormPartyCommand((byte)next, members)));
+                Feedback = new Feedback(Invariant($"{_context.FriendlyName(crawlerId, DossierModel.UnknownName)} joins party {next}."), FeedbackTone.Ok);
+                return;
+            }
+            if (from == null) return;
+            var staying = new EntityId[from.Members.Count - 1];
+            for (int i = 0, n = 0; i < from.Members.Count; i++)
+            {
+                if (from.Members[i].CrawlerId != crawlerId) staying[n++] = from.Members[i].CrawlerId;
+            }
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateFormParty("Player", new FormPartyCommand(from.Slot, staying)));
+            Feedback = new Feedback(Invariant($"{_context.FriendlyName(crawlerId, DossierModel.UnknownName)} leaves party {from.Slot}."), FeedbackTone.Ok);
         }
 
         /// <summary>Dismiss: a <see cref="DismissCommand"/>; the member leaves on the next tick.</summary>
