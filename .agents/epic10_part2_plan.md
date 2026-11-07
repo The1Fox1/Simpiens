@@ -485,6 +485,41 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   1. **[x] S1 Animated hazards** (done 2026-11-06: `27ce4e1`, art pins `8dc7945`, renders `0f16fb0`; puffs and ripples drawn on 24-pixel canvases and laid over the floor, since 16 pixels didn't read at the whole floor's zoom and a standing piece must fit a cell) [Possibly Complex: art in two projections, renders and pins]: D69; a scene test (the effects stand in charted hazard sectors only, and move with time); the art sheet looked at; pins and renders re-recorded.
   2. **[x] S2 The caravan on the map** (done 2026-11-06: `c79f1b4`, art pins `4f1dce4`, render `59ed406`) [Possibly Complex: a route as map data, a frame field, art]: D70; a core test (the caravan reaches the stall on each visit's tick and is gone between visits); a scene test; renders.
 
+### S3. One last stretch: a hurt crawler wears a blinking red coat (added 2026-11-07)
+**Complexity:** Possibly Complex: a new way of drawing in the renderer (a silhouette in a flat colour) on both backends, whose fit over the sprite must be proved in pixels. The rest is Basic.
+- **The ask (the producer, 2026-11-07):** "I want Crawlers who are taking damage to get a blinking red animated 'coat' over them"
+- **D71, the hurt coat:**
+  - **What counts as taking damage:** health taken this tick, after gear's resistance. Today only a hazard sector takes it, and gear stops at most 75% of one, so a crawler in a hazard is hurt every tick it stands there.
+    - The runtime writes it on the crawler where it takes it (`AgentState.HurtThisTick`), every tick.
+    - It is derived per tick, so it isn't saved.
+    - Nothing decides on it, so behaviour and the golden hashes don't move.
+    - Later damage (combat) writes the same field.
+  - **The frame:** a `CrawlerFlags.Hurt` bit, a passing moment shown over the crawler's state. It chooses no pose.
+  - **The coat:** the crawler's own sprite (whatever it's drawn with: its body, today's figure, a worn variant) drawn again right over it, as a flat red silhouette.
+    - **The blink:** at 2 Hz it snaps on and fades in steps (0.65, 0.4, 0.15, then off, an eighth of a second each).
+    - All hurt crawlers blink together, on the view's clock.
+    - It is faded by the fog as its crawler is.
+    - It doesn't cover the carried bundle.
+  - **How it's drawn:** a draw item marked `Silhouette` goes through the stock `BasicEffect` with its fog forced to 100% (`FogStart == FogEnd`).
+    - The fog replaces a texel's colour with the fog's colour and keeps its alpha: XNA's old trick for a flat-colour silhouette, with no shader of our own to compile, in KNI and MonoGame alike.
+    - The effect's fog writes premultiplied colour, so a silhouette batch blends premultiplied (`BlendState.AlphaBlend`).
+    - A silhouette breaks the batch, a few times a frame at most.
+  - **Why not a red tint:** a multiply tint (RimWorld's damage flash) only takes green and blue away. Dark clothes stay dark, and it doesn't read at the whole floor's zoom.
+  - **Why not baked silhouettes:** bodies are baked into the world texture at run time, so a silhouette per cell doubles that region and its plumbing.
+  - **Photosensitivity:** 2 flashes a second (under the guideline of 3), on a crawler-sized area, never at full red.
+- **Steps:**
+  1. **S3.1 The signal** [Basic]: `AgentState.HurtThisTick`, written by the runtime.
+     - A core test: a crawler in the Sump is hurt each tick and one in the hub isn't.
+     - Golden 3/3 unchanged.
+  2. **S3.2 The coat in the scene** [Basic]: `CrawlerFlags.Hurt`; `HurtCoat` (its colour and the blink); the scene's coat item, right after its crawler.
+     - Scene tests: a hurt crawler gets one coat in its own sprite, and an unhurt one gets none; it blinks; the fog hides it.
+  3. **S3.3 The silhouette in the renderer** [Possibly Complex]: `DrawItem.Silhouette` and the `BasicEffect` path.
+     - A pixel test: at full strength the coat covers exactly the sprite's pixels, at whole and in-between zooms.
+     - The MonoGame compile.
+  4. **S3.4 Renders and docs** [Basic]: a render of a hurt crawler.
+     - Existing renders re-recorded (after a look, in their own commit) wherever a hurt crawler shows in them.
+     - Docs: the epic, `AGENTS.md` and the decision log.
+
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.
 - 2026-11-04: W0.2 done (above): ore and herbs are plentiful, glowstone scarce, purses small; an artisan qualifies early on every seed.
