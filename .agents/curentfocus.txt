@@ -71,6 +71,9 @@ CURRENT FOCUS
   and without the guild.
   The stretch, done 2026-11-06: the hazards animate in the view (D69), and the trade caravan walks in from the Road
   Gate to the stall for each visit and back out, its place a pure function of the clock (D70).
+  The producer's last stretch, done 2026-11-07 (S3, D71): a crawler taking damage wears a blinking red coat, a flat
+  silhouette of its own sprite drawn through the stock BasicEffect with full fog; the core only records each
+  crawler's damage in its last tick (unsaved; golden unchanged).
   NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6).
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1

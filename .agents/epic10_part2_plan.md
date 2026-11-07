@@ -508,15 +508,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **Why not baked silhouettes:** bodies are baked into the world texture at run time, so a silhouette per cell doubles that region and its plumbing.
   - **Photosensitivity:** 2 flashes a second (under the guideline of 3), on a crawler-sized area, never at full red.
 - **Steps:**
-  1. **S3.1 The signal** [Basic]: `AgentState.HurtThisTick`, written by the runtime.
+  1. **[x] S3.1 The signal** (done 2026-11-07: `55938e8`) [Basic]: `AgentState.HurtThisTick`, written by the runtime.
      - A core test: a crawler in the Sump is hurt each tick and one in the hub isn't.
      - Golden 3/3 unchanged.
-  2. **S3.2 The coat in the scene** [Basic]: `CrawlerFlags.Hurt`; `HurtCoat` (its colour and the blink); the scene's coat item, right after its crawler.
+  2. **[x] S3.2 The coat in the scene** (done 2026-11-07: `48bc0b3`) [Basic]: `CrawlerFlags.Hurt`; `HurtCoat` (its colour and the blink); the scene's coat item, right after its crawler.
      - Scene tests: a hurt crawler gets one coat in its own sprite, and an unhurt one gets none; it blinks; the fog hides it.
-  3. **S3.3 The silhouette in the renderer** [Possibly Complex]: `DrawItem.Silhouette` and the `BasicEffect` path.
+  3. **[x] S3.3 The silhouette in the renderer** (done 2026-11-07: `48bc0b3`; the fog trick fit exactly at the first try, and on the pinned image's llvmpipe) [Possibly Complex]: `DrawItem.Silhouette` and the `BasicEffect` path.
      - A pixel test: at full strength the coat covers exactly the sprite's pixels, at whole and in-between zooms.
      - The MonoGame compile.
-  4. **S3.4 Renders and docs** [Basic]: a render of a hurt crawler.
+  4. **[x] S3.4 Renders and docs** (done 2026-11-07: renders and pins `0a5b582`; the t300 views show the crawler mining in the Glow Caves in its coat) [Basic]: a render of a hurt crawler (`render-iso-hurt-t300-zoomed`).
      - Existing renders re-recorded (after a look, in their own commit) wherever a hurt crawler shows in them.
      - Docs: the epic, `AGENTS.md` and the decision log.
 
