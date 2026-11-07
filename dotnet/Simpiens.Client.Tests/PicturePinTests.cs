@@ -173,12 +173,14 @@ namespace Simpiens.Client.Tests
         // Epic 10 Part 2 W5.2 (2026-11-06): the guildhall's eight barracks bunks, and with eight more entities on the map every
         // later id moves, so every crawler's look and day moved too; every item pin re-pinned with the render references, the
         // whole floor's labels held, the zoomed views' moved with the selected crawler.
-        private static readonly (ulong, ulong) PinnedTick0 = (12747935816705717298UL, 14344167986805025999UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (2565234048395133202UL, 14344167986805025999UL);
+        // Epic 10 Part 2's stretch (2026-11-06, D69): the hazards' animations in the whole floor's views; items re-pinned,
+        // labels and the zoomed views unchanged (no hazard sector in them).
+        private static readonly (ulong, ulong) PinnedTick0 = (12937878628055227934UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (6032210246337508215UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
         private static readonly (ulong, ulong) PinnedSelectedZoomed = (16238647467431113274UL, 4268601865235128987UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (17826139544596396097UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (18273753880055733174UL, 7638092815957420050UL);
         private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14081764154863997278UL, 13801314577213324051UL);
     }
 }
