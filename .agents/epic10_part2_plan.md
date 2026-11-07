@@ -450,12 +450,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
 
 ### W6. The gate (1–2 days)
 **Complexity:** Possibly Complex: the scenarios and the soak band (set with the producer); the close-out is Basic.
-- [ ] **W6.1 `TheWorkshopLoopPlaysThrough`,** [Possibly Complex] 45 minutes on the default seed: build, hire, make, outfit, two parties, hauls, sales.
-- [ ] **W6.2 A save mid-craft and mid-expedition** [Possibly Complex] loads byte for byte and plays on.
-- [ ] **W6.3 The soak:** [Possibly Complex]
+- [x] **W6.1 `TheWorkshopLoopPlaysThrough`,** [Possibly Complex] 45 minutes on the default seed: build, hire, make, outfit, two parties, hauls, sales.
+- [x] **W6.2 A save mid-craft and mid-expedition** [Possibly Complex] loads byte for byte and plays on.
+- [x] **W6.3 The soak:** (the band proposed by exception, D68) [Possibly Complex]
   - a `crafting` profile's band, set with the producer;
   - the other bands re-checked.
-- [ ] **W6.4 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] and the gate seeds with and without the guild and workshop players.
+- [x] **W6.4 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] and the gate seeds with and without the guild and workshop players.
 - [ ] **W6.5 The producer's play session.** [Possibly Complex: grade each fix it asks for]
 - [ ] **W6.6 Close-out:** [Basic]
   - **the roadmap:** Part 2 COMPLETED, Milestone 3, Epic UI-4 delivered;
@@ -467,6 +467,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
     - **The scripted players spend like nobody minds:** the stations go up the moment the stall can pay, and the guild re-signs members who quit unpaid, 20g a time (seed 1 signed 21 and ended with none). Both now take an optional reserve (W6.0).
     - **F14 is the economy's balance:** with a 200g reserve for the guild no wage went unpaid, but treasuries hover at 0–300g. On the default seed the stall affords the forge and a guild of eight, never the still as well (its 300g never comes back). Where the money goes: upkeep 320g a day, eight members' wages about 130g a day after lodging, two artisans' about 40g, the stations 600g once; the guild's glowstone feeds the forge's respirators instead of the caravan's exports.
   - **D67, the gate's player is a cautious one:** the full-loop scenario and the `crafting` soak profile use the scripted players with reserves, builds before recruiting, as a player who wants both stations would. That's input, not a rule.
+  - **Done:** W6.0 `c7e21a5`; W6.1 and W6.2 `bed8565` (on gate seed 1: the deviation in D67's commit). W6.3, the `crafting` profile, its band proposed by exception (economy model §7: treasuries of 1–390g at day 3; the band asks for integrity). W6.4: seeds 1–120 pass the outpost's day without and with the guild player (120/120 each, 2026-11-06); the 23 gate seeds hold two days with the workshop players and the crafting guild (23/23).
   - **D68, no retuning of the economy under the directive:** the producer sets the `crafting` band (W6.3). The soak measures the loop as it stands and proposes a band by exception; F14's numbers and the levers (station cost, upkeep, glowstone's export price, members' wages) go to the play session.
 
 ## Log

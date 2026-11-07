@@ -51,12 +51,24 @@ namespace Simpiens.Hosting
         /// </summary>
         public const int GuildProfileSize = Simpiens.Intervention.DispatchExpeditionCommand.MaxMembers;
 
+        /// <summary>
+        /// The crafting profile (Epic 10 Part 2, W6.3): fair prices, the forge making respirators and the still draughts,
+        /// and the guildhall's guild of eight in two parties sent together, keeping a reserve (D67). Its band is proposed by
+        /// exception from W6.3's measurement over seeds 1-15 and 20261009 (D68): treasuries at day 3 of 1-390g against the
+        /// fair player's 771-1,277g (F14), so the band asks for the loop's integrity, not a treasury.
+        /// </summary>
+        public const int CraftingGuildSize = 8;
+        public const uint CraftingGuildReserve = 200;
+        public const uint CraftingTreasuryMin = 0;
+        public const uint CraftingTreasuryMax = 1200;
+        public const int CraftingTrustUpMin = 8;
+
         /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
         public const long GuildSpareTicks = 8 * DayClock.TicksPerHour;
 
         /// <summary>The soak's seeds.</summary>
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
-        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild" };
+        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild", "crafting" };
 
         /// <summary>A soak player: the prices it sets (item, price), as the typed command it sends on the first tick.</summary>
         public readonly struct Player
@@ -97,6 +109,7 @@ namespace Simpiens.Hosting
             {
                 case "fair": return new Player("fair", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 case "guild": return new Player("guild", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
+                case "crafting": return new Player("crafting", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 // Rations 30g, ore 2g, herbs 3g, gear 60g
                 case "greedy": return new Player("greedy", Prices(2f, 0.5f, 0.5f, 2f), sendsCommand: true);
                 // Rations 5g, ore 9g, herbs 10g, gear 20g
@@ -141,6 +154,10 @@ namespace Simpiens.Hosting
             /// worst run of unpaid visits, wages and shares paid, and expeditions home with glowstone.
             /// </summary>
             public int Members, Signed, WorstUnpaid, ExpeditionsHome;
+
+            /// <summary>The crafting profile's (Epic 10 Part 2, W6.3): stations standing, artisans at work at the end, and what the stations made.</summary>
+            public int StationsBuilt, Artisans;
+            public uint Made;
             public long GuildFullTick = -1;
             public uint Wages, WageGold, Shares, ShareGold;
 
@@ -191,6 +208,13 @@ namespace Simpiens.Hosting
                             failures.Add($"guild: full at t{GuildFullTick}, but no expedition came home with glowstone");
                         }
                         break;
+                    case "crafting":
+                        if (last.Treasury < CraftingTreasuryMin || last.Treasury > CraftingTreasuryMax) failures.Add($"crafting: treasury {last.Treasury}g at day 3, outside {CraftingTreasuryMin}-{CraftingTreasuryMax}g");
+                        if (last.TrustUp < CraftingTrustUpMin) failures.Add($"crafting: trust rose for only {last.TrustUp} crawlers (need {CraftingTrustUpMin})");
+                        if (last.StarvingEpisodes != 0) failures.Add($"crafting: {last.StarvingEpisodes} starving episodes (need 0)");
+                        if (WorstUnpaid != 0) failures.Add($"crafting: a member went unpaid {WorstUnpaid} visit(s) in a row");
+                        if (StationsBuilt == 0 || Made == 0) failures.Add($"crafting: {StationsBuilt} station(s) built, {Made} made");
+                        break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
                         if (peakTrustUp < GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak)");
@@ -208,9 +232,10 @@ namespace Simpiens.Hosting
                     int sample = day * SamplesPerDay;
                     checkpoints.Add($"D{day} {(Rows.Count > sample ? Rows[sample].Treasury.ToString(CultureInfo.InvariantCulture) : "?")}");
                 }
-                string guild = Player.Name == "guild"
+                string guild = Player.Name == "guild" || Player.Name == "crafting"
                     ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
                     : string.Empty;
+                if (Player.Name == "crafting") guild += $"; stations {StationsBuilt}, artisans {Artisans}, made {Made}";
                 return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
             }
 
@@ -258,10 +283,21 @@ namespace Simpiens.Hosting
 
             // The guild profile's player (D14), acting only through commands
             GuildPlayer guildPlayer = null;
+            int guildSize = GuildProfileSize;
             if (result.Player.Name == "guild")
             {
                 guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize);
                 guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
+            }
+            // The crafting profile's players (Epic 10 Part 2, W6.3, D67): both stations, and the guildhall's guild of eight
+            if (result.Player.Name == "crafting")
+            {
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.Respirator);
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught);
+                guildSize = CraftingGuildSize;
+                guildPlayer = new GuildPlayer(sim, targetSize: CraftingGuildSize, reserve: CraftingGuildReserve);
+                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
+                guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
             }
             var guild = manager.Guild;
             bool partyOut = false;
@@ -330,7 +366,7 @@ namespace Simpiens.Hosting
                 if (guildPlayer != null)
                 {
                     for (int i = 0; i < guild.Members.Count; i++) result.WorstUnpaid = Math.Max(result.WorstUnpaid, guild.Members[i].UnpaidVisits);
-                    if (result.GuildFullTick < 0 && guild.Members.Count >= GuildProfileSize) result.GuildFullTick = rel;
+                    if (result.GuildFullTick < 0 && guild.Members.Count >= guildSize) result.GuildFullTick = rel;
                     if (guild.HasExpedition) partyOut = true;
                     else if (partyOut)
                     {
@@ -356,6 +392,13 @@ namespace Simpiens.Hosting
                     result.ShareGold = flows.ShareGold;
                 }
             }
+            var workshops = manager.Workshops;
+            for (int i = 0; workshops != null && i < workshops.Count; i++)
+            {
+                if (workshops[i].Built) result.StationsBuilt++;
+                result.Made += workshops[i].Made;
+            }
+            result.Artisans = workshops?.Artisans.Count ?? 0;
             if (manager.EconomyLedger != null)
             {
                 result.DrifterPurses = manager.EconomyLedger.GetFaucetTotal("DrifterPurses");
