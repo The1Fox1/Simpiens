@@ -213,7 +213,7 @@ namespace Simpiens.Testing.Persistence
             var save = new GuildSave
             {
                 GroupId = 3,
-                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
+                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1, bunk: 3), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) }, // C keeps the third bunk in the barracks (Epic 10 Part 2, W5.2)
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } },
                 // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part; held by
                 // the guild's second party, its slot kept (Epic 10 Part 2, W5, D60)
@@ -241,7 +241,7 @@ namespace Simpiens.Testing.Persistence
             var again = new GuildSave();
             guild.CaptureTo(again);
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
-            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
+            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1 && guild.Members[0].Bunk == 3 && !guild.Members[1].HasBunk, "Members come back in join order, with their wages, unpaid visits and bunks.");
             Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
             var party = guild.Parties[1];
             Assert(guild.HasExpedition && !guild.Parties[0].IsOut && party.GroupId == 4 && guild.PartyOf(C) == party && guild.PartyByGroup(4) == party,

@@ -334,7 +334,7 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));
                 card.Health.Color = row.Downed ? UiStyle.Danger : UiStyle.TextLight;
-                UiParts.SetText(card.Gear, "Gear: " + row.Gear);
+                UiParts.SetText(card.Gear, row.Bunk.Length > 0 ? "Gear: " + row.Gear + " · " + row.Bunk : "Gear: " + row.Gear);
                 UiParts.SetIcon(card.GearIcon, _icons, row.GearIcon);
                 float gearX = row.GearIcon != null ? IconAtlas.SmallSize + 6f : 0f;
                 if (card.Gear.X != gearX) card.Gear.X = gearX;

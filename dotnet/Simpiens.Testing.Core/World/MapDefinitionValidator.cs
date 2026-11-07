@@ -344,6 +344,10 @@ namespace Simpiens.Testing.World
             // A sleeper holds its bunk about 8 hours of the 24-hour day (Epic 10 Part 2, T2.3, D21): a bunk per resident
             Assert(bunks >= Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount,
                 $"Floor1 has a bunk per resident ({bunks} for {Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount}).");
+            // The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each member, in the guildhall
+            int barracks = CountPois(def, PoiKind.GuildBunk, Floor1Layout.GuildhallSectorId, grid);
+            Assert(barracks == Floor1Layout.GuildBunkCount && barracks >= Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers,
+                $"Floor1 has {Floor1Layout.GuildBunkCount} bunks in the guildhall's barracks, one per member (found {barracks}).");
 
             Assert(def.TryGetPoi(Floor1Layout.Hearth, out var hearth) && def.FindSector(hearth.Position).Id == Floor1Layout.HubSectorId, "The hearth is in the Hub.");
             Assert(def.TryGetPoi(Floor1Layout.Stall, out var stall), "Floor1 has the stall.");
@@ -383,16 +387,16 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Pois.Count; i++)
             {
                 var p = def.Pois[i];
-                if (p.Kind != PoiKind.Bunk) continue;
+                if (p.Kind != PoiKind.Bunk && p.Kind != PoiKind.GuildBunk) continue;
                 float d = DistanceToSegment(p.Position, laneFrom, laneTo);
-                Assert(d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+                Assert(p.Kind == PoiKind.GuildBunk || d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
                 // On the 24-hour day a sleeper lies in its bunk for hours, and paths don't see pawns: a bunk against the north
                 // wall blocks the walkable strip there, the way to the hub door (Epic 10 Part 2, T4.2: it walled a crawler in)
                 Assert(grid.WorldToCell(p.Position, out int bx, out int by) && grid.IsCellWalkable(bx, by + 1),
                     $"Bunk '{p.Key}' at {p.Position} sits against the wall, in the way to the hub door.");
             }
 
-            TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
+            TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks and {barracks} in the barracks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
         }
 
         private static int CountPois(MapDefinition def, PoiKind kind, byte sectorId, StaticNavGrid grid)

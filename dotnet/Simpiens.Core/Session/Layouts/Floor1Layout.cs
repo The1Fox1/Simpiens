@@ -84,6 +84,9 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>A bunk per resident (Epic 10 Part 2, T2.3, D21): on the 24-hour day a sleeper holds its bunk about 8 hours.</summary>
         public const int BunkCount = 12;
 
+        /// <summary>The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each of its eight members, by D21's reckoning.</summary>
+        public const int GuildBunkCount = 8;
+
         /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
         public static readonly IReadOnlyList<Vec2> Doors = new[]
         {
@@ -181,7 +184,7 @@ namespace Simpiens.Core.Session.Layouts
                 new RectF(-24f, -24f, 16f, 6f), hazard: DrownedGalleryHazard);
             b.Sector(WorkshopRowSectorId, "Workshop Row", "Plots for a forge and a still, where trusted hands turn the stall's salvage into tools, gear and draughts.",
                 new RectF(-8f, -24f, 16f, 6f), facility: true);
-            b.Sector(GuildhallSectorId, "Guildhall", "The guild's own hall past the workshop row, waiting for barracks and a muster yard.",
+            b.Sector(GuildhallSectorId, "Guildhall", "The guild's own hall past the workshop row: barracks where its members sleep, and a yard by the door.",
                 new RectF(8f, -24f, 16f, 6f), facility: true);
 
             // --- Hub ---
@@ -194,6 +197,14 @@ namespace Simpiens.Core.Session.Layouts
             for (int i = 0; i < BunkCount; i++)
             {
                 b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f), 1.0f);
+            }
+
+            // --- Guildhall: the barracks, two rows of four in its east half, laid out as the bunkhouse is (1.5 apart, the
+            // walkable strip along the north wall kept free), a bunk kept for each member (Epic 10 Part 2, W5.2, D62). The
+            // west half, inside the door, is the yard (D64: the muster stays at the stall) ---
+            for (int i = 0; i < GuildBunkCount; i++)
+            {
+                b.Poi($"barracks.{i + 1}", PoiKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f), 1.0f);
             }
 
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---

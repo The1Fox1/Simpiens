@@ -8,7 +8,9 @@ namespace Simpiens.Simulation.World
         Stall,
         Hearth,
         Bunk,
-        SpawnPoint
+        SpawnPoint,
+        /// <summary>A bunk in the guild's barracks, kept for a member (Epic 10 Part 2, W5.2, D62).</summary>
+        GuildBunk
     }
 
     /// <summary>What makes a sector dangerous (Epic 10 G2): the environment, never creatures (producer decision Q2).</summary>

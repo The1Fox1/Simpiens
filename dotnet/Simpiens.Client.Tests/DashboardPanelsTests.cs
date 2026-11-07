@@ -120,8 +120,11 @@ namespace Simpiens.Client.Tests
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
             game.Session.Simulation.Clock.SetTimeMultiplier(1f);
-            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId);
-            game.Session.DashboardModel.SelectSector(Floor1Layout.HubSectorId);
+            // A crawler in the hub, or the first crawler where it is: where they are at t300 moves with behaviour (W5.2)
+            var sectors = game.Session.Simulation.Sectors;
+            var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
+            var crawler = pawns.FirstOrDefault(e => sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId) ?? pawns[0];
+            game.Session.DashboardModel.SelectSector(sectors.GetSectorAt(crawler.Position).Id);
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             game.Play.Dashboard.Refresh();
             game.RunOneFrame();

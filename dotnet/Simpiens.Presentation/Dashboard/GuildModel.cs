@@ -21,6 +21,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
 
+        /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
+        public string Bunk { get; internal set; } = string.Empty;
+
         /// <summary>Its face (Epic UI-Beta B4), when it has a look.</summary>
         public bool HasPortrait { get; internal set; }
         public Simpiens.Presentation.Art.People.PortraitKey Portrait { get; internal set; }
@@ -66,7 +69,7 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>"2/8": members out of the most, for the header.</summary>
         public string Count { get; private set; } = "0/8";
 
-        /// <summary>"2 of 8 members · 11g in wages a visit".</summary>
+        /// <summary>"2 of 8 members · 11g in wages a visit", and what the barracks' lodging fees keep back: ", 2g back for bunks" (Epic 10 Part 2, W5.2).</summary>
         public string Status { get; private set; } = string.Empty;
 
         public Feedback Feedback { get; private set; } = Feedback.None;
@@ -104,7 +107,7 @@ namespace Simpiens.Presentation.Dashboard
                 return;
             }
 
-            int wages = 0;
+            int wages = 0, lodging = 0;
             for (int i = 0; i < members; i++)
             {
                 var contract = guild.Members[i];
@@ -118,7 +121,9 @@ namespace Simpiens.Presentation.Dashboard
                 row.CrawlerId = contract.CrawlerId;
                 row.Wage = contract.Wage;
                 row.UnpaidVisits = contract.UnpaidVisits;
+                row.Bunk = contract.HasBunk ? Invariant($"Bunk {contract.Bunk}") : string.Empty;
                 wages += contract.Wage;
+                lodging += contract.Wage - (int)GuildService.WagePaid(contract, tuning);
                 var node = _context.Registry?.GetEntity(contract.CrawlerId);
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
@@ -135,7 +140,7 @@ namespace Simpiens.Presentation.Dashboard
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
-            Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit");
+            Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit") + (lodging > 0 ? Invariant($", {lodging}g back for bunks") : string.Empty);
             Expedition.Refresh();
         }
 

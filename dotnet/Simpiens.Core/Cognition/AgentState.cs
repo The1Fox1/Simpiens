@@ -94,6 +94,9 @@ namespace Simpiens.Cognition
         /// <summary>Its part in its station's work (Epic 10 Part 2, W1.3), a copy refreshed every tick as the expedition's is; not saved.</summary>
         public StationOrder Station { get; set; }
 
+        /// <summary>The bunk the guild keeps for it in the barracks (Epic 10 Part 2, W5.2), a copy refreshed every tick as the expedition's is; not saved.</summary>
+        public KeptBunk Bunk { get; set; }
+
         /// <summary>
         /// It did a tick of a station's work this tick (W1.3, D15): its handler marks it, during the simulation's tick, and
         /// the state's own tick, after it, drains the station's rate and clears it. Not saved: it lasts a tick.
@@ -510,7 +513,8 @@ namespace Simpiens.Cognition
                 Health,
                 IsDowned,
                 Expedition,
-                Station);
+                Station,
+                Bunk);
         }
     }
 }

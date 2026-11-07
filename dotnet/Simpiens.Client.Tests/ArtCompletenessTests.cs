@@ -27,7 +27,7 @@ namespace Simpiens.Client.Tests
         private static ArtCatalog Catalog(string mode) => mode == "top-down" ? ViewMode.TopDown.Catalog : ViewMode.Isometric.Catalog;
 
         /// <summary>The kinds the scene draws as entities; walls are the map's tiles, and the stall isn't an entity.</summary>
-        private static readonly EntityType[] Drawn = { EntityType.Pawn, EntityType.Resource, EntityType.Anchor, EntityType.Bunk };
+        private static readonly EntityType[] Drawn = { EntityType.Pawn, EntityType.Resource, EntityType.Anchor, EntityType.Bunk, EntityType.GuildBunk };
 
         [Theory]
         [MemberData(nameof(Modes))]

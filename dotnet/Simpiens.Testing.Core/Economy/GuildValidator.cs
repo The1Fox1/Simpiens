@@ -13,8 +13,9 @@ namespace Simpiens.Testing.Economy
 {
     /// <summary>
     /// Epic 10 G4.6, the guild (decisions D1, D2, D4): the rule and each refusal, the signing fee as a conserved transfer,
-    /// four members at most, a recruit keeping its settlement, dismissal and its cooldown, wages, the commands applied on
-    /// the tick, and the player as patron (no place on the roster, never succeeded).
+    /// eight members at most (Epic 10 Part 2, D61), a recruit keeping its settlement, dismissal and its cooldown, wages, the
+    /// commands applied on the tick, the player as patron (no place on the roster, never succeeded), and the barracks (W5.2,
+    /// D62, D63): a bunk kept per member, freed when it leaves, a lodging fee taken from its wage, its own bunk first.
     /// </summary>
     public class GuildValidator
     {
@@ -37,8 +38,9 @@ namespace Simpiens.Testing.Economy
             ValidateFullAtTheLimitAndDismissal();
             ValidateCommandsOnTheTick();
             ValidateThePatron();
+            ValidateTheBarracks();
 
-            TestLog.Log("<color=green>[GuildValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[GuildValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateRefusals()
@@ -173,6 +175,66 @@ namespace Simpiens.Testing.Economy
             Assert(o.Groups.TryGetGroup(guild, out data) && data.MemberCount == 0, "The guild is kept while empty.");
 
             TestLog.Log("[PASS] Test 5: The player as patron: no place on the roster, never succeeded, the guild kept while empty.");
+        }
+
+        private static void ValidateTheBarracks()
+        {
+            var o = NewOutpost(treasury: 500);
+            var tuning = o.Sim.Economy.Guild;
+            EntityId first = EntityId.Generate(), second = EntityId.Generate();
+            Vec2 firstAt = new Vec2(16.5f, -20.5f), secondAt = new Vec2(18f, -20.5f);
+            o.Sim.RegisterBarracksBunk(first, firstAt);
+            o.Sim.RegisterBarracksBunk(second, secondAt);
+            Assert(o.Sim.Guild.Barracks.Count == 2, "The barracks hold the bunks the map spawned.");
+
+            // Kept in signing order, the first free one; with none free, none
+            var a = Crawler(o, trust: 80, warmth: 80);
+            var b = Crawler(o, trust: 80, warmth: 80);
+            var c = Crawler(o, trust: 80, warmth: 80);
+            foreach (var member in new[] { a, b, c }) o.Sim.Guild.Recruit(o.Sim, member.AgentId, 5, 1);
+            var kept = o.Sim.Guild.KeptBunkFor(a.AgentId);
+            Assert(kept.IsKept && kept.BunkId == first && kept.Position == firstAt, "The first to sign keeps the first bunk.");
+            Assert(o.Sim.Guild.KeptBunkFor(b.AgentId).BunkId == second, "The second keeps the second.");
+            Assert(!o.Sim.Guild.KeptBunkFor(c.AgentId).IsKept, "With every bunk kept, the third has none: it sleeps in the common bunks.");
+            Assert(!o.Sim.Guild.KeptBunkFor(EntityId.Generate()).IsKept, "A crawler outside the guild keeps none.");
+
+            // Freed when its member leaves, and kept for the next to sign
+            o.Sim.Guild.Dismiss(o.Sim, a.AgentId, 2);
+            var d = Crawler(o, trust: 80, warmth: 80);
+            o.Sim.Guild.Recruit(o.Sim, d.AgentId, 5, 3);
+            Assert(o.Sim.Guild.KeptBunkFor(d.AgentId).BunkId == first, "A member who leaves frees its bunk for the next.");
+
+            // The lodging fee, from the wage of each member with a bunk (D63): the stall pays 4g of a 5g wage, 5g to the member without
+            uint before = o.Sim.ActiveStalls[0].TreasuryGold;
+            uint wagesBefore = o.Ledger.Flows.WageGold;
+            o.Sim.Guild.SetWage(o.Sim, b.AgentId, 1, 4); // a wage no more than the fee: paid nothing, never a debt
+            o.Sim.Guild.PayWages(o.Sim, o.Sim.ActiveStalls[0], 600);
+            Assert(tuning.LodgingFee == 1, "The lodging fee is 1g a visit.");
+            Assert(b.Inventory.Gold == 20 && c.Inventory.Gold == 20 + 5 && d.Inventory.Gold == 20 + 4, $"The wages less the fee: {b.Inventory.Gold - 20}g, {c.Inventory.Gold - 20}g, {d.Inventory.Gold - 20}g after the 20g fees.");
+            Assert(before - o.Sim.ActiveStalls[0].TreasuryGold == 9 && o.Ledger.Flows.WageGold - wagesBefore == 9, "The stall paid 9g; the fees stayed in its treasury, and the ledger counts what was paid.");
+            Assert(o.Sim.Guild.TryGetContract(b.AgentId, out var paidNothing) && paidNothing.UnpaidVisits == 0, "A wage the fee takes whole is still paid: no unpaid visit.");
+
+            // A load keeps the barracks (the map's) and each member's bunk (its contract); a respawn forgets them
+            var save = new Simpiens.Simulation.Persistence.GuildSave();
+            o.Sim.Guild.CaptureTo(save);
+            o.Sim.Guild.RestoreFrom(save);
+            Assert(o.Sim.Guild.Barracks.Count == 2 && o.Sim.Guild.KeptBunkFor(d.AgentId).BunkId == first, "A load keeps the barracks and the bunks kept.");
+            o.Sim.Guild.Reset();
+            Assert(o.Sim.Guild.Barracks.Count == 0, "A respawn forgets the barracks; the next map's spawn adds its own.");
+
+            // Its own bunk first, wherever it is, though a common bunk it remembers is nearer; a downed crawler takes the nearest
+            var memory = (Simpiens.Cognition.Memory.AgentMemory)b.Memory;
+            var common = EntityId.Generate();
+            memory.SpatialMemoryMap[common] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(common, Simpiens.Simulation.Spatial.EntityType.Bunk, new GridPoint(1, 0), 1);
+            var context = new AgentContext(b.AgentId, Vec2.Zero, new AgentNeeds(10f, 20f, 50f), 0f, null, memory, 10, bunk: new KeptBunk(second, secondAt));
+            Assert(Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunkAt) && bunkId == second && bunkAt == secondAt,
+                "A member goes to its own bunk in the barracks before a nearer common one.");
+            Assert(Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out bunkId, out _, ownFirst: false) && bunkId == common,
+                "Asked for the nearest (a downed crawler where it lies), it takes the common bunk.");
+            var nonMember = new AgentContext(c.AgentId, Vec2.Zero, new AgentNeeds(10f, 20f, 50f), 0f, null, memory, 10);
+            Assert(Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(nonMember, out bunkId, out _) && bunkId == common, "Without a kept bunk, the nearest it remembers.");
+
+            TestLog.Log("[PASS] Test 6: The barracks: a bunk kept per member in signing order and freed when it leaves, kept across a load; a lodging fee from the wage, never a debt; its own bunk first.");
         }
 
         private static Outpost NewOutpost(uint treasury)

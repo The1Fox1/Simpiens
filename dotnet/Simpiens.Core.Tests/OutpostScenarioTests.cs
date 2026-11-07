@@ -261,7 +261,7 @@ namespace Simpiens.Core.Tests
 
                 long loadTick = sim.Clock.CurrentTick;
                 var watch = new OutpostWatch(sim);
-                watch.Run(3000);
+                watch.Run(OutpostWatch.DayTicks / 2); // every crawler eats within half a day: on the 24-hour day a first meal comes hours after a morning load
                 TestContext.Current.TestOutputHelper?.WriteLine($"saved and loaded at t{saveTick}; " + watch.Report());
 
                 Assert.Equal(0, watch.ConservationViolations);

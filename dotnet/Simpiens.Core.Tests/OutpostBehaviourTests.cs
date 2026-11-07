@@ -102,44 +102,30 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Review §3.2: the ration price is not an on/off switch. The player changes only the ration price, through the
-        /// price command, every 2.5 sim-minutes; personalities and hunger give each crawler its own reservation price, so
-        /// demand falls off in steps: at least three distinct buyer counts, buyers at the lowest price, none above every
-        /// reservation price. Buyers are the residents (drifters come and go).
+        /// Review §3.2: the ration price is not an on/off switch. The player sets only the ration price, through the price
+        /// command; personalities and hunger give each crawler its own reservation price, so demand falls off in steps: at
+        /// least three distinct buyer counts, buyers at the lowest price, none above every reservation price. Buyers are the
+        /// residents (drifters come and go). Each price gets a fresh outpost and a whole game day from its start: on the
+        /// 24-hour day purchases cluster at mealtimes, so a price held for a few hours measured the clock, not the price
+        /// (Epic 10 Part 2, W5.2).
         /// </summary>
         [Fact]
         public void DemandFallsGraduallyWithThePrice()
         {
             ushort[] prices = { 10, 15, 20, 25, 30, 60 }; // 60g is above any reservation price (at most 45g)
-            const long StepTicks = 1500;
-
-            using var sim = Outpost();
-            var intervention = sim.Services.GetRequiredService<IPlayerInterventionService>();
-            var ledger = sim.Simulation.EconomyLedger;
-            var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
             var buyers = new int[prices.Length];
-            var purchases = new uint[prices.Length];
+            var purchases = new int[prices.Length];
 
             for (int step = 0; step < prices.Length; step++)
             {
+                using var sim = Outpost();
+                var intervention = sim.Services.GetRequiredService<IPlayerInterventionService>();
+                var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
                 var stall = sim.Simulation.ActiveStalls[0];
                 intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", TestPrices.Command(stall.StallEntityId, prices[step], stall.OreBuyPrice, stall.HerbBuyPrice)));
-                uint startPurchases = ledger.Flows.Purchases;
-                var lastGold = residents.Select(s => s.Inventory.Gold).ToArray();
-                var bought = new bool[residents.Count];
-                for (long t = 0; t < StepTicks; t++)
-                {
-                    sim.Step(1);
-                    // Crawlers spend gold only on rations, so a drop in a crawler's gold is a purchase
-                    for (int c = 0; c < residents.Count; c++)
-                    {
-                        int gold = residents[c].Inventory.Gold;
-                        if (gold < lastGold[c]) bought[c] = true;
-                        lastGold[c] = gold;
-                    }
-                }
-                buyers[step] = bought.Count(b => b);
-                purchases[step] = ledger.Flows.Purchases - startPurchases;
+                sim.Step(DayClock.TicksPerDay);
+                buyers[step] = residents.Count(s => s.Activity.RationPurchases > 0);
+                purchases[step] = residents.Sum(s => s.Activity.RationPurchases);
             }
 
             TestContext.Current.TestOutputHelper?.WriteLine($"buyers {string.Join("/", buyers)} at {string.Join("/", prices)}g; purchases {string.Join("/", purchases)}");

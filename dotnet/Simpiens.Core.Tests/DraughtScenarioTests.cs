@@ -15,7 +15,8 @@ namespace Simpiens.Core.Tests
     /// W2's DoD, <c>ADraughtKeepsAPartyWorking</c> (Epic 10 Part 2), live and headless with nothing injected: on the default
     /// seed, twice, the scripted players build and staff the still, which makes draughts from the stall's herbs, and the
     /// guild, once it holds eight, sends four bare members to the Drowned Gallery under Steady. The two runs are the same
-    /// until the dispatch: once each member carries two draughts, once none. Without, the party turns back; with, its
+    /// until the dispatch: once each member is given two draughts, once none (a member may carry one it bought itself, W2.3:
+    /// the bold buy). Without, the party turns back; with, its
     /// members drink at the treat line and it works on until the seam is spent, longer, its haul at least as big, nobody
     /// downed. The ledger balances and the days' checks hold on the run with draughts.
     /// </summary>
@@ -89,8 +90,8 @@ namespace Simpiens.Core.Tests
             Assert.True(without.Ended && with.Ended, "Both parties went and came home.");
             Assert.Equal(without.Dispatched, with.Dispatched); // the same until the dispatch: the guild waited for the same stockpile
             Assert.True(with.MadeAtStill >= Stockpile, "The still made the draughts from the stall's herbs.");
-            Assert.Equal(0, without.Carried);
-            Assert.Equal(2 * 4, with.Carried);
+            Assert.Equal(2 * 4, with.Carried); // topped up to two each
+            Assert.True(without.Carried < with.Carried, $"Without, the guild gave none: the party carried only what members bought themselves ({without.Carried}).");
             Assert.True(without.TurnedBack, "Without draughts, the retreat rule turned the bare party back.");
             Assert.False(with.TurnedBack, "With draughts, the party worked on.");
             Assert.True(with.Drunk > 0, "Members drank at the treat line.");

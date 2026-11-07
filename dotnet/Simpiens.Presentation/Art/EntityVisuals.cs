@@ -28,6 +28,7 @@ namespace Simpiens.Presentation.Art
             for (int i = 0; i < _byType.Length; i++) _byType[i] = ArtId.None;
             _byType[(int)EntityType.Anchor] = catalog.Id(ArtKeys.PropHearth);
             _byType[(int)EntityType.Bunk] = catalog.Id(ArtKeys.PropBunk); // under its sleeper: the role orders a prop before a crawler
+            _byType[(int)EntityType.GuildBunk] = catalog.Id(ArtKeys.PropBunk); // the barracks' bunks are bunks to look at (Epic 10 Part 2, W5.2)
             var states = (AgentVisualState[])Enum.GetValues(typeof(AgentVisualState));
             _crawlers = new ArtId[states.Length];
             foreach (var state in states) _crawlers[(int)state] = catalog.Id(ArtKeys.Crawler(state));

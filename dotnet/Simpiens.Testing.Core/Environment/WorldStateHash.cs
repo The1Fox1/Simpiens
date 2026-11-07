@@ -217,6 +217,7 @@ namespace Simpiens.Testing.Environment
                     Mix(ref groups, (int)contract.Wage);
                     Mix(ref groups, (int)contract.UnpaidVisits);
                     Mix(ref groups, (long)contract.JoinTick);
+                    Mix(ref groups, (int)contract.Bunk); // its bunk in the barracks (Epic 10 Part 2, W5.2)
                 }
 
                 // Each party's expedition out (Epic 10 G5; per party since Epic 10 Part 2, W5), only while there is one

@@ -10,7 +10,7 @@ namespace Simpiens.Client.Tests.People
 {
     /// <summary>
     /// The live outpost drawn with bodies (Epic UI-Beta B2): the map at tick 300 in both view modes, framed and zoomed on
-    /// the hub, written to render-output/bodies-*.png (the producer's look passed on these, 2026-11-02). Every crawler
+    /// a crawler, written to render-output/bodies-*.png (the producer's look passed on these, 2026-11-02). Every crawler
     /// is drawn from the body region, none as today's figure, and every body the frame shows is baked.
     /// </summary>
     public class BodyMapReviewTests
@@ -34,8 +34,9 @@ namespace Simpiens.Client.Tests.People
             Png.Write(Path.Combine(output, $"bodies-{mode}-t300.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
             AssertEveryCrawlerIsABody(scene);
 
-            var hub = game.Session.Simulation.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-            game.World.Rig.ZoomAt(hub, 0.3f);
+            // Zoomed on a crawler: where they are at t300 moves with behaviour (the hub was empty once the map grew, W5.2)
+            var crawler = game.Session.Simulation.Host.CrawlerStates.First(s => !s.IsDrifter).Position;
+            game.World.Rig.ZoomAt(crawler, 0.3f);
             Png.Write(Path.Combine(output, $"bodies-{mode}-t300-zoomed.png"), Width, Height, FrameCapture.CaptureMap(game, Width, Height));
             AssertEveryCrawlerIsABody(scene);
         }

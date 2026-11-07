@@ -175,8 +175,8 @@ namespace Simpiens.Cognition.Evaluators
 
             if (!context.IsDowned && !(inHazard && context.Health < Vitality.RetreatBelow)) return null;
 
-            // A free bunk within reach: a downed crawler sleeps in it
-            if (context.IsDowned && Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunk)
+            // A free bunk within reach: a downed crawler sleeps in it, its own in the barracks or not
+            if (context.IsDowned && Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunk, ownFirst: false)
                 && (bunk - context.Position).SqrMagnitude <= 1f)
             {
                 return new SleepAtBunkIntent(context.AgentId, bunkId, DownedSleepSeconds);

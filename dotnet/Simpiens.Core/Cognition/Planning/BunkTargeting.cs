@@ -4,7 +4,9 @@ namespace Simpiens.Cognition.Planning
 {
     /// <summary>
     /// Allocation-free bunk lookups for the rest anchor (Epic MAP Phase 3): bunks the agent remembers, that are not
-    /// blacklisted and that the snapshot shows free. Nearest wins; ties go to the lower entity id.
+    /// blacklisted and that the snapshot shows free. Nearest wins; ties go to the lower entity id. A guild member's own
+    /// bunk in the barracks comes first, wherever it is (Epic 10 Part 2, W5.2, D62); nobody else remembers the barracks'
+    /// bunks as bunks, since they are another kind of entity.
     /// </summary>
     public static class BunkTargeting
     {
@@ -17,10 +19,22 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public const float ApproachDistance = 1.5f;
 
-        public static bool TryGetNearestFreeBunk(in AgentContext context, out EntityId bunkId, out Vec2 position)
+        /// <param name="ownFirst">False for the nearest bunk however far its own is (a downed crawler sleeps where it lies).</param>
+        public static bool TryGetNearestFreeBunk(in AgentContext context, out EntityId bunkId, out Vec2 position, bool ownFirst = true)
         {
             bunkId = default;
             position = default;
+
+            // Its own bunk, as a colonist goes to its own bed
+            var own = context.Bunk;
+            if (ownFirst && own.IsKept && (context.Memory == null || !context.Memory.IsBlacklisted(own.BunkId, context.CurrentTick))
+                && (context.Snapshot == null || !context.Snapshot.IsBunkOccupied(own.BunkId)))
+            {
+                bunkId = own.BunkId;
+                position = own.Position;
+                return true;
+            }
+
             if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return false;
 
             bool found = false;

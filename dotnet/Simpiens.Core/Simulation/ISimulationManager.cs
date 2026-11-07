@@ -12,6 +12,7 @@ namespace Simpiens.Simulation
         void RegisterResource(ResourceData data);
         void RegisterAnchor(EntityId id, Vec2 position, float radius = 3.0f);
         void RegisterBunk(EntityId id, Vec2 position);
+        void RegisterBarracksBunk(EntityId id, Vec2 position);
         void RegisterTradeStall(Simpiens.Simulation.Economy.TradeStallData stallData);
         bool TryGetTradeStall(EntityId stallId, out Simpiens.Simulation.Economy.TradeStallData stallData);
         System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> ActiveStalls { get; }

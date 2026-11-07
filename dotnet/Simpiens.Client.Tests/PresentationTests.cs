@@ -237,7 +237,8 @@ namespace Simpiens.Client.Tests
             bool Shown(Simpiens.Simulation.WorldEntity e) => scene.Fog.Visibility(e.Position, 0f) > 0f;
             int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null && Shown(e));
             int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && Shown(e) && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
-                || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
+                || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk
+                || e.Type == Simpiens.Simulation.Spatial.EntityType.GuildBunk)); // the barracks' bunks too (Epic 10 Part 2, W5.2)
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);

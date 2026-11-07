@@ -15,8 +15,8 @@ namespace Simpiens.Core.Tests
     /// W3's DoD, <c>TheRightGearForTheRightHazard</c> (Epic 10 Part 2), live and headless with nothing injected, on the
     /// default seed. With the guild: the scripted players build and staff the forge, which makes respirators from the
     /// stall's glowstone and herbs, and send the guild to the Drowned Gallery, outfitted for its flooded air (D50), so its
-    /// trips go from hazard gear to respirators: in the Gallery a member in a respirator takes half the harm of one in
-    /// hazard gear, and trips in respirators bring home as much. Without the guild, the forge's respirators are sold: a
+    /// trips go from hazard gear to respirators as the forge makes them: in the Gallery a member in a respirator takes half
+    /// the harm of one in hazard gear, and trips all in respirators bring home as much as trips with members in hazard gear. Without the guild, the forge's respirators are sold: a
     /// bold resident trades its gear for one (D53) and works the Gallery alone (D51). The ledger balances and the days'
     /// checks hold.
     /// </summary>
@@ -43,7 +43,7 @@ namespace Simpiens.Core.Tests
                 var trips = new List<(int Respirators, int Haul, bool Back)>();
                 int respiratorsOnTrip = 0, haul = 0;
                 bool active = false, back = false;
-                while (sim.Clock.CurrentTick < Horizon && !(harm.ContainsKey(ItemType.Respirator) && harm.ContainsKey(ItemType.HazardGear) && trips.Any(t => t.Respirators == 0) && trips.Any(t => t.Respirators == 4)))
+                while (sim.Clock.CurrentTick < Horizon && !(harm.ContainsKey(ItemType.Respirator) && harm.ContainsKey(ItemType.HazardGear) && trips.Any(t => t.Respirators < 4) && trips.Any(t => t.Respirators == 4)))
                 {
                     watch.Run(1);
                     var expedition = guild.Parties[0].Expedition;
@@ -78,9 +78,9 @@ namespace Simpiens.Core.Tests
                 Assert.True(forge.BuiltTick >= 0 && player.Dispatches > 0, "The forge was built and the guild sent parties.");
                 Assert.True(Rate(ItemType.HazardGear) > 0 && Rate(ItemType.Respirator) > 0, "Members worked the Gallery in hazard gear and in respirators.");
                 Assert.InRange(Rate(ItemType.Respirator) / Rate(ItemType.HazardGear), 0.45, 0.55); // half the harm
-                var inGear = trips.Where(t => t.Respirators == 0).ToList();
+                var inGear = trips.Where(t => t.Respirators < 4).ToList(); // members in hazard gear: the forge's respirators weren't enough yet
                 var inRespirators = trips.Where(t => t.Respirators == 4).ToList();
-                Assert.True(inGear.Count > 0 && inRespirators.Count > 0, "A trip in hazard gear, and one all in respirators.");
+                Assert.True(inGear.Count > 0 && inRespirators.Count > 0, "A trip with members in hazard gear, and one all in respirators.");
                 Assert.True(inRespirators.Min(t => t.Haul) >= inGear.Max(t => t.Haul) && inRespirators.All(t => !t.Back), "In respirators the party brought home as much.");
                 Assert.Equal(0, watch.ConservationViolations);
                 var failures = watch.DayFailures();
