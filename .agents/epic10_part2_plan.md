@@ -470,6 +470,21 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **Done:** W6.0 `c7e21a5`; W6.1 and W6.2 `bed8565` (on gate seed 1: the deviation in D67's commit). W6.3, the `crafting` profile, its band proposed by exception (economy model §7: treasuries of 1–390g at day 3; the band asks for integrity). W6.4: seeds 1–120 pass the outpost's day without and with the guild player (120/120 each, 2026-11-06); the 23 gate seeds hold two days with the workshop players and the crafting guild (23/23).
   - **D68, no retuning of the economy under the directive:** the producer sets the `crafting` band (W6.3). The soak measures the loop as it stands and proposes a band by exception; F14's numbers and the levers (station cost, upkeep, glowstone's export price, members' wages) go to the play session.
 
+### S. The stretch: hazards that move, and the caravan on the map (the AFK directive's stretch goal)
+**Complexity:** Possibly Complex as a whole: presentation and art, with no change to the simulation's timing.
+- **The directive:** "As a stretch goal at the end of epic 10 part 2 I would like to see animations of the hazards and the trade caravan as an agent that goes in and out of the map."
+- **D69, hazards animate in the view:** presentation only, from the scene's view time; the simulation and the golden hashes don't move.
+  - Each charted hazard sector gets a fixed set of spots, derived from its bounds and id (deterministic, two units clear of its walls), each with its own phase.
+  - **Foul air** (the Sump): green puffs that rise and fade. **Falling rock** (the Glow Caves): every few seconds per spot, a pebble falls and dust bursts. **Flooding** (the Gallery): ripples spreading on the floor.
+  - Hidden by the fog, as everything in an uncharted sector is. Ripples lie on the floor (`FloorMark`); puffs and rocks stand (`Prop`).
+  - **Art:** generated frames (`ProceduralSprites`, `IsometricSprites`) and rows `fx/hazard/foul-air`, `fx/hazard/falling-rock`, `fx/hazard/flood` in both tables.
+- **D70, the caravan walks in and out:** the supply visit stays on its schedule. The caravan's place is a pure function of the clock, owned by the simulation (`Caravan`, beside the supply service): it sets out from the Road Gate so as to reach the stall on the visit's tick, trades, and walks back out. Nothing new is saved, and no crawler perceives it or bumps into it, so behaviour doesn't change.
+  - **The route is map data** (`Floor1Layout.CaravanRoute`: the gate, the lane, the hub's door, the stall). The frame carries the caravan (`WorldViewFrame`), and the scene draws a cart with its porter, walking.
+  - *Left for later:* a caravan that is a crawler-like pawn (delayed by crowds, met by crawlers, traded with) belongs with interactive trade, after Part 2.
+- **Steps:**
+  1. **[ ] S1 Animated hazards** [Possibly Complex: art in two projections, renders and pins]: D69; a scene test (the effects stand in charted hazard sectors only, and move with time); the art sheet looked at; pins and renders re-recorded.
+  2. **[ ] S2 The caravan on the map** [Possibly Complex: a route as map data, a frame field, art]: D70; a core test (the caravan reaches the stall on each visit's tick and is gone between visits); a scene test; renders.
+
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.
 - 2026-11-04: W0.2 done (above): ore and herbs are plentiful, glowstone scarce, purses small; an artisan qualifies early on every seed.
