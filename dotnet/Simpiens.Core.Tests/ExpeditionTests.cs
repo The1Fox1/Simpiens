@@ -133,7 +133,7 @@ namespace Simpiens.Core.Tests
 
             Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
             Assert.Equal(GuildRules.Check.ExpeditionOut, o.Guild.Dispatch(o.Host, o.Order(), o.Tick));
-            Assert.Equal("A party is already out: one at a time.", GuildRules.Describe(GuildRules.Check.ExpeditionOut, "", null, o.Guild, o.Tick, tuning));
+            Assert.Equal("That party is already out.", GuildRules.Describe(GuildRules.Check.ExpeditionOut, "", null, o.Guild, o.Tick, tuning));
 
             var gear = ItemType.HazardGear;
             Assert.Equal(GuildRules.Check.NotMember, o.Guild.CanGiveGear(o.Host, outsider.AgentId, gear));
@@ -398,6 +398,53 @@ namespace Simpiens.Core.Tests
             Assert.True(first.GroupId == group && first.Members.Count == 3 && groups.TryGetMembership(d, group, out _), "The party stands, and d is back in it.");
             for (int i = 0; i < 3; i++) Assert.Equal(ExpeditionMemberStatus.Going, first.Members[i].Status);
             Assert.True(groups.TryGetGroup(group, out data) && data.ActiveDirective.Type == DirectiveType.None, "Its order is lifted.");
+        }
+
+        /// <summary>
+        /// Two at once (Epic 10 Part 2, W5.3b, D66): with eight members in two parties, both go out, each to its own sector:
+        /// the same sector is refused while the other works it. Each party musters, marches and claims the nodes of its own
+        /// sector; recalled, each comes home on its own.
+        /// </summary>
+        [Fact]
+        public void TwoPartiesWorkTwoSectorsAtOnce()
+        {
+            using var o = NewOutpost(count: 8);
+            EntityId[] first = o.Members.Take(4).Select(m => m.AgentId).ToArray(), second = o.Members.Skip(4).Select(m => m.AgentId).ToArray();
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(1, first), o.Tick));
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.FormParty(o.Host, new FormPartyCommand(2, second), o.Tick));
+            o.PutAll(o.Home);
+
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, new DispatchExpeditionCommand(1, Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady), o.Tick));
+            Assert.Equal(GuildRules.Check.SectorTaken, o.Guild.CanDispatch(o.Host, new DispatchExpeditionCommand(2, Floor1Layout.DrownedGallerySectorId, 4, RetreatRule.Steady)));
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Dispatch(o.Host, new DispatchExpeditionCommand(2, Floor1Layout.GlowCavesSectorId, 3, RetreatRule.Steady), o.Tick));
+            Assert.True(o.Guild.Parties[0].IsOut && o.Guild.Parties[1].IsOut, "Both parties are out.");
+            Assert.Equal(GuildRules.Check.ExpeditionOut, o.Guild.CanDispatch(o.Host, new DispatchExpeditionCommand(1, Floor1Layout.SumpSectorId, 1, RetreatRule.Steady)));
+
+            // Mustered, both march; each member in its party's sector, each party works its own nodes
+            o.Step();
+            Assert.True(o.Guild.Parties[0].Expedition.Stage == ExpeditionStage.March && o.Guild.Parties[1].Expedition.Stage == ExpeditionStage.March, "Both march.");
+            o.Host.TryGetSector(Floor1Layout.GlowCavesSectorId, out var caves);
+            for (int i = 0; i < 8; i++) o.Members[i].Position = (i < 4 ? o.Gallery : caves.TargetPoint) + new Vec2((i % 4) * 0.5f, 0f);
+            o.Step();
+            var map = o.Sim.Host.Current.Map;
+            for (int p = 0; p < 2; p++)
+            {
+                var party = o.Guild.Parties[p];
+                byte sector = p == 0 ? Floor1Layout.DrownedGallerySectorId : Floor1Layout.GlowCavesSectorId;
+                Assert.Equal(ExpeditionStage.Work, party.Expedition.Stage);
+                foreach (var member in party.Members)
+                {
+                    Assert.True(member.NodeId != default && map.FindSector(member.NodePosition).Id == sector, $"Party {party.Slot}'s members work its own sector's nodes.");
+                    Assert.Equal(sector, o.Guild.OrderFor(member.CrawlerId).TargetSectorId);
+                }
+            }
+
+            // Each comes home on its own
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.Recall(o.Host, 2, o.Tick));
+            Assert.True(o.Guild.Parties[1].Expedition.TurnedBack && o.Guild.Parties[0].Expedition.Stage == ExpeditionStage.Work, "Recalling party 2 leaves party 1 at work.");
+            o.PutAll(o.Home);
+            o.Step();
+            Assert.True(!o.Guild.Parties[1].IsOut && o.Guild.Parties[0].IsOut, "Party 2 came home; party 1 works on.");
         }
 
         [Fact]

@@ -22,8 +22,15 @@ namespace Simpiens.Client.Ui
             Header = new HeaderBar(icons) { Motion = motion };
             Panels = new DashboardPanels(model, icons, portraits);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
-            Tracker = new ExpeditionTracker(model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
-            ui.Root.Children.Add(Tracker.Root);
+            // A tracker per party (Epic 10 Part 2, W5.3b), the second under the first
+            var trackers = ExpeditionTracker.Column();
+            for (byte slot = 1; slot <= Simpiens.Simulation.Guild.GuildService.PartySlots; slot++)
+            {
+                var tracker = new ExpeditionTracker(slot, Simpiens.Intervention.DispatchExpeditionCommand.MaxMembers);
+                trackers.Children.Add(tracker.Root);
+                _trackers.Add(tracker);
+            }
+            ui.Root.Children.Add(trackers);
             Inspector = new InspectorCard(model, portraits); // Epic UI-Beta B4: on the map, under the windows
             ui.Root.Children.Add(Inspector.Root);
             Panels.FindOnMap = FindOnMap;
@@ -89,8 +96,13 @@ namespace Simpiens.Client.Ui
             return most;
         }
 
-        /// <summary>The expedition tracker on the map view while a party is out (Epic 10 G5).</summary>
-        public ExpeditionTracker Tracker { get; }
+        private readonly System.Collections.Generic.List<ExpeditionTracker> _trackers = new System.Collections.Generic.List<ExpeditionTracker>(2);
+
+        /// <summary>The expedition trackers on the map view, one per party, each shown while its party is out (Epic 10 G5; W5.3b).</summary>
+        public System.Collections.Generic.IReadOnlyList<ExpeditionTracker> Trackers => _trackers;
+
+        /// <summary>Party 1's tracker.</summary>
+        public ExpeditionTracker Tracker => _trackers[0];
 
         /// <summary>The map inspector (Epic UI-Beta B4): the selected crawler's card on the map.</summary>
         public InspectorCard Inspector { get; }
@@ -111,7 +123,7 @@ namespace Simpiens.Client.Ui
             Bounties.Window.IsShown = false;
             Guild.Window.IsShown = false;
             Stations.Window.IsShown = false;
-            Tracker.Root.Visible = false;
+            for (int i = 0; i < _trackers.Count; i++) _trackers[i].Root.Visible = false;
             Inspector.Root.Visible = false;
             Sessions.Root.Visible = false;
         }
@@ -179,7 +191,7 @@ namespace Simpiens.Client.Ui
             Bounties.Bind();
             Guild.Bind();
             Stations.Bind();
-            Tracker.Bind(Model.Guild.Expedition, mapView: !Model.PanelsVisible);
+            for (int i = 0; i < _trackers.Count; i++) _trackers[i].Bind(Model.Guild.Expedition.Trackers[i], mapView: !Model.PanelsVisible);
             Inspector.Bind();
             Sessions?.Bind();
         }

@@ -28,7 +28,8 @@ namespace Simpiens.Client.Ui
 
         private readonly GuildModel _model;
         private readonly IconAtlas _icons;
-        private readonly TextRuntime _status, _empty, _feedback, _goal, _ruleText, _dispatchText, _out;
+        private readonly TextRuntime _status, _empty, _feedback, _goal, _ruleText, _dispatchText;
+        private readonly List<TextRuntime> _out = new List<TextRuntime>(2); // a line per party out (Epic 10 Part 2, W5.3b)
         private readonly List<MemberCard> _cards = new List<MemberCard>(8);
         private readonly ContainerRuntime _membersPage, _expeditionsPage;
         private bool _binding;
@@ -132,8 +133,12 @@ namespace Simpiens.Client.Ui
             _expeditionsPage.Children.Add(Window.Gap(6f));
             _ruleText = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _expeditionsPage.Children.Add(_ruleText);
-            _out = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
-            _expeditionsPage.Children.Add(_out);
+            for (int i = 0; i < Simpiens.Simulation.Guild.GuildService.PartySlots; i++)
+            {
+                var line = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
+                _out.Add(line);
+                _expeditionsPage.Children.Add(line);
+            }
             var send = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 40f };
             _dispatchText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             UiParts.CentreVertically(_dispatchText);
@@ -363,7 +368,12 @@ namespace Simpiens.Client.Ui
             if (OutfitButton.Text != outfit) OutfitButton.Text = outfit;
             if (DraughtsButton.Text != expedition.DraughtsText) DraughtsButton.Text = expedition.DraughtsText;
             UiParts.SetText(_ruleText, expedition.RuleText);
-            UiParts.SetText(_out, expedition.IsOut ? Invariant($"{expedition.StageText} · {expedition.TimeOut} · {expedition.HaulText}") : string.Empty);
+            for (int i = 0; i < _out.Count; i++)
+            {
+                var tracker = expedition.Trackers[i];
+                _out[i].Visible = tracker.IsOut;
+                UiParts.SetText(_out[i], tracker.IsOut ? Invariant($"Party {tracker.Slot}: {tracker.StageText} · {tracker.TimeOut} · {tracker.HaulText}") : string.Empty);
+            }
             UiParts.SetText(_dispatchText, expedition.Feedback.Text.Length > 0 && !expedition.CanDispatch ? expedition.Feedback.Text : expedition.DispatchText);
             DispatchButton.IsEnabled = expedition.CanDispatch;
             RecallButton.IsEnabled = expedition.CanRecall;

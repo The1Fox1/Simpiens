@@ -19,7 +19,7 @@ namespace Simpiens.Simulation.Guild
     /// each member is paid a share. The party is a <see cref="GroupType.TemporaryParty"/> group inside the guild, led by
     /// the patron, with an <see cref="DirectiveType.Expedition"/> directive issued once at dispatch, whose target moves
     /// with the stage. The guild holds its parties in slots (<see cref="GuildParty"/>, Epic 10 Part 2, W5, D60), each
-    /// with its own expedition; one is out at a time. A party is formed by the player and outlives its trips (D65): its
+    /// with its own expedition: both may be out, never in the same sector (D66). A party is formed by the player and outlives its trips (D65): its
     /// group is made when it is formed and disbanded when it is emptied. Main thread: the stages are judged every tick
     /// after the intents run, from what the members' states show.
     /// </summary>

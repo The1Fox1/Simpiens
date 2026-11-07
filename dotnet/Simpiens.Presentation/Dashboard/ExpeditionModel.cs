@@ -22,10 +22,41 @@ namespace Simpiens.Presentation.Dashboard
     }
 
     /// <summary>
+    /// One party's tracker (Epic 10 G5; one per party since Epic 10 Part 2, W5.3b): where it went and under which rule, its
+    /// stage and time out, the haul so far, and each member's health, gear and part. Out only while the party is.
+    /// </summary>
+    public sealed class PartyTrackerModel
+    {
+        internal readonly List<ExpeditionMemberRow> Rows = new List<ExpeditionMemberRow>(DispatchExpeditionCommand.MaxMembers);
+
+        internal PartyTrackerModel(byte slot)
+        {
+            Slot = slot;
+        }
+
+        public byte Slot { get; }
+        public bool IsOut { get; internal set; }
+
+        /// <summary>"The Drowned Gallery · Steady".</summary>
+        public string Title { get; internal set; } = string.Empty;
+
+        /// <summary>"Mustering at the stall", "Marching to The Drowned Gallery", "Working The Drowned Gallery", "Coming home", "Turning back".</summary>
+        public string StageText { get; internal set; } = string.Empty;
+
+        /// <summary>"1:45 out".</summary>
+        public string TimeOut { get; internal set; } = string.Empty;
+
+        /// <summary>"Haul 2 of 4".</summary>
+        public string HaulText { get; internal set; } = string.Empty;
+
+        public IReadOnlyList<ExpeditionMemberRow> Members => Rows;
+    }
+
+    /// <summary>
     /// Expeditions on screen (Epic 10 G5, D7): the party builder in the roster window (which of the guild's parties, the
     /// target among the charted hazard sectors, the goal, the retreat rule, outfitting from the stall's stock; Dispatch
-    /// and Recall) and the tracker while a party is out (the stage, the time out, the haul, each member's health, gear and
-    /// part). A party's members are chosen on the roster's cards (Epic 10 Part 2, W5, D65). The rules are the guild's
+    /// and Recall) and a tracker for each party out (Epic 10 Part 2, W5.3b). A party's members are chosen on the roster's
+    /// cards (W5, D65). The rules are the guild's
     /// (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied on the next tick. Views decide
     /// nothing.
     /// </summary>
@@ -34,7 +65,7 @@ namespace Simpiens.Presentation.Dashboard
         private readonly DashboardContext _context;
         private readonly GuildModel _guild;
         private readonly List<(byte Id, string Name)> _targets = new List<(byte, string)>(4);
-        private readonly List<ExpeditionMemberRow> _members = new List<ExpeditionMemberRow>(DispatchExpeditionCommand.MaxMembers);
+        private readonly PartyTrackerModel[] _trackers = { new PartyTrackerModel(1), new PartyTrackerModel(2) };
         private readonly List<EntityId> _party = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         private int _target;
 
@@ -167,23 +198,13 @@ namespace Simpiens.Presentation.Dashboard
             Feedback = new Feedback(Invariant($"Party {PartySlot} is called home."), FeedbackTone.Ok);
         }
 
-        // --- The tracker ---
+        // --- The trackers ---
 
-        public bool IsOut { get; private set; }
+        /// <summary>A tracker for each of the guild's parties, in slot order.</summary>
+        public IReadOnlyList<PartyTrackerModel> Trackers => _trackers;
 
-        /// <summary>"The Drowned Gallery · Steady".</summary>
-        public string Title { get; private set; } = string.Empty;
-
-        /// <summary>"Mustering at the stall", "Marching to The Drowned Gallery", "Working The Drowned Gallery", "Coming home", "Turning back".</summary>
-        public string StageText { get; private set; } = string.Empty;
-
-        /// <summary>"1:45 out".</summary>
-        public string TimeOut { get; private set; } = string.Empty;
-
-        /// <summary>"Haul 2 of 4".</summary>
-        public string HaulText { get; private set; } = string.Empty;
-
-        public IReadOnlyList<ExpeditionMemberRow> Members => _members;
+        /// <summary>True while a party is out.</summary>
+        public bool IsOut => _trackers[0].IsOut || _trackers[1].IsOut;
 
         public void Refresh()
         {
@@ -266,24 +287,25 @@ namespace Simpiens.Presentation.Dashboard
 
         private void RefreshTracker()
         {
+            for (int i = 0; i < _trackers.Length; i++) RefreshTracker(_trackers[i]);
+        }
+
+        private void RefreshTracker(PartyTrackerModel tracker)
+        {
             var guild = Guild;
             var host = Host;
-            // The builder's party when it is out, or else the first out
-            GuildParty party = guild != null && guild.Parties[PartySlot - 1].IsOut ? guild.Parties[PartySlot - 1] : null;
-            for (int i = 0; guild != null && i < guild.Parties.Count && party == null; i++)
-            {
-                if (guild.Parties[i].IsOut) party = guild.Parties[i];
-            }
+            var party = guild != null && tracker.Slot <= guild.Parties.Count ? guild.Parties[tracker.Slot - 1] : null;
             var expedition = party != null ? party.Expedition : default;
-            IsOut = expedition.IsActive;
-            if (!IsOut || host == null)
+            tracker.IsOut = expedition.IsActive && host != null;
+            var rows = tracker.Rows;
+            if (!tracker.IsOut)
             {
-                _members.Clear();
+                rows.Clear();
                 return;
             }
             string sector = _context.Sectors != null && _context.Sectors.TryGetSector(expedition.TargetSectorId, out var target) ? target.Name : "the sector";
-            Title = Invariant($"{sector} · {expedition.Rule}");
-            StageText = expedition.Stage switch
+            tracker.Title = Invariant($"{sector} · {expedition.Rule}");
+            tracker.StageText = expedition.Stage switch
             {
                 ExpeditionStage.Muster => "Mustering at the stall",
                 ExpeditionStage.March => $"Marching to {sector}",
@@ -291,16 +313,16 @@ namespace Simpiens.Presentation.Dashboard
                 ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : "Coming home",
                 _ => "Delivering",
             };
-            TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
-            HaulText = Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
+            tracker.TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
+            tracker.HaulText = Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
 
             var roster = party.Members;
-            while (_members.Count < roster.Count) _members.Add(new ExpeditionMemberRow());
-            if (_members.Count > roster.Count) _members.RemoveRange(roster.Count, _members.Count - roster.Count);
+            while (rows.Count < roster.Count) rows.Add(new ExpeditionMemberRow());
+            if (rows.Count > roster.Count) rows.RemoveRange(roster.Count, rows.Count - roster.Count);
             for (int i = 0; i < roster.Count; i++)
             {
                 var member = roster[i];
-                var row = _members[i];
+                var row = rows[i];
                 row.Name = _context.FriendlyName(member.CrawlerId, DossierModel.UnknownName);
                 row.WithParty = member.IsWithParty;
                 row.Downed = member.Status == ExpeditionMemberStatus.Downed;
