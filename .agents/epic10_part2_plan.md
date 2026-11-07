@@ -461,6 +461,13 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **the roadmap:** Part 2 COMPLETED, Milestone 3, Epic UI-4 delivered;
   - **the epic, the focus file, `architecture_history.md`, the economy model and AGENTS.md;**
   - this plan is deleted.
+- **The design (2026-11-06, under the AFK directive)** [Possibly Complex as a whole]:
+  - **Measured first: the whole loop as it stands** (the forge making respirators, the still draughts, the guild of eight in two parties sent together; 6 game days, 5 seeds):
+    - **The day's check was wrong:** four seeds failed "crawlers went alone where only an expedition goes", every one a resident in a respirator the forge made, which D51 allows. The observer now judges what a crawler's gear leaves of the hazard (W6.0, `c7e21a5`).
+    - **The scripted players spend like nobody minds:** the stations go up the moment the stall can pay, and the guild re-signs members who quit unpaid, 20g a time (seed 1 signed 21 and ended with none). Both now take an optional reserve (W6.0).
+    - **F14 is the economy's balance:** with a 200g reserve for the guild no wage went unpaid, but treasuries hover at 0–300g. On the default seed the stall affords the forge and a guild of eight, never the still as well (its 300g never comes back). Where the money goes: upkeep 320g a day, eight members' wages about 130g a day after lodging, two artisans' about 40g, the stations 600g once; the guild's glowstone feeds the forge's respirators instead of the caravan's exports.
+  - **D67, the gate's player is a cautious one:** the full-loop scenario and the `crafting` soak profile use the scripted players with reserves, builds before recruiting, as a player who wants both stations would. That's input, not a rule.
+  - **D68, no retuning of the economy under the directive:** the producer sets the `crafting` band (W6.3). The soak measures the loop as it stands and proposes a band by exception; F14's numbers and the levers (station cost, upkeep, glowstone's export price, members' wages) go to the play session.
 
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.

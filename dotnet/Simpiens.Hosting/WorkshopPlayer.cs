@@ -45,7 +45,7 @@ namespace Simpiens.Hosting
             sim.Host.TickCompleted += Act;
         }
 
-        /// <summary>When it built its station, first hired, and first ordered; -1 until it has.</summary>
+        /// <summary>When it first saw its station standing, first hired, and first ordered; -1 until it has.</summary>
         public long BuiltTick { get; private set; } = -1;
         public long FirstHireTick { get; private set; } = -1;
         public long FirstOrderTick { get; private set; } = -1;
@@ -74,9 +74,9 @@ namespace Simpiens.Hosting
                 if (workshops.CanBuild(host, index) != WorkshopRules.Check.Ok) return;
                 if (_sim.Simulation.ActiveStalls[0].TreasuryGold < _sim.Simulation.Economy.Workshops.ConstructionCost + _reserve) return;
                 _commands.QueueInfluence(InfluenceEvent.CreateBuildStation(SourceId, (byte)index));
-                if (BuiltTick < 0) BuiltTick = tick;
                 return;
             }
+            if (BuiltTick < 0) BuiltTick = tick; // seen standing: a build command can be refused once applied (another spent the gold)
 
             var artisan = workshops.ArtisanAt(index);
             if (artisan == default)
