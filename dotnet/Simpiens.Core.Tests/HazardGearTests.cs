@@ -58,7 +58,44 @@ namespace Simpiens.Core.Tests
             sim.Chronicle.GetActorEvents(breaking.AgentId, told);
             Assert.Contains(told, e => e.EventType == ChronicleEventType.GearWornOut);
         }
-            /// <summary>
+        /// <summary>
+        /// What the view's red coat shows (Epic 10 Part 2, S3, D71): a crawler is hurt in a tick exactly when it stands in a
+        /// hazard sector, by what its gear lets through; anyone elsewhere is not. Two crawlers are put in the Sump, one bare
+        /// and one in a respirator; every crawler is judged every tick for 20 ticks.
+        /// </summary>
+        [Fact]
+        public void ACrawlerIsHurtInATickExactlyWhenItStandsInAHazard()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var map = sim.Host.Current.Map;
+            var states = sim.Host.CrawlerStates;
+            var bare = states[0];
+            var masked = states[1];
+            var sump = new Vec2(-16f, -12f);
+            bare.Position = sump + new Vec2(-1f, 0f);
+            masked.Position = sump + new Vec2(1f, 0f);
+            Assert.True(masked.Inventory.TryEquip(new ItemInstance(1, ItemType.Respirator, 1, 60, durability: 1500)), "The respirator goes on.");
+            float perTick = (float)(Floor1Layout.SumpHazard.DamagePerSecond * 0.1f);
+
+            int bareHurt = 0, maskedHurt = 0, elsewhere = 0;
+            for (int t = 0; t < 20; t++)
+            {
+                sim.Step(1);
+                foreach (var crawler in states)
+                {
+                    bool inHazard = map.FindSector(crawler.Position).Hazard.IsHazardous;
+                    Assert.True(inHazard == crawler.HurtThisTick > 0f, $"t{sim.Clock.CurrentTick}: {crawler.AgentId} in a hazard {inHazard}, hurt {crawler.HurtThisTick}.");
+                    if (!inHazard) { elsewhere++; continue; }
+                    if (crawler == bare && bare.Health > perTick) { Assert.Equal(perTick, bare.HurtThisTick, 4); bareHurt++; }
+                    if (crawler == masked) { Assert.Equal(perTick * 0.25f, masked.HurtThisTick, 4); maskedHurt++; }
+                }
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"bare hurt {bareHurt} ticks, masked {maskedHurt}; crawler-ticks elsewhere, unhurt: {elsewhere}");
+            Assert.True(bareHurt > 0 && maskedHurt > 0 && elsewhere > 0, "Both in the Sump were hurt, and the rest were not.");
+        }
+
+        /// <summary>
         /// Protection by kind (Epic 10 Part 2, W3.1, D47): in the Sump's foul air a respirator lets through a quarter of the
         /// harm, hazard gear half, a hard hat all of it; in the Glow Caves' falling rock the hard hat a quarter and the
         /// respirator all. The resistance is the wearer's: general plus the kind's, at most 0.9.

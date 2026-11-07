@@ -106,6 +106,7 @@ namespace Simpiens.Cognition
             // loses a unit for every tick in danger, and at 0 it is gone
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
+            State.HurtThisTick = 0f;
             if (hazard.IsHazardous)
             {
                 State.Activity.HazardTicks++;
@@ -116,6 +117,7 @@ namespace Simpiens.Cognition
                 float before = State.Health;
                 State.Health = SimMath.Max(0f, (float)(State.Health - (float)(damagePerSecond * FixedTickDeltaTime)));
                 float taken = before - State.Health;
+                State.HurtThisTick = taken;
                 State.Activity.HazardDamage += taken;
                 if (geared)
                 {

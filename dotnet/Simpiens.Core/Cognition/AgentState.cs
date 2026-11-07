@@ -164,6 +164,13 @@ namespace Simpiens.Cognition
         /// <summary>Health, 0 to 100 (Epic 10 G2): hazard sectors take it, bunks and herbs give it back. Saved.</summary>
         public float Health { get; set; } = Vitality.MaxHealth;
 
+        /// <summary>
+        /// The health taken from it in its last tick (Epic 10 Part 2, S3, D71): today by a hazard sector, after its gear's
+        /// resistance. The view shows it as a red coat. Never saved, and nothing decides on it: the runtime writes it
+        /// every tick, so after a load it is right again from the first tick.
+        /// </summary>
+        public float HurtThisTick { get; set; }
+
         /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
         public bool IsDowned { get; set; }
 
