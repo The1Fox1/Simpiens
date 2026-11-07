@@ -9,14 +9,14 @@ namespace Simpiens.Client.Tests
     /// <summary>Frames captured by hand, for tests that build a scene without a game: the world as it stands, at a tick.</summary>
     internal static class TestFrames
     {
-        public static WorldViewFrames Of(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> stalls = null, Simpiens.Simulation.Workshops.WorkshopService workshops = null)
+        public static WorldViewFrames Of(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<Simpiens.Simulation.Economy.TradeStallData> stalls = null, Simpiens.Simulation.Workshops.WorkshopService workshops = null, uint caravanInterval = 0)
         {
             var frames = new WorldViewFrames();
-            frames.Restart(entities, sectors, tick, stalls, workshops);
+            frames.Restart(entities, sectors, tick, stalls, workshops, caravanInterval);
             return frames;
         }
 
-        public static WorldViewFrames Of(LocalSimulation sim, long tick) => Of(sim.Registry.ActiveEntities, sim.Sectors, tick, sim.Simulation.ActiveStalls, sim.Simulation.Workshops);
+        public static WorldViewFrames Of(LocalSimulation sim, long tick) => Of(sim.Registry.ActiveEntities, sim.Sectors, tick, sim.Simulation.ActiveStalls, sim.Simulation.Workshops, sim.Simulation.Economy.Supply.RestockIntervalTicks);
 
         public static WorldViewFrames Of(LocalSimulation sim) => Of(sim, sim.Clock.CurrentTick);
     }

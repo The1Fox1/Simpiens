@@ -14,6 +14,9 @@ namespace Simpiens.Presentation.Art
         public const float ResourceSize = 0.8f;
         public const float HearthSize = 0.9f;
         public const float BunkSize = 0.9f;
+
+        /// <summary>The caravan's stride, both views (Epic 10 Part 2, D70).</summary>
+        public const float CaravanFramesPerSecond = 4f;
         public const float SelectionRingSize = 0.9f;
         /// <summary>An item lying in the world (on the stall's counter), and the marker over its carrier: 8 texels at a whole 8 pixels.</summary>
         public const float ItemMapSize = 0.75f, CarriedSize = 0.5f;
@@ -47,6 +50,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
+               // The trade caravan (Epic 10 Part 2, the stretch, D70): a porter and its cart, walking
+               .Add(ArtKeys.PropCaravan, Sheet, HazardSprites.Names(CaravanSprites.Name, CaravanSprites.Frames), 1f, 1f, Art, framesPerSecond: CaravanFramesPerSecond)
                // The hazards' animations (Epic 10 Part 2, the stretch, D69): their frames run at HazardEffects' rates
                .Add(ArtKeys.FxFoulAir, Sheet, HazardSprites.Names(HazardSprites.PuffName, HazardSprites.PuffFrames), 1.5f, 1.5f, Art, framesPerSecond: HazardEffects.PuffFramesPerSecond)
                .Add(ArtKeys.FxFallingRock, Sheet, HazardSprites.Names(HazardSprites.RockName, HazardSprites.RockFrames), 1f, 1f, Art, framesPerSecond: HazardEffects.RockFramesPerSecond)

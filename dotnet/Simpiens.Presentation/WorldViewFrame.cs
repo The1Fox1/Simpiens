@@ -112,6 +112,9 @@ namespace Simpiens.Presentation
 
         public ref readonly StationView Station(int index) => ref _stations[index];
 
+        /// <summary>The trade caravan at the end of the tick (Epic 10 Part 2, the stretch, D70): off the map, walking in or out, or at the stall.</summary>
+        public CaravanState Caravan { get; private set; }
+
         /// <summary>
         /// What the chronicle recorded during this tick (oldest first): crawlers' interactions with each other among them,
         /// which start dynamic scenes (M3 design D9). Empty right after a rebuilt world.
@@ -132,8 +135,10 @@ namespace Simpiens.Presentation
         /// Copies <paramref name="entities"/>, the charting of <paramref name="sectors"/> (null: unknown) and the tick's
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null,
+            in CaravanState caravan = default)
         {
+            Caravan = caravan;
             StallCount = 0;
             if (stalls != null)
             {
@@ -296,6 +301,16 @@ namespace Simpiens.Presentation
             return Vec2.Lerp(from, now.Position, _alpha);
         }
 
+        /// <summary>Where the caravan is drawn this frame (Epic 10 Part 2, D70): between its last two ticks, as a crawler is.</summary>
+        public Vec2 DrawnCaravanPosition()
+        {
+            var now = _current.Caravan;
+            var before = _previous.Caravan;
+            if (_alpha >= 1f || _previous.Epoch != _current.Epoch || !before.IsOnTheMap) return now.Position;
+            if ((now.Position - before.Position).SqrMagnitude > SnapDistance * SnapDistance) return now.Position;
+            return Vec2.Lerp(before.Position, now.Position, _alpha);
+        }
+
         /// <summary>Where an entity is drawn this frame; false when the world doesn't have it.</summary>
         public bool TryGetDrawnPosition(EntityId id, out Vec2 position)
         {
@@ -331,28 +346,33 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>The next frame: <see cref="Current"/> becomes <see cref="Previous"/>, with the chronicle's new events.</summary>
-        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
+        /// <param name="caravanInterval">The supply visits' interval the caravan keeps (Epic 10 Part 2, D70); 0: the simulation's.</param>
+        public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null, uint caravanInterval = 0)
         {
-            CaptureFrame(entities, sectors, tick, TakeNewEvents(), stalls, workshops);
+            CaptureFrame(entities, sectors, tick, TakeNewEvents(), stalls, workshops, caravanInterval);
             Captured?.Invoke(this);
         }
 
         /// <summary>A rebuilt world: a new epoch, and both frames show it, so nothing carries over from the old world (its chronicle's past included).</summary>
-        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null)
+        public void Restart(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null, uint caravanInterval = 0)
         {
             _epoch = unchecked((uint)System.Threading.Interlocked.Increment(ref s_lastEpoch));
             _lastEventId = NewestEventId();
-            CaptureFrame(entities, sectors, tick, null, stalls, workshops);
-            CaptureFrame(entities, sectors, tick, null, stalls, workshops);
+            CaptureFrame(entities, sectors, tick, null, stalls, workshops, caravanInterval);
+            CaptureFrame(entities, sectors, tick, null, stalls, workshops, caravanInterval);
             Captured?.Invoke(this);
         }
 
-        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events, IReadOnlyList<TradeStallData> stalls, WorkshopService workshops)
+        private void CaptureFrame(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, IReadOnlyList<ChronicleEvent> events, IReadOnlyList<TradeStallData> stalls, WorkshopService workshops, uint caravanInterval = 0)
         {
             var next = _previous;
             _previous = _current;
             _current = next;
-            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops);
+            // The caravan, where the simulation's schedule puts it at this tick (D70)
+            var route = sectors?.Map?.CaravanRoute;
+            uint interval = caravanInterval != 0 ? caravanInterval : _simulation?.Economy != null ? _simulation.Economy.Supply.RestockIntervalTicks : 0u;
+            var caravan = route != null ? Simpiens.Simulation.Economy.Caravan.At(tick, interval, route) : default;
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>

@@ -55,6 +55,7 @@ namespace Simpiens.Presentation
                 _lowWall = value.Id(ArtKeys.TileWallLow);
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
                 for (int i = 0; i < _hazards.Length; i++)
                 {
                     string key = ArtKeys.Hazard((HazardKind)i);
@@ -74,7 +75,7 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow;
+        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan;
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -172,6 +173,7 @@ namespace Simpiens.Presentation
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
                 for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
+                AddCaravan(frame.Caravan, frames.DrawnCaravanPosition(), viewSeconds);
             }
 
             if (selection != null) AddSelection(selection, viewSeconds);
@@ -265,6 +267,22 @@ namespace Simpiens.Presentation
             if (shown <= 0f) return;
             var role = station.Built ? DrawRole.Prop : DrawRole.FloorMark;
             Add(role, station.Built ? Projection.Depth(position) : 0f, _catalog.Piece(art, viewSeconds), position, Shown(White, shown)).Pick = Items.Pickable(StationPick.Of(station.Index));
+        }
+
+        /// <summary>The share of its route over which the caravan fades in from the road, and out again (D70).</summary>
+        public const float CaravanFade = 0.08f;
+
+        /// <summary>
+        /// The trade caravan (Epic 10 Part 2, the stretch, D70), where the frame's schedule puts it: walking in from the road
+        /// (fading in), standing at the stall while it trades, walking back out (fading away).
+        /// </summary>
+        private void AddCaravan(in CaravanState caravan, Vec2 position, float viewSeconds)
+        {
+            if (!caravan.IsOnTheMap || _caravan.IsNone) return;
+            float shown = Fog.Visibility(position, viewSeconds) * MathF.Min(1f, caravan.Progress / CaravanFade);
+            if (shown <= 0f) return;
+            float walking = caravan.Stage == CaravanStage.Trading ? 0f : viewSeconds; // it stands while it trades
+            Add(DrawRole.Prop, Projection.Depth(position), _catalog.Piece(_caravan, walking), position, Shown(White, shown));
         }
 
         /// <summary>The props (resource nodes, the hearth, bunks), each as its visual says; other kinds have no picture.</summary>

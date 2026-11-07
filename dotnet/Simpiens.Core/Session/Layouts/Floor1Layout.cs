@@ -207,6 +207,10 @@ namespace Simpiens.Core.Session.Layouts
                 b.Poi($"barracks.{i + 1}", PoiKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f), 1.0f);
             }
 
+            // --- The trade caravan's way in (Epic 10 Part 2, the stretch, D70): up the gate-to-hub lane from the Road Gate's
+            // south end, through the bunkhouse's two doors, to the stall's east side; out the same way ---
+            b.CaravanRoute(new Vec2(4f, -16.5f), Doors[6], Doors[5], new Vec2(4f, -1f), new Vec2(2.5f, 1f));
+
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---
             b.Station(Forge, StationKind.Forge, new Vec2(-5f, -21f), StationRadius);
             b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);

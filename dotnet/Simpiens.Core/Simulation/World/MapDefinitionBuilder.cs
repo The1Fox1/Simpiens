@@ -26,6 +26,7 @@ namespace Simpiens.Simulation.World
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
         private readonly List<StationDefinition> _stations = new List<StationDefinition>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
+        private Vec2[] _caravanRoute;
 
         public MapDefinitionBuilder(string name, RectF playableBounds)
         {
@@ -101,6 +102,14 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
+        /// <summary>The trade caravan's way in, from where the road meets the map to the stall (Epic 10 Part 2, D70).</summary>
+        public MapDefinitionBuilder CaravanRoute(params Vec2[] waypoints)
+        {
+            if (waypoints == null || waypoints.Length < 2) throw new InvalidOperationException($"Map '{_name}': a caravan route needs two waypoints at least.");
+            _caravanRoute = (Vec2[])waypoints.Clone();
+            return this;
+        }
+
         public MapDefinition Build()
         {
             if (string.IsNullOrEmpty(_name)) throw new InvalidOperationException("Map definition needs a name.");
@@ -145,7 +154,8 @@ namespace Simpiens.Simulation.World
                 _nodes.ToArray(),
                 _pois.ToArray(),
                 _stations.ToArray(),
-                _labels.ToArray());
+                _labels.ToArray(),
+                _caravanRoute);
         }
 
         private void RequireKey(HashSet<string> keys, string key)

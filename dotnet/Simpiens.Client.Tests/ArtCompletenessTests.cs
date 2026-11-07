@@ -96,6 +96,7 @@ namespace Simpiens.Client.Tests
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             used.Add(catalog.Id(ArtKeys.PropStall));
+            used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
                 if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
             foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))

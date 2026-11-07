@@ -202,6 +202,12 @@ namespace Simpiens.Simulation.World
 
         public readonly IReadOnlyList<MapLabel> Labels;
 
+        /// <summary>
+        /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
+        /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
+        /// </summary>
+        public readonly IReadOnlyList<Vec2> CaravanRoute;
+
         internal MapDefinition(
             string name,
             RectF playableBounds,
@@ -212,8 +218,10 @@ namespace Simpiens.Simulation.World
             ResourceNodeDefinition[] resourceNodes,
             PoiDefinition[] pois,
             StationDefinition[] stations,
-            MapLabel[] labels)
+            MapLabel[] labels,
+            Vec2[] caravanRoute = null)
         {
+            CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
             Name = name;
             PlayableBounds = playableBounds;
             CameraFrame = cameraFrame;
