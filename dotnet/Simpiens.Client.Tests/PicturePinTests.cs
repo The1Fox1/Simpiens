@@ -170,12 +170,15 @@ namespace Simpiens.Client.Tests
         // zoomed views' moved with the selected crawler.
         // Epic 10 Part 2 W1.6a.1 (2026-11-05): the stations' plots lie in the workshop row, at the floor's lower edge; the
         // whole-floor views' items re-pinned with the render references, labels unchanged, the zoomed views unchanged.
-        private static readonly (ulong, ulong) PinnedTick0 = (3278266317953728146UL, 14344167986805025999UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (2305033242063241463UL, 14344167986805025999UL);
+        // Epic 10 Part 2 W5.2 (2026-11-06): the guildhall's eight barracks bunks, and with eight more entities on the map every
+        // later id moves, so every crawler's look and day moved too; every item pin re-pinned with the render references, the
+        // whole floor's labels held, the zoomed views' moved with the selected crawler.
+        private static readonly (ulong, ulong) PinnedTick0 = (12747935816705717298UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (2565234048395133202UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (2540631555451582028UL, 7072242001048544868UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (16238647467431113274UL, 4268601865235128987UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (11639804497313262571UL, 7638092815957420050UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15765990988924145470UL, 13206999959402381698UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (17826139544596396097UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14081764154863997278UL, 13801314577213324051UL);
     }
 }
