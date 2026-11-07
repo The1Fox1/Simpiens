@@ -242,7 +242,8 @@ namespace Simpiens.Client.Tests
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2)
+            int hazards = scene.Hazards.Spots.Count(s => s.Kind != Simpiens.Simulation.World.HazardKind.FallingRock || HazardEffects.LocalSeconds(s, 0f) >= 0f); // the hazards' animations at 0 s (Epic 10 Part 2, D69): every hazard sector is charted
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards, scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)

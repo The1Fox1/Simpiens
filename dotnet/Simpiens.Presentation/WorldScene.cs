@@ -55,6 +55,11 @@ namespace Simpiens.Presentation
                 _lowWall = value.Id(ArtKeys.TileWallLow);
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                for (int i = 0; i < _hazards.Length; i++)
+                {
+                    string key = ArtKeys.Hazard((HazardKind)i);
+                    _hazards[i] = key != null && value.TryId(key, out var art) ? art : ArtId.None;
+                }
                 Visuals = new EntityVisuals(value);
             }
         }
@@ -70,6 +75,10 @@ namespace Simpiens.Presentation
 
         private ArtCatalog _catalog;
         private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow;
+        private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
+
+        /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
+        public HazardEffects Hazards { get; } = new HazardEffects();
 
         public WorldScene() => Catalog = TopDownArtTable.Catalog;
 
@@ -150,6 +159,7 @@ namespace Simpiens.Presentation
                 Fog.Draw(Items, viewSeconds, Projection);
                 Fog.AddLabels(Labels, viewSeconds);
                 AddHazardNotes(map);
+                AddHazardEffects(map, viewSeconds);
             }
 
             if (frame != null)
@@ -304,6 +314,27 @@ namespace Simpiens.Presentation
         /// Each hazard sector's danger under its room's name; none while the fog covers the sector, whose "UNCHARTED"
         /// takes that line (the fog hides what an uncharted sector holds).
         /// </summary>
+        /// <summary>
+        /// The hazards' animations (Epic 10 Part 2, the stretch, D69), where the fog lets them show, each drawn as
+        /// <see cref="HazardEffects.RoleOf"/> says.
+        /// </summary>
+        private void AddHazardEffects(MapDefinition map, float viewSeconds)
+        {
+            Hazards.Load(map);
+            var spots = Hazards.Spots;
+            for (int i = 0; i < spots.Count; i++)
+            {
+                var spot = spots[i];
+                var art = (int)spot.Kind < _hazards.Length ? _hazards[(int)spot.Kind] : ArtId.None;
+                float local = HazardEffects.LocalSeconds(spot, viewSeconds);
+                if (art.IsNone || local < 0f) continue;
+                float shown = Fog.Visibility(spot.Position, viewSeconds);
+                if (shown <= 0f) continue;
+                var role = HazardEffects.RoleOf(spot.Kind);
+                Add(role, role == DrawRole.Prop ? Projection.Depth(spot.Position) : 0f, _catalog.Piece(art, local), spot.Position, Shown(White, shown));
+            }
+        }
+
         private void AddHazardNotes(MapDefinition map)
         {
             for (int s = 0; s < map.Sectors.Count; s++)

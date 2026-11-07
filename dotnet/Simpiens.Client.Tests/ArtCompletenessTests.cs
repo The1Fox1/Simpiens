@@ -96,6 +96,8 @@ namespace Simpiens.Client.Tests
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             used.Add(catalog.Id(ArtKeys.PropStall));
+            foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
+                if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
             foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))
                 foreach (bool built in new[] { false, true }) used.Add(catalog.Id(ArtKeys.Station(kind, built)));
             foreach (var key in WornSprites.Keys)

@@ -44,6 +44,10 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Iso_StationPlot" }, IsometricSprites.PlotWidth, IsometricSprites.PlotHeight)
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)
+               // The hazards' animations (Epic 10 Part 2, the stretch, D69): puffs and pebbles stand, ripples lie on the floor
+               .Add(ArtKeys.FxFoulAir, Sheet, HazardSprites.Names(HazardSprites.PuffName, HazardSprites.PuffFrames), HazardSprites.Size, HazardSprites.Size, pivotY: 1f, framesPerSecond: HazardEffects.PuffFramesPerSecond)
+               .Add(ArtKeys.FxFallingRock, Sheet, HazardSprites.Names(HazardSprites.RockName, HazardSprites.RockFrames), Standing, Standing, pivotY: FeetPivot, framesPerSecond: HazardEffects.RockFramesPerSecond)
+               .Add(ArtKeys.FxFlood, Sheet, HazardSprites.Names(HazardSprites.IsoRippleName, HazardSprites.RippleFrames), HazardSprites.IsoRippleWidth, HazardSprites.IsoRippleHeight, framesPerSecond: HazardEffects.RippleFramesPerSecond)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);

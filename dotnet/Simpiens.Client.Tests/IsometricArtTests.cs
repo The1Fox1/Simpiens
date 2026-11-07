@@ -96,11 +96,13 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheBodies()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheHazardsThenTheBodies()
         {
             var world = SpriteSheets.World;
             int missing = ProceduralSprites.All.Count + IsometricSprites.All.Count;
-            int bodies = missing + 1 + ItemSprites.World.Count + WornSprites.All.Count;
+            int hazards = missing + 1 + ItemSprites.World.Count + WornSprites.All.Count;
+            int bodies = hazards + HazardSprites.All.Count; // the hazards' animations (Epic 10 Part 2, D69)
+            for (int i = 0; i < HazardSprites.All.Count; i++) Assert.Same(HazardSprites.All[i], world[hazards + i]);
             Assert.Equal(bodies + Simpiens.Presentation.Art.People.BodySlots.All.Count, world.Count);
             Assert.Same(MissingArt.Sprite, world[missing]);
             for (int i = 0; i < ItemSprites.World.Count; i++) Assert.Same(ItemSprites.World[i], world[missing + 1 + i]);

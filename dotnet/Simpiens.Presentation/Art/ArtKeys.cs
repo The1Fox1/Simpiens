@@ -42,6 +42,20 @@ namespace Simpiens.Presentation.Art
         };
 
         public const string SelectionRing = "fx/selection-ring";
+
+        /// <summary>A hazard's animation (Epic 10 Part 2, the stretch, D69): foul air's puffs, falling rock's pebbles, the flood's ripples.</summary>
+        public const string FxFoulAir = "fx/hazard/foul-air";
+        public const string FxFallingRock = "fx/hazard/falling-rock";
+        public const string FxFlood = "fx/hazard/flood";
+
+        /// <summary>The animation a hazard of <paramref name="kind"/> plays; none for no hazard.</summary>
+        public static string Hazard(Simpiens.Simulation.World.HazardKind kind) => kind switch
+        {
+            Simpiens.Simulation.World.HazardKind.FoulAir => FxFoulAir,
+            Simpiens.Simulation.World.HazardKind.FallingRock => FxFallingRock,
+            Simpiens.Simulation.World.HazardKind.Flooding => FxFlood,
+            _ => null
+        };
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";
         public const string NodePrefix = "node/";

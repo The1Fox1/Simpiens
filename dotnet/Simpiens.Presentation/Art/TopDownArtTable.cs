@@ -47,6 +47,10 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
+               // The hazards' animations (Epic 10 Part 2, the stretch, D69): their frames run at HazardEffects' rates
+               .Add(ArtKeys.FxFoulAir, Sheet, HazardSprites.Names(HazardSprites.PuffName, HazardSprites.PuffFrames), 1.5f, 1.5f, Art, framesPerSecond: HazardEffects.PuffFramesPerSecond)
+               .Add(ArtKeys.FxFallingRock, Sheet, HazardSprites.Names(HazardSprites.RockName, HazardSprites.RockFrames), 1f, 1f, Art, framesPerSecond: HazardEffects.RockFramesPerSecond)
+               .Add(ArtKeys.FxFlood, Sheet, HazardSprites.Names(HazardSprites.RippleName, HazardSprites.RippleFrames), 1.5f, 1.5f, Art, framesPerSecond: HazardEffects.RippleFramesPerSecond)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
