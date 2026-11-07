@@ -193,6 +193,9 @@ namespace Simpiens.Client.Ui
         public Button RecallButton { get; }
         public string DispatchText => _dispatchText.Text;
 
+        /// <summary>Party <paramref name="index"/>'s line while it is out (Epic 10 Part 2, W5.3b).</summary>
+        public string OutLine(int index) => _out[index].Text;
+
         public string StatusText => _status.Text;
         public int CardsShown { get; private set; }
         public string CardName(int index) => _cards[index].Name.Text;

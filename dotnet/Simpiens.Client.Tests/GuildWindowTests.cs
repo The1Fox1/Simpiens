@@ -144,25 +144,9 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void EightMembersAndTheExpeditionsTabFitTheWindow()
         {
-            var ui = UiDriver.Start(width: Width, height: Height);
+            var ui = SignEight();
             var game = ui.Game;
-            var sim = game.Session.Simulation;
-            var guild = sim.Simulation.Guild;
-            var host = (Simpiens.Simulation.Guild.IGuildHost)sim.Simulation;
-            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
-            const ushort wage = 20;
-            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter))
-            {
-                crawler.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(warmth: 60, trust: 80, fear: 0, respect: 40, interactionCount: 1, lastInteractionTick: 0));
-            }
-            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter).Take(8))
-            {
-                Assert.Equal(Simpiens.Simulation.Guild.GuildRules.Check.Ok, guild.CanRecruit(host, crawler.AgentId, wage, (uint)sim.Clock.CurrentTick));
-                commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateRecruit("test", crawler.AgentId, wage));
-            }
-            ui.Ticks(1);
-            Assert.Equal(8, guild.Members.Count);
-
+            var guild = game.Session.Simulation.Simulation.Guild;
             var dashboard = game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
             ui.Frame();
@@ -193,6 +177,68 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(roster.PartySelectButton));
             Assert.Equal("Party 2 · 4", roster.PartySelectButton.Text);
             RenderTests.CompareWithReference("render-outpost-guild-eight", eight, Width, Height);
+        }
+
+        /// <summary>Eight residents signed on at once, their standing set by hand (a layout check, not play).</summary>
+        private static UiDriver SignEight()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var sim = ui.Game.Session.Simulation;
+            var guild = sim.Simulation.Guild;
+            var host = (Simpiens.Simulation.Guild.IGuildHost)sim.Simulation;
+            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+            const ushort wage = 20;
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter))
+            {
+                crawler.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(warmth: 60, trust: 80, fear: 0, respect: 40, interactionCount: 1, lastInteractionTick: 0));
+            }
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter).Take(8))
+            {
+                Assert.Equal(Simpiens.Simulation.Guild.GuildRules.Check.Ok, guild.CanRecruit(host, crawler.AgentId, wage, (uint)sim.Clock.CurrentTick));
+                commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateRecruit("test", crawler.AgentId, wage));
+            }
+            ui.Ticks(1);
+            Assert.Equal(8, guild.Members.Count);
+            return ui;
+        }
+
+        /// <summary>
+        /// Two trackers (Epic 10 Part 2, W5.3b, D66): with two parties out at once, the map shows a tracker for each, the
+        /// second under the first; the Expeditions tab a line for each.
+        /// </summary>
+        [Fact]
+        public void TwoPartiesOutShowTwoTrackers()
+        {
+            var ui = SignEight();
+            var game = ui.Game;
+            var sim = game.Session.Simulation;
+            var guild = sim.Simulation.Guild;
+            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+            var members = guild.Members.Select(m => m.CrawlerId).ToArray();
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateFormParty("test", new Simpiens.Intervention.FormPartyCommand(1, members.Take(4).ToArray())));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateFormParty("test", new Simpiens.Intervention.FormPartyCommand(2, members.Skip(4).ToArray())));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateDispatchExpedition("test", new Simpiens.Intervention.DispatchExpeditionCommand(1,
+                Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, 4, Simpiens.Simulation.Guild.RetreatRule.Steady)));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateDispatchExpedition("test", new Simpiens.Intervention.DispatchExpeditionCommand(2,
+                Simpiens.Core.Session.Layouts.Floor1Layout.GlowCavesSectorId, 3, Simpiens.Simulation.Guild.RetreatRule.Bold)));
+            ui.Ticks(100);
+            Assert.True(guild.Parties[0].IsOut && guild.Parties[1].IsOut, "Both parties are out.");
+
+            var dashboard = game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.ExpeditionsTab));
+            ui.Frame();
+            Assert.StartsWith("Party 1: ", dashboard.Guild.OutLine(0));
+            Assert.StartsWith("Party 2: ", dashboard.Guild.OutLine(1));
+            dashboard.CloseWindow();
+            dashboard.TogglePanels(); // the map
+            ui.Frame();
+            var first = dashboard.Trackers[0].Root;
+            var second = dashboard.Trackers[1].Root;
+            Assert.True(dashboard.Trackers[0].IsShown && dashboard.Trackers[1].IsShown, "A tracker for each party out.");
+            Assert.True(second.AbsoluteTop >= first.AbsoluteTop + first.AbsoluteHeight && second.AbsoluteTop + second.AbsoluteHeight <= Height, "The second under the first, on the screen.");
+            Assert.Equal("Glow Caves · Bold", game.Session.DashboardModel.Guild.Expedition.Trackers[1].Title);
+            RenderTests.CompareWithReference("render-outpost-two-trackers", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
         }
 
         [Fact]
