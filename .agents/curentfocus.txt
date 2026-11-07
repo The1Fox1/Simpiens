@@ -64,7 +64,13 @@ CURRENT FOCUS
   W5, the guildhall, done 2026-11-06: expeditions per party first (a refactor with no change in behaviour), eight
   members in two tabs, the barracks (a bunk kept for each member, a 1g lodging fee from the wage), FormParty (parties
   outlive their trips), two parties out at once with a tracker each (D60-D66); live scenario TwoPartiesOutAtOnce.
-  NEXT: W6 the gate (the producer's play session pending); stretch: animated hazards and the caravan as an agent.
+  W6, the gate, done 2026-11-06 but for the producer's play session: the lone-venture check judges by D51; the
+  scripted players keep a reserve; TheWorkshopLoopPlaysThrough (gate seed 1: on the default seed the stall can't
+  afford both stations and a guild of eight, F14) and a save mid-craft and mid-expedition; the soak's crafting
+  profile, its band proposed by exception (integrity only: treasuries end day 3 at 1-390g); seeds 1-120 120/120 with
+  and without the guild.
+  NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6);
+  meanwhile the stretch: animated hazards and the caravan as an agent.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as

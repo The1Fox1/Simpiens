@@ -1516,3 +1516,11 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **D65, FormParty:** a party is a standing group, made when formed and disbanded when emptied. A member who stays behind leaves the group for the trip, so the directive doesn't draw it along, and rejoins at the end. Dispatch and Recall name the slot.
 - **D66, two at once:** each party has one expedition, never two in the same sector. Measured: parties sent each on its own take turns, because the caravan's gear outfits one party a visit; the scripted player's `together` holds both until both are ready, and then both are out at once on every seed that filled the guild. That is player input, not a rule.
 - Commits: W5.0 `c1f7f29`; W5.1 `0dcaa09`, `b349d46`; W5.2 `bd1c2d7`, golden `d9f5989`, `ae33c2b`; W5.3a `4deeb00`, `eeb07e1`; W5.3b `6b554e6`, `c2982d8`, `ee2958a`, `fd130be`; W5.4 `746a9d7`.
+
+## 2026-11-06: W6, the gate (`feat/epic10-part2`, under the producer's AFK directive; the play session pending)
+
+- **Measured first, the whole loop:** the forge, the still and a guild of eight together. The day's check failed on 4 of 5 seeds, and every failure was a resident in a respirator the forge made, which D51 allows. The observer was judging a lone venture by the hazard's raw rate; it now judges what the crawler's gear leaves of it, as `Vitality` does.
+- **The scripted players spent like nobody minds** (stations the moment the stall could pay; members re-signed after quitting unpaid, 20g a time), so both take an optional cash reserve. Even so, no order of spending fits the default seed: building the stations first left the treasury at 0 for 95 hours. F14 is the economy's balance, the producer's call (D68), so the loop's scenario runs on gate seed 1, where it plays through, and the default seed's outcome is reported (D67).
+- **The `crafting` band asks for integrity, not prosperity:** treasuries end day 3 at 1–390g where the fair player's end at 771–1,277g. A treasury band would have enshrined a balance nobody has chosen yet.
+- **Gate:** seeds 1–120 120/120 with and without the guild player; the 23 gate seeds 23/23 over two days with every scripted player.
+- Commits: W6.0 `c7e21a5`; W6.1–W6.2 `bed8565`; W6.3–W6.4 `ec14a97`.
