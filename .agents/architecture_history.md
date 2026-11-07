@@ -1524,3 +1524,9 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The `crafting` band asks for integrity, not prosperity:** treasuries end day 3 at 1–390g where the fair player's end at 771–1,277g. A treasury band would have enshrined a balance nobody has chosen yet.
 - **Gate:** seeds 1–120 120/120 with and without the guild player; the 23 gate seeds 23/23 over two days with every scripted player.
 - Commits: W6.0 `c7e21a5`; W6.1–W6.2 `bed8565`; W6.3–W6.4 `ec14a97`.
+
+## 2026-11-06: the stretch, hazards that move and the caravan on the map (`feat/epic10-part2`, the AFK directive's stretch goal)
+
+- **D69, the hazards animate in the view:** presentation only, from the scene's time. `HazardEffects` lays out spots per hazard sector, clear of walls and nodes, phased by a hash of where they lie, so a map always looks the same at the same moment; the fog hides them as everything in an uncharted sector. *Found on the way:* 16-pixel effects didn't read at the whole floor's zoom, and art is drawn 1:1, so puffs and ripples got 24-pixel canvases. A standing piece must fit a cell or isometric sorts its neighbours wrongly, so they lie over the floor (`FloorMark`); the 16-pixel pebble stands.
+- **D70, the caravan is a function of the clock:** it walks in to reach the stall on the visit's tick and walks out after a game hour; the supply visit keeps its schedule. Making it an entity would have moved every later id and every crawler's day (W5.2 showed what a map change does), and made its timing a new piece of saved state. As a pure function owned by the core and carried by the frames, it changes nothing in the simulation, saves nothing, and still reads as an agent coming and going. A pawn caravan belongs with interactive trade.
+- Commits: S1 `27ce4e1`, `8dc7945`, `0f16fb0`; S2 `c79f1b4`, `4f1dce4`, `59ed406`.

@@ -226,6 +226,11 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
   - **To decide, F14:** the whole loop leaves the stall near broke (treasuries of 1–390g at day 3 where the fair player ends at 771–1,277g). The levers, measured in the plan's W6 design: the stations' 300g each, upkeep (320g a day), members' wages (5g a visit, about 130g a day for eight after lodging), glowstone's export price, or the made goods' prices. The `crafting` band follows the choice.
 - [ ] **W6.6, the close-out** (after the play session): the roadmap's COMPLETED, Milestone 3, Epic UI-4; the plan deleted.
 
+### The stretch (2026-11-06, `feat/epic10-part2`, the AFK directive's stretch goal)
+- [x] **S1, the hazards move** (D69): in the view only, from the scene's time. Sickly puffs rise and thin in the Sump, ripples spread in the Drowned Gallery, and pebbles fall with their dust in the Glow Caves, at spots laid out clear of walls and nodes, hidden by the fog. Art generated on the CPU (`HazardSprites`); no simulation change.
+- [x] **S2, the caravan walks in and out** (D70): a porter hauling a covered handcart up the lane from the Road Gate to the stall for each supply visit, trading a game hour and walking back out. Its place is a pure function of the clock (`Caravan.At`), so the visit's timing, the save and the golden hashes are untouched; the route is map data (`MapDefinition.CaravanRoute`). *Left for later:* a caravan that is a pawn (delayed by crowds, met by crawlers, traded with) belongs with interactive trade, after Part 2.
+- **For the play session:** watch the Sump, the Gallery and the Glow Caves, and the lane a little before each six-hourly visit (`render-iso-caravan-t2400.png`).
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |

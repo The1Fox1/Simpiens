@@ -482,8 +482,8 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   - **The route is map data** (`Floor1Layout.CaravanRoute`: the gate, the lane, the hub's door, the stall). The frame carries the caravan (`WorldViewFrame`), and the scene draws a cart with its porter, walking.
   - *Left for later:* a caravan that is a crawler-like pawn (delayed by crowds, met by crawlers, traded with) belongs with interactive trade, after Part 2.
 - **Steps:**
-  1. **[ ] S1 Animated hazards** [Possibly Complex: art in two projections, renders and pins]: D69; a scene test (the effects stand in charted hazard sectors only, and move with time); the art sheet looked at; pins and renders re-recorded.
-  2. **[ ] S2 The caravan on the map** [Possibly Complex: a route as map data, a frame field, art]: D70; a core test (the caravan reaches the stall on each visit's tick and is gone between visits); a scene test; renders.
+  1. **[x] S1 Animated hazards** (done 2026-11-06: `27ce4e1`, art pins `8dc7945`, renders `0f16fb0`; puffs and ripples drawn on 24-pixel canvases and laid over the floor, since 16 pixels didn't read at the whole floor's zoom and a standing piece must fit a cell) [Possibly Complex: art in two projections, renders and pins]: D69; a scene test (the effects stand in charted hazard sectors only, and move with time); the art sheet looked at; pins and renders re-recorded.
+  2. **[x] S2 The caravan on the map** (done 2026-11-06: `c79f1b4`, art pins `4f1dce4`, render `59ed406`) [Possibly Complex: a route as map data, a frame field, art]: D70; a core test (the caravan reaches the stall on each visit's tick and is gone between visits); a scene test; renders.
 
 ## Log
 - 2026-11-04: the go ("Begin Epic 10 part 2 work"); Q1–Q12 stand as proposed. W0.1 done: the epic doc, the roadmap, the focus file, this plan.

@@ -69,8 +69,9 @@ CURRENT FOCUS
   afford both stations and a guild of eight, F14) and a save mid-craft and mid-expedition; the soak's crafting
   profile, its band proposed by exception (integrity only: treasuries end day 3 at 1-390g); seeds 1-120 120/120 with
   and without the guild.
-  NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6);
-  meanwhile the stretch: animated hazards and the caravan as an agent.
+  The stretch, done 2026-11-06: the hazards animate in the view (D69), and the trade caravan walks in from the Road
+  Gate to the stall for each visit and back out, its place a pure function of the clock (D70).
+  NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6).
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
