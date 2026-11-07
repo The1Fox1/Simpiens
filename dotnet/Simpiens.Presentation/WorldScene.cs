@@ -217,6 +217,15 @@ namespace Simpiens.Presentation
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);
             Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
+            // Hurt (S3, D71): its red coat, the same sprite as a silhouette right over it, blinking
+            float coat = (entity.Flags & CrawlerFlags.Hurt) != 0 ? HurtCoat.Strength(viewSeconds) * shown : 0f;
+            if (coat > 0f)
+            {
+                var colour = HurtCoat.Colour;
+                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, position, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), pose.TiltDegrees * DegreesToRadians);
+                silhouette.Silhouette = true;
+                silhouette.Pick = pick;
+            }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
             var carried = _catalog.Piece(_catalog.Picture(ItemCatalog.Get(entity.Carried)?.ArtKey, ItemPicture.Carried), viewSeconds);

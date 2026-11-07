@@ -58,6 +58,11 @@ namespace Simpiens.Presentation
         /// would open hairline gaps at in-between zooms.
         /// </summary>
         public bool SnapToPixel;
+        /// <summary>
+        /// Drawn as a silhouette (Epic 10 Part 2, S3, D71): its sprite's shape filled flat with <see cref="Tint"/>'s colour,
+        /// at the tint's alpha, whatever the sprite's own colours (the red coat over a hurt crawler, <see cref="HurtCoat"/>).
+        /// </summary>
+        public bool Silhouette;
     }
 
     /// <summary>

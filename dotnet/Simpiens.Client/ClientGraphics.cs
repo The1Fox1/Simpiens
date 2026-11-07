@@ -73,6 +73,7 @@ namespace Simpiens.Client
             Icons.Dispose();
             Portraits.Dispose();
             FontPages.Dispose();
+            Renderer.Dispose();
             _batch.Dispose();
         }
     }

@@ -26,6 +26,8 @@ namespace Simpiens.Presentation
         Yielding = 4,
         Sharing = 8,
         Gossiping = 16,
+        /// <summary>Hurt this tick (Epic 10 Part 2, S3, D71): drawn as a blinking red coat over whatever state it shows (<see cref="HurtCoat"/>).</summary>
+        Hurt = 32,
     }
 
     /// <summary>
@@ -230,6 +232,7 @@ namespace Simpiens.Presentation
             if (agent.IsYielding) flags |= CrawlerFlags.Yielding;
             if (agent.IsSharing) flags |= CrawlerFlags.Sharing;
             if (agent.IsGossiping) flags |= CrawlerFlags.Gossiping;
+            if (agent.HurtThisTick > 0f) flags |= CrawlerFlags.Hurt;
             return flags;
         }
     }
