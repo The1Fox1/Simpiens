@@ -25,13 +25,16 @@ namespace Simpiens.Hosting
         private readonly ushort _batch;
         private readonly byte _shifts;
         private readonly ushort _wage;
+        private readonly uint _reserve;
         private readonly List<EntityId> _hired = new List<EntityId>(2);
 
         /// <param name="batch">How many makes each order asks for.</param>
         /// <param name="shifts">The blocks the artisan works (<see cref="ShiftBlocks"/>).</param>
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
-        public WorkshopPlayer(LocalSimulation sim, StationKind kind, ItemType make, ushort batch = 2, byte shifts = ShiftBlocks.DayShift, ushort wage = 0)
+        /// <param name="reserve">Gold it keeps in the treasury (Epic 10 Part 2, W6): it builds only when the stall holds the cost and this besides.</param>
+        public WorkshopPlayer(LocalSimulation sim, StationKind kind, ItemType make, ushort batch = 2, byte shifts = ShiftBlocks.DayShift, ushort wage = 0, uint reserve = 0)
         {
+            _reserve = reserve;
             _sim = sim;
             _commands = (IPlayerInterventionService)sim.Services.GetService(typeof(IPlayerInterventionService));
             _kind = kind;
@@ -69,6 +72,7 @@ namespace Simpiens.Hosting
             if (!workshops[index].Built)
             {
                 if (workshops.CanBuild(host, index) != WorkshopRules.Check.Ok) return;
+                if (_sim.Simulation.ActiveStalls[0].TreasuryGold < _sim.Simulation.Economy.Workshops.ConstructionCost + _reserve) return;
                 _commands.QueueInfluence(InfluenceEvent.CreateBuildStation(SourceId, (byte)index));
                 if (BuiltTick < 0) BuiltTick = tick;
                 return;

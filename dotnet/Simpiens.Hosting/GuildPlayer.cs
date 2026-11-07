@@ -26,6 +26,7 @@ namespace Simpiens.Hosting
         private readonly IPlayerInterventionService _commands;
         private readonly int _targetSize;
         private readonly ushort _wage;
+        private readonly uint _reserve;
         private readonly List<EntityId> _recruited = new List<EntityId>(4);
 
         /// <summary>What it does with each party: party 1's members are its first four in join order, party 2's the next four.</summary>
@@ -49,8 +50,10 @@ namespace Simpiens.Hosting
         private int _promised;
 
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
-        public GuildPlayer(LocalSimulation sim, int targetSize, ushort wage = 0)
+        /// <param name="reserve">Gold it keeps in the treasury (Epic 10 Part 2, W6): it signs a member on only when the stall holds the fee and this besides.</param>
+        public GuildPlayer(LocalSimulation sim, int targetSize, ushort wage = 0, uint reserve = 0)
         {
+            _reserve = reserve;
             _sim = sim;
             _commands = (IPlayerInterventionService)sim.Services.GetService(typeof(IPlayerInterventionService));
             _targetSize = targetSize;
@@ -141,6 +144,7 @@ namespace Simpiens.Hosting
                 return;
             }
             var host = (IGuildHost)_sim.Simulation;
+            if (_reserve > 0 && _sim.Simulation.ActiveStalls[0].TreasuryGold < _sim.Simulation.Economy.Guild.SigningFee + _reserve) return;
             var crawlers = _sim.Host.CrawlerStates;
             for (int i = 0; i < crawlers.Count; i++)
             {

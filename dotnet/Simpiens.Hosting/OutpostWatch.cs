@@ -80,7 +80,11 @@ namespace Simpiens.Hosting
         public int ConservationViolations, WorstDiscrepancy, FogLeaks;
         public string FirstFogLeak;
 
-        /// <summary>Crawler-ticks spent alone where a hazard is past the lone limit (Epic 10 G5, D11): the Drowned Gallery is an expedition's, and a party's members don't count.</summary>
+        /// <summary>
+        /// Crawler-ticks spent alone where a hazard is past the lone limit through what the crawler wears (Epic 10 G5, D11;
+        /// D51 since Epic 10 Part 2's W3): the Drowned Gallery is an expedition's unless a crawler wears a respirator, and a
+        /// party's members don't count.
+        /// </summary>
         public int AloneInTheChamber;
         public string FirstAloneInTheChamber;
         public long ObservedTicks;
@@ -188,7 +192,8 @@ namespace Simpiens.Hosting
             {
                 var state = present[i];
                 if (state.Inventory != null) agentGold += (uint)state.Inventory.Gold;
-                if (Vitality.HazardAt(map, state.Position).DamagePerSecond > Vitality.LoneHazardLimit && !sim.Guild.IsOnExpedition(state.AgentId))
+                // Past the lone limit through what it wears (Epic 10 Part 2, D51: a respirator opens the Gallery to the bold), off an expedition
+                if (Vitality.LoneDanger(Vitality.HazardAt(map, state.Position), state.Inventory) > Vitality.LoneHazardLimit && !sim.Guild.IsOnExpedition(state.AgentId))
                 {
                     AloneInTheChamber++;
                     FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
