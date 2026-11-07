@@ -125,5 +125,6 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 ## 8. Deferred
 - ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
 - **Made goods** (the pickaxe, draughts, gear for each hazard): Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
-- **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat. Barracks: Epic 10 Part 2, W5.
+- ~~**Lodging fees:**~~ delivered by Epic 10 Part 2, W5 (2026-11-06, D63): a guild member with a bunk in the barracks is paid its wage less 1g each caravan visit (`GuildTuning.LodgingFee`), never below nothing. It is a deduction, not a transfer: the fee stays in the treasury and the ledger records the wage paid.
+- **Other crawler sinks:** not needed while crawler wallets stay flat.
 - **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).

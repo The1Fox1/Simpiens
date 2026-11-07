@@ -402,7 +402,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   3. **[x] W4.3 The client** (done 2026-11-05: `cb648be`, pins `040bfbe`, renders `9c9d78c`) [Possibly Complex: rims by grade; the window's repair; renders after a look]: rarity rims by grade in the merchant terminal and the roster; the stock line by grade; the station window's artisan grade and a repair row.
   4. **[x] W4.4 The live scenarios** (done 2026-11-05, `39eee16`) [Possibly Complex: measured first]: `PracticeMakesBetterGear` (within some game days the artisan's grade rises and a later piece lasts longer) and `TheForgeMendsWornGear` (a worn piece comes back full for half the inputs).
 
-### W5. The guildhall (2–3 days)
+### W5. The guildhall (2–3 days) — done 2026-11-06
 **Complexity:** Very Complex: G5's one-expedition stage machine becomes several, and parties live on between expeditions. Split it: W5.1–W5.2, then FormParty, then two expeditions at once. The developer supervises the last of these.
 - [ ] **W5.1 The guild's limit,** [Basic] from 4 to 8, in `GuildTuning`.
 - [ ] **W5.2 Barracks:** [Possibly Complex]
@@ -444,9 +444,9 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Ev
   3. **[x] W5.2 The barracks** (done 2026-11-06: `bd1c2d7`, golden `d9f5989`, renders and pins `ae33c2b`) [Possibly Complex: map data, so the golden hashes and renders are re-recorded in their own commits; a bunk kept per member; the fee]: D62–D64. A validator for keeping, freeing and restoring a bunk and for the fee. Members sleeping in the barracks is measured on the gate seeds.
      - **Measured:** on 8 gate seeds over four days, members slept only in their own barracks bunks (61–178 bunk-hours a seed), none in the common bunks; no one else took a barracks bunk; nobody starved; no day failed.
      - **Found on the way:** eight more map entities move every later id, so play moved on every seed and six tests that leaned on where crawlers happened to be broke. Each was made robust rather than re-tuned: demand by price is now a whole day at each price; a load is followed for half a day; and so on (the commit lists them). F15 is the one that matters for play.
-  4. **[ ] W5.3a FormParty** [Possibly Complex: a command, and parties that persist]: D65. Dispatch and recall name a slot; the roster's party buttons; the scripted player forms its party once. `ExpeditionTests` and the guild scenarios follow, re-measured: the party's group now exists before dispatch.
-  5. **[ ] W5.3b Two at once** [Possibly Complex after W5.0; it was Very Complex, with the developer to supervise, which the AFK directive delegates]: D66. The rules, cognition's refusal hook by party, the scripted player with two parties and two targets, the two trackers. The risk lies in play (two musters at the stall, the stock split two ways), which W5.4 measures.
-  6. **[ ] W5.4 `TwoPartiesOutAtOnce`** [Possibly Complex: measured first]: the DoD above, on the default seed, with nothing injected.
+  4. **[x] W5.3a FormParty** (done 2026-11-06: `4deeb00`, renders `eeb07e1`) [Possibly Complex: a command, and parties that persist]: D65. Dispatch and recall name a slot; the roster's party buttons; the scripted player forms its party once. `ExpeditionTests` and the guild scenarios follow, re-measured: the party's group now exists before dispatch.
+  5. **[x] W5.3b Two at once** (done 2026-11-06: `6b554e6`, `c2982d8`; two trackers `ee2958a`, `fd130be`) [Possibly Complex after W5.0; it was Very Complex, with the developer to supervise, which the AFK directive delegates]: D66. The rules, cognition's refusal hook by party, the scripted player with two parties and two targets, the two trackers. The risk lies in play (two musters at the stall, the stock split two ways), which W5.4 measures.
+  6. **[x] W5.4 `TwoPartiesOutAtOnce`** (done 2026-11-06, `746a9d7`; measured first: each party alone, the caravan's gear outfits one a visit and they take turns, so the scripted player sends them `together`) [Possibly Complex: measured first]: the DoD above, on the default seed, with nothing injected.
 
 ### W6. The gate (1–2 days)
 **Complexity:** Possibly Complex: the scenarios and the soak band (set with the producer); the close-out is Basic.

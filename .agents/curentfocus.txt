@@ -61,8 +61,10 @@ CURRENT FOCUS
   W4, practice and repair, done 2026-11-05: practice raises an artisan's grade (Standard, Fine, Masterwork) and a
   grade lengthens a piece's life and strengthens its effect; the stall's shelf keeps grades and worn pieces; the forge
   mends worn pieces for half their inputs (D55-D59); live scenarios PracticeMakesBetterGear, TheForgeMendsWornGear.
-  NEXT: W5 the guildhall, W6 the gate (the producer's play session pending); stretch: animated hazards and the
-  caravan as an agent.
+  W5, the guildhall, done 2026-11-06: expeditions per party first (a refactor with no change in behaviour), eight
+  members in two tabs, the barracks (a bunk kept for each member, a 1g lodging fee from the wage), FormParty (parties
+  outlive their trips), two parties out at once with a tracker each (D60-D66); live scenario TwoPartiesOutAtOnce.
+  NEXT: W6 the gate (the producer's play session pending); stretch: animated hazards and the caravan as an agent.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
