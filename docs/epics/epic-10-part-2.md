@@ -236,12 +236,12 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 
 | Left out | Owner |
 | :--- | :--- |
-| Weapons, and armour against creatures | Part 3 (K2, K3) |
+| Weapons, and armour against creatures | Part 3 (K3, K4, K8) |
 | More stations; station upgrades | After Epic 10 |
 | Artisans who also go out with the guild | Q4's alternative, if the producer wants it |
 | The caravan buying made goods | Q7's alternative |
-| Loot in play | Part 3 (K3) |
-| Combat and death | Part 3 (K0–K4; its draft's Q2–Q4) |
+| Loot in play | Part 3 (K4) |
+| Combat and death | Part 3 (K0–K5, K8; its draft's Q2–Q4) |
 | Safe zones; placing the shop and the guildhall where the player chooses, each grown as one building; rival shops and guilds | Unscheduled: the producer's long-term direction ([Game Design Proposal §5](../Game%20Design%20Proposal.md)) |
 | Quitting on soured feelings (the producer, 2026-11-04). Today a guild member (Part 1's D4) and an artisan (W1.2) quit at a caravan visit when trust toward the player is under 30, or after 2 unpaid visits in a row. Later: quitting on warmth (affection) as well as trust, thresholds per role as tuning, quitting at any time rather than only at a visit, and perhaps going to a rival (Game Design Proposal §5) | Unscheduled; any epic that reworks contracts |
 

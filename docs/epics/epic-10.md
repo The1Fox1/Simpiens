@@ -283,21 +283,21 @@ Each milestone also needs its validators, the golden check and the client's test
 
 | Left out | Owner |
 | :--- | :--- |
-| The descent gate and its boss; moving the outpost to the next floor | The gate and its boss: Epic 10 Part 3 (K7), Milestone 4. The move: Part 4, the descent (split out of Part 3 on 2026-11-07) |
+| The descent gate and its boss; moving the outpost to the next floor | The gate and its boss: Epic 10 Part 3 (K10), Milestone 4. The move: Part 4, the descent, Milestone 5 (split out of Part 3 on 2026-11-07) |
 | Workshops, hired artisans and crafting | Epic 10 Part 2 with Epic UI-4, Milestone 3 |
-| Creatures and combat | Epic 10 Part 3 (K0–K2), Milestone 4 |
+| Creatures and combat | Epic 10 Part 3 (K0–K3, K8), Milestone 4 |
 | A guild larger than four, barracks and a guildhall | Part 2, the guildhall (W5), Milestone 3 |
 | Tavern rumours written by a language model | Epic 11 |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
 | A cognition budget (ROADMAP §3A #8); planners per worker came with the core refactor's R6 (2026-11-02, no measured gain) | A measured need; G1 and G5 measured none (G5: an expedition costs 28% more time over its 800 ticks, far within the tick) |
 | The pickaxe (a harvest tool, a yield bonus; the item system's tool stat, `HarvestSpeed`, is unused until then) | Epic 10 Part 2, the workshops (W1) |
-| A weapon (the item system's Attack and Defense stats are unused until then) | Part 3 (K2), Milestone 4 |
+| A weapon (the item system's Attack and Defense stats are unused until then) | Part 3 (K3), Milestone 4 |
 | Gear per hazard kind (a respirator, a helmet), better grades (`ItemInstance.Quality`), repair | Part 2 (W3, W4) |
 | Gear making lone crawlers bolder (D10 settles it for parties) | Part 2, gear for each hazard (W3) |
 | Several parties at once; a FormParty command (parties that outlive one expedition) | Part 2, the guildhall (W5) |
-| Carrying a downed member | Part 3 (K6) |
+| Carrying a downed member | Part 3 (K5, death and rescue) |
 | Expeditions into uncharted sectors (scouting as an order) | Part 4, or later (out of Part 3 since its re-scope, 2026-11-07) |
-| Loot tables in play (the item refactor's foundation): the haul, node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), conditions (sector, danger, depth, a crawler's stats); the haul stays glowstone | Part 3, creature drops (K3): the first milestone that needs random drops |
+| Loot tables in play (the item refactor's foundation): the haul, node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), conditions (sector, danger, depth, a crawler's stats); the haul stays glowstone | Part 3, creature drops (K4): the first milestone that needs random drops |
 | Rarity in the client (colours, the merchant) | With the first rare drop the player sees |
 | Item data files (JSON) and content tools | The map designer (Epic CLIENT) |
 | Salvage as "a resource the stall buys": `IsSalvage` still means any resource, and the stall's role is checked where it trades | When an unsold resource appears (none today) |

@@ -1565,3 +1565,20 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - loot piles for both kills and bodies;
   - creature kinds as data.
 - **Milestone 4:** Q1 proposes splitting it. Milestone 4 would be "Creatures, Combat & the Gatekeeper" (Part 3, UI-5, Epic 11), and a Milestone 5 "Floor Relocation" (Part 4). The roadmap records the re-scope and leaves the split to the answer.
+
+## 2026-11-07: Part 3's draft answered in part; Milestone 4 ends with Part 3; K0–K11
+- **The producer:** "Q3 hazards should also kill if the downed crawler is not rescued. Q4 looks good. Q2 melee first, then range. Seeded hit rolls. Q11 Add more equipment slots, for now we should have 2 slots but I want us to build the foundation of a more complex appendable equipment system. Q1 the milestone 4 should end here with functional combat system. Add K9 - skill system".
+- **What the plan became:** K0–K11.
+  - **K1, the equipment system:** slots as a table, room for 16 in the save, and generic stats, wear and outfitting. Head and body replace protection.
+  - **K5, death and rescue:** carrying is one capability, used by friends and parties.
+  - **K8, ranged combat:** after the whole melee loop.
+  - **K9, the skill system:** seven skills as a table. It absorbs Q9's veterans and W4's practice.
+  - The estimate is 31–44 agent days.
+- **Readings, flagged to the producer:**
+  - **Q3:** "rescued" means a crawler downed in danger collapses: it can no longer limp out as Part 1's do. Q3a: its own draught counts as rescue. Q3b: friends rescue, not only parties.
+  - **Q11:** the "2 slots" are head and body, beside the weapon and the tool.
+  - **Q1:** Epic 11 moves with Part 4 to a new Milestone 5, "Floor Relocation", so that Milestone 4, "Combat & the Gatekeeper", ends with Part 3.
+- **Why skills come at K9 and not first:** they tune systems that must exist first (melee, ranged, harvest, making, rescue). The combat rule's read model carries a proficiency from K0.3, flat until K9 fills it, so nothing is rebuilt. The bosses (K10) are tuned with skills in play.
+- **New questions, with defaults:**
+  - Q15 and Q16, ranged: a sling and a crossbow in the one weapon slot, with no ammunition;
+  - Q17–Q21, skills: seven skills; levels 0–10 in named bands; starting skills drawn from the seed and leaned by personality; what each skill does; skills steering choices only through what work pays.
