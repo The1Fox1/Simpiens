@@ -175,5 +175,8 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void Loot() => new Simpiens.Testing.Economy.LootValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Combat() => new Simpiens.Testing.Combat.CombatValidator().RunAllValidationTests();
     }
 }

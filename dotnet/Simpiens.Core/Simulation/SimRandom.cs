@@ -63,5 +63,6 @@ namespace Simpiens.Simulation
         public const uint Loot = 7; // loot tables (item system I7)
         public const uint Look = 8; // a crawler's look (Epic UI-Beta B1)
         public const uint Name = 9; // a crawler's given name (Epic UI-Beta B1)
+        public const uint Combat = 10; // a swing's hit roll (Epic 10 Part 3, K0.3)
     }
 }

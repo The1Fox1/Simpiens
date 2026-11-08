@@ -1582,3 +1582,19 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **New questions, with defaults:**
   - Q15 and Q16, ranged: a sling and a crossbow in the one weapon slot, with no ammunition;
   - Q17–Q21, skills: seven skills; levels 0–10 in named bands; starting skills drawn from the seed and leaned by personality; what each skill does; skills steering choices only through what work pays.
+
+## 2026-11-08: Epic 10 Part 3 ACTIVE; K0's measurements and the combat rule
+- **The go:** "The revised epic plan looks good. Please proceed with K0". The three flagged readings (Q1, Q3, Q11) and the unanswered defaults stand by exception. The design moved into `docs/epics/epic-10-part-3.md`; the plan keeps the steps. Part 2's play session and close-out stay open beside it.
+- **K0.2, measured** (the 23 gate seeds, three game days, with no player, the guild player and the crafting players): 41 of 64 planner facts; about 20,000 ticks/s; frames of 1.7–4.0 ms on llvmpipe; the soak 15/15. The bold are 1–6 of 12 residents and carry 60–100g on most days, which sets K3's weapon prices (a cudgel about 15g, a blade about 30g).
+- **Finding F1: hazards alone down nobody.** No crawler was downed on any run; the lowest health in danger is 46 for a resident and 42 for a member, above the retreat line. So Q3's lethal hazards change no gate seed by themselves, and the deaths `TheCarefulLoseFew` bounds will come from combat, reckless orders and bad luck.
+- **K0.3, the combat rule** (supervised; the developer's review pending), in `Simulation/Combat/`. The decisions are the epic's D1–D8:
+  - **D1, one read model, `Combatant`:** the rule reads a crawler (state and `CrawlerStats`) and a creature (kind and record) the same way.
+  - **D2, weapons are stat modifiers on the bare hand:** attack 2, reach 0.5 between bodies, a swing every 1.5 s, no range. Three stat kinds were added: `Reach`, `AttackInterval` and `Range`.
+  - **D3, the roll:** one draw per swing from (seed, attacker, tick, `SimRandomSalt.Combat`), with the target outside it.
+  - **D4, no damage variance:** a hit does exactly the mitigated attack.
+  - **D5, the chance:** 70% plus proficiency, kept within 5–95%.
+  - **D6, simultaneous resolution:** every swing of a tick is decided before any harm lands, so no outcome depends on entity ids.
+  - **D7, wear per landed hit:** on the weapon only.
+  - **D8, the swing timer belongs to its owner:** whether it is saved is K2.4's call.
+- **Why simultaneous (D6):** Q2 asked for one pass in entity-id order, for determinism. Applying each swing's harm at once would make the lower id strike first in every exchange: ids are drawn from the seed, so that would be a hidden per-seed bias. Deciding first and applying after keeps the pass's id order for logs, and makes outcomes independent of it. The validator duels a crawler against a hand-written creature in both orders and gets identical results.
+- **Golden unchanged:** nothing calls the rule until K2 and K3.

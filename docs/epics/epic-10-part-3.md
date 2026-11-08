@@ -77,8 +77,28 @@ Answered rows say so. Every other row is a default that stands by exception.
 | Q20 | **What skills do** (K9) | • **Melee and ranged:** the hit chance and a little damage.<br>• **Mining and foraging:** harvest speed, multiplied with the pickaxe.<br>• **Smithing and alchemy:** a make's grade and speed. **W4's practice becomes these skills;** an artisan's grade is now its skill's band.<br>• **Medicine:** carrying a fallen crawler faster, and a draught given heals more. | Skills only in combat; W4's practice stays apart |
 | Q21 | **Do skills steer choices?** (K9) | **Lightly, through what exists.**<br>• A crawler weighs work by what it pays an hour (W1.4), and skill raises that, so specialists emerge with no new rule.<br>• The roster and the recruit list show skills, so the player hires for them. | Skills as an explicit preference in every work choice |
 
-### K0's decisions
-Defaults, taken while doing K0; the producer answers by exception. None yet.
+### K0's decisions (2026-11-08)
+Defaults, taken while doing K0; the producer answers by exception. D1–D8 are K0.3's, the combat rule, which the developer reviews (the step is supervised).
+- **D1, the read model:** `Combatant` is a value read when a swing is due and then dropped: id, position, body radius, health, whether it stands, attack, defense, reach, swing interval, range and proficiency. A crawler's comes from its state and `CrawlerStats`; a creature's from its kind and its record (K0.4, K2). The rule reads nothing else.
+- **D2, a weapon is modifiers on the bare hand:**
+  - Reach, the time between swings and range are stats beside `Attack` and `Defense` (`StatKind.Reach`, `AttackInterval`, `Range`).
+  - The bare hand is the base: attack 2 (Q2), reach 0.5 across the gap between bodies (neighbours on adjacent tiles), a swing every 1.5 s, no range.
+  - So a "+4 attack" cudgel hits for 6, and a blade at "×0.8 interval" swings every 1.2 s.
+  - Grades strengthen them as they strengthen every effect (Part 2's D56), and armour adds `Defense`.
+- **D3, the roll:**
+  - **One draw per swing,** from (seed, attacker, tick, salt 10). The target doesn't enter it.
+  - **Several foes in one swing:** a swing that strikes several (the Gatekeeper's slam, K10) draws once a foe, in id order.
+  - **Why it holds:** a fighter swings at most once a tick, so every swing has its own stream.
+- **D4, no damage variance:** a hit does exactly the mitigated attack, as Q2 words it; the roll decides only hit or miss. A second draw for variance can come later without reshaping the rule.
+- **D5, the chance:** 70% plus proficiency (0 until K9), kept within 5–95%.
+- **D6, simultaneous resolution** (for K2.2's pass):
+  - every swing of a tick is decided from the tick's start, and then all the harm is applied;
+  - so two fighters can fell each other in the same tick, and the order of resolution changes nothing;
+  - Q2's id order remains the pass's order, for its logs and bookkeeping, but no outcome depends on an entity's id.
+- **D7, wear per landed hit:** only the weapon slot's piece wears, and only on a hit; a miss, a bare hand, the tool and armour wear nothing from a swing. How armour wears from blows taken is K1.3's and K3's.
+- **D8, the swing's timer belongs to its owner:**
+  - A fighter's next swing is a tick (`NextSwingAt`), kept by whoever owns the fighter: the creature's record (K2), or the crawler's state (K3).
+  - Whether it is saved is K2.4's call. K11.1 asks a save mid-fight to load byte for byte, which argues for saving it.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
@@ -193,6 +213,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 ### K0. Groundwork (under way, `feat/epic10-part3`)
 - [x] **Docs:** this file, the roadmap (Part 3 ACTIVE), the focus file; the plan keeps the steps.
 - [x] **Measurements** (K0.2, the 23 gate seeds for three game days, with no player, the guild player and the crafting players): in the plan, with finding F1 below. 41 of 64 planner facts; about 20,000 ticks/s; frames of 2–4 ms; the soak 15/15; the bold carry 60–100g on most days; nobody is downed by a hazard.
+- [x] **The combat rule** (K0.3, D1–D8; the developer's review pending): `Combatant`, `CombatRules` and `SwingOutcome` in `Simulation/Combat/`; `SimRandomSalt.Combat`; `StatKind.Reach`, `AttackInterval` and `Range`. `CombatValidator` (9 tests). Nothing calls it yet, so the golden hashes don't move.
 
 ## 5. Deferred and out of scope
 

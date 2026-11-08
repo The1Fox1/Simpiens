@@ -68,11 +68,17 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - **Weapons' prices (K3):** the bold carry 60–100g on most days, and residents who mine buy the 30g pickaxe from day 2 (D39). So a cudgel at about 15g and an iron blade at about 30g are within a bold resident's purse; the glowstone edge's price follows glowstone's.
     - **Q3's hazard deaths change nothing on the gate seeds by themselves** (finding F1 in the epic): nobody is downed by a hazard today. Deaths will come from combat, from orders that push past the retreat line, and from bad luck. So `TheCarefulLoseFew`'s band is set by combat, and K5.1 re-records the golden hashes only if a golden seed downs someone in danger.
     - **Room to spend:** planning and frame time leave wide margins for 15–25 creatures (§8's first risk); K2, K7 and K8 measure again.
-- [ ] **K0.3 The combat rule:** [Very Complex, supervised by the developer: the first fight's rule sets the pattern K2–K10 follow]
+- [x] **K0.3 The combat rule:** [Very Complex, supervised by the developer: the first fight's rule sets the pattern K2–K10 follow] (done 2026-11-08, waiting for the developer's review)
   - `Combatant`, the read model (A1), with range and proficiency in it from the start;
   - `CombatRules`: reach, interval, the hit roll on a new `SimRandomSalt`, mitigation by `Defense`, wear per hit;
   - `CombatValidator`;
   - the golden hashes unchanged: nothing fights yet.
+  - **What was built** (`Simulation/Combat/`):
+    - `Combatant`: id, position, body radius, health, standing, attack, defense, reach, swing interval in ticks, range and proficiency. `Combatant.ForCrawler` reads a crawler from its state and `CrawlerStats`; a creature's comes with K0.4.
+    - `CombatRules`, pure and allocation-free: `InReach`, `Gap`, `CanSwing`/`NextSwingAt`, `CanStrike`, `HitChance`, `Mitigated`, `RandomFor`, `Swing` and `WearOnHit`, with `SwingOutcome`.
+    - `SimRandomSalt.Combat` (10); `StatKind.Reach`, `AttackInterval` and `Range` (23–25).
+    - `CombatValidator`, 9 tests: the roll seeded and the same on any thread, hit rates at their chance over 100,000 swings, the chance's bounds, the defense curve, a crawler's read with a test weapon and armour, reach and timing, wear per hit, a crawler against a hand-written creature (the same on a replay and in either order of resolution; over 40 seeds the crawler wins 24, the creature 15, both fall once), and no allocation.
+  - **For the review** (K0's decisions D1–D8 in the epic's §0): the bare hand's numbers (D2), the target outside the roll (D3), no damage variance (D4), and above all D6, simultaneous resolution: K2.2's pass decides every swing of a tick from the tick's start and applies the harm after, so outcomes never depend on entity ids. D8 leaves to K2.4 whether a fighter's next swing is saved.
 - [ ] **K0.4 The creature catalogue:** [Possibly Complex: a new catalogue with a precedent, `ItemCatalog`]
   - kinds as data (A6), with a validator;
   - no spawns yet.
