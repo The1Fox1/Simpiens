@@ -27,10 +27,10 @@ namespace Simpiens.Simulation.Persistence
                             if (!slots[i].IsEmpty && Unknown(slots[i].Type)) return Where(slots[i].Type, $"{crawler.Name}'s pack");
                         }
                     }
-                    var equipped = crawler.Inventory?.Equipped;
-                    if (equipped != null)
+                    if (crawler.Inventory != null)
                     {
-                        for (int i = 0; i < equipped.Length; i++)
+                        var equipped = crawler.Inventory.Equipped;
+                        for (int i = 0; i < Simpiens.Simulation.Items.EquipmentSlots.Capacity; i++)
                         {
                             if (!equipped[i].IsEmpty && Unknown(equipped[i].Type)) return Where(equipped[i].Type, $"{crawler.Name}'s equipment");
                         }
@@ -66,6 +66,31 @@ namespace Simpiens.Simulation.Persistence
                 for (int i = 0; i < world.Harvested.Length; i++)
                 {
                     if (Unknown(world.Harvested[i].Item)) return Where(world.Harvested[i].Item, "the harvest tally");
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Where the save holds a piece worn where this game can't wear it (Epic 10 Part 3, K1.2): in a slot the table doesn't
+        /// define (retired, as protection's 0 is), or in a slot of another kind ("a HardHat in SwarmAgent_3's Body slot"); or
+        /// null. Read after <see cref="FirstUnknown"/>, so every piece is a defined item.
+        /// </summary>
+        public static string FirstMisworn(SessionSave save)
+        {
+            if (save?.Crawlers == null) return null;
+            for (int c = 0; c < save.Crawlers.Length; c++)
+            {
+                var crawler = save.Crawlers[c];
+                if (crawler?.Inventory == null) continue;
+                var equipped = crawler.Inventory.Equipped;
+                for (int i = 0; i < Simpiens.Simulation.Items.EquipmentSlots.Capacity; i++)
+                {
+                    if (equipped[i].IsEmpty) continue;
+                    var slot = (Simpiens.Simulation.Items.EquipmentSlot)i;
+                    string item = ItemCatalog.NameOf(equipped[i].Type);
+                    if (!Simpiens.Simulation.Items.EquipmentSlots.IsDefined(slot)) return $"a {item} in {crawler.Name}'s slot {i}, which this game doesn't have";
+                    if (!Simpiens.Simulation.Items.EquipmentSlots.Fits(slot, equipped[i].Type)) return $"a {item} in {crawler.Name}'s {Simpiens.Simulation.Items.EquipmentSlots.NameOf(slot)} slot";
                 }
             }
             return null;

@@ -14,9 +14,9 @@ namespace Simpiens.Cognition.Inventory
 
         public int Capacity => _capacity;
         public int Gold { get; private set; }
-        private readonly ItemInstance[] _equipped = new ItemInstance[Simpiens.Simulation.Items.EquipmentSlots.Capacity];
+        private Simpiens.Simulation.Items.WornEquipment _equipped;
 
-        public ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot) => (byte)slot < _equipped.Length ? _equipped[(byte)slot] : ItemInstance.Empty;
+        public ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot) => (byte)slot < Simpiens.Simulation.Items.EquipmentSlots.Capacity ? _equipped[(byte)slot] : ItemInstance.Empty;
 
         public AgentInventorySnapshot(int capacity = AgentInventory.DefaultCapacity)
         {
@@ -35,12 +35,12 @@ namespace Simpiens.Cognition.Inventory
             {
                 Array.Clear(_slots, 0, _capacity);
                 Gold = 0;
-                Array.Clear(_equipped, 0, _equipped.Length);
+                _equipped = default;
                 return;
             }
 
             Gold = source.Gold;
-            for (int i = 0; i < _equipped.Length; i++) _equipped[i] = source.GetEquipped((Simpiens.Simulation.Items.EquipmentSlot)i);
+            source.CopyEquippedTo(ref _equipped);
             int copyCount = Math.Min(_capacity, source.Capacity);
             for (int i = 0; i < copyCount; i++)
             {

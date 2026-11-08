@@ -10,8 +10,9 @@ namespace Simpiens.Testing.Economy
     /// The equipment slots as a table (Epic 10 Part 3, K1.1; seam A3; the producer's Q11): every row is consistent; the
     /// first rows are Q11's reading (head and body in protection's place, the weapon and the tool kept); an item fits a
     /// kind, and a kind with two slots fills the first free one; a new slot needs no code beyond its row; the shared rule of
-    /// what a piece takes the place of keeps one protective piece until K1.3; and reading allocates nothing. Runs as a
-    /// test (ValidatorTests).
+    /// what a piece takes the place of keeps one protective piece until K1.3; and reading allocates nothing. The save
+    /// (K1.2): every one of the 16 records goes into a save and comes back, a slot added later loads an older save with
+    /// nothing in it, and a save with a piece worn where this game can't wear it is refused. Runs as a test (ValidatorTests).
     /// </summary>
     public class EquipmentSlotsValidator
     {
@@ -30,8 +31,11 @@ namespace Simpiens.Testing.Economy
             ValidateASlotIsARow();
             ValidateOneProtectivePieceUntilK13();
             ValidateReadingAllocatesNothing();
+            ValidateTheSaveKeepsEveryRecord();
+            ValidateANewSlotLoadsAnOlderSaveEmpty();
+            ValidateAPieceWornWhereThisGameCantIsRefused();
 
-            TestLog.Log("<color=green>[EquipmentSlotsValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EquipmentSlotsValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTableIsConsistent()
@@ -189,6 +193,99 @@ namespace Simpiens.Testing.Economy
             Assert(allocated == 0 && total > 0f && found == 10000, $"10,000 reads allocated {allocated} bytes.");
             TestLog.Log("[PASS] Test 6: reading the table, the worn slots, the stats over them and the shared rule allocate nothing.");
         }
+
+        private void ValidateTheSaveKeepsEveryRecord()
+        {
+            var inventory = new AgentInventory(4, startingGold: 7);
+            inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, quality: Grades.Fine, durability: 1234));
+            inventory.TryEquip(new ItemInstance(2, ItemType.HazardGear, 1, 40, durability: 99));
+            inventory.TryEquip(new ItemInstance(3, ItemType.ToolPickaxe, 1, 30, quality: Grades.Masterwork, durability: 17));
+            var back = RoundTrip(inventory);
+            for (int id = 0; id < EquipmentSlots.Capacity; id++)
+            {
+                var slot = (EquipmentSlot)id;
+                Assert(back.GetEquipped(slot) == inventory.GetEquipped(slot), $"Slot {id} comes back as it went.");
+            }
+            Assert(back.GetEquipped(EquipmentSlot.Head).Durability == 1234 && back.GetEquipped(EquipmentSlot.Head).Quality == Grades.Fine
+                && back.GetEquipped(EquipmentSlot.Tool).Quality == Grades.Masterwork && back.Gold == 7, "With their grades and wear.");
+
+            var save = new Simpiens.Simulation.Persistence.InventorySave();
+            inventory.CaptureTo(save);
+            int bytes = Simpiens.Simulation.Persistence.SaveSerializer.Serialize(save).Length;
+            var bare = new Simpiens.Simulation.Persistence.InventorySave();
+            new AgentInventory(4, startingGold: 7).CaptureTo(bare);
+            Assert(Simpiens.Simulation.Persistence.SaveSerializer.Serialize(bare).Length == bytes, "A bare crawler saves as many bytes as a geared one: all 16 records, always.");
+            TestLog.Log("[PASS] Test 7: the save keeps all 16 records, filled or not, with their grades and wear.");
+        }
+
+        private void ValidateANewSlotLoadsAnOlderSaveEmpty()
+        {
+            // A save made with today's table, loaded after two slots were added
+            var inventory = new AgentInventory(4, startingGold: 0);
+            inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1500));
+            var save = new Simpiens.Simulation.Persistence.InventorySave();
+            inventory.CaptureTo(save);
+            byte[] bytes = Simpiens.Simulation.Persistence.SaveSerializer.Serialize(save);
+            using (TestSlots())
+            using (TestItems())
+            {
+                var loaded = Simpiens.Simulation.Persistence.SaveSerializer.Deserialize<Simpiens.Simulation.Persistence.InventorySave>(bytes);
+                Assert(Simpiens.Simulation.Persistence.SaveItems.FirstMisworn(SaveOf(loaded)) == null, "The older save loads.");
+                var back = new AgentInventory(4, startingGold: 0);
+                back.RestoreFrom(loaded);
+                Assert(back.GetEquipped(EquipmentSlot.Body).Type == ItemType.HazardGear, "What was worn is worn.");
+                Assert(back.GetEquipped(LeftHand).IsEmpty && back.GetEquipped(RightHand).IsEmpty, "The new slots load with nothing in them.");
+                Assert(back.TryEquip(new ItemInstance(2, TestRing, 1, 5), out var wornIn) && wornIn == LeftHand, "And take a piece after.");
+            }
+            TestLog.Log("[PASS] Test 8: a slot added to the table loads an older save with nothing in it, and no change of format.");
+        }
+
+        private void ValidateAPieceWornWhereThisGameCantIsRefused()
+        {
+            // A ring worn on a hand that this game's table doesn't have: made with the test slots, loaded without them
+            Simpiens.Simulation.Persistence.InventorySave ringed;
+            using (TestSlots())
+            using (TestItems())
+            {
+                var inventory = new AgentInventory(4, startingGold: 0);
+                inventory.TryEquip(new ItemInstance(1, TestRing, 1, 5));
+                ringed = new Simpiens.Simulation.Persistence.InventorySave();
+                inventory.CaptureTo(ringed);
+            }
+            using (TestItems())
+            {
+                string refusal = Simpiens.Simulation.Persistence.SaveItems.FirstMisworn(SaveOf(ringed));
+                Assert(refusal != null && refusal.Contains("slot 14"), $"A piece in a slot this game doesn't have is refused ({refusal}).");
+            }
+
+            var misfit = new Simpiens.Simulation.Persistence.InventorySave { Slots = new ItemInstance[4] };
+            var records = default(WornEquipment);
+            records[(int)EquipmentSlot.Body] = new ItemInstance(1, ItemType.HardHat, 1, 60);
+            misfit.Equipped = records;
+            string wrong = Simpiens.Simulation.Persistence.SaveItems.FirstMisworn(SaveOf(misfit));
+            Assert(wrong != null && wrong.Contains("HardHat") && wrong.Contains("Body"), $"A hard hat in the body slot is refused ({wrong}).");
+
+            records = default;
+            records[0] = new ItemInstance(1, ItemType.HazardGear, 1, 40);
+            misfit.Equipped = records;
+            Assert(Simpiens.Simulation.Persistence.SaveItems.FirstMisworn(SaveOf(misfit)) != null, "So is hazard gear in retired slot 0, where format 10 kept protection.");
+            TestLog.Log("[PASS] Test 9: a save with a piece in a slot this game doesn't have, or in a slot of another kind, is refused before anything loads.");
+        }
+
+        private static AgentInventory RoundTrip(AgentInventory inventory)
+        {
+            var save = new Simpiens.Simulation.Persistence.InventorySave();
+            inventory.CaptureTo(save);
+            var loaded = Simpiens.Simulation.Persistence.SaveSerializer.Deserialize<Simpiens.Simulation.Persistence.InventorySave>(Simpiens.Simulation.Persistence.SaveSerializer.Serialize(save));
+            var back = new AgentInventory(inventory.Capacity, startingGold: 0);
+            back.RestoreFrom(loaded);
+            return back;
+        }
+
+        private static Simpiens.Simulation.Persistence.SessionSave SaveOf(Simpiens.Simulation.Persistence.InventorySave inventory) => new Simpiens.Simulation.Persistence.SessionSave
+        {
+            Crawlers = new[] { new Simpiens.Simulation.Persistence.CrawlerSave { Name = "Tester", Inventory = inventory } }
+        };
 
         /// <summary>Two hands for rings: a kind with two slots (Q11's "a kind may later have several slots").</summary>
         private static IDisposable TestSlots() => EquipmentSlots.ExtendForTest(

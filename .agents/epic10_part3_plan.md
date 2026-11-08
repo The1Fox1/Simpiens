@@ -115,11 +115,20 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - **Deviation:** the save format is raised to 11 here, not at K1.2, because this step changes what the equipment's indices mean. It is the PR's one raise, and K1.2's changes ride on it, as W4's did on W0.5's.
   - `EquipmentSlotsValidator`, 6 tests: the table is consistent; Q11's first rows; an item fits a kind (two test ring slots fill in turn); a slot is a row (stats and the snapshot follow); the shared rule; no allocation.
   - **Done 2026-11-08:** core 187/187, client 485/485, golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild.
-- [ ] **K1.2 Storage that grows:** [Possibly Complex: the save format, once]
+- [x] **K1.2 Storage that grows:** [Possibly Complex: the save format, once]
   - the inventory's equipment as room for 16 slot records, indexed by slot id;
   - the save copies all 16, so a new slot loads old saves with it empty;
   - the goods table at 16;
   - one format bump.
+  - **What was built** (the design for the developer's review, before K1.3):
+    - `WornEquipment` (`Simulation/Items/`), an unmanaged inline array of 16 `ItemInstance` records indexed by slot id, 256 bytes and pinned. The inventory holds one, the snapshot copies it whole, and `InventorySave.Equipped` is one, saved as raw memory.
+    - **The save copies all 16 records,** filled or not, so a bare crawler saves as many bytes as a geared one. A slot added to the table later finds its record empty in an older save, and loads with nothing in it, with no change of format. A seventeenth slot changes the format (the pin says so).
+    - **Refused before anything loads** (`SaveItems.FirstMisworn`, read after the unknown-item check): a piece in a slot this game doesn't define (a retired one, as protection's 0, or one a newer game added), and a piece in a slot of another kind. The player reads, for example, "The save holds equipment this game can't wear (a HardHat in SwarmAgent_3's Body slot)".
+    - **The goods table at 16** (`TradeStallData` 136 to 196 bytes, pinned), room for Part 3's arms and armour, the forge's and the caravan's.
+    - **The format:** 11, raised once in K1.1 for the whole PR.
+    - No migration: a format-10 save is refused with a reason, as every older format is.
+  - Tests: `EquipmentSlotsValidator` gains 3 (every record round-trips; a new slot loads an older save empty; misworn pieces are refused); `LiveSaveTests` refuses a live save with a piece in retired slot 0 and one with a hard hat on the body; the size pins.
+  - **Done 2026-11-08:** core 187/187, client 485/485, golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild, the soak 15/15 (bands as at K0), the pinned image 485/485 exact, the MonoGame and Android compiles with 0 warnings. **Waits for the developer's review of the save design before K1.3.**
 - [ ] **K1.3 Stats and wear over every slot:** [Possibly Complex: behaviour; the golden hashes may move]
   - `CrawlerStats` sums every worn slot, with each stat's stacking rule (add, multiply, a cap);
   - each piece wears by its own rule.

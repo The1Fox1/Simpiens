@@ -24,9 +24,13 @@ namespace Simpiens.Cognition.Inventory
 
         /// <summary>
         /// The worn equipment beside the pack, one piece per slot, so equipment never takes a pack slot: a record for every
-        /// slot id the table may define (<see cref="EquipmentSlots.Capacity"/>, Epic 10 Part 3, K1.1), indexed by the id.
+        /// slot id the table may define (<see cref="EquipmentSlots.Capacity"/>, Epic 10 Part 3, K1.1), indexed by the id,
+        /// and saved whole (K1.2).
         /// </summary>
-        private readonly ItemInstance[] _equipped = new ItemInstance[EquipmentSlots.Capacity];
+        private WornEquipment _equipped;
+
+        /// <summary>Copies every worn record into <paramref name="target"/> (the snapshot's buffer): main thread only.</summary>
+        internal void CopyEquippedTo(ref WornEquipment target) => target = _equipped;
 
         /// <summary>What is equipped in a slot, or empty (and for a retired or undefined slot). Its Durability counts the wear it still takes.</summary>
         public ItemInstance GetEquipped(EquipmentSlot slot) => (byte)slot < EquipmentSlots.Capacity ? _equipped[(byte)slot] : ItemInstance.Empty;
@@ -263,21 +267,23 @@ namespace Simpiens.Cognition.Inventory
         public void Clear()
         {
             Array.Clear(_slots, 0, _capacity);
-            Array.Clear(_equipped, 0, EquipmentSlots.Capacity);
+            _equipped = default;
         }
 
-        /// <summary>Writes the purse, every slot and the equipment into a save, reusing its slot array when the capacity matches.</summary>
+        /// <summary>Writes the purse, every slot and every equipment record into a save, reusing its slot array when the capacity matches.</summary>
         public void CaptureTo(InventorySave save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (save.Slots == null || save.Slots.Length != _capacity) save.Slots = new ItemInstance[_capacity];
             Array.Copy(_slots, save.Slots, _capacity);
             save.Gold = Gold;
-            if (save.Equipped == null || save.Equipped.Length != EquipmentSlots.Capacity) save.Equipped = new ItemInstance[EquipmentSlots.Capacity];
-            Array.Copy(_equipped, save.Equipped, EquipmentSlots.Capacity);
+            save.Equipped = _equipped;
         }
 
-        /// <summary>Replaces the purse, the slots and the equipment with a save's. The save must have this inventory's capacity.</summary>
+        /// <summary>
+        /// Replaces the purse, the slots and the equipment with a save's. The save must have this inventory's capacity; that
+        /// each piece fits its slot is checked before a load begins (<see cref="Simpiens.Simulation.Persistence.SaveItems"/>).
+        /// </summary>
         public void RestoreFrom(InventorySave save)
         {
             if (save?.Slots == null) throw new ArgumentNullException(nameof(save));
@@ -287,8 +293,7 @@ namespace Simpiens.Cognition.Inventory
             }
             Array.Copy(save.Slots, _slots, _capacity);
             Gold = save.Gold;
-            Array.Clear(_equipped, 0, EquipmentSlots.Capacity);
-            if (save.Equipped != null) Array.Copy(save.Equipped, _equipped, Math.Min(EquipmentSlots.Capacity, save.Equipped.Length));
+            _equipped = save.Equipped;
         }
     }
 }

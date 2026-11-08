@@ -342,6 +342,12 @@ namespace Simpiens.Core.Session
                 session = null;
                 return $"The save holds an item this game doesn't have ({unknownItem}).";
             }
+            string misworn = SaveItems.FirstMisworn(save);
+            if (misworn != null)
+            {
+                session = null;
+                return $"The save holds equipment this game can't wear ({misworn}).";
+            }
             return null;
         }
 
