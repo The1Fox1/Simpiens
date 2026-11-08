@@ -1544,3 +1544,24 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Why:** `FrameTimeGateTests.TheDashboardWithFacesDrawsFarInsideTheFrameBudget` had kept main's CI red since PR #22 merged (11.56 ms against the flat 10 ms), and failed PR #23 twice (16.05 ms, then 10.72 ms), each time with a CPU p99 of 3–6 ms. On the development machine, llvmpipe with four cores, the branch drew that dashboard in about 4.1 ms against main's 5.9 ms (three alternating rounds), so Part 2 didn't make it slower: GitHub's hosted runners are slower and vary. The mean is wall time with the GPU flushed, mostly llvmpipe filling pixels, and 1280x720 has 1.92 times the pixels of the 800x600 the 10 ms was set for.
 - **Decision (the producer's pick, 2026-11-07):** the mean's budget is 10 ms at the 800x600 reference, scaled by the window's pixels and never below it (`MeanBudgetFor`): 19.2 ms at 1280x720. The CPU p99 keeps its one 33 ms budget, since it isn't filling. The gate still catches a change that multiplies the frame's cost.
 - **Rejected:** merging with red CI; re-running until green, which hides a gate that is marginal on the runners.
+
+## 2026-11-07: Epic 10 Part 3 re-scoped: creatures, combat and the gatekeeper; Floor 2 out
+- **The producer:** "I want to re evaluate what we are tackling in epic10_part3, The focus should be combat system, equipment improvements, death, loot, creatures, bosses / gate keepers. We should not focus on floor 2 at all yet".
+- **What changed:**
+  - **Out of Part 3:** Floor 2, floors as data, the move and what it carries, and the next floor's pressure (the 2026-10-29 draft's L0.3–L0.4, L4 and L5), with scouting as a guild order. They go to a Part 4, the descent, which is QUEUED and not drafted.
+  - **In Part 3:** death (the old draft had none) and equipment by body part; two bosses, where the old draft had one; hunt bounties.
+  - **The rewritten draft:** `.agents/epic10_part3_plan.md`, K0–K8, with questions Q1–Q14 as defaults for the producer.
+- **Positions the draft argues:**
+  - the player never commands a fight;
+  - combat runs in physical time, because it is watched, while bleeding out, refilling and growth run in the day's time;
+  - creatures follow a short rule, not the planner;
+  - deaths come from the player's choices, since lone crawlers avoid known lairs;
+  - loot feeds the forge.
+- **Seams laid before the systems** (AGENTS.md, "Refactor and reevaluate"; no large refactor needed):
+  - one combat rule over a read model of both kinds of fighter;
+  - a death goes the drifter's way out of the world;
+  - head and body slots and a goods table of 16, in one format bump;
+  - creatures in a phase of their own, in id order;
+  - loot piles for both kills and bodies;
+  - creature kinds as data.
+- **Milestone 4:** Q1 proposes splitting it. Milestone 4 would be "Creatures, Combat & the Gatekeeper" (Part 3, UI-5, Epic 11), and a Milestone 5 "Floor Relocation" (Part 4). The roadmap records the re-scope and leaves the split to the answer.

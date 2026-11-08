@@ -1,208 +1,329 @@
-# Epic 10 Part 3: the descent (draft plan)
+# Epic 10 Part 3: creatures, combat and the gatekeeper (draft plan)
 
-Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans ([index](epic10_plan.md)). Written 2026-10-29 at the producer's request.
+Working document (AGENTS.md, Documentation Protocol 6), one of Epic 10's plans ([index](epic10_plan.md)). First written 2026-10-29 as "the descent". **Re-scoped 2026-11-07 by the producer:** "I want to re evaluate what we are tackling in epic10_part3, The focus should be combat system, equipment improvements, death, loot, creatures, bosses / gate keepers. We should not focus on floor 2 at all yet". This draft replaces the earlier one, which git keeps.
 
-**Part 3 is QUEUED:** ROADMAP Milestone 4, Gatekeeper Descent & Floor Relocation, with Epic UI-5. Epic 11 shares the milestone as an epic of its own. As with Part 2, this plan is both the draft and the phased plan; once the producer has answered §3, §1–§4 move into the epic.
+**Part 3 is QUEUED.** As with Part 2, this plan is both the draft and the phased plan. Once the producer has answered §4, §1–§4 move into the epic doc.
 
 - **Sources:**
-  - **The roadmap's Milestone 4:** "Boss-guarded descent gate breach, roguelike forward operating base relocation loop (via MemoryPack state snapshotting)".
-  - **The game design, §3:** "Advancing to the next floor requires outfitting a party capable of defeating a sector boss guarding the descent gate". Then the player moves the outpost down, "preserving accumulated meta-renown, player crafting recipes, and veteran roster contracts, but resetting physical room layouts against escalated environmental pressure".
-    - Deeper floors bring "lethal mob packs, scarce provisions, high-tier crafting ores".
-    - Phase 4: "procedural floor boss integration, descent gate mechanics, and the persistent campaign migration loop".
-  - **Epic 10 §5:** the descent gate, its boss and moving the outpost; creatures and combat; a weapon.
-  - **Part 1's deferrals** (the G6 plan, §4): carrying the downed; expeditions into uncharted sectors; loot on hauls.
+  - **The producer's re-scope** (above): combat, equipment, death, loot, creatures, bosses and gatekeepers. Floor 2 is out.
+  - **The game design:**
+    - §3: the upper floors have "minor vermin, low-value salvage", and the deeper floors "lethal mob packs". "Advancing to the next floor requires outfitting a party capable of defeating a sector boss guarding the descent gate."
+    - §2: "Cleared sectors permit direct camera observation of simulated micro-encounters (campfires, node disputes, combat)."
   - **Epic 8's intent:** "Directives will drive squad-level combat flanking, focus-fire, and tactical retreat."
-  - **The refactor plan:** A*'s 16,384-cell cap (R1 refuses a map past it); a `WorldState` wider than 64 facts, left to "the epic that plans the 61st fact".
-- **Starts:** after Part 2's close-out.
-- **Estimate:** 16–23 agent days: L0 2–3, L1 3–4, L2 3–4, L3 2–3, L4 3–4, L5 2–3, L6 1–2. As rough as Part 2's; L0 measures first.
-- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as a whole: it is epic-sized, its systems have no precedent (creatures, combat, floors, the move), and §3 is unanswered. L3, L5 and L6 are Possibly Complex. L0, L1, L2 and L4 are Very Complex: split each, and the developer supervises the steps stamped Very Complex.
+  - **What Parts 1 and 2 left to Part 3:** a weapon (`Attack` and `Defense` are unused); carrying a downed member; loot tables in play; rarity in the client (Part 1 §5); armour against creatures; combat and death (Part 2 §5).
+  - **The guiding lights:**
+    - **Majesty:** heroes fight because a reward draws them. The player flags a lair, and the bold answer. They buy their own arms and potions, flee when hurt, and grow into veterans.
+    - **RimWorld:** fights are short, readable and dangerous. The downed bleed out unless someone carries them home. Animals drop leather that becomes armour, and a death is felt by those who knew the dead.
+- **What left Part 3:** Floor 2, floors as data, the move and what it carries, and Floor 2's pressure (the old L0.3–L0.4, L4 and L5). They go to a later part, the descent, which is not drafted (Q1). Scouting as a guild order (the old L3.1) goes with them; scout bounties already chart sectors.
+- **Starts:** after Part 2's close-out (its play session, W6.5).
+- **Estimate:** 22–31 agent days: K0 2–3, K1 3–4, K2 3–4, K3 2–3, K4 3–4, K5 2–3, K6 3–4, K7 3–4, K8 1–2. This is rough, as Part 2's first estimate was; K0 measures first.
+- **Complexity** ([rubric](rules/complexity-grading.md)): **Very Complex** as a whole. It is epic-sized, its systems have no precedent (combat, creatures, death) and §4 is unanswered.
+  - K1, K4, K6 and K7 are Very Complex: each is split below, and the developer supervises its steps stamped Very Complex.
+  - K0 holds one supervised step (K0.3).
+  - K2, K3, K5 and K8 are Possibly Complex.
 - **The producer's stops:**
-  - answering §3, which is the go;
-  - a look at L2, the first fights;
-  - a play session at L6, which closes Epic 10.
+  - answering §4, which is the go;
+  - a look at K2, the first fights;
+  - a look at K4, death;
+  - a play session at K8.
 
-## 0. What Parts 1 and 2 hand over (checked at L0)
-- **Groups:** many-to-many. The guild holds up to eight, with two parties out at once; expeditions are directives with a retreat rule.
-- **The workshops:** the forge and the still, with grades and repair; gear for each hazard; draughts.
-- **The map:** Floor 1 with 13 sectors: the gallery, the workshop row and the guildhall added. Two of them, the Deep Seam and the Overgrowth, are still charted only by a scout's report.
-- **The item system:** the `Attack` and `Defense` stats and the weapon slot, unused; loot tables, not in play.
-- **The planner:** about 48 of 64 facts used.
+## 0. What Parts 1 and 2 hand over (checked at K0)
+- **Health:** a crawler has 100. A hazard sector takes health by kind, through worn gear. At 0 a crawler is downed and limps to a bunk at 40% of its speed, getting up at 60. Nobody dies (Part 1's Q3).
+- **Being hurt shows:** `AgentState.HurtThisTick` and the blinking red coat (S3, D71) work for any damage. Combat feeds them as it is.
+- **Gear:** three equipment slots: protection, weapon and tool.
+  - Protection holds one of hazard gear, a respirator or a hard hat.
+  - The weapon slot and the `Attack` and `Defense` stats are unused.
+  - `WearRule.PerUse` is reserved for "a weapon per hit".
+- **The workshops:** the forge and the still. They have grades (Standard, Fine, Masterwork) from practice and repair worn pieces at half their inputs. The stall's goods table holds 10 goods; 9 are used.
+- **Loot:** loot tables and `LootRoller`, deterministic on `SimRandom` (item system I7), are not wired into play. `ItemRarity` has five tiers, and the sprite kit already draws icon plates with rarity rims.
+- **Expeditions:** muster, march, work, return, deliver, with a retreat rule. Two parties of up to four can be out at once, never in the same sector. Draughts heal 80 at once.
+- **Leaving the world:** a drifter is removed at the end of the tick (`SessionHost`, `CrawlerDeparted`), and `DepartedCrawler` records who left.
+- **The map:** Floor 1 has 13 sectors. Two of them, the Deep Seam and the Overgrowth, are charted only by a scout's report.
+- **The planner:** 41 of 64 facts used.
 
 ## 1. Goal
-**The player promise:** find the gate below, break what guards it, and move the whole outpost down a floor, keeping the guild you built.
+**The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die.
 
 What Parts 1 and 2 leave undone:
-- **The floor ends.** Nothing lies below, and nothing threatens a party but the air and the rock.
-- **The guild has nothing to fight,** so weapons have no use.
-- **The uncharted sectors** are only a scouting bounty.
-- **There is no campaign:** one floor, played for ever.
+- **Nothing threatens a crawler but the air and the rock.** Hazards hurt but never kill, so risk is a cost in time, never a loss.
+- **The forge has nothing to arm.** Weapons have no use, and armour only means hazard gear.
+- **Loot is a foundation with no floor on it:** the haul is always glowstone.
+- **The floor has no climax:** no boss, no gate, nothing to work toward past a full guild.
 
 ## 2. The loop
-1. **Scout** the floor's uncharted sectors with an expedition: an order to scout.
-2. **Clear** what lives there with armed parties. Creatures drop loot.
-3. **Find** the descent gate and the gatekeeper that holds it.
-4. **Arm and kit** the guild at the forge and the still, and **breach** the gate.
-5. **Descend:** the outpost moves to Floor 2 with the guild, the treasury and what its workshops know. Its rooms are built again.
-6. **Floor 2 presses harder:** scarcer food, richer ore, packs.
+1. **Creatures hold sectors.** Vermin nest in the Deep Seam and the Overgrowth. A lone crawler who strays in is hurt and flees, and the cautious stop going. The salvage there dries up: pressure on the stall.
+2. **The player answers indirectly:**
+   - stock weapons and armour at the stall, so that the bold arm themselves;
+   - post a **Hunt bounty** on a lair (Majesty's flag), which the bold and armed take;
+   - send an armed guild party with a **Clear** order.
+3. **Kills drop loot:** hides and chitin, sometimes salvage, now and then a rare piece. The stall buys them, and the forge turns them into better armour.
+4. **Fighters grow:** members who survive fights become seasoned, then veterans.
+5. **The brood's Matriarch** teaches the guild that a boss needs a party, draughts and armour.
+6. **The gatekeeper** holds the sealed gate at the floor's edge. Breaking it is Part 3's climax; the way down stays dark until the descent part.
+7. **Death is the price throughout.** A fallen crawler who isn't carried out of danger bleeds out. Friends grieve, the guild loses a contract, and the body lies where it fell with everything it carried.
 
-**The new verbs:** order a scout, order a clearing, breach, descend.
+**The new verbs:** stock arms, post a hunt, order a clearing, carry the fallen (the party does it), and breach.
 
-## 3. Questions for the producer (defaults; answers by exception)
+## 3. Positions this draft takes (argued, for the producer to overturn)
+- **The player never commands a fight.** Fights come from bounties, orders and stock, as everything else does. A direct "attack this" button would make Simpiens a tactics game, and the game design's whole premise is indirect agency.
+- **Combat is watched, so it runs in physical time.**
+  - Swings, lunges and flight are motion: ticks and seconds, as walking is ([time-model.md](../docs/time-model.md)).
+  - What lasts across the day stays in the day's time: bleeding out, lairs refilling, a boss healing between attempts, and a fighter's growth.
+  - An encounter resolved by a hidden roll was rejected: the design promises "direct camera observation" of combat.
+- **Creatures are not crawlers.** A creature has a short rule on the main thread, not a planner, needs, memory or a purse. RimWorld's animals are simple too, and fifteen to twenty-five creatures must cost the tick almost nothing.
+- **Deaths come from choices.** A lone crawler avoids lairs it knows of, as it avoids a hazard past its limit. So deaths come from the player's orders, from bounties the bold chose to take, and from the fog (a lair nobody has charted). A careful player can lose no one, and a reckless one loses people. Without that, death is noise, not stakes.
+- **Loot feeds the workshops, not only the purse.** Hides and chitin become armour at the forge. Each kill pays twice: in what the stall sells, and in what the forge can make.
+
+## 4. Questions for the producer (defaults; answers by exception)
 | # | Question | Default | Alternative |
 | :-: | :--- | :--- | :--- |
-| Q1 | **Name and home** | "Epic 10, Part 3: The Descent", in `docs/epics/epic-10-part-3.md`, with Epic UI-5 folded in. Epic 11 stays an epic of its own. | — |
-| Q2 | **Combat** | Deterministic, on ticks, with no aiming.<br>• **A hit:** a fighter in reach strikes on a cooldown, for its `Attack` less the target's `Defense`. Health works as G2's does.<br>• **A party** fights through its directive: one target at a time (focus fire), with Part 1's retreat rule.<br>• **Order:** hits are resolved on the main thread, in id order. | Encounters resolved by a seeded roll when a party meets a nest |
-| Q3 | **Death** | Still none (Part 1's Q3): a crawler at 0 is downed.<br>Deeper, being downed costs more: its worn gear is lost, and it heals for a sim-day before it works again. | Death on Floor 2 and below: the roguelike's stakes |
-| Q4 | **Creatures** | **A new kind of entity, not a crawler.** A creature keeps a sector and has health, `Attack`, `Defense` and a short rule: patrol, attack a crawler in reach, flee when hurt.<br>**Where:** vermin nests in Floor 1's uncharted sectors, spawned from the session's seed. A cleared nest comes back after a while. | Creatures as moving hazards: damage by presence, no fight |
-| Q5 | **Weapons and armour** | **Weapons** (`Attack`, in the weapon slot) are made at the forge from ore and glowstone; the caravan sells a basic one.<br>**Armour:** protection gear gains `Defense` through the forge's grades. | Weapons from the caravan only |
-| Q6 | **Lone crawlers** | A crawler avoids a known nest as it avoids a hazard over its limit. Attacked, it flees, unless it is bold and armed: then it fights back. | Every crawler flees |
-| Q7 | **The gatekeeper** | **One boss creature** at the descent gate, in a new sector at the floor's edge, reached through the uncharted sectors.<br>• Much stronger than vermin; it heals between attempts.<br>• Beaten once, it stays beaten. | Procedural bosses (the game design's Phase 4): after Epic 10 |
-| Q8 | **Floor 2** | **Authored as map data** (`Floor2Layout`), as Floor 1 is: larger, within A*'s cap, with its own residents and dangers. | Generated floors |
-| Q9 | **What moves down** | The game design's list: "meta-renown, player crafting recipes, and veteran roster contracts".<br>**Moves:**<br>• the guild: members, contracts, allegiance and worn gear;<br>• the treasury;<br>• the workshops' recipes and the artisans' practice. The stations are built again at half price;<br>• renown: Floor 2's residents start with some trust toward the player, by how many of Floor 1's residents trusted it.<br>**Stays:** Floor 1's other residents and their settlements, and the stall's stock, sold to the caravan before leaving. | Everything moves, Floor 1's residents included |
-| Q10 | **Floors at once** | One. The session holds the floor it is on, and the save records which. | Floors kept running in the background |
-| Q11 | **Loot** | Creatures drop items from loot tables (the item refactor's foundation): salvage, and now and then a rare piece. | No drops |
-| Q12 | **Shipping and done** | As in Part 1 (its Q8 and Q10) | — |
+| Q1 | **Name, home and the milestone** | "Epic 10, Part 3: Creatures, Combat and the Gatekeeper", in `docs/epics/epic-10-part-3.md`, with Epic UI-5 folded in. **Milestone 4 splits:**<br>• **Milestone 4**, "Creatures, Combat & the Gatekeeper": Part 3, UI-5 and Epic 11 (deaths and battles give the chronicle its best material).<br>• **Milestone 5**, "Floor Relocation": Part 4, the descent (Floor 2 and the move), QUEUED and not drafted.<br>Epic 10 closes after Part 4. | Keep Milestone 4 whole, with the relocation as its second half |
+| Q2 | **Combat** | On ticks, in physical time, melee only, with no aiming:<br>• **A swing:** a fighter in reach swings on its weapon's interval (about 1.5 s). A seeded roll (`SimRandom`, its own salt) decides hit or miss, about 70% to begin with.<br>• **A hit** does the weapon's `Attack`, cut by the target's `Defense` on a curve that never reaches zero (`Defense / (Defense + 10)` to begin with).<br>• **Order:** hits are resolved on the main thread, in one pass after movement, in entity-id order.<br>• **Unarmed**, a crawler hits for 2. | (a) A crossbow at the forge as well: ranged combat needs line of sight and kiting, about +2 days. (b) Encounters resolved by a seeded roll, unseen |
+| Q3 | **Death** | **Yes, and permanent.**<br>• At 0 a crawler is downed (as today).<br>• **Downed in danger,** within a hostile creature's reach or in a hazard sector, it bleeds out over 2 game hours.<br>• **The clock stops** when it leaves danger (it limps, or a party member carries it), drinks a draught or is given one.<br>• **When the clock runs out, it dies.**<br>• Creatures turn from a downed crawler to one still standing. | (a) Only creatures kill; a hazard only downs. (b) Majesty's resurrection: the dead brought back for gold at a shrine (deferred by default) |
+| Q4 | **What a death costs** | • **The body:** its pack, worn gear and purse lie where it fell, as a loot pile that anyone may recover.<br>• **The guild:** the dead member's contract and kept bunk end, and its party is one short.<br>• **The living:** friends (warmth 30 or more) grieve, through a memory event and a mood. If a member dies under the guild's orders, the other members' trust toward the patron falls.<br>• **Memory:** the chronicle tells it, and the departed list keeps the dead with their cause.<br>• **A newcomer** settles at the Road Gate 2 days after a resident dies, with a new look and name, so the outpost doesn't bleed out over a campaign. | No newcomers: the population only shrinks |
+| Q5 | **Creatures** | • **A new kind of entity,** plain data, saved. Its rule: rest at its lair, roam its sector, chase what it sees within a leash, strike in reach, flee when hurt if its kind flees, go home and heal over the day.<br>• **A catalogue of kinds,** like the item catalogue, as data: health, `Attack`, `Defense`, speed, reach, swing interval, sight, leash, flight, loot table and art.<br>• **Three kinds** (placeholder names):<br>&nbsp;&nbsp;– **burrow rats**, weak, in packs of three or four, and they flee;<br>&nbsp;&nbsp;– **stone beetles**, armoured and slow, where a weapon matters;<br>&nbsp;&nbsp;– **cave spinners**, on the gate's approach (K7).<br>• **Lairs are map data:** rats in the Overgrowth, beetles in the Deep Seam. They are spawned from the session's seed, and a cleared lair refills after 2 game days.<br>• **No raids:** creatures keep to their sectors. | (a) Creatures as moving hazards, hurting by presence with no fight. (b) Raids on the outpost at night: later |
+| Q6 | **Lone crawlers** | • A crawler judges a **known** lair as it judges a hazard: it avoids one past what it would brave alone.<br>• **Attacked,** it flees (a reflex beside retreat), unless it is bold and armed: then it fights back.<br>• **The bold buy their own weapons** at the stall when their purse spares it, as residents who mine buy pickaxes (D39).<br>• **A scout's report** charts the lairs of the sector it charts. | Every crawler flees; only the guild fights |
+| Q7 | **Hunt bounties** (Majesty's flag) | • **A third bounty kind** beside Scout and Gather: "Hunt", on a charted lair, paid from escrow when the lair is empty.<br>• **Up to three claimants,** the bold and armed. The reward is shared by the damage each one dealt.<br>• If the lair refills before it is cleared, the bounty runs on until it expires. | No hunt bounties: only the guild fights |
+| Q8 | **The guild's Clear order** | • **A new order** for an expedition: a lair as the target. Its stages: muster, march, **fight**, return, deliver. The haul is what the party picked up.<br>• **Focus fire:** the directive names one target at a time, the party leader's choice (the nearest, then the weakest).<br>• **Retreat:** the party turns back when half its members are downed, or its health is spent past a line; it carries its downed home at half pace (Part 1's deferral).<br>• Flanking is left for later. | No carrying: the downed limp home alone |
+| Q9 | **Veterans** | Fighting is practice, as making is for an artisan (W4):<br>• **The grades:** Green, Seasoned, Veteran, from fights survived and blows landed.<br>• **What a grade gives:** a better hit chance and a little more damage.<br>• **Saved;** shown in the dossier and on the roster.<br>This is the design's "veteran roster contracts". | No growth: gear alone makes a fighter |
+| Q10 | **Weapons** | Three, in the weapon slot (placeholder names):<br>• **a cudgel**, which the caravan supplies cheaply;<br>• **an iron blade**, made at the forge from ore;<br>• **a glowstone edge**, made from ore and glowstone: the best.<br>They wear per hit (`WearRule.PerUse`), and the forge's grades and repair apply. | Weapons from the caravan only |
+| Q11 | **Armour and slots** | • **Protection splits** into **head** and **body**:<br>&nbsp;&nbsp;– the head takes the hard hat, the respirator (worn as a mask) or an iron helm;<br>&nbsp;&nbsp;– the body takes hazard gear or armour: a ring coat from ore (K2), a leather jerkin from hides and chitin plate (K3).<br>• **A real choice:** a party bound for a lair in a hazard sector picks armour or a hazard suit.<br>• **Rarity:** rare pieces are fixed items with a rarity, dropped by bosses (for example the Matriarch's fang dagger), never random affixes. The client shows rarity's colours (Part 1's deferral). | Keep one protection slot: armour or hazard gear |
+| Q12 | **Loot** | • **Piles:** a kill drops a pile at its place, rolled from its kind's loot table: its material (hide, chitin), sometimes salvage, now and then a rare piece. A boss drops a sure trophy and a rare piece.<br>• **Who takes it:** the victors pick it up, a party into its haul and a hunter into its pack. Anyone may claim a pile left behind. Piles fade after a game day.<br>• **The economy:** the stall buys the materials, the caravan exports them, and the forge makes armour from them. | Drops go straight into the killer's pack, with no piles |
+| Q13 | **Bosses** | **Two:**<br>• **The Matriarch** heads the rats' warren. She is stronger and calls her brood to her at half health. Slain, she returns after a game week.<br>• **The Gatekeeper** holds the sealed descent gate:<br>&nbsp;&nbsp;– **its lair:** a new sector at the floor's edge, the Old Stair, reached through the Deep Seam and uncharted at the start;<br>&nbsp;&nbsp;– **its fight:** a slam that strikes everyone in reach, and fury at a quarter of its health;<br>&nbsp;&nbsp;– **between attempts:** it heals fully once its lair has been empty for a game hour;<br>&nbsp;&nbsp;– **beaten once,** it stays beaten.<br>• **The breach** is a saved world flag, told by the chronicle and a hard cutscene. Beyond the gate the stairs go down into the dark, for the descent part. | The Gatekeeper only |
+| Q14 | **Shipping and done** | As in Parts 1 and 2:<br>• one PR, with a commit per step;<br>• each milestone's DoD is a live scenario on the real session, with nothing injected;<br>• a scripted player acts only through commands. | — |
 
-## 4. Milestones
+## 5. Architecture first (AGENTS.md, "Refactor and reevaluate")
+Part 3 adds systems rather than rewriting old ones, so no large refactor is needed first. Six seams, laid before the systems that use them, make each later step smaller:
+- **A1. One combat rule over two kinds of fighter.**
+  - `CombatRules` reads a fighter through a small read model (`Combatant`: health, `Attack`, `Defense`, reach, interval and grade).
+  - A crawler's comes from `AgentState` and `CrawlerStats`, and a creature's from its own record.
+  - So there is one rule, one validator and one place to tune: no crawler path and creature path that drift apart (K0.3).
+- **A2. A crawler leaves the world one way.**
+  - A death reuses the drifter's departure: removal at the end of the tick and `CrawlerDeparted`.
+  - `DepartedCrawler` gains a cause (left or died).
+  - The groups, bunks, contracts and views that already handle a drifter leaving handle the dead the same way. That keeps K4.2's risk in the things that are new: succession and the body (K4.2).
+- **A3. Slots by body part before new gear.**
+  - Head and body replace protection, and the stall's goods table grows to 16, in one format bump (K0.5).
+  - Every weapon and armour after that is a table row, by AGENTS.md's "Adding an item".
+- **A4. Creatures tick in a phase of their own,** after the crawlers' runtime and in id order, and every swing is resolved in one pass after movement. Determinism holds, and combat can be tested apart from cognition (K1.2).
+- **A5. Items on the ground are one entity:** the loot pile. A kill's drop (K3) and a body (K4) are both piles, so death needs no second mechanism.
+- **A6. Kinds as data:** creatures in a catalogue, like items, so the Matriarch and the Gatekeeper are rows with boss traits plus the mechanics no row can hold (K7).
+
+## 6. Milestones
 | Milestone | What the player sees | Core (engine-free simulation) | Client (KNI, Epic UI-5) | Complexity |
 | :--- | :--- | :--- | :--- | :--- |
-| **L0. Groundwork** | Nothing new on Floor 1 | Measurements; floors as data (in the session, the save and its fingerprint); Floor 2's map authored and validated, not yet reachable; the creature entity; combat's rule, engine-free; the planner widened past 64 facts if Part 3 needs it | Floor 2's art keys (placeholders) | Very Complex (split it) |
-| **L1. Creatures** | Vermin in the uncharted sectors; a lone crawler that strays in is hurt and flees | Creatures, nests and their rule; crawlers' flight and avoidance (Q6); spawns on the seed | Creatures drawn; hits and flight readable on the map | Very Complex (split it) |
-| **L2. Armed parties** | The guild, armed, clears a nest together and carries its downed home | Weapons (Q5); the party's fight under its directive (focus fire, retreat); carrying the downed; loot | Weapons in the merchant terminal and the party builder; the fight in the tracker | Very Complex (split it) |
-| **L3. Scouting and the gate** | A party scouts, finds the gate and beats the gatekeeper | Scouting orders; the gate's sector; the gatekeeper; the breach | The scouting order in the party builder; the gate on the map; a hard cutscene for the breach | Possibly Complex |
-| **L4. The move** | Descend: the outpost moves to Floor 2 with its guild | The Descend command after the breach; the session rebuilt on Floor 2 with what moves (Q9); save and load across the move | The relocation screen (what moves, what stays); the descent's cutscene | Very Complex (supervised) |
-| **L5. Floor 2's pressure** | A harder floor with its own day | Floor 2's economy and dangers tuned; its gate seeds and soak bands | Floor 2's look | Possibly Complex |
-| **L6. The gate** | The campaign, Floor 1 to Floor 2, played | Every scenario; the whole campaign headless | The producer's play session; Epic 10 closes | Possibly Complex |
+| **K0. Groundwork** | Nothing new | Measurements; the combat rule and its read model; the creature catalogue; head and body slots; the goods table at 16 | The new slots in the dossier | Very Complex (K0.3 supervised; the rest Possibly Complex) |
+| **K1. Creatures** | Vermin in the Deep Seam and the Overgrowth; a stray is hurt and flees; the cautious keep out | Lairs, spawns, the creature's rule; flight and avoidance; the save | Creatures drawn, striking, coated red when hit, hidden by the fog | Very Complex (split; K1.2 and K1.3 supervised) |
+| **K2. Arms and armour** | The bold buy blades and fight back; the forge makes weapons and a ring coat | Weapons, armour, wear per hit, fighting back, outfitting for creatures | Weapons in hand, the merchant terminal, the party builder | Possibly Complex |
+| **K3. Loot** | Kills leave piles; hides and chitin sell, and become armour | Piles, drops, picking up, materials and their recipes, rare pieces | Piles on the map; rarity's colours | Possibly Complex |
+| **K4. Death** | The fallen bleed out unless carried or dosed; the dead are mourned; a newcomer arrives | Bleeding out; a death; grief and trust; the newcomer; the save | The body and a cairn; the chronicle; the dossier of the dead | Very Complex (split; K4.2 supervised) |
+| **K5. Hunting** | The player flags a lair; the bold clear it and are paid | Hunt bounties; the hunters' goals | The bounty board's Hunt | Possibly Complex |
+| **K6. The guild goes to war** | An armed party clears a nest, carries its downed home and brings back loot | The Clear order; the party's fight; carrying; veterans | The Clear order and the fight in the tracker | Very Complex (split; K6.2 and K6.3 supervised) |
+| **K7. Bosses and the gate** | The Matriarch; the Old Stair; the Gatekeeper broken; the gate breached | The new sector; boss traits and mechanics; the breach | Boss art and health bars; the gate; the breach's cutscene | Very Complex (split; K7.3 supervised) |
+| **K8. The gate** | Part 3 played through | Every scenario; seeds; soak bands with combat and deaths | The producer's play session | Possibly Complex |
 
-**Order:** L0 to L6, in order. The producer looks at L2 and plays L6.
+**Order:** K0 to K8, in order. Loot (K3) comes before death (K4), because a body is a pile.
 
-## 5. The milestones, phased
-Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Every milestone passes the index's gates and ends in its PR into `main`.
+## 7. The milestones, phased
+Each step is a commit. After each: a build with 0 warnings and `dotnet test`. The whole part is one PR into `main` (the index's rules).
 
-### L0. Groundwork (2–3 days)
-**Complexity:** Very Complex: it bundles floors in the save's fingerprint, a second map, the first creature and the planner's width. Split it into three PRs: floors (L0.3–L0.4), the creature and combat's rule (L0.5), and the planner (L0.6).
-- [ ] **L0.1 Docs:** [Basic]
+### K0. Groundwork (2–3 days)
+**Complexity:** Very Complex, for K0.3. The rest is Possibly Complex.
+- [ ] **K0.1 Docs:** [Basic]
   - the answered draft into `docs/epics/epic-10-part-3.md` (Q1);
-  - the roadmap: Epic 10 Part 3 ACTIVE, Epic UI-5 folded in;
+  - the roadmap: Part 3 ACTIVE; Milestone 4's split if Q1 stands;
   - the focus file.
-- [ ] **L0.2 Measure:** [Possibly Complex]
+- [ ] **K0.2 Measure:** [Possibly Complex: probes and reading them]
   - planning cost and the planner's facts in use;
   - the frame time;
-  - where Part 2's economy stands.
-- [ ] **L0.3 Floors as data:** [Possibly Complex: the save's fingerprint and a format bump]
-  - `FloorDefinition`: a floor's layout and its tuning;
-  - the session's floor, which the save's fingerprint gains (a format bump).
-- [ ] **L0.4 Floor 2's map:** [Possibly Complex: a day that holds on a new map is tuning]
-  - `Floor2Layout`, authored, with the map validators;
-  - R1's A* guard holds;
-  - a test session on Floor 2, with residents only, plays its day.
-- [ ] **L0.5 The creature and combat's rule:** [Very Complex, supervised by the developer: the first creature entity sets the pattern that L1–L4 follow]
-  - the creature entity, as plain data;
-  - `CombatRules`: reach, cooldown, `Attack` less `Defense`;
-  - `CombatValidator`.
-- [ ] **L0.6 The planner's room:** [Possibly Complex: the planner's hot path; the golden hashes stay unchanged] if Part 3's facts would pass 60, widen `WorldState`, in a commit of its own, with the golden hashes unchanged.
-- **DoD:**
-  - Floor 1's 23 gate seeds and the soak are unchanged;
-  - Floor 2's day holds on its own gate seeds, with residents only.
+  - the economy after Part 2's F14 decision;
+  - how many residents would venture, and with what purses (weapon prices are set against them, as the pickaxe's were, F9).
+- [ ] **K0.3 The combat rule:** [Very Complex, supervised by the developer: the first fight's rule sets the pattern K1–K7 follow]
+  - `Combatant`, the read model (A1);
+  - `CombatRules`: reach, interval, the hit roll on a new `SimRandomSalt`, mitigation by `Defense`, wear per hit;
+  - `CombatValidator`;
+  - the golden hashes unchanged: nothing fights yet.
+- [ ] **K0.4 The creature catalogue:** [Possibly Complex: a new catalogue with a precedent, `ItemCatalog`]
+  - kinds as data (A6), with a validator;
+  - no spawns yet.
+- [ ] **K0.5 Head and body:** [Possibly Complex: the save format, and outfitting may now give a crawler two pieces]
+  - the head and body slots in place of protection (A3);
+  - the goods table at 16;
+  - one format bump.
+  - The golden hashes are re-recorded in their own commit only if outfitting changes behaviour.
+- **DoD:** Floor 1's 23 gate seeds and the soak are unchanged, or re-recorded with K0.5's cause named.
 
-### L1. Creatures (3–4 days)
-**Complexity:** Very Complex, because of L1.3. Do L1.1, L1.2 and L1.4 as one PR first; then L1.3, supervised by the developer.
-- [ ] **L1.1 Nests:** [Possibly Complex]
-  - map data in the uncharted sectors;
-  - spawns on the seed, and their comeback time.
-- [ ] **L1.2 The creature's rule:** [Possibly Complex: on L0.5's entity, on the main thread in id order]
-  - patrol its sector, attack a crawler in reach, flee when hurt;
-  - on the main thread, with no planner.
-- [ ] **L1.3 Crawlers:** [Very Complex, supervised by the developer: a new reflex beside retreat and panic, in the runtime's pre-emption]
-  - flight, a reflex beside G2's retreat;
-  - avoiding known nests, as `WouldVenture` avoids hazards;
-  - a scout's report charts a nest.
-- [ ] **L1.4 The client:** [Basic: art rows by AGENTS.md's "Adding art"] creatures' art rows (placeholders), with hits readable.
-- **DoD `VerminDriveTheLoneAway`:** on the default seed's day:
-  - a lone crawler that strays into a nest's sector is hurt and flees;
-  - nobody else enters a known nest;
+### K1. Creatures (3–4 days)
+**Complexity:** Very Complex: a new system. Split as below. The developer supervises K1.2 and K1.3.
+- [ ] **K1.1 Lairs:** [Possibly Complex: a map change, with golden and renders re-recorded]
+  - lairs as map data in the Overgrowth and the Deep Seam;
+  - spawns on the seed;
+  - refilling on the day's time.
+- [ ] **K1.2 The creature's rule:** [Very Complex, supervised by the developer: the creature's tick, its own phase in id order (A4)]
+  - rest, roam, chase within the leash, strike, flee, go home, heal;
+  - its paths through the existing pathfinder;
+  - swings resolved in one pass after movement.
+- [ ] **K1.3 Crawlers meet creatures:** [Very Complex, supervised by the developer: a new reflex in the runtime's pre-emption, and cognition]
+  - flight, a reflex beside retreat and panic;
+  - known lairs judged in `LoneDanger`, as hazards are;
+  - a scout's report charts lairs;
+  - nobody yet fights back, and nobody dies: a downed crawler limps out, as today.
+- [ ] **K1.4 Saves:** [Possibly Complex: a save block] creatures and lairs in the world's block, with the round-trip validators.
+- [ ] **K1.5 The client:** [Possibly Complex: new art and renders to look at]
+  - `CreatureSprites` (generated placeholders);
+  - art rows per view mode, and `EntityVisuals`;
+  - a strike pose;
+  - the red coat on creatures too;
+  - the fog hides them;
+  - the inspector shows a creature.
+- **DoD `VerminDriveTheLoneAway`:** on the 23 gate seeds' day:
+  - a crawler who strays into a lair's reach is hurt and flees;
+  - nobody enters a known lair alone;
   - the day's checks hold.
 
-### L2. Armed parties (3–4 days), then the producer's look
-**Complexity:** Very Complex: a party's fight and carrying the downed are both new. Split it: weapons and loot (L2.1, L2.4), then the fight (L2.2), then carrying (L2.3). The developer supervises the last two.
-- [ ] **L2.1 Weapons (Q5):** [Possibly Complex: weapons as items are Basic; `Attack` and `Defense` in combat are not]
-  - the items, the forge's recipes and the caravan's basic weapon;
-  - `Attack` in combat;
-  - `Defense` in the forge's grades.
-- [ ] **L2.2 The party's fight:** [Very Complex, supervised by the developer]
-  - the expedition's work stage becomes clearing: focus fire on one creature at a time, the directive's target;
-  - the retreat rule.
-- [ ] **L2.3 Carrying the downed** [Very Complex, supervised by the developer: two crawlers' movement coupled, and saved] (Part 1's deferral): a member carries a downed member home, at half pace.
-- [ ] **L2.4 Loot** [Possibly Complex: deterministic rolls on `SimRandom`] (Q11): creature drops from loot tables.
-- [ ] **L2.5 The client:** [Possibly Complex] weapons in the merchant terminal and the party builder; the fight in the tracker.
-- **DoD `AnArmedPartyClearsANest`:**
-  - the scripted player arms four and orders a clearing;
-  - they fight together, clear the nest, carry anyone downed home and bring back loot;
-  - the ledger balances.
-- **Stop for the producer's look** before L3.
+### K2. Arms and armour (3–4 days), then the producer's look
+**Complexity:** Possibly Complex: items with a precedent, and one new reflex.
+- [ ] **K2.1 Weapons (Q10):** [Possibly Complex: a stat read in combat]
+  - the cudgel, the iron blade and the glowstone edge;
+  - their recipes, and the caravan's terms;
+  - wear per hit; grades and repair.
+- [ ] **K2.2 Armour from ore (Q11):** [Basic: item rows and recipes, by AGENTS.md's "Adding an item"] the iron helm and the ring coat.
+- [ ] **K2.3 Fighting back:** [Possibly Complex: cognition, a fact and a reflex]
+  - the bold and armed fight back;
+  - the bold buy a weapon (Q6);
+  - the party builder outfits members for creatures as it does for hazards (W3).
+- [ ] **K2.4 The client:** [Possibly Complex: Gum UI and worn sprites]
+  - weapons in hand (`WornSprites`);
+  - the new goods in the merchant terminal and the party builder.
+- **DoD `AnArmedCrawlerFightsBack`:** on a gate seed, the scripted player stocks blades; a bold resident buys one, meets vermin, fights and kills one; the day holds.
+- **Stop for the producer's look** at the first fights.
 
-### L3. Scouting and the gate (2–3 days)
-**Complexity:** Possibly Complex: G5's expedition stages and L1's creatures are the precedents.
-- [ ] **L3.1 Scouting orders** [Possibly Complex] (Part 1's deferral): an expedition into an uncharted sector charts it with a scout's report.
-- [ ] **L3.2 The gate:** [Possibly Complex]
-  - its sector, as map data at the floor's edge;
-  - the gatekeeper (Q7): its health, healing between attempts, beaten once.
-- [ ] **L3.3 The breach:** [Possibly Complex]
-  - beating the gatekeeper opens the gate, a world flag that is saved;
-  - the chronicle tells it, and a hard cutscene plays.
-- **DoD `ThePartyFindsAndBreachesTheGate`:** on the default seed, the scripted player scouts, finds the gate, arms and kits the guild, and breaches the gate. More than one attempt is allowed; the bound is set at L3's first measurement.
+### K3. Loot (2–3 days)
+**Complexity:** Possibly Complex: rolls already exist; piles are a new entity with saved state.
+- [ ] **K3.1 Piles:** [Possibly Complex: a new entity, saved]
+  - items on the ground (A5);
+  - they fade after a game day.
+- [ ] **K3.2 Drops:** [Possibly Complex: deterministic rolls] each kind's loot table, rolled at the kill by `LootRoller`.
+- [ ] **K3.3 Picking up:** [Possibly Complex: cognition, a goal and a fact]
+  - the victors take their pile;
+  - anyone may claim one left behind.
+- [ ] **K3.4 Materials:** [Possibly Complex: the economy, and the soak may move]
+  - hides and chitin at the stall and the caravan;
+  - the leather jerkin and chitin plate at the forge;
+  - the rare pieces as items.
+- [ ] **K3.5 The client:** [Possibly Complex: art and renders]
+  - piles on the map;
+  - rarity's colours in the merchant terminal and the dossier.
+- **DoD `KillsFeedTheForge`:** a hunter's kill drops hide; the hide is sold at the stall; the forge makes a jerkin from it; a resident wears it.
 
-### L4. The move (3–4 days)
-**Complexity:** Very Complex, supervised by the developer: the session is rebuilt mid-play with a carried record. L4.1 goes first; the rest are Possibly Complex.
-- [ ] **L4.1 The Descend command,** [Very Complex, supervised by the developer] after the breach:
-  - what moves (Q9) is captured as a carried record, saved with MemoryPack, as the roadmap says;
-  - the session is rebuilt on Floor 2 as a respawn is, with the carried record in place of part of `Populate`, in a new session epoch.
-- [ ] **L4.2 Arrival:** [Possibly Complex]
-  - Floor 2's residents spawn, with renown;
-  - the guild arrives with its contracts and gear, and the treasury with it;
-  - stations can be built again at half price.
-- [ ] **L4.3 Save and load across the move:** [Possibly Complex] a save on Floor 2 loads on Floor 2, and a save from before the move still loads on Floor 1.
-- [ ] **L4.4 The client:** [Possibly Complex] the relocation screen and the descent's cutscene.
-- **DoD `TheOutpostMovesDown`:** after the breach, the scripted player descends. On Floor 2:
-  - the guild's members, contracts and gear are there;
-  - the treasury has moved, and the artisans' practice is kept;
-  - Floor 2's day passes its checks.
+### K4. Death (3–4 days), then the producer's look
+**Complexity:** Very Complex: a crawler leaving the world mid-session touches every system that holds one. Split as below. The developer supervises K4.2.
+- [ ] **K4.1 Bleeding out (Q3):** [Possibly Complex: a rule in `Vitality`, saved]
+  - the clock while downed in danger;
+  - what stops it.
+- [ ] **K4.2 A death:** [Very Complex, supervised by the developer: groups and succession, contracts, bunks, parties and expeditions, memory, the ledger]
+  - a death goes the drifter's way (A2);
+  - the body is a pile with the purse in it, held in a ledger account for gold on the ground;
+  - a dead leader is succeeded.
+- [ ] **K4.3 The living remember (Q4):** [Possibly Complex: memory events, affinity and mood]
+  - grief;
+  - trust toward the patron after a death under orders;
+  - the chronicle;
+  - the departed list's cause.
+- [ ] **K4.4 A newcomer:** [Possibly Complex: a population rule on the seed] 2 days after a resident's death.
+- [ ] **K4.5 Saves:** [Possibly Complex: format] the dead, the bleeding clock and gold on the ground, with the round-trip validators.
+- [ ] **K4.6 The client:** [Possibly Complex: art, renders, a dynamic scene]
+  - the body and a cairn;
+  - the chronicle's lines;
+  - the dossier of the dead (portrait greyed);
+  - a dynamic scene when a friend sees a death.
+- **DoD:**
+  - **`DeathHasItsCost`:** the scripted player sends an under-armed party against beetles. A member falls and isn't carried, and it dies. Its friends grieve, the guild loses its contract, the body's pile holds its gear and purse, and a newcomer arrives. The ledger balances.
+  - **`TheCarefulLoseNoOne`:** on the 23 gate seeds, with no player action, deaths stay within a band set with the producer (zero is the target).
+- **Stop for the producer's look** at death.
 
-### L5. Floor 2's pressure (2–3 days)
-**Complexity:** Possibly Complex: tuning, and bands set with the producer.
-- [ ] **L5.1 Floor 2's tuning:** [Possibly Complex] scarcer food (fewer plots), richer ore, a pack of creatures, its drifters.
-- [ ] **L5.2 Floor 2's gate seeds and soak bands,** [Possibly Complex] set with the producer.
-- **DoD `TheSecondFloorsDayHolds`:** on Floor 2's gate seeds:
-  - nobody starves, and the ledger balances;
-  - crawlers complete their cycles;
-  - the guild works.
+### K5. Hunting (2–3 days)
+**Complexity:** Possibly Complex: a new bounty kind with two precedents, Scout and Gather.
+- [ ] **K5.1 Hunt bounties (Q7):** [Possibly Complex: a command, escrow, saved]
+  - posted on a charted lair;
+  - claimed by up to three;
+  - paid by damage dealt when the lair is empty.
+- [ ] **K5.2 The hunters:** [Possibly Complex: cognition, a goal, an action and facts] claim, go, fight in the lair, and are paid.
+- [ ] **K5.3 The client:** [Possibly Complex: Gum UI] the bounty board's Hunt, with charted lairs as targets.
+- **DoD `AHuntBountyClearsALair`:** the scripted player posts a hunt on the rats; bold, armed residents claim it, clear the lair and are paid. The ledger balances.
 
-### L6. The gate (1–2 days)
-**Complexity:** Possibly Complex: the campaign scenario and saves across the move; the close-out is Basic.
-- [ ] **L6.1 `TheCampaignPlaysThrough`:** [Possibly Complex] from Floor 1's start, through the breach and the move, to Floor 2's first day, headless.
-- [ ] **L6.2 Saves across the move,** [Possibly Complex] byte for byte.
-- [ ] **L6.3 Seeds and soaks on both floors.** [Basic to run; any failure it finds is graded on its own]
-- [ ] **L6.4 The producer's play session.** [Possibly Complex: grade each fix it asks for]
-- [ ] **L6.5 Epic 10's close-out:** [Basic]
-  - **the roadmap:** Epic 10 COMPLETED; Milestone 4's Epic 10 share and Epic UI-5 delivered;
-  - **the epic docs, the focus file, `architecture_history.md`, the economy model and AGENTS.md;**
-  - every Epic 10 plan is deleted, the index too.
+### K6. The guild goes to war (3–4 days)
+**Complexity:** Very Complex: a party's fight and carrying the downed are both new. Split as below. The developer supervises K6.2 and K6.3.
+- [ ] **K6.1 The Clear order (Q8):** [Possibly Complex: a new expedition kind on G5's stages]
+  - a lair as the target;
+  - the fight stage;
+  - the haul as what was picked up.
+- [ ] **K6.2 The party's fight:** [Very Complex, supervised by the developer: focus fire through the directive, and the retreat rule]
+- [ ] **K6.3 Carrying the downed:** [Very Complex, supervised by the developer: two crawlers' movement coupled, and saved] Part 1's deferral, at half pace.
+- [ ] **K6.4 Veterans (Q9):** [Possibly Complex: saved state, with W4's practice as the precedent]
+- [ ] **K6.5 The client:** [Possibly Complex: Gum UI]
+  - the Clear order in the party builder;
+  - the fight in the tracker: the party's health and its foe's;
+  - grades on the roster.
+- **DoD `AnArmedPartyClearsANest`:** the scripted player arms four and orders a clearing. They fight together, clear the nest, carry anyone downed home and bring back loot. The ledger balances.
 
-## 6. Risks
+### K7. Bosses and the gate (3–4 days)
+**Complexity:** Very Complex: boss mechanics are new. Split as below. The developer supervises K7.3.
+- [ ] **K7.1 The Old Stair:** [Possibly Complex: a map change, with golden and renders re-recorded]
+  - the new sector at the floor's edge, uncharted at the start;
+  - the sealed gate;
+  - the spinners' lair on its approach.
+- [ ] **K7.2 The Matriarch (Q13):** [Possibly Complex: a kind with boss traits]
+  - she calls her brood to her;
+  - she returns after a week.
+- [ ] **K7.3 The Gatekeeper:** [Very Complex, supervised by the developer: the slam, the fury, healing between attempts, beaten once, saved]
+- [ ] **K7.4 The breach:** [Possibly Complex]
+  - a saved world flag;
+  - the chronicle;
+  - the stairs beyond, dark.
+- [ ] **K7.5 The client:** [Possibly Complex: art, renders, a hard cutscene]
+  - boss sprites (up to 64×64) and health bars;
+  - the gate on the map;
+  - the breach's cutscene.
+- **DoD `TheGuildBreaksTheGatekeeper`:** on the default seed the scripted player scouts the Old Stair, arms and kits the guild, and breaks the Gatekeeper. More than one attempt is allowed; the bound is set at K7's first measurement.
+
+### K8. The gate (1–2 days)
+**Complexity:** Possibly Complex: the whole part's scenarios and bands; the close-out is Basic.
+- [ ] **K8.1 Every scenario together,** [Possibly Complex] with a save mid-fight and with a bleeding crawler, loaded byte for byte.
+- [ ] **K8.2 The soak's `hunting` profile:** [Possibly Complex: bands set with the producer] treasuries, kills and deaths per day.
+- [ ] **K8.3 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] with and without the guild.
+- [ ] **K8.4 The producer's play session.** [Possibly Complex: grade each fix it asks for]
+- [ ] **K8.5 Part 3's close-out:** [Basic]
+  - the roadmap: Part 3 COMPLETED, and Milestone 4 as Q1 decides;
+  - the epic doc, the focus file, `architecture_history.md`, the economy model and AGENTS.md;
+  - this plan deleted.
+
+## 8. Risks
 | Risk | What we do |
 | :--- | :--- |
-| Creatures and fights add entities and decisions, costing planning and frame time. | Creatures follow a short rule on the main thread, not the planner. Measure at L1 and L2; the refactor's R6 (planners per worker) if needed. |
-| Fights must be deterministic. | Resolved on the main thread, in id order, on ticks. |
-| The move rebuilds the world, and entity ids repeat per seed. | A new session epoch, as a respawn has. The save's fingerprint gains the floor. |
-| Floor 2 comes near A*'s cap. | R1 refuses a map past it. Size the searcher's buffers from the map if Floor 2 needs more. |
-| The planner's 64 facts run out. | L0.6 widens `WorldState` first, if needed. |
-| Death, if the producer picks Q3's alternative, changes trust, the guild and the save. | It becomes a milestone of its own, between L4 and L5. |
-| Epic 11 shares the milestone. | Separate branches and PRs. They share only the chronicle. |
+| Creatures and fights cost planning and frame time. | Creatures follow a short rule, not the planner (§3). Measure at K1 and K6. |
+| Fights must be deterministic. | The main thread, in id order, on ticks, with one seeded roll per swing (A4). |
+| Death touches every system that holds a crawler: groups, contracts, bunks, parties, memory, the ledger and the views. | The drifter's departure is the precedent (A2), and K4.2 is supervised. The round-trip validators gain the dead. |
+| Deaths change the economy: a smaller population buys and sells less. | The newcomer rule (Q4). The soak's bands are set with deaths in them (K8.2). |
+| Hazards that can kill make Part 1's and 2's dangers sharper. | Q3's alternative (a): only creatures kill. `TheCarefulLoseNoOne` watches every gate seed. |
+| The bold die on the default seeds with no player involved. | Avoidance of known lairs (Q6) and the band in `TheCarefulLoseNoOne`. If deaths pass the band, the lone limit is tuned. |
+| The planner's facts grow: armed, a known lair, a hunt, a pile. | About 46 of 64. R1's guard. |
+| The map grows: the Old Stair and two lairs. | Golden and renders re-recorded in their own commits. Well within A*'s cap. |
+| Combat reads poorly on screen. | A strike pose, the red coat on both sides, boss health bars, and the producer's look at K2. |
+| The save format moves at K0, K1, K3, K4, K5, K6 and K7. | The index's rule: raised once per PR. Old saves are refused with a reason. |
 
-## 7. Deferred (proposed)
+## 9. Deferred (proposed)
 | Left out | Owner |
 | :--- | :--- |
-| Floors past the second; procedural floors and bosses | After Epic 10. Generated maps want the map designer (Epic CLIENT). |
-| Multiplayer | After the MVP; this part keeps it possible (ROADMAP §1A.1) |
+| Floor 2, floors as data, the move and what moves, the next floor's pressure | Part 4, the descent: QUEUED, not drafted (Q1) |
+| Scouting as a guild order | Part 4, or later; scout bounties chart sectors today |
+| Ranged weapons | Later, unless the producer takes Q2's alternative (a) |
+| Random affixes on gear | Later; rare pieces are fixed items (Q11) |
+| Fights between crawlers (the design's "lethal rivalries") | Later, deeper floors |
+| Raids on the outpost | Later (Q5's alternative (b)) |
+| Resurrection | Later (Q3's alternative (b)) |
+| Flanking (Epic 8's intent) | Later; focus fire and retreat come in K6 |
+| Loot tables on nodes and the haul | Later; Part 3 rolls loot only for kills |
+| Procedural bosses (the game design's Phase 4) | After Epic 10 |
+| Art beyond the generated placeholders | The producer's art direction (Epic CLIENT M7) |
 | Tavern rumours written by a language model | Epic 11 |
-| Art beyond the generated placeholders | The producer's art direction |

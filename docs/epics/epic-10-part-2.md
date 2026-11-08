@@ -5,7 +5,7 @@
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
 - **Preceding**: [Epic 10 Part 1](epic-10.md), the guild and its expeditions. **Builds on**: Epic 8 (groups and directives), Epic 9 (the economy), the item system (I1–I8), the core refactor (R1–R6), Epic UI-Beta (the client's UI kit).
-- **Following**: Epic 10 Part 3, the descent (Milestone 4).
+- **Following**: Epic 10 Part 3, creatures, combat and the gatekeeper (Milestone 4; re-scoped by the producer on 2026-11-07, with Floor 2 moved to a Part 4).
 - **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** as an epic, for its size. Each milestone is stamped in §2.2; W1 and W5 are split in the plan before they start.
 
 ---
@@ -236,12 +236,12 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 
 | Left out | Owner |
 | :--- | :--- |
-| Weapons, and armour against creatures | Part 3 (L2) |
+| Weapons, and armour against creatures | Part 3 (K2, K3) |
 | More stations; station upgrades | After Epic 10 |
 | Artisans who also go out with the guild | Q4's alternative, if the producer wants it |
 | The caravan buying made goods | Q7's alternative |
-| Loot in play | Part 3 (L2) |
-| Combat and death | Part 3 (Q11) |
+| Loot in play | Part 3 (K3) |
+| Combat and death | Part 3 (K0–K4; its draft's Q2–Q4) |
 | Safe zones; placing the shop and the guildhall where the player chooses, each grown as one building; rival shops and guilds | Unscheduled: the producer's long-term direction ([Game Design Proposal §5](../Game%20Design%20Proposal.md)) |
 | Quitting on soured feelings (the producer, 2026-11-04). Today a guild member (Part 1's D4) and an artisan (W1.2) quit at a caravan visit when trust toward the player is under 30, or after 2 unpaid visits in a row. Later: quitting on warmth (affection) as well as trust, thresholds per role as tuning, quitting at any time rather than only at a visit, and perhaps going to a rival (Game Design Proposal §5) | Unscheduled; any epic that reworks contracts |
 
