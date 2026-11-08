@@ -10,7 +10,7 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 | Part 1 (G4–G6) | The guild, expeditions and the gate | **COMPLETED 2026-11-01** (epic §4); its plans are deleted | — | — | Play session passed 2026-11-01 |
 | The core refactor (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | **Done 2026-11-02**, merged as PR #21; its plan is deleted (ROADMAP §3A) | — | — | — |
 | [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in ([epic](../docs/epics/epic-10-part-2.md)) | **ACTIVE 2026-11-04:** W0–W6, milestone T and the stretch done, merged into main as PR #23 (2026-11-07); the play session and the close-out remain | 14–19 | **Very Complex** (epic-sized). W1 and W5 need splitting | A look at W3; a play session at W6 |
-| [`epic10_part3_plan.md`](epic10_part3_plan.md) | Part 3, Milestone 4: creatures, combat and the gatekeeper, K0–K11, with Epic UI-5 folded in. Re-scoped by the producer on 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2) and answered in part the same day (melee then ranged, an appendable equipment system, hazards that kill the unrescued, a skill system as K9; Milestone 4 ends here) | A draft, answered in part 2026-11-07 | 31–44 | **Very Complex** (epic-sized; new systems). K1, K2, K5, K8, K9 and K10 are split, with steps the developer supervises | The go; looks at K3, K5 and K8; a play session at K11 |
+| [`epic10_part3_plan.md`](epic10_part3_plan.md) | Part 3, Milestone 4: creatures, combat and the gatekeeper, K0–K11, with Epic UI-5 folded in ([epic](../docs/epics/epic-10-part-3.md)). Re-scoped by the producer on 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2) and answered in part the same day (melee then ranged, an appendable equipment system, hazards that kill the unrescued, a skill system as K9; Milestone 4 ends here) | **ACTIVE 2026-11-08:** the producer's go ("Please proceed with K0"); K0 under way | 31–44 | **Very Complex** (epic-sized; new systems). K1, K2, K5, K8, K9 and K10 are split, with steps the developer supervises | The go; looks at K3, K5 and K8; a play session at K11 |
 | Part 4 (no plan yet) | Milestone 5, the descent: Floor 2, floors as data, moving the outpost and what moves. Split out of Part 3 on 2026-11-07 | Not drafted | — | — | — |
 
 **Left:** Part 2's play session and close-out; Part 3 about 31–44 agent days; Part 4 not yet estimated.
@@ -25,7 +25,10 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
    - ~~the producer answers the draft's questions;~~ 2026-11-04: "Begin Epic 10 part 2 work", Q1–Q12 as proposed;
    - ~~the design part of the draft moves into an epic doc~~ (`docs/epics/epic-10-part-2.md`);
    - then W0–W6.
-4. **Part 3:** the same, then K0–K11.
+4. **Part 3:**
+   - ~~the producer answers the draft's questions;~~ 2026-11-07, in part, the rest by exception;
+   - ~~the design part of the draft moves into an epic doc~~ (`docs/epics/epic-10-part-3.md`, 2026-11-08, with the go for K0);
+   - then K0–K11.
 5. **Part 4, the descent,** is drafted after Part 3. Its close-out marks Epic 10 COMPLETED, and every plan here is deleted.
 
 Epic 11 (the MCP narrative) shares Milestone 5 with Part 4 (since 2026-11-07, so that Milestone 4 ends with Part 3) but is its own epic. Nothing here waits for it.

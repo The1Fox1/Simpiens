@@ -5,7 +5,7 @@
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
 - **Preceding**: Epic 9 (the outpost economy). **Builds on**: Epic 8 (groups and directives), Epic CORE (the engine-free core, headless tests), Epic CLIENT (the KNI client).
-- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) Part 3 (creatures, combat and the gatekeeper, Milestone 4) and Part 4 (the descent; split out of Part 3 on 2026-11-07).
+- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) [Part 3](epic-10-part-3.md) (creatures, combat and the gatekeeper, Milestone 4; ACTIVE since 2026-11-08) and Part 4 (the descent; split out of Part 3 on 2026-11-07).
 
 ---
 

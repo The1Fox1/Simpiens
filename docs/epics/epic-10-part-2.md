@@ -5,7 +5,7 @@
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
 - **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
 - **Preceding**: [Epic 10 Part 1](epic-10.md), the guild and its expeditions. **Builds on**: Epic 8 (groups and directives), Epic 9 (the economy), the item system (I1–I8), the core refactor (R1–R6), Epic UI-Beta (the client's UI kit).
-- **Following**: Epic 10 Part 3, creatures, combat and the gatekeeper (Milestone 4; re-scoped by the producer on 2026-11-07, with Floor 2 moved to a Part 4).
+- **Following**: [Epic 10 Part 3](epic-10-part-3.md), creatures, combat and the gatekeeper (Milestone 4; re-scoped by the producer on 2026-11-07, with Floor 2 moved to a Part 4; ACTIVE since 2026-11-08).
 - **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** as an epic, for its size. Each milestone is stamped in §2.2; W1 and W5 are split in the plan before they start.
 
 ---

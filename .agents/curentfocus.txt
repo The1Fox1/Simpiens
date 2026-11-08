@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-07 (Epic 10 Part 2 ACTIVE: W0-W6, milestone T and the stretch done, merged into main as PR #23; the play session and close-out remain)
+# Last reconciled: 2026-11-08 (Epic 10 Part 3 ACTIVE: K0 under way; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -76,12 +76,15 @@ CURRENT FOCUS
   crawler's damage in its last tick (unsaved; golden unchanged).
   Merged into main as PR #23 (2026-11-07, the producer's word), before the play session.
   NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6).
-- AFTER: Epic 10 Part 3, re-scoped by the producer 2026-11-07 to combat, equipment, death, loot, creatures and
-  bosses, with Floor 2 out (to a Part 4, the descent). Its draft, rewritten the same day on feat/epic10-part3
-  (.agents/epic10_part3_plan.md: K0-K11), answered in part the same day: melee then ranged on seeded hit rolls,
-  hazards kill the downed if nobody rescues them, death as proposed, an appendable equipment system (head and
-  body for now), a skill system as K9, and Milestone 4 ends with Part 3 (Part 4 and Epic 11 to a Milestone 5).
-  The other questions stand by exception; the go comes after Part 2's close-out.
+- NOW: Epic 10 Part 3, Creatures, Combat and the Gatekeeper (Milestone 4) [ACTIVE 2026-11-08]
+  (docs/epics/epic-10-part-3.md): re-scoped by the producer 2026-11-07 to combat, equipment, death, loot, creatures
+  and bosses, with Floor 2 out (to a Part 4, the descent). Its draft (K0-K11) was answered in part the same day:
+  melee then ranged on seeded hit rolls, hazards kill the downed if nobody rescues them, death as proposed, an
+  appendable equipment system (head and body for now), a skill system as K9, and Milestone 4 ends with Part 3
+  (Part 4 and Epic 11 to a Milestone 5). The rest stands by exception. The go, 2026-11-08: "The revised epic plan
+  looks good. Please proceed with K0". K0, groundwork, under way on feat/epic10-part3 (one PR for all of Part 3):
+  the docs, measurements, the combat rule (supervised) and the creature catalogue. Plan: .agents/epic10_part3_plan.md.
+  Part 2's play session and close-out stay open beside it.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
@@ -108,7 +111,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [QUEUED], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2), with a redrafted plan; Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0 under way], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
