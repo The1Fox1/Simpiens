@@ -96,6 +96,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - a bare hand needs 116 s against a beetle that downs it in 41 s, and the placeholder cudgel 31 s;
     - one rat loses to a bare hand, and a pack of three downs it in 16 s.
 - **DoD:** the golden hashes, the 23 gate seeds and the soak are unchanged.
+- **Done 2026-11-08:** every step above; K0.3 waits for the developer's review. Core 186/186 and client 485/485, though one allocation test failed once with the core's tests running alongside (F2); golden 3/3, unchanged; the 23 gate seeds and the soak hold; seeds 1–120 120/120 with and without the guild; the pinned image 485/485 exact; the MonoGame and Android compiles with 0 warnings.
 
 ### K1. The equipment system (3–4 days)
 **Complexity:** Very Complex: it generalises the inventory, which hazards, harvest, outfitting, saves and the client rely on (bundling). Split as below; each step is Possibly Complex. The developer reviews K1.2's save design before K1.3 starts.

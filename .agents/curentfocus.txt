@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-08 (Epic 10 Part 3 ACTIVE: K0 under way; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-08 (Epic 10 Part 3 ACTIVE: K0 done, the combat rule waiting for review; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -82,8 +82,10 @@ CURRENT FOCUS
   melee then ranged on seeded hit rolls, hazards kill the downed if nobody rescues them, death as proposed, an
   appendable equipment system (head and body for now), a skill system as K9, and Milestone 4 ends with Part 3
   (Part 4 and Epic 11 to a Milestone 5). The rest stands by exception. The go, 2026-11-08: "The revised epic plan
-  looks good. Please proceed with K0". K0, groundwork, under way on feat/epic10-part3 (one PR for all of Part 3):
-  the docs, measurements, the combat rule (supervised) and the creature catalogue. Plan: .agents/epic10_part3_plan.md.
+  looks good. Please proceed with K0". K0, groundwork, done the same day on feat/epic10-part3 (one PR for all of
+  Part 3): the docs; measurements (F1: hazards alone down nobody on the gate seeds); the combat rule (Combatant,
+  CombatRules, D1-D8; supervised, waiting for the developer's review); the creature catalogue (rats, beetles,
+  spinners as rows). NEXT: K1, the equipment system, on the producer's word. Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
@@ -111,7 +113,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0 under way], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0 done; K1 next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.

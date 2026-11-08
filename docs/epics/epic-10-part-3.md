@@ -1,6 +1,6 @@
 # Epic 10, Part 3: Creatures, Combat and the Gatekeeper
 
-- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is under way (§4). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
+- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is done the same day (§4): the measurements (finding F1), the combat rule, which waits for the developer's review (D1–D8), and the creature catalogue. K1 starts on the producer's word. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-5 is folded in, as UI-3 and UI-4 were into Parts 1 and 2, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 4, Combat & the Gatekeeper (ROADMAP §3). Milestone 4 ends with this part (Q1).
 - **Source**: the draft plan `.agents/epic10_part3_plan.md`. It was first written 2026-10-29 as "the descent", re-scoped by the producer on 2026-11-07 and answered in part the same day. Its design (§1–§4) moved here with the go.
@@ -210,11 +210,12 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 
 ## 4. Acceptance checklist (delivered work only)
 
-### K0. Groundwork (under way, `feat/epic10-part3`)
+### K0. Groundwork (done 2026-11-08, `feat/epic10-part3`; the combat rule waits for the developer's review)
 - [x] **Docs:** this file, the roadmap (Part 3 ACTIVE), the focus file; the plan keeps the steps.
 - [x] **Measurements** (K0.2, the 23 gate seeds for three game days, with no player, the guild player and the crafting players): in the plan, with finding F1 below. 41 of 64 planner facts; about 20,000 ticks/s; frames of 2–4 ms; the soak 15/15; the bold carry 60–100g on most days; nobody is downed by a hazard.
 - [x] **The combat rule** (K0.3, D1–D8; the developer's review pending): `Combatant`, `CombatRules` and `SwingOutcome` in `Simulation/Combat/`; `SimRandomSalt.Combat`; `StatKind.Reach`, `AttackInterval` and `Range`. `CombatValidator` (9 tests). Nothing calls it yet, so the golden hashes don't move.
 - [x] **The creature catalogue** (K0.4, seam A6): `CreatureKind`, `CreatureDefinition` and `CreatureCatalog` in `Simulation/Creatures/`, with burrow rats, stone beetles and cave spinners as placeholder rows; `Combatant.ForCreature`. `CreatureCatalogValidator` (5 tests) holds the kinds to Q5's shape through the combat rule's expectations. Nothing spawns yet.
+- [x] **The gate:** Core 186/186 and client 485/485, though one allocation test failed once with the core's tests running alongside (F2); golden 3/3, unchanged; the 23 gate seeds and the soak hold; seeds 1–120 120/120 with and without the guild; the pinned image 485/485 exact; the MonoGame and Android compiles with 0 warnings. K0 has nothing a player does yet, so it has no live scenario of its own.
 
 ## 5. Deferred and out of scope
 
