@@ -256,9 +256,9 @@ namespace Simpiens.Core.Session
             for (int p = 0; p < map.Pois.Count; p++)
             {
                 var poi = map.Pois[p];
-                if (poi.Kind == PoiKind.Bunk)
+                if (poi.Kind == PoiKind.Bunk || poi.Kind == PoiKind.GuildBunk)
                 {
-                    _world.RegisterEntity(poi.Key, SpawnBunk(poi.Position));
+                    _world.RegisterEntity(poi.Key, SpawnBunk(poi.Position, poi.Kind == PoiKind.GuildBunk));
                     continue;
                 }
                 if (poi.Kind != PoiKind.Hearth) continue;
@@ -509,14 +509,18 @@ namespace Simpiens.Core.Session
             return anchorId;
         }
 
-        /// <summary>A bunk: walkable, one sleeper at a time (Epic MAP Phase 3 rest anchor).</summary>
-        private EntityId SpawnBunk(Vec2 pos)
+        /// <summary>
+        /// A bunk: walkable, one sleeper at a time (Epic MAP Phase 3 rest anchor). One in the guild's barracks is kept for a
+        /// member (Epic 10 Part 2, W5.2, D62): another kind of entity, so nobody else remembers it as a bunk.
+        /// </summary>
+        private EntityId SpawnBunk(Vec2 pos, bool barracks = false)
         {
             var bunkId = NextEntityId();
-            var entity = new WorldEntity(bunkId, EntityType.Bunk, pos, BunkRadius, name: $"Bunk_{pos.X}_{pos.Y}");
+            var entity = new WorldEntity(bunkId, barracks ? EntityType.GuildBunk : EntityType.Bunk, pos, BunkRadius, name: $"Bunk_{pos.X}_{pos.Y}");
             PropSpawned?.Invoke(entity);
             _registry?.Register(entity);
-            _simulationManager?.RegisterBunk(bunkId, pos);
+            if (barracks) _simulationManager?.RegisterBarracksBunk(bunkId, pos);
+            else _simulationManager?.RegisterBunk(bunkId, pos);
             return bunkId;
         }
 

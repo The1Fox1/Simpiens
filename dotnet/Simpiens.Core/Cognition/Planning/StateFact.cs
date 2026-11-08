@@ -45,6 +45,7 @@ namespace Simpiens.Cognition.Planning
         KnowsBunkLocation = 36,
         AtBunk = 37,
         HasLeftOutpost = 38, // a drifter's last goal (Epic 10 G1); never true in a built state: leaving ends the crawler
-        AtExpeditionWork = 39 // a party member under orders, at work with a node to work (Epic 10 G5)
+        AtDirectiveWork = 39, // a member whose directive gives it work at a site: a party at its node (Epic 10 G5), an artisan on shift (Epic 10 Part 2, W1.3)
+        HasMedicine = 40 // carries medicine: a herb, or a draught bought to carry into danger (Epic 10 Part 2, W2.3)
     }
 }

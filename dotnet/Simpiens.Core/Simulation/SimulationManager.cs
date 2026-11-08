@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, System.IDisposable
+    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -98,6 +98,11 @@ namespace Simpiens.Simulation
         /// <summary>The player's guild (Epic 10 G4): its group, members' contracts and cooldowns.</summary>
         public Simpiens.Simulation.Guild.GuildService Guild { get; } = new Simpiens.Simulation.Guild.GuildService();
 
+        private readonly Simpiens.Simulation.Workshops.WorkshopService _workshops = new Simpiens.Simulation.Workshops.WorkshopService();
+
+        /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
+        public Simpiens.Simulation.Workshops.WorkshopService Workshops => _workshops.Follow(_sectors?.Map);
+
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {
             crawler = null;
@@ -107,6 +112,8 @@ namespace Simpiens.Simulation
         }
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        int Simpiens.Simulation.Workshops.IWorkshopHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        bool Simpiens.Simulation.Workshops.IWorkshopHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler) => ((Simpiens.Simulation.Guild.IGuildHost)this).TryGetCrawler(crawlerId, out crawler);
 
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetSector(byte sectorId, out SectorDefinition sector)
         {
@@ -137,7 +144,8 @@ namespace Simpiens.Simulation
             into.Sort((a, b) => a.CompareTo(b)); // the dictionary's order is not the simulation's
         }
 
-        TradeStallData ISupplyHost.PayGuildWages(TradeStallData stall, uint currentTick) => Guild.PayWages(this, stall, currentTick);
+        TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
+        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
@@ -335,12 +343,15 @@ namespace Simpiens.Simulation
                     Guild.Recruit(this, influence.Recruit.CrawlerId, influence.Recruit.Wage, currentTick);
                     break;
 
+                // A crawler holds one role at a time (Epic 10 Part 2, D6, D8): a member's or an artisan's terms
                 case InfluenceCommandType.Dismiss:
-                    Guild.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
+                    if (Workshops.IsArtisan(influence.Dismiss.CrawlerId)) Workshops.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
+                    else Guild.Dismiss(this, influence.Dismiss.CrawlerId, currentTick);
                     break;
 
                 case InfluenceCommandType.SetWage:
-                    Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
+                    if (Workshops.IsArtisan(influence.SetWage.CrawlerId)) Workshops.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
+                    else Guild.SetWage(this, influence.SetWage.CrawlerId, influence.SetWage.Wage, currentTick);
                     break;
 
                 // Expeditions (Epic 10 G5)
@@ -349,11 +360,33 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.RecallExpedition:
-                    Guild.Recall(this, currentTick);
+                    Guild.Recall(this, influence.RecallExpedition.PartySlot, currentTick);
+                    break;
+
+                // The guildhall's parties (Epic 10 Part 2, W5)
+                case InfluenceCommandType.FormParty:
+                    Guild.FormParty(this, influence.FormParty, currentTick);
                     break;
 
                 case InfluenceCommandType.GiveGear:
-                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick);
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against);
+                    break;
+
+                // The workshops (Epic 10 Part 2)
+                case InfluenceCommandType.BuildStation:
+                    Workshops.Build(this, influence.BuildStation.StationIndex, currentTick);
+                    break;
+
+                case InfluenceCommandType.HireArtisan:
+                    Workshops.Hire(this, influence.HireArtisan.CrawlerId, influence.HireArtisan.StationIndex, influence.HireArtisan.Wage, currentTick);
+                    break;
+
+                case InfluenceCommandType.OrderStation:
+                    Workshops.Order(this, influence.OrderStation.StationIndex, influence.OrderStation.Item, influence.OrderStation.Count, influence.OrderStation.Repair);
+                    break;
+
+                case InfluenceCommandType.SetShifts:
+                    Workshops.SetShifts(this, influence.SetShifts.CrawlerId, influence.SetShifts.Shifts);
                     break;
             }
         }
@@ -383,6 +416,7 @@ namespace Simpiens.Simulation
             _economy = economy ?? EconomyTuning.Default;
             _supplyService?.Configure(_economy.Supply);
             _spatialPartition?.SetEconomy(_economy);
+            _consequenceService?.SetPace(_economy.Day);
         }
 
         public void Tick()
@@ -494,6 +528,9 @@ namespace Simpiens.Simulation
 
             // The guild's expedition moves on from where the intents left its members (Epic 10 G5)
             Guild.TickExpedition(this, currentTick);
+
+            // The stations' crews: each one's order follows its artisan's shift (Epic 10 Part 2, W1.3)
+            Workshops.TickShifts(this, currentTick);
 
             // Evaluate Hearth Dynamics, Proximity Bonding & Succession every 50 ticks
             if (currentTick % 50 == 0)

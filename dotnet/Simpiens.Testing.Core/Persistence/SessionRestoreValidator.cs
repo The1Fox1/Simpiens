@@ -36,13 +36,14 @@ namespace Simpiens.Testing.Persistence
             ValidateLedgerRoundTrips();
             ValidateGroupsRoundTrip();
             ValidateGuildRoundTrips();
+            ValidateWorkshopsRoundTrip();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
             ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -144,39 +145,114 @@ namespace Simpiens.Testing.Persistence
         }
 
         // Epic 10 G4.6: the guild's group, its members' contracts in join order and the cooldowns come back exactly
+        private void ValidateWorkshopsRoundTrip()
+        {
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            var save = new WorkshopSave
+            {
+                Stations = new[]
+                {
+                    // A forge mid-make (Epic 10 Part 2, W0.5): its order, its progress, its inputs taken, its crew
+                    new Simpiens.Simulation.Workshops.StationState
+                    {
+                        Kind = Simpiens.Simulation.Items.StationKind.Forge, Built = true, Order = ItemType.ToolPickaxe, Remaining = 3,
+                        Progress = 240, InputsTaken = true, CrewGroupId = 5, Made = 7
+                    },
+                    // A still holding a make the stall had no room for
+                    new Simpiens.Simulation.Workshops.StationState
+                    {
+                        Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, HeldGrade = 1, Made = 2
+                    }
+                },
+                // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
+                // be hired again yet
+                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234, practice: 14) },
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
+            };
+            var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
+            workshops.RestoreFrom(save);
+            var again = new WorkshopSave();
+            workshops.CaptureTo(again);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The stations restored from their save");
+            Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1 && workshops[1].HeldGrade == 1,
+                "A make in progress and a held make, with its grade (Epic 10 Part 2, W4), come back.");
+            Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
+                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234 && contract.Practice == 14
+                && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract, its shifts and its break, and the cooldown come back.");
+
+            workshops.RestoreFrom(null);
+            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built && workshops.Artisans.Count == 0, "A save without the block loads every station unbuilt, nobody hired.");
+            var swapped = new WorkshopSave { Stations = new[] { save.Stations[1], save.Stations[0] } };
+            workshops.RestoreFrom(swapped);
+            Assert(!workshops[0].Built && !workshops[1].Built, "A saved station whose kind isn't the map's is left unbuilt.");
+
+            // A station's crew (W0.6): a patron-led Workshop group, anchored at its station, whose artisan also lives in a
+            // settlement; its memberships come back in precedence order
+            var groups = new GroupRegistry();
+            var artisan = new EntityId(5u, 0u, 0u, 2u);
+            byte home = groups.CreateGroup(GroupType.Settlement, A, Vec2.Zero, 80);
+            byte crew = groups.CreateGroup(GroupType.Workshop, Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Vec2(-5f, -21f), 90);
+            groups.AddMember(home, artisan);
+            groups.AddMember(crew, artisan, RoleRank.Follower, 75);
+            var groupSave = new GroupSave();
+            groups.CaptureTo(groupSave);
+            var restored = new GroupRegistry();
+            restored.RestoreFrom(SaveSerializer.Deserialize<GroupSave>(SaveSerializer.Serialize(groupSave)));
+            Assert(restored.TryGetGroup(crew, out var crewGroup) && crewGroup.Type == GroupType.Workshop && crewGroup.IsPatronLed && crewGroup.AnchorPosition == new Vec2(-5f, -21f),
+                "The crew comes back: a Workshop group, led by the patron, anchored at its station.");
+            var memberships = restored.GetMemberships(artisan);
+            Assert(memberships.Count == 2 && memberships.KindAt(0) == GroupType.Workshop && memberships.KindAt(1) == GroupType.Settlement
+                && restored.TryGetMembership(artisan, crew, out var inCrew) && inCrew.Allegiance == 75, "The artisan's memberships come back, the workshop's before the settlement's (D6).");
+
+            TestLog.Log("[PASS] The stations round-trip: a make in progress, a held make, an artisan's contract, a cooldown, a crew (Epic 10 Part 2, W0.5, W0.6, W1.2).");
+        }
+
         private void ValidateGuildRoundTrips()
         {
             var guild = new Simpiens.Simulation.Guild.GuildService();
             var save = new GuildSave
             {
                 GroupId = 3,
-                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) },
+                Members = new[] { new Simpiens.Simulation.Guild.GuildContract(C, 7, 40u, 1, bunk: 3), new Simpiens.Simulation.Guild.GuildContract(A, 5, 20u) }, // C keeps the third bunk in the barracks (Epic 10 Part 2, W5.2)
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 900u }, new IdTickRecord { Id = B, Tick = 3100u } },
-                // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part
-                Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
+                // An expedition at work (Epic 10 G5): its order, its stage and when it began, each member's node and part; held by
+                // the guild's second party, its slot kept (Epic 10 Part 2, W5, D60)
+                Parties = new[]
                 {
-                    DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
-                    Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work
-                },
-                Party = new[]
-                {
-                    new Simpiens.Simulation.Guild.ExpeditionMember(C, 2) { NodeId = B },
-                    new Simpiens.Simulation.Guild.ExpeditionMember(A, 0) { NodeId = B, Status = Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed }
+                    new GuildPartySave
+                    {
+                        Slot = 2,
+                        GroupId = 4,
+                        Expedition = new Simpiens.Simulation.Guild.ExpeditionRecord
+                        {
+                            DispatchTick = 100u, StageTick = 160u, PartyGroupId = 4, TargetSectorId = 11, HaulItem = (ItemType)7, Goal = 4,
+                            Rule = Simpiens.Simulation.Guild.RetreatRule.Bold, Stage = Simpiens.Simulation.Guild.ExpeditionStage.Work,
+                            Draughts = 2 // each member's draughts (Epic 10 Part 2, W2)
+                        },
+                        Members = new[]
+                        {
+                            new Simpiens.Simulation.Guild.ExpeditionMember(C, 2) { NodeId = B },
+                            new Simpiens.Simulation.Guild.ExpeditionMember(A, 0) { NodeId = B, Status = Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed }
+                        }
+                    }
                 }
             };
             guild.RestoreFrom(save);
             var again = new GuildSave();
             guild.CaptureTo(again);
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The guild restored from its save");
-            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1, "Members come back in join order, with their wages and unpaid visits.");
+            Assert(guild.GroupId == 3 && guild.Members[0].CrawlerId == C && guild.Members[1].Wage == 5 && guild.Members[0].UnpaidVisits == 1 && guild.Members[0].Bunk == 3 && !guild.Members[1].HasBunk, "Members come back in join order, with their wages, unpaid visits and bunks.");
             Assert(guild.CooldownUntil(B) == 3100u && guild.CooldownUntil(C) == 0u, "Cooldowns come back.");
-            Assert(guild.HasExpedition && guild.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && guild.Expedition.StageTick == 160u
-                && guild.Party.Count == 2 && guild.Party[0].CarriedAtDispatch == 2 && guild.Party[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
+            var party = guild.Parties[1];
+            Assert(guild.HasExpedition && !guild.Parties[0].IsOut && party.GroupId == 4 && guild.PartyOf(C) == party && guild.PartyByGroup(4) == party,
+                "The party comes back in its slot, with its group (Epic 10 Part 2, W5).");
+            Assert(party.Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Work && party.Expedition.StageTick == 160u && party.Expedition.Draughts == 2
+                && party.Members.Count == 2 && party.Members[0].CarriedAtDispatch == 2 && party.Members[1].Status == Simpiens.Simulation.Guild.ExpeditionMemberStatus.Downed,
                 "The expedition comes back mid-stage, its party in the order sent (Epic 10 G5).");
             guild.RestoreFrom(null);
-            Assert(guild.GroupId == 0 && guild.Members.Count == 0 && !guild.HasExpedition && guild.Party.Count == 0, "A save made before the guild existed loads with none.");
+            Assert(guild.GroupId == 0 && guild.Members.Count == 0 && !guild.HasExpedition && guild.Parties[1].Members.Count == 0 && guild.Parties[1].GroupId == 0, "A save made before the guild existed loads with none.");
 
-            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, an expedition mid-stage (Epic 10 G4.6, G5.3).");
+            TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, a party in its slot with its expedition mid-stage (Epic 10 G4.6, G5.3; W5).");
         }
 
         private void ValidateChronicleRoundTrips()

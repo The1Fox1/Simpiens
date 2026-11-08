@@ -39,8 +39,9 @@ namespace Simpiens.Testing.World
             ValidateReportPublishesTheChart();
             ValidateUnchartedGatherBountiesCannotBeClaimed();
             ValidateExplorationAvoidsUnchartedSectors();
+            ValidateNoBountyTargetsAFacility();
 
-            TestLog.Log("<color=green>[SectorChartingValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SectorChartingValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateExploredMask()
@@ -153,6 +154,21 @@ namespace Simpiens.Testing.World
             quitter.UpdateMemory(snapshot, new GridPoint(-16, 12), 6, 51);
             Assert(quitter.SurveyNoteCount == 1 && !quitter.SpatialMemoryMap.ContainsKey(seam), "Without a report the survey stays private notes.");
             TestLog.Log("[PASS] Test 5: A successful report publishes the chart to every agent; an abandoned survey charts nothing.");
+        }
+
+        /// <summary>The player's facilities (Epic 10 Part 2, D7) hold nothing to gather or chart: no bounty targets one.</summary>
+        private void ValidateNoBountyTargetsAFacility()
+        {
+            var sectors = new SectorRegistry();
+            sectors.Load(Floor1Layout.Definition);
+            foreach (var type in new[] { BountyType.GatherResource, BountyType.ScoutSector })
+            {
+                Assert(BountyRules.CheckTarget(type, Floor1Layout.WorkshopRowSectorId, sectors) == BountyRules.TargetCheck.Facility, $"A {type} bounty on the workshop row is refused.");
+                Assert(BountyRules.CheckTarget(type, Floor1Layout.GuildhallSectorId, sectors) == BountyRules.TargetCheck.Facility, $"A {type} bounty on the guildhall is refused.");
+            }
+            Assert(BountyRules.CheckTarget(BountyType.GatherResource, Floor1Layout.OreQuarrySectorId, sectors) == BountyRules.TargetCheck.Ok, "A Gather bounty on the quarry stands.");
+            Assert(BountyRules.Describe(BountyRules.TargetCheck.Facility, Floor1Layout.GuildhallSectorId, sectors).StartsWith("Guildhall is the outpost's own"), "The refusal names the facility.");
+            TestLog.Log("[PASS] Test 8: No bounty targets the player's facilities.");
         }
 
         private void ValidateUnchartedGatherBountiesCannotBeClaimed()

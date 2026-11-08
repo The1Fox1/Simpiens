@@ -18,7 +18,7 @@ namespace Simpiens.Client.Tests
     /// </summary>
     public class LiveItemsInTheWorldTests
     {
-        private const int Day = 9000; // the outpost's day (Epic MAP's DoD); G3's gear is bought within it
+        private const int Day = Simpiens.Simulation.DayClock.TicksPerDay; // the outpost's day (Epic MAP's DoD); G3's gear is bought within it
 
         [Fact]
         public void TheStallsGoodsWornGearAndCarriedSalvageShowInTheLiveOutpost()

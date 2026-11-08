@@ -73,7 +73,7 @@ namespace Simpiens.Presentation.Dashboard
         public string Bounties { get; private set; } = "0 active bounties";
 
         /// <summary>The guild button's words: "Guild 2/4" (Epic 10 G4, D6).</summary>
-        public string Guild { get; private set; } = "Guild 0/4";
+        public string Guild { get; private set; } = "Guild 0/8";
         public string Tick { get; private set; } = "TICK: 00000";
 
         /// <summary>The time of day (Epic UI-Beta B5): "Day 1 · 06:30". The header shows it, or the tick in development builds.</summary>

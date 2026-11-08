@@ -22,8 +22,15 @@ namespace Simpiens.Client.Ui
             Header = new HeaderBar(icons) { Motion = motion };
             Panels = new DashboardPanels(model, icons, portraits);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
-            Tracker = new ExpeditionTracker(model.Context.Simulation?.Economy?.Guild.MaxMembers ?? Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers);
-            ui.Root.Children.Add(Tracker.Root);
+            // A tracker per party (Epic 10 Part 2, W5.3b), the second under the first
+            var trackers = ExpeditionTracker.Column();
+            for (byte slot = 1; slot <= Simpiens.Simulation.Guild.GuildService.PartySlots; slot++)
+            {
+                var tracker = new ExpeditionTracker(slot, Simpiens.Intervention.DispatchExpeditionCommand.MaxMembers);
+                trackers.Children.Add(tracker.Root);
+                _trackers.Add(tracker);
+            }
+            ui.Root.Children.Add(trackers);
             Inspector = new InspectorCard(model, portraits); // Epic UI-Beta B4: on the map, under the windows
             ui.Root.Children.Add(Inspector.Root);
             Panels.FindOnMap = FindOnMap;
@@ -37,9 +44,14 @@ namespace Simpiens.Client.Ui
             Guild.FindOnMap = FindOnMap;
             Guild.Window.CloseButton.Click += (_, _) => { Model.Guild.Close(); Refresh(); };
             ui.Root.Children.Add(Guild.Window.Veil);
+            Stations = new StationWindow(model.Stations, icons, model.Context.Simulation?.Workshops?.Count ?? 0, MostRecipes(), portraits);
+            Stations.FindOnMap = FindOnMap;
+            Stations.Window.CloseButton.Click += (_, _) => { Model.Stations.Close(); Refresh(); };
+            ui.Root.Children.Add(Stations.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
             Header.GuildButton.Click += (_, _) => { Model.ToggleGuild(); Refresh(); };
+            Header.WorkshopButton.Click += (_, _) => { Model.ToggleStations(); Refresh(); };
             Header.TabButton.Click += (_, _) => TogglePanels();
             Header.MenuButton.Click += (_, _) => Header.ToggleMenu();
             Header.SaveButton.Click += (_, _) => { Header.CloseMenu(); Model.Saves.Save(); Refresh(); };
@@ -58,6 +70,7 @@ namespace Simpiens.Client.Ui
             Merchant.Window.Motion = motion;
             Bounties.Window.Motion = motion;
             Guild.Window.Motion = motion;
+            Stations.Window.Motion = motion;
             Sessions = new SessionSwitchBar(model.Sessions);
             ui.Root.Children.Add(Sessions.Root);
             ui.Root.Children.Add(Header.Menu); // over everything but the tips: the session switch sits where it drops
@@ -71,8 +84,25 @@ namespace Simpiens.Client.Ui
         public BountyBoardWindow Bounties { get; }
         public GuildWindow Guild { get; }
 
-        /// <summary>The expedition tracker on the map view while a party is out (Epic 10 G5).</summary>
-        public ExpeditionTracker Tracker { get; }
+        /// <summary>The station window (Epic 10 Part 2, W1.6a).</summary>
+        public StationWindow Stations { get; }
+
+        /// <summary>The most recipes any station has: the window's rows, built once.</summary>
+        private static int MostRecipes()
+        {
+            int most = 0;
+            foreach (Simpiens.Simulation.Items.StationKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.Items.StationKind)))
+                most = System.Math.Max(most, Simpiens.Simulation.Items.RecipeBook.At(kind).Count);
+            return most;
+        }
+
+        private readonly System.Collections.Generic.List<ExpeditionTracker> _trackers = new System.Collections.Generic.List<ExpeditionTracker>(2);
+
+        /// <summary>The expedition trackers on the map view, one per party, each shown while its party is out (Epic 10 G5; W5.3b).</summary>
+        public System.Collections.Generic.IReadOnlyList<ExpeditionTracker> Trackers => _trackers;
+
+        /// <summary>Party 1's tracker.</summary>
+        public ExpeditionTracker Tracker => _trackers[0];
 
         /// <summary>The map inspector (Epic UI-Beta B4): the selected crawler's card on the map.</summary>
         public InspectorCard Inspector { get; }
@@ -92,7 +122,8 @@ namespace Simpiens.Client.Ui
             Merchant.Window.IsShown = false;
             Bounties.Window.IsShown = false;
             Guild.Window.IsShown = false;
-            Tracker.Root.Visible = false;
+            Stations.Window.IsShown = false;
+            for (int i = 0; i < _trackers.Count; i++) _trackers[i].Root.Visible = false;
             Inspector.Root.Visible = false;
             Sessions.Root.Visible = false;
         }
@@ -137,6 +168,7 @@ namespace Simpiens.Client.Ui
                 Merchant.Window.Animate(realSeconds);
                 Bounties.Window.Animate(realSeconds);
                 Guild.Window.Animate(realSeconds);
+                Stations.Window.Animate(realSeconds);
             }
             if (realSeconds > 0f) _sinceRefresh += realSeconds;
             bool newSession = Model.SessionVersion != _sessionVersion; // a switch or a load shows at once, not at the next refresh
@@ -158,7 +190,8 @@ namespace Simpiens.Client.Ui
             _bountiesWereOpen = Model.Bounties.IsOpen;
             Bounties.Bind();
             Guild.Bind();
-            Tracker.Bind(Model.Guild.Expedition, mapView: !Model.PanelsVisible);
+            Stations.Bind();
+            for (int i = 0; i < _trackers.Count; i++) _trackers[i].Bind(Model.Guild.Expedition.Trackers[i], mapView: !Model.PanelsVisible);
             Inspector.Bind();
             Sessions?.Bind();
         }

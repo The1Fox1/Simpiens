@@ -18,7 +18,15 @@ namespace Simpiens.Intervention
         /// <summary>Expeditions (Epic 10 G5): send a party, call it home, give a member gear from the stall's stock.</summary>
         DispatchExpedition = 8,
         RecallExpedition = 9,
-        GiveGear = 10
+        GiveGear = 10,
+        /// <summary>The workshops (Epic 10 Part 2): build a station, hire an artisan to work one (Dismiss and SetWage serve artisans too).</summary>
+        BuildStation = 11,
+        HireArtisan = 12,
+        /// <summary>Shifts (Epic 10 Part 2, W1.3): order makes at a station, set which blocks of the day an artisan works.</summary>
+        OrderStation = 13,
+        SetShifts = 14,
+        /// <summary>The guildhall (Epic 10 Part 2, W5, D65): set one of the guild's parties' members.</summary>
+        FormParty = 15
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -59,25 +67,61 @@ namespace Simpiens.Intervention
     }
 
     /// <summary>
-    /// The player sends a party of guild members out (Epic 10 G5, D7): one to <see cref="MaxMembers"/> members, the
-    /// sector, how many of what its nodes yield to bring back, and when to turn back. Zero-allocation: four fields.
+    /// The player sends one of the guild's parties out (Epic 10 G5, D7; the party by its slot since Epic 10 Part 2, W5,
+    /// D65): the sector, how many of what its nodes yield to bring back, when to turn back, and how many draughts each
+    /// member carries from the stall's stock (W2, D44). Its members are the party's. Zero-allocation.
     /// </summary>
     public readonly struct DispatchExpeditionCommand
     {
+        /// <summary>A party's members at most.</summary>
         public const int MaxMembers = 4;
 
+        /// <summary>The most draughts a member is given to carry (D44).</summary>
+        public const byte MaxDraughts = 2;
+
+        public readonly byte PartySlot;
         public readonly byte TargetSectorId;
         public readonly byte Goal;
         public readonly RetreatRule Rule;
-        public readonly int Count;
-        private readonly EntityId _member0, _member1, _member2, _member3;
+        public readonly byte Draughts;
 
-        public DispatchExpeditionCommand(byte targetSectorId, byte goal, RetreatRule rule, ReadOnlySpan<EntityId> members)
+        public DispatchExpeditionCommand(byte partySlot, byte targetSectorId, byte goal, RetreatRule rule, byte draughts = 0)
         {
-            if (members.Length > MaxMembers) throw new ArgumentException($"A party has at most {MaxMembers} members.", nameof(members));
+            if (draughts > MaxDraughts) throw new ArgumentException($"A member carries at most {MaxDraughts} draughts.", nameof(draughts));
+            PartySlot = partySlot;
             TargetSectorId = targetSectorId;
             Goal = goal;
             Rule = rule;
+            Draughts = draughts;
+        }
+    }
+
+    /// <summary>The player calls one of the guild's parties home (D7), by its slot.</summary>
+    public readonly struct RecallExpeditionCommand
+    {
+        public readonly byte PartySlot;
+
+        public RecallExpeditionCommand(byte partySlot)
+        {
+            PartySlot = partySlot;
+        }
+    }
+
+    /// <summary>
+    /// The player sets the members of one of the guild's parties (Epic 10 Part 2, W5, D65): up to
+    /// <see cref="DispatchExpeditionCommand.MaxMembers"/> guild members, in order; a member in another party moves over,
+    /// and none empties the party. The party outlives its expeditions. Zero-allocation.
+    /// </summary>
+    public readonly struct FormPartyCommand
+    {
+        public readonly byte PartySlot;
+        public readonly int Count;
+        private readonly EntityId _member0, _member1, _member2, _member3;
+
+        public FormPartyCommand(byte partySlot, ReadOnlySpan<EntityId> members)
+        {
+            if (members.Length > DispatchExpeditionCommand.MaxMembers) throw new ArgumentException($"A party has at most {DispatchExpeditionCommand.MaxMembers} members.", nameof(members));
+            PartySlot = partySlot;
             Count = members.Length;
             _member0 = Count > 0 ? members[0] : default;
             _member1 = Count > 1 ? members[1] : default;
@@ -95,9 +139,62 @@ namespace Simpiens.Intervention
         };
     }
 
-    /// <summary>The player calls the party home (D7). One expedition at a time, so it names none.</summary>
-    public readonly struct RecallExpeditionCommand
+    /// <summary>The player builds a station (Epic 10 Part 2, D10): the one at this index of the map's stations.</summary>
+    public readonly struct BuildStationCommand
     {
+        public readonly byte StationIndex;
+
+        public BuildStationCommand(byte stationIndex)
+        {
+            StationIndex = stationIndex;
+        }
+    }
+
+    /// <summary>The player hires a crawler to work a station at a wage per caravan visit (Epic 10 Part 2, D8, D9).</summary>
+    public readonly struct HireArtisanCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly ushort Wage;
+        public readonly byte StationIndex;
+
+        public HireArtisanCommand(EntityId crawlerId, byte stationIndex, ushort wage)
+        {
+            CrawlerId = crawlerId;
+            StationIndex = stationIndex;
+            Wage = wage;
+        }
+    }
+
+    /// <summary>The player orders makes at a station (Epic 10 Part 2, D32): this many of an item its recipe makes; none cancels.</summary>
+    public readonly struct OrderStationCommand
+    {
+        public readonly ItemType Item;
+        public readonly ushort Count;
+        public readonly byte StationIndex;
+
+        /// <summary>Mend worn pieces of the item instead of making new ones (Epic 10 Part 2, W4, D59).</summary>
+        public readonly bool Repair;
+
+        public OrderStationCommand(byte stationIndex, ItemType item, ushort count, bool repair = false)
+        {
+            StationIndex = stationIndex;
+            Item = item;
+            Count = count;
+            Repair = repair;
+        }
+    }
+
+    /// <summary>The player sets which of the day's six blocks an artisan works (Epic 10 Part 2, D12): a mask, block 0 from 06:00.</summary>
+    public readonly struct SetShiftsCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly byte Shifts;
+
+        public SetShiftsCommand(EntityId crawlerId, byte shifts)
+        {
+            CrawlerId = crawlerId;
+            Shifts = shifts;
+        }
     }
 
     /// <summary>The player gives a guild member gear from the stall's stock (D12): no gold changes hands.</summary>
@@ -106,10 +203,14 @@ namespace Simpiens.Intervention
         public readonly EntityId CrawlerId;
         public readonly ItemType Item;
 
-        public GiveGearCommand(EntityId crawlerId, ItemType item)
+        /// <summary>The hazard it is given for (Epic 10 Part 2, W3, D50): gear that cuts it more may replace what the member wears; None for none.</summary>
+        public readonly Simpiens.Simulation.World.HazardKind Against;
+
+        public GiveGearCommand(EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
         {
             CrawlerId = crawlerId;
             Item = item;
+            Against = against;
         }
     }
 
@@ -184,7 +285,8 @@ namespace Simpiens.Intervention
     /// </summary>
     public readonly struct UpdateStallPricesCommand
     {
-        public const int Capacity = 8;
+        /// <summary>As many prices as a stall trades goods.</summary>
+        public const int Capacity = Simpiens.Simulation.Economy.TradeStallData.GoodsCapacity;
 
         public readonly EntityId StallId;
         public readonly int Count;
@@ -248,7 +350,13 @@ namespace Simpiens.Intervention
         public readonly DismissCommand Dismiss;
         public readonly SetWageCommand SetWage;
         public readonly DispatchExpeditionCommand DispatchExpedition;
+        public readonly RecallExpeditionCommand RecallExpedition;
+        public readonly FormPartyCommand FormParty;
         public readonly GiveGearCommand GiveGear;
+        public readonly BuildStationCommand BuildStation;
+        public readonly HireArtisanCommand HireArtisan;
+        public readonly OrderStationCommand OrderStation;
+        public readonly SetShiftsCommand SetShifts;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -262,6 +370,11 @@ namespace Simpiens.Intervention
             InfluenceCommandType.DispatchExpedition => "DispatchExpedition",
             InfluenceCommandType.RecallExpedition => "RecallExpedition",
             InfluenceCommandType.GiveGear => "GiveGear",
+            InfluenceCommandType.BuildStation => "BuildStation",
+            InfluenceCommandType.HireArtisan => "HireArtisan",
+            InfluenceCommandType.OrderStation => "OrderStation",
+            InfluenceCommandType.SetShifts => "SetShifts",
+            InfluenceCommandType.FormParty => "FormParty",
             _ => string.Empty
         };
 
@@ -276,8 +389,20 @@ namespace Simpiens.Intervention
             in DismissCommand dismiss = default,
             in SetWageCommand setWage = default,
             in DispatchExpeditionCommand dispatchExpedition = default,
-            in GiveGearCommand giveGear = default)
+            in GiveGearCommand giveGear = default,
+            in BuildStationCommand buildStation = default,
+            in HireArtisanCommand hireArtisan = default,
+            in OrderStationCommand orderStation = default,
+            in SetShiftsCommand setShifts = default,
+            in RecallExpeditionCommand recallExpedition = default,
+            in FormPartyCommand formParty = default)
         {
+            RecallExpedition = recallExpedition;
+            FormParty = formParty;
+            BuildStation = buildStation;
+            HireArtisan = hireArtisan;
+            OrderStation = orderStation;
+            SetShifts = setShifts;
             DispatchExpedition = dispatchExpedition;
             GiveGear = giveGear;
             SourceId = sourceId;
@@ -311,14 +436,39 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.DispatchExpedition, dispatchExpedition: cmd);
         }
 
-        public static InfluenceEvent CreateRecallExpedition(string sourceId)
+        public static InfluenceEvent CreateRecallExpedition(string sourceId, byte partySlot)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition);
+            return new InfluenceEvent(sourceId, InfluenceCommandType.RecallExpedition, recallExpedition: new RecallExpeditionCommand(partySlot));
         }
 
-        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item)
+        public static InfluenceEvent CreateFormParty(string sourceId, in FormPartyCommand cmd)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item));
+            return new InfluenceEvent(sourceId, InfluenceCommandType.FormParty, formParty: cmd);
+        }
+
+        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item, against));
+        }
+
+        public static InfluenceEvent CreateBuildStation(string sourceId, byte stationIndex)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.BuildStation, buildStation: new BuildStationCommand(stationIndex));
+        }
+
+        public static InfluenceEvent CreateHireArtisan(string sourceId, EntityId crawlerId, byte stationIndex, ushort wage)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.HireArtisan, hireArtisan: new HireArtisanCommand(crawlerId, stationIndex, wage));
+        }
+
+        public static InfluenceEvent CreateOrderStation(string sourceId, byte stationIndex, ItemType item, ushort count, bool repair = false)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.OrderStation, orderStation: new OrderStationCommand(stationIndex, item, count, repair));
+        }
+
+        public static InfluenceEvent CreateSetShifts(string sourceId, EntityId crawlerId, byte shifts)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.SetShifts, setShifts: new SetShiftsCommand(crawlerId, shifts));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)

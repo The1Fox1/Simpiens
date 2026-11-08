@@ -18,7 +18,7 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class GuildScenarioTests
     {
-        private const long Day = 9000;
+        private const long Day = OutpostWatch.DayTicks;
 
         /// <summary>Playing fair prices only, a resident signs on within the day; the fee and every visit's wage are paid; it keeps its settlement and its trust; the day holds.</summary>
         [Fact]

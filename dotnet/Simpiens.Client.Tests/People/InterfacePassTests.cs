@@ -12,7 +12,7 @@ namespace Simpiens.Client.Tests.People
             var ui = UiDriver.Start(width: 1280, height: 720);
             var game = ui.Game;
             var model = game.Session.DashboardModel;
-            ui.Ticks(400);
+            ui.Ticks(2 * Simpiens.Simulation.DayClock.TicksPerHour); // the Hub's first trades (on the 24-hour day, from about t370)
             model.SelectSector(Simpiens.Core.Session.Layouts.Floor1Layout.HubSectorId);
             game.Play.Dashboard.Refresh();
             ui.Frame();

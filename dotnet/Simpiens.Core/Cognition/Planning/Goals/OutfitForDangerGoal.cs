@@ -5,10 +5,12 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
-    /// Goal (Epic 10 G3): before going into danger, buy hazard gear at the stall. DesiredState: HasHazardGear = true.
+    /// Goal (Epic 10 G3): before going into danger, buy protection at the stall. DesiredState: HasHazardGear = true.
     /// Reached through TravelToStall → BuyHazardGear. Only a crawler that would venture (Vitality.WouldVenture: bold and
-    /// healthy) and knows where glowstone is wants it, and only while it wears none, isn't hungry or worn out, and the
-    /// stall sells one at or below its own price with a ration's price to spare (ResourceTargeting.CanBuyGear).
+    /// healthy) wants it, and only while it wears none, isn't hungry or worn out, and the stall has a piece it can pay for
+    /// that lets it work hazardous salvage it knows, preferring one that opens salvage it can't reach as it is (a respirator
+    /// for the Gallery, Epic 10 Part 2, D51; ResourceTargeting.TryChooseProtection). Wearing some, it still wants a piece
+    /// that would open salvage it can't reach, trading the old one in (D53).
     /// </summary>
     public class OutfitForDangerGoal : GoapGoal
     {
@@ -23,10 +25,11 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override bool IsValid(AgentContext context)
         {
-            if (context.Inventory == null || context.Inventory.IsWearing(Simpiens.Simulation.Items.ItemCategory.Protection)) return false;
-            if (!Vitality.WouldVenture(context)) return false;
+            if (context.Inventory == null || !Vitality.WouldVenture(context)) return false;
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            return ResourceTargeting.KnowsHazardousSalvage(context) && ResourceTargeting.CanBuyGear(context);
+            // Wearing protection, it still wants a piece that would open salvage it can't reach as it is (D53)
+            if (context.Inventory.IsWearing(Simpiens.Simulation.Items.ItemCategory.Protection)) return ResourceTargeting.WouldUpgradeProtection(context);
+            return ResourceTargeting.TryChooseProtection(context, out _);
         }
     }
 }

@@ -24,7 +24,9 @@ namespace Simpiens.Simulation.World
         private readonly List<SectorDefinition> _sectors = new List<SectorDefinition>();
         private readonly List<ResourceNodeDefinition> _nodes = new List<ResourceNodeDefinition>();
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
+        private readonly List<StationDefinition> _stations = new List<StationDefinition>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
+        private Vec2[] _caravanRoute;
 
         public MapDefinitionBuilder(string name, RectF playableBounds)
         {
@@ -69,9 +71,9 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
-        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default)
+        public MapDefinitionBuilder Sector(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default, bool facility = false)
         {
-            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored, hazard));
+            _sectors.Add(new SectorDefinition(id, name, description, bounds, anchor, anchorRadius, startsExplored, hazard, facility));
             return this;
         }
 
@@ -87,9 +89,24 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
+        /// <summary>A place where the player may build a station (Epic 10 Part 2).</summary>
+        public MapDefinitionBuilder Station(string key, Simpiens.Simulation.Items.StationKind kind, Vec2 position, float radius)
+        {
+            _stations.Add(new StationDefinition(key, kind, position, radius));
+            return this;
+        }
+
         public MapDefinitionBuilder Label(string text, Vec2 position, Rgba color)
         {
             _labels.Add(new MapLabel(text, position, color));
+            return this;
+        }
+
+        /// <summary>The trade caravan's way in, from where the road meets the map to the stall (Epic 10 Part 2, D70).</summary>
+        public MapDefinitionBuilder CaravanRoute(params Vec2[] waypoints)
+        {
+            if (waypoints == null || waypoints.Length < 2) throw new InvalidOperationException($"Map '{_name}': a caravan route needs two waypoints at least.");
+            _caravanRoute = (Vec2[])waypoints.Clone();
             return this;
         }
 
@@ -120,6 +137,12 @@ namespace Simpiens.Simulation.World
                 RequireKey(keys, _pois[i].Key);
                 RequireInside(_pois[i].Position, _pois[i].Key);
             }
+            for (int i = 0; i < _stations.Count; i++)
+            {
+                RequireKey(keys, _stations[i].Key);
+                RequireInside(_stations[i].Position, _stations[i].Key);
+                if (_stations[i].Kind == Simpiens.Simulation.Items.StationKind.None) throw new InvalidOperationException($"Map '{_name}': station '{_stations[i].Key}' has no kind.");
+            }
 
             return new MapDefinition(
                 _name,
@@ -130,7 +153,9 @@ namespace Simpiens.Simulation.World
                 _fallback,
                 _nodes.ToArray(),
                 _pois.ToArray(),
-                _labels.ToArray());
+                _stations.ToArray(),
+                _labels.ToArray(),
+                _caravanRoute);
         }
 
         private void RequireKey(HashSet<string> keys, string key)

@@ -8,7 +8,7 @@ namespace Simpiens.Presentation.Dashboard
     /// to it; the player's actions leave as typed commands through <see cref="DashboardContext.Intervention"/>.
     /// <list type="bullet">
     /// <item><description>The header and an open window show over the map; the three panels show while <see cref="PanelsVisible"/>.</description></item>
-    /// <item><description>One window at a time: opening the merchant closes the bounty board, and the other way round.</description></item>
+    /// <item><description>One window at a time: opening one closes the others (<see cref="IDashboardWindow"/>).</description></item>
     /// <item><description>The selection follows the map's <see cref="WorldSelection"/> both ways, as Unity's did.</description></item>
     /// </list>
     /// </summary>
@@ -17,6 +17,7 @@ namespace Simpiens.Presentation.Dashboard
         private readonly DashboardContext _context;
         private readonly WorldSelection _selection;
         private EntityId _selectedCrawler;
+        private readonly IDashboardWindow[] _windows;
 
         public DashboardModel(DashboardContext context, WorldSelection selection = null)
         {
@@ -26,6 +27,8 @@ namespace Simpiens.Presentation.Dashboard
             Merchant = new MerchantModel(_context);
             Bounties = new BountyBoardModel(_context);
             Guild = new GuildModel(_context, Moods);
+            Stations = new StationModel(_context, Moods);
+            _windows = new IDashboardWindow[] { Merchant, Bounties, Guild, Stations };
             Sectors = new SectorPanelModel(_context, Moods);
             Dossier = new DossierModel(_context, Guild, Moods);
             Inspector = new InspectorModel(_context, Moods);
@@ -47,9 +50,7 @@ namespace Simpiens.Presentation.Dashboard
         public void FindOnMap(EntityId crawlerId)
         {
             if (crawlerId == default || _context.Registry?.GetEntity(crawlerId)?.Agent == null) return;
-            Merchant.Close();
-            Bounties.Close();
-            Guild.Close();
+            CloseAllBut(null);
             PanelsVisible = false;
             _selectedCrawler = crawlerId;
             _selection?.SelectCrawler(crawlerId, follow: true);
@@ -81,6 +82,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The guild's roster window and what the dossier says about recruiting (Epic 10 G4).</summary>
         public GuildModel Guild { get; }
+
+        /// <summary>The station window (Epic 10 Part 2, W1.6a): building, the artisan, its shifts and the order.</summary>
+        public StationModel Stations { get; }
         public SectorPanelModel Sectors { get; }
         public DossierModel Dossier { get; }
         public SaveSlotModel Saves { get; }
@@ -103,23 +107,33 @@ namespace Simpiens.Presentation.Dashboard
 
         public void OpenMerchant()
         {
-            Bounties.Close();
-            Guild.Close();
+            CloseAllBut(Merchant);
             Merchant.Open();
         }
 
         public void OpenBounties()
         {
-            Merchant.Close();
-            Guild.Close();
+            CloseAllBut(Bounties);
             Bounties.Open();
         }
 
         public void OpenGuild()
         {
-            Merchant.Close();
-            Bounties.Close();
+            CloseAllBut(Guild);
             Guild.Open();
+        }
+
+        /// <summary>The station window on the station at <paramref name="index"/> (a click on it on the map), or the one shown last.</summary>
+        public void OpenStation(int index = -1)
+        {
+            CloseAllBut(Stations);
+            Stations.Open(index);
+        }
+
+        public void ToggleStations()
+        {
+            if (Stations.IsOpen) Stations.Close();
+            else OpenStation();
         }
 
         public void ToggleGuild()
@@ -143,11 +157,16 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Closes the open window, if any (Esc); false when none was open.</summary>
         public bool CloseWindow()
         {
-            if (!Merchant.IsOpen && !Bounties.IsOpen && !Guild.IsOpen) return false;
-            Merchant.Close();
-            Bounties.Close();
-            Guild.Close();
-            return true;
+            bool open = false;
+            for (int i = 0; i < _windows.Length; i++) open |= _windows[i].IsOpen;
+            CloseAllBut(null);
+            return open;
+        }
+
+        /// <summary>One window at a time: closes every window but <paramref name="keep"/> (none for null).</summary>
+        private void CloseAllBut(IDashboardWindow keep)
+        {
+            for (int i = 0; i < _windows.Length; i++) if (!ReferenceEquals(_windows[i], keep)) _windows[i].Close();
         }
 
         /// <summary>A sector picked in the list: shown here, and selected on the map.</summary>
@@ -173,6 +192,7 @@ namespace Simpiens.Presentation.Dashboard
             Merchant.Refresh();
             Bounties.Refresh();
             Guild.Refresh();
+            Stations.Refresh();
             Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following);
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);
@@ -183,9 +203,7 @@ namespace Simpiens.Presentation.Dashboard
         public void SessionChanged()
         {
             _selectedCrawler = default;
-            Merchant.Close();
-            Bounties.Close();
-            Guild.Close();
+            CloseAllBut(null);
             Bounties.Reset();
             Sectors.SelectedSectorId = -1;
             Sectors.EnsureSelection();

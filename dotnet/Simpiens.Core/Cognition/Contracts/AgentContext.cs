@@ -54,6 +54,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Its part in the guild's expedition, if any (Epic 10 G5).</summary>
         public readonly ExpeditionOrder Expedition;
 
+        /// <summary>Its part in its station's work, if it is an artisan on shift (Epic 10 Part 2, W1.3).</summary>
+        public readonly StationOrder Station;
+
+        /// <summary>The bunk the guild keeps for it in the barracks, if it is a member (Epic 10 Part 2, W5.2).</summary>
+        public readonly KeptBunk Bunk;
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership directiveMembership = default, in IdentityTag identity = default,
@@ -63,9 +69,13 @@ namespace Simpiens.Cognition.Contracts
                             uint departsAtTick = 0,
                             float health = Vitality.MaxHealth,
                             bool isDowned = false,
-                            in ExpeditionOrder expedition = default)
+                            in ExpeditionOrder expedition = default,
+                            in StationOrder station = default,
+                            in KeptBunk bunk = default)
         {
             Expedition = expedition;
+            Station = station;
+            Bunk = bunk;
             DepartsAtTick = departsAtTick;
             Health = health;
             IsDowned = isDowned;

@@ -29,8 +29,25 @@ namespace Simpiens.Testing.Environment
             ValidatePeriodicHearthExactness();
             ValidateVisualInterpolationAlpha();
             ValidateZeroAllocationOnTickLoop();
+            ValidateTheDay();
 
-            TestLog.Log("<color=green>[SimulationClockValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SimulationClockValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+        }
+
+        // The day's clock (Epic 10 Part 2, T1, D17): whole ticks for a minute and an hour, 06:00 at tick 0, midnight turns the day
+        private void ValidateTheDay()
+        {
+            Assert(DayClock.TicksPerDay == 10080 && DayClock.TicksPerHour == 420 && DayClock.TicksPerMinute == 7, "A day is 10,080 ticks: an hour 420, a minute 7");
+            Assert(SimMath.Approximately(DayClock.SecondsPerHour, 42f), $"A game hour is 42 s at 1x (actual: {DayClock.SecondsPerHour})");
+            Assert(DayClock.Hours(4) == 1680 && DayClock.Minutes(30) == 210, "Hours and minutes turn into whole ticks");
+            Assert(SimMath.Approximately(DayClock.PerSecond(42f), 1f), "42 an hour is 1 a second");
+            Assert(DayClock.Day(0) == 1 && DayClock.MinuteOfDay(0) == 6 * 60 && DayClock.HourOfDay(0) == 6, "Tick 0 is 06:00 on day 1");
+            long midnight = 18L * DayClock.TicksPerHour;
+            Assert(DayClock.Day(midnight - 1) == 1 && DayClock.Day(midnight) == 2 && DayClock.MinuteOfDay(midnight) == 0, "Midnight starts day 2");
+            Assert(DayClock.Day(DayClock.TicksPerDay) == 2 && DayClock.MinuteOfDay(DayClock.TicksPerDay) == 6 * 60, "A day after tick 0 is 06:00 on day 2");
+            Assert(!DayClock.IsNight(0) && DayClock.IsNight(12L * DayClock.TicksPerHour) && !DayClock.IsNight(12L * DayClock.TicksPerHour - 1), "Night runs from 18:00 to 06:00");
+            Assert(DayClock.Day(-5) == 1 && DayClock.MinuteOfDay(-5) == 6 * 60, "A tick before the start reads as the start");
+            TestLog.Log("[SimulationClockValidator] PASS: the day's clock");
         }
 
         private void ValidateFixedTickRateAndSpeedScaling()

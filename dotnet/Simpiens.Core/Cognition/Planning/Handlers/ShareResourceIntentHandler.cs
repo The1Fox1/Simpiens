@@ -47,7 +47,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
 
                 state.ElapsedTime += context.FixedTickDeltaTime;
-                if (state.ElapsedTime < share.TransferDuration)
+                float transferDuration = share.TransferDuration >= 0f ? share.TransferDuration : context.Economy.Day.Actions.ShareSeconds;
+                if (state.ElapsedTime < transferDuration)
                 {
                     return IntentResult.InProgress;
                 }

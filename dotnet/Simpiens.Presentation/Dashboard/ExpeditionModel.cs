@@ -22,18 +22,50 @@ namespace Simpiens.Presentation.Dashboard
     }
 
     /// <summary>
-    /// Expeditions on screen (Epic 10 G5, D7): the party builder in the roster window (the members to send, the target
-    /// among the charted hazard sectors, the goal, the retreat rule, outfitting from the stall's stock; Dispatch and
-    /// Recall) and the tracker while a party is out (the stage, the time out, the haul, each member's health, gear and
-    /// part). The rules are the guild's (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied
-    /// on the next tick. Views decide nothing.
+    /// One party's tracker (Epic 10 G5; one per party since Epic 10 Part 2, W5.3b): where it went and under which rule, its
+    /// stage and time out, the haul so far, and each member's health, gear and part. Out only while the party is.
+    /// </summary>
+    public sealed class PartyTrackerModel
+    {
+        internal readonly List<ExpeditionMemberRow> Rows = new List<ExpeditionMemberRow>(DispatchExpeditionCommand.MaxMembers);
+
+        internal PartyTrackerModel(byte slot)
+        {
+            Slot = slot;
+        }
+
+        public byte Slot { get; }
+        public bool IsOut { get; internal set; }
+
+        /// <summary>"The Drowned Gallery · Steady".</summary>
+        public string Title { get; internal set; } = string.Empty;
+
+        /// <summary>"Mustering at the stall", "Marching to The Drowned Gallery", "Working The Drowned Gallery", "Coming home", "Turning back".</summary>
+        public string StageText { get; internal set; } = string.Empty;
+
+        /// <summary>"1:45 out".</summary>
+        public string TimeOut { get; internal set; } = string.Empty;
+
+        /// <summary>"Haul 2 of 4".</summary>
+        public string HaulText { get; internal set; } = string.Empty;
+
+        public IReadOnlyList<ExpeditionMemberRow> Members => Rows;
+    }
+
+    /// <summary>
+    /// Expeditions on screen (Epic 10 G5, D7): the party builder in the roster window (which of the guild's parties, the
+    /// target among the charted hazard sectors, the goal, the retreat rule, outfitting from the stall's stock; Dispatch
+    /// and Recall) and a tracker for each party out (Epic 10 Part 2, W5.3b). A party's members are chosen on the roster's
+    /// cards (W5, D65). The rules are the guild's
+    /// (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied on the next tick. Views decide
+    /// nothing.
     /// </summary>
     public sealed class ExpeditionModel
     {
         private readonly DashboardContext _context;
         private readonly GuildModel _guild;
         private readonly List<(byte Id, string Name)> _targets = new List<(byte, string)>(4);
-        private readonly List<ExpeditionMemberRow> _members = new List<ExpeditionMemberRow>(DispatchExpeditionCommand.MaxMembers);
+        private readonly PartyTrackerModel[] _trackers = { new PartyTrackerModel(1), new PartyTrackerModel(2) };
         private readonly List<EntityId> _party = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         private int _target;
 
@@ -45,6 +77,19 @@ namespace Simpiens.Presentation.Dashboard
 
         // --- The builder ---
 
+        /// <summary>The party it sends (Epic 10 Part 2, W5): 1 or 2.</summary>
+        public byte PartySlot { get; private set; } = 1;
+
+        /// <summary>"Party 1 · 4": the party and how many it holds.</summary>
+        public string PartyText { get; private set; } = "Party 1";
+
+        /// <summary>The next party, and round again.</summary>
+        public void NextParty()
+        {
+            PartySlot = (byte)(PartySlot % GuildService.PartySlots + 1);
+            Refresh();
+        }
+
         /// <summary>Where a party can go: the charted hazard sectors, in map order. The builder starts on the most dangerous, where nobody goes alone (D11).</summary>
         public IReadOnlyList<(byte Id, string Name)> Targets => _targets;
         public string TargetName => _targets.Count > 0 ? _targets[_target].Name : "No charted danger";
@@ -54,10 +99,31 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Outfit from stock: members without protection, or with it worn to half its life, are given some from the stall as the party is sent (D12).</summary>
         public bool Outfit { get; private set; } = true;
 
+        /// <summary>
+        /// The outfit button's words: "No outfitting", or the gear it gives for the target's hazard (Epic 10 Part 2, W3, D50):
+        /// "Outfit: respirator", "Outfit: hazard gear"; "Outfit from stock" while there is none.
+        /// </summary>
+        public string OutfitText
+        {
+            get
+            {
+                if (!Outfit) return "No outfitting";
+                var host = Host;
+                var gear = host != null && _targets.Count > 0 ? GuildRules.BestProtectionInStock(host, GuildRules.HazardOf(host, _targets[_target].Id)) : ItemType.None;
+                return gear == ItemType.None ? "Outfit from stock" : "Outfit: " + ItemTexts.Of(gear).MerchantName.ToLowerInvariant();
+            }
+        }
+
+        /// <summary>Draughts each member is given at the muster, as stock allows (Epic 10 Part 2, W2, D44): 0 to <see cref="DispatchExpeditionCommand.MaxDraughts"/>.</summary>
+        public byte Draughts { get; private set; }
+
+        /// <summary>"No draughts", "1 draught each", "2 draughts each".</summary>
+        public string DraughtsText => Draughts == 0 ? "No draughts" : Draughts == 1 ? "1 draught each" : Invariant($"{Draughts} draughts each");
+
         /// <summary>"Send 4 to The Drowned Gallery for 4 glowstone", or why not.</summary>
         public string DispatchText { get; private set; } = string.Empty;
         public bool CanDispatch { get; private set; }
-        public bool CanRecall => Guild?.HasExpedition == true && _context.Intervention != null;
+        public bool CanRecall => Guild != null && Guild.Parties[PartySlot - 1].IsOut && _context.Intervention != null;
         public Feedback Feedback { get; private set; } = Feedback.None;
 
         public void NextTarget()
@@ -90,6 +156,13 @@ namespace Simpiens.Presentation.Dashboard
             Refresh();
         }
 
+        /// <summary>None, one or two draughts each, and round again.</summary>
+        public void NextDraughts()
+        {
+            Draughts = (byte)((Draughts + 1) % (DispatchExpeditionCommand.MaxDraughts + 1));
+            Refresh();
+        }
+
         /// <summary>"Steady: turn back below 55 health".</summary>
         public string RuleText => Invariant($"{Rule}: turn back below {Tuning.RetreatHealth(Rule):F0} health");
 
@@ -103,42 +176,35 @@ namespace Simpiens.Presentation.Dashboard
             var host = Host;
             if (Outfit && host != null)
             {
-                var gear = GearInStock(out int stock);
+                // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50), for each member who needs it
+                var hazard = GuildRules.HazardOf(host, _targets[_target].Id);
+                var gear = GuildRules.BestProtectionInStock(host, hazard);
+                int stock = gear != ItemType.None ? host.ActiveStalls[0].SellStockOf(gear) : 0;
                 for (int i = 0; i < _party.Count && stock > 0; i++)
                 {
-                    if (Guild.CanGiveGear(host, _party[i], gear) != GuildRules.Check.Ok) continue;
-                    _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", _party[i], gear));
+                    if (Guild.CanGiveGear(host, _party[i], gear, hazard) != GuildRules.Check.Ok) continue;
+                    _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", _party[i], gear, hazard));
                     stock--;
                 }
             }
             _context.Intervention.QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Player", Order()));
-            Feedback = new Feedback(Invariant($"{_party.Count} set out for {TargetName}."), FeedbackTone.Ok);
+            Feedback = new Feedback(Invariant($"Party {PartySlot} sets out for {TargetName}, {_party.Count} strong."), FeedbackTone.Ok);
         }
 
         public void Recall()
         {
             if (!CanRecall) return;
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Player"));
-            Feedback = new Feedback("The party is called home.", FeedbackTone.Ok);
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateRecallExpedition("Player", PartySlot));
+            Feedback = new Feedback(Invariant($"Party {PartySlot} is called home."), FeedbackTone.Ok);
         }
 
-        // --- The tracker ---
+        // --- The trackers ---
 
-        public bool IsOut { get; private set; }
+        /// <summary>A tracker for each of the guild's parties, in slot order.</summary>
+        public IReadOnlyList<PartyTrackerModel> Trackers => _trackers;
 
-        /// <summary>"The Drowned Gallery · Steady".</summary>
-        public string Title { get; private set; } = string.Empty;
-
-        /// <summary>"Mustering at the stall", "Marching to The Drowned Gallery", "Working The Drowned Gallery", "Coming home", "Turning back".</summary>
-        public string StageText { get; private set; } = string.Empty;
-
-        /// <summary>"1:45 out".</summary>
-        public string TimeOut { get; private set; } = string.Empty;
-
-        /// <summary>"Haul 2 of 4".</summary>
-        public string HaulText { get; private set; } = string.Empty;
-
-        public IReadOnlyList<ExpeditionMemberRow> Members => _members;
+        /// <summary>True while a party is out.</summary>
+        public bool IsOut => _trackers[0].IsOut || _trackers[1].IsOut;
 
         public void Refresh()
         {
@@ -179,41 +245,67 @@ namespace Simpiens.Presentation.Dashboard
             var guild = Guild;
             var host = Host;
             _party.Clear();
-            var rows = _guild.Rows;
-            for (int i = 0; i < rows.Count && _party.Count < DispatchExpeditionCommand.MaxMembers; i++)
+            if (guild != null)
             {
-                if (rows[i].InParty) _party.Add(rows[i].CrawlerId);
+                var members = guild.Parties[PartySlot - 1].Members;
+                for (int i = 0; i < members.Count; i++) _party.Add(members[i].CrawlerId);
             }
+            PartyText = _party.Count == 0 ? Invariant($"Party {PartySlot}") : Invariant($"Party {PartySlot} · {_party.Count}");
             if (guild == null || host == null || _context.Intervention == null || _targets.Count == 0)
             {
                 CanDispatch = false;
                 DispatchText = _targets.Count == 0 ? "Chart a hazard sector to send a party there." : string.Empty;
                 return;
             }
+            if (_party.Count == 0)
+            {
+                CanDispatch = false;
+                DispatchText = Invariant($"Party {PartySlot} has no members: choose them on the Members tab.");
+                return;
+            }
             var check = guild.CanDispatch(host, Order());
             CanDispatch = check == GuildRules.Check.Ok;
             DispatchText = CanDispatch
-                ? Invariant($"Send {_party.Count} to {TargetName} for {Goal}.")
+                ? Invariant($"Send party {PartySlot}, {_party.Count} strong, to {TargetName} for {Goal}.") + DraughtsInStock(host)
                 : GuildRules.Describe(check, string.Empty, null, guild, Tick, (_context.Simulation.Economy ?? EconomyTuning.Default).Guild);
         }
 
         private DispatchExpeditionCommand Order() =>
-            new DispatchExpeditionCommand(_targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, _party.ToArray());
+            new DispatchExpeditionCommand(PartySlot, _targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, Draughts);
+
+        /// <summary>" 3 of 8 draughts in stock." when the party is to carry some and the stall can't give them all; empty otherwise.</summary>
+        private string DraughtsInStock(IGuildHost host)
+        {
+            if (Draughts == 0 || host.ActiveStalls.Count == 0) return string.Empty;
+            var stall = host.ActiveStalls[0];
+            int stock = 0;
+            var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
+            for (int i = 0; i < medicines.Count; i++) stock += stall.SellStockOf(medicines[i]);
+            int wanted = Draughts * _party.Count;
+            return stock >= wanted ? string.Empty : Invariant($" {stock} of {wanted} draughts in stock.");
+        }
 
         private void RefreshTracker()
         {
+            for (int i = 0; i < _trackers.Length; i++) RefreshTracker(_trackers[i]);
+        }
+
+        private void RefreshTracker(PartyTrackerModel tracker)
+        {
             var guild = Guild;
             var host = Host;
-            var expedition = guild != null ? guild.Expedition : default;
-            IsOut = expedition.IsActive;
-            if (!IsOut || host == null)
+            var party = guild != null && tracker.Slot <= guild.Parties.Count ? guild.Parties[tracker.Slot - 1] : null;
+            var expedition = party != null ? party.Expedition : default;
+            tracker.IsOut = expedition.IsActive && host != null;
+            var rows = tracker.Rows;
+            if (!tracker.IsOut)
             {
-                _members.Clear();
+                rows.Clear();
                 return;
             }
             string sector = _context.Sectors != null && _context.Sectors.TryGetSector(expedition.TargetSectorId, out var target) ? target.Name : "the sector";
-            Title = Invariant($"{sector} · {expedition.Rule}");
-            StageText = expedition.Stage switch
+            tracker.Title = Invariant($"{sector} · {expedition.Rule}");
+            tracker.StageText = expedition.Stage switch
             {
                 ExpeditionStage.Muster => "Mustering at the stall",
                 ExpeditionStage.March => $"Marching to {sector}",
@@ -221,17 +313,16 @@ namespace Simpiens.Presentation.Dashboard
                 ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : "Coming home",
                 _ => "Delivering",
             };
-            uint seconds = (Tick - expedition.DispatchTick) / 10;
-            TimeOut = Invariant($"{seconds / 60}:{seconds % 60:00} out");
-            HaulText = Invariant($"Haul {guild.Gathered(host)} of {expedition.Goal}");
+            tracker.TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
+            tracker.HaulText = Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
 
-            var party = guild.Party;
-            while (_members.Count < party.Count) _members.Add(new ExpeditionMemberRow());
-            if (_members.Count > party.Count) _members.RemoveRange(party.Count, _members.Count - party.Count);
-            for (int i = 0; i < party.Count; i++)
+            var roster = party.Members;
+            while (rows.Count < roster.Count) rows.Add(new ExpeditionMemberRow());
+            if (rows.Count > roster.Count) rows.RemoveRange(roster.Count, rows.Count - roster.Count);
+            for (int i = 0; i < roster.Count; i++)
             {
-                var member = party[i];
-                var row = _members[i];
+                var member = roster[i];
+                var row = rows[i];
                 row.Name = _context.FriendlyName(member.CrawlerId, DossierModel.UnknownName);
                 row.WithParty = member.IsWithParty;
                 row.Downed = member.Status == ExpeditionMemberStatus.Downed;
@@ -251,19 +342,5 @@ namespace Simpiens.Presentation.Dashboard
             }
         }
 
-        /// <summary>The first protection the stall has in stock, and how many.</summary>
-        private ItemType GearInStock(out int stock)
-        {
-            stock = 0;
-            var stalls = _context.Simulation?.ActiveStalls;
-            if (stalls == null || stalls.Count == 0) return ItemType.None;
-            var protection = ItemCatalog.InCategory(ItemCategory.Protection);
-            for (int i = 0; i < protection.Count; i++)
-            {
-                stock = stalls[0].SellStockOf(protection[i]);
-                if (stock > 0) return protection[i];
-            }
-            return ItemType.None;
-        }
     }
 }

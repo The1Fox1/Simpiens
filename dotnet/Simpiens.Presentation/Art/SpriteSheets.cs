@@ -20,7 +20,7 @@ namespace Simpiens.Presentation.Art
         /// independent of the atlas's layout (epic F12).
         /// </summary>
         public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite)
-            .Concat(ItemSprites.World).Concat(WornSprites.All).Concat(People.BodySlots.All));
+            .Concat(ItemSprites.World).Concat(WornSprites.All).Concat(HazardSprites.All).Concat(CaravanSprites.All).Concat(People.BodySlots.All));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });

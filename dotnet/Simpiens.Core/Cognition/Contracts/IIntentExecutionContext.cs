@@ -82,5 +82,8 @@ namespace Simpiens.Cognition.Contracts
 
         bool TryGetBounty(ushort bountyId, out BountyContract bounty);
         void UpdateBounty(BountyContract bounty);
+
+        /// <summary>One tick of an artisan's work at the station at <paramref name="stationIndex"/> (Epic 10 Part 2, W1.3).</summary>
+        Simpiens.Simulation.Workshops.CraftStep WorkStation(int stationIndex);
     }
 }

@@ -41,7 +41,14 @@ namespace Simpiens.Narrative
         ExpeditionSent = 31, // Epic 10 G5: ActorA is the party's first member; the extra is the party's size, or the haul
         ExpeditionTurnedBack = 32,
         ExpeditionReturned = 33,
-        ExpeditionDowned = 34
+        ExpeditionDowned = 34,
+        StationBuilt = 35, // Epic 10 Part 2: ActorB is the player; the extra is the station's kind
+        ArtisanHired = 36, // the extra is the wage; the sector is the station's
+        ArtisanUnpaid = 37, // the extra is the station's kind, for this and the next two
+        ArtisanQuit = 38,
+        ArtisanDismissed = 39,
+        ArtisanBrokeDown = 40, // W1.3, D16: overworked on its shift; the extra is the station's kind
+        ToolWornOut = 41 // W1.4, D37: a tool used to its end broke; the extra is the item
     }
 
     /// <summary>

@@ -47,7 +47,9 @@ namespace Simpiens.Testing.Environment
                 state.Tick(0.1f);
             }
 
-            Assert(state.Hunger >= 14.9f && state.Hunger <= 15.1f, $"Headless agent hunger expected ~15.0, actual: {state.Hunger}");
+            // Ten seconds at the session's pace (before the 24-hour day 15, on it about 1)
+            float expected = 10f * Simpiens.Simulation.Economy.DayTuning.Default.HungerPerSecond;
+            Assert(System.Math.Abs(state.Hunger - expected) < 0.1f, $"Headless agent hunger expected ~{expected:F2}, actual: {state.Hunger}");
             Assert(state.Frustration == 0f, $"Headless agent frustration expected 0, actual: {state.Frustration}");
 
             state.TriggerTantrumVisual(0f);

@@ -132,7 +132,7 @@ namespace Simpiens.Client.Tests
             model.Merchant.RationPrice = 999; // the slider's range holds
             model.Merchant.Apply();
             sim.Tick();
-            Assert.True(sim.TryGetTradeStall(stall, out var clamped) && clamped.RationSellPrice == MerchantModel.MaxPrice);
+            Assert.True(sim.TryGetTradeStall(stall, out var clamped) && clamped.RationSellPrice == model.Merchant.Row(ItemType.Ration).MaxPrice);
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace Simpiens.Client.Tests
             model.Bounties.Item = ItemType.IronOre;
             model.Bounties.Quantity = 2;
             model.Bounties.Reward = 50;
-            model.Bounties.Duration = 1500;
+            model.Bounties.Duration = 6; // game hours
             model.Bounties.Post();
             Assert.Equal(FeedbackTone.Ok, model.Bounties.Feedback.Tone);
             sim.Tick();
@@ -157,6 +157,7 @@ namespace Simpiens.Client.Tests
             var bounty = Assert.Single(sim.ActiveBounties);
             Assert.Equal((BountyType.GatherResource, ItemType.IronOre, 2, 50, BountyStatus.Open), (bounty.Type, bounty.TargetItemType, (int)bounty.TargetQuantity, (int)bounty.RewardGold, bounty.Status));
             Assert.True(sim.TryGetTradeStall(stall, out var escrowed) && escrowed.TreasuryGold == 200);
+            Assert.Equal(DayClock.Hours(6), bounty.ExpirationTick - bounty.IssuedTick);
             var events = new List<ChronicleEvent>();
             chronicle.GetAllRecentEvents(events, 5);
             Assert.Contains(events, e => e.EventType == ChronicleEventType.BountyPosted);
@@ -165,7 +166,7 @@ namespace Simpiens.Client.Tests
             var row = Assert.Single(model.Bounties.Contracts);
             Assert.Equal($"#{bounty.BountyId} - Gather Salvage", row.Title);
             Assert.Equal("OPEN", row.StatusText);
-            Assert.Equal("2x IronOre from Ore Quarry | Expires: " + bounty.ExpirationTick + " ticks", row.Details);
+            Assert.StartsWith("2x IronOre from Ore Quarry | Expires in ", row.Details);
             Assert.Equal("50 Gold", row.Reward);
             Assert.True(row.CanCancel);
             Assert.Equal("1 ACTIVE", model.Bounties.CountBadge);
@@ -194,9 +195,11 @@ namespace Simpiens.Client.Tests
             Assert.False(model.Bounties.SelectSector(Floor1Layout.HubSectorId), "A charted room is not offered to scout.");
             Assert.Equal("Uncharted", model.Bounties.SectorState);
 
-            // Gather offers every sector, marking the uncharted ones
+            // Gather offers every sector but the player's own facilities (Epic 10 Part 2, D7), marking the uncharted ones
             model.Bounties.SetType(BountyType.GatherResource);
-            Assert.Equal(sectors.All.Count, model.Bounties.SectorChoiceIds.Count);
+            Assert.Equal(sectors.All.Count(s => !s.Facility), model.Bounties.SectorChoiceIds.Count);
+            Assert.DoesNotContain((int)Floor1Layout.WorkshopRowSectorId, model.Bounties.SectorChoiceIds);
+            Assert.DoesNotContain((int)Floor1Layout.GuildhallSectorId, model.Bounties.SectorChoiceIds);
             int deep = model.Bounties.SectorChoiceIds.ToList().IndexOf(Floor1Layout.DeepSeamSectorId);
             Assert.EndsWith(BountyBoardModel.AwaitsChartSuffix, model.Bounties.SectorChoiceLabels[deep]);
 

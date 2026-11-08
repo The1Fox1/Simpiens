@@ -25,13 +25,13 @@ namespace Simpiens.Core.Tests
             return sim;
         }
 
-        /// <summary>The outpost's whole day (Epic MAP's DoD): 9,000 ticks.</summary>
+        /// <summary>The outpost's whole day (Epic MAP's DoD): a game day, 10,080 ticks.</summary>
         [Fact]
         public void TheOutpostsDayEmerges()
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
@@ -52,7 +52,7 @@ namespace Simpiens.Core.Tests
             using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
             watch.Finish();
 
             var failures = watch.DayFailures();
@@ -69,7 +69,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
@@ -118,15 +118,17 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// Danger (Epic 10 G2's Definition of Done): on the real outpost, with nothing injected, a bold crawler goes into a
-        /// hazard sector on its own for its glowstone, is hurt, comes out and recovers (in the bunks, sooner with a herb:
-        /// herbs are eaten); no cautious crawler sets foot in one; the caravan buys the glowstone at its premium.
+        /// hazard sector on its own for its glowstone, is hurt, comes out and recovers; no cautious crawler sets foot in one;
+        /// the caravan buys the glowstone at its premium. On the 24-hour day a venture costs about 40 health and a night in a
+        /// bunk heals 80, so a crawler rarely falls under the herb line (60) and recovers in the bunks: G2's herbs are no
+        /// longer asserted (Epic 10 Part 2, T5, finding F12).
         /// </summary>
         [Fact]
         public void TheBoldBraveTheHazardsAndHealAndTheCautiousStayOut()
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
@@ -134,7 +136,6 @@ namespace Simpiens.Core.Tests
             var cautious = watch.Crawlers.Where(c => c.State.Personality.RiskTolerance < Simpiens.Cognition.Vitality.VentureRiskTolerance).ToList();
             Assert.NotEmpty(bold);
             Assert.Contains(bold, c => c.State.Activity.HazardTicks > 0 && c.LowestHealth < OutpostWatch.HurtBelow && c.HurtThenRecovered);
-            Assert.True(watch.Crawlers.Sum(c => c.State.Activity.HerbsEaten) > 0, "Nobody ate a herb to heal.");
             Assert.Empty(cautious.Where(c => c.State.Activity.HazardTicks > 0).Select(c => c.Name));
             Assert.True(sim.Simulation.EconomyLedger.GetFaucetTotal("CaravanSalvageSales") > 0);
             Assert.Contains(sim.Host.CrawlerStates, s => s.Activity.SalvageSales > 0);
@@ -158,7 +159,7 @@ namespace Simpiens.Core.Tests
             var bare = new Dictionary<byte, (int Ticks, float Damage)>();
             var geared = new Dictionary<byte, (int Ticks, float Damage)>();
             var last = new Dictionary<EntityId, Simpiens.Cognition.Contracts.AgentActivity>();
-            for (int t = 0; t < 9000; t++)
+            for (long t = 0; t < OutpostWatch.DayTicks; t++)
             {
                 sim.Step(1);
                 watch.Observe();
@@ -207,18 +208,21 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var watch = new OutpostWatch(sim);
-            watch.Run(6000);
+            // Deadlines in game hours from the 24-hour day's gate seeds (Epic 10 Part 2, T5): the first sale by t524 at the
+            // latest, the scout by t679, the Gather by t1658, regrowth by t1511, a restock at the first or second visit
+            const long Hour = DayClock.TicksPerHour;
+            watch.Run(12 * Hour);
             TestContext.Current.TestOutputHelper?.WriteLine(watch.Report());
 
-            Assert.True(watch.GatherTick >= 0 && watch.GatherTick <= 900, $"Gather bounty not fulfilled by t900 (t{watch.GatherTick}).");
+            Assert.True(watch.GatherTick >= 0 && watch.GatherTick <= 6 * Hour, $"Gather bounty not fulfilled within 6 game hours (t{watch.GatherTick}).");
             Assert.True(watch.GatherClaimantTrust > 0, "The Gather bounty claimant's trust toward the player did not rise.");
-            Assert.True(watch.SaleTick >= 0 && watch.SaleTick <= 400, $"No salvage sold at the stall by t400 (t{watch.SaleTick}).");
-            Assert.True(watch.ScoutTick >= 0 && watch.ScoutTick <= 550, $"Scout bounty not fulfilled by t550 (t{watch.ScoutTick}).");
+            Assert.True(watch.SaleTick >= 0 && watch.SaleTick <= 2 * Hour, $"No salvage sold at the stall within 2 game hours (t{watch.SaleTick}).");
+            Assert.True(watch.ScoutTick >= 0 && watch.ScoutTick <= 2 * Hour, $"Scout bounty not fulfilled within 2 game hours (t{watch.ScoutTick}).");
             Assert.True(watch.ScoutCharted, "Scout bounty completed but the Deep Seam was not charted.");
             Assert.Equal(0, watch.FogLeaks);
             Assert.True(watch.GatherTick > watch.ScoutTick, "The Deep Seam Gather bounty was fulfilled before the sector was charted.");
-            Assert.True(watch.RestockTick >= 0 && watch.RestockTick <= 6000, $"No caravan restock by t6000 (t{watch.RestockTick}).");
-            Assert.True(watch.RegrowthTick >= 0 && watch.RegrowthTick <= 6000, $"No node regrowth by t6000 (t{watch.RegrowthTick}).");
+            Assert.True(watch.RestockTick >= 0 && watch.RestockTick <= 12 * Hour, $"No caravan restock within 12 game hours (t{watch.RestockTick}).");
+            Assert.True(watch.RegrowthTick >= 0 && watch.RegrowthTick <= 6 * Hour, $"No node regrowth within 6 game hours (t{watch.RegrowthTick}).");
             Assert.Equal(0, watch.ConservationViolations);
             Assert.True(watch.IntentFaults == 0, $"Intent handlers threw: {sim.Simulation.FirstIntentFault}");
         }
@@ -257,7 +261,7 @@ namespace Simpiens.Core.Tests
 
                 long loadTick = sim.Clock.CurrentTick;
                 var watch = new OutpostWatch(sim);
-                watch.Run(3000);
+                watch.Run(OutpostWatch.DayTicks / 2); // every crawler eats within half a day: on the 24-hour day a first meal comes hours after a morning load
                 TestContext.Current.TestOutputHelper?.WriteLine($"saved and loaded at t{saveTick}; " + watch.Report());
 
                 Assert.Equal(0, watch.ConservationViolations);

@@ -10,8 +10,6 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class EarnIncomeGoal : GoapGoal
     {
-        public const int ComfortableGold = 40;
-
         public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true))
         {
         }
@@ -19,7 +17,10 @@ namespace Simpiens.Cognition.Planning.Goals
         public override float CalculatePriority(AgentContext context)
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
-            float need = SimMath.Clamp(ComfortableGold - gold, 0, ComfortableGold) * 0.5f;
+            int comfortable = Considerations.Economy(context).ComfortablePurse;
+            // The need is a share of the purse, 20 when empty (Epic 10 Part 2, T5.1b): a bigger purse doesn't make a crawler
+            // more desperate, nor every bounty look smaller beside earning (before the day, 0.5 a gold short of 40g, as here)
+            float need = comfortable > 0 ? SimMath.Clamp(comfortable - gold, 0, comfortable) * (20f / comfortable) : 0f;
             float priority = SimMath.Max(5f, 25f + need - (context.Hunger * 0.2f));
             return priority * Considerations.TraitFactor(context.Personality.Greed, Considerations.GreedOnIncome)
                             * Considerations.TraitFactor(context.Personality.Diligence, Considerations.DiligenceOnWork);
@@ -28,7 +29,7 @@ namespace Simpiens.Cognition.Planning.Goals
         public override bool IsValid(AgentContext context)
         {
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            if (context.Inventory == null || context.Inventory.Gold >= ComfortableGold) return false;
+            if (context.Inventory == null || context.Inventory.Gold >= Considerations.Economy(context).ComfortablePurse) return false;
             if (context.Snapshot == null || context.Snapshot.ActiveStallCount == 0) return false;
             if (!ResourceTargeting.NearestStallCanBuySalvage(context)) return false;
 

@@ -21,6 +21,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
 
+        /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
+        public string Bunk { get; internal set; } = string.Empty;
+
         /// <summary>Its face (Epic UI-Beta B4), when it has a look.</summary>
         public bool HasPortrait { get; internal set; }
         public Simpiens.Presentation.Art.People.PortraitKey Portrait { get; internal set; }
@@ -28,8 +31,8 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
 
-        /// <summary>Sent with the next party (the builder's toggle; every member at first).</summary>
-        public bool InParty { get; set; } = true;
+        /// <summary>Its party, 1 or 2, or 0 for none (Epic 10 Part 2, W5, D65), as the guild holds it.</summary>
+        public byte Party { get; internal set; }
 
         /// <summary>The wage the slider sets; Apply sends it.</summary>
         public int PendingWage { get; set; }
@@ -41,12 +44,12 @@ namespace Simpiens.Presentation.Dashboard
     /// rule is the core's (<see cref="GuildRules"/>); the player's actions leave as typed commands, applied on the next
     /// tick. Views decide nothing.
     /// </summary>
-    public sealed class GuildModel
+    public sealed class GuildModel : IDashboardWindow
     {
         public const string EmptyText = "No members yet. Recruit trusted crawlers from the dossier.";
 
         private readonly DashboardContext _context;
-        private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(4);
+        private readonly List<GuildRosterRow> _rows = new List<GuildRosterRow>(8);
 
         private readonly Simpiens.Presentation.Art.People.MoodTracker _moods;
 
@@ -63,13 +66,24 @@ namespace Simpiens.Presentation.Dashboard
         public bool IsOpen { get; private set; }
         public IReadOnlyList<GuildRosterRow> Rows => _rows;
 
-        /// <summary>"2/4": members out of the most, for the header.</summary>
-        public string Count { get; private set; } = "0/4";
+        /// <summary>"2/8": members out of the most, for the header.</summary>
+        public string Count { get; private set; } = "0/8";
 
-        /// <summary>"2 of 4 members · 11g in wages a visit".</summary>
+        /// <summary>"2 of 8 members · 11g in wages a visit", and what the barracks' lodging fees keep back: ", 2g back for bunks" (Epic 10 Part 2, W5.2).</summary>
         public string Status { get; private set; } = string.Empty;
 
         public Feedback Feedback { get; private set; } = Feedback.None;
+
+        /// <summary>The window's tab (Epic 10 Part 2, W5.1): the members' cards, or the expeditions. Kept while the window closes.</summary>
+        public bool ShowingExpeditions { get; private set; }
+
+        public void ShowMembers() => ShowingExpeditions = false;
+
+        public void ShowExpeditions()
+        {
+            ShowingExpeditions = true;
+            Expedition.Refresh();
+        }
 
         public void Open()
         {
@@ -93,21 +107,20 @@ namespace Simpiens.Presentation.Dashboard
                 return;
             }
 
-            int wages = 0;
+            int wages = 0, lodging = 0;
             for (int i = 0; i < members; i++)
             {
                 var contract = guild.Members[i];
                 if (i == _rows.Count) _rows.Add(new GuildRosterRow { PendingWage = contract.Wage });
                 var row = _rows[i];
-                if (row.CrawlerId != contract.CrawlerId)
-                {
-                    row.PendingWage = contract.Wage; // a new member in this place
-                    row.InParty = true;
-                }
+                if (row.CrawlerId != contract.CrawlerId) row.PendingWage = contract.Wage; // a new member in this place
+                row.Party = guild.PartyOf(contract.CrawlerId)?.Slot ?? 0;
                 row.CrawlerId = contract.CrawlerId;
                 row.Wage = contract.Wage;
                 row.UnpaidVisits = contract.UnpaidVisits;
+                row.Bunk = contract.HasBunk ? Invariant($"Bunk {contract.Bunk}") : string.Empty;
                 wages += contract.Wage;
+                lodging += contract.Wage - (int)GuildService.WagePaid(contract, tuning);
                 var node = _context.Registry?.GetEntity(contract.CrawlerId);
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
@@ -119,12 +132,12 @@ namespace Simpiens.Presentation.Dashboard
                 row.Downed = agent.IsDowned;
                 var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
                 row.Gear = DossierModel.GearText(worn);
-                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type);
+                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
-            Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit");
+            Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit") + (lodging > 0 ? Invariant($", {lodging}g back for bunks") : string.Empty);
             Expedition.Refresh();
         }
 
@@ -140,6 +153,45 @@ namespace Simpiens.Presentation.Dashboard
                 sent++;
             }
             Feedback = sent > 0 ? new Feedback(Invariant($"{sent} wage(s) set for the next visit."), FeedbackTone.Ok) : Feedback.None;
+        }
+
+        /// <summary>
+        /// A card's party button (Epic 10 Part 2, W5, D65): the member moves to the next party with room, or out of parties
+        /// after the last, sent as a <see cref="FormPartyCommand"/> for the party it joins (which takes it out of its old one)
+        /// or the party it leaves. A party out keeps its members.
+        /// </summary>
+        public void CycleParty(EntityId crawlerId)
+        {
+            var guild = _context.Simulation?.Guild;
+            if (guild == null || _context.Intervention == null) return;
+            var from = guild.PartyOf(crawlerId);
+            if (from != null && from.IsOut)
+            {
+                Feedback = new Feedback(Invariant($"Party {from.Slot} is out: change it when it is home."), FeedbackTone.Notice);
+                return;
+            }
+            int slot = from?.Slot ?? 0;
+            for (int step = 1; step <= GuildService.PartySlots; step++)
+            {
+                int next = (slot + step) % (GuildService.PartySlots + 1);
+                if (next == 0) break; // out of parties
+                var to = guild.Parties[next - 1];
+                if (to.IsOut || to.Members.Count >= DispatchExpeditionCommand.MaxMembers) continue;
+                var members = new EntityId[to.Members.Count + 1];
+                for (int i = 0; i < to.Members.Count; i++) members[i] = to.Members[i].CrawlerId;
+                members[to.Members.Count] = crawlerId;
+                _context.Intervention.QueueInfluence(InfluenceEvent.CreateFormParty("Player", new FormPartyCommand((byte)next, members)));
+                Feedback = new Feedback(Invariant($"{_context.FriendlyName(crawlerId, DossierModel.UnknownName)} joins party {next}."), FeedbackTone.Ok);
+                return;
+            }
+            if (from == null) return;
+            var staying = new EntityId[from.Members.Count - 1];
+            for (int i = 0, n = 0; i < from.Members.Count; i++)
+            {
+                if (from.Members[i].CrawlerId != crawlerId) staying[n++] = from.Members[i].CrawlerId;
+            }
+            _context.Intervention.QueueInfluence(InfluenceEvent.CreateFormParty("Player", new FormPartyCommand(from.Slot, staying)));
+            Feedback = new Feedback(Invariant($"{_context.FriendlyName(crawlerId, DossierModel.UnknownName)} leaves party {from.Slot}."), FeedbackTone.Ok);
         }
 
         /// <summary>Dismiss: a <see cref="DismissCommand"/>; the member leaves on the next tick.</summary>
@@ -170,6 +222,7 @@ namespace Simpiens.Presentation.Dashboard
                         : $"Settlement: led by {_context.FriendlyName(group.LeaderId, DossierModel.UnknownName)}",
                     GroupType.FactionGuild => _context.Simulation.Guild.TryGetContract(crawlerId, out var contract)
                         ? Invariant($"Guild: member, {contract.Wage}g a visit") : "Guild: member",
+                    GroupType.Workshop => "Workshop: artisan",
                     _ => "Party",
                 });
             }

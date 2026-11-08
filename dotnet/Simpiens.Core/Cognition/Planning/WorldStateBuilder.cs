@@ -27,14 +27,16 @@ namespace Simpiens.Cognition.Planning
             var inv = inventory ?? context.Inventory;
             // Groups, not items (the item catalog): food, a tool, salvage to sell, and worn protection (Epic 10 G3)
             bool hasFood = inv.HasAny(ItemCategory.Food);
-            bool hasTool = inv.HasAny(ItemCategory.Tool);
+            bool hasTool = inv.HasAny(ItemCategory.Tool) || inv.IsWearing(ItemCategory.Tool); // worn in the tool slot, as a bought pickaxe is
             bool hasSalvage = inv.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-            bool hasHazardGear = inv.IsWearing(ItemCategory.Protection);
+            // Worn protection counts unless a bold crawler would trade it for a piece that opens salvage it can't reach (D53)
+            bool hasHazardGear = inv.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
 
             var state = BuildWorldState(context, hasFood, hasTool);
             state = state.With(StateFact.HasProvisions, hasFood);
             state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
             state = state.With(StateFact.HasHazardGear, hasHazardGear);
+            state = state.With(StateFact.HasMedicine, inv.HasAny(ItemCategory.Medicine));
             return state;
         }
 
@@ -59,14 +61,15 @@ namespace Simpiens.Cognition.Planning
                 {
                     hasFoodInInventory = true;
                 }
-                if (!hasTool && context.Inventory.HasAny(ItemCategory.Tool))
+                if (!hasTool && (context.Inventory.HasAny(ItemCategory.Tool) || context.Inventory.IsWearing(ItemCategory.Tool)))
                 {
                     hasTool = true;
                 }
                 bool hasSalvage = context.Inventory.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-                bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection);
+                bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
+                state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);
@@ -195,7 +198,7 @@ namespace Simpiens.Cognition.Planning
 
             state = state.With(StateFact.HasActiveDirective, hasActiveDirective);
             state = state.With(StateFact.AtDirectiveLocation, atDirectiveLocation);
-            state = state.With(StateFact.AtExpeditionWork, hasActiveDirective && context.Expedition.IsWorking);
+            state = state.With(StateFact.AtDirectiveWork, hasActiveDirective && (context.Expedition.IsWorking || context.Station.IsActive));
             state = state.With(StateFact.IsGroupLeader, isGroupLeader);
 
             // 7. Outpost Economy & Trade Stall State (Epic 9 Slice 2)

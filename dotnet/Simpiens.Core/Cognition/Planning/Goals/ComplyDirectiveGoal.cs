@@ -19,6 +19,14 @@ namespace Simpiens.Cognition.Planning.Goals
         /// reflexes and hunger from 70 still come first.
         /// </summary>
         public const float ExpeditionPriority = 120f;
+
+        /// <summary>
+        /// An artisan on shift holds to its station's work as a party member holds to its expedition (Epic 10 Part 2, W1.3,
+        /// D13, D15): above the hearth, earning and rest, so tiredness alone doesn't end a shift; the break line does
+        /// (<see cref="Simpiens.Simulation.Workshops.WorkshopService"/>). Unlike an expedition's, the order is judged by
+        /// compliance every time. Hunger from 70 still comes first.
+        /// </summary>
+        public const float ShiftPriority = ExpeditionPriority;
         public const float IntimidationFearThreshold = 70f;
 
         public ComplyDirectiveGoal() : base("ComplyDirective", WorldState.Empty.With(StateFact.DirectiveFulfilled, true))
@@ -61,6 +69,7 @@ namespace Simpiens.Cognition.Planning.Goals
             {
                 return 0f;
             }
+            if (context.Station.IsActive) return context.Hunger >= StarvationThreshold ? 10f : ShiftPriority;
 
             var affinity = context.Memory != null
                 ? context.Memory.GetAffinity(groupData.LeaderId, context.CurrentTick)

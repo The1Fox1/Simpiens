@@ -45,6 +45,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             bool atSurveyPoint = bounty.TargetLocation == default || Vec2.Distance(node.Position, bounty.TargetLocation) <= SurveyRadius;
             if (inSector && (!hasRoute || atSurveyPoint))
             {
+                // The survey takes its time where the scout stands (D22)
+                if (StillWorking(node, state, context, context.Economy.Day.Actions.SurveySeconds)) return IntentResult.InProgress;
                 if (agent != null)
                 {
                     agent.ScoutReportBountyId = scout.BountyId;
@@ -67,6 +69,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 // Path exhausted: one final sector check, otherwise the route never reached the sector
                 if (context.GetSectorForPosition(node.Position) == scout.TargetSectorId)
                 {
+                    if (StillWorking(node, state, context, context.Economy.Day.Actions.SurveySeconds)) return IntentResult.InProgress;
                     if (agent != null)
                     {
                         agent.ScoutReportBountyId = scout.BountyId;

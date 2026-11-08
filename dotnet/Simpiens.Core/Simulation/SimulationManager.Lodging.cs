@@ -18,6 +18,13 @@ namespace Simpiens.Simulation
 
         public void RegisterBunk(EntityId id, Vec2 position) => _lodging.RegisterBunk(id, position);
 
+        /// <summary>A bunk in the guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk like any, which the guild keeps for its members.</summary>
+        public void RegisterBarracksBunk(EntityId id, Vec2 position)
+        {
+            _lodging.RegisterBunk(id, position);
+            Guild.AddBarracksBunk(id, position);
+        }
+
         /// <summary>Bunk id to sleeper id, for the bunks taken right now.</summary>
         public IReadOnlyDictionary<EntityId, EntityId> BunkOccupants => _lodging.BunkOccupants;
 
@@ -51,7 +58,8 @@ namespace Simpiens.Simulation
                 _groupRegistry.LeaveAllGroups(node.Id);
                 agent.Memberships = _groupRegistry.GetMemberships(node.Id);
             }
-            Guild.Forget(node.Id);
+            Guild.Forget(this, node.Id);
+            _workshops.Forget(node.Id);
 
             agent.HasLeft = true;
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({releasedClaims} claim(s) released)");

@@ -55,6 +55,12 @@ namespace Simpiens.Presentation
                 _lowWall = value.Id(ArtKeys.TileWallLow);
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
+                for (int i = 0; i < _hazards.Length; i++)
+                {
+                    string key = ArtKeys.Hazard((HazardKind)i);
+                    _hazards[i] = key != null && value.TryId(key, out var art) ? art : ArtId.None;
+                }
                 Visuals = new EntityVisuals(value);
             }
         }
@@ -69,7 +75,11 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow;
+        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan;
+        private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
+
+        /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
+        public HazardEffects Hazards { get; } = new HazardEffects();
 
         public WorldScene() => Catalog = TopDownArtTable.Catalog;
 
@@ -150,6 +160,7 @@ namespace Simpiens.Presentation
                 Fog.Draw(Items, viewSeconds, Projection);
                 Fog.AddLabels(Labels, viewSeconds);
                 AddHazardNotes(map);
+                AddHazardEffects(map, viewSeconds);
             }
 
             if (frame != null)
@@ -161,6 +172,8 @@ namespace Simpiens.Presentation
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
+                for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
+                AddCaravan(frame.Caravan, frames.DrawnCaravanPosition(), viewSeconds);
             }
 
             if (selection != null) AddSelection(selection, viewSeconds);
@@ -204,6 +217,15 @@ namespace Simpiens.Presentation
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);
             Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
+            // Hurt (S3, D71): its red coat, the same sprite as a silhouette right over it, blinking
+            float coat = (entity.Flags & CrawlerFlags.Hurt) != 0 ? HurtCoat.Strength(viewSeconds) * shown : 0f;
+            if (coat > 0f)
+            {
+                var colour = HurtCoat.Colour;
+                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, position, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), pose.TiltDegrees * DegreesToRadians);
+                silhouette.Silhouette = true;
+                silhouette.Pick = pick;
+            }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
             var carried = _catalog.Piece(_catalog.Picture(ItemCatalog.Get(entity.Carried)?.ArtKey, ItemPicture.Carried), viewSeconds);
@@ -238,6 +260,38 @@ namespace Simpiens.Presentation
                 shownGood.Z = slots[slot].Height;
                 slot++;
             }
+        }
+
+        /// <summary>
+        /// A station (Epic 10 Part 2, W1.6a): the forge or the still once built, standing at its place; before that its
+        /// empty plot, lying on the floor. Either is pickable under the station's own id (<see cref="StationPick"/>): a
+        /// click on it opens the station's window.
+        /// </summary>
+        private void AddStation(in StationView station, float viewSeconds)
+        {
+            var art = Visuals.Station(station.Kind, station.Built);
+            if (art.IsNone) return;
+            var position = station.Position;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var role = station.Built ? DrawRole.Prop : DrawRole.FloorMark;
+            Add(role, station.Built ? Projection.Depth(position) : 0f, _catalog.Piece(art, viewSeconds), position, Shown(White, shown)).Pick = Items.Pickable(StationPick.Of(station.Index));
+        }
+
+        /// <summary>The share of its route over which the caravan fades in from the road, and out again (D70).</summary>
+        public const float CaravanFade = 0.08f;
+
+        /// <summary>
+        /// The trade caravan (Epic 10 Part 2, the stretch, D70), where the frame's schedule puts it: walking in from the road
+        /// (fading in), standing at the stall while it trades, walking back out (fading away).
+        /// </summary>
+        private void AddCaravan(in CaravanState caravan, Vec2 position, float viewSeconds)
+        {
+            if (!caravan.IsOnTheMap || _caravan.IsNone) return;
+            float shown = Fog.Visibility(position, viewSeconds) * MathF.Min(1f, caravan.Progress / CaravanFade);
+            if (shown <= 0f) return;
+            float walking = caravan.Stage == CaravanStage.Trading ? 0f : viewSeconds; // it stands while it trades
+            Add(DrawRole.Prop, Projection.Depth(position), _catalog.Piece(_caravan, walking), position, Shown(White, shown));
         }
 
         /// <summary>The props (resource nodes, the hearth, bunks), each as its visual says; other kinds have no picture.</summary>
@@ -287,6 +341,27 @@ namespace Simpiens.Presentation
         /// Each hazard sector's danger under its room's name; none while the fog covers the sector, whose "UNCHARTED"
         /// takes that line (the fog hides what an uncharted sector holds).
         /// </summary>
+        /// <summary>
+        /// The hazards' animations (Epic 10 Part 2, the stretch, D69), where the fog lets them show, each drawn as
+        /// <see cref="HazardEffects.RoleOf"/> says.
+        /// </summary>
+        private void AddHazardEffects(MapDefinition map, float viewSeconds)
+        {
+            Hazards.Load(map);
+            var spots = Hazards.Spots;
+            for (int i = 0; i < spots.Count; i++)
+            {
+                var spot = spots[i];
+                var art = (int)spot.Kind < _hazards.Length ? _hazards[(int)spot.Kind] : ArtId.None;
+                float local = HazardEffects.LocalSeconds(spot, viewSeconds);
+                if (art.IsNone || local < 0f) continue;
+                float shown = Fog.Visibility(spot.Position, viewSeconds);
+                if (shown <= 0f) continue;
+                var role = HazardEffects.RoleOf(spot.Kind);
+                Add(role, role == DrawRole.Prop ? Projection.Depth(spot.Position) : 0f, _catalog.Piece(art, local), spot.Position, Shown(White, shown));
+            }
+        }
+
         private void AddHazardNotes(MapDefinition map)
         {
             for (int s = 0; s < map.Sectors.Count; s++)
@@ -369,7 +444,7 @@ namespace Simpiens.Presentation
 
         private bool FloorBehind(MapTileLayer tiles, int x, int y, float depth) => tiles.IsFloor(x, y) && Projection.Depth(tiles.CellCentre(x, y)) < depth;
 
-        private readonly int[] _layers = new int[(int)DrawRole.Shadow + 1]; // each role's layer, this build
+        private readonly int[] _layers = new int[(int)DrawRole.FloorMark + 1]; // each role's layer, this build
 
         /// <summary>Adds <paramref name="piece"/> standing at <paramref name="at"/> as an item of <paramref name="role"/>, in the layer the projection gives that role.</summary>
         private ref DrawItem Add(DrawRole role, float depth, in ArtPiece piece, Vec2 at, Rgba32 tint, float rotation = 0f)
@@ -377,7 +452,7 @@ namespace Simpiens.Presentation
             ref var item = ref Items.Add(_layers[(int)role], role, depth, piece.Sprite, at.X, at.Y, piece.Width, piece.Height, tint, rotation, piece.Sheet);
             item.PivotX = piece.PivotX;
             item.PivotY = piece.PivotY;
-            item.SnapToPixel = role is DrawRole.Prop or DrawRole.Crawler or DrawRole.Shadow or DrawRole.Selection; // standing pieces (F19)
+            item.SnapToPixel = role is DrawRole.Prop or DrawRole.Crawler or DrawRole.Shadow or DrawRole.Selection or DrawRole.FloorMark; // standing pieces (F19)
             return ref item;
         }
 

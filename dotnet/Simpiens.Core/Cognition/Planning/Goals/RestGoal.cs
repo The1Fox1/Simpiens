@@ -21,8 +21,10 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override bool IsValid(AgentContext context)
         {
-            // Only consider resting when energy falls below tired threshold
-            return context.Energy < Considerations.TiredEnergy;
+            // Only consider resting when energy falls below tired threshold; a hungry crawler eats first unless it is too
+            // tired to walk, so its sleep isn't cut short by hunger (Epic 10 Part 2, D34)
+            if (context.Energy >= Considerations.TiredEnergy) return false;
+            return context.Hunger < Considerations.Economy(context).Day.BedtimeHunger || context.Energy <= Considerations.TooTiredToWalkEnergy;
         }
     }
 }

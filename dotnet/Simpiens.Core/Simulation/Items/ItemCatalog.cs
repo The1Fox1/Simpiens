@@ -60,18 +60,35 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
                 ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }),
-            // No source until Epic 10 Part 2; nothing reads HarvestSpeed yet
             new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 100, WearRule.PerUse,
+                // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
+                // miner's work while the stall's ore shelf sets how much it mines, so the forge sees its buyers again
+                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 40, WearRule.PerUse,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
-            // Halves hazard damage; lasts 500 ticks (50 s) in danger (Epic 10 G3)
+            // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
+            // longer ventures, Epic 10 Part 2, T3.2a)
             new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
-                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare)
+                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
+            // Made at the still from two herbs; heals 80 at once (Epic 10 Part 2, W2, Q5, D42). Medicine, so the herb reflex
+            // drinks it under the treat line; not salvage: the stall doesn't buy it back
+            new ItemDefinition(ItemType.HealingDraught, "HealingDraught", "Healing Draught",
+                ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Uncommon, maxStack: 5,
+                consume: new[] { new ConsumeEffect(StatKind.Health, 80f) }),
+            // Protection by kind (Epic 10 Part 2, W3, Q5, D47): each cuts its own hazards by three quarters, where hazard gear
+            // cuts any by half; worn in the protection slot and worn out by exposure, as hazard gear
+            new ItemDefinition(ItemType.Respirator, "Respirator", "Respirator",
+                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.AirResistance, ModifierOp.Add, 0.75f))),
+            new ItemDefinition(ItemType.HardHat, "HardHat", "Hard Hat",
+                ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
+                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f)))
         };
 
         /// <summary>

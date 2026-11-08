@@ -17,7 +17,8 @@ namespace Simpiens.Client.Tests
         /// How long the outpost may take for a resident to qualify: the default seed's first one does within its first few
         /// minutes, at a tick that moves with every change of behaviour, so the tests wait for it rather than name it.
         /// </summary>
-        private const long QualifiesWithin = 9000;
+        /// <summary>On the 24-hour day the first resident reaches the guild's standing in 0.4 to 1.8 game days (Epic 10 Part 2, T4.2b).</summary>
+        private const long QualifiesWithin = 2 * Simpiens.Simulation.DayClock.TicksPerDay;
 
         private static Vec2 Centre(FrameworkElement control)
             => new Vec2(control.AbsoluteLeft + control.ActualWidth * 0.5f, control.AbsoluteTop + control.ActualHeight * 0.5f);
@@ -51,7 +52,7 @@ namespace Simpiens.Client.Tests
             var guild = game.Session.Simulation.Simulation.Guild;
             var dashboard = game.Play.Dashboard;
             Assert.True(guild.IsMember(recruit), "The Recruit button's command signed the crawler on.");
-            Assert.Equal("Guild 1/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 1/8", dashboard.Header.GuildButton.Text);
             Assert.Contains("Guild: member, 5g a visit", dashboard.Panels.GroupsShown);
             Assert.Equal(string.Empty, dashboard.Panels.RecruitShown);
             Assert.False(dashboard.Panels.RecruitButton.IsEnabled, "A member can't be recruited again.");
@@ -62,7 +63,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(1, roster.CardsShown);
             Assert.Equal(game.Session.Identity.GetFriendlyName(recruit), roster.CardName(0));
             Assert.StartsWith("Trust ", roster.CardStanding(0));
-            Assert.StartsWith("1 of 4 members", roster.StatusText);
+            Assert.StartsWith("1 of 8 members", roster.StatusText);
 
             roster.WageSlider(0).Value = 9;
             ui.Click(Centre(roster.ApplyButton));
@@ -73,7 +74,7 @@ namespace Simpiens.Client.Tests
             ui.Ticks(1);
             Assert.False(guild.IsMember(recruit), "Dismiss let the member go.");
             Assert.Equal(0, roster.CardsShown);
-            Assert.Equal("Guild 0/4", dashboard.Header.GuildButton.Text);
+            Assert.Equal("Guild 0/8", dashboard.Header.GuildButton.Text);
 
             Assert.True(dashboard.CloseWindow(), "Esc closes the roster.");
             Assert.False(roster.Window.IsShown);
@@ -90,19 +91,35 @@ namespace Simpiens.Client.Tests
             var dashboard = game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
             var roster = dashboard.Guild;
-            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(true), roster.PartyButton(0).Text);
+            // Into party 1 from its card (Epic 10 Part 2, W5, D65): a FormParty command, applied on the next tick
+            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(0), roster.PartyButton(0).Text);
+            ui.Click(Centre(roster.PartyButton(0)));
+            ui.Ticks(1);
+            ui.Frame();
+            Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(1), roster.PartyButton(0).Text);
+            ui.Click(Centre(roster.ExpeditionsTab)); // the builder's tab (Epic 10 Part 2, W5.1)
+            Assert.False(roster.Card(0).Visible && roster.Card(0).Parent.Visible, "The Expeditions tab hides the members' cards.");
+            Assert.Equal("Party 1 · 1", roster.PartySelectButton.Text);
             Assert.Equal("The Drowned Gallery", roster.TargetButton.Text);
-            Assert.Equal("Send 1 to The Drowned Gallery for 4.", roster.DispatchText);
+            Assert.Equal("Send party 1, 1 strong, to The Drowned Gallery for 4.", roster.DispatchText);
             Assert.True(roster.DispatchButton.IsEnabled && !roster.RecallButton.IsEnabled);
 
             ui.Click(Centre(roster.RuleButton));
             Assert.Equal("BOLD", roster.RuleButton.Text);
+
+            // Draughts each (Epic 10 Part 2, W2.4): none, one, two and round; the line says when stock is short
+            Assert.Equal("No draughts", roster.DraughtsButton.Text);
+            ui.Click(Centre(roster.DraughtsButton));
+            ui.Click(Centre(roster.DraughtsButton));
+            Assert.Equal("2 draughts each", roster.DraughtsButton.Text);
+            Assert.Equal("Send party 1, 1 strong, to The Drowned Gallery for 4. 0 of 2 draughts in stock.", roster.DispatchText);
             var protection = Simpiens.Simulation.Items.ItemCategory.Protection;
             bool inStock = sim.ActiveStalls[0].SellStockOf(Simpiens.Simulation.Economy.ItemType.HazardGear) > 0;
             ui.Click(Centre(roster.DispatchButton));
             ui.Ticks(1);
             ui.Frame();
-            Assert.True(guild.HasExpedition && guild.Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
+            Assert.True(guild.HasExpedition && guild.Parties[0].Expedition.Rule == Simpiens.Simulation.Guild.RetreatRule.Bold, "Dispatch sent the party under Bold.");
+            Assert.Equal(2, guild.Parties[0].Expedition.Draughts); // the order carries them; the muster gives what stock allows
             if (inStock) Assert.True(Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(game.Session.Simulation.Host.CrawlerStates.First(s => s.AgentId == recruit).Inventory, protection), "Outfitted from stock.");
             Assert.False(roster.DispatchButton.IsEnabled);
             Assert.True(roster.RecallButton.IsEnabled);
@@ -117,7 +134,111 @@ namespace Simpiens.Client.Tests
             ui.Click(Centre(dashboard.Header.GuildButton));
             ui.Click(Centre(roster.RecallButton));
             ui.Ticks(1);
-            Assert.True(!guild.HasExpedition || guild.Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
+            Assert.True(!guild.HasExpedition || guild.Parties[0].Expedition.TurnedBack, "Recall ends a muster, or turns a march back.");
+        }
+
+        /// <summary>
+        /// A guild of eight (Epic 10 Part 2, W5.1, D61): eight cards on the Members tab, and the Expeditions tab, each fit
+        /// a 1280×720 window. The standing that lets eight sign on at once is set by hand: this checks the layout, not play.
+        /// </summary>
+        [Fact]
+        public void EightMembersAndTheExpeditionsTabFitTheWindow()
+        {
+            var ui = SignEight();
+            var game = ui.Game;
+            var guild = game.Session.Simulation.Simulation.Guild;
+            var dashboard = game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Frame();
+            var roster = dashboard.Guild;
+            Assert.Equal(8, roster.CardsShown);
+            Assert.StartsWith("8 of 8 members", roster.StatusText);
+            float frameBottom = roster.Window.Frame.AbsoluteTop + roster.Window.Frame.AbsoluteHeight;
+            float lastCard = roster.Card(7).AbsoluteTop + roster.Card(7).AbsoluteHeight;
+            Assert.True(lastCard < frameBottom && frameBottom <= Height, $"The eighth card ends at {lastCard} and the window at {frameBottom}, within the screen's {Height} rows.");
+            Assert.True(roster.Window.Frame.AbsoluteTop >= dashboard.Header.GuildButton.AbsoluteTop + dashboard.Header.GuildButton.ActualHeight, "The window starts below the header.");
+
+            // Two parties of four from the cards (Epic 10 Part 2, W5, D65): each click joins the first party with room
+            for (int i = 0; i < 8; i++)
+            {
+                ui.Click(Centre(roster.PartyButton(i)));
+                ui.Ticks(1);
+            }
+            ui.Frame();
+            for (int i = 0; i < 8; i++) Assert.Equal(Simpiens.Client.Ui.GuildWindow.PartyText(i < 4 ? (byte)1 : (byte)2), roster.PartyButton(i).Text);
+            Assert.True(guild.Parties[0].Members.Count == 4 && guild.Parties[1].Members.Count == 4, "Two parties of four.");
+            byte[] eight = FrameCapture.Capture(ui.Game, Width, Height);
+
+            ui.Click(Centre(roster.ExpeditionsTab));
+            ui.Frame();
+            frameBottom = roster.Window.Frame.AbsoluteTop + roster.Window.Frame.AbsoluteHeight;
+            Assert.True(roster.RecallButton.AbsoluteTop + roster.RecallButton.ActualHeight < frameBottom && frameBottom <= Height, "The Expeditions tab fits too.");
+            Assert.Equal("Send party 1, 4 strong, to The Drowned Gallery for 4.", roster.DispatchText);
+            ui.Click(Centre(roster.PartySelectButton));
+            Assert.Equal("Party 2 · 4", roster.PartySelectButton.Text);
+            RenderTests.CompareWithReference("render-outpost-guild-eight", eight, Width, Height);
+        }
+
+        /// <summary>Eight residents signed on at once, their standing set by hand (a layout check, not play).</summary>
+        private static UiDriver SignEight()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var sim = ui.Game.Session.Simulation;
+            var guild = sim.Simulation.Guild;
+            var host = (Simpiens.Simulation.Guild.IGuildHost)sim.Simulation;
+            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+            const ushort wage = 20;
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter))
+            {
+                crawler.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(warmth: 60, trust: 80, fear: 0, respect: 40, interactionCount: 1, lastInteractionTick: 0));
+            }
+            foreach (var crawler in sim.Host.CrawlerStates.Where(s => !s.IsDrifter).Take(8))
+            {
+                Assert.Equal(Simpiens.Simulation.Guild.GuildRules.Check.Ok, guild.CanRecruit(host, crawler.AgentId, wage, (uint)sim.Clock.CurrentTick));
+                commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateRecruit("test", crawler.AgentId, wage));
+            }
+            ui.Ticks(1);
+            Assert.Equal(8, guild.Members.Count);
+            return ui;
+        }
+
+        /// <summary>
+        /// Two trackers (Epic 10 Part 2, W5.3b, D66): with two parties out at once, the map shows a tracker for each, the
+        /// second under the first; the Expeditions tab a line for each.
+        /// </summary>
+        [Fact]
+        public void TwoPartiesOutShowTwoTrackers()
+        {
+            var ui = SignEight();
+            var game = ui.Game;
+            var sim = game.Session.Simulation;
+            var guild = sim.Simulation.Guild;
+            var commands = (Simpiens.Intervention.IPlayerInterventionService)sim.Services.GetService(typeof(Simpiens.Intervention.IPlayerInterventionService));
+            var members = guild.Members.Select(m => m.CrawlerId).ToArray();
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateFormParty("test", new Simpiens.Intervention.FormPartyCommand(1, members.Take(4).ToArray())));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateFormParty("test", new Simpiens.Intervention.FormPartyCommand(2, members.Skip(4).ToArray())));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateDispatchExpedition("test", new Simpiens.Intervention.DispatchExpeditionCommand(1,
+                Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, 4, Simpiens.Simulation.Guild.RetreatRule.Steady)));
+            commands.QueueInfluence(Simpiens.Intervention.InfluenceEvent.CreateDispatchExpedition("test", new Simpiens.Intervention.DispatchExpeditionCommand(2,
+                Simpiens.Core.Session.Layouts.Floor1Layout.GlowCavesSectorId, 3, Simpiens.Simulation.Guild.RetreatRule.Bold)));
+            ui.Ticks(100);
+            Assert.True(guild.Parties[0].IsOut && guild.Parties[1].IsOut, "Both parties are out.");
+
+            var dashboard = game.Play.Dashboard;
+            ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.ExpeditionsTab));
+            ui.Frame();
+            Assert.StartsWith("Party 1: ", dashboard.Guild.OutLine(0));
+            Assert.StartsWith("Party 2: ", dashboard.Guild.OutLine(1));
+            dashboard.CloseWindow();
+            dashboard.TogglePanels(); // the map
+            ui.Frame();
+            var first = dashboard.Trackers[0].Root;
+            var second = dashboard.Trackers[1].Root;
+            Assert.True(dashboard.Trackers[0].IsShown && dashboard.Trackers[1].IsShown, "A tracker for each party out.");
+            Assert.True(second.AbsoluteTop >= first.AbsoluteTop + first.AbsoluteHeight && second.AbsoluteTop + second.AbsoluteHeight <= Height, "The second under the first, on the screen.");
+            Assert.Equal("Glow Caves · Bold", game.Session.DashboardModel.Guild.Expedition.Trackers[1].Title);
+            RenderTests.CompareWithReference("render-outpost-two-trackers", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
         }
 
         [Fact]
@@ -126,6 +247,9 @@ namespace Simpiens.Client.Tests
             var (ui, _) = RecruitFromTheDossier();
             var dashboard = ui.Game.Play.Dashboard;
             ui.Click(Centre(dashboard.Header.GuildButton));
+            ui.Click(Centre(dashboard.Guild.PartyButton(0)));
+            ui.Ticks(1);
+            ui.Click(Centre(dashboard.Guild.ExpeditionsTab));
             ui.Click(Centre(dashboard.Guild.DispatchButton));
             ui.Ticks(100);
             dashboard.CloseWindow();

@@ -26,8 +26,8 @@ namespace Simpiens.Cognition.Planning.Actions
 
         public override AgentIntent CreateIntent(AgentContext context)
         {
-            // Produces an IdleIntent with a 2-second recovery duration
-            return new IdleIntent(context.AgentId, 2.0f);
+            // A pause of the session's rest length (DayTuning, Epic 10 Part 2, milestone T)
+            return new IdleIntent(context.AgentId, Considerations.Economy(context).Day.RestSeconds);
         }
     }
 }

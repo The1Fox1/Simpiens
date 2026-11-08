@@ -46,7 +46,7 @@ namespace Simpiens.Simulation.Economy
     /// </summary>
     public readonly struct SupplyTuning
     {
-        /// <summary>Ticks between supply caravan visits (600 = 60 s).</summary>
+        /// <summary>Ticks between supply caravan visits (2,520 = 6 game hours).</summary>
         public readonly uint RestockIntervalTicks;
 
         /// <summary>Gold the stall pays per visit to keep the outpost running; leaves the economy as "OutpostUpkeep".</summary>
@@ -77,11 +77,16 @@ namespace Simpiens.Simulation.Economy
             return copy;
         }
 
-        /// <summary>Market prices sit about 20% above the stall's default buy prices (ore 20g, herb 25g).</summary>
-        public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: 600, upkeepPerVisit: 80,
+        /// <summary>
+        /// The caravan on the 24-hour day (Epic 10 Part 2, milestone T): every 6 game hours, at 12:00, 18:00, 00:00 and 06:00
+        /// (T4.1, D24), with 80g of upkeep a visit (§3.3 D2). Salvage (T4.2b, D29): it pays about 20% above the stall's prices
+        /// (ore 5g, herbs 6g) and takes lots of 16 ore and 12 herbs, so the stall can keep buying what a day's work brings in
+        /// (ore, harvested more, filled the stall at 12). Glowstone, the reward for danger, keeps Part 1's price.
+        /// </summary>
+        public static SupplyTuning Default => new SupplyTuning(restockIntervalTicks: DayClock.Hours(6), upkeepPerVisit: 80,
             CaravanTerms.Supplies(ItemType.Ration, stockCap: 50, wholesaleCost: 2, SupplyService.CaravanSinkName),
-            CaravanTerms.Exports(ItemType.IronOre, quota: 2, marketPrice: 24),
-            CaravanTerms.Exports(ItemType.MedicinalHerb, quota: 2, marketPrice: 30),
+            CaravanTerms.Exports(ItemType.IronOre, quota: 16, marketPrice: 6),
+            CaravanTerms.Exports(ItemType.MedicinalHerb, quota: 12, marketPrice: 7),
             CaravanTerms.Supplies(ItemType.HazardGear, stockCap: 3, wholesaleCost: 20, SupplyService.GearSinkName),
             CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70));
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Gum.Forms.Controls;
@@ -241,16 +242,18 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>A point in the room at least two units from any crawler.</summary>
+        // The empty floor nearest the room's centre: well inside it, clear of its walls and of any pawn
         private static Vec2 EmptyFloor(SimpiensGame game, RectF room)
         {
             var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).Select(e => e.Position).ToList();
+            var candidates = new List<Vec2>();
             for (float y = room.YMin + 1.5f; y < room.YMax - 1f; y += 0.5f)
             {
-                for (float x = room.XMin + 1.5f; x < room.XMax - 1f; x += 0.5f)
-                {
-                    var p = new Vec2(x, y);
-                    if (pawns.All(c => Vec2.Distance(c, p) > 2f)) return p;
-                }
+                for (float x = room.XMin + 1.5f; x < room.XMax - 1f; x += 0.5f) candidates.Add(new Vec2(x, y));
+            }
+            foreach (var p in candidates.OrderBy(c => Vec2.Distance(c, room.Center)))
+            {
+                if (pawns.All(c => Vec2.Distance(c, p) > 2f)) return p;
             }
             return room.Center;
         }

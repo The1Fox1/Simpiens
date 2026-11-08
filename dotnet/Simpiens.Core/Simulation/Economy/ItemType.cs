@@ -9,8 +9,11 @@ namespace Simpiens.Simulation.Economy
         Ration        = 1, // Edible provisions; satisfies agent Hunger
         IronOre       = 2, // Raw mineral salvage harvested from deep nodes; sold to outpost
         MedicinalHerb = 3, // Biological salvage; sold to outpost or used for comfort
-        ToolPickaxe   = 4, // Harvesting implement; enhances harvest yield (no source yet: Epic 10 Part 2)
+        ToolPickaxe   = 4, // Mining tool, made at the forge (Epic 10 Part 2, W1)
         HazardGear    = 5, // Worn protection: cuts hazard damage and wears out (Epic 10 G3; placeholder name; Epic 9 called it BasicWeapon)
-        Glowstone     = 6  // Rare salvage, found only in hazard sectors; the caravan pays a premium (Epic 10 G2; placeholder name)
+        Glowstone     = 6, // Rare salvage, found only in hazard sectors; the caravan pays a premium (Epic 10 G2; placeholder name)
+        HealingDraught = 7, // Made at the still from herbs; heals at once, carried into danger (Epic 10 Part 2, W2; placeholder name)
+        Respirator    = 8, // Worn protection against the air hazards, made at the forge (Epic 10 Part 2, W3; placeholder name)
+        HardHat       = 9  // Worn protection against falling rock, made at the forge (Epic 10 Part 2, W3; placeholder name)
     }
 }

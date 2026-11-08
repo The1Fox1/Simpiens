@@ -14,6 +14,9 @@ namespace Simpiens.Presentation.Art
         public const float ResourceSize = 0.8f;
         public const float HearthSize = 0.9f;
         public const float BunkSize = 0.9f;
+
+        /// <summary>The caravan's stride, both views (Epic 10 Part 2, D70).</summary>
+        public const float CaravanFramesPerSecond = 4f;
         public const float SelectionRingSize = 0.9f;
         /// <summary>An item lying in the world (on the stall's counter), and the marker over its carrier: 8 texels at a whole 8 pixels.</summary>
         public const float ItemMapSize = 0.75f, CarriedSize = 0.5f;
@@ -42,7 +45,17 @@ namespace Simpiens.Presentation.Art
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
                .Add(ArtKeys.PropStall, Sheet, new[] { "Prop_Stall" }, 2f, 1f, Art) // two cells by one
+               // The stations (Epic 10 Part 2, W1.6a): a cell each at the art's own 16 pixels a unit, as isometric's
+               .Add(ArtKeys.PropForge, Sheet, new[] { "Prop_Forge" }, 1f, 1f, Art)
+               .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
+               .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
+               // The trade caravan (Epic 10 Part 2, the stretch, D70): a porter and its cart, walking
+               .Add(ArtKeys.PropCaravan, Sheet, HazardSprites.Names(CaravanSprites.Name, CaravanSprites.Frames), 1f, 1f, Art, framesPerSecond: CaravanFramesPerSecond)
+               // The hazards' animations (Epic 10 Part 2, the stretch, D69): their frames run at HazardEffects' rates
+               .Add(ArtKeys.FxFoulAir, Sheet, HazardSprites.Names(HazardSprites.PuffName, HazardSprites.PuffFrames), 1.5f, 1.5f, Art, framesPerSecond: HazardEffects.PuffFramesPerSecond)
+               .Add(ArtKeys.FxFallingRock, Sheet, HazardSprites.Names(HazardSprites.RockName, HazardSprites.RockFrames), 1f, 1f, Art, framesPerSecond: HazardEffects.RockFramesPerSecond)
+               .Add(ArtKeys.FxFlood, Sheet, HazardSprites.Names(HazardSprites.RippleName, HazardSprites.RippleFrames), 1.5f, 1.5f, Art, framesPerSecond: HazardEffects.RippleFramesPerSecond)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);

@@ -28,7 +28,7 @@ namespace Simpiens.Presentation.Art.People
         public static readonly Rgba32 TabardColour = new Rgba32(30, 58, 138), TabardDevice = new Rgba32(250, 204, 21);
 
         // The keys the kit adds to a pattern's: hair in shade, the helm and its brim, the helm's lamp, the tabard and its device
-        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g';
+        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q';
 
         // What a pose holds besides the body: the tool, the bubbles' white and the marks over the head
         private const string Carried = "TW!?Z";
@@ -77,24 +77,28 @@ namespace Simpiens.Presentation.Art.People
             return sprites;
         }
 
-        private static readonly bool[] _onHead = BuildOnHead();
+        private static readonly bool[] _onHead = BuildWorn(Worn.Head);
+        private static readonly bool[] _onFace = BuildWorn(Worn.Face);
 
-        private static bool[] BuildOnHead()
+        private static bool[] BuildWorn(Worn where)
         {
             var items = (ItemType[])Enum.GetValues(typeof(ItemType));
             int most = 0;
             foreach (var item in items) most = Math.Max(most, (int)item);
-            var onHead = new bool[most + 1];
+            var worn = new bool[most + 1];
             foreach (var item in items)
-                onHead[(int)item] = item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out var art) && art.Worn == Worn.Head;
-            return onHead;
+                worn[(int)item] = item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out var art) && art.Worn == where;
+            return worn;
         }
 
         /// <summary>Whether <paramref name="item"/> is worn on the head, and so drawn on a body and a portrait (a helm).</summary>
         public static bool IsWornOnHead(ItemType item) => (uint)item < (uint)_onHead.Length && _onHead[(int)item];
 
-        /// <summary><paramref name="worn"/> if it is worn on the head, else None: what shows of a crawler's protection.</summary>
-        public static ItemType HeadGearOf(ItemType worn) => IsWornOnHead(worn) ? worn : ItemType.None;
+        /// <summary>Whether <paramref name="item"/> is worn over the face (a respirator's mask, Epic 10 Part 2, D52), and so drawn on a body and a portrait.</summary>
+        public static bool IsWornOnFace(ItemType item) => (uint)item < (uint)_onFace.Length && _onFace[(int)item];
+
+        /// <summary><paramref name="worn"/> if it is worn on the head or the face, else None: what shows of a crawler's protection.</summary>
+        public static ItemType HeadGearOf(ItemType worn) => IsWornOnHead(worn) || IsWornOnFace(worn) ? worn : ItemType.None;
 
         /// <summary>The hair styles that hang below the brow, and so show under a helm.</summary>
         public static bool HangsBelowTheBrow(string hairStyle) => hairStyle is "long" or "ponytail" or "braids";
@@ -113,6 +117,7 @@ namespace Simpiens.Presentation.Art.People
             Hair(keys, head, style);
             FacialHair(keys, head, LookCatalog.KeyOf(LookGene.FacialHair, look.FacialHair));
             if (colours.HasHelm) HelmOn(keys, head);
+            if (colours.HasMask) MaskOn(keys, head);
 
             int shift = 0;
             if (!head.Lying)
@@ -246,6 +251,13 @@ namespace Simpiens.Presentation.Art.People
             Set(keys, r + 2, t + 1, '#', ".");
         }
 
+        // The respirator's mask (D52): the mouth's row across the face, its filters at either side, over facial hair too
+        private static void MaskOn(Span<char> keys, in HeadAnchor head)
+        {
+            int c = head.Chin, l = HeadAnchor.Left, r = HeadAnchor.Right;
+            for (int x = l; x <= r; x++) Set(keys, x, c, x == l || x == r ? Filter : Mask, "KHh");
+        }
+
         // --- The body, from its first row under the head down ---
 
         private static void Build(Span<char> keys, int fromRow, string build)
@@ -335,7 +347,7 @@ namespace Simpiens.Presentation.Art.People
         /// <summary>A look's colours by key, resolved once per bake.</summary>
         private readonly struct Colours
         {
-            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp;
+            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp, _mask, _filter;
 
             public Colours(in CrawlerLook look, ItemType headGear)
             {
@@ -353,9 +365,14 @@ namespace Simpiens.Presentation.Art.People
                     _lamp = helm.Secondary;
                 }
                 else _helm = _brim = _lamp = Rgba32.Clear;
+                ItemLook face = default;
+                HasMask = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out face) && face.Worn == Worn.Face;
+                _mask = HasMask ? face.Primary : Rgba32.Clear;
+                _filter = HasMask ? face.Secondary : Rgba32.Clear;
             }
 
             public bool HasHelm { get; }
+            public bool HasMask { get; }
 
             public Rgba32 Of(char key, bool asleep) => key switch
             {
@@ -368,6 +385,8 @@ namespace Simpiens.Presentation.Art.People
                 Helm => _helm,
                 Brim => _brim,
                 Lamp => _lamp,
+                Mask => _mask,
+                Filter => _filter,
                 Tabard => TabardColour,
                 Device => TabardDevice,
                 _ => ProceduralSprites.CrawlerKeyColour(key),

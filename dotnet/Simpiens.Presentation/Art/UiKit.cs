@@ -52,6 +52,8 @@ namespace Simpiens.Presentation.Art
         public const string Moon = "Ui_Moon";
         public const string Close = "Ui_Close";
         public const string Lantern = "Ui_Lantern";
+        /// <summary>The workshop's glyph (Epic 10 Part 2, W1.6a): an anvil, horn to the left.</summary>
+        public const string Anvil = "Ui_Anvil";
 
         // The palette as art (UiStyle's values): warm grey stone, never brown
         private static readonly Rgba32 StoneDark = Rgb(0x1c1815);
@@ -99,6 +101,7 @@ namespace Simpiens.Presentation.Art
             Glyph(Moon, "..###..", ".##....", "##.....", "##.....", "##.....", ".##....", "..###.."),
             Glyph(Close, "#.....#", ".#...#.", "..#.#..", "...#...", "..#.#..", ".#...#.", "#.....#"),
             Glyph(Lantern, "..##..", ".####.", "##..##", "#.##.#", "#.##.#", "##..##", ".####.", "..##.."),
+            Glyph(Anvil, "########", ".#######", "...####.", "....##..", "...####.", "..######"),
         };
 
         /// <summary>

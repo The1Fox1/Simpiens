@@ -1,69 +1,81 @@
 # The Outpost Economy Model
 
 - **Owner:** review §3.3 / [ROADMAP §3A #10a](ROADMAP.md#3a-architecture-review-remediation-tracker). Status is owned by the roadmap.
-- **Evidence:** [Epic 9 §8](epics/epic-9.md) (Milestone 1); [Epic 10 §4 and §7](epics/epic-10.md) (drifters, glowstone, the bands since).
-- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../dotnet/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning`, `DrifterTuning` and `GuildTuning`). Since the item system refactor (2026-10-26):
+- **Evidence:** [Epic 9 §8](epics/epic-9.md) (Milestone 1); [Epic 10 §4 and §7](epics/epic-10.md) (drifters, glowstone, the guild); [Epic 10 Part 2](epics/epic-10-part-2.md) and the [time model](time-model.md) §2 (the economy per day, T4–T5).
+- **Numbers:** one `EconomyTuning` per session ([`EconomyTuning.cs`](../dotnet/Simpiens.Core/Simulation/Economy/EconomyTuning.cs), with `SupplyTuning`, `DrifterTuning`, `GuildTuning`, `WorkshopTuning` and the day's pace, `DayTuning`). Since the item system refactor (2026-10-26):
   - each item's terms are a table: its base value and the stall's role, price and stock, plus the caravan's exports and supplies (`ItemTerms`, `CaravanTerms`);
   - what an item does (hazard gear's protection and life, a ration's or a herb's effect) is its definition in the item catalog. The Garden and the hazard sectors are map data (`Floor1Layout`).
-- **Decided 2026-10-14** by the agent under the producer's provisional authority. Reviewed, merged (PR #3) and play-tested in the Unity editor by the producer on 2026-10-15. Extended by Epic 10: drifters (G1), glowstone (G2) and hazard gear (G3).
+- **History:**
+  - **Decided 2026-10-14** by the agent under the producer's provisional authority; reviewed, merged (PR #3) and play-tested by the producer on 2026-10-15.
+  - **Extended by Epic 10:** drifters (G1), glowstone (G2), hazard gear (G3), the guild (G4) and expeditions (G5).
+  - **Re-paced for the 24-hour day** by Epic 10 Part 2, milestone T, 2026-11-05 (D23–D29, approved by the developer; T5 made it the game). Before the day, the caravan came every real minute, salvage paid four times as much, and the soak played 30 minutes: see git history for the model as it was.
 
 ## 1. The loop in one paragraph
-Crawlers harvest ore and herbs and sell them to the player's stall. They spend that gold on stall rations or eat free from the Garden. The caravan visits every minute:
-1. it buys a fixed quota of the stall's salvage at a market price (the main way new gold enters), glowstone from the hazard sectors at a premium since Epic 10 G2;
+Crawlers harvest ore and herbs and sell them to the player's stall. They spend that gold on stall rations, and sometimes eat free from the Garden. A crawler eats two or three times a day, sleeps about 8 hours, and works toward a purse of 80g (D25). The caravan visits every 6 game hours, at 12:00, 18:00, 00:00 and 06:00 (D24). On each visit:
+1. it buys the stall's salvage up to its lots at a market price (the main way new gold enters), and glowstone from the hazard sectors at a premium;
 2. the stall pays its upkeep (the main way gold leaves);
 3. the caravan sells the stall wholesale rations;
-4. the stall pays the guild's wages, since Epic 10 G4;
-5. then hazard gear, since Epic 10 G3: food, then people, then stock.
+4. the stall pays the guild's wages, then the artisans' (Epic 10 Part 2);
+5. then hazard gear: food, then people, then stock.
 
-The player sets five prices (rations, ore, herbs, glowstone since Epic 10 G2, hazard gear since G3) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
+The player sets five prices (rations, ore, herbs, glowstone, hazard gear) and posts bounties. Each crawler judges every trade by its own valuation, and trust toward the player follows those judgements.
 
-**Hazard gear (Epic 10 G3, 2026-10-25)** is the crawlers' own sink, deferred by Epic 9 D2.
-- **What it does:** a bold crawler buys gear at the stall before going into a hazard sector. Worn, it halves the damage and wears out after 50 s in danger, so the crawler buys again.
+**Work on the day (D29).** Salvage pays a quarter of Part 1's price, so a day's meals (about 35–40g) take a resident some 5–6 hours of harvesting and selling, RimWorld-style: harvest trips 4.6 game hours a day and selling 1.1, idle 13% (measured on the 23 gate seeds over three days). The caravan's bigger lots let the stall keep buying what a day's work brings in. D25's 6–8 hours are near, not met; made goods to buy (the pickaxe, draughts) are meant to bring the rest.
+
+**Hazard gear (Epic 10 G3)** is the crawlers' own sink.
+- **What it does:** a bold crawler buys gear at the stall before going into a hazard sector. Worn, it halves the damage and wears out after 1,500 ticks in danger (about 3.6 game hours), so the crawler buys again.
 - **Where the gold goes:** the crawler's gold goes to the stall, and the stall pays the caravan wholesale for the next piece.
 
-**The guild (Epic 10 G4, 2026-10-30)** is the player's cost of keeping people.
-- **Joining:** a trusted resident signs on for a 20g fee from the stall.
-- **Wages:** each visit pays every member its wage (5g by default) in join order, each in full or not at all.
-- **Where the gold goes:** both are transfers from the stall to members, who spend them. With four members on the soak's seeds, the treasury ends 192–249g below a guild-free run, with members' purses within what residents usually carry. No crawler sink is needed.
+**The guild (Epic 10 G4)** is the player's cost of keeping people.
+- **Joining:** a resident at trust 60 and warmth 40 signs on for a 20g fee from the stall. On the day four residents qualify by about day 2 (T4.2b): trust follows six sales a day.
+- **Wages:** each visit pays every member its wage (5g by default, 20g a day) in join order, each in full or not at all.
+- **Where the gold goes:** both are transfers from the stall to members, who spend them.
 
-**Expeditions (Epic 10 G5, 2026-10-31)** bring back what nobody gathers alone.
-- **The chamber:** the Drowned Gallery's one glowstone seam (yield 4, regrowing in 10 minutes) is worked only by a party: a crawler alone never braves more than 4 health a second.
+**Expeditions (Epic 10 G5)** bring back what nobody gathers alone.
+- **The chamber:** the Drowned Gallery's one glowstone seam (yield 4, regrowing in about 14 game hours) is worked only by a party: a crawler alone never braves more than 1 health a second, and the Gallery takes 1.5.
+- **The muster** rouses a member who has slept past the tired line (D31), as RimWorld's drafted colonists wake.
 - **The haul:** it goes into the stall's stock without a sale, and the caravan buys it at its premium as any glowstone. The members split 30% of its caravan value (21g a glowstone), paid from the stall on delivery as transfers, each in full or not at all.
 - **What the stall gives from stock, no gold:** hazard gear for members who need it, and two rations each at the muster. The caravan restocks both at wholesale, so they are the expedition's cost.
-- **One trip:** about 280g of glowstone for the caravan, 84g in shares, gear and rations from stock. Since Epic 10 G6 the soak's `guild` profile plays them: the treasury stays in the fair band, 1,000–2,000g, with four members' wages and one haul home on every seed whose guild fills (§7; D14).
+- **One trip:** about 280g of glowstone for the caravan, 84g in shares, gear and rations from stock. The soak's `guild` profile plays them (§7).
 
-**Drifters (Epic 10 G1, 2026-10-23)** open the economy: strangers come in by the Road Gate with a small purse, buy a meal or two, sometimes work, and move on after three to five minutes. Their purses are the second way new gold enters; what they still carry leaves with them. The 12 residents stay.
+**Drifters (Epic 10 G1)** open the economy: strangers come in by the Road Gate with 20–26g, about one every 5 game hours from the third, and stay 4–7 game hours. On the day they work too (F11): they sell salvage, so they take away more gold than they bring, but a stall ends richer with them than in a closed outpost (§7).
 
 ## 2. Faucets and sinks (all named in the ledger)
+A day is 4 caravan visits. Measured per day on the gate seeds (T4.2b): the caravan pays about 890g, upkeep takes 320g, wholesale rations about 56g, gear about 21g; the stall sells 29 rations (455g) and buys 92 units of salvage (660g).
+
 | Flow | Name | Size | Bound |
 | :--- | :--- | :--- | :--- |
 | Faucet | `InitialSeed` | stall treasury 250g + 15g per crawler | once, at tick 0 |
-| Faucet | `CaravanSalvageSales` | 2 ore × 24g + 2 herbs × 30g per visit | 108g a visit for ore and herbs; with glowstone's row below, `SupplyTuning.MaxSalvagePaymentPerVisit` is 248g |
-| Sink | `OutpostUpkeep` | 80g per visit | fixed; a stall that can't pay goes into arrears |
+| Faucet | `CaravanSalvageSales` | up to 16 ore × 6g + 12 herbs × 7g a visit (the stall pays 5g and 6g) | 180g a visit for ore and herbs; with glowstone's row below, `SupplyTuning.MaxSalvagePaymentPerVisit` is 320g |
+| Sink | `OutpostUpkeep` | 80g a visit, 320g a day | fixed; a stall that can't pay goes into arrears |
 | Sink | `SupplyCaravan` | 2g per wholesale ration, topping stock up to 50 | as much as the stall can pay for (partial restocks) |
-| Faucet | `CaravanSalvageSales` (glowstone) | up to 2 glowstone × 70g per visit (Epic 10 G2); the stall pays crawlers 45g | six nodes in the hazard sectors, one unit each, regrowing in 10 minutes |
-| Sink | `GearWholesale` | 20g per hazard gear, topping stock up to 3 after the rations (Epic 10 G3) | as much as the stall can pay for; the stall sells it to crawlers at the player's price (default 30g) |
-| Faucet | `DrifterPurses` | 20–26g per drifter, about one every 3.5 minutes from minute 2 | at most 3 drifters at once (`DrifterTuning`) |
+| Faucet | `CaravanSalvageSales` (glowstone) | up to 2 glowstone × 70g a visit; the stall pays crawlers 45g | six nodes in the hazard sectors, one unit each, regrowing in about 14 game hours |
+| Sink | `GearWholesale` | 20g per hazard gear, topping stock up to 3 after the rations | as much as the stall can pay for; the stall sells it at the player's price (default 30g) |
+| Faucet | `DrifterPurses` | 20–26g per drifter, about one every 5 game hours | at most 3 drifters at once (`DrifterTuning`) |
 | Sink | `DrifterDepartures` | what a drifter still carries when it leaves | its purse plus what it earned |
 | Transfer | purchases, sales, bounty escrow | between the stall and crawlers | conserved |
-| Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; counted as `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
-| Faucet | `CaravanSalvageSales` (the Gallery's glowstone, Epic 10 G5) | the haul of an expedition, up to 4 glowstone, sold 2 a visit at 70g | one seam, regrowing in 10 minutes; only a party works it |
-| Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party (21g a glowstone) | conserved; counted as `Shares` in the ledger's flows; a share the treasury can't cover isn't paid |
+| Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
+| Faucet | `CaravanSalvageSales` (the Gallery's glowstone, Epic 10 G5) | an expedition's haul, up to 4 glowstone, sold 2 a visit at 70g | one seam; only a party works it |
+| Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party | conserved; `Shares` in the ledger's flows |
+| Sink | `Construction` (Epic 10 Part 2) | 300g per station, the forge and the still (`WorkshopTuning`) | once per station; refused when the treasury can't pay |
+| Transfer | artisans' wages (Epic 10 Part 2) | each artisan's wage a visit (5g by default), after the guild's members | conserved; `ArtisanWages` in the ledger's flows; no signing fee |
 
-**What follows:** the stall's net per visit ≈ salvage faucet − upkeep − wholesale − growth in crawler wallets.
-- Crawlers spend almost all they earn, so their gold passes through.
-- The treasury grows only when crawlers sell enough salvage to fill the caravan's quota, which happens when the stall's prices are fair.
+**What follows:** the stall's net a day ≈ the caravan's payment − upkeep − wholesale − what crawlers keep.
+- Crawlers spend what they earn, so their gold passes through; purses stay near 40–55g, under the 80g they earn toward.
+- The stall earns about 1g on each unit of salvage it passes on, and about 13g on each ration it sells. The treasury grows about 250g a day at fair prices.
 
 ## 3. The scarcity lever: crawlers' willingness to trade (D4)
 Every crawler values things with its personality and needs:
 - **A ration:** calm value = 20g × greed factor (neutral 20g, greedy 10g, generous 30g). Hunger raises what it will pay, up to 1.5× when starving.
-- **Salvage:** minimum sale price = base value × greed factor (neutral ore 8g, herb 12g).
-- **Hazard gear (Epic 10 G3):** calm value = 40g × greed factor (neutral 40g, greedy 20g, generous 60g). No need raises it, so it is also the most a crawler pays.
+- **Salvage:** minimum sale price = base value × greed factor (neutral ore 2g, herb 3g). Every seller, greedy to generous, sells at the stall's default price.
+- **Hazard gear:** calm value = 40g × greed factor (neutral 40g, greedy 20g, generous 60g). No need raises it, so it is also the most a crawler pays.
     - **Who buys:** only a crawler bold and healthy enough to go into danger, wearing no gear, that can still pay for a ration after.
-    - **Why 30g:** the default is 0.75 of the neutral value, as the ration's 15g is of 20g. At 40g, the base value, nobody with any greed bought.
-    - **Gear's scarcity:** the caravan's three a visit and the crawlers' purses. Those are the "gear-gated scarcity" Epic 9 deferred.
+    - **Why 30g:** the default is 0.75 of the neutral value, as the ration's 15g is of 20g.
+    - **Gear's scarcity:** the caravan's three a visit and the crawlers' purses.
 
-A crawler refuses a price outside its valuation. Over-pricing doesn't only cost trust: it cuts trade volume, and volume is what fills the caravan's quota.
+**Earning (D30).** Below its 80g purse a crawler works for gold; how urgently is the share of the purse it lacks (20 when empty), not the gold, so a bigger purse doesn't make every bounty look small beside earning.
+
+A crawler refuses a price outside its valuation. Over-pricing doesn't only cost trust: it cuts trade volume, and volume is what the caravan pays for.
 
 ## 4. Fairness and trust (D3)
 Only completed trades change trust; a refused trade changes nothing.
@@ -71,52 +83,49 @@ Only completed trades change trust; a refused trade changes nothing.
 | Trade | Generous (+10 trust) | Fair (+3) | Unfair |
 | :--- | :--- | :--- | :--- |
 | Crawler buys a ration | price ≤ 0.6 × calm value | ≤ 1 × calm value | **Gouged** (−15): above its calm value, so hunger made it pay |
-| Crawler buys hazard gear (Epic 10 G3) | price ≤ 0.6 × calm value | ≤ 1 × calm value | none: it never pays above its calm value |
+| Crawler buys hazard gear | price ≤ 0.6 × calm value | ≤ 1 × calm value | none: it never pays above its calm value |
 | Crawler sells salvage | price ≥ 3 × its minimum | ≥ 1.5 × minimum | **Stingy** (−5): at its minimum or just above |
 | Crawler delivers a bounty (Epic 10 G4) | reward ≥ 3 × its minimum for the work (+15 trust, +10 warmth, +10 respect) | ≥ 1.5 × (+8, +5, +5) | **Stingy** (−5 trust, −3 warmth) |
 
-**A bounty's minimum for the work:** a Gather's items at the crawler's minimum sale prices, and a Scout's report at 5g × its greed factor. The seeded bounties (25g for an ore, 15g for a scout) are generous to a neutral crawler and fair to a greedy one.
+**A bounty's minimum for the work:** a Gather's items at the crawler's minimum sale prices, and a Scout's report at 5g × its greed factor. The seeded bounties (25g for an ore, 15g for a scout) are generous to every crawler on the day.
 
 **A guild member's trust:** each paid visit is +2 trust and +1 warmth; an unpaid one is −10 and −5. A member quits below 30 trust, or after two unpaid visits in a row.
 
-The default prices (15 / 20 / 25) are fair to a neutral crawler. Trust regresses toward neutral over time, so a player keeps trust only by keeping trade fair.
+The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affinity fades 5 points toward neutral every 12 game hours since the last dealing (D27), so a player keeps trust only by keeping trade fair.
 
 ## 5. The stall's limits
-- **Salvage capacity:** 20 of each type. A full stall stops buying until the caravan takes its quota, and crawlers stop harvesting salvage for it.
+- **Salvage capacity:** 20 of each type. A full stall stops buying until the caravan takes its lot, and crawlers stop harvesting salvage for it. On the day ore fills it before about half the visits.
 - **Arrears:** when upkeep can't be paid in full, the stall pays what it has (no debt) and buys no salvage until a visit pays in full. It keeps selling rations, which is how it recovers. The merchant view shows the arrears and the chronicle records it.
 - **Bankruptcy is felt as hunger.** With no gold the caravan delivers no rations, and the outpost falls back on the Garden.
 
-## 6. Food (D6)
-- **Hunger** rises 1.5/s; a ration takes off 50, so a crawler needs about 1.8 meals a minute (12 crawlers: about 22).
-- **The Garden:** 4 plots × 4 rations, regrowing 300 ticks after they empty, about 32 a minute at most (`Floor1Layout.FoodPlotYield`, `FoodRegrowTicks`). It's free, but the plots are shared and walking takes time; crawlers harvest about 9 a minute in practice.
+## 6. Food (D6, D19)
+- **Hunger** fills from fed to starving over a game day; a ration from the pack takes off 40, eaten at a Garden plot 50. A crawler eats two or three times a day (2.3 measured).
+- **The Garden:** 4 plots × 4 rations, regrowing 300 ticks after they empty (`Floor1Layout.FoodPlotYield`, `FoodRegrowTicks`). It's free, but on the day crawlers buy nine meals in ten at the stall; the Garden is the quick fallback (D26, measured).
 - **A crawler arrives with 15g,** one ration at the default price.
-- **Invariant:** a ration costs no more than one ore sale (15 ≤ 20), so one sale always buys a meal.
-- **Behaviour:** a starving crawler that knows no reachable food goes back to the Garden plots it has seen and waits for them to regrow. It doesn't explore away.
+- **A meal is three units of ore** (15g against 5g): about an hour and a half of harvesting with the walks. Before the day one ore sale bought a meal.
+- **Behaviour:** a starving crawler that knows no reachable food goes back to the Garden plots it has seen and waits for them to regrow. A sleeper wakes when hunger reaches 85.
 
-## 7. Pace targets (D5), asserted by the soak
-`simpiens soak` and `dotnet test` (`EconomySoakTests`) run 30 sim-minutes for each of 3 seeds; each profile is set by a price command at tick 0, and every run is checked against its profile's band (`EconomySoak`). (Unity's `scripts/run-economy-soak.sh` did the same until Unity's removal on 2026-10-24.)
+## 7. Pace targets (D5, D28), asserted by the soak
+`simpiens soak` and `dotnet test` (`EconomySoakTests`) play three game days (30,240 ticks) for each of 3 seeds, sampled at each caravan visit; each profile's prices are set by a command at tick 0 as shares of the fair prices, and every run is checked against its profile's band (`EconomySoak`). Starving is hunger 95 or more for 2 game hours.
 
-| Profile | Prices (ration / ore / herb; gear since Epic 10 G3) | Band (per run, at 30 min) | Measured 2026-10-25 with gear, headless (3 seeds) |
+| Profile | Prices (ration / ore / herb; gear) | Band (per run, at the end of day 3) | Measured 2026-11-05 (T4.4, seeds 1–15 and 20261009) |
 | :--- | :--- | :--- | :--- |
-| Fair | 15 / 20 / 25; gear 30 | treasury 1,000–2,000g (the producer, 2026-10-25; was 375–875g before Epic 10 G2's glowstone); trust up for ≥ 8 of 12; 0 starving episodes | 1,499–1,564g; trust up 11–12; 0 starving (before gear 1,545–1,594g; 2026-10-15, before Epic 10: 546–771g) |
-| Greedy | 30 / 10 / 12; gear 60 | trust up for ≤ 2 of 12; trust mean below 0 at its lowest (since 2026-10-23, Epic 10 G0; it was at 30 min) (treasury not asserted) | trust up 0, mean −2.5 to −0.8 at 30 min; treasury 0g at 30 min on every seed |
-| Generous | 5 / 35 / 40; gear 20 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by minute 10 on every seed; trust up 11–12; 0 starving |
-| Guild (Epic 10 G6, D14) | fair, plus the scripted guild player: four recruited as they qualify at the default wage, outfitted from stock and sent to the Drowned Gallery whenever its seam is back | treasury 1,000–2,000g; trust up for ≥ 8 of 12; 0 starving episodes; no wage unpaid; a guild full by minute 25 brings an expedition home | 2026-11-01, the soak's seeds: 1,146–1,630g; trust up 11; never unpaid; one haul home on each seed whose guild filled (seed 2's reached two members). Seeds 1–15: 1,146–1,991g, never unpaid, one starving episode (seed 11) |
+| Fair | 15 / 5 / 6; gear 30 | treasury 600–1,600g; trust up for ≥ 8 of 12; 0 starving episodes | 771–1,277g; trust up 10–12; 0 starving |
+| Greedy | 30 / 2 / 3; gear 60 (food and gear ×2, salvage ×½) | trust up for ≤ 3 of 12; trust mean below 0 at its lowest (treasury not asserted) | trust up 0–3; mean −29 to −71 at the end; treasury 512–729g |
+| Generous | 5 / 9 / 10; gear 20 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by day 1–2 on every seed; trust up 12 |
+| Guild (Epic 10 G6, D14) | fair, plus the scripted guild player: four recruited as they qualify, outfitted from stock and sent to the Drowned Gallery whenever its seam is back | treasury 400–1,200g; trust up for ≥ 8 of 12; 0 starving; no wage unpaid; a guild full 8 game hours before the end brings an expedition home | 578–998g; full on day 1.6–2.9; every wage paid; 1–2 hauls home whenever full in time |
+| Crafting (Epic 10 Part 2, W6.3, D67–D68; measured 2026-11-06, same seeds) | fair, plus the forge making respirators, the still draughts, and the guildhall's guild of eight (two parties sent together), keeping a 200g reserve | proposed by exception: treasury 0–1,200g; trust up for ≥ 8 of 12; 0 starving; no member unpaid; a station standing and something made | 1–390g; trust up 10–12; 0 starving; stations 1–2 standing, 0–8 made; a member unpaid once on 2 seeds; nothing made on 2 (no glowstone or herbs to work); eight members by day 3 only on the default seed. 12 of 16 within the band, the soak's 3 seeds all |
 
-- **Why greed paid nothing before drifters:** the economy was closed. Without an outside buyer, greedy prices only shrank the trade that fills the caravan's quota. Since Epic 10 G1 drifters bring outside gold: drifters leave gold behind on every soak seed (their purses exceed what they take away), and a slightly greedy player (rations 20, ore 18, herbs 22: the soak's `keen` profile) ends the 30 minutes richer than the same player in a closed outpost over the soak's seeds (`dotnet test` asserted it in `AKeenPlayerDoesBetterWithDrifters` until Epic 10 G3; `simpiens soak --profile keen [--closed]`). Measured 2026-10-23, headless: 2,316g against 2,154g summed (886 against 796, 652 against 652, 778 against 706); drifters left 139g, 35g and 86g behind. Per seed the comparison is noisy: a run with drifters is a different run of a chaotic day.
-    - **Since glowstone the comparison is within that noise** (Epic 10 F4). Measured 2026-10-25 with gear over seeds 1–15: 19,355g against 19,249g, ahead on 8 of 15.
-    - The test (`DriftersLeaveGoldBehindForAKeenPlayer`) now asserts what is causal: drifters leave gold behind on every soak seed. It reports the treasury comparison.
-- **The fair band since glowstone (Epic 10 G2, 2026-10-23):** the hazard sectors' glowstone is new money by design (the caravan's premium); the fair player ends at 1,545–1,594g, the same in Unity and headless, so the band was re-set to 1,000–2,200g, and the producer set it to 1,000–2,000g on 2026-10-25 (re-measured: 1,545–1,594g). Gear wear (G3) and wages (G4) are the costs meant to meet it. Measured before G2, with drifters: 768–831g.
-- **The fair band with drifters:** it holds (768–831g headless, 2026-10-23). Larger purses broke it: 40–80g every two minutes nearly doubled the fair player's treasury (1,189–1,273g), so the tuning was cut until the band held.
-- **Why greed is judged at its lowest trust (2026-10-23, Epic 10 G0):** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral by minute 30. Before G0's navigation fixes, starving crawlers stuck near the stall bought gouged rations late in the run, and that kept the mean below 0 at the end; now they eat at the Garden. The generous band is judged at its peak for the same reason.
+- **The bands are proposed** from T4.4's measurement and stand by the producer's rule of answering by exception. Before the day: fair and guild 1,000–2,000g at 30 minutes (the producer, 2026-10-25), greedy trust up for 2 at most.
+- **Lower treasuries than Part 1's:** a day pays 320g of upkeep, and salvage earns the stall about 1g a unit instead of 4–5g. The guild's wages, fees and outfitting take about 260g more over three days than the fair player's.
+- **Drifters (F11):** the keen profile (rations 20, ore 4, herbs 5, gear 35: slightly greedy) ends richer with drifters than in a closed outpost on every soak seed. Measured over 16 seeds: 17,254g against 11,985g, ahead on all 16, though drifters take away more than they bring (about 460g against 330g over three days). `DriftersLeaveAKeenPlayersStallRicher` asserts it; on Part 1's day the comparison was within the noise (Epic 10 F4).
+- **Why greed is judged at its lowest trust:** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
-- **The regular suite** asserts the fair case over 15 minutes: the outpost's day (`OutpostScenarioTests`, on 23 gate seeds) checks that trust rises for ⅔ of crawlers and nobody starves.
-- **Headless (.NET 10, since 2026-10-17; the only runtime since Unity's removal on 2026-10-24):** `simpiens soak` and `dotnet test` assert the bands, all 9 runs in about 4 s. Until Epic 10 G2 the numbers differed from Unity's, because Mono rounded some float expressions differently (epic CORE §6 F1); since G2's rounding fixes the 9 runs end on identical numbers in both runtimes.
-- **Across seeds:** the 15-minute day (`simpiens sweep`, the lifecycle checks) passes on all 23 gate seeds since Epic 10 G0, and `dotnet test` asserts it (`OutpostWatch.GateSeeds`). On 2026-10-17 it passed on 16 of 23 (epic CORE §6 F2, resolved by G0: crawlers that couldn't move, not a food shortage). Wider sweeps leave a few trust shortfalls (Epic 10 F3).
+- **The regular suite** asserts the fair case over one game day: the outpost's day (`OutpostScenarioTests`, on the 23 gate seeds) checks that trust rises for ⅔ of crawlers and nobody starves. Seeds 1–120 all pass (`simpiens sweep`, 2026-11-05).
 
 ## 8. Deferred
-- ~~**Drifters** (outside buyers and churn): Milestone 2.~~ Delivered by Epic 10 G1 (2026-10-23): §1, §2, §7.
-- ~~**Gear, wear and gear-gated scarcity:** Epic 10 G3.~~ Delivered by Epic 10 G3 (2026-10-25): §1, §2, §3, §4, §7. Crafted gear, grades and repair: Epic 10 Part 2.
-- ~~**Wages, bounty fairness and Guild recruitment thresholds:** Epic 10 G4 (Milestone 2).~~ Delivered by Epic 10 G4 (2026-10-30): §1, §2.
-- ~~**Expeditions and their shares:** Epic 10 G5.~~ Delivered by Epic 10 G5 (2026-10-31): §1, §2. Their effect on the soak's bands was measured at G6 (2026-11-01): the `guild` profile, §7.
-- **Lodging fees and other crawler sinks:** not needed while crawler wallets stay flat.
+- ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
+- **Made goods** (the pickaxe, draughts, gear for each hazard): Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
+- ~~**Lodging fees:**~~ delivered by Epic 10 Part 2, W5 (2026-11-06, D63): a guild member with a bunk in the barracks is paid its wage less 1g each caravan visit (`GuildTuning.LodgingFee`), never below nothing. It is a deduction, not a transfer: the fee stays in the treasury and the ledger records the wage paid.
+- **Other crawler sinks:** not needed while crawler wallets stay flat.
+- **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).

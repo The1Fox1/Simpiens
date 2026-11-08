@@ -17,7 +17,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (agent != null && !agent.IsGossiping) agent.VisualState = AgentVisualState.Idle;
 
             state.ElapsedTime += context.FixedTickDeltaTime;
-            return state.ElapsedTime >= eat.Duration ? IntentResult.Success : IntentResult.InProgress;
+            float duration = eat.Duration >= 0f ? eat.Duration : context.Economy.Day.Actions.EatSeconds;
+            return state.ElapsedTime >= duration ? IntentResult.Success : IntentResult.InProgress;
         }
     }
 }

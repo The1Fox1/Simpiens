@@ -35,13 +35,14 @@ namespace Simpiens.Presentation.Dashboard
     /// would refuse (<see cref="BountyRules"/>, the treasury) so the player gets the reason. Post and Cancel queue typed
     /// commands; nothing changes here until the simulation applies them.
     /// </summary>
-    public sealed class BountyBoardModel
+    public sealed class BountyBoardModel : IDashboardWindow
     {
         public const string AllChartedText = "Every sector is charted: there is nothing left to scout.";
         public const string AwaitsChartSuffix = " (claimable once charted)";
         public const int MinQuantity = 1, MaxQuantity = 10, DefaultQuantity = 1;
         public const int MinReward = 10, MaxReward = 100, DefaultReward = 25;
-        public const int MinDuration = 500, MaxDuration = 3000, DefaultDuration = 1000;
+        /// <summary>A bounty's life in game hours (Epic 10 Part 2, T6: on the 24-hour day, 4 to 24 hours, 12 offered).</summary>
+        public const int MinDuration = 4, MaxDuration = 24, DefaultDuration = 12;
 
         private readonly DashboardContext _context;
         private readonly List<int> _sectorIds = new List<int>(16);
@@ -124,7 +125,7 @@ namespace Simpiens.Presentation.Dashboard
 
         public static string QuantityText(int quantity) => Invariant($"{quantity} Unit{(quantity > 1 ? "s" : "")}");
         public static string RewardText(int gold) => Invariant($"{gold} Gold");
-        public static string DurationText(int ticks) => Invariant($"{ticks} Ticks");
+        public static string DurationText(int hours) => OutpostClock.Span(hours * (long)DayClock.TicksPerHour);
 
         public static string FormatType(BountyType type) => type switch
         {
@@ -173,7 +174,7 @@ namespace Simpiens.Presentation.Dashboard
                 : $"Explore & Scout {sectorName}";
             bool canCancel = bounty.Status == BountyStatus.Open || bounty.Status == BountyStatus.Claimed;
             return new BountyRow(bounty.BountyId, Invariant($"#{bounty.BountyId} - {FormatType(bounty.Type)}"), bounty.Status,
-                Invariant($"{task} | Expires: {bounty.ExpirationTick} ticks"), RewardText(bounty.RewardGold), canCancel);
+                $"{task} | Expires in {OutpostClock.Span(bounty.ExpirationTick - (_context.Clock?.CurrentTick ?? 0))}", RewardText(bounty.RewardGold), canCancel);
         }
 
         /// <summary>
@@ -199,6 +200,7 @@ namespace Simpiens.Presentation.Dashboard
             for (int i = 0; i < zones.Count; i++)
             {
                 var zone = zones[i];
+                if (zone.IsFacility) continue; // the player's own (BountyRules.TargetCheck.Facility)
                 if (_type == BountyType.ScoutSector && zone.IsExplored) continue;
                 _sectorIds.Add(zone.ZoneId);
                 _sectorLabels.Add(zone.IsExplored || _type == BountyType.ScoutSector ? zone.Name : zone.Name + AwaitsChartSuffix);
@@ -231,7 +233,7 @@ namespace Simpiens.Presentation.Dashboard
             var item = _type == BountyType.ScoutSector ? ItemType.None : Item;
             byte quantity = (byte)Clamp(Quantity, MinQuantity, MaxQuantity);
             ushort reward = (ushort)Clamp(Reward, MinReward, MaxReward);
-            uint duration = (uint)Clamp(Duration, MinDuration, MaxDuration);
+            uint duration = DayClock.Hours(Clamp(Duration, MinDuration, MaxDuration));
 
             EntityId stallId = default;
             if (_context.TryGetStall(out var stall))

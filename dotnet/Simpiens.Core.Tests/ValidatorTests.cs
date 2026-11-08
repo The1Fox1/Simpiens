@@ -66,6 +66,9 @@ namespace Simpiens.Core.Tests
         public void DirectiveCompliance() => new Simpiens.Testing.Sociopolitical.DirectiveComplianceValidator().Start();
 
         [Fact]
+        public void DayPace() => new Simpiens.Testing.Drives.DayPaceValidator().Start();
+
+        [Fact]
         public void DriveDecay() => new Simpiens.Testing.Drives.DriveDecayValidator().Start();
 
         [Fact]
@@ -157,6 +160,18 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void ItemCatalog() => new Simpiens.Testing.Economy.ItemCatalogValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Crafting() => new Simpiens.Testing.Economy.CraftingValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Workshops() => new Simpiens.Testing.Economy.WorkshopValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Tools() => new Simpiens.Testing.Economy.ToolValidator().RunAllValidationTests();
 
         [Fact]
         public void Loot() => new Simpiens.Testing.Economy.LootValidator().RunAllValidationTests();

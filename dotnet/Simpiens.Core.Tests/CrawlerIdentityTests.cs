@@ -52,7 +52,7 @@ namespace Simpiens.Core.Tests
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var watch = new OutpostWatch(sim);
-            watch.Run(9000);
+            watch.Run(OutpostWatch.DayTicks);
 
             // Everyone the day saw: who is still here, and who left (CrawlerSpawned fires before the host names a crawler)
             var given = sim.Host.CrawlerStates.Select(s => s.GivenName).Concat(sim.Host.Departed.Select(d => d.GivenName)).ToList();
@@ -81,7 +81,7 @@ namespace Simpiens.Core.Tests
             using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var watch = new OutpostWatch(sim);
-            while (sim.Host.Departed.Count == 0 && sim.Clock.CurrentTick < 9000) watch.Run(100);
+            while (sim.Host.Departed.Count == 0 && sim.Clock.CurrentTick < OutpostWatch.DayTicks) watch.Run(100);
             Assert.True(sim.Host.Departed.Count > 0, "No drifter left within the day.");
             var save = SaveSerializer.Deserialize<SessionSave>(SaveSerializer.Serialize(sim.Host.Capture()));
 
@@ -117,7 +117,7 @@ namespace Simpiens.Core.Tests
             Simpiens.Cognition.AgentState arrived = null;
             void OnSpawned(Simpiens.Cognition.AgentRuntime runtime, Simpiens.Simulation.WorldEntity entity, string name) => arrived ??= runtime.State;
             sim.Host.CrawlerSpawned += OnSpawned;
-            for (long end = sim.Clock.CurrentTick + 9000; arrived == null && sim.Clock.CurrentTick < end;) sim.Step(1);
+            for (long end = sim.Clock.CurrentTick + OutpostWatch.DayTicks; arrived == null && sim.Clock.CurrentTick < end;) sim.Step(1);
             sim.Host.CrawlerSpawned -= OnSpawned;
             return arrived;
         }

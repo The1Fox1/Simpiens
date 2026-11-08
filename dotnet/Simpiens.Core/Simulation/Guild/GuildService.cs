@@ -108,7 +108,7 @@ namespace Simpiens.Simulation.Guild
                 groups.AddMember(_groupId, crawlerId, RoleRank.Follower, tuning.InitialAllegiance);
                 crawler.Memberships = groups.GetMemberships(crawlerId);
             }
-            _members.Add(new GuildContract(crawlerId, wage, tick));
+            _members.Add(new GuildContract(crawlerId, wage, tick, bunk: FreeBunk())); // a bunk in the barracks, if one is free (Epic 10 Part 2, W5.2)
             _cooldowns.Remove(crawlerId);
 
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} signed on with the guild at {wage}g a visit; the stall paid a {tuning.SigningFee}g fee ({_members.Count} of {tuning.MaxMembers})");
@@ -155,7 +155,8 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// The caravan's visit pays every member's wage from <paramref name="stall"/>, in join order, each in full or not at
-        /// all (D3): no debt, as with upkeep. A paid member's trust, warmth and allegiance rise (the payment is an
+        /// all (D3): no debt, as with upkeep. A member with a bunk in the barracks is paid its wage less the lodging fee
+        /// (Epic 10 Part 2, W5.2, D63): the fee stays in the treasury. A paid member's trust, warmth and allegiance rise (the payment is an
         /// interaction, so its trust doesn't drift back); an unpaid one's fall, and its unpaid visits count up. Then a
         /// member quits below the trust floor or after too many unpaid visits in a row (D4), leaving the guild only.
         /// Wages are transfers from the stall to the member, conserved. Returns the stall as it is after.
@@ -171,14 +172,15 @@ namespace Simpiens.Simulation.Guild
             {
                 var contract = _members[i];
                 if (!host.TryGetCrawler(contract.CrawlerId, out var member)) continue;
-                bool paid = stall.TreasuryGold >= contract.Wage && member.Inventory != null;
+                uint pay = WagePaid(contract, tuning);
+                bool paid = stall.TreasuryGold >= pay && member.Inventory != null;
                 if (paid)
                 {
-                    if (host.EconomyLedger != null) host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, member.Inventory, contract.Wage, StallPayment.GuildWage);
-                    else
+                    if (pay > 0 && host.EconomyLedger != null) host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, member.Inventory, pay, StallPayment.GuildWage);
+                    else if (pay > 0)
                     {
-                        stall = stall.WithTreasury(stall.TreasuryGold - contract.Wage);
-                        member.Inventory.AddGold(contract.Wage);
+                        stall = stall.WithTreasury(stall.TreasuryGold - pay);
+                        member.Inventory.AddGold((int)pay);
                     }
                     changed = true;
                     member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
@@ -219,7 +221,10 @@ namespace Simpiens.Simulation.Guild
             return stall;
         }
 
-        /// <summary>Takes a member out of the guild (quitting or dismissal): its contract ends, it leaves the guild's group only, and it can't sign again for a while.</summary>
+        /// <summary>
+        /// Takes a member out of the guild (quitting or dismissal): its contract ends, it leaves the guild's group and its
+        /// party (Epic 10 Part 2, W5, D65; a party out marks it gone on its next tick), and it can't sign again for a while.
+        /// </summary>
         internal void Leave(IGuildHost host, EntityId crawlerId, uint tick, in GuildTuning tuning)
         {
             int i = IndexOf(crawlerId);
@@ -232,22 +237,41 @@ namespace Simpiens.Simulation.Guild
                 groups.RemoveMember(_groupId, crawlerId);
                 if (host.TryGetCrawler(crawlerId, out var crawler)) crawler.Memberships = groups.GetMemberships(crawlerId);
             }
+            var party = PartyOf(crawlerId);
+            if (party != null && !party.IsOut) RemoveFromParty(host, party, crawlerId);
         }
 
-        /// <summary>A crawler who left the outpost is no longer a member; its contract ends with it (the groups already let it go).</summary>
-        public void Forget(EntityId crawlerId)
+        /// <summary>
+        /// A crawler who left the outpost is no longer a member; its contract ends with it, and its place in a party at home
+        /// (the groups already let it go; a party out marks it gone on its next tick).
+        /// </summary>
+        public void Forget(IGuildHost host, EntityId crawlerId)
         {
             int i = IndexOf(crawlerId);
             if (i >= 0) _members.RemoveAt(i);
             _cooldowns.Remove(crawlerId);
+            var party = PartyOf(crawlerId);
+            if (party != null && !party.IsOut)
+            {
+                party.Roster.RemoveAt(party.IndexOf(crawlerId));
+                if (party.Roster.Count == 0) DisbandParty(host, party);
+            }
         }
 
+        /// <summary>Forgets everything, the barracks too (a respawn: the next map's bunks are added as it spawns).</summary>
         public void Reset()
+        {
+            ClearState();
+            _barracks.Clear();
+        }
+
+        /// <summary>Forgets the guild's state, keeping the barracks: they are the map's, and a load rebuilds the same map.</summary>
+        private void ClearState()
         {
             _members.Clear();
             _cooldowns.Clear();
             _groupId = 0;
-            ResetExpedition();
+            ResetParties();
         }
 
         public void CaptureTo(GuildSave save)
@@ -260,13 +284,26 @@ namespace Simpiens.Simulation.Guild
             foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
             Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
             save.Cooldowns = cooldowns;
-            save.Expedition = _expedition;
-            save.Party = _party.ToArray();
+
+            // The parties with a group or a roster, in slot order (Epic 10 Part 2, W5, D60)
+            int formed = 0;
+            for (int i = 0; i < _parties.Length; i++)
+            {
+                if (_parties[i].GroupId != 0 || _parties[i].Roster.Count > 0) formed++;
+            }
+            var parties = new GuildPartySave[formed];
+            for (int i = 0, next = 0; i < _parties.Length; i++)
+            {
+                var party = _parties[i];
+                if (party.GroupId == 0 && party.Roster.Count == 0) continue;
+                parties[next++] = new GuildPartySave { Slot = party.Slot, GroupId = party.GroupId, Expedition = party.Record, Members = party.Roster.ToArray() };
+            }
+            save.Parties = parties;
         }
 
         public void RestoreFrom(GuildSave save)
         {
-            Reset();
+            ClearState();
             if (save == null) return;
             _groupId = save.GroupId;
             if (save.Members != null) _members.AddRange(save.Members);
@@ -274,8 +311,16 @@ namespace Simpiens.Simulation.Guild
             {
                 for (int i = 0; i < save.Cooldowns.Length; i++) _cooldowns[save.Cooldowns[i].Id] = save.Cooldowns[i].Tick;
             }
-            _expedition = save.Expedition;
-            if (save.Party != null) _party.AddRange(save.Party);
+            if (save.Parties == null) return;
+            for (int i = 0; i < save.Parties.Length; i++)
+            {
+                var saved = save.Parties[i];
+                if (saved == null || saved.Slot < 1 || saved.Slot > _parties.Length) throw new ArgumentException($"A saved guild party has slot {saved?.Slot}, outside 1 to {_parties.Length}.", nameof(save));
+                var party = _parties[saved.Slot - 1];
+                party.GroupId = saved.GroupId;
+                party.Record = saved.Expedition;
+                if (saved.Members != null) party.Roster.AddRange(saved.Members);
+            }
         }
 
         private int IndexOf(EntityId crawlerId)

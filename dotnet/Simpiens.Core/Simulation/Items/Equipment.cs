@@ -63,5 +63,26 @@ namespace Simpiens.Simulation.Items
 
         public int ModifierCount => _modifiers.Length;
         public StatModifier GetModifier(int index) => _modifiers[index];
+
+        /// <summary>How much longer each grade above Standard makes a piece last (Epic 10 Part 2, W4, D56): a quarter.</summary>
+        public float LifePerGrade { get; init; } = 0.25f;
+
+        /// <summary>How much stronger each grade above Standard makes its effect (D56): a tenth.</summary>
+        public float EffectPerGrade { get; init; } = 0.1f;
+
+        /// <summary>A new piece's durability at <paramref name="grade"/>: a Fine pickaxe lasts 50 units, a Standard one 40.</summary>
+        public ushort DurabilityAt(byte grade)
+        {
+            float life = Durability * (1f + LifePerGrade * grade);
+            return (ushort)System.Math.Min(ushort.MaxValue, (int)System.Math.Round(life));
+        }
+
+        /// <summary>A modifier's value on a piece of <paramref name="grade"/>: an Add a tenth more a grade, a Multiply's bonus a tenth more a grade.</summary>
+        public float ValueAt(in StatModifier modifier, byte grade)
+        {
+            if (grade == 0) return modifier.Value;
+            float step = 1f + EffectPerGrade * grade;
+            return modifier.Op == ModifierOp.Multiply ? 1f + (modifier.Value - 1f) * step : modifier.Value * step;
+        }
     }
 }

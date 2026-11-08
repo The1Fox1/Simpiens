@@ -39,20 +39,33 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
-        /// The status bar's treasury and stock line never overlap, even with a four-digit treasury and every stock at its
-        /// most (Epic 10 G2 and G3 each lengthened the stock line).
+        /// Each good shows its stock in its own row, and the line ends before its slider, even with every stock at its most:
+        /// a single stock line in the status bar ran into the treasury once Epic 10 G2, G3 and the forge's pickaxe had
+        /// lengthened it.
         /// </summary>
         [Fact]
-        public void TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest()
+        public void EachGoodShowsItsStockInItsRowAndTheLineFitsBeforeTheSlider()
         {
             var ui = OpenMerchant();
             var sim = (Simpiens.Simulation.SimulationManager)ui.Game.Session.Simulation.Simulation;
             var stall = sim.ActiveStalls[0];
-            sim.UpdateStall(stall.WithTreasury(9999).WithStock(50, 20, 20).WithGlowstoneStock(20).WithHazardGearStock(99));
+            sim.UpdateStall(stall.WithTreasury(9999).WithStock(50, 20, 20).WithGlowstoneStock(20).WithHazardGearStock(99)
+                // The longest lines W4 gives: made goods on the shelf at their best grade, with worn pieces waiting
+                .WithStocked(ItemType.Respirator, 12, Simpiens.Simulation.Items.Grades.Masterwork).WithWorn(ItemType.Respirator, 12)
+                .WithStocked(ItemType.ToolPickaxe, 12, Simpiens.Simulation.Items.Grades.Masterwork).WithWorn(ItemType.ToolPickaxe, 12)
+                .WithStocked(ItemType.HardHat, 12, Simpiens.Simulation.Items.Grades.Masterwork).WithWorn(ItemType.HardHat, 12));
             ui.Frame();
             var window = ui.Game.Play.Dashboard.Merchant;
             Assert.Equal("Treasury: 9999 Gold", window.TreasuryText);
-            Assert.True(window.StockLeft >= window.TreasuryRight + 8f, $"The stock line starts at {window.StockLeft}, the treasury ends at {window.TreasuryRight}.");
+            foreach (var item in window.Items)
+            {
+                var hint = window.HintText(item);
+                Assert.Contains(" in stock", hint.Text);
+                float right = hint.AbsoluteLeft + hint.AbsoluteWidth;
+                Assert.True(right + 8f <= window.PriceSlider(item).Visual.AbsoluteLeft, $"{item}'s line ends at {right}, its slider starts at {window.PriceSlider(item).Visual.AbsoluteLeft}.");
+            }
+            Assert.EndsWith("99 in stock", window.HintText(ItemType.HazardGear).Text);
+            Assert.EndsWith("12 in stock, best Masterwork, 12 worn", window.HintText(ItemType.Respirator).Text);
         }
 
         [Fact]
@@ -75,18 +88,19 @@ namespace Simpiens.Client.Tests
             ui.MoveTo(new Vec2(track.AbsoluteLeft + track.AbsoluteWidth + 40f, thumb.Y));
             ui.Script.Left = false;
             ui.Frame();
-            Assert.Equal(MerchantModelMax, (int)slider.Value);
-            Assert.Equal($"{MerchantModelMax} Gold", window.RationValue.Text);
-            Assert.Equal(MerchantModelMax, game.Session.DashboardModel.Merchant.RationPrice);
+            int top = game.Session.DashboardModel.Merchant.Row(ItemType.Ration).MaxPrice; // the slider's range for rations: four times 15g
+            Assert.Equal(60, top);
+            Assert.Equal(top, (int)slider.Value);
+            Assert.Equal($"{top} Gold", window.RationValue.Text);
+            Assert.Equal(top, game.Session.DashboardModel.Merchant.RationPrice);
 
             ui.Click(Centre(window.ApplyButton));
-            Assert.StartsWith("Rates updated: Ration 50g", window.FeedbackText);
+            Assert.StartsWith($"Rates updated: Ration {top}g", window.FeedbackText);
             Assert.True(game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice == before.RationSellPrice, "Nothing changes before the tick.");
             ui.Ticks(1);
-            Assert.Equal(MerchantModelMax, (int)game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
+            Assert.Equal(top, (int)game.Session.Simulation.Simulation.ActiveStalls[0].RationSellPrice);
         }
 
-        private const int MerchantModelMax = Simpiens.Presentation.Dashboard.MerchantModel.MaxPrice;
 
         [Fact]
         public void AnOpenWindowTakesTheClicksAndItsCloseButtonClosesIt()

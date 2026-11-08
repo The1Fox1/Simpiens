@@ -44,7 +44,7 @@ namespace Simpiens.Cognition.Planning.Actions
                 float wait = MentalBreakEvaluator.WaitAtPlotRadius;
                 if ((plot - context.Position).SqrMagnitude <= wait * wait)
                 {
-                    return new ValueTask<AgentIntent>(new IdleIntent(context.AgentId, MentalBreakEvaluator.WaitAtPlotSeconds));
+                    return new ValueTask<AgentIntent>(new IdleIntent(context.AgentId, MentalBreakEvaluator.WaitAtPlotSeconds(context)));
                 }
                 return ResourceTargeting.BuildTravelIntentAsync(context, _pathfinder, plot);
             }

@@ -4,6 +4,7 @@ using Simpiens.Cognition;
 using Simpiens.Core.Session;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.World;
 using Simpiens.Testing.Sessions;
@@ -265,6 +266,31 @@ namespace Simpiens.Testing.World
             Assert(DoorWidth(grid, seam.Bounds, garden.Bounds) == 0 && DoorWidth(grid, garden.Bounds, overgrowth.Bounds) == 0, "(d) The Garden must not open onto a frontier sector.");
             Assert(!seam.StartsExplored && !overgrowth.StartsExplored && garden.StartsExplored && hub.StartsExplored, "Frontier sectors start shrouded; near sectors explored.");
 
+            // (i) The workshop row and the guildhall (Epic 10 Part 2, D4): safe and charted, the only facilities (D7: nobody
+            // explores them); the row opens onto the Road Gate and the guildhall, the guildhall onto the row alone; the two
+            // stations stand, reachable, in the row
+            def.TryGetSector(Floor1Layout.WorkshopRowSectorId, out var workshops);
+            def.TryGetSector(Floor1Layout.GuildhallSectorId, out var guildhall);
+            def.TryGetSector(Floor1Layout.RoadGateSectorId, out var gate);
+            Assert(workshops.StartsExplored && guildhall.StartsExplored && !workshops.Hazard.IsHazardous && !guildhall.Hazard.IsHazardous, "(i) The workshop row and the guildhall are charted and safe.");
+            Assert(DoorWidth(grid, gate.Bounds, workshops.Bounds) >= 3 && DoorWidth(grid, workshops.Bounds, guildhall.Bounds) >= 3, "(i) The workshop row opens onto the Road Gate and the guildhall.");
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var s = def.Sectors[i];
+                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId;
+                Assert(s.Facility == facility, $"(i) {s.Name} {(facility ? "must" : "must not")} be a facility.");
+                if (!facility) Assert(DoorWidth(grid, guildhall.Bounds, s.Bounds) == 0, $"(i) The guildhall must open only onto the workshop row, not {s.Name}.");
+            }
+            var kinds = new HashSet<StationKind>();
+            for (int i = 0; i < def.Stations.Count; i++)
+            {
+                var station = def.Stations[i];
+                Assert(def.FindSector(station.Position).Id == Floor1Layout.WorkshopRowSectorId, $"(i) Station '{station.Key}' stands in the workshop row.");
+                Assert(grid.TryGetRegion(station.Position, out int r) && r == hubRegion, $"(i) Station '{station.Key}' at {station.Position} is reachable from the Hub.");
+                Assert(station.Radius > 0f && kinds.Add(station.Kind), $"(i) Station '{station.Key}': a radius, and the only {station.Kind}.");
+            }
+            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && def.Stations.Count == 2, "(i) Floor 1 has a forge and a still (Q2).");
+
             // (e) building twice gives identical walkability and region labels
             var again = Rasterized(def);
             for (int y = 0; y < grid.Height; y++)
@@ -280,7 +306,7 @@ namespace Simpiens.Testing.World
             }
 
             var cells = def.PartitionCells(1f);
-            TestLog.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, all entries reachable, deterministic.");
+            TestLog.Log($"[PASS] Test 7: Floor1 ({cells.X}x{cells.Y}) is one connected floor: {def.Sectors.Count} sectors, {doors} doorways >= 3 cells, {def.Stations.Count} stations, all entries reachable, deterministic.");
         }
 
         /// <summary>
@@ -290,11 +316,11 @@ namespace Simpiens.Testing.World
         /// </summary>
         private void ValidateFloor1LiveUse()
         {
+            var def = Floor1Layout.Definition;
             const float HearthGatherRing = 2.0f;   // TravelToAnchorAction's perimeter distance
             const float DoorApron = 3.0f;          // room in front of a door that must stay clear
             const float LaneClearance = 1.5f;
 
-            var def = Floor1Layout.Definition;
             var grid = Rasterized(def);
 
             for (int i = 0; i < def.Sectors.Count; i++)
@@ -315,6 +341,13 @@ namespace Simpiens.Testing.World
             Assert(spawns == Floor1Layout.SpawnPointCount, $"Floor1 has {Floor1Layout.SpawnPointCount} spawn points in the Road Gate (found {spawns}).");
             int bunks = CountPois(def, PoiKind.Bunk, Floor1Layout.BunkhouseSectorId, grid);
             Assert(bunks == Floor1Layout.BunkCount, $"Floor1 has {Floor1Layout.BunkCount} bunks in the Bunkhouse (found {bunks}).");
+            // A sleeper holds its bunk about 8 hours of the 24-hour day (Epic 10 Part 2, T2.3, D21): a bunk per resident
+            Assert(bunks >= Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount,
+                $"Floor1 has a bunk per resident ({bunks} for {Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount}).");
+            // The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each member, in the guildhall
+            int barracks = CountPois(def, PoiKind.GuildBunk, Floor1Layout.GuildhallSectorId, grid);
+            Assert(barracks == Floor1Layout.GuildBunkCount && barracks >= Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers,
+                $"Floor1 has {Floor1Layout.GuildBunkCount} bunks in the guildhall's barracks, one per member (found {barracks}).");
 
             Assert(def.TryGetPoi(Floor1Layout.Hearth, out var hearth) && def.FindSector(hearth.Position).Id == Floor1Layout.HubSectorId, "The hearth is in the Hub.");
             Assert(def.TryGetPoi(Floor1Layout.Stall, out var stall), "Floor1 has the stall.");
@@ -354,12 +387,16 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Pois.Count; i++)
             {
                 var p = def.Pois[i];
-                if (p.Kind != PoiKind.Bunk) continue;
+                if (p.Kind != PoiKind.Bunk && p.Kind != PoiKind.GuildBunk) continue;
                 float d = DistanceToSegment(p.Position, laneFrom, laneTo);
-                Assert(d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+                Assert(p.Kind == PoiKind.GuildBunk || d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+                // On the 24-hour day a sleeper lies in its bunk for hours, and paths don't see pawns: a bunk against the north
+                // wall blocks the walkable strip there, the way to the hub door (Epic 10 Part 2, T4.2: it walled a crawler in)
+                Assert(grid.WorldToCell(p.Position, out int bx, out int by) && grid.IsCellWalkable(bx, by + 1),
+                    $"Bunk '{p.Key}' at {p.Position} sits against the wall, in the way to the hub door.");
             }
 
-            TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
+            TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks and {barracks} in the barracks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
         }
 
         private static int CountPois(MapDefinition def, PoiKind kind, byte sectorId, StaticNavGrid grid)

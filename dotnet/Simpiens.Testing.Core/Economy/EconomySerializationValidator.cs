@@ -33,8 +33,8 @@ namespace Simpiens.Testing.Economy
         {
             AssertSize<ItemInstance>(16);
             AssertSize<BountyContract>(64);
-            AssertSize<TradeStallData>(84); // 52 since Epic 10 G2 (format 3); 56 since G3 (format 4); 84 since item system I5: a goods table of 8, so new items don't change it (format 6)
-            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 84 bytes).");
+            AssertSize<TradeStallData>(136); // 52 since Epic 10 G2 (format 3); 56 since G3 (format 4); 84 since item system I5: a goods table of 8, so new items don't change it (format 6); 96 since Epic 10 Part 2's W3: a table of 10 (D49); 136 since W4: each good's grades and worn pieces (D57, D58; both inside format 10, unreleased)
+            TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 136 bytes).");
         }
 
         private void ValidateRecordsRoundTrip()
@@ -175,7 +175,9 @@ namespace Simpiens.Testing.Economy
             return new[]
             {
                 TestStalls.Stall(new EntityId(11u, 12u, 13u, 14u), new Vec2(0.5f, 1.5f), rationSellPrice: 17, rationStock: 33,
-                    oreBuyPrice: 21, oreStock: 4, herbBuyPrice: 26, herbStock: 2, treasuryGold: 412, interactionRadius: 2.75f, inArrears: true),
+                    oreBuyPrice: 21, oreStock: 4, herbBuyPrice: 26, herbStock: 2, treasuryGold: 412, interactionRadius: 2.75f, inArrears: true)
+                    // A made good on the shelf by grade, with worn pieces waiting for repair (Epic 10 Part 2, W4)
+                    .WithGood(new StallGood(ItemType.ToolPickaxe, StallRole.Sells, 30, 5) { Fine = 2, Masterwork = 1, Worn = 3 }),
                 TestStalls.Stall(new EntityId(31u, 32u, 33u, 34u), new Vec2(-4f, 9f), treasuryGold: 0),
             };
         }
@@ -190,6 +192,13 @@ namespace Simpiens.Testing.Economy
                 $"{label}: stock round-trips.");
             Assert(actual.TreasuryGold == expected.TreasuryGold && actual.InteractionRadius == expected.InteractionRadius && actual.InArrears == expected.InArrears,
                 $"{label}: treasury, radius and arrears round-trip.");
+            for (int i = 0; i < TradeStallData.GoodsCapacity; i++)
+            {
+                var a = actual.GoodAt(i);
+                var e = expected.GoodAt(i);
+                Assert(a.Item == e.Item && a.Role == e.Role && a.Price == e.Price && a.Stock == e.Stock && a.Fine == e.Fine && a.Masterwork == e.Masterwork && a.Worn == e.Worn,
+                    $"{label}: good {i} round-trips, its grades and worn pieces too.");
+            }
         }
 
         private static void AssertSize<T>(int expected) where T : struct

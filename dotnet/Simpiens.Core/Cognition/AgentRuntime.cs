@@ -84,7 +84,9 @@ namespace Simpiens.Cognition
             if (_clock != null && _clock.IsPaused) return;
 
             // Advance biological drives and emotion timers on fixed logical tick dt
-            State.Tick(FixedTickDeltaTime);
+            var day = _simulationManager != null ? _simulationManager.Economy.Day : Simpiens.Simulation.Economy.EconomyTuning.Default.Day;
+            State.Tick(FixedTickDeltaTime, day);
+            if (State.Memory != null) State.Memory.TrustFadeTicks = day.TrustFadeTicks;
 
             // Keep the crawler's copy of its memberships synced with the authoritative group registry (cognition reads the copy)
             if (_simulationManager?.Groups != null)
@@ -93,22 +95,29 @@ namespace Simpiens.Cognition
             }
             // And of its part in the guild's expedition (Epic 10 G5)
             State.Expedition = _simulationManager?.Guild != null ? _simulationManager.Guild.OrderFor(State.AgentId) : default;
+            // And of its station's work, on shift (Epic 10 Part 2, W1.3)
+            State.Station = _simulationManager?.Workshops != null ? _simulationManager.Workshops.OrderFor(State.AgentId, (uint)currentTick) : default;
+            // And of the bunk the guild keeps for it (Epic 10 Part 2, W5.2)
+            State.Bunk = _simulationManager?.Guild != null ? _simulationManager.Guild.KeptBunkFor(State.AgentId) : default;
 
             // Danger (Epic 10 G2): a hazard sector takes health; at 0 the crawler is downed. Getting up again is the state's.
-            // Equipment's HazardResistance (G3's hazard gear) stops part of the damage; equipment that wears per hazard tick
+            // Equipment's resistance stops part of the damage: hazard gear's against any hazard (G3), a respirator's or a hard
+            // hat's against its kind (Epic 10 Part 2, W3, D47); equipment that wears per hazard tick
             // loses a unit for every tick in danger, and at 0 it is gone
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
+            State.HurtThisTick = 0f;
             if (hazard.IsHazardous)
             {
                 State.Activity.HazardTicks++;
                 var inventory = State.Inventory;
-                float resistance = CrawlerStats.Get(inventory, StatKind.HazardResistance);
+                float resistance = CrawlerStats.HazardResistance(inventory, hazard.Kind);
                 bool geared = resistance > 0f;
                 float damagePerSecond = geared ? (float)(hazard.DamagePerSecond * (float)(1f - resistance)) : hazard.DamagePerSecond;
                 float before = State.Health;
                 State.Health = SimMath.Max(0f, (float)(State.Health - (float)(damagePerSecond * FixedTickDeltaTime)));
                 float taken = before - State.Health;
+                State.HurtThisTick = taken;
                 State.Activity.HazardDamage += taken;
                 if (geared)
                 {

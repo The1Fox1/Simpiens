@@ -28,17 +28,18 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// The rest anchor (Epic MAP Phase 3): crawlers start rested at the Road Gate and find the Bunkhouse on their own.
-        /// Within the bound at least 3 distinct crawlers sleep in a bunk; no bunk ever holds two sleepers; every sleeper
-        /// lies on its bunk and is shown asleep; nobody starves; nobody stacks.
+        /// On the 24-hour day they tire after about 16 hours, so by the next dawn at least 8 distinct crawlers have slept in a
+        /// bunk (the gate seeds: 9 to 12, the eighth by t8926 at the latest; Epic 10 Part 2, T5); no bunk ever holds two
+        /// sleepers; every sleeper lies on its bunk and is shown asleep; nobody starves; nobody stacks.
         /// </summary>
         [Fact]
         public void TiredCrawlersSleepInTheBunkhouse()
         {
-            const long HorizonTicks = 4000;
-            const long SleepersDeadlineTicks = 2100; // Unity: the third sleeper at t1375 in 3 of 3 runs, x 1.5
-            const int RequiredSleepers = 3;
-            const float StarvingHunger = 95f;
-            const long StarvingTicks = 300;
+            const long HorizonTicks = OutpostWatch.DayTicks;
+            const long SleepersDeadlineTicks = OutpostWatch.DayTicks;
+            const int RequiredSleepers = 8;
+            const float StarvingHunger = OutpostWatch.StarvingHunger;
+            const long StarvingTicks = OutpostWatch.StarvingTicks;
 
             using var sim = Outpost();
             var manager = (SimulationManager)sim.Simulation;
@@ -47,7 +48,7 @@ namespace Simpiens.Core.Tests
             var perBunk = new Dictionary<EntityId, int>();
             var hungrySince = new Dictionary<EntityId, long>();
             var starving = new HashSet<EntityId>();
-            long thirdSleeperTick = -1;
+            long lastSleeperTick = -1;
             int doubleOccupancy = 0, misplaced = 0;
             string firstDouble = null, firstMisplaced = null, firstStarving = null;
 
@@ -58,7 +59,7 @@ namespace Simpiens.Core.Tests
 
                 foreach (var pair in manager.BunkSleeps)
                 {
-                    if (pair.Value > 0 && sleepers.Add(pair.Key) && sleepers.Count == RequiredSleepers) thirdSleeperTick = rel;
+                    if (pair.Value > 0 && sleepers.Add(pair.Key) && sleepers.Count == RequiredSleepers) lastSleeperTick = rel;
                 }
 
                 // Single occupancy, checked against the sleepers themselves: every sleep past its first tick holds its bunk
@@ -91,9 +92,9 @@ namespace Simpiens.Core.Tests
                 }
             }
 
-            TestContext.Current.TestOutputHelper?.WriteLine($"{sleepers.Count} sleepers, the third at t{thirdSleeperTick}; {detector.Summary()}");
+            TestContext.Current.TestOutputHelper?.WriteLine($"{sleepers.Count} sleepers, the {RequiredSleepers}th at t{lastSleeperTick}; {detector.Summary()}");
             Assert.True(sleepers.Count >= RequiredSleepers, $"Only {sleepers.Count} crawlers slept in a bunk within {HorizonTicks} ticks.");
-            Assert.True(thirdSleeperTick >= 0 && thirdSleeperTick <= SleepersDeadlineTicks, $"The third crawler slept at t{thirdSleeperTick}, after t{SleepersDeadlineTicks}.");
+            Assert.True(lastSleeperTick >= 0 && lastSleeperTick <= SleepersDeadlineTicks, $"The {RequiredSleepers}th crawler slept at t{lastSleeperTick}, after t{SleepersDeadlineTicks}.");
             Assert.True(doubleOccupancy == 0, $"A bunk held two sleepers ({doubleOccupancy}; first {firstDouble}).");
             Assert.True(misplaced == 0, $"A sleeper was off its bunk or not shown asleep ({misplaced}; first {firstMisplaced}).");
             Assert.True(starving.Count == 0, $"{starving.Count} crawlers starved (first {firstStarving}).");
@@ -101,44 +102,30 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Review §3.2: the ration price is not an on/off switch. The player changes only the ration price, through the
-        /// price command, every 2.5 sim-minutes; personalities and hunger give each crawler its own reservation price, so
-        /// demand falls off in steps: at least three distinct buyer counts, buyers at the lowest price, none above every
-        /// reservation price. Buyers are the residents (drifters come and go).
+        /// Review §3.2: the ration price is not an on/off switch. The player sets only the ration price, through the price
+        /// command; personalities and hunger give each crawler its own reservation price, so demand falls off in steps: at
+        /// least three distinct buyer counts, buyers at the lowest price, none above every reservation price. Buyers are the
+        /// residents (drifters come and go). Each price gets a fresh outpost and a whole game day from its start: on the
+        /// 24-hour day purchases cluster at mealtimes, so a price held for a few hours measured the clock, not the price
+        /// (Epic 10 Part 2, W5.2).
         /// </summary>
         [Fact]
         public void DemandFallsGraduallyWithThePrice()
         {
             ushort[] prices = { 10, 15, 20, 25, 30, 60 }; // 60g is above any reservation price (at most 45g)
-            const long StepTicks = 1500;
-
-            using var sim = Outpost();
-            var intervention = sim.Services.GetRequiredService<IPlayerInterventionService>();
-            var ledger = sim.Simulation.EconomyLedger;
-            var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
             var buyers = new int[prices.Length];
-            var purchases = new uint[prices.Length];
+            var purchases = new int[prices.Length];
 
             for (int step = 0; step < prices.Length; step++)
             {
+                using var sim = Outpost();
+                var intervention = sim.Services.GetRequiredService<IPlayerInterventionService>();
+                var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
                 var stall = sim.Simulation.ActiveStalls[0];
                 intervention.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices("Player", TestPrices.Command(stall.StallEntityId, prices[step], stall.OreBuyPrice, stall.HerbBuyPrice)));
-                uint startPurchases = ledger.Flows.Purchases;
-                var lastGold = residents.Select(s => s.Inventory.Gold).ToArray();
-                var bought = new bool[residents.Count];
-                for (long t = 0; t < StepTicks; t++)
-                {
-                    sim.Step(1);
-                    // Crawlers spend gold only on rations, so a drop in a crawler's gold is a purchase
-                    for (int c = 0; c < residents.Count; c++)
-                    {
-                        int gold = residents[c].Inventory.Gold;
-                        if (gold < lastGold[c]) bought[c] = true;
-                        lastGold[c] = gold;
-                    }
-                }
-                buyers[step] = bought.Count(b => b);
-                purchases[step] = ledger.Flows.Purchases - startPurchases;
+                sim.Step(DayClock.TicksPerDay);
+                buyers[step] = residents.Count(s => s.Activity.RationPurchases > 0);
+                purchases[step] = residents.Sum(s => s.Activity.RationPurchases);
             }
 
             TestContext.Current.TestOutputHelper?.WriteLine($"buyers {string.Join("/", buyers)} at {string.Join("/", prices)}g; purchases {string.Join("/", purchases)}");

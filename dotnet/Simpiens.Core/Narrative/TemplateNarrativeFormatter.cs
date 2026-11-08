@@ -138,10 +138,34 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ExpeditionDowned:
                     return $"{actorA} was downed in {sector} on an expedition.";
 
+                case ChronicleEventType.StationBuilt:
+                    return $"The {Station(evt)} was built in {sector}.";
+
+                case ChronicleEventType.ArtisanHired:
+                    return $"{actorA} took up work in {sector}, at {(int)evt.ExtraData}g a visit.";
+
+                case ChronicleEventType.ArtisanUnpaid:
+                    return $"{actorA} went unpaid at the {Station(evt)} this visit.";
+
+                case ChronicleEventType.ArtisanQuit:
+                    return $"{actorA} quit their work at the {Station(evt)}.";
+
+                case ChronicleEventType.ArtisanDismissed:
+                    return $"{actorA} was let go from the {Station(evt)}.";
+
+                case ChronicleEventType.ArtisanBrokeDown:
+                    return $"{actorA} broke down at the {Station(evt)}, worked past the end of their strength.";
+
+                case ChronicleEventType.ToolWornOut:
+                    return $"{actorA}'s {(Simpiens.Simulation.Items.ItemCatalog.Get((Simpiens.Simulation.Economy.ItemType)(byte)evt.ExtraData)?.DisplayName ?? "tool").ToLowerInvariant()} broke in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }
         }
+
+        /// <summary>The station an event's extra names (Epic 10 Part 2): "forge".</summary>
+        private static string Station(in ChronicleEvent evt) => Simpiens.Simulation.Workshops.WorkshopRules.StationName((Simpiens.Simulation.Items.StationKind)(byte)evt.ExtraData);
 
         private string ResolveActorName(EntityId actorId, string defaultName)
         {

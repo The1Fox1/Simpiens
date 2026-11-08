@@ -81,7 +81,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(36, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone and graphics V5's stall
+            Assert.Equal(39, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, and Part 2's forge, still and plot
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -191,8 +191,9 @@ namespace Simpiens.Client.Tests
 
         // Recorded 2026-10-18 (M0.2) as 1175, 384, 254; Epic 10 G2 turned the two blocks of rock either side of the lower
         // wing into the Sump and the Glow Caves, so Floor 1 had no rock tiles; Epic 10 G5 added the Drowned Gallery below the
-        // Sump (80 floor tiles) and a block of rock beside it, 32 by 6
-        internal const int PinnedFloor = 1595, PinnedRock = 192, PinnedWalls = 320;
+        // Sump (80 floor tiles) and a block of rock beside it, 32 by 6; Epic 10 Part 2 (W0.4) turned that rock into the
+        // workshop row and the guildhall
+        internal const int PinnedFloor = 1754, PinnedRock = 0, PinnedWalls = 353;
     }
 
     public class TopDownProjectionTests
@@ -236,11 +237,13 @@ namespace Simpiens.Client.Tests
             bool Shown(Simpiens.Simulation.WorldEntity e) => scene.Fog.Visibility(e.Position, 0f) > 0f;
             int crawlers = sim.Registry.ActiveEntities.Count(e => e.Agent != null && Shown(e));
             int props = sim.Registry.ActiveEntities.Count(e => e.Agent == null && Shown(e) && (e.Type == Simpiens.Simulation.Spatial.EntityType.Resource
-                || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk));
+                || e.Type == Simpiens.Simulation.Spatial.EntityType.Anchor || e.Type == Simpiens.Simulation.Spatial.EntityType.Bunk
+                || e.Type == Simpiens.Simulation.Spatial.EntityType.GuildBunk)); // the barracks' bunks too (Epic 10 Part 2, W5.2)
             Assert.True(crawlers > 0);
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim), scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5)
+            int hazards = scene.Hazards.Spots.Count(s => s.Kind != Simpiens.Simulation.World.HazardKind.FallingRock || HazardEffects.LocalSeconds(s, 0f) >= 0f); // the hazards' animations at 0 s (Epic 10 Part 2, D69): every hazard sector is charted
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards, scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)

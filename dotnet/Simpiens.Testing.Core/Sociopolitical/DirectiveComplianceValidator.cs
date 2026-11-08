@@ -474,7 +474,26 @@ namespace Simpiens.Testing.Sociopolitical
             registry.RemoveMember(home, crawler);
             Assert(registry.TryGetMembership(crawler, guild, out _) && !registry.TryGetMembership(crawler, home, out _), "Deserting the settlement keeps the guild.");
 
-            TestLog.Log("[PASS] Directive precedence (party, guild, settlement) and one-group desertion verified (Epic 10 G4, D1).");
+            // A workshop (Epic 10 Part 2, D6): its orders rank with a guild's, after a party's and before a settlement's,
+            // though its kind's value is the highest
+            var artisan = MembershipSet.Empty;
+            byte workshop = 3;
+            artisan.Set(GroupType.Settlement, new GroupMembership(settlement, RoleRank.Follower, 70, 0));
+            artisan.Set(GroupType.Workshop, new GroupMembership(workshop, RoleRank.Follower, 70, 0));
+            artisan.Set(GroupType.TemporaryParty, new GroupMembership(party, RoleRank.Follower, 60, 0));
+            Assert(artisan.KindAt(0) == GroupType.TemporaryParty && artisan.KindAt(1) == GroupType.Workshop && artisan.KindAt(2) == GroupType.Settlement,
+                "A workshop membership ranks between the party and the settlement.");
+            var work = new GroupDirective(DirectiveType.RallyAtLocation, workshop, WorldRegistry.PlayerEntityId, new Vec2(-5f, -21f), default, issuedTick: 100, expirationTick: 900, targetRadius: 1.5f);
+            groups[0] = new GroupData(party, GroupType.TemporaryParty, partyLeader, Vec2.Zero, GroupDirective.None, 2, 90);
+            groups[2] = new GroupData(workshop, GroupType.Workshop, WorldRegistry.PlayerEntityId, new Vec2(-5f, -21f), work, 1, 90);
+            snapshot.SetGroups(groups, 3);
+            Assert(artisan.DirectiveMembership(snapshot, 200).GroupId == workshop, "With no order from its party, the artisan follows its workshop's before its settlement's.");
+            groups[0] = new GroupData(party, GroupType.TemporaryParty, partyLeader, Vec2.Zero,
+                new GroupDirective(DirectiveType.RallyAtLocation, party, partyLeader, new Vec2(8f, 8f), default, issuedTick: 150, expirationTick: 500, targetRadius: 2f), 2, 90);
+            snapshot.SetGroups(groups, 3);
+            Assert(artisan.DirectiveMembership(snapshot, 200).GroupId == party, "A party's order comes before the workshop's.");
+
+            TestLog.Log("[PASS] Directive precedence (party, guild or workshop, settlement) and one-group desertion verified (Epic 10 G4, D1; Part 2, D6).");
         }
 
         private static EntityId CreateGuid()

@@ -114,7 +114,7 @@ namespace Simpiens.Client.Ui
             QuantitySlider = SliderRow(_quantityGroup, "How many:", BountyBoardModel.MinQuantity, BountyBoardModel.MaxQuantity, 1, v => _model.Quantity = v, BountyBoardModel.QuantityText, out _quantityValue);
             form.Children.Add(_quantityGroup);
             RewardSlider = SliderRow(form, "Reward, held in escrow:", BountyBoardModel.MinReward, BountyBoardModel.MaxReward, 1, v => _model.Reward = v, BountyBoardModel.RewardText, out _rewardValue);
-            DurationSlider = SliderRow(form, "Posted for:", BountyBoardModel.MinDuration, BountyBoardModel.MaxDuration, 50, v => _model.Duration = v, BountyBoardModel.DurationText, out _durationValue);
+            DurationSlider = SliderRow(form, "Posted for:", BountyBoardModel.MinDuration, BountyBoardModel.MaxDuration, 1, v => _model.Duration = v, BountyBoardModel.DurationText, out _durationValue);
 
             form.Children.Add(Window.Gap(6f));
             form.Children.Add(Window.Rule());

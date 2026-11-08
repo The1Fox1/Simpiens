@@ -10,8 +10,15 @@ namespace Simpiens.Client
     /// so each batch draws in submission order (<see cref="SpriteSortMode.Deferred"/>) and never sorts by depth itself;
     /// a new batch starts only when the sheet changes, with that sheet's sampling (point for pixel art, linear for the
     /// fog). Colours are not premultiplied. Sprites turn about their pivot.
+    /// <para>
+    /// A silhouette (<see cref="DrawItem.Silhouette"/>: the red coat over a hurt crawler, Epic 10 Part 2, S3, D71) is drawn
+    /// through the stock <see cref="BasicEffect"/> with its fog forced to 100% (<c>FogStart == FogEnd</c>): the fog
+    /// replaces each texel's colour with the fog's and keeps its alpha, so the sprite's shape is filled flat with the item's
+    /// colour, with no shader of our own, in KNI and MonoGame alike. The effect writes premultiplied colour, so its batch
+    /// blends premultiplied. A silhouette starts a batch of its own, as a change of sheet does.
+    /// </para>
     /// </summary>
-    public sealed class WorldRenderer
+    public sealed class WorldRenderer : System.IDisposable
     {
         /// <summary>
         /// Screen pixels every point-sampled quad is shifted by, right and down (graphics V3.1, epic F12). At an in-between
@@ -24,31 +31,53 @@ namespace Simpiens.Client
 
         private readonly SpriteBatch _batch;
         private readonly SpriteAtlas[] _sheets;
+        private readonly BasicEffect _silhouette;
 
         /// <param name="sheets">One atlas per <see cref="DrawSheet"/>, by its value.</param>
         public WorldRenderer(SpriteBatch batch, SpriteAtlas[] sheets)
         {
             _batch = batch;
             _sheets = sheets;
+            _silhouette = new BasicEffect(batch.GraphicsDevice)
+            {
+                TextureEnabled = true,
+                VertexColorEnabled = true,
+                LightingEnabled = false,
+                FogEnabled = true,
+                FogStart = 0f,
+                FogEnd = 0f, // start and end alike: everything is wholly fogged
+            };
         }
 
         public void Draw(DrawList items, in View camera)
         {
             int open = -1;
-            bool openOnFloor = false;
+            bool openOnFloor = false, openSilhouette = false;
+            Rgba32 openFill = default;
             var floorToScreen = ToMatrix(camera.FloorToScreen());
             for (int i = 0; i < items.Count; i++)
             {
                 ref readonly var item = ref items[i];
                 int sheet = (int)item.Sheet;
-                if (sheet != open || item.OnFloor != openOnFloor)
+                bool fill = item.Silhouette;
+                if (sheet != open || item.OnFloor != openOnFloor || fill != openSilhouette || (fill && !SameColour(item.Tint, openFill)))
                 {
                     if (open >= 0) _batch.End();
                     // What lies on the floor is drawn in floor units under the view's transform (M3 design D6)
-                    _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone,
-                        null, item.OnFloor ? floorToScreen : Matrix.Identity);
+                    var transform = item.OnFloor ? floorToScreen : Matrix.Identity;
+                    if (fill)
+                    {
+                        Silhouette(transform, item.Tint);
+                        _batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone, _silhouette, transform);
+                    }
+                    else
+                    {
+                        _batch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, _sheets[sheet].Sampling, DepthStencilState.None, RasterizerState.CullNone, null, transform);
+                    }
                     open = sheet;
                     openOnFloor = item.OnFloor;
+                    openSilhouette = fill;
+                    openFill = item.Tint;
                 }
 
                 var atlas = _sheets[sheet];
@@ -70,6 +99,24 @@ namespace Simpiens.Client
             }
             if (open >= 0) _batch.End();
         }
+
+        /// <summary>
+        /// Readies the silhouette effect for a batch in <paramref name="colour"/>, under <paramref name="transform"/>. A custom
+        /// effect takes the place of the batch's own vertex shader, so it is given the batch's projection: the viewport's
+        /// pixels, y down, as <c>SpriteBatch</c> sets for its own.
+        /// </summary>
+        private void Silhouette(in Matrix transform, Rgba32 colour)
+        {
+            var viewport = _batch.GraphicsDevice.Viewport;
+            _silhouette.World = Matrix.Identity;
+            _silhouette.View = transform;
+            _silhouette.Projection = Matrix.CreateOrthographicOffCenter(0f, viewport.Width, viewport.Height, 0f, 0f, -1f);
+            _silhouette.FogColor = new Vector3(colour.R / 255f, colour.G / 255f, colour.B / 255f);
+        }
+
+        public void Dispose() => _silhouette.Dispose();
+
+        private static bool SameColour(Rgba32 a, Rgba32 b) => a.R == b.R && a.G == b.G && a.B == b.B;
 
         /// <summary>The engine-free affine as XNA's row-vector matrix: <c>[x y 0 1] M</c>.</summary>
         private static Matrix ToMatrix(in Affine2 a)

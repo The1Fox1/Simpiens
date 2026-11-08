@@ -6,7 +6,7 @@ namespace Simpiens.Simulation.Economy
     /// </summary>
     public readonly struct GuildTuning
     {
-        /// <summary>Members at most (Q4: four, so the whole guild can be one party).</summary>
+        /// <summary>Members at most: eight since the guildhall (Epic 10 Part 2, Q9, D61), two parties of four; Part 1's guild was four, one party (Q4).</summary>
         public readonly byte MaxMembers;
 
         /// <summary>A crawler signs on at this trust and warmth toward the player or more (Q5).</summary>
@@ -47,11 +47,19 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The guild's expeditions (Epic 10 G5).</summary>
         public readonly ExpeditionTuning Expedition;
 
+        /// <summary>
+        /// What a member with a bunk in the barracks pays for it each caravan visit (Epic 10 Part 2, W5.2, D63), taken from
+        /// its wage: the stall pays the wage less the fee, never below nothing.
+        /// </summary>
+        public readonly ushort LodgingFee;
+
         public GuildTuning(byte maxMembers, sbyte recruitTrust, sbyte recruitWarmth, ushort signingFee, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rejoinCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
-            TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust, ExpeditionTuning? expedition = null)
+            TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust, ExpeditionTuning? expedition = null,
+            ushort lodgingFee = 1)
         {
             Expedition = expedition ?? ExpeditionTuning.Default;
+            LodgingFee = lodgingFee;
             MaxMembers = maxMembers;
             RecruitTrust = recruitTrust;
             RecruitWarmth = recruitWarmth;
@@ -71,7 +79,7 @@ namespace Simpiens.Simulation.Economy
         }
 
         public static GuildTuning Default => new GuildTuning(
-            maxMembers: 4,
+            maxMembers: 8,
             recruitTrust: 60,
             recruitWarmth: 40,
             signingFee: 20,

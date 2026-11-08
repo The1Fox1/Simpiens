@@ -72,9 +72,10 @@ namespace Simpiens.Simulation.Guild
     }
 
     /// <summary>
-    /// An expedition's order and where it is (Epic 10 G5, D7 and D9). The guild holds one at a time; its party is a
+    /// An expedition's order and where it is (Epic 10 G5, D7 and D9). Each of the guild's parties holds one
+    /// (<see cref="GuildParty"/>, Epic 10 Part 2, W5, D60); the party is a
     /// <see cref="Simpiens.Cognition.Groups.GroupType.TemporaryParty"/> group inside the guild. Saved as raw memory
-    /// (format 9); a party id of 0 means no expedition.
+    /// (format 9); no stage means no expedition.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct ExpeditionRecord
@@ -96,8 +97,9 @@ namespace Simpiens.Simulation.Guild
         /// <summary>Set when the party turned back (the retreat rule, a downed member, the player's recall, time up).</summary>
         public bool TurnedBack;
 
-        private byte _pad;
+        /// <summary>Draughts each member is given to carry at the muster (Epic 10 Part 2, W2, D44): the record's spare byte.</summary>
+        public byte Draughts;
 
-        public readonly bool IsActive => PartyGroupId != 0;
+        public readonly bool IsActive => Stage != ExpeditionStage.None;
     }
 }

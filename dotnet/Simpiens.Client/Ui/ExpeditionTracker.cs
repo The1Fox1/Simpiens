@@ -9,9 +9,10 @@ using static System.FormattableString;
 namespace Simpiens.Client.Ui
 {
     /// <summary>
-    /// The expedition tracker (Epic 10 G5): a compact panel at the top right of the map view while a party is out. Where
-    /// it went and under which rule, its stage and time out, the haul so far, and each member's health and part. A view
-    /// over <see cref="ExpeditionModel"/>; it decides nothing.
+    /// An expedition tracker (Epic 10 G5; one per party since Epic 10 Part 2, W5.3b): a compact panel at the top right of
+    /// the map view while its party is out, the second under the first. Where it went and under which rule, its stage and
+    /// time out, the haul so far, and each member's health and part. A view over a <see cref="PartyTrackerModel"/>; it
+    /// decides nothing.
     /// </summary>
     public sealed class ExpeditionTracker
     {
@@ -20,24 +21,31 @@ namespace Simpiens.Client.Ui
         private readonly TextRuntime _title, _stage, _haul;
         private readonly List<(TextRuntime Name, TextRuntime State)> _members = new List<(TextRuntime, TextRuntime)>(4);
 
-        public ExpeditionTracker(int capacity)
+        /// <summary>The trackers' column at the top right of the map: one panel per party, an absent party's taking no room.</summary>
+        public static ContainerRuntime Column()
+        {
+            var column = UiParts.Column(8f);
+            column.XUnits = GeneralUnitType.PixelsFromLarge;
+            column.XOrigin = HorizontalAlignment.Right;
+            column.X = -16f;
+            column.Y = HeaderBar.Height + 12f;
+            return column;
+        }
+
+        public ExpeditionTracker(byte partySlot, int capacity)
         {
             Root = new ContainerRuntime
             {
                 Width = Width,
                 HeightUnits = DimensionUnitType.RelativeToChildren,
                 Height = 16f,
-                XUnits = GeneralUnitType.PixelsFromLarge,
-                XOrigin = HorizontalAlignment.Right,
-                X = -16f,
-                Y = HeaderBar.Height + 12f,
                 Visible = false,
             };
             UiParts.AddFrame(Root, Simpiens.Presentation.Art.UiKit.FrameSteel); // the guild's blued steel
             var column = UiParts.Column(3f);
             column.X = 12f;
             column.Y = 10f;
-            column.Children.Add(UiParts.Text("EXPEDITION", UiStyle.Accent, UiText.Small));
+            column.Children.Add(UiParts.Text(Invariant($"EXPEDITION · PARTY {partySlot}"), UiStyle.Accent, UiText.Small));
             _title = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             _stage = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             _haul = UiParts.Text(string.Empty, UiStyle.GoldText, UiText.Small);
@@ -62,8 +70,8 @@ namespace Simpiens.Client.Ui
         public bool IsShown => Root.Visible;
         public string StageText => _stage.Text;
 
-        /// <summary>Shown while a party is out, on the map view (the dashboard's panels hidden).</summary>
-        public void Bind(ExpeditionModel model, bool mapView)
+        /// <summary>Shown while its party is out, on the map view (the dashboard's panels hidden).</summary>
+        public void Bind(PartyTrackerModel model, bool mapView)
         {
             Root.Visible = model.IsOut && mapView;
             if (!Root.Visible) return;

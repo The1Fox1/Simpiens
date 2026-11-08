@@ -19,10 +19,11 @@ namespace Simpiens.Simulation.Economy
         INarrativeChronicleService ChronicleService { get; }
 
         /// <summary>
-        /// The caravan's visit pays the guild's wages from <paramref name="stall"/> (Epic 10 G4, D3), after the rations and
-        /// before the other goods: food, then people, then stock. Returns the stall as it is after.
+        /// The caravan's visit pays wages from <paramref name="stall"/>: the guild's members (Epic 10 G4, D3), then the
+        /// stations' artisans (Part 2, D9), after the rations and before the other goods: food, then people, then stock.
+        /// Returns the stall as it is after.
         /// </summary>
-        TradeStallData PayGuildWages(TradeStallData stall, uint currentTick);
+        TradeStallData PayWages(TradeStallData stall, uint currentTick);
     }
 
     /// <summary>

@@ -174,15 +174,26 @@ namespace Simpiens.Cognition
 
             SimLog.Groups.ZLogDebug($"{SimLog.Agent(agent.AgentId)} evaluated directive {groupData.ActiveDirective.Type} from group {groupData.GroupId}: {decision}");
 
+            // A station's crew (Epic 10 Part 2, W1.3, D13): an artisan who deserts its shift's order quits the station, keeping
+            // its settlement; one who won't work this block loses allegiance, as any member does (below)
+            if (decision == ComplianceDecision.ActiveDesertion && groupData.Type == GroupType.Workshop && simulationManager.Workshops != null
+                && simulationManager.Workshops.IsArtisan(agent.AgentId) && simulationManager is Simpiens.Simulation.Workshops.IWorkshopHost workshopHost)
+            {
+                simulationManager.Workshops.Desert(workshopHost, agent.AgentId, tick);
+                if (simulationManager.Groups != null) agent.Memberships = simulationManager.Groups.GetMemberships(agent.AgentId);
+                agent.Memory.RecordEvent(MemoryEventType.DesertedGroup, groupData.LeaderId, currentPosInt, tick);
+                agent.TriggerDefiantVisual(2.5f);
+                return;
+            }
+
             // The guild's expedition (Epic 10 G5, D8): the guild owns the party. A member who won't go stays behind, losing
             // allegiance to the guild; one who deserts leaves the guild as well, keeping its settlement
-            var guild = simulationManager.Guild;
-            if (decision != ComplianceDecision.Comply && guild != null && guild.HasExpedition && guild.Expedition.PartyGroupId == membership.GroupId
-                && simulationManager is Simpiens.Simulation.Guild.IGuildHost host)
+            var party = simulationManager.Guild?.PartyByGroup(membership.GroupId);
+            if (decision != ComplianceDecision.Comply && party != null && party.IsOut && simulationManager is Simpiens.Simulation.Guild.IGuildHost host)
             {
                 bool deserted = decision == ComplianceDecision.ActiveDesertion;
-                if (!deserted) simulationManager.Groups?.UpdateAllegiance(agent.AgentId, guild.GroupId, -5);
-                guild.RefuseOrder(host, agent.AgentId, deserted, tick);
+                if (!deserted) simulationManager.Groups?.UpdateAllegiance(agent.AgentId, simulationManager.Guild.GroupId, -5);
+                simulationManager.Guild.RefuseOrder(host, agent.AgentId, deserted, tick);
                 if (simulationManager.Groups != null) agent.Memberships = simulationManager.Groups.GetMemberships(agent.AgentId);
                 if (deserted) agent.Memory.RecordEvent(MemoryEventType.DesertedGroup, groupData.LeaderId, currentPosInt, tick);
                 agent.TriggerDefiantVisual(deserted ? 2.5f : 1.5f);

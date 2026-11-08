@@ -88,6 +88,11 @@ namespace Simpiens.Testing.Navigation
             {
                 var s = def.Sectors[i];
                 if (s.Id == Floor1Layout.HubSectorId) continue;
+                if (s.Facility)
+                {
+                    Assert(!picked[s.Id] && !boldPicked[s.Id], $"Nobody explores {s.Name}, the player's facility (Epic 10 Part 2, D7).");
+                    continue;
+                }
                 if (s.Hazard.IsHazardous)
                 {
                     Assert(!picked[s.Id], $"A cautious agent never explores {s.Name}, a hazard sector.");

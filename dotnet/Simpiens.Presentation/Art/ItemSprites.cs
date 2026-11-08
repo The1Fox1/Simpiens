@@ -16,6 +16,7 @@ namespace Simpiens.Presentation.Art
         private static readonly List<PixelSprite> _icons = new List<PixelSprite>(8);
         private static readonly List<PixelSprite> _world = new List<PixelSprite>(16);
         private static readonly List<string> _keys = new List<string>(8);
+        private static readonly List<string> _gradedKeys = new List<string>(4);
 
         static ItemSprites()
         {
@@ -30,6 +31,13 @@ namespace Simpiens.Presentation.Art
                 var glyph = SpriteKit.Paint(ItemShapes.All[look.Shape], primary, secondary, out int w, out int h);
                 var outlined = SpriteKit.Outlined(glyph, w, h, SpriteKit.Outline, out int ow, out int oh);
                 _icons.Add(new PixelSprite(IconName(item.ArtKey), SpriteKit.IconSize, SpriteKit.IconSize, SpriteKit.Icon(outlined, ow, oh, item.Rarity)));
+                // A piece made Fine or Masterwork shows a rarer rim (Epic 10 Part 2, W4, D55)
+                if (Grades.Graded(item.Id))
+                {
+                    for (byte grade = Grades.Fine; grade <= Grades.Masterwork; grade++)
+                        _icons.Add(new PixelSprite(IconName(item.ArtKey, grade), SpriteKit.IconSize, SpriteKit.IconSize, SpriteKit.Icon(outlined, ow, oh, Grades.RimOf(item.Rarity, grade))));
+                    _gradedKeys.Add(item.ArtKey);
+                }
                 // Standing on the bottom of its canvas, centred: its lowest opaque row is the canvas's bottom edge
                 _world.Add(new PixelSprite(MapName(item.ArtKey), MapSize, MapSize, SpriteKit.Place(outlined, ow, oh, MapSize, MapSize, (MapSize - ow) / 2, MapSize - 1 - LowestOpaqueRow(outlined, ow, oh))));
 
@@ -47,6 +55,14 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>The art keys that have pictures, in the catalog's order.</summary>
         public static IReadOnlyList<string> Keys => _keys;
+
+        /// <summary>The art keys of items that come in grades (Epic 10 Part 2, W4), each with an icon per grade above Standard.</summary>
+        public static IReadOnlyList<string> GradedKeys => _gradedKeys;
+
+        /// <summary>The art key a graded piece's icon goes by: "pickaxe+fine" (Standard: the item's own).</summary>
+        public static string GradedKey(string artKey, byte grade) => grade == Grades.Standard ? artKey : artKey + "+" + Grades.NameOf(grade).ToLowerInvariant();
+
+        public static string IconName(string artKey, byte grade) => grade == Grades.Standard ? IconName(artKey) : IconName(artKey) + "_" + Grades.NameOf(grade);
 
         private static int LowestOpaqueRow(Rgba32[] pixels, int width, int height)
         {

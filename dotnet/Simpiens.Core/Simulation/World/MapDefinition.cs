@@ -8,7 +8,9 @@ namespace Simpiens.Simulation.World
         Stall,
         Hearth,
         Bunk,
-        SpawnPoint
+        SpawnPoint,
+        /// <summary>A bunk in the guild's barracks, kept for a member (Epic 10 Part 2, W5.2, D62).</summary>
+        GuildBunk
     }
 
     /// <summary>What makes a sector dangerous (Epic 10 G2): the environment, never creatures (producer decision Q2).</summary>
@@ -62,9 +64,16 @@ namespace Simpiens.Simulation.World
         public readonly bool StartsExplored;
         public readonly SectorHazard Hazard;
 
-        public SectorDefinition(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default)
+        /// <summary>
+        /// The player's facility (Epic 10 Part 2, D7): the workshop row, the guildhall. Nothing in it is found by looking,
+        /// so no crawler explores it; artisans and members go there with work to do.
+        /// </summary>
+        public readonly bool Facility;
+
+        public SectorDefinition(byte id, string name, string description, RectF bounds, Vec2 anchor = default, float anchorRadius = 0f, bool startsExplored = true, SectorHazard hazard = default, bool facility = false)
         {
             Hazard = hazard;
+            Facility = facility;
             Id = id;
             Name = name;
             Description = description;
@@ -129,6 +138,29 @@ namespace Simpiens.Simulation.World
         }
     }
 
+    /// <summary>
+    /// A station's place in the outpost (Epic 10 Part 2, W0.4): a forge or a still the player may build there. The map
+    /// fixes where stations stand (Q2, Q10); whether one is built, who works it and what it makes is the session's state.
+    /// A station holds no stock of its own (D3): it works from the stall's.
+    /// </summary>
+    public readonly struct StationDefinition
+    {
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Items.StationKind Kind;
+        public readonly Vec2 Position;
+
+        /// <summary>How near an artisan stands to work it.</summary>
+        public readonly float Radius;
+
+        public StationDefinition(string key, Simpiens.Simulation.Items.StationKind kind, Vec2 position, float radius)
+        {
+            Key = key;
+            Kind = kind;
+            Position = position;
+            Radius = radius;
+        }
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -164,7 +196,17 @@ namespace Simpiens.Simulation.World
         public readonly SectorDefinition FallbackSector;
         public readonly IReadOnlyList<ResourceNodeDefinition> ResourceNodes;
         public readonly IReadOnlyList<PoiDefinition> Pois;
+
+        /// <summary>Where stations may be built, in definition order (Epic 10 Part 2).</summary>
+        public readonly IReadOnlyList<StationDefinition> Stations;
+
         public readonly IReadOnlyList<MapLabel> Labels;
+
+        /// <summary>
+        /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
+        /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
+        /// </summary>
+        public readonly IReadOnlyList<Vec2> CaravanRoute;
 
         internal MapDefinition(
             string name,
@@ -175,8 +217,11 @@ namespace Simpiens.Simulation.World
             SectorDefinition fallbackSector,
             ResourceNodeDefinition[] resourceNodes,
             PoiDefinition[] pois,
-            MapLabel[] labels)
+            StationDefinition[] stations,
+            MapLabel[] labels,
+            Vec2[] caravanRoute = null)
         {
+            CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
             Name = name;
             PlayableBounds = playableBounds;
             CameraFrame = cameraFrame;
@@ -185,6 +230,7 @@ namespace Simpiens.Simulation.World
             FallbackSector = fallbackSector;
             ResourceNodes = resourceNodes;
             Pois = pois;
+            Stations = stations;
             Labels = labels;
         }
 
@@ -255,6 +301,20 @@ namespace Simpiens.Simulation.World
                 }
             }
             poi = default;
+            return false;
+        }
+
+        public bool TryGetStation(string key, out StationDefinition station)
+        {
+            for (int i = 0; i < Stations.Count; i++)
+            {
+                if (Stations[i].Key == key)
+                {
+                    station = Stations[i];
+                    return true;
+                }
+            }
+            station = default;
             return false;
         }
 

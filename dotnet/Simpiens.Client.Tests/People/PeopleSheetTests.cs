@@ -71,6 +71,10 @@ namespace Simpiens.Client.Tests.People
                 Make("resident", basis), Make("drifter", basis, standing: CrawlerStanding.Drifter), Make("guild member", basis, standing: CrawlerStanding.GuildMember),
                 Make("helm", basis, gear: ItemType.HazardGear), Make("helm, long hair", Set(basis, LookGene.HairStyle, "long"), gear: ItemType.HazardGear),
                 Make("guild, helm", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.HazardGear),
+                // Protection by kind (Epic 10 Part 2, W3, D52): the hard hat a steel helm, the respirator a mask
+                Make("hard hat", basis, gear: ItemType.HardHat), Make("respirator", basis, gear: ItemType.Respirator),
+                Make("respirator, beard", Set(basis, LookGene.FacialHair, "beard"), gear: ItemType.Respirator),
+                Make("guild, respirator", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.Respirator),
             });
 
             // Faces for the lists (B4, D1): the head cropped from the portrait, at 2x
@@ -90,7 +94,9 @@ namespace Simpiens.Client.Tests.People
                 BodyOnly(o.Key, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, o.Key), AgentVisualState.Idle, 0, ItemType.HazardGear, tabard: false)));
             Section("The guild's tabard on each build, then a delver", LookCatalog.Options(LookGene.Build).Select(o =>
                 BodyOnly(o.Key, Set(basis, LookGene.Build, o.Key), AgentVisualState.Idle, 0, ItemType.None, tabard: true))
-                .Concat(new[] { BodyOnly("delver", delver, AgentVisualState.Idle, 0, ItemType.None, tabard: true), BodyOnly("helm, tabard", delver, AgentVisualState.Walking, 0, ItemType.HazardGear, tabard: true) }));
+                .Concat(new[] { BodyOnly("delver", delver, AgentVisualState.Idle, 0, ItemType.None, tabard: true), BodyOnly("helm, tabard", delver, AgentVisualState.Walking, 0, ItemType.HazardGear, tabard: true),
+                    BodyOnly("hard hat", basis, AgentVisualState.Walking, 0, ItemType.HardHat, tabard: false), BodyOnly("respirator", basis, AgentVisualState.Harvesting, 0, ItemType.Respirator, tabard: false),
+                    BodyOnly("respirator, asleep", basis, AgentVisualState.Sleeping, 0, ItemType.Respirator, tabard: false) }));
 
             // Every pose: do the overlays sit right at each frame's head anchor?
             foreach (var (title, look, gear, tabard) in new[]

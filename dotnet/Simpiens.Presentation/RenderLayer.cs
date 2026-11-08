@@ -19,6 +19,8 @@ namespace Simpiens.Presentation
         Crawler = 6,
         /// <summary>A crawler's shadow on the floor (isometric).</summary>
         Shadow = 7,
+        /// <summary>A mark lying on the floor, under whoever stands on it: a station's empty plot (Epic 10 Part 2).</summary>
+        FloorMark = 8,
     }
 
     /// <summary>

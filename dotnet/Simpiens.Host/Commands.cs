@@ -19,14 +19,14 @@ namespace Simpiens.Host
         public const string Usage =
 @"simpiens: the Simpiens simulation, headless (Epic CORE Phase 1)
 
-  simpiens run    [--session outpost] [--seed N] [--ticks 9000]
-      Plays a session and prints one line per sim-minute, then its world hash.
-  simpiens sweep  [--seeds 1..20] [--ticks 9000] [--guild] [--verbose]
+  simpiens run    [--session outpost] [--seed N] [--ticks 10080]
+      Plays a session (a game day by default) and prints one line per game hour, then its world hash.
+  simpiens sweep  [--seeds 1..20] [--ticks 10080] [--guild] [--verbose]
       The outpost's day on each seed, judged by the lifecycle Definition of Done (OutpostLifecycleScenario's checks).
       --guild adds the scripted guild player (Epic 10 G6): four recruited as they qualify, outfitted and sent to the
       Drowned Gallery whenever its seam is back; it reports expeditions sent and home.
-  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 18000] [--csv DIR] [--closed]
-      The economy soak: each profile and seed for 30 sim-minutes, judged against its pace band (docs/economy-model.md §7).
+  simpiens soak   [--profile fair|greedy|generous|guild|keen|all] [--seeds 20261009,1,2 | --seeds 1..20] [--ticks 30240] [--csv DIR] [--closed]
+      The economy soak: each profile and seed for three game days, judged against its pace band (docs/economy-model.md §7).
       --closed plays it without drifters, as the outpost was before Epic 10 G1 (keen: slightly greedy, no band).
   simpiens golden check  [--baseline Baselines/golden-world-hash.txt] [--seeds ...]
       Compares headless runs with the golden world hashes (the default: every seed in the file).
@@ -59,7 +59,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
         {
             string sessionId = options.Text("session", OutpostSession.SessionId);
             ulong seed = options.Seeds(new[] { SimulationSettings.DefaultSeed })[0];
-            long ticks = options.Long("ticks", 9000);
+            long ticks = options.Long("ticks", DayClock.TicksPerDay);
 
             using var sim = LocalSimulation.Create(seed);
             sim.Respawn(sessionId);
@@ -71,7 +71,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
             long start = sim.Clock.CurrentTick;
             for (long rel = 0; rel <= ticks && !ct.IsCancellationRequested; rel++)
             {
-                if (rel % EconomySoak.SampleIntervalTicks == 0 || rel == ticks) Console.WriteLine(Line(sim, rel));
+                if (rel % DayClock.TicksPerHour == 0 || rel == ticks) Console.WriteLine(Line(sim, rel));
                 if (rel < ticks) sim.Step(1);
             }
             watch.Stop();
@@ -114,7 +114,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
         private static int Sweep(Options options, CancellationToken ct)
         {
             var seeds = options.Seeds(EconomySoak.DefaultSeeds);
-            long ticks = options.Long("ticks", 9000);
+            long ticks = options.Long("ticks", DayClock.TicksPerDay);
             bool verbose = options.Flag("verbose");
             bool withGuild = options.Flag("guild");
             int failed = 0, runs = 0;
@@ -127,7 +127,7 @@ Exit code: 0 when every run held, 1 when one failed, 64 for a bad command line."
                 GuildPlayer player = null;
                 if (withGuild)
                 {
-                    player = new GuildPlayer(sim, targetSize: sim.Simulation.Economy.Guild.MaxMembers);
+                    player = new GuildPlayer(sim, targetSize: EconomySoak.GuildProfileSize);
                     player.SendExpeditions(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, Simpiens.Core.Session.Layouts.Floor1Layout.GallerySeamYield);
                 }
                 var day = new OutpostWatch(sim);

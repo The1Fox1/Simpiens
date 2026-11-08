@@ -97,6 +97,7 @@ namespace Simpiens.Client.Tests
                 hash = Fnv.Add(hash, Fnv.Quantize(quad.Height));
                 hash = Fnv.Add(hash, Fnv.Quantize(item.Rotation * 64f));
                 hash = Fnv.Add(hash, (long)item.Tint.R << 24 | (long)item.Tint.G << 16 | (long)item.Tint.B << 8 | item.Tint.A);
+                if (item.Silhouette) hash = Fnv.Add(hash, 1); // filled flat with its tint (S3): only when set, so the pins of pictures without one hold
             }
             return hash;
         }
@@ -162,12 +163,28 @@ namespace Simpiens.Client.Tests
         // the labels, with the render references.
         // Epic UI-Beta B2 (2026-11-03): every crawler is drawn as its own body, a cell of the world sheet's body region, so
         // every item pin was re-pinned with the render references after the producer's look; labels unchanged.
-        private static readonly (ulong, ulong) PinnedTick0 = (17641633296866019416UL, 14250960641362250661UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (5459232858451998362UL, 14250960641362250661UL);
+        // Epic 10 Part 2 W0.4 (2026-11-04): the workshop row and the guildhall replace the rock beside the Drowned Gallery,
+        // with their floors, walls and names; the whole-floor pins moved, items and labels, and the zoomed views' labels
+        // (every placed label is hashed), while their items held: nothing a crawler does changed.
+        // Epic 10 Part 2 T5 (2026-11-05), the 24-hour day: 12 bunks in two rows of six, and every crawler spawns and moves
+        // on the day's pace, so every item pin was re-pinned with the render references; the whole floor's labels held, the
+        // zoomed views' moved with the selected crawler.
+        // Epic 10 Part 2 W1.6a.1 (2026-11-05): the stations' plots lie in the workshop row, at the floor's lower edge; the
+        // whole-floor views' items re-pinned with the render references, labels unchanged, the zoomed views unchanged.
+        // Epic 10 Part 2 W5.2 (2026-11-06): the guildhall's eight barracks bunks, and with eight more entities on the map every
+        // later id moves, so every crawler's look and day moved too; every item pin re-pinned with the render references, the
+        // whole floor's labels held, the zoomed views' moved with the selected crawler.
+        // Epic 10 Part 2's stretch (2026-11-06, D69): the hazards' animations in the whole floor's views; items re-pinned,
+        // labels and the zoomed views unchanged (no hazard sector in them).
+        // Epic 10 Part 2's S3 (2026-11-07, D71): at t300 a crawler in the Glow Caves is hurt and wears its red coat, a
+        // silhouette item, now part of the hash; both views at t300 re-pinned with the render references, labels unchanged,
+        // t0 and the zoomed views unchanged (nobody hurt in them).
+        private static readonly (ulong, ulong) PinnedTick0 = (12937878628055227934UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (10024080536634263731UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8048523018784521886UL, 9314585316717962577UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (16238647467431113274UL, 4268601865235128987UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (17091240611631339463UL, 5606140428678540481UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (9986015466188299776UL, 3214430476125141426UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (530121878841030718UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14081764154863997278UL, 13801314577213324051UL);
     }
 }

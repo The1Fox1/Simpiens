@@ -27,7 +27,7 @@ namespace Simpiens.Client.Tests
         private static ArtCatalog Catalog(string mode) => mode == "top-down" ? ViewMode.TopDown.Catalog : ViewMode.Isometric.Catalog;
 
         /// <summary>The kinds the scene draws as entities; walls are the map's tiles, and the stall isn't an entity.</summary>
-        private static readonly EntityType[] Drawn = { EntityType.Pawn, EntityType.Resource, EntityType.Anchor, EntityType.Bunk };
+        private static readonly EntityType[] Drawn = { EntityType.Pawn, EntityType.Resource, EntityType.Anchor, EntityType.Bunk, EntityType.GuildBunk };
 
         [Theory]
         [MemberData(nameof(Modes))]
@@ -50,6 +50,24 @@ namespace Simpiens.Client.Tests
                 if (session == OutpostSession.SessionId) Assert.Equal(Drawn.ToHashSet(), seen.Intersect(Drawn).ToHashSet()); // Floor 1 has every kind
             }
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) Assert.False(visuals.Crawler(state).IsNone, state.ToString());
+        }
+
+        /// <summary>Every station on a shipped map is drawn (Epic 10 Part 2, W1.6a): its own art once built, its plot before.</summary>
+        [Theory]
+        [MemberData(nameof(Modes))]
+        public void EveryStationHasItsArtBuiltAndUnbuilt(string mode)
+        {
+            var visuals = new EntityVisuals(Catalog(mode));
+            foreach (var map in new[] { Floor1Layout.Definition, DevMapLayout.Definition })
+            {
+                foreach (var station in map.Stations)
+                {
+                    Assert.False(visuals.Station(station.Kind, built: false).IsNone, $"{map.Name}: station '{station.Key}' has no plot.");
+                    Assert.False(visuals.Station(station.Kind, built: true).IsNone, $"{map.Name}: station '{station.Key}' ({station.Kind}) has no art built.");
+                    Assert.NotEqual(visuals.Station(station.Kind, built: false), visuals.Station(station.Kind, built: true));
+                }
+            }
+            Assert.NotEmpty(Floor1Layout.Definition.Stations);
         }
 
         [Theory]
@@ -78,6 +96,11 @@ namespace Simpiens.Client.Tests
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             used.Add(catalog.Id(ArtKeys.PropStall));
+            used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
+            foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
+                if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
+            foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))
+                foreach (bool built in new[] { false, true }) used.Add(catalog.Id(ArtKeys.Station(kind, built)));
             foreach (var key in WornSprites.Keys)
                 foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.CrawlerWearing(state, key)));
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));
@@ -113,6 +136,12 @@ namespace Simpiens.Client.Tests
                 var icon = icons.Picture(item.ArtKey, ItemPicture.Icon);
                 Assert.True(icon != icons.Missing, $"{item.Name} ('{item.ArtKey}') has no icon.");
                 used.Add(icon);
+                // A piece that comes in grades has an icon for each (Epic 10 Part 2, W4)
+                for (byte grade = Grades.Fine; Grades.Graded(item.Id) && grade <= Grades.Masterwork; grade++)
+                {
+                    Assert.True(icons.TryId(ItemIcons.Of(item.Id, grade), out var graded) && graded != icon, $"{item.Name} has no {Grades.NameOf(grade)} icon.");
+                    used.Add(graded);
+                }
             }
             Assert.Equal(icons.Count, used.Count);
         }

@@ -16,3 +16,6 @@ If anything here or elsewhere disagrees with `docs/ROADMAP.md`, the roadmap wins
 ## Working with the producer
 - The producer is an expert full-stack .NET developer. Give direct, ego-less feedback; prefer technical transparency and grounded explanations over polite filler.
 - The producer answers questions by exception: a default they don't contest stands, but silence is not a go-ahead for work that needs one.
+
+### Directives
+If given a directive or provisional authority to execute an approved set of work until the developer returns then immediately persist the directive to the local agent folder.

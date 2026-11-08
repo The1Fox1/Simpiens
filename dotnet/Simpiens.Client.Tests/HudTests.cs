@@ -1,4 +1,5 @@
 using System.Linq;
+using Simpiens.Client.Ui;
 using Simpiens.Presentation;
 using Simpiens.Simulation.Spatial;
 using Xunit;
@@ -30,7 +31,7 @@ namespace Simpiens.Client.Tests
         {
             var ui = MapView();
             Assert.Equal("Day 1 · 06:00", ui.Game.Play.Dashboard.Header.TickText); // the time of day (Epic UI-Beta B5)
-            ui.Ticks(375);
+            ui.Ticks(Simpiens.Simulation.DayClock.TicksPerHour);
             Assert.Equal("Day 1 · 07:00", ui.Game.Play.Dashboard.Header.TickText);
             Assert.True(ui.Game.Session.DashboardModel.Context.TryGetStall(out var stall));
             Assert.Equal($"{stall.TreasuryGold}", ui.Game.Play.Dashboard.Header.GoldText);
@@ -103,6 +104,34 @@ namespace Simpiens.Client.Tests
             ui.Frame();
             ui.Script.Keys = default;
             Assert.False(game.Session.Selection.Following, "With no window open, Esc stops the camera following.");
+        }
+
+        /// <summary>
+        /// At every window size the game offers, the header's clusters from the left and from the right keep clear of each
+        /// other (Epic 10 Part 2, W1.6a: the Workshop button ran under the clock at 1280), with room for the clock's day to
+        /// reach two digits; at 1280 the identity drops its words, from 1440 it has them.
+        /// </summary>
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void TheHeadersClustersKeepClearAtEveryWindowSize(int size)
+        {
+            var at = WindowSizes.All[size];
+            var ui = UiDriver.Start(width: at.X, height: at.Y);
+            ui.Frame();
+            var header = ui.Game.Play.Dashboard.Header;
+            float leftEnd = header.Left.AbsoluteLeft + header.Left.AbsoluteWidth;
+            float rightStart = header.Right.AbsoluteLeft;
+            const float Clearance = 12f + 12f; // the clusters' own gap, and a second digit in the day with room to spare
+            Assert.True(rightStart - leftEnd >= Clearance, $"At {at.X}x{at.Y} the clusters are {rightStart - leftEnd:F0} px apart (from {leftEnd:F0} to {rightStart:F0}).");
+            Assert.Equal(at.X >= HeaderBar.WordsFromWidth, header.Left.Children.Count > 0 && ShowsWords(header));
+        }
+
+        private static bool ShowsWords(HeaderBar header)
+        {
+            var identity = (Gum.Wireframe.GraphicalUiElement)header.Left.Children[0];
+            return ((Gum.Wireframe.GraphicalUiElement)identity.Children[1]).Visible;
         }
 
         [Fact]

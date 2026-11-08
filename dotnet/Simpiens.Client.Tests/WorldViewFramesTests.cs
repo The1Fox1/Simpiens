@@ -38,6 +38,7 @@ namespace Simpiens.Client.Tests
                 Assert.Equal(entity.Agent.IsYielding, (view.Flags & CrawlerFlags.Yielding) != 0);
                 Assert.Equal(entity.Agent.IsSharing, (view.Flags & CrawlerFlags.Sharing) != 0);
                 Assert.Equal(entity.Agent.IsGossiping, (view.Flags & CrawlerFlags.Gossiping) != 0);
+                Assert.Equal(entity.Agent.HurtThisTick > 0f, (view.Flags & CrawlerFlags.Hurt) != 0);
                 Assert.True(frame.TryGetIndex(entity.Id, out int index) && index == i);
             }
             Assert.Equal(sim.Sectors.ExploredMask, frame.ChartedMask);

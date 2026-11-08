@@ -125,12 +125,12 @@ namespace Simpiens.Testing.Economy
 
                     // A crawler at the stall: claim a Gather bounty, deliver its ore, buy a ration, sell ore
                     sim.RegisterBounty(new BountyContract(DeliveredId, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, tick, tick + 1000, creatorStallId: stallId));
-                    Count(sim.ExecuteIntent(node, claim));
+                    Count(sim.RunToCompletion(node, claim));
                     agent.Inventory.TryAddItem(ore, out _);
-                    Count(sim.ExecuteIntent(node, deliver));
-                    Count(sim.ExecuteIntent(node, buy));
+                    Count(sim.RunToCompletion(node, deliver));
+                    Count(sim.RunToCompletion(node, buy));
                     agent.Inventory.TryAddItem(ore, out _);
-                    Count(sim.ExecuteIntent(node, sell));
+                    Count(sim.RunToCompletion(node, sell));
 
                     // A bounty nobody takes: it expires on the next tick and its escrow goes back to the stall
                     sim.RegisterBounty(new BountyContract(ExpiringId, BountyType.GatherResource, 0, ItemType.IronOre, 1, 10, tick, tick, creatorStallId: stallId));

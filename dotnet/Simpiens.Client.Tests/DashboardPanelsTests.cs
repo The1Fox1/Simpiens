@@ -66,10 +66,12 @@ namespace Simpiens.Client.Tests
             ui.Ticks(300);
             game.Play.Dashboard.TogglePanels();
             ui.Frame();
-            // A crawler out of the Road Gate with nobody beside it, so the click can only mean it (picking takes what is drawn on top)
+            // A crawler out of the Road Gate, in a charted sector (the fog hides the rest), with nobody beside it, so the click
+            // can only mean it (picking takes what is drawn on top)
+            var sectors = game.Session.Simulation.Sectors;
             var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
-            var walker = pawns.First(e => game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId
-                                          && pawns.All(o => o == e || Vec2.Distance(o.Position, e.Position) > 1f));
+            var walker = pawns.First(e => sectors.GetSectorAt(e.Position).Id != Floor1Layout.RoadGateSectorId && sectors.IsExplored(sectors.GetSectorAt(e.Position).Id)
+                                          && pawns.All(o => o == e || Vec2.Distance(o.Position, e.Position) > 2f));
             ui.Click(game.World.View.WorldToScreen(walker.Position));
             Assert.Equal(walker.Id, game.Session.Selection.SelectedCrawler);
 
@@ -96,13 +98,33 @@ namespace Simpiens.Client.Tests
             Assert.Equal(0f, crawler.Agent.Frustration);
         }
 
+        /// <summary>A worn tool shows on its own line under the gear, only while there is one (Epic 10 Part 2, W1.6b).</summary>
+        [Fact]
+        public void TheDossierShowsAWornToolOnlyWhileThereIsOne()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            ui.Frame();
+            Assert.Equal(string.Empty, game.Play.Dashboard.Panels.ToolShown);
+            crawler.Agent.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.ToolPickaxe, 1, 30, durability: 32)); // by hand
+            game.Play.Dashboard.Refresh();
+            ui.Frame();
+            Assert.Equal("Tool: Pickaxe, 80% left", game.Play.Dashboard.Panels.ToolShown);
+            RenderTests.CompareWithReference("render-outpost-dossier-tool", FrameCapture.Capture(game, Width, Height), Width, Height);
+        }
+
         [Fact]
         public void TheDashboardLooksAsRecorded()
         {
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 3, Width, Height);
             game.Session.Simulation.Clock.SetTimeMultiplier(1f);
-            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && game.Session.Simulation.Sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId);
-            game.Session.DashboardModel.SelectSector(Floor1Layout.HubSectorId);
+            // A crawler in the hub, or the first crawler where it is: where they are at t300 moves with behaviour (W5.2)
+            var sectors = game.Session.Simulation.Sectors;
+            var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
+            var crawler = pawns.FirstOrDefault(e => sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId) ?? pawns[0];
+            game.Session.DashboardModel.SelectSector(sectors.GetSectorAt(crawler.Position).Id);
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             game.Play.Dashboard.Refresh();
             game.RunOneFrame();

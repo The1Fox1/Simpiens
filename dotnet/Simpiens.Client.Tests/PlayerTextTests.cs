@@ -80,8 +80,9 @@ namespace Simpiens.Client.Tests
         public void ADriftersDossierSaysWhenItMovesOn()
         {
             Assert.Equal(string.Empty, DossierModel.Stay(0, 100));
-            Assert.Equal("drifter, leaves in 2 min", DossierModel.Stay(1300, 200));
-            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1000));
+            Assert.Equal("drifter, leaves in 3 h 20 min", DossierModel.Stay(1500 + 3 * DayClock.TicksPerHour + 20 * DayClock.TicksPerMinute, 1500)); // in game time
+            Assert.Equal("drifter, leaves in 45 min", DossierModel.Stay(1300, 1300 - 45 * DayClock.TicksPerMinute));
+            Assert.Equal("drifter, leaves in 1 min", DossierModel.Stay(1300, 1299)); // a part of a minute rounds up
             Assert.Equal("drifter, leaving", DossierModel.Stay(1300, 1300));
 
             using var sim = Outpost(0);
@@ -109,7 +110,7 @@ namespace Simpiens.Client.Tests
             sim.Step(1);
             Assert.True(model.Context.TryGetStall(model.Merchant.StallId, out var stall));
             Assert.Equal(38, stall.GlowstoneBuyPrice);
-            Assert.Equal(20, stall.OreBuyPrice); // the others keep their prices
+            Assert.Equal(EconomyTuning.Default.Terms(ItemType.IronOre).StallPrice, stall.OreBuyPrice); // the others keep their prices
 
             var crawler = sim.Host.CrawlerStates[0];
             crawler.Health = 30f;
@@ -145,6 +146,33 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear); // by its catalog name
             Assert.Equal("item/hazard-gear/icon", model.Dossier.GearIcon);
             Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1)));
+
+            // A worn tool has its own line, shown only while there is one (Epic 10 Part 2, W1.6b)
+            Assert.Equal(string.Empty, model.Dossier.Tool);
+            Assert.Null(model.Dossier.ToolIcon);
+            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 32));
+            model.SelectCrawler(crawler.AgentId);
+            Assert.Equal("Pickaxe, 80% left", model.Dossier.Tool); // 32 of its 40
+            Assert.Equal("item/pickaxe/icon", model.Dossier.ToolIcon);
+            Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear);
+        }
+
+        /// <summary>The party builder's outfit names the gear it gives for the target's hazard (Epic 10 Part 2, W3.4, D50).</summary>
+        [Fact]
+        public void TheOutfitButtonNamesTheGearForTheTarget()
+        {
+            using var sim = Outpost(0);
+            sim.Sectors.SetExplored(Simpiens.Core.Session.Layouts.Floor1Layout.DrownedGallerySectorId, true); // by hand: charted
+            var model = new DashboardModel(DashboardContext.From(sim.Services));
+            model.OpenGuild();
+            var expedition = model.Guild.Expedition;
+            Assert.Equal("The Drowned Gallery", expedition.TargetName); // the builder starts on the most dangerous
+            Assert.Equal("Outfit: hazard gear", expedition.OutfitText);
+            var sm = (SimulationManager)sim.Simulation;
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 2));
+            Assert.Equal("Outfit: respirator", expedition.OutfitText);
+            expedition.ToggleOutfit();
+            Assert.Equal("No outfitting", expedition.OutfitText);
         }
 
         [Fact]

@@ -90,6 +90,25 @@ namespace Simpiens.Cognition
 
         /// <summary>Its part in the guild's expedition (Epic 10 G5), a copy refreshed every tick as the memberships are; not saved.</summary>
         public ExpeditionOrder Expedition { get; set; }
+
+        /// <summary>Its part in its station's work (Epic 10 Part 2, W1.3), a copy refreshed every tick as the expedition's is; not saved.</summary>
+        public StationOrder Station { get; set; }
+
+        /// <summary>The bunk the guild keeps for it in the barracks (Epic 10 Part 2, W5.2), a copy refreshed every tick as the expedition's is; not saved.</summary>
+        public KeptBunk Bunk { get; set; }
+
+        /// <summary>
+        /// It did a tick of a station's work this tick (W1.3, D15): its handler marks it, during the simulation's tick, and
+        /// the state's own tick, after it, drains the station's rate and clears it. Not saved: it lasts a tick.
+        /// </summary>
+        public bool WorkedStation { get; set; }
+
+        /// <summary>
+        /// A muster call rouses this sleeper (Epic 10 Part 2, T5): it has slept past the tired line, and its party is
+        /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
+        /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
+        /// </summary>
+        public bool IsCalledFromSleep => Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Muster && Energy >= Considerations.TiredEnergy;
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
         /// <summary>Stable traits (review §3.2). Neutral by default; set once at spawn.</summary>
@@ -145,6 +164,13 @@ namespace Simpiens.Cognition
         /// <summary>Health, 0 to 100 (Epic 10 G2): hazard sectors take it, bunks and herbs give it back. Saved.</summary>
         public float Health { get; set; } = Vitality.MaxHealth;
 
+        /// <summary>
+        /// The health taken from it in its last tick (Epic 10 Part 2, S3, D71): today by a hazard sector, after its gear's
+        /// resistance. The view shows it as a red coat. Never saved, and nothing decides on it: the runtime writes it
+        /// every tick, so after a load it is right again from the first tick.
+        /// </summary>
+        public float HurtThisTick { get; set; }
+
         /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
         public bool IsDowned { get; set; }
 
@@ -193,9 +219,15 @@ namespace Simpiens.Cognition
         }
 
         /// <summary>
-        /// Advance biological drives and emotion timers on fixed logical tick delta.
+        /// Advance biological drives and emotion timers on fixed logical tick delta, at the default economy's pace.
         /// </summary>
-        public void Tick(float dt)
+        public void Tick(float dt) => Tick(dt, Simpiens.Simulation.Economy.EconomyTuning.Default.Day);
+
+        /// <summary>
+        /// Advance biological drives and emotion timers on fixed logical tick delta, at the session's pace
+        /// (<see cref="Simpiens.Simulation.Economy.DayTuning"/>, Epic 10 Part 2, milestone T).
+        /// </summary>
+        public void Tick(float dt, in Simpiens.Simulation.Economy.DayTuning day)
         {
             if (YieldingTimer > 0f) YieldingTimer -= dt;
             if (SharingTimer > 0f) SharingTimer -= dt;
@@ -221,14 +253,14 @@ namespace Simpiens.Cognition
             // Biological drive decay
             // Every step cast to float: Unity's Mono keeps a scalar chain's intermediates at double precision, CoreCLR
             // doesn't, and needs compared against thresholds then parted the golden seeds (Epic CORE F1, Epic 10 G2)
-            float hunger = SimMath.Min(100f, (float)(Needs.Hunger + (float)(dt * 1.5f)));
+            float hunger = SimMath.Min(100f, (float)(Needs.Hunger + (float)(dt * day.HungerPerSecond)));
             float energy = Needs.Energy;
 
             bool inBunk = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.SleepAtBunkAction;
             if (IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction))
             {
                 // A bunk restores energy faster than resting where you stand (Epic MAP Phase 3 rest anchor)
-                float rate = inBunk && !IsExhaustionCollapsed ? Simpiens.Cognition.Planning.Considerations.BunkRecoveryPerSecond : 15f;
+                float rate = inBunk && !IsExhaustionCollapsed ? day.BunkRecoveryPerSecond : day.RestRecoveryPerSecond;
                 energy = SimMath.Min(100f, (float)(energy + (float)(dt * rate)));
                 if (IsExhaustionCollapsed && energy >= 30f)
                 {
@@ -239,24 +271,31 @@ namespace Simpiens.Cognition
             }
             else if (VisualState == AgentVisualState.Walking)
             {
-                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 1.0f)));
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyWalkingPerSecond)));
+            }
+            else if (VisualState == AgentVisualState.Harvesting)
+            {
+                // Work tires as walking does on the 24-hour day (Epic 10 Part 2, T2.4); a station's work less (W1.3, D15)
+                float rate = WorkedStation ? day.EnergyCraftingPerSecond : day.EnergyWorkingPerSecond;
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * rate)));
             }
             else
             {
-                energy = SimMath.Max(0f, (float)(energy - (float)(dt * 0.2f)));
+                energy = SimMath.Max(0f, (float)(energy - (float)(dt * day.EnergyStandingPerSecond)));
             }
+            WorkedStation = false;
 
             // Health (Epic 10 G2): heals slowly anywhere, fast asleep in a bunk; a downed crawler gets up at RecoveredAt.
             // Hazard damage is the runtime's (it knows the map)
             bool sleepingInBunk = inBunk || CurrentIntent is SleepAtBunkIntent;
-            Health = SimMath.Min(Vitality.MaxHealth, (float)(Health + (float)(dt * (sleepingInBunk ? Vitality.BunkHealPerSecond : Vitality.RestingHealPerSecond))));
+            Health = SimMath.Min(Vitality.MaxHealth, (float)(Health + (float)(dt * (sleepingInBunk ? day.BunkHealPerSecond : day.RestingHealPerSecond))));
             if (IsDowned && Health >= Vitality.RecoveredAt)
             {
                 IsDowned = false;
                 SimLog.Drives.ZLogInformation($"{SimLog.Agent(AgentId)} is back on its feet (health {Health:F0})");
             }
 
-            float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * 0.5f)));
+            float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
             Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * 1f)));
 
@@ -480,7 +519,9 @@ namespace Simpiens.Cognition
                 DepartsAtTick,
                 Health,
                 IsDowned,
-                Expedition);
+                Expedition,
+                Station,
+                Bunk);
         }
     }
 }

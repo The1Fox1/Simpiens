@@ -75,6 +75,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                 return Reject(node, deliver, "reward not in escrow");
             }
 
+            // Handing it over takes its time (D22); the deliverable and the escrow are checked again each tick
+            if (StillWorking(node, state, context, context.Economy.Day.Actions.BoardSeconds)) return IntentResult.InProgress;
+
             uint currentDeliverTick = context.CurrentTick;
 
             // 2. Hand over the deliverable

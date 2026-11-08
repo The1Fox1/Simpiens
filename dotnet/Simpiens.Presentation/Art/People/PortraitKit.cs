@@ -88,7 +88,9 @@ namespace Simpiens.Presentation.Art.People
             string accessory = LookCatalog.KeyOf(LookGene.Accessory, look.Accessory);
             bool delver = lineage == "delver", female = LookCatalog.KeyOf(LookGene.Frame, look.Frame) == "female";
             ItemLook gear = default;
-            bool helm = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out gear) && gear.Worn == Worn.Head;
+            bool worn = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out gear);
+            bool helm = worn && gear.Worn == Worn.Head;
+            bool mask = worn && gear.Worn == Worn.Face; // a respirator (Epic 10 Part 2, D52)
 
             // The head: centre and radii by face shape and lineage; the face turns to the viewer's right, toward the light's side
             int cx = 23, cy = 20;
@@ -167,6 +169,7 @@ namespace Simpiens.Presentation.Art.People
                 for (int y = cy - 6; y <= cy - 5; y++)
                     for (int x = cx - rx + 2; x <= cx + rx; x++) if (c.At(x, y) is Skin or Hair) c.Set(x, y, Bandage, y == cy - 6 ? 1 : 2);
             if (helm) HelmOn(ref c, cx, cy, rx, ry);
+            if (mask) MaskOn(ref c, cx, cy, rx, ry, my);
             if (tabard)
                 for (int y = 40; y < Size; y++)
                     for (int x = cx - 2; x <= cx + 3; x++)
@@ -386,6 +389,20 @@ namespace Simpiens.Presentation.Art.People
             for (int x = cx - rx - 2; x <= cx + rx + 4; x++) c.Set(x, brim, Helm, x < cx ? 3 : 4);
             for (int y = brim - 6; y <= brim - 3; y++)
                 for (int x = cx + 5; x <= cx + 8; x++) c.Set(x, y, Lamp, (x == cx + 6 && y == brim - 5) ? 1 : 2);
+        }
+
+        // The respirator (D52): a mask over the mouth and the nose's foot, lit from the top left in the gear's colour, a filter
+        // at the front of the face (the right) and one at the near cheek in its second colour
+        private static void MaskOn(ref Canvas c, int cx, int cy, int rx, int ry, int my)
+        {
+            for (int y = my - 3; y <= my + 2; y++)
+                for (int x = cx - 5; x <= cx + rx; x++)
+                    if (Inside(x - cx, y - cy, rx, ry)) c.Set(x, y, Helm, y == my + 2 ? 4 : x < cx ? 2 : 3);
+            for (int y = my - 1; y <= my + 1; y++)
+            {
+                for (int x = cx + 7; x <= cx + 9; x++) c.Set(x, y, Lamp, (x == cx + 7 && y == my - 1) ? 1 : 2);
+                for (int x = cx - 6; x <= cx - 4; x++) c.Set(x, y, Lamp, (x == cx - 6 && y == my - 1) ? 1 : 2);
+            }
         }
 
         // The hair over the head: a cap above a hairline that drops toward the back of the head (left) and sits high over the face
