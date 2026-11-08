@@ -178,5 +178,8 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void Combat() => new Simpiens.Testing.Combat.CombatValidator().RunAllValidationTests();
+
+        [Fact]
+        public void CreatureCatalog() => new Simpiens.Testing.Combat.CreatureCatalogValidator().RunAllValidationTests();
     }
 }

@@ -79,9 +79,22 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - `SimRandomSalt.Combat` (10); `StatKind.Reach`, `AttackInterval` and `Range` (23–25).
     - `CombatValidator`, 9 tests: the roll seeded and the same on any thread, hit rates at their chance over 100,000 swings, the chance's bounds, the defense curve, a crawler's read with a test weapon and armour, reach and timing, wear per hit, a crawler against a hand-written creature (the same on a replay and in either order of resolution; over 40 seeds the crawler wins 24, the creature 15, both fall once), and no allocation.
   - **For the review** (K0's decisions D1–D8 in the epic's §0): the bare hand's numbers (D2), the target outside the roll (D3), no damage variance (D4), and above all D6, simultaneous resolution: K2.2's pass decides every swing of a tick from the tick's start and applies the harm after, so outcomes never depend on entity ids. D8 leaves to K2.4 whether a fighter's next swing is saved.
-- [ ] **K0.4 The creature catalogue:** [Possibly Complex: a new catalogue with a precedent, `ItemCatalog`]
+- [x] **K0.4 The creature catalogue:** [Possibly Complex: a new catalogue with a precedent, `ItemCatalog`] (done 2026-11-08)
   - kinds as data (A6), with a validator;
   - no spawns yet.
+  - **What was built** (`Simulation/Creatures/`):
+    - `CreatureKind` (ids never reused, as items' aren't);
+    - `CreatureDefinition`: health, attack, defense, reach, swing interval, range, speed, body, sight, leash, the flight line, pack size, healing and return in game hours, and a loot table id for K4. Its fields are init-only properties, so a row reads by name;
+    - `CreatureCatalog`: static and immutable, with `ExtendForTest`;
+    - `Combatant.ForCreature`, so a creature fights through the one rule (A1).
+  - **The three kinds** (placeholder numbers, which K2 and K3 tune by measurement):
+    - burrow rats: 20 health, 3 attack, quick, packs of 3–4, fleeing under 40%;
+    - stone beetles: 60 health, 7 attack, defense 8, slower than a crawler, packs of 1–2;
+    - cave spinners: 30 health, a 5-unit spit for K8, fleeing under 30%.
+    - All heal over 12 game hours and return after 2 game days (Q5).
+  - `CreatureCatalogValidator`, 5 tests, checks the shape Q5 describes through the rule's expectations:
+    - a bare hand needs 116 s against a beetle that downs it in 41 s, and the placeholder cudgel 31 s;
+    - one rat loses to a bare hand, and a pack of three downs it in 16 s.
 - **DoD:** the golden hashes, the 23 gate seeds and the soak are unchanged.
 
 ### K1. The equipment system (3–4 days)

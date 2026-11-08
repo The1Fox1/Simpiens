@@ -214,6 +214,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 - [x] **Docs:** this file, the roadmap (Part 3 ACTIVE), the focus file; the plan keeps the steps.
 - [x] **Measurements** (K0.2, the 23 gate seeds for three game days, with no player, the guild player and the crafting players): in the plan, with finding F1 below. 41 of 64 planner facts; about 20,000 ticks/s; frames of 2–4 ms; the soak 15/15; the bold carry 60–100g on most days; nobody is downed by a hazard.
 - [x] **The combat rule** (K0.3, D1–D8; the developer's review pending): `Combatant`, `CombatRules` and `SwingOutcome` in `Simulation/Combat/`; `SimRandomSalt.Combat`; `StatKind.Reach`, `AttackInterval` and `Range`. `CombatValidator` (9 tests). Nothing calls it yet, so the golden hashes don't move.
+- [x] **The creature catalogue** (K0.4, seam A6): `CreatureKind`, `CreatureDefinition` and `CreatureCatalog` in `Simulation/Creatures/`, with burrow rats, stone beetles and cave spinners as placeholder rows; `Combatant.ForCreature`. `CreatureCatalogValidator` (5 tests) holds the kinds to Q5's shape through the combat rule's expectations. Nothing spawns yet.
 
 ## 5. Deferred and out of scope
 
@@ -253,3 +254,4 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 ## 7. Findings
 
 - **F1 (2026-11-08, K0.2): hazards alone down nobody.** On the 23 gate seeds over three game days, with no player, with the guild player and with the crafting players, no crawler is downed. The lowest health anyone reaches in a hazard sector is 46 for a resident and 42 for a member on an expedition, above the retreat line (40). So Q3's lethal hazards change no outcome on the gate seeds by themselves, and the deaths `TheCarefulLoseFew` bounds will come from combat, from orders that push past the retreat line, and from bad luck. K5.1 re-records the golden hashes only if a golden seed downs someone in danger. [Basic: a measurement that K5 reads; no work of its own]
+- **F2 (2026-11-08, K0's gate): an allocation test failed once.** `WorldViewFramesTests.ASteadyCaptureAllocatesNothing` failed in one `dotnet test` of the whole solution, with the core's tests running alongside. It then passed 3 times alone and in two full reruns of the client's tests (485/485). K0 doesn't touch the client, and the same test passed in K0.3's run. Watched: if it fails again, look at what the runtime allocates on the test's thread during the measured loop (tiered compilation is the first suspect) before looking at the capture. [Basic: watch]

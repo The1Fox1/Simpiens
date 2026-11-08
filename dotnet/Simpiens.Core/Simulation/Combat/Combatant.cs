@@ -82,6 +82,13 @@ namespace Simpiens.Simulation.Combat
                 proficiency: 0f);
         }
 
+        /// <summary>
+        /// A creature as a fighter (K0.4): what it brings from its kind, its health from its own record (K2). On its feet while
+        /// it has health; practice is a crawler's alone.
+        /// </summary>
+        public static Combatant ForCreature(Simpiens.Simulation.Creatures.CreatureDefinition kind, EntityId id, Vec2 position, float health) =>
+            new Combatant(id, position, kind.BodyRadius, health, standing: health > 0f, kind.Attack, kind.Defense, kind.Reach, kind.SwingIntervalTicks, kind.Range);
+
         public override string ToString() =>
             $"{Id} at {Position}: health {Health:0.#}{(Standing ? string.Empty : " (down)")}, attack {Attack:0.##}, defense {Defense:0.##}, reach {Reach:0.##}, every {SwingInterval} ticks{(IsRanged ? $", range {Range:0.#}" : string.Empty)}";
     }

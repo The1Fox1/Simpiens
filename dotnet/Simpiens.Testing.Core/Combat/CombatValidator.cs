@@ -191,6 +191,7 @@ namespace Simpiens.Testing.Combat
             }
             Assert(swings == 4, $"A swing every 15 ticks: {swings} in 60, not 4.");
             Assert(CombatRules.SecondsToTicks(1.5f) == 15 && CombatRules.SecondsToTicks(1.2f) == 12 && CombatRules.SecondsToTicks(0.01f) == 1, "Seconds as whole ticks, at least one.");
+            Assert(SimMath.Approximately(CombatRules.TicksPerSecond * SimulationClock.FixedTickDeltaTime, 1f), "The rule's ticks a second are the clock's.");
             TestLog.Log("[PASS] Test 6: reach spans the gap between bodies; a fighter strikes only a standing foe in reach, once each interval.");
         }
 
