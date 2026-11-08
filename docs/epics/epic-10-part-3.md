@@ -192,6 +192,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 
 ### K0. Groundwork (under way, `feat/epic10-part3`)
 - [x] **Docs:** this file, the roadmap (Part 3 ACTIVE), the focus file; the plan keeps the steps.
+- [x] **Measurements** (K0.2, the 23 gate seeds for three game days, with no player, the guild player and the crafting players): in the plan, with finding F1 below. 41 of 64 planner facts; about 20,000 ticks/s; frames of 2–4 ms; the soak 15/15; the bold carry 60–100g on most days; nobody is downed by a hazard.
 
 ## 5. Deferred and out of scope
 
@@ -218,7 +219,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 | :--- | :--- |
 | Creatures, fights and shots cost planning and frame time. | Creatures follow a short rule, not the planner (§2.2). Measure at K2, K7 and K8. Line of sight is a ray over the nav grid, checked only when a shot is due. |
 | Fights must be deterministic. | The main thread, in id order, on ticks, with one seeded roll per swing or shot (A4). |
-| Q3 makes Part 1's and Part 2's hazards lethal: a crawler downed in a hazard no longer limps out. | K0.2 measures how often it happens today. Friends' rescue (Q3b) and a carried draught (Q3a) are the answers in the game. The lone limit and the retreat line are tuned against `TheCarefulLoseFew`'s band. The golden hashes are re-recorded in K5.1's own commit. |
+| Q3 makes Part 1's and Part 2's hazards lethal: a crawler downed in a hazard no longer limps out. | Measured at K0.2: nobody is downed by a hazard in three game days on the gate seeds (F1). Friends' rescue (Q3b) and a carried draught (Q3a) are the answers in the game. The lone limit and the retreat line are tuned against `TheCarefulLoseFew`'s band. The golden hashes are re-recorded in K5.1's own commit. |
 | Death touches every system that holds a crawler: groups, contracts, bunks, parties, memory, the ledger and the views. | The drifter's departure is the precedent (A2), and K5.4 is supervised. The round-trip validators gain the dead. |
 | Deaths change the economy: a smaller population buys and sells less. | The newcomer rule (Q4). The soak's bands are set with deaths in them (K11.2). |
 | The equipment refactor touches hazards, harvest, outfitting, saves and the client at once. | Split into six steps, with a proof test that adds a slot (K1.6). Behaviour is held, or re-recorded with its cause named. |
@@ -230,4 +231,4 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 
 ## 7. Findings
 
-None yet.
+- **F1 (2026-11-08, K0.2): hazards alone down nobody.** On the 23 gate seeds over three game days, with no player, with the guild player and with the crafting players, no crawler is downed. The lowest health anyone reaches in a hazard sector is 46 for a resident and 42 for a member on an expedition, above the retreat line (40). So Q3's lethal hazards change no outcome on the gate seeds by themselves, and the deaths `TheCarefulLoseFew` bounds will come from combat, from orders that push past the retreat line, and from bad luck. K5.1 re-records the golden hashes only if a golden seed downs someone in danger. [Basic: a measurement that K5 reads; no work of its own]

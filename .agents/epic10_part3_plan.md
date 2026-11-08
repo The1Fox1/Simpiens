@@ -45,12 +45,29 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - the answered draft into `docs/epics/epic-10-part-3.md`;
   - the roadmap: Part 3 ACTIVE;
   - the focus file.
-- [ ] **K0.2 Measure:** [Possibly Complex: probes and reading them]
+- [x] **K0.2 Measure:** [Possibly Complex: probes and reading them]
   - planning cost and the planner's facts in use;
   - the frame time;
   - the economy after Part 2's F14 decision;
   - how many residents would venture, and with what purses (weapon prices are set against them, as the pickaxe's were, F9);
   - how often a lone venturer is downed in a hazard today: Q3 turns each of those into a death unless it is rescued.
+  - **Done 2026-11-08** (scratch probes over the 23 gate seeds for three game days, with no player, G6's guild player and the soak's crafting players; `feat/epic10-part3` at `30aa984`, the same code as `main`). F14 is still undecided, so the economy is measured as it stands:
+
+    | Measure | Result |
+    | :--- | :--- |
+    | Planner facts | 41 of 64 (`StateFact` 0–40, the last `HasMedicine`) |
+    | Throughput (Release, `PopulationScalingProbe`, a quiet run) | 20,500 ticks/s with 12 crawlers, 23,300 with 16, 19,900 with 24: some 2,000 times 1× |
+    | Frame time (Release, `FrameTimeProbe`, llvmpipe) | isometric 1.73 ms at 800×600, top-down 3.11 ms; the dashboard with a dossier 3.99 ms at 1280×720, the bounty board 2.06 ms. 30 fps allows 33 ms |
+    | The economy (the soak, every profile, its default seeds) | 15/15 within their bands. Treasury at day 3: fair 890–1,056g, greedy 652–685g, guild 813–835g, generous 0g. Crafting 123–154g: F14 as W6 reported, with the still built on 2 of 3 seeds and no party home |
+    | The bold (risk tolerance 30% or more), of 12 residents | 1–6 per seed, 2 on most; ready to venture (bold, at 80 health or more) in 7–47% of resident-hours |
+    | The bold's purses at each day's end | 24–116g on average on day 1 and 52–116g on day 3, most 60–100g; the richest 64–120g. With the guild player, up to 185g |
+    | Downed in three game days | **Nobody**, on any seed, with no player, with the guild player or with the crafting players |
+    | The lowest health in a hazard sector | Residents 46–84 (most 65–74), drifters 57–100, members on an expedition 42–73. Nobody reaches the retreat line (40), so nobody retreats either |
+
+    What it means:
+    - **Weapons' prices (K3):** the bold carry 60–100g on most days, and residents who mine buy the 30g pickaxe from day 2 (D39). So a cudgel at about 15g and an iron blade at about 30g are within a bold resident's purse; the glowstone edge's price follows glowstone's.
+    - **Q3's hazard deaths change nothing on the gate seeds by themselves** (finding F1 in the epic): nobody is downed by a hazard today. Deaths will come from combat, from orders that push past the retreat line, and from bad luck. So `TheCarefulLoseFew`'s band is set by combat, and K5.1 re-records the golden hashes only if a golden seed downs someone in danger.
+    - **Room to spend:** planning and frame time leave wide margins for 15–25 creatures (§8's first risk); K2, K7 and K8 measure again.
 - [ ] **K0.3 The combat rule:** [Very Complex, supervised by the developer: the first fight's rule sets the pattern K2–K10 follow]
   - `Combatant`, the read model (A1), with range and proficiency in it from the start;
   - `CombatRules`: reach, interval, the hit roll on a new `SimRandomSalt`, mitigation by `Defense`, wear per hit;
