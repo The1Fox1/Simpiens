@@ -124,9 +124,10 @@ namespace Simpiens.Cognition
                     State.Activity.GearedHazardTicks++;
                     State.Activity.GearedHazardDamage += taken;
                 }
-                for (int s = 0; inventory != null && s < AgentInventory.EquipmentSlots; s++)
+                var slots = EquipmentSlots.All;
+                for (int s = 0; inventory != null && s < slots.Count; s++)
                 {
-                    var slot = (EquipmentSlot)s;
+                    var slot = slots[s].Id;
                     var worn = inventory.GetEquipped(slot);
                     if (worn.IsEmpty || ItemCatalog.Get(worn.Type)?.Equipment?.Wear != WearRule.PerHazardTick) continue;
                     if (inventory.Wear(slot))

@@ -203,7 +203,9 @@ namespace Simpiens.Simulation.Guild
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
             if (host.ActiveStalls[0].SellStockOf(item) < 1) return Check.OutOfStock;
             if (!host.TryGetCrawler(crawlerId, out var crawler) || crawler.Inventory == null) return Check.NoCrawler;
-            var worn = crawler.Inventory.GetEquipped(equipment.Slot);
+            // The piece it would take the place of, by the rule the stall's sales share (Epic 10 Part 3, K1.1)
+            if (!WornGear.TryReplacing(crawler.Inventory, item, out var replacing)) return Check.NotGear;
+            var worn = crawler.Inventory.GetEquipped(replacing);
             if (!WornOut(worn) && (against == HazardKind.None || ProtectionAgainst(item, against) <= ProtectionAgainst(worn.Type, against))) return Check.AlreadyWearing;
             return Check.Ok;
         }

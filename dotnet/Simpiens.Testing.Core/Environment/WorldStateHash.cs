@@ -96,15 +96,21 @@ namespace Simpiens.Testing.Environment
                     Mix(ref h, inv.GetItemCount(ItemType.IronOre));
                     Mix(ref h, inv.GetItemCount(ItemType.MedicinalHerb));
                     Mix(ref h, inv.GetItemCount(ItemType.Glowstone)); // the rare salvage (Epic 10 G2)
-                    // Equipment and its wear (G3): the protection slot as G3 hashed its one gear slot; the others only when filled
-                    // (item system I4), so hashes recorded before the slots existed still match
-                    var protection = inv.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+                    // Equipment and its wear (G3): first the protective piece's durability, as G3 hashed its one gear slot (since
+                    // Epic 10 Part 3's K1.1, the body's piece, else the head's); then every other slot only when filled, by its
+                    // id (item system I4: the weapon 1, the tool 2), so hashes recorded before head and body existed still match
+                    var body = Simpiens.Simulation.Items.EquipmentSlot.Body;
+                    var head = Simpiens.Simulation.Items.EquipmentSlot.Head;
+                    var protective = !inv.GetEquipped(body).IsEmpty ? body : head;
+                    var protection = inv.GetEquipped(protective);
                     Mix(ref h, protection.IsEmpty ? -1 : protection.Durability);
-                    for (int slot = 1; slot < Simpiens.Cognition.Inventory.AgentInventory.EquipmentSlots; slot++)
+                    var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+                    for (int e = 0; e < slots.Count; e++)
                     {
-                        var equipped = inv.GetEquipped((Simpiens.Simulation.Items.EquipmentSlot)slot);
-                        if (equipped.IsEmpty) continue;
-                        Mix(ref h, slot);
+                        var slot = slots[e].Id;
+                        var equipped = inv.GetEquipped(slot);
+                        if (slot == protective || equipped.IsEmpty) continue;
+                        Mix(ref h, (int)slot);
                         Mix(ref h, (int)equipped.Type);
                         Mix(ref h, equipped.Durability);
                     }

@@ -16,8 +16,9 @@ namespace Simpiens.Cognition.Inventory
         int GetItemCount(ItemType type);
 
         /// <summary>
-        /// What the crawler has equipped in a slot, beside the pack (protection since Epic 10 G3; weapon and tool reserved):
-        /// <see cref="ItemInstance.Empty"/> when nothing. Its <see cref="ItemInstance.Durability"/> counts the wear it still takes.
+        /// What the crawler has equipped in a slot, beside the pack (the slots are the rows of
+        /// <see cref="Simpiens.Simulation.Items.EquipmentSlots"/>, Epic 10 Part 3, K1.1): <see cref="ItemInstance.Empty"/> when
+        /// nothing. Its <see cref="ItemInstance.Durability"/> counts the wear it still takes.
         /// </summary>
         ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot);
     }

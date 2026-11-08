@@ -210,11 +210,11 @@ namespace Simpiens.Testing.Combat
                 Assert(!CombatRules.WearOnHit(hit, inventory), "A bare hand wears nothing.");
                 Assert(!CombatRules.WearOnHit(hit, null), "Nor does a fighter with no inventory (a creature).");
 
-                // Worn gear that isn't a weapon is untouched: a pickaxe in the tool slot, armour in the protection slot
+                // Worn gear that isn't a weapon is untouched: a pickaxe in the tool slot, armour in the body slot
                 Assert(inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 40)), "A pickaxe in the tool slot.");
-                Assert(inventory.TryEquip(new ItemInstance(1, Brigandine, 1, 10, durability: 100)), "The brigandine in the protection slot.");
+                Assert(inventory.TryEquip(new ItemInstance(1, Brigandine, 1, 10, durability: 100)), "The brigandine in the body slot.");
                 CombatRules.WearOnHit(hit, inventory);
-                Assert(inventory.GetEquipped(EquipmentSlot.Tool).Durability == 40 && inventory.GetEquipped(EquipmentSlot.Protection).Durability == 100, "A hit wears only the weapon.");
+                Assert(inventory.GetEquipped(EquipmentSlot.Tool).Durability == 40 && inventory.GetEquipped(EquipmentSlot.Body).Durability == 100, "A hit wears only the weapon.");
             }
             TestLog.Log("[PASS] Test 7: a weapon that wears per use loses a unit a landed hit and breaks at 0; misses, bare hands and other gear wear nothing.");
         }
@@ -316,12 +316,12 @@ namespace Simpiens.Testing.Combat
         private static IDisposable TestItems() => ItemCatalog.ExtendForTest(
             // Attack +4, a fifth quicker, a quarter tile longer; three hits from breaking when made with durability 3
             new ItemDefinition(Cudgel, "TestCudgel", "Test Cudgel", ItemCategory.Equipment | ItemCategory.Weapon, ItemRarity.Common,
-                equipment: new EquipmentBlock(EquipmentSlot.Weapon, durability: 3, WearRule.PerUse,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 3, WearRule.PerUse,
                     new StatModifier(StatKind.Attack, ModifierOp.Add, 4f),
                     new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.8f),
                     new StatModifier(StatKind.Reach, ModifierOp.Add, 0.25f))),
             new ItemDefinition(Brigandine, "TestBrigandine", "Test Brigandine", ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Common,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 100, WearRule.None,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 100, WearRule.None,
                     new StatModifier(StatKind.Defense, ModifierOp.Add, 5f))));
 
         private static Combatant Fighter(uint id, Vec2 position, float attack = CombatRules.UnarmedAttack, float defense = 0f, float proficiency = 0f, bool standing = true) =>

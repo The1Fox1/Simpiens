@@ -100,11 +100,21 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K1. The equipment system (3–4 days)
 **Complexity:** Very Complex: it generalises the inventory, which hazards, harvest, outfitting, saves and the client rely on (bundling). Split as below; each step is Possibly Complex. The developer reviews K1.2's save design before K1.3 starts.
-- [ ] **K1.1 Slots as a table:** [Possibly Complex: a new catalogue with a precedent]
+- [x] **K1.1 Slots as a table:** [Possibly Complex: a new catalogue with a precedent]
   - `EquipmentSlots`: each slot's id, name, kind, body region, draw layer, place on the paper doll and order;
   - the first rows: head, body, weapon and tool, with protection retired;
   - items fit a slot kind (`EquipmentBlock`);
   - a validator.
+  - **What was built** (`Simulation/Items/EquipmentSlots.cs`, `WornGear.cs`):
+    - `EquipmentSlot` stays an id enum, as `ItemType` is, and the id is the slot's index in storage. Protection's id 0 is retired, never reused. The weapon (1) and the tool (2) keep their ids, so the world hash's old encoding still holds for them. Head is 3 and body 4.
+    - `SlotKind` is what fits a slot: an item's `EquipmentBlock.Kind`. A kind may have several slots, and a piece goes in the first free one in id order. `BodyRegion` is where a piece is worn, for portraits and worn sprites.
+    - The catalogue is static and immutable, with `ExtendForTest`. `All` is in id order, the order stats are summed in; `InDisplayOrder` is for lists.
+    - The inventory and its snapshot keep a record for each of 16 slot ids, indexed by the id (as an array here; K1.2 makes it the save's fixed record). `TryEquip` fills the first free slot of a piece's kind, or a named slot.
+    - Stats, hazard wear and the "is it wearing" questions loop over the table's rows.
+    - **One temporary rule:** `WornGear.TryReplacing` is what a piece takes the place of. The stall's sales, the guild's gifts and the scripted guild player share it. Until K1.3 a piece of protection takes the place of the protection worn, as G3's single slot did. So K1.1 and K1.2 change the structure only, and K1.3 changes this one rule.
+    - **Deviation:** the save format is raised to 11 here, not at K1.2, because this step changes what the equipment's indices mean. It is the PR's one raise, and K1.2's changes ride on it, as W4's did on W0.5's.
+  - `EquipmentSlotsValidator`, 6 tests: the table is consistent; Q11's first rows; an item fits a kind (two test ring slots fill in turn); a slot is a row (stats and the snapshot follow); the shared rule; no allocation.
+  - **Done 2026-11-08:** core 187/187, client 485/485, golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild.
 - [ ] **K1.2 Storage that grows:** [Possibly Complex: the save format, once]
   - the inventory's equipment as room for 16 slot records, indexed by slot id;
   - the save copies all 16, so a new slot loads old saves with it empty;

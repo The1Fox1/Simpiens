@@ -528,8 +528,7 @@ namespace Simpiens.Core.Tests
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, gear));
             o.Sim.Step(1); // applied on the tick, as every command
 
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
-            var worn = member.Inventory.GetEquipped(protection);
+            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body);
             Assert.Equal(gear, worn.Type);
             Assert.Equal(Simpiens.Simulation.Items.ItemCatalog.Get(gear).Equipment.Durability, worn.Durability);
             stall = o.Sim.Simulation.ActiveStalls[0];
@@ -573,8 +572,8 @@ namespace Simpiens.Core.Tests
 
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator, flooding));
             o.Sim.Step(1);
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
-            Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(protection).Type);
+            Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head).Type);
+            Assert.True(member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).IsEmpty, "One protective piece at a time until K1.3: the respirator took the hazard gear's place.");
             Assert.Equal(gearStock + 1, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // the sound gear went back
             Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.Respirator));
             Assert.Equal(GuildRules.Check.OutOfStock, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator, flooding));
@@ -592,7 +591,7 @@ namespace Simpiens.Core.Tests
             var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator));
             o.Sim.Step(1);
-            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head);
             Assert.Equal(1500, worn.Durability);
             Assert.Equal(1, o.Sim.Simulation.ActiveStalls[0].WornOf(ItemType.Respirator));
             Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].StockOf(ItemType.Respirator));

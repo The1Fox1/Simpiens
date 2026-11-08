@@ -40,13 +40,29 @@ namespace Simpiens.Cognition.Inventory
         }
 
         /// <summary>True when an equipped item is in the group.</summary>
-        public static bool IsWearing(this IAgentInventory inventory, ItemCategory group)
+        public static bool IsWearing(this IAgentInventory inventory, ItemCategory group) => !inventory.WornIn(group).IsEmpty;
+
+        /// <summary>The first equipped item in the group, in slot id order; empty when none is (Epic 10 Part 3, K1.1).</summary>
+        public static Simpiens.Simulation.Economy.ItemInstance WornIn(this IAgentInventory inventory, ItemCategory group)
         {
-            if (inventory == null) return false;
-            for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
+            if (inventory == null) return Simpiens.Simulation.Economy.ItemInstance.Empty;
+            var slots = EquipmentSlots.All;
+            for (int s = 0; s < slots.Count; s++)
             {
-                var item = inventory.GetEquipped((EquipmentSlot)s);
-                if (!item.IsEmpty && ItemCatalog.Is(item.Type, group)) return true;
+                var item = inventory.GetEquipped(slots[s].Id);
+                if (!item.IsEmpty && ItemCatalog.Is(item.Type, group)) return item;
+            }
+            return Simpiens.Simulation.Economy.ItemInstance.Empty;
+        }
+
+        /// <summary>True when <paramref name="item"/> is equipped in any slot (Epic 10 Part 3, K1.1).</summary>
+        public static bool IsWearing(this IAgentInventory inventory, Simpiens.Simulation.Economy.ItemType item)
+        {
+            if (inventory == null || item == Simpiens.Simulation.Economy.ItemType.None) return false;
+            var slots = EquipmentSlots.All;
+            for (int s = 0; s < slots.Count; s++)
+            {
+                if (inventory.GetEquipped(slots[s].Id).Type == item) return true;
             }
             return false;
         }

@@ -167,7 +167,7 @@ namespace Simpiens.Presentation.Dashboard
             State = agent.VisualState;
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
-            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
+            var worn = WornGear.Protection(agent.Inventory);
             Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
             Gear = GearText(worn);
             GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);

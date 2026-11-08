@@ -71,7 +71,7 @@ namespace Simpiens.Core.Tests
             for (long t = 0; t < DayClock.TicksPerDay && inGallery < 0; t++)
             {
                 sim.Step(1);
-                bool respirator = bold.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator;
+                bool respirator = WornGear.Protection(bold.Inventory).Type == ItemType.Respirator;
                 if (respirator && gearStockAtUpgrade < 0)
                 {
                     gearStockAtUpgrade = sim.Simulation.ActiveStalls[0].StockOf(ItemType.HazardGear);
@@ -81,8 +81,8 @@ namespace Simpiens.Core.Tests
                 }
                 if (respirator && map.FindSector(bold.Position).Id == Floor1Layout.DrownedGallerySectorId) inGallery = sim.Clock.CurrentTick;
             }
-            TestContext.Current.TestOutputHelper?.WriteLine($"wears {bold.Inventory.GetEquipped(EquipmentSlot.Protection).Type}; in the Gallery at t{inGallery}; gear bought {bold.Activity.GearPurchases}; hazard ticks {bold.Activity.HazardTicks}");
-            Assert.Equal(ItemType.Respirator, bold.Inventory.GetEquipped(EquipmentSlot.Protection).Type);
+            TestContext.Current.TestOutputHelper?.WriteLine($"wears {WornGear.Protection(bold.Inventory).Type}; in the Gallery at t{inGallery}; gear bought {bold.Activity.GearPurchases}; hazard ticks {bold.Activity.HazardTicks}");
+            Assert.Equal(ItemType.Respirator, WornGear.Protection(bold.Inventory).Type);
             Assert.Equal(1, bold.Activity.GearPurchases);
             Assert.Equal(0, sim.Simulation.ActiveStalls[0].StockOf(ItemType.Respirator));
             Assert.Equal(gearStock + 1, gearStockAtUpgrade); // its gear traded in (others, earning since, may buy it later)

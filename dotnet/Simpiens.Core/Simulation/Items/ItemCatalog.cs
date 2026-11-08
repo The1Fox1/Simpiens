@@ -64,13 +64,13 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
                 // miner's work while the stall's ore shelf sets how much it mines, so the forge sees its buyers again
-                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 40, WearRule.PerUse,
+                equipment: new EquipmentBlock(SlotKind.Tool, durability: 40, WearRule.PerUse,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
             // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
             // longer ventures, Epic 10 Part 2, T3.2a)
             new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
                 ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
@@ -80,14 +80,15 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Uncommon, maxStack: 5,
                 consume: new[] { new ConsumeEffect(StatKind.Health, 80f) }),
             // Protection by kind (Epic 10 Part 2, W3, Q5, D47): each cuts its own hazards by three quarters, where hazard gear
-            // cuts any by half; worn in the protection slot and worn out by exposure, as hazard gear
+            // cuts any by half; worn on the head (the respirator as a mask; Epic 10 Part 3, Q11) and worn out by exposure,
+            // as hazard gear is on the body
             new ItemDefinition(ItemType.Respirator, "Respirator", "Respirator",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.AirResistance, ModifierOp.Add, 0.75f))),
             new ItemDefinition(ItemType.HardHat, "HardHat", "Hard Hat",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f)))
         };
 

@@ -62,7 +62,7 @@ namespace Simpiens.Core.Tests
                         if (stage == ExpeditionStage.Work || stage == ExpeditionStage.Return) haul[p] = System.Math.Max(haul[p], party.Gathered(host));
                         if (p == 0 && stage == ExpeditionStage.Work)
                         {
-                            int wearing = party.Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+                            int wearing = party.Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && WornGear.Protection(c.Inventory).Type == ItemType.Respirator);
                             respiratorsOnATrip = System.Math.Max(respiratorsOnATrip, wearing);
                         }
                     }
@@ -157,6 +157,6 @@ namespace Simpiens.Core.Tests
             sim.Host.CrawlerStates.Where(c => !c.IsDrifter).Sum(c => c.Activity.MedicinePurchases) + RespiratorsBought(sim);
 
         private static int RespiratorsBought(LocalSimulation sim) =>
-            sim.Host.CrawlerStates.Count(c => !c.IsDrifter && !sim.Simulation.Guild.IsMember(c.AgentId) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+            sim.Host.CrawlerStates.Count(c => !c.IsDrifter && !sim.Simulation.Guild.IsMember(c.AgentId) && WornGear.Protection(c.Inventory).Type == ItemType.Respirator);
     }
 }

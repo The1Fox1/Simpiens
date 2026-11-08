@@ -258,10 +258,11 @@ namespace Simpiens.Simulation.Guild
             host.TryGetCrawler(crawlerId, out var crawler);
             var equipment = ItemCatalog.Get(item).Equipment;
             var stall = host.ActiveStalls[0];
-            var worn = crawler.Inventory.GetEquipped(equipment.Slot);
+            WornGear.TryReplacing(crawler.Inventory, item, out var replacing);
+            var worn = crawler.Inventory.GetEquipped(replacing);
             if (!worn.IsEmpty)
             {
-                crawler.Inventory.Unequip(equipment.Slot);
+                crawler.Inventory.Unequip(replacing);
                 stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn);
             }
             // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's

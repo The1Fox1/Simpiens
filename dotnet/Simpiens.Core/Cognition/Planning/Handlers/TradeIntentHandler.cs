@@ -46,12 +46,15 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
                 var equipment = Simpiens.Simulation.Items.ItemCatalog.Get(trade.ItemType)?.Equipment;
                 bool gear = equipment != null;
-                // A crawler wears one piece at a time; protection it wears is traded in for another piece (Epic 10 Part 2, D53:
-                // the planner asks only for one that opens salvage it can't reach), never for the same again
-                var wornNow = gear ? agent.Inventory.GetEquipped(equipment.Slot) : ItemInstance.Empty;
+                // A crawler wears one piece a slot; protection it wears is traded in for another piece (Epic 10 Part 2, D53:
+                // the planner asks only for one that opens salvage it can't reach), never for the same again. Which piece it
+                // takes the place of is the shared rule's (Epic 10 Part 3, K1.1)
+                var replacing = default(Simpiens.Simulation.Items.EquipmentSlot);
+                bool slotted = gear && Simpiens.Simulation.Items.WornGear.TryReplacing(agent.Inventory, trade.ItemType, out replacing);
+                var wornNow = slotted ? agent.Inventory.GetEquipped(replacing) : ItemInstance.Empty;
                 bool tradeIn = gear && !wornNow.IsEmpty && wornNow.Type != trade.ItemType
                     && Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Protection);
-                if (gear && (trade.Quantity != 1 || (!agent.Inventory.GetEquipped(equipment.Slot).IsEmpty && !tradeIn)))
+                if (gear && (trade.Quantity != 1 || !slotted || (!wornNow.IsEmpty && !tradeIn)))
                 {
                     return Reject(node, trade, "a crawler wears one piece of gear at a time");
                 }
@@ -73,13 +76,18 @@ namespace Simpiens.Cognition.Planning.Handlers
                     return Reject(node, trade, "agent cannot afford the purchase");
                 }
 
-                var tradedIn = tradeIn ? agent.Inventory.Unequip(equipment.Slot) : ItemInstance.Empty;
+                var tradedIn = tradeIn ? agent.Inventory.Unequip(replacing) : ItemInstance.Empty;
+                var wornIn = default(Simpiens.Simulation.Items.EquipmentSlot);
                 if (gear)
                 {
                     // New equipment comes at the best grade on the shelf (Epic 10 Part 2, D57), its life the grade's (hazard
                     // gear: ticks of hazard exposure)
                     byte grade = stall.BestGradeOf(trade.ItemType);
-                    agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)));
+                    if (!agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)), out wornIn))
+                    {
+                        if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
+                        return Reject(node, trade, "a crawler wears one piece of gear at a time");
+                    }
                 }
                 else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
                 {
@@ -92,7 +100,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     if (!context.EconomyLedger.TryExecuteStallPurchase(stall.StallEntityId, ref stall, agent.Inventory, totalCost))
                     {
                         // Roll back what was added, and give back what was traded in
-                        if (gear) agent.Inventory.Unequip(equipment.Slot);
+                        if (gear) agent.Inventory.Unequip(wornIn);
                         else agent.Inventory.TryRemoveItem(trade.ItemType, trade.Quantity);
                         if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
                         return Reject(node, trade, "ledger refused the purchase");
@@ -117,7 +125,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
-                if (gear && equipment.Slot == Simpiens.Simulation.Items.EquipmentSlot.Tool) agent.Activity.ToolPurchases++;
+                if (gear && equipment.Kind == Simpiens.Simulation.Items.SlotKind.Tool) agent.Activity.ToolPurchases++;
                 else if (gear) agent.Activity.GearPurchases++;
                 else if (food) agent.Activity.RecordRationPurchase();
                 else agent.Activity.MedicinePurchases++;

@@ -4,8 +4,8 @@ namespace Simpiens.Simulation.Items
 {
     /// <summary>
     /// A crawler's stats as its equipment makes them (the item system refactor, 2026-10-26): a base value, then every
-    /// equipped item's Add modifiers, then its Multiply modifiers, in slot order (deterministic). Code asks here
-    /// ("HazardResistance") instead of reading a tuning.
+    /// equipped item's Add modifiers, then its Multiply modifiers, over every slot of the table in id order (deterministic;
+    /// Epic 10 Part 3, K1.1). Code asks here ("HazardResistance") instead of reading a tuning.
     /// </summary>
     public static class CrawlerStats
     {
@@ -14,9 +14,10 @@ namespace Simpiens.Simulation.Items
             float value = baseValue;
             if (inventory == null) return value;
             // Each worn piece's modifiers at its grade (Epic 10 Part 2, W4, D56)
-            for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
+            var slots = EquipmentSlots.All;
+            for (int s = 0; s < slots.Count; s++)
             {
-                var equipment = Equipment(inventory, s, out byte grade);
+                var equipment = Equipment(inventory, slots[s].Id, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
@@ -24,9 +25,9 @@ namespace Simpiens.Simulation.Items
                     if (modifier.Stat == stat && modifier.Op == ModifierOp.Add) value += equipment.ValueAt(modifier, grade);
                 }
             }
-            for (int s = 0; s < AgentInventory.EquipmentSlots; s++)
+            for (int s = 0; s < slots.Count; s++)
             {
-                var equipment = Equipment(inventory, s, out byte grade);
+                var equipment = Equipment(inventory, slots[s].Id, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
@@ -94,9 +95,9 @@ namespace Simpiens.Simulation.Items
             _ => StatKind.None
         };
 
-        private static EquipmentBlock Equipment(IAgentInventory inventory, int slot, out byte grade)
+        private static EquipmentBlock Equipment(IAgentInventory inventory, EquipmentSlot slot, out byte grade)
         {
-            var item = inventory.GetEquipped((EquipmentSlot)slot);
+            var item = inventory.GetEquipped(slot);
             grade = item.IsEmpty ? Grades.Standard : item.Quality;
             return item.IsEmpty ? null : ItemCatalog.Get(item.Type)?.Equipment;
         }

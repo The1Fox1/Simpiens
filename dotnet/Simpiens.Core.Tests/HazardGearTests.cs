@@ -24,7 +24,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
+            var protection = Simpiens.Simulation.Items.EquipmentSlot.Body;
             float resistance = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.GetModifier(0).Value; // 0.5
             var states = sim.Host.CrawlerStates;
             var bare = states[0];

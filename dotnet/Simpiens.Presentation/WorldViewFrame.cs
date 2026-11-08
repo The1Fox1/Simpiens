@@ -215,7 +215,8 @@ namespace Simpiens.Presentation
 
         private static ItemType Worn(AgentInventory inventory)
         {
-            var worn = inventory.GetEquipped(EquipmentSlot.Protection);
+            // The protection worn (one piece until K1.3; K1.5 draws every slot by its layer)
+            var worn = WornGear.Protection(inventory);
             return worn.IsEmpty ? ItemType.None : worn.Type;
         }
 

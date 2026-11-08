@@ -56,8 +56,13 @@ namespace Simpiens.Testing.Economy
                 Assert(item.Is(ItemCategory.Equipment) == (item.Equipment != null), $"{item.Name}: equipment exactly when it has an equipment block.");
                 if (item.Equipment != null)
                 {
-                    var expected = item.Is(ItemCategory.Weapon) ? EquipmentSlot.Weapon : item.Is(ItemCategory.Protection) ? EquipmentSlot.Protection : EquipmentSlot.Tool;
-                    Assert(item.Equipment.Slot == expected && item.Equipment.Durability > 0, $"{item.Name}: in the {expected} slot, with a life.");
+                    // Its kind follows its group (Epic 10 Part 3, K1.1: protection on the head or the body), and a slot takes it
+                    var kind = item.Equipment.Kind;
+                    bool fitting = item.Is(ItemCategory.Weapon) ? kind == SlotKind.Weapon
+                        : item.Is(ItemCategory.Protection) ? kind == SlotKind.Head || kind == SlotKind.Body
+                        : kind == SlotKind.Tool;
+                    Assert(fitting && item.Equipment.Durability > 0, $"{item.Name}: a {kind} piece, as its group says, with a life.");
+                    Assert(EquipmentSlots.TryFirstOf(kind, out _), $"{item.Name}: a slot takes {kind} pieces.");
                 }
             }
             TestLog.Log("[PASS] Test 1: every definition is consistent.");

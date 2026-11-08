@@ -632,7 +632,7 @@ namespace Simpiens.Presentation.Art.People
         /// </summary>
         public static PortraitKey Of(EntityId id, Simpiens.Cognition.AgentState agent, MoodTracker moods, long tick)
         {
-            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection) : default;
+            var worn = Simpiens.Simulation.Items.WornGear.Protection(agent.Inventory);
             var mood = moods.Update(id, MoodSigns.Of(agent), tick);
             return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? ItemType.None : worn.Type));
         }

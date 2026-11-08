@@ -59,7 +59,7 @@ namespace Simpiens.Core.Tests
                         if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                         float before = lastDamage.TryGetValue(member.CrawlerId, out var d) ? d : crawler.Activity.HazardDamage;
                         lastDamage[member.CrawlerId] = crawler.Activity.HazardDamage;
-                        var worn = crawler.Inventory.GetEquipped(EquipmentSlot.Protection).Type;
+                        var worn = WornGear.Protection(crawler.Inventory).Type;
                         if (expedition.Stage == ExpeditionStage.Work && map.FindSector(crawler.Position).Id == Floor1Layout.DrownedGallerySectorId && crawler.Activity.HazardDamage > before)
                         {
                             var (sum, ticks) = harm.TryGetValue(worn, out var h) ? h : (0d, 0);
@@ -67,7 +67,7 @@ namespace Simpiens.Core.Tests
                         }
                     }
                     if (expedition.Stage == ExpeditionStage.Work && respiratorsOnTrip == 0)
-                        respiratorsOnTrip = guild.Parties[0].Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+                        respiratorsOnTrip = guild.Parties[0].Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && WornGear.Protection(c.Inventory).Type == ItemType.Respirator);
                     if (expedition.Stage == ExpeditionStage.Work || expedition.Stage == ExpeditionStage.Return) haul = System.Math.Max(haul, guild.Parties[0].Gathered(host));
                     back = expedition.TurnedBack;
                 }
@@ -100,7 +100,7 @@ namespace Simpiens.Core.Tests
                     sim.Step(1);
                     foreach (var crawler in sim.Host.CrawlerStates)
                     {
-                        if (crawler.Inventory.GetEquipped(EquipmentSlot.Protection).Type != ItemType.Respirator) continue;
+                        if (WornGear.Protection(crawler.Inventory).Type != ItemType.Respirator) continue;
                         if (map.FindSector(crawler.Position).Id != Floor1Layout.DrownedGallerySectorId) continue;
                         alone = sim.Clock.CurrentTick;
                         loner = crawler.AgentId;

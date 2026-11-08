@@ -235,7 +235,7 @@ namespace Simpiens.Hosting
             {
                 var id = plan.Members[i];
                 if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
-                var worn = member.Inventory.GetEquipped(EquipmentSlot.Protection);
+                var worn = WornGear.Protection(member.Inventory);
                 bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > GuildRules.ProtectionAgainst(worn.Type, hazard);
                 if (!GuildRules.WornOut(worn) && !better) continue;
                 if (GuildRules.WornOut(worn)) all = false; // a member with sound gear can go; better gear is given when there is some

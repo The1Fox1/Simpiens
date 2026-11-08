@@ -217,14 +217,14 @@ namespace Simpiens.Testing.Economy
         }
 
         /// <summary>
-        /// Epic 10 G3 (D3), item system I4: equipment goes in slots beside the pack (protection, weapon, tool), so a full
-        /// pack still takes it and it never takes a pack slot. Only equipment goes on, in its own slot, one item per slot;
-        /// a pickaxe (a tool) and hazard gear (protection) are worn together. Wear counts a slot's durability down and
-        /// breaks it at 0; the snapshot and a save carry every slot.
+        /// Epic 10 G3 (D3), item system I4: equipment goes in slots beside the pack (since Epic 10 Part 3's K1.1 the slot
+        /// table's: head, body, weapon, tool), so a full pack still takes it and it never takes a pack slot. Only equipment
+        /// goes on, in a slot of its kind, one item per slot; a pickaxe (a tool) and hazard gear (the body) are worn
+        /// together. Wear counts a slot's durability down and breaks it at 0; the snapshot and a save carry every slot.
         /// </summary>
         private void ValidateGearIsWornBesideThePack()
         {
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
+            var protection = Simpiens.Simulation.Items.EquipmentSlot.Body;
             var tool = Simpiens.Simulation.Items.EquipmentSlot.Tool;
             var inv = new AgentInventory(4, startingGold: 0);
             inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
@@ -236,10 +236,12 @@ namespace Simpiens.Testing.Economy
             Assert(!inv.TryEquip(new ItemInstance(5, ItemType.Ration, 1, 5)), "A ration is not equipment.");
             Assert(inv.TryEquip(new ItemInstance(6, ItemType.HazardGear, 1, 40, durability: 3)), "Gear goes on although the pack is full.");
             Assert(inv.OccupiedSlots == 4 && !inv.HasItem(ItemType.HazardGear), "Equipment takes no pack slot and isn't in the pack.");
-            Assert(inv.GetEquipped(protection).Type == ItemType.HazardGear, "Hazard gear goes in the protection slot.");
-            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HazardGear, 1, 40)), "A second piece of protection is refused while one is worn.");
+            Assert(inv.GetEquipped(protection).Type == ItemType.HazardGear, "Hazard gear goes in the body slot.");
+            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HazardGear, 1, 40)), "A second piece for the body is refused while one is worn.");
+            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HardHat, 1, 40), protection), "A hard hat doesn't fit the body slot.");
+            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HardHat, 1, 40), (Simpiens.Simulation.Items.EquipmentSlot)0), "Nor the retired slot 0 (protection, K1.1).");
             Assert(inv.TryEquip(new ItemInstance(8, ItemType.ToolPickaxe, 1, 30, durability: 100)) && inv.GetEquipped(tool).Type == ItemType.ToolPickaxe,
-                "A pickaxe goes in the tool slot beside the protection.");
+                "A pickaxe goes in the tool slot beside the body's gear.");
 
             var snapshot = (AgentInventorySnapshot)inv.GetSnapshot();
             Assert(snapshot.GetEquipped(protection).Durability == 3 && snapshot.GetEquipped(tool).Type == ItemType.ToolPickaxe, "The snapshot carries every slot.");

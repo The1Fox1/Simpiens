@@ -14,9 +14,9 @@ namespace Simpiens.Cognition.Inventory
 
         public int Capacity => _capacity;
         public int Gold { get; private set; }
-        private readonly ItemInstance[] _equipped = new ItemInstance[AgentInventory.EquipmentSlots];
+        private readonly ItemInstance[] _equipped = new ItemInstance[Simpiens.Simulation.Items.EquipmentSlots.Capacity];
 
-        public ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot) => _equipped[(int)slot];
+        public ItemInstance GetEquipped(Simpiens.Simulation.Items.EquipmentSlot slot) => (byte)slot < _equipped.Length ? _equipped[(byte)slot] : ItemInstance.Empty;
 
         public AgentInventorySnapshot(int capacity = AgentInventory.DefaultCapacity)
         {

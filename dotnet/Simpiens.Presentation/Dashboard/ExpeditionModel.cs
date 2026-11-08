@@ -337,7 +337,7 @@ namespace Simpiens.Presentation.Dashboard
                 if (host.TryGetCrawler(member.CrawlerId, out var crawler))
                 {
                     row.Health = crawler.Health;
-                    row.Gear = DossierModel.GearText(crawler.Inventory != null ? crawler.Inventory.GetEquipped(EquipmentSlot.Protection) : default);
+                    row.Gear = DossierModel.GearText(WornGear.Protection(crawler.Inventory));
                 }
             }
         }
