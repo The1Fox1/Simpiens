@@ -5,9 +5,10 @@ namespace Simpiens.Cognition.Planning.Goals
 {
     /// <summary>
     /// Goal (Epic 10 Part 2, W1.4, D38): a resident who mines buys a pickaxe at the stall, to mine faster. DesiredState:
-    /// HasTool = true, reached through TravelToStall → BuyTool. Only a resident (drifters pass through) wearing no tool, who
-    /// knows a mineral node it would mine, isn't hungry or worn out, and finds one in stock at or under its own price with
-    /// a ration's price to spare (ResourceTargeting.CanBuyTool), as Majesty's heroes spend their purses at the market.
+    /// HasTool = true, reached through TravelToStall → BuyTool. Only a resident (drifters pass through) wearing nothing that
+    /// speeds its mining, who knows a mineral node it would mine, isn't hungry or worn out, and finds a piece in stock at or
+    /// under its own price with a ration's price to spare (ResourceTargeting.TryChooseWorkGear, by stats since Epic 10 Part
+    /// 3, K1.4), as Majesty's heroes spend their purses at the market.
     /// </summary>
     public class EquipForWorkGoal : GoapGoal
     {
@@ -22,9 +23,9 @@ namespace Simpiens.Cognition.Planning.Goals
 
         public override bool IsValid(AgentContext context)
         {
-            if (context.IsDrifter || context.Inventory == null || context.Inventory.IsWearing(Simpiens.Simulation.Items.ItemCategory.Tool)) return false;
+            if (context.IsDrifter || context.Inventory == null || ResourceTargeting.EquippedForWork(context.Inventory)) return false;
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            return ResourceTargeting.CanBuyTool(context) && ResourceTargeting.KnowsMineral(context); // the stock first: usually there is none
+            return ResourceTargeting.TryChooseWorkGear(context, out _) && ResourceTargeting.KnowsMineral(context); // the stock first: usually there is none
         }
     }
 }

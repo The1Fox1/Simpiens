@@ -1,4 +1,5 @@
 using Simpiens.Cognition.Inventory;
+using Simpiens.Simulation.Economy;
 
 namespace Simpiens.Simulation.Items
 {
@@ -10,15 +11,21 @@ namespace Simpiens.Simulation.Items
     /// </summary>
     public static class CrawlerStats
     {
-        public static float Get(IAgentInventory inventory, StatKind stat, float baseValue = 0f)
+        public static float Get(IAgentInventory inventory, StatKind stat, float baseValue = 0f) => Get(inventory, stat, baseValue, default);
+
+        /// <summary>
+        /// As <see cref="Get(IAgentInventory, StatKind, float)"/>, with <paramref name="swap"/>'s piece worn in its slot in
+        /// place of what is there (Epic 10 Part 3, K1.4): what the stats would be, with nothing moved.
+        /// </summary>
+        public static float Get(IAgentInventory inventory, StatKind stat, float baseValue, in WornSwap swap)
         {
             float value = baseValue;
-            if (inventory == null) return value;
+            if (inventory == null && !swap.IsActive) return value;
             // Each worn piece's modifiers at its grade (Epic 10 Part 2, W4, D56)
             var slots = EquipmentSlots.All;
             for (int s = 0; s < slots.Count; s++)
             {
-                var equipment = Equipment(inventory, slots[s].Id, out byte grade);
+                var equipment = Equipment(inventory, slots[s].Id, swap, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
@@ -28,7 +35,7 @@ namespace Simpiens.Simulation.Items
             }
             for (int s = 0; s < slots.Count; s++)
             {
-                var equipment = Equipment(inventory, slots[s].Id, out byte grade);
+                var equipment = Equipment(inventory, slots[s].Id, swap, out byte grade);
                 if (equipment == null) continue;
                 for (int m = 0; m < equipment.ModifierCount; m++)
                 {
@@ -59,17 +66,23 @@ namespace Simpiens.Simulation.Items
         /// <see cref="MaxHazardResistance"/>. Since K1.3 both may be worn at once (hazard gear on the body, a hard hat on the
         /// head): 0.5 and 0.75 together stop the most, 0.9.
         /// </summary>
-        public static float HazardResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind)
+        public static float HazardResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind) => HazardResistance(inventory, kind, default);
+
+        /// <summary>As <see cref="HazardResistance(IAgentInventory, Simpiens.Simulation.World.HazardKind)"/>, with <paramref name="swap"/>'s piece worn (K1.4).</summary>
+        public static float HazardResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind, in WornSwap swap)
         {
-            float resistance = Get(inventory, StatKind.HazardResistance) + KindResistance(inventory, kind);
+            float resistance = Get(inventory, StatKind.HazardResistance, 0f, swap) + KindResistance(inventory, kind, swap);
             return resistance < MaxHazardResistance ? resistance : MaxHazardResistance;
         }
 
         /// <summary>What gear made against <paramref name="kind"/> stops of it, apart from protection against any hazard (D51 judges by this).</summary>
-        public static float KindResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind)
+        public static float KindResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind) => KindResistance(inventory, kind, default);
+
+        /// <summary>As <see cref="KindResistance(IAgentInventory, Simpiens.Simulation.World.HazardKind)"/>, with <paramref name="swap"/>'s piece worn (K1.4).</summary>
+        public static float KindResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind, in WornSwap swap)
         {
             var stat = StatAgainst(kind);
-            return stat == StatKind.None ? 0f : Get(inventory, stat);
+            return stat == StatKind.None ? 0f : Get(inventory, stat, 0f, swap);
         }
 
         /// <summary>What <paramref name="item"/>, worn, stops of a hazard of <paramref name="kind"/> by its kind alone, from its definition (D51).</summary>
@@ -96,9 +109,9 @@ namespace Simpiens.Simulation.Items
             _ => StatKind.None
         };
 
-        private static EquipmentBlock Equipment(IAgentInventory inventory, EquipmentSlot slot, out byte grade)
+        private static EquipmentBlock Equipment(IAgentInventory inventory, EquipmentSlot slot, in WornSwap swap, out byte grade)
         {
-            var item = inventory.GetEquipped(slot);
+            var item = swap.IsActive && swap.Slot == slot ? swap.Piece : inventory != null ? inventory.GetEquipped(slot) : ItemInstance.Empty;
             grade = item.IsEmpty ? Grades.Standard : item.Quality;
             return item.IsEmpty ? null : ItemCatalog.Get(item.Type)?.Equipment;
         }

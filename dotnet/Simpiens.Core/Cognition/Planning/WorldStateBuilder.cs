@@ -25,12 +25,13 @@ namespace Simpiens.Cognition.Planning
         public static WorldState BuildWorldState(in AgentContext context, Simpiens.Cognition.Inventory.IAgentInventory inventory)
         {
             var inv = inventory ?? context.Inventory;
-            // Groups, not items (the item catalog): food, a tool, salvage to sell, and worn protection (Epic 10 G3)
+            // Groups, not items (the item catalog): food, a tool, salvage to sell; what is worn by its stats (Epic 10 Part 3, K1.4)
             bool hasFood = inv.HasAny(ItemCategory.Food);
-            bool hasTool = inv.HasAny(ItemCategory.Tool) || inv.IsWearing(ItemCategory.Tool); // worn in the tool slot, as a bought pickaxe is
+            bool hasTool = inv.HasAny(ItemCategory.Tool) || ResourceTargeting.EquippedForWork(inv); // worn, as a bought pickaxe is
             bool hasSalvage = inv.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-            // Worn protection counts unless a bold crawler would trade it for a piece that opens salvage it can't reach (D53)
-            bool hasHazardGear = inv.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
+            // Worn protection counts unless a bold crawler would buy another piece: one that opens salvage it can't reach
+            // (D53), or one for a bare slot that cuts the harm where it works (K1.4)
+            bool hasHazardGear = ResourceTargeting.Protects(inv) && !ResourceTargeting.WantsMoreProtection(context);
 
             var state = BuildWorldState(context, hasFood, hasTool);
             state = state.With(StateFact.HasProvisions, hasFood);
@@ -61,12 +62,12 @@ namespace Simpiens.Cognition.Planning
                 {
                     hasFoodInInventory = true;
                 }
-                if (!hasTool && (context.Inventory.HasAny(ItemCategory.Tool) || context.Inventory.IsWearing(ItemCategory.Tool)))
+                if (!hasTool && (context.Inventory.HasAny(ItemCategory.Tool) || ResourceTargeting.EquippedForWork(context.Inventory)))
                 {
                     hasTool = true;
                 }
                 bool hasSalvage = context.Inventory.HasAny(ItemCategory.Resource) && !ResourceTargeting.StallRefusesHeldSalvage(context);
-                bool hasHazardGear = context.Inventory.IsWearing(ItemCategory.Protection) && !ResourceTargeting.WouldUpgradeProtection(context);
+                bool hasHazardGear = ResourceTargeting.Protects(context.Inventory) && !ResourceTargeting.WantsMoreProtection(context);
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
                 state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));

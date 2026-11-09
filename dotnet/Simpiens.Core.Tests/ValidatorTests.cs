@@ -165,6 +165,9 @@ namespace Simpiens.Core.Tests
         public void EquipmentSlots() => new Simpiens.Testing.Economy.EquipmentSlotsValidator().RunAllValidationTests();
 
         [Fact]
+        public void Outfitting() => new Simpiens.Testing.Economy.OutfittingValidator().RunAllValidationTests();
+
+        [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]

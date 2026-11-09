@@ -100,8 +100,9 @@ namespace Simpiens.Presentation.Dashboard
         public bool Outfit { get; private set; } = true;
 
         /// <summary>
-        /// The outfit button's words: "No outfitting", or the gear it gives for the target's hazard (Epic 10 Part 2, W3, D50):
-        /// "Outfit: respirator", "Outfit: hazard gear"; "Outfit from stock" while there is none.
+        /// The outfit button's words: "No outfitting", or the gear it gives for the target's hazard (Epic 10 Part 2, W3, D50),
+        /// a piece for each slot that has one in stock (Epic 10 Part 3, K1.4), in the slots' display order: "Outfit:
+        /// respirator, hazard gear", "Outfit: hazard gear"; "Outfit from stock" while there is none.
         /// </summary>
         public string OutfitText
         {
@@ -109,8 +110,18 @@ namespace Simpiens.Presentation.Dashboard
             {
                 if (!Outfit) return "No outfitting";
                 var host = Host;
-                var gear = host != null && _targets.Count > 0 ? GuildRules.BestProtectionInStock(host, GuildRules.HazardOf(host, _targets[_target].Id)) : ItemType.None;
-                return gear == ItemType.None ? "Outfit from stock" : "Outfit: " + ItemTexts.Of(gear).MerchantName.ToLowerInvariant();
+                if (host == null || _targets.Count == 0 || host.ActiveStalls.Count == 0) return "Outfit from stock";
+                var hazard = GuildRules.HazardOf(host, _targets[_target].Id);
+                var stall = host.ActiveStalls[0];
+                var text = new System.Text.StringBuilder();
+                var slots = Simpiens.Simulation.Items.EquipmentSlots.InDisplayOrder;
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    var gear = GuildRules.BestForBare(stall, slots[i].Id, hazard);
+                    if (gear == ItemType.None) continue;
+                    text.Append(text.Length == 0 ? "Outfit: " : ", ").Append(ItemTexts.Of(gear).MerchantName.ToLowerInvariant());
+                }
+                return text.Length == 0 ? "Outfit from stock" : text.ToString();
             }
         }
 
@@ -174,18 +185,16 @@ namespace Simpiens.Presentation.Dashboard
         {
             if (!CanDispatch) return;
             var host = Host;
-            if (Outfit && host != null)
+            if (Outfit && host != null && host.ActiveStalls.Count > 0)
             {
-                // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50), for each member who needs it
+                // The best piece in stock for each slot against the target's hazard (Epic 10 Part 2, D50; Epic 10 Part 3, K1.4),
+                // members with no sound protection first, as the scripted player outfits
                 var hazard = GuildRules.HazardOf(host, _targets[_target].Id);
-                var gear = GuildRules.BestProtectionInStock(host, hazard);
-                int stock = gear != ItemType.None ? host.ActiveStalls[0].SellStockOf(gear) : 0;
-                for (int i = 0; i < _party.Count && stock > 0; i++)
-                {
-                    if (Guild.CanGiveGear(host, _party[i], gear, hazard) != GuildRules.Check.Ok) continue;
-                    _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", _party[i], gear, hazard));
-                    stock--;
-                }
+                var stock = host.ActiveStalls[0];
+                var gifts = new GearGift[_party.Count * Simpiens.Simulation.Items.EquipmentSlots.Capacity];
+                int count = 0;
+                GuildRules.PlanOutfit(Guild, host, _party, hazard, OutfitRound.Both, ref stock, gifts, ref count);
+                for (int i = 0; i < count; i++) _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", gifts[i].Crawler, gifts[i].Item, hazard));
             }
             _context.Intervention.QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Player", Order()));
             Feedback = new Feedback(Invariant($"Party {PartySlot} sets out for {TargetName}, {_party.Count} strong."), FeedbackTone.Ok);

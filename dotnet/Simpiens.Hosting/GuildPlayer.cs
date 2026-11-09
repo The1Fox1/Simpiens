@@ -45,9 +45,15 @@ namespace Simpiens.Hosting
         private readonly PartyPlan[] _plans = { new PartyPlan { Slot = 1 }, new PartyPlan { Slot = 2 } };
         private bool _together;
 
-        // Gear promised from stock this tick: the commands apply on the next, so the second party counts what the first was given
-        private ItemType _promisedGear;
-        private int _promised;
+        // The stall's stock less the gear promised this tick: the commands apply on the next, so the second party sees what
+        // the first was given (Epic 10 Part 3, K1.4: any piece, slot by slot)
+        private TradeStallData _stockLeft;
+        private bool _stockTaken;
+        private readonly GearGift[] _gifts = new GearGift[2 * DispatchExpeditionCommand.MaxMembers * Simpiens.Simulation.Items.EquipmentSlots.Capacity];
+        private int _giftCount;
+        private readonly bool[] _ready = new bool[2];
+        private readonly DispatchExpeditionCommand[] _orders = new DispatchExpeditionCommand[2];
+        private readonly bool[] _outfitting = new bool[2];
 
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
         /// <param name="reserve">Gold it keeps in the treasury (Epic 10 Part 2, W6): it signs a member on only when the stall holds the fee and this besides.</param>
@@ -124,12 +130,16 @@ namespace Simpiens.Hosting
             if (_commands == null) return;
             if (guild.Members.Count >= _targetSize)
             {
-                _promised = 0;
+                // Readying gives the unprotected their gear first, in both parties, then every slot its piece, then the parties go
+                // (the gifts apply before the dispatch, on the next tick)
+                _stockTaken = false;
+                _giftCount = 0;
                 if (_together && _plans[0].Target != 0 && _plans[1].Target != 0)
                 {
                     // Both at once: only when neither is out and both are ready
                     if (guild.HasExpedition) return;
                     bool first = Ready(guild, _plans[0], out var one), second = Ready(guild, _plans[1], out var two);
+                    OutfitEverySlot(guild);
                     if (first && second)
                     {
                         Send(_plans[0], one, tick);
@@ -139,7 +149,12 @@ namespace Simpiens.Hosting
                 }
                 for (int i = 0; i < _plans.Length; i++)
                 {
-                    if (_plans[i].Target != 0 && Ready(guild, _plans[i], out var order)) Send(_plans[i], order, tick);
+                    _ready[i] = _plans[i].Target != 0 && Ready(guild, _plans[i], out _orders[i]);
+                }
+                OutfitEverySlot(guild);
+                for (int i = 0; i < _plans.Length; i++)
+                {
+                    if (_ready[i]) Send(_plans[i], _orders[i], tick);
                 }
                 return;
             }
@@ -219,39 +234,57 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>
-        /// Gives protection from the stall's stock to each member without, or with it worn to half its life (the roster shows
-        /// it), or wearing gear that cuts the target's hazard less than the best in stock (Epic 10 Part 2, D50); true when
-        /// every member wears some good for a trip.
+        /// Outfits the party for its target's hazard from the stall's stock, as the party builder does (Epic 10 Part 2, D50;
+        /// slot by slot, Epic 10 Part 3, K1.4: <see cref="GuildRules.PlanOutfit"/>): this round, members with no sound
+        /// protection get their best piece; <see cref="OutfitEverySlot"/> gives every slot its piece after every party has had
+        /// this round. True when every member wears some good for a trip.
         /// </summary>
         private bool Outfitted(GuildService guild, IGuildHost host, PartyPlan plan)
         {
-            var stall = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0] : default;
-            // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50), less what this tick promised already
-            var hazard = GuildRules.HazardOf(host, plan.Target);
-            var gear = GuildRules.BestProtectionInStock(host, hazard);
-            int stock = gear != ItemType.None ? stall.SellStockOf(gear) - (gear == _promisedGear ? _promised : 0) : 0;
+            _outfitting[plan.Slot - 1] = true;
+            int from = _giftCount;
+            GuildRules.PlanOutfit(guild, host, plan.Members, GuildRules.HazardOf(host, plan.Target), OutfitRound.Unprotected, ref StockLeft(), _gifts, ref _giftCount);
+            Give(from, GuildRules.HazardOf(host, plan.Target));
             bool all = true;
             for (int i = 0; i < plan.Members.Count; i++)
             {
-                var id = plan.Members[i];
-                if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
-                // Given to a member with no sound protection; in place of a worn-down piece in the gear's slot; or when it cuts
-                // the hazard more than all the member wears (Epic 10 Part 3, K1.3: a respirator goes on over hazard gear, which
-                // stays on the body). A protected member's bare slot waits for K1.4's outfitting by slot
-                var worn = gear != ItemType.None ? WornGear.Replaced(member.Inventory, gear) : ItemInstance.Empty;
-                bool sound = GuildRules.WearsSoundProtection(member.Inventory);
-                bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > CrawlerStats.HazardResistance(member.Inventory, hazard);
-                bool refresh = !worn.IsEmpty && GuildRules.WornOut(worn);
-                if (!sound) all = false; // a member with sound gear can go; better gear is given when there is some
-                if (gear == ItemType.None || (sound && !refresh && !better)) continue;
-                if (stock <= 0 || guild.CanGiveGear(host, id, gear, hazard) != GuildRules.Check.Ok) continue;
-                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, id, gear, hazard));
-                GearGiven++;
-                stock--;
-                if (_promisedGear != gear) { _promisedGear = gear; _promised = 0; }
-                _promised++;
+                if (host.TryGetCrawler(plan.Members[i], out var member) && member.Inventory != null && !GuildRules.WearsSoundProtection(member.Inventory)) all = false; // a member with sound gear can go; better gear is given when there is some
             }
             return all;
+        }
+
+        /// <summary>The second round, after every party's first: each party being readied gets the best piece in stock for every slot of each member, as stock allows.</summary>
+        private void OutfitEverySlot(GuildService guild)
+        {
+            var host = (IGuildHost)_sim.Simulation;
+            for (int p = 0; p < _plans.Length; p++)
+            {
+                if (!_outfitting[p]) continue;
+                _outfitting[p] = false;
+                var hazard = GuildRules.HazardOf(host, _plans[p].Target);
+                int from = _giftCount;
+                GuildRules.PlanOutfit(guild, host, _plans[p].Members, hazard, OutfitRound.EverySlot, ref StockLeft(), _gifts, ref _giftCount);
+                Give(from, hazard);
+            }
+        }
+
+        private ref TradeStallData StockLeft()
+        {
+            if (!_stockTaken)
+            {
+                _stockLeft = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0] : default;
+                _stockTaken = true;
+            }
+            return ref _stockLeft;
+        }
+
+        private void Give(int from, Simpiens.Simulation.World.HazardKind hazard)
+        {
+            for (int i = from; i < _giftCount; i++)
+            {
+                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, _gifts[i].Crawler, _gifts[i].Item, hazard));
+                GearGiven++;
+            }
         }
 
         /// <summary>Every member of a party well enough for the muster, as the roster's health bars show.</summary>

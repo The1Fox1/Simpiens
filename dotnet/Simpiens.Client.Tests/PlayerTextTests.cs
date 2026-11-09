@@ -157,7 +157,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear);
         }
 
-        /// <summary>The party builder's outfit names the gear it gives for the target's hazard (Epic 10 Part 2, W3.4, D50).</summary>
+        /// <summary>The party builder's outfit names the gear it gives for the target's hazard (Epic 10 Part 2, W3.4, D50), a piece for each slot (Epic 10 Part 3, K1.4).</summary>
         [Fact]
         public void TheOutfitButtonNamesTheGearForTheTarget()
         {
@@ -170,7 +170,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Outfit: hazard gear", expedition.OutfitText);
             var sm = (SimulationManager)sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 2));
-            Assert.Equal("Outfit: respirator", expedition.OutfitText);
+            Assert.Equal("Outfit: respirator, hazard gear", expedition.OutfitText); // the head's, then the body's
             expedition.ToggleOutfit();
             Assert.Equal("No outfitting", expedition.OutfitText);
         }
