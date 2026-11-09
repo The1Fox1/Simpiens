@@ -1,0 +1,260 @@
+using System.Collections.Generic;
+using Simpiens.Diagnostics;
+using Simpiens.Simulation.Spatial;
+using Simpiens.Simulation.World;
+using ZLogger;
+
+namespace Simpiens.Simulation.Creatures
+{
+    /// <summary>Where a creature's entity enters and leaves the world (the simulation: its registry, so its spatial grid and its views follow).</summary>
+    public interface ICreatureWorld
+    {
+        void AddCreature(WorldEntity entity);
+        void RemoveCreature(EntityId id);
+    }
+
+    /// <summary>
+    /// One lair at play (Epic 10 Part 3, K2.1): its map definition, the size of its pack (drawn from the session's seed),
+    /// who holds each place in it, and when a slain member returns to its place.
+    /// </summary>
+    public sealed class LairState
+    {
+        private EntityId[] _members = System.Array.Empty<EntityId>();
+        private uint[] _returnsAt = System.Array.Empty<uint>();
+
+        internal LairState(int index, in LairDefinition definition)
+        {
+            Index = index;
+            Definition = definition;
+        }
+
+        public int Index { get; }
+        public LairDefinition Definition { get; }
+
+        /// <summary>How many it holds when full.</summary>
+        public int Pack => _members.Length;
+
+        /// <summary>The creature in <paramref name="slot"/>; empty while the place is empty.</summary>
+        public EntityId MemberIn(int slot) => _members[slot];
+
+        /// <summary>When <paramref name="slot"/>'s slain member returns; 0 when none is due.</summary>
+        public uint ReturnAt(int slot) => _returnsAt[slot];
+
+        /// <summary>How many of its places are held.</summary>
+        public int Alive
+        {
+            get
+            {
+                int alive = 0;
+                for (int i = 0; i < _members.Length; i++)
+                {
+                    if (_members[i] != default) alive++;
+                }
+                return alive;
+            }
+        }
+
+        internal void SetPack(int pack)
+        {
+            _members = new EntityId[pack];
+            _returnsAt = new uint[pack];
+        }
+
+        internal void Hold(int slot, EntityId id) => _members[slot] = id;
+
+        internal void Free(int slot, uint returnsAt)
+        {
+            _members[slot] = default;
+            _returnsAt[slot] = returnsAt;
+        }
+
+        internal bool Due(int slot, uint tick) => _members[slot] == default && _returnsAt[slot] != 0 && tick >= _returnsAt[slot];
+
+        internal void ClearReturn(int slot) => _returnsAt[slot] = 0;
+    }
+
+    /// <summary>
+    /// The creatures of the session (Epic 10 Part 3, K2; seam A4): the map's lairs and the creatures that live in them.
+    /// <list type="bullet">
+    /// <item><b>Spawns on the seed</b> (K2.1): at the session's start every lair is filled to a pack drawn from the seed within
+    /// its kind's range, each member in its place around the lair's heart.</item>
+    /// <item><b>Its own ids:</b> a creature's id comes from a seeded sequence of its own (<see cref="SimRandomSalt.CreatureId"/>),
+    /// not the entities' (<see cref="EntityIdAllocator"/>), so creatures coming and going never change who the next crawler
+    /// or drifter is. The sequence's counter is saved (K2.4).</item>
+    /// <item><b>Refilling on the day's time</b> (Q5): a slain member returns to its place after its kind's
+    /// <see cref="CreatureDefinition.RespawnHours"/>; a cleared lair is whole again 2 game days on.</item>
+    /// <item><b>Its own phase</b> (A4): <see cref="Tick"/> runs after the crawlers' runtime, every creature in id order.</item>
+    /// </list>
+    /// Main thread only. Owned by the simulation (<see cref="SimulationManager.Creatures"/>), which follows the loaded map.
+    /// </summary>
+    public sealed class CreatureService
+    {
+        /// <summary>The most a lair holds: the places around its heart.</summary>
+        public const int MaxPack = 8;
+
+        // A pack's places around its lair's heart, about a body apart
+        private static readonly Vec2[] Places =
+        {
+            new Vec2(0f, 0f), new Vec2(0.8f, 0f), new Vec2(-0.8f, 0.4f), new Vec2(0.4f, -0.8f),
+            new Vec2(-0.4f, -0.8f), new Vec2(0.8f, 0.8f), new Vec2(-0.8f, -0.4f), new Vec2(0f, 0.9f),
+        };
+
+        private MapDefinition _map;
+        private readonly List<LairState> _lairs = new List<LairState>(4);
+        private readonly List<CreatureState> _creatures = new List<CreatureState>(16);
+        private ulong _seed;
+        private long _idCounter;
+
+        /// <summary>Every creature in the world, in id order (the phase's order, A4).</summary>
+        public IReadOnlyList<CreatureState> Creatures => _creatures;
+
+        /// <summary>The map's lairs at play, in definition order.</summary>
+        public IReadOnlyList<LairState> Lairs => _lairs;
+
+        /// <summary>Creature ids handed out since the session started: with the seed, all a save needs to continue the sequence (K2.4).</summary>
+        public long IdCounter => _idCounter;
+
+        /// <summary>Lays out <paramref name="map"/>'s lairs, empty, when the map changes (a respawn or a load); nothing otherwise.</summary>
+        public CreatureService Follow(MapDefinition map)
+        {
+            if (ReferenceEquals(map, _map)) return this;
+            _map = map;
+            _lairs.Clear();
+            _creatures.Clear();
+            if (map == null) return this;
+            for (int i = 0; i < map.Lairs.Count; i++) _lairs.Add(new LairState(i, map.Lairs[i]));
+            return this;
+        }
+
+        /// <summary>Forgets every lair and creature (a respawn or a load tears the world down); the next <see cref="Follow"/> lays the map's out afresh.</summary>
+        public void Reset()
+        {
+            _map = null;
+            _lairs.Clear();
+            _creatures.Clear();
+            _idCounter = 0;
+        }
+
+        /// <summary>The creature with <paramref name="id"/>; false for none.</summary>
+        public bool TryGet(EntityId id, out CreatureState creature)
+        {
+            int index = IndexOf(id);
+            creature = index >= 0 ? _creatures[index] : null;
+            return index >= 0;
+        }
+
+        /// <summary>
+        /// Fills every lair at the session's start (K2.1): a pack drawn from <paramref name="seed"/> and the lair's place in the
+        /// map, within its kind's range (at most <see cref="MaxPack"/>), each member at full health in its place.
+        /// </summary>
+        public void Populate(ICreatureWorld world, ulong seed)
+        {
+            _seed = seed;
+            _idCounter = 0;
+            for (int i = 0; i < _creatures.Count; i++) world?.RemoveCreature(_creatures[i].Id);
+            _creatures.Clear();
+            for (int l = 0; l < _lairs.Count; l++)
+            {
+                var lair = _lairs[l];
+                var kind = CreatureCatalog.Get(lair.Definition.Kind);
+                if (kind == null)
+                {
+                    lair.SetPack(0);
+                    continue;
+                }
+                lair.SetPack(PackSize(seed, l, kind));
+                for (int slot = 0; slot < lair.Pack; slot++) Spawn(world, lair, (byte)slot);
+                SimLog.Bootstrap.ZLogInformation($"Lair {lair.Definition.Key}: {lair.Pack} {kind.Name}");
+            }
+        }
+
+        /// <summary>
+        /// The creatures' phase (A4), after the crawlers' runtime: a slain member whose time has come returns to its place
+        /// (K2.1). Allocates nothing while nobody is due.
+        /// </summary>
+        public void Tick(ICreatureWorld world, uint tick)
+        {
+            for (int l = 0; l < _lairs.Count; l++)
+            {
+                var lair = _lairs[l];
+                for (int slot = 0; slot < lair.Pack; slot++)
+                {
+                    if (!lair.Due(slot, tick)) continue;
+                    lair.ClearReturn(slot);
+                    var creature = Spawn(world, lair, (byte)slot);
+                    SimLog.Simulation.ZLogInformation($"A {CreatureCatalog.NameOf(creature.Kind)} came back to {lair.Definition.Key}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// A creature slain (K3's blows; a test): out of the world, and back in its place after its kind's
+        /// <see cref="CreatureDefinition.RespawnHours"/> of the day (Q5), or never for a kind that doesn't return. False for none.
+        /// </summary>
+        public bool Slay(ICreatureWorld world, EntityId id, uint tick)
+        {
+            int index = IndexOf(id);
+            if (index < 0) return false;
+            var creature = _creatures[index];
+            _creatures.RemoveAt(index);
+            creature.Health = 0f;
+            world?.RemoveCreature(id);
+            var kind = creature.Definition;
+            uint returnsAt = kind != null && kind.Respawns ? tick + DayClock.Hours(kind.RespawnHours) : 0u;
+            if (creature.LairIndex >= 0 && creature.LairIndex < _lairs.Count) _lairs[creature.LairIndex].Free(creature.Slot, returnsAt);
+            return true;
+        }
+
+        /// <summary>The pack <paramref name="kind"/>'s lair at <paramref name="lairIndex"/> holds on <paramref name="seed"/>: within its range, at most <see cref="MaxPack"/>.</summary>
+        public static int PackSize(ulong seed, int lairIndex, CreatureDefinition kind)
+        {
+            int min = kind.PackMin, max = kind.PackMax < kind.PackMin ? kind.PackMin : kind.PackMax;
+            var rng = SimRandom.For(seed, default, lairIndex, SimRandomSalt.Lair);
+            int pack = min + (int)(rng.NextULong() % (ulong)(max - min + 1));
+            return pack < MaxPack ? pack : MaxPack;
+        }
+
+        /// <summary>Where <paramref name="slot"/> rests around a lair's heart at <paramref name="heart"/>.</summary>
+        public static Vec2 PlaceOf(Vec2 heart, int slot) => heart + Places[slot % Places.Length];
+
+        private CreatureState Spawn(ICreatureWorld world, LairState lair, byte slot)
+        {
+            var kind = CreatureCatalog.Get(lair.Definition.Kind);
+            var creature = new CreatureState(NextId(), kind.Id, lair.Index, slot, PlaceOf(lair.Definition.Position, slot));
+            lair.Hold(slot, creature.Id);
+            int at = ~IndexOf(creature.Id);
+            _creatures.Insert(at < 0 ? _creatures.Count : at, creature);
+            world?.AddCreature(new WorldEntity(creature.Id, EntityType.Creature, creature.Home, kind.BodyRadius, kind.Speed,
+                name: $"{kind.Name}_{lair.Index}.{slot}", creature: creature));
+            return creature;
+        }
+
+        // The creatures' own seeded sequence: the n-th id depends only on the seed and n
+        private EntityId NextId()
+        {
+            while (true)
+            {
+                var rng = SimRandom.For(_seed, default, _idCounter++, SimRandomSalt.CreatureId);
+                ulong hi = rng.NextULong();
+                ulong lo = rng.NextULong();
+                var id = new EntityId((uint)(hi >> 32), (uint)hi, (uint)(lo >> 32), (uint)lo);
+                if (id != default && id != WorldRegistry.PlayerEntityId) return id;
+            }
+        }
+
+        // Binary search by id: the index, or the complement of where it would go
+        private int IndexOf(EntityId id)
+        {
+            int lo = 0, hi = _creatures.Count - 1;
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) >> 1;
+                int c = _creatures[mid].Id.CompareTo(id);
+                if (c == 0) return mid;
+                if (c < 0) lo = mid + 1;
+                else hi = mid - 1;
+            }
+            return ~lo;
+        }
+    }
+}

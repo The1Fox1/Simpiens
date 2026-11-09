@@ -173,7 +173,7 @@ namespace Simpiens.Presentation
             for (int i = 0; i < entities.Count; i++)
             {
                 var entity = entities[i];
-                if (entity == null) continue;
+                if (entity == null || entity.Type == EntityType.Creature) continue; // creatures are drawn from K2.5 (Epic 10 Part 3)
                 var agent = entity.Agent;
                 _entities[Count] = new EntityView
                 {

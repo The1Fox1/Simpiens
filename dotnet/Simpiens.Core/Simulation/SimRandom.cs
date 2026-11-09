@@ -64,5 +64,7 @@ namespace Simpiens.Simulation
         public const uint Look = 8; // a crawler's look (Epic UI-Beta B1)
         public const uint Name = 9; // a crawler's given name (Epic UI-Beta B1)
         public const uint Combat = 10; // a swing's hit roll (Epic 10 Part 3, K0.3)
+        public const uint Lair = 11; // a lair's pack size (K2.1)
+        public const uint CreatureId = 12; // a creature's id, its own sequence apart from the entities' (K2.1)
     }
 }

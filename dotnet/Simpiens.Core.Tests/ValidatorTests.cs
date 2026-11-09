@@ -168,6 +168,9 @@ namespace Simpiens.Core.Tests
         public void Outfitting() => new Simpiens.Testing.Economy.OutfittingValidator().RunAllValidationTests();
 
         [Fact]
+        public void Lairs() => new Simpiens.Testing.Combat.LairValidator().RunAllValidationTests();
+
+        [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]

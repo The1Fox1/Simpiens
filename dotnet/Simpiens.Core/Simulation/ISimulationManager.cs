@@ -34,6 +34,15 @@ namespace Simpiens.Simulation
         /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
         Simpiens.Simulation.Workshops.WorkshopService Workshops { get; }
 
+        /// <summary>The lairs and their creatures (Epic 10 Part 3, K2).</summary>
+        Simpiens.Simulation.Creatures.CreatureService Creatures { get; }
+
+        /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
+        void PopulateLairs(ulong seed);
+
+        /// <summary>The creatures' phase, after the crawlers' runtime (seam A4).</summary>
+        void TickCreatures(uint tick);
+
         /// <summary>Applies a session's economy tuning: the supply caravan, trade rules and the snapshot cognition reads.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);

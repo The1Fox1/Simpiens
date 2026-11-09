@@ -7,8 +7,8 @@ namespace Simpiens.Simulation
     /// <summary>
     /// A simulation entity as plain data (Epic CORE C5): a crawler, a resource node, a hearth, a bunk, an injected wall.
     /// This, not a scene object, is what the simulation, the intent handlers and the spatial grid work with; views read
-    /// it and never write it (ROADMAP §1A.1 rule 5). A crawler's position is its <see cref="AgentState.Position"/>, so
-    /// there is one source of truth for it.
+    /// it and never write it (ROADMAP §1A.1 rule 5). A crawler's position is its <see cref="AgentState.Position"/>, and a
+    /// creature's its <see cref="Simpiens.Simulation.Creatures.CreatureState.Position"/>, so there is one source of truth for it.
     /// </summary>
     public sealed class WorldEntity
     {
@@ -18,15 +18,18 @@ namespace Simpiens.Simulation
         private Vec2 _position;
         private readonly float _baseSpeed;
 
-        public WorldEntity(EntityId id, EntityType type, Vec2 position, float radius, float baseSpeed = 0f, AgentState agent = null, string name = null)
+        public WorldEntity(EntityId id, EntityType type, Vec2 position, float radius, float baseSpeed = 0f, AgentState agent = null, string name = null,
+            Simpiens.Simulation.Creatures.CreatureState creature = null)
         {
             Id = id;
             Type = type;
             Radius = radius;
             _baseSpeed = baseSpeed;
             Agent = agent;
+            Creature = creature;
             Name = name ?? string.Empty;
             if (agent != null) agent.Position = position;
+            else if (creature != null) creature.Position = position;
             else _position = position;
             PreviousPosition = position;
         }
@@ -34,11 +37,14 @@ namespace Simpiens.Simulation
         public EntityId Id { get; }
         public EntityType Type { get; set; }
 
-        /// <summary>The crawler's state; null for props (resources, hearths, bunks, walls).</summary>
+        /// <summary>The crawler's state; null for props (resources, hearths, bunks, walls) and creatures.</summary>
         public AgentState Agent { get; }
 
-        /// <summary>The authoritative logical position (a crawler's is its AgentState's).</summary>
-        public Vec2 Position => Agent != null ? Agent.Position : _position;
+        /// <summary>The creature's state (Epic 10 Part 3, K2.1); null for anything else.</summary>
+        public Simpiens.Simulation.Creatures.CreatureState Creature { get; }
+
+        /// <summary>The authoritative logical position (a crawler's is its AgentState's, a creature's its CreatureState's).</summary>
+        public Vec2 Position => Agent != null ? Agent.Position : Creature != null ? Creature.Position : _position;
 
         /// <summary>The position before the last move, for views that interpolate between ticks.</summary>
         public Vec2 PreviousPosition { get; private set; }
@@ -48,6 +54,7 @@ namespace Simpiens.Simulation
         {
             PreviousPosition = Position;
             if (Agent != null) Agent.Position = position;
+            else if (Creature != null) Creature.Position = position;
             else _position = position;
         }
 

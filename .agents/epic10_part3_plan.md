@@ -182,10 +182,19 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K2. Creatures (3–4 days)
 **Complexity:** Very Complex: a new system. Split as below. The developer supervises K2.2 and K2.3.
-- [ ] **K2.1 Lairs:** [Possibly Complex: a map change, with golden and renders re-recorded]
+- [x] **K2.1 Lairs:** [Possibly Complex: a map change, with golden and renders re-recorded]
   - lairs as map data in the Overgrowth and the Deep Seam;
   - spawns on the seed;
   - refilling on the day's time.
+  - **What was built:**
+    - **Map data:** `LairDefinition` (key, kind, heart) in `MapDefinition.Lairs`, `MapDefinitionBuilder.Lair`. Floor1: the rats' warren at (21, 16) in the Overgrowth and the beetles' hollow at (−21, 16) in the Deep Seam, each in its far corner: one node in its kind's sight (overgrowth.3, seam.1), one past its leash, and the sector's door past it.
+    - **Creatures as entities:** `EntityType.Creature`, and `CreatureState` (`Simulation/Creatures/`: kind, lair and place, home, position, health) on the entity, as a crawler's `AgentState` is: the entity's position is the creature's.
+    - **`CreatureService`** (`SimulationManager.Creatures`, following the map as the workshops do): every lair filled at the session's start to a pack drawn from the seed within its kind's range (`SimRandomSalt.Lair`), each member at its place around the heart; a slain member (`Slay`, for K3 and the tests) leaves the world and returns to its place after its kind's `RespawnHours` of the day (Q5: 2 game days). `Tick` is the creatures' phase, run by the host after the crawlers' runtime (seam A4); K2.2 adds each creature's rule to it. The creatures are kept in id order.
+    - **Ids of their own:** a creature's id comes from a seeded sequence of its own (`SimRandomSalt.CreatureId`), not the entities' allocator, so creatures coming and going never change who the next crawler or drifter is (their personalities and looks are drawn from their ids). The counter is the service's, for K2.4's save.
+    - **Held apart until their steps:** crawlers don't perceive creatures until K2.3 (`AgentMemory` skips them), and the frames don't carry them until K2.5 draws them. A load fills the lairs afresh until K2.4 saves them.
+    - **Deviation:** the plan expected golden and renders re-recorded here. Neither moved: the creatures' own ids, perception and the frames hold K2.1 to structure, and behaviour changes with K2.2's rule.
+  - Tests: `LairValidator`, 5 (the lairs fill on the seed; the same seed fills them the same, with ids never from the entities' sequence; every pack size turns up across 60 seeds; a slain rat returns two game days on, not a tick before; the phase allocates nothing); `MapDefinitionValidator`'s (l), Floor1's lairs; `LairTests.TheOutpostOpensWithItsLairsFull` (a respawn and a load fill them the same).
+  - **Done 2026-11-08:** core 197/197, client 487/487 (one allocation test failed once in a full run and passed after: F2, again), golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild, the soak 15/15 (crafting 123–154g), the MonoGame compile with 0 warnings.
 - [ ] **K2.2 The creature's rule:** [Very Complex, supervised by the developer: the creature's tick, its own phase in id order (A4)]
   - rest, roam, chase within the leash, strike, flee, go home, heal;
   - its paths through the existing pathfinder;

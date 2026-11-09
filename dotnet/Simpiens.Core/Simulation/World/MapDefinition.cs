@@ -161,6 +161,26 @@ namespace Simpiens.Simulation.World
         }
     }
 
+    /// <summary>
+    /// A creatures' lair (Epic 10 Part 3, K2.1; Q5: "lairs are map data"): where a pack of one kind lives, rests and heals.
+    /// Its pack is drawn from the session's seed and a slain member returns there (<see cref="Simpiens.Simulation.Creatures.CreatureService"/>).
+    /// </summary>
+    public readonly struct LairDefinition
+    {
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Creatures.CreatureKind Kind;
+
+        /// <summary>The lair's heart: its pack rests around it.</summary>
+        public readonly Vec2 Position;
+
+        public LairDefinition(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position)
+        {
+            Key = key;
+            Kind = kind;
+            Position = position;
+        }
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -202,6 +222,9 @@ namespace Simpiens.Simulation.World
 
         public readonly IReadOnlyList<MapLabel> Labels;
 
+        /// <summary>The creatures' lairs, in definition order (Epic 10 Part 3, K2.1). Empty on a map with none.</summary>
+        public readonly IReadOnlyList<LairDefinition> Lairs;
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -219,9 +242,11 @@ namespace Simpiens.Simulation.World
             PoiDefinition[] pois,
             StationDefinition[] stations,
             MapLabel[] labels,
-            Vec2[] caravanRoute = null)
+            Vec2[] caravanRoute = null,
+            LairDefinition[] lairs = null)
         {
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
+            Lairs = lairs ?? System.Array.Empty<LairDefinition>();
             Name = name;
             PlayableBounds = playableBounds;
             CameraFrame = cameraFrame;
@@ -301,6 +326,20 @@ namespace Simpiens.Simulation.World
                 }
             }
             poi = default;
+            return false;
+        }
+
+        public bool TryGetLair(string key, out LairDefinition lair)
+        {
+            for (int i = 0; i < Lairs.Count; i++)
+            {
+                if (Lairs[i].Key == key)
+                {
+                    lair = Lairs[i];
+                    return true;
+                }
+            }
+            lair = default;
             return false;
         }
 

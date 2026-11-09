@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, System.IDisposable
+    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, Simpiens.Simulation.Creatures.ICreatureWorld, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -102,6 +102,30 @@ namespace Simpiens.Simulation
 
         /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
         public Simpiens.Simulation.Workshops.WorkshopService Workshops => _workshops.Follow(_sectors?.Map);
+
+        private readonly Simpiens.Simulation.Creatures.CreatureService _creatures = new Simpiens.Simulation.Creatures.CreatureService();
+
+        /// <summary>The lairs and their creatures (Epic 10 Part 3, K2), following the loaded map.</summary>
+        public Simpiens.Simulation.Creatures.CreatureService Creatures => _creatures.Follow(_sectors?.Map);
+
+        /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
+        public void PopulateLairs(ulong seed) => Creatures.Populate(this, seed);
+
+        /// <summary>The creatures' phase (seam A4), after the crawlers' runtime. Main thread.</summary>
+        public void TickCreatures(uint tick) => Creatures.Tick(this, tick);
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.AddCreature(WorldEntity entity)
+        {
+            if (entity == null) return;
+            _worldRegistry?.Register(entity);
+            SimLog.RegisterAgentName(entity.Id, entity.Name);
+        }
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.RemoveCreature(EntityId id)
+        {
+            var entity = _worldRegistry?.GetEntity(id);
+            if (entity != null) _worldRegistry.Unregister(entity);
+        }
 
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {

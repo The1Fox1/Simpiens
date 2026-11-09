@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
@@ -20,7 +21,8 @@ namespace Simpiens.Client.Tests
         private static void AssertShowsTheWorld(WorldViewFrame frame, LocalSimulation sim)
         {
             Assert.Equal(sim.Clock.CurrentTick, frame.Tick);
-            var entities = sim.Registry.ActiveEntities;
+            // Every entity but the creatures, which the frames carry from K2.5 (Epic 10 Part 3)
+            var entities = sim.Registry.ActiveEntities.Where(e => e.Type != Simpiens.Simulation.Spatial.EntityType.Creature).ToList();
             Assert.Equal(entities.Count, frame.Count);
             for (int i = 0; i < entities.Count; i++)
             {

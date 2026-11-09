@@ -58,6 +58,11 @@ namespace Simpiens.Core.Session.Layouts
 
         /// <summary>The Gallery's one rich glowstone seam (D11), at its far west end: a party crosses the flood to reach it.</summary>
         public const string GallerySeam = "gallery.seam";
+
+        /// <summary>The burrow rats' warren in the Overgrowth (Epic 10 Part 3, K2.1); the Matriarch's, from K10.</summary>
+        public const string RatWarren = "lair.warren";
+        /// <summary>The stone beetles' hollow in the Deep Seam (K2.1).</summary>
+        public const string BeetleHollow = "lair.hollow";
         public const int GallerySeamYield = 4;
         public const uint GlowstoneRegrowTicks = 6000; // ten minutes: rare (Epic 10 G2)
 
@@ -249,6 +254,12 @@ namespace Simpiens.Core.Session.Layouts
             b.Node("caves.2", new Vec2(13f, -14f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
             b.Node("caves.3", new Vec2(20f, -15f), ItemType.Glowstone, 1, GlowstoneRegrowTicks);
             b.Node(GallerySeam, new Vec2(-21f, -21f), ItemType.Glowstone, GallerySeamYield, GlowstoneRegrowTicks); // only an expedition works it (D11)
+
+            // --- Lairs (Epic 10 Part 3, K2.1; Q5): rats in the Overgrowth, beetles in the Deep Seam, each in its far corner,
+            // in sight of one node (overgrowth.3, seam.1) and out of reach of the other two, so a stray meets them and the rest
+            // of the sector stays workable ---
+            b.Lair(RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, new Vec2(21f, 16f));
+            b.Lair(BeetleHollow, Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle, new Vec2(-21f, 16f));
 
             // --- Labels (sector names near each sector's top edge) ---
             b.Label("Outpost Hub", new Vec2(0f, 4.6f), new Rgba(0.95f, 0.85f, 0.4f));

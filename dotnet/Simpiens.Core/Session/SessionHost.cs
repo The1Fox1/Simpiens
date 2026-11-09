@@ -209,6 +209,9 @@ namespace Simpiens.Core.Session
                 }
             }
 
+            // 5. The lairs (Epic 10 Part 3, K2.1): their packs from the seed, with ids of their own sequence
+            _simulationManager?.PopulateLairs(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed);
+
             ScheduleFirstDrifter(map);
             SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_crawlers.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
             SessionChanged?.Invoke(session);
@@ -288,6 +291,8 @@ namespace Simpiens.Core.Session
 
             for (int i = 0; i < save.Crawlers.Length; i++) SpawnRestoredCrawler(save.Crawlers[i]);
             _simulationManager?.RestoreFrom(save);
+            // Until the creatures are saved (K2.4), a load fills the lairs afresh, as a session's start does
+            _simulationManager?.PopulateLairs(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed);
             RestoreDriftersFrom(save, session.Map);
 
             var world = save.World;
@@ -539,6 +544,7 @@ namespace Simpiens.Core.Session
                 var crawler = _crawlers[i].Runtime;
                 if (!crawler.IsDisposed) crawler.Tick(currentTick);
             }
+            _simulationManager?.TickCreatures((uint)currentTick); // their own phase, after the crawlers' (seam A4)
             TickPopulation(currentTick);
             TickCompleted?.Invoke(currentTick);
         }

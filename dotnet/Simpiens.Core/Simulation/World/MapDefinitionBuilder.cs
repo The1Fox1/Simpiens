@@ -25,6 +25,7 @@ namespace Simpiens.Simulation.World
         private readonly List<ResourceNodeDefinition> _nodes = new List<ResourceNodeDefinition>();
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
         private readonly List<StationDefinition> _stations = new List<StationDefinition>();
+        private readonly List<LairDefinition> _lairs = new List<LairDefinition>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
         private Vec2[] _caravanRoute;
 
@@ -96,6 +97,13 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
+        /// <summary>A lair of <paramref name="kind"/> (Epic 10 Part 3, K2.1): its pack is drawn from the session's seed.</summary>
+        public MapDefinitionBuilder Lair(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position)
+        {
+            _lairs.Add(new LairDefinition(key, kind, position));
+            return this;
+        }
+
         public MapDefinitionBuilder Label(string text, Vec2 position, Rgba color)
         {
             _labels.Add(new MapLabel(text, position, color));
@@ -143,6 +151,12 @@ namespace Simpiens.Simulation.World
                 RequireInside(_stations[i].Position, _stations[i].Key);
                 if (_stations[i].Kind == Simpiens.Simulation.Items.StationKind.None) throw new InvalidOperationException($"Map '{_name}': station '{_stations[i].Key}' has no kind.");
             }
+            for (int i = 0; i < _lairs.Count; i++)
+            {
+                RequireKey(keys, _lairs[i].Key);
+                RequireInside(_lairs[i].Position, _lairs[i].Key);
+                if (_lairs[i].Kind == Simpiens.Simulation.Creatures.CreatureKind.None) throw new InvalidOperationException($"Map '{_name}': lair '{_lairs[i].Key}' has no kind.");
+            }
 
             return new MapDefinition(
                 _name,
@@ -155,7 +169,8 @@ namespace Simpiens.Simulation.World
                 _pois.ToArray(),
                 _stations.ToArray(),
                 _labels.ToArray(),
-                _caravanRoute);
+                _caravanRoute,
+                _lairs.ToArray());
         }
 
         private void RequireKey(HashSet<string> keys, string key)

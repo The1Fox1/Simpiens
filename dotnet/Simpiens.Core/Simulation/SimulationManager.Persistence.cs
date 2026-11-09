@@ -156,6 +156,7 @@ namespace Simpiens.Simulation
             }
             Guild.Reset();
             _workshops.Reset();
+            _creatures.Reset();
 
             // Walls from the torn-down world (including injected chaos walls) must not outlive it
             _spatialPartition?.ResetStatic();

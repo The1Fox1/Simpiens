@@ -213,6 +213,14 @@ namespace Simpiens.Testing.World
                 Assert(grid.TryGetRegion(p.Position, out int r) && r == hubRegion, $"(b) POI '{p.Key}' at {p.Position} is not reachable from the Hub.");
             }
 
+            // (l) the lairs (Epic 10 Part 3, K2.1; Q5): rats in the Overgrowth, beetles in the Deep Seam, both shrouded at the
+            // start; every place a pack may rest is walkable and reached from the Hub; each lair has a node in its kind's
+            // sight (a stray meets it) and one past its leash (the sector stays partly workable), and the sector's door lies
+            // past the leash (the way in isn't held)
+            Assert(def.Lairs.Count == 2, $"(l) Floor1 has two lairs, not {def.Lairs.Count}.");
+            ValidateLair(def, grid, hubRegion, Floor1Layout.RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, Floor1Layout.OvergrowthSectorId);
+            ValidateLair(def, grid, hubRegion, Floor1Layout.BeetleHollow, Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle, Floor1Layout.DeepSeamSectorId);
+
             // (d) doorways: every connected pair of neighbouring sectors shares a door at least 3 cells wide;
             // the frontier sectors are reached only through the near work sectors
             int doors = 0;
@@ -485,6 +493,37 @@ namespace Simpiens.Testing.World
                 }
             }
             return width;
+        }
+
+        private void ValidateLair(MapDefinition def, StaticNavGrid grid, int hubRegion, string key, Simpiens.Simulation.Creatures.CreatureKind kind, byte sectorId)
+        {
+            Assert(def.TryGetLair(key, out var lair) && lair.Kind == kind, $"(l) Lair '{key}' holds {kind}.");
+            var sector = def.FindSector(lair.Position);
+            Assert(sector.Id == sectorId && !sector.StartsExplored, $"(l) Lair '{key}' lies in shrouded sector {sectorId}, not {sector.Name}.");
+            for (int slot = 0; slot < Simpiens.Simulation.Creatures.CreatureService.MaxPack; slot++)
+            {
+                var place = Simpiens.Simulation.Creatures.CreatureService.PlaceOf(lair.Position, slot);
+                Assert(def.FindSector(place).Id == sectorId && grid.TryGetRegion(place, out int r) && r == hubRegion, $"(l) Lair '{key}''s place {slot} at {place} is walkable, in its sector, reached from the Hub.");
+            }
+            var definition = Simpiens.Simulation.Creatures.CreatureCatalog.Get(kind);
+            bool inSight = false, pastLeash = false;
+            for (int i = 0; i < def.ResourceNodes.Count; i++)
+            {
+                var n = def.ResourceNodes[i];
+                if (def.FindSector(n.Position).Id != sectorId) continue;
+                float d = Vec2.Distance(n.Position, lair.Position);
+                if (d <= definition.Sight) inSight = true;
+                if (d > definition.Leash) pastLeash = true;
+            }
+            Assert(inSight && pastLeash, $"(l) Lair '{key}' has a node in its kind's sight ({inSight}) and one past its leash ({pastLeash}).");
+            for (int d = 0; d < Floor1Layout.Doors.Count; d++)
+            {
+                var door = Floor1Layout.Doors[d];
+                bool opensOnIt = def.FindSector(door + new Vec2(0f, 0.5f)).Id == sectorId || def.FindSector(door - new Vec2(0f, 0.5f)).Id == sectorId
+                    || def.FindSector(door + new Vec2(0.5f, 0f)).Id == sectorId || def.FindSector(door - new Vec2(0.5f, 0f)).Id == sectorId;
+                if (!opensOnIt) continue;
+                Assert(Vec2.Distance(door, lair.Position) > definition.Leash, $"(l) Lair '{key}' holds its sector's door at {door}.");
+            }
         }
 
         private static bool IsWalkable(StaticNavGrid grid, Vec2 world)
