@@ -126,7 +126,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var delta = TradeFairness.PurchaseDelta(verdict, economy.TradeTrust);
 
                 agent.Memory?.RecordInteraction(context.PlayerEntityId, delta.Warmth, delta.Trust, 0, delta.Respect, currentTradeTick);
-                if (gear && equipment.Kind == Simpiens.Simulation.Items.SlotKind.Tool) agent.Activity.ToolPurchases++;
+                // A piece for work (it speeds mining: a pickaxe) or for danger, by its stats (Epic 10 Part 3, K1.6)
+                if (gear && Simpiens.Simulation.Items.Outfitting.Score(null, Simpiens.Simulation.Items.OutfitNeed.ForMining,
+                    new Simpiens.Simulation.Items.WornSwap(wornIn, Simpiens.Simulation.Items.Outfitting.NewPiece(trade.ItemType, Simpiens.Simulation.Items.Grades.Standard))) > 0f) agent.Activity.ToolPurchases++;
                 else if (gear) agent.Activity.GearPurchases++;
                 else if (food) agent.Activity.RecordRationPurchase();
                 else agent.Activity.MedicinePurchases++;

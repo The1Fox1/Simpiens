@@ -15,7 +15,7 @@ Simpiens is a .NET 10 solution, `dotnet/Simpiens.slnx`. (It began as a Unity pro
 | `Simpiens.Testing.Core` | Test-only, never shipped: the engine-free validators, fixtures, the Dev Map session, `WorldStateHash` and `GoldenWorldHash`. |
 | `Simpiens.Hosting` | Registrations for `Microsoft.Extensions.DependencyInjection`, `LocalSimulation` (the simulation in this process), and the harness the tests and the console share: the economy soak (`EconomySoak`), the guild's scripted player (`GuildPlayer`, which acts only through commands: it recruits, and with `SendExpeditions` and `SendSecondParty` forms, outfits and sends its two parties, alone or `together`), the workshop's (`WorkshopPlayer`: it builds a station, hires an artisan, gives it a shift and orders its make; the guild's sends draughts and can wait for a stockpile), the Definition-of-Done observer `OutpostWatch`, the `AnomalyDetector` (jitter, stacking, wall penetration, boundary breaches, state thrashing, judged per tick) and the `EdgeCaseInjector`. |
 | `Simpiens.Host` | The `simpiens` development console: `run`, `sweep`, `soak`, `golden`. It uses the test harness and never ships. |
-| `Simpiens.Core.Tests` | xUnit v3: the engine-free validators, the golden hashes, determinism, and the live scenarios headless (the outpost's day on 23 gate seeds, the supply loop, save and load, drifters, hazards, the guild, expeditions, the whole guild loop and a save mid-expedition, the forge turning ore into pickaxes that residents buy, draughts keeping a party working, the right gear for each hazard, practice and repair, two parties out at once with the guild sleeping in its barracks, the Dev Map pens, walls dropped into doors, bunks, price response, live saves). |
+| `Simpiens.Core.Tests` | xUnit v3: the engine-free validators, the golden hashes, determinism, and the live scenarios headless (the outpost's day on 23 gate seeds, the supply loop, save and load, drifters, hazards, the guild, expeditions, the whole guild loop and a save mid-expedition, the forge turning ore into pickaxes that residents buy, draughts keeping a party working, the right gear for each hazard, a hard hat over hazard gear on the gate seeds and a slot added as data (Epic 10 Part 3, K1), practice and repair, two parties out at once with the guild sleeping in its barracks, the Dev Map pens, walls dropped into doors, bunks, price response, live saves). |
 | `Simpiens.Presentation` | What the game client draws, as data, with no XNA reference (see below). |
 | `Simpiens.Client` | The KNI game client (see below). |
 | `Simpiens.Desktop` | The desktop exe; Debug builds add the test harness's Dev Map to the session switch. |
@@ -171,6 +171,18 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   2. Setting `AgentState.HasFoodInInventory` true packs a ration.
   3. A node yielding `ItemType.None` counts as food.
   4. `ItemInstance.ItemId` is stamped 1 everywhere.
+
+### Adding an equipment slot
+- **A slot is a row** (Epic 10 Part 3, K1; the producer's "appendable equipment system"):
+  1. An `EquipmentSlot` value under `EquipmentSlots.Capacity` (16). Never reuse one: the id is the slot's record in a crawler's save, and protection's 0 stays retired.
+  2. Its row in `EquipmentSlots`: code name, the player's word, the `SlotKind` it takes, its `BodyRegion`, its draw layer (worn looks stack up the layers), its cell on the paper doll and its place in lists (`Order`).
+  3. A new kind of piece is a `SlotKind` value (never reused); two slots may take one kind (two hands for rings), and a piece goes in the first free one.
+  4. The items that fit it: their `EquipmentBlock` names the kind, with their stat modifiers and `WearRule` ("Adding or removing an item").
+  5. If its pieces show worn, their look in `ItemArt` says where (`Worn`: on the head, over the face, on the torso). A part of the body no mode draws yet is a new `Worn` value and its drawing in `BodyKit`, `PortraitKit` and `WornSprites`; look at the people sheet and re-record the art pins.
+  6. If a stat needs bounds, a row in `StatRules`.
+- **Nothing else:** stats and their stacking, wear by rule, outfitting by stats (residents' purchases, the guild's gifts, the party builder), saves (all 16 records, so an older save loads the new slot empty), and the dossier's and the guild cards' gear lines follow (`EquipmentSlotProofTests` in both test projects add feet and boots this way; `TestCatalogs.FeetAndBoots`).
+- **The checks:** `EquipmentSlotsValidator` (the table, the save's records); `SlotNamesTests` (production code names a slot only in the table and the catalogue: ask `EquipmentSlots`, `WornGear` and `Outfitting`).
+- **A 17th slot** changes the save format: raise `EquipmentSlots.Capacity` and bump `SessionSaveHeader.CurrentFormatVersion` (the size pin in `EconomySerializationValidator` fails until you do).
 
 ### Adding art
 - **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:
