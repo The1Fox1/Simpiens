@@ -127,6 +127,34 @@ namespace Simpiens.Simulation
             if (entity != null) _worldRegistry.Unregister(entity);
         }
 
+        Simpiens.Simulation.Spatial.SharedWorldSnapshot Simpiens.Simulation.Creatures.ICreatureWorld.Snapshot => _spatialPartition?.GetActiveSnapshot();
+
+        System.Collections.Generic.IReadOnlyList<WorldEntity> Simpiens.Simulation.Creatures.ICreatureWorld.Entities => _worldRegistry?.ActiveEntities;
+
+        /// <summary>
+        /// A creature's swing at a crawler (Epic 10 Part 3, K2.2, D13): the crawler notes who swung and when, hit or miss; a
+        /// blow takes its mitigated harm from its health (the red coat shows it), wears what it wears against blows (D7), and
+        /// at none downs it, as a hazard does (until K5 a downed crawler limps out; nobody dies).
+        /// </summary>
+        void Simpiens.Simulation.Creatures.ICreatureWorld.Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick)
+        {
+            var state = crawler?.Agent;
+            if (state == null) return;
+            state.StruckAtTick = tick;
+            state.StruckBy = attacker;
+            if (!outcome.Hit) return;
+            Simpiens.Simulation.Combat.CombatRules.WearOnBlowTaken(outcome, state.Inventory);
+            float before = state.Health;
+            state.Health = SimMath.Max(0f, (float)(state.Health - outcome.Damage));
+            state.HurtThisTick = (float)(state.HurtThisTick + (before - state.Health));
+            if (state.Health > 0f || state.IsDowned) return;
+            state.IsDowned = true;
+            state.Activity.TimesDowned++;
+            SimLog.Drives.ZLogInformation($"{SimLog.Agent(state.AgentId)} was downed by {SimLog.Agent(attacker)} at {state.Position}");
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
+                GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
+        }
+
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {
             crawler = null;

@@ -195,10 +195,17 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - **Deviation:** the plan expected golden and renders re-recorded here. Neither moved: the creatures' own ids, perception and the frames hold K2.1 to structure, and behaviour changes with K2.2's rule.
   - Tests: `LairValidator`, 5 (the lairs fill on the seed; the same seed fills them the same, with ids never from the entities' sequence; every pack size turns up across 60 seeds; a slain rat returns two game days on, not a tick before; the phase allocates nothing); `MapDefinitionValidator`'s (l), Floor1's lairs; `LairTests.TheOutpostOpensWithItsLairsFull` (a respawn and a load fill them the same).
   - **Done 2026-11-08:** core 197/197, client 487/487 (one allocation test failed once in a full run and passed after: F2, again), golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild, the soak 15/15 (crafting 123–154g), the MonoGame compile with 0 warnings.
-- [ ] **K2.2 The creature's rule:** [Very Complex, supervised by the developer: the creature's tick, its own phase in id order (A4)]
+- [x] **K2.2 The creature's rule:** [Very Complex, supervised by the developer: the creature's tick, its own phase in id order (A4)]
   - rest, roam, chase within the leash, strike, flee, go home, heal;
   - its paths through the existing pathfinder;
   - swings resolved in one pass after movement.
+  - **What was built** (`Simulation/Creatures/CreatureService.Rule.cs`; the decisions D9–D15 are in the epic, for the developer's review):
+    - `CreatureMode` (rest, roam, chase, flee, home) on `CreatureState`, with its quarry, its swing's timer (D8), its rest's end and its goal; its path is work in progress.
+    - The phase: every creature in id order decides and moves, then every due swing is decided from where all stand, then all the harm lands (`ICreatureWorld.Strike`, the simulation's: harm, the red coat, armour's wear, a downing; the crawler notes who swung, `StruckAtTick`, `StruckBy`).
+    - Paths through a `GridAStarSearcher` of the creatures' own, on the main thread, planned again when the goal moves past a unit.
+    - **`Hunting` is off in the live session (D14):** creatures rest and roam there, and notice crawlers from K2.3. So golden, the sweeps and the soak are unchanged.
+  - Tests, `CreatureRuleTests` (7, on the real outpost, hunting on, the stray put and held by hand): every creature rests and roams within half its leash and in its sector; a rat swings 0.7 s after a stray appears in its sight, and the warren downs it in 12 s (34 blows), then lets it be and goes home; the leash ends a chase and nobody follows past it; a hurt rat flees home heeding nothing and heals an hour's twelfth in an hour; the same seed plays the same, and blows on one tick all land; the rule allocates nothing once warm; and without hunting no crawler is touched in a day.
+  - **Done 2026-11-08:** core 204/204, client 487/487, golden 3/3 unchanged, seeds 1–120 120/120 with and without the guild, the soak 15/15 (crafting 123–154g), the MonoGame compile with 0 warnings. **Waits for the developer's review before K2.3.**
 - [ ] **K2.3 Crawlers meet creatures:** [Very Complex, supervised by the developer: a new reflex in the runtime's pre-emption, and cognition]
   - flight, a reflex beside retreat and panic;
   - known lairs judged in `LoneDanger`, as hazards are;

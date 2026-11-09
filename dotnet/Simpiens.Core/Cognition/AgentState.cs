@@ -171,6 +171,13 @@ namespace Simpiens.Cognition
         /// </summary>
         public float HurtThisTick { get; set; }
 
+        /// <summary>
+        /// The last tick a creature swung at it, hit or miss (Epic 10 Part 3, K2.2, D13), and which: K2.3's flight reads
+        /// them. Not saved, as <see cref="HurtThisTick"/> isn't: after a load a crawler decides afresh.
+        /// </summary>
+        public uint StruckAtTick { get; set; }
+        public EntityId StruckBy { get; set; }
+
         /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
         public bool IsDowned { get; set; }
 

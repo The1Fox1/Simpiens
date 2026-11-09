@@ -1,6 +1,6 @@
 # Epic 10, Part 3: Creatures, Combat and the Gatekeeper
 
-- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is done the same day (§4): the measurements (finding F1), the combat rule (D1–D8) and the creature catalogue. The producer approved it the same day: "Approved. Proceed with developing K1". K1, the equipment system, is done the same day: slots as a table, storage for 16 (save format 11, its design approved: "continue with k1.3-k1.6"), stats and wear over every slot, outfitting by slot and by stats (the live scenario `GearByTheSlot`: a venturer wears a hard hat over hazard gear on 17 of the 23 gate seeds), the client from the slot table (hazard gear is now a suit worn on the body), and a slot added as data. Its art and panels wait for the producer's look; K2 waits for the producer's go. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
+- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is done the same day (§4): the measurements (finding F1), the combat rule (D1–D8) and the creature catalogue. The producer approved it the same day: "Approved. Proceed with developing K1". K1, the equipment system, is done the same day: slots as a table, storage for 16 (save format 11, its design approved: "continue with k1.3-k1.6"), stats and wear over every slot, outfitting by slot and by stats (the live scenario `GearByTheSlot`: a venturer wears a hard hat over hazard gear on 17 of the 23 gate seeds), the client from the slot table (hazard gear is now a suit worn on the body), and a slot added as data. The producer's look passed ("K1 looks good") with the go for K2, creatures: K2.1, lairs, done the same day; K2.2, the creature's rule, done the same day and waiting for the developer's review (its decisions D9–D15 below) before K2.3. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-5 is folded in, as UI-3 and UI-4 were into Parts 1 and 2, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 4, Combat & the Gatekeeper (ROADMAP §3). Milestone 4 ends with this part (Q1).
 - **Source**: the draft plan `.agents/epic10_part3_plan.md`. It was first written 2026-10-29 as "the descent", re-scoped by the producer on 2026-11-07 and answered in part the same day. Its design (§1–§4) moved here with the go.
@@ -99,6 +99,31 @@ Defaults, taken while doing K0; the producer answers by exception. D1–D8 are K
 - **D8, the swing's timer belongs to its owner:**
   - A fighter's next swing is a tick (`NextSwingAt`), kept by whoever owns the fighter: the creature's record (K2), or the crawler's state (K3).
   - Whether it is saved is K2.4's call. K11.1 asks a save mid-fight to load byte for byte, which argues for saving it.
+
+### K2's decisions (2026-11-08), for the developer's review
+K2.1's choices and K2.2's rule, the creature's tick; the step is supervised, so the developer reviews these before K2.3.
+- **D9, the creature's modes** (`CreatureMode`, a short state machine on the main thread, not a planner):
+  - **Rest:** at its place in the lair; it heals there, whole again over its kind's `HealHours`; rested, it roams.
+  - **Roam:** it walks to a point near its lair, in its sector, then rests again.
+  - **Chase:** after a crawler it noticed; it walks into striking reach and stands there to strike.
+  - **Flee:** a kind that flees, hurt under its line (rats under 40%), runs for its place and heeds nothing; it then rests, noticing nothing and not roaming until it has healed back over the line.
+  - **Home:** its quarry lost (downed, gone, or past the leash), it walks back to its place and rests.
+- **D10, what it sees:**
+  - a crawler on its feet, within its kind's `Sight`, with no wall between (the snapshot's line of sight), the nearest first, the lower id on a tie;
+  - not other creatures, and not the fog: creatures know their own ground;
+  - a downed crawler is nobody's quarry: until K5 it limps out, as from a hazard, so nobody dies.
+- **D11, the leash and the path:**
+  - the leash is measured from the lair's heart to the **quarry**: a creature chases a crawler while it stands within its kind's `Leash` of the heart, and lets it go past that;
+  - paths come through the existing A* (a `GridAStarSearcher` of the creatures' own, on the main thread, against the live snapshot), planned again when the goal moves more than a unit from where the path ends;
+  - the creature moves at its kind's speed a second (physical time), through its entity, so a view draws it between ticks.
+- **D12, the phase** (seam A4; the combat rule's D6): after the crawlers' runtime, every creature in id order decides and moves; then every due swing is decided from where all stand after moving; then all the harm lands. A creature swings at most once a tick, so two rats' blows on one tick both land.
+- **D13, a blow on a crawler:** the crawler notes who swung and when, hit or miss (`AgentState.StruckAtTick`, `StruckBy`: K2.3's flight reads them; unsaved, as `HurtThisTick` is). A hit takes the mitigated attack from its health, shows as the red coat, wears what it wears against blows (D7's `PerBlowTaken`), and at none downs it, as a hazard does (`TimesDowned`, the chronicle's `CrawlerDowned`).
+- **D14, hunting comes with flight:** in the live session creatures rest and roam from K2.2, but notice crawlers only from K2.3 (`CreatureService.Hunting`, off), when crawlers can flee and keep away from known lairs. A step where crawlers are struck with no way to answer would fail the day's checks for nothing. The rule's tests switch it on; K2.3 removes the switch.
+- **D15, the numbers** (placeholders, tuned by measurement in K2.3 and K3): a rest lasts 20–40 s, drawn from (seed, creature, tick); a roam reaches up to half the kind's leash from the heart; "there" is within a quarter unit.
+- **K2.1's choices, for the same review:**
+  - **Creatures are entities** (`EntityType.Creature`, their `CreatureState` on the entity, as a crawler's `AgentState` is), so the spatial grid, snapshots, picking and the frames carry them.
+  - **Their ids come from a seeded sequence of their own** (`SimRandomSalt.CreatureId`), not the entities' allocator. Creatures coming and going never change who the next crawler or drifter is, and their personalities and looks are drawn from their ids. The counter goes into K2.4's save.
+- **To weigh before K2.3:** rats run at 2.2 and crawlers walk at 2, so a crawler fleeing a rat's chase takes blows until it is out of the leash. From overgrowth.3 that is about 6 units, roughly 3 s and 25 health against a full warren. A full warren downs a crawler who stands its ground in about 12 s (34 blows, measured).
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

@@ -6,11 +6,23 @@ using ZLogger;
 
 namespace Simpiens.Simulation.Creatures
 {
-    /// <summary>Where a creature's entity enters and leaves the world (the simulation: its registry, so its spatial grid and its views follow).</summary>
+    /// <summary>
+    /// The world as the creatures' phase sees it (the simulation): where a creature's entity enters and leaves (its registry,
+    /// so its spatial grid and its views follow), what it sees and walks on, and where a blow lands on a crawler. Main thread.
+    /// </summary>
     public interface ICreatureWorld
     {
         void AddCreature(WorldEntity entity);
         void RemoveCreature(EntityId id);
+
+        /// <summary>The live snapshot: line of sight and the nav grid for paths; null in a test without one.</summary>
+        Simpiens.Simulation.Spatial.SharedWorldSnapshot Snapshot { get; }
+
+        /// <summary>Every entity in the world, the crawlers among them.</summary>
+        IReadOnlyList<WorldEntity> Entities { get; }
+
+        /// <summary>A creature's swing at a crawler (K2.2, D13): the harm if it landed, the red coat, the armour's wear, a downing.</summary>
+        void Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick);
     }
 
     /// <summary>
@@ -87,7 +99,7 @@ namespace Simpiens.Simulation.Creatures
     /// </list>
     /// Main thread only. Owned by the simulation (<see cref="SimulationManager.Creatures"/>), which follows the loaded map.
     /// </summary>
-    public sealed class CreatureService
+    public sealed partial class CreatureService
     {
         /// <summary>The most a lair holds: the places around its heart.</summary>
         public const int MaxPack = 8;
@@ -163,16 +175,23 @@ namespace Simpiens.Simulation.Creatures
                     continue;
                 }
                 lair.SetPack(PackSize(seed, l, kind));
-                for (int slot = 0; slot < lair.Pack; slot++) Spawn(world, lair, (byte)slot);
+                for (int slot = 0; slot < lair.Pack; slot++) Spawn(world, lair, (byte)slot, 0u);
                 SimLog.Bootstrap.ZLogInformation($"Lair {lair.Definition.Key}: {lair.Pack} {kind.Name}");
             }
         }
 
         /// <summary>
-        /// The creatures' phase (A4), after the crawlers' runtime: a slain member whose time has come returns to its place
-        /// (K2.1). Allocates nothing while nobody is due.
+        /// The creatures' phase (seam A4), after the crawlers' runtime: a slain member whose time has come returns to its place
+        /// (K2.1); then every creature's rule, in id order, and every swing decided from where all stand, then all the harm
+        /// (K2.2, <see cref="Rule"/>). Allocates nothing once warm.
         /// </summary>
         public void Tick(ICreatureWorld world, uint tick)
+        {
+            Returns(world, tick);
+            Rule(world, tick);
+        }
+
+        private void Returns(ICreatureWorld world, uint tick)
         {
             for (int l = 0; l < _lairs.Count; l++)
             {
@@ -181,7 +200,7 @@ namespace Simpiens.Simulation.Creatures
                 {
                     if (!lair.Due(slot, tick)) continue;
                     lair.ClearReturn(slot);
-                    var creature = Spawn(world, lair, (byte)slot);
+                    var creature = Spawn(world, lair, (byte)slot, tick);
                     SimLog.Simulation.ZLogInformation($"A {CreatureCatalog.NameOf(creature.Kind)} came back to {lair.Definition.Key}");
                 }
             }
@@ -217,15 +236,17 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>Where <paramref name="slot"/> rests around a lair's heart at <paramref name="heart"/>.</summary>
         public static Vec2 PlaceOf(Vec2 heart, int slot) => heart + Places[slot % Places.Length];
 
-        private CreatureState Spawn(ICreatureWorld world, LairState lair, byte slot)
+        private CreatureState Spawn(ICreatureWorld world, LairState lair, byte slot, uint tick)
         {
             var kind = CreatureCatalog.Get(lair.Definition.Kind);
             var creature = new CreatureState(NextId(), kind.Id, lair.Index, slot, PlaceOf(lair.Definition.Position, slot));
+            creature.RestUntil = tick + RestTicks(creature.Id, tick);
             lair.Hold(slot, creature.Id);
             int at = ~IndexOf(creature.Id);
             _creatures.Insert(at < 0 ? _creatures.Count : at, creature);
-            world?.AddCreature(new WorldEntity(creature.Id, EntityType.Creature, creature.Home, kind.BodyRadius, kind.Speed,
-                name: $"{kind.Name}_{lair.Index}.{slot}", creature: creature));
+            creature.Entity = new WorldEntity(creature.Id, EntityType.Creature, creature.Home, kind.BodyRadius, kind.Speed,
+                name: $"{kind.Name}_{lair.Index}.{slot}", creature: creature);
+            world?.AddCreature(creature.Entity);
             return creature;
         }
 

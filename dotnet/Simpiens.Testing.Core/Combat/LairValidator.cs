@@ -133,8 +133,12 @@ namespace Simpiens.Testing.Combat
         private sealed class FakeWorld : ICreatureWorld
         {
             public readonly Dictionary<EntityId, WorldEntity> Entities = new Dictionary<EntityId, WorldEntity>();
+            private readonly List<WorldEntity> _none = new List<WorldEntity>();
             public void AddCreature(WorldEntity entity) => Entities.Add(entity.Id, entity);
             public void RemoveCreature(EntityId id) => Entities.Remove(id);
+            public Simpiens.Simulation.Spatial.SharedWorldSnapshot Snapshot => null;
+            IReadOnlyList<WorldEntity> ICreatureWorld.Entities => _none;
+            public void Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick) { }
         }
 
         private static void Assert(bool condition, string message)
