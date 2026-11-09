@@ -219,7 +219,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - The frames carry creatures (`EntityView.Creature`, `CreatureMode`, `IsCreature`): the frame skip of K2.1 is gone.
     - The scene draws each among the crawlers by depth, on the shadow in isometric: scuttling while it moved over the last tick, its first frame while it stands, mirrored when it last went left on screen (`CreatureAppearance`, the view's own: which way is left is the projection's). The fog hides them.
     - Tests: `CreatureViewTests` (the frames carry every creature as its kind; the fog hides them, and charted each is drawn as its kind where it stands, in both modes; a rat scuttles while it roams and stands still resting; facing by the projection, by hand; renders `render-iso-warren-t300` and `render-floor1-hollow-t300`, the lairs charted by hand); `ArtCompletenessTests` (every kind has its own art in both modes, every row is used); the sheet's order.
-    - **Done 2026-11-09:** no existing render moved (both lairs open uncharted); golden untouched (no core change).
+    - **Done 2026-11-09:** golden untouched (no core change). Five existing renders moved, each by the stone beetle alone, in the Deep Seam once a scout charts it (t1500, the fog lifting, the caravan at t2400, the expedition); they passed locally under the render tolerance, and the pinned image re-recorded them. Commits `f3d04b4` (code), `38953e6` (art pins), `003e672` (renders).
   - Still K2.5's, each with the step that makes it visible:
     - a strike pose, with K2.3 (hunting goes live there);
     - the red coat on creatures too, with K3 (nothing hurts a creature before);

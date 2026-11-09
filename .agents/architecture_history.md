@@ -1626,3 +1626,4 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **A crawler's canvas and scale:** 16 pixels, feet on row 14, a crawler's size in top-down and standing on its feet in isometric, so creatures' pixels match crawlers' in both modes.
 - **Not pickable yet:** a click on a creature selects nothing until the inspector shows one.
 - **Nothing moved:** no existing render (both lairs open uncharted), no golden hash (no core change). Two new renders show the warren (isometric) and the hollow (top-down), the lairs charted by hand.
+- **Correction, the same day:** five existing renders did move, each by the stone beetle alone, drawn in the Deep Seam once a scout has charted it (t1500 in both modes, the fog lifting, the caravan at t2400, the expedition). Locally they passed under the render tolerance; the pinned image compares byte for byte and re-recorded them (`003e672`).
