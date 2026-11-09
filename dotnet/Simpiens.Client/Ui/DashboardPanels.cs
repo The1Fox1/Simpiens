@@ -31,7 +31,7 @@ namespace Simpiens.Client.Ui
         private readonly DashboardModel _model;
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
-        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty, _gear, _tool;
+        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
@@ -143,25 +143,11 @@ namespace Simpiens.Client.Ui
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
             _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
-            // Worn gear (Epic 10 G3): its icon at 1x (graphics V4), then its words; then a worn tool's (Epic 10 Part 2, W1.6b),
-            // on the same line: the dossier has no height to spare at 720 rows. A hidden piece takes no room in the row
+            // What it wears (Epic 10 G3's gear, W1.6b's tool; every slot from the table since Epic 10 Part 3, K1.5): each piece's
+            // icon at 1x (graphics V4) and its words, on one line: the dossier has no height to spare at 720 rows
             var gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize };
-            var worn = UiParts.Row(6f);
-            GearIcon = UiParts.Icon(icons, null, scale: 1);
-            worn.Children.Add(GearIcon);
-            _gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(_gear);
-            worn.Children.Add(_gear);
-            _toolGap = new ContainerRuntime { Width = 4f, Height = 1f, Visible = false };
-            worn.Children.Add(_toolGap);
-            ToolIcon = UiParts.Icon(icons, null, scale: 1);
-            ToolIcon.Visible = false;
-            worn.Children.Add(ToolIcon);
-            _tool = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            _tool.Visible = false;
-            UiParts.CentreVertically(_tool);
-            worn.Children.Add(_tool);
-            gearLine.Children.Add(worn);
+            Equipment = new WornLine(icons);
+            gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
@@ -263,13 +249,9 @@ namespace Simpiens.Client.Ui
         public bool DossierShown => _dossierDetails.Visible;
         public float HungerShown => _hunger.Value;
         public float HealthShown => _health.Value;
-        public string GearShown => _gear.Text;
-
-        /// <summary>The worn gear's icon; hidden with none.</summary>
-        public SpriteRuntime GearIcon { get; }
-        public SpriteRuntime ToolIcon { get; }
-        private readonly ContainerRuntime _toolGap;
-        public string ToolShown => _tool.Visible ? _tool.Text : string.Empty;
+        /// <summary>The dossier's line of what the crawler wears, slot by slot (Epic 10 Part 3, K1.5).</summary>
+        public WornLine Equipment { get; }
+        public string GearShown => Equipment.Shown;
 
         /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds that crawler on the map.</summary>
         public Action<EntityId> FindOnMap { get; set; }
@@ -380,16 +362,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
-            UiParts.SetText(_gear, "Gear: " + dossier.Gear);
-            UiParts.SetIcon(GearIcon, _icons, dossier.GearIcon); // hidden with none: the words start the row
-            bool tool = dossier.Tool.Length > 0;
-            if (_tool.Visible != tool)
-            {
-                _tool.Visible = tool;
-                _toolGap.Visible = tool;
-            }
-            UiParts.SetIcon(ToolIcon, _icons, tool ? dossier.ToolIcon : null);
-            if (tool) UiParts.SetText(_tool, "Tool: " + dossier.Tool);
+            Equipment.Show(dossier.Equipment);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);

@@ -16,8 +16,8 @@ namespace Simpiens.Presentation.Dashboard
         public string Doing { get; internal set; } = string.Empty;
         public float Health { get; internal set; }
         public bool Downed { get; internal set; }
-        public string Gear { get; internal set; } = string.Empty;
-        public string GearIcon { get; internal set; }
+        /// <summary>What it wears, a row for each slot in the table's display order (Epic 10 Part 3, K1.5).</summary>
+        public WornPieces Equipment { get; } = new WornPieces();
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
 
@@ -130,9 +130,7 @@ namespace Simpiens.Presentation.Dashboard
                 row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;
-                var worn = WornGear.Protection(agent.Inventory);
-                row.Gear = DossierModel.GearText(worn);
-                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
+                row.Equipment.Refresh(agent.Inventory);
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
             }

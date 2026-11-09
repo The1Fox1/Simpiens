@@ -134,7 +134,7 @@ namespace Simpiens.Client.Tests.People
             var game = Offscreen.Start(frames: 1);
             var atlas = game.Graphics.Portraits;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, Simpiens.Simulation.Economy.ItemType.None);
+            var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, default);
             atlas.Show(key);
             int bakes = atlas.Table.Bakes;
             var source = atlas.ShowFace(key);

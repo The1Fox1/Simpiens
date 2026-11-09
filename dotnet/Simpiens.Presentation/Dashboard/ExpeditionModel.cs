@@ -346,7 +346,7 @@ namespace Simpiens.Presentation.Dashboard
                 if (host.TryGetCrawler(member.CrawlerId, out var crawler))
                 {
                     row.Health = crawler.Health;
-                    row.Gear = DossierModel.GearText(WornGear.Protection(crawler.Inventory));
+                    row.Gear = WornPieces.Describe(crawler.Inventory); // every slot, in display order (Epic 10 Part 3, K1.5)
                 }
             }
         }

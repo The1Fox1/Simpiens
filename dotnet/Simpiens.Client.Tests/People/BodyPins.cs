@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -25,19 +26,22 @@ namespace Simpiens.Client.Tests.People
                 {
                     var look = Basis.With(gene, option.Id);
                     if (look.ClothesPrimary == look.ClothesSecondary) look = look.With(gene == LookGene.ClothesPrimary ? LookGene.ClothesSecondary : LookGene.ClothesPrimary, option.Id == 1 ? (byte)2 : (byte)1);
-                    yield return Body($"Body/{gene}/{option.Key}", look, ItemType.None, false);
+                    yield return Body($"Body/{gene}/{option.Key}", look, default, false);
                 }
             }
-            foreach (var style in LookCatalog.Options(LookGene.HairStyle)) yield return Body($"Body/helm/{style.Key}", Basis.With(LookGene.HairStyle, style.Id), ItemType.HazardGear, false);
-            foreach (var build in LookCatalog.Options(LookGene.Build)) yield return Body($"Body/tabard/{build.Key}", Basis.With(LookGene.Build, build.Id), ItemType.None, true);
+            foreach (var style in LookCatalog.Options(LookGene.HairStyle)) yield return Body($"Body/helm/{style.Key}", Basis.With(LookGene.HairStyle, style.Id), WornLook.Wearing(ItemType.HardHat), false);
+            foreach (var build in LookCatalog.Options(LookGene.Build)) yield return Body($"Body/tabard/{build.Key}", Basis.With(LookGene.Build, build.Id), default, true);
+            // A coat on the body (Epic 10 Part 3, K1.5): hazard gear by build, and with a hard hat and the tabard over it
+            foreach (var build in LookCatalog.Options(LookGene.Build)) yield return Body($"Body/coat/{build.Key}", Basis.With(LookGene.Build, build.Id), WornLook.Wearing(ItemType.HazardGear), false);
+            yield return Body("Body/hat-and-coat", Basis, WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear), true);
             for (uint i = 0; i < PeopleSheetTests.CrowdSize; i++)
-                yield return Body($"Body/crowd/{i:D2}", CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), ItemType.None, false);
+                yield return Body($"Body/crowd/{i:D2}", CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), default, false);
         }
 
-        private static PixelSprite Body(string name, CrawlerLook look, ItemType headGear, bool tabard)
+        private static PixelSprite Body(string name, CrawlerLook look, WornLook worn, bool tabard)
         {
             var pixels = new Rgba32[BodyKit.PixelsPerBody];
-            BodyKit.Bake(look, headGear, tabard, pixels);
+            BodyKit.Bake(look, worn, tabard, pixels);
             return new PixelSprite(name, BodyKit.Size, BodyKit.Size * BodyKit.FrameCount, pixels); // the frames stacked
         }
 

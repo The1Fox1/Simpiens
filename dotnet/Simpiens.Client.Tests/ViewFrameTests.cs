@@ -78,11 +78,12 @@ namespace Simpiens.Client.Tests
             var frame = frames.Current;
             Assert.True(frame.TryGetIndex(wearer.AgentId, out int w));
             Assert.True(frame.TryGetIndex(carrier.AgentId, out int c));
-            Assert.Equal(Simpiens.Simulation.Economy.ItemType.HazardGear, frame[w].Worn);
+            Assert.Equal(Simpiens.Simulation.Economy.ItemType.HazardGear, frame[w].Worn.In(Simpiens.Simulation.Items.EquipmentSlot.Body)); // by slot (Epic 10 Part 3, K1.5)
+            Assert.Equal(Simpiens.Simulation.Economy.ItemType.HazardGear, frame[w].Worn.Topmost);
             Assert.Equal(Simpiens.Simulation.Economy.ItemType.IronOre, frame[c].Carried);
-            Assert.Equal(Simpiens.Simulation.Economy.ItemType.None, frame[c].Worn);
+            Assert.True(frame[c].Worn.IsEmpty);
             for (int i = 0; i < frame.Count; i++)
-                if (!frame[i].IsCrawler) Assert.Equal((Simpiens.Simulation.Economy.ItemType.None, Simpiens.Simulation.Economy.ItemType.None), (frame[i].Worn, frame[i].Carried));
+                if (!frame[i].IsCrawler) Assert.True(frame[i].Worn.IsEmpty && frame[i].Carried == Simpiens.Simulation.Economy.ItemType.None);
 
             Assert.Equal(sim.Simulation.ActiveStalls.Count, frame.StallCount);
             Assert.True(frame.StallCount > 0);

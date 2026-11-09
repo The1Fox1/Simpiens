@@ -14,6 +14,8 @@ using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.Workshops;
 using Simpiens.Simulation.World;
 
+using Simpiens.Presentation.Art;
+
 namespace Simpiens.Presentation
 {
     /// <summary>A crawler's passing moments that the view shows over its state (<see cref="CrawlerAppearance.Desired"/>).</summary>
@@ -54,8 +56,8 @@ namespace Simpiens.Presentation
         public CrawlerFlags Flags;
         /// <summary>A crawler's sector at the end of the tick (for scenes started by entering a zone); -1 for props or with no sectors captured.</summary>
         public int SectorId;
-        /// <summary>What a crawler wears in its protection slot (graphics V5); None for none, and for props.</summary>
-        public ItemType Worn;
+        /// <summary>What a crawler shows worn, slot by slot (graphics V5; every slot since Epic 10 Part 3, K1.5); nothing for props.</summary>
+        public WornLook Worn;
         /// <summary>The first salvage a crawler holds, in id order (graphics V5): what it is seen carrying; None for none.</summary>
         public ItemType Carried;
         /// <summary>A crawler's look (Epic UI-Beta B2), its body drawn from it; default (no look) for props and for crawlers given none.</summary>
@@ -183,7 +185,7 @@ namespace Simpiens.Presentation
                     VisualState = agent != null ? agent.VisualState : AgentVisualState.Idle,
                     Flags = agent != null ? FlagsOf(agent) : CrawlerFlags.None,
                     SectorId = agent != null && sectors != null ? sectors.GetSectorAt(entity.Position).Id : -1,
-                    Worn = agent?.Inventory != null ? Worn(agent.Inventory) : ItemType.None,
+                    Worn = agent?.Inventory != null ? WornLook.Of(agent.Inventory) : default,
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                     Look = agent != null ? agent.Look : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
@@ -211,13 +213,6 @@ namespace Simpiens.Presentation
                     Lit = state.Built && state.InputsTaken,
                 };
             }
-        }
-
-        private static ItemType Worn(AgentInventory inventory)
-        {
-            // The first protection worn, the head's before the body's (K1.5 draws every slot by its layer)
-            var worn = WornGear.Protection(inventory);
-            return worn.IsEmpty ? ItemType.None : worn.Type;
         }
 
         /// <summary>A crawler's standing: a member of a guild (the player's, in the live outpost), a drifter, or a resident.</summary>

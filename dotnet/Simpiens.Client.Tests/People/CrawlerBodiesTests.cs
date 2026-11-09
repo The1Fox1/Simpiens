@@ -84,12 +84,12 @@ namespace Simpiens.Client.Tests.People
             Assert.True(bodies.TryKeyIn(1, out var key) && key.Look == crawlers[2].Agent.Look);
 
             // Putting on a helm is another body: its old slot is freed first, so the helmed body is baked into it
-            crawlers[0].Agent.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 100));
+            crawlers[0].Agent.Inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, durability: 100));
             bodies.Update(Frame(crawlers));
             Assert.Equal(3, bodies.InUse);
             Assert.True(bodies.TryTakePending(out slot));
             Assert.Equal(0, slot);
-            Assert.True(bodies.TryKeyIn(slot, out key) && key.HeadGear == ItemType.HazardGear && key.Look == crawlers[0].Agent.Look);
+            Assert.True(bodies.TryKeyIn(slot, out key) && key.Worn.In(Simpiens.Simulation.Items.EquipmentSlot.Head) == ItemType.HardHat && key.Look == crawlers[0].Agent.Look);
             Assert.False(bodies.TryTakePending(out _));
         }
 

@@ -212,7 +212,7 @@ namespace Simpiens.Presentation
             if (shown <= 0f) return;
             if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
             // Wearing its gear (graphics V5): a helmet is the crawler's own variant. Its own body, when it has one (UI-Beta B2)
-            var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn), pose.Frame, pose.ScaleX, pose.ScaleY);
+            var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn.Topmost), pose.Frame, pose.ScaleX, pose.ScaleY);
             if (Bodies != null && Bodies.TryCell(entity, pose.State, pose.Frame, out int body)) art = art.WithSprite(body);
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);

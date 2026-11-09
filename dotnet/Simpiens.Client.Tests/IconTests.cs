@@ -91,7 +91,7 @@ namespace Simpiens.Client.Tests
 
             var shown = new System.Collections.Generic.List<(string Where, Gum.GueDeriving.SpriteRuntime Icon, string Key)>();
             for (int i = 0; i < model.Merchant.Rows.Count; i++) shown.Add(($"merchant row {i}", dashboard.Merchant.Icons[i], model.Merchant.Rows[i].Icon));
-            shown.Add(("dossier gear", dashboard.Panels.GearIcon, "item/hazard-gear/icon"));
+            shown.Add(("dossier gear", dashboard.Panels.Equipment.IconFor(Simpiens.Simulation.Items.EquipmentSlot.Body), "item/hazard-gear/icon"));
             for (int i = 0; i < model.Header.Stock.Count; i++) shown.Add(($"header stock {i}", dashboard.Header.StockEntries[i].Icon, model.Header.Stock[i].Icon));
             Assert.Equal(model.Header.Stock.Count, dashboard.Header.StockEntries.Count);
 

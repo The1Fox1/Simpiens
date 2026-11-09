@@ -10,6 +10,8 @@ namespace Simpiens.Presentation.Art
         Head = 1,
         /// <summary>Over the lower face: a respirator's mask (Epic 10 Part 2, W3, D52).</summary>
         Face = 2,
+        /// <summary>Over the shirt, as a coat: hazard gear's suit, worn on the body (Epic 10 Part 3, K1.5).</summary>
+        Torso = 3,
     }
 
     /// <summary>How an item looks: its shape, its primary and secondary colours, and how it is worn.</summary>
@@ -42,16 +44,21 @@ namespace Simpiens.Presentation.Art
             ["iron-ore"] = new ItemLook(ItemShapes.Chunk, new Rgba32(100, 116, 139), new Rgba32(234, 88, 12)),
             ["medicinal-herb"] = new ItemLook(ItemShapes.Sprig, new Rgba32(45, 212, 191), new Rgba32(216, 180, 254)),
             ["pickaxe"] = new ItemLook(ItemShapes.Pick, new Rgba32(148, 163, 184), new Rgba32(120, 72, 32)),
-            ["hazard-gear"] = new ItemLook(ItemShapes.Helmet, new Rgba32(250, 204, 21), new Rgba32(254, 240, 138), Worn.Head),
+            // A suit in hazard yellow with silver bands, worn on the body (Epic 10 Part 3, K1.5: a helmet until the body slot took it)
+            ["hazard-gear"] = new ItemLook(ItemShapes.Vest, new Rgba32(250, 204, 21), new Rgba32(203, 213, 225), Worn.Torso),
             ["glowstone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(251, 191, 36), new Rgba32(103, 232, 249)),
             ["healing-draught"] = new ItemLook(ItemShapes.Flask, new Rgba32(225, 29, 72), new Rgba32(161, 112, 66)), // ruby in glass, a cork
             // Protection by kind (Epic 10 Part 2, W3, D52): the respirator a mask over the mouth, its filters teal; the hard hat
-            // a steel helm on the head, as hazard gear's yellow one
+            // a steel helm on the head
             ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191), Worn.Face),
             ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);
+
+        /// <summary>Where <paramref name="item"/> shows when worn, by its art key; None for an item with no look, or one that doesn't show.</summary>
+        public static Worn WornOf(Simpiens.Simulation.Economy.ItemType item)
+            => item != Simpiens.Simulation.Economy.ItemType.None && TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(item)?.ArtKey, out var look) ? look.Worn : Worn.None;
 
         /// <summary>Every look, by art key in ordinal order.</summary>
         public static IEnumerable<KeyValuePair<string, ItemLook>> All => _looks.OrderBy(p => p.Key, System.StringComparer.Ordinal);

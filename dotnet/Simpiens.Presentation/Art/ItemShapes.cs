@@ -17,6 +17,7 @@ namespace Simpiens.Presentation.Art
         public const string Pick = "pick";
         public const string Flask = "flask";
         public const string Mask = "mask";
+        public const string Vest = "vest";
 
         public const int GlyphSize = 12;
 
@@ -133,6 +134,22 @@ namespace Simpiens.Presentation.Art
                 "...223333...",
                 "....3344....",
                 "............",
+                "............",
+            },
+            // A sleeveless suit, open at the neck, with two reflective bands (hazard gear, worn on the body; Epic 10 Part 3, K1.5)
+            [Vest] = new[]
+            {
+                "............",
+                "...12..23...",
+                "..122..233..",
+                ".1222..2333.",
+                ".12222.2333.",
+                ".1222222333.",
+                ".abbbbbbccd.",
+                ".1222222333.",
+                ".1222222333.",
+                ".abbbbbbccd.",
+                ".2333333334.",
                 "............",
             },
         };

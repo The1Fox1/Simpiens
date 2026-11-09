@@ -138,23 +138,23 @@ namespace Simpiens.Client.Tests
 
             var crawler = sim.Host.CrawlerStates[0];
             model.SelectCrawler(crawler.AgentId);
-            Assert.Equal(DossierModel.NoGear, model.Dossier.Gear);
-            Assert.Null(model.Dossier.GearIcon);
+            Assert.True(model.Dossier.Equipment.NoneWorn);
+            Assert.Equal(DossierModel.NoGear, model.Dossier.Equipment.Summary);
             ushort life = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.Durability;
             crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: (ushort)(life * 64 / 100)));
             model.SelectCrawler(crawler.AgentId);
-            Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear); // by its catalog name
-            Assert.Equal("item/hazard-gear/icon", model.Dossier.GearIcon);
+            var body = model.Dossier.Equipment.Slots.Single(s => s.Slot.Id == Simpiens.Simulation.Items.EquipmentSlot.Body);
+            Assert.Equal(("Hazard Gear, 64% left", "Hazard Gear 64%", "64%"), (body.Text, body.Short, body.Left)); // by its catalog name
+            Assert.Equal("item/hazard-gear/icon", body.Icon);
             Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1)));
 
-            // A worn tool has its own line, shown only while there is one (Epic 10 Part 2, W1.6b)
-            Assert.Equal(string.Empty, model.Dossier.Tool);
-            Assert.Null(model.Dossier.ToolIcon);
+            // Every slot has its row, in the table's display order (Epic 10 Part 3, K1.5): the head's first, the tool's last
+            Assert.Equal(Simpiens.Simulation.Items.EquipmentSlots.InDisplayOrder.Select(d => d.Id), model.Dossier.Equipment.Slots.Select(s => s.Slot.Id));
             crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 32));
+            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, quality: Simpiens.Simulation.Items.Grades.Fine, durability: 1875));
             model.SelectCrawler(crawler.AgentId);
-            Assert.Equal("Pickaxe, 80% left", model.Dossier.Tool); // 32 of its 40
-            Assert.Equal("item/pickaxe/icon", model.Dossier.ToolIcon);
-            Assert.Equal("Hazard Gear, 64% left", model.Dossier.Gear);
+            Assert.Equal("Fine Hard Hat 100%, Hazard Gear 64%, Pickaxe 80%", model.Dossier.Equipment.Summary); // 32 of its 40
+            Assert.Equal("item/pickaxe/icon", model.Dossier.Equipment.Slots[^1].Icon);
         }
 
         /// <summary>The party builder's outfit names the gear it gives for the target's hazard (Epic 10 Part 2, W3.4, D50), a piece for each slot (Epic 10 Part 3, K1.4).</summary>

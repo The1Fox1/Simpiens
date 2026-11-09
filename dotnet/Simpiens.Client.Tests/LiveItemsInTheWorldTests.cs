@@ -49,7 +49,7 @@ namespace Simpiens.Client.Tests
                 bool someoneWears = false, someoneCarries = false;
                 for (int i = 0; i < frame.Count; i++)
                 {
-                    someoneWears |= frame[i].IsCrawler && frame[i].Worn != ItemType.None;
+                    someoneWears |= frame[i].IsCrawler && !frame[i].Worn.IsEmpty;
                     someoneCarries |= frame[i].IsCrawler && frame[i].Carried != ItemType.None;
                 }
                 if (!(someoneWears && wornAt < 0) && !(someoneCarries && carriedAt < 0)) continue;
@@ -63,10 +63,11 @@ namespace Simpiens.Client.Tests
                     if (!crawler.IsCrawler) continue;
                     var body = drawn.FirstOrDefault(d => d.Pick >= 0 && d.Z == 0f && scene.Items.PickedEntity(d.Pick) == crawler.Id);
                     if (body.Pick < 0 || body.Width == 0f) continue; // not drawn: under the fog
-                    if (wornAt < 0 && crawler.Worn != ItemType.None)
+                    if (wornAt < 0 && !crawler.Worn.IsEmpty)
                     {
+                        // A scene with no bodies baked draws today's figures, each with its topmost piece (Epic 10 Part 3, K1.5)
                         var pose = scene.Appearance.Pose(crawler.Id, crawler.VisualState, crawler.Flags, t * 0.1f);
-                        Assert.Equal(catalog.Sprite(catalog.Id(ArtKeys.CrawlerWearing(pose.State, ItemCatalog.Get(crawler.Worn).ArtKey)), pose.Frame), body.SpriteIndex);
+                        Assert.Equal(catalog.Sprite(catalog.Id(ArtKeys.CrawlerWearing(pose.State, ItemCatalog.Get(crawler.Worn.Topmost).ArtKey)), pose.Frame), body.SpriteIndex);
                         wornAt = t;
                     }
                     if (carriedAt < 0 && crawler.Carried != ItemType.None)

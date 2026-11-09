@@ -37,8 +37,9 @@ namespace Simpiens.Client.Ui
         private sealed class MemberCard
         {
             public ContainerRuntime Root, Gap;
-            public TextRuntime Name, Doing, Health, Gear, Standing, Unpaid, Wage;
-            public SpriteRuntime GearIcon, Face;
+            public TextRuntime Name, Doing, Health, Standing, Unpaid, Wage;
+            public SpriteRuntime Face;
+            public WornLine Equipment;
             public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
@@ -245,12 +246,10 @@ namespace Simpiens.Client.Ui
             standingLine.Children.Add(card.Health);
             standingLine.Children.Add(card.Standing);
             standing.Children.Add(standingLine);
+            // What it wears, slot by slot (Epic 10 Part 3, K1.5): each piece's icon and what's left of it, then its bunk
             var gearLine = new ContainerRuntime { Width = 230f, Height = IconAtlas.SmallSize };
-            card.GearIcon = UiParts.Icon(_icons, null, scale: 1);
-            gearLine.Children.Add(card.GearIcon);
-            card.Gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(card.Gear);
-            gearLine.Children.Add(card.Gear);
+            card.Equipment = new WornLine(_icons);
+            gearLine.Children.Add(card.Equipment.Visual);
             standing.Children.Add(gearLine);
             card.Root.Children.Add(standing);
 
@@ -348,10 +347,7 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));
                 card.Health.Color = row.Downed ? UiStyle.Danger : UiStyle.TextLight;
-                UiParts.SetText(card.Gear, row.Bunk.Length > 0 ? "Gear: " + row.Gear + " · " + row.Bunk : "Gear: " + row.Gear);
-                UiParts.SetIcon(card.GearIcon, _icons, row.GearIcon);
-                float gearX = row.GearIcon != null ? IconAtlas.SmallSize + 6f : 0f;
-                if (card.Gear.X != gearX) card.Gear.X = gearX;
+                card.Equipment.Show(row.Equipment, brief: true, suffix: row.Bunk.Length > 0 ? "· " + row.Bunk : string.Empty);
                 UiParts.SetText(card.Standing, row.Standing);
                 UiParts.SetText(card.Unpaid, UnpaidText(row.UnpaidVisits));
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;

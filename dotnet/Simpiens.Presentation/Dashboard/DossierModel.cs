@@ -102,16 +102,12 @@ namespace Simpiens.Presentation.Dashboard
         public float Health { get; private set; }
         public const string DownedBadge = "DOWNED";
 
-        /// <summary>The worn protection and its wear (Epic 10 G3): "Hazard Gear, 64% left", or "None".</summary>
-        public string Gear { get; private set; } = string.Empty;
-        /// <summary>The worn gear's icon (graphics V4); null with none.</summary>
-        public string GearIcon { get; private set; }
+        /// <summary>
+        /// What it wears and each piece's wear, a row for each slot in the table's display order (Epic 10 G3's protection and
+        /// W1.6b's tool, every slot since Epic 10 Part 3, K1.5): "Hard Hat 64%", "Hazard Gear 80%"; none worn reads <see cref="NoGear"/>.
+        /// </summary>
+        public WornPieces Equipment { get; } = new WornPieces();
         public const string NoGear = "None";
-
-        /// <summary>The worn tool and its wear (Epic 10 Part 2, W1.6b): "Pickaxe, 80% left"; empty with none, and the line hides.</summary>
-        public string Tool { get; private set; } = string.Empty;
-        /// <summary>The worn tool's icon; null with none.</summary>
-        public string ToolIcon { get; private set; }
 
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
@@ -153,9 +149,7 @@ namespace Simpiens.Presentation.Dashboard
             CrawlerId = HasCrawler ? node.Id : default;
             _affinities.Clear();
             _shownRows.Clear();
-            GearIcon = null;
-            Tool = string.Empty;
-            ToolIcon = null;
+            Equipment.Refresh(null);
             if (!HasCrawler) return;
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
@@ -167,13 +161,8 @@ namespace Simpiens.Presentation.Dashboard
             State = agent.VisualState;
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
-            var worn = WornGear.Protection(agent.Inventory);
-            Describe(node.Id, agent, worn.IsEmpty ? ItemType.None : worn.Type);
-            Gear = GearText(worn);
-            GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
-            var tool = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Tool) : default;
-            Tool = tool.IsEmpty ? string.Empty : GearText(tool);
-            ToolIcon = tool.IsEmpty ? null : ItemIcons.Of(tool.Type, tool.Quality);
+            Describe(node.Id, agent);
+            Equipment.Refresh(agent.Inventory);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -209,7 +198,7 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change
-        private void Describe(EntityId id, Simpiens.Cognition.AgentState agent, ItemType worn)
+        private void Describe(EntityId id, Simpiens.Cognition.AgentState agent)
         {
             var look = agent.Look;
             var standing = WorldViewFrame.StandingOf(agent);
@@ -238,15 +227,22 @@ namespace Simpiens.Presentation.Dashboard
         /// Equipment in words, by its catalog name: what is left of its life (its definition's durability), rounded up so
         /// equipment that still works never reads 0%.
         /// </summary>
-        public static string GearText(in ItemInstance gear)
+        public static string GearText(in ItemInstance gear) => gear.IsEmpty ? NoGear : Invariant($"{PieceName(gear)}, {LifeLeft(gear)}% left");
+
+        /// <summary>What is left of a piece's life, in percent, rounded up so equipment that still works never reads 0 (a grade's life is its whole, Epic 10 Part 2, D56).</summary>
+        public static int LifeLeft(in ItemInstance gear)
         {
-            if (gear.IsEmpty) return NoGear;
             var definition = ItemCatalog.Get(gear.Type);
-            ushort life = definition?.Equipment != null ? definition.Equipment.DurabilityAt(gear.Quality) : (ushort)0; // a grade's life is its whole (Epic 10 Part 2, D56)
-            int left = life > 0 ? (gear.Durability * 100 + life - 1) / life : 100;
+            ushort life = definition?.Equipment != null ? definition.Equipment.DurabilityAt(gear.Quality) : (ushort)0;
+            return life > 0 ? (gear.Durability * 100 + life - 1) / life : 100;
+        }
+
+        /// <summary>A piece's name, by its catalog name, its grade before it when graded (Epic 10 Part 2, W4): "Fine Hard Hat".</summary>
+        public static string PieceName(in ItemInstance gear)
+        {
+            var definition = ItemCatalog.Get(gear.Type);
             string name = definition?.DisplayName ?? ItemCatalog.NameOf(gear.Type);
-            if (gear.Quality != Grades.Standard) name = Grades.NameOf(gear.Quality) + " " + name; // a graded piece (Epic 10 Part 2, W4)
-            return Invariant($"{name}, {left}% left");
+            return gear.Quality != Grades.Standard ? Grades.NameOf(gear.Quality) + " " + name : name;
         }
 
         /// <summary>A drifter's stay in words, in game time (Epic 10 Part 2, T6: "drifter, leaves in 3 h 20 min"); empty for a resident.</summary>

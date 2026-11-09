@@ -7,7 +7,9 @@ namespace Simpiens.Presentation.Art
     /// state and frame again with its hair (<see cref="ProceduralSprites.Hair"/>, a colour no other part uses) in the
     /// item's primary colour: a helmet, aligned in every pose, asleep included. For each item worn on the face (Epic 10
     /// Part 2, D52), the skin of the mouth's row at each frame's head anchor in the item's colours: a mask, its filters at
-    /// either side. In the world sheet.
+    /// either side. For each item worn on the torso (Epic 10 Part 3, K1.5), the shirt in the item's primary colour: a
+    /// coat (asleep, the blanket covers it). One figure a piece: a crawler with no look shows its topmost piece
+    /// (<see cref="WornLook.Topmost"/>). In the world sheet.
     /// </summary>
     public static class WornSprites
     {
@@ -23,9 +25,12 @@ namespace Simpiens.Presentation.Art
                 if (look.Worn == Worn.None) continue;
                 foreach (var (state, frames) in CrawlerFrames.All)
                     for (int f = 0; f < frames.Length; f++)
-                        _all.Add(look.Worn == Worn.Head
-                            ? SpriteKit.Recolour(sheet[frames[f]], ProceduralSprites.Hair, look.Primary, Name(frames[f], key))
-                            : Masked(sheet[frames[f]], state, f, look, Name(frames[f], key)));
+                        _all.Add(look.Worn switch
+                        {
+                            Worn.Head => SpriteKit.Recolour(sheet[frames[f]], ProceduralSprites.Hair, look.Primary, Name(frames[f], key)),
+                            Worn.Torso => SpriteKit.Recolour(sheet[frames[f]], ProceduralSprites.CrawlerKeyColour('C'), look.Primary, Name(frames[f], key)),
+                            _ => Masked(sheet[frames[f]], state, f, look, Name(frames[f], key)),
+                        });
                 _keys.Add(key);
             }
         }
@@ -48,7 +53,7 @@ namespace Simpiens.Presentation.Art
             return new PixelSprite(name, sprite.Width, sprite.Height, pixels);
         }
 
-        /// <summary>The art keys of the items worn on the head, in ordinal order.</summary>
+        /// <summary>The art keys of the items that show worn, in ordinal order.</summary>
         public static IReadOnlyList<string> Keys => _keys;
 
         /// <summary>A crawler frame's sprite wearing <paramref name="itemArtKey"/>: "Agent_Walk_0_hazard-gear".</summary>

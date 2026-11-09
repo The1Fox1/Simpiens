@@ -41,7 +41,7 @@ namespace Simpiens.Presentation.Art.People
 
         /// <summary>The body <paramref name="crawler"/> is drawn with: its look, its helm if it wears one, its tabard if it's in a guild.</summary>
         public BodyKey KeyOf(in EntityView crawler)
-            => new BodyKey(crawler.Look, BodyKit.HeadGearOf(crawler.Worn), crawler.Standing == CrawlerStanding.GuildMember);
+            => new BodyKey(crawler.Look, crawler.Worn, crawler.Standing == CrawlerStanding.GuildMember);
 
         /// <summary>
         /// Moves the table on to <paramref name="frame"/>: bodies its crawlers show keep their slots, new ones take the
@@ -124,7 +124,7 @@ namespace Simpiens.Presentation.Art.People
         public void BakeSlot(int slot, Span<Rgba32> into)
         {
             var key = _keyIn[slot];
-            BodyKit.Bake(key.Look, key.HeadGear, key.Tabard, into);
+            BodyKit.Bake(key.Look, key.Worn, key.Tabard, into);
         }
 
         /// <summary>The world sheet's sprite of <paramref name="slot"/>'s frame <paramref name="frameIndex"/>: where its bake goes.</summary>
@@ -149,27 +149,27 @@ namespace Simpiens.Presentation.Art.People
         }
     }
 
-    /// <summary>A body: a look with what shows of a crawler's gear (a helm) and standing (the guild's tabard).</summary>
+    /// <summary>A body: a look with what shows of a crawler's gear, slot by slot (a helm, a coat; Epic 10 Part 3, K1.5), and its standing (the guild's tabard).</summary>
     public readonly struct BodyKey : IEquatable<BodyKey>
     {
-        public BodyKey(in CrawlerLook look, ItemType headGear, bool tabard)
+        public BodyKey(in CrawlerLook look, in WornLook worn, bool tabard)
         {
             Look = look;
-            HeadGear = headGear;
+            Worn = worn;
             Tabard = tabard;
         }
 
         public CrawlerLook Look { get; }
 
-        /// <summary>What it wears on its head, drawn as a helm; None for nothing.</summary>
-        public ItemType HeadGear { get; }
+        /// <summary>What shows worn, by slot; nothing for nothing.</summary>
+        public WornLook Worn { get; }
 
         public bool Tabard { get; }
 
-        public bool Equals(BodyKey other) => Look.Equals(other.Look) && HeadGear == other.HeadGear && Tabard == other.Tabard;
+        public bool Equals(BodyKey other) => Look.Equals(other.Look) && Worn.Equals(other.Worn) && Tabard == other.Tabard;
 
         public override bool Equals(object obj) => obj is BodyKey other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)HeadGear, Tabard);
+        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), Worn.GetHashCode(), Tabard);
     }
 }

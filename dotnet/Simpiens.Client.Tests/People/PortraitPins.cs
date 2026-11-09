@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -32,14 +33,17 @@ namespace Simpiens.Client.Tests.People
                 {
                     var look = Basis.With(gene, option.Id);
                     if (look.ClothesPrimary == look.ClothesSecondary) look = look.With(gene == LookGene.ClothesPrimary ? LookGene.ClothesSecondary : LookGene.ClothesPrimary, option.Id == 1 ? (byte)2 : (byte)1);
-                    yield return Portrait($"Portrait/{gene}/{option.Key}", new PortraitKey(look, Mood.Content, CrawlerStanding.Resident, ItemType.None));
+                    yield return Portrait($"Portrait/{gene}/{option.Key}", new PortraitKey(look, Mood.Content, CrawlerStanding.Resident, default));
                 }
             }
-            foreach (var mood in Enum.GetValues<Mood>()) yield return Portrait($"Portrait/mood/{mood}", new PortraitKey(Basis, mood, CrawlerStanding.Resident, ItemType.None));
-            foreach (var standing in Enum.GetValues<CrawlerStanding>()) yield return Portrait($"Portrait/standing/{standing}", new PortraitKey(Basis, Mood.Content, standing, ItemType.None));
-            yield return Portrait("Portrait/helm", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, ItemType.HazardGear));
+            foreach (var mood in Enum.GetValues<Mood>()) yield return Portrait($"Portrait/mood/{mood}", new PortraitKey(Basis, mood, CrawlerStanding.Resident, default));
+            foreach (var standing in Enum.GetValues<CrawlerStanding>()) yield return Portrait($"Portrait/standing/{standing}", new PortraitKey(Basis, Mood.Content, standing, default));
+            yield return Portrait("Portrait/helm", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HardHat)));
+            // A suit on the shoulders (Epic 10 Part 3, K1.5), and with a hard hat
+            yield return Portrait("Portrait/suit", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HazardGear)));
+            yield return Portrait("Portrait/hat-and-suit", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear)));
             for (uint i = 0; i < PeopleSheetTests.CrowdSize; i++)
-                yield return Portrait($"Portrait/crowd/{i:D2}", new PortraitKey(CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), Mood.Content, CrawlerStanding.Resident, ItemType.None));
+                yield return Portrait($"Portrait/crowd/{i:D2}", new PortraitKey(CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), Mood.Content, CrawlerStanding.Resident, default));
         }
 
         private static PixelSprite Portrait(string name, in PortraitKey key)
