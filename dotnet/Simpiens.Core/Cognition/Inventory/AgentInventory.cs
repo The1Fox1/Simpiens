@@ -247,6 +247,31 @@ namespace Simpiens.Cognition.Inventory
             return true;
         }
 
+        /// <summary>
+        /// Wears by one unit every piece worn that wears by <paramref name="rule"/>, whichever slot it is in, in the table's id
+        /// order (Epic 10 Part 3, K1.3): a tick in danger wears a hard hat and hazard gear alike. Returns how many pieces it
+        /// wore; the ones that broke and are gone go into <paramref name="broke"/> (as many as fit), and their number into
+        /// <paramref name="brokeCount"/>. Allocates nothing: a caller passes a stack buffer of <see cref="EquipmentSlots.Capacity"/>.
+        /// </summary>
+        public int WearBy(WearRule rule, System.Span<ItemType> broke, out int brokeCount)
+        {
+            brokeCount = 0;
+            if (rule == WearRule.None) return 0;
+            int worn = 0;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i].Id;
+                var piece = _equipped[(byte)slot];
+                if (piece.IsEmpty || ItemCatalog.Get(piece.Type)?.Equipment?.Wear != rule) continue;
+                worn++;
+                if (!Wear(slot)) continue;
+                if (brokeCount < broke.Length) broke[brokeCount] = piece.Type;
+                brokeCount++;
+            }
+            return worn;
+        }
+
         public void AddGold(int amount)
         {
             if (amount > 0)

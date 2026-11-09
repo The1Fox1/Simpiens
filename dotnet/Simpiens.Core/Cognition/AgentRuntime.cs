@@ -124,16 +124,16 @@ namespace Simpiens.Cognition
                     State.Activity.GearedHazardTicks++;
                     State.Activity.GearedHazardDamage += taken;
                 }
-                var slots = EquipmentSlots.All;
-                for (int s = 0; inventory != null && s < slots.Count; s++)
+                // Every piece that wears by exposure wears, whichever slot it is in (Epic 10 Part 3, K1.3): a hard hat and
+                // hazard gear worn together both
+                if (inventory != null)
                 {
-                    var slot = slots[s].Id;
-                    var worn = inventory.GetEquipped(slot);
-                    if (worn.IsEmpty || ItemCatalog.Get(worn.Type)?.Equipment?.Wear != WearRule.PerHazardTick) continue;
-                    if (inventory.Wear(slot))
+                    System.Span<Simpiens.Simulation.Economy.ItemType> broke = stackalloc Simpiens.Simulation.Economy.ItemType[EquipmentSlots.Capacity];
+                    inventory.WearBy(WearRule.PerHazardTick, broke, out int brokeCount);
+                    for (int b = 0; b < brokeCount && b < broke.Length; b++)
                     {
                         State.Activity.GearWornOut++;
-                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s {ItemCatalog.NameOf(worn.Type)} wore out in {hazard.Kind} at {State.Position}");
+                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s {ItemCatalog.NameOf(broke[b])} wore out in {hazard.Kind} at {State.Position}");
                         RecordStory(ChronicleEventType.GearWornOut, ChronicleIntensity.Notable);
                     }
                 }

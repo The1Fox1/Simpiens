@@ -235,10 +235,15 @@ namespace Simpiens.Hosting
             {
                 var id = plan.Members[i];
                 if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
-                var worn = WornGear.Protection(member.Inventory);
-                bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > GuildRules.ProtectionAgainst(worn.Type, hazard);
-                if (!GuildRules.WornOut(worn) && !better) continue;
-                if (GuildRules.WornOut(worn)) all = false; // a member with sound gear can go; better gear is given when there is some
+                // Given to a member with no sound protection; in place of a worn-down piece in the gear's slot; or when it cuts
+                // the hazard more than all the member wears (Epic 10 Part 3, K1.3: a respirator goes on over hazard gear, which
+                // stays on the body). A protected member's bare slot waits for K1.4's outfitting by slot
+                var worn = gear != ItemType.None ? WornGear.Replaced(member.Inventory, gear) : ItemInstance.Empty;
+                bool sound = GuildRules.WearsSoundProtection(member.Inventory);
+                bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > CrawlerStats.HazardResistance(member.Inventory, hazard);
+                bool refresh = !worn.IsEmpty && GuildRules.WornOut(worn);
+                if (!sound) all = false; // a member with sound gear can go; better gear is given when there is some
+                if (gear == ItemType.None || (sound && !refresh && !better)) continue;
                 if (stock <= 0 || guild.CanGiveGear(host, id, gear, hazard) != GuildRules.Check.Ok) continue;
                 _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, id, gear, hazard));
                 GearGiven++;

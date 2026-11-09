@@ -5,7 +5,8 @@ namespace Simpiens.Simulation.Items
     /// <summary>
     /// A crawler's stats as its equipment makes them (the item system refactor, 2026-10-26): a base value, then every
     /// equipped item's Add modifiers, then its Multiply modifiers, over every slot of the table in id order (deterministic;
-    /// Epic 10 Part 3, K1.1). Code asks here ("HazardResistance") instead of reading a tuning.
+    /// Epic 10 Part 3, K1.1), held within the stat's bounds (<see cref="StatRules"/>, K1.3). Code asks here
+    /// ("HazardResistance") instead of reading a tuning.
     /// </summary>
     public static class CrawlerStats
     {
@@ -35,7 +36,7 @@ namespace Simpiens.Simulation.Items
                     if (modifier.Stat == stat && modifier.Op == ModifierOp.Multiply) value *= equipment.ValueAt(modifier, grade);
                 }
             }
-            return value;
+            return StatRules.Of(stat).Bound(value);
         }
 
         /// <summary>
@@ -45,18 +46,18 @@ namespace Simpiens.Simulation.Items
         public static float MiningSpeed(IAgentInventory inventory, Simpiens.Simulation.Economy.ItemType item)
         {
             if (inventory == null || !ItemCatalog.Is(item, ItemCategory.Mineral)) return 1f;
-            float speed = Get(inventory, StatKind.HarvestSpeed, 1f);
-            return speed > 0.1f ? speed : 0.1f;
+            return Get(inventory, StatKind.HarvestSpeed, 1f); // at least 0.1, by the stat's rule
         }
 
-        /// <summary>The most of a hazard's harm worn protection can stop (D47).</summary>
-        public const float MaxHazardResistance = 0.9f;
+        /// <summary>The most of a hazard's harm worn protection can stop (D47): the resistances' bound (<see cref="StatRules.MaxResistance"/>).</summary>
+        public const float MaxHazardResistance = StatRules.MaxResistance;
 
         /// <summary>
         /// How much of a hazard of <paramref name="kind"/>'s harm this inventory's wearer is spared (Epic 10 Part 2, W3, D47):
         /// its <see cref="StatKind.HazardResistance"/> (hazard gear's 0.5, against any hazard) plus its resistance to that
         /// kind (a respirator's 0.75 against the air hazards, a hard hat's against falling rock), at most
-        /// <see cref="MaxHazardResistance"/>.
+        /// <see cref="MaxHazardResistance"/>. Since K1.3 both may be worn at once (hazard gear on the body, a hard hat on the
+        /// head): 0.5 and 0.75 together stop the most, 0.9.
         /// </summary>
         public static float HazardResistance(IAgentInventory inventory, Simpiens.Simulation.World.HazardKind kind)
         {

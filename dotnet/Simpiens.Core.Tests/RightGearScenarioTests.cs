@@ -15,10 +15,10 @@ namespace Simpiens.Core.Tests
     /// W3's DoD, <c>TheRightGearForTheRightHazard</c> (Epic 10 Part 2), live and headless with nothing injected, on the
     /// default seed. With the guild: the scripted players build and staff the forge, which makes respirators from the
     /// stall's glowstone and herbs, and send the guild to the Drowned Gallery, outfitted for its flooded air (D50), so its
-    /// trips go from hazard gear to respirators as the forge makes them: in the Gallery a member in a respirator takes half
-    /// the harm of one in hazard gear, and trips all in respirators bring home as much as trips with members in hazard gear. Without the guild, the forge's respirators are sold: a
-    /// bold resident trades its gear for one (D53) and works the Gallery alone (D51). The ledger balances and the days'
-    /// checks hold.
+    /// trips go from hazard gear to respirators as the forge makes them: in the Gallery a member in a respirator over its
+    /// hazard gear (Epic 10 Part 3, K1.3) takes a fifth of the harm of one in hazard gear alone; trips all in
+    /// respirators bring home as much as trips with members in hazard gear. Without the guild, the forge's respirators are
+    /// sold: a bold resident buys one (D53) and works the Gallery alone (D51). The ledger balances and the days' checks hold.
     /// </summary>
     public class RightGearScenarioTests
     {
@@ -38,12 +38,14 @@ namespace Simpiens.Core.Tests
                 var guild = sim.Simulation.Guild;
                 var host = (IGuildHost)sim.Simulation;
                 var map = sim.Host.Current.Map;
-                var harm = new Dictionary<ItemType, (double Damage, int Ticks)>();
+                // Harm by what is worn, head and body (Epic 10 Part 3, K1.3: a respirator goes on over hazard gear)
+                const string InGear = "None/HazardGear", InRespirator = "Respirator/None", InBoth = "Respirator/HazardGear";
+                var harm = new Dictionary<string, (double Damage, int Ticks)>();
                 var lastDamage = new Dictionary<EntityId, float>();
                 var trips = new List<(int Respirators, int Haul, bool Back)>();
                 int respiratorsOnTrip = 0, haul = 0;
                 bool active = false, back = false;
-                while (sim.Clock.CurrentTick < Horizon && !(harm.ContainsKey(ItemType.Respirator) && harm.ContainsKey(ItemType.HazardGear) && trips.Any(t => t.Respirators < 4) && trips.Any(t => t.Respirators == 4)))
+                while (sim.Clock.CurrentTick < Horizon && !(harm.ContainsKey(InGear) && harm.ContainsKey(InBoth) && trips.Any(t => t.Respirators < 4) && trips.Any(t => t.Respirators == 4)))
                 {
                     watch.Run(1);
                     var expedition = guild.Parties[0].Expedition;
@@ -59,7 +61,7 @@ namespace Simpiens.Core.Tests
                         if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                         float before = lastDamage.TryGetValue(member.CrawlerId, out var d) ? d : crawler.Activity.HazardDamage;
                         lastDamage[member.CrawlerId] = crawler.Activity.HazardDamage;
-                        var worn = WornGear.Protection(crawler.Inventory).Type;
+                        var worn = $"{crawler.Inventory.GetEquipped(EquipmentSlot.Head).Type}/{crawler.Inventory.GetEquipped(EquipmentSlot.Body).Type}";
                         if (expedition.Stage == ExpeditionStage.Work && map.FindSector(crawler.Position).Id == Floor1Layout.DrownedGallerySectorId && crawler.Activity.HazardDamage > before)
                         {
                             var (sum, ticks) = harm.TryGetValue(worn, out var h) ? h : (0d, 0);
@@ -72,12 +74,14 @@ namespace Simpiens.Core.Tests
                     back = expedition.TurnedBack;
                 }
                 watch.Finish();
-                double Rate(ItemType gear) => harm.TryGetValue(gear, out var h) && h.Ticks > 0 ? h.Damage / h.Ticks : 0d;
-                TestContext.Current.TestOutputHelper?.WriteLine($"with the guild: respirators made {sim.Simulation.Workshops[sim.Simulation.Workshops.IndexOf(StationKind.Forge)].Made}; harm a tick in the Gallery: hazard gear {Rate(ItemType.HazardGear):F4} over {(harm.TryGetValue(ItemType.HazardGear, out var g) ? g.Ticks : 0)} ticks, respirator {Rate(ItemType.Respirator):F4} over {(harm.TryGetValue(ItemType.Respirator, out var r) ? r.Ticks : 0)}; trips {string.Join(", ", trips.Select(t => $"{t.Respirators} in respirators, haul {t.Haul}{(t.Back ? " back" : "")}"))}; ended t{sim.Clock.CurrentTick}\n{watch.Report()}");
+                double Rate(string worn) => harm.TryGetValue(worn, out var h) && h.Ticks > 0 ? h.Damage / h.Ticks : 0d;
+                TestContext.Current.TestOutputHelper?.WriteLine($"with the guild: respirators made {sim.Simulation.Workshops[sim.Simulation.Workshops.IndexOf(StationKind.Forge)].Made}; harm a tick in the Gallery by head/body: {string.Join(", ", harm.Select(kv => $"{kv.Key} {Rate(kv.Key):F4} over {kv.Value.Ticks} ticks"))}; trips {string.Join(", ", trips.Select(t => $"{t.Respirators} in respirators, haul {t.Haul}{(t.Back ? " back" : "")}"))}; ended t{sim.Clock.CurrentTick}\n{watch.Report()}");
 
                 Assert.True(forge.BuiltTick >= 0 && player.Dispatches > 0, "The forge was built and the guild sent parties.");
-                Assert.True(Rate(ItemType.HazardGear) > 0 && Rate(ItemType.Respirator) > 0, "Members worked the Gallery in hazard gear and in respirators.");
-                Assert.InRange(Rate(ItemType.Respirator) / Rate(ItemType.HazardGear), 0.45, 0.55); // half the harm
+                // Members keep their hazard gear on under the forge's respirators (K1.3), so the trips show gear alone and both
+                Assert.True(Rate(InGear) > 0 && Rate(InBoth) > 0, "Members worked the Gallery in hazard gear, and in respirators over it.");
+                Assert.InRange(Rate(InBoth) / Rate(InGear), 0.18, 0.22); // a fifth: 0.5 and 0.75 together, held at 0.9
+                if (Rate(InRespirator) > 0) Assert.InRange(Rate(InRespirator) / Rate(InGear), 0.45, 0.55); // a respirator alone: half
                 var inGear = trips.Where(t => t.Respirators < 4).ToList(); // members in hazard gear: the forge's respirators weren't enough yet
                 var inRespirators = trips.Where(t => t.Respirators == 4).ToList();
                 Assert.True(inGear.Count > 0 && inRespirators.Count > 0, "A trip with members in hazard gear, and one all in respirators.");

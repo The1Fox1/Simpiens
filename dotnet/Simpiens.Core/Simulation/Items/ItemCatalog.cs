@@ -64,7 +64,7 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
                 // miner's work while the stall's ore shelf sets how much it mines, so the forge sees its buyers again
-                equipment: new EquipmentBlock(SlotKind.Tool, durability: 40, WearRule.PerUse,
+                equipment: new EquipmentBlock(SlotKind.Tool, durability: 40, WearRule.PerHarvest,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
             // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
             // longer ventures, Epic 10 Part 2, T3.2a)

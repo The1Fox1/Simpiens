@@ -539,13 +539,14 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Outfitting by the target's hazard (Epic 10 Part 2, W3.2, D50): the best protection in stock for the Gallery's
-        /// flooding is a respirator, for the Glow Caves' falling rock a hard hat, and with neither, hazard gear. Given for
-        /// the Gallery, a respirator replaces sound hazard gear, which goes back into the stall's stock; a hard hat, no
-        /// better against flooding, is refused.
+        /// Outfitting by the target's hazard (Epic 10 Part 2, W3.2, D50), slot by slot (Epic 10 Part 3, K1.3): the best
+        /// protection in stock for the Gallery's flooding is a respirator, for the Glow Caves' falling rock a hard hat, and
+        /// with neither, hazard gear. Given for the Gallery, a respirator goes on the head over sound hazard gear, which
+        /// stays on the body; then a hard hat, no better against flooding than the respirator in its slot, is refused, and
+        /// more hazard gear, its slot taken by sound gear, too.
         /// </summary>
         [Fact]
-        public void GearIsGivenForTheTargetsHazardAndSoundGearGoesBackToStock()
+        public void GearIsGivenForTheTargetsHazardSlotBySlot()
         {
             using var o = NewOutpost(1);
             var member = o.Members[0];
@@ -567,15 +568,18 @@ namespace Simpiens.Core.Tests
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.HazardGear));
             o.Sim.Step(1);
             int gearStock = o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear);
-            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator)); // for no hazard, as G3
-            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, flooding));
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HazardGear)); // its slot holds sound gear, as G3
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator)); // the head is bare (K1.3)
 
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator, flooding));
             o.Sim.Step(1);
             Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head).Type);
-            Assert.True(member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).IsEmpty, "One protective piece at a time until K1.3: the respirator took the hazard gear's place.");
-            Assert.Equal(gearStock + 1, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // the sound gear went back
+            Assert.Equal(ItemType.HazardGear, member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).Type); // worn together since K1.3
+            Assert.Equal(gearStock, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // nothing went back
             Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.Respirator));
+            Assert.Equal(0.9f, Simpiens.Simulation.Items.CrawlerStats.HazardResistance(member.Inventory, flooding), 3); // 0.5 and 0.75, held at the most
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, flooding)); // no better than the respirator in its slot
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, rock)); // better there
             Assert.Equal(GuildRules.Check.OutOfStock, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator, flooding));
         }
 

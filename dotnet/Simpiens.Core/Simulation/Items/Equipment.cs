@@ -2,12 +2,22 @@ using System;
 
 namespace Simpiens.Simulation.Items
 {
-    /// <summary>What wears an item out: nothing, each tick in a hazard sector (hazard gear), or each use (reserved: a tool per harvest, a weapon per hit).</summary>
+    /// <summary>
+    /// What wears a worn piece out, whichever slot it is in (Epic 10 Part 3, K1.3): each piece wears by its own rule, and
+    /// every piece with the rule wears when its event comes (<see cref="Simpiens.Cognition.Inventory.AgentInventory.WearBy"/>).
+    /// Not saved: a value may be renamed, but keep each one's meaning.
+    /// </summary>
     public enum WearRule : byte
     {
         None = 0,
+        /// <summary>A tick in a hazard sector (hazard gear, a respirator, a hard hat; Epic 10 G3).</summary>
         PerHazardTick = 1,
-        PerUse = 2
+        /// <summary>A mineral unit mined (a pickaxe; Epic 10 Part 2, D37).</summary>
+        PerHarvest = 2,
+        /// <summary>A blow landed (a weapon; Q10, the combat rule's D7).</summary>
+        PerHit = 3,
+        /// <summary>A blow taken (armour; D7 leaves it to K1.3 and K3).</summary>
+        PerBlowTaken = 4
     }
 
     public enum ModifierOp : byte
@@ -52,7 +62,7 @@ namespace Simpiens.Simulation.Items
         /// </summary>
         public SlotKind Kind { get; }
 
-        /// <summary>A new item's durability: the units of wear it takes before it breaks (for PerHazardTick, ticks in danger).</summary>
+        /// <summary>A new item's durability: the units of wear it takes before it breaks (for PerHazardTick, ticks in danger; for PerHit, blows landed).</summary>
         public ushort Durability { get; }
 
         public WearRule Wear { get; }

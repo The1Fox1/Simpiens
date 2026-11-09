@@ -44,12 +44,12 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// D53, D54: a bold crawler in sound hazard gear, knowing nothing of the Gallery but what the charted map shows, trades
-        /// its gear in for the stall's respirator (the gear goes back into stock, no gold back) and, shown the seam, works the
-        /// Gallery alone.
+        /// D53, D54, slot by slot (Epic 10 Part 3, K1.3): a bold crawler in sound hazard gear and a hard hat, knowing nothing
+        /// of the Gallery but what the charted map shows, trades its hard hat in for the stall's respirator (the hat goes to
+        /// the shelf of worn pieces, no gold back), keeps its hazard gear on, and, shown the seam, works the Gallery alone.
         /// </summary>
         [Fact]
-        public void ABoldCrawlerTradesItsGearForARespiratorAndWorksTheGalleryAlone()
+        public void ABoldCrawlerTradesItsHardHatForARespiratorKeepsItsGearAndWorksTheGalleryAlone()
         {
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
@@ -57,35 +57,39 @@ namespace Simpiens.Core.Tests
             var bold = sim.Host.CrawlerStates.First(s => !s.IsDrifter && s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent);
             Assert.True(sim.Sectors.IsExplored(Floor1Layout.DrownedGallerySectorId), "The Gallery is charted from the start: its plan is known.");
 
-            // By hand: it wears sound hazard gear, the stall has a respirator, and only this crawler can pay for protection
+            // By hand: it wears sound hazard gear and a hard hat, the stall has a respirator, and only this crawler can pay for protection
             Assert.True(bold.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1500)));
+            Assert.True(bold.Inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, durability: 1500)));
             var sm = (SimulationManager)sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1));
             int gearStock = sm.ActiveStalls[0].StockOf(ItemType.HazardGear);
+            int hatsWorn = sm.ActiveStalls[0].WornOf(ItemType.HardHat);
             foreach (var crawler in sim.Host.CrawlerStates) crawler.Inventory.Gold = crawler == bold ? 80 : 0; // the price and a ration's: after it, it needs to earn
 
             long inGallery = -1;
-            int gearStockAtUpgrade = -1;
+            int hatsWornAtUpgrade = -1;
             var seam = sim.Host.World.GetEntityId(Floor1Layout.GallerySeam);
             var seamAt = map.ResourceNodes.First(n => n.Key == Floor1Layout.GallerySeam).Position;
             for (long t = 0; t < DayClock.TicksPerDay && inGallery < 0; t++)
             {
                 sim.Step(1);
-                bool respirator = WornGear.Protection(bold.Inventory).Type == ItemType.Respirator;
-                if (respirator && gearStockAtUpgrade < 0)
+                bool respirator = bold.Inventory.GetEquipped(EquipmentSlot.Head).Type == ItemType.Respirator;
+                if (respirator && hatsWornAtUpgrade < 0)
                 {
-                    gearStockAtUpgrade = sim.Simulation.ActiveStalls[0].StockOf(ItemType.HazardGear);
+                    hatsWornAtUpgrade = sim.Simulation.ActiveStalls[0].WornOf(ItemType.HardHat);
+                    Assert.Equal(gearStock, sim.Simulation.ActiveStalls[0].StockOf(ItemType.HazardGear)); // the gear stayed on
                     // Shown the seam (by hand: which sector it searches first is luck, F15)
                     ((Simpiens.Cognition.Memory.AgentMemory)bold.Memory).SpatialMemoryMap[seam] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(
                         seam, EntityType.Resource, GridPoint.RoundToInt(seamAt), (uint)sim.Clock.CurrentTick, ItemType.Glowstone);
                 }
                 if (respirator && map.FindSector(bold.Position).Id == Floor1Layout.DrownedGallerySectorId) inGallery = sim.Clock.CurrentTick;
             }
-            TestContext.Current.TestOutputHelper?.WriteLine($"wears {WornGear.Protection(bold.Inventory).Type}; in the Gallery at t{inGallery}; gear bought {bold.Activity.GearPurchases}; hazard ticks {bold.Activity.HazardTicks}");
-            Assert.Equal(ItemType.Respirator, WornGear.Protection(bold.Inventory).Type);
+            TestContext.Current.TestOutputHelper?.WriteLine($"wears {bold.Inventory.GetEquipped(EquipmentSlot.Head).Type} and {bold.Inventory.GetEquipped(EquipmentSlot.Body).Type}; in the Gallery at t{inGallery}; gear bought {bold.Activity.GearPurchases}; hazard ticks {bold.Activity.HazardTicks}");
+            Assert.Equal(ItemType.Respirator, bold.Inventory.GetEquipped(EquipmentSlot.Head).Type);
+            Assert.Equal(ItemType.HazardGear, bold.Inventory.GetEquipped(EquipmentSlot.Body).Type);
             Assert.Equal(1, bold.Activity.GearPurchases);
             Assert.Equal(0, sim.Simulation.ActiveStalls[0].StockOf(ItemType.Respirator));
-            Assert.Equal(gearStock + 1, gearStockAtUpgrade); // its gear traded in (others, earning since, may buy it later)
+            Assert.Equal(hatsWorn + 1, hatsWornAtUpgrade); // its hat traded in, to be mended (D58)
             Assert.True(inGallery >= 0, "Through its respirator it went into the Gallery alone.");
             Assert.False(sim.Simulation.Guild.HasExpedition, "Alone: no party was sent.");
             Assert.Equal(0, sim.Simulation.IntentFaults);

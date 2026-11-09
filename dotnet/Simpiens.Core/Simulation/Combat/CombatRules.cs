@@ -124,16 +124,28 @@ namespace Simpiens.Simulation.Combat
         }
 
         /// <summary>
-        /// Wears the attacker's weapon for a swing that landed (Q10: weapons wear per hit; <see cref="WearRule.PerUse"/>): one
-        /// unit, and none for a miss, a bare hand or a weapon that doesn't wear. Returns true when the weapon broke and is gone.
-        /// Main thread only: it writes the inventory.
+        /// Wears what the attacker wields for a swing that landed (Q10: weapons wear per hit; D7): one unit of every piece it
+        /// wears by <see cref="WearRule.PerHit"/>, whichever slot it is in (Epic 10 Part 3, K1.3), and nothing for a miss, a
+        /// bare hand or a piece that doesn't wear so. Returns true when a piece broke and is gone. Main thread only: it
+        /// writes the inventory.
         /// </summary>
-        public static bool WearOnHit(in SwingOutcome outcome, AgentInventory inventory)
+        public static bool WearOnHit(in SwingOutcome outcome, AgentInventory inventory) =>
+            outcome.Hit && WearAll(inventory, WearRule.PerHit);
+
+        /// <summary>
+        /// Wears what the target wears against blows for a swing that landed on it (D7's armour, K1.3): one unit of every
+        /// piece it wears by <see cref="WearRule.PerBlowTaken"/>; nothing for a miss. Returns true when a piece broke and is
+        /// gone. Main thread only.
+        /// </summary>
+        public static bool WearOnBlowTaken(in SwingOutcome outcome, AgentInventory inventory) =>
+            outcome.Hit && WearAll(inventory, WearRule.PerBlowTaken);
+
+        private static bool WearAll(AgentInventory inventory, WearRule rule)
         {
-            if (!outcome.Hit || inventory == null) return false;
-            var weapon = inventory.GetEquipped(EquipmentSlot.Weapon);
-            if (weapon.IsEmpty || ItemCatalog.Get(weapon.Type)?.Equipment?.Wear != WearRule.PerUse) return false;
-            return inventory.Wear(EquipmentSlot.Weapon);
+            if (inventory == null) return false;
+            System.Span<Simpiens.Simulation.Economy.ItemType> broke = stackalloc Simpiens.Simulation.Economy.ItemType[EquipmentSlots.Capacity];
+            inventory.WearBy(rule, broke, out int brokeCount);
+            return brokeCount > 0;
         }
     }
 }

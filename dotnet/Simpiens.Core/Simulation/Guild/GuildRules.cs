@@ -178,6 +178,19 @@ namespace Simpiens.Simulation.Guild
         public static Check CheckRecall(GuildService guild, byte partySlot) =>
             partySlot >= 1 && partySlot <= guild.Parties.Count && guild.Parties[partySlot - 1].IsOut ? Check.Ok : Check.NoExpedition;
 
+        /// <summary>True when the crawler wears a piece of protection, in any slot, not worn to half its life (D12; every slot since Epic 10 Part 3, K1.3).</summary>
+        public static bool WearsSoundProtection(Simpiens.Cognition.Inventory.IAgentInventory inventory)
+        {
+            if (inventory == null) return false;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var worn = inventory.GetEquipped(slots[i].Id);
+                if (!worn.IsEmpty && ItemCatalog.Is(worn.Type, ItemCategory.Protection) && !WornOut(worn)) return true;
+            }
+            return false;
+        }
+
         /// <summary>An empty slot, or a piece worn to half its life or less: it gets fresh gear (D12).</summary>
         public static bool WornOut(in ItemInstance worn)
         {

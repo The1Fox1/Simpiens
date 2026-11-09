@@ -216,7 +216,7 @@ namespace Simpiens.Testing.Combat
                 CombatRules.WearOnHit(hit, inventory);
                 Assert(inventory.GetEquipped(EquipmentSlot.Tool).Durability == 40 && inventory.GetEquipped(EquipmentSlot.Body).Durability == 100, "A hit wears only the weapon.");
             }
-            TestLog.Log("[PASS] Test 7: a weapon that wears per use loses a unit a landed hit and breaks at 0; misses, bare hands and other gear wear nothing.");
+            TestLog.Log("[PASS] Test 7: a weapon that wears per hit loses a unit a landed hit and breaks at 0; misses, bare hands and other gear wear nothing.");
         }
 
         private void ValidateOneRuleOverTwoKindsOfFighter()
@@ -316,7 +316,7 @@ namespace Simpiens.Testing.Combat
         private static IDisposable TestItems() => ItemCatalog.ExtendForTest(
             // Attack +4, a fifth quicker, a quarter tile longer; three hits from breaking when made with durability 3
             new ItemDefinition(Cudgel, "TestCudgel", "Test Cudgel", ItemCategory.Equipment | ItemCategory.Weapon, ItemRarity.Common,
-                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 3, WearRule.PerUse,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 3, WearRule.PerHit,
                     new StatModifier(StatKind.Attack, ModifierOp.Add, 4f),
                     new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.8f),
                     new StatModifier(StatKind.Reach, ModifierOp.Add, 0.25f))),

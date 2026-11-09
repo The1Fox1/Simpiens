@@ -46,9 +46,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                 }
                 var equipment = Simpiens.Simulation.Items.ItemCatalog.Get(trade.ItemType)?.Equipment;
                 bool gear = equipment != null;
-                // A crawler wears one piece a slot; protection it wears is traded in for another piece (Epic 10 Part 2, D53:
-                // the planner asks only for one that opens salvage it can't reach), never for the same again. Which piece it
-                // takes the place of is the shared rule's (Epic 10 Part 3, K1.1)
+                // A crawler wears one piece a slot. A piece goes in a free slot of its kind; with every slot of its kind
+                // taken, protection there is traded in for another piece (Epic 10 Part 2, D53: the planner asks only for one
+                // that opens salvage it can't reach), never for the same again. Which slot is the shared rule's (Epic 10
+                // Part 3, K1.1; per slot since K1.3, so a hard hat goes on over hazard gear)
                 var replacing = default(Simpiens.Simulation.Items.EquipmentSlot);
                 bool slotted = gear && Simpiens.Simulation.Items.WornGear.TryReplacing(agent.Inventory, trade.ItemType, out replacing);
                 var wornNow = slotted ? agent.Inventory.GetEquipped(replacing) : ItemInstance.Empty;
@@ -56,7 +57,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     && Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Protection);
                 if (gear && (trade.Quantity != 1 || !slotted || (!wornNow.IsEmpty && !tradeIn)))
                 {
-                    return Reject(node, trade, "a crawler wears one piece of gear at a time");
+                    return Reject(node, trade, "a crawler wears one piece a slot");
                 }
 
                 if (stall.SellStockOf(trade.ItemType) < trade.Quantity)
@@ -86,7 +87,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     if (!agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)), out wornIn))
                     {
                         if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
-                        return Reject(node, trade, "a crawler wears one piece of gear at a time");
+                        return Reject(node, trade, "a crawler wears one piece a slot");
                     }
                 }
                 else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))

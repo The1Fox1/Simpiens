@@ -257,19 +257,23 @@ namespace Simpiens.Cognition.Planning.Handlers
             /// <summary>How much faster <paramref name="harvester"/> mines <paramref name="item"/> with what it wears (<see cref="CrawlerStats.MiningSpeed"/>).</summary>
         public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) => CrawlerStats.MiningSpeed(harvester?.Inventory, item);
 
-        /// <summary>A mineral unit mined wears the tool that is used by the unit (D37); a tool worn to its end breaks and is gone, told in the chronicle.</summary>
+        /// <summary>
+        /// A mineral unit mined wears every piece worn that wears by the unit (D37; by its rule, whichever slot it is in, Epic
+        /// 10 Part 3, K1.3): a pickaxe. A piece worn to its end breaks and is gone, told in the chronicle.
+        /// </summary>
         private static void WearTool(Simpiens.Cognition.AgentState harvester, WorldEntity node, IIntentExecutionContext context)
         {
             var inventory = harvester.Inventory;
             if (inventory == null) return;
-            var tool = inventory.GetEquipped(EquipmentSlot.Tool);
-            if (tool.IsEmpty || ItemCatalog.Get(tool.Type)?.Equipment?.Wear != WearRule.PerUse) return;
-            harvester.Activity.ToolMinedUnits++;
-            if (!inventory.Wear(EquipmentSlot.Tool)) return;
-            harvester.Activity.ToolsWornOut++;
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(harvester.AgentId)}'s {ItemCatalog.NameOf(tool.Type)} broke at {node.Position}");
-            context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ToolWornOut, harvester.AgentId, default,
-                context.GetSectorForPosition(node.Position), (uint)context.CurrentTick, ChronicleIntensity.Notable, (byte)tool.Type));
+            System.Span<ItemType> broke = stackalloc ItemType[EquipmentSlots.Capacity];
+            if (inventory.WearBy(WearRule.PerHarvest, broke, out int brokeCount) > 0) harvester.Activity.ToolMinedUnits++;
+            for (int b = 0; b < brokeCount && b < broke.Length; b++)
+            {
+                harvester.Activity.ToolsWornOut++;
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(harvester.AgentId)}'s {ItemCatalog.NameOf(broke[b])} broke at {node.Position}");
+                context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ToolWornOut, harvester.AgentId, default,
+                    context.GetSectorForPosition(node.Position), (uint)context.CurrentTick, ChronicleIntensity.Notable, (byte)broke[b]));
+            }
         }
     }
 }

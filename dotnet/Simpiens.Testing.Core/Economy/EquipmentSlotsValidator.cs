@@ -10,9 +10,11 @@ namespace Simpiens.Testing.Economy
     /// The equipment slots as a table (Epic 10 Part 3, K1.1; seam A3; the producer's Q11): every row is consistent; the
     /// first rows are Q11's reading (head and body in protection's place, the weapon and the tool kept); an item fits a
     /// kind, and a kind with two slots fills the first free one; a new slot needs no code beyond its row; the shared rule of
-    /// what a piece takes the place of keeps one protective piece until K1.3; and reading allocates nothing. The save
-    /// (K1.2): every one of the 16 records goes into a save and comes back, a slot added later loads an older save with
-    /// nothing in it, and a save with a piece worn where this game can't wear it is refused. Runs as a test (ValidatorTests).
+    /// what a piece takes the place of goes slot by slot (K1.3); and reading allocates nothing. The save (K1.2): every one
+    /// of the 16 records goes into a save and comes back, a slot added later loads an older save with nothing in it, and a
+    /// save with a piece worn where this game can't wear it is refused. Stats and wear (K1.3): every stat stacks over every
+    /// worn piece within its bounds, and every piece wears by its own rule, whichever slot it is in. Runs as a test
+    /// (ValidatorTests).
     /// </summary>
     public class EquipmentSlotsValidator
     {
@@ -20,6 +22,10 @@ namespace Simpiens.Testing.Economy
         private const EquipmentSlot LeftHand = (EquipmentSlot)14;
         private const EquipmentSlot RightHand = (EquipmentSlot)15;
         private const ItemType TestRing = (ItemType)212;
+        private const ItemType LeadRing = (ItemType)213;
+        private const ItemType WardRing = (ItemType)214;
+        private const ItemType TestBlade = (ItemType)215;
+        private const ItemType TestMail = (ItemType)216;
 
         public void RunAllValidationTests()
         {
@@ -29,13 +35,15 @@ namespace Simpiens.Testing.Economy
             ValidateTheFirstRowsAreQ11s();
             ValidateAnItemFitsAKind();
             ValidateASlotIsARow();
-            ValidateOneProtectivePieceUntilK13();
+            ValidateAPieceTakesThePlaceOnlyOfItsSlots();
             ValidateReadingAllocatesNothing();
             ValidateTheSaveKeepsEveryRecord();
             ValidateANewSlotLoadsAnOlderSaveEmpty();
             ValidateAPieceWornWhereThisGameCantIsRefused();
+            ValidateStatsStackWithinTheirBounds();
+            ValidateEachPieceWearsByItsOwnRule();
 
-            TestLog.Log("<color=green>[EquipmentSlotsValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[EquipmentSlotsValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTableIsConsistent()
@@ -156,21 +164,27 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("[PASS] Test 4: a new slot is a row: its pieces are worn, summed into stats and snapshotted with no code of its own; a duplicate id and one past the room are refused.");
         }
 
-        private void ValidateOneProtectivePieceUntilK13()
+        private void ValidateAPieceTakesThePlaceOnlyOfItsSlots()
         {
             var inventory = new AgentInventory(4, startingGold: 0);
             Assert(WornGear.TryReplacing(inventory, ItemType.Respirator, out var slot) && slot == EquipmentSlot.Head && WornGear.Replaced(inventory, ItemType.Respirator).IsEmpty,
                 "Nothing worn: a respirator would go on the empty head, in nobody's place.");
             inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1500));
-            Assert(WornGear.TryReplacing(inventory, ItemType.Respirator, out slot) && slot == EquipmentSlot.Body && WornGear.Replaced(inventory, ItemType.Respirator).Type == ItemType.HazardGear,
-                "Hazard gear worn: a respirator takes its place (one protective piece, as G3's single slot, until K1.3).");
-            Assert(WornGear.Protection(inventory).Type == ItemType.HazardGear, "The protection worn is the hazard gear.");
+            Assert(WornGear.TryReplacing(inventory, ItemType.Respirator, out slot) && slot == EquipmentSlot.Head && WornGear.Replaced(inventory, ItemType.Respirator).IsEmpty,
+                "Hazard gear worn: a respirator still goes on the empty head, in nobody's place (K1.3).");
+            Assert(inventory.TryEquip(new ItemInstance(2, ItemType.HardHat, 1, 60, durability: 1500), out var wornIn) && wornIn == EquipmentSlot.Head,
+                "A hard hat goes on over the hazard gear.");
+            Assert(inventory.IsWearing(ItemType.HardHat) && inventory.IsWearing(ItemType.HazardGear), "Both are worn together.");
+            Assert(WornGear.Protection(inventory).Type == ItemType.HardHat, "The first protection worn, in id order, is the head's.");
+            Assert(WornGear.TryReplacing(inventory, ItemType.Respirator, out slot) && slot == EquipmentSlot.Head && WornGear.Replaced(inventory, ItemType.Respirator).ItemId == 2,
+                "A respirator would take the hard hat's place, the piece in its own slot, and leave the hazard gear.");
+            Assert(WornGear.Replaced(inventory, ItemType.HazardGear).ItemId == 1, "More hazard gear would take the hazard gear's place.");
             Assert(WornGear.TryReplacing(inventory, ItemType.ToolPickaxe, out slot) && slot == EquipmentSlot.Tool && WornGear.Replaced(inventory, ItemType.ToolPickaxe).IsEmpty,
                 "A pickaxe goes in the free tool slot, in nobody's place.");
-            inventory.TryEquip(new ItemInstance(2, ItemType.ToolPickaxe, 1, 30, durability: 40));
-            Assert(WornGear.Replaced(inventory, ItemType.ToolPickaxe).ItemId == 2, "With one worn, another pickaxe would take its place.");
+            inventory.TryEquip(new ItemInstance(3, ItemType.ToolPickaxe, 1, 30, durability: 40));
+            Assert(WornGear.Replaced(inventory, ItemType.ToolPickaxe).ItemId == 3, "With one worn, another pickaxe would take its place.");
             Assert(!WornGear.TryReplacing(inventory, ItemType.Ration, out _) && WornGear.Replaced(inventory, ItemType.Ration).IsEmpty, "A ration is worn nowhere.");
-            TestLog.Log("[PASS] Test 5: the shared rule: a piece goes in a free slot of its kind, or takes the place of the piece in it; protection takes the place of the protection worn until K1.3.");
+            TestLog.Log("[PASS] Test 5: the shared rule: a piece goes in a free slot of its kind, or takes the place of the piece in it, and only that piece: a hard hat and hazard gear are worn together.");
         }
 
         private void ValidateReadingAllocatesNothing()
@@ -272,6 +286,81 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("[PASS] Test 9: a save with a piece in a slot this game doesn't have, or in a slot of another kind, is refused before anything loads.");
         }
 
+        private void ValidateStatsStackWithinTheirBounds()
+        {
+            // A hard hat and hazard gear together: the gear's 0.5 against any hazard, the hat's 0.75 against falling rock
+            var inventory = new AgentInventory(4, startingGold: 0);
+            inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1500));
+            inventory.TryEquip(new ItemInstance(2, ItemType.HardHat, 1, 60, durability: 1500));
+            var rock = Simpiens.Simulation.World.HazardKind.FallingRock;
+            var air = Simpiens.Simulation.World.HazardKind.FoulAir;
+            Assert(CrawlerStats.Get(inventory, StatKind.HazardResistance) == 0.5f && CrawlerStats.KindResistance(inventory, rock) == 0.75f, "Each piece's stat, read on its own.");
+            Assert(CrawlerStats.HazardResistance(inventory, rock) == StatRules.MaxResistance, $"Against falling rock they add up, held at the most protection stops ({CrawlerStats.HazardResistance(inventory, rock)}).");
+            Assert(CrawlerStats.HazardResistance(inventory, air) == 0.5f, "Against foul air only the gear counts: the hat isn't made against it.");
+
+            // A Masterwork respirator reaches the bound alone (0.75, a fifth more at two grades up: 0.9)
+            var masterwork = new AgentInventory(4, startingGold: 0);
+            masterwork.TryEquip(new ItemInstance(3, ItemType.Respirator, 1, 60, quality: Grades.Masterwork, durability: 1500));
+            Assert(Math.Abs(CrawlerStats.Get(masterwork, StatKind.AirResistance) - 0.9f) < 1e-5f, "A Masterwork respirator stops nine tenths of the air hazards.");
+
+            using (TestSlots())
+            using (TestItems())
+            {
+                // Two wards of 0.5 on the hands and hazard gear's 0.5: 1.5 summed, held at 0.9
+                var warded = new AgentInventory(4, startingGold: 0);
+                warded.TryEquip(new ItemInstance(4, WardRing, 1, 5));
+                warded.TryEquip(new ItemInstance(5, WardRing, 1, 5));
+                warded.TryEquip(new ItemInstance(6, ItemType.HazardGear, 1, 40, durability: 1500));
+                Assert(CrawlerStats.Get(warded, StatKind.HazardResistance) == StatRules.MaxResistance, "Resistance from three slots is held at its bound.");
+
+                // Two lead rings: mining x0.01 twice, held at a tenth; defense -5 twice, held at none
+                var leaden = new AgentInventory(4, startingGold: 0);
+                leaden.TryEquip(new ItemInstance(7, LeadRing, 1, 5));
+                leaden.TryEquip(new ItemInstance(8, LeadRing, 1, 5));
+                Assert(CrawlerStats.Get(leaden, StatKind.HarvestSpeed, 1f) == 0.1f && CrawlerStats.MiningSpeed(leaden, ItemType.IronOre) == 0.1f, "Harvest speed multiplied down is held at a tenth: work never stops.");
+                Assert(CrawlerStats.Get(leaden, StatKind.Defense) == 0f && CrawlerStats.Get(leaden, StatKind.Attack, 2f) == 2f, "Defense taken below none is held at none; attack, untouched, is its base.");
+            }
+            Assert(StatRules.Of(StatKind.Hunger).Min == float.MinValue && StatRules.Of(StatKind.Hunger).Max == float.MaxValue, "A stat with no row is unbounded.");
+            TestLog.Log("[PASS] Test 10: every stat stacks over every worn piece, base plus adds times multiplies, then within its bounds: a hard hat over hazard gear stops 0.9 of falling rock, and nothing takes a stat past its bounds.");
+        }
+
+        private void ValidateEachPieceWearsByItsOwnRule()
+        {
+            System.Span<ItemType> broke = stackalloc ItemType[EquipmentSlots.Capacity];
+            var inventory = new AgentInventory(4, startingGold: 0);
+            inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1500));
+            inventory.TryEquip(new ItemInstance(2, ItemType.HardHat, 1, 60, durability: 2));
+            inventory.TryEquip(new ItemInstance(3, ItemType.ToolPickaxe, 1, 30, durability: 40));
+
+            Assert(inventory.WearBy(WearRule.PerHazardTick, broke, out int brokeCount) == 2 && brokeCount == 0, "A tick in danger wears both the hat and the gear.");
+            Assert(inventory.GetEquipped(EquipmentSlot.Head).Durability == 1 && inventory.GetEquipped(EquipmentSlot.Body).Durability == 1499 && inventory.GetEquipped(EquipmentSlot.Tool).Durability == 40,
+                "Each by a unit; the pickaxe, which wears by the harvest, is untouched.");
+            Assert(inventory.WearBy(WearRule.PerHarvest, broke, out brokeCount) == 1 && inventory.GetEquipped(EquipmentSlot.Tool).Durability == 39 && inventory.GetEquipped(EquipmentSlot.Body).Durability == 1499,
+                "A mineral unit mined wears the pickaxe alone.");
+            Assert(inventory.WearBy(WearRule.PerHazardTick, broke, out brokeCount) == 2 && brokeCount == 1 && broke[0] == ItemType.HardHat && inventory.GetEquipped(EquipmentSlot.Head).IsEmpty,
+                "The hat's last unit breaks it, and it's named among the broken.");
+            Assert(inventory.WearBy(WearRule.PerHit, broke, out brokeCount) == 0 && inventory.WearBy(WearRule.None, broke, out _) == 0, "Nothing worn wears by a hit, and nothing wears by no rule.");
+
+            using (TestSlots())
+            using (TestItems())
+            {
+                // A blade wears per blow landed, mail per blow taken (D7); a ring wearing by exposure on a new slot wears too
+                var fighter = new AgentInventory(4, startingGold: 0);
+                fighter.TryEquip(new ItemInstance(4, TestBlade, 1, 10, durability: 2));
+                fighter.TryEquip(new ItemInstance(5, TestMail, 1, 10, durability: 1));
+                fighter.TryEquip(new ItemInstance(6, WardRing, 1, 5, durability: 9));
+                var hit = new Simpiens.Simulation.Combat.SwingOutcome(true, 0.7f, 3f);
+                var miss = new Simpiens.Simulation.Combat.SwingOutcome(false, 0.7f, 0f);
+                Assert(!Simpiens.Simulation.Combat.CombatRules.WearOnHit(miss, fighter) && !Simpiens.Simulation.Combat.CombatRules.WearOnBlowTaken(miss, fighter), "A miss wears nothing, on either side.");
+                Assert(!Simpiens.Simulation.Combat.CombatRules.WearOnHit(hit, fighter) && fighter.GetEquipped(EquipmentSlot.Weapon).Durability == 1 && fighter.GetEquipped(EquipmentSlot.Body).Durability == 1,
+                    "A blow landed wears the blade, not the mail.");
+                Assert(Simpiens.Simulation.Combat.CombatRules.WearOnBlowTaken(hit, fighter) && fighter.GetEquipped(EquipmentSlot.Body).IsEmpty && fighter.GetEquipped(EquipmentSlot.Weapon).Durability == 1,
+                    "A blow taken wears the mail, its last unit breaking it; the blade is untouched.");
+                Assert(fighter.WearBy(WearRule.PerHazardTick, broke, out _) == 1 && fighter.GetEquipped(LeftHand).Durability == 8, "A piece in a new slot wears by its rule, with no code of its own.");
+            }
+            TestLog.Log("[PASS] Test 11: every piece wears by its own rule, whichever slot it is in: exposure wears a hat and gear together, the harvest the pickaxe, a blow landed the blade and a blow taken the mail.");
+        }
+
         private static AgentInventory RoundTrip(AgentInventory inventory)
         {
             var save = new Simpiens.Simulation.Persistence.InventorySave();
@@ -295,7 +384,21 @@ namespace Simpiens.Testing.Economy
         private static IDisposable TestItems() => ItemCatalog.ExtendForTest(
             new ItemDefinition(TestRing, "TestRing", "Test Ring", ItemCategory.Equipment, ItemRarity.Common,
                 equipment: new EquipmentBlock(Ring, durability: 100, WearRule.None,
-                    new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.05f))));
+                    new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.05f))),
+            // Takes mining and defense down, to show the bounds hold
+            new ItemDefinition(LeadRing, "LeadRing", "Lead Ring", ItemCategory.Equipment, ItemRarity.Common,
+                equipment: new EquipmentBlock(Ring, durability: 100, WearRule.None,
+                    new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 0.01f),
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, -5f))),
+            new ItemDefinition(WardRing, "WardRing", "Ward Ring", ItemCategory.Equipment, ItemRarity.Common,
+                equipment: new EquipmentBlock(Ring, durability: 100, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
+            new ItemDefinition(TestBlade, "TestBlade", "Test Blade", ItemCategory.Equipment, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 2, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 3f))),
+            new ItemDefinition(TestMail, "TestMail", "Test Mail", ItemCategory.Equipment, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 1, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 4f))));
 
         private static void Assert(bool condition, string message)
         {
