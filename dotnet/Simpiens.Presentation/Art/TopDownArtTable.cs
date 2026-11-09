@@ -59,6 +59,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
+            // The creatures (Epic 10 Part 3, K2.5): a crawler's canvas at a crawler's size, so their pixels match
+            foreach (var (key, framesPerSecond) in Creatures) art.Add(ArtKeys.Creature(key), Sheet, CreatureSprites.Names(key), CrawlerSize, CrawlerSize, Art, framesPerSecond: framesPerSecond);
             foreach (var key in WornSprites.Keys)
                 foreach (var (state, sprites) in Crawlers)
                     art.Add(ArtKeys.CrawlerWearing(state, key), Sheet, new[] { WornSprites.Name(sprites[0], key), WornSprites.Name(sprites[1], key) }, CrawlerSize, CrawlerSize, Art);
@@ -80,6 +82,17 @@ namespace Simpiens.Presentation.Art
             (ArtKeys.Node("iron-ore"), "Resource_OreVein"),
             (ArtKeys.Node("medicinal-herb"), "Resource_HerbPatch"),
             (ArtKeys.Node("glowstone"), "Resource_Glowstone"),
+        };
+
+        /// <summary>
+        /// Each creature kind's row, by its art key (Epic 10 Part 3, K2.5): how fast its frames run while it moves (a rat
+        /// scuttles, a beetle plods); still, it holds its first. Shared with isometric.
+        /// </summary>
+        public static IReadOnlyList<(string Key, float FramesPerSecond)> Creatures { get; } = new[]
+        {
+            ("burrow-rat", 8f),
+            ("stone-beetle", 4f),
+            ("cave-spinner", 6f),
         };
 
         /// <summary>Each crawler state's two frames (<see cref="CrawlerFrames"/>). Shared with isometric.</summary>

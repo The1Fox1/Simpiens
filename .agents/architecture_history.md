@@ -1611,3 +1611,18 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The client reads the table** (K1.5): `WornPieces` is a row per slot in display order, laid out by the client's `WornLine` (one gear line; no paper-doll grid, since the dossier has no height at 720 rows). `WornLook` carries each slot's showing piece in the frames; bodies and portraits bake from it up the draw layers. **Deviation, hazard gear's art:** K1.1 put it on the body, but its art was a helmet that couldn't show with a hard hat. It is now a suit: `Worn.Torso` and a new vest glyph. The art pins and 17 renders were re-recorded in their own commits after a look.
 - **The proof** (K1.6): feet and boots added through `TestCatalogs` are worn, summed, worn out, bought by a bold resident on its own, given by the guild, saved and shown in the dossier, with no code of their own. `SlotNamesTests` keeps slot names to the table and the catalogue.
 
+
+## 2026-11-08: Epic 10 Part 3, K2.1–K2.2, lairs and the creature's rule
+- **The go:** "K1 looks good", with the go for K2. K2.2 and K2.3 are supervised: K2.2's rule waits for the developer's review before K2.3. Commits `ac83fbe` (K2.1) and `94a6b37` (K2.2) on `feat/epic10-part3`, unpushed.
+- **Creatures have ids of their own** (K2.1): drawn from a seeded sequence (`SimRandomSalt.CreatureId`), not `EntityIdAllocator`, so creatures coming and going never shift which crawler or drifter comes next. The sequence's counter is what a save needs (K2.4).
+- **The creatures' phase** (K2.2, seam A4): after the crawlers' runtime, in id order; every creature decides and moves, then every swing is decided from where all stand, then all the harm lands (D6). Paths through a `GridAStarSearcher` of the creatures' own, on the main thread. The decisions are the epic's D9–D15.
+- **Hunting is off in the live session until K2.3 (D14):** creatures rest and roam, and notice nobody until crawlers can flee and keep away from known lairs. The rule's tests switch it on.
+- **Deviation:** the plan expected golden and renders to move at K2.1. Neither did: the creatures' own ids, perception skipping them (until K2.3) and the frames skipping them (until K2.5) held K2.1 to structure, and hunting off holds K2.2's.
+
+## 2026-11-09: Epic 10 Part 3, the creatures drawn ahead of K2.3 (K2.5a)
+- **The ask:** "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now". K2.2's review is not yet given, so K2.3 still waits for it; drawing comes first.
+- **Deviation from the plan's order:** K2.5 was to follow K2.3 and K2.4. Its drawing is split out as K2.5a and done now. Each remaining piece goes with the step that makes it visible: the strike pose with K2.3 (hunting goes live), the red coat on creatures with K3 (nothing hurts one before), and the inspector later in K2.5.
+- **Side view, mirrored by the view:** each kind is drawn from the side, facing right, in two frames. Which way a creature faces is the view's own (`CreatureAppearance`): the projection says which way is left on screen, so the frames carry no facing and the core holds no presentation state. A creature that stops keeps facing the way it last went.
+- **A crawler's canvas and scale:** 16 pixels, feet on row 14, a crawler's size in top-down and standing on its feet in isometric, so creatures' pixels match crawlers' in both modes.
+- **Not pickable yet:** a click on a creature selects nothing until the inspector shows one.
+- **Nothing moved:** no existing render (both lairs open uncharted), no golden hash (no core change). Two new renders show the warren (isometric) and the hollow (top-down), the lairs charted by hand.

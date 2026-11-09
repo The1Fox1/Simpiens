@@ -64,6 +64,13 @@ namespace Simpiens.Presentation
         public CrawlerLook Look;
         /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
         public CrawlerStanding Standing;
+        /// <summary>A creature's kind (Epic 10 Part 3, K2.5); None for crawlers and props.</summary>
+        public Simpiens.Simulation.Creatures.CreatureKind Creature;
+        /// <summary>What a creature is doing: resting at its place, roaming, chasing, fleeing, going home.</summary>
+        public Simpiens.Simulation.Creatures.CreatureMode CreatureMode;
+
+        /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
+        public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
     }
 
     /// <summary>
@@ -85,7 +92,7 @@ namespace Simpiens.Presentation
 
     /// <summary>
     /// The world as the view draws it, at the end of one tick (Epic CLIENT, review A3): every entity in the world, in
-    /// registration order, and which sectors are charted. The views read frames, never the live simulation; a network
+    /// registration order (the creatures among them since Epic 10 Part 3, K2.5), and which sectors are charted. The views read frames, never the live simulation; a network
     /// client would fill the same structure from replicated state. Its buffers grow once and are reused.
     /// </summary>
     public sealed class WorldViewFrame
@@ -173,8 +180,9 @@ namespace Simpiens.Presentation
             for (int i = 0; i < entities.Count; i++)
             {
                 var entity = entities[i];
-                if (entity == null || entity.Type == EntityType.Creature) continue; // creatures are drawn from K2.5 (Epic 10 Part 3)
+                if (entity == null) continue;
                 var agent = entity.Agent;
+                var creature = entity.Creature; // a creature (Epic 10 Part 3, K2.5)
                 _entities[Count] = new EntityView
                 {
                     Id = entity.Id,
@@ -189,6 +197,8 @@ namespace Simpiens.Presentation
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                     Look = agent != null ? agent.Look : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
+                    Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
+                    CreatureMode = creature != null ? creature.Mode : default,
                 };
                 _index[entity.Id] = Count;
                 Count++;

@@ -213,12 +213,17 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - nobody yet fights back, and nobody dies: until K5 a downed crawler limps out, as today.
 - [ ] **K2.4 Saves:** [Possibly Complex: a save block] creatures and lairs in the world's block, with the round-trip validators.
 - [ ] **K2.5 The client:** [Possibly Complex: new art and renders to look at]
-  - `CreatureSprites` (generated placeholders);
-  - art rows per view mode, and `EntityVisuals`;
-  - a strike pose;
-  - the red coat on creatures too;
-  - the fog hides them;
-  - the inspector shows a creature.
+  - [x] **K2.5a The creatures drawn, ahead of K2.3** (the producer, 2026-11-09: "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now"): [Possibly Complex: new art, the frames and the scene, renders to look at]
+    - `CreatureSprites` (generated placeholders): each kind from the side, facing right, two frames of a scuttle, on a crawler's 16-pixel canvas with its feet on row 14; in the world sheet before the body slots.
+    - Art rows per view mode, `creature/<kind's art key>` (`TopDownArtTable.Creatures`: each kind's frame rate, shared with isometric; a crawler's size in top-down, standing on its feet in isometric), and `EntityVisuals.Creature(kind)` (the missing art for a kind with no row).
+    - The frames carry creatures (`EntityView.Creature`, `CreatureMode`, `IsCreature`): the frame skip of K2.1 is gone.
+    - The scene draws each among the crawlers by depth, on the shadow in isometric: scuttling while it moved over the last tick, its first frame while it stands, mirrored when it last went left on screen (`CreatureAppearance`, the view's own: which way is left is the projection's). The fog hides them.
+    - Tests: `CreatureViewTests` (the frames carry every creature as its kind; the fog hides them, and charted each is drawn as its kind where it stands, in both modes; a rat scuttles while it roams and stands still resting; facing by the projection, by hand; renders `render-iso-warren-t300` and `render-floor1-hollow-t300`, the lairs charted by hand); `ArtCompletenessTests` (every kind has its own art in both modes, every row is used); the sheet's order.
+    - **Done 2026-11-09:** no existing render moved (both lairs open uncharted); golden untouched (no core change).
+  - Still K2.5's, each with the step that makes it visible:
+    - a strike pose, with K2.3 (hunting goes live there);
+    - the red coat on creatures too, with K3 (nothing hurts a creature before);
+    - the inspector shows a creature (a creature is not pickable yet).
 - **DoD `VerminDriveTheLoneAway`:** on the 23 gate seeds' day:
   - a crawler who strays into a lair's reach is hurt and flees;
   - nobody enters a known lair alone;

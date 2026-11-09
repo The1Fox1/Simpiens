@@ -82,6 +82,11 @@ namespace Simpiens.Presentation.Art
 
         public static string Node(string itemArtKey) => NodePrefix + itemArtKey;
 
+        public const string CreaturePrefix = "creature/";
+
+        /// <summary>A creature of a kind (Epic 10 Part 3, K2.5), by its kind's art key: <c>creature/burrow-rat</c> (setup only: builds a string).</summary>
+        public static string Creature(string creatureArtKey) => CreaturePrefix + creatureArtKey;
+
         public const string ItemPrefix = "item/";
 
         /// <summary>An item's picture: <c>item/iron-ore/icon</c>, <c>item/iron-ore/map</c>, <c>item/iron-ore/carried</c>.</summary>

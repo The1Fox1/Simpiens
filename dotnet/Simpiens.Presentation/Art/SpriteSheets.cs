@@ -15,12 +15,14 @@ namespace Simpiens.Presentation.Art
         /// <summary>
         /// The world's art, for both view modes (graphics V3.2): the generated 16x16 sprites, then the isometric
         /// placeholders, then the missing art (V3.3), then the items' map sprites and carried markers (V3.6), then
-        /// crawlers wearing gear (V5), then the region the client bakes bodies into (UI-Beta B2), so either mode's world
+        /// crawlers wearing gear (V5), then the hazards' animations and the caravan (Epic 10 Part 2), then the creatures (Epic 10
+        /// Part 3, K2.5), then the region the client bakes bodies into (UI-Beta B2), so either mode's world
         /// (walls, props, crawlers interleaved) is one batch. One sheet since the sampling rules made the picture
         /// independent of the atlas's layout (epic F12).
         /// </summary>
         public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite)
-            .Concat(ItemSprites.World).Concat(WornSprites.All).Concat(HazardSprites.All).Concat(CaravanSprites.All).Concat(People.BodySlots.All));
+            .Concat(ItemSprites.World).Concat(WornSprites.All).Concat(HazardSprites.All).Concat(CaravanSprites.All).Concat(CreatureSprites.All)
+            .Concat(People.BodySlots.All));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });

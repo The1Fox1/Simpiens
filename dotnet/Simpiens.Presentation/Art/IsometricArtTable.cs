@@ -52,6 +52,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);
+            foreach (var (key, framesPerSecond) in TopDownArtTable.Creatures)
+                art.Add(ArtKeys.Creature(key), Sheet, CreatureSprites.Names(key), Standing, Standing, pivotY: FeetPivot, framesPerSecond: framesPerSecond); // on their feet (K2.5)
             foreach (var key in WornSprites.Keys)
                 foreach (var (state, sprites) in TopDownArtTable.Crawlers)
                     art.Add(ArtKeys.CrawlerWearing(state, key), Sheet, new[] { WornSprites.Name(sprites[0], key), WornSprites.Name(sprites[1], key) }, Standing, Standing, pivotY: FeetPivot);

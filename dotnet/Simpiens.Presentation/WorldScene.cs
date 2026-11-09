@@ -24,9 +24,9 @@ namespace Simpiens.Presentation
 
     /// <summary>
     /// What the view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and room names,
-    /// the props (resource nodes, the hearth, bunks, the stall with its goods) and the crawlers with their animation,
-    /// their worn gear and what they carry (graphics V5). What stands in an uncharted sector is hidden by its fog and
-    /// fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's frames (<see cref="WorldViewFrames"/>,
+    /// the props (resource nodes, the hearth, bunks, the stall with its goods), the crawlers with their animation,
+    /// their worn gear and what they carry (graphics V5), and the creatures (Epic 10 Part 3, K2.5). What stands in an
+    /// uncharted sector is hidden by its fog and fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's frames (<see cref="WorldViewFrames"/>,
     /// review A3), never the live simulation. The map's tiles are built once per map. What each thing looks like
     /// (sprite, size, pivot, frames) comes from the view mode's art catalogue (<see cref="Catalog"/>, graphics V2), and
     /// which art a thing has, from its visuals (<see cref="EntityVisuals"/>); where it goes and in what order, from the
@@ -105,6 +105,9 @@ namespace Simpiens.Presentation
         /// <summary>Each crawler's displayed state across frames.</summary>
         public CrawlerAppearance Appearance { get; } = new CrawlerAppearance();
 
+        /// <summary>Each creature's facing and stride across frames (Epic 10 Part 3, K2.5).</summary>
+        public CreatureAppearance Creatures { get; } = new CreatureAppearance();
+
         /// <summary>The fog over uncharted sectors, and its fades.</summary>
         public FogOfWar Fog { get; } = new FogOfWar();
 
@@ -123,6 +126,7 @@ namespace Simpiens.Presentation
             {
                 Fog.Load(map, frame);
                 Appearance.Reset();
+                Creatures.Reset();
                 _epoch = epoch;
             }
             Fog.Update(frame, viewSeconds);
@@ -137,6 +141,7 @@ namespace Simpiens.Presentation
                 crawlers++;
             }
             Appearance.ForgetAbsent(frame.Tick, crawlers);
+            Creatures.Advance(frames, Projection);
         }
 
         /// <summary>
@@ -169,6 +174,7 @@ namespace Simpiens.Presentation
                 {
                     ref readonly var entity = ref frame[i];
                     if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
+                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds);
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
@@ -232,6 +238,24 @@ namespace Simpiens.Presentation
             ref var bundle = ref Add(DrawRole.Crawler, depth, carried, position + _catalog.CarryOffset, Shown(White, shown));
             bundle.Z = _catalog.CarryHeight;
             bundle.Pick = pick;
+        }
+
+        /// <summary>
+        /// A creature (Epic 10 Part 3, K2.5), as its kind, where it is drawn between ticks, standing among the crawlers by
+        /// depth on the shadow they stand on: scuttling through its frames while it moves, its first frame while it stands,
+        /// mirrored when it last went left on screen (<see cref="CreatureAppearance"/>). The fog hides it in an uncharted
+        /// sector, as it hides a crawler (D1 = C). Not pickable yet: the inspector shows a creature later.
+        /// </summary>
+        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds)
+        {
+            var art = Visuals.Creature(entity.Creature);
+            if (art.IsNone) return;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var tint = Shown(White, shown);
+            if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, tint);
+            ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), position, tint);
+            item.FlipX = Creatures.FacesLeft(entity.Id);
         }
 
         /// <summary>
