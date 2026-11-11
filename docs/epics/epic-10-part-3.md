@@ -216,6 +216,11 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **Priority 90,** above every goal but a drifter's leaving: a life is on a clock.
   - **Both remember:** aid given and received, the rescued warming to its rescuer and trusting it; the chronicle tells it (`CrawlerRescued`).
   - **Why earshot and not sight:** a crawler down in a hazard is usually alone, and sight is 6 units. Earshot lets a friend working nearby come. The 15 is unmeasured; the DoDs' measurement will say whether it is right.
+- **D31, the living remember** (Q4):
+  - **Grief:** each crawler whose warmth toward the dead is 30 or more (the friend line) remembers a grief and its frustration rises by 25. The portrait's frustrated face shows it; a grieving face of its own is deferred (§5).
+  - **Under orders:** if the dead was a guild member on an expedition, every other member's trust toward the patron falls by 15 (and warmth by 5).
+  - **The chronicle** tells the death (downed by a creature's kind, or by a sector's danger), the rescue (carried out, or a draught given) and the newcomer. A death's extra packs the cause and its kind.
+- **D32, a newcomer** (Q4): 2 game days after a resident's death (not a drifter's), a resident settles at a spawn point clear of crawlers. It comes with a new look and name, a seeded personality, the session's starting purse (a faucet, `NewcomerPurses`) and a resident's arrival hunger. The ones still due are saved in the population block, inside format 11.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
@@ -388,6 +393,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 | Procedural bosses (the game design's Phase 4) | After Epic 10 |
 | Art beyond the generated placeholders | The producer's art direction (Epic CLIENT M7) |
 | Tavern rumours written by a language model | Epic 11, in Milestone 5 (Q1's reading) |
+| A grieving face of its own in the portrait (D31: grief shows as the frustrated face) | Epic 10 Part 3, K5.8 or later |
 
 ## 6. Risks
 

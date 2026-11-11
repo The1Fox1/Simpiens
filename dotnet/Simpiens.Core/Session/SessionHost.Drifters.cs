@@ -31,6 +31,20 @@ namespace Simpiens.Core.Session
         private int _driftersArrived;
         private readonly List<DepartedCrawler> _departed = new List<DepartedCrawler>(16);
 
+        // Newcomers (Epic 10 Part 3, K5.6, Q4): a resident's death brings one, 2 game days on; when each is due, and how many came
+        private readonly List<uint> _newcomersDue = new List<uint>(4);
+        private int _newcomersArrived;
+
+        /// <summary>How long after a resident's death a newcomer settles (Q4: 2 game days).</summary>
+        public const int NewcomerAfterHours = 48;
+
+        /// <summary>A newcomer's hunger as it arrives (the outpost's residents start at 20).</summary>
+        public const float NewcomerArrivalHunger = 20f;
+
+        /// <summary>Newcomers who have settled since the session started, and the ticks the next are due.</summary>
+        public int NewcomersArrived => _newcomersArrived;
+        public IReadOnlyList<uint> NewcomersDue => _newcomersDue;
+
         /// <summary>A crawler walked out by the Road Gate, or died (Epic 10 Part 3, K5.4a), and was removed: views drop what they drew for it.</summary>
         public event Action<AgentRuntime, WorldEntity> CrawlerDeparted;
 
@@ -49,6 +63,8 @@ namespace Simpiens.Core.Session
         private void ScheduleFirstDrifter(MapDefinition map)
         {
             _driftersArrived = 0;
+            _newcomersArrived = 0;
+            _newcomersDue.Clear();
             var tuning = Drifters;
             long first = tuning.FirstArrivalTick + Jitter(tuning, 0);
             _nextDrifterTick = tuning.IsEnabled && HasSpawnPoint(map) ? (first < 1 ? 1 : first) : -1;
@@ -62,7 +78,11 @@ namespace Simpiens.Core.Session
                 departed[i] = new DepartedSave { Id = _departed[i].Id, GivenName = _departed[i].GivenName, Look = _departed[i].Look, Cause = _departed[i].Cause, CauseDetail = _departed[i].CauseDetail, Tick = _departed[i].Tick };
             }
             Array.Sort(departed, (a, b) => a.Id.CompareTo(b.Id));
-            save.Population = new PopulationSave { NextDrifterTick = _nextDrifterTick, DriftersArrived = _driftersArrived, Departed = departed };
+            save.Population = new PopulationSave
+            {
+                NextDrifterTick = _nextDrifterTick, DriftersArrived = _driftersArrived, Departed = departed,
+                NewcomersDue = _newcomersDue.ToArray(), NewcomersArrived = _newcomersArrived, // K5.6
+            };
         }
 
         private void RestoreDriftersFrom(SessionSave save, MapDefinition map)
@@ -71,6 +91,8 @@ namespace Simpiens.Core.Session
             {
                 _nextDrifterTick = save.Population.NextDrifterTick;
                 _driftersArrived = save.Population.DriftersArrived;
+                _newcomersArrived = save.Population.NewcomersArrived;
+                if (save.Population.NewcomersDue != null) _newcomersDue.AddRange(save.Population.NewcomersDue);
                 var departed = save.Population.Departed ?? Array.Empty<DepartedSave>();
                 for (int i = 0; i < departed.Length; i++)
                 {
@@ -91,6 +113,7 @@ namespace Simpiens.Core.Session
             {
                 if (_crawlers[i].State.HasLeft) RemoveCrawlerAt(i);
             }
+            TickNewcomers(tick);
 
             if (_nextDrifterTick < 0 || tick < _nextDrifterTick) return;
             var tuning = Drifters;
@@ -134,12 +157,43 @@ namespace Simpiens.Core.Session
             _simulationManager?.Chronicle?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterArrived, state.AgentId, default, sector, (uint)tick));
         }
 
+        // A newcomer due settles at a spawn point clear of crawlers; a crowded gate makes it wait for the next tick (K5.6)
+        private void TickNewcomers(long tick)
+        {
+            for (int i = 0; i < _newcomersDue.Count; i++)
+            {
+                if (tick < _newcomersDue[i]) continue;
+                if (!TryPickArrivalPoint(_current?.Map, _driftersArrived + _newcomersArrived, out var gate)) return;
+                _newcomersDue.RemoveAt(i);
+                AdmitNewcomer(tick, gate);
+                return; // one a tick
+            }
+        }
+
+        // A resident who settles (Q4): a new look and name, a seeded personality, the session's starting purse (a faucet)
+        private void AdmitNewcomer(long tick, Vec2 gate)
+        {
+            int number = ++_newcomersArrived;
+            var state = SpawnCrawler(gate, NextEntityId(), $"Newcomer_{number}", $"Newcomer{number}").State;
+            ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
+            state.Personality = AgentPersonality.Generate(seed, state.AgentId);
+            GiveIdentity(state);
+            state.Hunger = NewcomerArrivalHunger;
+            uint purse = _simulationManager != null ? (uint)_simulationManager.Economy.StartingGold : 0u;
+            if (state.Inventory != null) state.Inventory.Gold = (int)purse;
+            if (purse > 0) _simulationManager?.EconomyLedger?.RecordFaucet(purse, "NewcomerPurses");
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(state.AgentId)} settled at the outpost by the Road Gate with {purse}g ({state.Personality.ToString()})");
+            int sector = _worldMap?.Sectors != null ? _worldMap.Sectors.GetSectorAt(gate).Id : 0;
+            _simulationManager?.Chronicle?.RecordEvent(new ChronicleEvent(ChronicleEventType.NewcomerArrived, state.AgentId, default, sector, (uint)tick));
+        }
+
         private void RemoveCrawlerAt(int index)
         {
             var entry = _crawlers[index];
             var runtime = entry.Runtime;
             var entity = _registry?.GetEntity(runtime.State.AgentId);
             uint tick = _clock != null ? (uint)_clock.CurrentTick : 0u;
+            if (runtime.State.DiedOf != DeathCause.None && !runtime.State.IsDrifter) _newcomersDue.Add(tick + DayClock.Hours(NewcomerAfterHours)); // K5.6
             _departed.Add(new DepartedCrawler(runtime.State.AgentId, runtime.State.GivenName, runtime.State.Look, runtime.State.DiedOf, runtime.State.DiedDetail, tick));
             runtime.Dispose();
             if (entity != null) _registry.Unregister(entity);

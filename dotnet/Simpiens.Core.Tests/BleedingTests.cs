@@ -69,6 +69,29 @@ namespace Simpiens.Core.Tests
         }
 
         [Fact]
+        public void ASaveWhileItBleedsLoadsItsClock()
+        {
+            // K5.7: the clock and what downed it are saved; after a load it bleeds out at the same tick
+            using var sim = Outpost();
+            var crawler = Resident(sim);
+            Empty(crawler);
+            DownedAt(sim, crawler, InTheSump);
+            sim.Step(5);
+            Assert.True(crawler.IsCollapsed);
+            uint bleedsOut = crawler.BleedsOutAt;
+            byte[] saved = Simpiens.Simulation.Persistence.SaveSerializer.Serialize(sim.Host.Capture());
+            sim.Step(30);
+            Assert.True(sim.Host.TryRestore(Simpiens.Simulation.Persistence.SaveSerializer.Deserialize<Simpiens.Simulation.Persistence.SessionSave>(saved), out string refusal), refusal);
+            Assert.Equal(saved, Simpiens.Simulation.Persistence.SaveSerializer.Serialize(sim.Host.Capture()));
+            var loaded = sim.Host.CrawlerStates.Single(c => c.AgentId == crawler.AgentId);
+            Assert.True(loaded.IsCollapsed);
+            Assert.Equal(bleedsOut, loaded.BleedsOutAt);
+            Assert.Equal(DeathCause.Hazard, loaded.DownedBy);
+            sim.RunTo(bleedsOut + 3);
+            Assert.True(sim.Host.Departed.Any(d => d.Id == crawler.AgentId && d.Died) || !loaded.IsDowned, "It bled out at its saved time, unless rescued or stood up.");
+        }
+
+        [Fact]
         public void DownedInSafetyItLimpsAsBefore()
         {
             using var sim = Outpost();

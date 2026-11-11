@@ -50,8 +50,9 @@ namespace Simpiens.Narrative
         ArtisanBrokeDown = 40, // W1.3, D16: overworked on its shift; the extra is the station's kind
         ToolWornOut = 41, // W1.4, D37: a tool used to its end broke; the extra is the item
         CreatureSlain = 42, // Epic 10 Part 3, K3.3: ActorA slew the creature ActorB; the extra is its kind
-        CrawlerDied = 43, // K5.4a: ActorA died; ActorB is what downed it (a creature) or none; the extra is its DeathCause
-        CrawlerRescued = 44 // K5.3: ActorA rescued ActorB; the extra is 1 for a carry out, 2 for a medicine given
+        CrawlerDied = 43, // K5.4a: ActorA died; ActorB is what downed it (a creature) or none; the extra is its DeathCause x 256 + the cause's detail (the kind)
+        CrawlerRescued = 44, // K5.3: ActorA rescued ActorB; the extra is 1 for a carry out, 2 for a medicine given
+        NewcomerArrived = 45 // K5.6: ActorA settled at the outpost, 2 days after a resident's death
     }
 
     /// <summary>

@@ -332,7 +332,7 @@ namespace Simpiens.Testing.Persistence
                 Piles = new[]
                 {
                     new PileRecord { Id = A, ClaimedFor = C, Position = new Vec2(-20f, 14f), FadesAt = 12000u, ClaimUntil = 2420u, Gold = 0, StackCount = 2 },
-                    new PileRecord { Id = B, Position = new Vec2(3f, -4f), FadesAt = 9000u, Gold = 17, StackCount = 1 },
+                    new PileRecord { Id = B, BodyOf = C, Position = new Vec2(3f, -4f), FadesAt = 9000u, Gold = 17, StackCount = 1 }, // a body (K5.4a)
                 },
                 Stacks = new[]
                 {
@@ -348,6 +348,7 @@ namespace Simpiens.Testing.Persistence
             Assert(piles.TryGet(A, out var claimed) && claimed.ClaimedFor == C && claimed.ClaimUntil == 2420u && claimed.Count == 2 && !claimed.MayTake(B, 2000u) && claimed.MayTake(B, 2420u),
                 "A claimed pile comes back with its claim and its stacks.");
             Assert(piles.TryGet(B, out var purse) && purse.Gold == 17 && purse.StackAt(0).Durability == 33 && purse.FadesAt == 9000u, "A pile's gold, its worn piece and its fading come back.");
+            Assert(purse.IsBody && purse.BodyOf == C && piles.TotalGold == 17u, "A body comes back as whose it was, its purse gold on the ground (K5.4).");
             Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = save.Piles, Stacks = new ItemInstance[1] }) != null, "Stacks that don't add up are refused.");
             Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = new[] { save.Piles[1], save.Piles[0] }, Stacks = save.Stacks }) != null, "Piles out of id order are refused.");
             piles.Restore(null, null, 424242UL);

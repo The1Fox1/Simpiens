@@ -97,13 +97,48 @@ namespace Simpiens.Simulation
             }
             Piles.Drop(this, node.Position, body.Slice(0, stacks), gold, default, tick, bodyOf: node.Id);
 
+            // Under the guild's orders (on an expedition), its death costs the patron the other members' trust (Q4, K5.5)
+            bool underOrders = Guild.IsMember(node.Id) && agent.Expedition.IsActive;
             int releasedClaims = ReleaseFromOutpost(node);
             agent.HasLeft = true;
             agent.DiedOf = cause;
             agent.DiedDetail = detail;
-            SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} died ({cause}) at {node.Position}, leaving {stacks} stacks and {gold}g ({releasedClaims} claim(s) released)");
+            int grieving = Grieve(node, tick, underOrders);
+            SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} died ({cause}) at {node.Position}, leaving {stacks} stacks and {gold}g ({releasedClaims} claim(s) released; {grieving} grieve)");
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDied, node.Id, by, GetSectorForPosition(node.Position), tick,
-                ChronicleIntensity.Crisis, (byte)cause));
+                ChronicleIntensity.Crisis, (int)cause * 256 + detail));
+        }
+
+        /// <summary>A friend's grief raises frustration by this much (Q4, K5.5): the portrait's frustrated face shows it.</summary>
+        public const float GriefFrustration = 25f;
+
+        /// <summary>What a death under the guild's orders costs the patron in each other member's trust (Q4, K5.5).</summary>
+        public const sbyte TrustLostUnderOrders = -15;
+
+        // The living remember (Q4, K5.5): each friend (warmth toward the dead at the friend line) grieves, a memory and
+        // frustration; under the guild's orders, the other members trust the patron less. The friends who grieve.
+        private int Grieve(WorldEntity dead, uint tick, bool underOrders)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return 0;
+            int grieving = 0;
+            var at = GridPoint.RoundToInt(dead.Position);
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var living = entities[i]?.Agent;
+                if (living == null || living.HasLeft || living.AgentId == dead.Id || living.Memory == null) continue;
+                if (living.Memory.GetAffinity(dead.Id, tick).Warmth >= Simpiens.Cognition.Planning.Rescue.FriendWarmth)
+                {
+                    living.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(Simpiens.Cognition.Memory.MemoryEventType.Grieved, dead.Id, at, tick));
+                    living.Frustration = SimMath.Min(100f, (float)(living.Frustration + GriefFrustration));
+                    grieving++;
+                }
+                if (underOrders && Guild.IsMember(living.AgentId))
+                {
+                    living.Memory.RecordInteraction(PlayerEntityId, deltaWarmth: -5, deltaTrust: TrustLostUnderOrders, deltaFear: 0, deltaRespect: 0, tick);
+                }
+            }
+            return grieving;
         }
 
         // What a crawler lets go of as it leaves the world, by the Road Gate or by dying: its bounty claims, its bunk, every

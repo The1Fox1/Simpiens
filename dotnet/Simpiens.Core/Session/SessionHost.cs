@@ -231,6 +231,8 @@ namespace Simpiens.Core.Session
 
             _crawlers.Clear();
             _departed.Clear();
+            _newcomersDue.Clear(); // K5.6
+            _newcomersArrived = 0;
             _identity?.ClearCustomNames(); // ids repeat per seed: a name belongs to this session's crawlers only
             _registry?.Clear();
             _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn

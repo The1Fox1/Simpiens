@@ -159,6 +159,20 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ToolWornOut:
                     return $"{actorA}'s {(Simpiens.Simulation.Items.ItemCatalog.Get((Simpiens.Simulation.Economy.ItemType)(byte)evt.ExtraData)?.DisplayName ?? "tool").ToLowerInvariant()} broke in {sector}.";
 
+                case ChronicleEventType.CrawlerDied:
+                {
+                    int cause = (int)evt.ExtraData / 256, detail = (int)evt.ExtraData % 256;
+                    if (cause == (int)Simpiens.Simulation.DeathCause.Creature)
+                        return $"{actorA} was downed by a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)detail)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector} and bled out before anyone came.";
+                    return $"{actorA} fell in the danger of {sector} and bled out before anyone came.";
+                }
+
+                case ChronicleEventType.CrawlerRescued:
+                    return (int)evt.ExtraData == 2 ? $"{actorA} gave {actorB} a draught where they lay in {sector}." : $"{actorA} carried {actorB} out of danger in {sector}.";
+
+                case ChronicleEventType.NewcomerArrived:
+                    return $"{actorA} came in by the Road Gate to settle at the outpost.";
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 

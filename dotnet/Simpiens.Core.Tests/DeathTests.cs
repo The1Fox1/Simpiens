@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Simpiens.Cognition;
+using Simpiens.Cognition.Contracts;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
@@ -61,7 +62,7 @@ namespace Simpiens.Core.Tests
 
             var told = new List<ChronicleEvent>();
             sim.Chronicle.GetAllRecentEvents(told, 64);
-            Assert.Contains(told, e => e.EventType == ChronicleEventType.CrawlerDied && e.ActorAId == dead.AgentId && e.ExtraData == (byte)DeathCause.Creature);
+            Assert.Contains(told, e => e.EventType == ChronicleEventType.CrawlerDied && e.ActorAId == dead.AgentId && (int)e.ExtraData == (int)DeathCause.Creature * 256 + (int)CreatureKind.StoneBeetle);
         }
 
         [Fact]
@@ -131,6 +132,72 @@ namespace Simpiens.Core.Tests
         }
 
         [Fact]
+        public void FriendsGrieve()
+        {
+            using var sim = Outpost();
+            var dead = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
+            var friend = sim.Host.CrawlerStates.First(s => !s.IsDrifter && s != dead);
+            var stranger = sim.Host.CrawlerStates.Last(s => !s.IsDrifter && s != dead && s != friend);
+            uint tick = (uint)sim.Clock.CurrentTick;
+            friend.Memory.RecordInteraction(dead.AgentId, deltaWarmth: 60, deltaTrust: 0, deltaFear: 0, deltaRespect: 0, tick);
+            float friendBefore = friend.Frustration, strangerBefore = stranger.Frustration;
+            bool strangerFriend = stranger.Memory.GetAffinity(dead.AgentId, tick).Warmth >= Simpiens.Cognition.Planning.Rescue.FriendWarmth;
+            sim.Simulation.Die(sim.Registry.GetEntity(dead.AgentId), DeathCause.Hazard, 1);
+            var memories = new List<Simpiens.Cognition.Memory.MemoryEvent>();
+            friend.Memory.EventLedger.GetRecentEvents((uint)sim.Clock.CurrentTick, 100, memories);
+            Assert.Contains(memories, e => e.EventType == Simpiens.Cognition.Memory.MemoryEventType.Grieved && e.SubjectId == dead.AgentId);
+            Assert.Equal(SimMath.Min(100f, friendBefore + SimulationManager.GriefFrustration), friend.Frustration, 3);
+            if (!strangerFriend) Assert.Equal(strangerBefore, stranger.Frustration, 3);
+        }
+
+        [Fact]
+        public void ADeathUnderOrdersCostsThePatronTrust()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var player = new GuildPlayer(sim, targetSize: 2);
+            for (int t = 0; t < 3 * DayClock.TicksPerDay && sim.Simulation.Guild.Members.Count < 2; t++) sim.Step(1);
+            Assert.Equal(2, sim.Simulation.Guild.Members.Count);
+            player.Stop();
+            var dead = sim.Host.CrawlerStates.First(c => c.AgentId == sim.Simulation.Guild.Members[0].CrawlerId);
+            var other = sim.Host.CrawlerStates.First(c => c.AgentId == sim.Simulation.Guild.Members[1].CrawlerId);
+            uint tick = (uint)sim.Clock.CurrentTick;
+            int trust = other.Memory.GetAffinity(WorldRegistry.PlayerEntityId, tick).Trust;
+            // By hand: it dies on an expedition (the guild's orders)
+            dead.Expedition = new ExpeditionOrder(Simpiens.Simulation.Guild.ExpeditionStage.Work, 1, default, dead.Position);
+            sim.Simulation.Die(sim.Registry.GetEntity(dead.AgentId), DeathCause.Hazard, 1);
+            Assert.Equal(System.Math.Max(-100, trust + SimulationManager.TrustLostUnderOrders), other.Memory.GetAffinity(WorldRegistry.PlayerEntityId, tick).Trust);
+        }
+
+        [Fact]
+        public void ANewcomerSettlesTwoDaysAfterAResidentsDeath()
+        {
+            using var sim = Outpost();
+            var dead = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
+            int residents = sim.Host.CrawlerStates.Count(s => !s.IsDrifter);
+            sim.Simulation.Die(sim.Registry.GetEntity(dead.AgentId), DeathCause.Hazard, 1);
+            sim.Step(1);
+            Assert.Single(sim.Host.NewcomersDue);
+            uint due = sim.Host.NewcomersDue[0];
+            Assert.Equal((uint)sim.Clock.CurrentTick + DayClock.Hours(SessionHost.NewcomerAfterHours), due); // from the tick it was removed
+            sim.RunTo(due - 1);
+            Assert.Equal(0, sim.Host.NewcomersArrived);
+            sim.RunTo(due + 50);
+            Assert.Equal(1, sim.Host.NewcomersArrived);
+            Assert.Empty(sim.Host.NewcomersDue);
+            int index = sim.Host.CrawlerNames.ToList().FindIndex(n => n == "Newcomer_1");
+            Assert.True(index >= 0, "The newcomer lives at the outpost.");
+            var newcomer = sim.Host.CrawlerStates[index];
+            Assert.False(newcomer.IsDrifter);
+            Assert.False(string.IsNullOrEmpty(newcomer.GivenName));
+            Assert.NotEqual(dead.GivenName, newcomer.GivenName);
+            Assert.True(Balanced(sim), "Its purse is a faucet.");
+            var told = new List<ChronicleEvent>();
+            sim.Chronicle.GetAllRecentEvents(told, 256);
+            Assert.Contains(told, e => e.EventType == ChronicleEventType.NewcomerArrived && e.ActorAId == newcomer.AgentId);
+        }
+
+        [Fact]
         public void ALoadPutsTheDeadAndTheirBodiesBack()
         {
             using var sim = Outpost();
@@ -148,6 +215,7 @@ namespace Simpiens.Core.Tests
             Assert.True(departed.Tick > 0);
             Assert.Contains(sim.Simulation.Piles.Piles, p => p.BodyOf == dead.AgentId);
             Assert.Equal(ground, sim.Simulation.EconomyLedger.TotalGroundGold);
+            Assert.Single(sim.Host.NewcomersDue); // a newcomer still due (K5.6)
             Assert.True(Balanced(sim));
         }
 
