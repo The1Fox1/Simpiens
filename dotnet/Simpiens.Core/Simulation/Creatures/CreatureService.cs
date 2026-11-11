@@ -116,6 +116,7 @@ namespace Simpiens.Simulation.Creatures
         private readonly List<CreatureState> _creatures = new List<CreatureState>(16);
         private ulong _seed;
         private long _idCounter;
+        private ulong _charted; // bit i: lair i is known to everyone (K2.3, D17)
 
         /// <summary>Every creature in the world, in id order (the phase's order, A4).</summary>
         public IReadOnlyList<CreatureState> Creatures => _creatures;
@@ -126,6 +127,15 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>Creature ids handed out since the session started: with the seed, all a save needs to continue the sequence (K2.4).</summary>
         public long IdCounter => _idCounter;
 
+        /// <summary>
+        /// Which lairs are charted (K2.3, D17): bit i set when lair i is known to everyone, since a crawler saw one of its
+        /// creatures or was struck by one. The simulation publishes it in every snapshot, for cognition.
+        /// </summary>
+        public ulong ChartedMask => _charted;
+
+        /// <summary>True when lair <paramref name="lairIndex"/> is charted.</summary>
+        public bool IsCharted(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (_charted & (1UL << lairIndex)) != 0;
+
         /// <summary>Lays out <paramref name="map"/>'s lairs, empty, when the map changes (a respawn or a load); nothing otherwise.</summary>
         public CreatureService Follow(MapDefinition map)
         {
@@ -133,6 +143,7 @@ namespace Simpiens.Simulation.Creatures
             _map = map;
             _lairs.Clear();
             _creatures.Clear();
+            _charted = 0UL;
             if (map == null) return this;
             for (int i = 0; i < map.Lairs.Count; i++) _lairs.Add(new LairState(i, map.Lairs[i]));
             return this;
@@ -145,6 +156,7 @@ namespace Simpiens.Simulation.Creatures
             _lairs.Clear();
             _creatures.Clear();
             _idCounter = 0;
+            _charted = 0UL;
         }
 
         /// <summary>The creature with <paramref name="id"/>; false for none.</summary>
@@ -163,6 +175,7 @@ namespace Simpiens.Simulation.Creatures
         {
             _seed = seed;
             _idCounter = 0;
+            _charted = 0UL;
             for (int i = 0; i < _creatures.Count; i++) world?.RemoveCreature(_creatures[i].Id);
             _creatures.Clear();
             for (int l = 0; l < _lairs.Count; l++)

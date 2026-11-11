@@ -595,6 +595,7 @@ namespace Simpiens.Simulation
             if (_spatialPartition != null && _worldRegistry != null)
             {
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
+                _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
                 ValidateBunkOccupancy();
                 _spatialPartition.SetOccupiedBunks(_lodging.OccupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);

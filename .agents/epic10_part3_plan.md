@@ -211,6 +211,22 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - known lairs judged in `LoneDanger`, as hazards are;
   - a scout's report charts lairs;
   - nobody yet fights back, and nobody dies: until K5 a downed crawler limps out, as today.
+  - **The go:** "Proceed" (the producer, 2026-11-10, after the K2.5a report closed with "Say the word and I'll start K2.3"); K2.2's rule (D9–D15) stands by exception. Split into four sub-steps; the decisions D16–D20 go into the epic for the developer's review.
+  - [x] **K2.3a Lairs' reach, danger and charting:** [Possibly Complex: map data and a pure rule, plus one mask in the snapshot]
+    - A lair's **reach** is a disc of its kind's leash around its heart: the ground its pack defends (D16).
+    - Its **danger** is a pack's expected harm a second (its kind's smallest pack, the combat rule's hit chance, the crawler's defense through what it wears), compared with `Vitality.LoneHazardLimit` as a hazard's is (D18).
+    - A lair is **charted** (known to everyone) when a crawler on its feet sees one of its creatures in a charted sector, within its vision and line of sight, or is struck by one (D17). The creatures' phase decides it, after the swings; `SharedWorldSnapshot.ChartedLairMask` carries it to cognition from the next tick. Saved with the creatures in K2.4; until then a load forgets it, as it refills the lairs.
+    - **Built:** `LairReach` (reach, the lair at a point, danger), `CreatureService.ChartedMask` (charted on a strike or a sighting, behind `Hunting` until K2.3d), the snapshot's `ChartedLairMask`, `Vitality.LairDangerAt` and `WouldEnterAt`. Tests `LairKnowledgeTests` (6). Core 210/210, golden 3/3 unchanged.
+  - [ ] **K2.3b Lone crawlers keep out of known lairs:** [Possibly Complex: every place-judgment that sends a crawler somewhere alone]
+    - `Vitality.WouldEnterAt(context, position)`: the sector's hazard as today, and no known lair's reach a crawler would not brave alone.
+    - Read where salvage is chosen (with a Gather bounty's), where a hurt crawler fetches a herb, where an explorer and an idle wanderer go.
+  - [ ] **K2.3c Flight:** [Very Complex, supervised by the developer: a reflex in the runtime's pre-emption and in cognition]
+    - Struck by a creature in the last 2 s, on its feet, a crawler drops what it does (the runtime's pre-emption, after exhaustion and before starvation) and flees: a `FleeIntent` toward the bunks, shown panicking, that ends once it stands out of every lair's reach and has not been struck for 2 s (D19).
+    - `AgentContext.StruckAtTick`; `FleeIntentHandler`; the reflex in `MentalBreakEvaluator` beside retreat. A downed crawler limps out as today.
+  - [ ] **K2.3d Hunting goes live:** [Possibly Complex: a behaviour change on every seed]
+    - `CreatureService.Hunting` removed; the rats' leash tuned to 6 (D20); golden re-recorded in its own commit.
+    - Measured on the 23 gate seeds' day: who strays and is struck, who flees, what is charted when; the sweeps and the soak.
+    - The DoD `VerminDriveTheLoneAway` if the day shows it unaided; otherwise with the scripted player's scout bounty as its input.
 - [ ] **K2.4 Saves:** [Possibly Complex: a save block] creatures and lairs in the world's block, with the round-trip validators.
 - [ ] **K2.5 The client:** [Possibly Complex: new art and renders to look at]
   - [x] **K2.5a The creatures drawn, ahead of K2.3** (the producer, 2026-11-09: "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now"): [Possibly Complex: new art, the frames and the scene, renders to look at]

@@ -80,6 +80,17 @@ namespace Simpiens.Simulation.Spatial
         }
         public void SetExploredSectors(ulong mask) => ExploredSectorMask = mask;
 
+        /// <summary>
+        /// Which of the map's lairs are charted (Epic 10 Part 3, K2.3, D17): bit i set when lair i (in the map's order) is
+        /// known to everyone, since a crawler saw one of its creatures or was struck by one. A lone crawler keeps out of a
+        /// charted lair's reach (<c>Vitality.WouldEnterAt</c>). Defaults to none.
+        /// </summary>
+        public ulong ChartedLairMask { get; private set; }
+        public void SetChartedLairs(ulong mask) => ChartedLairMask = mask;
+
+        /// <summary>True when lair <paramref name="lairIndex"/> (in the map's order) is charted.</summary>
+        public bool IsLairCharted(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (ChartedLairMask & (1UL << lairIndex)) != 0;
+
         public bool IsSectorCharted(int sectorId)
         {
             if (sectorId < 0 || sectorId >= 64) return true;

@@ -32,6 +32,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which sectors are charted (bit i = sector i), published in every following snapshot. Main thread only.</summary>
         void SetExploredSectors(ulong mask);
 
+        /// <summary>Which of the map's lairs are charted (bit i = lair i, Epic 10 Part 3, K2.3), published in every following snapshot. Main thread only.</summary>
+        void SetChartedLairs(ulong mask);
+
         /// <summary>The session's economy tuning (immutable), published by reference in every snapshot. Main thread only.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
 
@@ -62,6 +65,9 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _exploredSectors = ulong.MaxValue;
         public void SetExploredSectors(ulong mask) => _exploredSectors = mask;
+
+        private ulong _chartedLairs;
+        public void SetChartedLairs(ulong mask) => _chartedLairs = mask;
 
         private Simpiens.Simulation.Economy.EconomyTuning _economy;
         public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => _economy = economy;
@@ -184,6 +190,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetMap(_map);
             _currentTickSnapshot.SetEconomy(_economy);
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
+            _currentTickSnapshot.SetChartedLairs(_chartedLairs);
             _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch

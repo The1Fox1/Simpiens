@@ -63,6 +63,42 @@ namespace Simpiens.Cognition
             kindResistance > 0f ? (float)(hazard.DamagePerSecond * (float)(1f - kindResistance)) : hazard.DamagePerSecond;
 
         /// <summary>
+        /// The worst danger a charted lair puts a crawler in at <paramref name="position"/> (Epic 10 Part 3, K2.3, D18): the
+        /// expected harm a second of the pack whose reach holds it, through the defense <paramref name="worn"/> gives; 0 outside
+        /// every charted lair's reach. A lair nobody has charted is no danger to anyone's judgment, only to their health.
+        /// </summary>
+        public static float LairDangerAt(Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)
+        {
+            var map = snapshot?.Map;
+            if (map == null || snapshot.ChartedLairMask == 0UL) return 0f;
+            float worst = 0f, defense = -1f;
+            var lairs = map.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
+                if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.Defense);
+                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense);
+                if (danger > worst) worst = danger;
+            }
+            return worst;
+        }
+
+        /// <summary>
+        /// True when this crawler, alone, would go to <paramref name="position"/> (Epic 10 Part 3, K2.3): its sector's hazard
+        /// judged as <see cref="WouldEnter(in AgentContext, in SectorHazard)"/>, and a charted lair's reach judged the same
+        /// way, by its pack's danger against <see cref="LoneHazardLimit"/> (Q6: a known lair is judged as a hazard is).
+        /// </summary>
+        public static bool WouldEnterAt(in AgentContext context, Vec2 position) => WouldEnterAt(WouldVenture(context), context.Snapshot, position, context.Inventory);
+
+        /// <summary>The same, for a crawler already known to venture or not, wearing <paramref name="worn"/>.</summary>
+        public static bool WouldEnterAt(bool venture, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)
+        {
+            if (!WouldEnter(venture, HazardAt(snapshot?.Map, position), worn)) return false;
+            float lair = LairDangerAt(snapshot, position, worn);
+            return lair <= 0f || (venture && lair <= LoneHazardLimit);
+        }
+
+        /// <summary>
         /// Where a hurt crawler heads: the floor plan's nearest bunk, free or not (the plan is common knowledge; a crawler
         /// that knew no free bunk stayed downed in a hazard sector all day). False on a map without bunks.
         /// </summary>

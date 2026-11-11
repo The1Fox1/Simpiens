@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Simpiens.Diagnostics;
+using ZLogger;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Combat;
 using Simpiens.Simulation.Spatial;
@@ -72,6 +74,42 @@ namespace Simpiens.Simulation.Creatures
             _swings.Clear();
             for (int i = 0; i < _creatures.Count; i++) DecideSwing(_creatures[i], entities, tick);
             for (int i = 0; i < _swings.Count; i++) world.Strike(_swings[i].Target, _swings[i].Attacker.Id, _swings[i].Outcome, tick);
+
+            // Who knows of a lair now (K2.3, D17): a crawler struck by one of its creatures, or one who sees one
+            for (int i = 0; i < _swings.Count; i++) Chart(_swings[i].Attacker.LairIndex, _swings[i].Target.Id, struck: true);
+            Sightings(snapshot, entities);
+        }
+
+        /// <summary>How far a crawler sees a creature (its vision, as it sees everything else).</summary>
+        public const float SightingDistance = Simpiens.Cognition.AgentRuntime.DefaultVisionRadius;
+
+        // D17: an uncharted lair is charted when a crawler on its feet sees one of its creatures in a charted sector (nothing
+        // inside the fog is seen), within its vision and with nothing walling it off; one sighting a creature, the first crawler
+        private void Sightings(SharedWorldSnapshot snapshot, IReadOnlyList<WorldEntity> entities)
+        {
+            if (!Hunting || entities == null) return;
+            for (int i = 0; i < _creatures.Count; i++)
+            {
+                var c = _creatures[i];
+                if (!c.IsAlive || IsCharted(c.LairIndex)) continue;
+                if (snapshot != null && !snapshot.IsCharted(c.Position)) continue;
+                for (int e = 0; e < entities.Count; e++)
+                {
+                    var agent = entities[e].Agent;
+                    if (agent == null || agent.IsDowned || agent.HasLeft) continue;
+                    if ((entities[e].Position - c.Position).SqrMagnitude > SightingDistance * SightingDistance) continue;
+                    if (snapshot != null && !snapshot.HasLineOfSight(entities[e].Position, c.Position)) continue;
+                    Chart(c.LairIndex, entities[e].Id, struck: false);
+                    break;
+                }
+            }
+        }
+
+        private void Chart(int lairIndex, EntityId by, bool struck)
+        {
+            if (lairIndex < 0 || lairIndex >= 64 || lairIndex >= _lairs.Count || IsCharted(lairIndex)) return;
+            _charted |= 1UL << lairIndex;
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(by)} {(struck ? "was struck from" : "sighted")} {_lairs[lairIndex].Definition.Key}: the lair is charted");
         }
 
         private void Step(CreatureState c, SharedWorldSnapshot snapshot, IReadOnlyList<WorldEntity> entities, uint tick)
