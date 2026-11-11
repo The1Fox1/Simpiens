@@ -161,7 +161,7 @@ namespace Simpiens.Client.Tests
             Step(sim, dashboard);
 
             // The forge's recipes in the order of what they make: the pickaxe (W1), the respirator and the hard hat (W3)
-            Assert.Equal(new[] { ItemType.ToolPickaxe, ItemType.Respirator, ItemType.HardHat, ItemType.IronBlade, ItemType.GlowstoneEdge, ItemType.IronHelm, ItemType.RingCoat },
+            Assert.Equal(new[] { ItemType.ToolPickaxe, ItemType.Respirator, ItemType.HardHat, ItemType.IronBlade, ItemType.GlowstoneEdge, ItemType.IronHelm, ItemType.RingCoat, ItemType.LeatherJerkin, ItemType.ChitinPlate },
                 station.Recipes.Select(r => r.Item).ToArray()); // the arms and armour (Epic 10 Part 3, K3.1, K3.2)
             Assert.Equal("1 glowstone, 2 herbs · 2 h of work", station.Recipes[1].Recipe);
             var pickaxe = station.Recipes[0];

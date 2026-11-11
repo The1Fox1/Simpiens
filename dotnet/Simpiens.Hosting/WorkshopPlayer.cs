@@ -27,6 +27,7 @@ namespace Simpiens.Hosting
         private readonly ushort _wage;
         private readonly uint _reserve;
         private readonly List<EntityId> _hired = new List<EntityId>(2);
+        private readonly List<ItemType> _also = new List<ItemType>(2);
 
         /// <param name="batch">How many makes each order asks for.</param>
         /// <param name="shifts">The blocks the artisan works (<see cref="ShiftBlocks"/>).</param>
@@ -56,6 +57,20 @@ namespace Simpiens.Hosting
 
         /// <summary>Orders to mend worn pieces it gave (Epic 10 Part 2, W4).</summary>
         public int Repairs { get; private set; }
+
+        /// <summary>
+        /// Makes <paramref name="make"/> too (Epic 10 Part 3, K4.4): with no order standing, it orders one of it, before its
+        /// own make, whenever the stall holds the inputs for it and none is on the shelf (armour from a kill's materials). The
+        /// makes added first come first. Returns this player.
+        /// </summary>
+        public WorkshopPlayer Also(ItemType make)
+        {
+            _also.Add(make);
+            return this;
+        }
+
+        /// <summary>Orders placed for the makes added by <see cref="Also"/>.</summary>
+        public int AlsoOrders { get; private set; }
 
         /// <summary>Stops acting (a scenario that takes over).</summary>
         public void Stop() => _sim.Host.TickCompleted -= Act;
@@ -108,12 +123,35 @@ namespace Simpiens.Hosting
                 Repairs++;
                 return;
             }
+            // A make added by Also, when the stall holds its inputs and none is on the shelf (K4.4)
+            for (int i = 0; i < _also.Count; i++)
+            {
+                if (!HoldsInputsFor(_also[i]) || _sim.Simulation.ActiveStalls[0].SellStockOf(_also[i]) > 0) continue;
+                if (WorkshopRules.CheckOrder(workshops, index, _also[i], 1) != WorkshopRules.Check.Ok) continue;
+                _commands.QueueInfluence(InfluenceEvent.CreateOrderStation(SourceId, (byte)index, _also[i], 1));
+                AlsoOrders++;
+                return;
+            }
             if (WorkshopRules.CheckOrder(workshops, index, _make, _batch) == WorkshopRules.Check.Ok)
             {
                 _commands.QueueInfluence(InfluenceEvent.CreateOrderStation(SourceId, (byte)index, _make, _batch));
                 Orders++;
                 if (FirstOrderTick < 0) FirstOrderTick = tick;
             }
+        }
+
+        // The stall holds every input of one make of the item, as the station window shows
+        private bool HoldsInputsFor(ItemType make)
+        {
+            var recipe = RecipeBook.For(make);
+            if (recipe == null || _sim.Simulation.ActiveStalls.Count == 0) return false;
+            var stall = _sim.Simulation.ActiveStalls[0];
+            for (int i = 0; i < recipe.InputCount; i++)
+            {
+                var input = recipe.GetInput(i);
+                if (stall.StockOf(input.Item) < input.Count) return false;
+            }
+            return true;
         }
     }
 }

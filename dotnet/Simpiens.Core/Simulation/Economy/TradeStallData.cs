@@ -76,7 +76,7 @@ namespace Simpiens.Simulation.Economy
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct TradeStallData : IEquatable<TradeStallData>
     {
-        public const int GoodsCapacity = 16; // 8 until Epic 10 Part 2's W3 (D49), 10 until Epic 10 Part 3's K1.2: room for Part 3's arms and armour in the PR's one format raise
+        public const int GoodsCapacity = 24; // 8 until Epic 10 Part 2's W3 (D49), 10 until Epic 10 Part 3's K1.2, 16 until K4.4 (D25): room for Part 3's arms, armour and materials inside the PR's one format raise
 
         public readonly EntityId StallEntityId;
         public readonly Vec2 Position;

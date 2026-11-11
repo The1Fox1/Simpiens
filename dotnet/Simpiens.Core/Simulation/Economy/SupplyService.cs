@@ -309,7 +309,8 @@ namespace Simpiens.Simulation.Economy
                 var terms = _tuning.Terms(item);
                 if (terms.Role != CaravanRole.Exports || terms.Price == 0) continue;
                 int stock = updated.StockOf(item);
-                uint units = (uint)System.Math.Min(stock, (int)terms.Limit);
+                int surplus = stock - terms.Keep; // what is past the reserve kept for the forge (K4.4, D25)
+                uint units = surplus > 0 ? (uint)System.Math.Min(surplus, (int)terms.Limit) : 0u;
                 if (units == 0) continue;
                 updated = updated.WithStock(item, (ushort)(stock - units));
                 revenue += units * terms.Price;

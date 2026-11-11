@@ -318,11 +318,26 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - [x] **K4.3e Tests:** [Basic] mechanism tests on the real outpost: a slayer takes its pile; a stranger waits out the claim; a better piece is worn and a worse one left; a full pack leaves the materials. The live evidence is K4's DoD, once the stall buys the materials (K4.4).
   - **Built:** as planned. Activity counters stay out of the crawler's saved record: the pile service counts units taken and pieces worn (unsaved). `PileTests`' fade test ticks the piles by hand now, since crawlers pick its pile over first.
   - Tests: `PickUpTests` (5): the rule; a kill's piece whole; a full pack; a pile by the stall picked over at t467 (three set out for it); a claimed pile taken by its victor at t507, inside its hour. Core 231/231, client 500/500, golden 3/3 unchanged (no pile in a golden run).
-- [ ] **K4.4 Materials:** [Possibly Complex: the economy, and the soak may move]
+- [x] **K4.4 Materials:** [Possibly Complex: the economy, and the soak may move]
   - hides and chitin at the stall and the caravan;
   - the leather jerkin and chitin plate at the forge;
   - the rare pieces as items.
   - **The plan:** the stall buys hide and chitin, the caravan exports them; the forge makes the leather jerkin (two hides) and the chitin plate (three chitin and an ore); two rare pieces (a rat's fang knife, a beetle's stoneheart coat). The bold who are armed buy armour for a bare slot too (D: the K3 call "residents buy weapons only" widened so a jerkin finds a wearer).
+  - [x] **K4.4a The stall's goods (D25):** [Possibly Complex: the stall's record grows, inside format 11] room for 24 goods (16 hold today's 14 and not the 4 new ones), as K2.4 and K4.1 grew format 11 without a raise; the stall buys hide (5g) and chitin (8g) and sells the jerkin (35g) and the plate (70g), all from no stock. The size pins follow.
+  - [x] **K4.4b The forge's recipes:** [Basic] the jerkin (two hides, 2 game hours), the plate (three chitin and an ore, 3 hours).
+  - [x] **K4.4c The caravan takes the surplus (D25):** [Possibly Complex: a new term in the caravan's market] hide (6g) and chitin (10g), 8 a visit, past a reserve the stall keeps for the forge (`CaravanTerms.Keep`, 6): taken every six hours, the forge would seldom hold two hides at once; never taken, a full shelf would stop the stall buying.
+  - [x] **K4.4d Armour for a bare slot (D26):** [Possibly Complex: cognition, and the soak may move] the bold and armed buy the piece that most raises their fighting outfit: a better weapon (K3.3) or armour for an empty head or body slot, never one in place of what they wear (hazard gear stays). `ResourceTargeting.TryChooseArms` replaces `TryChooseWeapon`; the fact and the goal keep their names.
+  - [x] **K4.4e The DoD `KillsFeedTheForge`:** [Possibly Complex: a live scenario on a gate seed] the scripted workshop player orders blades, then jerkins; a kill drops hide, a crawler picks it up and sells it to the stall, the forge makes a jerkin from it, and a resident wears it; the days hold, the ledger balances.
+  - Then the golden hashes (re-recorded in their own commit: the stall's new goods are in the world hash), the soak and the seed sweeps.
+  - **Built:** as planned, with what the measurement found (the gate seeds over ten days, `KillsFeedTheForgeTests`' explicit measurement):
+    - nobody sold the materials at base values of 6g and 9g, over the stall's 5g and 8g: the greediest seller asks half again over base. Bases 3g and 5g (D25);
+    - victors walked off from their drop a step away, hurt and no longer braving the lair, or blind to it in uncharted ground; and a hurt victor's herb reflex came first. A victor's own drop at hand is taken fog or lair, before the herb (D24);
+    - the plate at three chitin was made on 1 seed in ten days; at two chitin, on 6 (D25);
+    - the materials' empty shelves kept a full stall looking open to the miners (golden 424242 moved at t2000): they don't count toward its room for salvage (D25).
+    - The workshop player takes extra makes (`WorkshopPlayer.Also`): one of each when the stall holds its inputs and none is on the shelf.
+  - **The DoD** `KillsFeedTheForge` (`AKillsMaterialsBecomeArmourAResidentWears`): gate seed 18, a chitin plate worn at t33877 after three kills; armour from a kill worn on 5 of the 23 gate seeds in ten days (made on 6).
+  - **Found:** F5, older than K4: a thrash by the stall on seeds 8 and 15 over long runs with the workshop player (the same at K3's gate and at K4.3).
+  - Tests: core 232/232, golden 3/3 unchanged (its runs end at t3000, before any kill), the soak 15/15, seeds 1–120 120/120 with and without the guild; client 500/500 in the pinned image after re-recording the merchant terminal and the station window (their lists grew), and the art pins (the jerkin's and the plate's graded icons) after a look.
 - [ ] **K4.5 The client:** [Possibly Complex: art and renders]
   - piles on the map;
   - rarity's colours in the merchant terminal and the dossier.

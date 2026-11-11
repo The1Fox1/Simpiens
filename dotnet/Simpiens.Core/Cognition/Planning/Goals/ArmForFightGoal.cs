@@ -7,7 +7,8 @@ namespace Simpiens.Cognition.Planning.Goals
     /// strikes it, and a better one when its purse spares it (a blade over a cudgel). DesiredState: HasWeapon = true (armed with
     /// the best it would buy), reached through TravelToStall → BuyWeapon. Only a resident (drifters pass through) who would
     /// venture into danger, not hungry or worn out, who finds a better weapon in stock at or under its own price with a
-    /// ration's price to spare (ResourceTargeting.TryChooseWeapon, by stats), as Majesty's heroes buy their own arms.
+    /// ration's price to spare (ResourceTargeting.TryChooseArms, by stats), as Majesty's heroes buy their own arms; once
+    /// armed, armour for a bare head or body slot too (K4.4, D26).
     /// </summary>
     public class ArmForFightGoal : GoapGoal
     {
@@ -24,7 +25,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
             if (context.IsDrifter || context.Inventory == null) return false;
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            return ResourceTargeting.TryChooseWeapon(context, out _);
+            return ResourceTargeting.TryChooseArms(context, out _);
         }
     }
 }

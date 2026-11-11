@@ -171,8 +171,10 @@ namespace Simpiens.Cognition.Evaluators
             bool inHazard = Vitality.HazardAt(context.Snapshot?.Map, context.Position).IsHazardous;
 
             // Hurt but on its feet, out of danger and not hungry: it fetches medicine (a herb) from a patch it knows, then
-            // eats it; medicines in id order
-            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger)
+            // eats it; medicines in id order. Not while its own kill's drop lies at hand: it picks that up first (Epic 10
+            // Part 3, K4.4, D24), or it is lost to the fog or the lair it won't brave hurt
+            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger
+                && !Simpiens.Cognition.Planning.LootTargeting.OwnDropAtHand(context))
             {
                 for (int i = 0; i < medicines.Count; i++)
                 {

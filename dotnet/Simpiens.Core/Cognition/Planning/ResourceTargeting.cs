@@ -404,26 +404,27 @@ namespace Simpiens.Cognition.Planning
             var access = GetStallAccess(context, out var stall);
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
-            // The cheapest price the stall pays for a resource that isn't hazardous (ore, herbs): it must be able to pay that
+            // The cheapest price the stall pays for a resource that isn't hazardous or a creature's (ore, herbs): it must be able to pay that
             uint cheapest = uint.MaxValue;
             var resources = ItemCatalog.InCategory(ItemCategory.Resource);
             for (int i = 0; i < resources.Count; i++)
             {
-                if (ItemCatalog.Is(resources[i], ItemCategory.Hazardous) || !stall.TryGetGood(resources[i], out var good) || good.Role != StallRole.Buys) continue;
+                if (ItemCatalog.Is(resources[i], ItemCategory.Hazardous) || ItemCatalog.Is(resources[i], ItemCategory.Creature)
+                    || !stall.TryGetGood(resources[i], out var good) || good.Role != StallRole.Buys) continue;
                 if (good.Price < cheapest) cheapest = good.Price;
             }
             if (cheapest == uint.MaxValue) cheapest = 0;
             var economy = Considerations.Economy(context);
             // A hazardous kind's shelf counts only for a crawler who would go into danger for it, and only while the stall
-            // pays for it (Epic 10 G2); a kind the stall doesn't buy at all has no shelf (a creature's material before the
-            // stall trades it, Epic 10 Part 3, K4.2)
+            // pays for it (Epic 10 G2); a kind the stall doesn't buy has no shelf, and a creature's material isn't gathered at a
+            // node, so its shelf says nothing of the work (Epic 10 Part 3, K4.2, K4.4: an empty hide shelf kept a full stall open)
             bool venture = Vitality.WouldVenture(context);
             bool room = false;
             var salvage = ItemCatalog.InCategory(ItemCategory.Resource);
             for (int i = 0; i < salvage.Count && !room; i++)
             {
                 var kind = salvage[i];
-                if (!stall.TryGetGood(kind, out var shelf) || shelf.Role != StallRole.Buys) continue;
+                if (ItemCatalog.Is(kind, ItemCategory.Creature) || !stall.TryGetGood(kind, out var shelf) || shelf.Role != StallRole.Buys) continue;
                 if (ItemCatalog.Is(kind, ItemCategory.Hazardous) && (!venture || stall.BuyPriceOf(kind) == 0)) continue;
                 room = economy.StallHasRoom(stall, kind);
             }
@@ -667,20 +668,24 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// The weapon this bold resident would buy now (Epic 10 Part 3, K3.3, Q6: the bold buy their own weapons, as residents
+        /// The arms this bold resident would buy now (Epic 10 Part 3, K3.3, Q6: the bold buy their own weapons, as residents
         /// who mine buy pickaxes): among the equipment the nearest reachable stall sells and has in stock, at or under its price
-        /// with a ration's price to spare, the one that most raises its attack over what it wields (a blade over a cudgel); the
-        /// first in id order on a tie. False for a drifter, a crawler that wouldn't venture into danger, or one that wields the
-        /// best it would buy.
+        /// with a ration's price to spare, the piece that most raises its fighting outfit (<see cref="OutfitNeed.ForFighting"/>):
+        /// a weapon that raises its attack over what it wields (a blade over a cudgel, the old one traded in), or, once armed,
+        /// armour for a head or body slot it leaves bare (K4.4, D26: never in place of what it wears, so hazard gear stays).
+        /// The first in id order on a tie. False for a drifter, a crawler that wouldn't venture into danger, or one armed as
+        /// well as it would buy.
         /// </summary>
-        public static bool TryChooseWeapon(in AgentContext context, out ItemType weapon)
+        public static bool TryChooseArms(in AgentContext context, out ItemType arms)
         {
-            weapon = ItemType.None;
+            arms = ItemType.None;
             if (context.IsDrifter || context.Personality.RiskTolerancePercent < Vitality.VentureRiskTolerancePercent) return false;
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
             var inventory = context.Inventory;
             int gold = inventory != null ? inventory.Gold : 0;
             ushort food = stall.SellPriceOf(FoodForSale(stall));
+            bool armed = Vitality.IsArmed(inventory);
+            float unarmed = Simpiens.Simulation.Combat.CombatRules.UnarmedAttack;
             float bestGain = 0f;
             var items = ItemCatalog.All;
             for (int i = 0; i < items.Count; i++)
@@ -691,15 +696,15 @@ namespace Simpiens.Cognition.Planning
                 if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
                 if (!Simpiens.Simulation.Items.WornGear.TryReplacing(inventory, item, out var slot)) continue;
                 var piece = Outfitting.NewPiece(item, stall.BestGradeOf(item));
-                // A weapon: what raises its attack (armour, which raises its defense alone, is the guild's to give, K7); one better
-                // than the weapon it wields takes its place, which goes back to the stall (W3's trade-in)
-                if (CrawlerStats.Get(inventory, StatKind.Attack, Simpiens.Simulation.Combat.CombatRules.UnarmedAttack, new WornSwap(slot, piece)) <= Simpiens.Simulation.Combat.CombatRules.UnarmedAttack) continue;
+                bool weapon = CrawlerStats.Get(inventory, StatKind.Attack, unarmed, new WornSwap(slot, piece)) > unarmed;
+                // Armour once armed, for a slot left bare (D26); a weapon whenever it raises the attack (K3.3)
+                if (!weapon && (!armed || !items[i].Is(ItemCategory.Protection) || (inventory != null && !inventory.GetEquipped(slot).IsEmpty))) continue;
                 float gain = Outfitting.Gain(inventory, OutfitNeed.ForFighting, slot, piece);
                 if (gain <= bestGain) continue;
                 bestGain = gain;
-                weapon = item;
+                arms = item;
             }
-            return weapon != ItemType.None;
+            return arms != ItemType.None;
         }
 
         /// <summary>True when what the crawler wears speeds its mining, by its stats (K1.4; W1.4 asked for the tool group).</summary>

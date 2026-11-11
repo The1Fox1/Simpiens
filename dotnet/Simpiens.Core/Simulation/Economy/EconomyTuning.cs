@@ -160,10 +160,10 @@ namespace Simpiens.Simulation.Economy
             items[(int)ItemType.RingCoat] = new ItemTerms(70, StallRole.Sells, 55, 0);
             // Loot (Epic 10 Part 3, K4.2): valued, not yet traded (the stall's terms for materials and their armour are K4.4's);
             // the rare pieces are never the stall's
-            items[(int)ItemType.Hide] = new ItemTerms(6);
-            items[(int)ItemType.Chitin] = new ItemTerms(9);
-            items[(int)ItemType.LeatherJerkin] = new ItemTerms(45);
-            items[(int)ItemType.ChitinPlate] = new ItemTerms(100);
+            items[(int)ItemType.Hide] = new ItemTerms(3, StallRole.Buys, 5, 0); // K4.4 (D25): the forge's, the surplus the caravan's
+            items[(int)ItemType.Chitin] = new ItemTerms(5, StallRole.Buys, 8, 0);
+            items[(int)ItemType.LeatherJerkin] = new ItemTerms(45, StallRole.Sells, 35, 0); // made at the forge (K4.4)
+            items[(int)ItemType.ChitinPlate] = new ItemTerms(100, StallRole.Sells, 70, 0);
             items[(int)ItemType.FangKnife] = new ItemTerms(150);
             items[(int)ItemType.StoneheartCoat] = new ItemTerms(180);
             return items;
