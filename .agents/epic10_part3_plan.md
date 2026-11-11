@@ -338,9 +338,14 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - **The DoD** `KillsFeedTheForge` (`AKillsMaterialsBecomeArmourAResidentWears`): gate seed 18, a chitin plate worn at t33877 after three kills; armour from a kill worn on 5 of the 23 gate seeds in ten days (made on 6).
   - **Found:** F5, older than K4: a thrash by the stall on seeds 8 and 15 over long runs with the workshop player (the same at K3's gate and at K4.3).
   - Tests: core 232/232, golden 3/3 unchanged (its runs end at t3000, before any kill), the soak 15/15, seeds 1–120 120/120 with and without the guild; client 500/500 in the pinned image after re-recording the merchant terminal and the station window (their lists grew), and the art pins (the jerkin's and the plate's graded icons) after a look.
-- [ ] **K4.5 The client:** [Possibly Complex: art and renders]
+- [x] **K4.5 The client:** [Possibly Complex: art and renders]
   - piles on the map;
   - rarity's colours in the merchant terminal and the dossier.
+  - [x] **K4.5a Piles on the map:** [Possibly Complex: a new entity drawn, in both view modes] the frame carries each pile's top item (its rarest stack, the first on a tie: `EntityView.PileItem`), drawn as that item's picture on the stall's display (`DisplayPicture`: every item has one), standing as a prop, faded by the fog like any prop. No new sprite: a pile of hide shows a hide.
+  - [x] **K4.5b Rarity's colours on names:** [Basic: tokens and two views] `UiStyle`'s rarity tokens (lighter shades of the icon rims' colours, for text on the dark panels; common keeps today's colour): the merchant terminal's good names, and the gear line's pieces in the dossier and the guild cards (a graded piece by its rim, as its icon).
+  - [x] **K4.5c Tests:** [Basic] a presentation test (a pile drawn with its top item's picture, under the fog hidden); the changed renders re-recorded in the pinned image after a look.
+  - **Built:** as planned. Client 502/502 in the pinned image after re-recording the merchant terminal (glowstone in rare blue; chitin, the pickaxe, hazard gear and the draught in uncommon green) and the dossier with a pickaxe (its gear line green), after a look; no render shows a pile (none lies on the map in a render's scene).
+- **K4 is done (2026-11-11).** Its DoD `KillsFeedTheForge` passes on gate seed 18.
 - **DoD `KillsFeedTheForge`:** a hunter's kill drops hide; the hide is sold at the stall; the forge makes a jerkin from it; a resident wears it.
 
 ### K5. Death and rescue (4–5 days), then the producer's look

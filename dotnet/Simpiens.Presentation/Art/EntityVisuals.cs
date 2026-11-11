@@ -61,10 +61,14 @@ namespace Simpiens.Presentation.Art
             return (uint)i < (uint)_stations.Length ? _stations[i] : ArtId.None;
         }
 
-        /// <summary>A prop's art: a resource node, the hearth or a bunk; false for anything drawn otherwise, or not at all.</summary>
+        /// <summary>
+        /// A prop's art: a resource node, the hearth, a bunk, or a pile on the ground (Epic 10 Part 3, K4.5a: its top item as
+        /// the stall displays it); false for anything drawn otherwise, or not at all.
+        /// </summary>
         public bool TryProp(in EntityView entity, out ArtId id)
         {
             if (entity.Type == EntityType.Resource) id = _catalog.Node(ItemCatalog.Get(entity.ResourceKind)?.ArtKey);
+            else if (entity.Type == EntityType.Pile) id = entity.PileItem != Simpiens.Simulation.Economy.ItemType.None ? _catalog.Picture(ItemCatalog.Get(entity.PileItem)?.ArtKey, _catalog.DisplayPicture) : ArtId.None;
             else id = (uint)entity.Type < (uint)_byType.Length ? _byType[(int)entity.Type] : ArtId.None;
             return !id.IsNone;
         }

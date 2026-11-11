@@ -75,6 +75,9 @@ namespace Simpiens.Presentation
 
         /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
         public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
+
+        /// <summary>A pile's top item (Epic 10 Part 3, K4.5a): its rarest stack, the first on a tie; none for anything else, or a purse alone.</summary>
+        public ItemType PileItem;
     }
 
     /// <summary>
@@ -205,10 +208,27 @@ namespace Simpiens.Presentation
                     CreatureMode = creature != null ? creature.Mode : default,
                     CreatureTarget = creature != null ? creature.Target : default,
                     Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
+                    PileItem = entity.Pile != null ? TopItem(entity.Pile) : ItemType.None,
                 };
                 _index[entity.Id] = Count;
                 Count++;
             }
+        }
+
+        // A pile's rarest stack, the first on a tie (K4.5a)
+        private static ItemType TopItem(Simpiens.Simulation.Loot.LootPile pile)
+        {
+            var top = ItemType.None;
+            var rarity = ItemRarity.Common;
+            for (int i = 0; i < pile.Count; i++)
+            {
+                var item = pile.StackAt(i).Type;
+                var definition = ItemCatalog.Get(item);
+                if (definition == null || (top != ItemType.None && definition.Rarity <= rarity)) continue;
+                top = item;
+                rarity = definition.Rarity;
+            }
+            return top;
         }
 
         private void CaptureStations(WorkshopService workshops)

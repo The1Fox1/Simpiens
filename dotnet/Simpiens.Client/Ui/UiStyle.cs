@@ -69,6 +69,23 @@ namespace Simpiens.Client.Ui
         public static readonly Color TestBannerBorder = Hex(0xf97316);
         public static readonly Color TestBannerText = Hex(0xffedd5);
 
+        // Rarity's colours on an item's name (Epic 10 Part 3, K4.5b): the icon rims' hues, a shade lighter so small words
+        // read on the dark panels; a common item keeps the colour its place gives it
+        public static readonly Color RarityUncommon = Hex(0x4ade80);
+        public static readonly Color RarityRare = Hex(0x60a5fa);
+        public static readonly Color RarityEpic = Hex(0xc084fc);
+        public static readonly Color RarityLegendary = Hex(0xfbbf24);
+
+        /// <summary>The colour of an item's name at <paramref name="rarity"/>; <paramref name="common"/> for a common one.</summary>
+        public static Color RarityText(Simpiens.Simulation.Items.ItemRarity rarity, Color common) => rarity switch
+        {
+            Simpiens.Simulation.Items.ItemRarity.Uncommon => RarityUncommon,
+            Simpiens.Simulation.Items.ItemRarity.Rare => RarityRare,
+            Simpiens.Simulation.Items.ItemRarity.Epic => RarityEpic,
+            Simpiens.Simulation.Items.ItemRarity.Legendary => RarityLegendary,
+            _ => common,
+        };
+
         /// <summary>
         /// A crawler's state badge: a dark plate under light words, so a list of badges stays quiet and only panic, in
         /// the danger red, stands out (the words say the state; colour only helps).

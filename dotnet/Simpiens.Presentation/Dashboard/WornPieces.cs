@@ -32,6 +32,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Its icon key (graphics V4); null with none.</summary>
         public string Icon { get; private set; }
 
+        /// <summary>Its rarity as its icon's rim shows it, raised by its grade (Epic 10 Part 3, K4.5b): what colours its name; common with none.</summary>
+        public ItemRarity Rarity { get; private set; }
+
         // Words are rebuilt only when the piece, its grade or what's left of it changes
         internal void Show(in ItemInstance piece)
         {
@@ -42,6 +45,7 @@ namespace Simpiens.Presentation.Dashboard
                 _left = -1;
                 Text = Short = Left = string.Empty;
                 Icon = null;
+                Rarity = ItemRarity.Common;
                 return;
             }
             int left = DossierModel.LifeLeft(piece);
@@ -54,6 +58,7 @@ namespace Simpiens.Presentation.Dashboard
             Short = Invariant($"{name} {left}%");
             Left = Invariant($"{left}%");
             Icon = ItemIcons.Of(piece.Type, piece.Quality);
+            Rarity = Grades.RimOf(ItemCatalog.Get(piece.Type)?.Rarity ?? ItemRarity.Common, piece.Quality);
         }
     }
 

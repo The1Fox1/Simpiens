@@ -72,7 +72,8 @@ namespace Simpiens.Client.Ui
             {
                 var item = row.Item;
                 _items.Add(item);
-                _sliders[item] = AddPriceRow(list, row.Label, row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value, out var hint);
+                var rarity = Simpiens.Simulation.Items.ItemCatalog.Get(item)?.Rarity ?? Simpiens.Simulation.Items.ItemRarity.Common;
+                _sliders[item] = AddPriceRow(list, row.Label, UiStyle.RarityText(rarity, UiStyle.TextBright), row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value, out var hint);
                 _values[item] = value;
                 _hints[item] = hint;
             }
@@ -122,7 +123,7 @@ namespace Simpiens.Client.Ui
         /// <summary>A good's line under its name: what it is to the stall, and the stall's stock of it.</summary>
         public TextRuntime HintText(Simpiens.Simulation.Economy.ItemType item) => _hints[item];
 
-        private Slider AddPriceRow(GraphicalUiElement body, string title, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value, out TextRuntime hint)
+        private Slider AddPriceRow(GraphicalUiElement body, string title, Color titleColour, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value, out TextRuntime hint)
         {
             var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };
             UiParts.AddFill(row, UiStyle.Card);
@@ -135,7 +136,7 @@ namespace Simpiens.Client.Ui
             var labels = UiParts.Column(2f);
             labels.X = 12f + IconAtlas.Size + 10f;
             UiParts.CentreVertically(labels);
-            labels.Children.Add(UiParts.Text(title, UiStyle.TextBright, UiText.BodyBold));
+            labels.Children.Add(UiParts.Text(title, titleColour, UiText.BodyBold)); // in its rarity's colour (Epic 10 Part 3, K4.5b)
             hint = UiParts.Text(description, UiStyle.TextMuted, UiText.Small);
             labels.Children.Add(hint);
             row.Children.Add(labels);

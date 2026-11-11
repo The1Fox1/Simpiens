@@ -67,6 +67,8 @@ namespace Simpiens.Client.Ui
                 if (worn)
                 {
                     UiParts.SetText(entry.Text, brief ? slots[i].Left : slots[i].Short);
+                    var colour = UiStyle.RarityText(slots[i].Rarity, UiStyle.TextSecondary); // its rarity's, as its icon's rim (K4.5b)
+                    if (entry.Text.Color != colour) entry.Text.Color = colour;
                     first = false;
                 }
             }
