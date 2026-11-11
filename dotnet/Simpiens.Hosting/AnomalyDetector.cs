@@ -296,6 +296,7 @@ namespace Simpiens.Hosting
                     var b = entities[j];
                     if (b == null || b.Type != EntityType.Pawn) continue;
                     if (IsSocial(a) || IsSocial(b)) continue;
+                    if (IsDownOrCarried(a) || IsDownOrCarried(b)) continue; // the fallen lie on the ground, the carried ride (Epic 10 Part 3, K5)
                     float distance = Vec2.Distance(a.Position, b.Position);
                     if (distance >= StackingDistance) continue;
                     stacked = true;
@@ -314,6 +315,8 @@ namespace Simpiens.Hosting
         }
 
         private static bool IsSocial(WorldEntity pawn) => pawn.Agent != null && (pawn.Agent.IsGossiping || pawn.Agent.IsSharing);
+
+        private static bool IsDownOrCarried(WorldEntity pawn) => pawn.Agent != null && (pawn.Agent.IsDowned || pawn.Agent.Carrying != default);
 
         private void CheckBodies(IReadOnlyList<WorldEntity> entities, long tick, float seconds)
         {

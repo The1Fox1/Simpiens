@@ -42,6 +42,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>A crawler in a fight asks to swing at a creature this tick; the creatures' phase decides it (K3.3, D6).</summary>
         void SwingAtCreature(WorldEntity crawler, EntityId creature);
 
+        /// <summary>Danger for the fallen (Epic 10 Part 3, K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
+        bool InDanger(Vec2 position);
+
         /// <summary>True while the pile lies on the ground (Epic 10 Part 3, K4.3).</summary>
         bool PileExists(EntityId pileId);
 

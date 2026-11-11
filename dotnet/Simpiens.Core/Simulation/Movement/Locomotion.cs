@@ -170,6 +170,7 @@ namespace Simpiens.Simulation.Movement
             float speed = node != null ? node.BaseSpeed : 2f;
             if (node?.Agent != null && node.Agent.IsCollapsed) return IntentResult.PathBlocked; // collapsed in danger, it can't move (Epic 10 Part 3, K5.1)
             if (node?.Agent != null && node.Agent.IsDowned) speed = (float)(speed * Vitality.DownedSpeedFactor);
+            if (node?.Agent != null && node.Agent.Carrying != default) speed = (float)(speed * Vitality.CarrySpeedFactor); // with the fallen on its back (K5.2)
             float step = (float)(speed * SimulationManager.FixedTickDeltaTime);
             Vec2 candidate = Vec2.MoveTowards(node.Position, targetPos, step);
             if (IsCrowdedMove(node, candidate))

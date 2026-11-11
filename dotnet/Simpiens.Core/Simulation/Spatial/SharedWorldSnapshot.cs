@@ -46,6 +46,18 @@ namespace Simpiens.Simulation.Spatial
         public int ActivePileCount;
         public ReadOnlySpan<Simpiens.Simulation.Loot.PileView> Piles => new ReadOnlySpan<Simpiens.Simulation.Loot.PileView>(PileBuffer, 0, ActivePileCount);
 
+        // The fallen (Epic 10 Part 3, K5.3): crawlers collapsed in danger, in registration order
+        public const int MaxFallen = 16;
+        public readonly FallenView[] FallenBuffer = new FallenView[MaxFallen];
+        public int ActiveFallenCount;
+        public ReadOnlySpan<FallenView> Fallen => new ReadOnlySpan<FallenView>(FallenBuffer, 0, ActiveFallenCount);
+
+        /// <summary>Adds a fallen crawler (main thread, while the snapshot is filled); past the cap, the later are left out.</summary>
+        public void AddFallen(in FallenView fallen)
+        {
+            if (ActiveFallenCount < MaxFallen) FallenBuffer[ActiveFallenCount++] = fallen;
+        }
+
         /// <summary>Copies the piles into the pre-allocated buffer (main thread; no allocation).</summary>
         public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> source)
         {
@@ -158,6 +170,8 @@ namespace Simpiens.Simulation.Spatial
             ActiveBountyCount = 0;
             Array.Clear(PileBuffer, 0, ActivePileCount);
             ActivePileCount = 0;
+            Array.Clear(FallenBuffer, 0, ActiveFallenCount);
+            ActiveFallenCount = 0;
         }
 
         /// <summary>

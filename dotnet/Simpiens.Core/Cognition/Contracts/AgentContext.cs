@@ -69,6 +69,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Downed in danger, the tick it bleeds out (Epic 10 Part 3, K5.1); 0 while it isn't bleeding.</summary>
         public readonly uint BleedsOutAt;
 
+        /// <summary>Its party's group, if it is in one (Epic 10 Part 3, K5.3: party mates come for each other); 0 for none.</summary>
+        public readonly byte PartyGroupId;
+
         /// <summary>Collapsed in danger, its clock running (K5.1): it lies where it fell.</summary>
         public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
 
@@ -89,9 +92,11 @@ namespace Simpiens.Cognition.Contracts
                             in KeptBunk bunk = default,
                             uint struckAtTick = 0,
                             EntityId struckBy = default,
-                            uint bleedsOutAt = 0)
+                            uint bleedsOutAt = 0,
+                            byte partyGroupId = 0)
         {
             BleedsOutAt = bleedsOutAt;
+            PartyGroupId = partyGroupId;
             StruckAtTick = struckAtTick;
             StruckBy = struckBy;
             Expedition = expedition;

@@ -76,6 +76,8 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.HasWeapon, Vitality.IsArmed(context.Inventory) && !ResourceTargeting.TryChooseArms(context, out _));
                 // Nothing on the ground in sight to take (K4.3): a pile it would take from is loot to collect
                 state = state.With(StateFact.LootCollected, !LootTargeting.TryChoosePile(context, out _));
+                // Nobody fallen within earshot it would come for (K5.3)
+                state = state.With(StateFact.FallenRescued, !Rescue.TryChooseFallen(context, out _, out _));
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);

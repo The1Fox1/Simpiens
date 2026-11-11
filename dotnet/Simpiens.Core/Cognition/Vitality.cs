@@ -27,6 +27,9 @@ namespace Simpiens.Cognition
         /// <summary>A downed crawler limps at this share of its speed.</summary>
         public const float DownedSpeedFactor = 0.4f;
 
+        /// <summary>A rescuer carries the fallen at half its pace (Epic 10 Part 3, K5.2).</summary>
+        public const float CarrySpeedFactor = 0.5f;
+
         /// <summary>Only a crawler at least this bold (personality) and this healthy goes into a hazard sector for its salvage.</summary>
         public const float VentureRiskTolerance = 0.3f;
         public const int VentureRiskTolerancePercent = 30;
@@ -202,10 +205,12 @@ namespace Simpiens.Cognition
         /// Where a hurt crawler heads: the floor plan's nearest bunk, free or not (the plan is common knowledge; a crawler
         /// that knew no free bunk stayed downed in a hazard sector all day). False on a map without bunks.
         /// </summary>
-        public static bool TryGetRefuge(in AgentContext context, out Vec2 refuge)
+        public static bool TryGetRefuge(in AgentContext context, out Vec2 refuge) => TryGetRefugeFrom(context.Snapshot?.Map, context.Position, out refuge);
+
+        /// <summary>The bunk nearest <paramref name="from"/> (a rescuer's way out from where the fallen lies, Epic 10 Part 3, K5.3).</summary>
+        public static bool TryGetRefugeFrom(MapDefinition map, Vec2 from, out Vec2 refuge)
         {
             refuge = default;
-            var map = context.Snapshot?.Map;
             if (map == null) return false;
             float bestSqr = float.MaxValue;
             bool found = false;
@@ -213,7 +218,7 @@ namespace Simpiens.Cognition
             {
                 var poi = map.Pois[i];
                 if (poi.Kind != PoiKind.Bunk) continue;
-                float sqr = (poi.Position - context.Position).SqrMagnitude;
+                float sqr = (poi.Position - from).SqrMagnitude;
                 if (sqr >= bestSqr) continue;
                 bestSqr = sqr;
                 refuge = poi.Position;

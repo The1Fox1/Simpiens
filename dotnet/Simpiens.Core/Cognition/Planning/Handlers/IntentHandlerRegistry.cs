@@ -64,6 +64,8 @@ namespace Simpiens.Cognition.Contracts
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.TreatWoundsIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.WorkStationIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.PickUpIntentHandler()); // Epic 10 Part 3, K4.3
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.CarryIntentHandler()); // K5.2
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.GiveMedicineIntentHandler()); // K5.3
             return registry;
         }
     }

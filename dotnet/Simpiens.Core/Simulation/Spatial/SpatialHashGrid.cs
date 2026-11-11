@@ -248,6 +248,12 @@ namespace Simpiens.Simulation.Spatial
                 var type = node.Type;
 
                 bool isCollapsed = node.Agent != null && node.Agent.IsExhaustionCollapsed;
+                if (node.Agent != null && node.Agent.IsCollapsed && !node.Agent.HasLeft)
+                {
+                    // Collapsed in danger (Epic 10 Part 3, K5.3): its cry reaches would-be rescuers through the snapshot
+                    byte party = node.Agent.Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var membership) ? membership.GroupId : (byte)0;
+                    _currentTickSnapshot.AddFallen(new FallenView(node.Id, pos, node.Agent.BleedsOutAt, node.Agent.CarriedBy, party));
+                }
                 float hunger = node.Agent != null ? node.Agent.Hunger : 0f;
                 var snapshot = new EntitySnapshot(node.Id, pos, node.Velocity, radius, type, isCollapsed, hunger, node.ResourceKind);
 

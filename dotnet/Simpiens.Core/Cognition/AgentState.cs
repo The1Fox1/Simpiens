@@ -193,6 +193,13 @@ namespace Simpiens.Cognition
         /// </summary>
         public uint BleedsOutAt { get; set; }
 
+        /// <summary>
+        /// Carrying (Epic 10 Part 3, K5.2, A7): on the fallen, who carries it; on its rescuer, whom it carries. Coupled only
+        /// while the rescuer's carry runs; not saved (work in progress: after a load the fallen lies where it was).
+        /// </summary>
+        public EntityId CarriedBy { get; set; }
+        public EntityId Carrying { get; set; }
+
         /// <summary>Collapsed in danger, its clock running (K5.1).</summary>
         public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
 
@@ -563,7 +570,8 @@ namespace Simpiens.Cognition
                 Bunk,
                 StruckAtTick,
                 StruckBy,
-                BleedsOutAt);
+                BleedsOutAt,
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0);
         }
     }
 }

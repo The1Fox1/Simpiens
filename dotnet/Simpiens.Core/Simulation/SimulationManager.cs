@@ -139,6 +139,15 @@ namespace Simpiens.Simulation
         {
             var entities = _worldRegistry?.ActiveEntities;
             if (entities == null) return;
+            // A carry holds only while the rescuer's carry runs for this fallen and the fallen is still down (K5.2b): however
+            // it ended (struck, downed, gone, turned to something else), the two part where they are
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var agent = entities[i]?.Agent;
+                if (agent == null) continue;
+                if (agent.CarriedBy != default && !CarryHolds(_worldRegistry.GetEntity(agent.CarriedBy)?.Agent, agent)) agent.CarriedBy = default;
+                if (agent.Carrying != default && !CarryHolds(agent, _worldRegistry.GetEntity(agent.Carrying)?.Agent)) agent.Carrying = default;
+            }
             for (int i = 0; i < entities.Count; i++)
             {
                 var node = entities[i];
@@ -158,6 +167,12 @@ namespace Simpiens.Simulation
                 if (tick >= agent.BleedsOutAt) Die(node, agent.DownedBy, agent.DownedDetail, agent.StruckBy);
             }
         }
+
+        // The rescuer still carries the fallen: both here, its carry running for this one, the fallen still down
+        private static bool CarryHolds(AgentState rescuer, AgentState fallen) =>
+            rescuer != null && fallen != null && !rescuer.HasLeft && !fallen.HasLeft && fallen.IsDowned && !rescuer.IsDowned
+            && rescuer.Carrying == fallen.AgentId && fallen.CarriedBy == rescuer.AgentId
+            && rescuer.CurrentIntent is CarryIntent carry && carry.FallenId == fallen.AgentId;
 
         /// <summary>How long a crawler downed in danger lives, unrescued (Q3: 2 game hours).</summary>
         public const int BleedOutHours = 2;

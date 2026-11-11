@@ -207,6 +207,15 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **The clock stops** when it is out of danger (carried, K5.2) or back on its feet. When the clock runs out, it dies of what downed it: the hazard's or the creature's kind, and the creature for the chronicle.
   - **Saved** in the crawler's record: the clock, and what downed it (inside format 11).
   - **K2.3's test** of a stray downed by the warren limping out became "it collapses, lies still and is left alone".
+- **D29, carrying** (A7, one capability): the rescuer walks to the fallen, lifts it (a game minute), and carries it at half pace toward the bunk nearest where it lay, the fallen riding at its place. It sets the fallen down as soon as they are out of danger; downed in safety there, the fallen limps on itself.
+  - **A carry holds** only while the rescuer's carry runs for this fallen and both are as they were: struck, downed, gone or turned to something else, the two part where they are, and a fallen still in danger lies collapsed with its clock running.
+  - **Not saved:** work in progress, as intents are. After a load the fallen lies where it was and is rescued afresh.
+  - **The anomaly watch** doesn't count the fallen or the carried as stacked pawns.
+- **D30, who comes** (Q3b): a crawler collapsed in danger cries out. A crawler on its feet within 15 units, through walls, comes if the fallen is a friend (its warmth toward it 30 or more, the same line as grief) or a party mate, and if it would itself go where the fallen lies.
+  - **What it does:** with a medicine that alone stands the fallen up (a draught: 80 against the recovery line of 60), it hands that over (two game minutes); otherwise it carries the fallen out.
+  - **Priority 90,** above every goal but a drifter's leaving: a life is on a clock.
+  - **Both remember:** aid given and received, the rescued warming to its rescuer and trusting it; the chronicle tells it (`CrawlerRescued`).
+  - **Why earshot and not sight:** a crawler down in a hazard is usually alone, and sight is 6 units. Earshot lets a friend working nearby come. The 15 is unmeasured; the DoDs' measurement will say whether it is right.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
