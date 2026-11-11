@@ -1661,3 +1661,21 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The DoD** (`04a8d1e`): gate seed 18, a kill at t14382.
 - **K3.4** (`86fdbb3`): a weapon is worn in the hand. The hand is the rightmost skin under the head, so no new anchor table was needed.
 - **Golden:** re-recorded once, for the purchases (`a56309d`).
+
+## 2026-11-11: Epic 10 Part 3, K4, loot (under the producer's AFK directive)
+- **The word:** "Looks good. I will be afk you will be responsible for finishing K4-K5", after K3's look. Decisions D22–D26 are in the epic for the producer's return.
+- **K4.1** (`cd41635`): piles are entities of their own (`EntityType.Pile`, `PileService`) with their own seeded id sequence, as creatures have, so drops never shift who comes next. They are left out of spatial memory, so cognition reads them from the snapshot. They are saved in the world's block and held in the world hash.
+- **K4.2** (`dce6211`): creatures' materials are a new origin, `ItemCategory.Creature` (D22). Loops over every resource met the new items: the stall's room check (golden moved at t2000 until fixed), the header and the Gather list. Item ids are never reused, so the six items take 15–20.
+- **K4.3** (`5bf26a7`): one loot rule (`LootRules`) for both the take and the choice of pile, so a crawler never walks to a pile it would take nothing from. Cognition sees piles as copies in every snapshot (`PileView`, with a 256-bit item mask), never the live piles. Activity counters stay out of the raw-memory crawler record. The loot roller now gives equipment its life; it had dropped pieces at durability 0.
+- **K4.4** (`7c178e5`): measured before tuning (an explicit gate-seed measurement in `KillsFeedTheForgeTests`), which found four frictions and a leak:
+  - nobody sold at base values over the stall's price;
+  - victors walked off from their own drop, blind to it in fog or a lair they no longer braved;
+  - the herb reflex came before the drop;
+  - the plate at three chitin was too rare;
+  - the materials' empty shelves kept a full stall looking open.
+  - **Deviation:** the stall's goods table grew from 16 to 24 inside the unreleased format 11 rather than raising the format. That is format 10's precedent, and K2.4 and K4.1 had already grown format 11. A quick-save made on the branch before K4.4 won't load.
+  - **Deviation:** K3's "residents buy weapons only" was widened to armour for a bare slot (D26), so armour made from a kill finds a wearer.
+  - **The workshop player** takes extra makes (`Also`).
+- **K4.5** (`d230531`): a pile is drawn as its rarest item, so no new sprite was needed. Item names take rarity's colours from tokens a shade lighter than the icon rims.
+- **Golden unchanged through K4:** the golden runs end at t3000, before any kill.
+- **Finding F5:** a thrash by the stall on seeds 8 and 15 in long runs with the workshop player. It is older than K4 (the same at K3's gate).
