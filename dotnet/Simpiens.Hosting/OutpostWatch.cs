@@ -116,10 +116,15 @@ namespace Simpiens.Hosting
         /// Creatures (Epic 10 Part 3, K2.3), every crawler present, drifters included: blows that fell (hit or miss), the
         /// crawlers they fell on, those that hurt, flights begun, crawlers a blow downed, when each of the map's lairs was
         /// charted (-1 for never), and lone entries into a lair after it had been charted for <see cref="KnownLairGraceTicks"/>:
-        /// a crawler on its feet, off an expedition, not fleeing, stepping from outside to within its reach less
-        /// <see cref="LairEdgeBand"/> (a passer-by grazing the edge isn't going into it). Any entry fails the day.
+        /// a crawler on its feet, off an expedition, not fleeing, not one who braves the lair (the bold and armed, Epic 10 Part
+        /// 3, K3.3, D21), stepping from outside to within its reach less <see cref="LairEdgeBand"/> (a passer-by grazing the
+        /// edge isn't going into it). Any entry fails the day.
         /// </summary>
         public int Blows, Hits, Flights, DownedByCreatures, EntriesIntoKnownLairs;
+
+        /// <summary>Fighting back (Epic 10 Part 3, K3.3): fights begun, creatures slain while watched, and the most residents armed at once.</summary>
+        public int Fights, Kills, MostArmed;
+        private readonly int _killsAtStart;
 
         /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
         public const float LairEdgeBand = 1f;
@@ -130,7 +135,7 @@ namespace Simpiens.Hosting
         /// <summary>A crawler that decided to go before a lair was charted may still be on its way: entries count from a game hour after.</summary>
         public const long KnownLairGraceTicks = DayClock.TicksPerHour;
 
-        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InKnownLair, bool Downed)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool)>();
+        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InKnownLair, bool Downed, bool Fighting)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool, bool)>();
 
         /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
         public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
@@ -141,6 +146,7 @@ namespace Simpiens.Hosting
             _startTick = sim.Clock.CurrentTick;
             _baselineSalvage = TotalSalvage(sim.Simulation);
             _faultsAtStart = sim.Simulation.IntentFaults;
+            _killsAtStart = sim.Simulation.Creatures.Kills;
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>
             {
@@ -276,12 +282,17 @@ namespace Simpiens.Hosting
             for (int i = 0; i < lairCount; i++)
                 if (LairChartedAt[i] < 0 && creatures.IsCharted(i)) LairChartedAt[i] = rel;
 
+            Kills = creatures.Kills - _killsAtStart;
             var present = _sim.Host.CrawlerStates;
+            int armed = 0;
             for (int i = 0; i < present.Count; i++)
             {
                 var state = present[i];
                 _creatureWatch.TryGetValue(state.AgentId, out var was);
                 bool fleeing = state.CurrentIntent is Simpiens.Cognition.Contracts.FleeIntent;
+                bool fighting = state.CurrentIntent is Simpiens.Cognition.Contracts.FightIntent;
+                if (fighting && !was.Fighting) Fights++;
+                if (!state.IsDrifter && Vitality.IsArmed(state.Inventory)) armed++;
                 if (state.StruckAtTick != 0 && state.StruckAtTick != was.Struck)
                 {
                     Blows++;
@@ -299,20 +310,22 @@ namespace Simpiens.Hosting
                 {
                     float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
                     inKnownLair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f
-                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep
+                        && !Vitality.BravesLair(map.Lairs[l], state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned); // K3.3, D21
                 }
                 if (inKnownLair && !was.InKnownLair && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
                 {
                     EntriesIntoKnownLairs++;
                     FirstEntryIntoKnownLair ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position} ({state.CurrentIntent?.GetType().Name})";
                 }
-                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inKnownLair, state.IsDowned);
+                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inKnownLair, state.IsDowned, fighting);
             }
+            if (armed > MostArmed) MostArmed = armed;
         }
 
         /// <summary>The creatures' line of the report (Epic 10 Part 3, K2.3).</summary>
         public string CreatureSummary() =>
-            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}";
+            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}; armed at most {MostArmed}, fights {Fights}, kills {Kills}";
 
         /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
         public void Run(long ticks)

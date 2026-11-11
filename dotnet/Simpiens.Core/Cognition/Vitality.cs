@@ -88,7 +88,64 @@ namespace Simpiens.Cognition
         /// judged as <see cref="WouldEnter(in AgentContext, in SectorHazard)"/>, and a charted lair's reach judged the same
         /// way, by its pack's danger against <see cref="LoneHazardLimit"/> (Q6: a known lair is judged as a hazard is).
         /// </summary>
-        public static bool WouldEnterAt(in AgentContext context, Vec2 position) => WouldEnterAt(WouldVenture(context), context.Snapshot, position, context.Inventory);
+        public static bool WouldEnterAt(in AgentContext context, Vec2 position)
+        {
+            bool venture = WouldVenture(context);
+            if (!WouldEnter(venture, HazardAt(context.Snapshot?.Map, position), context.Inventory)) return false;
+            float lair = LairDangerFor(context, position);
+            return lair <= 0f || (venture && lair <= LoneHazardLimit);
+        }
+
+        /// <summary>
+        /// As <see cref="LairDangerAt"/>, for this crawler: a charted lair it braves is no danger to it (Epic 10 Part 3, K3.3,
+        /// D21: the bold and armed brave a lair whose pack they expect to slay, <see cref="BravesLair"/>).
+        /// </summary>
+        public static float LairDangerFor(in AgentContext context, Vec2 position)
+        {
+            var snapshot = context.Snapshot;
+            var map = snapshot?.Map;
+            if (map == null || snapshot.ChartedLairMask == 0UL) return 0f;
+            float worst = 0f, defense = -1f;
+            var lairs = map.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
+                if (BravesLair(lairs[i], context.Inventory, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned)) continue;
+                if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
+                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense);
+                if (danger > worst) worst = danger;
+            }
+            return worst;
+        }
+
+        /// <summary>
+        /// The harm a crawler wearing <paramref name="worn"/> expects to take slaying <paramref name="lair"/>'s smallest pack
+        /// one by one (Epic 10 Part 3, K3.3, D21): each creature's harm a second through its defense, times what its own blows
+        /// take to slay one (the combat rule's hit chance for its attack less the creature's defense, every swing), over the
+        /// pack still standing: n, n - 1, ... 1 of them. Infinite for blows that can't hurt.
+        /// </summary>
+        public static float HarmToClear(in Simpiens.Simulation.World.LairDefinition lair, Simpiens.Cognition.Inventory.IAgentInventory worn)
+        {
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lair.Kind);
+            if (kind == null || kind.PackMin == 0) return 0f;
+            float attack = Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.Attack, Simpiens.Simulation.Combat.CombatRules.UnarmedAttack);
+            float interval = Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.AttackInterval, Simpiens.Simulation.Combat.CombatRules.UnarmedIntervalSeconds);
+            float perSecond = (float)(Simpiens.Simulation.Combat.CombatRules.BaseHitChance * Simpiens.Simulation.Combat.CombatRules.Mitigated(attack, kind.Defense) / SimMath.Max(0.1f, interval));
+            if (perSecond <= 0f) return float.MaxValue;
+            float defense = Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.Defense);
+            float eachHarm = Simpiens.Simulation.Creatures.LairReach.Danger(kind, defense) / kind.PackMin;
+            float eachTime = kind.MaxHealth / perSecond;
+            int n = kind.PackMin;
+            return (float)(eachHarm * eachTime * (n * (n + 1) / 2f));
+        }
+
+        /// <summary>
+        /// True when a crawler braves <paramref name="lair"/> alone (Epic 10 Part 3, K3.3, D21; Q6: a known lair is avoided
+        /// "past what it would brave alone"): bold, armed, on its feet, and expecting to slay its smallest pack before its health
+        /// falls to the retreat line.
+        /// </summary>
+        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, Simpiens.Cognition.Inventory.IAgentInventory worn, float health, int riskTolerancePercent, bool downed) =>
+            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, worn) <= health - RetreatBelow;
 
         /// <summary>The same, for a crawler already known to venture or not, wearing <paramref name="worn"/>.</summary>
         public static bool WouldEnterAt(bool venture, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)

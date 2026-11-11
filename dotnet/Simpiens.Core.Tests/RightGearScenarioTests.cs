@@ -22,7 +22,9 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class RightGearScenarioTests
     {
-        private const long Horizon = 6 * DayClock.TicksPerDay;
+        // Nine days (six until Epic 10 Part 3's K3.3): with the bold buying weapons the gate seed's trip all in respirators
+        // came on day 7.8, the forge's respirators shared with more buyers
+        private const long Horizon = 9 * DayClock.TicksPerDay;
 
         [Fact]
         public void TheRightGearForTheRightHazard()

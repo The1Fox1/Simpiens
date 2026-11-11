@@ -100,12 +100,12 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.IronBlade, "IronBlade", "Iron Blade",
                 ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Uncommon,
                 equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerHit,
-                    new StatModifier(StatKind.Attack, ModifierOp.Add, 6f),
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 8f), // +8 since K3.3's fights (D21): a lone beetle falls to it
                     new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
             new ItemDefinition(ItemType.GlowstoneEdge, "GlowstoneEdge", "Glowstone Edge",
                 ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Rare,
                 equipment: new EquipmentBlock(SlotKind.Weapon, durability: 160, WearRule.PerHit,
-                    new StatModifier(StatKind.Attack, ModifierOp.Add, 10f),
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 12f),
                     new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
             // Armour from ore (K3.2, Q11): defense cuts a blow by D / (D + 10) (the combat rule's D4), and wears by the blow taken
             new ItemDefinition(ItemType.IronHelm, "IronHelm", "Iron Helm",

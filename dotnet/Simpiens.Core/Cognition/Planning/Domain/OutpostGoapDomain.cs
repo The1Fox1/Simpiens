@@ -33,6 +33,7 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new BuyProvisionsAction());
             graph.RegisterAction(new BuyHazardGearAction());
             graph.RegisterAction(new BuyToolAction());
+            graph.RegisterAction(new BuyWeaponAction()); // Epic 10 Part 3, K3.3
             graph.RegisterAction(new BuyDraughtAction());
             graph.RegisterAction(new SellSalvageAction());
             graph.RegisterAction(new ClaimGatherBountyAction());
@@ -59,6 +60,7 @@ namespace Simpiens.Cognition.Planning.Domain
                 new PurchaseProvisionsGoal(),
                 new OutfitForDangerGoal(),
                 new EquipForWorkGoal(),
+                new ArmForFightGoal(), // Epic 10 Part 3, K3.3
                 new CarryMedicineGoal(),
                 new LiquidateSalvageGoal(),
                 new FulfillBountyGoal(),

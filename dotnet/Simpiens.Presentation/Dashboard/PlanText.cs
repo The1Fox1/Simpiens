@@ -26,6 +26,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(PurchaseProvisionsGoal)] = "Buy provisions",
             [typeof(OutfitForDangerGoal)] = "Gear up for danger",
             [typeof(EquipForWorkGoal)] = "Get a pickaxe for the work",
+            [typeof(ArmForFightGoal)] = "Arm itself against the vermin", // Epic 10 Part 3, K3.3
             [typeof(CarryMedicineGoal)] = "Carry a draught into danger",
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
@@ -36,6 +37,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(BuyProvisionsAction)] = "Buying provisions",
             [typeof(BuyHazardGearAction)] = "Buying hazard gear",
             [typeof(BuyToolAction)] = "Buying a pickaxe",
+            [typeof(BuyWeaponAction)] = "Buying a weapon",
             [typeof(BuyDraughtAction)] = "Buying a draught",
             [typeof(ClaimBountyAction)] = "Claiming a bounty",
             [typeof(ClaimGatherBountyAction)] = "Claiming a gather bounty",

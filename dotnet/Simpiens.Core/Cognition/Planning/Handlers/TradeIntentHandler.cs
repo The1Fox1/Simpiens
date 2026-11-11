@@ -53,8 +53,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var replacing = default(Simpiens.Simulation.Items.EquipmentSlot);
                 bool slotted = gear && Simpiens.Simulation.Items.WornGear.TryReplacing(agent.Inventory, trade.ItemType, out replacing);
                 var wornNow = slotted ? agent.Inventory.GetEquipped(replacing) : ItemInstance.Empty;
+                // A weapon is traded in for a better one too (Epic 10 Part 3, K3.3: a blade over a cudgel)
                 bool tradeIn = gear && !wornNow.IsEmpty && wornNow.Type != trade.ItemType
-                    && Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Protection);
+                    && (Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Protection)
+                        || Simpiens.Simulation.Items.ItemCatalog.Is(trade.ItemType, Simpiens.Simulation.Items.ItemCategory.Weapon));
                 if (gear && (trade.Quantity != 1 || !slotted || (!wornNow.IsEmpty && !tradeIn)))
                 {
                     return Reject(node, trade, "a crawler wears one piece a slot");

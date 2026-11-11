@@ -71,6 +71,8 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
                 state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));
+                // Armed with the best it would buy (Epic 10 Part 3, K3.3): a better weapon in stock it can afford is a weapon to buy
+                state = state.With(StateFact.HasWeapon, Vitality.IsArmed(context.Inventory) && !ResourceTargeting.TryChooseWeapon(context, out _));
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);

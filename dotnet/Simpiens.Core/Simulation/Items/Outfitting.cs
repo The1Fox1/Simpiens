@@ -24,17 +24,24 @@ namespace Simpiens.Simulation.Items
 
     /// <summary>
     /// What a wearer is outfitted for (K1.4): the hazards it faces and whether it mines. A piece is scored by what it does
-    /// to the stats that matter for these, never by its name or group. K3 adds creatures (attack and defense).
+    /// to the stats that matter for these, never by its name or group. K3.3 adds fighting creatures (attack and defense).
     /// </summary>
     public readonly struct OutfitNeed
     {
         private readonly uint _hazards;
 
-        private OutfitNeed(uint hazards, bool mining)
+        private OutfitNeed(uint hazards, bool mining, bool fighting = false)
         {
             _hazards = hazards;
             Mining = mining;
+            Fighting = fighting;
         }
+
+        /// <summary>Fights creatures (Epic 10 Part 3, K3.3): attack over a bare hand's, and defense, count.</summary>
+        public static OutfitNeed ForFighting => new OutfitNeed(0u, false, true);
+
+        /// <summary>Fights creatures as well as what this need covers.</summary>
+        public bool Fighting { get; }
 
         /// <summary>Faces a hazard of <paramref name="kind"/>; nothing for none.</summary>
         public static OutfitNeed Against(HazardKind kind) => default(OutfitNeed).And(kind);
@@ -53,16 +60,16 @@ namespace Simpiens.Simulation.Items
         }
 
         /// <summary>This need, facing a hazard of <paramref name="kind"/> too.</summary>
-        public OutfitNeed And(HazardKind kind) => kind == HazardKind.None || (byte)kind >= 32 ? this : new OutfitNeed(_hazards | (1u << (byte)kind), Mining);
+        public OutfitNeed And(HazardKind kind) => kind == HazardKind.None || (byte)kind >= 32 ? this : new OutfitNeed(_hazards | (1u << (byte)kind), Mining, Fighting);
 
         public bool Faces(HazardKind kind) => kind != HazardKind.None && (byte)kind < 32 && (_hazards & (1u << (byte)kind)) != 0;
 
         public bool Mining { get; }
 
         /// <summary>Nothing to outfit for: every piece scores 0.</summary>
-        public bool IsEmpty => _hazards == 0 && !Mining;
+        public bool IsEmpty => _hazards == 0 && !Mining && !Fighting;
 
-        public override string ToString() => IsEmpty ? "nothing" : $"hazards 0x{_hazards:x}{(Mining ? ", mining" : string.Empty)}";
+        public override string ToString() => IsEmpty ? "nothing" : $"hazards 0x{_hazards:x}{(Mining ? ", mining" : string.Empty)}{(Fighting ? ", fighting" : string.Empty)}";
     }
 
     /// <summary>
@@ -89,6 +96,14 @@ namespace Simpiens.Simulation.Items
                 if (need.Faces((HazardKind)kind)) score += CrawlerStats.HazardResistance(inventory, (HazardKind)kind, swap);
             }
             if (need.Mining) score += CrawlerStats.Get(inventory, StatKind.HarvestSpeed, 1f, swap) - 1f;
+            // Fighting (Epic 10 Part 3, K3.3): attack in bare hands' worth over one, and defense as the share of a blow it stops
+            if (need.Fighting)
+            {
+                float unarmed = Simpiens.Simulation.Combat.CombatRules.UnarmedAttack;
+                score += (CrawlerStats.Get(inventory, StatKind.Attack, unarmed, swap) - unarmed) / unarmed;
+                float defense = CrawlerStats.Get(inventory, StatKind.Defense, 0f, swap);
+                score += defense / (defense + Simpiens.Simulation.Combat.CombatRules.MitigationScale);
+            }
             return score;
         }
 

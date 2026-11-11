@@ -107,7 +107,7 @@ namespace Simpiens.Cognition.Planning
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
                 // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions;
                 // a charted lair's reach is danger too (Epic 10 Part 3, K2.3)
-                if (!Vitality.WouldEnterAt(venture, context.Snapshot, record.LastKnownLocation, context.Inventory)) continue;
+                if (!Vitality.WouldEnterAt(context, record.LastKnownLocation)) continue; // the bold and armed brave a lair they can clear (K3.3, D21)
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -662,6 +662,42 @@ namespace Simpiens.Cognition.Planning
                 gear = item;
             }
             return gear != ItemType.None;
+        }
+
+        /// <summary>
+        /// The weapon this bold resident would buy now (Epic 10 Part 3, K3.3, Q6: the bold buy their own weapons, as residents
+        /// who mine buy pickaxes): among the equipment the nearest reachable stall sells and has in stock, at or under its price
+        /// with a ration's price to spare, the one that most raises its attack over what it wields (a blade over a cudgel); the
+        /// first in id order on a tie. False for a drifter, a crawler that wouldn't venture into danger, or one that wields the
+        /// best it would buy.
+        /// </summary>
+        public static bool TryChooseWeapon(in AgentContext context, out ItemType weapon)
+        {
+            weapon = ItemType.None;
+            if (context.IsDrifter || context.Personality.RiskTolerancePercent < Vitality.VentureRiskTolerancePercent) return false;
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            var inventory = context.Inventory;
+            int gold = inventory != null ? inventory.Gold : 0;
+            ushort food = stall.SellPriceOf(FoodForSale(stall));
+            float bestGain = 0f;
+            var items = ItemCatalog.All;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i].Id;
+                if (items[i].Equipment == null || stall.SellStockOf(item) < 1) continue;
+                ushort price = stall.SellPriceOf(item);
+                if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
+                if (!Simpiens.Simulation.Items.WornGear.TryReplacing(inventory, item, out var slot)) continue;
+                var piece = Outfitting.NewPiece(item, stall.BestGradeOf(item));
+                // A weapon: what raises its attack (armour, which raises its defense alone, is the guild's to give, K7); one better
+                // than the weapon it wields takes its place, which goes back to the stall (W3's trade-in)
+                if (CrawlerStats.Get(inventory, StatKind.Attack, Simpiens.Simulation.Combat.CombatRules.UnarmedAttack, new WornSwap(slot, piece)) <= Simpiens.Simulation.Combat.CombatRules.UnarmedAttack) continue;
+                float gain = Outfitting.Gain(inventory, OutfitNeed.ForFighting, slot, piece);
+                if (gain <= bestGain) continue;
+                bestGain = gain;
+                weapon = item;
+            }
+            return weapon != ItemType.None;
         }
 
         /// <summary>True when what the crawler wears speeds its mining, by its stats (K1.4; W1.4 asked for the tool group).</summary>

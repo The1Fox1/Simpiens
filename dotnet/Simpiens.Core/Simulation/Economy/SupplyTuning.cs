@@ -88,7 +88,8 @@ namespace Simpiens.Simulation.Economy
             CaravanTerms.Exports(ItemType.IronOre, quota: 16, marketPrice: 6),
             CaravanTerms.Exports(ItemType.MedicinalHerb, quota: 12, marketPrice: 7),
             CaravanTerms.Supplies(ItemType.HazardGear, stockCap: 3, wholesaleCost: 20, SupplyService.GearSinkName),
-            CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70));
+            CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70),
+            CaravanTerms.Supplies(ItemType.Cudgel, stockCap: 2, wholesaleCost: 6, SupplyService.GearSinkName)); // Epic 10 Part 3, K3.1, Q10: with K3.3's buyers
 
         /// <summary>The most gold the caravan can pay a stall for its exports in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit

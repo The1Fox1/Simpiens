@@ -13,14 +13,22 @@ namespace Simpiens.Core.Tests
 {
     /// <summary>
     /// Epic 10 G4's Definition of Done (epic §3), live and headless: on the real outpost with nothing injected, a scripted
-    /// player that acts only through commands sees a trusted crawler sign on within the day and stay while paid; and,
+    /// player that acts only through commands sees a trusted crawler sign on within two days (one until Epic 10 Part 3's
+    /// K3.3) and stay while paid; and,
     /// when the stall can no longer pay, a member goes unpaid and quits, keeping its settlement.
     /// </summary>
     public class GuildScenarioTests
     {
         private const long Day = OutpostWatch.DayTicks;
 
-        /// <summary>Playing fair prices only, a resident signs on within the day; the fee and every visit's wage are paid; it keeps its settlement and its trust; the day holds.</summary>
+        /// <summary>
+        /// How long a trusted crawler may take to sign on: two days (Epic 10 Part 3, K3.3). On the default seed one signed at
+        /// t9405, an hour and a half before the first day's end, and the bold buying weapons moved the day's trades past it;
+        /// trust and warmth enough for a contract come of a day's fair trading, give or take.
+        /// </summary>
+        private const long SignOnBy = 2 * Day;
+
+        /// <summary>Playing fair prices only, a resident signs on within two days; the fee and every visit's wage are paid; it keeps its settlement and its trust; the days hold.</summary>
         [Fact]
         public void TheTrustedSignOnAndThePaidStay()
         {
@@ -33,12 +41,12 @@ namespace Simpiens.Core.Tests
 
             // Run until the first recruit has signed, noting the settlement it had just before
             byte settlementBefore = 0;
-            while (guild.Members.Count == 0 && sim.Clock.CurrentTick < Day)
+            while (guild.Members.Count == 0 && sim.Clock.CurrentTick < SignOnBy)
             {
                 if (player.Recruited.Count > 0 && groups.TryGetMembership(player.Recruited[0], GroupType.Settlement, out var s)) settlementBefore = s.GroupId;
                 watch.Run(1);
             }
-            Assert.True(guild.Members.Count == 1, $"Nobody signed on within the day (asked at t{player.FirstRecruitTick}).");
+            Assert.True(guild.Members.Count == 1, $"Nobody signed on within two days (asked at t{player.FirstRecruitTick}).");
             var contract = guild.Members[0];
             uint joined = contract.JoinTick;
             var ledger = sim.Simulation.EconomyLedger;
@@ -46,12 +54,13 @@ namespace Simpiens.Core.Tests
             Assert.Equal((uint)sim.Simulation.Economy.Guild.SigningFee, ledger.Flows.FeeGold);
             if (settlementBefore != 0) Assert.True(groups.TryGetMembership(contract.CrawlerId, settlementBefore, out _), "The recruit kept its settlement (D1).");
 
-            watch.Run(Day - sim.Clock.CurrentTick);
+            long end = (joined / Day + 1) * Day; // the end of the day it signed in
+            watch.Run(end - sim.Clock.CurrentTick);
             watch.Finish();
             TestContext.Current.TestOutputHelper?.WriteLine($"Signed at t{joined} ({sim.Host.CrawlerNames[IndexOf(sim, contract.CrawlerId)]}); wages paid {ledger.Flows.Wages}\n" + watch.Report());
 
             uint interval = sim.Simulation.Economy.Supply.RestockIntervalTicks;
-            uint visitsSince = (uint)(Day / interval - joined / interval);
+            uint visitsSince = (uint)(end / interval - joined / interval);
             Assert.True(guild.IsMember(contract.CrawlerId), "The paid member stayed.");
             Assert.Equal(visitsSince, ledger.Flows.Wages);
             Assert.True(guild.TryGetContract(contract.CrawlerId, out var after) && after.UnpaidVisits == 0, "Never unpaid.");
@@ -71,8 +80,8 @@ namespace Simpiens.Core.Tests
             var guild = sim.Simulation.Guild;
             var groups = sim.Simulation.Groups;
 
-            while (guild.Members.Count == 0 && sim.Clock.CurrentTick < Day) watch.Run(1);
-            Assert.True(guild.Members.Count == 1, "Nobody signed on within the day at fair prices.");
+            while (guild.Members.Count == 0 && sim.Clock.CurrentTick < SignOnBy) watch.Run(1);
+            Assert.True(guild.Members.Count == 1, "Nobody signed on within two days at fair prices.");
             player.Stop();
             var member = guild.Members[0].CrawlerId;
             bool hadSettlement = groups.TryGetMembership(member, GroupType.Settlement, out var settlement);
