@@ -55,13 +55,30 @@ namespace Simpiens.Hosting
         /// The crafting profile (Epic 10 Part 2, W6.3): fair prices, the forge making respirators and the still draughts,
         /// and the guildhall's guild of eight in two parties sent together, keeping a reserve (D67). Its band is proposed by
         /// exception from W6.3's measurement over seeds 1-15 and 20261009 (D68): treasuries at day 3 of 1-390g against the
-        /// fair player's 771-1,277g (F14), so the band asks for the loop's integrity, not a treasury.
+        /// fair player's 771-1,277g (F14), so the band asks for the loop's integrity, not a treasury. Since Epic 10 Part 3's F3
+        /// (option A, the developer's 2026-11-10) the integrity is the game's own rule, judged across seeds: the stations make
+        /// goods on most of them (<see cref="CraftingMadeShare"/>), and on few does anyone quit for want of pay
+        /// (<see cref="CraftingUnpaidQuitShare"/>).
         /// </summary>
         public const int CraftingGuildSize = 8;
         public const uint CraftingGuildReserve = 200;
         public const uint CraftingTreasuryMin = 0;
         public const uint CraftingTreasuryMax = 1200;
         public const int CraftingTrustUpMin = 8;
+
+        /// <summary>
+        /// The share of seeds on which the crafting profile's stations make goods within the horizon (Epic 10 Part 3, F3's
+        /// option A): the forge's respirators wait on glowstone the expeditions bring home near the horizon's edge, so a seed
+        /// alone is timing; measured 18 of seeds 1-20 with hunting off and on.
+        /// </summary>
+        public const float CraftingMadeShare = 0.8f;
+
+        /// <summary>
+        /// The share of seeds on which someone may quit the crafting profile's loop for want of pay (Epic 10 Part 3, F3's
+        /// option A): a stall that has just bought its salvage can be empty at a caravan's visit; measured on seeds 1-20 and
+        /// 20261009, one seed with hunting off (13) and two with it on (2 and 3).
+        /// </summary>
+        public const float CraftingUnpaidQuitShare = 0.15f;
 
         /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
         public const long GuildSpareTicks = 8 * DayClock.TicksPerHour;
@@ -155,6 +172,13 @@ namespace Simpiens.Hosting
             /// </summary>
             public int Members, Signed, WorstUnpaid, ExpeditionsHome;
 
+            /// <summary>
+            /// Guild members and artisans who quit for want of pay (Epic 10 Part 3, F3's option A): gone from their roster with
+            /// one unpaid visit short of the quitting line, on the visit that reached it. A single unpaid visit is a warning the
+            /// game recovers from; a quit is the loop failing.
+            /// </summary>
+            public int UnpaidQuits;
+
             /// <summary>The crafting profile's (Epic 10 Part 2, W6.3): stations standing, artisans at work at the end, and what the stations made.</summary>
             public int StationsBuilt, Artisans;
             public uint Made;
@@ -202,7 +226,7 @@ namespace Simpiens.Hosting
                         if (last.Treasury < GuildTreasuryMin || last.Treasury > GuildTreasuryMax) failures.Add($"guild: treasury {last.Treasury}g at day 3, outside {GuildTreasuryMin}-{GuildTreasuryMax}g");
                         if (last.TrustUp < GuildTrustUpMin) failures.Add($"guild: trust rose for only {last.TrustUp} crawlers (need {GuildTrustUpMin})");
                         if (last.StarvingEpisodes != 0) failures.Add($"guild: {last.StarvingEpisodes} starving episodes (need 0)");
-                        if (WorstUnpaid != 0) failures.Add($"guild: a member went unpaid {WorstUnpaid} visit(s) in a row");
+                        if (UnpaidQuits > 0) failures.Add($"guild: {UnpaidQuits} quit for want of pay (worst run {WorstUnpaid} unpaid)");
                         if (GuildFullTick >= 0 && GuildFullTick <= HorizonTicks - GuildSpareTicks && ExpeditionsHome == 0)
                         {
                             failures.Add($"guild: full at t{GuildFullTick}, but no expedition came home with glowstone");
@@ -212,8 +236,8 @@ namespace Simpiens.Hosting
                         if (last.Treasury < CraftingTreasuryMin || last.Treasury > CraftingTreasuryMax) failures.Add($"crafting: treasury {last.Treasury}g at day 3, outside {CraftingTreasuryMin}-{CraftingTreasuryMax}g");
                         if (last.TrustUp < CraftingTrustUpMin) failures.Add($"crafting: trust rose for only {last.TrustUp} crawlers (need {CraftingTrustUpMin})");
                         if (last.StarvingEpisodes != 0) failures.Add($"crafting: {last.StarvingEpisodes} starving episodes (need 0)");
-                        if (WorstUnpaid != 0) failures.Add($"crafting: a member went unpaid {WorstUnpaid} visit(s) in a row");
-                        if (StationsBuilt == 0 || Made == 0) failures.Add($"crafting: {StationsBuilt} station(s) built, {Made} made");
+                        // Pay and makes are judged across seeds (CraftingMadeShare, CraftingUnpaidQuitShare): a seed alone is timing
+                        if (StationsBuilt == 0) failures.Add($"crafting: no station built");
                         break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
@@ -233,7 +257,7 @@ namespace Simpiens.Hosting
                     checkpoints.Add($"D{day} {(Rows.Count > sample ? Rows[sample].Treasury.ToString(CultureInfo.InvariantCulture) : "?")}");
                 }
                 string guild = Player.Name == "guild" || Player.Name == "crafting"
-                    ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
+                    ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, quit unpaid {UnpaidQuits}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
                     : string.Empty;
                 if (Player.Name == "crafting") guild += $"; stations {StationsBuilt}, artisans {Artisans}, made {Made}";
                 return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
@@ -300,6 +324,8 @@ namespace Simpiens.Hosting
                 guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
             }
             var guild = manager.Guild;
+            var unpaidNow = new Dictionary<EntityId, (int Unpaid, int Max)>();
+            var unpaidLast = new Dictionary<EntityId, (int Unpaid, int Max)>();
             bool partyOut = false;
             uint sharesSeen = 0;
 
@@ -363,9 +389,18 @@ namespace Simpiens.Hosting
                     result.Rows.Add(Sample(manager, crawlers, rel, sim.Clock.CurrentTick, crawlerGold, trustAtStart, starvingEpisodes, collapses));
                 }
 
+                // Who is unpaid now, and who left at the quitting line's eve (F3's option A)
+                unpaidNow.Clear();
+                for (int i = 0; i < guild.Members.Count; i++) unpaidNow[guild.Members[i].CrawlerId] = (guild.Members[i].UnpaidVisits, manager.Economy.Guild.MaxUnpaidVisits);
+                var artisans = manager.Workshops?.Artisans;
+                for (int i = 0; artisans != null && i < artisans.Count; i++) unpaidNow[artisans[i].CrawlerId] = (artisans[i].UnpaidVisits, manager.Economy.Workshops.MaxUnpaidVisits);
+                foreach (var pair in unpaidLast)
+                    if (!unpaidNow.ContainsKey(pair.Key) && pair.Value.Unpaid + 1 >= pair.Value.Max) result.UnpaidQuits++;
+                foreach (var pair in unpaidNow) result.WorstUnpaid = Math.Max(result.WorstUnpaid, pair.Value.Unpaid);
+                (unpaidLast, unpaidNow) = (unpaidNow, unpaidLast);
+
                 if (guildPlayer != null)
                 {
-                    for (int i = 0; i < guild.Members.Count; i++) result.WorstUnpaid = Math.Max(result.WorstUnpaid, guild.Members[i].UnpaidVisits);
                     if (result.GuildFullTick < 0 && guild.Members.Count >= guildSize) result.GuildFullTick = rel;
                     if (guild.HasExpedition) partyOut = true;
                     else if (partyOut)

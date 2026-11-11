@@ -12,7 +12,7 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// Flight (Epic 10 Part 3, K2.3c; the epic's D19), on the real outpost with hunting switched on: a crawler held by the
+    /// Flight (Epic 10 Part 3, K2.3c; the epic's D19), on the real outpost: a crawler held by the
     /// warren until the first blow, then left to itself, drops what it was doing and flees, shown panicking, until it stands clear of
     /// the warren's reach and nothing has struck it for two seconds; then it goes about its day. A downed crawler limps out
     /// as from a hazard, and nobody strikes it.
@@ -101,7 +101,6 @@ namespace Simpiens.Core.Tests
         {
             var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            sim.Simulation.Creatures.Hunting = true;
             return sim;
         }
     }

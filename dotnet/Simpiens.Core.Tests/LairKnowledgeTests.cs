@@ -16,7 +16,7 @@ namespace Simpiens.Core.Tests
     /// its kind's leash around its heart; its danger is its pack's expected harm a second, past what anyone braves alone; a
     /// crawler who sees one of its creatures in a charted sector charts it for everyone, and one struck by one charts it even
     /// in the fog; the snapshot carries the chart to cognition, and a lone crawler would not go into a charted lair's reach.
-    /// Mechanism tests, with crawlers put and held by hand and hunting switched on (it goes live with K2.3d).
+    /// Mechanism tests, with crawlers put and held by hand.
     /// </summary>
     public class LairKnowledgeTests
     {
@@ -63,7 +63,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ACrawlerWhoSeesACreatureInAChartedSectorChartsItsLair()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var watcher = sim.Host.CrawlerStates[0];
             int warren = WarrenIndex(sim);
 
@@ -88,7 +88,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ACrawlerStruckByACreatureChartsItsLairEvenInTheFog()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             Assert.False(sim.Sectors.IsExplored(Floor1Layout.OvergrowthSectorId));
             for (int t = 0; t < 100 && stray.StruckAtTick == 0; t++)
@@ -103,7 +103,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ALoneCrawlerWouldNotGoIntoAChartedLairsReach()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var crawler = sim.Host.CrawlerStates.First(s => s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent);
             var context = crawler.CreateContext(Snapshot(sim), (uint)sim.Clock.CurrentTick);
             Assert.True(Vitality.WouldVenture(context));
@@ -127,7 +127,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ALoneCrawlerLooksPastAChartedLairsReach()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var crawler = sim.Host.CrawlerStates.First(s => s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent);
             var map = sim.Host.Current.Map;
             sim.Sectors.SetExplored(Floor1Layout.OvergrowthSectorId, true);
@@ -171,19 +171,11 @@ namespace Simpiens.Core.Tests
             return found;
         }
 
-        [Fact]
-        public void WithoutHuntingNothingIsChartedInADay()
-        {
-            using var sim = Outpost();
-            sim.Step(Simpiens.Simulation.DayClock.TicksPerDay);
-            Assert.Equal(0UL, sim.Simulation.Creatures.ChartedMask);
-        }
 
-        private static LocalSimulation Outpost(bool hunting = false)
+        private static LocalSimulation Outpost()
         {
             var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            sim.Simulation.Creatures.Hunting = hunting;
             return sim;
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Simpiens.Hosting;
 using Simpiens.Simulation.Economy;
 using Xunit;
@@ -27,6 +28,28 @@ namespace Simpiens.Core.Tests
             TestContext.Current.TestOutputHelper?.WriteLine(result.Summary());
             var failures = result.Failures();
             Assert.True(failures.Count == 0, $"{profile} seed {seed}: " + string.Join("; ", failures));
+        }
+
+        /// <summary>
+        /// The crafting loop holds on most seeds (Epic 10 Part 3, F3's option A, the developer's 2026-11-10): the stations make
+        /// goods within the horizon, and nobody quits for want of pay. A seed alone is timing (the forge's respirators wait on
+        /// glowstone the expeditions bring home near the horizon's edge; a stall that has just bought its salvage can be empty
+        /// at a caravan's visit), so the band asks it of seeds 1-20 together. Measured with hunting off and on: goods on 18 of
+        /// 20 both ways; a quit for pay on 1 seed off, 2 on.
+        /// </summary>
+        [Fact]
+        public void TheCraftingLoopHoldsOnMostSeeds()
+        {
+            var seeds = new ulong[20];
+            for (int i = 0; i < seeds.Length; i++) seeds[i] = (ulong)(i + 1);
+            var runs = new System.Collections.Concurrent.ConcurrentDictionary<ulong, EconomySoak.Result>();
+            System.Threading.Tasks.Parallel.ForEach(seeds, seed => runs[seed] = EconomySoak.Run(seed, "crafting"));
+            int making = seeds.Count(s => runs[s].Made > 0), quitting = seeds.Count(s => runs[s].UnpaidQuits > 0);
+            TestContext.Current.TestOutputHelper?.WriteLine($"made goods on {making} of {seeds.Length} seeds, a quit for pay on {quitting}: " +
+                string.Join(", ", seeds.Select(s => $"{s}:{runs[s].Made}{(runs[s].UnpaidQuits > 0 ? "q" : "")}")));
+            Assert.True(making >= (int)System.Math.Ceiling(EconomySoak.CraftingMadeShare * seeds.Length), $"The stations made goods on only {making} of {seeds.Length} seeds.");
+            Assert.True(quitting <= (int)System.Math.Floor(EconomySoak.CraftingUnpaidQuitShare * seeds.Length), $"Someone quit for want of pay on {quitting} of {seeds.Length} seeds.");
+            Assert.All(seeds, s => Assert.Empty(runs[s].Failures()));
         }
 
         /// <summary>

@@ -13,11 +13,10 @@ namespace Simpiens.Core.Tests
 {
     /// <summary>
     /// The creature's rule (Epic 10 Part 3, K2.2; the epic's D9–D15), on the real outpost: mechanism tests, with crawlers put
-    /// and held near a lair by hand and the rule's hunting switched on (D14: the live session hunts from K2.3). Creatures rest
-    /// and roam near their lairs and in their sectors; a rat chases a stray in its sight and within its leash and strikes it
-    /// down, then goes home; the leash ends a chase; a hurt rat flees home, heeding nothing, and heals there; every swing of a
-    /// tick lands together and the same seed plays the same; the rule allocates nothing once warm; and without hunting no
-    /// crawler is touched in a day.
+    /// and held near a lair by hand (the live session hunts since K2.3). Creatures rest and roam near their lairs and in their
+    /// sectors; a rat chases a stray in its sight and within its leash and strikes it down, then goes home; the leash ends a
+    /// chase; a hurt rat flees home, heeding nothing, and heals there; every swing of a tick lands together and the same seed
+    /// plays the same; and the rule allocates nothing once warm.
     /// </summary>
     public class CreatureRuleTests
     {
@@ -39,10 +38,10 @@ namespace Simpiens.Core.Tests
                     var lair = service.Lairs[c.LairIndex].Definition;
                     Assert.Equal(map.FindSector(lair.Position).Id, map.FindSector(c.Position).Id);
                     float d = Vec2.Distance(c.Position, lair.Position);
+                    if (c.Mode != CreatureMode.Rest && c.Mode != CreatureMode.Roam) continue; // after a crawler, or home from one
                     farthest = Math.Max(farthest, d / c.Definition.Leash);
                     Assert.True(d <= c.Definition.Leash * CreatureService.RoamShareOfLeash + 1f, $"{c} roamed past half its leash.");
                     if (c.Mode == CreatureMode.Roam) roamed.Add(c.Id);
-                    Assert.True(c.Mode == CreatureMode.Rest || c.Mode == CreatureMode.Roam, $"{c}: with nobody hunted it only rests and roams.");
                 }
             }
             TestContext.Current.TestOutputHelper?.WriteLine($"{roamed.Count} of {service.Creatures.Count} roamed; the farthest went {farthest:P0} of its leash");
@@ -52,7 +51,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ARatChasesAStrayStrikesItDownAndGoesHome()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             var rats = sim.Simulation.Creatures.Creatures.Where(c => c.Kind == CreatureKind.BurrowRat).Select(c => c.Id).ToHashSet();
             long struckAt = -1, downedAt = -1;
@@ -93,7 +92,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void TheLeashEndsAChase()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             var service = sim.Simulation.Creatures;
             var heart = service.Lairs[0].Definition.Position;
@@ -122,7 +121,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void AHurtRatFleesHomeHeedingNothingAndHeals()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             var service = sim.Simulation.Creatures;
             var rat = service.Creatures.First(c => c.Kind == CreatureKind.BurrowRat);
@@ -167,7 +166,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void TheRuleAllocatesNothingOnceWarm()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             var world = (ICreatureWorld)sim.Simulation;
             var service = sim.Simulation.Creatures;
@@ -187,18 +186,10 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, allocated);
         }
 
-        [Fact]
-        public void WithoutHuntingNoCrawlerIsTouchedInADay()
-        {
-            using var sim = Outpost();
-            Assert.False(sim.Simulation.Creatures.Hunting);
-            sim.Step(DayClock.TicksPerDay);
-            Assert.All(sim.Host.CrawlerStates, c => Assert.Equal(0u, c.StruckAtTick));
-        }
 
         private static (List<float> Health, List<Vec2> Positions, int Together) Trace()
         {
-            using var sim = Outpost(hunting: true);
+            using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
             var health = new List<float>();
             var positions = new List<Vec2>();
@@ -227,11 +218,10 @@ namespace Simpiens.Core.Tests
             return (health, positions, together);
         }
 
-        private static LocalSimulation Outpost(bool hunting = false)
+        private static LocalSimulation Outpost()
         {
             var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
-            sim.Simulation.Creatures.Hunting = hunting;
             return sim;
         }
 

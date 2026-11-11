@@ -33,11 +33,6 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>Its goal moved this far from where its path ends: it plans again (a quarry on the move, D11).</summary>
         public const float ReplanDistance = 1f;
 
-        /// <summary>
-        /// Whether creatures notice crawlers (D14). Off in the live session until K2.3 gives crawlers flight and caution, so no
-        /// step has crawlers struck without a way to answer; the rule's tests switch it on. K2.3 removes it.
-        /// </summary>
-        public bool Hunting { get; set; }
 
         private enum Walk : byte { There, Walking, Stuck }
 
@@ -87,7 +82,7 @@ namespace Simpiens.Simulation.Creatures
         // inside the fog is seen), within its vision and with nothing walling it off; one sighting a creature, the first crawler
         private void Sightings(SharedWorldSnapshot snapshot, IReadOnlyList<WorldEntity> entities)
         {
-            if (!Hunting || entities == null) return;
+            if (entities == null) return;
             for (int i = 0; i < _creatures.Count; i++)
             {
                 var c = _creatures[i];
@@ -183,7 +178,7 @@ namespace Simpiens.Simulation.Creatures
         // nearest, the lower id on a tie. Wounded past its line, a fleeing kind notices nothing
         private bool Notice(CreatureState c, CreatureDefinition kind, Vec2 heart, SharedWorldSnapshot snapshot, IReadOnlyList<WorldEntity> entities)
         {
-            if (!Hunting || (kind.Flees && Wounded(c, kind)) || entities == null) return false;
+            if ((kind.Flees && Wounded(c, kind)) || entities == null) return false;
             WorldEntity best = null;
             float bestDistance = float.MaxValue;
             for (int i = 0; i < entities.Count; i++)
