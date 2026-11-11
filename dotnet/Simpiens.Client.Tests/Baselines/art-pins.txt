@@ -505,6 +505,8 @@ Iso_Wall 32 40 13851616869656659073
 Iso_Wall_Low 32 20 14629098251863395198
 Item_chitin-plate_Carried 8 8 987679120821209858
 Item_chitin-plate_Icon 16 16 7632072472653042018
+Item_chitin-plate_Icon_Fine 16 16 17345231224533510038
+Item_chitin-plate_Icon_Masterwork 16 16 4779596986054672538
 Item_chitin-plate_Map 16 16 13429326788336423694
 Item_chitin_Carried 8 8 3620970519265279914
 Item_chitin_Icon 16 16 11737447948249216257
@@ -552,6 +554,8 @@ Item_iron-ore_Icon 16 16 2154869829169621085
 Item_iron-ore_Map 16 16 29410469697556497
 Item_leather-jerkin_Carried 8 8 8712638235138240135
 Item_leather-jerkin_Icon 16 16 16766739713128483449
+Item_leather-jerkin_Icon_Fine 16 16 121212753310791653
+Item_leather-jerkin_Icon_Masterwork 16 16 3572475680359027949
 Item_leather-jerkin_Map 16 16 8583780357467328005
 Item_medicinal-herb_Carried 8 8 17245101706565724070
 Item_medicinal-herb_Icon 16 16 5172412997452005894
