@@ -2,7 +2,7 @@
 # Re-record only for a deliberate behaviour change, in its own commit: simpiens golden record --out Baselines/golden-world-hash.txt
 # t <tick> total/economy/bounties/map/groups <WorldStateHash parts>; a <agent hash> <name> | <description, for diagnosis only>
 seed 424242 session outpost
-t 0 total 99c96dc51093db63 economy a6522bdc352733f8 bounties a4f33c36438532e6 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 0 total a83762ebad4e2ca4 economy a6522bdc352733f8 bounties a4f33c36438532e6 map 84295ba2ec459856 groups 0243cfa845185aa5
   a 36892b917e6ca111 SwarmAgent_0 | pos (-5.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a 642d1bb00089fddd SwarmAgent_9 | pos (1.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a c223bfd2348bab1c SwarmAgent_7 | pos (-3.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
@@ -15,7 +15,7 @@ t 0 total 99c96dc51093db63 economy a6522bdc352733f8 bounties a4f33c36438532e6 ma
   a 07fdb83805948eb8 SwarmAgent_11 | pos (5.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a db24152b220a4f9d SwarmAgent_5 | pos (5.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a fd2dd8e0efe353c7 SwarmAgent_1 | pos (-3.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
-t 100 total 146ba925ad64a144 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 100 total 495116388afc65c7 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map 84295ba2ec459856 groups 0243cfa845185aa5
   a 5830af97813a67aa SwarmAgent_0 | pos (-0.011,-13.667) hunger 20.99 energy 99.00 gold 15 intent WanderIntent goal EarnIncome
   a 42f4cdc33b5f7cdf SwarmAgent_9 | pos (6.900,1.500) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
   a 98c401e4436c1b94 SwarmAgent_7 | pos (1.979,-1.912) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
@@ -28,7 +28,7 @@ t 100 total 146ba925ad64a144 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e 
   a 27789eba4eb347f9 SwarmAgent_11 | pos (4.287,-10.849) hunger 20.99 energy 98.99 gold 15 intent WanderIntent goal EarnIncome
   a 124b6bb0a53120e2 SwarmAgent_5 | pos (-0.614,4.570) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
   a 00032e4c4cc2b914 SwarmAgent_1 | pos (1.979,-1.316) hunger 20.99 energy 98.07 gold 15 intent WanderIntent goal EarnIncome
-t 200 total 8a2a39307b12a942 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 200 total 3755a656bc719935 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map 84295ba2ec459856 groups 0243cfa845185aa5
   a 148ed78884c39ee5 SwarmAgent_0 | pos (-4.587,0.010) hunger 21.98 energy 97.04 gold 15 intent WanderIntent goal EarnIncome
   a 1f9ff5c3ea138013 SwarmAgent_9 | pos (11.704,1.269) hunger 21.98 energy 96.10 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 76f9022328de46d2 SwarmAgent_7 | pos (-1.353,5.835) hunger 21.98 energy 96.11 gold 15 intent WanderIntent goal EarnIncome
@@ -41,7 +41,7 @@ t 200 total 8a2a39307b12a942 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e 
   a b868cd206a20b4e6 SwarmAgent_11 | pos (-6.332,0.900) hunger 21.98 energy 97.04 gold 15 intent WanderIntent goal EarnIncome
   a de65f547d48c5734 SwarmAgent_5 | pos (6.187,1.721) hunger 21.98 energy 96.11 gold 15 intent WanderIntent goal EarnIncome
   a a4e3ab4ce44ae681 SwarmAgent_1 | pos (-15.364,-1.815) hunger 21.98 energy 96.11 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 300 total 3966aabb38633fe7 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 300 total 2b17add597259a34 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map 55aeee6a22cd0160 groups 0243cfa845185aa5
   a b912ec49e4ea8134 SwarmAgent_0 | pos (-12.504,2.501) hunger 22.98 energy 95.08 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 0a17f38e0290ec71 SwarmAgent_9 | pos (8.920,1.562) hunger 22.98 energy 94.13 gold 15 intent WanderIntent goal EarnIncome
   a 5f92ce5f66137a5b SwarmAgent_7 | pos (-14.522,-7.091) hunger 22.98 energy 94.15 gold 15 intent WanderIntent goal EarnIncome
@@ -54,7 +54,7 @@ t 300 total 3966aabb38633fe7 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e 
   a eea58f550e37617a SwarmAgent_11 | pos (-12.234,1.392) hunger 22.98 energy 95.08 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 2d6293495f3ab012 SwarmAgent_5 | pos (15.547,-2.525) hunger 22.98 energy 94.15 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 7efb7344e1d6c7e3 SwarmAgent_1 | pos (-15.364,-1.815) hunger 22.98 energy 94.15 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 400 total a77cd50b30c2fd19 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 400 total d29e56ae0ffde88b economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e map e32b592a5b90dee4 groups 0243cfa845185aa5
   a c3269f7b32282728 SwarmAgent_0 | pos (-12.504,2.501) hunger 23.97 energy 93.11 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 7f6cc6d147ac101a SwarmAgent_9 | pos (2.421,2.288) hunger 23.97 energy 93.03 gold 15 intent TradeIntent goal EarnIncome
   a 41491ac66ac48374 SwarmAgent_7 | pos (-13.529,-13.477) hunger 23.97 energy 92.18 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -67,7 +67,7 @@ t 400 total a77cd50b30c2fd19 economy a6522bdc352733f8 bounties 228a4a0fbf6aa63e 
   a 992aeab237427506 SwarmAgent_11 | pos (-12.234,1.392) hunger 23.97 energy 93.11 gold 15 intent HarvestResourceIntent goal EarnIncome
   a fe3a3f4bcc2a004f SwarmAgent_5 | pos (15.547,-2.525) hunger 23.97 energy 92.18 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 4f68035063aa0bdc SwarmAgent_1 | pos (-15.364,-1.815) hunger 23.97 energy 92.18 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 500 total 4a8d9e8d92d16d49 economy 3c6d0247709bef26 bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 500 total e6975bd3a3be2e5e economy 3c6d0247709bef26 bounties 228a4a0fbf6aa63e map ecda44b5e5a710f2 groups 0243cfa845185aa5
   a 37122864cda28d75 SwarmAgent_0 | pos (-7.504,2.501) hunger 24.96 energy 91.15 gold 15 intent WanderIntent goal EarnIncome
   a ac29fa592e93ed65 SwarmAgent_9 | pos (10.606,2.161) hunger 24.96 energy 91.15 gold 21 intent HarvestResourceIntent goal EarnIncome
   a ff5c13b1df488422 SwarmAgent_7 | pos (-13.529,-13.477) hunger 24.96 energy 90.22 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -80,7 +80,7 @@ t 500 total 4a8d9e8d92d16d49 economy 3c6d0247709bef26 bounties 228a4a0fbf6aa63e 
   a c2ba158f18ae38fa SwarmAgent_11 | pos (-4.665,2.077) hunger 24.96 energy 91.15 gold 15 intent WanderIntent goal EarnIncome
   a 34db712be1181473 SwarmAgent_5 | pos (2.315,2.106) hunger 24.96 energy 90.23 gold 15 intent TradeIntent goal EarnIncome
   a 2a95fbef835c33b4 SwarmAgent_1 | pos (-2.152,2.640) hunger 24.96 energy 90.30 gold 15 intent TradeIntent goal EarnIncome
-t 600 total e5d43de5f3cb2322 economy 9f5ae9633d7e4ace bounties 228a4a0fbf6aa63e map f9a96c236ad3278b groups 0243cfa845185aa5
+t 600 total 68d1ee3f9a33c00d economy 9f5ae9633d7e4ace bounties 228a4a0fbf6aa63e map ecda44b5e5a710f2 groups 0243cfa845185aa5
   a 64afe82fead19a04 SwarmAgent_0 | pos (-2.225,3.118) hunger 25.95 energy 89.99 gold 15 intent TradeIntent goal EarnIncome
   a d53f751592c8b581 SwarmAgent_9 | pos (15.753,-1.259) hunger 25.95 energy 89.20 gold 21 intent HarvestResourceIntent goal EarnIncome
   a 133a9a1fc0b1fa4a SwarmAgent_7 | pos (-13.476,-3.297) hunger 25.95 energy 88.25 gold 15 intent WanderIntent goal EarnIncome
@@ -93,7 +93,7 @@ t 600 total e5d43de5f3cb2322 economy 9f5ae9633d7e4ace bounties 228a4a0fbf6aa63e 
   a 552ccb28c6b0a89b SwarmAgent_11 | pos (-2.181,1.642) hunger 25.95 energy 90.06 gold 15 intent TradeIntent goal EarnIncome
   a 2f326897d56bc577 SwarmAgent_5 | pos (7.510,2.329) hunger 25.95 energy 89.21 gold 21 intent HarvestResourceIntent goal EarnIncome
   a 4672cc8e8c5c2c6a SwarmAgent_1 | pos (4.019,2.036) hunger 25.95 energy 89.22 gold 20 intent WanderIntent goal EarnIncome
-t 700 total 535d083d2a8c5c87 economy 2b745382151f352d bounties 5b2a969b42d238a4 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 700 total 9aff00eb6b8345e5 economy 2b745382151f352d bounties 5b2a969b42d238a4 map 92a1132833d93ee4 groups 0243cfa845185aa5
   a b2a38ef5bcf28a06 SwarmAgent_0 | pos (-19.391,2.038) hunger 26.94 energy 88.16 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 553be479b20159ac SwarmAgent_9 | pos (15.753,-1.259) hunger 26.94 energy 87.23 gold 21 intent WanderIntent goal EarnIncome
   a 9096390cce381eb0 SwarmAgent_7 | pos (-0.969,1.355) hunger 26.94 energy 86.63 gold 15 intent TradeIntent goal EarnIncome
@@ -106,7 +106,7 @@ t 700 total 535d083d2a8c5c87 economy 2b745382151f352d bounties 5b2a969b42d238a4 
   a 8d4d6678d5270077 SwarmAgent_11 | pos (-3.386,-2.096) hunger 26.94 energy 89.13 gold 20 intent IdleIntent goal GatherAtAnchor
   a 40275f18f686ce7e SwarmAgent_5 | pos (14.611,-1.466) hunger 26.94 energy 87.32 gold 21 intent ClaimBountyIntent goal FulfillBounty
   a a4ce316421c8bdc6 SwarmAgent_1 | pos (21.510,-3.046) hunger 26.94 energy 87.26 gold 20 intent HarvestResourceIntent goal EarnIncome
-t 800 total 8a177e537929dbe6 economy 8af8fb568bbc1f6c bounties b947771d7460648c map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 800 total cc42ff12c0bfd95c economy 8af8fb568bbc1f6c bounties b947771d7460648c map 92a1132833d93ee4 groups 0243cfa845185aa5
   a 961151ea4e9dc5d9 SwarmAgent_0 | pos (-19.391,2.038) hunger 27.94 energy 86.20 gold 20 intent HarvestResourceIntent goal EarnIncome
   a bada987bea8bea09 SwarmAgent_9 | pos (1.459,2.152) hunger 27.94 energy 85.38 gold 21 intent TradeIntent goal EarnIncome
   a 55f7f9a99fa3fa22 SwarmAgent_7 | pos (-0.969,1.355) hunger 27.94 energy 85.97 gold 60 intent TradeIntent goal OutfitForDanger
@@ -119,7 +119,7 @@ t 800 total 8a177e537929dbe6 economy 8af8fb568bbc1f6c bounties b947771d7460648c 
   a b2f3c4f44627eac2 SwarmAgent_11 | pos (-3.386,-2.096) hunger 27.94 energy 88.48 gold 20 intent IdleIntent goal GatherAtAnchor
   a 3c33c98cf8319674 SwarmAgent_5 | pos (19.636,1.192) hunger 27.94 energy 85.75 gold 21 intent HarvestResourceIntent goal EarnIncome
   a aab74bad09527b19 SwarmAgent_1 | pos (20.512,1.444) hunger 27.94 energy 85.29 gold 20 intent HarvestResourceIntent goal EarnIncome
-t 900 total 410f5045471a1ea1 economy 2375908239ab6216 bounties b947771d7460648c map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 900 total 3095250ecad89f28 economy 2375908239ab6216 bounties b947771d7460648c map 7443ba1a2a346ff7 groups 0243cfa845185aa5
   a c6f721e61b13d6ee SwarmAgent_0 | pos (-19.391,2.038) hunger 28.93 energy 84.23 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 101b49c14df96bff SwarmAgent_9 | pos (8.658,2.291) hunger 28.93 energy 84.24 gold 27 intent HarvestResourceIntent goal EarnIncome
   a b337b2c15e7bc36b SwarmAgent_7 | pos (-3.015,-2.259) hunger 28.93 energy 85.19 gold 30 intent IdleIntent goal GatherAtAnchor
@@ -132,7 +132,7 @@ t 900 total 410f5045471a1ea1 economy 2375908239ab6216 bounties b947771d7460648c 
   a 495c46b6d2948ba5 SwarmAgent_11 | pos (-13.761,4.630) hunger 28.93 energy 87.09 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 330254fd5352339c SwarmAgent_5 | pos (19.636,1.192) hunger 28.93 energy 83.79 gold 21 intent HarvestResourceIntent goal EarnIncome
   a 6e4168e514c556ad SwarmAgent_1 | pos (17.518,2.142) hunger 28.93 energy 83.33 gold 20 intent WanderIntent goal EarnIncome
-t 1000 total eb5cc75dba82acaa economy 2375908239ab6216 bounties b947771d7460648c map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1000 total e6d3686a827101b8 economy 2375908239ab6216 bounties b947771d7460648c map 16f18a5eb87bbc30 groups 0243cfa845185aa5
   a 2a3659e9ecf324e0 SwarmAgent_0 | pos (-1.500,2.464) hunger 29.92 energy 82.29 gold 20 intent TradeIntent goal EarnIncome
   a b3bfc0c8144872c3 SwarmAgent_9 | pos (-2.497,3.566) hunger 29.92 energy 82.29 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 66afd0abfc160fa4 SwarmAgent_7 | pos (-3.015,-2.259) hunger 29.92 energy 84.53 gold 30 intent IdleIntent goal GatherAtAnchor
@@ -145,7 +145,7 @@ t 1000 total eb5cc75dba82acaa economy 2375908239ab6216 bounties b947771d7460648c
   a 8fd795ff5882e767 SwarmAgent_11 | pos (-15.500,9.500) hunger 29.92 energy 85.12 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 7e826a726ebbef45 SwarmAgent_5 | pos (4.071,2.229) hunger 29.92 energy 81.82 gold 21 intent WanderIntent goal EarnIncome
   a e3a1d3cecc39ae73 SwarmAgent_1 | pos (1.498,2.423) hunger 29.92 energy 81.61 gold 20 intent TradeIntent goal EarnIncome
-t 1100 total 170a14ee0d53bb98 economy 4d71bcc5c7de8e0f bounties b947771d7460648c map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1100 total 628b0e2afb074196 economy 4d71bcc5c7de8e0f bounties b947771d7460648c map 16f18a5eb87bbc30 groups 0243cfa845185aa5
   a 0bd3bff34d50d5c3 SwarmAgent_0 | pos (-7.088,3.513) hunger 30.91 energy 81.25 gold 25 intent HarvestResourceIntent goal EarnIncome
   a c445ea509782bedd SwarmAgent_9 | pos (-13.500,12.500) hunger 30.91 energy 80.33 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 1d1fdf2458095c1e SwarmAgent_7 | pos (-10.579,0.318) hunger 30.91 energy 83.39 gold 30 intent HarvestResourceIntent goal EarnIncome
@@ -158,7 +158,7 @@ t 1100 total 170a14ee0d53bb98 economy 4d71bcc5c7de8e0f bounties b947771d7460648c
   a e35a00fc0ecd3c06 SwarmAgent_11 | pos (-15.500,9.500) hunger 30.91 energy 83.16 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 0d2669af67a687f3 SwarmAgent_5 | pos (1.078,2.190) hunger 30.91 energy 80.80 gold 27 intent HarvestResourceIntent goal EarnIncome
   a a45c9217a56e03d8 SwarmAgent_1 | pos (-2.699,-2.481) hunger 30.91 energy 80.51 gold 26 intent IdleIntent goal GatherAtAnchor
-t 1200 total 474235e8b108e8b9 economy 4d71bcc5c7de8e0f bounties b947771d7460648c map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1200 total 7f0839b3afa4f447 economy 4d71bcc5c7de8e0f bounties b947771d7460648c map 047d41f7d50a65f7 groups 0243cfa845185aa5
   a 7ec9f6dad616a8ee SwarmAgent_0 | pos (-12.676,13.378) hunger 31.90 energy 79.28 gold 25 intent HarvestResourceIntent goal EarnIncome
   a dba6d36210ffb001 SwarmAgent_9 | pos (-12.268,13.326) hunger 31.90 energy 78.36 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 476aa0906816a62e SwarmAgent_7 | pos (-19.479,-9.430) hunger 31.90 energy 81.43 gold 30 intent HarvestResourceIntent goal EarnIncome
@@ -171,7 +171,7 @@ t 1200 total 474235e8b108e8b9 economy 4d71bcc5c7de8e0f bounties b947771d7460648c
   a b961be2e3bbf54a2 SwarmAgent_11 | pos (-14.225,3.737) hunger 31.90 energy 81.19 gold 20 intent WanderIntent goal EarnIncome
   a 38d15f9efc46726f SwarmAgent_5 | pos (-13.987,4.222) hunger 31.90 energy 78.84 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 9113904d482971b0 SwarmAgent_1 | pos (-2.699,-2.481) hunger 31.90 energy 79.86 gold 26 intent IdleIntent goal GatherAtAnchor
-t 1300 total 0c77b9398522739e economy 69bea477666f7029 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1300 total d34b69d15dac2220 economy 69bea477666f7029 bounties cbf29ce484222325 map 62042a2c3a023bf9 groups 0243cfa845185aa5
   a 6f78d406bd614492 SwarmAgent_0 | pos (-12.676,13.378) hunger 32.90 energy 77.32 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 3288e14cef48290a SwarmAgent_9 | pos (-12.268,13.326) hunger 32.90 energy 76.40 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 1e15cac88a49c102 SwarmAgent_7 | pos (-19.479,-9.430) hunger 32.90 energy 79.46 gold 30 intent HarvestResourceIntent goal EarnIncome
@@ -184,7 +184,7 @@ t 1300 total 0c77b9398522739e economy 69bea477666f7029 bounties cbf29ce484222325
   a 1071eb2cb19072b8 SwarmAgent_11 | pos (-1.367,3.117) hunger 32.90 energy 79.69 gold 20 intent TradeIntent goal EarnIncome
   a a4941f423ccc653a SwarmAgent_5 | pos (-12.345,12.902) hunger 32.90 energy 76.87 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 236885d16d67bc3e SwarmAgent_1 | pos (-2.699,-2.481) hunger 32.90 energy 79.20 gold 26 intent none goal none
-t 1400 total f4ac837bc7b1ba52 economy 69bea477666f7029 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1400 total d99b2b5f79d72e9c economy 69bea477666f7029 bounties cbf29ce484222325 map 62042a2c3a023bf9 groups 0243cfa845185aa5
   a 8d36eb8cbdaac6c3 SwarmAgent_0 | pos (-12.676,13.378) hunger 33.89 energy 75.35 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 7510c30643b01a0a SwarmAgent_9 | pos (-12.116,3.528) hunger 33.89 energy 74.43 gold 27 intent WanderIntent goal EarnIncome
   a 0bbdc3ce33b33d69 SwarmAgent_7 | pos (-16.378,-6.033) hunger 33.89 energy 77.50 gold 30 intent WanderIntent goal EarnIncome
@@ -197,7 +197,7 @@ t 1400 total f4ac837bc7b1ba52 economy 69bea477666f7029 bounties cbf29ce484222325
   a a4ae3304a2077202 SwarmAgent_11 | pos (-1.367,3.117) hunger 33.89 energy 79.03 gold 20 intent none goal none
   a c3f26cf7db20abfa SwarmAgent_5 | pos (-12.495,12.425) hunger 33.89 energy 75.84 gold 27 intent none goal none
   a be1cf613eedc7bde SwarmAgent_1 | pos (-2.699,-2.481) hunger 33.89 energy 78.55 gold 26 intent none goal none
-t 1500 total ffe74cd9d310156e economy 5285cb2fa5dd95c1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1500 total fbea9c5fcb3986be economy 5285cb2fa5dd95c1 bounties cbf29ce484222325 map 11679f5656f10a80 groups 8d0350be04626145
   a ea4b5cbd7394535c SwarmAgent_0 | pos (-5.316,3.496) hunger 34.88 energy 73.39 gold 25 intent WanderIntent goal EarnIncome
   a aeb5e638cc306c49 SwarmAgent_9 | pos (-1.516,3.494) hunger 34.88 energy 73.07 gold 27 intent TradeIntent goal EarnIncome
   a c6324e1057d767a5 SwarmAgent_7 | pos (-1.303,1.716) hunger 34.88 energy 75.64 gold 30 intent TradeIntent goal EarnIncome
@@ -211,7 +211,7 @@ t 1500 total ffe74cd9d310156e economy 5285cb2fa5dd95c1 bounties cbf29ce484222325
   a 99a035281d423db9 Drifter_1 | pos (-1.208,-13.747) hunger 61.43 energy 99.60 gold 24 intent WanderIntent goal PurchaseProvisions
   a a7be7a6520eb9c9e SwarmAgent_5 | pos (-13.496,8.967) hunger 34.88 energy 74.93 gold 27 intent WanderIntent goal GatherAtAnchor
   a 8e9973ebe041b009 SwarmAgent_1 | pos (-2.699,-2.481) hunger 34.88 energy 77.89 gold 26 intent none goal none
-t 1600 total e807cdef24fc482a economy 73509fcba5f1add1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1600 total bdffedb99c58f17e economy 73509fcba5f1add1 bounties cbf29ce484222325 map 5af35bc7acc75456 groups 8d0350be04626145
   a e304a33d1a003ef7 SwarmAgent_0 | pos (-2.195,3.597) hunger 35.87 energy 72.37 gold 25 intent WanderIntent goal GatherAtAnchor
   a f6faf550fae32379 SwarmAgent_9 | pos (-1.516,3.494) hunger 35.87 energy 72.42 gold 27 intent none goal none
   a 7350ced4807511dc SwarmAgent_7 | pos (-2.453,-1.580) hunger 35.87 energy 74.91 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -225,7 +225,7 @@ t 1600 total e807cdef24fc482a economy 73509fcba5f1add1 bounties cbf29ce484222325
   a ffec5fe0478036cd Drifter_1 | pos (-0.435,1.064) hunger 62.43 energy 97.69 gold 24 intent TradeIntent goal PurchaseProvisions
   a f9357781e7730403 SwarmAgent_5 | pos (-4.937,-2.180) hunger 35.87 energy 73.19 gold 27 intent IdleIntent goal GatherAtAnchor
   a 307c2fb300bc90f7 SwarmAgent_1 | pos (-0.080,-1.492) hunger 35.87 energy 77.21 gold 26 intent HarvestResourceIntent goal EarnIncome
-t 1700 total 895938579832479d economy 315d2518bc1e903f bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1700 total 9e9bb36174b93a16 economy 315d2518bc1e903f bounties cbf29ce484222325 map 7bb94f3f510d39a2 groups 8d0350be04626145
   a 0740e7a8a50bed23 SwarmAgent_0 | pos (-3.503,-2.063) hunger 36.87 energy 71.51 gold 25 intent IdleIntent goal GatherAtAnchor
   a 25502914b7d2d014 SwarmAgent_9 | pos (-1.516,3.494) hunger 36.87 energy 71.76 gold 27 intent none goal none
   a 166ee714129cca74 SwarmAgent_7 | pos (-2.453,-1.580) hunger 36.87 energy 74.25 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -239,7 +239,7 @@ t 1700 total 895938579832479d economy 315d2518bc1e903f bounties cbf29ce484222325
   a 499f5fef5a599cd5 Drifter_1 | pos (-0.435,1.064) hunger 63.42 energy 97.03 gold 9 intent EatCarriedFoodIntent goal none
   a 9b8c8a6fcee7c010 SwarmAgent_5 | pos (-4.937,-2.180) hunger 36.87 energy 72.54 gold 27 intent IdleIntent goal GatherAtAnchor
   a 5b9bfc6a44ccf001 SwarmAgent_1 | pos (18.500,2.500) hunger 36.87 energy 75.25 gold 26 intent HarvestResourceIntent goal EarnIncome
-t 1800 total 377499ac22b0345c economy 315d2518bc1e903f bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1800 total e7c8f9f7e44f2e0f economy 315d2518bc1e903f bounties cbf29ce484222325 map abe52cd43568baf8 groups 8d0350be04626145
   a a9c66b961976f7db SwarmAgent_0 | pos (-3.503,-2.063) hunger 37.86 energy 70.86 gold 25 intent IdleIntent goal GatherAtAnchor
   a 62e2e0feb1981af8 SwarmAgent_9 | pos (-1.516,3.494) hunger 37.86 energy 71.11 gold 27 intent none goal none
   a 890ca2a5a0ad882f SwarmAgent_7 | pos (-2.453,-1.580) hunger 37.86 energy 73.60 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -253,7 +253,7 @@ t 1800 total 377499ac22b0345c economy 315d2518bc1e903f bounties cbf29ce484222325
   a cf1c8fe69c2b2d6b Drifter_1 | pos (4.564,1.142) hunger 24.41 energy 96.04 gold 9 intent WanderIntent goal EarnIncome
   a 98c8fe528d030bf0 SwarmAgent_5 | pos (-4.937,-2.180) hunger 37.86 energy 71.88 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 3becef13c5591e76 SwarmAgent_1 | pos (16.250,-1.419) hunger 37.86 energy 73.30 gold 26 intent HarvestResourceIntent goal EarnIncome
-t 1900 total 9cf67852a718a628 economy 315d2518bc1e903f bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1900 total 9c0f81ee81c94adc economy 315d2518bc1e903f bounties cbf29ce484222325 map bc41920f39af90b6 groups 8d0350be04626145
   a fe255a24c6eee516 SwarmAgent_0 | pos (7.696,1.264) hunger 38.85 energy 69.42 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 5aac89c52ca4bb95 SwarmAgent_9 | pos (-1.516,3.494) hunger 38.85 energy 70.45 gold 27 intent none goal none
   a 61f4120eb781854b SwarmAgent_7 | pos (-2.453,-1.580) hunger 38.85 energy 72.94 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -267,7 +267,7 @@ t 1900 total 9cf67852a718a628 economy 315d2518bc1e903f bounties cbf29ce484222325
   a 047a262e32b2f693 Drifter_1 | pos (12.741,2.247) hunger 25.40 energy 94.07 gold 9 intent HarvestResourceIntent goal EarnIncome
   a 94d8e1949ad4360a SwarmAgent_5 | pos (13.985,2.727) hunger 38.85 energy 70.09 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 35a68c25ef2e6bdf SwarmAgent_1 | pos (16.250,-1.419) hunger 38.85 energy 71.33 gold 26 intent HarvestResourceIntent goal EarnIncome
-t 2000 total 1593494b71d26eb9 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2000 total 3e7442d20c052112 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map 9c4adbae5fb73c5a groups 8d0350be04626145
   a ff25791a412af743 SwarmAgent_0 | pos (18.786,2.612) hunger 39.84 energy 67.45 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 6512123d30181791 SwarmAgent_9 | pos (-1.516,3.494) hunger 39.84 energy 69.80 gold 27 intent none goal none
   a dcf100845c55c434 SwarmAgent_7 | pos (-2.453,-1.580) hunger 39.84 energy 72.29 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -281,7 +281,7 @@ t 2000 total 1593494b71d26eb9 economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a b9eaa79fc3c0b2c8 Drifter_1 | pos (12.741,2.247) hunger 26.40 energy 92.11 gold 9 intent HarvestResourceIntent goal EarnIncome
   a d66fd224356bb72d SwarmAgent_5 | pos (19.231,2.210) hunger 39.84 energy 68.12 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 7601eb1389721860 SwarmAgent_1 | pos (1.193,1.849) hunger 39.84 energy 69.37 gold 26 intent WanderIntent goal GatherAtAnchor
-t 2100 total 61f8f6c3409562b1 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2100 total 5191055e497455e8 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map 9d91470b18ed3d9d groups 8d0350be04626145
   a 85716896fc60caf6 SwarmAgent_0 | pos (19.032,2.769) hunger 40.82 energy 65.51 gold 25 intent none goal none
   a 4ada1d3426f3ade5 SwarmAgent_9 | pos (-1.516,3.494) hunger 40.83 energy 69.15 gold 27 intent none goal none
   a a24114c16e0719ce SwarmAgent_7 | pos (-2.453,-1.580) hunger 40.83 energy 71.63 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -295,7 +295,7 @@ t 2100 total 61f8f6c3409562b1 economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a a80b9be5de8a1200 Drifter_1 | pos (-1.581,-1.740) hunger 27.39 energy 90.41 gold 9 intent WanderIntent goal GatherAtAnchor
   a 69270155725e0ff1 SwarmAgent_5 | pos (19.231,2.210) hunger 40.83 energy 66.16 gold 27 intent WanderIntent goal EarnIncome
   a 76cafda0df1f0d64 SwarmAgent_1 | pos (-2.127,-1.890) hunger 40.83 energy 68.54 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2200 total 2201b62278c409ee economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2200 total 30207c8e4e2469c8 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map c1eb7a9447aabb5c groups 8d0350be04626145
   a f4c8fa559f000b31 SwarmAgent_0 | pos (0.259,-2.090) hunger 41.58 energy 64.07 gold 25 intent WanderIntent goal GatherAtAnchor
   a 01c399571732b3fd SwarmAgent_9 | pos (-1.516,3.494) hunger 41.83 energy 68.49 gold 27 intent none goal none
   a 821b8723d16067c0 SwarmAgent_7 | pos (-2.453,-1.580) hunger 41.83 energy 70.98 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -309,7 +309,7 @@ t 2200 total 2201b62278c409ee economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a d318280c3c37b131 Drifter_1 | pos (-2.348,-2.872) hunger 28.38 energy 89.22 gold 9 intent IdleIntent goal GatherAtAnchor
   a 2b0b5fbe3b1f2df6 SwarmAgent_5 | pos (0.464,1.258) hunger 41.83 energy 64.19 gold 27 intent WanderIntent goal GatherAtAnchor
   a eb29ea563c704ff2 SwarmAgent_1 | pos (-2.127,-1.890) hunger 41.83 energy 67.89 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2300 total f97bfe9f06635a81 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2300 total 7666af06e0ac7a1b economy 5ccf8f1de993f422 bounties cbf29ce484222325 map a4fb05fc36409f1f groups 8d0350be04626145
   a bde426cc3d5fdd03 SwarmAgent_0 | pos (-2.081,-3.436) hunger 42.57 energy 63.41 gold 25 intent IdleIntent goal GatherAtAnchor
   a 19f600453b3ffd69 SwarmAgent_9 | pos (-1.516,3.494) hunger 42.82 energy 67.84 gold 27 intent none goal none
   a ff23dd75a3ae6b87 SwarmAgent_7 | pos (-2.453,-1.580) hunger 42.82 energy 70.32 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -323,7 +323,7 @@ t 2300 total f97bfe9f06635a81 economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a d85a0b30d678032a Drifter_1 | pos (-2.348,-2.872) hunger 29.37 energy 88.56 gold 9 intent IdleIntent goal GatherAtAnchor
   a 6c986ecabcfb3fdc SwarmAgent_5 | pos (-1.842,-1.561) hunger 42.82 energy 62.56 gold 27 intent WanderIntent goal GatherAtAnchor
   a cbea95475172a0d5 SwarmAgent_1 | pos (-2.127,-1.890) hunger 42.82 energy 67.23 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2400 total 0a41c98a44e1567c economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2400 total e471f31903e2f291 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map 47042700bb5e8820 groups 8d0350be04626145
   a f2e7f7f2bd6c7a02 SwarmAgent_0 | pos (-2.081,-3.436) hunger 43.56 energy 62.76 gold 25 intent IdleIntent goal GatherAtAnchor
   a 12692634cd7f9f00 SwarmAgent_9 | pos (-1.516,3.494) hunger 43.81 energy 67.18 gold 27 intent none goal none
   a 3eab80c300265384 SwarmAgent_7 | pos (-2.453,-1.580) hunger 43.81 energy 69.67 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -337,7 +337,7 @@ t 2400 total 0a41c98a44e1567c economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a 99ee0057cc2dc4dc Drifter_1 | pos (-2.348,-2.872) hunger 30.36 energy 87.91 gold 9 intent IdleIntent goal GatherAtAnchor
   a 50cb0b789ed8621d SwarmAgent_5 | pos (-3.287,-1.322) hunger 43.81 energy 60.68 gold 27 intent IdleIntent goal GatherAtAnchor
   a 50dfd8cfbfa508ac SwarmAgent_1 | pos (-2.127,-1.890) hunger 43.81 energy 66.58 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2500 total a70bfe02da7a43f9 economy 5ccf8f1de993f422 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2500 total 49905f297f3aac0f economy 5ccf8f1de993f422 bounties cbf29ce484222325 map 1fa7c7244342dca8 groups 8d0350be04626145
   a d6f483783bd16cbe SwarmAgent_0 | pos (-2.081,-3.436) hunger 44.55 energy 62.11 gold 25 intent IdleIntent goal GatherAtAnchor
   a 549b035b79a81c61 SwarmAgent_9 | pos (-1.516,3.494) hunger 44.80 energy 66.53 gold 27 intent none goal none
   a e739f5b46487cf1e SwarmAgent_7 | pos (-2.453,-1.580) hunger 44.80 energy 69.02 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -351,7 +351,7 @@ t 2500 total a70bfe02da7a43f9 economy 5ccf8f1de993f422 bounties cbf29ce484222325
   a edad120e93e81e2d Drifter_1 | pos (-2.348,-2.872) hunger 31.36 energy 87.25 gold 9 intent IdleIntent goal GatherAtAnchor
   a 7e69e055c0aefa6b SwarmAgent_5 | pos (-3.287,-1.322) hunger 44.80 energy 60.03 gold 27 intent IdleIntent goal GatherAtAnchor
   a 2af56dd703bf7bba SwarmAgent_1 | pos (-2.127,-1.890) hunger 44.80 energy 65.92 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2600 total f045ed5b049c263f economy 90789321ebfad1fb bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2600 total 63478a921cf77e0f economy 90789321ebfad1fb bounties cbf29ce484222325 map 096ce78dfb4f91f8 groups 8d0350be04626145
   a b0b32291b8f69390 SwarmAgent_0 | pos (-2.081,-3.436) hunger 45.55 energy 61.45 gold 25 intent IdleIntent goal GatherAtAnchor
   a 4777a5031506a96f SwarmAgent_9 | pos (-2.902,3.296) hunger 45.79 energy 65.77 gold 32 intent HarvestResourceIntent goal EarnIncome
   a bebb5663bfe394b2 SwarmAgent_7 | pos (-2.453,-1.580) hunger 45.79 energy 68.36 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -365,7 +365,7 @@ t 2600 total f045ed5b049c263f economy 90789321ebfad1fb bounties cbf29ce484222325
   a 97217937ce873e77 Drifter_1 | pos (-2.108,-2.322) hunger 32.35 energy 86.13 gold 9 intent WanderIntent goal LiquidateSalvage
   a 254904107df35599 SwarmAgent_5 | pos (-3.287,-1.322) hunger 45.79 energy 59.38 gold 27 intent IdleIntent goal GatherAtAnchor
   a 2cd23def82a7331e SwarmAgent_1 | pos (-2.127,-1.890) hunger 45.79 energy 65.27 gold 26 intent IdleIntent goal GatherAtAnchor
-t 2700 total 83304d09b5006e98 economy bbd4c26acde1cc6c bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2700 total ccb4d22bc0726a1c economy bbd4c26acde1cc6c bounties cbf29ce484222325 map 060b9870b7e950ef groups 8d0350be04626145
   a efda483db0964875 SwarmAgent_0 | pos (-0.575,0.246) hunger 46.54 energy 60.47 gold 25 intent TradeIntent goal LiquidateSalvage
   a 0271868308100a59 SwarmAgent_9 | pos (-11.290,2.519) hunger 46.79 energy 63.80 gold 32 intent HarvestResourceIntent goal EarnIncome
   a 19a0862ed7d2bbbe SwarmAgent_7 | pos (-2.453,-1.580) hunger 46.79 energy 67.71 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -379,7 +379,7 @@ t 2700 total 83304d09b5006e98 economy bbd4c26acde1cc6c bounties cbf29ce484222325
   a f04c0094f8421c07 Drifter_1 | pos (-0.808,-0.086) hunger 33.34 energy 84.53 gold 9 intent WanderIntent goal LiquidateSalvage
   a 48eccfa48263f02c SwarmAgent_5 | pos (-0.244,1.538) hunger 46.79 energy 58.52 gold 33 intent HarvestResourceIntent goal EarnIncome
   a 867520c328c09407 SwarmAgent_1 | pos (-1.255,0.042) hunger 46.79 energy 64.13 gold 26 intent WanderIntent goal LiquidateSalvage
-t 2800 total 8567ca65cbf1c5b6 economy 78689721f0627d0d bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2800 total 73ccb05eb916028f economy 78689721f0627d0d bounties cbf29ce484222325 map 81ea87b0907d453d groups 8d0350be04626145
   a 3d36eb7d7c568fbf SwarmAgent_0 | pos (11.418,1.535) hunger 47.53 energy 58.91 gold 30 intent HarvestResourceIntent goal EarnIncome
   a aab11b6d928ffee8 SwarmAgent_9 | pos (-11.290,2.519) hunger 47.78 energy 61.84 gold 32 intent HarvestResourceIntent goal EarnIncome
   a 3bc832ccd2cbad7d SwarmAgent_7 | pos (-2.453,-1.580) hunger 47.78 energy 67.05 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -393,7 +393,7 @@ t 2800 total 8567ca65cbf1c5b6 economy 78689721f0627d0d bounties cbf29ce484222325
   a 366c39a9a61aa2ea Drifter_1 | pos (-0.311,0.183) hunger 34.33 energy 83.39 gold 9 intent TradeIntent goal LiquidateSalvage
   a 8663d08090656d29 SwarmAgent_5 | pos (11.347,1.975) hunger 47.78 energy 56.56 gold 33 intent HarvestResourceIntent goal EarnIncome
   a 82649c4ebdd3e155 SwarmAgent_1 | pos (-4.734,0.967) hunger 47.78 energy 63.12 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2900 total 263dfa81041e6e7a economy 381f374590a37ef1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2900 total 2e18fc1e15405f4c economy 381f374590a37ef1 bounties cbf29ce484222325 map e394b818bb85ef28 groups 8d0350be04626145
   a 0c4d681a1ce10e63 SwarmAgent_0 | pos (11.418,1.535) hunger 48.52 energy 56.95 gold 30 intent HarvestResourceIntent goal EarnIncome
   a 80b7fab2371c5f80 SwarmAgent_9 | pos (-6.090,2.510) hunger 48.77 energy 59.87 gold 32 intent WanderIntent goal EarnIncome
   a 608c0d4d699e1f3f SwarmAgent_7 | pos (-2.453,-1.580) hunger 48.77 energy 66.40 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -407,7 +407,7 @@ t 2900 total 263dfa81041e6e7a economy 381f374590a37ef1 bounties cbf29ce484222325
   a 9778504347e226d3 Drifter_1 | pos (10.996,1.650) hunger 35.32 energy 81.54 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 8e1024c8adda40c8 SwarmAgent_5 | pos (11.347,1.975) hunger 48.77 energy 54.60 gold 33 intent WanderIntent goal EarnIncome
   a 0e0be2f2e3d2e9c5 SwarmAgent_1 | pos (-14.125,-0.789) hunger 48.77 energy 61.17 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 3000 total 5d26d771bd3cad28 economy 3d035835e1153469 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 3000 total f0bed52766cf8fc8 economy 3d035835e1153469 bounties cbf29ce484222325 map 5637c109f2cb5a02 groups 8d0350be04626145
   a b903d4898ab0284f SwarmAgent_0 | pos (2.274,2.034) hunger 49.52 energy 55.18 gold 30 intent TradeIntent goal EarnIncome
   a e11ec97dcded825c SwarmAgent_9 | pos (-0.902,2.448) hunger 49.76 energy 58.87 gold 37 intent WanderIntent goal EarnIncome
   a bb1c03ee5b6acbff SwarmAgent_7 | pos (-2.453,-1.580) hunger 49.76 energy 65.74 gold 75 intent IdleIntent goal GatherAtAnchor
@@ -423,7 +423,7 @@ t 3000 total 5d26d771bd3cad28 economy 3d035835e1153469 bounties cbf29ce484222325
   a d040c8379f81a2a9 SwarmAgent_1 | pos (-15.469,-1.657) hunger 49.76 energy 59.21 gold 32 intent HarvestResourceIntent goal EarnIncome
 end
 seed 20261009 session outpost
-t 0 total 3fea14a2aa0ac198 economy 3ea5a613c5d84a06 bounties a4f33c36438532e6 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 0 total ebe99d5ed30c8d34 economy 3ea5a613c5d84a06 bounties a4f33c36438532e6 map 6269087a042988e6 groups 0243cfa845185aa5
   a 3c9569689be73c05 SwarmAgent_10 | pos (3.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a a650bf2db35f1da5 SwarmAgent_4 | pos (3.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a a7e35346696ef00d SwarmAgent_9 | pos (1.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
@@ -436,7 +436,7 @@ t 0 total 3fea14a2aa0ac198 economy 3ea5a613c5d84a06 bounties a4f33c36438532e6 ma
   a a70d839647e8bc20 SwarmAgent_2 | pos (-1.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a f7e68efbe4efb2d9 SwarmAgent_1 | pos (-3.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a 119b97ef9bda9032 SwarmAgent_7 | pos (-3.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
-t 100 total d724249542ed5b66 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 100 total 95993e26d634a452 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map 6269087a042988e6 groups 0243cfa845185aa5
   a d96617e7960adda0 SwarmAgent_10 | pos (2.783,-11.005) hunger 20.99 energy 99.00 gold 15 intent ScoutIntent goal FulfillBounty
   a 3c7cf144eede5c0a SwarmAgent_4 | pos (4.101,-9.123) hunger 20.99 energy 99.00 gold 15 intent WanderIntent goal EarnIncome
   a 37629ca044d14c1b SwarmAgent_9 | pos (2.497,-11.707) hunger 20.99 energy 99.00 gold 15 intent WanderIntent goal EarnIncome
@@ -449,7 +449,7 @@ t 100 total d724249542ed5b66 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 
   a 603d4b024e58bfa9 SwarmAgent_2 | pos (-2.104,-0.348) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
   a 54bfa884341c8414 SwarmAgent_1 | pos (3.069,-6.221) hunger 20.99 energy 98.07 gold 15 intent WanderIntent goal EarnIncome
   a 28e472ebf140a79d SwarmAgent_7 | pos (5.682,-1.542) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
-t 200 total 81285d17cdd26064 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 200 total 507d5e1596102bf0 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map 6269087a042988e6 groups 0243cfa845185aa5
   a 63e2c2efdee2d897 SwarmAgent_10 | pos (-8.990,2.394) hunger 21.98 energy 97.04 gold 15 intent ScoutIntent goal FulfillBounty
   a 252098463762e3ef SwarmAgent_4 | pos (13.402,-3.058) hunger 21.98 energy 97.04 gold 15 intent WanderIntent goal EarnIncome
   a e3bccbdb0ab29b1f SwarmAgent_9 | pos (0.030,7.236) hunger 21.98 energy 97.04 gold 15 intent WanderIntent goal EarnIncome
@@ -462,7 +462,7 @@ t 200 total 81285d17cdd26064 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 
   a 170f8b54b8aeedb7 SwarmAgent_2 | pos (-19.797,1.343) hunger 21.98 energy 96.11 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 7c746479f321db81 SwarmAgent_1 | pos (15.399,-2.483) hunger 21.98 energy 96.11 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 36f86b6738fae879 SwarmAgent_7 | pos (15.348,-1.540) hunger 21.98 energy 96.10 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 300 total 131da2841c963ef6 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 300 total 42e7718c417a7102 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map 6269087a042988e6 groups 0243cfa845185aa5
   a 52ac0496d12a2a6b SwarmAgent_10 | pos (-15.433,11.034) hunger 22.98 energy 95.55 gold 15 intent ScoutIntent goal FulfillBounty
   a a44f7bf8ea07e7ba SwarmAgent_4 | pos (19.468,-9.483) hunger 22.98 energy 95.08 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 9a8eb7309ee09f3d SwarmAgent_9 | pos (-8.597,3.287) hunger 22.98 energy 95.09 gold 15 intent WanderIntent goal EarnIncome
@@ -475,7 +475,7 @@ t 300 total 131da2841c963ef6 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 
   a 396b1f732ffdf495 SwarmAgent_2 | pos (-19.797,1.343) hunger 22.98 energy 94.15 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 07ac5ee677a5396f SwarmAgent_1 | pos (15.399,-2.483) hunger 22.98 energy 94.15 gold 15 intent HarvestResourceIntent goal EarnIncome
   a b17da3a584c89bc2 SwarmAgent_7 | pos (15.348,-1.540) hunger 22.98 energy 94.13 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 400 total c7773705387615ac economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 400 total be3e2ab814cb05e8 economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 map f97fcbc0769ca6bf groups 0243cfa845185aa5
   a 959ce22ecb4393ad SwarmAgent_10 | pos (-15.433,11.034) hunger 23.97 energy 94.89 gold 15 intent ScoutIntent goal FulfillBounty
   a 7fe2af8802687144 SwarmAgent_4 | pos (19.468,-9.483) hunger 23.97 energy 93.11 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 990bea7a2b3a635f SwarmAgent_9 | pos (-19.400,1.686) hunger 23.97 energy 93.12 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -488,7 +488,7 @@ t 400 total c7773705387615ac economy 3ea5a613c5d84a06 bounties a25a1238c8b3d395 
   a 72bdc0091e1bdfd4 SwarmAgent_2 | pos (-19.797,1.343) hunger 23.97 energy 92.18 gold 15 intent HarvestResourceIntent goal EarnIncome
   a d655496b79c72295 SwarmAgent_1 | pos (4.907,2.355) hunger 23.97 energy 92.18 gold 15 intent WanderIntent goal EarnIncome
   a d43efdbc15f6fa14 SwarmAgent_7 | pos (2.353,2.199) hunger 23.97 energy 92.46 gold 15 intent TradeIntent goal EarnIncome
-t 500 total 639b1b9e5a33b8ec economy c070da6b2fe70d2f bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 500 total becdfa40dede48b9 economy c070da6b2fe70d2f bounties a25a1238c8b3d395 map d3338cb49b5e2961 groups 0243cfa845185aa5
   a 7fb8d3f6fe63efd3 SwarmAgent_10 | pos (-14.755,6.282) hunger 24.96 energy 93.91 gold 15 intent WanderIntent goal FulfillBounty
   a df60bb347e4056d6 SwarmAgent_4 | pos (13.688,-3.114) hunger 24.96 energy 91.15 gold 15 intent WanderIntent goal EarnIncome
   a 33c1c197f2e07c40 SwarmAgent_9 | pos (-19.400,1.686) hunger 24.96 energy 91.16 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -501,7 +501,7 @@ t 500 total 639b1b9e5a33b8ec economy c070da6b2fe70d2f bounties a25a1238c8b3d395 
   a 3f7ec0e8b9b03ab7 SwarmAgent_2 | pos (-2.485,2.347) hunger 24.96 energy 90.30 gold 15 intent TradeIntent goal EarnIncome
   a e8c2b0334d981fdb SwarmAgent_1 | pos (1.498,2.577) hunger 24.96 energy 90.58 gold 15 intent TradeIntent goal LiquidateSalvage
   a 1666aee44f5c80c8 SwarmAgent_7 | pos (11.500,2.500) hunger 24.96 energy 91.15 gold 21 intent HarvestResourceIntent goal EarnIncome
-t 600 total d32fefd5ef0f7de6 economy e9d602c92467d37a bounties a25a1238c8b3d395 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 600 total a60a35606ebfb183 economy e9d602c92467d37a bounties a25a1238c8b3d395 map 173eff9ec68f8555 groups 0243cfa845185aa5
   a 817173712b17e867 SwarmAgent_10 | pos (-1.361,3.231) hunger 25.95 energy 92.27 gold 15 intent DeliverBountyIntent goal FulfillBounty
   a e8f72f656d25c684 SwarmAgent_4 | pos (1.325,1.712) hunger 25.95 energy 89.55 gold 15 intent TradeIntent goal EarnIncome
   a fa745967ea59f3d9 SwarmAgent_9 | pos (-13.005,1.954) hunger 25.95 energy 89.20 gold 15 intent WanderIntent goal EarnIncome
@@ -514,7 +514,7 @@ t 600 total d32fefd5ef0f7de6 economy e9d602c92467d37a bounties a25a1238c8b3d395 
   a 0e6db0c1aa75063b SwarmAgent_2 | pos (-9.081,2.106) hunger 25.95 energy 89.20 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 2b491b6047dd2377 SwarmAgent_1 | pos (10.698,2.506) hunger 25.95 energy 89.21 gold 21 intent HarvestResourceIntent goal EarnIncome
   a 83e7c3c6b0c205c6 SwarmAgent_7 | pos (11.500,2.500) hunger 25.95 energy 89.18 gold 21 intent HarvestResourceIntent goal EarnIncome
-t 700 total f287abf6e249be55 economy e5c54333165d7c71 bounties 5b2a969b42d238a4 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 700 total 0ca962fae3828cbe economy e5c54333165d7c71 bounties 5b2a969b42d238a4 map c09a5059d4252968 groups 0243cfa845185aa5
   a 064b1b22046548a0 SwarmAgent_10 | pos (-1.361,3.231) hunger 26.94 energy 91.62 gold 30 intent ClaimBountyIntent goal FulfillBounty
   a edc735817fe7f78f SwarmAgent_4 | pos (11.321,1.982) hunger 26.94 energy 88.16 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 9228fdf46fc8ab97 SwarmAgent_9 | pos (-1.499,2.437) hunger 26.94 energy 87.62 gold 15 intent TradeIntent goal EarnIncome
@@ -527,7 +527,7 @@ t 700 total f287abf6e249be55 economy e5c54333165d7c71 bounties 5b2a969b42d238a4 
   a 127bae2cf75b1376 SwarmAgent_2 | pos (-11.396,2.295) hunger 26.94 energy 87.23 gold 20 intent HarvestResourceIntent goal EarnIncome
   a bbdf4f1788e705aa SwarmAgent_1 | pos (16.108,-1.385) hunger 26.94 energy 87.26 gold 21 intent HarvestResourceIntent goal EarnIncome
   a fe971cf7ac3dd6fd SwarmAgent_7 | pos (1.500,2.500) hunger 26.94 energy 87.37 gold 21 intent TradeIntent goal EarnIncome
-t 800 total 7c51037ce642bdb5 economy 1787c6cf9fd0e91a bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 800 total 502c7a90e50e4fb4 economy 1787c6cf9fd0e91a bounties 337795e35e15449b map bba386ad898735ed groups 0243cfa845185aa5
   a d80843d0a40a85cb SwarmAgent_10 | pos (-11.311,2.731) hunger 27.94 energy 89.90 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a c57d02ccdc10ec67 SwarmAgent_4 | pos (11.321,1.982) hunger 27.94 energy 86.20 gold 60 intent HarvestResourceIntent goal EarnIncome
   a fe029b6c30c841cd SwarmAgent_9 | pos (-10.609,2.000) hunger 27.94 energy 86.21 gold 20 intent HarvestResourceIntent goal EarnIncome
@@ -540,7 +540,7 @@ t 800 total 7c51037ce642bdb5 economy 1787c6cf9fd0e91a bounties 337795e35e15449b 
   a fe8504370e6ecc65 SwarmAgent_2 | pos (-11.396,2.295) hunger 27.94 energy 85.27 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 200796fd18674623 SwarmAgent_1 | pos (19.428,1.503) hunger 27.69 energy 85.80 gold 21 intent HarvestResourceIntent goal EarnIncome
   a ab989cbc54359f90 SwarmAgent_7 | pos (9.300,2.500) hunger 27.94 energy 86.20 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 900 total 2f4ed7faef6731fb economy f49d8771d6caa5db bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 900 total 23bad2a7fc67d05a economy f49d8771d6caa5db bounties 337795e35e15449b map bba386ad898735ed groups 0243cfa845185aa5
   a faf8c078385b98b3 SwarmAgent_10 | pos (-15.933,-1.283) hunger 28.68 energy 88.44 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a b4da3b5159a48ca7 SwarmAgent_4 | pos (2.330,2.393) hunger 28.93 energy 84.47 gold 60 intent TradeIntent goal EarnIncome
   a a882dc2786151013 SwarmAgent_9 | pos (-5.458,-2.631) hunger 28.68 energy 85.01 gold 20 intent IdleIntent goal GatherAtAnchor
@@ -553,7 +553,7 @@ t 900 total 2f4ed7faef6731fb economy f49d8771d6caa5db bounties 337795e35e15449b 
   a 3f864ecdc36582f0 SwarmAgent_2 | pos (-2.376,2.444) hunger 28.93 energy 83.55 gold 20 intent TradeIntent goal EarnIncome
   a 1a23a8d061bd91ed SwarmAgent_1 | pos (19.029,1.523) hunger 28.68 energy 83.83 gold 21 intent WanderIntent goal EarnIncome
   a 3bb49e285caee228 SwarmAgent_7 | pos (-1.262,3.482) hunger 28.68 energy 84.74 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1000 total 3d19a3e82af4cd62 economy 115f881d84461b38 bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1000 total 31b3d6d57694859a economy 115f881d84461b38 bounties 337795e35e15449b map bb063291f64cd440 groups 0243cfa845185aa5
   a 7c2d6af45dd7bd7d SwarmAgent_10 | pos (-15.724,3.913) hunger 29.42 energy 86.98 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a 9a0aa62c2503e00f SwarmAgent_4 | pos (-6.402,3.486) hunger 29.92 energy 83.22 gold 66 intent HarvestResourceIntent goal EarnIncome
   a aaa3eb706eab7436 SwarmAgent_9 | pos (-5.458,-2.631) hunger 29.67 energy 84.36 gold 20 intent IdleIntent goal GatherAtAnchor
@@ -566,7 +566,7 @@ t 1000 total 3d19a3e82af4cd62 economy 115f881d84461b38 bounties 337795e35e15449b
   a 8027fa901f06b968 SwarmAgent_2 | pos (-3.305,-1.241) hunger 29.92 energy 82.62 gold 25 intent IdleIntent goal GatherAtAnchor
   a 3d59f2a95fa7a976 SwarmAgent_1 | pos (1.511,2.422) hunger 29.67 energy 82.02 gold 21 intent TradeIntent goal EarnIncome
   a 167b39f8d3ee4b53 SwarmAgent_7 | pos (-13.644,11.249) hunger 29.67 energy 82.77 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1100 total 5898bda34a65554b economy 3b6c77f02021b9c9 bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1100 total dbd298ba7d073161 economy 3b6c77f02021b9c9 bounties 337795e35e15449b map 0fd84131ff100c6a groups 0243cfa845185aa5
   a 4b400c750fb35f54 SwarmAgent_10 | pos (-15.500,9.500) hunger 30.42 energy 85.02 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a 9cef0f4ae7d45731 SwarmAgent_4 | pos (-12.346,13.100) hunger 30.91 energy 81.26 gold 66 intent HarvestResourceIntent goal EarnIncome
   a e4386c460e39e42c SwarmAgent_9 | pos (-5.800,-1.273) hunger 30.66 energy 83.61 gold 20 intent HarvestResourceIntent goal EarnIncome
@@ -579,7 +579,7 @@ t 1100 total 5898bda34a65554b economy 3b6c77f02021b9c9 bounties 337795e35e15449b
   a adb89af249d51cbb SwarmAgent_2 | pos (-3.305,-1.241) hunger 30.91 energy 81.97 gold 25 intent IdleIntent goal GatherAtAnchor
   a 9de564ee6a068a1a SwarmAgent_1 | pos (-6.026,3.400) hunger 30.66 energy 80.86 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 76ed5ca028dc139e SwarmAgent_7 | pos (-12.510,13.490) hunger 30.66 energy 80.81 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1200 total 20b67b658016844b economy ad4645e6b1538ae6 bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1200 total 98f7d483ad87f1da economy ad4645e6b1538ae6 bounties 337795e35e15449b map 54f88859d74d9551 groups 0243cfa845185aa5
   a a32d85cb3ddbf062 SwarmAgent_10 | pos (-15.500,9.500) hunger 31.41 energy 83.05 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a eda31b0bbef0e94c SwarmAgent_4 | pos (-12.346,13.100) hunger 31.90 energy 79.29 gold 66 intent HarvestResourceIntent goal EarnIncome
   a 6d64523092ab2358 SwarmAgent_9 | pos (-15.691,8.678) hunger 31.66 energy 81.82 gold 20 intent HarvestResourceIntent goal EarnIncome
@@ -592,7 +592,7 @@ t 1200 total 20b67b658016844b economy ad4645e6b1538ae6 bounties 337795e35e15449b
   a 3755a725720eb8ec SwarmAgent_2 | pos (-5.649,0.290) hunger 31.90 energy 81.11 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 92b80c36de1d3fea SwarmAgent_1 | pos (-12.676,12.799) hunger 31.66 energy 78.89 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 00370b6a08476dbd SwarmAgent_7 | pos (-12.510,13.490) hunger 31.66 energy 78.84 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1300 total ed13ce44b5745d8c economy ad4645e6b1538ae6 bounties 337795e35e15449b map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1300 total 5563e83ec9def04d economy ad4645e6b1538ae6 bounties 337795e35e15449b map 54f88859d74d9551 groups 0243cfa845185aa5
   a 95621c2a8edcbfa9 SwarmAgent_10 | pos (-11.248,4.540) hunger 32.40 energy 81.09 gold 30 intent WanderIntent goal FulfillBounty
   a d5d22af62e921d3d SwarmAgent_4 | pos (-12.510,12.523) hunger 32.90 energy 77.33 gold 66 intent WanderIntent goal EarnIncome
   a 876cdf5056e9878e SwarmAgent_9 | pos (-12.790,13.397) hunger 32.65 energy 79.86 gold 20 intent HarvestResourceIntent goal EarnIncome
@@ -605,7 +605,7 @@ t 1300 total ed13ce44b5745d8c economy ad4645e6b1538ae6 bounties 337795e35e15449b
   a ae08743e7ca1fee9 SwarmAgent_2 | pos (-15.500,9.500) hunger 32.90 energy 79.15 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 817c33089e4886a0 SwarmAgent_1 | pos (-11.913,13.369) hunger 32.65 energy 76.93 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 062a99d31c05c82c SwarmAgent_7 | pos (-13.516,3.532) hunger 32.65 energy 76.88 gold 27 intent WanderIntent goal EarnIncome
-t 1400 total 1d13835732065692 economy 23eaf4b0483d6510 bounties 337795e35e15449b map b85b2e6626a5afcb groups 8d0350be04626145
+t 1400 total 38ef8b40418b6ea8 economy 23eaf4b0483d6510 bounties 337795e35e15449b map c5a25da1354b75d8 groups 8d0350be04626145
   a 94fd396888d10a02 SwarmAgent_10 | pos (-1.367,3.117) hunger 33.39 energy 79.78 gold 30 intent DeliverBountyIntent goal FulfillBounty
   a 93e8452443d0617f SwarmAgent_4 | pos (-3.116,3.486) hunger 33.89 energy 75.36 gold 66 intent WanderIntent goal EarnIncome
   a 88eff6d94f55cefe SwarmAgent_9 | pos (-12.790,13.397) hunger 33.64 energy 77.90 gold 20 intent HarvestResourceIntent goal EarnIncome
@@ -619,7 +619,7 @@ t 1400 total 1d13835732065692 economy 23eaf4b0483d6510 bounties 337795e35e15449b
   a a19d1c15f6a6561e Drifter_1 | pos (1.128,-3.677) hunger 53.26 energy 98.18 gold 22 intent WanderIntent goal SatiateHunger
   a fd8ac486c7baa3ce SwarmAgent_1 | pos (-11.913,13.369) hunger 33.64 energy 74.97 gold 27 intent HarvestResourceIntent goal EarnIncome
   a 8642f20a09f4288b SwarmAgent_7 | pos (-1.576,3.485) hunger 33.64 energy 75.41 gold 27 intent TradeIntent goal EarnIncome
-t 1500 total c9094e392e658aa7 economy 5bc95d18819a023a bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1500 total 3865afac52c42afe economy 5bc95d18819a023a bounties cbf29ce484222325 map 3c1e15245e841484 groups 8d0350be04626145
   a cc0adee56b5d725b SwarmAgent_10 | pos (-3.306,-2.124) hunger 34.38 energy 78.74 gold 55 intent IdleIntent goal GatherAtAnchor
   a 7df1a750eb6bc531 SwarmAgent_4 | pos (-2.116,3.481) hunger 34.88 energy 74.63 gold 66 intent TradeIntent goal OutfitForDanger
   a f9a086a3243db0c5 SwarmAgent_9 | pos (-13.809,8.094) hunger 34.63 energy 75.93 gold 20 intent WanderIntent goal EarnIncome
@@ -633,7 +633,7 @@ t 1500 total c9094e392e658aa7 economy 5bc95d18819a023a bounties cbf29ce484222325
   a 9865e3c0c5b3eef7 Drifter_1 | pos (-16.317,-2.068) hunger 54.25 energy 96.21 gold 22 intent WanderIntent goal SatiateHunger
   a d403e9bd90d67878 SwarmAgent_1 | pos (-11.737,13.837) hunger 34.63 energy 73.51 gold 27 intent none goal none
   a 4942e6ea7faa7c08 SwarmAgent_7 | pos (-1.576,3.485) hunger 34.63 energy 74.76 gold 27 intent none goal none
-t 1600 total 70affe6f1679387a economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1600 total 162442813f01081d economy 33e03766b28d52b1 bounties cbf29ce484222325 map 7bbac0ee30cabf67 groups 8d0350be04626145
   a d793fe72f30a1837 SwarmAgent_10 | pos (-3.306,-2.124) hunger 35.38 energy 78.09 gold 55 intent IdleIntent goal GatherAtAnchor
   a b45dcec7eb9e5d3d SwarmAgent_4 | pos (7.356,1.785) hunger 35.87 energy 73.32 gold 36 intent HarvestResourceIntent goal EarnIncome
   a bb294dccf64240a8 SwarmAgent_9 | pos (-2.089,3.578) hunger 35.62 energy 74.25 gold 20 intent TradeIntent goal EarnIncome
@@ -647,7 +647,7 @@ t 1600 total 70affe6f1679387a economy 33e03766b28d52b1 bounties cbf29ce484222325
   a b7dd39b46e2122ee Drifter_1 | pos (0.490,1.497) hunger 55.24 energy 94.26 gold 22 intent WanderIntent goal SatiateHunger
   a 8232bc769d67ef8c SwarmAgent_1 | pos (-11.737,13.837) hunger 35.62 energy 72.86 gold 27 intent none goal none
   a 5f898608826f23d8 SwarmAgent_7 | pos (-1.576,3.485) hunger 35.62 energy 74.10 gold 27 intent none goal none
-t 1700 total 6efa9c0abd11d9b8 economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1700 total 1b7e5ced1bb4ec50 economy 33e03766b28d52b1 bounties cbf29ce484222325 map 67e5802a18b49020 groups 8d0350be04626145
   a 2f38488868b55425 SwarmAgent_10 | pos (-3.306,-2.124) hunger 36.37 energy 77.44 gold 55 intent none goal none
   a 3ec701d20200ad32 SwarmAgent_4 | pos (20.026,-12.854) hunger 36.87 energy 71.36 gold 36 intent HarvestResourceIntent goal EarnIncome
   a 0999c74ee0362147 SwarmAgent_9 | pos (-2.089,3.578) hunger 36.62 energy 73.59 gold 20 intent none goal none
@@ -661,7 +661,7 @@ t 1700 total 6efa9c0abd11d9b8 economy 33e03766b28d52b1 bounties cbf29ce484222325
   a 7fd0227bb60404a3 Drifter_1 | pos (17.179,-6.366) hunger 56.24 energy 92.30 gold 22 intent WanderIntent goal SatiateHunger
   a 29823d14e5016ef3 SwarmAgent_1 | pos (-11.737,13.837) hunger 36.62 energy 72.20 gold 27 intent none goal none
   a 9eae164b6f14a116 SwarmAgent_7 | pos (-1.576,3.485) hunger 36.62 energy 73.45 gold 27 intent none goal none
-t 1800 total 908e4b7e3ec6a8b5 economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1800 total b8eddba86ac2b5e5 economy 33e03766b28d52b1 bounties cbf29ce484222325 map 67e5802a18b49020 groups 8d0350be04626145
   a 055e96bae217558b SwarmAgent_10 | pos (-3.306,-2.124) hunger 37.36 energy 76.78 gold 55 intent none goal none
   a 20d415011737c4e7 SwarmAgent_4 | pos (20.247,-14.258) hunger 37.86 energy 69.39 gold 36 intent HarvestResourceIntent goal EarnIncome
   a 652d6c2a6f911e31 SwarmAgent_9 | pos (-2.089,3.578) hunger 37.61 energy 72.94 gold 20 intent none goal none
@@ -675,7 +675,7 @@ t 1800 total 908e4b7e3ec6a8b5 economy 33e03766b28d52b1 bounties cbf29ce484222325
   a f69cd7efade9249c Drifter_1 | pos (10.243,-0.014) hunger 57.23 energy 90.35 gold 22 intent WanderIntent goal SatiateHunger
   a 096c3b196ef13698 SwarmAgent_1 | pos (-11.737,13.837) hunger 37.61 energy 71.55 gold 27 intent none goal none
   a cef2cd4b578da969 SwarmAgent_7 | pos (-1.576,3.485) hunger 37.61 energy 72.79 gold 27 intent none goal none
-t 1900 total 08cb7aee173af730 economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1900 total 1be76c86758135b3 economy 33e03766b28d52b1 bounties cbf29ce484222325 map e6fb032fad38db60 groups 8d0350be04626145
   a e32aefe14485f81f SwarmAgent_10 | pos (-3.306,-2.124) hunger 38.35 energy 76.13 gold 55 intent none goal none
   a 97611e94325f4fc2 SwarmAgent_4 | pos (20.247,-14.258) hunger 38.85 energy 67.43 gold 36 intent HarvestResourceIntent goal EarnIncome
   a 2782b8b42c58e0d8 SwarmAgent_9 | pos (-2.089,3.578) hunger 38.60 energy 72.28 gold 20 intent none goal none
@@ -689,7 +689,7 @@ t 1900 total 08cb7aee173af730 economy 33e03766b28d52b1 bounties cbf29ce484222325
   a d662f64994dc071a Drifter_1 | pos (-7.900,4.500) hunger 58.22 energy 88.38 gold 22 intent WanderIntent goal SatiateHunger
   a dd4c505cfa62511d SwarmAgent_1 | pos (-11.737,13.837) hunger 38.60 energy 70.89 gold 27 intent none goal none
   a f27843f08d7df14b SwarmAgent_7 | pos (-1.576,3.485) hunger 38.60 energy 72.14 gold 27 intent none goal none
-t 2000 total 525414caec0921c5 economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2000 total e5f2f8b13fc53d08 economy 33e03766b28d52b1 bounties cbf29ce484222325 map 30ec104c09c42fc1 groups 8d0350be04626145
   a 63f57cda9dfe0b39 SwarmAgent_10 | pos (-3.306,-2.124) hunger 39.35 energy 75.47 gold 55 intent IdleIntent goal GatherAtAnchor
   a f9184d3480951ada SwarmAgent_4 | pos (11.300,-0.900) hunger 39.84 energy 65.46 gold 36 intent WanderIntent goal EarnIncome
   a 365944d9ae3f35d0 SwarmAgent_9 | pos (-2.089,3.578) hunger 39.59 energy 71.63 gold 20 intent none goal none
@@ -703,7 +703,7 @@ t 2000 total 525414caec0921c5 economy 33e03766b28d52b1 bounties cbf29ce484222325
   a d5f8e2dff12f940b Drifter_1 | pos (-16.500,6.500) hunger 59.21 energy 86.42 gold 22 intent WanderIntent goal SatiateHunger
   a d1345d16cf5cbfe9 SwarmAgent_1 | pos (-11.737,13.837) hunger 39.59 energy 70.24 gold 27 intent none goal none
   a 68077d9136b61ab1 SwarmAgent_7 | pos (-1.576,3.485) hunger 39.59 energy 71.48 gold 27 intent none goal none
-t 2100 total cc88dc2a510e55b8 economy 33e03766b28d52b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2100 total 13f182f502ff18f0 economy 33e03766b28d52b1 bounties cbf29ce484222325 map 21a482d5b765e1ad groups 8d0350be04626145
   a e607659df2be8cbd SwarmAgent_10 | pos (-3.306,-2.124) hunger 40.34 energy 74.82 gold 55 intent IdleIntent goal GatherAtAnchor
   a 4aff3daffd890a9f SwarmAgent_4 | pos (1.156,1.544) hunger 40.83 energy 64.06 gold 36 intent TradeIntent goal EarnIncome
   a 1615be940620afc1 SwarmAgent_9 | pos (-2.089,3.578) hunger 40.59 energy 70.97 gold 20 intent none goal none
@@ -717,7 +717,7 @@ t 2100 total cc88dc2a510e55b8 economy 33e03766b28d52b1 bounties cbf29ce484222325
   a 9f4ff25b82d1623d Drifter_1 | pos (-2.284,9.095) hunger 60.20 energy 84.45 gold 22 intent WanderIntent goal SatiateHunger
   a 114db0dc4bfd96ab SwarmAgent_1 | pos (-11.737,13.837) hunger 40.59 energy 69.58 gold 27 intent none goal none
   a bec6c0268e1ffda2 SwarmAgent_7 | pos (-1.576,3.485) hunger 40.59 energy 70.83 gold 27 intent none goal none
-t 2200 total b7af9ce50748391e economy 9c418a20ffc36a21 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2200 total 5e3110129b879d90 economy 9c418a20ffc36a21 bounties cbf29ce484222325 map 3770edb1ee0d8c38 groups 8d0350be04626145
   a fb937c91c76f19fe SwarmAgent_10 | pos (-3.306,-2.124) hunger 41.33 energy 74.16 gold 55 intent IdleIntent goal GatherAtAnchor
   a 62e8a4e078b5d06b SwarmAgent_4 | pos (1.156,1.544) hunger 41.83 energy 63.41 gold 81 intent IdleIntent goal none
   a 2bf6fb63889af67e SwarmAgent_9 | pos (-2.089,3.578) hunger 41.58 energy 70.32 gold 20 intent none goal none
@@ -731,7 +731,7 @@ t 2200 total b7af9ce50748391e economy 9c418a20ffc36a21 bounties cbf29ce484222325
   a 868c7a8e927b2d18 Drifter_1 | pos (-2.699,9.959) hunger 61.20 energy 82.49 gold 22 intent HarvestResourceIntent goal none
   a 76a8f70e30a90ec5 SwarmAgent_1 | pos (-11.737,13.837) hunger 41.58 energy 68.93 gold 27 intent none goal none
   a f481d5adca1e4cce SwarmAgent_7 | pos (-1.576,3.485) hunger 41.58 energy 70.17 gold 27 intent none goal none
-t 2300 total 112371180f7d23f5 economy 9c418a20ffc36a21 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2300 total 183c78ae9768bccd economy 9c418a20ffc36a21 bounties cbf29ce484222325 map fdda601be91e7233 groups 8d0350be04626145
   a d07203d290540770 SwarmAgent_10 | pos (-3.306,-2.124) hunger 42.32 energy 73.51 gold 55 intent IdleIntent goal GatherAtAnchor
   a 2583f2f32552a341 SwarmAgent_4 | pos (-3.670,-1.111) hunger 42.82 energy 62.40 gold 81 intent IdleIntent goal GatherAtAnchor
   a 7c2d644bfe41c9a4 SwarmAgent_9 | pos (-2.089,3.578) hunger 42.57 energy 69.66 gold 20 intent none goal none
@@ -745,7 +745,7 @@ t 2300 total 112371180f7d23f5 economy 9c418a20ffc36a21 bounties cbf29ce484222325
   a 6cf01677504ad495 Drifter_1 | pos (11.300,2.500) hunger 12.19 energy 80.55 gold 22 intent HarvestResourceIntent goal EarnIncome
   a 3a345e74973c3852 SwarmAgent_1 | pos (-11.737,13.837) hunger 42.57 energy 68.27 gold 27 intent none goal none
   a 40d9bfd74849a356 SwarmAgent_7 | pos (-1.576,3.485) hunger 42.57 energy 69.52 gold 27 intent none goal none
-t 2400 total 48c271026e92f207 economy 9c418a20ffc36a21 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2400 total 9a1b98d88708baee economy 9c418a20ffc36a21 bounties cbf29ce484222325 map ab86e02d57e3f90c groups 8d0350be04626145
   a 0d5a57ba0438d6c9 SwarmAgent_10 | pos (-3.306,-2.124) hunger 43.31 energy 72.85 gold 55 intent IdleIntent goal GatherAtAnchor
   a 44ff5cb0d254ffc7 SwarmAgent_4 | pos (-3.670,-1.111) hunger 43.81 energy 61.75 gold 81 intent IdleIntent goal GatherAtAnchor
   a 44719054461b351e SwarmAgent_9 | pos (-2.089,3.578) hunger 43.56 energy 69.01 gold 20 intent none goal none
@@ -759,7 +759,7 @@ t 2400 total 48c271026e92f207 economy 9c418a20ffc36a21 bounties cbf29ce484222325
   a e1d0c6f687e0193d Drifter_1 | pos (11.500,2.500) hunger 13.18 energy 78.59 gold 22 intent HarvestResourceIntent goal EarnIncome
   a 5ecffa7c89d53a2c SwarmAgent_1 | pos (-11.737,13.837) hunger 43.56 energy 67.62 gold 27 intent none goal none
   a 184a2fec3815c4ac SwarmAgent_7 | pos (-1.576,3.485) hunger 43.56 energy 68.86 gold 27 intent none goal none
-t 2500 total 8f363c861e803689 economy 9c418a20ffc36a21 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2500 total a0f0d28697db3d35 economy 9c418a20ffc36a21 bounties cbf29ce484222325 map 7a8c0dfd8a09299e groups 8d0350be04626145
   a b2136cc1f2032d0f SwarmAgent_10 | pos (-3.306,-2.124) hunger 44.31 energy 72.20 gold 55 intent IdleIntent goal GatherAtAnchor
   a 3620f7743cb227e3 SwarmAgent_4 | pos (-3.670,-1.111) hunger 44.80 energy 61.09 gold 81 intent IdleIntent goal GatherAtAnchor
   a 5747bf80c4ce5514 SwarmAgent_9 | pos (-2.089,3.578) hunger 44.55 energy 68.35 gold 20 intent none goal none
@@ -773,7 +773,7 @@ t 2500 total 8f363c861e803689 economy 9c418a20ffc36a21 bounties cbf29ce484222325
   a 7b20777951f48749 Drifter_1 | pos (1.500,2.500) hunger 14.17 energy 76.73 gold 22 intent TradeIntent goal EarnIncome
   a e0b533928ac6fb44 SwarmAgent_1 | pos (-11.737,13.837) hunger 44.55 energy 66.97 gold 27 intent none goal none
   a ca52512199d8a74c SwarmAgent_7 | pos (-1.576,3.485) hunger 44.55 energy 68.21 gold 27 intent none goal none
-t 2600 total 59582df6a1b9941e economy ab84dda9293df6b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2600 total 7d8182daa72451eb economy ab84dda9293df6b1 bounties cbf29ce484222325 map 20d32114e3eaf2be groups 8d0350be04626145
   a 23a32b71ea32de1d SwarmAgent_10 | pos (-3.306,-2.124) hunger 45.30 energy 71.54 gold 55 intent IdleIntent goal GatherAtAnchor
   a fcac5ea34ff0ed07 SwarmAgent_4 | pos (-3.670,-1.111) hunger 45.79 energy 60.44 gold 81 intent IdleIntent goal GatherAtAnchor
   a 521c1a89714e7e86 SwarmAgent_9 | pos (-3.486,3.682) hunger 45.55 energy 67.59 gold 25 intent HarvestResourceIntent goal EarnIncome
@@ -787,7 +787,7 @@ t 2600 total 59582df6a1b9941e economy ab84dda9293df6b1 bounties cbf29ce484222325
   a d57d35265efdc306 Drifter_1 | pos (8.500,2.500) hunger 15.16 energy 75.60 gold 28 intent HarvestResourceIntent goal EarnIncome
   a cd7ddf11f719b059 SwarmAgent_1 | pos (-11.913,13.369) hunger 45.55 energy 65.28 gold 27 intent WanderIntent goal LiquidateSalvage
   a 41e869fa6b015266 SwarmAgent_7 | pos (-2.772,3.579) hunger 45.55 energy 67.45 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2700 total 1ebc40eb10e63594 economy ab84dda9293df6b1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2700 total e9bca18347ac3cbd economy ab84dda9293df6b1 bounties cbf29ce484222325 map 06678fa281c6774d groups 8d0350be04626145
   a 81b6860c4ac0da00 SwarmAgent_10 | pos (-3.306,-2.124) hunger 46.29 energy 70.89 gold 55 intent IdleIntent goal GatherAtAnchor
   a db2439e9b3d4a2db SwarmAgent_4 | pos (-1.959,0.572) hunger 46.79 energy 59.61 gold 81 intent WanderIntent goal LiquidateSalvage
   a 03f65339206a5d42 SwarmAgent_9 | pos (-15.829,8.754) hunger 46.54 energy 65.63 gold 25 intent HarvestResourceIntent goal EarnIncome
@@ -801,7 +801,7 @@ t 2700 total 1ebc40eb10e63594 economy ab84dda9293df6b1 bounties cbf29ce484222325
   a 57c9b5cf6897be80 Drifter_1 | pos (11.500,2.500) hunger 16.16 energy 73.64 gold 28 intent HarvestResourceIntent goal EarnIncome
   a 9a3b0b06a0f824e9 SwarmAgent_1 | pos (-11.808,13.649) hunger 46.54 energy 63.35 gold 27 intent WanderIntent goal LiquidateSalvage
   a 3575443f509ead5e SwarmAgent_7 | pos (-13.136,11.047) hunger 46.54 energy 65.49 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2800 total a741f03afaca9cf3 economy 0a27ea6f7416cd76 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2800 total 3909e821266e4fb7 economy 0a27ea6f7416cd76 bounties cbf29ce484222325 map 37f03e9be7e3d090 groups 8d0350be04626145
   a 82ea985f35db0d53 SwarmAgent_10 | pos (-3.306,-2.124) hunger 47.28 energy 70.23 gold 55 intent IdleIntent goal GatherAtAnchor
   a 776b49e50692adc1 SwarmAgent_4 | pos (-2.613,-1.408) hunger 47.78 energy 58.64 gold 86 intent IdleIntent goal GatherAtAnchor
   a 65419714c9e51ebb SwarmAgent_9 | pos (-16.262,9.267) hunger 47.53 energy 63.67 gold 25 intent HarvestResourceIntent goal EarnIncome
@@ -815,7 +815,7 @@ t 2800 total a741f03afaca9cf3 economy 0a27ea6f7416cd76 bounties cbf29ce484222325
   a e323c95d7b2c8c98 Drifter_1 | pos (2.700,2.500) hunger 17.15 energy 71.67 gold 28 intent WanderIntent goal EarnIncome
   a aabef75a9d957746 SwarmAgent_1 | pos (-12.306,4.343) hunger 47.53 energy 61.39 gold 27 intent WanderIntent goal LiquidateSalvage
   a 38aaf770dcc6995a SwarmAgent_7 | pos (-12.327,13.274) hunger 47.53 energy 63.52 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2900 total b4bbde96cc2d6301 economy b8f33a3ec7553df7 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2900 total 05d6639bab9a9402 economy b8f33a3ec7553df7 bounties cbf29ce484222325 map 7a604631acbc7fa9 groups 8d0350be04626145
   a dce7fe84bc0de7f6 SwarmAgent_10 | pos (-3.306,-2.124) hunger 48.28 energy 69.58 gold 55 intent IdleIntent goal GatherAtAnchor
   a 12cf9fe94cb07e51 SwarmAgent_4 | pos (-2.613,-1.408) hunger 48.77 energy 57.99 gold 86 intent IdleIntent goal GatherAtAnchor
   a 1945b112d5bcc56e SwarmAgent_9 | pos (-16.262,9.267) hunger 48.52 energy 61.70 gold 25 intent HarvestResourceIntent goal EarnIncome
@@ -829,7 +829,7 @@ t 2900 total b4bbde96cc2d6301 economy b8f33a3ec7553df7 bounties cbf29ce484222325
   a bf44c03a7489135c Drifter_1 | pos (-1.213,-0.706) hunger 18.14 energy 70.70 gold 34 intent WanderIntent goal GatherAtAnchor
   a a941a046157cdfa1 SwarmAgent_1 | pos (-1.944,3.917) hunger 48.52 energy 59.91 gold 27 intent TradeIntent goal LiquidateSalvage
   a ce1d241215a34ee2 SwarmAgent_7 | pos (-12.327,13.274) hunger 48.52 energy 61.56 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 3000 total 94f925eb4e8828f4 economy bd745afdc866cd33 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 3000 total f8df9cc2a7925633 economy bd745afdc866cd33 bounties cbf29ce484222325 map 2e25b7f91c5b6273 groups 8d0350be04626145
   a 4b45b1ce7a5cff16 SwarmAgent_10 | pos (-3.306,-2.124) hunger 49.27 energy 68.93 gold 55 intent IdleIntent goal GatherAtAnchor
   a 1de0ecd706189f0c SwarmAgent_4 | pos (-2.613,-1.408) hunger 49.76 energy 57.33 gold 86 intent IdleIntent goal GatherAtAnchor
   a 92c189ffb8f20678 SwarmAgent_9 | pos (-5.905,3.234) hunger 49.52 energy 59.74 gold 25 intent WanderIntent goal EarnIncome
@@ -845,7 +845,7 @@ t 3000 total 94f925eb4e8828f4 economy bd745afdc866cd33 bounties cbf29ce484222325
   a 83d6e56878b27c7e SwarmAgent_7 | pos (-14.053,4.606) hunger 49.52 energy 59.59 gold 32 intent WanderIntent goal EarnIncome
 end
 seed 20261010 session outpost
-t 0 total a209cea19cc50131 economy 7824a1253eb56f6c bounties a4f33c36438532e6 map f9a96c236ad3278b groups 0243cfa845185aa5
+t 0 total a7bc282a8d8a213c economy 7824a1253eb56f6c bounties a4f33c36438532e6 map 470bd8045bba4397 groups 0243cfa845185aa5
   a 1173f32e43097d13 SwarmAgent_8 | pos (-1.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a 5682601edb5a00b8 SwarmAgent_6 | pos (-5.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a 6b8e3cce1304185b SwarmAgent_0 | pos (-5.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
@@ -858,7 +858,7 @@ t 0 total a209cea19cc50131 economy 7824a1253eb56f6c bounties a4f33c36438532e6 ma
   a b1fc82daf578eb96 SwarmAgent_10 | pos (3.000,-16.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a 6f36c22c35cfe171 SwarmAgent_1 | pos (-3.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
   a a9140ece18ba101f SwarmAgent_5 | pos (5.000,-14.000) hunger 20.00 energy 100.00 gold 15 intent none goal none
-t 100 total e12f50b8bbd8d769 economy 7824a1253eb56f6c bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 100 total 436f4dad4dc66e64 economy 7824a1253eb56f6c bounties 351099d512bdb8ee map 470bd8045bba4397 groups 0243cfa845185aa5
   a 9730fb8318fda532 SwarmAgent_8 | pos (2.418,-13.559) hunger 20.99 energy 99.00 gold 15 intent WanderIntent goal EarnIncome
   a 48f161fa907a7a1b SwarmAgent_6 | pos (0.442,-3.265) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
   a cc2b382128b39326 SwarmAgent_0 | pos (-0.011,-13.667) hunger 20.99 energy 99.00 gold 15 intent WanderIntent goal EarnIncome
@@ -871,7 +871,7 @@ t 100 total e12f50b8bbd8d769 economy 7824a1253eb56f6c bounties 351099d512bdb8ee 
   a 04016482b14e1323 SwarmAgent_10 | pos (7.100,1.500) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
   a 8187b1986bd47295 SwarmAgent_1 | pos (1.908,-13.448) hunger 20.99 energy 98.99 gold 15 intent ScoutIntent goal FulfillBounty
   a 916fec36a8848897 SwarmAgent_5 | pos (10.111,2.683) hunger 20.99 energy 98.06 gold 15 intent WanderIntent goal EarnIncome
-t 200 total 634d8aeaa50a8d53 economy 7824a1253eb56f6c bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 200 total 17b0c2513e9a9dba economy 7824a1253eb56f6c bounties 351099d512bdb8ee map 470bd8045bba4397 groups 0243cfa845185aa5
   a 38d6e342499b7943 SwarmAgent_8 | pos (0.226,2.294) hunger 21.98 energy 97.07 gold 15 intent WanderIntent goal EarnIncome
   a 4a4f83afa0b51b17 SwarmAgent_6 | pos (-14.499,-5.498) hunger 21.98 energy 96.10 gold 15 intent WanderIntent goal EarnIncome
   a de4ac924b3b2514f SwarmAgent_0 | pos (7.139,1.260) hunger 21.98 energy 97.05 gold 15 intent WanderIntent goal EarnIncome
@@ -884,7 +884,7 @@ t 200 total 634d8aeaa50a8d53 economy 7824a1253eb56f6c bounties 351099d512bdb8ee 
   a e585da4490376ec7 SwarmAgent_10 | pos (18.490,-11.233) hunger 21.98 energy 96.10 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 5e4634df591953cc SwarmAgent_1 | pos (-6.075,0.645) hunger 21.98 energy 97.03 gold 15 intent ScoutIntent goal FulfillBounty
   a d7323fd8b59c7a58 SwarmAgent_5 | pos (11.598,2.568) hunger 21.98 energy 96.10 gold 15 intent HarvestResourceIntent goal EarnIncome
-t 300 total 9ba2d172c5fd4f86 economy 7824a1253eb56f6c bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 300 total a4ed6f74635adafe economy 7824a1253eb56f6c bounties 351099d512bdb8ee map 64b28b3663378647 groups 0243cfa845185aa5
   a 25d75d0d6cd81819 SwarmAgent_8 | pos (-6.259,2.133) hunger 22.98 energy 95.11 gold 15 intent WanderIntent goal EarnIncome
   a aae4b7828d1a4e06 SwarmAgent_6 | pos (-13.672,-13.912) hunger 22.98 energy 94.13 gold 15 intent HarvestResourceIntent goal EarnIncome
   a fa53039e538c10e5 SwarmAgent_0 | pos (21.384,-11.457) hunger 22.98 energy 95.09 gold 15 intent WanderIntent goal EarnIncome
@@ -897,7 +897,7 @@ t 300 total 9ba2d172c5fd4f86 economy 7824a1253eb56f6c bounties 351099d512bdb8ee 
   a 69fb61cdc266776e SwarmAgent_10 | pos (19.419,-10.474) hunger 22.98 energy 94.13 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 97b1b69330b42422 SwarmAgent_1 | pos (-15.433,11.034) hunger 22.98 energy 95.31 gold 15 intent ScoutIntent goal FulfillBounty
   a 4f89f814c664f363 SwarmAgent_5 | pos (1.798,2.510) hunger 22.98 energy 94.13 gold 15 intent WanderIntent goal EarnIncome
-t 400 total ceba83f8a1d7c5d3 economy 9f431eb38ed586d3 bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 400 total 227f251c87c0fa9d economy 9f431eb38ed586d3 bounties 351099d512bdb8ee map 299508bc72c7d231 groups 0243cfa845185aa5
   a 3cbb9fff55175904 SwarmAgent_8 | pos (-16.472,-2.406) hunger 23.97 energy 93.15 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 3353381d895477f9 SwarmAgent_6 | pos (-13.672,-13.912) hunger 23.97 energy 92.17 gold 15 intent HarvestResourceIntent goal EarnIncome
   a b40dd670eabb7155 SwarmAgent_0 | pos (20.555,-10.560) hunger 23.97 energy 93.12 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -910,7 +910,7 @@ t 400 total ceba83f8a1d7c5d3 economy 9f431eb38ed586d3 bounties 351099d512bdb8ee 
   a 42ec11698d5887b3 SwarmAgent_10 | pos (19.419,-10.474) hunger 23.97 energy 92.17 gold 15 intent HarvestResourceIntent goal EarnIncome
   a ce4ecbe9884506a1 SwarmAgent_1 | pos (-15.433,11.034) hunger 23.97 energy 94.66 gold 15 intent ScoutIntent goal FulfillBounty
   a 8cad12f27f59ba5a SwarmAgent_5 | pos (6.500,2.504) hunger 23.97 energy 93.11 gold 21 intent HarvestResourceIntent goal EarnIncome
-t 500 total 92f627f0f4d43471 economy 9f431eb38ed586d3 bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 500 total 96a0f5d2c7278a83 economy 9f431eb38ed586d3 bounties 351099d512bdb8ee map 299508bc72c7d231 groups 0243cfa845185aa5
   a d103b1cb2f38dbdf SwarmAgent_8 | pos (-16.472,-2.406) hunger 24.96 energy 91.19 gold 15 intent HarvestResourceIntent goal EarnIncome
   a 44d1458802531eca SwarmAgent_6 | pos (-14.478,-4.747) hunger 24.96 energy 90.20 gold 15 intent WanderIntent goal EarnIncome
   a ba8fb8c6db284bd5 SwarmAgent_0 | pos (20.084,-14.331) hunger 24.71 energy 91.66 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -923,7 +923,7 @@ t 500 total 92f627f0f4d43471 economy 9f431eb38ed586d3 bounties 351099d512bdb8ee 
   a 0f6b4f267c92601b SwarmAgent_10 | pos (8.500,1.520) hunger 24.96 energy 90.20 gold 15 intent WanderIntent goal EarnIncome
   a 5af0c374ef462d04 SwarmAgent_1 | pos (-15.235,9.648) hunger 24.96 energy 93.90 gold 15 intent WanderIntent goal FulfillBounty
   a 43ba85bf449fac8c SwarmAgent_5 | pos (11.500,2.500) hunger 24.96 energy 91.15 gold 21 intent HarvestResourceIntent goal EarnIncome
-t 600 total 20cc6e2f4ce413c6 economy 0f4f42f2af1e4362 bounties 351099d512bdb8ee map f9a96c236ad3278b groups 0243cfa845185aa5
+t 600 total 2798ccceada669ca economy 0f4f42f2af1e4362 bounties 351099d512bdb8ee map a799f170c63792de groups 0243cfa845185aa5
   a b9ef3f565b44db77 SwarmAgent_8 | pos (-11.447,0.066) hunger 25.95 energy 89.22 gold 15 intent WanderIntent goal EarnIncome
   a 620c075cd3dd739a SwarmAgent_6 | pos (-0.960,1.348) hunger 25.95 energy 88.46 gold 15 intent TradeIntent goal EarnIncome
   a 5bcad45db00e39bc SwarmAgent_0 | pos (20.084,-14.331) hunger 25.70 energy 89.70 gold 15 intent HarvestResourceIntent goal EarnIncome
@@ -936,7 +936,7 @@ t 600 total 20cc6e2f4ce413c6 economy 0f4f42f2af1e4362 bounties 351099d512bdb8ee 
   a b234376ba8baf9b9 SwarmAgent_10 | pos (1.247,1.667) hunger 25.95 energy 89.06 gold 15 intent TradeIntent goal EarnIncome
   a e27b72c735eba73b SwarmAgent_1 | pos (-1.361,3.231) hunger 25.95 energy 92.04 gold 15 intent DeliverBountyIntent goal FulfillBounty
   a 7fa51ec5b0ca5209 SwarmAgent_5 | pos (6.809,2.104) hunger 25.95 energy 89.18 gold 21 intent WanderIntent goal EarnIncome
-t 700 total f5c65074bff2bff4 economy c8c555f45a813594 bounties 5b2a969b42d238a4 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 700 total bd0dd87382591b65 economy c8c555f45a813594 bounties 5b2a969b42d238a4 map fa0198c8c8f9b8b9 groups 0243cfa845185aa5
   a a2c728bc86d6724f SwarmAgent_8 | pos (-1.438,2.072) hunger 26.94 energy 87.86 gold 15 intent TradeIntent goal EarnIncome
   a 9d720033af92ac27 SwarmAgent_6 | pos (-9.635,1.352) hunger 26.94 energy 87.22 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 0ad24b5c0cddd883 SwarmAgent_0 | pos (14.471,-5.575) hunger 26.70 energy 87.73 gold 15 intent WanderIntent goal EarnIncome
@@ -949,7 +949,7 @@ t 700 total f5c65074bff2bff4 economy c8c555f45a813594 bounties 5b2a969b42d238a4 
   a ba14edfa12c9e592 SwarmAgent_10 | pos (11.151,1.530) hunger 26.94 energy 87.22 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 624c07b668dad924 SwarmAgent_1 | pos (-1.361,3.231) hunger 26.94 energy 91.38 gold 30 intent ClaimBountyIntent goal FulfillBounty
   a c32847895d0d1563 SwarmAgent_5 | pos (1.500,2.500) hunger 26.94 energy 88.17 gold 27 intent ClaimBountyIntent goal FulfillBounty
-t 800 total 1a8d2576aaa88077 economy d8adcf5eae600486 bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 800 total 285f39e6c2c8017e economy d8adcf5eae600486 bounties 7a3ecd775dc97c44 map fa0198c8c8f9b8b9 groups 0243cfa845185aa5
   a 9aa3f78cda439b64 SwarmAgent_8 | pos (-11.377,1.839) hunger 27.94 energy 86.39 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 50e5875f20acf772 SwarmAgent_6 | pos (-19.479,-9.430) hunger 27.94 energy 85.25 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 105c10cc215d0c5b SwarmAgent_0 | pos (3.750,1.525) hunger 27.69 energy 85.77 gold 15 intent HarvestResourceIntent goal none
@@ -962,7 +962,7 @@ t 800 total 1a8d2576aaa88077 economy d8adcf5eae600486 bounties 7a3ecd775dc97c44 
   a 2481b8958e747edd SwarmAgent_10 | pos (15.753,-1.259) hunger 27.69 energy 85.76 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 80be11ba24e33258 SwarmAgent_1 | pos (-10.996,2.487) hunger 27.94 energy 89.90 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a ebf534b054521638 SwarmAgent_5 | pos (-9.218,3.864) hunger 27.94 energy 86.71 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 900 total 88f0aae2e579da6e economy 0f09133f411b4ab3 bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 900 total 121323f774f40f09 economy 0f09133f411b4ab3 bounties 7a3ecd775dc97c44 map b5e05531bffd1381 groups 0243cfa845185aa5
   a ec8aca61a9dcb971 SwarmAgent_8 | pos (-15.611,-1.117) hunger 28.68 energy 84.93 gold 20 intent HarvestResourceIntent goal EarnIncome
   a d5afc8b4fdd12145 SwarmAgent_6 | pos (-19.479,-9.430) hunger 28.93 energy 83.29 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 87c550e5cba223e2 SwarmAgent_0 | pos (14.575,-1.436) hunger 28.68 energy 83.81 gold 15 intent HarvestResourceIntent goal none
@@ -975,7 +975,7 @@ t 900 total 88f0aae2e579da6e economy 0f09133f411b4ab3 bounties 7a3ecd775dc97c44 
   a 5aa36c3367f550ea SwarmAgent_10 | pos (15.753,-1.259) hunger 28.68 energy 83.79 gold 60 intent HarvestResourceIntent goal EarnIncome
   a 4373d90905d641d4 SwarmAgent_1 | pos (-15.033,-1.765) hunger 28.93 energy 87.95 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a a9897412e67f37ec SwarmAgent_5 | pos (-12.274,13.287) hunger 28.93 energy 84.74 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1000 total 371c4ffa6e7144eb economy 820cb8c3d5245f0b bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 0243cfa845185aa5
+t 1000 total 01050f86fa863fdc economy 820cb8c3d5245f0b bounties 7a3ecd775dc97c44 map 8a69b0847619ee2f groups 0243cfa845185aa5
   a f81eaeb706d11db5 SwarmAgent_8 | pos (-16.352,-0.446) hunger 29.60 energy 83.11 gold 20 intent HarvestResourceIntent goal EarnIncome
   a d8a7b1b907ab776d SwarmAgent_6 | pos (-17.322,-7.066) hunger 29.92 energy 81.32 gold 60 intent WanderIntent goal EarnIncome
   a 27578c570fb20ab0 SwarmAgent_0 | pos (19.263,1.896) hunger 29.42 energy 82.35 gold 15 intent HarvestResourceIntent goal none
@@ -988,7 +988,7 @@ t 1000 total 371c4ffa6e7144eb economy 820cb8c3d5245f0b bounties 7a3ecd775dc97c44
   a 4ecb71244524ed9b SwarmAgent_10 | pos (1.459,2.152) hunger 29.67 energy 81.99 gold 60 intent TradeIntent goal EarnIncome
   a 52ac974fd27c0279 SwarmAgent_1 | pos (-15.666,-0.854) hunger 29.84 energy 86.14 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a 68c90faf29c7e33a SwarmAgent_5 | pos (-12.274,13.287) hunger 29.92 energy 82.78 gold 27 intent HarvestResourceIntent goal EarnIncome
-t 1100 total 5f98f94ccad225f7 economy dfddac71e638bb59 bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1100 total bb21072ef537b6b2 economy dfddac71e638bb59 bounties 7a3ecd775dc97c44 map 7608368cc92b1299 groups 8d0350be04626145
   a be74140ee164d80a SwarmAgent_8 | pos (-19.259,1.753) hunger 30.42 energy 81.51 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 8fa309044004e79e SwarmAgent_6 | pos (-1.303,1.716) hunger 30.91 energy 79.37 gold 60 intent TradeIntent goal EarnIncome
   a 959f298150dec542 SwarmAgent_0 | pos (16.664,1.977) hunger 30.42 energy 80.39 gold 15 intent WanderIntent goal LiquidateSalvage
@@ -1002,7 +1002,7 @@ t 1100 total 5f98f94ccad225f7 economy dfddac71e638bb59 bounties 7a3ecd775dc97c44
   a 996c21193003625f SwarmAgent_10 | pos (3.673,2.525) hunger 30.66 energy 80.82 gold 66 intent HarvestResourceIntent goal EarnIncome
   a 83f0612f09a02619 SwarmAgent_1 | pos (-19.006,2.100) hunger 30.66 energy 84.53 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a f72f6b9ccdb12982 SwarmAgent_5 | pos (-13.222,10.291) hunger 30.91 energy 80.81 gold 27 intent WanderIntent goal EarnIncome
-t 1200 total 84543cc0391af972 economy 02ccb30e0c73b43f bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1200 total d5eef0f0bfcb1946 economy 02ccb30e0c73b43f bounties 7a3ecd775dc97c44 map e7c9b5fbc837405d groups 8d0350be04626145
   a 3ad20490f3180ccf SwarmAgent_8 | pos (-19.259,1.753) hunger 31.41 energy 79.54 gold 20 intent HarvestResourceIntent goal EarnIncome
   a 7b26f441c4e1201e SwarmAgent_6 | pos (-3.147,-2.191) hunger 31.90 energy 78.48 gold 60 intent IdleIntent goal GatherAtAnchor
   a e02d57ae97f1b94e SwarmAgent_0 | pos (2.267,2.703) hunger 31.41 energy 78.76 gold 15 intent TradeIntent goal LiquidateSalvage
@@ -1016,7 +1016,7 @@ t 1200 total 84543cc0391af972 economy 02ccb30e0c73b43f bounties 7a3ecd775dc97c44
   a dc3e3aa68d5a2af4 SwarmAgent_10 | pos (-14.500,6.100) hunger 31.66 energy 78.86 gold 66 intent HarvestResourceIntent goal EarnIncome
   a 29e0968f053e8e78 SwarmAgent_1 | pos (-19.006,2.100) hunger 31.66 energy 82.56 gold 30 intent HarvestResourceIntent goal FulfillBounty
   a 78f30b5c4093b647 SwarmAgent_5 | pos (-1.176,3.489) hunger 31.90 energy 78.87 gold 27 intent TradeIntent goal EarnIncome
-t 1300 total 9171e7f328f957d9 economy addcd2e83502b46f bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1300 total b359ffa00259b8e2 economy addcd2e83502b46f bounties 7a3ecd775dc97c44 map c87ebcd74d4db713 groups 8d0350be04626145
   a 2c9122e21c05bd4e SwarmAgent_8 | pos (-5.327,2.263) hunger 32.40 energy 77.58 gold 20 intent WanderIntent goal EarnIncome
   a 38775bb3a69afcad SwarmAgent_6 | pos (-3.147,-2.191) hunger 32.90 energy 77.81 gold 60 intent IdleIntent goal GatherAtAnchor
   a 8b3b5e1dcb25d083 SwarmAgent_0 | pos (-8.074,3.811) hunger 32.40 energy 77.41 gold 21 intent HarvestResourceIntent goal EarnIncome
@@ -1030,7 +1030,7 @@ t 1300 total 9171e7f328f957d9 economy addcd2e83502b46f bounties 7a3ecd775dc97c44
   a 4042288bea7c6514 SwarmAgent_10 | pos (-12.274,13.287) hunger 32.65 energy 76.89 gold 66 intent HarvestResourceIntent goal EarnIncome
   a 627cae21ddb92dcf SwarmAgent_1 | pos (-10.408,2.281) hunger 32.65 energy 80.60 gold 30 intent WanderIntent goal FulfillBounty
   a a9d2635a61b10490 SwarmAgent_5 | pos (-6.960,3.928) hunger 32.90 energy 77.83 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 1400 total 135c5674ffcd9b9a economy cbcb5bc58120b775 bounties 7a3ecd775dc97c44 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1400 total 553d693d8c88f551 economy cbcb5bc58120b775 bounties 7a3ecd775dc97c44 map ca843478cdd7769d groups 8d0350be04626145
   a 797de78e1c146538 SwarmAgent_8 | pos (-2.104,0.946) hunger 33.39 energy 76.56 gold 25 intent WanderIntent goal GatherAtAnchor
   a 04689c6d41832fda SwarmAgent_6 | pos (-3.147,-2.191) hunger 33.89 energy 77.16 gold 60 intent IdleIntent goal GatherAtAnchor
   a e9fca436f7ed320f SwarmAgent_0 | pos (-12.326,12.814) hunger 33.39 energy 75.44 gold 21 intent HarvestResourceIntent goal EarnIncome
@@ -1044,7 +1044,7 @@ t 1400 total 135c5674ffcd9b9a economy cbcb5bc58120b775 bounties 7a3ecd775dc97c44
   a 1f3ac2a05f24cdd7 SwarmAgent_10 | pos (-12.274,13.287) hunger 33.64 energy 74.93 gold 66 intent HarvestResourceIntent goal EarnIncome
   a 9aa1f6b45f4ca69c SwarmAgent_1 | pos (-2.410,2.449) hunger 33.64 energy 79.41 gold 30 intent DeliverBountyIntent goal FulfillBounty
   a 65b1c41ce1b516bd SwarmAgent_5 | pos (-12.466,12.436) hunger 33.89 energy 75.86 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 1500 total d609b39b5ca50b95 economy 6779ca5e192806ff bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1500 total d23aea7b3c2104a2 economy 6779ca5e192806ff bounties cbf29ce484222325 map ca843478cdd7769d groups 8d0350be04626145
   a badc8543f2aeb26c SwarmAgent_8 | pos (-3.284,-2.132) hunger 34.38 energy 75.68 gold 25 intent IdleIntent goal GatherAtAnchor
   a c7bdd03eea8b6fc7 SwarmAgent_6 | pos (-15.500,8.700) hunger 34.88 energy 75.43 gold 60 intent HarvestResourceIntent goal EarnIncome
   a f6d6a7ae9c04fdaa SwarmAgent_0 | pos (-13.008,13.275) hunger 34.38 energy 74.04 gold 21 intent none goal none
@@ -1058,7 +1058,7 @@ t 1500 total d609b39b5ca50b95 economy 6779ca5e192806ff bounties cbf29ce484222325
   a 2c00bf6b82c81f6e SwarmAgent_10 | pos (-12.137,13.767) hunger 34.63 energy 73.12 gold 66 intent none goal none
   a d40f42d7793014a2 SwarmAgent_1 | pos (-3.319,-1.240) hunger 34.63 energy 78.59 gold 55 intent IdleIntent goal GatherAtAnchor
   a 1ddda0963eada13a SwarmAgent_5 | pos (-11.684,12.142) hunger 34.88 energy 74.46 gold 32 intent none goal none
-t 1600 total 562a155268b94f1c economy 6779ca5e192806ff bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1600 total c3bc9cbbb1970c2c economy 6779ca5e192806ff bounties cbf29ce484222325 map 716ec6fb70dcae28 groups 8d0350be04626145
   a 1e92fabe3fcb7e3a SwarmAgent_8 | pos (-3.284,-2.132) hunger 35.38 energy 75.02 gold 25 intent IdleIntent goal GatherAtAnchor
   a 6329a834c6ce5d93 SwarmAgent_6 | pos (-15.209,8.114) hunger 35.87 energy 74.32 gold 60 intent none goal none
   a a7eed693c43d8eae SwarmAgent_0 | pos (-13.008,13.275) hunger 35.38 energy 73.39 gold 21 intent none goal none
@@ -1072,7 +1072,7 @@ t 1600 total 562a155268b94f1c economy 6779ca5e192806ff bounties cbf29ce484222325
   a c92da6458fc0f6e3 SwarmAgent_10 | pos (-12.137,13.767) hunger 35.62 energy 72.46 gold 66 intent none goal none
   a 81233f35f6eb68da SwarmAgent_1 | pos (-3.319,-1.240) hunger 35.62 energy 77.94 gold 55 intent IdleIntent goal GatherAtAnchor
   a 85eecf724873a99a SwarmAgent_5 | pos (-11.684,12.142) hunger 35.87 energy 73.81 gold 32 intent none goal none
-t 1700 total 9a3fb1ec77b2dc14 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1700 total ec1e95f8d2c81154 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 20f375b9beb34036 groups 8d0350be04626145
   a e549ede7ee16ec60 SwarmAgent_8 | pos (-3.284,-2.132) hunger 36.37 energy 74.37 gold 25 intent none goal none
   a 05bdadb0d8e21cb8 SwarmAgent_6 | pos (-15.209,8.114) hunger 36.87 energy 73.66 gold 60 intent none goal none
   a e075dd7a33936e4e SwarmAgent_0 | pos (-13.008,13.275) hunger 36.37 energy 72.73 gold 21 intent none goal none
@@ -1086,7 +1086,7 @@ t 1700 total 9a3fb1ec77b2dc14 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 7d494a7ddaf97967 SwarmAgent_10 | pos (-12.137,13.767) hunger 36.62 energy 71.81 gold 66 intent none goal none
   a 1155c38659778947 SwarmAgent_1 | pos (-3.319,-1.240) hunger 36.62 energy 77.29 gold 55 intent none goal none
   a 70b4eea906037b31 SwarmAgent_5 | pos (-11.684,12.142) hunger 36.87 energy 73.15 gold 32 intent none goal none
-t 1800 total 7eacc549090b4417 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1800 total f517aaacda90b655 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 595ee134cc3697e1 groups 8d0350be04626145
   a 7ab577aac9f529df SwarmAgent_8 | pos (-3.284,-2.132) hunger 37.36 energy 73.72 gold 25 intent none goal none
   a 036c0a43b6c4df09 SwarmAgent_6 | pos (-15.209,8.114) hunger 37.86 energy 73.01 gold 60 intent none goal none
   a 368536f2bd87af08 SwarmAgent_0 | pos (-13.008,13.275) hunger 37.36 energy 72.08 gold 21 intent none goal none
@@ -1100,7 +1100,7 @@ t 1800 total 7eacc549090b4417 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 0139728c4a9fca43 SwarmAgent_10 | pos (-12.137,13.767) hunger 37.61 energy 71.15 gold 66 intent none goal none
   a 42765df557f7d703 SwarmAgent_1 | pos (-3.319,-1.240) hunger 37.61 energy 76.63 gold 55 intent none goal none
   a 9cdd6ea4e2205d1c SwarmAgent_5 | pos (-11.684,12.142) hunger 37.86 energy 72.50 gold 32 intent none goal none
-t 1900 total 3b94ce887f4725ce economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 1900 total 95f7b8410a899ce9 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b3b6b48153b4808a groups 8d0350be04626145
   a b60a6b162a756d9e SwarmAgent_8 | pos (-3.284,-2.132) hunger 38.35 energy 73.06 gold 25 intent none goal none
   a 2f1202073fd8bb64 SwarmAgent_6 | pos (-15.209,8.114) hunger 38.85 energy 72.35 gold 60 intent none goal none
   a 7412fbb5a2e378a6 SwarmAgent_0 | pos (-13.008,13.275) hunger 38.35 energy 71.42 gold 21 intent none goal none
@@ -1114,7 +1114,7 @@ t 1900 total 3b94ce887f4725ce economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a f62588c6aa3dbfb8 SwarmAgent_10 | pos (-12.137,13.767) hunger 38.60 energy 70.50 gold 66 intent none goal none
   a 497e580258549572 SwarmAgent_1 | pos (-3.319,-1.240) hunger 38.60 energy 75.98 gold 55 intent none goal none
   a ec96a1925c21da07 SwarmAgent_5 | pos (-11.684,12.142) hunger 38.85 energy 71.84 gold 32 intent none goal none
-t 2000 total 8beccba7c84a3f06 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2000 total f17428a0fdd5c2e3 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 05cf5e1de6791e59 groups 8d0350be04626145
   a ad4fbd7349987f12 SwarmAgent_8 | pos (-3.284,-2.132) hunger 39.35 energy 72.41 gold 25 intent none goal none
   a 870fdf5f8c61728d SwarmAgent_6 | pos (-15.209,8.114) hunger 39.84 energy 71.70 gold 60 intent none goal none
   a a086a9d5e2dfebf5 SwarmAgent_0 | pos (-13.008,13.275) hunger 39.35 energy 70.77 gold 21 intent none goal none
@@ -1128,7 +1128,7 @@ t 2000 total 8beccba7c84a3f06 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 50ab6a4f1ebe879c SwarmAgent_10 | pos (-12.137,13.767) hunger 39.59 energy 69.85 gold 66 intent none goal none
   a 271422aec08459fd SwarmAgent_1 | pos (-3.319,-1.240) hunger 39.59 energy 75.32 gold 55 intent none goal none
   a c7d62f147cd18faa SwarmAgent_5 | pos (-11.684,12.142) hunger 39.84 energy 71.19 gold 32 intent none goal none
-t 2100 total 160cfd33da7a2a8a economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2100 total 480697446f5f4dfa economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map cec740fae4b518c0 groups 8d0350be04626145
   a 0753d8e05204c84d SwarmAgent_8 | pos (-3.284,-2.132) hunger 40.34 energy 71.75 gold 25 intent none goal none
   a e44ec8385b0682a8 SwarmAgent_6 | pos (-15.209,8.114) hunger 40.83 energy 71.04 gold 60 intent none goal none
   a 2b72d0af0a9d6bc5 SwarmAgent_0 | pos (-13.008,13.275) hunger 40.34 energy 70.11 gold 21 intent none goal none
@@ -1142,7 +1142,7 @@ t 2100 total 160cfd33da7a2a8a economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 4773df27060731b0 SwarmAgent_10 | pos (-12.137,13.767) hunger 40.59 energy 69.19 gold 66 intent none goal none
   a 92a497544afb0fe8 SwarmAgent_1 | pos (-3.319,-1.240) hunger 40.59 energy 74.67 gold 55 intent none goal none
   a 9982ced1efa22d31 SwarmAgent_5 | pos (-11.684,12.142) hunger 40.83 energy 70.53 gold 32 intent none goal none
-t 2200 total 86cbd04b95c1b697 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2200 total 1df951f8daf089b1 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 4edd710c42bd35a4 groups 8d0350be04626145
   a 14e5cf55ca9468f7 SwarmAgent_8 | pos (-3.284,-2.132) hunger 41.33 energy 71.10 gold 25 intent none goal none
   a 6bf169a67db30b38 SwarmAgent_6 | pos (-15.209,8.114) hunger 41.83 energy 70.39 gold 60 intent none goal none
   a 1b96df56c7ed6017 SwarmAgent_0 | pos (-13.008,13.275) hunger 41.33 energy 69.46 gold 21 intent none goal none
@@ -1156,7 +1156,7 @@ t 2200 total 86cbd04b95c1b697 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 95413584e1901495 SwarmAgent_10 | pos (-12.137,13.767) hunger 41.58 energy 68.54 gold 66 intent none goal none
   a 6b02e5f12311ffdf SwarmAgent_1 | pos (-3.319,-1.240) hunger 41.58 energy 74.01 gold 55 intent none goal none
   a fefbd1a0eca65c61 SwarmAgent_5 | pos (-11.684,12.142) hunger 41.83 energy 69.88 gold 32 intent none goal none
-t 2300 total 4a47fe73dd1c3f00 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups 8d0350be04626145
+t 2300 total ac5aa23879ba5a2e economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 8d004809bafecdf1 groups 8d0350be04626145
   a 8a411628bef6f178 SwarmAgent_8 | pos (-3.284,-2.132) hunger 42.32 energy 70.44 gold 25 intent none goal none
   a 7ffe5e1a482e1c53 SwarmAgent_6 | pos (-15.209,8.114) hunger 42.82 energy 69.74 gold 60 intent none goal none
   a 5c87b1d88d595a58 SwarmAgent_0 | pos (-13.008,13.275) hunger 42.32 energy 68.81 gold 21 intent none goal none
@@ -1170,7 +1170,7 @@ t 2300 total 4a47fe73dd1c3f00 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a a04a20236ca892f8 SwarmAgent_10 | pos (-12.137,13.767) hunger 42.57 energy 67.88 gold 66 intent none goal none
   a c0e644ec21f2b365 SwarmAgent_1 | pos (-3.319,-1.240) hunger 42.57 energy 73.36 gold 55 intent none goal none
   a 894fb6f2b83db1ec SwarmAgent_5 | pos (-11.684,12.142) hunger 42.82 energy 69.22 gold 32 intent none goal none
-t 2400 total 581a2dab88d34630 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2400 total 60cc7c4be287e11e economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 8d004809bafecdf1 groups e3900089fc55d1cc
   a 67247e3250d312bc SwarmAgent_8 | pos (-3.284,-2.132) hunger 43.31 energy 69.79 gold 25 intent none goal none
   a cd8c72bd0c59c8ae SwarmAgent_6 | pos (-15.209,8.114) hunger 43.81 energy 69.08 gold 60 intent none goal none
   a 84b58145eaf5ae79 SwarmAgent_0 | pos (-13.008,13.275) hunger 43.31 energy 68.15 gold 21 intent none goal none
@@ -1184,7 +1184,7 @@ t 2400 total 581a2dab88d34630 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 2c95fc593c7232ab SwarmAgent_10 | pos (-12.137,13.767) hunger 43.56 energy 67.23 gold 66 intent none goal none
   a 9ddc69815b8cbe21 SwarmAgent_1 | pos (-3.319,-1.240) hunger 43.56 energy 72.70 gold 55 intent none goal none
   a 302cc6cc7c71c415 SwarmAgent_5 | pos (-11.684,12.142) hunger 43.81 energy 68.57 gold 32 intent none goal none
-t 2500 total a6e4a37d4cc28d75 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2500 total 46358d9c1da3df82 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325 map 01580731b72db7a7 groups e3900089fc55d1cc
   a 02418aa4ce33f51d SwarmAgent_8 | pos (-3.284,-2.132) hunger 44.31 energy 69.13 gold 25 intent none goal none
   a e2d4299056116a66 SwarmAgent_6 | pos (-15.209,8.114) hunger 44.80 energy 68.43 gold 60 intent none goal none
   a 7284429b554a77ae SwarmAgent_0 | pos (-13.008,13.275) hunger 44.31 energy 67.50 gold 21 intent none goal none
@@ -1198,7 +1198,7 @@ t 2500 total a6e4a37d4cc28d75 economy 3c371b7f1fe0cbd1 bounties cbf29ce484222325
   a 3f2f2f0ba7bd2a90 SwarmAgent_10 | pos (-12.137,13.767) hunger 44.55 energy 66.57 gold 66 intent none goal none
   a 0f9f0e1812dd6199 SwarmAgent_1 | pos (-3.319,-1.240) hunger 44.55 energy 72.05 gold 55 intent none goal none
   a 8ec36b0617663663 SwarmAgent_5 | pos (-11.684,12.142) hunger 44.80 energy 67.92 gold 32 intent none goal none
-t 2600 total 0588aa8d64132d51 economy ccbc7e4f7321d4a6 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2600 total 4a56449b4481a7f4 economy ccbc7e4f7321d4a6 bounties cbf29ce484222325 map 16590c0d918ca866 groups e3900089fc55d1cc
   a 8f1556139c27466c SwarmAgent_8 | pos (-17.263,2.397) hunger 45.30 energy 67.43 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 37a76f79b348b6e7 SwarmAgent_6 | pos (-2.973,3.197) hunger 45.79 energy 66.72 gold 60 intent WanderIntent goal LiquidateSalvage
   a 790cd39994579f04 SwarmAgent_0 | pos (-7.273,4.101) hunger 45.30 energy 65.79 gold 21 intent WanderIntent goal LiquidateSalvage
@@ -1212,7 +1212,7 @@ t 2600 total 0588aa8d64132d51 economy ccbc7e4f7321d4a6 bounties cbf29ce484222325
   a 754ff2b1568ec95f SwarmAgent_10 | pos (-9.116,3.528) hunger 45.55 energy 64.87 gold 66 intent WanderIntent goal LiquidateSalvage
   a 2dd023c82344c016 SwarmAgent_1 | pos (-15.500,7.300) hunger 45.55 energy 70.35 gold 55 intent HarvestResourceIntent goal EarnIncome
   a 2392e2286c85ce1a SwarmAgent_5 | pos (-11.500,13.500) hunger 45.79 energy 66.21 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2700 total 5d8ac18e62232d1d economy 59438ac6f596e880 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2700 total b5d3330f5983a990 economy 59438ac6f596e880 bounties cbf29ce484222325 map 16590c0d918ca866 groups e3900089fc55d1cc
   a 774d395c342dd24a SwarmAgent_8 | pos (-19.410,2.190) hunger 46.29 energy 65.47 gold 25 intent HarvestResourceIntent goal EarnIncome
   a dd4b1c81028c8d0b SwarmAgent_6 | pos (-2.100,1.143) hunger 46.79 energy 65.70 gold 105 intent WanderIntent goal GatherAtAnchor
   a 9717d4a32c12cd9b SwarmAgent_0 | pos (-2.101,3.601) hunger 46.29 energy 64.59 gold 21 intent TradeIntent goal LiquidateSalvage
@@ -1226,7 +1226,7 @@ t 2700 total 5d8ac18e62232d1d economy 59438ac6f596e880 bounties cbf29ce484222325
   a f0cf9df5c5942687 SwarmAgent_10 | pos (-1.099,3.521) hunger 46.54 energy 63.68 gold 66 intent TradeIntent goal LiquidateSalvage
   a b16a918b491c1151 SwarmAgent_1 | pos (-15.500,9.500) hunger 46.54 energy 68.38 gold 55 intent HarvestResourceIntent goal EarnIncome
   a 9728770d1b95f60f SwarmAgent_5 | pos (-11.500,13.500) hunger 46.79 energy 64.25 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2800 total dc9d42a42c7198ce economy dceb76ff6d681c42 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2800 total 583e69193599a7e2 economy dceb76ff6d681c42 bounties cbf29ce484222325 map cff78c8ffef57bbd groups e3900089fc55d1cc
   a 62a2396e137d8500 SwarmAgent_8 | pos (-19.410,2.190) hunger 47.28 energy 63.50 gold 25 intent HarvestResourceIntent goal EarnIncome
   a 64574b2cb986978b SwarmAgent_6 | pos (-3.307,-2.124) hunger 47.78 energy 64.81 gold 105 intent IdleIntent goal GatherAtAnchor
   a 6abf2b5e9c1144e3 SwarmAgent_0 | pos (-11.380,2.100) hunger 47.28 energy 62.81 gold 66 intent HarvestResourceIntent goal EarnIncome
@@ -1240,7 +1240,7 @@ t 2800 total dc9d42a42c7198ce economy dceb76ff6d681c42 bounties cbf29ce484222325
   a c4086a290c02c08f SwarmAgent_10 | pos (-11.330,2.603) hunger 47.53 energy 61.88 gold 71 intent HarvestResourceIntent goal EarnIncome
   a 7db8924d4c68410e SwarmAgent_1 | pos (-15.500,9.500) hunger 47.53 energy 66.42 gold 55 intent HarvestResourceIntent goal EarnIncome
   a f9dc5feb1cffacd2 SwarmAgent_5 | pos (-15.347,11.184) hunger 47.53 energy 62.79 gold 32 intent HarvestResourceIntent goal EarnIncome
-t 2900 total b0e11a028b659d81 economy 1556c9fb7f7ddd58 bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 2900 total 8d403e1da3d5197b economy 1556c9fb7f7ddd58 bounties cbf29ce484222325 map f6f77f1dca85eebc groups e3900089fc55d1cc
   a 3c669b457465bf47 SwarmAgent_8 | pos (-4.101,2.260) hunger 48.28 energy 61.54 gold 25 intent WanderIntent goal EarnIncome
   a 2171c3e2991379ab SwarmAgent_6 | pos (-3.307,-2.124) hunger 48.77 energy 64.16 gold 105 intent IdleIntent goal GatherAtAnchor
   a 22078161427c2df4 SwarmAgent_0 | pos (-11.380,2.100) hunger 48.28 energy 60.84 gold 66 intent HarvestResourceIntent goal EarnIncome
@@ -1254,7 +1254,7 @@ t 2900 total b0e11a028b659d81 economy 1556c9fb7f7ddd58 bounties cbf29ce484222325
   a 900ec949df2866af SwarmAgent_10 | pos (-11.330,2.603) hunger 48.52 energy 59.92 gold 71 intent HarvestResourceIntent goal EarnIncome
   a c95ffd0b6df676b7 SwarmAgent_1 | pos (-4.157,3.411) hunger 48.52 energy 64.45 gold 55 intent WanderIntent goal EarnIncome
   a c32d328f75c62c38 SwarmAgent_5 | pos (-14.752,11.002) hunger 48.52 energy 61.53 gold 32 intent none goal none
-t 3000 total a182281701b1e811 economy b82544fb8d889b7a bounties cbf29ce484222325 map b85b2e6626a5afcb groups e3900089fc55d1cc
+t 3000 total 62837572da673028 economy b82544fb8d889b7a bounties cbf29ce484222325 map 9e676fb439cf2fe6 groups e3900089fc55d1cc
   a d3fbe4fda46300e5 SwarmAgent_8 | pos (-4.307,2.348) hunger 49.27 energy 60.52 gold 30 intent HarvestResourceIntent goal EarnIncome
   a 5976c0629cec5d6c SwarmAgent_6 | pos (-3.307,-2.124) hunger 49.76 energy 63.50 gold 105 intent IdleIntent goal GatherAtAnchor
   a 5e17134ae4d1ff91 SwarmAgent_0 | pos (-11.244,2.246) hunger 49.27 energy 58.88 gold 66 intent WanderIntent goal EarnIncome
