@@ -40,6 +40,9 @@ namespace Simpiens.Simulation
         /// <summary>The items on the ground (Epic 10 Part 3, K4.1).</summary>
         Simpiens.Simulation.Loot.PileService Piles { get; }
 
+        /// <summary>A crawler dies (Epic 10 Part 3, K5.4a): its body a pile where it fell, gone from the world at the tick's end.</summary>
+        void Die(WorldEntity node, Simpiens.Simulation.DeathCause cause, byte detail = 0, EntityId by = default);
+
         /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
         void PopulateLairs(ulong seed);
 

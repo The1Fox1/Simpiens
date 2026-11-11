@@ -52,5 +52,10 @@ namespace Simpiens.Simulation.Persistence
         public EntityId Id { get; set; }
         public string GivenName { get; set; }
         public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
+
+        /// <summary>Whether it died and of what, and when it left (Epic 10 Part 3, K5.4a; inside format 11).</summary>
+        public Simpiens.Simulation.DeathCause Cause { get; set; }
+        public byte CauseDetail { get; set; }
+        public uint Tick { get; set; }
     }
 }

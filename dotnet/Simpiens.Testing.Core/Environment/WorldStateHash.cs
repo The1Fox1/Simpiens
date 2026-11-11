@@ -303,6 +303,7 @@ namespace Simpiens.Testing.Environment
                     Mix(ref map, pile.ClaimedFor.GetHashCode());
                     Mix(ref map, pile.ClaimUntil);
                     Mix(ref map, pile.Gold);
+                    Mix(ref map, pile.BodyOf.GetHashCode()); // whose body (K5.4a)
                     for (int st = 0; st < pile.Count; st++)
                     {
                         var stack = pile.StackAt(st);

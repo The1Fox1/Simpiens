@@ -17,12 +17,16 @@ namespace Simpiens.Simulation.Persistence
         public ItemInstance[] Stacks { get; set; }
     }
 
-    /// <summary>A pile as saved: who it is, where, when it fades, who may claim it until when, its gold and how many stacks. 56 bytes, no padding.</summary>
+    /// <summary>
+    /// A pile as saved: who it is, where, when it fades, who may claim it until when, its gold and how many stacks, and whose
+    /// body it is (Epic 10 Part 3, K5.4a; empty for a kill's drop). 72 bytes, no padding (56 until K5.4a, inside format 11).
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct PileRecord
     {
         public EntityId Id;
         public EntityId ClaimedFor;
+        public EntityId BodyOf;
         public Vec2 Position;
         public uint FadesAt;
         public uint ClaimUntil;
@@ -33,6 +37,7 @@ namespace Simpiens.Simulation.Persistence
         {
             Id = pile.Id;
             ClaimedFor = pile.ClaimedFor;
+            BodyOf = pile.BodyOf;
             Position = pile.Position;
             FadesAt = pile.FadesAt;
             ClaimUntil = pile.ClaimUntil;

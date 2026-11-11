@@ -139,11 +139,16 @@ namespace Simpiens.Simulation
             if (entity != null) _worldRegistry.Unregister(entity);
         }
 
+        // Gold on the ground (Epic 10 Part 3, K5.4b): a body's purse is held by the ledger's own account, as escrow is
         void Simpiens.Simulation.Loot.IPileWorld.GoldFaded(Simpiens.Simulation.Loot.LootPile pile, int gold)
         {
-            // Gold on the ground comes with K5's bodies, and its ledger account with it
-            SimLog.Economy.ZLogWarning($"{gold}g faded with {pile}");
+            _economyLedger?.FadeFromGround((uint)gold);
+            SimLog.Economy.ZLogInformation($"{gold}g faded with {pile}");
         }
+
+        void Simpiens.Simulation.Loot.IPileWorld.GoldDropped(Simpiens.Simulation.Loot.LootPile pile, int gold) => _economyLedger?.DropToGround((uint)gold);
+
+        void Simpiens.Simulation.Loot.IPileWorld.GoldTaken(Simpiens.Simulation.Loot.LootPile pile, int gold) => _economyLedger?.TakeFromGround((uint)gold);
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.AddCreature(WorldEntity entity)
         {

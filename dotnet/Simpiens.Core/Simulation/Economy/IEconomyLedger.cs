@@ -21,6 +21,13 @@ namespace Simpiens.Simulation.Economy
     public interface IEconomyLedger
     {
         uint TotalEscrowGold { get; }
+
+        /// <summary>Gold lying in piles on the ground (Epic 10 Part 3, K5.4b), counted by conservation.</summary>
+        uint TotalGroundGold { get; }
+        void DropToGround(uint amount);
+        void TakeFromGround(uint amount);
+        void FadeFromGround(uint amount);
+        void RestoreGroundGold(uint amount);
         uint TotalFaucetedGold { get; }
         uint TotalSinkedGold { get; }
 

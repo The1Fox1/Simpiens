@@ -325,7 +325,7 @@ namespace Simpiens.Testing.Persistence
         // gold and stacks come back; a save that doesn't add up is refused; a save without the block starts with none
         private void ValidatePilesRoundTrip()
         {
-            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<PileRecord>() == 56, "A pile's record is 56 bytes, saved as raw memory.");
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<PileRecord>() == 72, "A pile's record is 72 bytes (whose body since K5.4a), saved as raw memory.");
             var save = new PileSave
             {
                 IdCounter = 3,

@@ -193,6 +193,13 @@ namespace Simpiens.Cognition
         /// </summary>
         public bool HasLeft { get; set; }
 
+        /// <summary>
+        /// What it died of, and the cause's detail (Epic 10 Part 3, K5.4a): set with <see cref="HasLeft"/> by a death, read by
+        /// the host as it removes the crawler at the end of the tick. Not saved: a crawler is gone before any save sees it.
+        /// </summary>
+        public Simpiens.Simulation.DeathCause DiedOf { get; set; }
+        public byte DiedDetail { get; set; }
+
         public bool IsInTantrum => TantrumTimer > 0f;
         public bool IsYielding => YieldingTimer > 0f;
         public bool IsGossiping => GossipTimer > 0f;

@@ -23,6 +23,11 @@ namespace Simpiens.Simulation.Loot
         public EntityId Id { get; }
         public Vec2 Position { get; }
 
+        /// <summary>Whose body it is (Epic 10 Part 3, K5.4a: a dead crawler's pack, gear and purse); empty for a kill's drop.</summary>
+        public EntityId BodyOf { get; internal set; }
+
+        public bool IsBody => BodyOf != default;
+
         /// <summary>The tick it is gone, taken by the floor.</summary>
         public uint FadesAt { get; internal set; }
 

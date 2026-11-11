@@ -16,6 +16,12 @@ namespace Simpiens.Simulation.Loot
 
         /// <summary>A pile faded with gold in it (a body's purse, K5): the ledger's account for gold on the ground loses it.</summary>
         void GoldFaded(LootPile pile, int gold);
+
+        /// <summary>A pile was dropped with gold in it (a body's purse, K5.4b): the ledger's account for gold on the ground holds it.</summary>
+        void GoldDropped(LootPile pile, int gold);
+
+        /// <summary>Gold was picked up from a pile into a purse (K5.4b): it leaves the ground for the purses.</summary>
+        void GoldTaken(LootPile pile, int gold);
     }
 
     /// <summary>
@@ -43,6 +49,17 @@ namespace Simpiens.Simulation.Loot
         private long _idCounter;
 
         public IReadOnlyList<LootPile> Piles => _piles;
+
+        /// <summary>The gold every pile holds: what the ledger's account for gold on the ground should hold (K5.4b).</summary>
+        public uint TotalGold
+        {
+            get
+            {
+                uint total = 0;
+                for (int i = 0; i < _piles.Count; i++) total += (uint)_piles[i].Gold;
+                return total;
+            }
+        }
 
         /// <summary>Units taken from piles, and pieces worn from them, since the session started (K4.3; diagnostics, not saved).</summary>
         public int UnitsTaken { get; private set; }
@@ -83,15 +100,16 @@ namespace Simpiens.Simulation.Loot
         /// <paramref name="gold"/> at <paramref name="at"/>, claimed for <paramref name="claimedFor"/> (none: anyone) for
         /// <see cref="ClaimHours"/>; null when there is nothing to drop.
         /// </summary>
-        public LootPile Drop(IPileWorld world, Vec2 at, ReadOnlySpan<ItemInstance> items, int gold, EntityId claimedFor, uint tick)
+        public LootPile Drop(IPileWorld world, Vec2 at, ReadOnlySpan<ItemInstance> items, int gold, EntityId claimedFor, uint tick, EntityId bodyOf = default)
         {
             int stacks = 0;
             for (int i = 0; i < items.Length; i++) if (!items[i].IsEmpty) stacks++;
-            if (stacks == 0 && gold <= 0) return null;
-            var pile = new LootPile(NextId(), at, tick + DayClock.Hours(FadeHours), claimedFor, claimedFor != default ? tick + DayClock.Hours(ClaimHours) : 0u);
+            if (stacks == 0 && gold <= 0 && bodyOf == default) return null; // a body lies even with nothing on it (K5.4a)
+            var pile = new LootPile(NextId(), at, tick + DayClock.Hours(FadeHours), claimedFor, claimedFor != default ? tick + DayClock.Hours(ClaimHours) : 0u) { BodyOf = bodyOf };
             for (int i = 0; i < items.Length; i++) pile.TryAdd(items[i]);
             pile.Gold = gold > 0 ? gold : 0;
             Insert(world, pile);
+            if (pile.Gold > 0) world?.GoldDropped(pile, pile.Gold);
             SimLog.Simulation.ZLogInformation($"A pile of {pile.Count} stacks and {pile.Gold}g lies at {at}");
             return pile;
         }
@@ -138,8 +156,9 @@ namespace Simpiens.Simulation.Loot
                 gold = pile.Gold;
                 inventory.AddGold(gold);
                 pile.Gold = 0;
+                world?.GoldTaken(pile, gold);
             }
-            if (pile.IsEmpty) Remove(world, index);
+            if (pile.IsEmpty && !pile.IsBody) Remove(world, index); // a body stays until it fades, picked clean or not (K5.4a)
             return units;
         }
 
@@ -221,7 +240,7 @@ namespace Simpiens.Simulation.Loot
             for (int i = 0; i < save.Piles.Length; i++)
             {
                 var r = save.Piles[i];
-                var pile = new LootPile(r.Id, r.Position, r.FadesAt, r.ClaimedFor, r.ClaimUntil) { Gold = r.Gold };
+                var pile = new LootPile(r.Id, r.Position, r.FadesAt, r.ClaimedFor, r.ClaimUntil) { Gold = r.Gold, BodyOf = r.BodyOf };
                 for (int s = 0; s < r.StackCount; s++) pile.TryAdd(save.Stacks[n++]);
                 Insert(world, pile);
             }

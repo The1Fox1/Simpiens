@@ -192,6 +192,14 @@ K4 was done while the producer was away (the AFK directive of 2026-11-11: "Looks
   - **The materials don't count toward the stall's room for salvage:** no node yields them, so an empty hide shelf would keep a full stall looking open to the miners (golden 424242 moved at t2000 until this was fixed).
 - **D26, armour for a bare slot** (widening K3's "residents buy weapons only"): a bold resident who is armed buys the piece that most raises its fighting outfit, a better weapon or armour for a head or body slot it leaves bare, never one in place of what it wears (hazard gear stays). Without it, nobody would wear the armour made from a kill's materials.
 
+### K5's decisions (2026-11-11 onward), for the producer's return
+K5 is being done under the same AFK directive; its two supervised steps (carrying, death) are split so that no part is Very Complex.
+- **D27, a death the drifter's way** (A2): a death and a departure let go of the same things (claims, bunks, every group, the guild's and the workshops' contracts, a kept bunk, a party one short), through one shared release; the host removes the dead at the end of the tick.
+  - **The departed list keeps the cause:** hazard or creature, with the hazard's or creature's kind, and the tick.
+  - **The body** is a pile anyone may take from: its pack, then what it wore, and its purse. It lies until it fades (a game day), even picked clean, so the cairn stands where it fell (K5.8b).
+  - **Gold on the ground** is held by the ledger's own account, as escrow is; conservation counts it, a fade sinks it (`GoldFadedOnTheGround`), and a load derives it from the piles.
+  - **Inside format 11:** a pile's saved record grows from 56 to 72 bytes (whose body it is) and the departed list's records gain the cause, as K2.4, K4.1 and K4.4 grew format 11 unreleased.
+
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
 

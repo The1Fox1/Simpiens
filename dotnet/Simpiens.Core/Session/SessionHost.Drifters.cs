@@ -31,7 +31,7 @@ namespace Simpiens.Core.Session
         private int _driftersArrived;
         private readonly List<DepartedCrawler> _departed = new List<DepartedCrawler>(16);
 
-        /// <summary>A crawler walked out by the Road Gate and was removed: views drop what they drew for it.</summary>
+        /// <summary>A crawler walked out by the Road Gate, or died (Epic 10 Part 3, K5.4a), and was removed: views drop what they drew for it.</summary>
         public event Action<AgentRuntime, WorldEntity> CrawlerDeparted;
 
         /// <summary>Drifters admitted since the session started (also numbers their names).</summary>
@@ -59,7 +59,7 @@ namespace Simpiens.Core.Session
             var departed = new DepartedSave[_departed.Count];
             for (int i = 0; i < departed.Length; i++)
             {
-                departed[i] = new DepartedSave { Id = _departed[i].Id, GivenName = _departed[i].GivenName, Look = _departed[i].Look };
+                departed[i] = new DepartedSave { Id = _departed[i].Id, GivenName = _departed[i].GivenName, Look = _departed[i].Look, Cause = _departed[i].Cause, CauseDetail = _departed[i].CauseDetail, Tick = _departed[i].Tick };
             }
             Array.Sort(departed, (a, b) => a.Id.CompareTo(b.Id));
             save.Population = new PopulationSave { NextDrifterTick = _nextDrifterTick, DriftersArrived = _driftersArrived, Departed = departed };
@@ -74,7 +74,7 @@ namespace Simpiens.Core.Session
                 var departed = save.Population.Departed ?? Array.Empty<DepartedSave>();
                 for (int i = 0; i < departed.Length; i++)
                 {
-                    _departed.Add(new DepartedCrawler(departed[i].Id, departed[i].GivenName, departed[i].Look));
+                    _departed.Add(new DepartedCrawler(departed[i].Id, departed[i].GivenName, departed[i].Look, departed[i].Cause, departed[i].CauseDetail, departed[i].Tick));
                     if (!string.IsNullOrEmpty(departed[i].GivenName)) _identity?.RegisterCustomName(departed[i].Id, departed[i].GivenName);
                 }
             }
@@ -139,7 +139,8 @@ namespace Simpiens.Core.Session
             var entry = _crawlers[index];
             var runtime = entry.Runtime;
             var entity = _registry?.GetEntity(runtime.State.AgentId);
-            _departed.Add(new DepartedCrawler(runtime.State.AgentId, runtime.State.GivenName, runtime.State.Look));
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0u;
+            _departed.Add(new DepartedCrawler(runtime.State.AgentId, runtime.State.GivenName, runtime.State.Look, runtime.State.DiedOf, runtime.State.DiedDetail, tick));
             runtime.Dispose();
             if (entity != null) _registry.Unregister(entity);
             _crawlers.RemoveAt(index);

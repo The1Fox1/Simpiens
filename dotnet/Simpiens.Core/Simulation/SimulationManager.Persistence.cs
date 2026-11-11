@@ -79,6 +79,7 @@ namespace Simpiens.Simulation
             // The lairs and their creatures (Epic 10 Part 3, K2.4); a save from before fills them afresh
             Creatures.Restore(this, world?.Creatures, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed);
             Piles.Restore(this, world?.Piles, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed); // K4.1
+            _economyLedger?.RestoreGroundGold(Piles.TotalGold); // gold on the ground, derived from the piles (K5.4b)
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
             Guild.RestoreFrom(save.Guild);
