@@ -66,8 +66,9 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5)
-                if (!Vitality.WouldEnter(context, Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation))) continue;
+                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5),
+                // and a charted lair's only for one who would brave its pack alone (Epic 10 Part 3, K2.3)
+                if (!Vitality.WouldEnterAt(context, record.LastKnownLocation)) continue;
                 return true;
             }
             return false;
@@ -104,8 +105,9 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions
-                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation), context.Inventory)) continue;
+                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions;
+                // a charted lair's reach is danger too (Epic 10 Part 3, K2.3)
+                if (!Vitality.WouldEnterAt(venture, context.Snapshot, record.LastKnownLocation, context.Inventory)) continue;
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -284,7 +286,9 @@ namespace Simpiens.Cognition.Planning
                 float fx = ((h >> 8) % 1000u) / 1000f * 2f - 1f;
                 float fy = ((h >> 18) % 1000u) / 1000f * 2f - 1f;
                 waypoint = bounds.Center + new Vec2(fx * jitterX, fy * jitterY);
-                return true;
+                // Not into a charted lair's reach (Epic 10 Part 3, K2.3): the sector's own point instead, or nowhere
+                if (!Vitality.WouldEnterAt(context, waypoint)) waypoint = sector.TargetPoint;
+                return Vitality.WouldEnterAt(context, waypoint);
             }
             return false;
         }

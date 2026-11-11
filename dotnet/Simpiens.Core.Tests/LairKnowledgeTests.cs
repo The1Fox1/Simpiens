@@ -118,6 +118,57 @@ namespace Simpiens.Core.Tests
             Assert.True(Vitality.WouldEnterAt(context, Node(sim.Host.Current.Map, "overgrowth.1")), "Out of its reach, the Overgrowth is open.");
         }
 
+        /// <summary>
+        /// K2.3b: a lone crawler who knows a node in a charted lair's reach looks past it for salvage, and an explorer's
+        /// waypoint never lies in one (before the warren is charted, some do).
+        /// </summary>
+        [Fact]
+        public void ALoneCrawlerLooksPastAChartedLairsReach()
+        {
+            using var sim = Outpost(hunting: true);
+            var crawler = sim.Host.CrawlerStates.First(s => s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent);
+            var map = sim.Host.Current.Map;
+            sim.Sectors.SetExplored(Floor1Layout.OvergrowthSectorId, true);
+            sim.Step(1);
+            // It has seen the Overgrowth's three herb patches from the middle of the room (the warren's rats rest out of its sight)
+            crawler.Memory.UpdateMemory(Snapshot(sim), GridPoint.RoundToInt(new Vec2(16f, 12f)), AgentRuntime.DefaultVisionRadius, (uint)sim.Clock.CurrentTick);
+            Assert.False(sim.Simulation.Creatures.IsCharted(WarrenIndex(sim)));
+            crawler.Position = NearTheWarren;
+            var context = crawler.CreateContext(Snapshot(sim), (uint)sim.Clock.CurrentTick);
+            Assert.True(Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, Simpiens.Simulation.Economy.ItemType.MedicinalHerb, out var before));
+            Assert.Equal(Node(map, "overgrowth.3"), before.LastKnownLocation); // the nearest, while nobody knows of the warren
+            // An explorer goes to the sector it stood in least long ago: another crawler, which has never been in the Overgrowth
+            var explorer = sim.Host.CrawlerStates.First(s => s != crawler && !s.IsDrifter);
+            var uncharted = Waypoints(explorer, sim);
+            Assert.Contains(uncharted, w => LairReach.LairAt(map, w) == WarrenIndex(sim));
+
+            crawler.Position = InSightOfTheWarren;
+            sim.Step(2);
+            Assert.True(sim.Simulation.Creatures.IsCharted(WarrenIndex(sim)));
+            crawler.Position = NearTheWarren;
+            context = crawler.CreateContext(Snapshot(sim), (uint)sim.Clock.CurrentTick);
+            Assert.True(Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, Simpiens.Simulation.Economy.ItemType.MedicinalHerb, out var after));
+            Assert.False(LairReach.Holds(map.Lairs[WarrenIndex(sim)], after.LastKnownLocation), $"It chose {after.LastKnownLocation}, in the warren's reach.");
+            var charted = Waypoints(explorer, sim);
+            Assert.Contains(charted, w => map.FindSector(w).Id == Floor1Layout.OvergrowthSectorId); // it still explores the Overgrowth
+            Assert.DoesNotContain(charted, w => LairReach.LairAt(map, w) == WarrenIndex(sim));
+        }
+
+        // Where it would explore from the hub, over many of the waypoint's windows
+        private static System.Collections.Generic.List<Vec2> Waypoints(AgentState crawler, LocalSimulation sim)
+        {
+            var found = new System.Collections.Generic.List<Vec2>();
+            var held = crawler.Position;
+            crawler.Position = Vec2.Zero;
+            for (uint w = 0; w < 400; w++)
+            {
+                var context = crawler.CreateContext(Snapshot(sim), w * Simpiens.Cognition.Planning.ResourceTargeting.SectorChoiceTicks);
+                if (Simpiens.Cognition.Planning.ResourceTargeting.TryPickSectorWaypoint(context, sim.Host.Current.Map, out var waypoint)) found.Add(waypoint);
+            }
+            crawler.Position = held;
+            return found;
+        }
+
         [Fact]
         public void WithoutHuntingNothingIsChartedInADay()
         {
