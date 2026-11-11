@@ -151,6 +151,9 @@ namespace Simpiens.Cognition
             bool tending = State.CurrentIntent is RetreatIntent || State.CurrentIntent is TreatWoundsIntent || State.CurrentIntent is SleepAtBunkIntent
                 || (State.CurrentIntent is IdleIntent && !hazard.IsHazardous);
 
+            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, it drops what it does and flees
+            bool struck = !State.IsDowned && Vitality.StruckRecently(State.StruckAtTick, (uint)currentTick);
+
             // Reflexive preemption check
             bool emergencyExhaustion = State.Energy <= MentalBreakEvaluator.ExhaustionThreshold;
             bool emergencyStarvation = State.Hunger >= MentalBreakEvaluator.StarvationThreshold && !State.HasFoodInInventory && !State.HasKnownFood();
@@ -164,6 +167,11 @@ namespace Simpiens.Cognition
             bool shouldPreempt = false;
             if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
             {
+                shouldPreempt = true;
+            }
+            else if (struck && !(State.CurrentIntent is FleeIntent))
+            {
+                // Before hunger: a crawler that starves while it is bitten runs first and eats after
                 shouldPreempt = true;
             }
             else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent) && !tending)

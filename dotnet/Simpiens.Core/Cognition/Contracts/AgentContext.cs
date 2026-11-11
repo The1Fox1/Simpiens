@@ -60,6 +60,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The bunk the guild keeps for it in the barracks, if it is a member (Epic 10 Part 2, W5.2).</summary>
         public readonly KeptBunk Bunk;
 
+        /// <summary>When a creature last swung at it, hit or miss (Epic 10 Part 3, K2.3); 0 for never. Flight reads it.</summary>
+        public readonly uint StruckAtTick;
+
+        /// <summary>True when a creature's blow fell on it within <see cref="Vitality.FlightSeconds"/>: it flees.</summary>
+        public bool StruckRecently => Vitality.StruckRecently(StruckAtTick, CurrentTick);
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership directiveMembership = default, in IdentityTag identity = default,
@@ -71,8 +77,10 @@ namespace Simpiens.Cognition.Contracts
                             bool isDowned = false,
                             in ExpeditionOrder expedition = default,
                             in StationOrder station = default,
-                            in KeptBunk bunk = default)
+                            in KeptBunk bunk = default,
+                            uint struckAtTick = 0)
         {
+            StruckAtTick = struckAtTick;
             Expedition = expedition;
             Station = station;
             Bunk = bunk;

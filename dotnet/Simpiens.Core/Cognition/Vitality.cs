@@ -99,6 +99,34 @@ namespace Simpiens.Cognition
         }
 
         /// <summary>
+        /// A crawler struck by a creature within this many seconds flees (Epic 10 Part 3, K2.3, D19), and runs on until none has
+        /// struck it for as long. Physical time, as blows and walking are.
+        /// </summary>
+        public const float FlightSeconds = 2f;
+
+        /// <summary><see cref="FlightSeconds"/> in ticks.</summary>
+        public static uint FlightTicks => (uint)Simpiens.Simulation.Combat.CombatRules.SecondsToTicks(FlightSeconds);
+
+        /// <summary>How far past a lair's reach a fleeing crawler runs before it counts itself safe.</summary>
+        public const float FlightClearance = 1f;
+
+        /// <summary>True when a creature's blow (hit or miss) fell on the crawler within <see cref="FlightSeconds"/> of <paramref name="tick"/>.</summary>
+        public static bool StruckRecently(uint struckAtTick, uint tick) => struckAtTick != 0 && tick >= struckAtTick && tick - struckAtTick <= FlightTicks;
+
+        /// <summary>True when <paramref name="position"/> lies more than <see cref="FlightClearance"/> past every lair's reach on <paramref name="map"/>, charted or not.</summary>
+        public static bool ClearOfLairs(MapDefinition map, Vec2 position)
+        {
+            if (map == null) return true;
+            var lairs = map.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                float clear = Simpiens.Simulation.Creatures.LairReach.Of(lairs[i]) + FlightClearance;
+                if ((position - lairs[i].Position).SqrMagnitude <= clear * clear) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Where a hurt crawler heads: the floor plan's nearest bunk, free or not (the plan is common knowledge; a crawler
         /// that knew no free bunk stayed downed in a hazard sector all day). False on a map without bunks.
         /// </summary>

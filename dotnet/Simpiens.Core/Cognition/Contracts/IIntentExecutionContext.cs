@@ -33,6 +33,9 @@ namespace Simpiens.Cognition.Contracts
         void CheckGossipOpportunity(WorldEntity node);
         int GetSectorForPosition(Vec2 position);
 
+        /// <summary>The loaded map (immutable): its sectors, lairs and points; null before one is loaded.</summary>
+        Simpiens.Simulation.World.MapDefinition Map { get; }
+
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
         void RemoveResource(EntityId resourceId);
 

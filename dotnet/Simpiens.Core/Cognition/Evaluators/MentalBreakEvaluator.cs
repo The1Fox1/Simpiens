@@ -12,6 +12,7 @@ namespace Simpiens.Cognition.Evaluators
     /// Tier 1 Reflexive Evaluator that handles severe biological emergencies and mental breaks:
     /// 1. Exhaustion Collapse (Energy <= 5f): Forces emergency resting recovery.
     /// 2. Starvation Panic (Hunger >= 85f and no known food, carried rations included): Clears stale memory and triggers exploratory sprint.
+    /// Between them, danger: flight from a creature's blows (Epic 10 Part 3, K2.3), wounds, a downing, a hazard's harm.
     /// </summary>
     public class MentalBreakEvaluator : ICognitiveEvaluator
     {
@@ -149,6 +150,14 @@ namespace Simpiens.Cognition.Evaluators
 
         private async ValueTask<AgentIntent> DangerReflexAsync(AgentContext context)
         {
+            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, it flees toward the bunks before anything else.
+            // Nobody fights back until K3; a downed crawler limps out as from a hazard (below)
+            if (context.StruckRecently && !context.IsDowned)
+            {
+                var flight = await FleeAsync(context);
+                if (flight != null) return flight;
+            }
+
             var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
             if (context.Health < Vitality.TreatWoundsBelow)
             {
@@ -193,6 +202,16 @@ namespace Simpiens.Cognition.Evaluators
             if (path.IsValid && path.Length > 0) return new RetreatIntent(context.AgentId, path);
             path.ReturnToPool();
             return context.IsDowned && !inHazard ? new IdleIntent(context.AgentId, DownedSleepSeconds) : null;
+        }
+
+        // Toward the floor plan's nearest bunk, as a retreat runs; the flight ends once clear of every lair's reach (FleeIntentHandler)
+        private async ValueTask<AgentIntent> FleeAsync(AgentContext context)
+        {
+            if (_pathfinder == null || !Vitality.TryGetRefuge(context, out var refuge)) return null;
+            var path = await _pathfinder.CalculatePathAsync(new PathRequest { StartPosition = context.Position, TargetPosition = refuge }, context.Snapshot);
+            if (path.IsValid && path.Length > 0) return new FleeIntent(context.AgentId, path);
+            path.ReturnToPool();
+            return null;
         }
 
         public static bool HasKnownFood(in AgentContext context)

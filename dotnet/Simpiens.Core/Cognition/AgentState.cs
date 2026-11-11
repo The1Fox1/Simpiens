@@ -528,7 +528,8 @@ namespace Simpiens.Cognition
                 IsDowned,
                 Expedition,
                 Station,
-                Bunk);
+                Bunk,
+                StruckAtTick);
         }
     }
 }

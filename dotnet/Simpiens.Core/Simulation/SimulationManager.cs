@@ -108,6 +108,9 @@ namespace Simpiens.Simulation
         /// <summary>The lairs and their creatures (Epic 10 Part 3, K2), following the loaded map.</summary>
         public Simpiens.Simulation.Creatures.CreatureService Creatures => _creatures.Follow(_sectors?.Map);
 
+        /// <summary>The loaded map (immutable); null before one is loaded.</summary>
+        public Simpiens.Simulation.World.MapDefinition Map => _sectors?.Map;
+
         /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
         public void PopulateLairs(ulong seed) => Creatures.Populate(this, seed);
 
@@ -647,6 +650,10 @@ namespace Simpiens.Simulation
             else if (intent is RetreatIntent ri)
             {
                 ri.Path?.ReturnToPool();
+            }
+            else if (intent is FleeIntent fi)
+            {
+                fi.Path?.ReturnToPool();
             }
 
             if (_consequenceService != null && _agentRegistry != null && _agentRegistry.TryGetAgent(intent.AgentId, out var agentState))
