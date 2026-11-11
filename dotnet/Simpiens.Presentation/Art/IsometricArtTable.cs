@@ -23,6 +23,7 @@ namespace Simpiens.Presentation.Art
             {
                 NameOffset = Vec2.Zero, NameHeight = 1.125f, // over the head: a 16-pixel sprite is one unit tall
                 CarryOffset = Vec2.Zero, CarryHeight = 1.25f, // centred over the head
+                RideOffset = Vec2.Zero, RideHeight = 0.55f, // a carried crawler across the shoulders (Epic 10 Part 3, K5.8a)
                 // Along the counter's front edge, 12 px apart on screen ((s, -s) on the floor is horizontal), on its top (8 px up)
                 DisplaySlots = new[] { (new Vec2(-0.5625f, 0.5625f), 0.5f), (new Vec2(-0.1875f, 0.1875f), 0.5f), (new Vec2(0.1875f, -0.1875f), 0.5f), (new Vec2(0.5625f, -0.5625f), 0.5f) },
                 DisplayPicture = ItemPicture.Map,
@@ -42,6 +43,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Iso_Still" }, IsometricSprites.StillWidth, IsometricSprites.StillHeight + IsometricSprites.StillRise,
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.StillHeight, IsometricSprites.StillRise))
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Iso_StationPlot" }, IsometricSprites.PlotWidth, IsometricSprites.PlotHeight)
+               .Add(ArtKeys.PropCairn, Sheet, new[] { "Prop_Cairn" }, Standing, Standing, pivotY: FeetPivot) // a body (Epic 10 Part 3, K5.8b), standing as the hearth does
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)
                .Add(ArtKeys.PropCaravan, Sheet, HazardSprites.Names(CaravanSprites.Name, CaravanSprites.Frames), Standing, Standing, pivotY: FeetPivot, framesPerSecond: TopDownArtTable.CaravanFramesPerSecond)

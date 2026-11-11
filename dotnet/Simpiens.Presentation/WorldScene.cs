@@ -211,26 +211,38 @@ namespace Simpiens.Presentation
 
         private static readonly Rgba32 NameColor = Rgba32.From(new Rgba(1f, 0.92f, 0.55f));
 
+        /// <summary>The fallen lie on their side (K5.8a): a quarter turn.</summary>
+        public const float LyingDegrees = 90f;
+
         private void AddCrawler(in EntityView entity, Vec2 position, float viewSeconds)
         {
             var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, viewSeconds);
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
-            if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
+            // The fallen (Epic 10 Part 3, K5.8a): collapsed, it lies on its side where it fell; carried, it lies across its
+            // rescuer's back, raised and with no shadow of its own
+            bool ridden = (entity.Flags & CrawlerFlags.Carried) != 0;
+            bool lying = ridden || (entity.Flags & CrawlerFlags.Collapsed) != 0;
+            float tilt = lying ? LyingDegrees : pose.TiltDegrees;
+            if (!_shadow.IsNone && !ridden) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
             // Wearing its gear (graphics V5): a helmet is the crawler's own variant. Its own body, when it has one (UI-Beta B2)
             var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn.Topmost), pose.Frame, pose.ScaleX, pose.ScaleY);
             if (Bodies != null && Bodies.TryCell(entity, pose.State, pose.Frame, out int body)) art = art.WithSprite(body);
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);
-            Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
+            var drawnAt = ridden ? position + _catalog.RideOffset : position;
+            ref var figure = ref Add(DrawRole.Crawler, depth, art, drawnAt, Shown(White, shown), tilt * DegreesToRadians);
+            figure.Pick = pick;
+            if (ridden) figure.Z = _catalog.RideHeight;
             // Hurt (S3, D71): its red coat, the same sprite as a silhouette right over it, blinking
             float coat = (entity.Flags & CrawlerFlags.Hurt) != 0 ? HurtCoat.Strength(viewSeconds) * shown : 0f;
             if (coat > 0f)
             {
                 var colour = HurtCoat.Colour;
-                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, position, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), pose.TiltDegrees * DegreesToRadians);
+                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, drawnAt, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), tilt * DegreesToRadians);
                 silhouette.Silhouette = true;
                 silhouette.Pick = pick;
+                if (ridden) silhouette.Z = _catalog.RideHeight;
             }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier

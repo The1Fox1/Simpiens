@@ -30,6 +30,10 @@ namespace Simpiens.Presentation
         Gossiping = 16,
         /// <summary>Hurt this tick (Epic 10 Part 2, S3, D71): drawn as a blinking red coat over whatever state it shows (<see cref="HurtCoat"/>).</summary>
         Hurt = 32,
+        /// <summary>Downed in danger, its clock running (Epic 10 Part 3, K5.8a): drawn lying where it fell.</summary>
+        Collapsed = 64,
+        /// <summary>Carried by a rescuer (K5.8a): drawn lying across its rescuer's back.</summary>
+        Carried = 128,
     }
 
     /// <summary>
@@ -78,6 +82,9 @@ namespace Simpiens.Presentation
 
         /// <summary>A pile's top item (Epic 10 Part 3, K4.5a): its rarest stack, the first on a tie; none for anything else, or a purse alone.</summary>
         public ItemType PileItem;
+
+        /// <summary>A pile that is a dead crawler's body (K5.8b): drawn as a cairn.</summary>
+        public bool IsBody;
     }
 
     /// <summary>
@@ -209,6 +216,7 @@ namespace Simpiens.Presentation
                     CreatureTarget = creature != null ? creature.Target : default,
                     Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
                     PileItem = entity.Pile != null ? TopItem(entity.Pile) : ItemType.None,
+                    IsBody = entity.Pile != null && entity.Pile.IsBody,
                 };
                 _index[entity.Id] = Count;
                 Count++;
@@ -265,6 +273,8 @@ namespace Simpiens.Presentation
             if (agent.IsSharing) flags |= CrawlerFlags.Sharing;
             if (agent.IsGossiping) flags |= CrawlerFlags.Gossiping;
             if (agent.HurtThisTick > 0f) flags |= CrawlerFlags.Hurt;
+            if (agent.IsCollapsed) flags |= CrawlerFlags.Collapsed;
+            if (agent.CarriedBy != default) flags |= CrawlerFlags.Carried;
             return flags;
         }
     }

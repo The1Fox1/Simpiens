@@ -27,6 +27,9 @@ namespace Simpiens.Presentation.Art
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>
         public const string PropStall = "prop/stall";
+
+        /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
+        public const string PropCairn = "prop/cairn";
         /// <summary>The trade caravan walking the map (Epic 10 Part 2, the stretch, D70).</summary>
         public const string PropCaravan = "prop/caravan";
 

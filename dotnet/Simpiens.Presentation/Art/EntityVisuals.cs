@@ -42,6 +42,7 @@ namespace Simpiens.Presentation.Art
                 if (all) _wearing[key] = byState;
             }
             Stall = catalog.TryId(ArtKeys.PropStall, out var stall) ? stall : ArtId.None;
+            Cairn = catalog.TryId(ArtKeys.PropCairn, out var cairn) ? cairn : catalog.Missing;
             for (int i = 0; i < _creatures.Length; i++) _creatures[i] = ArtId.None;
             foreach (var kind in Simpiens.Simulation.Creatures.CreatureCatalog.All)
                 _creatures[(byte)kind.Id] = catalog.TryId(ArtKeys.Creature(kind.ArtKey), out var creature) ? creature : catalog.Missing;
@@ -68,6 +69,7 @@ namespace Simpiens.Presentation.Art
         public bool TryProp(in EntityView entity, out ArtId id)
         {
             if (entity.Type == EntityType.Resource) id = _catalog.Node(ItemCatalog.Get(entity.ResourceKind)?.ArtKey);
+            else if (entity.Type == EntityType.Pile && entity.IsBody) id = Cairn; // a body (Epic 10 Part 3, K5.8b)
             else if (entity.Type == EntityType.Pile) id = entity.PileItem != Simpiens.Simulation.Economy.ItemType.None ? _catalog.Picture(ItemCatalog.Get(entity.PileItem)?.ArtKey, _catalog.DisplayPicture) : ArtId.None;
             else id = (uint)entity.Type < (uint)_byType.Length ? _byType[(int)entity.Type] : ArtId.None;
             return !id.IsNone;
@@ -102,5 +104,8 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>The trade stall's art; none when the catalogue has no stall.</summary>
         public ArtId Stall { get; }
+
+        /// <summary>A body's cairn (Epic 10 Part 3, K5.8b); the loud missing art when the catalogue has none.</summary>
+        public ArtId Cairn { get; }
     }
 }

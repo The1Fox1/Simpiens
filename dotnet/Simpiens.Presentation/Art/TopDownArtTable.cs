@@ -33,6 +33,7 @@ namespace Simpiens.Presentation.Art
             {
                 NameOffset = new Vec2(0f, 0.65f), NameHeight = 0f, // above the crawler (Unity's CameraController)
                 CarryOffset = new Vec2(0.25f, 0.3f), CarryHeight = 0f, // over its pack, at its upper right
+                RideOffset = new Vec2(0f, 0.3f), RideHeight = 0f, // a carried crawler across its back, up the screen (Epic 10 Part 3, K5.8a)
                 // On the stall's counter, its lower half: four goods as their 8x8 markers (a 12-px map sprite would cover it)
                 DisplaySlots = new[] { (new Vec2(-0.69f, -0.22f), 0f), (new Vec2(-0.23f, -0.22f), 0f), (new Vec2(0.23f, -0.22f), 0f), (new Vec2(0.69f, -0.22f), 0f) },
                 DisplayPicture = ItemPicture.Carried,
@@ -45,6 +46,7 @@ namespace Simpiens.Presentation.Art
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
                .Add(ArtKeys.PropStall, Sheet, new[] { "Prop_Stall" }, 2f, 1f, Art) // two cells by one
+               .Add(ArtKeys.PropCairn, Sheet, new[] { "Prop_Cairn" }, 1f, 1f, Art) // a body (Epic 10 Part 3, K5.8b)
                // The stations (Epic 10 Part 2, W1.6a): a cell each at the art's own 16 pixels a unit, as isometric's
                .Add(ArtKeys.PropForge, Sheet, new[] { "Prop_Forge" }, 1f, 1f, Art)
                .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)

@@ -83,6 +83,8 @@ namespace Simpiens.Presentation.Art
         {
             CarryOffset = builder.CarryOffset;
             CarryHeight = builder.CarryHeight;
+            RideOffset = builder.RideOffset;
+            RideHeight = builder.RideHeight;
             DisplaySlots = builder.DisplaySlots ?? System.Array.Empty<(Vec2 Offset, float Height)>();
             DisplayPicture = builder.DisplayPicture;
             Vec2 nameOffset = builder.NameOffset;
@@ -114,6 +116,10 @@ namespace Simpiens.Presentation.Art
         public Vec2 CarryOffset { get; }
 
         public float CarryHeight { get; }
+
+        /// <summary>Where a carried crawler rides on its rescuer (Epic 10 Part 3, K5.8a): <see cref="RideOffset"/> on the floor from it, <see cref="RideHeight"/> units up.</summary>
+        public Vec2 RideOffset { get; }
+        public float RideHeight { get; }
 
         /// <summary>Where the stall shows its goods (graphics V5): each slot a floor offset from the stall and a height.</summary>
         public IReadOnlyList<(Vec2 Offset, float Height)> DisplaySlots { get; }
@@ -200,6 +206,8 @@ namespace Simpiens.Presentation.Art
             public Vec2 CarryOffset { get; set; }
 
             public float CarryHeight { get; set; }
+            public Vec2 RideOffset { get; set; }
+            public float RideHeight { get; set; }
 
             public (Vec2 Offset, float Height)[] DisplaySlots { get; set; }
 
