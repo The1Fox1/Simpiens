@@ -12,6 +12,8 @@ namespace Simpiens.Presentation.Art
         Face = 2,
         /// <summary>Over the shirt, as a coat: hazard gear's suit, worn on the body (Epic 10 Part 3, K1.5).</summary>
         Torso = 3,
+        /// <summary>In the right hand, its blade rising up and out: a weapon (Epic 10 Part 3, K3.4).</summary>
+        Hand = 4,
     }
 
     /// <summary>How an item looks: its shape, its primary and secondary colours, and how it is worn.</summary>
@@ -53,10 +55,11 @@ namespace Simpiens.Presentation.Art
             ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191), Worn.Face),
             ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
             // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): the cudgel's oak and iron studs; the blade's steel and its
-            // leather grip, the edge's glowstone amber on a dark grip; the helm dark iron with a black visor; the ring coat steel
-            ["cudgel"] = new ItemLook(ItemShapes.Club, new Rgba32(146, 98, 56), new Rgba32(120, 128, 140)),
-            ["iron-blade"] = new ItemLook(ItemShapes.Blade, new Rgba32(203, 213, 225), new Rgba32(120, 72, 32)),
-            ["glowstone-edge"] = new ItemLook(ItemShapes.Blade, new Rgba32(251, 191, 36), new Rgba32(51, 65, 85)),
+            // leather grip, the edge's glowstone amber on a dark grip, each held in the hand (K3.4); the helm dark iron with a
+            // black visor; the ring coat steel
+            ["cudgel"] = new ItemLook(ItemShapes.Club, new Rgba32(146, 98, 56), new Rgba32(120, 128, 140), Worn.Hand),
+            ["iron-blade"] = new ItemLook(ItemShapes.Blade, new Rgba32(203, 213, 225), new Rgba32(120, 72, 32), Worn.Hand),
+            ["glowstone-edge"] = new ItemLook(ItemShapes.Blade, new Rgba32(251, 191, 36), new Rgba32(51, 65, 85), Worn.Hand),
             ["iron-helm"] = new ItemLook(ItemShapes.Helmet, new Rgba32(100, 110, 124), new Rgba32(15, 18, 24), Worn.Head),
             ["ring-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(160, 170, 182), new Rgba32(84, 92, 104), Worn.Torso),
         };

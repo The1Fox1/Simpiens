@@ -267,7 +267,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - **Deviation:** the caravan's cudgel supply moves to K3.3. Stocked before anyone buys a weapon, its 12g once tipped the crafting loop's quits for pay from 2 to 6 of seeds 1–20, so it comes with its buyers and is measured with them.
 - [x] **K3.2 Armour from ore (Q11):** [Basic: item rows and recipes, by AGENTS.md's "Adding an item"] the iron helm and the ring coat.
   - **Built:** `ItemType` 13–14: the iron helm (head, defense +3, two ore in 2 h, 30g) and the ring coat (body, defense +6, four ore in 3 h, 55g), each wearing by the blow taken (80 and 120); the helm on the helmet's shape in dark iron, the coat on a new `Mail` shape, worn as a coat. The worn figures, bodies and portraits follow.
-- [ ] **K3.3 Fighting back:** [Possibly Complex: cognition, a fact and a reflex]
+- [x] **K3.3 Fighting back:** [Possibly Complex: cognition, a fact and a reflex]
   - the bold and armed fight back;
   - the bold buy a weapon (Q6);
   - outfitting for creatures comes from K1.4's rule.
@@ -283,11 +283,14 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - **Tuned:** the iron blade +8 attack (was +6), the glowstone edge +12 (was +10), so a blade clears a lone beetle (51 health expected, from full) or three rats (49).
     - **Measured** (the 23 gate seeds, four days, the workshop player ordering blades): blades worn on 20; fights on 12; a bold resident slew a creature on 7, the first at t14382 (seed 18). One Ore Quarry jitter on seed 8 on day 2, with no fight in it (F4's kind).
     - **Older scenarios given room:** the guild's sign-on within two days (it came at t9405 on the default seed, 93% of the day); the right gear's trip all in respirators within nine days (day 7.8).
-- [ ] **K3.4 The client:** [Possibly Complex: worn sprites and Gum UI]
+- [x] **K3.4 The client:** [Possibly Complex: worn sprites and Gum UI]
   - weapons in hand;
   - the new goods in the merchant terminal and the party builder.
   - **Done with K3.1** (the new goods overflowed both windows at 720 rows): the merchant terminal's goods scroll past nine (the window 24 px wider for the scrollbar), the station window's orders past four.
+  - **Weapons in hand:** a weapon is worn in the hand (`Worn.Hand`): bodies (`BodyKit`) and today's figures (`WornSprites`) draw its hilt beside the right hand (the rightmost skin under the head) and its blade rising up and out, three pixels, in its colours. Portraits show none.
+  - **The party builder:** the guild's outfit (K1.4's rule, by hazards) gives no weapons yet: weapons for a party come with the Clear order (K7). Nothing to show there.
 - **DoD `AnArmedCrawlerFightsBack`:** on a gate seed, the scripted player stocks blades; a bold resident buys one, meets vermin, fights and kills one; the day holds.
+  - **Done 2026-11-11** (`04a8d1e`): gate seed 18, the slayer SwarmAgent_11 at t14382 with an iron blade it bought, the days holding.
 - **Stop for the producer's look** at the first fights.
 
 ### K4. Loot (2–3 days)

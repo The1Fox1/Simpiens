@@ -28,7 +28,7 @@ namespace Simpiens.Presentation.Art.People
         public static readonly Rgba32 TabardColour = new Rgba32(30, 58, 138), TabardDevice = new Rgba32(250, 204, 21);
 
         // The keys the kit adds to a pattern's: hair in shade, the helm and its brim, the helm's lamp, the tabard and its device
-        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q';
+        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q', Blade = 'X', Hilt = 'x';
 
         // What a pose holds besides the body: the tool, the bubbles' white and the marks over the head
         private const string Carried = "TW!?Z";
@@ -103,6 +103,7 @@ namespace Simpiens.Presentation.Art.People
                 Build(keys, head.BodyTop, LookCatalog.KeyOf(LookGene.Build, look.Build));
                 if (LookCatalog.KeyOf(LookGene.Lineage, look.Lineage) == "delver" && Shorten(keys, head.BodyTop)) shift = 1;
                 if (tabard) TabardOn(keys, head.BodyTop + shift);
+                if (colours.HasWeapon) WeaponOn(keys, head.BodyTop); // in the hand (Epic 10 Part 3, K3.4)
             }
 
             for (int i = 0; i < keys.Length; i++) into[i] = colours.Of(keys[i], head.Lying);
@@ -288,6 +289,30 @@ namespace Simpiens.Presentation.Art.People
         }
 
         // The guild's tabard (D8): two columns down the middle of the shirt, the device at the breast, a hem over the belt
+        /// <summary>
+        /// A weapon in the right hand (Epic 10 Part 3, K3.4): the hand is the rightmost skin under the head; the hilt beside it
+        /// and the blade rising up and out from there, three pixels, where nothing but the outline or the air is.
+        /// </summary>
+        public static bool TryHand(ReadOnlySpan<char> keys, int bodyTop, out int x, out int y)
+        {
+            x = y = -1;
+            for (int row = Math.Max(0, bodyTop); row < Size; row++)
+                for (int col = Size - 1; col >= 0; col--)
+                {
+                    if (keys[row * Size + col] != 'K' || col <= x) continue;
+                    x = col;
+                    y = row;
+                }
+            return x >= 0;
+        }
+
+        private static void WeaponOn(Span<char> keys, int bodyTop)
+        {
+            if (!TryHand(keys, bodyTop, out int hx, out int hy)) return;
+            Set(keys, hx + 1, hy, Hilt, ".#");
+            for (int i = 1; i <= 3; i++) Set(keys, hx + i, hy - i, Blade, ".#");
+        }
+
         private static void TabardOn(Span<char> keys, int bodyTop)
         {
             var shoulders = keys.Slice(bodyTop * Size, Size);
@@ -325,7 +350,7 @@ namespace Simpiens.Presentation.Art.People
         /// <summary>A look's colours by key, resolved once per bake: what shows worn takes its place (the helm's, the mask's, the coat's).</summary>
         private readonly struct Colours
         {
-            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp, _mask, _filter;
+            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp, _mask, _filter, _blade, _hilt;
 
             public Colours(in CrawlerLook look, in WornLook worn)
             {
@@ -342,6 +367,10 @@ namespace Simpiens.Presentation.Art.People
                 _filter = HasMask ? face.Secondary : Rgba32.Clear;
                 // A coat over the shirt (Epic 10 Part 3, K1.5): the shirt's keys in the coat's colour
                 _shirt = LookOf(worn.On(Worn.Torso), out var coat) ? coat.Primary : LookPalettes.PrimaryOf(look);
+                // A weapon in the hand (K3.4): its blade in its primary colour, its hilt in its secondary
+                HasWeapon = LookOf(worn.On(Worn.Hand), out var weapon);
+                _blade = HasWeapon ? weapon.Primary : Rgba32.Clear;
+                _hilt = HasWeapon ? weapon.Secondary : Rgba32.Clear;
             }
 
             private static bool LookOf(ItemType item, out ItemLook look)
@@ -352,6 +381,7 @@ namespace Simpiens.Presentation.Art.People
 
             public bool HasHelm { get; }
             public bool HasMask { get; }
+            public bool HasWeapon { get; }
 
             public Rgba32 Of(char key, bool asleep) => key switch
             {
@@ -366,6 +396,8 @@ namespace Simpiens.Presentation.Art.People
                 Lamp => _lamp,
                 Mask => _mask,
                 Filter => _filter,
+                Blade => _blade,
+                Hilt => _hilt,
                 Tabard => TabardColour,
                 Device => TabardDevice,
                 _ => ProceduralSprites.CrawlerKeyColour(key),
