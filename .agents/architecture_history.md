@@ -1636,3 +1636,13 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **The rats' leash 6** (D20): the layout's claim (the warren holds one node and not the survey point) wasn't true at 8.
 - **Each commit kept golden:** K2.3a–c and the prep left hunting off live. Turning it on is the only behaviour change, kept as a patch for the review.
 - **Finding F3:** live hunting fails Part 2's crafting soak (its 3 seeds) and the workshop loop (gate seed 1). Some of that is the epic's intended pressure (seam.1 lost, about −8% treasury over seeds 1–20); most is the crafting profile's fragility (already 17/20 with hunting off; glowstone lands at the horizon's edge). Options A (bands by the quitting rule), B (retune at F14), C (soften until K3); A recommended. The developer decides.
+
+## 2026-11-10: Epic 10 Part 3, hunting live, F3 by option A, K2.4 and the strike pose
+- **The word:** "Chose A. Proceed". The go covered turning hunting on, settling F3 by option A, golden, the renders, the DoD and K2.4. The strike pose, K2.5's piece due with live hunting, came before the renders.
+- **F3 as applied** (`e73b586`): a quit for want of pay, not a single unpaid visit, fails a band (members and artisans quit at two). The harness counts quits by who leaves a roster one short of the line on the visit that reached it, so no counter was added to the core. The crafting profile's makes and pay are judged across seeds 1–20.
+  - **Deviation:** the option as written judged pay per seed ("an unpaid run under the quitting line"). On the soak's seed 2 an artisan really quit, but pay quits are as rare with hunting as without (1 of 21 seeds off, 2 on), so pay is judged across seeds, as makes are. Recorded in the epic for the developer.
+  - The mid-craft save searches 12 days.
+- **Golden re-recorded twice, each in its own commit:** hunting live (`7298461`: only 20261010 moves, from t1900), then the creatures in the hash (`85ec88e`: every sample's map part).
+- **K2.4** (`7f6f918`): `CreatureSave` in the world's block, owned by `CreatureService` (as the workshops own theirs). The swing's timer is saved (D8, so K11.1's mid-fight load holds); paths and the strike pose's tick aren't. A save that doesn't fit the map is refused before anything changes. A load registers creatures after the crawlers, so a loaded session's registry order differs from the original's; no check needs it to match, since crawlers decide afresh after a load.
+- **The strike pose** (`570ada4`): the core notes a swing's tick (unsaved, view-only, as `HurtThisTick` is), and the view times the lunge.
+- **Finding F4:** seed 82 of 1–120 fails on one Grove jitter with no creature involved; the change of timing surfaced it.

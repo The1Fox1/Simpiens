@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-10 (Epic 10 Part 3 ACTIVE: K0 and K1 done and approved; K2.1-K2.2 done; the creatures drawn (K2.5a); K2.3a-c done, hunting on waits for the review of F3; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-10 (Epic 10 Part 3 ACTIVE: K0 and K1 done and approved; K2.1-K2.2 done; the creatures drawn (K2.5a); K2.3 and K2.4 done, hunting live (F3 by option A), K2's DoD passes; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -92,11 +92,11 @@ CURRENT FOCUS
   gear a suit on the body) and K1.6 (a slot added as data; AGENTS.md's recipe) done. K1 done; its look passed ("K1
   looks good") with the go for K2. K2.1 (lairs, filled on the seed) and K2.2 (the creature's rule, D9-D15; hunting off
   in the live session until K2.3) done. 2026-11-09, at the producer's word: the creatures drawn on the map ahead of
-  K2.3 (K2.5a: side-view placeholders, both view modes, hidden by the fog). 2026-11-10 "Proceed": K2.3a-c (lairs'
-  reach, danger and charting; lone crawlers keep out of known lairs; flight) and K2.3d's prep done, hunting still off.
-  NEXT: the developer's review of K2.3 (D16-D20) and finding F3 (live hunting fails Part 2's crafting soak and the
-  workshop loop; options A/B/C, A recommended); then turn hunting on (.agents/local/k2.3d-hunting-flip.patch), golden,
-  renders, the DoD VerminDriveTheLoneAway, then K2.4.
+  K2.3 (K2.5a: side-view placeholders, both view modes, hidden by the fog). 2026-11-10 "Proceed": K2.3 (lairs' reach,
+  danger and charting; lone crawlers keep out of known lairs; flight); F3 settled by option A ("Chose A. Proceed"),
+  hunting live; K2.4 (the creatures saved) and the strike pose done; K2's DoD VerminDriveTheLoneAway passes. K2 is
+  delivered but for a creature in the inspector (and the creatures' red coat, with K3). NEXT: the producer's word on
+  K3 (melee arms and armour) or on the inspector first; nothing pushed.
   Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
 
@@ -125,7 +125,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0 and K1 done; K2.1-K2.2 done, the creatures drawn (K2.5a, 2026-11-09), K2.3 after the rule's review], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0 and K1 done; K2 delivered 2026-11-10 but for a creature in the inspector], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
