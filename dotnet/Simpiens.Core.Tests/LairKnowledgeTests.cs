@@ -34,9 +34,11 @@ namespace Simpiens.Core.Tests
             Assert.Equal(CreatureCatalog.Get(CreatureKind.BurrowRat).Leash, LairReach.Of(warren));
             Assert.Equal(CreatureCatalog.Get(CreatureKind.StoneBeetle).Leash, LairReach.Of(hollow));
 
-            // Each holds the node beside it; the beetles hold no other node and not the Deep Seam's survey point
+            // Each holds the node beside it and no other, and not its sector's survey point
             Assert.True(LairReach.Holds(warren, Node(map, "overgrowth.3")));
             Assert.False(LairReach.Holds(warren, Node(map, "overgrowth.1")));
+            Assert.False(LairReach.Holds(warren, Node(map, "overgrowth.2"))); // D20: the rats' leash of 6
+            Assert.False(LairReach.Holds(warren, map.Sectors.First(s => s.Id == Floor1Layout.OvergrowthSectorId).TargetPoint));
             Assert.True(LairReach.Holds(hollow, Node(map, "seam.1")));
             Assert.False(LairReach.Holds(hollow, Node(map, "seam.2")));
             Assert.False(LairReach.Holds(hollow, Node(map, "seam.3")));

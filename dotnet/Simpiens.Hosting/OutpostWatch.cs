@@ -112,6 +112,26 @@ namespace Simpiens.Hosting
         public string FirstIdentityFault;
         private readonly HashSet<string> _livingNames = new HashSet<string>();
 
+        /// <summary>
+        /// Creatures (Epic 10 Part 3, K2.3), every crawler present, drifters included: blows that fell (hit or miss), the
+        /// crawlers they fell on, those that hurt, flights begun, crawlers a blow downed, when each of the map's lairs was
+        /// charted (-1 for never), and lone entries into a lair after it had been charted for <see cref="KnownLairGraceTicks"/>:
+        /// a crawler on its feet, off an expedition, not fleeing, stepping from outside to within its reach less
+        /// <see cref="LairEdgeBand"/> (a passer-by grazing the edge isn't going into it). Any entry fails the day.
+        /// </summary>
+        public int Blows, Hits, Flights, DownedByCreatures, EntriesIntoKnownLairs;
+
+        /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
+        public const float LairEdgeBand = 1f;
+        public readonly HashSet<EntityId> Struck = new HashSet<EntityId>();
+        public long[] LairChartedAt = System.Array.Empty<long>();
+        public string FirstEntryIntoKnownLair, FirstFlight;
+
+        /// <summary>A crawler that decided to go before a lair was charted may still be on its way: entries count from a game hour after.</summary>
+        public const long KnownLairGraceTicks = DayClock.TicksPerHour;
+
+        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InKnownLair, bool Downed)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool)>();
+
         /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
         public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
 
@@ -228,6 +248,7 @@ namespace Simpiens.Hosting
                 }
             }
 
+            ObserveCreatures(rel, (uint)tick, map);
             Anomalies.Observe(tick);
 
             if (sim.EconomyLedger != null)
@@ -242,6 +263,56 @@ namespace Simpiens.Hosting
                 }
             }
         }
+
+        private void ObserveCreatures(long rel, uint tick, Simpiens.Simulation.World.MapDefinition map)
+        {
+            var creatures = _sim.Simulation.Creatures;
+            int lairCount = map != null ? map.Lairs.Count : 0;
+            if (LairChartedAt.Length != lairCount)
+            {
+                LairChartedAt = new long[lairCount];
+                for (int i = 0; i < lairCount; i++) LairChartedAt[i] = -1;
+            }
+            for (int i = 0; i < lairCount; i++)
+                if (LairChartedAt[i] < 0 && creatures.IsCharted(i)) LairChartedAt[i] = rel;
+
+            var present = _sim.Host.CrawlerStates;
+            for (int i = 0; i < present.Count; i++)
+            {
+                var state = present[i];
+                _creatureWatch.TryGetValue(state.AgentId, out var was);
+                bool fleeing = state.CurrentIntent is Simpiens.Cognition.Contracts.FleeIntent;
+                if (state.StruckAtTick != 0 && state.StruckAtTick != was.Struck)
+                {
+                    Blows++;
+                    if (state.HurtThisTick > 0f) Hits++;
+                    Struck.Add(state.AgentId);
+                    if (state.IsDowned && !was.Downed) DownedByCreatures++;
+                }
+                if (fleeing && !was.Fleeing)
+                {
+                    Flights++;
+                    FirstFlight ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
+                }
+                bool inKnownLair = false;
+                for (int l = 0; l < lairCount && !inKnownLair; l++)
+                {
+                    float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
+                    inKnownLair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f
+                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                }
+                if (inKnownLair && !was.InKnownLair && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
+                {
+                    EntriesIntoKnownLairs++;
+                    FirstEntryIntoKnownLair ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position} ({state.CurrentIntent?.GetType().Name})";
+                }
+                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inKnownLair, state.IsDowned);
+            }
+        }
+
+        /// <summary>The creatures' line of the report (Epic 10 Part 3, K2.3).</summary>
+        public string CreatureSummary() =>
+            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}";
 
         /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
         public void Run(long ticks)
@@ -277,6 +348,7 @@ namespace Simpiens.Hosting
             if (gatherings == 0) failures.Add("no hearth gathering");
             if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");
             if (FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({FogLeaks}; first {FirstFogLeak})");
+            if (EntriesIntoKnownLairs > 0) failures.Add($"crawlers went alone into a known lair ({EntriesIntoKnownLairs}; first {FirstEntryIntoKnownLair})");
             if (AloneInTheChamber > 0) failures.Add($"crawlers went alone where only an expedition goes ({AloneInTheChamber} crawler-ticks; first {FirstAloneInTheChamber})");
             if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
             if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
@@ -322,6 +394,7 @@ namespace Simpiens.Hosting
         {
             var sb = new StringBuilder();
             sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; alone in the chamber {AloneInTheChamber}; intent faults {IntentFaults}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
+            sb.AppendLine(CreatureSummary());
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");

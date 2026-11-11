@@ -43,11 +43,12 @@ namespace Simpiens.Simulation.Creatures
         /// </summary>
         private static CreatureDefinition[] Definitions() => new[]
         {
-            // Weak and quick, in packs of three or four that wear a lone crawler down; each runs for the warren under 40%
+            // Weak and quick, in packs of three or four that wear a lone crawler down; each runs for the warren under 40%. A leash of
+            // 6 (K2.3, D20): the warren holds overgrowth.3 and leaves the Overgrowth's other patches and its survey point clear
             new CreatureDefinition(CreatureKind.BurrowRat, "BurrowRat", "Burrow Rat")
             {
                 MaxHealth = 20f, Attack = 3f, Defense = 0f, Reach = 0.3f, SwingIntervalSeconds = 1f,
-                Speed = 2.2f, BodyRadius = 0.25f, Sight = 5f, Leash = 8f, FleeBelow = 0.4f,
+                Speed = 2.2f, BodyRadius = 0.25f, Sight = 5f, Leash = 6f, FleeBelow = 0.4f,
                 PackMin = 3, PackMax = 4, HealHours = 12, RespawnHours = 48
             },
             // Armoured and slow: a bare hand barely scratches one (defense 8 stops 44% of a blow), a crawler can walk away
