@@ -68,5 +68,6 @@ namespace Simpiens.Simulation
         public const uint CreatureId = 12; // a creature's id, its own sequence apart from the entities' (K2.1)
         public const uint CreatureRest = 13; // how long a creature rests before it roams (K2.2)
         public const uint CreatureRoam = 14; // where a creature roams (K2.2)
+        public const uint PileId = 15; // a pile's id, its own sequence apart from the entities' (K4.1)
     }
 }

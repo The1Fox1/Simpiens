@@ -32,6 +32,9 @@ namespace Simpiens.Simulation.Persistence
 
         /// <summary>The lairs and their creatures (Epic 10 Part 3, K2.4); null in a save from before, and the lairs fill afresh.</summary>
         public CreatureSave Creatures { get; set; }
+
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.1); null in a save from before: none.</summary>
+        public PileSave Piles { get; set; }
     }
 
     /// <summary>The supply service in a save: its regrowth queue, in its own order, and its counters.</summary>

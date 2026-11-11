@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, Simpiens.Simulation.Creatures.ICreatureWorld, System.IDisposable
+    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, Simpiens.Simulation.Creatures.ICreatureWorld, Simpiens.Simulation.Loot.IPileWorld, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -108,14 +108,42 @@ namespace Simpiens.Simulation
         /// <summary>The lairs and their creatures (Epic 10 Part 3, K2), following the loaded map.</summary>
         public Simpiens.Simulation.Creatures.CreatureService Creatures => _creatures.Follow(_sectors?.Map);
 
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.1): kills' drops, and bodies from K5.</summary>
+        public Simpiens.Simulation.Loot.PileService Piles { get; } = new Simpiens.Simulation.Loot.PileService();
+
         /// <summary>The loaded map (immutable); null before one is loaded.</summary>
         public Simpiens.Simulation.World.MapDefinition Map => _sectors?.Map;
 
         /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
-        public void PopulateLairs(ulong seed) => Creatures.Populate(this, seed);
+        public void PopulateLairs(ulong seed)
+        {
+            Creatures.Populate(this, seed);
+            Piles.Begin(this, seed); // no piles at a session's start (K4.1)
+        }
 
-        /// <summary>The creatures' phase (seam A4), after the crawlers' runtime. Main thread.</summary>
-        public void TickCreatures(uint tick) => Creatures.Tick(this, tick);
+        /// <summary>The creatures' phase (seam A4), after the crawlers' runtime, then the piles' (K4.1: fading). Main thread.</summary>
+        public void TickCreatures(uint tick)
+        {
+            Creatures.Tick(this, tick);
+            Piles.Tick(this, tick);
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.AddPile(WorldEntity entity)
+        {
+            if (entity != null) _worldRegistry?.Register(entity);
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.RemovePile(EntityId id)
+        {
+            var entity = _worldRegistry?.GetEntity(id);
+            if (entity != null) _worldRegistry.Unregister(entity);
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.GoldFaded(Simpiens.Simulation.Loot.LootPile pile, int gold)
+        {
+            // Gold on the ground comes with K5's bodies, and its ledger account with it
+            SimLog.Economy.ZLogWarning($"{gold}g faded with {pile}");
+        }
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.AddCreature(WorldEntity entity)
         {

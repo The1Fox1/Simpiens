@@ -68,6 +68,14 @@ namespace Simpiens.Simulation.Persistence
                     if (Unknown(world.Harvested[i].Item)) return Where(world.Harvested[i].Item, "the harvest tally");
                 }
             }
+            var stacks = world?.Piles?.Stacks; // the items on the ground (Epic 10 Part 3, K4.1)
+            if (stacks != null)
+            {
+                for (int i = 0; i < stacks.Length; i++)
+                {
+                    if (!stacks[i].IsEmpty && Unknown(stacks[i].Type)) return Where(stacks[i].Type, "a pile on the ground");
+                }
+            }
             return null;
         }
 

@@ -288,6 +288,32 @@ namespace Simpiens.Testing.Environment
                 }
             }
 
+            // The items on the ground (Epic 10 Part 3, K4.1), only while there are any, so runs without piles hash as before
+            var piles = sim?.Piles;
+            if (piles != null && (piles.Piles.Count > 0 || piles.IdCounter > 0))
+            {
+                Mix(ref map, piles.IdCounter);
+                for (int i = 0; i < piles.Piles.Count; i++)
+                {
+                    var pile = piles.Piles[i];
+                    Mix(ref map, pile.Id.GetHashCode());
+                    Mix(ref map, Quantize(pile.Position.X, 1000f));
+                    Mix(ref map, Quantize(pile.Position.Y, 1000f));
+                    Mix(ref map, pile.FadesAt);
+                    Mix(ref map, pile.ClaimedFor.GetHashCode());
+                    Mix(ref map, pile.ClaimUntil);
+                    Mix(ref map, pile.Gold);
+                    for (int st = 0; st < pile.Count; st++)
+                    {
+                        var stack = pile.StackAt(st);
+                        Mix(ref map, (int)stack.Type);
+                        Mix(ref map, (int)stack.Quantity);
+                        Mix(ref map, (int)stack.Quality);
+                        Mix(ref map, (int)stack.Durability);
+                    }
+                }
+            }
+
             Mix(ref total, economy);
             Mix(ref total, bounties);
             Mix(ref total, map);

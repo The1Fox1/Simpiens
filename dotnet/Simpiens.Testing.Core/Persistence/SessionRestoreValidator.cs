@@ -38,13 +38,14 @@ namespace Simpiens.Testing.Persistence
             ValidateGuildRoundTrips();
             ValidateWorkshopsRoundTrip();
             ValidateCreaturesRoundTrip();
+            ValidatePilesRoundTrip();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
             ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -318,6 +319,39 @@ namespace Simpiens.Testing.Persistence
 
             creatures.Restore(null, null, 424242UL);
             Assert(creatures.IdCounter > 0 && creatures.Creatures.Count >= 4 && creatures.ChartedMask == 0UL, "A save without the block fills the lairs afresh, nothing charted.");
+        }
+
+        // The items on the ground (Epic 10 Part 3, K4.1): a save restored and captured again is the same bytes; claims, fades,
+        // gold and stacks come back; a save that doesn't add up is refused; a save without the block starts with none
+        private void ValidatePilesRoundTrip()
+        {
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<PileRecord>() == 56, "A pile's record is 56 bytes, saved as raw memory.");
+            var save = new PileSave
+            {
+                IdCounter = 3,
+                Piles = new[]
+                {
+                    new PileRecord { Id = A, ClaimedFor = C, Position = new Vec2(-20f, 14f), FadesAt = 12000u, ClaimUntil = 2420u, Gold = 0, StackCount = 2 },
+                    new PileRecord { Id = B, Position = new Vec2(3f, -4f), FadesAt = 9000u, Gold = 17, StackCount = 1 },
+                },
+                Stacks = new[]
+                {
+                    new ItemInstance(1, ItemType.IronOre, 2, 0),
+                    new ItemInstance(1, ItemType.MedicinalHerb, 1, 0),
+                    new ItemInstance(1, ItemType.Cudgel, 1, 0, durability: 33),
+                },
+            };
+            Assert(Simpiens.Simulation.Loot.PileService.Check(save) == null, "The save adds up.");
+            var piles = new Simpiens.Simulation.Loot.PileService();
+            piles.Restore(null, save, 424242UL);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(piles.Capture()), "The piles restored from their save");
+            Assert(piles.TryGet(A, out var claimed) && claimed.ClaimedFor == C && claimed.ClaimUntil == 2420u && claimed.Count == 2 && !claimed.MayTake(B, 2000u) && claimed.MayTake(B, 2420u),
+                "A claimed pile comes back with its claim and its stacks.");
+            Assert(piles.TryGet(B, out var purse) && purse.Gold == 17 && purse.StackAt(0).Durability == 33 && purse.FadesAt == 9000u, "A pile's gold, its worn piece and its fading come back.");
+            Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = save.Piles, Stacks = new ItemInstance[1] }) != null, "Stacks that don't add up are refused.");
+            Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = new[] { save.Piles[1], save.Piles[0] }, Stacks = save.Stacks }) != null, "Piles out of id order are refused.");
+            piles.Restore(null, null, 424242UL);
+            Assert(piles.Piles.Count == 0 && piles.IdCounter == 0, "A save without the block starts with no piles.");
         }
 
         private static CreatureRecord Record(EntityId id, Simpiens.Simulation.Creatures.CreatureKind kind, int lair, byte slot, Vec2 position, float health,

@@ -34,6 +34,7 @@ namespace Simpiens.Simulation
             save.World.BunkSleeps = _lodging.CaptureSleeps();
             save.World.Harvested = harvested;
             save.World.Creatures = Creatures.Capture(); // the lairs and their creatures (Epic 10 Part 3, K2.4)
+            save.World.Piles = Piles.Capture(); // the items on the ground (K4.1)
 
             var groups = new Simpiens.Simulation.Persistence.GroupSave();
             _groupRegistry?.CaptureTo(groups);
@@ -77,6 +78,7 @@ namespace Simpiens.Simulation
 
             // The lairs and their creatures (Epic 10 Part 3, K2.4); a save from before fills them afresh
             Creatures.Restore(this, world?.Creatures, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed);
+            Piles.Restore(this, world?.Piles, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed); // K4.1
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
             Guild.RestoreFrom(save.Guild);
@@ -161,6 +163,7 @@ namespace Simpiens.Simulation
             Guild.Reset();
             _workshops.Reset();
             _creatures.Reset();
+            Piles.Reset();
 
             // Walls from the torn-down world (including injected chaos walls) must not outlive it
             _spatialPartition?.ResetStatic();

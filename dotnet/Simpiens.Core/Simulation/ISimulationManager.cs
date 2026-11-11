@@ -37,6 +37,9 @@ namespace Simpiens.Simulation
         /// <summary>The lairs and their creatures (Epic 10 Part 3, K2).</summary>
         Simpiens.Simulation.Creatures.CreatureService Creatures { get; }
 
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.1).</summary>
+        Simpiens.Simulation.Loot.PileService Piles { get; }
+
         /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
         void PopulateLairs(ulong seed);
 

@@ -295,17 +295,24 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K4. Loot (2–3 days)
 **Complexity:** Possibly Complex: rolls already exist; piles are a new entity with saved state.
-- [ ] **K4.1 Piles:** [Possibly Complex: a new entity, saved]
+- **The go:** the producer's AFK directive (2026-11-11): "Looks good. I will be afk you will be responsible for finishing K4-K5" (K3's look passed). Decisions D22 onward go into the epic for the producer's return; a local log in `.agents/local/epic10-part3_afk-log.md`.
+- [x] **K4.1 Piles:** [Possibly Complex: a new entity, saved]
   - items on the ground (A5);
   - they fade after a game day.
+  - **The plan:** `EntityType.Pile` and a `PileService` owned by the simulation (as the creatures' is): up to 16 stacks and a purse (for K5's bodies), where it lies, when it fades (a game day on), and who may claim it first until when (its victor, a game hour). Ids from a seeded sequence of their own (as creatures', so drops never shift who comes next). Out of crawlers' spatial memory (as creatures are): cognition finds piles in the snapshot. Saved in the world's block (`PileSave`), checked before a load; the world hash holds them.
+  - **Built:** `LootPile` and `PileService` (`Simulation/Loot/`, `SimulationManager.Piles`, ticked after the creatures: fading), `IPileWorld`, `EntityType.Pile`, `SimRandomSalt.PileId`, `PileSave`/`PileRecord` (56 bytes) in the world's block; `SaveItems` vets a pile's stacks, `CheckRestorable` its counts; out of spatial memory. Gold that fades is logged until K5's account for gold on the ground.
+  - Tests: `SessionRestoreValidator.ValidatePilesRoundTrip`; `PileTests` (3). Core 222/222, client 500/500, golden 3/3 unchanged (no pile is dropped in a live run yet).
 - [ ] **K4.2 Drops:** [Possibly Complex: deterministic rolls] each kind's loot table, rolled at the kill by `LootRoller`.
+  - **The plan:** the materials as items (hide, chitin) and each kind's table in `CreatureLoot` (`CreatureDefinition.LootTable`): a rat drops a hide, sometimes a herb, now and then a rare piece; a beetle chitin, sometimes ore, now and then a rare piece. Rolled at the kill on (seed, creature, tick) into a pile at its place, claimed for the slayer.
 - [ ] **K4.3 Picking up:** [Possibly Complex: cognition, a goal and a fact]
   - the victors take their pile;
   - anyone may claim one left behind.
+  - **The plan:** `CollectLootGoal` and `PickUpLootAction` (`StateFact.LootCollected`), a `PickUpIntent`: a pile in sight (the snapshot, within a crawler's vision of 6 and charted), its own or past its claim, where it would go alone (`WouldEnterAt`), with room in its pack; it walks there and takes what fits, the purse too. Then the stall buys what it sells.
 - [ ] **K4.4 Materials:** [Possibly Complex: the economy, and the soak may move]
   - hides and chitin at the stall and the caravan;
   - the leather jerkin and chitin plate at the forge;
   - the rare pieces as items.
+  - **The plan:** the stall buys hide and chitin, the caravan exports them; the forge makes the leather jerkin (two hides) and the chitin plate (three chitin and an ore); two rare pieces (a rat's fang knife, a beetle's stoneheart coat). The bold who are armed buy armour for a bare slot too (D: the K3 call "residents buy weapons only" widened so a jerkin finds a wearer).
 - [ ] **K4.5 The client:** [Possibly Complex: art and renders]
   - piles on the map;
   - rarity's colours in the merchant terminal and the dossier.

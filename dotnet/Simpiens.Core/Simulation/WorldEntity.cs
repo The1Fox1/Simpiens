@@ -19,7 +19,7 @@ namespace Simpiens.Simulation
         private readonly float _baseSpeed;
 
         public WorldEntity(EntityId id, EntityType type, Vec2 position, float radius, float baseSpeed = 0f, AgentState agent = null, string name = null,
-            Simpiens.Simulation.Creatures.CreatureState creature = null)
+            Simpiens.Simulation.Creatures.CreatureState creature = null, Simpiens.Simulation.Loot.LootPile pile = null)
         {
             Id = id;
             Type = type;
@@ -27,6 +27,7 @@ namespace Simpiens.Simulation
             _baseSpeed = baseSpeed;
             Agent = agent;
             Creature = creature;
+            Pile = pile;
             Name = name ?? string.Empty;
             if (agent != null) agent.Position = position;
             else if (creature != null) creature.Position = position;
@@ -35,6 +36,9 @@ namespace Simpiens.Simulation
         }
 
         public EntityId Id { get; }
+
+        /// <summary>The items on the ground, for a pile (Epic 10 Part 3, K4.1); null for everything else.</summary>
+        public Simpiens.Simulation.Loot.LootPile Pile { get; }
         public EntityType Type { get; set; }
 
         /// <summary>The crawler's state; null for props (resources, hearths, bunks, walls) and creatures.</summary>

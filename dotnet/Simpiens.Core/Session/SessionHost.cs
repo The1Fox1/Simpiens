@@ -351,6 +351,12 @@ namespace Simpiens.Core.Session
                 session = null;
                 return $"The save holds equipment this game can't wear ({misworn}).";
             }
+            string piles = Simpiens.Simulation.Loot.PileService.Check(save.World.Piles);
+            if (piles != null)
+            {
+                session = null;
+                return $"The save's piles don't fit this game ({piles}).";
+            }
             string creatures = Simpiens.Simulation.Creatures.CreatureService.Check(save.World.Creatures, session.Map);
             if (creatures != null)
             {
