@@ -37,13 +37,14 @@ namespace Simpiens.Testing.Persistence
             ValidateGroupsRoundTrip();
             ValidateGuildRoundTrips();
             ValidateWorkshopsRoundTrip();
+            ValidateCreaturesRoundTrip();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
             ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -254,6 +255,78 @@ namespace Simpiens.Testing.Persistence
 
             TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, a party in its slot with its expedition mid-stage (Epic 10 G4.6, G5.3; W5).");
         }
+
+        // The lairs and their creatures (Epic 10 Part 3, K2.4): a save restored and captured again is the same bytes; every
+        // field comes back; a save that doesn't fit the map is refused; a save without the block fills the lairs afresh
+        private void ValidateCreaturesRoundTrip()
+        {
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 72, "A creature's record is 72 bytes, saved as raw memory.");
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<LairSlotRecord>() == 24, "A lair's place is 24 bytes, saved as raw memory.");
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            int warren = -1, hollow = -1;
+            for (int i = 0; i < map.Lairs.Count; i++)
+            {
+                if (map.Lairs[i].Key == Simpiens.Core.Session.Layouts.Floor1Layout.RatWarren) warren = i;
+                if (map.Lairs[i].Key == Simpiens.Core.Session.Layouts.Floor1Layout.BeetleHollow) hollow = i;
+            }
+            Assert(warren >= 0 && hollow >= 0, "Floor 1 has the warren and the hollow.");
+            var rat = Simpiens.Simulation.Creatures.CreatureKind.BurrowRat;
+            var beetle = Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
+            // A rat chasing mid-fight with its swing's timer, a hurt one resting, a slain one's place waiting for its return;
+            // a beetle roaming toward its goal; the hollow charted
+            var packs = new byte[map.Lairs.Count];
+            packs[warren] = 3;
+            packs[hollow] = 1;
+            var save = new CreatureSave
+            {
+                IdCounter = 9,
+                ChartedLairs = 1UL << hollow,
+                Packs = packs,
+                Slots = new[]
+                {
+                    new LairSlotRecord((byte)warren, 0, A, 0u),
+                    new LairSlotRecord((byte)warren, 1, default, 2400u),
+                    new LairSlotRecord((byte)warren, 2, B, 0u),
+                    new LairSlotRecord((byte)hollow, 0, C, 0u),
+                },
+                Creatures = new[]
+                {
+                    Record(A, rat, warren, 0, new Vec2(19.5f, 14.25f), 20f, Simpiens.Simulation.Creatures.CreatureMode.Chase, target: new EntityId(9u, 9u, 9u, 9u), nextSwingAt: 1337, restUntil: 0, goal: new Vec2(19f, 14f)),
+                    Record(B, rat, warren, 2, new Vec2(20.2f, 16.4f), 7.5f, Simpiens.Simulation.Creatures.CreatureMode.Rest, target: default, nextSwingAt: 900, restUntil: 1500, goal: new Vec2(20.2f, 16.4f)),
+                    Record(C, beetle, hollow, 0, new Vec2(-19f, 15f), 60f, Simpiens.Simulation.Creatures.CreatureMode.Roam, target: default, nextSwingAt: 0, restUntil: 400, goal: new Vec2(-18.5f, 14.5f)),
+                },
+            };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(save, map) == null, "The save fits Floor 1.");
+            var creatures = new Simpiens.Simulation.Creatures.CreatureService().Follow(map);
+            creatures.Restore(null, save, 424242UL);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(creatures.Capture()), "The creatures restored from their save");
+            Assert(creatures.Creatures.Count == 3 && creatures.IdCounter == 9 && creatures.IsCharted(hollow) && !creatures.IsCharted(warren), "The creatures, the id counter and the charted lair come back.");
+            Assert(creatures.TryGet(A, out var chaser) && chaser.Mode == Simpiens.Simulation.Creatures.CreatureMode.Chase && chaser.NextSwingAt == 1337 && chaser.Target == new EntityId(9u, 9u, 9u, 9u)
+                && chaser.Position == new Vec2(19.5f, 14.25f) && chaser.Home == Simpiens.Simulation.Creatures.CreatureService.PlaceOf(map.Lairs[warren].Position, 0), "A chase mid-fight comes back with its swing's timer.");
+            Assert(creatures.TryGet(B, out var resting) && resting.Health == 7.5f && resting.RestUntil == 1500, "A hurt rat's health and rest come back.");
+            Assert(creatures.Lairs[warren].MemberIn(1) == default && creatures.Lairs[warren].ReturnAt(1) == 2400u && creatures.Lairs[warren].Alive == 2, "A slain rat's place waits for its return.");
+
+            // Refused, before anything changes: another map's lairs, a kind out of its lair, a place past a pack, ids out of order
+            var shortPacks = new CreatureSave { Packs = new byte[] { 3 }, Slots = save.Slots, Creatures = save.Creatures };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(shortPacks, map) != null, "A save with another number of lairs is refused.");
+            var misplaced = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { Record(A, beetle, warren, 0, Vec2.Zero, 1f, default, default, 0, 0, Vec2.Zero) } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(misplaced, map) != null, "A beetle in the warren is refused.");
+            var pastPack = new CreatureSave { Packs = packs, Slots = new[] { new LairSlotRecord((byte)hollow, 1, C, 0u) }, Creatures = System.Array.Empty<CreatureRecord>() };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(pastPack, map) != null, "A place past a lair's pack is refused.");
+            var unordered = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { save.Creatures[1], save.Creatures[0] } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(unordered, map) != null, "Creatures out of id order are refused.");
+
+            creatures.Restore(null, null, 424242UL);
+            Assert(creatures.IdCounter > 0 && creatures.Creatures.Count >= 4 && creatures.ChartedMask == 0UL, "A save without the block fills the lairs afresh, nothing charted.");
+        }
+
+        private static CreatureRecord Record(EntityId id, Simpiens.Simulation.Creatures.CreatureKind kind, int lair, byte slot, Vec2 position, float health,
+            Simpiens.Simulation.Creatures.CreatureMode mode, EntityId target, long nextSwingAt, long restUntil, Vec2 goal)
+            => new CreatureRecord
+            {
+                Id = id, Kind = kind, Lair = (byte)lair, Slot = slot, Position = position, Health = health, Mode = mode, Target = target,
+                NextSwingAt = nextSwingAt, RestUntil = restUntil, Goal = goal
+            };
 
         private void ValidateChronicleRoundTrips()
         {

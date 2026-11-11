@@ -10,7 +10,8 @@ namespace Simpiens.Testing.Environment
     /// <summary>
     /// One sample of the authoritative world, hashed (Epic MAP Phase 5 determinism check). FNV-1a over plain data
     /// only, in id order: each agent's position (to 1/1000 unit), needs (to 0.01), gold, inventory, health, look and
-    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals;
+    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask and the creatures in
+    /// their lairs (Epic 10 Part 3, K2.4); ledger totals;
     /// groups (each active group's kind, leader, cohesion, directive and sorted roster, then each crawler's memberships:
     /// Epic 10 G4.2). No view state.
     /// Per-part hashes and per-agent descriptions name what differs when two samples disagree.
@@ -46,7 +47,7 @@ namespace Simpiens.Testing.Environment
             }
             if (Economy != other.Economy) parts.Add("stalls or ledger");
             if (Bounties != other.Bounties) parts.Add("bounties");
-            if (Map != other.Map) parts.Add("charted sectors");
+            if (Map != other.Map) parts.Add("charted sectors or creatures");
             if (Groups != other.Groups) parts.Add("groups or memberships");
             return string.Join("; ", parts);
         }
@@ -174,6 +175,41 @@ namespace Simpiens.Testing.Environment
 
             ulong map = Offset;
             Mix(ref map, sectors != null ? sectors.ExploredMask : 0UL);
+
+            // The lairs and their creatures (Epic 10 Part 3, K2.4): what a save holds of them, only on a map with lairs
+            var creatures = sim?.Creatures;
+            if (creatures != null && creatures.Lairs.Count > 0)
+            {
+                Mix(ref map, creatures.IdCounter);
+                Mix(ref map, creatures.ChartedMask);
+                for (int l = 0; l < creatures.Lairs.Count; l++)
+                {
+                    var lair = creatures.Lairs[l];
+                    Mix(ref map, lair.Pack);
+                    for (int slot = 0; slot < lair.Pack; slot++)
+                    {
+                        Mix(ref map, lair.MemberIn(slot).GetHashCode());
+                        Mix(ref map, lair.ReturnAt(slot));
+                    }
+                }
+                for (int i = 0; i < creatures.Creatures.Count; i++)
+                {
+                    var c = creatures.Creatures[i];
+                    Mix(ref map, c.Id.GetHashCode());
+                    Mix(ref map, (int)c.Kind);
+                    Mix(ref map, c.LairIndex);
+                    Mix(ref map, (int)c.Slot);
+                    Mix(ref map, Quantize(c.Position.X, 1000f));
+                    Mix(ref map, Quantize(c.Position.Y, 1000f));
+                    Mix(ref map, Quantize(c.Health, 100f));
+                    Mix(ref map, (int)c.Mode);
+                    Mix(ref map, c.Target.GetHashCode());
+                    Mix(ref map, c.NextSwingAt);
+                    Mix(ref map, c.RestUntil);
+                    Mix(ref map, Quantize(c.Goal.X, 1000f));
+                    Mix(ref map, Quantize(c.Goal.Y, 1000f));
+                }
+            }
 
             // Groups by id, each with its sorted roster; then each crawler's memberships, in id order. A crawler's memberships
             // go as a count and then each one, so a crawler in several groups (Epic 10 G4.3) hashes as one in a single group did

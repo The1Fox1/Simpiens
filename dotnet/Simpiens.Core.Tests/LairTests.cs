@@ -12,8 +12,8 @@ namespace Simpiens.Core.Tests
 {
     /// <summary>
     /// The lairs on the real outpost (Epic 10 Part 3, K2.1): the session opens with the warren and the hollow full, their
-    /// creatures in the world in their sectors; a respawn fills them the same, and so does a load (until the creatures are
-    /// saved, K2.4). What creatures do is K2.2's.
+    /// creatures in the world in their sectors, and a respawn fills them the same; a load puts them back as they were saved
+    /// (K2.4). What creatures do is K2.2's.
     /// </summary>
     public class LairTests
     {
@@ -45,10 +45,49 @@ namespace Simpiens.Core.Tests
             Assert.Equal(ids, sim.Simulation.Creatures.Creatures.Select(c => c.Id).ToList());
 
             sim.Step(50);
-            byte[] saved = SaveSerializer.Serialize(sim.Host.Capture());
-            Assert.True(sim.Host.TryRestore(SaveSerializer.Deserialize<SessionSave>(saved), out string refusal), refusal);
             Assert.Equal(ids, sim.Simulation.Creatures.Creatures.Select(c => c.Id).ToList());
-            Assert.Equal(ids.Count, sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Creature));
+        }
+
+        /// <summary>
+        /// K2.4: a load puts back the lairs and their creatures as they were saved, not afresh: a slain rat's place waiting
+        /// for its return, a hurt rat, where each stood and what it did, the id sequence and the charted lairs; byte for byte
+        /// and with the same world hash, its creatures in the world. The slain rat comes back on time after the load.
+        /// </summary>
+        [Fact]
+        public void ALoadPutsTheCreaturesBackAsSaved()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var creatures = sim.Simulation.Creatures;
+            var world = (ICreatureWorld)sim.Simulation;
+            sim.Step(400);
+            var slain = creatures.Creatures.First(c => c.Kind == CreatureKind.BurrowRat);
+            int lair = slain.LairIndex, slot = slain.Slot;
+            Assert.True(creatures.Slay(world, slain.Id, (uint)sim.Clock.CurrentTick));
+            uint returnsAt = creatures.Lairs[lair].ReturnAt(slot);
+            var hurt = creatures.Creatures.First(c => c.Kind == CreatureKind.BurrowRat);
+            hurt.Health = 9f;
+            sim.Step(30);
+
+            long tick = sim.Clock.CurrentTick;
+            var expected = creatures.Creatures.Select(c => (c.Id, c.Position, c.Health, c.Mode, c.Goal, c.RestUntil)).ToList();
+            byte[] saved = SaveSerializer.Serialize(sim.Host.Capture());
+            var savedHash = Simpiens.Testing.Environment.WorldStateHash.Capture(tick, sim.Host, sim.Simulation, sim.Sectors, includeWork: false);
+            sim.Step(200); // the world moves on; the load puts it back
+            Assert.True(sim.Host.TryRestore(SaveSerializer.Deserialize<SessionSave>(saved), out string refusal), refusal);
+
+            creatures = sim.Simulation.Creatures;
+            Assert.Equal(expected, creatures.Creatures.Select(c => (c.Id, c.Position, c.Health, c.Mode, c.Goal, c.RestUntil)).ToList());
+            Assert.Equal(default, creatures.Lairs[lair].MemberIn(slot));
+            Assert.Equal(returnsAt, creatures.Lairs[lair].ReturnAt(slot));
+            Assert.Equal(expected.Count, sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Creature));
+            Assert.All(creatures.Creatures, c => Assert.Equal(c.Position, sim.Registry.GetEntity(c.Id).Position));
+            Assert.Equal(saved, SaveSerializer.Serialize(sim.Host.Capture()));
+            var loadedHash = Simpiens.Testing.Environment.WorldStateHash.Capture(tick, sim.Host, sim.Simulation, sim.Sectors, includeWork: false);
+            Assert.True(savedHash.Total == loadedHash.Total, savedHash.DescribeDifference(loadedHash));
+
+            sim.RunTo(returnsAt);
+            Assert.NotEqual(default, sim.Simulation.Creatures.Lairs[lair].MemberIn(slot)); // back in its place, on time
         }
     }
 }

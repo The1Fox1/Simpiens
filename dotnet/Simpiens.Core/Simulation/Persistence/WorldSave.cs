@@ -5,7 +5,8 @@ using Simpiens.Simulation.Economy;
 namespace Simpiens.Simulation.Persistence
 {
     /// <summary>
-    /// The world's changing state in a save: resource nodes and their regrowth, the fog, and per-session tallies.
+    /// The world's changing state in a save: resource nodes and their regrowth, the fog, per-session tallies, and the
+    /// creatures in their lairs (Epic 10 Part 3, K2.4).
     /// The map itself comes from the session definition, and a load refuses a save made on another map.
     /// </summary>
     [MemoryPackable]
@@ -28,6 +29,9 @@ namespace Simpiens.Simulation.Persistence
         /// <summary>The session's keyed entities (map nodes and POIs, the stall), in ordinal key order.</summary>
         public string[] EntityKeys { get; set; }
         public EntityId[] EntityIds { get; set; }
+
+        /// <summary>The lairs and their creatures (Epic 10 Part 3, K2.4); null in a save from before, and the lairs fill afresh.</summary>
+        public CreatureSave Creatures { get; set; }
     }
 
     /// <summary>The supply service in a save: its regrowth queue, in its own order, and its counters.</summary>

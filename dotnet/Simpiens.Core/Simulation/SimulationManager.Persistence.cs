@@ -33,6 +33,7 @@ namespace Simpiens.Simulation
             save.World.ExploredSectors = _sectors?.CaptureExplored();
             save.World.BunkSleeps = _lodging.CaptureSleeps();
             save.World.Harvested = harvested;
+            save.World.Creatures = Creatures.Capture(); // the lairs and their creatures (Epic 10 Part 3, K2.4)
 
             var groups = new Simpiens.Simulation.Persistence.GroupSave();
             _groupRegistry?.CaptureTo(groups);
@@ -73,6 +74,9 @@ namespace Simpiens.Simulation
             {
                 for (int i = 0; i < world.Harvested.Length; i++) _harvested[world.Harvested[i].Item] = world.Harvested[i].Count;
             }
+
+            // The lairs and their creatures (Epic 10 Part 3, K2.4); a save from before fills them afresh
+            Creatures.Restore(this, world?.Creatures, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed);
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
             Guild.RestoreFrom(save.Guild);

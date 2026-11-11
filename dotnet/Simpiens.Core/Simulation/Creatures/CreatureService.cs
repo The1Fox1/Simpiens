@@ -83,6 +83,12 @@ namespace Simpiens.Simulation.Creatures
         internal bool Due(int slot, uint tick) => _members[slot] == default && _returnsAt[slot] != 0 && tick >= _returnsAt[slot];
 
         internal void ClearReturn(int slot) => _returnsAt[slot] = 0;
+
+        internal void Set(int slot, EntityId member, uint returnsAt)
+        {
+            _members[slot] = member;
+            _returnsAt[slot] = returnsAt;
+        }
     }
 
     /// <summary>
@@ -257,10 +263,110 @@ namespace Simpiens.Simulation.Creatures
             lair.Hold(slot, creature.Id);
             int at = ~IndexOf(creature.Id);
             _creatures.Insert(at < 0 ? _creatures.Count : at, creature);
-            creature.Entity = new WorldEntity(creature.Id, EntityType.Creature, creature.Home, kind.BodyRadius, kind.Speed,
-                name: $"{kind.Name}_{lair.Index}.{slot}", creature: creature);
-            world?.AddCreature(creature.Entity);
+            Enter(world, creature, kind);
             return creature;
+        }
+
+        // Its entity into the world, where it stands (its spatial grid and its views follow the registry)
+        private static void Enter(ICreatureWorld world, CreatureState creature, CreatureDefinition kind)
+        {
+            creature.Entity = new WorldEntity(creature.Id, EntityType.Creature, creature.Position, kind.BodyRadius, kind.Speed,
+                name: $"{kind.Name}_{creature.LairIndex}.{creature.Slot}", creature: creature);
+            world?.AddCreature(creature.Entity);
+        }
+
+        /// <summary>
+        /// The creatures for a save (K2.4): the id counter, the charted lairs, each lair's pack and places, every creature
+        /// in id order. Main thread, between ticks.
+        /// </summary>
+        public Simpiens.Simulation.Persistence.CreatureSave Capture()
+        {
+            var packs = new byte[_lairs.Count];
+            int places = 0;
+            for (int l = 0; l < _lairs.Count; l++)
+            {
+                packs[l] = (byte)_lairs[l].Pack;
+                places += _lairs[l].Pack;
+            }
+            var slots = new Simpiens.Simulation.Persistence.LairSlotRecord[places];
+            int n = 0;
+            for (int l = 0; l < _lairs.Count; l++)
+                for (int slot = 0; slot < _lairs[l].Pack; slot++)
+                    slots[n++] = new Simpiens.Simulation.Persistence.LairSlotRecord((byte)l, (byte)slot, _lairs[l].MemberIn(slot), _lairs[l].ReturnAt(slot));
+            var creatures = new Simpiens.Simulation.Persistence.CreatureRecord[_creatures.Count];
+            for (int i = 0; i < _creatures.Count; i++) creatures[i] = new Simpiens.Simulation.Persistence.CreatureRecord(_creatures[i]);
+            return new Simpiens.Simulation.Persistence.CreatureSave { IdCounter = _idCounter, ChartedLairs = _charted, Packs = packs, Slots = slots, Creatures = creatures };
+        }
+
+        /// <summary>
+        /// Why <paramref name="save"/>'s creatures can't live on <paramref name="map"/> (player-facing text), or null when
+        /// they can: a lair the map doesn't have, a place past its pack or the most a lair holds, a kind this game doesn't
+        /// know or another than its lair's, creatures out of id order. Checked before a load changes anything.
+        /// </summary>
+        public static string Check(Simpiens.Simulation.Persistence.CreatureSave save, MapDefinition map)
+        {
+            if (save == null) return null; // a save from before the creatures were saved: the lairs fill afresh
+            int lairs = map?.Lairs.Count ?? 0;
+            if (save.Packs == null || save.Slots == null || save.Creatures == null) return "its creatures are incomplete";
+            if (save.Packs.Length != lairs) return $"it has {save.Packs.Length} lairs where the map has {lairs}";
+            for (int l = 0; l < save.Packs.Length; l++)
+                if (save.Packs[l] > MaxPack) return $"lair {l} holds {save.Packs[l]}, more than {MaxPack}";
+            for (int i = 0; i < save.Slots.Length; i++)
+            {
+                var slot = save.Slots[i];
+                if (slot.Lair >= lairs || slot.Slot >= save.Packs[slot.Lair]) return $"a place in lair {slot.Lair} that doesn't exist";
+            }
+            for (int i = 0; i < save.Creatures.Length; i++)
+            {
+                var c = save.Creatures[i];
+                if (!CreatureCatalog.IsDefined(c.Kind)) return $"a creature of kind {(byte)c.Kind}";
+                if (c.Lair >= lairs || c.Slot >= save.Packs[c.Lair] || map.Lairs[c.Lair].Kind != c.Kind) return $"a {CreatureCatalog.NameOf(c.Kind)} out of its lair";
+                if (i > 0 && save.Creatures[i - 1].Id.CompareTo(c.Id) >= 0) return "creatures out of order";
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Puts a save's creatures back (a load, K2.4; after <see cref="Check"/>): the id counter and the charted lairs, each
+        /// lair's pack and places, and every creature where it stood, doing what it did, its entity in the world in id order.
+        /// A save without creatures fills the lairs afresh, as a session's start does. Main thread, between ticks.
+        /// </summary>
+        public void Restore(ICreatureWorld world, Simpiens.Simulation.Persistence.CreatureSave save, ulong seed)
+        {
+            if (save == null)
+            {
+                Populate(world, seed);
+                return;
+            }
+            _seed = seed;
+            for (int i = 0; i < _creatures.Count; i++) world?.RemoveCreature(_creatures[i].Id);
+            _creatures.Clear();
+            _idCounter = save.IdCounter;
+            _charted = save.ChartedLairs;
+            for (int l = 0; l < _lairs.Count; l++) _lairs[l].SetPack(l < save.Packs.Length ? save.Packs[l] : 0);
+            for (int i = 0; i < save.Slots.Length; i++)
+            {
+                var slot = save.Slots[i];
+                if (slot.Lair < _lairs.Count && slot.Slot < _lairs[slot.Lair].Pack) _lairs[slot.Lair].Set(slot.Slot, slot.Member, slot.ReturnAt);
+            }
+            for (int i = 0; i < save.Creatures.Length; i++)
+            {
+                var r = save.Creatures[i];
+                var kind = CreatureCatalog.Get(r.Kind);
+                if (kind == null || r.Lair >= _lairs.Count) continue;
+                var creature = new CreatureState(r.Id, r.Kind, r.Lair, r.Slot, PlaceOf(_lairs[r.Lair].Definition.Position, r.Slot))
+                {
+                    Position = r.Position,
+                    Health = r.Health,
+                    Mode = r.Mode,
+                    Target = r.Target,
+                    NextSwingAt = r.NextSwingAt,
+                    RestUntil = r.RestUntil,
+                    Goal = r.Goal,
+                };
+                _creatures.Add(creature);
+                Enter(world, creature, kind);
+            }
         }
 
         // The creatures' own seeded sequence: the n-th id depends only on the seed and n

@@ -290,9 +290,7 @@ namespace Simpiens.Core.Session
             _simulationManager?.SetEconomy(session.Economy);
 
             for (int i = 0; i < save.Crawlers.Length; i++) SpawnRestoredCrawler(save.Crawlers[i]);
-            _simulationManager?.RestoreFrom(save);
-            // Until the creatures are saved (K2.4), a load fills the lairs afresh, as a session's start does
-            _simulationManager?.PopulateLairs(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed);
+            _simulationManager?.RestoreFrom(save); // the creatures with it (Epic 10 Part 3, K2.4)
             RestoreDriftersFrom(save, session.Map);
 
             var world = save.World;
@@ -352,6 +350,12 @@ namespace Simpiens.Core.Session
             {
                 session = null;
                 return $"The save holds equipment this game can't wear ({misworn}).";
+            }
+            string creatures = Simpiens.Simulation.Creatures.CreatureService.Check(save.World.Creatures, session.Map);
+            if (creatures != null)
+            {
+                session = null;
+                return $"The save's creatures don't fit this game ({creatures}).";
             }
             return null;
         }

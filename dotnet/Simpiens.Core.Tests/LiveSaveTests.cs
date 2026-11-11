@@ -83,6 +83,11 @@ namespace Simpiens.Core.Tests
             Assert.True(world.Resources.Length > 0 && world.Resources.Length <= Floor1Layout.Definition.ResourceNodes.Count, "Resource nodes.");
             Assert.NotNull(world.Supply?.Dormant);
             Assert.Equal(256, world.ExploredSectors.Length);
+            // The lairs and their creatures (Epic 10 Part 3, K2.4)
+            Assert.NotNull(world.Creatures);
+            Assert.Equal(Floor1Layout.Definition.Lairs.Count, world.Creatures.Packs.Length);
+            Assert.Equal(sim.Simulation.Creatures.Creatures.Count, world.Creatures.Creatures.Length);
+            Assert.Equal(sim.Simulation.Creatures.IdCounter, world.Creatures.IdCounter);
             int stallKey = Array.IndexOf(world.EntityKeys, Floor1Layout.Stall);
             Assert.True(stallKey >= 0, "The stall's key.");
             Assert.Equal(economy.Stalls[0].StallEntityId, world.EntityIds[stallKey]);
