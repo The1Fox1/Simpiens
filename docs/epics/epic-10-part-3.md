@@ -341,7 +341,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 - [x] **The materials** (K4.4, D25, D26): the stall buys hide and chitin and sells the leather jerkin and the chitin plate, made at the forge; the caravan takes the surplus past the forge's reserve; armed residents buy armour for a bare slot.
 - [x] **The client** (K4.5): piles drawn as their rarest item; item names in rarity's colours in the merchant terminal and the gear lines.
 - [x] **The DoD** `KillsFeedTheForge`: on gate seed 18 a beetle's chitin is picked up, sold, made into a plate, and a resident wears it at t33877; armour from a kill is worn on 5 of the 23 gate seeds in ten days.
-- [x] **The gate** (2026-11-11): core 232/232, client 502/502 in the pinned image, golden 3/3 unchanged (its runs end at t3000, before any kill), the soak 15/15, seeds 1–120 120/120 with and without the guild.
+- [x] **The gate** (2026-11-11): core 232/232, client 502/502 in the pinned image, golden 3/3 unchanged (its runs end at t3000, before any kill), the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles with 0 warnings.
 
 ## 5. Deferred and out of scope
 
