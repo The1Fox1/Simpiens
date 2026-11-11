@@ -49,7 +49,7 @@ namespace Simpiens.Simulation.Creatures
             {
                 MaxHealth = 20f, Attack = 3f, Defense = 0f, Reach = 0.3f, SwingIntervalSeconds = 1f,
                 Speed = 2.2f, BodyRadius = 0.25f, Sight = 5f, Leash = 6f, FleeBelow = 0.4f,
-                PackMin = 3, PackMax = 4, HealHours = 12, RespawnHours = 48
+                PackMin = 3, PackMax = 4, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Rat
             },
             // Armoured and slow: a bare hand barely scratches one (defense 8 stops 44% of a blow), a crawler can walk away
             // from one, and a weapon decides the fight
@@ -57,14 +57,14 @@ namespace Simpiens.Simulation.Creatures
             {
                 MaxHealth = 60f, Attack = 7f, Defense = 8f, Reach = 0.4f, SwingIntervalSeconds = 2f,
                 Speed = 1.2f, BodyRadius = 0.4f, Sight = 4f, Leash = 6f,
-                PackMin = 1, PackMax = 2, HealHours = 12, RespawnHours = 48
+                PackMin = 1, PackMax = 2, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Beetle
             },
             // Spits from range on the gate's approach (shots come with K8, the approach with K10); runs under 30%
             new CreatureDefinition(CreatureKind.CaveSpinner, "CaveSpinner", "Cave Spinner")
             {
                 MaxHealth = 30f, Attack = 4f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.5f, Range = 5f,
                 Speed = 1.6f, BodyRadius = 0.35f, Sight = 7f, Leash = 9f, FleeBelow = 0.3f,
-                PackMin = 2, PackMax = 3, HealHours = 12, RespawnHours = 48
+                PackMin = 2, PackMax = 3, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Spinner
             }
         };
 

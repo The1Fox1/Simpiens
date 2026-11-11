@@ -415,13 +415,15 @@ namespace Simpiens.Cognition.Planning
             if (cheapest == uint.MaxValue) cheapest = 0;
             var economy = Considerations.Economy(context);
             // A hazardous kind's shelf counts only for a crawler who would go into danger for it, and only while the stall
-            // pays for it (Epic 10 G2)
+            // pays for it (Epic 10 G2); a kind the stall doesn't buy at all has no shelf (a creature's material before the
+            // stall trades it, Epic 10 Part 3, K4.2)
             bool venture = Vitality.WouldVenture(context);
             bool room = false;
             var salvage = ItemCatalog.InCategory(ItemCategory.Resource);
             for (int i = 0; i < salvage.Count && !room; i++)
             {
                 var kind = salvage[i];
+                if (!stall.TryGetGood(kind, out var shelf) || shelf.Role != StallRole.Buys) continue;
                 if (ItemCatalog.Is(kind, ItemCategory.Hazardous) && (!venture || stall.BuyPriceOf(kind) == 0)) continue;
                 room = economy.StallHasRoom(stall, kind);
             }

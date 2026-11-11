@@ -139,7 +139,7 @@ namespace Simpiens.Testing.Combat
             public Simpiens.Simulation.Spatial.SharedWorldSnapshot Snapshot => null;
             IReadOnlyList<WorldEntity> ICreatureWorld.Entities => _none;
             public void Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick) { }
-            public void CreatureSlain(EntityId slayer, CreatureState creature, uint tick) { }
+            public void CreatureSlain(EntityId slayer, CreatureState creature, System.ReadOnlySpan<Simpiens.Simulation.Economy.ItemInstance> drops, uint tick) { }
         }
 
         private static void Assert(bool condition, string message)

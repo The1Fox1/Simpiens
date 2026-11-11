@@ -21,6 +21,8 @@ namespace Simpiens.Presentation.Art
         public const string Club = "club";
         public const string Blade = "blade";
         public const string Mail = "mail";
+        public const string Pelt = "pelt";
+        public const string Plates = "plates";
 
         public const int GlyphSize = 12;
 
@@ -185,6 +187,38 @@ namespace Simpiens.Presentation.Art
                 "..2a2a2a23..",
                 "..22a2a2a3..",
                 "..23333334..",
+                "............",
+            },
+            // A stretched pelt, its legs out at the corners (a hide; Epic 10 Part 3, K4.2)
+            [Pelt] = new[]
+            {
+                "............",
+                ".1........2.",
+                "..11122222..",
+                "..12222223..",
+                ".122a22a233.",
+                ".12222222233",
+                ".1222a222233",
+                "..12222223..",
+                "..12222233..",
+                "..22333333..",
+                ".2........3.",
+                "............",
+            },
+            // Three overlapping shell plates (chitin; K4.2)
+            [Plates] = new[]
+            {
+                "............",
+                "....1112....",
+                "...112223...",
+                "..1122a223..",
+                "..1222a2233.",
+                ".11122222334",
+                ".122a222334.",
+                ".122a222334.",
+                "..1222233...",
+                "...223334...",
+                "....334.....",
                 "............",
             },
             // A sleeveless suit, open at the neck, with two reflective bands (hazard gear, worn on the body; Epic 10 Part 3, K1.5)

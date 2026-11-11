@@ -19,6 +19,12 @@ namespace Simpiens.Simulation.Economy
         IronBlade     = 11, // A melee weapon made at the forge from ore (K3.1; placeholder name)
         GlowstoneEdge = 12, // The best melee weapon, made at the forge from ore and glowstone (K3.1; placeholder name)
         IronHelm      = 13, // Armour for the head, made at the forge from ore (K3.2, Q11; placeholder name)
-        RingCoat      = 14  // Armour for the body, made at the forge from ore (K3.2; placeholder name)
+        RingCoat      = 14, // Armour for the body, made at the forge from ore (K3.2; placeholder name)
+        Hide          = 15, // A rat's hide, dropped at the kill (K4.2, Q12; placeholder name)
+        Chitin        = 16, // A beetle's shell plates, dropped at the kill (K4.2; placeholder name)
+        LeatherJerkin = 17, // Armour for the body, made at the forge from hides (K4.4; placeholder name)
+        ChitinPlate   = 18, // Armour for the body, made at the forge from chitin and ore (K4.4; placeholder name)
+        FangKnife     = 19, // A rare weapon a rat now and then drops (K4.2, K4.4; placeholder name)
+        StoneheartCoat = 20 // A rare coat a beetle now and then drops (K4.2, K4.4; placeholder name)
     }
 }

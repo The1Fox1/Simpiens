@@ -115,7 +115,29 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.RingCoat, "RingCoat", "Ring Coat",
                 ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Mineral, ItemRarity.Uncommon,
                 equipment: new EquipmentBlock(SlotKind.Body, durability: 120, WearRule.PerBlowTaken,
-                    new StatModifier(StatKind.Defense, ModifierOp.Add, 6f)))
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 6f))),
+            // Materials from kills (Epic 10 Part 3, K4.2, Q12): salvage the stall buys and the forge works (K4.4)
+            new ItemDefinition(ItemType.Hide, "Hide", "Hide", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Common),
+            new ItemDefinition(ItemType.Chitin, "Chitin", "Chitin", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Uncommon),
+            // Armour from the materials (K4.4): the jerkin between the helm and the ring coat, the plate above it
+            new ItemDefinition(ItemType.LeatherJerkin, "LeatherJerkin", "Leather Jerkin",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 90, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 4f))),
+            new ItemDefinition(ItemType.ChitinPlate, "ChitinPlate", "Chitin Plate",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Rare,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 160, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 9f))),
+            // Rare pieces (K4.2, Q11: fixed items with a rarity, never random affixes), now and then at a kill
+            new ItemDefinition(ItemType.FangKnife, "FangKnife", "Fang Knife",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Creature, ItemRarity.Epic,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 140, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 9f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.8f))),
+            new ItemDefinition(ItemType.StoneheartCoat, "StoneheartCoat", "Stoneheart Coat",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Epic,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 220, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 12f)))
         };
 
         /// <summary>

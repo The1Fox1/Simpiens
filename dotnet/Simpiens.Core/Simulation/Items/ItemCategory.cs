@@ -12,7 +12,7 @@ namespace Simpiens.Simulation.Items
     {
         None = 0,
 
-        /// <summary>A raw material harvested from a node.</summary>
+        /// <summary>A raw material: harvested from a node, or taken from a slain creature (<see cref="Creature"/>).</summary>
         Resource = 1u << 0,
 
         /// <summary>Used up for an effect.</summary>
@@ -35,6 +35,12 @@ namespace Simpiens.Simulation.Items
         Botanical = 1u << 9,
 
         /// <summary>Found only in hazard sectors.</summary>
-        Hazardous = 1u << 10
+        Hazardous = 1u << 10,
+
+        /// <summary>
+        /// Origin: from a creature's body (Epic 10 Part 3, K4.2). No node yields a creature's material, so no Gather bounty
+        /// asks for it and no pickaxe works it.
+        /// </summary>
+        Creature = 1u << 11
     }
 }

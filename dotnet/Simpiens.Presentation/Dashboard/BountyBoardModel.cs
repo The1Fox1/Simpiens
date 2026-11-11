@@ -91,7 +91,9 @@ namespace Simpiens.Presentation.Dashboard
             var items = new System.Collections.Generic.List<ItemType>();
             foreach (var item in Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Resource))
             {
-                if (!Simpiens.Simulation.Items.ItemCatalog.Is(item, Simpiens.Simulation.Items.ItemCategory.Hazardous)) items.Add(item);
+                // Not a hazard's, and not a creature's (Epic 10 Part 3, K4.2): no node yields it to gather
+                if (!Simpiens.Simulation.Items.ItemCatalog.Is(item, Simpiens.Simulation.Items.ItemCategory.Hazardous)
+                    && !Simpiens.Simulation.Items.ItemCatalog.Is(item, Simpiens.Simulation.Items.ItemCategory.Creature)) items.Add(item);
             }
             return items.ToArray();
         }

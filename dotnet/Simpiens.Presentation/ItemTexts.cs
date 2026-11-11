@@ -50,6 +50,13 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.GlowstoneEdge] = new ItemText("Glowstone edge", "Forged from ore and glowstone", "Glowstone edge", "Glowstone edge", "GLOWSTONE EDGE");
             _texts[(int)ItemType.IronHelm] = new ItemText("Iron helm", "Forged from two ore; turns blows", "Iron helm", "Iron helm", "IRON HELM");
             _texts[(int)ItemType.RingCoat] = new ItemText("Ring coat", "Forged from four ore; turns blows", "Ring coat", "Ring coat", "RING COAT");
+            // Loot (Epic 10 Part 3, K4.2, K4.4)
+            _texts[(int)ItemType.Hide] = new ItemText("Hides", "Taken from slain rats", "Hide", "Hides", "HIDES");
+            _texts[(int)ItemType.Chitin] = new ItemText("Chitin", "Taken from slain beetles", "Chitin", "Chitin", "CHITIN");
+            _texts[(int)ItemType.LeatherJerkin] = new ItemText("Leather jerkin", "Forged from two hides; turns blows", "Leather jerkin", "Leather jerkin", "LEATHER JERKIN");
+            _texts[(int)ItemType.ChitinPlate] = new ItemText("Chitin plate", "Forged from chitin and ore; turns blows", "Chitin plate", "Chitin plate", "CHITIN PLATE");
+            _texts[(int)ItemType.FangKnife] = new ItemText("Fang knife", "A rat's rare fang, quick in the hand", "Fang knife", "Fang knife", "FANG KNIFE");
+            _texts[(int)ItemType.StoneheartCoat] = new ItemText("Stoneheart coat", "A beetle's rare heart-shell", "Stoneheart coat", "Stoneheart coat", "STONEHEART COAT");
         }
 
         public static ItemText Of(ItemType item)

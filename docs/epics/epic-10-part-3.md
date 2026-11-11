@@ -169,6 +169,17 @@ K3 isn't supervised; these are the calls made in it, flagged for the look.
 - **Older scenarios given room** (as F3's option A did): the guild's sign-on within two days (it had signed at t9405 of t10080), the right gear's trip all in respirators within nine days (day 7.8).
 - **Measured** (the 23 gate seeds, four days, the workshop player ordering blades): blades worn on 20, fights on 12, a kill on 7. The soak 15/15; seeds 1–120 120/120 with and without the guild.
 
+### K4's decisions (2026-11-11 onward), for the producer's return
+K4 was done while the producer was away (the AFK directive of 2026-11-11: "Looks good. I will be afk you will be responsible for finishing K4-K5"); these are the calls made in it.
+- **D22, creatures' materials are salvage of their own origin** (`ItemCategory.Creature`): hide and chitin are resources, so the stall buys them and the caravan exports them as it does ore (K4.4). No node yields them, so no Gather bounty asks for them and no pickaxe works them.
+  - **The header** counts the staples only: rations, ore and herbs. The materials are listed in the merchant window, as glowstone is. Five counts didn't fit at 1280×720.
+  - **The armour made from them** (the jerkin, the chitin plate) and the rare pieces (the fang knife, the stoneheart coat) are of the same origin.
+- **D23, what a kill drops** (Q12; placeholder weights, `CreatureLoot`): rolled at the kill on the seed, the creature and the tick, into a pile where it fell, claimed for its slayer for a game hour (K4.1).
+  - **A rat:** a hide (70 in 100), a herb (18), its fang knife (2), or nothing (10).
+  - **A beetle:** one or two rolls of chitin, one or two (72), an ore (22), its stoneheart coat (3), or nothing (3).
+  - **A spinner** (for K10): chitin (60), a herb (30), or nothing (10).
+  - **The rare pieces** (Q11, fixed items with a rarity): the fang knife (weapon, attack +9, a swing a fifth quicker; Epic) and the stoneheart coat (body, defense +12; Epic), above the glowstone edge and the ring coat.
+
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
 

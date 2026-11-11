@@ -62,6 +62,14 @@ namespace Simpiens.Presentation.Art
             ["glowstone-edge"] = new ItemLook(ItemShapes.Blade, new Rgba32(251, 191, 36), new Rgba32(51, 65, 85), Worn.Hand),
             ["iron-helm"] = new ItemLook(ItemShapes.Helmet, new Rgba32(100, 110, 124), new Rgba32(15, 18, 24), Worn.Head),
             ["ring-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(160, 170, 182), new Rgba32(84, 92, 104), Worn.Torso),
+            // Loot (Epic 10 Part 3, K4.2, K4.4): the rat's hide and the beetle's chitin; the jerkin in its leather, the plate in
+            // the shell's slate; the rare pieces, the fang knife's ivory on a dark grip and the stoneheart coat's deep stone
+            ["hide"] = new ItemLook(ItemShapes.Pelt, new Rgba32(150, 112, 84), new Rgba32(96, 70, 52)),
+            ["chitin"] = new ItemLook(ItemShapes.Plates, new Rgba32(104, 116, 132), new Rgba32(118, 150, 96)),
+            ["leather-jerkin"] = new ItemLook(ItemShapes.Vest, new Rgba32(138, 92, 56), new Rgba32(92, 60, 36), Worn.Torso),
+            ["chitin-plate"] = new ItemLook(ItemShapes.Mail, new Rgba32(92, 104, 122), new Rgba32(118, 150, 96), Worn.Torso),
+            ["fang-knife"] = new ItemLook(ItemShapes.Blade, new Rgba32(236, 226, 200), new Rgba32(60, 40, 44), Worn.Hand),
+            ["stoneheart-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(70, 64, 92), new Rgba32(196, 120, 220), Worn.Torso),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

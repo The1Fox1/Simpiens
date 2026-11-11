@@ -75,7 +75,8 @@ namespace Simpiens.Testing.Economy
             {
                 var id = (ItemType)i;
                 bool wasFood = id == ItemType.None || id == ItemType.Ration;
-                bool wasSalvage = id == ItemType.IronOre || id == ItemType.MedicinalHerb || id == ItemType.Glowstone;
+                // Creatures' materials (Epic 10 Part 3, K4.2) are salvage too: the stall buys them (K4.4)
+                bool wasSalvage = id == ItemType.IronOre || id == ItemType.MedicinalHerb || id == ItemType.Glowstone || id == ItemType.Hide || id == ItemType.Chitin;
                 Assert(id.IsFoodYield() == wasFood, $"Item {i}: IsFoodYield {id.IsFoodYield()}, was {wasFood}.");
                 Assert(id.IsSalvage() == wasSalvage, $"Item {i}: IsSalvage {id.IsSalvage()}, was {wasSalvage}.");
                 // The one gear slot of G3 took hazard gear only; I4's slots take every equipment item, in its own slot
@@ -100,7 +101,12 @@ namespace Simpiens.Testing.Economy
                     if (i > 0) Assert(members[i] > members[i - 1], $"{group}: id order.");
                 }
             }
-            Assert(ItemCatalog.InCategory(ItemCategory.Resource).Count == 3, "Three resources: ore, herbs, glowstone.");
+            Assert(ItemCatalog.InCategory(ItemCategory.Resource).Count == 5, "Five resources: ore, herbs, glowstone, and creatures' hide and chitin.");
+            // No node yields a creature's material (K4.2), and none is mined or picked
+            foreach (var item in ItemCatalog.InCategory(ItemCategory.Creature))
+            {
+                Assert(!ItemCatalog.Is(item, ItemCategory.Mineral) && !ItemCatalog.Is(item, ItemCategory.Botanical) && !ItemCatalog.Is(item, ItemCategory.Hazardous), $"{item}: from a creature, of no other origin.");
+            }
 
             bool refused = false;
             try { ItemCatalog.InCategory(ItemCategory.Resource | ItemCategory.Mineral); }
@@ -130,6 +136,7 @@ namespace Simpiens.Testing.Economy
                     var node = map.ResourceNodes[i];
                     Assert(node.Item == ItemType.None || ItemCatalog.IsDefined(node.Item), $"{map.Name} node {node.Key}: item {(byte)node.Item} is defined.");
                     Assert(node.Item.IsFoodYield() || ItemCatalog.Is(node.Item, ItemCategory.Resource), $"{map.Name} node {node.Key}: yields food or a resource.");
+                    Assert(!ItemCatalog.Is(node.Item, ItemCategory.Creature), $"{map.Name} node {node.Key}: no node yields a creature's material.");
                 }
             }
             TestLog.Log("[PASS] Test 4: every map's nodes yield defined food or resources.");

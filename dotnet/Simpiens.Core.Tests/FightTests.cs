@@ -56,6 +56,14 @@ namespace Simpiens.Core.Tests
             Assert.Contains(recent, e => e.EventType == Simpiens.Narrative.ChronicleEventType.CreatureSlain && e.ActorAId == fighter.AgentId && e.ActorBId == target);
             var hollow = creatures.Lairs.First(l => l.Definition.Key == Floor1Layout.BeetleHollow);
             Assert.True(Enumerable.Range(0, hollow.Pack).Any(s => hollow.MemberIn(s) == default && hollow.ReturnAt(s) > 0), "Its place waits for its return.");
+
+            // Its loot (K4.2): a pile where it fell, claimed for the slayer, its stacks from the beetle's table (or nothing at all)
+            var pile = sim.Simulation.Piles.Piles.FirstOrDefault(p => p.ClaimedFor == fighter.AgentId);
+            if (pile != null)
+            {
+                Assert.True(Vec2.Distance(pile.Position, BySeamOne) < 4f, $"The pile lies where the beetle fell ({pile.Position}).");
+                Assert.All(Enumerable.Range(0, pile.Count).Select(i => pile.StackAt(i).Type), t => Assert.Contains(t, new[] { ItemType.Chitin, ItemType.IronOre, ItemType.StoneheartCoat }));
+            }
         }
 
         [Theory]

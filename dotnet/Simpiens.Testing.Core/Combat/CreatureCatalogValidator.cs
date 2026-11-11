@@ -65,7 +65,17 @@ namespace Simpiens.Testing.Combat
                 Assert(kind.HealHours > 0 && kind.HealPerTick > 0f, $"{k}: heals over {kind.HealHours} game hours at its lair.");
                 Assert(SimMath.Approximately(kind.HealPerTick * kind.HealHours * DayClock.TicksPerHour, kind.MaxHealth), $"{k}: healing over {kind.HealHours} hours makes it whole.");
                 Assert(kind.RespawnHours >= 0 && kind.RespawnTicks == DayClock.Hours(kind.RespawnHours) && kind.Respawns == kind.RespawnHours > 0, $"{k}: returns after {kind.RespawnHours} game hours, or never.");
-                Assert(kind.LootTableId == 0, $"{k}: no loot table before loot is in play (K4).");
+                // What it drops (K4.2): a table that exists, whose rolls fit a kill's drops, of defined items in whole stacks
+                Assert(CreatureLoot.Tables.TryGet(kind.LootTableId, out var loot), $"{k}: its loot table ({kind.LootTableId}) exists.");
+                Assert(loot.MaxRolls <= CreatureLoot.MaxDrops && loot.TotalWeight > 0, $"{k}: at most {CreatureLoot.MaxDrops} stacks a kill ({loot.MaxRolls} rolls).");
+                for (int e = 0; e < loot.EntryCount; e++)
+                {
+                    var entry = loot.GetEntry(e);
+                    Assert(entry.Kind != Simpiens.Simulation.Items.LootEntryKind.Table, $"{k}: its table nests none, so a kill's drops are its rolls.");
+                    if (entry.Kind != Simpiens.Simulation.Items.LootEntryKind.Item) continue;
+                    var item = Simpiens.Simulation.Items.ItemCatalog.Get(entry.Item);
+                    Assert(item != null && entry.MaxQuantity <= item.MaxStack, $"{k}: drops {entry.Item}, defined, in one stack ({entry.MaxQuantity}).");
+                }
             }
             TestLog.Log($"[PASS] Test 1: {CreatureCatalog.All.Count} kinds, each consistent: a body, a fight, a hunt that can reach what it sees, a pack, healing and a return.");
         }

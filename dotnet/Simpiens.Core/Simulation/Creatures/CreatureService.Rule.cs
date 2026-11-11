@@ -3,6 +3,7 @@ using Simpiens.Diagnostics;
 using ZLogger;
 using Simpiens.Cognition.Pathfinding;
 using Simpiens.Simulation.Combat;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Spatial;
 
 namespace Simpiens.Simulation.Creatures
@@ -147,7 +148,10 @@ namespace Simpiens.Simulation.Creatures
             }
             Kills++;
             Slay(world, creature.Id, tick);
-            world.CreatureSlain(blow.Crawler.Id, creature, tick);
+            // Its loot (K4.2), rolled on (seed, the creature, the tick of its death) from its kind's table
+            System.Span<Simpiens.Simulation.Economy.ItemInstance> drops = stackalloc Simpiens.Simulation.Economy.ItemInstance[CreatureLoot.MaxDrops];
+            int dropped = creature.Definition != null ? LootRoller.Roll(CreatureLoot.Tables, creature.Definition.LootTableId, _seed, creature.Id, tick, drops) : 0;
+            world.CreatureSlain(blow.Crawler.Id, creature, drops.Slice(0, dropped), tick);
         }
 
         // Struck while resting, roaming or going home, a creature turns on whoever struck it, within its leash (a fleeing one
