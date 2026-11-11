@@ -44,6 +44,10 @@ namespace Simpiens.Simulation.Loot
 
         public IReadOnlyList<LootPile> Piles => _piles;
 
+        /// <summary>Units taken from piles, and pieces worn from them, since the session started (K4.3; diagnostics, not saved).</summary>
+        public int UnitsTaken { get; private set; }
+        public int PiecesWorn { get; private set; }
+
         /// <summary>Pile ids handed out since the session started: with the seed, all a save needs to continue the sequence.</summary>
         public long IdCounter => _idCounter;
 
@@ -54,6 +58,8 @@ namespace Simpiens.Simulation.Loot
             _piles.Clear();
             _seed = seed;
             _idCounter = 0;
+            UnitsTaken = 0;
+            PiecesWorn = 0;
         }
 
         /// <summary>Forgets every pile (a respawn or a load tears the world down).</summary>
@@ -61,6 +67,8 @@ namespace Simpiens.Simulation.Loot
         {
             _piles.Clear();
             _idCounter = 0;
+            UnitsTaken = 0;
+            PiecesWorn = 0;
         }
 
         public bool TryGet(EntityId id, out LootPile pile)
@@ -89,27 +97,42 @@ namespace Simpiens.Simulation.Loot
         }
 
         /// <summary>
-        /// <paramref name="taker"/> takes what fits from <paramref name="pileId"/> into <paramref name="inventory"/> and its
-        /// purse, if it may (its victor, or anyone past the claim); an emptied pile is gone. Returns the units taken; the gold
-        /// taken in <paramref name="gold"/>.
+        /// <paramref name="taker"/> takes from <paramref name="pileId"/> what <see cref="LootRules"/> says it takes, if it may
+        /// (its victor, or anyone past the claim): materials and consumables into <paramref name="inventory"/>'s pack as they
+        /// fit, the purse, and each piece of equipment it would wear, worn at once, what it replaces left in the pile in its
+        /// place. An emptied pile is gone. Returns the units taken (a piece worn counts one); the gold taken in
+        /// <paramref name="gold"/>, the pieces worn in <paramref name="worn"/>.
         /// </summary>
-        public int Take(IPileWorld world, EntityId pileId, Simpiens.Cognition.Inventory.AgentInventory inventory, EntityId taker, uint tick, out int gold)
+        public int Take(IPileWorld world, EntityId pileId, Simpiens.Cognition.Inventory.AgentInventory inventory, EntityId taker, uint tick, out int gold, out int worn)
         {
             gold = 0;
+            worn = 0;
             int index = IndexOf(pileId);
             if (index < 0 || inventory == null) return 0;
             var pile = _piles[index];
             if (!pile.MayTake(taker, tick)) return 0;
             int units = 0;
-            for (int i = 0; i < pile.Count; i++)
+            int count = pile.Count; // pieces left in exchange are appended past it, and not looked at again
+            for (int i = 0; i < count; i++)
             {
                 var stack = pile.StackAt(i);
                 if (stack.IsEmpty) continue;
+                if (ItemCatalog.Get(stack.Type)?.Equipment != null)
+                {
+                    if (TryWear(pile, i, stack, inventory))
+                    {
+                        units++;
+                        worn++;
+                    }
+                    continue;
+                }
                 inventory.TryAddItem(stack, out var remainder);
                 units += stack.Quantity - remainder.Quantity;
                 pile.SetAt(i, remainder);
             }
             pile.Compact();
+            UnitsTaken += units;
+            PiecesWorn += worn;
             if (pile.Gold > 0)
             {
                 gold = pile.Gold;
@@ -118,6 +141,30 @@ namespace Simpiens.Simulation.Loot
             }
             if (pile.IsEmpty) Remove(world, index);
             return units;
+        }
+
+        // One piece of the stack at index, worn if the taker would wear it (LootRules); what its slot held goes into the
+        // pile in its place (or after the rest of its stack, if there is room; else the swap is undone)
+        private static bool TryWear(LootPile pile, int index, in ItemInstance stack, Simpiens.Cognition.Inventory.AgentInventory inventory)
+        {
+            var piece = stack.WithQuantity(1);
+            if (!LootRules.WouldWear(inventory, piece, out var slot)) return false;
+            var rest = stack.Quantity > 1 ? stack.WithQuantity((ushort)(stack.Quantity - 1)) : ItemInstance.Empty;
+            var old = inventory.GetEquipped(slot);
+            if (!rest.IsEmpty && !old.IsEmpty && pile.Count >= Capacity) return false; // nowhere to leave the old piece
+            if (!old.IsEmpty) inventory.Unequip(slot);
+            if (!inventory.TryEquip(piece, slot))
+            {
+                if (!old.IsEmpty) inventory.TryEquip(old, slot);
+                return false;
+            }
+            if (rest.IsEmpty) pile.SetAt(index, old);
+            else
+            {
+                pile.SetAt(index, rest);
+                if (!old.IsEmpty) pile.TryAdd(old);
+            }
+            return true;
         }
 
         /// <summary>The piles' tick: a pile past its time fades, its gold with it (K5's account for gold on the ground). Allocates nothing.</summary>

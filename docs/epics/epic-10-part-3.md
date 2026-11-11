@@ -179,6 +179,10 @@ K4 was done while the producer was away (the AFK directive of 2026-11-11: "Looks
   - **A beetle:** one or two rolls of chitin, one or two (72), an ore (22), its stoneheart coat (3), or nothing (3).
   - **A spinner** (for K10): chitin (60), a herb (30), or nothing (10).
   - **The rare pieces** (Q11, fixed items with a rarity): the fang knife (weapon, attack +9, a swing a fifth quicker; Epic) and the stoneheart coat (body, defense +12; Epic), above the glowstone edge and the ring coat.
+- **D24, what a crawler picks up** (A5: "the victors take their pile; anyone may claim one left behind"):
+  - **What it takes:** materials, food and medicine while its pack has room, and the purse. A piece of equipment it takes only if wearing it outfits it better for fighting and against every hazard, by stats (K1.4). It wears that piece at once and leaves what it replaces in the pile in its place. Nobody carries gear in its pack, since the stall doesn't buy it. So a fang knife goes to whoever it betters, and the iron blade it replaces waits for someone else.
+  - **When:** a pile it sees (its vision of 6, in line of sight, charted), its own or past its victor's hour, where it would go alone (a known lair it doesn't brave keeps it out), holding something it would take. Not while hungry or worn out. The goal ranks above outfitting for danger (42 against 40): the pile is within sight, five game minutes' work.
+  - **Who:** anyone, drifters too: a drifter who picks a pile over leaves with it.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

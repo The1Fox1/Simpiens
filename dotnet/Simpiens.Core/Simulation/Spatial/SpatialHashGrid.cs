@@ -35,6 +35,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which of the map's lairs are charted (bit i = lair i, Epic 10 Part 3, K2.3), published in every following snapshot. Main thread only.</summary>
         void SetChartedLairs(ulong mask);
 
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.3b), copied into every following snapshot as they are then. Main thread only.</summary>
+        void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles);
+
         /// <summary>The session's economy tuning (immutable), published by reference in every snapshot. Main thread only.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
 
@@ -68,6 +71,9 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _chartedLairs;
         public void SetChartedLairs(ulong mask) => _chartedLairs = mask;
+
+        private IReadOnlyList<Simpiens.Simulation.Loot.LootPile> _piles;
+        public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles) => _piles = piles;
 
         private Simpiens.Simulation.Economy.EconomyTuning _economy;
         public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => _economy = economy;
@@ -191,6 +197,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetEconomy(_economy);
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
             _currentTickSnapshot.SetChartedLairs(_chartedLairs);
+            _currentTickSnapshot.SetPiles(_piles); // copied now, on the main thread (K4.3b)
             _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch

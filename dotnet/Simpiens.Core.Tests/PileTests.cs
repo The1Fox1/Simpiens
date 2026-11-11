@@ -30,9 +30,9 @@ namespace Simpiens.Core.Tests
             Assert.NotNull(pile);
             Assert.Contains(sim.Registry.ActiveEntities, e => e.Type == EntityType.Pile && e.Id == pile.Id && e.Pile == pile);
 
-            Assert.Equal(0, piles.Take(world, pile.Id, other.Inventory, other.AgentId, tick + 10, out _)); // claimed
+            Assert.Equal(0, piles.Take(world, pile.Id, other.Inventory, other.AgentId, tick + 10, out _, out _)); // claimed
             int gold = victor.Inventory.Gold;
-            int units = piles.Take(world, pile.Id, victor.Inventory, victor.AgentId, tick + 10, out int taken);
+            int units = piles.Take(world, pile.Id, victor.Inventory, victor.AgentId, tick + 10, out int taken, out _);
             Assert.True(units > 0);
             Assert.Equal(5, taken);
             Assert.Equal(gold + 5, victor.Inventory.Gold);
@@ -40,7 +40,7 @@ namespace Simpiens.Core.Tests
             else
             {
                 Assert.True(piles.TryGet(pile.Id, out _)); // what didn't fit stays
-                Assert.True(piles.Take(world, pile.Id, other.Inventory, other.AgentId, tick + DayClock.Hours(PileService.ClaimHours), out _) >= 0, "Past the claim, anyone may take.");
+                Assert.True(piles.Take(world, pile.Id, other.Inventory, other.AgentId, tick + DayClock.Hours(PileService.ClaimHours), out _, out _) >= 0, "Past the claim, anyone may take.");
             }
         }
 
@@ -51,9 +51,11 @@ namespace Simpiens.Core.Tests
             var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, new Vec2(1f, 1f), new[] { new ItemInstance(1, ItemType.IronOre, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
             uint fades = pile.FadesAt;
             Assert.Equal((uint)sim.Clock.CurrentTick + DayClock.Hours(PileService.FadeHours), fades);
-            sim.RunTo(fades - 1);
+            // The piles' own tick, by hand: crawlers would pick it over first (K4.3)
+            var world = (IPileWorld)sim.Simulation;
+            sim.Simulation.Piles.Tick(world, fades - 1);
             Assert.True(sim.Simulation.Piles.TryGet(pile.Id, out _));
-            sim.RunTo(fades + 1);
+            sim.Simulation.Piles.Tick(world, fades);
             Assert.False(sim.Simulation.Piles.TryGet(pile.Id, out _));
             Assert.DoesNotContain(sim.Registry.ActiveEntities, e => e.Id == pile.Id);
         }

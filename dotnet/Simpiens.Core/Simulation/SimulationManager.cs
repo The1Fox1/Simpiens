@@ -194,6 +194,24 @@ namespace Simpiens.Simulation
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
         }
 
+        /// <summary>True while the pile with <paramref name="id"/> lies on the ground (K4.3).</summary>
+        public bool PileExists(EntityId id) => Piles.TryGet(id, out _);
+
+        /// <summary>
+        /// <paramref name="taker"/> picks over the pile (K4.3d): what the loot rule says it takes (<see cref="Simpiens.Simulation.Loot.LootRules"/>),
+        /// if it may. The units taken; -1 when the pile is gone or not yet its to take. Gold on the ground comes with K5's
+        /// bodies, and its ledger account with it: a kill's drop holds none.
+        /// </summary>
+        public int TakeFromPile(WorldEntity taker, EntityId pileId)
+        {
+            var inventory = taker?.Agent?.Inventory;
+            uint tick = CurrentTick;
+            if (inventory == null || !Piles.TryGet(pileId, out var pile) || !pile.MayTake(taker.Id, tick)) return -1;
+            int units = Piles.Take(this, pileId, inventory, taker.Id, tick, out int gold, out int worn);
+            if (units > 0 || gold > 0) SimLog.Economy.ZLogInformation($"{SimLog.Agent(taker.Id)} took {units} from {pileId} ({worn} worn, {gold}g)");
+            return units;
+        }
+
         /// <summary>The creature with <paramref name="id"/> (K3.3: a fight's quarry); false when there is none, or it is slain.</summary>
         public bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature) => Creatures.TryGet(id, out creature) && creature.IsAlive;
 
@@ -641,6 +659,7 @@ namespace Simpiens.Simulation
             {
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
+                _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
                 ValidateBunkOccupancy();
                 _spatialPartition.SetOccupiedBunks(_lodging.OccupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);

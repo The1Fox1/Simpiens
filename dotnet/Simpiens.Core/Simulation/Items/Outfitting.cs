@@ -59,6 +59,9 @@ namespace Simpiens.Simulation.Items
             return need;
         }
 
+        /// <summary>This need, fighting creatures too (Epic 10 Part 3, K4.3c: a piece found in a pile is judged for both).</summary>
+        public OutfitNeed AndFighting() => new OutfitNeed(_hazards, Mining, true);
+
         /// <summary>This need, facing a hazard of <paramref name="kind"/> too.</summary>
         public OutfitNeed And(HazardKind kind) => kind == HazardKind.None || (byte)kind >= 32 ? this : new OutfitNeed(_hazards | (1u << (byte)kind), Mining, Fighting);
 

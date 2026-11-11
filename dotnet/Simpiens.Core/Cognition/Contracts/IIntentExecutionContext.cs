@@ -42,6 +42,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>A crawler in a fight asks to swing at a creature this tick; the creatures' phase decides it (K3.3, D6).</summary>
         void SwingAtCreature(WorldEntity crawler, EntityId creature);
 
+        /// <summary>True while the pile lies on the ground (Epic 10 Part 3, K4.3).</summary>
+        bool PileExists(EntityId pileId);
+
+        /// <summary>A crawler picks over a pile by the loot rule (K4.3d): the units taken; -1 when the pile is gone or not yet its to take.</summary>
+        int TakeFromPile(WorldEntity taker, EntityId pileId);
+
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
         void RemoveResource(EntityId resourceId);
 

@@ -170,7 +170,14 @@ namespace Simpiens.Simulation.Items
                 {
                     case LootEntryKind.Item:
                         ushort quantity = (ushort)(entry.MinQuantity + Below(ref random, (uint)(entry.MaxQuantity - entry.MinQuantity + 1)));
-                        if (count < drops.Length) drops[count++] = new ItemInstance(1, entry.Item, quantity, 0);
+                        // A piece of equipment comes whole, a new Standard piece with its life (Epic 10 Part 3, K4.3a): a stack of
+                        // durability 0 would break at its first wear
+                        if (count < drops.Length)
+                        {
+                            drops[count++] = ItemCatalog.Get(entry.Item)?.Equipment != null
+                                ? Outfitting.NewPiece(entry.Item, Grades.Standard)
+                                : new ItemInstance(1, entry.Item, quantity, 0);
+                        }
                         break;
                     case LootEntryKind.Table:
                         if (depth < MaxDepth && tables.TryGet(entry.TableId, out var nested)) RollTable(tables, nested, ref random, drops, ref count, depth + 1);

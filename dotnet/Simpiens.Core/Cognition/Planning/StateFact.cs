@@ -47,6 +47,7 @@ namespace Simpiens.Cognition.Planning
         HasLeftOutpost = 38, // a drifter's last goal (Epic 10 G1); never true in a built state: leaving ends the crawler
         AtDirectiveWork = 39, // a member whose directive gives it work at a site: a party at its node (Epic 10 G5), an artisan on shift (Epic 10 Part 2, W1.3)
         HasMedicine = 40, // carries medicine: a herb, or a draught bought to carry into danger (Epic 10 Part 2, W2.3)
-        HasWeapon = 41 // what it wields strikes harder than a bare hand (Epic 10 Part 3, K3.3)
+        HasWeapon = 41, // what it wields strikes harder than a bare hand (Epic 10 Part 3, K3.3)
+        LootCollected = 42 // no pile in sight it would take from (Epic 10 Part 3, K4.3)
     }
 }

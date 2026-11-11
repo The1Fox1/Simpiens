@@ -40,6 +40,20 @@ namespace Simpiens.Simulation.Spatial
         public int ActiveBountyCount;
         public ReadOnlySpan<BountyContract> Bounties => new ReadOnlySpan<BountyContract>(BountyBuffer, 0, ActiveBountyCount);
 
+        // The items on the ground (Epic 10 Part 3, K4.3b): copies, in id order, the oldest first past the cap
+        public const int MaxPiles = 64;
+        public readonly Simpiens.Simulation.Loot.PileView[] PileBuffer = new Simpiens.Simulation.Loot.PileView[MaxPiles];
+        public int ActivePileCount;
+        public ReadOnlySpan<Simpiens.Simulation.Loot.PileView> Piles => new ReadOnlySpan<Simpiens.Simulation.Loot.PileView>(PileBuffer, 0, ActivePileCount);
+
+        /// <summary>Copies the piles into the pre-allocated buffer (main thread; no allocation).</summary>
+        public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> source)
+        {
+            int toCopy = source == null ? 0 : SimMath.Min(source.Count, MaxPiles);
+            for (int i = 0; i < toCopy; i++) PileBuffer[i] = new Simpiens.Simulation.Loot.PileView(source[i]);
+            ActivePileCount = toCopy;
+        }
+
         // Static Navigation Grid (Section 2.6)
         public StaticNavGrid StaticGrid { get; private set; }
         public void SetStaticGrid(StaticNavGrid staticGrid) => StaticGrid = staticGrid;
@@ -142,6 +156,8 @@ namespace Simpiens.Simulation.Spatial
             ActiveStallCount = 0;
             Array.Clear(BountyBuffer, 0, ActiveBountyCount);
             ActiveBountyCount = 0;
+            Array.Clear(PileBuffer, 0, ActivePileCount);
+            ActivePileCount = 0;
         }
 
         /// <summary>
