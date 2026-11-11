@@ -37,6 +37,8 @@ namespace Simpiens.Client.Tests
                 {
                     Assert.Equal(entity.Creature.Kind, view.Creature);
                     Assert.Equal(entity.Creature.Mode, view.CreatureMode);
+                    Assert.Equal(entity.Creature.Target, view.CreatureTarget);
+                    Assert.Equal(entity.Creature.SwungAtTick != 0 && entity.Creature.SwungAtTick == (uint)frame.Tick, view.Striking);
                 }
                 if (entity.Agent == null) continue;
                 Assert.Equal(entity.Agent.VisualState, view.VisualState);

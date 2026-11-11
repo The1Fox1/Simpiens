@@ -191,6 +191,57 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>
+        /// The strike pose (K2.5, with live hunting): a rat that swings at a stray held by its warren lunges at it, facing
+        /// it, deepest halfway through <see cref="CreatureAppearance.StrikeSeconds"/> and back where it stands at the end; its
+        /// shadow stays put.
+        /// </summary>
+        [Fact]
+        public void ARatLungesAtWhatItStrikes()
+        {
+            using var sim = Outpost();
+            ChartTheLairs(sim);
+            using var frames = new WorldViewFrames();
+            frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock);
+            var scene = new WorldScene { Mode = ViewMode.TopDown };
+            var map = sim.Host.Current.Map;
+            var stray = sim.Host.CrawlerStates.First(c => !c.IsDrifter);
+            int strikerIndex = -1;
+            for (int t = 0; t < 300 && strikerIndex < 0; t++)
+            {
+                stray.Position = new Vec2(20f, 14f); // by hand: it stands by the warren
+                sim.Step(1);
+                var frame = frames.Current;
+                for (int i = 0; i < frame.Count && strikerIndex < 0; i++) if (frame[i].IsCreature && frame[i].Striking) strikerIndex = i;
+            }
+            Assert.True(strikerIndex >= 0, "A rat struck the stray.");
+            ref readonly var striker = ref frames.Current[strikerIndex];
+            Assert.Equal(stray.AgentId, striker.CreatureTarget);
+            float t0 = 100f;
+            frames.Alpha = 1f;
+            scene.Advance(map, frames, t0);
+            var at = striker.Position;
+            Assert.True(frames.TryGetDrawnPosition(stray.AgentId, out var quarry));
+            var art = scene.Catalog.Piece(scene.Visuals.Creature(striker.Creature), 0f);
+            DrawItem Drawn(float seconds)
+            {
+                scene.Present(map, frames, seconds);
+                return CreaturesDrawn(scene).Where(d => d.SpriteIndex == art.Sprite || d.SpriteIndex == art.Sprite + 1)
+                    .OrderBy(d => (new Vec2(d.X, d.Y) - at).SqrMagnitude).First();
+            }
+
+            var deepest = Drawn(t0 + CreatureAppearance.StrikeSeconds / 2f);
+            float lunged = Vec2.Distance(new Vec2(deepest.X, deepest.Y), at);
+            Assert.Equal(WorldScene.LungeDistance, lunged, 3);
+            var toward = (quarry - at).Normalized;
+            var went = (new Vec2(deepest.X, deepest.Y) - at).Normalized;
+            Assert.True(Vec2.Dot(toward, went) > 0.99f, "It lunged at the stray.");
+            Assert.Equal(quarry.X < at.X, deepest.FlipX); // facing it
+            var after = Drawn(t0 + CreatureAppearance.StrikeSeconds);
+            Assert.Equal(at.X, after.X, 4);
+            Assert.Equal(at.Y, after.Y, 4);
+        }
+
+        /// <summary>
         /// The game's own picture, close up: the rat warren in the Overgrowth at t300 (charted by hand at t100, its fog faded),
         /// the pack resting at its places and roaming about them.
         /// </summary>

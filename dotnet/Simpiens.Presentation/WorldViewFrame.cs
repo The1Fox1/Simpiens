@@ -68,6 +68,10 @@ namespace Simpiens.Presentation
         public Simpiens.Simulation.Creatures.CreatureKind Creature;
         /// <summary>What a creature is doing: resting at its place, roaming, chasing, fleeing, going home.</summary>
         public Simpiens.Simulation.Creatures.CreatureMode CreatureMode;
+        /// <summary>The crawler a creature is after (its strike lunges at it); empty unless it chases.</summary>
+        public EntityId CreatureTarget;
+        /// <summary>A creature swung during this tick, hit or miss (Epic 10 Part 3, K2.5: its strike pose).</summary>
+        public bool Striking;
 
         /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
         public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
@@ -199,6 +203,8 @@ namespace Simpiens.Presentation
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
                     Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
                     CreatureMode = creature != null ? creature.Mode : default,
+                    CreatureTarget = creature != null ? creature.Target : default,
+                    Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
                 };
                 _index[entity.Id] = Count;
                 Count++;

@@ -219,6 +219,7 @@ namespace Simpiens.Simulation.Creatures
             if (!CombatRules.CanStrike(me, them, tick, c.NextSwingAt)) return;
             _swings.Add(new Swing { Attacker = c, Target = quarry, Outcome = CombatRules.Swing(_seed, tick, me, them) });
             c.NextSwingAt = CombatRules.NextSwingAt(tick, me);
+            c.SwungAtTick = tick;
         }
 
         // Toward the goal along its path (D11): planned through the A* when it has none, when the goal has moved more than

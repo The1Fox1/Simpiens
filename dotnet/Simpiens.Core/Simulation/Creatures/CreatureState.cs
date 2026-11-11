@@ -66,6 +66,9 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>The first tick it may swing again (the combat rule's D8: the swing's timer is its owner's).</summary>
         public long NextSwingAt { get; set; }
 
+        /// <summary>When it last swung, hit or miss (K2.5's strike pose); 0 for never. Unsaved, as a crawler's <c>StruckAtTick</c> is.</summary>
+        public uint SwungAtTick { get; set; }
+
         /// <summary>Until when it rests before it roams (physical time, ticks).</summary>
         public long RestUntil { get; set; }
 

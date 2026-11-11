@@ -141,7 +141,7 @@ namespace Simpiens.Presentation
                 crawlers++;
             }
             Appearance.ForgetAbsent(frame.Tick, crawlers);
-            Creatures.Advance(frames, Projection);
+            Creatures.Advance(frames, Projection, viewSeconds);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace Simpiens.Presentation
                 {
                     ref readonly var entity = ref frame[i];
                     if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
-                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds);
+                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds, frames);
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
@@ -244,9 +244,10 @@ namespace Simpiens.Presentation
         /// A creature (Epic 10 Part 3, K2.5), as its kind, where it is drawn between ticks, standing among the crawlers by
         /// depth on the shadow they stand on: scuttling through its frames while it moves, its first frame while it stands,
         /// mirrored when it last went left on screen (<see cref="CreatureAppearance"/>). The fog hides it in an uncharted
-        /// sector, as it hides a crawler (D1 = C). Not pickable yet: the inspector shows a creature later.
+        /// sector, as it hides a crawler (D1 = C). Striking, it lunges at its quarry, facing it (<see cref="LungeDistance"/>,
+        /// the strike pose); its shadow stays where it stands. Not pickable yet: the inspector shows a creature later.
         /// </summary>
-        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds)
+        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds, WorldViewFrames frames)
         {
             var art = Visuals.Creature(entity.Creature);
             if (art.IsNone) return;
@@ -254,9 +255,26 @@ namespace Simpiens.Presentation
             if (shown <= 0f) return;
             var tint = Shown(White, shown);
             if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, tint);
-            ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), position, tint);
-            item.FlipX = Creatures.FacesLeft(entity.Id);
+            bool facesLeft = Creatures.FacesLeft(entity.Id);
+            var drawnAt = position;
+            float lunge = Creatures.Lunge(entity.Id, viewSeconds);
+            if (lunge > 0f && frames.TryGetDrawnPosition(entity.CreatureTarget, out var quarry))
+            {
+                var toward = quarry - position;
+                float distance = toward.Magnitude;
+                if (distance > 1e-4f)
+                {
+                    drawnAt = position + toward * (LungeDistance * lunge / distance);
+                    float across = Projection.ToView(quarry).X - Projection.ToView(position).X;
+                    if (across != 0f) facesLeft = across < 0f;
+                }
+            }
+            ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), drawnAt, tint);
+            item.FlipX = facesLeft;
         }
+
+        /// <summary>How far a creature's strike lunges toward its quarry at its deepest, in world units (K2.5's strike pose).</summary>
+        public const float LungeDistance = 0.2f;
 
         /// <summary>
         /// The trade stall (graphics V5): its counter at its place, and on it, in its display slots, the goods it holds in
