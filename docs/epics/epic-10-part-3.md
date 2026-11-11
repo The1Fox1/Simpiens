@@ -212,6 +212,7 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **Not saved:** work in progress, as intents are. After a load the fallen lies where it was and is rescued afresh.
   - **The anomaly watch** doesn't count the fallen or the carried as stacked pawns.
 - **D30, who comes** (Q3b): a crawler collapsed in danger cries out. A crawler on its feet within 15 units, through walls, comes if the fallen is a friend (its warmth toward it 30 or more, the same line as grief) or a party mate, and if it would itself go where the fallen lies.
+  - **Already there:** a rescuer standing in the fallen's hazard sector (a party mate working beside it) needn't pass the lone crawler's judgement to cross the room it is in.
   - **What it does:** with a medicine that alone stands the fallen up (a draught: 80 against the recovery line of 60), it hands that over (two game minutes); otherwise it carries the fallen out.
   - **Priority 90,** above every goal but a drifter's leaving: a life is on a clock.
   - **Both remember:** aid given and received, the rescued warming to its rescuer and trusting it; the chronicle tells it (`CrawlerRescued`).
@@ -221,6 +222,7 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **Under orders:** if the dead was a guild member on an expedition, every other member's trust toward the patron falls by 15 (and warmth by 5).
   - **The chronicle** tells the death (downed by a creature's kind, or by a sector's danger), the rescue (carried out, or a draught given) and the newcomer. A death's extra packs the cause and its kind.
 - **D32, a newcomer** (Q4): 2 game days after a resident's death (not a drifter's), a resident settles at a spawn point clear of crawlers. It comes with a new look and name, a seeded personality, the session's starting purse (a faucet, `NewcomerPurses`) and a resident's arrival hunger. The ones still due are saved in the population block, inside format 11.
+- **D33, `TheCarefulLoseFew`'s band** (the producer's to set; this is a default): at most one death across the 23 gate seeds' day, with no player action. Measured at K5: none.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
@@ -435,3 +437,15 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
   - **2026-11-11:** with K3 in, seeds 1–120 pass 120/120 again. A four-day probe on the gate seeds showed one Ore Quarry jitter on seed 8 on day 2, again with no creature or fight in it.
   - **Again at K2.1:** another allocation test, `FacilityZoneServiceTests.QueriesWithoutARegistryAreEmptyAndQueriesWithOneAllocateNothing`, failed once in a full run of the client's tests; it then passed 3 times alone and in a full rerun (487/487). K2.1 touches neither the facility zones nor their queries. Two different allocation tests failing once each points at the measuring (allocations by the runtime on the test's thread), not at the code measured. [Possibly Complex: measuring, if a third shows]
 - **F5 (2026-11-11, K4.4): thrashing at the stall on seed 8 with the workshop player.** Over six days with the workshop player making blades, gate seed 8 shows a crawler thrashing (Thinking and Walking four times in 0.4 s) by the stall at t8962, and a jitter. The same run at K3's gate (`27b4eb7`) shows the same anomaly at the same tick, so it is older than K4; seed 15 over ten days shows one too, at t740, the same at K4.3 (`5bf26a7`). The gate's one-day scenario holds on both (no workshop player). Neither is a gate check today: K4's DoD runs seed 18. [Possibly Complex: a planning loop at the stall; look when the guild's or workshop's soak shows one]
+- **F6 (2026-11-11, K5's DoDs): nobody is downed in danger in live play, so K5's rules never fire live.**
+  - **Measured, with nothing injected:**
+    - the 23 gate seeds' day with no player: no crawler downed by a creature, no death (seeds 1–120 alike, with and without the guild);
+    - ten days of the forge loop with fights, on the 23 gate seeds: kills on 14 seeds, but nobody downed by a creature and no death (fighters flee at the retreat line and get away);
+    - eight days of the guild player sending four ungeared, under the Bold rule, into the Drowned Gallery: about ten trips a seed, the lowest health 25–32 (15 once), nobody downed. The expedition's retreat brings everyone out, as F1 found for gear.
+  - **So:** `TheCarefulLoseFew` is live and passes. `AFriendCarriesTheFallenOut` and `DeathHasItsCost` need a downing in danger, and no command the player has today can bring one about. `DeathHasItsCost`'s own wording sends a party against beetles, which only K7's Clear order can do.
+  - **The options, for the producer:**
+    - (A) Move the two DoDs to K7, beside `AnArmedPartyClearsANest` (which already carries the fallen out), and take K5 as delivered with its mechanism tests on the real outpost (`RescueTests`, `BleedingTests`, `DeathTests`) and `TheCarefulLoseFew` live.
+    - (B) Make danger bite now: a lower retreat line, faster rats, or crawlers who don't break off a fight. That retunes K2's and K3's calibrations before anything needs it.
+    - (C) Pull a minimal Clear order into K5. That is half of K7 done twice.
+  - **Recommended: (A).** The rules are proven on the real session by hand. The DoD rule wants an outcome that emerges, and nothing in the game can make a crawler fall in danger until the player can send people into a lair. Tuning danger up now would be undone by K7's own tuning.
+  - [Possibly Complex: where two DoDs live; the producer decides]

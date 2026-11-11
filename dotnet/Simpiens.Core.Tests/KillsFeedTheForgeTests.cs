@@ -104,7 +104,7 @@ namespace Simpiens.Core.Tests
                 var run = Play(seed, untilWorn: false);
                 if (run.WornAt >= 0) worn++;
                 var failures = run.Watch.DayFailures();
-                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}");
+                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {run}; downed by creatures {run.Watch.DownedByCreatures}, deaths {run.Watch.Deaths}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}");
             }
             TestContext.Current.TestOutputHelper?.WriteLine($"armour from a kill worn on {worn} of {OutpostWatch.GateSeeds.Length} seeds");
         }

@@ -40,13 +40,25 @@ namespace Simpiens.Cognition.Planning
                 if (distance > CryRadius * CryRadius || distance > best) continue;
                 if (distance == best && found && f.Id.CompareTo(chosen.Id) >= 0) continue;
                 if (!IsFriend(context, f)) continue;
-                if (!Vitality.WouldEnterAt(context, f.Position)) continue;
+                if (!Vitality.WouldEnterAt(context, f.Position) && !AlreadyThere(context, f.Position)) continue;
                 best = distance;
                 chosen = f;
                 found = true;
             }
             if (found) medicine = StandingMedicine(context);
             return found;
+        }
+
+        /// <summary>
+        /// True when the rescuer already stands in the hazard sector where the fallen lies: a party mate working beside it needn't
+        /// pass the lone crawler's judgement to cross the room it is in (D30).
+        /// </summary>
+        public static bool AlreadyThere(in AgentContext context, Vec2 position)
+        {
+            var map = context.Snapshot?.Map;
+            if (map == null) return false;
+            var here = map.FindSector(context.Position);
+            return here.Hazard.IsHazardous && here.Id == map.FindSector(position).Id;
         }
 
         /// <summary>A friend (its warmth toward the fallen) or a party mate.</summary>

@@ -398,7 +398,9 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - [ ] **K5.8b The client, the body:** [Basic: art as data] a body's pile is drawn as a cairn (a body is a pile with its dead named, `LootPile.BodyOf`).
   - [ ] **K5.8c The client, the record of the dead:** [Possibly Complex: Gum UI and a portrait variant] the chronicle's lines for a death and a rescue; the dossier of the dead, its portrait greyed.
   - [ ] **K5.8d The client, a scene:** [Possibly Complex: a dynamic scene] when a friend sees a death or makes a rescue.
-  - [ ] **The DoDs:** [Possibly Complex: live scenarios that need danger to happen] measured first on the gate seeds; `TheCarefulLoseFew`'s band is the producer's, so a default is recorded from the measurement.
+  - [x] **The DoDs:** [Possibly Complex: live scenarios that need danger to happen] measured first on the gate seeds; `TheCarefulLoseFew`'s band is the producer's, so a default is recorded from the measurement.
+    - **Done in part:** `TheCarefulLoseFew` passes (no death on the 23 gate seeds' day; band default D33). Nobody is downed in danger live, with or without the guild player sending an ungeared party into the Drowned Gallery (F6), so `AFriendCarriesTheFallenOut` and `DeathHasItsCost` wait for K7's Clear order (F6's recommended option A, for the producer). Their mechanism is proven on the real outpost by hand (`RescueTests`, `BleedingTests`, `DeathTests`). The measurement stays as an explicit test (`DeathAndRescueScenarioTests.MeasureDeathAndRescueOnTheGateSeeds`).
+    - **Also:** a rescuer already standing in the fallen's hazard sector needn't pass the lone judgement to cross it (`Rescue.AlreadyThere`, D30).
 - **DoD:**
   - **`AFriendCarriesTheFallenOut`:** a resident downed in a hazard is carried out by a friend and lives. Where nobody comes, one dies.
   - **`DeathHasItsCost`:** the scripted player sends an under-armed party against beetles. A member falls and isn't rescued, and it dies. Its friends grieve, the guild loses its contract, the body's pile holds its gear and purse, and a newcomer arrives. The ledger balances.
