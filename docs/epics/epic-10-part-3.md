@@ -199,6 +199,14 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **The body** is a pile anyone may take from: its pack, then what it wore, and its purse. It lies until it fades (a game day), even picked clean, so the cairn stands where it fell (K5.8b).
   - **Gold on the ground** is held by the ledger's own account, as escrow is; conservation counts it, a fade sinks it (`GoldFadedOnTheGround`), and a load derives it from the piles.
   - **Inside format 11:** a pile's saved record grows from 56 to 72 bytes (whose body it is) and the departed list's records gain the cause, as K2.4, K4.1 and K4.4 grew format 11 unreleased.
+- **D28, collapse and bleeding out** (Q3):
+  - **Danger** is a hazard sector, or the reach of a lair holding a living creature, charted or not: danger is the world's, not what the crawlers know.
+  - **Downed in danger,** a crawler collapses where it lies. It doesn't move (its walk is refused), and it lies still, which counts as tending to itself, so nothing pre-empts it. Its clock runs 2 game hours.
+  - **Downed in safety,** it limps to the bunks as before.
+  - **Any medicine it carries** it takes where it lies: a draught (80) stands it up at once, and two herbs (30 each) do too. Q3a named the draught; herbs were already medicine, so a forager who carries two lives.
+  - **The clock stops** when it is out of danger (carried, K5.2) or back on its feet. When the clock runs out, it dies of what downed it: the hazard's or the creature's kind, and the creature for the chronicle.
+  - **Saved** in the crawler's record: the clock, and what downed it (inside format 11).
+  - **K2.3's test** of a stray downed by the warren limping out became "it collapses, lies still and is left alone".
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

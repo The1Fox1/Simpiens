@@ -73,8 +73,9 @@ namespace Simpiens.Core.Tests
         }
 
         [Fact]
-        public void ADownedCrawlerLimpsOutAndIsLeftAlone()
+        public void ADownedCrawlerCollapsesAndIsLeftAlone()
         {
+            // Downed by the warren, in its reach, it collapses where it lies (Epic 10 Part 3, K5.1, Q3: it limped out before)
             using var sim = Outpost();
             var stray = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             sim.Step(20);
@@ -84,16 +85,18 @@ namespace Simpiens.Core.Tests
                 sim.Step(1);
             }
             Assert.True(stray.IsDowned);
+            sim.Step(1);
+            Assert.True(stray.IsCollapsed, "In the warren's reach, it collapses.");
             uint downedStruck = stray.StruckAtTick;
-            bool fled = false, retreated = false;
+            var at = stray.Position;
+            bool fled = false;
             for (int t = 0; t < 300; t++)
             {
                 sim.Step(1);
                 fled |= stray.CurrentIntent is FleeIntent;
-                retreated |= stray.CurrentIntent is RetreatIntent || stray.CurrentIntent is SleepAtBunkIntent;
+                Assert.True(Vec2.Distance(at, stray.Position) < 0.01f, "Collapsed, it doesn't move.");
             }
-            Assert.False(fled, "Downed, it limps; it doesn't flee.");
-            Assert.True(retreated, "It limped for the bunks, as from a hazard.");
+            Assert.False(fled, "Downed, it doesn't flee.");
             Assert.Equal(downedStruck, stray.StruckAtTick); // nobody strikes a downed crawler
         }
 

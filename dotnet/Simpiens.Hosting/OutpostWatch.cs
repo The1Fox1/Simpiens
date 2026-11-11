@@ -50,6 +50,9 @@ namespace Simpiens.Hosting
             public long LongestHungry, LongestHungryFrom = -1;
             public bool Starved;
 
+            /// <summary>It died (Epic 10 Part 3, K5): the day judges the living; deaths are counted apart.</summary>
+            public bool Died;
+
             /// <summary>Danger (Epic 10 G2): the lowest health seen, and whether it came back to full after being hurt.</summary>
             public float LowestHealth = 100f;
             public bool HurtThenRecovered;
@@ -101,6 +104,10 @@ namespace Simpiens.Hosting
 
         /// <summary>Drifters seen while watching (Epic 10 G1): arrived, walked out, and what those who left bought.</summary>
         public int DriftersArrived, DriftersLeft, DrifterPurchases;
+
+        /// <summary>Deaths (Epic 10 Part 3, K5.1, K5.4), residents' among them, and the first ("t1234: Name of Hazard at (x, y)").</summary>
+        public int Deaths, ResidentDeaths;
+        public string FirstDeath;
         private readonly int _driftersAtStart;
         private readonly int _faultsAtStart;
 
@@ -156,8 +163,17 @@ namespace Simpiens.Hosting
             _driftersAtStart = host.DriftersArrived;
             host.CrawlerDeparted += (runtime, entity) =>
             {
+                var gone = runtime.State;
+                if (gone.DiedOf != Simpiens.Simulation.DeathCause.None)
+                {
+                    Deaths++;
+                    if (!gone.IsDrifter) ResidentDeaths++;
+                    FirstDeath ??= $"t{_sim.Clock.CurrentTick - _startTick}: {gone.GivenName} of {gone.DiedOf} at {gone.Position}";
+                    for (int i = 0; i < Crawlers.Count; i++) if (Crawlers[i].State == gone) Crawlers[i].Died = true;
+                    return;
+                }
                 DriftersLeft++;
-                DrifterPurchases += runtime.State.Activity.RationPurchases;
+                DrifterPurchases += gone.Activity.RationPurchases;
             };
             // The day judges the residents: drifters pass through (Epic 10 G1)
             for (int i = 0; i < host.CrawlerStates.Count; i++)
@@ -325,7 +341,7 @@ namespace Simpiens.Hosting
 
         /// <summary>The creatures' line of the report (Epic 10 Part 3, K2.3).</summary>
         public string CreatureSummary() =>
-            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}; armed at most {MostArmed}, fights {Fights}, kills {Kills}";
+            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}; armed at most {MostArmed}, fights {Fights}, kills {Kills}; deaths {Deaths}{(FirstDeath != null ? $" (first {FirstDeath})" : "")}";
 
         /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
         public void Run(long ticks)
@@ -346,14 +362,16 @@ namespace Simpiens.Hosting
         public List<string> DayFailures()
         {
             var failures = new List<string>();
-            if (Crawlers.Count == 0) { failures.Add("no crawlers"); return failures; }
-            var noCycle = Crawlers.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
-            int sleepers = Crawlers.Count(c => c.State.Activity.BunkSleeps > 0);
-            int eaters = Crawlers.Count(c => c.State.Activity.Meals > 0);
-            int gatherings = Crawlers.Sum(c => c.State.Activity.HearthGatherings);
-            int trustRose = Crawlers.Count(c => c.TrustEnd > c.TrustStart);
-            int requiredTrustRose = SimMath.CeilToInt(Crawlers.Count * 2f / 3f);
-            var starved = Crawlers.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
+            // The living residents (Epic 10 Part 3, K5): a death is counted apart, and TheCarefulLoseFew bands it
+            var living = Crawlers.Where(c => !c.Died).ToList();
+            if (living.Count == 0) { failures.Add("no crawlers"); return failures; }
+            var noCycle = living.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
+            int sleepers = living.Count(c => c.State.Activity.BunkSleeps > 0);
+            int eaters = living.Count(c => c.State.Activity.Meals > 0);
+            int gatherings = living.Sum(c => c.State.Activity.HearthGatherings);
+            int trustRose = living.Count(c => c.TrustEnd > c.TrustStart);
+            int requiredTrustRose = SimMath.CeilToInt(living.Count * 2f / 3f);
+            var starved = living.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
 
             if (noCycle.Count > 0) failures.Add($"{noCycle.Count} crawlers never closed a harvest -> sell cycle: {string.Join(", ", noCycle)}");
             if (sleepers < 3) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
@@ -364,7 +382,7 @@ namespace Simpiens.Hosting
             if (EntriesIntoKnownLairs > 0) failures.Add($"crawlers went alone into a known lair ({EntriesIntoKnownLairs}; first {FirstEntryIntoKnownLair})");
             if (AloneInTheChamber > 0) failures.Add($"crawlers went alone where only an expedition goes ({AloneInTheChamber} crawler-ticks; first {FirstAloneInTheChamber})");
             if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
-            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
+            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {living.Count} (need {requiredTrustRose})");
             if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
             if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
             if (Stackings > 0) failures.Add($"pawn stacking {Stackings} times (first {FirstStacking})");

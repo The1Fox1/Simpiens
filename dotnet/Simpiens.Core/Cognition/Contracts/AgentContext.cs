@@ -66,6 +66,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The creature whose blow fell on it last (K3.3: whom it fights back).</summary>
         public readonly EntityId StruckBy;
 
+        /// <summary>Downed in danger, the tick it bleeds out (Epic 10 Part 3, K5.1); 0 while it isn't bleeding.</summary>
+        public readonly uint BleedsOutAt;
+
+        /// <summary>Collapsed in danger, its clock running (K5.1): it lies where it fell.</summary>
+        public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
+
         /// <summary>True when a creature's blow fell on it within <see cref="Vitality.FlightSeconds"/>: it flees.</summary>
         public bool StruckRecently => Vitality.StruckRecently(StruckAtTick, CurrentTick);
 
@@ -82,8 +88,10 @@ namespace Simpiens.Cognition.Contracts
                             in StationOrder station = default,
                             in KeptBunk bunk = default,
                             uint struckAtTick = 0,
-                            EntityId struckBy = default)
+                            EntityId struckBy = default,
+                            uint bleedsOutAt = 0)
         {
+            BleedsOutAt = bleedsOutAt;
             StruckAtTick = struckAtTick;
             StruckBy = struckBy;
             Expedition = expedition;

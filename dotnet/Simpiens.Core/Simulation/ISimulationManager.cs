@@ -43,6 +43,9 @@ namespace Simpiens.Simulation
         /// <summary>A crawler dies (Epic 10 Part 3, K5.4a): its body a pile where it fell, gone from the world at the tick's end.</summary>
         void Die(WorldEntity node, Simpiens.Simulation.DeathCause cause, byte detail = 0, EntityId by = default);
 
+        /// <summary>Danger for the fallen (K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
+        bool InDanger(Vec2 position);
+
         /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
         void PopulateLairs(ulong seed);
 

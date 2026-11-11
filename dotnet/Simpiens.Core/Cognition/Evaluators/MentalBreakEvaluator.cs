@@ -187,6 +187,10 @@ namespace Simpiens.Cognition.Evaluators
 
             if (!context.IsDowned && !(inHazard && context.Health < Vitality.RetreatBelow)) return null;
 
+            // Collapsed in danger (Epic 10 Part 3, K5.1, Q3): it can't limp out; it lies where it fell until rescued, or until a
+            // medicine it carries stands it up (above), or it bleeds out
+            if (context.IsCollapsed) return new IdleIntent(context.AgentId, DownedSleepSeconds);
+
             // A free bunk within reach: a downed crawler sleeps in it, its own in the barracks or not
             if (context.IsDowned && Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunk, ownFirst: false)
                 && (bunk - context.Position).SqrMagnitude <= 1f)

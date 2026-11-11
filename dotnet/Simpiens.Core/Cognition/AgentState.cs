@@ -188,6 +188,19 @@ namespace Simpiens.Cognition
         public bool IsDowned { get; set; }
 
         /// <summary>
+        /// Downed in danger, the tick it bleeds out (Epic 10 Part 3, K5.1, Q3): it lies where it fell, collapsed, until
+        /// rescued, back on its feet, or dead. 0 while it isn't bleeding (on its feet, or downed in safety, limping). Saved.
+        /// </summary>
+        public uint BleedsOutAt { get; set; }
+
+        /// <summary>Collapsed in danger, its clock running (K5.1).</summary>
+        public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
+
+        /// <summary>What downed it, and the cause's detail (the hazard's or the creature's kind): what it dies of if it bleeds out (K5.1). Saved.</summary>
+        public Simpiens.Simulation.DeathCause DownedBy { get; set; }
+        public byte DownedDetail { get; set; }
+
+        /// <summary>
         /// Set on the main thread when the crawler walks out by the Road Gate; the session host removes it at the end of
         /// the tick. Never saved: a save is captured between ticks, after the removal.
         /// </summary>
@@ -467,7 +480,10 @@ namespace Simpiens.Cognition
                 DepartsAtTick = DepartsAtTick,
                 Health = Health,
                 IsDowned = IsDowned,
-                Look = Look
+                Look = Look,
+                BleedsOutAt = BleedsOutAt,
+                DownedBy = DownedBy,
+                DownedDetail = DownedDetail
             };
         }
 
@@ -507,6 +523,9 @@ namespace Simpiens.Cognition
             Health = record.Health;
             IsDowned = record.IsDowned;
             Look = record.Look;
+            BleedsOutAt = record.BleedsOutAt;
+            DownedBy = record.DownedBy;
+            DownedDetail = record.DownedDetail;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -543,7 +562,8 @@ namespace Simpiens.Cognition
                 Station,
                 Bunk,
                 StruckAtTick,
-                StruckBy);
+                StruckBy,
+                BleedsOutAt);
         }
     }
 }

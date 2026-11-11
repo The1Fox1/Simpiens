@@ -140,6 +140,8 @@ namespace Simpiens.Cognition
                 if (State.Health <= 0f && !State.IsDowned)
                 {
                     State.IsDowned = true;
+                    State.DownedBy = Simpiens.Simulation.DeathCause.Hazard; // what it dies of, if it bleeds out (Epic 10 Part 3, K5.1)
+                    State.DownedDetail = (byte)hazard.Kind;
                     State.Activity.TimesDowned++;
                     SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)} was downed by {hazard.Kind} at {State.Position}");
                     RecordStory(ChronicleEventType.CrawlerDowned, ChronicleIntensity.Crisis);
@@ -149,7 +151,7 @@ namespace Simpiens.Cognition
             bool hurtInDanger = !State.IsDowned && hazard.IsHazardous && State.Health < Vitality.RetreatBelow;
             // Tending to itself; resting counts only out of danger (a downed crawler must not rest in a hazard sector)
             bool tending = State.CurrentIntent is RetreatIntent || State.CurrentIntent is TreatWoundsIntent || State.CurrentIntent is SleepAtBunkIntent
-                || (State.CurrentIntent is IdleIntent && !hazard.IsHazardous);
+                || (State.CurrentIntent is IdleIntent && (!hazard.IsHazardous || State.IsCollapsed)); // collapsed, it lies where it fell (Epic 10 Part 3, K5.1)
 
             // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, it drops what it does and flees, or fights back (K3.3)
             bool struck = !State.IsDowned && Vitality.StruckRecently(State.StruckAtTick, (uint)currentTick);

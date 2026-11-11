@@ -168,6 +168,7 @@ namespace Simpiens.Simulation.Movement
 
             // 3. Move the pawn visually and logically, keeping clear of walls and other pawns; a downed crawler limps
             float speed = node != null ? node.BaseSpeed : 2f;
+            if (node?.Agent != null && node.Agent.IsCollapsed) return IntentResult.PathBlocked; // collapsed in danger, it can't move (Epic 10 Part 3, K5.1)
             if (node?.Agent != null && node.Agent.IsDowned) speed = (float)(speed * Vitality.DownedSpeedFactor);
             float step = (float)(speed * SimulationManager.FixedTickDeltaTime);
             Vec2 candidate = Vec2.MoveTowards(node.Position, targetPos, step);

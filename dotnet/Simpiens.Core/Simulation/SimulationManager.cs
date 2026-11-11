@@ -126,6 +126,55 @@ namespace Simpiens.Simulation
         {
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
+            TickTheFallen(tick);
+        }
+
+        /// <summary>
+        /// The fallen (Epic 10 Part 3, K5.1, Q3), after every blow of the tick: a downed crawler in danger (a hazard sector, or
+        /// the reach of a lair with a living creature) collapses where it lies and its clock starts, 2 game hours; out of
+        /// danger (carried out, K5.2), or back on its feet, the clock stops. When it runs out, it dies of what downed it.
+        /// In registration order; allocates nothing.
+        /// </summary>
+        private void TickTheFallen(uint tick)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var node = entities[i];
+                var agent = node?.Agent;
+                if (agent == null || agent.HasLeft) continue;
+                if (!agent.IsDowned || !InDanger(node.Position))
+                {
+                    agent.BleedsOutAt = 0;
+                    continue;
+                }
+                if (agent.BleedsOutAt == 0)
+                {
+                    agent.BleedsOutAt = tick + DayClock.Hours(BleedOutHours);
+                    SimLog.Drives.ZLogInformation($"{SimLog.Agent(agent.AgentId)} collapsed in danger at {node.Position}: it bleeds out at t{agent.BleedsOutAt}");
+                    continue;
+                }
+                if (tick >= agent.BleedsOutAt) Die(node, agent.DownedBy, agent.DownedDetail, agent.StruckBy);
+            }
+        }
+
+        /// <summary>How long a crawler downed in danger lives, unrescued (Q3: 2 game hours).</summary>
+        public const int BleedOutHours = 2;
+
+        /// <summary>
+        /// Danger for the fallen (K5.1, Q3): a hazard sector, or within the reach of a lair holding a living creature,
+        /// charted or not (danger is the world's, not what crawlers know of it).
+        /// </summary>
+        public bool InDanger(Vec2 position)
+        {
+            if (Vitality.HazardAt(Map, position).IsHazardous) return true;
+            var lairs = Creatures.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (lairs[i].Alive > 0 && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i].Definition, position)) return true;
+            }
+            return false;
         }
 
         void Simpiens.Simulation.Loot.IPileWorld.AddPile(WorldEntity entity)
@@ -185,6 +234,8 @@ namespace Simpiens.Simulation
             state.HurtThisTick = (float)(state.HurtThisTick + (before - state.Health));
             if (state.Health > 0f || state.IsDowned) return;
             state.IsDowned = true;
+            state.DownedBy = Simpiens.Simulation.DeathCause.Creature; // what it dies of, if it bleeds out (K5.1)
+            state.DownedDetail = Creatures.TryGet(attacker, out var striker) ? (byte)striker.Kind : (byte)0;
             state.Activity.TimesDowned++;
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(state.AgentId)} was downed by {SimLog.Agent(attacker)} at {state.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
