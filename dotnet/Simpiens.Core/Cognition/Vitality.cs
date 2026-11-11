@@ -107,6 +107,21 @@ namespace Simpiens.Cognition
         /// <summary><see cref="FlightSeconds"/> in ticks.</summary>
         public static uint FlightTicks => (uint)Simpiens.Simulation.Combat.CombatRules.SecondsToTicks(FlightSeconds);
 
+        /// <summary>A fighting crawler lets a creature go that runs this far from it (Epic 10 Part 3, K3.3).</summary>
+        public const float FightPursuit = 3f;
+
+        /// <summary>
+        /// True when this crawler, struck by a creature, fights back instead of fleeing (Epic 10 Part 3, K3.3, Q6): bold (as
+        /// one who would venture into danger), armed (what it wields strikes harder than a bare hand) and on its feet above
+        /// the retreat line.
+        /// </summary>
+        public static bool FightsBack(in AgentContext context) =>
+            !context.IsDowned && context.Health >= RetreatBelow && context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(context.Inventory);
+
+        /// <summary>True when what <paramref name="worn"/> holds strikes harder than a bare hand.</summary>
+        public static bool IsArmed(Simpiens.Cognition.Inventory.IAgentInventory worn) =>
+            worn != null && Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.Attack, Simpiens.Simulation.Combat.CombatRules.UnarmedAttack) > Simpiens.Simulation.Combat.CombatRules.UnarmedAttack;
+
         /// <summary>How far past a lair's reach a fleeing crawler runs before it counts itself safe.</summary>
         public const float FlightClearance = 1f;
 

@@ -63,6 +63,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>When a creature last swung at it, hit or miss (Epic 10 Part 3, K2.3); 0 for never. Flight reads it.</summary>
         public readonly uint StruckAtTick;
 
+        /// <summary>The creature whose blow fell on it last (K3.3: whom it fights back).</summary>
+        public readonly EntityId StruckBy;
+
         /// <summary>True when a creature's blow fell on it within <see cref="Vitality.FlightSeconds"/>: it flees.</summary>
         public bool StruckRecently => Vitality.StruckRecently(StruckAtTick, CurrentTick);
 
@@ -78,9 +81,11 @@ namespace Simpiens.Cognition.Contracts
                             in ExpeditionOrder expedition = default,
                             in StationOrder station = default,
                             in KeptBunk bunk = default,
-                            uint struckAtTick = 0)
+                            uint struckAtTick = 0,
+                            EntityId struckBy = default)
         {
             StruckAtTick = struckAtTick;
+            StruckBy = struckBy;
             Expedition = expedition;
             Station = station;
             Bunk = bunk;

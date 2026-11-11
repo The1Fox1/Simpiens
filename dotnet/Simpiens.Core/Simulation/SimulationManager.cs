@@ -158,6 +158,19 @@ namespace Simpiens.Simulation
                 GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
         }
 
+        void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, uint tick)
+        {
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
+                GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
+        }
+
+        /// <summary>The creature with <paramref name="id"/> (K3.3: a fight's quarry); false when there is none, or it is slain.</summary>
+        public bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature) => Creatures.TryGet(id, out creature) && creature.IsAlive;
+
+        /// <summary>A crawler in a fight asks to swing at a creature this tick (K3.3); the creatures' phase decides it.</summary>
+        public void SwingAtCreature(WorldEntity crawler, EntityId creature) => Creatures.AskSwing(crawler, creature);
+
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {
             crawler = null;

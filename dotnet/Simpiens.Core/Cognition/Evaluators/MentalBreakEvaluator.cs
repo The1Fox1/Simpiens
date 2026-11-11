@@ -150,10 +150,11 @@ namespace Simpiens.Cognition.Evaluators
 
         private async ValueTask<AgentIntent> DangerReflexAsync(AgentContext context)
         {
-            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, it flees toward the bunks before anything else.
-            // Nobody fights back until K3; a downed crawler limps out as from a hazard (below)
+            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, the bold and armed fight back (K3.3, Q6), the rest flee
+            // toward the bunks, before anything else; a downed crawler limps out as from a hazard (below)
             if (context.StruckRecently && !context.IsDowned)
             {
+                if (Vitality.FightsBack(context) && context.StruckBy != default) return new FightIntent(context.AgentId, context.StruckBy);
                 var flight = await FleeAsync(context);
                 if (flight != null) return flight;
             }

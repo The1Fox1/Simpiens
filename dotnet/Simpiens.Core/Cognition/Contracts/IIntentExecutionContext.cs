@@ -36,6 +36,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The loaded map (immutable): its sectors, lairs and points; null before one is loaded.</summary>
         Simpiens.Simulation.World.MapDefinition Map { get; }
 
+        /// <summary>The creature with <paramref name="id"/>, alive (Epic 10 Part 3, K3.3: a fight's quarry).</summary>
+        bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature);
+
+        /// <summary>A crawler in a fight asks to swing at a creature this tick; the creatures' phase decides it (K3.3, D6).</summary>
+        void SwingAtCreature(WorldEntity crawler, EntityId creature);
+
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
         void RemoveResource(EntityId resourceId);
 

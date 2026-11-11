@@ -159,6 +159,9 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ToolWornOut:
                     return $"{actorA}'s {(Simpiens.Simulation.Items.ItemCatalog.Get((Simpiens.Simulation.Economy.ItemType)(byte)evt.ExtraData)?.DisplayName ?? "tool").ToLowerInvariant()} broke in {sector}.";
 
+                case ChronicleEventType.CreatureSlain:
+                    return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

@@ -178,6 +178,12 @@ namespace Simpiens.Cognition
         public uint StruckAtTick { get; set; }
         public EntityId StruckBy { get; set; }
 
+        /// <summary>
+        /// The first tick it may swing again in a fight (Epic 10 Part 3, K3.3; the combat rule's D8: the swing's timer is its
+        /// owner's). Unsaved: a fight is work in progress, and a crawler decides afresh after a load.
+        /// </summary>
+        public long NextSwingAt { get; set; }
+
         /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
         public bool IsDowned { get; set; }
 
@@ -529,7 +535,8 @@ namespace Simpiens.Cognition
                 Expedition,
                 Station,
                 Bunk,
-                StruckAtTick);
+                StruckAtTick,
+                StruckBy);
         }
     }
 }

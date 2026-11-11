@@ -43,6 +43,32 @@ namespace Simpiens.Simulation.Creatures
             public SwingOutcome Outcome;
         }
 
+        // A crawler's swing at a creature (K3.3): asked for by its fight, decided in the same pass as the creatures' (D6)
+        private struct CrawlerSwing
+        {
+            public WorldEntity Crawler;
+            public EntityId Target;
+            public SwingOutcome Outcome;
+            public CreatureState Creature;
+        }
+
+        private readonly List<CrawlerSwing> _asked = new List<CrawlerSwing>(8);
+        private readonly List<CrawlerSwing> _blows = new List<CrawlerSwing>(8);
+
+        /// <summary>Creatures slain by crawlers since the session started (K3.3; unsaved, for the day's checks).</summary>
+        public int Kills { get; private set; }
+
+        /// <summary>
+        /// A crawler in a fight asks to swing at <paramref name="creature"/> this tick (K3.3, from its intent, before the
+        /// creatures' phase); the phase decides it with every creature's swing, from where all stand, before any harm lands.
+        /// </summary>
+        public void AskSwing(WorldEntity crawler, EntityId creature)
+        {
+            if (crawler?.Agent == null || creature == default) return;
+            for (int i = 0; i < _asked.Count; i++) if (_asked[i].Crawler == crawler) return; // one a tick
+            _asked.Add(new CrawlerSwing { Crawler = crawler, Target = creature });
+        }
+
         private readonly GridAStarSearcher _searcher = new GridAStarSearcher();
         private readonly PathResponse _path = NewPathBuffer();
         private readonly List<Swing> _swings = new List<Swing>(16);
@@ -68,11 +94,73 @@ namespace Simpiens.Simulation.Creatures
 
             _swings.Clear();
             for (int i = 0; i < _creatures.Count; i++) DecideSwing(_creatures[i], entities, tick);
+            DecideCrawlerSwings(tick);
             for (int i = 0; i < _swings.Count; i++) world.Strike(_swings[i].Target, _swings[i].Attacker.Id, _swings[i].Outcome, tick);
+            for (int i = 0; i < _blows.Count; i++) Land(world, _blows[i], tick);
 
             // Who knows of a lair now (K2.3, D17): a crawler struck by one of its creatures, or one who sees one
             for (int i = 0; i < _swings.Count; i++) Chart(_swings[i].Attacker.LairIndex, _swings[i].Target.Id, struck: true);
             Sightings(snapshot, entities);
+        }
+
+        // The crawlers' asked swings, in the order they were asked (the intents' order): each on its feet, at a creature alive
+        // and in its reach, its own timer ready; rolled on the attacker's stream as a creature's are (D3)
+        private void DecideCrawlerSwings(uint tick)
+        {
+            _blows.Clear();
+            for (int i = 0; i < _asked.Count; i++)
+            {
+                var ask = _asked[i];
+                var agent = ask.Crawler.Agent;
+                if (agent == null || agent.IsDowned || agent.Health <= 0f || agent.HasLeft) continue;
+                if (!TryGet(ask.Target, out var creature) || !creature.IsAlive || creature.Definition == null) continue;
+                var me = Combatant.ForCrawler(agent, ask.Crawler.Radius);
+                var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+                if (!CombatRules.CanStrike(me, them, tick, agent.NextSwingAt)) continue;
+                ask.Outcome = CombatRules.Swing(_seed, tick, me, them);
+                ask.Creature = creature;
+                agent.NextSwingAt = CombatRules.NextSwingAt(tick, me);
+                _blows.Add(ask);
+            }
+            _asked.Clear();
+        }
+
+        // A crawler's blow on a creature: its weapon wears by the landed hit (D7); the creature turns on its attacker if it
+        // was minding its own business; at no health it is slain, out of the world, and returns to its place in its time (Q5)
+        private void Land(ICreatureWorld world, in CrawlerSwing blow, uint tick)
+        {
+            var creature = blow.Creature;
+            var agent = blow.Crawler.Agent;
+            if (creature == null || !creature.IsAlive) return;
+            if (!blow.Outcome.Hit)
+            {
+                Provoke(creature, blow.Crawler);
+                return;
+            }
+            if (agent?.Inventory != null && CombatRules.WearOnHit(blow.Outcome, agent.Inventory))
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)}'s weapon broke on {CreatureCatalog.NameOf(creature.Kind)} {creature.Id}");
+            creature.Health = SimMath.Max(0f, (float)(creature.Health - blow.Outcome.Damage));
+            if (creature.Health > 0f)
+            {
+                Provoke(creature, blow.Crawler);
+                return;
+            }
+            Kills++;
+            Slay(world, creature.Id, tick);
+            world.CreatureSlain(blow.Crawler.Id, creature, tick);
+        }
+
+        // Struck while resting, roaming or going home, a creature turns on whoever struck it, within its leash (a fleeing one
+        // runs on)
+        private void Provoke(CreatureState creature, WorldEntity attacker)
+        {
+            if (creature.Mode == CreatureMode.Chase || creature.Mode == CreatureMode.Flee) return;
+            var kind = creature.Definition;
+            if (kind == null || creature.LairIndex < 0 || creature.LairIndex >= _lairs.Count) return;
+            if (!IsQuarry(attacker, kind, _lairs[creature.LairIndex].Definition.Position)) return;
+            creature.Mode = CreatureMode.Chase;
+            creature.Target = attacker.Id;
+            creature.ForgetPath();
         }
 
         /// <summary>How far a crawler sees a creature (its vision, as it sees everything else).</summary>

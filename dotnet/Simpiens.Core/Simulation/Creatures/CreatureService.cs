@@ -23,6 +23,9 @@ namespace Simpiens.Simulation.Creatures
 
         /// <summary>A creature's swing at a crawler (K2.2, D13): the harm if it landed, the red coat, the armour's wear, a downing.</summary>
         void Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick);
+
+        /// <summary>A crawler slew a creature (K3.3): the log and the chronicle. The creature is already out of the world.</summary>
+        void CreatureSlain(EntityId slayer, CreatureState creature, uint tick);
     }
 
     /// <summary>
@@ -163,6 +166,8 @@ namespace Simpiens.Simulation.Creatures
             _creatures.Clear();
             _idCounter = 0;
             _charted = 0UL;
+            _asked.Clear();
+            Kills = 0;
         }
 
         /// <summary>The creature with <paramref name="id"/>; false for none.</summary>

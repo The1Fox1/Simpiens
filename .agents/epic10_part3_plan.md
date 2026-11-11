@@ -271,6 +271,11 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - the bold and armed fight back;
   - the bold buy a weapon (Q6);
   - outfitting for creatures comes from K1.4's rule.
+  - [x] **K3.3a The fight:** [Possibly Complex: a reflex, an intent, and crawlers' swings in the creatures' pass]
+    - Struck, a crawler who is bold (as one who would venture), armed (it strikes harder than a bare hand) and above the retreat line fights back (`Vitality.FightsBack`); the rest flee as before. The runtime pre-empts for either; `AgentContext.StruckBy`.
+    - `FightIntent`: out of reach it steps toward the creature, in reach it asks the creatures' pass for a swing (`SwingAtCreature`, `CreatureService.AskSwing`); done when the creature is slain, gone, or runs past 3 units; failed under the retreat line (it then flees) or downed. Shown defiant.
+    - The pass decides the crawlers' asked swings with the creatures' own, from where all stand, before any harm lands (D6), on each attacker's stream; the crawler's timer is its own (`AgentState.NextSwingAt`, unsaved: a fight is work in progress). A blow wears its weapon (D7) and turns a resting or roaming creature on its attacker; at no health the creature is slain (`Slay`: its place waits 48 game hours), the chronicle tells it (`CreatureSlain`), and `CreatureService.Kills` counts it.
+    - Tests `FightTests` (4): with the glowstone edge and a ring coat a bold crawler slays the beetle that struck it in 9 blows, keeping 66 health; the timid with a blade and the bold bare-handed flee; a fighter under the retreat line flees.
 - [ ] **K3.4 The client:** [Possibly Complex: worn sprites and Gum UI]
   - weapons in hand;
   - the new goods in the merchant terminal and the party builder.
