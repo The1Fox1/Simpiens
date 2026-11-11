@@ -151,6 +151,13 @@ namespace Simpiens.Simulation.Economy
             // herbs or ore, two hours' work), none to start
             items[(int)ItemType.Respirator] = new ItemTerms(80, StallRole.Sells, 60, 0);
             items[(int)ItemType.HardHat] = new ItemTerms(80, StallRole.Sells, 60, 0);
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): the caravan's cudgel at 12g; what the forge makes priced as
+            // the forge's goods are, its inputs and its hours under what a neutral crawler would pay; none to start
+            items[(int)ItemType.Cudgel] = new ItemTerms(15, StallRole.Sells, 12, 0);
+            items[(int)ItemType.IronBlade] = new ItemTerms(50, StallRole.Sells, 40, 0);
+            items[(int)ItemType.GlowstoneEdge] = new ItemTerms(110, StallRole.Sells, 85, 0);
+            items[(int)ItemType.IronHelm] = new ItemTerms(40, StallRole.Sells, 30, 0);
+            items[(int)ItemType.RingCoat] = new ItemTerms(70, StallRole.Sells, 55, 0);
             return items;
         }
 

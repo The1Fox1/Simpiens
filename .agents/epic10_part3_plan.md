@@ -258,11 +258,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K3. Melee arms and armour (2–3 days), then the producer's look
 **Complexity:** Possibly Complex: items on K1's table, and one new reflex.
-- [ ] **K3.1 Melee weapons (Q10):** [Possibly Complex: a stat read in combat]
+- **The go:** "Continue" (2026-11-10), after K2's report: K2.5's inspector, then K3 up to the stop for the producer's look.
+- [x] **K3.1 Melee weapons (Q10):** [Possibly Complex: a stat read in combat]
   - the cudgel, the iron blade and the glowstone edge;
   - their recipes, and the caravan's terms;
   - wear per hit; grades and repair.
-- [ ] **K3.2 Armour from ore (Q11):** [Basic: item rows and recipes, by AGENTS.md's "Adding an item"] the iron helm and the ring coat.
+  - **Built** (with K3.2): `ItemType` 10–12, rows in `ItemCatalog` (the weapon slot; attack +3 and reach +0.1 for the cudgel, +6 and a swing a tenth quicker for the blade, +10 and the same for the edge; durability 80, 120, 160 blows landed), the stall's terms (sold at 12g, 40g, 85g, none to start), the forge's recipes (the blade three ore in 2 h, the edge two ore and a glowstone in 3 h); looks in `ItemArt` on two new shapes (`Club`, `Blade`); words in `ItemTexts`. Grades and repair follow, since each forged piece has a recipe.
+  - **Deviation:** the caravan's cudgel supply moves to K3.3. Stocked before anyone buys a weapon, its 12g once tipped the crafting loop's quits for pay from 2 to 6 of seeds 1–20, so it comes with its buyers and is measured with them.
+- [x] **K3.2 Armour from ore (Q11):** [Basic: item rows and recipes, by AGENTS.md's "Adding an item"] the iron helm and the ring coat.
+  - **Built:** `ItemType` 13–14: the iron helm (head, defense +3, two ore in 2 h, 30g) and the ring coat (body, defense +6, four ore in 3 h, 55g), each wearing by the blow taken (80 and 120); the helm on the helmet's shape in dark iron, the coat on a new `Mail` shape, worn as a coat. The worn figures, bodies and portraits follow.
 - [ ] **K3.3 Fighting back:** [Possibly Complex: cognition, a fact and a reflex]
   - the bold and armed fight back;
   - the bold buy a weapon (Q6);
@@ -270,6 +274,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 - [ ] **K3.4 The client:** [Possibly Complex: worn sprites and Gum UI]
   - weapons in hand;
   - the new goods in the merchant terminal and the party builder.
+  - **Done with K3.1** (the new goods overflowed both windows at 720 rows): the merchant terminal's goods scroll past nine (the window 24 px wider for the scrollbar), the station window's orders past four.
 - **DoD `AnArmedCrawlerFightsBack`:** on a gate seed, the scripted player stocks blades; a bold resident buys one, meets vermin, fights and kills one; the day holds.
 - **Stop for the producer's look** at the first fights.
 

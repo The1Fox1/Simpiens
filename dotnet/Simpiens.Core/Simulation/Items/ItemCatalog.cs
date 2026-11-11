@@ -89,7 +89,33 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.HardHat, "HardHat", "Hard Hat",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
                 equipment: new EquipmentBlock(SlotKind.Head, durability: 1500, WearRule.PerHazardTick,
-                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f)))
+                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f))),
+            // Melee weapons (Epic 10 Part 3, K3.1, Q10), in the weapon slot, on the bare hand's 2 attack a swing every 1.5 s
+            // (the combat rule's D2); each wears by the blow landed. Placeholder numbers, tuned by K3's fights
+            new ItemDefinition(ItemType.Cudgel, "Cudgel", "Cudgel",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Botanical, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 80, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 3f),
+                    new StatModifier(StatKind.Reach, ModifierOp.Add, 0.1f))),
+            new ItemDefinition(ItemType.IronBlade, "IronBlade", "Iron Blade",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 6f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
+            new ItemDefinition(ItemType.GlowstoneEdge, "GlowstoneEdge", "Glowstone Edge",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Rare,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 160, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 10f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
+            // Armour from ore (K3.2, Q11): defense cuts a blow by D / (D + 10) (the combat rule's D4), and wears by the blow taken
+            new ItemDefinition(ItemType.IronHelm, "IronHelm", "Iron Helm",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 80, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 3f))),
+            new ItemDefinition(ItemType.RingCoat, "RingCoat", "Ring Coat",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 120, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 6f)))
         };
 
         /// <summary>

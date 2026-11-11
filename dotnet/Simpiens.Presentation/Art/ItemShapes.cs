@@ -18,6 +18,9 @@ namespace Simpiens.Presentation.Art
         public const string Flask = "flask";
         public const string Mask = "mask";
         public const string Vest = "vest";
+        public const string Club = "club";
+        public const string Blade = "blade";
+        public const string Mail = "mail";
 
         public const int GlyphSize = 12;
 
@@ -134,6 +137,54 @@ namespace Simpiens.Presentation.Art
                 "...223333...",
                 "....3344....",
                 "............",
+                "............",
+            },
+            // A studded club, its head at the top right (the cudgel; Epic 10 Part 3, K3.1)
+            [Club] = new[]
+            {
+                "......1112..",
+                ".....112223.",
+                ".....12a2b3.",
+                "....1222233.",
+                "....12b2a33.",
+                "...12223334.",
+                "...a23334...",
+                "..ab.44.....",
+                ".ab.........",
+                "ab..........",
+                "b...........",
+                "............",
+            },
+            // A straight blade, point at the top right, a crossguard and a wrapped grip (the iron blade, the glowstone edge)
+            [Blade] = new[]
+            {
+                "..........11",
+                ".........123",
+                "........123.",
+                ".......123..",
+                "......123...",
+                ".....123....",
+                "..a.123.....",
+                "...a23......",
+                "...ba.......",
+                "..bc.a......",
+                ".bc.........",
+                "cd..........",
+            },
+            // A coat of rings with short sleeves, the rings in dots (the ring coat, worn on the body; K3.2)
+            [Mail] = new[]
+            {
+                "............",
+                "..12....23..",
+                ".1222..2333.",
+                "122a2222a334",
+                "12a2a22a2a34",
+                ".22a2a2a2a3.",
+                "..2a2a2a23..",
+                "..22a2a2a3..",
+                "..2a2a2a23..",
+                "..22a2a2a3..",
+                "..23333334..",
                 "............",
             },
             // A sleeveless suit, open at the neck, with two reflective bands (hazard gear, worn on the body; Epic 10 Part 3, K1.5)

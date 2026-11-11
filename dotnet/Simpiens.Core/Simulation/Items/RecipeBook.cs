@@ -54,7 +54,12 @@ namespace Simpiens.Simulation.Items
             new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2)),
             // D48: protection by kind, two hours at the forge from a glowstone, with herbs for the filters or ore for the shell
             new Recipe(ItemType.Respirator, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.MedicinalHerb, 2)),
-            new Recipe(ItemType.HardHat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.IronOre, 2))
+            new Recipe(ItemType.HardHat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.IronOre, 2)),
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): blades and armour from ore, the edge with glowstone
+            new Recipe(ItemType.IronBlade, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)),
+            new Recipe(ItemType.GlowstoneEdge, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Glowstone, 1)),
+            new Recipe(ItemType.IronHelm, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2)),
+            new Recipe(ItemType.RingCoat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 4))
         };
 
         /// <summary>

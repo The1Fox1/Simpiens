@@ -52,6 +52,13 @@ namespace Simpiens.Presentation.Art
             // a steel helm on the head
             ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191), Worn.Face),
             ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): the cudgel's oak and iron studs; the blade's steel and its
+            // leather grip, the edge's glowstone amber on a dark grip; the helm dark iron with a black visor; the ring coat steel
+            ["cudgel"] = new ItemLook(ItemShapes.Club, new Rgba32(146, 98, 56), new Rgba32(120, 128, 140)),
+            ["iron-blade"] = new ItemLook(ItemShapes.Blade, new Rgba32(203, 213, 225), new Rgba32(120, 72, 32)),
+            ["glowstone-edge"] = new ItemLook(ItemShapes.Blade, new Rgba32(251, 191, 36), new Rgba32(51, 65, 85)),
+            ["iron-helm"] = new ItemLook(ItemShapes.Helmet, new Rgba32(100, 110, 124), new Rgba32(15, 18, 24), Worn.Head),
+            ["ring-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(160, 170, 182), new Rgba32(84, 92, 104), Worn.Torso),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

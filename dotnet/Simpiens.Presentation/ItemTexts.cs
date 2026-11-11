@@ -44,6 +44,12 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.HealingDraught] = new ItemText("Healing draught", "Made at the still from two herbs; heals 80 at once", "Draught", "Draught", "DRAUGHT");
             _texts[(int)ItemType.Respirator] = new ItemText("Respirator", "Forged; for bad air", "Respirator", "Respirator", "RESPIRATOR");
             _texts[(int)ItemType.HardHat] = new ItemText("Hard hat", "Forged; for falling rock", "Hard hat", "Hard hat", "HARD HAT");
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2)
+            _texts[(int)ItemType.Cudgel] = new ItemText("Cudgel", "From the caravan; a cheap club", "Cudgel", "Cudgel", "CUDGEL");
+            _texts[(int)ItemType.IronBlade] = new ItemText("Iron blade", "Forged from three ore", "Iron blade", "Iron blade", "IRON BLADE");
+            _texts[(int)ItemType.GlowstoneEdge] = new ItemText("Glowstone edge", "Forged from ore and glowstone", "Glowstone edge", "Glowstone edge", "GLOWSTONE EDGE");
+            _texts[(int)ItemType.IronHelm] = new ItemText("Iron helm", "Forged from two ore; turns blows", "Iron helm", "Iron helm", "IRON HELM");
+            _texts[(int)ItemType.RingCoat] = new ItemText("Ring coat", "Forged from four ore; turns blows", "Ring coat", "Ring coat", "RING COAT");
         }
 
         public static ItemText Of(ItemType item)
