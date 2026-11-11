@@ -291,7 +291,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - **The party builder:** the guild's outfit (K1.4's rule, by hazards) gives no weapons yet: weapons for a party come with the Clear order (K7). Nothing to show there.
 - **DoD `AnArmedCrawlerFightsBack`:** on a gate seed, the scripted player stocks blades; a bold resident buys one, meets vermin, fights and kills one; the day holds.
   - **Done 2026-11-11** (`04a8d1e`): gate seed 18, the slayer SwarmAgent_11 at t14382 with an iron blade it bought, the days holding.
-- **Stop for the producer's look** at the first fights.
+- **Stop for the producer's look** at the first fights. **Here, 2026-11-11.**
 
 ### K4. Loot (2–3 days)
 **Complexity:** Possibly Complex: rolls already exist; piles are a new entity with saved state.

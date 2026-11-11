@@ -1646,3 +1646,18 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **K2.4** (`7f6f918`): `CreatureSave` in the world's block, owned by `CreatureService` (as the workshops own theirs). The swing's timer is saved (D8, so K11.1's mid-fight load holds); paths and the strike pose's tick aren't. A save that doesn't fit the map is refused before anything changes. A load registers creatures after the crawlers, so a loaded session's registry order differs from the original's; no check needs it to match, since crawlers decide afresh after a load.
 - **The strike pose** (`570ada4`): the core notes a swing's tick (unsaved, view-only, as `HurtThisTick` is), and the view times the lunge.
 - **Finding F4:** seed 82 of 1–120 fails on one Grove jitter with no creature involved; the change of timing surfaced it.
+
+## 2026-11-10 to 2026-11-11: Epic 10 Part 3, the inspector's creature and K3, melee arms and armour
+- **The go:** "Continue", after K2's report: the inspector's creature (K2.5's last piece), then K3 up to its stop for the producer's look at the first fights.
+- **The inspector** (`8a91b62`): the selection holds a crawler or a creature, never both, so nothing that reads the crawler is handed a creature. A creature's card stands in the portrait's place, baked once per scale into a region of the portrait atlas from its sprite, three to one, so UI art stays drawn 1:1.
+- **K3.1–K3.2** (`a011275`): five items as rows on K1's tables. The new goods overflowed the merchant terminal and the station window at 720 rows, so their lists scroll (K3.4's part, done with K3.1).
+  - **Deviation:** the caravan's cudgels moved to K3.3. Stocked before anyone buys a weapon, their 12g once tipped the crafting loop's quits for pay from 2 to 6 of 20 seeds; they came with their buyers.
+- **K3.3:**
+  - **The fight** (`72e2b04`): a crawler's swing is asked for by its intent and decided in the creatures' pass, so D6 holds across both sides.
+  - **The bold arm themselves and brave what they can clear** (`d5d37cf`, D21): Q6's "past what it would brave alone" read as the harm expected while slaying the smallest pack against the health above the retreat line. Without it, nobody armed would ever meet a creature after day one.
+  - **Weapon upgrades with a trade-in:** the handler's trade-in was protection's alone.
+  - **Blade tuning:** the blade +8 and the edge +12, so a blade clears a lone beetle or three rats.
+  - **Older single-seed scenarios got room:** their outcomes sat at the edge of their horizons, the same fragility as F3's.
+- **The DoD** (`04a8d1e`): gate seed 18, a kill at t14382.
+- **K3.4** (`86fdbb3`): a weapon is worn in the hand. The hand is the rightmost skin under the head, so no new anchor table was needed.
+- **Golden:** re-recorded once, for the purchases (`a56309d`).
