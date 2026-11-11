@@ -36,6 +36,12 @@ namespace Simpiens.Client
 
         private readonly Rectangle[] _small = new Rectangle[CrawlerPortraits.Slots], _large = new Rectangle[CrawlerPortraits.Slots], _faces = new Rectangle[CrawlerPortraits.Slots];
         private readonly Rectangle[] _scaledFaces = new Rectangle[CrawlerPortraits.Slots];
+
+        /// <summary>Creature kinds with a card of their own (Epic 10 Part 3, K2.5), by their place in the catalogue.</summary>
+        public const int CreatureCards = 8;
+
+        private readonly Rectangle[] _creatures = new Rectangle[CreatureCards];
+        private readonly int[] _creatureScale = new int[CreatureCards]; // the scale each card was baked at; 0 before
         private readonly Rgba32[] _framed = new Rgba32[FramedSize * FramedSize], _magnified = new Rgba32[LargeCell * LargeCell], _face = new Rgba32[FaceSize * FaceSize];
         private readonly Color[] _scratch = new Color[LargeCell * LargeCell];
 
@@ -55,7 +61,11 @@ namespace Simpiens.Client
                 _faces[i] = new Rectangle(i % perFace * (FaceSize + Gutter), faceTop + i / perFace * (FaceSize + Gutter), FaceSize, FaceSize);
                 _scaledFaces[i] = new Rectangle(i % perScaledFace * (FaceCell + Gutter), scaledFaceTop + i / perScaledFace * (FaceCell + Gutter), FaceCell, FaceCell);
             }
-            Texture = new Texture2D(device, Width, scaledFaceTop + scaledFaceRows * (FaceCell + Gutter));
+            // The creatures' cards (K2.5) in a row of large cells after the faces
+            int creatureTop = scaledFaceTop + scaledFaceRows * (FaceCell + Gutter);
+            for (int i = 0; i < CreatureCards; i++) _creatures[i] = new Rectangle(i % perLarge * (LargeCell + Gutter), creatureTop + i / perLarge * (LargeCell + Gutter), LargeCell, LargeCell);
+            int creatureRows = (CreatureCards + perLarge - 1) / perLarge;
+            Texture = new Texture2D(device, Width, creatureTop + creatureRows * (LargeCell + Gutter));
         }
 
         /// <summary>Screen pixels per art pixel in the dossier and the inspector: 2 in a 720-row window, 3 at 1080, 4 at 1440.</summary>
@@ -101,6 +111,7 @@ namespace Simpiens.Client
             {
                 if (Table.TryKeyIn(slot, out _)) Bake(slot);
             }
+            System.Array.Clear(_creatureScale); // the creatures' cards bake again when next shown
             return true;
         }
 
@@ -120,6 +131,26 @@ namespace Simpiens.Client
 
         /// <summary>Where <paramref name="key"/>'s face is at <see cref="FaceScale"/>x (who is in a sector), baked now if its portrait wasn't.</summary>
         public Rectangle ShowScaledFace(in PortraitKey key) => At(_scaledFaces[Seat(key)], ScaledFaceSize);
+
+        /// <summary>
+        /// Where <paramref name="kind"/>'s card is in <see cref="Texture"/> at <see cref="Scale"/>x (K2.5: the inspector shows a
+        /// creature in a portrait's place), baked now if it wasn't at this scale; empty for a kind past the cards' room.
+        /// </summary>
+        public Rectangle ShowCreature(Simpiens.Simulation.Creatures.CreatureKind kind)
+        {
+            var all = Simpiens.Simulation.Creatures.CreatureCatalog.All;
+            int index = -1;
+            for (int i = 0; i < all.Count && index < 0; i++) if (all[i].Id == kind) index = i;
+            if (index < 0 || index >= CreatureCards) return Rectangle.Empty;
+            if (_creatureScale[index] != Scale)
+            {
+                Simpiens.Presentation.Art.CreatureCards.BakeFramed(kind, _framed);
+                PortraitKit.Magnify(_framed, FramedSize, Scale, _magnified);
+                Write(At(_creatures[index], Size), _magnified);
+                _creatureScale[index] = Scale;
+            }
+            return At(_creatures[index], Size);
+        }
 
         // The key's slot, every pending bake written
         private int Seat(in PortraitKey key)

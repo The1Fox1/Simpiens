@@ -90,7 +90,8 @@ namespace Simpiens.Client.Tests
             foreach (var creature in creatures)
             {
                 var art = scene.Catalog.Piece(scene.Visuals.Creature(creature.Kind), 0f);
-                Assert.Contains(drawn, d => d.SpriteIndex == art.Sprite && d.X == creature.Position.X && d.Y == creature.Position.Y && d.Tint.A == 255 && d.Pick < 0);
+                Assert.Contains(drawn, d => d.SpriteIndex == art.Sprite && d.X == creature.Position.X && d.Y == creature.Position.Y && d.Tint.A == 255
+                    && d.Pick >= 0 && scene.Items.PickedEntity(d.Pick) == creature.Id); // a click picks it (K2.5)
             }
             Assert.Contains(drawn, d => d.SpriteIndex == SpriteSheets.World.IndexOf(CreatureSprites.Name("burrow-rat", 0)));
             Assert.Contains(drawn, d => d.SpriteIndex == SpriteSheets.World.IndexOf(CreatureSprites.Name("stone-beetle", 0)));
@@ -239,6 +240,96 @@ namespace Simpiens.Client.Tests
             var after = Drawn(t0 + CreatureAppearance.StrikeSeconds);
             Assert.Equal(at.X, after.X, 4);
             Assert.Equal(at.Y, after.Y, 4);
+        }
+
+        /// <summary>
+        /// K2.5: a click on a creature selects it (not as a crawler), with its sector, and the camera follows; the ring and its
+        /// kind's name are drawn over it; a click on a crawler then selects the crawler and drops the creature.
+        /// </summary>
+        [Fact]
+        public void AClickOnACreatureSelectsItWithItsRingAndName()
+        {
+            using var sim = Outpost();
+            ChartTheLairs(sim);
+            var identity = (Simpiens.Narrative.IAgentIdentityService)sim.Services.GetService(typeof(Simpiens.Narrative.IAgentIdentityService));
+            var frames = TestFrames.Of(sim);
+            var selection = new WorldSelection(frames, sim.Sectors, identity);
+            var map = sim.Host.Current.Map;
+            var scene = new WorldScene();
+            scene.Build(map, frames, 0f);
+            var view = new View(TopDownProjection.Instance, new ViewCamera(map.CameraFrame.Center, 32f, 1280, 720));
+            void Click(Vec2 world)
+            {
+                var screen = view.WorldToScreen(world);
+                WorldPicker.TryPick(scene.Items, view, screen, out var picked);
+                selection.ClickAt(view.ScreenToFloor(screen), picked);
+            }
+
+            var beetle = sim.Simulation.Creatures.Creatures.First(c => c.Kind == CreatureKind.StoneBeetle);
+            Click(beetle.Position);
+            Assert.Equal(beetle.Id, selection.SelectedCreature);
+            Assert.Equal(default, selection.SelectedCrawler);
+            Assert.True(selection.Following);
+            Assert.Equal(Floor1Layout.DeepSeamSectorId, selection.SelectedSector);
+            Assert.Equal("Stone Beetle", selection.SelectedName());
+            Assert.True(selection.TryGetSelectedPosition(out var at) && at == beetle.Position);
+            scene.Build(map, frames, 0f, selection);
+            Assert.Contains(scene.Labels, l => l.Text == "Stone Beetle");
+            var ring = scene.Catalog.Piece(scene.Catalog.Id(ArtKeys.SelectionRing), 0f).Sprite;
+            Assert.Contains(Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]), d => d.SpriteIndex == ring && d.X == beetle.Position.X && d.Y == beetle.Position.Y);
+
+            var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            Click(crawler.Position);
+            Assert.Equal(crawler.Id, selection.SelectedCrawler);
+            Assert.Equal(default, selection.SelectedCreature);
+        }
+
+        /// <summary>
+        /// K2.5: the map inspector shows a selected creature: its kind's name and card (its sprite three to one, in the frame
+        /// of a wild thing) in the portrait's place, what it does, its health against its kind's, no needs and no dossier.
+        /// The game's own picture: a beetle of the hollow, the Deep Seam charted by hand.
+        /// </summary>
+        [Fact]
+        public void TheInspectorShowsACreature()
+        {
+            var game = Offscreen.Start(new ClientOptions { View = ViewMode.Isometric, TicksPerUpdate = 100 }, frames: 1, width: 1280, height: 720);
+            var sim = game.Session.Simulation;
+            ChartTheLairs(sim);
+            game.RunOneFrame();
+            game.RunOneFrame();
+            game.Play.Dashboard.TogglePanels();
+            var beetle = sim.Simulation.Creatures.Creatures.First(c => c.Kind == CreatureKind.StoneBeetle);
+            game.Session.Selection.SelectCreature(beetle.Id, follow: false);
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            game.Play.Dashboard.Refresh();
+            var card = game.Play.Dashboard.Inspector;
+            var model = game.Session.DashboardModel.Inspector;
+            Assert.True(card.Root.Visible && model.IsCreature);
+            Assert.Equal("Stone Beetle", card.NameShown);
+            Assert.Equal("Wild. Its lair is in Deep Seam.", card.MoodShown);
+            Assert.Equal(100f * beetle.Health / beetle.Definition.MaxHealth, model.Health, 3);
+            Assert.False(card.OpenDossierButton.Visual.Visible);
+            Assert.True(card.Portrait.Visible);
+            var at = beetle.Position;
+            game.World.Rig.ZoomAt(at, 0.3f);
+            game.World.Rig.Pan(at - game.World.Rig.Position);
+            RenderTests.CompareWithReference("render-iso-inspector-beetle-t300", FrameCapture.Capture(game, 1280, 720), 1280, 720);
+        }
+
+        /// <summary>A creature's card (K2.5) is its sprite three to one inside a framed portrait's square: the same pixels every bake.</summary>
+        [Fact]
+        public void ACreaturesCardIsItsSpriteThreeToOneInItsFrame()
+        {
+            var card = new Rgba32[CreatureCards.FramedSize * CreatureCards.FramedSize];
+            var again = new Rgba32[card.Length];
+            CreatureCards.BakeFramed(CreatureKind.BurrowRat, card);
+            CreatureCards.BakeFramed(CreatureKind.BurrowRat, again);
+            Assert.Equal(card, again);
+            Assert.Equal(CreatureCards.FrameOuter, card[0]);
+            Assert.Equal(CreatureCards.FrameInner, card[CreatureCards.FramedSize + 1]);
+            var sprite = CreatureSprites.All.First(s => s.Name == CreatureSprites.Name("burrow-rat", 0));
+            var eye = sprite.Pixels.First(p => p.R == 236 && p.G == 58 && p.B == 50); // the rat's red eye
+            Assert.Equal(CreatureCards.Scale * CreatureCards.Scale, card.Count(p => p.Equals(eye))); // one sprite pixel, three by three
         }
 
         /// <summary>

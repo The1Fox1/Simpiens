@@ -245,9 +245,12 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - Tests: `CreatureViewTests` (the frames carry every creature as its kind; the fog hides them, and charted each is drawn as its kind where it stands, in both modes; a rat scuttles while it roams and stands still resting; facing by the projection, by hand; renders `render-iso-warren-t300` and `render-floor1-hollow-t300`, the lairs charted by hand); `ArtCompletenessTests` (every kind has its own art in both modes, every row is used); the sheet's order.
     - **Done 2026-11-09:** golden untouched (no core change). Five existing renders moved, each by the stone beetle alone, in the Deep Seam once a scout charts it (t1500, the fog lifting, the caravan at t2400, the expedition); they passed locally under the render tolerance, and the pinned image re-recorded them. Commits `f3d04b4` (code), `38953e6` (art pins), `003e672` (renders).
   - [x] **K2.5b The strike pose, with live hunting** (2026-11-10, `570ada4`): [Basic: a frame flag and a view timing] a creature notes when it last swung (`SwungAtTick`, unsaved); the frames carry its quarry and the swing; the view lunges it 0.2 units at its quarry over 0.25 s of view time, facing it. Test `ARatLungesAtWhatItStrikes`.
-  - Still K2.5's, each with the step that makes it visible:
-    - the red coat on creatures too, with K3 (nothing hurts a creature before);
-    - the inspector shows a creature (a creature is not pickable yet).
+  - [x] **K2.5c A creature in the inspector** (2026-11-10, "Continue"): [Possibly Complex: selection, the inspector's model and card, an atlas region]
+    - A creature is pickable; the selection holds a crawler or a creature, never both (`WorldSelection.SelectedCreature`, `Selected`, `TryGetSelectedPosition`, `SelectedName`); the ring, its name and the camera's follow take either.
+    - `InspectorModel` shows a creature (its kind's name, its badge by mode, its lair's room, its health against its kind's, what it does and after whom); `InspectorCard` hides the needs and the dossier for one; `PortraitAtlas.ShowCreature` bakes its kind's card (`CreatureCards`: its sprite three to one, centred on a cave's floor, in a frame of its own) once per scale.
+    - Tests `AClickOnACreatureSelectsItWithItsRingAndName`, `TheInspectorShowsACreature` (render `render-iso-inspector-beetle-t300`), `ACreaturesCardIsItsSpriteThreeToOneInItsFrame`.
+  - Still K2.5's, with the step that makes it visible:
+    - the red coat on creatures too, with K3 (nothing hurts a creature before).
 - **DoD `VerminDriveTheLoneAway`:** on the 23 gate seeds' day:
   - a crawler who strays into a lair's reach is hurt and flees;
   - nobody enters a known lair alone;

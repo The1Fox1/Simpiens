@@ -622,10 +622,19 @@ namespace Simpiens.Client.Ui
         {
             private readonly RectangleRuntime _fill;
             private readonly TextRuntime _value;
+            private readonly ContainerRuntime _row;
+
+            /// <summary>Shown or not (a creature in the inspector shows its health alone, Epic 10 Part 3, K2.5).</summary>
+            public bool Visible
+            {
+                get => _row.Visible;
+                set { if (_row.Visible != value) _row.Visible = value; }
+            }
 
             public DriveBar(ContainerRuntime parent, string label, Color color)
             {
                 var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 20f };
+                _row = row;
                 var name = UiParts.Text(label, UiStyle.TextSecondary, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);

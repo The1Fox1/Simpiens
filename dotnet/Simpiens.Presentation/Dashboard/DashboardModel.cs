@@ -68,8 +68,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The inspector's Follow: the camera follows the selected crawler, or stops.</summary>
         public void ToggleFollow()
         {
-            if (_selection == null || _selection.SelectedCrawler == default) return;
+            if (_selection == null || _selection.Selected == default) return;
             if (_selection.Following) _selection.StopFollowing();
+            else if (_selection.SelectedCreature != default) _selection.SelectCreature(_selection.SelectedCreature, follow: true); // K2.5
             else _selection.SelectCrawler(_selection.SelectedCrawler, follow: true);
             Refresh();
         }
@@ -98,6 +99,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The crawler the dossier shows.</summary>
         public EntityId SelectedCrawler => _selection != null ? _selection.SelectedCrawler : _selectedCrawler;
+
+        /// <summary>The creature the inspector shows (Epic 10 Part 3, K2.5); the dossier is a crawler's alone.</summary>
+        public EntityId SelectedCreature => _selection != null ? _selection.SelectedCreature : default;
 
         public void TogglePanels()
         {
@@ -193,7 +197,7 @@ namespace Simpiens.Presentation.Dashboard
             Bounties.Refresh();
             Guild.Refresh();
             Stations.Refresh();
-            Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following);
+            Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following, PanelsVisible ? default : SelectedCreature);
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);
             Dossier.Refresh(SelectedCrawler);
@@ -221,7 +225,7 @@ namespace Simpiens.Presentation.Dashboard
                 Sectors.Refresh(SelectedCrawler);
                 Dossier.Refresh(SelectedCrawler);
             }
-            else Inspector.Refresh(SelectedCrawler, _selection.Following);
+            else Inspector.Refresh(SelectedCrawler, _selection.Following, SelectedCreature);
         }
     }
 }

@@ -198,11 +198,11 @@ namespace Simpiens.Presentation
         /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController), hidden with the crawler in the fog.</summary>
         private void AddSelection(WorldSelection selection, float viewSeconds)
         {
-            if (!selection.TryGetCrawlerPosition(out var at)) return;
+            if (!selection.TryGetSelectedPosition(out var at)) return; // a crawler or a creature (K2.5)
             float shown = Fog.Visibility(at, viewSeconds);
             if (shown <= 0f) return;
             Add(DrawRole.Selection, 0f, _catalog.Piece(_ring, viewSeconds), at, Shown(White, shown));
-            Labels.Add(new WorldLabel(selection.CrawlerName(), at + _catalog.NameOffset, LabelKind.Name, Shown(NameColor, shown), _catalog.NameHeight));
+            Labels.Add(new WorldLabel(selection.SelectedName(), at + _catalog.NameOffset, LabelKind.Name, Shown(NameColor, shown), _catalog.NameHeight));
         }
 
         /// <summary><paramref name="colour"/> with its alpha scaled by how much shows through the fog.</summary>
@@ -245,7 +245,7 @@ namespace Simpiens.Presentation
         /// depth on the shadow they stand on: scuttling through its frames while it moves, its first frame while it stands,
         /// mirrored when it last went left on screen (<see cref="CreatureAppearance"/>). The fog hides it in an uncharted
         /// sector, as it hides a crawler (D1 = C). Striking, it lunges at its quarry, facing it (<see cref="LungeDistance"/>,
-        /// the strike pose); its shadow stays where it stands. Not pickable yet: the inspector shows a creature later.
+        /// the strike pose); its shadow stays where it stands. A click on it selects it, and the inspector shows it.
         /// </summary>
         private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds, WorldViewFrames frames)
         {
@@ -271,6 +271,7 @@ namespace Simpiens.Presentation
             }
             ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), drawnAt, tint);
             item.FlipX = facesLeft;
+            item.Pick = Items.Pickable(entity.Id); // a click selects it, and the inspector shows it
         }
 
         /// <summary>How far a creature's strike lunges toward its quarry at its deepest, in world units (K2.5's strike pose).</summary>

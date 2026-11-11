@@ -51,8 +51,8 @@ namespace Simpiens.Presentation
     }
 
     /// <summary>
-    /// What the player has selected on the map (Epic CLIENT M1.5), a port of Unity's <c>WorldSelection</c>: a crawler
-    /// (optionally followed by the camera) and a sector. View state shared by the camera and, from M2, the dashboard;
+    /// What the player has selected on the map (Epic CLIENT M1.5), a port of Unity's <c>WorldSelection</c>: a crawler or,
+    /// since Epic 10 Part 3's K2.5, a creature (optionally followed by the camera), and a sector. View state shared by the camera and, from M2, the dashboard;
     /// nothing here enters the simulation. It finds the crawler in the view's frames (review A3), where it is drawn.
     /// </summary>
     public sealed class WorldSelection
@@ -75,6 +75,12 @@ namespace Simpiens.Presentation
 
         public EntityId SelectedCrawler { get; private set; }
 
+        /// <summary>
+        /// The selected creature (Epic 10 Part 3, K2.5: the inspector shows one), or empty. A creature and a crawler are never
+        /// selected together: each selection clears the other.
+        /// </summary>
+        public EntityId SelectedCreature { get; private set; }
+
         /// <summary>The selected sector id, or -1.</summary>
         public int SelectedSector { get; private set; } = -1;
 
@@ -87,11 +93,26 @@ namespace Simpiens.Presentation
         public void SelectCrawler(EntityId id, bool follow)
         {
             DropOtherWorld();
-            if (SelectedCrawler == id && Following == follow) return;
+            if (SelectedCrawler == id && Following == follow && (id == default || SelectedCreature == default)) return;
             SelectedCrawler = id;
+            if (id != default) SelectedCreature = default;
             Following = follow && id != default;
             Changed?.Invoke();
         }
+
+        /// <summary>Selects a creature (K2.5), and the camera follows it when <paramref name="follow"/>; the crawler is deselected.</summary>
+        public void SelectCreature(EntityId id, bool follow)
+        {
+            DropOtherWorld();
+            if (SelectedCreature == id && Following == follow && SelectedCrawler == default) return;
+            SelectedCreature = id;
+            if (id != default) SelectedCrawler = default;
+            Following = follow && id != default;
+            Changed?.Invoke();
+        }
+
+        /// <summary>The selected crawler or creature; empty for none.</summary>
+        public EntityId Selected => SelectedCrawler != default ? SelectedCrawler : SelectedCreature;
 
         public void SelectSector(int sectorId)
         {
@@ -108,13 +129,18 @@ namespace Simpiens.Presentation
             Changed?.Invoke();
         }
 
-        public void ClearCrawler() => SelectCrawler(default, false);
+        public void ClearCrawler()
+        {
+            if (SelectedCreature != default) SelectCreature(default, false);
+            SelectCrawler(default, false);
+        }
 
         /// <summary>Drops everything (the world was rebuilt; the selected crawler no longer exists).</summary>
         public void Clear()
         {
-            if (SelectedCrawler == default && SelectedSector < 0 && !Following) return;
+            if (SelectedCrawler == default && SelectedCreature == default && SelectedSector < 0 && !Following) return;
             SelectedCrawler = default;
+            SelectedCreature = default;
             SelectedSector = -1;
             Following = false;
             Changed?.Invoke();
@@ -129,8 +155,10 @@ namespace Simpiens.Presentation
         {
             if (picked != default)
             {
-                SelectCrawler(picked, follow: true);
-                if (TryGetCrawlerPosition(out var at)) SelectSectorAt(at);
+                // A creature is selected as a creature (K2.5), anything else picked as a crawler
+                if (_frames != null && _frames.Current.TryGetIndex(picked, out int index) && _frames.Current[index].IsCreature) SelectCreature(picked, follow: true);
+                else SelectCrawler(picked, follow: true);
+                if (TryGetSelectedPosition(out var at)) SelectSectorAt(at);
                 return;
             }
             ClearCrawler();
@@ -154,6 +182,14 @@ namespace Simpiens.Presentation
             return SelectedCrawler != default && _frames != null && _frames.Epoch == _epoch && _frames.TryGetDrawnPosition(SelectedCrawler, out position);
         }
 
+        /// <summary>Where the selected crawler or creature is drawn (the ring, the name, the camera's follow); false as <see cref="TryGetCrawlerPosition"/>.</summary>
+        public bool TryGetSelectedPosition(out Vec2 position)
+        {
+            position = default;
+            var id = Selected;
+            return id != default && _frames != null && _frames.Epoch == _epoch && _frames.TryGetDrawnPosition(id, out position);
+        }
+
         /// <summary>
         /// Brings the selection up to date with the frames, once per update: a rebuilt world (a new epoch: entity ids are
         /// reissued) drops everything, and a crawler that left the world is dropped.
@@ -161,8 +197,9 @@ namespace Simpiens.Presentation
         public void Update()
         {
             DropOtherWorld();
-            if (SelectedCrawler == default || _frames == null) return;
-            if (!_frames.Current.TryGetIndex(SelectedCrawler, out _)) ClearCrawler();
+            if (_frames == null) return;
+            if (SelectedCrawler != default && !_frames.Current.TryGetIndex(SelectedCrawler, out _)) ClearCrawler();
+            if (SelectedCreature != default && !_frames.Current.TryGetIndex(SelectedCreature, out _)) SelectCreature(default, false); // slain
         }
 
         /// <summary>The frames show another world than the one the selection was made in: drop it.</summary>
@@ -177,6 +214,14 @@ namespace Simpiens.Presentation
         {
             if (SelectedCrawler == default || _identity == null) return string.Empty;
             return _identity.GetFriendlyName(SelectedCrawler);
+        }
+
+        /// <summary>The name over the selection: the crawler's, or the creature kind's (K2.5).</summary>
+        public string SelectedName()
+        {
+            if (SelectedCrawler != default) return CrawlerName();
+            if (SelectedCreature == default || _frames == null || !_frames.Current.TryGetIndex(SelectedCreature, out int index)) return string.Empty;
+            return Simpiens.Simulation.Creatures.CreatureCatalog.Get(_frames.Current[index].Creature)?.DisplayName ?? string.Empty;
         }
     }
 }
