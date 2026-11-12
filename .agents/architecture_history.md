@@ -1709,3 +1709,5 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **K5 faults found (F7):** the carried fallen blocked its carrier's waypoint (`Locomotion.IsPositionBlocked` now ignores it); a downed carrier's carry ran a tick more; the carry stepped back to where the fallen lay; the anomaly watch judged the carried's moves as jitter.
 - **The guild player arms by the slot table** (`EquipmentSlots.All`), not by naming slots (`SlotNamesTests`).
 - **Golden unchanged:** nothing in a golden run's 3,000 ticks is on an expedition, carried or under a carry order.
+- **K7.3** (`aeca8c6`, render `6fe5887`): the builder's target list carries both kinds (sectors to gather, lairs to clear) rather than a new control, so its row's layout holds. Arming has one planner, `GuildRules.PlanArms`, shared by the builder and the scripted player, as `PlanOutfit` is for hazard gear.
+- **K7's gate** (2026-11-12): core 272/272, client 510/510 in the pinned image, golden unchanged, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.

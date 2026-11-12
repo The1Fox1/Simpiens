@@ -441,7 +441,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - focus fire through the directive;
   - the retreat rule;
   - rescue under orders through K5's carrying.
-- [ ] **K7.3 The client:** [Possibly Complex: Gum UI]
+- [x] **K7.3 The client:** [Possibly Complex: Gum UI]
   - the Clear order in the party builder;
   - the fight in the tracker: the party's health and its foe's.
 - **DoD `AnArmedPartyClearsANest`:** the scripted player arms four and orders a clearing. They fight together, clear the nest, carry anyone fallen out and bring back loot. The ledger balances.
@@ -458,12 +458,15 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - **Built differently (D42):** as planned, mates kept hunting (a hunt isn't pre-empted when struck) and the one that came was the most hurt, downed in turn while it carried. Now the guild sends the carrier, as it picks the focus: one fallen member at a time, carried by the mate on its feet with the most health (`GuildParty.Fallen`, `Carrier`; `ExpeditionOrder.Carry`). The carrier drops what it does once per order, comes struck or not, and carries on when struck; the rest hold. A mate doesn't come of its own accord; friends outside the party keep K5's rule.
     - **Two of K5's carries fixed on the way (F7):** the fallen on its carrier's back blocked the carrier's next waypoint, so a carry out stuck at the first turn of its path; and a downed carrier's carry ran a tick more. The carry walks on from the path's second waypoint (the first is where the fallen lay), and the anomaly watch doesn't judge a carried crawler's moves.
     - **Tests:** `ClearOrderTests` (6: the target, the fight's start and end with the focus and the thanks, both turn-backs, the carrier, the fight line). Core 272/272 (9 explicit), client 507/507, golden unchanged.
-  - [ ] **K7.3 The client:** [Possibly Complex: Gum UI and renders] the Clear order in the party builder, with the charted lairs; the tracker's fight: the party's health and the lair's.
+  - [x] **K7.3 The client:** [Possibly Complex: Gum UI and renders] the Clear order in the party builder, with the charted lairs; the tracker's fight: the party's health and the lair's.
+    - **Built:** the builder's target cycles through the charted hazard sectors, then the charted lairs with a creature ("Clear the burrow rats"); a clear hides the goal and arms from stock ("Arm: iron blade") through `GuildRules.PlanArms`, which the scripted guild player now shares. The tracker names the clear and its stage, what was picked up, and the fight ("Burrow rats: 3 of 4 left · party health 90"); members show the fallen and the carrier. Tests: `ClearUiTests` (3); the render `render-outpost-clear`, looked at and recorded in the pinned image; no other render moved. Client 510/510 in the pinned image.
   - [x] **K7.4 The DoDs:** [Possibly Complex: live scenarios] `AnArmedPartyClearsANest` (the guild player arms its party from the stall's stock, the workshop player making blades), and, from K5 (F6), `AFriendCarriesTheFallenOut` and `DeathHasItsCost`, measured on the gate seeds first.
     - **Done** (`ClearScenarioTests`; the guild player's `SendClear` arms each member slot by slot from the stall's stock):
       - `AnArmedPartyClearsANest` on gate seed 19: sent t22682, fighting t22998, the lair empty t23490, home t23684 with 4 of its material; the member who fell was carried out alive.
       - `AFriendCarriesTheFallenOut` on gate seed 6: a member collapses in the lair, the guild sends a mate, it is carried out and stands again at t23036.
       - `DeathHasItsCost` on gate seed 13, two sent unarmed against the beetles under the Bold rule: a member dies at t57349; friends grieve; the guild loses its contract; the body holds its belongings and 99g; a newcomer settles at t77509.
+    - **The gate** (2026-11-12): core 272/272 (9 explicit not run), client 510/510 in the pinned image, golden 3/3 unchanged, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles with 0 warnings.
+- **K7 is done (2026-11-12).**
     - **Measured** (the 23 gate seeds, eight days; `MeasureClearsOnTheGateSeeds`, `MeasureUnderArmedClearsOnTheGateSeeds`): An armed four clears a lair on 22 of the 23 gate seeds (seed 10 charts none in time), a fallen member is carried out alive on 7, nobody dies, and every day holds but seed 12's (F8). Two sent unarmed against the beetles under the Bold rule lose a member on 9 of the 23 (each grieved by a friend; a newcomer within the eight days on 8); seed 1's days fail there on a member starved, a pair sent again and again (F8). Seed 12's days fail on trust with any clear: the guild player's gifts on an early, repeated clear leave wages unpaid (F8).
 
 ### K8. Ranged combat (3–4 days), then the producer's look
