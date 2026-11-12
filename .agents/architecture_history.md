@@ -1711,3 +1711,14 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Golden unchanged:** nothing in a golden run's 3,000 ticks is on an expedition, carried or under a carry order.
 - **K7.3** (`aeca8c6`, render `6fe5887`): the builder's target list carries both kinds (sectors to gather, lairs to clear) rather than a new control, so its row's layout holds. Arming has one planner, `GuildRules.PlanArms`, shared by the builder and the scripted player, as `PlanOutfit` is for hazard gear.
 - **K7's gate** (2026-11-12): core 272/272, client 510/510 in the pinned image, golden unchanged, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.
+
+## 2026-11-12: Epic 10 Part 3, K8, ranged combat (under "Proceed with K6-K8")
+- **The split:** K8.2, Very Complex and supervised, was done as three parts (a clear line, Basic since the snapshot's ray existed; keeping distance; bows at the back), with D44–D48 in the epic for the developer's review.
+- **One rule over both kinds of shooter:** range, the chance's falloff, wear per shot and the keep-away line (`CombatRules.KeepAway`) are the combat rule's; a crawler's movement uses them in the fight's handlers (`Ranged`), a creature's in its rule (`Keep`). The clear line is the creatures' pass's, which holds the snapshot.
+- **Deviation found live:** members kept their march to the lair's heart into the fight, so bows walked into the beetles; the runtime now makes each member of a clear decide afresh once when the fight begins (as it does once per carry order). This also sends melee members in together, which moved K7's runs: two of its DoDs re-picked their seeds (3 and 7).
+- **Residents keep to blades:** the melee need no longer counts a ranged weapon's attack, and a shooting need does; without it residents bought slings as cudgels and seven live scenarios moved.
+- **The DoD's chain is the player's:** a scout bounty on the Overgrowth, the rats cleared for hides, two crossbows forged, then the beetles. Crossbows need hides, and the warren lies in the uncharted Overgrowth.
+- **Test hooks:** `Floor1Layout.BuildWith` and an internal `OutpostSession` constructor give a test the floor with a lair it doesn't have yet (spinners, until K10).
+- **Found:** the creatures' pass returned early when no creature was left, keeping the last tick's shots and any asked swings.
+- **Golden re-recorded** in its own commit (`2c34d44`): the caravan stocks slings from its first visit, t2600 on.
+- **K8's gate** (2026-11-12): core 276/276, client 512/512 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.

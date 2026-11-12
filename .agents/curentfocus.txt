@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-12 (Epic 10 Part 3 ACTIVE: K0-K5 done, K5's look passed by exception with "Proceed with K6-K8"; K6 hunting done 2026-11-11; K7 the guild goes to war done 2026-11-12 (D38-D43 for review, F7, F8); K8 ranged combat next, to the producer's look at ranged fights; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-12 (Epic 10 Part 3 ACTIVE: K0-K5 done, K5's look passed by exception with "Proceed with K6-K8"; K6 hunting done 2026-11-11; K7 the guild goes to war and K8 ranged combat done 2026-11-12 (D38-D48 for review, F7, F8); stop for the producer's look at ranged fights; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -105,7 +105,10 @@ CURRENT FOCUS
   AHuntBountyClearsALair on gate seed 18). K7, the guild goes to war, done 2026-11-12: the Clear order, the party's
   fight (focus fire, the party's rule over each member's line, the guild sending the carrier) and the client's builder
   and tracker (AnArmedPartyClearsANest, AFriendCarriesTheFallenOut, DeathHasItsCost; D38-D43 for the developer's
-  review; F7, F8). NEXT: K8, ranged combat, then the producer's look at ranged fights.
+  review; F7, F8). K8, ranged combat, done 2026-11-12 (slings and crossbows; shots with range, falloff and a clear line;
+  shooters keep their distance; bows at the back of a party; spinners spit on a test floor; shots drawn; ArchersHoldTheLine
+  on gate seed 19; D44-D48 for the developer's review; golden re-recorded for the caravan's slings).
+  NEXT: the producer's look at ranged fights (the plan's stop), then K9, the skill system.
   Nothing pushed.
   Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
@@ -135,7 +138,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K7 done; K8 ranged next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K8 done; the look at ranged fights is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.

@@ -471,20 +471,43 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K8. Ranged combat (3–4 days), then the producer's look
 **Complexity:** Very Complex: a second mode of combat with line of sight and positioning. Split as below. The developer supervises K8.2.
-- [ ] **K8.1 Ranged weapons (Q15, Q16):** [Possibly Complex: items on K1's table, with range in the combat rule]
+- [x] **K8.1 Ranged weapons (Q15, Q16):** [Possibly Complex: items on K1's table, with range in the combat rule]
   - the sling and the crossbow, their recipes and terms;
   - wear per shot;
   - the hit roll's fall with distance.
-- [ ] **K8.2 Line and distance:** [Very Complex, supervised by the developer: a ray over the nav grid in the hot path, and a new movement rule]
+- [x] **K8.2 Line and distance:** [Very Complex, supervised by the developer: a ray over the nav grid in the hot path, and a new movement rule]
   - a clear line before a shot;
   - a ranged fighter keeps its distance;
   - in a party, ranged members stand behind the melee.
-- [ ] **K8.3 Ranged creatures:** [Possibly Complex: a kind on K0.4's catalogue] the cave spinners spit, for K10's approach.
-- [ ] **K8.4 The client:** [Possibly Complex: art and renders]
+- [x] **K8.3 Ranged creatures:** [Possibly Complex: a kind on K0.4's catalogue] the cave spinners spit, for K10's approach.
+- [x] **K8.4 The client:** [Possibly Complex: art and renders]
   - shots drawn between ticks from the frames (presentation only);
   - the ranged goods in the merchant terminal and the party builder.
 - **DoD `ArchersHoldTheLine`:** the scripted player arms a party of two blades and two crossbows and orders a clearing of the beetles. The crossbows shoot from behind and never stand in reach. The lair is cleared, and the ledger balances.
 - **Stop for the producer's look** at ranged fights.
+- **The plan** (K8.2 split so that no part is Very Complex; its decisions recorded for the developer, as K7.2's were):
+  - [x] **K8.1a Two ranged weapons:** [Basic: rows on the item, economy, recipe and art tables] the sling (the caravan's, cheap) and the crossbow (the forge's, from ore and hide), in the weapon slot, with `StatKind.Range`; a new wear rule, per shot, hit or miss (Q16). Stats so that a blade stays the better weapon in reach: the sling 5 to hit at 5 units, the crossbow 9 at 7, slower.
+    - **Built (D44):** `ItemType.Sling` (21) and `Crossbow` (22), `WearRule.PerShot`, their terms, the caravan's slings, the crossbow's recipe, two new item shapes and their words.
+  - [x] **K8.1b The shot in the combat rule:** [Possibly Complex: the rule and its validator] a ranged fighter strikes a foe within its range (across the gap between bodies); its chance falls with distance past half its range, to half the base at full range; a ranged weapon wears per shot. Melee's numbers don't move.
+    - **Built (D45):** `CombatRules.InRange`, `InStrikingDistance`, `ShotChance`, `RangeFalloff`, `WearOnShot`; the combat validator's tenth test.
+  - [x] **K8.2a A clear line:** [Basic: the snapshot's ray exists] no shot past reach without a line of sight over the nav grid's walls, checked once per shot in the creatures' pass.
+    - **Built:** crawlers' shots and creatures' spits alike; `IIntentExecutionContext.HasLineOfSight` for the shooter's own judgement. `RangedCombatTests.AShotNeedsAClearLineAndCarriesToItsRange`.
+  - [x] **K8.2b Keeping distance:** [Possibly Complex: a movement rule in the fight's handlers] a crawler with a ranged weapon steps back from a creature inside its keep-away line (the creature's reach and a margin, or half its range), closes when out of range or without a line, and otherwise holds and shoots; the fight's, the hunt's and the party's fight share it.
+    - **Built (D46):** `Ranged.Engage` and `CombatRules.KeepAway`. Found live: the bows walked on to the lair's heart on their march and stood in the beetles' reach on every seed, so a clear's fight now makes every member drop its march once and decide afresh (`AgentRuntime`).
+  - [x] **K8.2c Ranged members behind the melee:** [Possibly Complex: outfitting and the party's arms] a need for shooting (only a weapon with range counts), so the guild arms the back of the party with bows and the front with blades; the builder's arming offers it, and the scripted player's clear takes a count of shooters. Holding off at range puts them behind the melee on the focus.
+    - **Built (D47):** `OutfitNeed.ForShooting` (and the melee need without a ranged weapon's attack: residents never buy a bow); `GuildRules.PlanArms(shooters)`, `BestBow`, `HasRange`; a fight's gift judged for either mode; the builder's third arming; `GuildPlayer.SendClear(shooters, bow, materialsFirst)`.
+  - [x] **K8.3 Spinners spit:** [Possibly Complex: the creature rule with range] a creature with a range strikes from it with a clear line and keeps its distance as a ranged crawler does. No lair holds spinners until K10's approach, so this is proven by hand.
+    - **Built (D48):** the creature rule's `Keep`; a test variant of the floor with a lair of spinners (`Floor1Layout.BuildWith`, an internal `OutpostSession` constructor). `RangedCombatTests.SpinnersSpitFromRangeAndKeepTheirDistance`: 39 spits, all from beyond reach, none closing in.
+  - [x] **K8.4a Shots drawn:** [Possibly Complex: a presentation feed and art] the creatures' pass records the tick's shots (unsaved, as a hurt is); the frames carry them; the scene draws a bolt, a stone or a gob of spit flying from shooter to target for a moment, in both view modes.
+    - **Built:** `ShotRecord`, `CreatureService.ShotsThisTick`, the frames' shots, `WorldScene`'s shots in flight (0.25 s), `ShotSprites` with `fx/shot` and `fx/spit` in both tables. `ShotViewTests`. Found: with no creature left, the creatures' pass kept the last shots and asks.
+  - [x] **K8.4b The ranged goods:** [Basic: tables and words] in the merchant terminal (by their terms) and the builder's arming words.
+    - **Built:** the art pins (58 new sprites) and five renders recorded in the pinned image after a look; no existing pin moved.
+  - [x] **K8.5 The DoD:** [Possibly Complex: a live scenario] `ArchersHoldTheLine`, measured on the gate seeds first; then the stop for the producer's look.
+    - **Done** on gate seed 19: the player posts a scout bounty on the Overgrowth, the guild clears the rats for the hides, the forge makes two crossbows, and two blades and two crossbows clear the beetles at t34612; the bows shoot from behind (nearest gap 4.47) and never stand in reach. Measured: 8 of the 23 gate seeds clear the beetles with two crossbows in ten days, the bows never in reach on 7.
+    - **K7's DoDs re-measured** after K8's start of the fight: armed fours clear a lair on 22 seeds and carry a fallen member out alive on 17, with no death; unarmed pairs lose a member on 2. `AnArmedPartyClearsANest` moves to gate seed 3, `DeathHasItsCost` to gate seed 7.
+    - **Golden** re-recorded on its own commit: the caravan's slings from t2600.
+    - **The gate** (2026-11-12): core 276/276 (10 explicit not run), client 512/512 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles with 0 warnings.
+- **K8 is done (2026-11-12); it stops here for the producer's look at ranged fights.**
 
 ### K9. The skill system (3–4 days)
 **Complexity:** Very Complex: a new system read by combat, harvest, crafting and rescue (bundling). Split as below. The developer supervises K9.3.
