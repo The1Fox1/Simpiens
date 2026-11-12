@@ -92,6 +92,13 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>False: the empty state shows instead.</summary>
         public bool HasCrawler { get; private set; }
+
+        /// <summary>
+        /// The crawler shown is dead (Epic 10 Part 3, K5.8c): its dossier from the departed list, its portrait greyed, its
+        /// death in place of its description; nothing to do for it.
+        /// </summary>
+        public bool IsDead { get; private set; }
+        public const string DeadBadge = "DEAD";
         public EntityId CrawlerId { get; private set; }
 
         public string Name { get; private set; } = string.Empty;
@@ -132,7 +139,7 @@ namespace Simpiens.Presentation.Dashboard
         public static string Percent(float value) => Invariant($"{value:F0}%");
 
         /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
-        public bool CanCalm => HasCrawler && _context.Intervention != null;
+        public bool CanCalm => HasCrawler && !IsDead && _context.Intervention != null;
 
         /// <summary>Calm Frustration: queues a <see cref="CalmCrawlerCommand"/>; the crawler calms on the next tick (Unity changed it at once, from the UI).</summary>
         public void Calm()
@@ -146,11 +153,16 @@ namespace Simpiens.Presentation.Dashboard
             var node = crawler != default ? _context.Registry?.GetEntity(crawler) : null;
             var agent = node?.Agent;
             HasCrawler = agent != null;
+            IsDead = false;
             CrawlerId = HasCrawler ? node.Id : default;
             _affinities.Clear();
             _shownRows.Clear();
             Equipment.Refresh(null);
-            if (!HasCrawler) return;
+            if (!HasCrawler)
+            {
+                if (crawler != default) ShowTheDead(crawler);
+                return;
+            }
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
             string title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
@@ -198,6 +210,57 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change
+        // The dossier of the dead (K5.8c): who it was, greyed, and what it died of, from the departed list
+        private void ShowTheDead(EntityId id)
+        {
+            var departed = _context.Departed?.Departed;
+            if (departed == null) return;
+            Simpiens.Simulation.People.DepartedCrawler dead = null;
+            for (int i = departed.Count - 1; i >= 0 && dead == null; i--) if (departed[i].Id == id && departed[i].Died) dead = departed[i];
+            if (dead == null) return;
+            HasCrawler = true;
+            IsDead = true;
+            CrawlerId = id;
+            Name = (dead.GivenName ?? _context.FriendlyName(id, "Unknown")) + " · died";
+            Description = DeathText(dead);
+            MoodLine = "At rest.";
+            HasPortrait = dead.Look.IsComplete;
+            Portrait = new PortraitKey(dead.Look, Simpiens.Presentation.Art.People.Mood.Content, CrawlerStanding.Resident, default, greyed: true);
+            State = AgentVisualState.Idle;
+            Badge = DeadBadge;
+            Health = Hunger = Energy = Social = Frustration = 0f;
+            Goal = "(None)";
+            Action = "(Gone)";
+            Residency = string.Empty;
+            Groups = string.Empty;
+            RecruitText = string.Empty;
+            CanRecruit = false;
+        }
+
+        /// <summary>What the departed list says of a death: "Downed by a stone beetle; bled out, Day 2 · 14:20" (K5.8c).</summary>
+        public static string DeathText(Simpiens.Simulation.People.DepartedCrawler dead)
+        {
+            string when = dead.Tick > 0 ? ", " + OutpostClock.Text(dead.Tick) : string.Empty;
+            switch (dead.Cause)
+            {
+                case Simpiens.Simulation.DeathCause.Creature:
+                    string kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)dead.CauseDetail)?.DisplayName ?? "creature";
+                    return $"Downed by a {kind.ToLowerInvariant()}; bled out{when}.";
+                case Simpiens.Simulation.DeathCause.Hazard:
+                    return $"Downed by {HazardWords((Simpiens.Simulation.World.HazardKind)dead.CauseDetail)}; bled out{when}.";
+                default:
+                    return $"Gone{when}.";
+            }
+        }
+
+        private static string HazardWords(Simpiens.Simulation.World.HazardKind kind) => kind switch
+        {
+            Simpiens.Simulation.World.HazardKind.FoulAir => "foul air",
+            Simpiens.Simulation.World.HazardKind.FallingRock => "falling rock",
+            Simpiens.Simulation.World.HazardKind.Flooding => "the flood",
+            _ => "danger",
+        };
+
         private void Describe(EntityId id, Simpiens.Cognition.AgentState agent)
         {
             var look = agent.Look;

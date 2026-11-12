@@ -66,6 +66,18 @@ namespace Simpiens.Presentation.Art.People
             Span<Rgba32> bust = stackalloc Rgba32[Size * Size];
             Bake(key.Look, key.Mood, key.Worn, key.Standing == CrawlerStanding.GuildMember, bust);
             Framed(bust, key.Standing, into);
+            if (key.Greyed) Grey(into);
+        }
+
+        /// <summary>Every pixel to its grey (Rec. 601 luma), alpha kept: the dead's portrait (Epic 10 Part 3, K5.8c).</summary>
+        public static void Grey(Span<Rgba32> pixels)
+        {
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                var p = pixels[i];
+                byte y = (byte)((p.R * 299 + p.G * 587 + p.B * 114 + 500) / 1000);
+                pixels[i] = new Rgba32(y, y, y, p.A);
+            }
         }
 
         /// <summary>
@@ -619,13 +631,17 @@ namespace Simpiens.Presentation.Art.People
     /// <summary>A portrait: a look with its mood, its standing (the frame, the tabard) and what shows of its gear.</summary>
     public readonly struct PortraitKey : IEquatable<PortraitKey>
     {
-        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, in WornLook worn)
+        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, in WornLook worn, bool greyed = false)
         {
             Look = look;
             Mood = mood;
             Standing = standing;
             Worn = worn;
+            Greyed = greyed;
         }
+
+        /// <summary>The dead's portrait (Epic 10 Part 3, K5.8c): the same face, in greys.</summary>
+        public bool Greyed { get; }
 
         public CrawlerLook Look { get; }
         public Mood Mood { get; }
@@ -645,10 +661,10 @@ namespace Simpiens.Presentation.Art.People
             return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), WornLook.Of(agent.Inventory));
         }
 
-        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && Worn.Equals(other.Worn);
+        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && Worn.Equals(other.Worn) && Greyed == other.Greyed;
 
         public override bool Equals(object obj) => obj is PortraitKey other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, Worn.GetHashCode());
+        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, Worn.GetHashCode(), Greyed);
     }
 }

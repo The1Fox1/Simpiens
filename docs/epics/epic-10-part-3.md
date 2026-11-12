@@ -222,6 +222,11 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **Under orders:** if the dead was a guild member on an expedition, every other member's trust toward the patron falls by 15 (and warmth by 5).
   - **The chronicle** tells the death (downed by a creature's kind, or by a sector's danger), the rescue (carried out, or a draught given) and the newcomer. A death's extra packs the cause and its kind.
 - **D32, a newcomer** (Q4): 2 game days after a resident's death (not a drifter's), a resident settles at a spawn point clear of crawlers. It comes with a new look and name, a seeded personality, the session's starting purse (a faucet, `NewcomerPurses`) and a resident's arrival hunger. The ones still due are saved in the population block, inside format 11.
+- **D34, the client's dead** (K5.8):
+  - **On the map:** the fallen lie on their side where they fell; the carried lie across their rescuer, at the catalogue's ride placement, with no shadow of their own; a body is a cairn while its pile lies.
+  - **The dossier of the dead:** the map's selection still drops a crawler that leaves the world (a drifter walking out), but the dossier keeps one that died until something else is selected. It shows the name, its death in place of the description ("Downed by a stone beetle; bled out, Day 2 · 14:20"), a DEAD badge and its portrait greyed. The dashboard reads the departed list through a small interface the host implements (`IDepartedRoll`).
+  - **A scene:** a rescue starts the demonstrations' rescue scene (development builds, as the other demonstration scenes are; a game hour apart at the most often).
+  - **Deferred:** a scene when a friend sees a death. The director's scenes need both actors on the map, and the dead are gone; a one-actor interaction is the director's next piece (§5).
 - **D33, `TheCarefulLoseFew`'s band** (the producer's to set; this is a default): at most one death across the 23 gate seeds' day, with no player action. Measured at K5: none.
 
 ## 1. Goal
@@ -396,6 +401,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 | Art beyond the generated placeholders | The producer's art direction (Epic CLIENT M7) |
 | Tavern rumours written by a language model | Epic 11, in Milestone 5 (Q1's reading) |
 | A grieving face of its own in the portrait (D31: grief shows as the frustrated face) | Epic 10 Part 3, K5.8 or later |
+| A dynamic scene when a friend sees a death (D34: the director needs a one-actor interaction) | Epic 10 Part 3, later; the narrative work |
 
 ## 6. Risks
 

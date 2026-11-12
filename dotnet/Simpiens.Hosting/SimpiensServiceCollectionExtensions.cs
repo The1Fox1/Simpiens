@@ -76,6 +76,7 @@ namespace Simpiens.Hosting
                 sp.GetServices<ISessionDefinition>().ToList(),
                 sp.GetService<IAgentIdentityService>()));
             services.AddSingleton<ISessionSwitcher>(sp => sp.GetRequiredService<SessionHost>());
+            services.AddSingleton<IDepartedRoll>(sp => sp.GetRequiredService<SessionHost>()); // the dossier of the dead (Epic 10 Part 3, K5.8c)
             services.AddSingleton<ISessionPersistence>(sp => sp.GetRequiredService<SessionHost>());
             return services;
         }

@@ -24,7 +24,7 @@ namespace Simpiens.Core.Session
     /// Every respawn starts from tick 0 with a reset id allocator, so the same seed gives the same world. Views follow
     /// its events (the client captures its frames on <see cref="TickCompleted"/>); a headless host uses it as it is. Main thread.
     /// </summary>
-    public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable
+    public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable, IDepartedRoll
     {
         // Body radii and speed the simulation gives each kind of entity (they were the views' collider radii)
         public const float CrawlerRadius = 0.35f;
