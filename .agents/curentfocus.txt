@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-11 (Epic 10 Part 3 ACTIVE: K0-K3 done and approved; K4 loot and K5 death and rescue done 2026-11-11 under the producer's AFK directive (D22-D34 for review; F6: two K5 DoDs recommended to move to K7); stop for the producer's look at death and rescue; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-12 (Epic 10 Part 3 ACTIVE: K0-K5 done, K5's look passed by exception with "Proceed with K6-K8"; K6 hunting done 2026-11-11; K7 the guild goes to war under way: the Clear order, the party's fight and its three DoDs done 2026-11-12 (D38-D43 for review, F7, F8), K7.3 the client next, then K8 to the producer's look at ranged fights; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -101,7 +101,12 @@ CURRENT FOCUS
   drops, picking up, the materials feeding the forge, piles drawn; D22-D26 for review; the DoD KillsFeedTheForge on
   gate seed 18). K5, death and rescue, done the same day (D27-D34; TheCarefulLoseFew live; F6: nobody is downed
   in danger live yet, so AFriendCarriesTheFallenOut and DeathHasItsCost are recommended to move to K7's Clear order).
-  NEXT: the producer's look at death and rescue (the plan's stop); then K6, hunting. Nothing pushed.
+  K5's look passed by exception with "Proceed with K6-K8" (F6's option A). K6, hunting, done 2026-11-11 (D35-D37;
+  AHuntBountyClearsALair on gate seed 18). K7, the guild goes to war: the Clear order and the party's fight (focus fire,
+  the party's rule over each member's line, the guild sending the carrier) and its DoDs done 2026-11-12
+  (AnArmedPartyClearsANest, AFriendCarriesTheFallenOut, DeathHasItsCost; D38-D43 for the developer's review; F7, F8).
+  NEXT: K7.3, the client's Clear order and the tracker's fight; then K8, ranged combat, to the producer's look.
+  Nothing pushed.
   Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
 
@@ -130,7 +135,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K5 done; the look at death and rescue is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K6 done; K7 under way, its client next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.

@@ -1695,3 +1695,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Finding F6:** nobody is downed in danger in live play, measured three ways. The two K5 DoDs that need a downing are recommended to move to K7's Clear order (option A); `TheCarefulLoseFew` is live, with its band a default (D33).
 - **The client:** the dossier keeps a dead crawler after the selection drops it (`DashboardModel.DossierCrawler`; the selection's rule for a drifter walking out is unchanged). The departed list reaches the dashboard through `IDepartedRoll`.
 - **Golden unchanged through K5:** nothing dies in a golden run.
+
+## 2026-11-11: Epic 10 Part 3, K6, hunting (under "Proceed with K6-K8")
+- **A hunt beside its contract** (D35): the bounty contract keeps its 64 bytes and stays open with no claimant, so the single-claim chain never takes a hunt; a `HuntRecord` (64 bytes) holds the lair and up to three hunters with their damage, in the economy's save block (inside format 11). Damage arrives through `ICreatureWorld.CreatureHit`; hunts settle after the creatures' phase; the ledger releases escrow in shares (`TryReleaseEscrowSplit`).
+- **The hunters** (D36): `HuntGoal`, `ClaimHuntAction`, `HuntLairAction`, `HuntIntent`; the melee step shared with the fight (`Melee`). Found: the planner validates every step before the first runs, so the hunt's second step must be valid while a hunt can still be joined.
+- **Commits:** K6.1 (`8d14e76`), K6.2 (`9338aab`), K6.3 the board (`8f59a8d`), K6.4 the DoD and `HuntPlayer` (`9a0db22`); the watch's lone-entry rule narrowed (D37). Golden unchanged: its runs end at t3000.
+
+## 2026-11-12: Epic 10 Part 3, K7.1, K7.2 and K7.4, the Clear order and the party's fight (under "Proceed with K6-K8")
+- **The split:** K7.2, Very Complex and supervised, was done as three Possibly Complex parts (focus, retreat, rescue), with its decisions D38–D43 in the epic for the developer's review.
+- **The directive carries the party's choices:** the guild picks the focus and the carrier on the main thread and copies them into each member's `ExpeditionOrder`, as G5 copies the stage and the node; cognition only follows them. Rescue had been planned as each mate's own decision (K5's rule with the lone judgement waived); measured live, mates kept fighting and the most hurt came, so the choice moved to the guild (D42). The runtime pre-empts a member once per carry order.
+- **Deviation from the plan:** under a clear's orders the party's rule replaces each member's own retreat line (D41). Without it no member was ever downed in a lair, and K5's DoDs could not happen live.
+- **Inside format 11:** the expedition's record grew from 16 to 20 bytes (kind, lair, cleared); the focus and the carrier aren't saved.
+- **K5 faults found (F7):** the carried fallen blocked its carrier's waypoint (`Locomotion.IsPositionBlocked` now ignores it); a downed carrier's carry ran a tick more; the carry stepped back to where the fallen lay; the anomaly watch judged the carried's moves as jitter.
+- **The guild player arms by the slot table** (`EquipmentSlots.All`), not by naming slots (`SlotNamesTests`).
+- **Golden unchanged:** nothing in a golden run's 3,000 ticks is on an expedition, carried or under a carry order.

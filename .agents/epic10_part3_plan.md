@@ -423,21 +423,21 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - [x] **K6.4 The DoD:** [Possibly Complex: a live scenario] a scripted player posts a hunt on a charted lair once a bold resident is armed (the workshop player making blades), measured on the gate seeds first.
     - **Done:** `HuntPlayer` (D36's notes: any charted lair, once someone braves it, a 150g reserve); the watch's entry rule (D37). `AHuntBountyClearsALair` on gate seed 18: posted t13137, three hunters, paid t14346; hunts paid on 21 of the 23 gate seeds in eight days (`HuntScenarioTests.MeasureHuntsOnTheGateSeeds`). Core 254/254, golden unchanged.
 - **K6 is done (2026-11-11).**
-- [ ] **K6.1 Hunt bounties (Q7):** [Possibly Complex: a command, escrow, saved]
+- [x] **K6.1 Hunt bounties (Q7):** [Possibly Complex: a command, escrow, saved]
   - posted on a charted lair;
   - claimed by up to three;
   - paid by damage dealt when the lair is empty.
-- [ ] **K6.2 The hunters:** [Possibly Complex: cognition, a goal, an action and facts] claim, go, fight in the lair, and are paid.
-- [ ] **K6.3 The client:** [Possibly Complex: Gum UI] the bounty board's Hunt, with charted lairs as targets.
+- [x] **K6.2 The hunters:** [Possibly Complex: cognition, a goal, an action and facts] claim, go, fight in the lair, and are paid.
+- [x] **K6.3 The client:** [Possibly Complex: Gum UI] the bounty board's Hunt, with charted lairs as targets.
 - **DoD `AHuntBountyClearsALair`:** the scripted player posts a hunt on the rats; bold, armed residents claim it, clear the lair and are paid. The ledger balances.
 
 ### K7. The guild goes to war (2–3 days)
 **Complexity:** Possibly Complex overall: G5's stages and K5's carrying are the precedents. K7.2 is Very Complex, supervised by the developer.
-- [ ] **K7.1 The Clear order (Q8):** [Possibly Complex: a new expedition kind on G5's stages]
+- [x] **K7.1 The Clear order (Q8):** [Possibly Complex: a new expedition kind on G5's stages]
   - a lair as the target;
   - the fight stage;
   - the haul as what was picked up.
-- [ ] **K7.2 The party's fight:** [Very Complex, supervised by the developer]
+- [x] **K7.2 The party's fight:** [Very Complex, supervised by the developer]
   - focus fire through the directive;
   - the retreat rule;
   - rescue under orders through K5's carrying.
@@ -445,6 +445,26 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - the Clear order in the party builder;
   - the fight in the tracker: the party's health and its foe's.
 - **DoD `AnArmedPartyClearsANest`:** the scripted player arms four and orders a clearing. They fight together, clear the nest, carry anyone fallen out and bring back loot. The ledger balances.
+- **The plan** (K7.2 split so that no part is Very Complex; its decisions recorded for the developer):
+  - [x] **K7.1a The Clear order's data:** [Possibly Complex: a saved record grows, inside format 11] `ExpeditionKind` (gather, clear) and the lair on `ExpeditionRecord` and `DispatchExpeditionCommand`; `ExpeditionStage.Fight` (appended). A clear names a charted lair with a creature in it; its sector is the lair's, its haul the kind's material (its table's first item: hide, chitin).
+    - **Built:** `ExpeditionKind`, `ExpeditionRecord.Kind`, `LairIndex` and `Cleared` (16 to 20 bytes, inside format 11), the command's kind and lair; `GuildRules.CheckDispatch`'s clear (`BadTarget` for an uncharted or empty lair); `IGuildHost.Lairs`, `IsLairCharted`, `TryGetCreature`. `GiveGearCommand.ForFighting`: the guild arms a member by what a piece adds for a fight (D38).
+  - [x] **K7.1b The stages:** [Possibly Complex: G5's machine] the march ends when a member reaches the lair's reach; the fight ends when the lair is empty, by the retreat rule, or after the work's time; the haul is what the members picked up of the material, delivered and shared as a gathering's.
+    - **Built:** the march's end at the lair's reach, `ExpeditionStage.Fight`, `FightForPartyAction` (the order's step at the fight), members directed to the lair's heart; a member at a clear picks up the lair's drops above its other goals (`CollectLootGoal`, 125). A cleared lair thanks the members as a haul does (D43).
+  - [x] **K7.2a Focus fire:** [Possibly Complex: the directive and the members' fight] the guild picks the party's target each tick of the fight (the lair's creature nearest the first member with the party, then the weakest), copied into each member's order; a member at the fight fights the focus (a hunt's intent with no bounty), else the lair's nearest. Under orders every member fights back when struck, bold or not.
+    - **Built:** `GuildParty.Focus` (not saved), chosen on the fight's first tick and kept while it lives, in `ExpeditionOrder.Focus`; the hunt's handler fights it; `Vitality.FightsBack` under orders. Found live: a struck member's fight stepped into its mates (stacking on seeds 4 and 6), so a member on an expedition steps beside others as a hunter does (D40).
+  - [x] **K7.2b The retreat rule:** [Basic: a rule beside G5's] a clear turns back when half its members are down, or the party's health on average falls past the rule's line.
+    - **Built,** and one change found live (D41): with every member still fleeing at its own line (40), nobody was ever downed (under-armed, Bold, against beetles: the lowest health 24 on the gate seeds). Under a clear's orders at the fight the party's rule replaces a member's own line (`Vitality.FightLine`).
+  - [x] **K7.2c Rescue under orders:** [Possibly Complex: cognition's priorities] a party mate in the same lair's reach comes for a fallen mate without the lone judgement (as one in the same hazard room does), and a mate's rescue outranks the order.
+    - **Built differently (D42):** as planned, mates kept hunting (a hunt isn't pre-empted when struck) and the one that came was the most hurt, downed in turn while it carried. Now the guild sends the carrier, as it picks the focus: one fallen member at a time, carried by the mate on its feet with the most health (`GuildParty.Fallen`, `Carrier`; `ExpeditionOrder.Carry`). The carrier drops what it does once per order, comes struck or not, and carries on when struck; the rest hold. A mate doesn't come of its own accord; friends outside the party keep K5's rule.
+    - **Two of K5's carries fixed on the way (F7):** the fallen on its carrier's back blocked the carrier's next waypoint, so a carry out stuck at the first turn of its path; and a downed carrier's carry ran a tick more. The carry walks on from the path's second waypoint (the first is where the fallen lay), and the anomaly watch doesn't judge a carried crawler's moves.
+    - **Tests:** `ClearOrderTests` (6: the target, the fight's start and end with the focus and the thanks, both turn-backs, the carrier, the fight line). Core 272/272 (9 explicit), client 507/507, golden unchanged.
+  - [ ] **K7.3 The client:** [Possibly Complex: Gum UI and renders] the Clear order in the party builder, with the charted lairs; the tracker's fight: the party's health and the lair's.
+  - [x] **K7.4 The DoDs:** [Possibly Complex: live scenarios] `AnArmedPartyClearsANest` (the guild player arms its party from the stall's stock, the workshop player making blades), and, from K5 (F6), `AFriendCarriesTheFallenOut` and `DeathHasItsCost`, measured on the gate seeds first.
+    - **Done** (`ClearScenarioTests`; the guild player's `SendClear` arms each member slot by slot from the stall's stock):
+      - `AnArmedPartyClearsANest` on gate seed 19: sent t22682, fighting t22998, the lair empty t23490, home t23684 with 4 of its material; the member who fell was carried out alive.
+      - `AFriendCarriesTheFallenOut` on gate seed 6: a member collapses in the lair, the guild sends a mate, it is carried out and stands again at t23036.
+      - `DeathHasItsCost` on gate seed 13, two sent unarmed against the beetles under the Bold rule: a member dies at t57349; friends grieve; the guild loses its contract; the body holds its belongings and 99g; a newcomer settles at t77509.
+    - **Measured** (the 23 gate seeds, eight days; `MeasureClearsOnTheGateSeeds`, `MeasureUnderArmedClearsOnTheGateSeeds`): An armed four clears a lair on 22 of the 23 gate seeds (seed 10 charts none in time), a fallen member is carried out alive on 7, nobody dies, and every day holds but seed 12's (F8). Two sent unarmed against the beetles under the Bold rule lose a member on 9 of the 23 (each grieved by a friend; a newcomer within the eight days on 8); seed 1's days fail there on a member starved, a pair sent again and again (F8). Seed 12's days fail on trust with any clear: the guild player's gifts on an early, repeated clear leave wages unpaid (F8).
 
 ### K8. Ranged combat (3–4 days), then the producer's look
 **Complexity:** Very Complex: a second mode of combat with line of sight and positioning. Split as below. The developer supervises K8.2.
