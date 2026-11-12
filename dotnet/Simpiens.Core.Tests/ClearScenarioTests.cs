@@ -156,11 +156,11 @@ namespace Simpiens.Core.Tests
             TestContext.Current.TestOutputHelper?.WriteLine($"{run}\n{run.Watch.CreatureSummary()}\n{run.Watch.Report()}");
 
         /// <summary>
-        /// Gate seed 19: K7.4 measured an armed four clearing a lair on 22 of the 23 gate seeds (all but seed 10, where no
-        /// lair is charted in time), with nobody dead and a fallen member carried out alive on 7; on this one a member falls
-        /// and is carried out alive, and the party comes home at t23684 with four of the lair's material.
+        /// Gate seed 3: measured (since K8, D46's start of the fight) an armed four clearing a lair on 22 of the 23 gate seeds
+        /// (all but seed 10, where no lair is charted in time), with nobody dead and a fallen member carried out alive on 17;
+        /// on this one a member falls and is carried out alive, and the party comes home at t18605 with five of the lair's material.
         /// </summary>
-        private const ulong ClearSeed = 19;
+        private const ulong ClearSeed = 3;
 
         [Fact]
         public void AnArmedPartyClearsANest()
@@ -194,11 +194,11 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Gate seed 13: K7.4 measured two sent unarmed against the beetles under the Bold rule losing a member on 9 of the 23
-        /// gate seeds in eight days (with four, the mates carried everyone out on every seed); here at t57349, and a newcomer
-        /// settles at t77509.
+        /// Gate seed 7: measured (since K8) two sent unarmed against the beetles under the Bold rule losing a member on 2 of the
+        /// 23 gate seeds in eight days (9 before the fight's start sent the whole party in together; with four, the mates carry
+        /// everyone out); here at t21138, and a newcomer settles at t41298.
         /// </summary>
-        private const ulong DeathSeed = 13;
+        private const ulong DeathSeed = 7;
 
         [Fact]
         public void DeathHasItsCost()
