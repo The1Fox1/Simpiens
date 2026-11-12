@@ -310,6 +310,33 @@ namespace Simpiens.Simulation.Guild
             }
         }
 
+        /// <summary>The best piece in <paramref name="stock"/> for a bare <paramref name="slot"/> in a fight (Epic 10 Part 3, K7.3: the builder's words for a clear).</summary>
+        public static ItemType BestForFight(in TradeStallData stock, EquipmentSlot slot)
+            => Outfitting.BestInStock(stock, null, OutfitNeed.ForFighting, slot, overBare: true, out _);
+
+        /// <summary>
+        /// The gifts that arm <paramref name="members"/> for a clear from the stall's stock (Epic 10 Part 3, K7.1, D38), the
+        /// party builder's and the scripted player's alike: each member in the order given, every slot in the table's order,
+        /// the piece that adds the most for a fight over what it wears, as stock allows.
+        /// </summary>
+        public static void PlanArms(GuildService guild, IGuildHost host, System.Collections.Generic.IReadOnlyList<EntityId> members,
+            ref TradeStallData stock, System.Span<GearGift> gifts, ref int count)
+        {
+            if (guild == null || host == null || members == null) return;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var crawler) || crawler.Inventory == null) continue;
+                for (int s = 0; s < slots.Count && count < gifts.Length; s++)
+                {
+                    var item = Outfitting.BestInStock(stock, crawler.Inventory, OutfitNeed.ForFighting, slots[s].Id, overBare: false, out float gain);
+                    if (item == ItemType.None || gain <= 0f || CheckGiveGear(guild, host, members[i], item, HazardKind.None, forFighting: true) != Check.Ok) continue;
+                    gifts[count++] = new GearGift(members[i], item, slots[s].Id);
+                    stock = stock.TakeBest(item, out _);
+                }
+            }
+        }
+
         private static bool Planned(System.Span<GearGift> gifts, int count, EntityId crawler, EquipmentSlot slot)
         {
             for (int i = 0; i < count; i++)

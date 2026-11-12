@@ -347,21 +347,17 @@ namespace Simpiens.Hosting
         private bool Armed(GuildService guild, IGuildHost host, List<EntityId> members)
         {
             ref var stock = ref StockLeft();
-            var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
-            bool all = true;
-            for (int i = 0; i < members.Count; i++)
+            int count = 0;
+            GuildRules.PlanArms(guild, host, members, ref stock, _gifts, ref count); // the builder's rule (K7.1)
+            for (int i = 0; i < count; i++)
             {
-                if (!host.TryGetCrawler(members[i], out var member) || member.Inventory == null) return false;
-                for (int s = 0; s < slots.Count; s++) // every slot, by what it adds for a fight (the slot table's rule, K1.4)
-                {
-                    var item = Simpiens.Simulation.Items.Outfitting.BestInStock(stock, member.Inventory, Simpiens.Simulation.Items.OutfitNeed.ForFighting, slots[s].Id, false, out float gain);
-                    if (item == ItemType.None || gain <= 0f || guild.CanGiveGear(host, members[i], item, Simpiens.Simulation.World.HazardKind.None, forFighting: true) != GuildRules.Check.Ok) continue;
-                    _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, members[i], item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
-                    stock = stock.TakeBest(item, out _);
-                    GearGiven++;
-                    all = false; // worn on the next tick
-                }
-                if (!Simpiens.Cognition.Vitality.IsArmed(member.Inventory)) all = false;
+                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, _gifts[i].Crawler, _gifts[i].Item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
+                GearGiven++;
+            }
+            bool all = count == 0; // what it was given is worn on the next tick
+            for (int i = 0; i < members.Count && all; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var member) || !Simpiens.Cognition.Vitality.IsArmed(member.Inventory)) all = false;
             }
             return all;
         }

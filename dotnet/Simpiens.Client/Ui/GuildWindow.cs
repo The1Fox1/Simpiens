@@ -16,8 +16,9 @@ namespace Simpiens.Client.Ui
     /// the guild's status. Members: a card per member (its name and what it is doing, unpaid visits, health, standing with
     /// the outpost and gear, a wage slider, whether it goes with the next party, and Dismiss), and Apply, which sends the
     /// wages that moved. The cards are built once, as many as the guild can hold, and shown as members fill them.
-    /// Expeditions: the party builder (Epic 10 G5, D7): the target, the goal, the retreat rule, outfitting from stock,
-    /// draughts, Dispatch and Recall, and while a party is out, where it is.
+    /// Expeditions: the party builder (Epic 10 G5, D7): the target (a hazard sector to gather, or a charted lair to clear:
+    /// Epic 10 Part 3, K7.3), the goal, the retreat rule, outfitting or arming from stock, draughts, Dispatch and Recall,
+    /// and while a party is out, where it is.
     /// </summary>
     public sealed class GuildWindow
     {
@@ -361,6 +362,10 @@ namespace Simpiens.Client.Ui
             if (PartySelectButton.Text != expedition.PartyText) PartySelectButton.Text = expedition.PartyText;
             if (TargetButton.Text != expedition.TargetName) TargetButton.Text = expedition.TargetName;
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
+            bool goal = !expedition.IsClear; // a clear has no goal: the lair empty (Epic 10 Part 3, K7.3)
+            _goal.Visible = goal;
+            LessButton.Visual.Visible = goal;
+            MoreButton.Visual.Visible = goal;
             string rule = expedition.Rule.ToString().ToUpperInvariant();
             if (RuleButton.Text != rule) RuleButton.Text = rule;
             string outfit = expedition.OutfitText;

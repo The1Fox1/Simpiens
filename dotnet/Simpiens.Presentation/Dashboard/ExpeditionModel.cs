@@ -46,8 +46,14 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>"1:45 out".</summary>
         public string TimeOut { get; internal set; } = string.Empty;
 
-        /// <summary>"Haul 2 of 4".</summary>
+        /// <summary>"Haul 2 of 4"; a clear's "Picked up 2 hide" (Epic 10 Part 3, K7.3).</summary>
         public string HaulText { get; internal set; } = string.Empty;
+
+        /// <summary>A clear's fight (Epic 10 Part 3, K7.3): "Burrow rats: 2 of 4 left · party health 68"; empty for a gathering.</summary>
+        public string FightText { get; internal set; } = string.Empty;
+
+        /// <summary>True for a clear: the tracker shows its fight.</summary>
+        public bool IsClear { get; internal set; }
 
         public IReadOnlyList<ExpeditionMemberRow> Members => Rows;
     }
@@ -64,7 +70,7 @@ namespace Simpiens.Presentation.Dashboard
     {
         private readonly DashboardContext _context;
         private readonly GuildModel _guild;
-        private readonly List<(byte Id, string Name)> _targets = new List<(byte, string)>(4);
+        private readonly List<(byte Id, string Name, bool Lair)> _targets = new List<(byte, string, bool)>(6);
         private readonly PartyTrackerModel[] _trackers = { new PartyTrackerModel(1), new PartyTrackerModel(2) };
         private readonly List<EntityId> _party = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         private int _target;
@@ -90,9 +96,16 @@ namespace Simpiens.Presentation.Dashboard
             Refresh();
         }
 
-        /// <summary>Where a party can go: the charted hazard sectors, in map order. The builder starts on the most dangerous, where nobody goes alone (D11).</summary>
-        public IReadOnlyList<(byte Id, string Name)> Targets => _targets;
+        /// <summary>
+        /// Where a party can go: the charted hazard sectors, in map order, to gather; then the charted lairs with a creature in
+        /// them, to clear (Epic 10 Part 3, K7.3: <c>Lair</c>, its id the lair's index). The builder starts on the most dangerous
+        /// sector, where nobody goes alone (D11).
+        /// </summary>
+        public IReadOnlyList<(byte Id, string Name, bool Lair)> Targets => _targets;
         public string TargetName => _targets.Count > 0 ? _targets[_target].Name : "No charted danger";
+
+        /// <summary>True when the target is a lair: the order is a clear, with no goal (Epic 10 Part 3, K7.3).</summary>
+        public bool IsClear => _targets.Count > 0 && _targets[_target].Lair;
         public byte Goal { get; private set; } = 4;
         public RetreatRule Rule { get; private set; } = RetreatRule.Steady;
 
@@ -108,20 +121,22 @@ namespace Simpiens.Presentation.Dashboard
         {
             get
             {
-                if (!Outfit) return "No outfitting";
+                bool clear = IsClear;
+                if (!Outfit) return clear ? "No arming" : "No outfitting";
                 var host = Host;
-                if (host == null || _targets.Count == 0 || host.ActiveStalls.Count == 0) return "Outfit from stock";
-                var hazard = GuildRules.HazardOf(host, _targets[_target].Id);
+                if (host == null || _targets.Count == 0 || host.ActiveStalls.Count == 0) return clear ? "Arm from stock" : "Outfit from stock";
+                var hazard = clear ? Simpiens.Simulation.World.HazardKind.None : GuildRules.HazardOf(host, _targets[_target].Id);
                 var stall = host.ActiveStalls[0];
                 var text = new System.Text.StringBuilder();
                 var slots = Simpiens.Simulation.Items.EquipmentSlots.InDisplayOrder;
                 for (int i = 0; i < slots.Count; i++)
                 {
-                    var gear = GuildRules.BestForBare(stall, slots[i].Id, hazard);
+                    // A clear arms by what a piece adds for a fight (Epic 10 Part 3, K7.3)
+                    var gear = clear ? GuildRules.BestForFight(stall, slots[i].Id) : GuildRules.BestForBare(stall, slots[i].Id, hazard);
                     if (gear == ItemType.None) continue;
-                    text.Append(text.Length == 0 ? "Outfit: " : ", ").Append(ItemTexts.Of(gear).MerchantName.ToLowerInvariant());
+                    text.Append(text.Length == 0 ? (clear ? "Arm: " : "Outfit: ") : ", ").Append(ItemTexts.Of(gear).MerchantName.ToLowerInvariant());
                 }
-                return text.Length == 0 ? "Outfit from stock" : text.ToString();
+                return text.Length > 0 ? text.ToString() : clear ? "Arm from stock" : "Outfit from stock";
             }
         }
 
@@ -185,7 +200,16 @@ namespace Simpiens.Presentation.Dashboard
         {
             if (!CanDispatch) return;
             var host = Host;
-            if (Outfit && host != null && host.ActiveStalls.Count > 0)
+            if (Outfit && host != null && host.ActiveStalls.Count > 0 && IsClear)
+            {
+                // A clear: the best piece in stock for a fight, slot by slot (Epic 10 Part 3, K7.3), as the scripted player arms
+                var stock = host.ActiveStalls[0];
+                var gifts = new GearGift[_party.Count * Simpiens.Simulation.Items.EquipmentSlots.Capacity];
+                int count = 0;
+                GuildRules.PlanArms(Guild, host, _party, ref stock, gifts, ref count);
+                for (int i = 0; i < count; i++) _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", gifts[i].Crawler, gifts[i].Item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
+            }
+            else if (Outfit && host != null && host.ActiveStalls.Count > 0)
             {
                 // The best piece in stock for each slot against the target's hazard (Epic 10 Part 2, D50; Epic 10 Part 3, K1.4),
                 // members with no sound protection first, as the scripted player outfits
@@ -197,7 +221,9 @@ namespace Simpiens.Presentation.Dashboard
                 for (int i = 0; i < count; i++) _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", gifts[i].Crawler, gifts[i].Item, hazard));
             }
             _context.Intervention.QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Player", Order()));
-            Feedback = new Feedback(Invariant($"Party {PartySlot} sets out for {TargetName}, {_party.Count} strong."), FeedbackTone.Ok);
+            Feedback = new Feedback(IsClear
+                ? Invariant($"Party {PartySlot} sets out to clear {LairName(_targets[_target].Id)}, {_party.Count} strong.")
+                : Invariant($"Party {PartySlot} sets out for {TargetName}, {_party.Count} strong."), FeedbackTone.Ok);
         }
 
         public void Recall()
@@ -231,22 +257,53 @@ namespace Simpiens.Presentation.Dashboard
         private void RefreshTargets()
         {
             var sectors = _context.Sectors;
-            byte chosen = _targets.Count > 0 ? _targets[_target].Id : (byte)0;
+            bool had = _targets.Count > 0;
+            var chosen = had ? _targets[_target] : default;
             _targets.Clear();
             _target = 0;
             if (sectors == null) return;
             float worst = 0f;
+            bool found = false;
             for (int i = 0; i < sectors.All.Count; i++)
             {
                 var sector = sectors.All[i];
                 if (!sector.Hazard.IsHazardous || !sectors.IsExplored(sector.Id)) continue;
-                if (chosen != 0 ? sector.Id == chosen : sector.Hazard.DamagePerSecond > worst)
+                if (had ? !chosen.Lair && sector.Id == chosen.Id : sector.Hazard.DamagePerSecond > worst)
                 {
                     _target = _targets.Count;
                     worst = sector.Hazard.DamagePerSecond;
+                    found = true;
                 }
-                _targets.Add((sector.Id, sector.Name));
+                _targets.Add((sector.Id, sector.Name, false));
             }
+            // The charted lairs with a creature in them, to clear (Epic 10 Part 3, K7.3)
+            var creatures = _context.Simulation?.Creatures;
+            for (int i = 0; creatures != null && i < creatures.Lairs.Count && i < 64; i++)
+            {
+                if (!creatures.IsCharted(i) || creatures.Lairs[i].Alive == 0) continue;
+                if (had && chosen.Lair && chosen.Id == i) { _target = _targets.Count; found = true; }
+                _targets.Add(((byte)i, "Clear the " + KindName(i, plural: true), true));
+            }
+            if (had && !found) _target = 0;
+        }
+
+        /// <summary>"burrow rat", or "burrow rats": a lair's kind in lower case (the bounty board's words, K6.3).</summary>
+        private string KindName(int lairIndex, bool plural)
+        {
+            var lairs = _context.Simulation?.Creatures?.Lairs;
+            string kind = lairs == null || lairIndex < 0 || lairIndex >= lairs.Count ? "creature"
+                : (Simpiens.Simulation.Creatures.CreatureCatalog.Get(lairs[lairIndex].Definition.Kind)?.DisplayName ?? "creature").ToLowerInvariant();
+            return plural ? kind + "s" : kind;
+        }
+
+        /// <summary>"the burrow rats of the Overgrowth": a lair by its kind and where it lies.</summary>
+        private string LairName(int lairIndex)
+        {
+            var lairs = _context.Simulation?.Creatures?.Lairs;
+            string where = "the floor";
+            if (lairs != null && lairIndex >= 0 && lairIndex < lairs.Count && _context.Sectors != null
+                && _context.Zones != null && _context.Zones.TryGetZone(_context.Sectors.GetSectorAt(lairs[lairIndex].Definition.Position).Id, out var zone)) where = zone.Name;
+            return Invariant($"the {KindName(lairIndex, plural: true)} of {where}");
         }
 
         private void RefreshBuilder()
@@ -263,7 +320,7 @@ namespace Simpiens.Presentation.Dashboard
             if (guild == null || host == null || _context.Intervention == null || _targets.Count == 0)
             {
                 CanDispatch = false;
-                DispatchText = _targets.Count == 0 ? "Chart a hazard sector to send a party there." : string.Empty;
+                DispatchText = _targets.Count == 0 ? "Chart a hazard sector or a lair to send a party there." : string.Empty;
                 return;
             }
             if (_party.Count == 0)
@@ -275,12 +332,15 @@ namespace Simpiens.Presentation.Dashboard
             var check = guild.CanDispatch(host, Order());
             CanDispatch = check == GuildRules.Check.Ok;
             DispatchText = CanDispatch
-                ? Invariant($"Send party {PartySlot}, {_party.Count} strong, to {TargetName} for {Goal}.") + DraughtsInStock(host)
+                ? (IsClear ? Invariant($"Send party {PartySlot}, {_party.Count} strong, to clear {LairName(_targets[_target].Id)}.")
+                    : Invariant($"Send party {PartySlot}, {_party.Count} strong, to {TargetName} for {Goal}.")) + DraughtsInStock(host)
                 : GuildRules.Describe(check, string.Empty, null, guild, Tick, (_context.Simulation.Economy ?? EconomyTuning.Default).Guild);
         }
 
         private DispatchExpeditionCommand Order() =>
-            new DispatchExpeditionCommand(PartySlot, _targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, Draughts);
+            IsClear
+                ? new DispatchExpeditionCommand(PartySlot, 0, 1, Rule, Draughts, ExpeditionKind.Clear, _targets[_target].Id) // a clear has no goal: the lair empty
+                : new DispatchExpeditionCommand(PartySlot, _targets.Count > 0 ? _targets[_target].Id : (byte)0, Goal, Rule, Draughts);
 
         /// <summary>" 3 of 8 draughts in stock." when the party is to carry some and the stall can't give them all; empty otherwise.</summary>
         private string DraughtsInStock(IGuildHost host)
@@ -313,17 +373,23 @@ namespace Simpiens.Presentation.Dashboard
                 return;
             }
             string sector = _context.Sectors != null && _context.Sectors.TryGetSector(expedition.TargetSectorId, out var target) ? target.Name : "the sector";
-            tracker.Title = Invariant($"{sector} · {expedition.Rule}");
+            tracker.IsClear = expedition.IsClear;
+            string foes = expedition.IsClear ? KindName(expedition.LairIndex, plural: true) : string.Empty;
+            tracker.Title = expedition.IsClear ? Invariant($"Clear: {Capitalised(LairName(expedition.LairIndex))} · {expedition.Rule}") : Invariant($"{sector} · {expedition.Rule}");
             tracker.StageText = expedition.Stage switch
             {
                 ExpeditionStage.Muster => "Mustering at the stall",
-                ExpeditionStage.March => $"Marching to {sector}",
+                ExpeditionStage.March => expedition.IsClear ? $"Marching on the {foes}" : $"Marching to {sector}",
                 ExpeditionStage.Work => $"Working {sector}",
-                ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : "Coming home",
+                ExpeditionStage.Fight => $"Fighting the {foes}",
+                ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : expedition.Cleared ? "The lair is clear: coming home" : "Coming home",
                 _ => "Delivering",
             };
             tracker.TimeOut = OutpostClock.Span(Tick - expedition.DispatchTick) + " out";
-            tracker.HaulText = Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
+            tracker.HaulText = expedition.IsClear
+                ? Invariant($"Picked up {party.Gathered(host)} {ItemTexts.Of(expedition.HaulItem).MerchantName.ToLowerInvariant()}")
+                : Invariant($"Haul {party.Gathered(host)} of {expedition.Goal}");
+            tracker.FightText = expedition.IsClear ? FightLine(host, party, expedition) : string.Empty;
 
             var roster = party.Members;
             while (rows.Count < roster.Count) rows.Add(new ExpeditionMemberRow());
@@ -347,9 +413,37 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     row.Health = crawler.Health;
                     row.Gear = WornPieces.Describe(crawler.Inventory); // every slot, in display order (Epic 10 Part 3, K1.5)
+                    // The fallen and their carriers (Epic 10 Part 3, K7.3)
+                    if (member.IsWithParty && crawler.IsCollapsed)
+                        row.Status = crawler.CarriedBy != default ? "Carried out by " + _context.FriendlyName(crawler.CarriedBy, DossierModel.UnknownName) : "Fallen, bleeding";
+                    else if (member.IsWithParty && crawler.Carrying != default)
+                        row.Status = "Carrying " + _context.FriendlyName(crawler.Carrying, DossierModel.UnknownName) + " out";
+                    else if (member.IsWithParty && party.Carrier == member.CrawlerId)
+                        row.Status = "Going for " + _context.FriendlyName(party.Fallen, DossierModel.UnknownName);
                 }
             }
         }
 
+        /// <summary>"Burrow rats: 2 of 4 left · party health 68": the lair's living and its pack, and the health of those with the party on average.</summary>
+        private string FightLine(IGuildHost host, GuildParty party, in ExpeditionRecord expedition)
+        {
+            var lairs = host.Lairs;
+            if (lairs == null || expedition.LairIndex >= lairs.Count) return string.Empty;
+            var lair = lairs[expedition.LairIndex];
+            float health = 0f;
+            int with = 0;
+            var roster = party.Members;
+            for (int i = 0; i < roster.Count; i++)
+            {
+                if (!roster[i].IsWithParty || !host.TryGetCrawler(roster[i].CrawlerId, out var c)) continue;
+                health += c.Health;
+                with++;
+            }
+            string foes = Capitalised(KindName(expedition.LairIndex, plural: true));
+            return with == 0 ? Invariant($"{foes}: {lair.Alive} of {lair.Pack} left")
+                : Invariant($"{foes}: {lair.Alive} of {lair.Pack} left · party health {health / with:F0}");
+        }
+
+        private static string Capitalised(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
     }
 }
