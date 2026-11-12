@@ -51,6 +51,7 @@ namespace Simpiens.Presentation.Dashboard
         private BountyType _choicesType = BountyType.None;
         private ulong _choicesMask;
         private int _choicesZoneCount = -1;
+        private ulong _choicesLairs;
         private BountyType _type = BountyType.GatherResource;
 
         internal BountyBoardModel(DashboardContext context) => _context = context;
@@ -66,9 +67,17 @@ namespace Simpiens.Presentation.Dashboard
         /// </summary>
         public void SetType(BountyType type)
         {
-            _type = type == BountyType.ScoutSector ? BountyType.ScoutSector : BountyType.GatherResource;
+            _type = type == BountyType.ScoutSector || type == BountyType.Hunt ? type : BountyType.GatherResource;
             RebuildSectorChoices();
         }
+
+        /// <summary>A hunt's targets are lairs (Epic 10 Part 3, K6.3): the picker's choices are lair indices, the charted lairs with a creature in them.</summary>
+        public bool TargetsLairs => _type == BountyType.Hunt;
+
+        /// <summary>The target picker's label: a hunt's lair, any other bounty's sector.</summary>
+        public string TargetLabel => TargetsLairs ? "Lair:" : "Sector:";
+
+        public const string NoLairText = "No charted lair has a creature in it: there is nothing to hunt.";
 
         /// <summary>Item and quantity only mean something for Gather (Unity hid them for Scout).</summary>
         public bool ShowsItem => _type == BountyType.GatherResource;
@@ -113,6 +122,7 @@ namespace Simpiens.Presentation.Dashboard
         {
             get
             {
+                if (TargetsLairs) return SelectedSectorIndex >= 0 && SelectedSectorIndex < _sectorIds.Count ? "Charted" : string.Empty;
                 if (SelectedSectorIndex < 0 || SelectedSectorIndex >= _sectorIds.Count || !_context.Zones.TryGetZone(_sectorIds[SelectedSectorIndex], out var zone)) return string.Empty;
                 return zone.IsExplored ? "Charted" : "Uncharted";
             }
@@ -133,6 +143,7 @@ namespace Simpiens.Presentation.Dashboard
         {
             BountyType.GatherResource => "Gather Salvage",
             BountyType.ScoutSector => "Scout Sector",
+            BountyType.Hunt => "Hunt a Lair",
             _ => "Directive"
         };
 
@@ -173,10 +184,36 @@ namespace Simpiens.Presentation.Dashboard
             string sectorName = _context.Zones.TryGetZone(bounty.TargetSectorId, out var zone) ? zone.Name : Invariant($"Sector {bounty.TargetSectorId}");
             string task = bounty.Type == BountyType.GatherResource
                 ? Invariant($"{bounty.TargetQuantity}x {bounty.TargetItemType} from {sectorName}")
+                : bounty.Type == BountyType.Hunt ? HuntTask(bounty, sectorName)
                 : $"Explore & Scout {sectorName}";
             bool canCancel = bounty.Status == BountyStatus.Open || bounty.Status == BountyStatus.Claimed;
             return new BountyRow(bounty.BountyId, Invariant($"#{bounty.BountyId} - {FormatType(bounty.Type)}"), bounty.Status,
                 $"{task} | Expires in {OutpostClock.Span(bounty.ExpirationTick - (_context.Clock?.CurrentTick ?? 0))}", RewardText(bounty.RewardGold), canCancel);
+        }
+
+        // A hunt's line (K6.3): the lair's kind, its sector and how many have joined
+        private string HuntTask(in BountyContract bounty, string sectorName)
+        {
+            var hunts = _context.Simulation?.Hunts;
+            int hunters = 0;
+            string kind = "creature";
+            if (hunts != null)
+            {
+                for (int i = 0; i < hunts.Count; i++)
+                {
+                    if (hunts[i].BountyId != bounty.BountyId) continue;
+                    hunters = hunts[i].Count;
+                    kind = LairKind(hunts[i].LairIndex);
+                }
+            }
+            return Invariant($"Hunt the {kind}s of {sectorName} · {hunters} of {HuntRecord.MaxClaimants} hunters");
+        }
+
+        private string LairKind(int lairIndex)
+        {
+            var lairs = _context.Simulation?.Creatures?.Lairs;
+            if (lairs == null || lairIndex < 0 || lairIndex >= lairs.Count) return "creature";
+            return (Simpiens.Simulation.Creatures.CreatureCatalog.Get(lairs[lairIndex].Definition.Kind)?.DisplayName ?? "creature").ToLowerInvariant();
         }
 
         /// <summary>
@@ -191,15 +228,31 @@ namespace Simpiens.Presentation.Dashboard
             {
                 if (zones[i].IsExplored && zones[i].ZoneId < 64) mask |= 1UL << zones[i].ZoneId;
             }
-            if (!force && _type == _choicesType && mask == _choicesMask && zones.Count == _choicesZoneCount) return;
+            // A hunt's choices follow the charted lairs and which hold a creature (K6.3)
+            var creatures = _context.Simulation?.Creatures;
+            ulong lairs = 0UL;
+            if (creatures != null)
+            {
+                for (int i = 0; i < creatures.Lairs.Count && i < 64; i++) if (creatures.IsCharted(i) && creatures.Lairs[i].Alive > 0) lairs |= 1UL << i;
+            }
+            if (!force && _type == _choicesType && mask == _choicesMask && zones.Count == _choicesZoneCount && lairs == _choicesLairs) return;
             _choicesType = _type;
             _choicesMask = mask;
             _choicesZoneCount = zones.Count;
+            _choicesLairs = lairs;
 
             int previous = SelectedSectorIndex >= 0 && SelectedSectorIndex < _sectorIds.Count ? _sectorIds[SelectedSectorIndex] : -1;
             _sectorIds.Clear();
             _sectorLabels.Clear();
-            for (int i = 0; i < zones.Count; i++)
+            for (int i = 0; TargetsLairs && creatures != null && i < creatures.Lairs.Count; i++)
+            {
+                if ((lairs & (1UL << i)) == 0) continue;
+                var heart = creatures.Lairs[i].Definition.Position;
+                string where = _context.Sectors != null && _context.Zones.TryGetZone(_context.Sectors.GetSectorAt(heart).Id, out var lairZone) ? lairZone.Name : "the floor";
+                _sectorIds.Add(i);
+                _sectorLabels.Add(Invariant($"The {LairKind(i)}s of {where}"));
+            }
+            for (int i = 0; !TargetsLairs && i < zones.Count; i++)
             {
                 var zone = zones[i];
                 if (zone.IsFacility) continue; // the player's own (BountyRules.TargetCheck.Facility)
@@ -210,6 +263,7 @@ namespace Simpiens.Presentation.Dashboard
             int keep = previous >= 0 ? _sectorIds.IndexOf(previous) : -1;
             SelectedSectorIndex = _sectorIds.Count == 0 ? -1 : keep >= 0 ? keep : 0;
             if (!CanPost && _type == BountyType.ScoutSector) Feedback = new Feedback(AllChartedText, FeedbackTone.Error);
+            if (!CanPost && TargetsLairs) Feedback = new Feedback(NoLairText, FeedbackTone.Error);
         }
 
         /// <summary>Posts the form's contract: checked here first, then queued as a <see cref="PostBountyCommand"/>.</summary>
@@ -219,20 +273,21 @@ namespace Simpiens.Presentation.Dashboard
             int choice = SelectedSectorIndex;
             if (choice < 0 || choice >= _sectorIds.Count)
             {
-                Feedback = new Feedback(_type == BountyType.ScoutSector && _sectorIds.Count == 0 ? AllChartedText : "Pick a target sector.", FeedbackTone.Error);
+                Feedback = new Feedback(_type == BountyType.ScoutSector && _sectorIds.Count == 0 ? AllChartedText : TargetsLairs ? NoLairText : "Pick a target sector.", FeedbackTone.Error);
                 return;
             }
-            byte sectorId = (byte)_sectorIds[choice];
+            byte sectorId = TargetsLairs ? (byte)0 : (byte)_sectorIds[choice];
+            byte lairIndex = TargetsLairs ? (byte)_sectorIds[choice] : PostBountyCommand.NoLair;
 
             // The simulation enforces the same rule; checking here gives the player the reason
-            var target = BountyRules.CheckTarget(_type, sectorId, _context.Sectors);
+            var target = TargetsLairs ? BountyRules.TargetCheck.Ok : BountyRules.CheckTarget(_type, sectorId, _context.Sectors);
             if (target != BountyRules.TargetCheck.Ok)
             {
                 Feedback = new Feedback(BountyRules.Describe(target, sectorId, _context.Sectors), FeedbackTone.Error);
                 return;
             }
 
-            var item = _type == BountyType.ScoutSector ? ItemType.None : Item;
+            var item = _type == BountyType.GatherResource ? Item : ItemType.None;
             byte quantity = (byte)Clamp(Quantity, MinQuantity, MaxQuantity);
             ushort reward = (ushort)Clamp(Reward, MinReward, MaxReward);
             uint duration = DayClock.Hours(Clamp(Duration, MinDuration, MaxDuration));
@@ -253,7 +308,7 @@ namespace Simpiens.Presentation.Dashboard
                 Feedback = new Feedback("No intervention queue available.", FeedbackTone.Error);
                 return;
             }
-            var command = new PostBountyCommand(0, _type, sectorId, item, quantity, reward, duration, Vec2.Zero, stallId);
+            var command = new PostBountyCommand(0, _type, sectorId, item, quantity, reward, duration, Vec2.Zero, stallId, lairIndex);
             _context.Intervention.QueueInfluence(InfluenceEvent.CreatePostBounty("Player", command));
             Feedback = new Feedback(Invariant($"Posted {FormatType(_type)} contract for {reward}g reward."), FeedbackTone.Ok);
         }
