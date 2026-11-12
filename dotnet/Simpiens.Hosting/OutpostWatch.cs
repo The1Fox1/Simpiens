@@ -321,15 +321,19 @@ namespace Simpiens.Hosting
                     Flights++;
                     FirstFlight ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
                 }
-                bool inKnownLair = false;
+                // In a known lair's reach (by where it stands), and whether it braves that lair (K3.3, D21): an entry is a step
+                // into the reach unbraved, not a brave crawler's health falling while it is there (K6.4: a hurt hunter)
+                bool inKnownLair = false, braves = false;
                 for (int l = 0; l < lairCount && !inKnownLair; l++)
                 {
                     float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
                     inKnownLair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f
-                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep
-                        && !Vitality.BravesLair(map.Lairs[l], state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned); // K3.3, D21
+                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                    if (inKnownLair) braves = Vitality.BravesLair(map.Lairs[l], state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned);
                 }
-                if (inKnownLair && !was.InKnownLair && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
+                // A victor stepping in for its own kill's drop at hand is D24's, not a lone venture
+                bool ownDrop = state.CurrentIntent is Simpiens.Cognition.Contracts.PickUpIntent pick && _sim.Simulation.Piles.TryGet(pick.PileId, out var pile) && pile.ClaimedFor == state.AgentId;
+                if (inKnownLair && !was.InKnownLair && !braves && !ownDrop && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
                 {
                     EntriesIntoKnownLairs++;
                     FirstEntryIntoKnownLair ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position} ({state.CurrentIntent?.GetType().Name})";

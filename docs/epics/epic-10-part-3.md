@@ -229,6 +229,16 @@ K5 is being done under the same AFK directive; its two supervised steps (carryin
   - **Deferred:** a scene when a friend sees a death. The director's scenes need both actors on the map, and the dead are gone; a one-actor interaction is the director's next piece (§5).
 - **D33, `TheCarefulLoseFew`'s band** (the producer's to set; this is a default): at most one death across the 23 gate seeds' day, with no player action. Measured at K5: none.
 
+### K6's decisions (2026-11-11), at the producer's "Proceed with K6-K8"
+- **D35, a hunt's party beside its contract** (Q7): the bounty contract keeps its 64 bytes and stays open with no claimant, so the single-claim chain (claim, gather or scout, deliver) never takes a hunt. A `HuntRecord` holds the lair and up to three claimants with the damage each has dealt. A claim at the board joins the party while it has room.
+  - **Paid when the lair is empty,** checked after the creatures' phase: the escrow by damage dealt, floors first, the rest to the most damage; an equal split if none was dealt. A hunt nobody joins waits for a claimant, or its expiry's refund.
+  - **Posted only on a charted lair with a creature in it;** its sector and heart are the lair's.
+- **D36, who hunts:** a resident on its feet over the recovery line, not hungry or worn out, bold and armed, who braves the lair (D21). It joins the open hunt that pays most, walks to the lair and fights its nearest creature, a game hour at a time, until the lair is empty or the retreat line sends it off. Struck while hunting, it hunts on. A hurt hunter stays in the party and heals first. Weighted as a bounty: 35 plus the reward, by greed and diligence, less hunger.
+  - **Two hunters on one creature keep clear of each other:** the hunter's step respects other crawlers and waits where one is in the way (a fight's step doesn't, as before).
+- **D37, the watch's lone entries:** an entry into a known lair is now a step into its reach unbraved. A brave crawler whose health falls while it is there, or a victor stepping in for its own drop at hand (D24), isn't one.
+- **The scripted hunt player** posts on the first charted lair with a creature (or a kind it is given) once a bold resident would brave it at full health, keeping 150g in the treasury besides the reward. Posting while nobody could take it on left 60g in escrow for two days and starved the stall's purchases (seed 4).
+- **Measured** (the 23 gate seeds, eight days, with the workshop player making blades): a hunt paid on 21; two or three hunters on most; every day held.
+
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
 

@@ -44,14 +44,23 @@ namespace Simpiens.Cognition.Planning.Handlers
             return true;
         }
 
-        /// <summary>A step toward the creature, as far as half a reach inside it; failed when the step is blocked.</summary>
-        public static IntentResult StepToward(WorldEntity node, CreatureState creature, IIntentExecutionContext context)
+        /// <summary>
+        /// A step toward the creature, as far as half a reach inside it; failed when the step is blocked. With
+        /// <paramref name="besideOthers"/> (a hunt's, K6.4) it keeps clear of other crawlers and waits where one is in the way,
+        /// so two hunters on one rat don't stand in each other.
+        /// </summary>
+        public static IntentResult StepToward(WorldEntity node, CreatureState creature, IIntentExecutionContext context, bool besideOthers = false)
         {
             var me = Combatant.ForCrawler(node.Agent, node.Radius);
             var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
             float step = SimMath.Min((float)(node.BaseSpeed * context.FixedTickDeltaTime), SimMath.Max(0f, (float)(CombatRules.Gap(me, them) - me.Reach * 0.5f)));
             if (step <= 0f) return IntentResult.InProgress;
             var toward = (creature.Position - node.Position).Normalized;
+            if (besideOthers)
+            {
+                context.TryDisplacePawn(node, node.Position + toward * step, respectPawns: true); // blocked by another: it waits
+                return IntentResult.InProgress;
+            }
             return context.TryDisplacePawn(node, node.Position + toward * step, respectPawns: false) ? IntentResult.InProgress : IntentResult.Failed;
         }
     }
@@ -78,7 +87,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (walked || (creature.Position - node.Position).SqrMagnitude <= EngageDistance * EngageDistance)
             {
                 if (Melee.TrySwing(node, creature, context)) return IntentResult.InProgress;
-                return Melee.StepToward(node, creature, context);
+                return Melee.StepToward(node, creature, context, besideOthers: true);
             }
             var result = context.ExecutePathMovement(node, hunt.Path, state);
             return result == IntentResult.Success ? IntentResult.InProgress : result;
