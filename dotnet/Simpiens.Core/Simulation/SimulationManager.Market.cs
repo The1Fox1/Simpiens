@@ -50,6 +50,26 @@ namespace Simpiens.Simulation
         /// <summary>The open hunts' parties (Epic 10 Part 3, K6.1), by bounty id.</summary>
         public IReadOnlyList<HuntRecord> Hunts => _market.Hunts;
 
+        /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (K6.2), the lowest id on a tie.</summary>
+        public bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature)
+        {
+            creature = null;
+            var lairs = Creatures.Lairs;
+            if (lairIndex < 0 || lairIndex >= lairs.Count) return false;
+            var lair = lairs[lairIndex];
+            float best = float.MaxValue;
+            for (int slot = 0; slot < lair.Pack; slot++)
+            {
+                var id = lair.MemberIn(slot);
+                if (id == default || !Creatures.TryGet(id, out var c) || !c.IsAlive) continue;
+                float d = (c.Position - from).SqrMagnitude;
+                if (d > best || (d == best && creature != null && c.Id.CompareTo(creature.Id) >= 0)) continue;
+                best = d;
+                creature = c;
+            }
+            return creature != null;
+        }
+
         /// <summary>A claim on a hunt joins its party while it has room (K6.1); true when the crawler is in it.</summary>
         public bool TryJoinHunt(ushort bountyId, EntityId crawler) => _market.TryJoinHunt(bountyId, crawler, CurrentTick);
 

@@ -29,6 +29,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(ArmForFightGoal)] = "Arm itself against the vermin", // Epic 10 Part 3, K3.3
             [typeof(CollectLootGoal)] = "Pick up what lies on the ground", // Epic 10 Part 3, K4.3
             [typeof(RescueGoal)] = "Save a fallen friend", // K5.3
+            [typeof(HuntGoal)] = "Hunt a lair for the bounty", // K6.2
             [typeof(CarryMedicineGoal)] = "Carry a draught into danger",
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
@@ -69,6 +70,8 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(LeaveOutpostAction)] = "Leaving by the Road Gate",
             [typeof(PickUpLootAction)] = "Picking over a pile",
             [typeof(RescueAction)] = "Coming to the rescue",
+            [typeof(ClaimHuntAction)] = "Joining a hunt",
+            [typeof(HuntLairAction)] = "Hunting the lair",
         };
 
         /// <summary>The goal in words, or "(None)".</summary>

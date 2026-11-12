@@ -171,7 +171,7 @@ namespace Simpiens.Cognition
             {
                 shouldPreempt = true;
             }
-            else if (struck && !(State.CurrentIntent is FleeIntent) && !(State.CurrentIntent is FightIntent))
+            else if (struck && !(State.CurrentIntent is FleeIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is HuntIntent)) // a hunter struck hunts on (K6.2)
             {
                 // Before hunger: a crawler that starves while it is bitten runs first and eats after
                 shouldPreempt = true;

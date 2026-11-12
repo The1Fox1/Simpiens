@@ -45,6 +45,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Danger for the fallen (Epic 10 Part 3, K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
         bool InDanger(Vec2 position);
 
+        /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (Epic 10 Part 3, K6.2: a hunter's quarry); false when the lair is empty.</summary>
+        bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature);
+
         /// <summary>A claim on a hunt joins its party while it has room (Epic 10 Part 3, K6.1); true when the crawler is in it.</summary>
         bool TryJoinHunt(ushort bountyId, EntityId crawler);
 

@@ -78,6 +78,10 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.LootCollected, !LootTargeting.TryChoosePile(context, out _));
                 // Nobody fallen within earshot it would come for (K5.3)
                 state = state.With(StateFact.FallenRescued, !Rescue.TryChooseFallen(context, out _, out _));
+                // Hunting (K6.2): in a hunt's party, or one to join
+                bool hunting = Hunting.TryGetJoined(context, out _);
+                state = state.With(StateFact.HasHuntBounty, hunting);
+                state = state.With(StateFact.LairHunted, !hunting && !Hunting.TryChoose(context, out _, out _));
             }
 
             state = state.With(StateFact.HasFoodInInventory, hasFoodInInventory);

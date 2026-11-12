@@ -112,6 +112,41 @@ namespace Simpiens.Core.Tests
             Assert.Equal(12f, loaded.Damage0);
         }
 
+        [Fact]
+        public void BoldArmedResidentsJoinAndHuntTheLairEmpty()
+        {
+            // By hand: the warren charted and its bold residents armed and armoured; the rest is theirs (K6.2)
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim);
+            ChartTheWarren(sim);
+            var bold = sim.Host.CrawlerStates.Where(s => !s.IsDrifter && s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent).Take(2).ToList();
+            Assert.NotEmpty(bold); // one on this seed
+            foreach (var b in bold)
+            {
+                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.GlowstoneEdge, Simpiens.Simulation.Items.Grades.Standard)));
+                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.RingCoat, Simpiens.Simulation.Items.Grades.Standard)));
+            }
+            Post(sim, warren, 60);
+            var hunt = sim.Simulation.Hunts[0];
+            int[] purses = bold.Select(b => b.Inventory.Gold).ToArray();
+            bool joined = false, hunted = false;
+            for (long t = 0; t < 2 * DayClock.TicksPerDay && sim.Simulation.Hunts.Count > 0; t++)
+            {
+                sim.Step(1);
+                if (sim.Simulation.Hunts.Count > 0) joined |= sim.Simulation.Hunts[0].Count > 0;
+                foreach (var b in bold) hunted |= b.CurrentIntent is Simpiens.Cognition.Contracts.HuntIntent;
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"t{sim.Clock.CurrentTick}: hunts left {sim.Simulation.Hunts.Count}; kills {sim.Simulation.Creatures.Kills}; paid {string.Join(", ", bold.Select((b, i) => b.Inventory.Gold - purses[i]))}");
+            Assert.True(joined, "Someone joined the hunt.");
+            Assert.True(hunted, "A bold resident went hunting.");
+            Assert.Empty(sim.Simulation.Hunts); // the warren emptied and the hunt paid
+            Assert.Equal(0, sim.Simulation.Creatures.Lairs[warren].Alive);
+            var told = new System.Collections.Generic.List<Simpiens.Narrative.ChronicleEvent>();
+            sim.Chronicle.GetAllRecentEvents(told, 512);
+            Assert.Contains(told, e => e.EventType == Simpiens.Narrative.ChronicleEventType.BountyFulfilled && bold.Any(b => b.AgentId == e.ActorAId));
+            Assert.True(Balanced(sim));
+        }
+
         private static void Post(LocalSimulation sim, int lair, ushort reward)
         {
             var commands = (IPlayerInterventionService)sim.Services.GetService(typeof(IPlayerInterventionService));
