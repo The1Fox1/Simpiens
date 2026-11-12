@@ -1679,3 +1679,19 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **K4.5** (`d230531`): a pile is drawn as its rarest item, so no new sprite was needed. Item names take rarity's colours from tokens a shade lighter than the icon rims.
 - **Golden unchanged through K4:** the golden runs end at t3000, before any kill.
 - **Finding F5:** a thrash by the stall on seeds 8 and 15 in long runs with the workshop player. It is older than K4 (the same at K3's gate).
+
+## 2026-11-11: Epic 10 Part 3, K5, death and rescue (under the producer's AFK directive)
+- **The split:** K5's two supervised Very Complex steps were split so that no part is Very Complex (the complexity rule's branch for an absent developer), and every call went into the epic as D27–D34 for the producer's look.
+  - **The order:** death first (`23935b9`), since bleeding out ends in it; then the collapse (`acebc49`), carrying and rescue (`6c55dcf`), memory, the newcomer and the saves (`5750248`), the DoD (`583547d`), and the client (`e7a2a57`, `c9b2e69`).
+- **One way out of the world** (A2): `Die` and `DepartOutpost` share one release (`ReleaseFromOutpost`), so the groups, contracts, bunks and claims a drifter's departure already handled handle the dead.
+  - **The body** is a pile (A5) with `BodyOf`, lying until it fades even picked clean.
+  - **Gold on the ground** is the ledger's own account, as escrow is, derived from the piles on a load.
+- **Danger is the world's:** `SimulationManager.InDanger` reads hazards and lairs with living creatures, charted or not.
+  - **The fallen's pass** runs after the creatures': it checks carry couplings, then runs the clocks.
+  - A collapsed crawler lying still had to count as tending; else the runtime pre-empted it every tick in a hazard, which made a thrash.
+- **Carrying is unsaved work in progress,** as intents are: a coupling holds only while the carrier's `CarryIntent` runs for that fallen, checked each tick.
+- **Rescue reads the snapshot's fallen** (`FallenView`): earshot, not sight; friends by warmth, or party mates; `AlreadyThere` for a rescuer in the same hazard room.
+- **Inside format 11:** `PileRecord` grew from 56 to 72 bytes; the crawler's record gained the clock and what downed it; the departed records gained their cause; the population block gained the newcomers due.
+- **Finding F6:** nobody is downed in danger in live play, measured three ways. The two K5 DoDs that need a downing are recommended to move to K7's Clear order (option A); `TheCarefulLoseFew` is live, with its band a default (D33).
+- **The client:** the dossier keeps a dead crawler after the selection drops it (`DashboardModel.DossierCrawler`; the selection's rule for a drifter walking out is unchanged). The departed list reaches the dashboard through `IDepartedRoll`.
+- **Golden unchanged through K5:** nothing dies in a golden run.

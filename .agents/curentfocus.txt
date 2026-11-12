@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-11 (Epic 10 Part 3 ACTIVE: K0-K3 done and approved; K4 loot done 2026-11-11 under the producer's AFK directive (D22-D26 for review); K5 death and rescue next under the same directive; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-11 (Epic 10 Part 3 ACTIVE: K0-K3 done and approved; K4 loot and K5 death and rescue done 2026-11-11 under the producer's AFK directive (D22-D34 for review; F6: two K5 DoDs recommended to move to K7); stop for the producer's look at death and rescue; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -99,8 +99,9 @@ CURRENT FOCUS
   (decision D21: the bold and armed brave a lair they can clear; the DoD AnArmedCrawlerFightsBack on gate seed 18).
   K3's look passed ("Looks good") with the producer's AFK directive for K4-K5. K4, loot, done 2026-11-11 (piles,
   drops, picking up, the materials feeding the forge, piles drawn; D22-D26 for review; the DoD KillsFeedTheForge on
-  gate seed 18). NEXT: K5, death and rescue, under the same directive, to the stop for the producer's look.
-  Nothing pushed.
+  gate seed 18). K5, death and rescue, done the same day (D27-D34; TheCarefulLoseFew live; F6: nobody is downed
+  in danger live yet, so AFriendCarriesTheFallenOut and DeathHasItsCost are recommended to move to K7's Clear order).
+  NEXT: the producer's look at death and rescue (the plan's stop); then K6, hunting. Nothing pushed.
   Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
 
@@ -129,7 +130,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K4 done; K5 next under the AFK directive], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K5 done; the look at death and rescue is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
 - Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
