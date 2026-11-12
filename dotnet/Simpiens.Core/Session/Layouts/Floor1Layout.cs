@@ -116,7 +116,10 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>Built once; definitions are immutable.</summary>
         public static MapDefinition Definition => _definition ??= Build();
 
-        private static MapDefinition Build()
+        /// <summary>Tests only: the floor with <paramref name="more"/> added (a lair the floor doesn't have yet: K8.3's spinners).</summary>
+        internal static MapDefinition BuildWith(System.Action<MapDefinitionBuilder> more) => Build(more);
+
+        private static MapDefinition Build(System.Action<MapDefinitionBuilder> more = null)
         {
             var b = new MapDefinitionBuilder("Floor1", new RectF(-24f, -24f, 48f, 42f));
 
@@ -276,6 +279,7 @@ namespace Simpiens.Core.Session.Layouts
             b.Label("Workshop Row", new Vec2(-3f, -19.4f), new Rgba(0.95f, 0.7f, 0.45f));
             b.Label("Guildhall", new Vec2(16f, -19.4f), new Rgba(0.75f, 0.65f, 0.95f));
 
+            more?.Invoke(b);
             return b.Build();
         }
     }

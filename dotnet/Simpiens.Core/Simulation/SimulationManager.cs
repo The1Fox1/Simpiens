@@ -182,6 +182,12 @@ namespace Simpiens.Simulation
         /// Danger for the fallen (K5.1, Q3): a hazard sector, or within the reach of a lair holding a living creature,
         /// charted or not (danger is the world's, not what crawlers know of it).
         /// </summary>
+        public bool HasLineOfSight(Vec2 from, Vec2 to)
+        {
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            return snapshot == null || snapshot.HasLineOfSight(from, to);
+        }
+
         public bool InDanger(Vec2 position)
         {
             if (Vitality.HazardAt(Map, position).IsHazardous) return true;

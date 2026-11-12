@@ -19,6 +19,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetCreature(fight.Target, out var creature)) return IntentResult.Success; // slain, or gone
+            if (Ranged.IsShooter(agent))
+            {
+                // A shooter keeps its distance (Epic 10 Part 3, K8.2b); it lets a creature go that runs out of its range
+                if (creature.Mode == CreatureMode.Flee && Vec2.Distance(node.Position, creature.Position) > Ranged.RangeOf(agent) + Vitality.FightPursuit) return IntentResult.Success;
+                return Ranged.Engage(node, creature, context);
+            }
             if (Melee.TrySwing(node, creature, context)) return IntentResult.InProgress;
             float distance = Vec2.Distance(node.Position, creature.Position);
             if (creature.Mode == CreatureMode.Flee && distance > Vitality.FightPursuit) return IntentResult.Success; // it ran: let it go
@@ -66,6 +72,64 @@ namespace Simpiens.Cognition.Planning.Handlers
     }
 
     /// <summary>
+    /// A shooter's turn against a creature (Epic 10 Part 3, K8.2b, D46), shared by the fight and the hunt (and so the party's
+    /// fight): in range with a clear line it asks the creatures' pass for a shot; it steps back while the creature is inside its
+    /// keep-away line (<see cref="CombatRules.KeepAway"/>), toward it while out of range or without a line, and otherwise holds. A step back that
+    /// walls or crawlers block turns aside, or it stands and shoots.
+    /// </summary>
+    internal static class Ranged
+    {
+        /// <summary>True when what the crawler wields has a range.</summary>
+        public static bool IsShooter(AgentState agent) => RangeOf(agent) > 0f;
+
+        public static float RangeOf(AgentState agent) => agent?.Inventory == null ? 0f : Simpiens.Simulation.Items.CrawlerStats.Get(agent.Inventory, Simpiens.Simulation.Items.StatKind.Range);
+
+        public static IntentResult Engage(WorldEntity node, CreatureState creature, IIntentExecutionContext context)
+        {
+            var agent = node.Agent;
+            var me = Combatant.ForCrawler(agent, node.Radius);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            agent.VisualState = AgentVisualState.Defiant;
+            bool clear = context.HasLineOfSight(node.Position, creature.Position);
+            if (clear && CombatRules.InRange(me, them)) context.SwingAtCreature(node, creature.Id);
+            float gap = CombatRules.Gap(me, them);
+            float keep = CombatRules.KeepAway(me.Range, them.Reach);
+            float step = (float)(node.BaseSpeed * context.FixedTickDeltaTime);
+            if (gap < keep)
+            {
+                var away = (node.Position - creature.Position).Normalized;
+                if (away == Vec2.Zero) away = Vec2.Up;
+                StepAside(node, away, SimMath.Min(step, (float)(keep - gap)), context);
+                return IntentResult.InProgress;
+            }
+            if (!clear || gap > (float)(me.Range * CombatRules.CloseShare))
+            {
+                float close = clear ? (float)(gap - me.Range * CombatRules.CloseShare) : step;
+                var toward = (creature.Position - node.Position).Normalized;
+                context.TryDisplacePawn(node, node.Position + toward * SimMath.Min(step, close), respectPawns: true); // blocked: it waits
+            }
+            return IntentResult.InProgress;
+        }
+
+        // Straight back, else turned 45 and then 90 degrees either way; it stays where it is when all are blocked
+        private static void StepAside(WorldEntity node, Vec2 away, float step, IIntentExecutionContext context)
+        {
+            if (context.TryDisplacePawn(node, node.Position + away * step, respectPawns: true)) return;
+            for (int turn = 1; turn <= 2; turn++)
+            {
+                float angle = turn * 0.7853982f;
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    float a = angle * side;
+                    float cos = SimMath.Cos(a), sin = SimMath.Sin(a);
+                    var turned = new Vec2((float)(away.X * cos - away.Y * sin), (float)(away.X * sin + away.Y * cos));
+                    if (context.TryDisplacePawn(node, node.Position + turned * step, respectPawns: true)) return;
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Executes a HuntIntent (Epic 10 Part 3, K6.2, Q7): the hunter walks toward its lair's heart on its path, and fights the
     /// lair's nearest living creature as soon as one is within its sight (or its path is walked), one after another, as a
     /// fight does (<see cref="Melee"/>); a member at a clear's fight fights its party's focus instead (K7.2a). Done when the
@@ -90,6 +154,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             bool walked = hunt.Path == null || state.CurrentWaypointIndex >= hunt.Path.Length;
             if (walked || (creature.Position - node.Position).SqrMagnitude <= EngageDistance * EngageDistance)
             {
+                if (Ranged.IsShooter(agent)) return Ranged.Engage(node, creature, context); // from range, keeping its distance (K8.2b)
                 if (Melee.TrySwing(node, creature, context)) return IntentResult.InProgress;
                 return Melee.StepToward(node, creature, context, besideOthers: true);
             }

@@ -48,13 +48,18 @@ namespace Simpiens.Core.Session
             Economy = economy ?? EconomyTuning.Default;
         }
 
+        /// <summary>Tests only: the outpost on <paramref name="map"/>, a variant of the floor (Floor1Layout.BuildWith).</summary>
+        internal OutpostSession(int crawlerCount, EconomyTuning economy, MapDefinition map) : this(crawlerCount, economy) => _map = map;
+
+        private readonly MapDefinition _map;
+
         public int CrawlerCount { get; }
 
         public EconomyTuning Economy { get; }
 
         public string Id => SessionId;
         public string DisplayName => "Main Map";
-        public MapDefinition Map => Floor1Layout.Definition;
+        public MapDefinition Map => _map ?? Floor1Layout.Definition;
 
         public void Populate(SessionBuilder session)
         {

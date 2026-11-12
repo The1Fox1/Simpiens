@@ -54,6 +54,13 @@ namespace Simpiens.Simulation.Creatures
         }
 
         private readonly List<CrawlerSwing> _asked = new List<CrawlerSwing>(8);
+        private readonly List<ShotRecord> _shots = new List<ShotRecord>(8);
+
+        /// <summary>
+        /// The shots loosed in the last creatures' pass, crawlers' and creatures' alike, in the order decided (Epic 10 Part 3,
+        /// K8.4a): what the views draw flying between ticks. Unsaved, as a hurt is: presentation's feed, rebuilt each pass.
+        /// </summary>
+        public IReadOnlyList<ShotRecord> ShotsThisTick => _shots;
         private readonly List<CrawlerSwing> _blows = new List<CrawlerSwing>(8);
 
         /// <summary>Creatures slain by crawlers since the session started (K3.3; unsaved, for the day's checks).</summary>
@@ -88,14 +95,19 @@ namespace Simpiens.Simulation.Creatures
         /// </summary>
         private void Rule(ICreatureWorld world, uint tick)
         {
-            if (world == null || _creatures.Count == 0) return;
+            _shots.Clear(); // this pass's shots only, though no creature is left to fight (K8.4a)
+            if (world == null || _creatures.Count == 0)
+            {
+                _asked.Clear(); // nothing to swing at: an asked swing doesn't wait for the next creature
+                return;
+            }
             var snapshot = world.Snapshot;
             var entities = world.Entities;
             for (int i = 0; i < _creatures.Count; i++) Step(_creatures[i], snapshot, entities, tick);
 
             _swings.Clear();
-            for (int i = 0; i < _creatures.Count; i++) DecideSwing(_creatures[i], entities, tick);
-            DecideCrawlerSwings(tick);
+            for (int i = 0; i < _creatures.Count; i++) DecideSwing(_creatures[i], snapshot, entities, tick);
+            DecideCrawlerSwings(snapshot, tick);
             for (int i = 0; i < _swings.Count; i++) world.Strike(_swings[i].Target, _swings[i].Attacker.Id, _swings[i].Outcome, tick);
             for (int i = 0; i < _blows.Count; i++) Land(world, _blows[i], tick);
 
@@ -105,8 +117,9 @@ namespace Simpiens.Simulation.Creatures
         }
 
         // The crawlers' asked swings, in the order they were asked (the intents' order): each on its feet, at a creature alive
-        // and in its reach, its own timer ready; rolled on the attacker's stream as a creature's are (D3)
-        private void DecideCrawlerSwings(uint tick)
+        // and in its reach, or in its range with a clear line (a shot, K8.1-K8.2a), its own timer ready; rolled on the attacker's
+        // stream as a creature's are (D3)
+        private void DecideCrawlerSwings(SharedWorldSnapshot snapshot, uint tick)
         {
             _blows.Clear();
             for (int i = 0; i < _asked.Count; i++)
@@ -118,8 +131,10 @@ namespace Simpiens.Simulation.Creatures
                 var me = Combatant.ForCrawler(agent, ask.Crawler.Radius);
                 var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
                 if (!CombatRules.CanStrike(me, them, tick, agent.NextSwingAt)) continue;
+                if (!CombatRules.InReach(me, them) && snapshot != null && !snapshot.HasLineOfSight(me.Position, them.Position)) continue; // a shot needs a clear line (K8.2a)
                 ask.Outcome = CombatRules.Swing(_seed, tick, me, them);
                 ask.Creature = creature;
+                if (me.IsRanged) _shots.Add(new ShotRecord(me.Id, them.Id, me.Position, them.Position, ask.Outcome.Hit, creature: false));
                 agent.NextSwingAt = CombatRules.NextSwingAt(tick, me);
                 _blows.Add(ask);
             }
@@ -133,6 +148,8 @@ namespace Simpiens.Simulation.Creatures
             var creature = blow.Creature;
             var agent = blow.Crawler.Agent;
             if (creature == null || !creature.IsAlive) return;
+            if (agent?.Inventory != null && CombatRules.WearOnShot(agent.Inventory)) // a ranged weapon wears per shot, hit or miss (K8.1)
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)}'s ranged weapon broke shooting at {CreatureCatalog.NameOf(creature.Kind)} {creature.Id}");
             if (!blow.Outcome.Hit)
             {
                 Provoke(creature, blow.Crawler);
@@ -232,6 +249,7 @@ namespace Simpiens.Simulation.Creatures
                     }
                     var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
                     var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
+                    if (me.IsRanged && Keep(c, kind, me, them, heart, snapshot)) break; // a spitter keeps its distance (K8.3)
                     if (CombatRules.Gap(me, them) <= kind.Reach) break; // in reach: it stands and strikes
                     if (WalkTo(c, kind, quarry.Position, snapshot, tick) == Walk.Stuck) GoHome(c);
                     break;
@@ -302,7 +320,7 @@ namespace Simpiens.Simulation.Creatures
             return agent != null && !agent.IsDowned && agent.Health > 0f && !agent.HasLeft && Vec2.Distance(e.Position, heart) <= kind.Leash;
         }
 
-        private void DecideSwing(CreatureState c, IReadOnlyList<WorldEntity> entities, uint tick)
+        private void DecideSwing(CreatureState c, SharedWorldSnapshot snapshot, IReadOnlyList<WorldEntity> entities, uint tick)
         {
             if (c.Mode != CreatureMode.Chase || !c.IsAlive) return;
             var kind = c.Definition;
@@ -311,9 +329,35 @@ namespace Simpiens.Simulation.Creatures
             var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
             var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
             if (!CombatRules.CanStrike(me, them, tick, c.NextSwingAt)) return;
-            _swings.Add(new Swing { Attacker = c, Target = quarry, Outcome = CombatRules.Swing(_seed, tick, me, them) });
+            if (!CombatRules.InReach(me, them) && snapshot != null && !snapshot.HasLineOfSight(me.Position, them.Position)) return; // a spit needs a clear line (K8.2a)
+            var outcome = CombatRules.Swing(_seed, tick, me, them);
+            _swings.Add(new Swing { Attacker = c, Target = quarry, Outcome = outcome });
+            if (me.IsRanged) _shots.Add(new ShotRecord(me.Id, them.Id, me.Position, them.Position, outcome.Hit, creature: true));
             c.NextSwingAt = CombatRules.NextSwingAt(tick, me);
             c.SwungAtTick = tick;
+        }
+
+        // A ranged creature's ground (K8.3, D48, as a shooting crawler's, K8.2b): inside its keep-away line it steps back from its
+        // quarry, wall-checked and within its leash; in range with a clear line it holds and spits. True when it stays put or
+        // stepped back; false to close as a biter does
+        private static bool Keep(CreatureState c, CreatureDefinition kind, in Combatant me, in Combatant them, Vec2 heart, SharedWorldSnapshot snapshot)
+        {
+            float gap = CombatRules.Gap(me, them);
+            bool clear = snapshot == null || snapshot.HasLineOfSight(me.Position, them.Position);
+            if (gap < CombatRules.KeepAway(me.Range, them.Reach))
+            {
+                var away = (c.Position - them.Position).Normalized;
+                if (away == Vec2.Zero) away = Vec2.Up;
+                var candidate = c.Position + away * (float)(kind.Speed * SimulationClock.FixedTickDeltaTime);
+                if ((candidate - heart).SqrMagnitude <= kind.Leash * kind.Leash
+                    && (snapshot == null || (snapshot.IsStaticWalkable(candidate) && snapshot.IsSegmentStaticClear(c.Position, candidate))))
+                {
+                    c.Position = candidate;
+                    c.ForgetPath();
+                }
+                return true; // cornered or at its leash's end, it stands and spits
+            }
+            return clear && gap <= (float)(me.Range * CombatRules.CloseShare);
         }
 
         // Toward the goal along its path (D11): planned through the A* when it has none, when the goal has moved more than

@@ -69,6 +69,9 @@ namespace Simpiens.Presentation.Art
             ["leather-jerkin"] = new ItemLook(ItemShapes.Vest, new Rgba32(138, 92, 56), new Rgba32(92, 60, 36), Worn.Torso),
             ["chitin-plate"] = new ItemLook(ItemShapes.Mail, new Rgba32(92, 104, 122), new Rgba32(118, 150, 96), Worn.Torso),
             ["fang-knife"] = new ItemLook(ItemShapes.Blade, new Rgba32(236, 226, 200), new Rgba32(60, 40, 44), Worn.Hand),
+            // Ranged arms (Epic 10 Part 3, K8.1): a leather sling on its cords, a crossbow's steel prod on a wooden stock
+            ["sling"] = new ItemLook(ItemShapes.Sling, new Rgba32(150, 104, 64), new Rgba32(196, 178, 140), Worn.Hand),
+            ["crossbow"] = new ItemLook(ItemShapes.Crossbow, new Rgba32(176, 186, 198), new Rgba32(126, 84, 46), Worn.Hand),
             ["stoneheart-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(70, 64, 92), new Rgba32(196, 120, 220), Worn.Torso),
         };
 

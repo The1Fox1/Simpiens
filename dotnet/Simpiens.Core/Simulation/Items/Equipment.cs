@@ -17,7 +17,9 @@ namespace Simpiens.Simulation.Items
         /// <summary>A blow landed (a weapon; Q10, the combat rule's D7).</summary>
         PerHit = 3,
         /// <summary>A blow taken (armour; D7 leaves it to K1.3 and K3).</summary>
-        PerBlowTaken = 4
+        PerBlowTaken = 4,
+        /// <summary>A shot loosed, hit or miss (a ranged weapon; Epic 10 Part 3, K8.1, Q16: no ammunition, the weapon wears instead).</summary>
+        PerShot = 5
     }
 
     public enum ModifierOp : byte

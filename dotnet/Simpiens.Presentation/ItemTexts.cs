@@ -47,6 +47,8 @@ namespace Simpiens.Presentation
             // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2)
             _texts[(int)ItemType.Cudgel] = new ItemText("Cudgel", "From the caravan; a cheap club", "Cudgel", "Cudgel", "CUDGEL");
             _texts[(int)ItemType.IronBlade] = new ItemText("Iron blade", "Forged from three ore", "Iron blade", "Iron blade", "IRON BLADE");
+            _texts[(int)ItemType.Sling] = new ItemText("Sling", "From the caravan; a cheap sling", "Sling", "Sling", "SLING");
+            _texts[(int)ItemType.Crossbow] = new ItemText("Crossbow", "Forged from ore and a hide", "Crossbow", "Crossbow", "CROSSBOW");
             _texts[(int)ItemType.GlowstoneEdge] = new ItemText("Glowstone edge", "Forged from ore and glowstone", "Glowstone edge", "Glowstone edge", "GLOWSTONE EDGE");
             _texts[(int)ItemType.IronHelm] = new ItemText("Iron helm", "Forged from two ore; turns blows", "Iron helm", "Iron helm", "IRON HELM");
             _texts[(int)ItemType.RingCoat] = new ItemText("Ring coat", "Forged from four ore; turns blows", "Ring coat", "Ring coat", "RING COAT");

@@ -38,8 +38,9 @@ namespace Simpiens.Testing.Combat
             ValidateAWeaponWearsPerHit();
             ValidateOneRuleOverTwoKindsOfFighter();
             ValidateNothingAllocates();
+            ValidateAShotCarriesFallsOffAndWears();
 
-            TestLog.Log("<color=green>[CombatValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[CombatValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheRollIsSeeded()
@@ -323,6 +324,38 @@ namespace Simpiens.Testing.Combat
             new ItemDefinition(Brigandine, "TestBrigandine", "Test Brigandine", ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Common,
                 equipment: new EquipmentBlock(SlotKind.Body, durability: 100, WearRule.None,
                     new StatModifier(StatKind.Defense, ModifierOp.Add, 5f))));
+
+        // A shot (Epic 10 Part 3, K8.1, D45): a ranged fighter strikes within its range across the gap between bodies; its chance
+        // holds to half its range and falls evenly to half of it at full range; a melee fighter's chance is untouched; a ranged
+        // weapon wears per shot, hit or miss, and a blade doesn't
+        private void ValidateAShotCarriesFallsOffAndWears()
+        {
+            var archer = new Combatant(new EntityId(1, 0, 0, 0), Vec2.Zero, CrawlerRadius, 100f, true, 9f, 0f, CombatRules.UnarmedReach, 24, range: 7f);
+            float span = CrawlerRadius * 2f; // the two bodies
+            Combatant At(float gap) => Fighter(2, new Vec2(gap + span, 0f));
+            Assert(archer.IsRanged && CombatRules.InRange(archer, At(7f)) && !CombatRules.InRange(archer, At(7.1f)), "In range up to 7 across the gap, not past it.");
+            Assert(CombatRules.CanStrike(archer, At(5f), 0, 0) && !CombatRules.InReach(archer, At(5f)), "A shot at 5: out of reach, in range.");
+            var brawler = Fighter(3, Vec2.Zero);
+            Assert(!CombatRules.CanStrike(brawler, At(5f), 0, 0) && !CombatRules.InRange(brawler, At(0.1f)), "A fighter with no range strikes only in reach.");
+            float baseChance = CombatRules.HitChance(archer);
+            Assert(CombatRules.ShotChance(archer, At(3f)) == baseChance && CombatRules.ShotChance(archer, At(3.5f)) == baseChance, "Up to half its range, the base chance.");
+            Assert(Math.Abs(CombatRules.ShotChance(archer, At(7f)) - baseChance * CombatRules.RangeFalloff) < 1e-5f, "At full range, half of it.");
+            Assert(Math.Abs(CombatRules.ShotChance(archer, At(5.25f)) - baseChance * 0.75f) < 1e-5f, "Midway, three quarters.");
+            Assert(CombatRules.ShotChance(brawler, At(5f)) == CombatRules.HitChance(brawler), "A melee fighter's chance doesn't fall with distance.");
+            AssertHitShare(archer, At(7f), baseChance * CombatRules.RangeFalloff, "a shot at full range");
+
+            var inventory = new AgentInventory();
+            Assert(inventory.TryEquip(Outfitting.NewPiece(ItemType.Crossbow, Grades.Standard)), "A crossbow in the weapon slot.");
+            int life = inventory.GetEquipped(EquipmentSlot.Weapon).Durability;
+            Assert(!CombatRules.WearOnShot(inventory) && inventory.GetEquipped(EquipmentSlot.Weapon).Durability == life - 1, "A shot wears a unit, hit or miss.");
+            Assert(!CombatRules.WearOnHit(new SwingOutcome(true, 0.7f, 5f), inventory) && inventory.GetEquipped(EquipmentSlot.Weapon).Durability == life - 1, "A hit wears it no more.");
+            Assert(CrawlerStats.Get(inventory, StatKind.Range) == 7f && CrawlerStats.Get(new AgentInventory(), StatKind.Range) == 0f, "Its range is the wearer's; a bare hand has none.");
+            var blade = new AgentInventory();
+            Assert(blade.TryEquip(Outfitting.NewPiece(ItemType.IronBlade, Grades.Standard)), "A blade.");
+            int edge = blade.GetEquipped(EquipmentSlot.Weapon).Durability;
+            Assert(!CombatRules.WearOnShot(blade) && blade.GetEquipped(EquipmentSlot.Weapon).Durability == edge, "A blade doesn't wear per shot.");
+            TestLog.Log("[PASS] Test 10: a shot carries to its range, its chance holds to half of it and halves at full range; a ranged weapon wears per shot.");
+        }
 
         private static Combatant Fighter(uint id, Vec2 position, float attack = CombatRules.UnarmedAttack, float defense = 0f, float proficiency = 0f, bool standing = true) =>
             new Combatant(new EntityId(id, 0, 0, 0), position, CrawlerRadius, health: 100f, standing, attack, defense, CombatRules.UnarmedReach,

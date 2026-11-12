@@ -60,6 +60,8 @@ namespace Simpiens.Simulation.Items
             new Recipe(ItemType.GlowstoneEdge, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Glowstone, 1)),
             new Recipe(ItemType.IronHelm, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2)),
             new Recipe(ItemType.RingCoat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 4)),
+            // Ranged arms (Epic 10 Part 3, K8.1, Q15): the crossbow's prod from ore, its string from a hide
+            new Recipe(ItemType.Crossbow, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Hide, 1)),
             // Armour from creatures' materials (Epic 10 Part 3, K4.4)
             new Recipe(ItemType.LeatherJerkin, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Hide, 2)),
             new Recipe(ItemType.ChitinPlate, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.Chitin, 2), new RecipeInput(ItemType.IronOre, 1))

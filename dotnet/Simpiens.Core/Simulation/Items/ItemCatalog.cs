@@ -137,7 +137,21 @@ namespace Simpiens.Simulation.Items
             new ItemDefinition(ItemType.StoneheartCoat, "StoneheartCoat", "Stoneheart Coat",
                 ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Epic,
                 equipment: new EquipmentBlock(SlotKind.Body, durability: 220, WearRule.PerBlowTaken,
-                    new StatModifier(StatKind.Defense, ModifierOp.Add, 12f)))
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 12f))),
+            // Ranged arms (Epic 10 Part 3, K8.1, Q15, D44): a range across the gap between bodies, and wear per shot, hit or
+            // miss (Q16: no ammunition). Weaker in a hit than a blade, so a blade stays the weapon in reach: the sling 5 to hit
+            // at 5 units, the crossbow 9 at 7 and slower
+            new ItemDefinition(ItemType.Sling, "Sling", "Sling",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Botanical, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 100, WearRule.PerShot,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 3f),
+                    new StatModifier(StatKind.Range, ModifierOp.Add, 5f))),
+            new ItemDefinition(ItemType.Crossbow, "Crossbow", "Crossbow",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerShot,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 7f),
+                    new StatModifier(StatKind.Range, ModifierOp.Add, 7f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f)))
         };
 
         /// <summary>

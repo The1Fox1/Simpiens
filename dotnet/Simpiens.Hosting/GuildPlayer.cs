@@ -43,6 +43,9 @@ namespace Simpiens.Hosting
             public bool Clear;
             public Simpiens.Simulation.Creatures.CreatureKind LairKind;
             public bool Arm;
+            public int Shooters;
+            public ItemType Bow;
+            public Simpiens.Simulation.Creatures.CreatureKind MaterialsFirst;
             public readonly List<EntityId> Members = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         }
 
@@ -116,15 +119,22 @@ namespace Simpiens.Hosting
         /// Sends party 1 to clear a lair (Epic 10 Part 3, K7.4, Q8): once the guild reaches its target size, each member is given
         /// the best weapon and armour for a fight the stall holds (if <paramref name="arm"/>), and when every member is armed and
         /// well, the first charted lair of <paramref name="kind"/> (any, for None) with a creature in it is ordered cleared,
-        /// under <paramref name="rule"/>. Again each time the party is home and a lair shows.
+        /// under <paramref name="rule"/>. Again each time the party is home and a lair shows. The last <paramref name="shooters"/>
+        /// members are armed to shoot (K8.2c), the rest to fight in reach; the arming waits until each has its weapon. With a
+        /// <paramref name="bow"/>, while the stall holds fewer of it than there are shooters, the party first clears the lairs of
+        /// <paramref name="materialsFirst"/> with no shooters, for the makings (a crossbow's hide; K8.5).
         /// </summary>
-        public void SendClear(Simpiens.Simulation.Creatures.CreatureKind kind = Simpiens.Simulation.Creatures.CreatureKind.None, RetreatRule rule = RetreatRule.Steady, bool arm = true)
+        public void SendClear(Simpiens.Simulation.Creatures.CreatureKind kind = Simpiens.Simulation.Creatures.CreatureKind.None, RetreatRule rule = RetreatRule.Steady, bool arm = true, int shooters = 0,
+            ItemType bow = ItemType.None, Simpiens.Simulation.Creatures.CreatureKind materialsFirst = Simpiens.Simulation.Creatures.CreatureKind.None)
         {
             var plan = _plans[0];
             Plan(plan, 0, 1, rule, outfit: false, draughts: 0, stockpile: 0);
             plan.Clear = true;
             plan.LairKind = kind;
             plan.Arm = arm;
+            plan.Shooters = shooters;
+            plan.Bow = bow;
+            plan.MaterialsFirst = materialsFirst;
             plan.Target = byte.MaxValue; // planned: the lair is found when it is ready
         }
 
@@ -231,9 +241,17 @@ namespace Simpiens.Hosting
             if (plan.Clear)
             {
                 // A clear (K7.4): its lair charted and holding a creature, every member armed (from stock first) and well
-                int lair = ClearTarget(plan.LairKind);
+                // The bows' makings first (K8.5): while the stall holds too few of the bow, the materials' lair, with no shooters
+                var kind = plan.LairKind;
+                int shooters = plan.Shooters;
+                if (plan.Bow != ItemType.None && BowsInStock(plan.Bow) + BowsWorn(host, members, plan.Bow) < shooters)
+                {
+                    kind = plan.MaterialsFirst;
+                    shooters = 0;
+                }
+                int lair = ClearTarget(kind);
                 if (lair < 0) return false;
-                if (plan.Arm && !Armed(guild, host, members)) return false;
+                if (plan.Arm && !Armed(guild, host, members, shooters)) return false;
                 if (!AllWell(host, members)) return false;
                 order = new DispatchExpeditionCommand(plan.Slot, 0, plan.Goal, plan.Rule, 0, ExpeditionKind.Clear, (byte)lair);
                 return guild.CanDispatch(host, order) == GuildRules.Check.Ok;
@@ -329,6 +347,20 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>The first charted lair of <paramref name="kind"/> (any, for None) with a creature in it, as the board shows them; -1 for none.</summary>
+        private int BowsInStock(ItemType bow) => _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0].SellStockOf(bow) : 0;
+
+        private static int BowsWorn(IGuildHost host, List<EntityId> members, ItemType bow)
+        {
+            int worn = 0;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var m) || m.Inventory == null) continue;
+                var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+                for (int s = 0; s < slots.Count; s++) if (m.Inventory.GetEquipped(slots[s].Id).Type == bow) worn++;
+            }
+            return worn;
+        }
+
         private int ClearTarget(Simpiens.Simulation.Creatures.CreatureKind kind)
         {
             var creatures = _sim.Simulation.Creatures;
@@ -344,11 +376,11 @@ namespace Simpiens.Hosting
         /// is given the piece that most outfits it for fighting, while stock lasts (promised pieces counted); true when every
         /// member is armed.
         /// </summary>
-        private bool Armed(GuildService guild, IGuildHost host, List<EntityId> members)
+        private bool Armed(GuildService guild, IGuildHost host, List<EntityId> members, int shooters)
         {
             ref var stock = ref StockLeft();
             int count = 0;
-            GuildRules.PlanArms(guild, host, members, ref stock, _gifts, ref count); // the builder's rule (K7.1)
+            GuildRules.PlanArms(guild, host, members, ref stock, _gifts, ref count, shooters); // the builder's rule (K7.1, K8.2c)
             for (int i = 0; i < count; i++)
             {
                 _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, _gifts[i].Crawler, _gifts[i].Item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
@@ -358,6 +390,7 @@ namespace Simpiens.Hosting
             for (int i = 0; i < members.Count && all; i++)
             {
                 if (!host.TryGetCrawler(members[i], out var member) || !Simpiens.Cognition.Vitality.IsArmed(member.Inventory)) all = false;
+                else if (i >= members.Count - shooters && !Simpiens.Cognition.Planning.Handlers.Ranged.IsShooter(member)) all = false; // a shooter waits for its bow
             }
             return all;
         }

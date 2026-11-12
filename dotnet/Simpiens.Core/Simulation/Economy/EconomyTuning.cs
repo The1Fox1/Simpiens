@@ -166,6 +166,10 @@ namespace Simpiens.Simulation.Economy
             items[(int)ItemType.ChitinPlate] = new ItemTerms(100, StallRole.Sells, 70, 0);
             items[(int)ItemType.FangKnife] = new ItemTerms(150);
             items[(int)ItemType.StoneheartCoat] = new ItemTerms(180);
+            // Ranged arms (Epic 10 Part 3, K8.1, D44): the caravan's sling at 10g; the forge's crossbow priced as its goods are
+            // (two ore and a hide, two hours' work), none to start
+            items[(int)ItemType.Sling] = new ItemTerms(12, StallRole.Sells, 10, 0);
+            items[(int)ItemType.Crossbow] = new ItemTerms(60, StallRole.Sells, 45, 0);
             return items;
         }
 

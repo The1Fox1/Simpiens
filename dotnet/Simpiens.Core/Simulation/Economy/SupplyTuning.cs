@@ -94,6 +94,7 @@ namespace Simpiens.Simulation.Economy
             CaravanTerms.Supplies(ItemType.HazardGear, stockCap: 3, wholesaleCost: 20, SupplyService.GearSinkName),
             CaravanTerms.Exports(ItemType.Glowstone, quota: 2, marketPrice: 70),
             CaravanTerms.Supplies(ItemType.Cudgel, stockCap: 2, wholesaleCost: 6, SupplyService.GearSinkName), // Epic 10 Part 3, K3.1, Q10: with K3.3's buyers
+            CaravanTerms.Supplies(ItemType.Sling, stockCap: 2, wholesaleCost: 5, SupplyService.GearSinkName), // K8.1, Q15
             // Creatures' materials (K4.4, D25): about 20% over the stall's price, past six of each kept for the forge
             CaravanTerms.Exports(ItemType.Hide, quota: 8, marketPrice: 6, keep: 6),
             CaravanTerms.Exports(ItemType.Chitin, quota: 8, marketPrice: 10, keep: 6));

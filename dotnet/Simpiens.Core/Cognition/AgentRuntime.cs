@@ -46,6 +46,9 @@ namespace Simpiens.Cognition
         /// <summary>The fallen mate the guild last sent it for that it answered (Epic 10 Part 3, K7.2c): it drops what it does once per order.</summary>
         private EntityId _answeredCarry;
 
+        /// <summary>True once it answered its clear's fight (Epic 10 Part 3, K8.2b): it drops its march once, to fight as its weapon fights.</summary>
+        private bool _answeredFight;
+
         public AgentRuntime(
             AgentState state,
             ISpatialPartition spatialPartition,
@@ -172,6 +175,9 @@ namespace Simpiens.Cognition
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;
             bool sentToCarry = !State.IsDowned && carry != default && carry != _answeredCarry && !State.IsEvaluating;
+            // The clear's fight begun (K8.2b): it leaves its march to the lair's heart once, so a shooter holds off at range
+            if (!State.Expedition.IsFighting) _answeredFight = false;
+            bool toTheFight = !State.IsDowned && State.Expedition.IsFighting && !_answeredFight && !State.IsEvaluating;
 
             bool shouldPreempt = false;
             if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
@@ -188,6 +194,12 @@ namespace Simpiens.Cognition
             {
                 _answeredCarry = carry;
                 shouldPreempt = !(State.CurrentIntent is CarryIntent) && !(State.CurrentIntent is GiveMedicineIntent);
+            }
+            else if (toTheFight)
+            {
+                _answeredFight = true;
+                shouldPreempt = !(State.CurrentIntent is HuntIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is FleeIntent)
+                    && !(State.CurrentIntent is CarryIntent) && !(State.CurrentIntent is GiveMedicineIntent);
             }
             else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent) && !tending)
             {

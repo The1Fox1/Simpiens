@@ -25,6 +25,8 @@ namespace Simpiens.Simulation.Economy
         LeatherJerkin = 17, // Armour for the body, made at the forge from hides (K4.4; placeholder name)
         ChitinPlate   = 18, // Armour for the body, made at the forge from chitin and ore (K4.4; placeholder name)
         FangKnife     = 19, // A rare weapon a rat now and then drops (K4.2, K4.4; placeholder name)
-        StoneheartCoat = 20 // A rare coat a beetle now and then drops (K4.2, K4.4; placeholder name)
+        StoneheartCoat = 20, // A rare coat a beetle now and then drops (K4.2, K4.4; placeholder name)
+        Sling         = 21, // A ranged weapon the caravan supplies cheaply (Epic 10 Part 3, K8.1, Q15; placeholder name)
+        Crossbow      = 22 // A ranged weapon made at the forge from ore and a hide (K8.1, Q15; placeholder name)
     }
 }

@@ -36,6 +36,9 @@ namespace Simpiens.Simulation.Combat
     /// <item>a hit does the attacker's <see cref="Combatant.Attack"/>, cut by the target's <see cref="Combatant.Defense"/> on a
     /// curve that never reaches zero;</item>
     /// <item>a landed hit wears a weapon that wears per use, one unit a hit.</item>
+    /// <item>a ranged fighter strikes a foe within its <see cref="Combatant.Range"/> too (Epic 10 Part 3, K8.1, D45): its
+    /// chance falls past half its range, to <see cref="RangeFalloff"/> of the base at full range, and its weapon wears per
+    /// shot, hit or miss. The clear line a shot needs is the caller's, which holds the map.</item>
     /// </list>
     /// Combat is watched, so it runs in physical time: ticks and seconds, as walking does, never the day's minutes
     /// (docs/time-model.md). Pure functions with no state, so nothing here allocates or needs a clock: the pass that applies
@@ -65,6 +68,22 @@ namespace Simpiens.Simulation.Combat
         /// <summary>A bare-handed crawler's time between swings (Q2's "about 1.5 s").</summary>
         public const float UnarmedIntervalSeconds = 1.5f;
 
+        /// <summary>At full range a shot's chance is this share of its chance at half range or nearer (Epic 10 Part 3, K8.1, D45).</summary>
+        public const float RangeFalloff = 0.5f;
+
+        /// <summary>What a shooter keeps past its foe's reach, at the least (Epic 10 Part 3, K8.2b, D46; game units).</summary>
+        public const float KeepMargin = 1.5f;
+
+        /// <summary>A shooter closes to this share of its range, so a step of its foe's doesn't put it out of range (K8.2b).</summary>
+        public const float CloseShare = 0.8f;
+
+        /// <summary>
+        /// The gap a shooter with <paramref name="range"/> keeps from a foe of <paramref name="foeReach"/> (K8.2b, D46): the foe's
+        /// reach and <see cref="KeepMargin"/>, at least half the range and at most <see cref="CloseShare"/> of it. A crawler's bow
+        /// and a spinner's spit alike.
+        /// </summary>
+        public static float KeepAway(float range, float foeReach) => SimMath.Min((float)(range * CloseShare), SimMath.Max((float)(range * 0.5f), (float)(foeReach + KeepMargin)));
+
         /// <summary>Seconds of physical time as whole ticks, at least one: 1.5 s is 15 ticks.</summary>
         public static int SecondsToTicks(float seconds) => SimMath.Max(1, SimMath.RoundToInt((float)(seconds * TicksPerSecond)));
 
@@ -78,6 +97,17 @@ namespace Simpiens.Simulation.Combat
             return (target.Position - attacker.Position).SqrMagnitude <= (float)(span * span);
         }
 
+        /// <summary>True when <paramref name="attacker"/> has a ranged attack and <paramref name="target"/>'s body is within its range (K8.1; compared squared).</summary>
+        public static bool InRange(in Combatant attacker, in Combatant target)
+        {
+            if (!attacker.IsRanged) return false;
+            float span = (float)((float)(attacker.BodyRadius + target.BodyRadius) + attacker.Range);
+            return (target.Position - attacker.Position).SqrMagnitude <= (float)(span * span);
+        }
+
+        /// <summary>True when <paramref name="attacker"/> can strike <paramref name="target"/> from where they stand: in reach, or in range (a shot, which also needs a clear line).</summary>
+        public static bool InStrikingDistance(in Combatant attacker, in Combatant target) => InReach(attacker, target) || InRange(attacker, target);
+
         /// <summary>True when a fighter whose next swing is due at <paramref name="readyAtTick"/> may swing at <paramref name="tick"/>.</summary>
         public static bool CanSwing(long tick, long readyAtTick) => tick >= readyAtTick;
 
@@ -85,11 +115,11 @@ namespace Simpiens.Simulation.Combat
         public static long NextSwingAt(long tick, in Combatant attacker) => tick + SimMath.Max(1, attacker.SwingInterval);
 
         /// <summary>
-        /// True when <paramref name="attacker"/> may swing at <paramref name="target"/> now: both on their feet, the target in reach,
-        /// and the attacker's swing due.
+        /// True when <paramref name="attacker"/> may swing at <paramref name="target"/> now: both on their feet, the target in reach
+        /// or, for a ranged fighter, in range (K8.1), and the attacker's swing due.
         /// </summary>
         public static bool CanStrike(in Combatant attacker, in Combatant target, long tick, long readyAtTick) =>
-            attacker.Standing && target.Standing && attacker.Id != target.Id && CanSwing(tick, readyAtTick) && InReach(attacker, target);
+            attacker.Standing && target.Standing && attacker.Id != target.Id && CanSwing(tick, readyAtTick) && InStrikingDistance(attacker, target);
 
         /// <summary>The chance a swing by <paramref name="attacker"/> lands: the base plus its proficiency, kept within the bounds.</summary>
         public static float HitChance(in Combatant attacker) => SimMath.Clamp((float)(BaseHitChance + attacker.Proficiency), MinHitChance, MaxHitChance);
@@ -108,10 +138,26 @@ namespace Simpiens.Simulation.Combat
         /// <summary>The random stream of <paramref name="attacker"/>'s swing at <paramref name="tick"/>. A swing that strikes several foes draws from it once a foe, in id order (the Gatekeeper's slam, K10).</summary>
         public static SimRandom RandomFor(ulong seed, EntityId attacker, long tick) => SimRandom.For(seed, attacker, tick, SimRandomSalt.Combat);
 
+        /// <summary>
+        /// The chance a ranged fighter's shot at <paramref name="target"/> lands (K8.1, D45): <see cref="HitChance(in Combatant)"/>
+        /// out to half its range, falling evenly past it to <see cref="RangeFalloff"/> of that at full range (and no lower beyond).
+        /// A fighter with no range has its swing's chance.
+        /// </summary>
+        public static float ShotChance(in Combatant attacker, in Combatant target)
+        {
+            float chance = HitChance(attacker);
+            if (!attacker.IsRanged) return chance;
+            float half = (float)(attacker.Range * 0.5f);
+            float past = (float)(Gap(attacker, target) - half);
+            if (past <= 0f) return chance;
+            float share = SimMath.Min(1f, (float)(past / half));
+            return SimMath.Max(MinHitChance, (float)(chance * (float)(1f - (float)((1f - RangeFalloff) * share))));
+        }
+
         /// <summary>One swing's outcome, drawing its roll from <paramref name="random"/>. Whether the swing may happen is <see cref="CanStrike"/>'s.</summary>
         public static SwingOutcome Swing(ref SimRandom random, in Combatant attacker, in Combatant target)
         {
-            float chance = HitChance(attacker);
+            float chance = attacker.IsRanged ? ShotChance(attacker, target) : HitChance(attacker); // melee's chance as it was
             bool hit = random.NextFloat() < chance;
             return new SwingOutcome(hit, chance, hit ? Mitigated(attacker.Attack, target.Defense) : 0f);
         }
@@ -139,6 +185,13 @@ namespace Simpiens.Simulation.Combat
         /// </summary>
         public static bool WearOnBlowTaken(in SwingOutcome outcome, AgentInventory inventory) =>
             outcome.Hit && WearAll(inventory, WearRule.PerBlowTaken);
+
+        /// <summary>
+        /// Wears what the attacker wields for a shot loosed, hit or miss (Q16, K8.1: a ranged weapon wears per shot): one unit of
+        /// every piece it wears by <see cref="WearRule.PerShot"/>; nothing for a melee weapon. Returns true when a piece broke and
+        /// is gone. Main thread only.
+        /// </summary>
+        public static bool WearOnShot(AgentInventory inventory) => WearAll(inventory, WearRule.PerShot);
 
         private static bool WearAll(AgentInventory inventory, WearRule rule)
         {

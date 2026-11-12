@@ -23,6 +23,8 @@ namespace Simpiens.Presentation.Art
         public const string Mail = "mail";
         public const string Pelt = "pelt";
         public const string Plates = "plates";
+        public const string Sling = "sling";
+        public const string Crossbow = "crossbow";
 
         public const int GlyphSize = 12;
 
@@ -155,6 +157,38 @@ namespace Simpiens.Presentation.Art
                 ".ab.........",
                 "ab..........",
                 "b...........",
+                "............",
+            },
+            // A leather pouch holding a stone, on two cords looped at the top left (the sling; Epic 10 Part 3, K8.1)
+            [Sling] = new[]
+            {
+                ".aa.........",
+                "a..a........",
+                "a...a.......",
+                ".a...a......",
+                "..b...a.....",
+                "...b...a....",
+                "....b...a...",
+                ".....b.1122.",
+                "......12223.",
+                "......12334.",
+                ".......334..",
+                "............",
+            },
+            // A steel prod bowed across the top, its string, and a wooden stock down to the trigger (the crossbow; K8.1)
+            [Crossbow] = new[]
+            {
+                "1..........3",
+                ".12......23.",
+                "..12aaaa23..",
+                "....2ab3....",
+                ".....ab.....",
+                ".....ab.....",
+                ".....ab.....",
+                ".....ab.....",
+                "....abbc....",
+                "....bccd....",
+                ".....cd.....",
                 "............",
             },
             // A straight blade, point at the top right, a crossguard and a wrapped grip (the iron blade, the glowstone edge)

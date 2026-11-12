@@ -28,6 +28,7 @@ namespace Simpiens.Hosting
         private readonly uint _reserve;
         private readonly List<EntityId> _hired = new List<EntityId>(2);
         private readonly List<ItemType> _also = new List<ItemType>(2);
+        private readonly List<int> _keep = new List<int>(2);
 
         /// <param name="batch">How many makes each order asks for.</param>
         /// <param name="shifts">The blocks the artisan works (<see cref="ShiftBlocks"/>).</param>
@@ -60,12 +61,13 @@ namespace Simpiens.Hosting
 
         /// <summary>
         /// Makes <paramref name="make"/> too (Epic 10 Part 3, K4.4): with no order standing, it orders one of it, before its
-        /// own make, whenever the stall holds the inputs for it and none is on the shelf (armour from a kill's materials). The
-        /// makes added first come first. Returns this player.
+        /// own make, whenever the stall holds the inputs for it and fewer than <paramref name="keep"/> are on the shelf (armour
+        /// from a kill's materials; two crossbows for a party's bows, K8.5). The makes added first come first. Returns this player.
         /// </summary>
-        public WorkshopPlayer Also(ItemType make)
+        public WorkshopPlayer Also(ItemType make, int keep = 1)
         {
             _also.Add(make);
+            _keep.Add(keep);
             return this;
         }
 
@@ -126,7 +128,7 @@ namespace Simpiens.Hosting
             // A make added by Also, when the stall holds its inputs and none is on the shelf (K4.4)
             for (int i = 0; i < _also.Count; i++)
             {
-                if (!HoldsInputsFor(_also[i]) || _sim.Simulation.ActiveStalls[0].SellStockOf(_also[i]) > 0) continue;
+                if (!HoldsInputsFor(_also[i]) || _sim.Simulation.ActiveStalls[0].SellStockOf(_also[i]) >= _keep[i]) continue;
                 if (WorkshopRules.CheckOrder(workshops, index, _also[i], 1) != WorkshopRules.Check.Ok) continue;
                 _commands.QueueInfluence(InfluenceEvent.CreateOrderStation(SourceId, (byte)index, _also[i], 1));
                 AlsoOrders++;

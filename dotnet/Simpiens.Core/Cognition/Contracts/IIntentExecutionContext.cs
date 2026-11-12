@@ -42,6 +42,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>A crawler in a fight asks to swing at a creature this tick; the creatures' phase decides it (K3.3, D6).</summary>
         void SwingAtCreature(WorldEntity crawler, EntityId creature);
 
+        /// <summary>True when nothing of the map's walls stands between the two points (Epic 10 Part 3, K8.2: a shooter's clear line); true with no map.</summary>
+        bool HasLineOfSight(Vec2 from, Vec2 to);
+
         /// <summary>Danger for the fallen (Epic 10 Part 3, K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
         bool InDanger(Vec2 position);
 

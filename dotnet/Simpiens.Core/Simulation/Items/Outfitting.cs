@@ -30,18 +30,28 @@ namespace Simpiens.Simulation.Items
     {
         private readonly uint _hazards;
 
-        private OutfitNeed(uint hazards, bool mining, bool fighting = false)
+        private OutfitNeed(uint hazards, bool mining, bool fighting = false, bool shooting = false)
         {
             _hazards = hazards;
             Mining = mining;
             Fighting = fighting;
+            Shooting = shooting;
         }
 
-        /// <summary>Fights creatures (Epic 10 Part 3, K3.3): attack over a bare hand's, and defense, count.</summary>
+        /// <summary>
+        /// Fights creatures in reach (Epic 10 Part 3, K3.3): attack over a bare hand's, and defense, count. A weapon with a range
+        /// adds nothing to it (K8.2c, D47): a lone fighter or a party's front stands in reach.
+        /// </summary>
         public static OutfitNeed ForFighting => new OutfitNeed(0u, false, true);
+
+        /// <summary>Fights creatures from range (Epic 10 Part 3, K8.2c, D47): defense counts, and attack only from a weapon with a range.</summary>
+        public static OutfitNeed ForShooting => new OutfitNeed(0u, false, true, true);
 
         /// <summary>Fights creatures as well as what this need covers.</summary>
         public bool Fighting { get; }
+
+        /// <summary>Fights from range: a weapon's attack counts only if it has a range (and, without this, only if it hasn't).</summary>
+        public bool Shooting { get; }
 
         /// <summary>Faces a hazard of <paramref name="kind"/>; nothing for none.</summary>
         public static OutfitNeed Against(HazardKind kind) => default(OutfitNeed).And(kind);
@@ -63,7 +73,7 @@ namespace Simpiens.Simulation.Items
         public OutfitNeed AndFighting() => new OutfitNeed(_hazards, Mining, true);
 
         /// <summary>This need, facing a hazard of <paramref name="kind"/> too.</summary>
-        public OutfitNeed And(HazardKind kind) => kind == HazardKind.None || (byte)kind >= 32 ? this : new OutfitNeed(_hazards | (1u << (byte)kind), Mining, Fighting);
+        public OutfitNeed And(HazardKind kind) => kind == HazardKind.None || (byte)kind >= 32 ? this : new OutfitNeed(_hazards | (1u << (byte)kind), Mining, Fighting, Shooting);
 
         public bool Faces(HazardKind kind) => kind != HazardKind.None && (byte)kind < 32 && (_hazards & (1u << (byte)kind)) != 0;
 
@@ -72,7 +82,7 @@ namespace Simpiens.Simulation.Items
         /// <summary>Nothing to outfit for: every piece scores 0.</summary>
         public bool IsEmpty => _hazards == 0 && !Mining && !Fighting;
 
-        public override string ToString() => IsEmpty ? "nothing" : $"hazards 0x{_hazards:x}{(Mining ? ", mining" : string.Empty)}{(Fighting ? ", fighting" : string.Empty)}";
+        public override string ToString() => IsEmpty ? "nothing" : $"hazards 0x{_hazards:x}{(Mining ? ", mining" : string.Empty)}{(Fighting ? (Shooting ? ", shooting" : ", fighting") : string.Empty)}";
     }
 
     /// <summary>
@@ -99,11 +109,13 @@ namespace Simpiens.Simulation.Items
                 if (need.Faces((HazardKind)kind)) score += CrawlerStats.HazardResistance(inventory, (HazardKind)kind, swap);
             }
             if (need.Mining) score += CrawlerStats.Get(inventory, StatKind.HarvestSpeed, 1f, swap) - 1f;
-            // Fighting (Epic 10 Part 3, K3.3): attack in bare hands' worth over one, and defense as the share of a blow it stops
+            // Fighting (Epic 10 Part 3, K3.3): attack in bare hands' worth over one, and defense as the share of a blow it stops;
+            // the attack of a weapon with a range only when shooting, of one without only when not (K8.2c, D47)
             if (need.Fighting)
             {
                 float unarmed = Simpiens.Simulation.Combat.CombatRules.UnarmedAttack;
-                score += (CrawlerStats.Get(inventory, StatKind.Attack, unarmed, swap) - unarmed) / unarmed;
+                bool ranged = CrawlerStats.Get(inventory, StatKind.Range, 0f, swap) > 0f;
+                if (ranged == need.Shooting) score += (CrawlerStats.Get(inventory, StatKind.Attack, unarmed, swap) - unarmed) / unarmed;
                 float defense = CrawlerStats.Get(inventory, StatKind.Defense, 0f, swap);
                 score += defense / (defense + Simpiens.Simulation.Combat.CombatRules.MitigationScale);
             }
