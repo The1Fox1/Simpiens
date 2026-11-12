@@ -61,6 +61,10 @@ namespace Simpiens.Presentation.Art
             Simpiens.Simulation.World.HazardKind.Flooding => FxFlood,
             _ => null
         };
+        /// <summary>A shot in flight (Epic 10 Part 3, K8.4a): a crawler's stone or bolt, and a spinner's spit.</summary>
+        public const string FxShot = "fx/shot";
+        public const string FxSpit = "fx/spit";
+
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";
         public const string NodePrefix = "node/";

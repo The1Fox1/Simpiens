@@ -117,6 +117,8 @@ namespace Simpiens.Client.Tests
             used.Add(catalog.Id(ArtKeys.PropStall));
             used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
             used.Add(new EntityVisuals(catalog).Cairn); // a body (Epic 10 Part 3, K5.8b)
+            used.Add(catalog.Id(ArtKeys.FxShot)); // shots in flight (Epic 10 Part 3, K8.4a)
+            used.Add(catalog.Id(ArtKeys.FxSpit));
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
                 if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
             foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))

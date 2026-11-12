@@ -74,8 +74,12 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Clear the burrow rats", expedition.TargetName);
             Assert.StartsWith("Arm: ", expedition.OutfitText);
             Assert.Contains("iron blade", expedition.OutfitText);
+            expedition.ToggleOutfit(); // the back half with bows (Epic 10 Part 3, K8.2c); none in stock this early
+            Assert.Equal("Arm: iron blade · no bows in stock", expedition.OutfitText);
+            Assert.Equal(2, expedition.Shooters);
             expedition.ToggleOutfit();
             Assert.Equal("No arming", expedition.OutfitText);
+            Assert.Equal(0, expedition.Shooters);
             expedition.ToggleOutfit();
             Assert.True(expedition.CanDispatch, expedition.DispatchText);
             Assert.Equal("Send party 1, 4 strong, to clear the burrow rats of Overgrowth.", expedition.DispatchText);

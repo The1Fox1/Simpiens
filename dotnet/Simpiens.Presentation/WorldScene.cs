@@ -56,6 +56,8 @@ namespace Simpiens.Presentation
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
+                _shotArt = value.TryId(ArtKeys.FxShot, out var shot) ? shot : ArtId.None;
+                _spitArt = value.TryId(ArtKeys.FxSpit, out var spit) ? spit : ArtId.None;
                 for (int i = 0; i < _hazards.Length; i++)
                 {
                     string key = ArtKeys.Hazard((HazardKind)i);
@@ -119,6 +121,7 @@ namespace Simpiens.Presentation
         public void Advance(MapDefinition map, WorldViewFrames frames, float viewSeconds)
         {
             var frame = frames?.Current;
+            AdvanceShots(frame, viewSeconds);
             // A new world (a respawn, a switch or a load: frames.Epoch): the fog and the crawlers' poses start afresh.
             // Without frames there is no world to key on, so the fog is loaded for the map every step.
             uint epoch = frames != null ? frames.Epoch : 0;
@@ -181,6 +184,7 @@ namespace Simpiens.Presentation
                 for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
                 AddCaravan(frame.Caravan, frames.DrawnCaravanPosition(), viewSeconds);
             }
+            AddShots(viewSeconds);
 
             if (selection != null) AddSelection(selection, viewSeconds);
 
@@ -335,6 +339,53 @@ namespace Simpiens.Presentation
 
         /// <summary>The share of its route over which the caravan fades in from the road, and out again (D70).</summary>
         public const float CaravanFade = 0.08f;
+
+        /// <summary>How long a shot is drawn flying from its shooter to its target (Epic 10 Part 3, K8.4a), in the view's seconds.</summary>
+        public const float ShotSeconds = 0.25f;
+
+        private struct ShotTrail
+        {
+            public Vec2 From, To;
+            public float Start;
+            public bool ByCreature;
+        }
+
+        private readonly List<ShotTrail> _trails = new List<ShotTrail>(8);
+        private long _shotsTick = long.MinValue;
+        private uint _shotsEpoch;
+        private ArtId _shotArt, _spitArt;
+
+        /// <summary>The shots in flight, presentation only: each frame's shots start once, when the frame is new, and fly for <see cref="ShotSeconds"/>.</summary>
+        public int ShotsInFlight => _trails.Count;
+
+        private void AdvanceShots(WorldViewFrame frame, float viewSeconds)
+        {
+            for (int i = _trails.Count - 1; i >= 0; i--) if (viewSeconds - _trails[i].Start >= ShotSeconds || viewSeconds < _trails[i].Start) _trails.RemoveAt(i);
+            if (frame == null || (frame.Tick == _shotsTick && frame.Epoch == _shotsEpoch)) return;
+            _shotsTick = frame.Tick;
+            _shotsEpoch = frame.Epoch;
+            for (int i = 0; i < frame.ShotCount; i++)
+            {
+                ref readonly var shot = ref frame.Shot(i);
+                _trails.Add(new ShotTrail { From = shot.From, To = shot.To, Start = viewSeconds, ByCreature = shot.ByCreature });
+            }
+        }
+
+        /// <summary>Each shot in flight, between its shooter and its target where the view's time puts it; hidden by the fog as the bodies are.</summary>
+        private void AddShots(float viewSeconds)
+        {
+            for (int i = 0; i < _trails.Count; i++)
+            {
+                var trail = _trails[i];
+                var art = trail.ByCreature ? _spitArt : _shotArt;
+                if (art.IsNone) continue;
+                float t = Math.Clamp((viewSeconds - trail.Start) / ShotSeconds, 0f, 1f);
+                var at = trail.From + (trail.To - trail.From) * t;
+                float shown = Fog.Visibility(at, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(at), _catalog.Piece(art, 0f), at, Shown(White, shown));
+            }
+        }
 
         /// <summary>
         /// The trade caravan (Epic 10 Part 2, the stretch, D70), where the frame's schedule puts it: walking in from the road

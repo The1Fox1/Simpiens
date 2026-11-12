@@ -112,6 +112,12 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Outfit from stock: members without protection, or with it worn to half its life, are given some from the stall as the party is sent (D12).</summary>
         public bool Outfit { get; private set; } = true;
 
+        /// <summary>A clear's arming gives the back half of the party bows (Epic 10 Part 3, K8.2c, D47).</summary>
+        public bool Bows { get; private set; }
+
+        /// <summary>How many at the back of the party a clear arms to shoot: half of it, with bows chosen; else none.</summary>
+        public int Shooters => IsClear && Outfit && Bows ? _party.Count / 2 : 0;
+
         /// <summary>
         /// The outfit button's words: "No outfitting", or the gear it gives for the target's hazard (Epic 10 Part 2, W3, D50),
         /// a piece for each slot that has one in stock (Epic 10 Part 3, K1.4), in the slots' display order: "Outfit:
@@ -135,6 +141,13 @@ namespace Simpiens.Presentation.Dashboard
                     var gear = clear ? GuildRules.BestForFight(stall, slots[i].Id) : GuildRules.BestForBare(stall, slots[i].Id, hazard);
                     if (gear == ItemType.None) continue;
                     text.Append(text.Length == 0 ? (clear ? "Arm: " : "Outfit: ") : ", ").Append(ItemTexts.Of(gear).MerchantName.ToLowerInvariant());
+                }
+                if (clear && Bows)
+                {
+                    // The back half's bow (Epic 10 Part 3, K8.2c): "Arm: iron blade · 2 with crossbow"
+                    var bow = GuildRules.BestBow(stall);
+                    string back = bow != ItemType.None ? Invariant($"{SafeHalf()} with {ItemTexts.Of(bow).MerchantName.ToLowerInvariant()}") : "no bows in stock";
+                    return (text.Length > 0 ? text.ToString() : "Arm") + " · " + back;
                 }
                 return text.Length > 0 ? text.ToString() : clear ? "Arm from stock" : "Outfit from stock";
             }
@@ -176,11 +189,16 @@ namespace Simpiens.Presentation.Dashboard
             Refresh();
         }
 
+        /// <summary>Outfitting on and off; for a clear, round three: arm, arm with bows at the back, no arming (Epic 10 Part 3, K8.2c).</summary>
         public void ToggleOutfit()
         {
-            Outfit = !Outfit;
+            if (IsClear && Outfit && !Bows) Bows = true;
+            else if (IsClear && Outfit) { Outfit = false; Bows = false; }
+            else { Outfit = !Outfit; Bows = false; }
             Refresh();
         }
+
+        private int SafeHalf() => System.Math.Max(1, _party.Count / 2);
 
         /// <summary>None, one or two draughts each, and round again.</summary>
         public void NextDraughts()
@@ -206,7 +224,7 @@ namespace Simpiens.Presentation.Dashboard
                 var stock = host.ActiveStalls[0];
                 var gifts = new GearGift[_party.Count * Simpiens.Simulation.Items.EquipmentSlots.Capacity];
                 int count = 0;
-                GuildRules.PlanArms(Guild, host, _party, ref stock, gifts, ref count);
+                GuildRules.PlanArms(Guild, host, _party, ref stock, gifts, ref count, Shooters);
                 for (int i = 0; i < count; i++) _context.Intervention.QueueInfluence(InfluenceEvent.CreateGiveGear("Player", gifts[i].Crawler, gifts[i].Item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
             }
             else if (Outfit && host != null && host.ActiveStalls.Count > 0)

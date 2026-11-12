@@ -96,14 +96,16 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheHazardsThenTheCaravanThenTheCreaturesThenTheBodies()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheHazardsThenTheCaravanThenTheCreaturesThenTheShotsThenTheBodies()
         {
             var world = SpriteSheets.World;
             int missing = ProceduralSprites.All.Count + IsometricSprites.All.Count;
             int hazards = missing + 1 + ItemSprites.World.Count + WornSprites.All.Count;
             int caravan = hazards + HazardSprites.All.Count; // the hazards' animations (Epic 10 Part 2, D69)
             int creatures = caravan + CaravanSprites.All.Count; // the caravan (D70)
-            int bodies = creatures + CreatureSprites.All.Count; // the creatures (Epic 10 Part 3, K2.5)
+            int shots = creatures + CreatureSprites.All.Count; // the creatures (Epic 10 Part 3, K2.5)
+            int bodies = shots + ShotSprites.All.Count; // shots in flight (K8.4a)
+            for (int i = 0; i < ShotSprites.All.Count; i++) Assert.Same(ShotSprites.All[i], world[shots + i]);
             for (int i = 0; i < HazardSprites.All.Count; i++) Assert.Same(HazardSprites.All[i], world[hazards + i]);
             for (int i = 0; i < CaravanSprites.All.Count; i++) Assert.Same(CaravanSprites.All[i], world[caravan + i]);
             for (int i = 0; i < CreatureSprites.All.Count; i++) Assert.Same(CreatureSprites.All[i], world[creatures + i]);

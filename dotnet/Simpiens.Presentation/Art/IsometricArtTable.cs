@@ -10,6 +10,9 @@ namespace Simpiens.Presentation.Art
         /// <summary>A 16x16 sprite's feet: the bottom of its last drawn row (row 14).</summary>
         public const float FeetPivot = 15f / 16f;
 
+        /// <summary>A shot's pivot: its eight pixels drawn six above the floor point it flies over, at a standing body's chest.</summary>
+        public const float ShotPivot = 1.75f;
+
         /// <summary>A 16x16 sprite standing, in art pixels.</summary>
         private const float Standing = 16f;
         private const DrawSheet Sheet = DrawSheet.World;
@@ -51,6 +54,9 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.FxFoulAir, Sheet, HazardSprites.Names(HazardSprites.PuffName, HazardSprites.PuffFrames), HazardSprites.Size, HazardSprites.Size, pivotY: 1f, framesPerSecond: HazardEffects.PuffFramesPerSecond)
                .Add(ArtKeys.FxFallingRock, Sheet, HazardSprites.Names(HazardSprites.RockName, HazardSprites.RockFrames), Standing, Standing, pivotY: FeetPivot, framesPerSecond: HazardEffects.RockFramesPerSecond)
                .Add(ArtKeys.FxFlood, Sheet, HazardSprites.Names(HazardSprites.IsoRippleName, HazardSprites.RippleFrames), HazardSprites.IsoRippleWidth, HazardSprites.IsoRippleHeight, framesPerSecond: HazardEffects.RippleFramesPerSecond)
+               // Shots in flight (Epic 10 Part 3, K8.4a): raised to a body's chest above the line they fly along
+               .Add(ArtKeys.FxShot, Sheet, new[] { ShotSprites.ShotName }, ShotSprites.Size, ShotSprites.Size, pivotY: ShotPivot)
+               .Add(ArtKeys.FxSpit, Sheet, new[] { ShotSprites.SpitName }, ShotSprites.Size, ShotSprites.Size, pivotY: ShotPivot)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);

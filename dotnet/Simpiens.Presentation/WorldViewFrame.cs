@@ -117,6 +117,7 @@ namespace Simpiens.Presentation
         private readonly Dictionary<EntityId, int> _index = new Dictionary<EntityId, int>(128);
         private readonly bool[] _charted = new bool[256];
         private readonly List<ChronicleEvent> _events = new List<ChronicleEvent>(8);
+        private Simpiens.Simulation.Combat.ShotRecord[] _shots = new Simpiens.Simulation.Combat.ShotRecord[8];
         private bool _knowsCharting;
 
         /// <summary>The tick the frame was captured at.</summary>
@@ -136,6 +137,11 @@ namespace Simpiens.Presentation
         public int StationCount { get; private set; }
 
         public ref readonly StationView Station(int index) => ref _stations[index];
+
+        /// <summary>The shots loosed in the tick (Epic 10 Part 3, K8.4a), crawlers' and creatures', as the creatures' pass decided them.</summary>
+        public int ShotCount { get; private set; }
+
+        public ref readonly Simpiens.Simulation.Combat.ShotRecord Shot(int index) => ref _shots[index];
 
         /// <summary>The trade caravan at the end of the tick (Epic 10 Part 2, the stretch, D70): off the map, walking in or out, or at the stall.</summary>
         public CaravanState Caravan { get; private set; }
@@ -161,9 +167,15 @@ namespace Simpiens.Presentation
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
         public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null,
-            in CaravanState caravan = default)
+            in CaravanState caravan = default, IReadOnlyList<Simpiens.Simulation.Combat.ShotRecord> shots = null)
         {
             Caravan = caravan;
+            ShotCount = 0;
+            if (shots != null)
+            {
+                if (_shots.Length < shots.Count) Array.Resize(ref _shots, Math.Max(shots.Count, _shots.Length * 2));
+                for (int i = 0; i < shots.Count; i++) _shots[ShotCount++] = shots[i];
+            }
             StallCount = 0;
             if (stalls != null)
             {
@@ -417,7 +429,7 @@ namespace Simpiens.Presentation
             var route = sectors?.Map?.CaravanRoute;
             uint interval = caravanInterval != 0 ? caravanInterval : _simulation?.Economy != null ? _simulation.Economy.Supply.RestockIntervalTicks : 0u;
             var caravan = route != null ? Simpiens.Simulation.Economy.Caravan.At(tick, interval, route) : default;
-            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan);
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan, _simulation?.Creatures?.ShotsThisTick);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>
