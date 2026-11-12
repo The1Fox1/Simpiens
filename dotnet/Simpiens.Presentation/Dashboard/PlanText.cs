@@ -72,6 +72,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(RescueAction)] = "Coming to the rescue",
             [typeof(ClaimHuntAction)] = "Joining a hunt",
             [typeof(HuntLairAction)] = "Hunting the lair",
+            [typeof(FightForPartyAction)] = "Fighting for the party",
         };
 
         /// <summary>The goal in words, or "(None)".</summary>

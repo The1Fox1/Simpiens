@@ -152,6 +152,8 @@ namespace Simpiens.Cognition.Evaluators
         {
             // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, the bold and armed fight back (K3.3, Q6), the rest flee
             // toward the bunks, before anything else; a downed crawler limps out as from a hazard (below)
+            // Under orders, a fallen mate first: the rescue outranks fighting on (Epic 10 Part 3, K7.2c, D42)
+            if (!context.IsDowned && Simpiens.Cognition.Planning.Rescue.ComesForAMate(context)) return null;
             if (context.StruckRecently && !context.IsDowned)
             {
                 if (Vitality.FightsBack(context) && context.StruckBy != default) return new FightIntent(context.AgentId, context.StruckBy);

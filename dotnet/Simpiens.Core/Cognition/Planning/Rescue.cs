@@ -28,7 +28,12 @@ namespace Simpiens.Cognition.Planning
             chosen = default;
             medicine = ItemType.None;
             var snapshot = context.Snapshot;
-            if (snapshot == null || snapshot.ActiveFallenCount == 0 || context.IsDowned || context.StruckRecently) return false;
+            if (snapshot == null || snapshot.ActiveFallenCount == 0 || context.IsDowned) return false;
+            // Under orders, a fallen mate is the one the guild sent it for, struck or not, wherever it lies; the rest hold the
+            // line (Epic 10 Part 3, K7.2c, D42). Struck, nobody else comes
+            bool ordered = UnderOrders(context);
+            var sentFor = ordered ? context.Expedition.Carry : default;
+            if (context.StruckRecently && sentFor == default) return false;
             var fallen = snapshot.Fallen;
             float best = float.MaxValue;
             bool found = false;
@@ -36,6 +41,14 @@ namespace Simpiens.Cognition.Planning
             {
                 ref readonly var f = ref fallen[i];
                 if (f.Id == context.AgentId || (f.CarriedBy != default && f.CarriedBy != context.AgentId)) continue;
+                if (sentFor != default)
+                {
+                    if (f.Id != sentFor) continue;
+                    chosen = f;
+                    found = true;
+                    break;
+                }
+                if (context.StruckRecently || (ordered && f.PartyGroupId == context.PartyGroupId)) continue; // a mate is the guild's to send
                 float distance = (f.Position - context.Position).SqrMagnitude;
                 if (distance > CryRadius * CryRadius || distance > best) continue;
                 if (distance == best && found && f.Id.CompareTo(chosen.Id) >= 0) continue;
@@ -51,15 +64,32 @@ namespace Simpiens.Cognition.Planning
 
         /// <summary>
         /// True when the rescuer already stands in the hazard sector where the fallen lies: a party mate working beside it needn't
-        /// pass the lone crawler's judgement to cross the room it is in (D30).
+        /// pass the lone crawler's judgement to cross the room it is in (D30); nor a friend in the same lair's reach (K7.2c).
         /// </summary>
         public static bool AlreadyThere(in AgentContext context, Vec2 position)
         {
             var map = context.Snapshot?.Map;
             if (map == null) return false;
             var here = map.FindSector(context.Position);
-            return here.Hazard.IsHazardous && here.Id == map.FindSector(position).Id;
+            if (here.Hazard.IsHazardous && here.Id == map.FindSector(position).Id) return true;
+            // Or in the same lair's reach (Epic 10 Part 3, K7.2c: a friend fighting beside the fallen, as a hunter)
+            var lairs = map.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], context.Position) && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) return true;
+            }
+            return false;
         }
+
+        /// <summary>On an expedition with its party (Epic 10 Part 3, K7.2c): its mates come first, struck or not.</summary>
+        public static bool UnderOrders(in AgentContext context) => context.Expedition.IsActive && context.PartyGroupId != 0;
+
+        /// <summary>
+        /// True when this crawler, under orders, is sent for a fallen party mate (Epic 10 Part 3, K7.2c, D42): the danger
+        /// reflexes stand aside so that the rescue (<see cref="Goals.RescueGoal.UnderOrdersPriority"/>) outranks fighting on.
+        /// </summary>
+        public static bool ComesForAMate(in AgentContext context) =>
+            UnderOrders(context) && context.Expedition.Carry != default && TryChooseFallen(context, out _, out _);
 
         /// <summary>A friend (its warmth toward the fallen) or a party mate.</summary>
         public static bool IsFriend(in AgentContext context, in FallenView fallen)

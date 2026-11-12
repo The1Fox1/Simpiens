@@ -31,6 +31,19 @@ namespace Simpiens.Simulation.Guild
 
         public bool IsOut => Record.IsActive;
 
+        /// <summary>
+        /// A clear's focus at its fight (Epic 10 Part 3, K7.2a): the creature the party fights now, chosen by the guild each
+        /// tick (the nearest to its first member, then the weakest). Not saved: the first tick after a load chooses again.
+        /// </summary>
+        public EntityId Focus { get; internal set; }
+
+        /// <summary>
+        /// Rescue under orders (Epic 10 Part 3, K7.2c, D42): the fallen member the party carries out now, and the mate the guild
+        /// sent for it; default when none. Not saved, as the focus: chosen again on the next tick after a load.
+        /// </summary>
+        public EntityId Fallen { get; internal set; }
+        public EntityId Carrier { get; internal set; }
+
         /// <summary>Its members, in the order they were sent, with each one's part.</summary>
         public IReadOnlyList<ExpeditionMember> Members => Roster;
 

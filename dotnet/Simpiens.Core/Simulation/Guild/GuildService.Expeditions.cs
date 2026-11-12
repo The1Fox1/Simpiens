@@ -79,7 +79,8 @@ namespace Simpiens.Simulation.Guild
             if (party == null || !party.IsOut) return default;
             var member = party.Roster[party.IndexOf(crawlerId)];
             if (!member.IsWithParty) return default;
-            return new Simpiens.Cognition.Contracts.ExpeditionOrder(party.Record.Stage, party.Record.TargetSectorId, member.NodeId, member.NodePosition);
+            return new Simpiens.Cognition.Contracts.ExpeditionOrder(party.Record.Stage, party.Record.TargetSectorId, member.NodeId, member.NodePosition,
+                party.Record.Kind, party.Record.LairIndex, party.Focus, party.Carrier == crawlerId ? party.Fallen : default);
         }
 
         /// <summary>
@@ -194,19 +195,23 @@ namespace Simpiens.Simulation.Guild
                 return check;
             }
 
-            var haul = SectorYield(host, order.TargetSectorId);
+            bool clear = order.Kind == ExpeditionKind.Clear;
+            var haul = clear ? ClearHaul(host, order.LairIndex) : SectorYield(host, order.TargetSectorId);
             party.Record = new ExpeditionRecord
             {
                 DispatchTick = tick,
                 StageTick = tick,
                 PartyGroupId = party.GroupId,
-                TargetSectorId = order.TargetSectorId,
+                TargetSectorId = clear ? (byte)host.GetSectorForPosition(host.Lairs[order.LairIndex].Definition.Position) : order.TargetSectorId,
                 HaulItem = haul,
                 Goal = order.Goal,
                 Rule = order.Rule,
                 Stage = ExpeditionStage.Muster,
-                Draughts = order.Draughts
+                Draughts = order.Draughts,
+                Kind = order.Kind,
+                LairIndex = clear ? order.LairIndex : (byte)0,
             };
+            party.Focus = party.Fallen = party.Carrier = default;
             for (int i = 0; i < party.Roster.Count; i++)
             {
                 var id = party.Roster[i].CrawlerId;
@@ -238,8 +243,8 @@ namespace Simpiens.Simulation.Guild
             return GuildRules.Check.Ok;
         }
 
-        public GuildRules.Check CanGiveGear(IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None)
-            => GuildRules.CheckGiveGear(this, host, crawlerId, item, against);
+        public GuildRules.Check CanGiveGear(IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None, bool forFighting = false)
+            => GuildRules.CheckGiveGear(this, host, crawlerId, item, against, forFighting);
 
         /// <summary>
         /// The player gives a member <paramref name="item"/> from the stall's stock (D12): the stock falls by one, the member
@@ -247,9 +252,9 @@ namespace Simpiens.Simulation.Guild
         /// (Epic 10 Part 2, D50), is handed back (<see cref="Simpiens.Simulation.Workshops.Crafting.HandBack"/>): to the shelf
         /// of worn pieces for the forge to mend (D58), or, hazard gear, back into stock while sound.
         /// </summary>
-        public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick, HazardKind against = HazardKind.None)
+        public GuildRules.Check GiveGear(IGuildHost host, EntityId crawlerId, ItemType item, uint tick, HazardKind against = HazardKind.None, bool forFighting = false)
         {
-            var check = CanGiveGear(host, crawlerId, item, against);
+            var check = CanGiveGear(host, crawlerId, item, against, forFighting);
             if (check != GuildRules.Check.Ok)
             {
                 LogRefusal(host, "Give gear", crawlerId, check, tick);
@@ -329,6 +334,7 @@ namespace Simpiens.Simulation.Guild
 
             uint elapsed = tick - party.Record.StageTick;
             var home = host.ActiveStalls.Count > 0 ? host.ActiveStalls[0].Position : Vec2.Zero;
+            if (party.Record.Stage != ExpeditionStage.Muster) ChooseCarrier(host, party);
             switch (party.Record.Stage)
             {
                 case ExpeditionStage.Muster:
@@ -352,10 +358,24 @@ namespace Simpiens.Simulation.Guild
                     break;
 
                 case ExpeditionStage.March:
-                    // The work starts when the first member reaches the sector, so nobody waits in danger for the rest
+                    // The work starts when the first member reaches the sector, so nobody waits in danger for the rest; a clear's
+                    // fight when the first reaches the lair's reach (Epic 10 Part 3, K7.1)
                     if (ShouldTurnBack(host, party, tuning)) TurnBack(host, party, tick);
-                    else if (AnyInSector(host, party)) SetStage(host, party, ExpeditionStage.Work, tick);
+                    else if (party.Record.IsClear ? AnyInLairReach(host, party) : AnyInSector(host, party))
+                        SetStage(host, party, party.Record.IsClear ? ExpeditionStage.Fight : ExpeditionStage.Work, tick);
                     else if (elapsed >= tuning.MarchTicks) TurnBack(host, party, tick);
+                    break;
+
+                case ExpeditionStage.Fight:
+                    // The lair emptied, the party goes home as ordered; short of it, the clear's retreat rule turns it back (K7.2b)
+                    if (LairIsEmpty(host, party))
+                    {
+                        party.Record.Cleared = true;
+                        SetStage(host, party, ExpeditionStage.Return, tick);
+                    }
+                    else if (ShouldTurnBackFromFight(host, party, tuning)) TurnBack(host, party, tick);
+                    else if (elapsed >= tuning.WorkTicks) SetStage(host, party, ExpeditionStage.Return, tick);
+                    else ChooseFocus(host, party);
                     break;
 
                 case ExpeditionStage.Work:
@@ -427,7 +447,7 @@ namespace Simpiens.Simulation.Guild
                 host.UpdateStall(stall);
             }
 
-            for (int i = 0; i < roster.Count && haul > 0; i++)
+            for (int i = 0; i < roster.Count && (haul > 0 || party.Record.Cleared); i++) // a cleared lair is a clear's haul (Epic 10 Part 3, D43)
             {
                 var member = roster[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
@@ -569,7 +589,12 @@ namespace Simpiens.Simulation.Guild
             var groups = host.Groups;
             if (groups == null || !party.IsOut) return;
             var target = host.ActiveStalls.Count > 0 ? host.ActiveStalls[0].Position : Vec2.Zero;
-            if ((party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) && host.TryGetSector(party.Record.TargetSectorId, out var sector))
+            var lairs = host.Lairs;
+            if (party.Record.IsClear && (party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Fight) && lairs != null && party.Record.LairIndex < lairs.Count)
+            {
+                target = lairs[party.Record.LairIndex].Definition.Position; // a clear's: the lair's heart (K7.1)
+            }
+            else if ((party.Record.Stage == ExpeditionStage.March || party.Record.Stage == ExpeditionStage.Work) && host.TryGetSector(party.Record.TargetSectorId, out var sector))
             {
                 target = sector.TargetPoint;
             }
@@ -647,6 +672,128 @@ namespace Simpiens.Simulation.Guild
                     && !crawler.Inventory.HasAny(ItemCategory.Medicine)) return true;
             }
             return false;
+        }
+
+        // A clear (Epic 10 Part 3, K7.1, K7.2)
+
+        /// <summary>What a clear brings back: the lair's kind's material, the first item of its loot table (hide, chitin).</summary>
+        private static ItemType ClearHaul(IGuildHost host, byte lairIndex)
+        {
+            var lairs = host.Lairs;
+            if (lairs == null || lairIndex >= lairs.Count) return ItemType.None;
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lairs[lairIndex].Definition.Kind);
+            if (kind == null || !Simpiens.Simulation.Creatures.CreatureLoot.Tables.TryGet(kind.LootTableId, out var table)) return ItemType.None;
+            for (int i = 0; i < table.EntryCount; i++)
+            {
+                var entry = table.GetEntry(i);
+                if (entry.Kind == LootEntryKind.Item) return entry.Item;
+            }
+            return ItemType.None;
+        }
+
+        private static bool LairIsEmpty(IGuildHost host, GuildParty party)
+        {
+            var lairs = host.Lairs;
+            return lairs == null || party.Record.LairIndex >= lairs.Count || lairs[party.Record.LairIndex].Alive == 0;
+        }
+
+        private static bool AnyInLairReach(IGuildHost host, GuildParty party)
+        {
+            var lairs = host.Lairs;
+            if (lairs == null || party.Record.LairIndex >= lairs.Count) return false;
+            var lair = lairs[party.Record.LairIndex].Definition;
+            var roster = party.Roster;
+            for (int i = 0; i < roster.Count; i++)
+            {
+                if (roster[i].IsWithParty && host.TryGetCrawler(roster[i].CrawlerId, out var crawler) && Simpiens.Simulation.Creatures.LairReach.Holds(lair, crawler.Position)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: the lair's living creature
+        /// nearest the first member with the party, then the weakest, then the lowest id. Kept while it lives.
+        /// </summary>
+        private static void ChooseFocus(IGuildHost host, GuildParty party)
+        {
+            if (party.Focus != default && host.TryGetCreature(party.Focus, out var held) && held.IsAlive) return;
+            party.Focus = default;
+            var lairs = host.Lairs;
+            if (lairs == null || party.Record.LairIndex >= lairs.Count || !host.TryGetCrawler(party.FirstWithParty(), out var leader)) return;
+            var lair = lairs[party.Record.LairIndex];
+            float bestDistance = float.MaxValue, bestHealth = float.MaxValue;
+            for (int slot = 0; slot < lair.Pack; slot++)
+            {
+                var id = lair.MemberIn(slot);
+                if (id == default || !host.TryGetCreature(id, out var c) || !c.IsAlive) continue;
+                float d = (c.Position - leader.Position).SqrMagnitude;
+                bool better = d < bestDistance || (d == bestDistance && (c.Health < bestHealth || (c.Health == bestHealth && c.Id.CompareTo(party.Focus) < 0)));
+                if (!better) continue;
+                bestDistance = d;
+                bestHealth = c.Health;
+                party.Focus = c.Id;
+            }
+        }
+
+        /// <summary>
+        /// Rescue under orders (K7.2c, D42): one fallen member at a time (the first in the roster collapsed in danger), carried
+        /// out by the mate the guild sends: with the party, on its feet and carrying nobody, the most health first, then the
+        /// nearest, then the lowest id. The rest hold the line. Kept until the fallen is out of danger, up or gone, or its
+        /// carrier falls or leaves; then the next.
+        /// </summary>
+        private static void ChooseCarrier(IGuildHost host, GuildParty party)
+        {
+            var roster = party.Roster;
+            if (party.Fallen != default)
+            {
+                int carrierAt = party.IndexOf(party.Carrier);
+                if (host.TryGetCrawler(party.Fallen, out var held) && !held.HasLeft && held.IsCollapsed
+                    && carrierAt >= 0 && roster[carrierAt].IsWithParty && host.TryGetCrawler(party.Carrier, out var bearer) && !bearer.HasLeft && !bearer.IsDowned) return;
+                party.Fallen = party.Carrier = default;
+            }
+            AgentState fallen = null;
+            for (int i = 0; i < roster.Count && fallen == null; i++)
+            {
+                if (roster[i].IsWithParty && host.TryGetCrawler(roster[i].CrawlerId, out var f) && !f.HasLeft && f.IsCollapsed) fallen = f;
+            }
+            if (fallen == null) return;
+            AgentState best = null;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < roster.Count; i++)
+            {
+                if (!roster[i].IsWithParty || !host.TryGetCrawler(roster[i].CrawlerId, out var c) || c.HasLeft || c.IsDowned || c.Carrying != default) continue;
+                float d = (c.Position - fallen.Position).SqrMagnitude;
+                bool better = best == null || c.Health > best.Health
+                    || (c.Health == best.Health && (d < bestDistance || (d == bestDistance && c.AgentId.CompareTo(best.AgentId) < 0)));
+                if (!better) continue;
+                best = c;
+                bestDistance = d;
+            }
+            if (best == null) return;
+            party.Fallen = fallen.AgentId;
+            party.Carrier = best.AgentId;
+        }
+
+        /// <summary>
+        /// A clear's retreat rule (K7.2b, Q8): half its members down, or the health of those with the party, on average, past
+        /// the rule's line. A downed member alone doesn't turn a fighting party back, as it does a gathering one: its mates
+        /// carry it out (K7.2c).
+        /// </summary>
+        private static bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        {
+            float floor = tuning.RetreatHealth(party.Record.Rule);
+            var roster = party.Roster;
+            int with = 0, down = 0;
+            float health = 0f;
+            for (int i = 0; i < roster.Count; i++)
+            {
+                var member = roster[i];
+                if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
+                with++;
+                if (member.Status == ExpeditionMemberStatus.Downed || crawler.IsDowned) down++;
+                health += crawler.Health;
+            }
+            return with == 0 || down * 2 >= with || health / with < floor;
         }
 
         /// <summary>At the stall, fed (below the muster's hunger, or carrying the trip's rations to eat on the way) and well.</summary>

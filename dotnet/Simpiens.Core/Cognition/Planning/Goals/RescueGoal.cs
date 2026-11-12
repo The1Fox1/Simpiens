@@ -11,11 +11,15 @@ namespace Simpiens.Cognition.Planning.Goals
     {
         public const float Priority = 90f;
 
+        /// <summary>A fallen party mate's rescue outranks the order (Epic 10 Part 3, K7.2c, Q8: "members carry their fallen out"): over the expedition's 120.</summary>
+        public const float UnderOrdersPriority = 130f;
+
         public RescueGoal() : base("Rescue", WorldState.Empty.With(StateFact.FallenRescued, true))
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        public override float CalculatePriority(AgentContext context) =>
+            Rescue.TryChooseFallen(context, out var fallen, out _) && fallen.PartyGroupId != 0 && fallen.PartyGroupId == context.PartyGroupId ? UnderOrdersPriority : Priority;
 
         public override bool IsValid(AgentContext context) => context.Inventory != null && Rescue.TryChooseFallen(context, out _, out _);
     }

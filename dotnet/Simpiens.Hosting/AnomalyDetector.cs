@@ -223,6 +223,14 @@ namespace Simpiens.Hosting
         private void CheckJitter(WorldEntity node, Pawn pawn, long tick)
         {
             Vec2 position = node.Position;
+            if (node.Agent != null && node.Agent.CarriedBy != default)
+            {
+                // The carried ride their rescuer's back (Epic 10 Part 3, K5.2): their moves are its, the lift's snap included;
+                // judged afresh once set down
+                pawn.LastPosition = position;
+                pawn.HasHeading = false;
+                return;
+            }
             pawn.RecordTrail(position);
             if (!pawn.HasPosition)
             {

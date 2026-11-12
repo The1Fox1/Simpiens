@@ -160,7 +160,15 @@ namespace Simpiens.Simulation.Guild
                 var id = members[i].CrawlerId;
                 if (!guild.IsMember(id) || !host.TryGetCrawler(id, out var crawler) || crawler.IsDowned) return Check.BadParty;
             }
-            if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
+            byte targetSector = order.TargetSectorId;
+            if (order.Kind == ExpeditionKind.Clear)
+            {
+                // A clear (Epic 10 Part 3, K7.1, Q8): a charted lair with a creature in it; its sector is the lair's
+                var lairs = host.Lairs;
+                if (lairs == null || order.LairIndex >= lairs.Count || !host.IsLairCharted(order.LairIndex) || lairs[order.LairIndex].Alive == 0) return Check.BadTarget;
+                targetSector = (byte)host.GetSectorForPosition(lairs[order.LairIndex].Definition.Position);
+            }
+            else if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
                 || sectorYield == ItemType.None)
             {
                 return Check.BadTarget;
@@ -168,7 +176,7 @@ namespace Simpiens.Simulation.Guild
             for (int i = 0; i < guild.Parties.Count; i++)
             {
                 var other = guild.Parties[i];
-                if (other != party && other.IsOut && other.Expedition.TargetSectorId == order.TargetSectorId) return Check.SectorTaken;
+                if (other != party && other.IsOut && other.Expedition.TargetSectorId == targetSector) return Check.SectorTaken;
             }
             if (order.Goal == 0 || order.Goal > tuning.Expedition.MaxGoal) return Check.BadGoal;
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
@@ -209,7 +217,7 @@ namespace Simpiens.Simulation.Guild
         /// (given for a hazard, Epic 10 Part 2, D50) wearing it in place of that piece would outfit the member better against
         /// <paramref name="against"/>, by the stats of all it wears (<see cref="Outfitting"/>, Epic 10 Part 3, K1.4).
         /// </summary>
-        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None)
+        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None, bool forFighting = false)
         {
             if (!guild.IsMember(crawlerId)) return Check.NotMember;
             var equipment = ItemCatalog.Get(item)?.Equipment;
@@ -220,7 +228,8 @@ namespace Simpiens.Simulation.Guild
             // The piece it would take the place of, by the rule the stall's sales share (Epic 10 Part 3, K1.1)
             if (!WornGear.TryReplacing(crawler.Inventory, item, out var replacing)) return Check.NotGear;
             var worn = crawler.Inventory.GetEquipped(replacing);
-            if (!WornOut(worn) && Outfitting.Gain(crawler.Inventory, OutfitNeed.Against(against), replacing, Outfitting.NewPiece(item, host.ActiveStalls[0].BestGradeOf(item))) <= 0f) return Check.AlreadyWearing;
+            var need = forFighting ? OutfitNeed.Against(against).AndFighting() : OutfitNeed.Against(against); // a fight's gift (Epic 10 Part 3, K7.4)
+            if (!WornOut(worn) && Outfitting.Gain(crawler.Inventory, need, replacing, Outfitting.NewPiece(item, host.ActiveStalls[0].BestGradeOf(item))) <= 0f) return Check.AlreadyWearing;
             return Check.Ok;
         }
 

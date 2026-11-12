@@ -39,6 +39,10 @@ namespace Simpiens.Hosting
             public byte Draughts;
             public int Stockpile;
             public int Dispatches;
+            /// <summary>A clear (Epic 10 Part 3, K7.4): of the first charted lair of this kind (None: any) with a creature in it, the party armed from stock first.</summary>
+            public bool Clear;
+            public Simpiens.Simulation.Creatures.CreatureKind LairKind;
+            public bool Arm;
             public readonly List<EntityId> Members = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         }
 
@@ -106,6 +110,22 @@ namespace Simpiens.Hosting
         {
             Plan(_plans[1], sectorId, goal, rule, outfit, draughts, stockpile);
             _together = together;
+        }
+
+        /// <summary>
+        /// Sends party 1 to clear a lair (Epic 10 Part 3, K7.4, Q8): once the guild reaches its target size, each member is given
+        /// the best weapon and armour for a fight the stall holds (if <paramref name="arm"/>), and when every member is armed and
+        /// well, the first charted lair of <paramref name="kind"/> (any, for None) with a creature in it is ordered cleared,
+        /// under <paramref name="rule"/>. Again each time the party is home and a lair shows.
+        /// </summary>
+        public void SendClear(Simpiens.Simulation.Creatures.CreatureKind kind = Simpiens.Simulation.Creatures.CreatureKind.None, RetreatRule rule = RetreatRule.Steady, bool arm = true)
+        {
+            var plan = _plans[0];
+            Plan(plan, 0, 1, rule, outfit: false, draughts: 0, stockpile: 0);
+            plan.Clear = true;
+            plan.LairKind = kind;
+            plan.Arm = arm;
+            plan.Target = byte.MaxValue; // planned: the lair is found when it is ready
         }
 
         private static void Plan(PartyPlan plan, byte sectorId, byte goal, RetreatRule rule, bool outfit, byte draughts, int stockpile)
@@ -208,6 +228,16 @@ namespace Simpiens.Hosting
                 return false; // the command applies at the start of the next tick
             }
 
+            if (plan.Clear)
+            {
+                // A clear (K7.4): its lair charted and holding a creature, every member armed (from stock first) and well
+                int lair = ClearTarget(plan.LairKind);
+                if (lair < 0) return false;
+                if (plan.Arm && !Armed(guild, host, members)) return false;
+                if (!AllWell(host, members)) return false;
+                order = new DispatchExpeditionCommand(plan.Slot, 0, plan.Goal, plan.Rule, 0, ExpeditionKind.Clear, (byte)lair);
+                return guild.CanDispatch(host, order) == GuildRules.Check.Ok;
+            }
             if (plan.Outfit && !Outfitted(guild, host, plan)) return false;
             if (plan.Stockpile > 0 && DraughtsInStock() < plan.Stockpile) return false;
             if (!SeamShows(plan.Target) || !AllWell(host, members)) return false;
@@ -296,6 +326,44 @@ namespace Simpiens.Hosting
                 if (!host.TryGetCrawler(members[i], out var member) || member.IsDowned || member.Health < well) return false;
             }
             return true;
+        }
+
+        /// <summary>The first charted lair of <paramref name="kind"/> (any, for None) with a creature in it, as the board shows them; -1 for none.</summary>
+        private int ClearTarget(Simpiens.Simulation.Creatures.CreatureKind kind)
+        {
+            var creatures = _sim.Simulation.Creatures;
+            for (int i = 0; i < creatures.Lairs.Count; i++)
+            {
+                if ((kind == Simpiens.Simulation.Creatures.CreatureKind.None || creatures.Lairs[i].Definition.Kind == kind) && creatures.IsCharted(i) && creatures.Lairs[i].Alive > 0) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Arms the party from the stall's stock for a fight (K7.4): each member, slot by slot (the weapon, the body, the head),
+        /// is given the piece that most outfits it for fighting, while stock lasts (promised pieces counted); true when every
+        /// member is armed.
+        /// </summary>
+        private bool Armed(GuildService guild, IGuildHost host, List<EntityId> members)
+        {
+            ref var stock = ref StockLeft();
+            var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+            bool all = true;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var member) || member.Inventory == null) return false;
+                for (int s = 0; s < slots.Count; s++) // every slot, by what it adds for a fight (the slot table's rule, K1.4)
+                {
+                    var item = Simpiens.Simulation.Items.Outfitting.BestInStock(stock, member.Inventory, Simpiens.Simulation.Items.OutfitNeed.ForFighting, slots[s].Id, false, out float gain);
+                    if (item == ItemType.None || gain <= 0f || guild.CanGiveGear(host, members[i], item, Simpiens.Simulation.World.HazardKind.None, forFighting: true) != GuildRules.Check.Ok) continue;
+                    _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, members[i], item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
+                    stock = stock.TakeBest(item, out _);
+                    GearGiven++;
+                    all = false; // worn on the next tick
+                }
+                if (!Simpiens.Cognition.Vitality.IsArmed(member.Inventory)) all = false;
+            }
+            return all;
         }
 
         /// <summary>A node of <paramref name="target"/> on the map: the registry holds a node only while it is ready.</summary>

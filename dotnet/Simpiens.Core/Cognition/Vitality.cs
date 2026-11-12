@@ -176,7 +176,16 @@ namespace Simpiens.Cognition
         /// the retreat line.
         /// </summary>
         public static bool FightsBack(in AgentContext context) =>
-            !context.IsDowned && context.Health >= RetreatBelow && context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(context.Inventory);
+            !context.IsDowned && context.Health >= FightLine(context.Expedition)
+            && ((context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(context.Inventory))
+                || context.Expedition.IsFighting); // under a clear's orders every member fights, bold or not (Epic 10 Part 3, K7.2a)
+
+        /// <summary>
+        /// The health under which a crawler gives a fight up: its own <see cref="RetreatBelow"/>, or, under a clear's orders at
+        /// the fight, none (Epic 10 Part 3, K7.2b, D41): the party holds together and its rule turns it back, so a member may
+        /// fall where its mates carry it out.
+        /// </summary>
+        public static float FightLine(in Simpiens.Cognition.Contracts.ExpeditionOrder order) => order.IsFighting ? 0f : RetreatBelow;
 
         /// <summary>True when what <paramref name="worn"/> holds strikes harder than a bare hand.</summary>
         public static bool IsArmed(Simpiens.Cognition.Inventory.IAgentInventory worn) =>

@@ -11,8 +11,8 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// which couples the two (<see cref="AgentState.Carrying"/>, <see cref="AgentState.CarriedBy"/>), then the carry on the path
     /// out at half pace, the fallen's place the rescuer's each tick, until both are out of danger: there it is set down, downed
     /// in safety (it limps on to the bunks itself). A fallen that is gone, back on its feet or carried by another is a missing
-    /// target. However the carry ends early (the rescuer struck, downed or turned to something else), the simulation's pass
-    /// over the fallen uncouples them where they are.
+    /// target; a rescuer downed itself lets go and fails. However the carry ends early (the rescuer struck, downed or turned
+    /// to something else), the simulation's pass over the fallen uncouples them where they are.
     /// </summary>
     public class CarryIntentHandler : IntentHandlerBase<CarryIntent>
     {
@@ -24,6 +24,11 @@ namespace Simpiens.Cognition.Planning.Handlers
             var rescuer = node.Agent;
             var fallenNode = context.WorldRegistry?.GetEntity(carry.FallenId);
             var fallen = fallenNode?.Agent;
+            if (rescuer != null && rescuer.IsDowned)
+            {
+                Release(rescuer, fallen); // downed itself (struck while it carried, under orders): it lets go where it falls (K7.2c)
+                return IntentResult.Failed;
+            }
             if (rescuer == null || fallen == null || fallen.HasLeft || !fallen.IsDowned)
             {
                 Release(rescuer, fallen);
@@ -47,7 +52,9 @@ namespace Simpiens.Cognition.Planning.Handlers
                 rescuer.Carrying = fallen.AgentId;
                 fallen.CarriedBy = node.Id;
                 fallenNode.SetPosition(node.Position);
-                state.CurrentWaypointIndex = 0;
+                // The way out starts where the fallen lay, beside the rescuer: it walks on from the next waypoint, not back
+                var outPath = carry.PathOut;
+                state.CurrentWaypointIndex = outPath != null && outPath.Length > 1 && (outPath.Waypoints[0] - node.Position).SqrMagnitude <= reach * 2.25f ? 1 : 0;
                 state.LastSampledPosition = node.Position;
                 state.TimeSinceLastProgress = 0f;
                 state.StallCount = 0;
@@ -94,6 +101,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             var rescuer = node.Agent;
             var fallenNode = context.WorldRegistry?.GetEntity(give.FallenId);
             var fallen = fallenNode?.Agent;
+            if (rescuer != null && rescuer.IsDowned) return IntentResult.Failed; // downed itself on the way (K7.2c)
             if (rescuer?.Inventory == null || fallen == null || fallen.HasLeft || !fallen.IsDowned) return IntentResult.TargetMissing;
             if (!rescuer.Inventory.HasItem(give.Medicine)) return IntentResult.TargetMissing;
             float reach = CarryIntentHandler.Reach * CarryIntentHandler.Reach;

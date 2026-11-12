@@ -302,6 +302,8 @@ namespace Simpiens.Simulation
         }
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        IReadOnlyList<Simpiens.Simulation.Creatures.LairState> Simpiens.Simulation.Guild.IGuildHost.Lairs => Creatures.Lairs;
+        bool Simpiens.Simulation.Guild.IGuildHost.IsLairCharted(int lairIndex) => Creatures.IsCharted(lairIndex);
         int Simpiens.Simulation.Workshops.IWorkshopHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
         bool Simpiens.Simulation.Workshops.IWorkshopHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler) => ((Simpiens.Simulation.Guild.IGuildHost)this).TryGetCrawler(crawlerId, out crawler);
 
@@ -559,7 +561,7 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.GiveGear:
-                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against);
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against, influence.GiveGear.ForFighting);
                     break;
 
                 // The workshops (Epic 10 Part 2)

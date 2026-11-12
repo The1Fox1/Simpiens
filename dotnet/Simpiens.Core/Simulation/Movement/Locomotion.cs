@@ -155,7 +155,7 @@ namespace Simpiens.Simulation.Movement
             // waypoint is often the destination, and a pawn standing there froze a crawler across the map (Epic 10 G0,
             // finding F2); further away, IsCrowdedMove below keeps pawns apart
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
-            if (nearWaypoint && IsPositionBlocked(targetPos, node.Id, clearance))
+            if (nearWaypoint && IsPositionBlocked(targetPos, node.Id, clearance, node.Agent != null ? node.Agent.Carrying : default)) // not by the fallen on its back (K7.2c)
             {
                 // Someone already stands on our destination and we're close: arrive here rather than stack on them
                 if (nearFinal) return IntentResult.Success;
@@ -339,7 +339,7 @@ namespace Simpiens.Simulation.Movement
             return false;
         }
 
-        public bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
+        public bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f, EntityId alsoIgnore = default)
         {
             if (_spatialPartition == null) return false;
             var snapshot = _spatialPartition.GetActiveSnapshot();
@@ -360,7 +360,7 @@ namespace Simpiens.Simulation.Movement
             for (int i = 0; i < count; i++)
             {
                 var entity = cellArray[i];
-                if (entity.Id != ignoreAgentId)
+                if (entity.Id != ignoreAgentId && (alsoIgnore == default || entity.Id != alsoIgnore))
                 {
                     if (entity.Type == EntityType.Wall) return true;
                     if (entity.Type == EntityType.Anchor && Vec2.Distance(entity.Position, targetPos) < 0.45f) return true;

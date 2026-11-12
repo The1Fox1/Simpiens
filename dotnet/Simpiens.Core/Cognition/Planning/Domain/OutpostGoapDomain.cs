@@ -48,6 +48,7 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new RescueAction(pathfinder)); // K5.3
             graph.RegisterAction(new ClaimHuntAction()); // K6.2
             graph.RegisterAction(new HuntLairAction(pathfinder));
+            graph.RegisterAction(new FightForPartyAction(pathfinder)); // K7.2a
             return graph;
         }
 

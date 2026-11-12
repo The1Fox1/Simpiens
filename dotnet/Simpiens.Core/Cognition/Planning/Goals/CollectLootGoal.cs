@@ -16,7 +16,13 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        /// <summary>
+        /// A member of a clear picks up what lies in sight above the order (Epic 10 Part 3, K7.1: the haul is what the party
+        /// picked up): over the expedition's 120, under a mate's rescue.
+        /// </summary>
+        public const float ClearPriority = 125f;
+
+        public override float CalculatePriority(AgentContext context) => context.Expedition.Kind == Simpiens.Simulation.Guild.ExpeditionKind.Clear && context.Expedition.IsActive ? ClearPriority : Priority;
 
         public override bool IsValid(AgentContext context)
         {

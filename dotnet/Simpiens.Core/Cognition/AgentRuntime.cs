@@ -43,6 +43,9 @@ namespace Simpiens.Cognition
         private long _lastBusyPerceptionTick = -BusyPerceptionIntervalTicks;
         private bool _disposed;
 
+        /// <summary>The fallen mate the guild last sent it for that it answered (Epic 10 Part 3, K7.2c): it drops what it does once per order.</summary>
+        private EntityId _answeredCarry;
+
         public AgentRuntime(
             AgentState state,
             ISpatialPartition spatialPartition,
@@ -166,15 +169,25 @@ namespace Simpiens.Cognition
                 State.VisualState = AgentVisualState.Resting;
             }
 
+            // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
+            var carry = State.Expedition.Carry;
+            bool sentToCarry = !State.IsDowned && carry != default && carry != _answeredCarry && !State.IsEvaluating;
+
             bool shouldPreempt = false;
             if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
             {
                 shouldPreempt = true;
             }
-            else if (struck && !(State.CurrentIntent is FleeIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is HuntIntent)) // a hunter struck hunts on (K6.2)
+            else if (struck && !(State.CurrentIntent is FleeIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is HuntIntent) // a hunter struck hunts on (K6.2)
+                && !(State.Expedition.IsActive && (State.CurrentIntent is CarryIntent || State.CurrentIntent is GiveMedicineIntent))) // a mate's rescue under orders goes on (K7.2c)
             {
                 // Before hunger: a crawler that starves while it is bitten runs first and eats after
                 shouldPreempt = true;
+            }
+            else if (sentToCarry)
+            {
+                _answeredCarry = carry;
+                shouldPreempt = !(State.CurrentIntent is CarryIntent) && !(State.CurrentIntent is GiveMedicineIntent);
             }
             else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent) && !tending)
             {

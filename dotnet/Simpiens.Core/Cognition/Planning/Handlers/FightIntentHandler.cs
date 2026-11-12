@@ -17,12 +17,12 @@ namespace Simpiens.Cognition.Planning.Handlers
         protected override IntentResult Execute(WorldEntity node, FightIntent fight, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
-            if (agent == null || agent.IsDowned || agent.Health < Vitality.RetreatBelow) return IntentResult.Failed;
+            if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetCreature(fight.Target, out var creature)) return IntentResult.Success; // slain, or gone
             if (Melee.TrySwing(node, creature, context)) return IntentResult.InProgress;
             float distance = Vec2.Distance(node.Position, creature.Position);
             if (creature.Mode == CreatureMode.Flee && distance > Vitality.FightPursuit) return IntentResult.Success; // it ran: let it go
-            return Melee.StepToward(node, creature, context);
+            return Melee.StepToward(node, creature, context, besideOthers: agent.Expedition.IsActive); // a party fights side by side (K7.2a)
         }
     }
 
@@ -68,8 +68,9 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// <summary>
     /// Executes a HuntIntent (Epic 10 Part 3, K6.2, Q7): the hunter walks toward its lair's heart on its path, and fights the
     /// lair's nearest living creature as soon as one is within its sight (or its path is walked), one after another, as a
-    /// fight does (<see cref="Melee"/>). Done when the lair is empty (the hunt pays from the simulation's pass) or after a game
-    /// hour, to decide afresh; failed under the retreat line, or downed.
+    /// fight does (<see cref="Melee"/>); a member at a clear's fight fights its party's focus instead (K7.2a). Done when the
+    /// lair is empty (the hunt pays from the simulation's pass) or after a game hour, to decide afresh; failed under the retreat
+    /// line, or downed.
     /// </summary>
     public class HuntIntentHandler : IntentHandlerBase<HuntIntent>
     {
@@ -79,8 +80,11 @@ namespace Simpiens.Cognition.Planning.Handlers
         protected override IntentResult Execute(WorldEntity node, HuntIntent hunt, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
-            if (agent == null || agent.IsDowned || agent.Health < Vitality.RetreatBelow) return IntentResult.Failed;
+            if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetNearestLairCreature(hunt.LairIndex, node.Position, out var creature)) return IntentResult.Success; // the lair is empty
+            // Under a clear's orders, the party's focus while it lives (Epic 10 Part 3, K7.2a)
+            var order = agent.Expedition;
+            if (order.IsFighting && order.LairIndex == hunt.LairIndex && order.Focus != default && context.TryGetCreature(order.Focus, out var focus) && focus.IsAlive) creature = focus;
             state.ElapsedTime += context.FixedTickDeltaTime;
             if (state.ElapsedTime >= DayClock.SecondsPerHour) return IntentResult.Success; // a game hour on: it decides afresh
             bool walked = hunt.Path == null || state.CurrentWaypointIndex >= hunt.Path.Length;
