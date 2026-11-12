@@ -226,6 +226,10 @@ namespace Simpiens.Intervention
         public readonly Vec2 TargetLocation;
         public readonly EntityId CreatorStallId;
 
+        /// <summary>A hunt's lair, its index in the map's lairs (Epic 10 Part 3, K6.1); <see cref="NoLair"/> for any other kind.</summary>
+        public readonly byte LairIndex;
+        public const byte NoLair = byte.MaxValue;
+
         public PostBountyCommand(
             ushort bountyId,
             BountyType type,
@@ -235,8 +239,10 @@ namespace Simpiens.Intervention
             ushort rewardGold,
             uint durationTicks = 1000,
             Vec2 targetLocation = default,
-            EntityId creatorStallId = default)
+            EntityId creatorStallId = default,
+            byte lairIndex = NoLair)
         {
+            LairIndex = lairIndex;
             BountyId = bountyId;
             Type = type;
             SectorId = sectorId;

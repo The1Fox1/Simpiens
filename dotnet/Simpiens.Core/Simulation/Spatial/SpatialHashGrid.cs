@@ -38,6 +38,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>The items on the ground (Epic 10 Part 3, K4.3b), copied into every following snapshot as they are then. Main thread only.</summary>
         void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles);
 
+        /// <summary>The hunts' parties (Epic 10 Part 3, K6.2), copied into every following snapshot. Main thread only.</summary>
+        void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> hunts);
+
         /// <summary>The session's economy tuning (immutable), published by reference in every snapshot. Main thread only.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
 
@@ -74,6 +77,9 @@ namespace Simpiens.Simulation.Spatial
 
         private IReadOnlyList<Simpiens.Simulation.Loot.LootPile> _piles;
         public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles) => _piles = piles;
+
+        private IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> _hunts;
+        public void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> hunts) => _hunts = hunts;
 
         private Simpiens.Simulation.Economy.EconomyTuning _economy;
         public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => _economy = economy;
@@ -198,6 +204,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
             _currentTickSnapshot.SetChartedLairs(_chartedLairs);
             _currentTickSnapshot.SetPiles(_piles); // copied now, on the main thread (K4.3b)
+            _currentTickSnapshot.SetHunts(_hunts); // K6.2
             _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch

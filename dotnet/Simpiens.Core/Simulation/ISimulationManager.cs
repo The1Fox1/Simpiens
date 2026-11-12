@@ -46,6 +46,12 @@ namespace Simpiens.Simulation
         /// <summary>Danger for the fallen (K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
         bool InDanger(Vec2 position);
 
+        /// <summary>The open hunts' parties (Epic 10 Part 3, K6.1), by bounty id.</summary>
+        System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> Hunts { get; }
+
+        /// <summary>A claim on a hunt joins its party while it has room (K6.1); true when the crawler is in it.</summary>
+        bool TryJoinHunt(ushort bountyId, EntityId crawler);
+
         /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
         void PopulateLairs(ulong seed);
 

@@ -29,6 +29,9 @@ namespace Simpiens.Simulation.Creatures
         /// place, claimed for the slayer. The creature is already out of the world.
         /// </summary>
         void CreatureSlain(EntityId slayer, CreatureState creature, System.ReadOnlySpan<Simpiens.Simulation.Economy.ItemInstance> drops, uint tick);
+
+        /// <summary>A crawler's blow landed on a creature for <paramref name="damage"/> (Epic 10 Part 3, K6.1: a hunter's share).</summary>
+        void CreatureHit(EntityId crawler, CreatureState creature, float damage);
     }
 
     /// <summary>

@@ -127,6 +127,7 @@ namespace Simpiens.Simulation
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
             TickTheFallen(tick);
+            _market.SettleHunts(Creatures.Lairs, _agentRegistry, tick); // a hunted lair emptied pays its hunters (K6.1)
         }
 
         /// <summary>
@@ -256,6 +257,9 @@ namespace Simpiens.Simulation
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
                 GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
         }
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureHit(EntityId crawler, Simpiens.Simulation.Creatures.CreatureState creature, float damage)
+            => _market.RecordHuntDamage(crawler, creature.LairIndex, damage);
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {
@@ -731,6 +735,7 @@ namespace Simpiens.Simulation
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
                 _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
+                _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)
                 ValidateBunkOccupancy();
                 _spatialPartition.SetOccupiedBunks(_lodging.OccupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);

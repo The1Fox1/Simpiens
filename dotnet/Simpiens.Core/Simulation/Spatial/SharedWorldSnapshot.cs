@@ -46,6 +46,20 @@ namespace Simpiens.Simulation.Spatial
         public int ActivePileCount;
         public ReadOnlySpan<Simpiens.Simulation.Loot.PileView> Piles => new ReadOnlySpan<Simpiens.Simulation.Loot.PileView>(PileBuffer, 0, ActivePileCount);
 
+        // The hunts' parties (Epic 10 Part 3, K6.2), by bounty id
+        public const int MaxHunts = 8;
+        public readonly Simpiens.Simulation.Economy.HuntRecord[] HuntBuffer = new Simpiens.Simulation.Economy.HuntRecord[MaxHunts];
+        public int ActiveHuntCount;
+        public ReadOnlySpan<Simpiens.Simulation.Economy.HuntRecord> Hunts => new ReadOnlySpan<Simpiens.Simulation.Economy.HuntRecord>(HuntBuffer, 0, ActiveHuntCount);
+
+        /// <summary>Copies the hunts' parties (main thread; no allocation).</summary>
+        public void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> source)
+        {
+            int toCopy = source == null ? 0 : SimMath.Min(source.Count, MaxHunts);
+            for (int i = 0; i < toCopy; i++) HuntBuffer[i] = source[i];
+            ActiveHuntCount = toCopy;
+        }
+
         // The fallen (Epic 10 Part 3, K5.3): crawlers collapsed in danger, in registration order
         public const int MaxFallen = 16;
         public readonly FallenView[] FallenBuffer = new FallenView[MaxFallen];
@@ -172,6 +186,8 @@ namespace Simpiens.Simulation.Spatial
             ActivePileCount = 0;
             Array.Clear(FallenBuffer, 0, ActiveFallenCount);
             ActiveFallenCount = 0;
+            Array.Clear(HuntBuffer, 0, ActiveHuntCount);
+            ActiveHuntCount = 0;
         }
 
         /// <summary>

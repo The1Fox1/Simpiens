@@ -109,6 +109,27 @@ namespace Simpiens.Simulation.Economy
             return false;
         }
 
+        /// <summary>
+        /// Releases a bounty's escrow in shares (Epic 10 Part 3, K6.1: a hunt's reward, by damage dealt): each claimant found is
+        /// paid its share; the shares must add up to the escrow. False, paying nothing, when they don't or there is none.
+        /// </summary>
+        public bool TryReleaseEscrowSplit(ushort bountyId, ReadOnlySpan<EntityId> claimants, ReadOnlySpan<uint> shares, IAgentRegistry agentRegistry)
+        {
+            if (!_bountyEscrows.TryGetValue(bountyId, out uint escrow) || escrow == 0 || claimants.Length != shares.Length) return false;
+            uint total = 0;
+            for (int i = 0; i < shares.Length; i++) total += shares[i];
+            if (total != escrow) return false;
+            _bountyEscrows.Remove(bountyId);
+            TotalEscrowGold -= escrow;
+            _escrowReleasedGold += escrow;
+            for (int i = 0; i < claimants.Length; i++)
+            {
+                if (agentRegistry != null && agentRegistry.TryGetAgent(claimants[i], out var agent)) agent.Inventory?.AddGold((int)shares[i]);
+                SimLog.Economy.ZLogDebug($"Ledger: released {shares[i]}g of bounty #{bountyId}'s escrow to {SimLog.Agent(claimants[i])}");
+            }
+            return true;
+        }
+
         public bool TryRefundEscrow(ushort bountyId, EntityId stallId, ref TradeStallData stall, out uint refundedAmount)
         {
             if (_bountyEscrows.TryGetValue(bountyId, out refundedAmount) && refundedAmount > 0)

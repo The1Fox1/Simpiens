@@ -19,6 +19,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             }
 
             uint currentClaimTick = context.CurrentTick;
+            if (bounty.Type == BountyType.Hunt) return JoinHunt(node, bounty, state, context); // a party of up to three (K6.1)
             if (!bounty.IsActive(currentClaimTick) || bounty.Status != BountyStatus.Open)
             {
                 SimLog.Economy.ZLogDebug($"{SimLog.Agent(node.Id)} claim of bounty #{claim.BountyId} rejected: status {bounty.Status}, claimant {SimLog.Agent(bounty.ClaimantId)}, expires t{bounty.ExpirationTick}");
@@ -40,6 +41,19 @@ namespace Simpiens.Cognition.Planning.Handlers
                 currentClaimTick,
                 ChronicleIntensity.Notable));
 
+            return IntentResult.Success;
+        }
+
+        // A hunt's claim (Epic 10 Part 3, K6.1): signing at the board, then joining its party while it has room; the
+        // contract stays open, its party in the hunt's record
+        private static IntentResult JoinHunt(WorldEntity node, in BountyContract bounty, ActiveIntentState state, IIntentExecutionContext context)
+        {
+            if (!bounty.IsActive(context.CurrentTick) || bounty.Status != BountyStatus.Open) return IntentResult.Failed;
+            if (StillWorking(node, state, context, context.Economy.Day.Actions.BoardSeconds)) return IntentResult.InProgress;
+            if (!context.TryJoinHunt(bounty.BountyId, node.Id)) return IntentResult.Failed; // full, or gone
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} joined hunt #{bounty.BountyId} (sector {bounty.TargetSectorId}, {bounty.RewardGold}g)");
+            context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.BountyClaimed, node.Id, context.PlayerEntityId,
+                context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Notable));
             return IntentResult.Success;
         }
     }

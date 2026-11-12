@@ -140,6 +140,7 @@ namespace Simpiens.Testing.Combat
             IReadOnlyList<WorldEntity> ICreatureWorld.Entities => _none;
             public void Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick) { }
             public void CreatureSlain(EntityId slayer, CreatureState creature, System.ReadOnlySpan<Simpiens.Simulation.Economy.ItemInstance> drops, uint tick) { }
+            public void CreatureHit(EntityId crawler, CreatureState creature, float damage) { }
         }
 
         private static void Assert(bool condition, string message)

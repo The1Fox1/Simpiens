@@ -140,7 +140,9 @@ namespace Simpiens.Simulation.Creatures
             }
             if (agent?.Inventory != null && CombatRules.WearOnHit(blow.Outcome, agent.Inventory))
                 SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)}'s weapon broke on {CreatureCatalog.NameOf(creature.Kind)} {creature.Id}");
+            float dealt = SimMath.Min(creature.Health, (float)blow.Outcome.Damage);
             creature.Health = SimMath.Max(0f, (float)(creature.Health - blow.Outcome.Damage));
+            world.CreatureHit(blow.Crawler.Id, creature, dealt); // a hunter's share (K6.1)
             if (creature.Health > 0f)
             {
                 Provoke(creature, blow.Crawler);

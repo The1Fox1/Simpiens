@@ -214,6 +214,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The player's guild: recruiting, the fee, wages and quitting (Epic 10 G4).</summary>
         public GuildTuning Guild { get; private set; } = GuildTuning.Default;
 
+        /// <summary>Hunt bounties (Epic 10 Part 3, K6, Q7).</summary>
+        public HuntTuning Hunt { get; private set; } = HuntTuning.Default;
+
         /// <summary>The stations and their artisans (Epic 10 Part 2).</summary>
         public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;
 
