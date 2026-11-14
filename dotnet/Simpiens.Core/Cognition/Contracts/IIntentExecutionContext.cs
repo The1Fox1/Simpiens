@@ -11,7 +11,7 @@ namespace Simpiens.Cognition.Contracts
     /// Context passed to IIntentHandler instances to interact with simulation state,
     /// physical movement, registries, and the economy ledger without tight coupling to SimulationManager.
     /// </summary>
-    public interface IIntentExecutionContext
+    public interface IIntentExecutionContext : Simpiens.Simulation.Skills.ISkillPractice
     {
         uint CurrentTick { get; }
         float FixedTickDeltaTime { get; }

@@ -10,7 +10,7 @@ namespace Simpiens.Simulation.Creatures
     /// The world as the creatures' phase sees it (the simulation): where a creature's entity enters and leaves (its registry,
     /// so its spatial grid and its views follow), what it sees and walks on, and where a blow lands on a crawler. Main thread.
     /// </summary>
-    public interface ICreatureWorld
+    public interface ICreatureWorld : Simpiens.Simulation.Skills.ISkillPractice
     {
         void AddCreature(WorldEntity entity);
         void RemoveCreature(EntityId id);

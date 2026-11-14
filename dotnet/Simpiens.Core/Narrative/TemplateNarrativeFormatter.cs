@@ -173,6 +173,13 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.NewcomerArrived:
                     return $"{actorA} came in by the Road Gate to settle at the outpost.";
 
+                case ChronicleEventType.SkillBandReached:
+                {
+                    var skill = Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)((int)evt.ExtraData / 256));
+                    string band = Simpiens.Simulation.Skills.SkillRules.NameOf((Simpiens.Simulation.Skills.SkillBand)((int)evt.ExtraData % 256)).ToLowerInvariant();
+                    return $"{actorA} is now {(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}.";
+                }
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 

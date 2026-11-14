@@ -182,6 +182,24 @@ namespace Simpiens.Simulation
         /// Danger for the fallen (K5.1, Q3): a hazard sector, or within the reach of a lair holding a living creature,
         /// charted or not (danger is the world's, not what crawlers know of it).
         /// </summary>
+        /// <summary>
+        /// Practice (Epic 10 Part 3, K9.2, Q18): adds <paramref name="experience"/> to <paramref name="agent"/>'s
+        /// <paramref name="skill"/>. A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the
+        /// chronicle. Main thread.
+        /// </summary>
+        public void Practise(AgentState agent, Simpiens.Simulation.Skills.Skill skill, int experience)
+        {
+            if (agent == null || skill == Simpiens.Simulation.Skills.Skill.None || experience <= 0) return;
+            var before = agent.Skills.Band(skill);
+            if (!agent.Practise(skill, experience, out int level)) return;
+            var band = Simpiens.Simulation.Skills.SkillRules.BandOf(level);
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} reached {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)} {level} ({Simpiens.Simulation.Skills.SkillRules.NameOf(band)})");
+            if (band == before) return;
+            uint tick = (uint)(_clock?.CurrentTick ?? 0);
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+        }
+
         public bool HasLineOfSight(Vec2 from, Vec2 to)
         {
             var snapshot = _spatialPartition?.GetActiveSnapshot();

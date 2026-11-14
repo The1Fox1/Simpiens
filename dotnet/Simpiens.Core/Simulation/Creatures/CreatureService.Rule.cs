@@ -51,6 +51,7 @@ namespace Simpiens.Simulation.Creatures
             public EntityId Target;
             public SwingOutcome Outcome;
             public CreatureState Creature;
+            public bool Ranged; // a shot: practice in the ranged skill, hit or miss (K9.2)
         }
 
         private readonly List<CrawlerSwing> _asked = new List<CrawlerSwing>(8);
@@ -134,6 +135,7 @@ namespace Simpiens.Simulation.Creatures
                 if (!CombatRules.InReach(me, them) && snapshot != null && !snapshot.HasLineOfSight(me.Position, them.Position)) continue; // a shot needs a clear line (K8.2a)
                 ask.Outcome = CombatRules.Swing(_seed, tick, me, them);
                 ask.Creature = creature;
+                ask.Ranged = me.IsRanged;
                 if (me.IsRanged) _shots.Add(new ShotRecord(me.Id, them.Id, me.Position, them.Position, ask.Outcome.Hit, creature: false));
                 agent.NextSwingAt = CombatRules.NextSwingAt(tick, me);
                 _blows.Add(ask);
@@ -148,6 +150,9 @@ namespace Simpiens.Simulation.Creatures
             var creature = blow.Creature;
             var agent = blow.Crawler.Agent;
             if (creature == null || !creature.IsAlive) return;
+            // Practice (K9.2): a shot, hit or miss; a blow in reach that landed
+            if (blow.Ranged) world.Practise(agent, Simpiens.Simulation.Skills.SkillTable.ForFight(ranged: true), Simpiens.Simulation.Skills.SkillRules.ShotExperience);
+            else if (blow.Outcome.Hit) world.Practise(agent, Simpiens.Simulation.Skills.SkillTable.ForFight(ranged: false), Simpiens.Simulation.Skills.SkillRules.HitExperience);
             if (agent?.Inventory != null && CombatRules.WearOnShot(agent.Inventory)) // a ranged weapon wears per shot, hit or miss (K8.1)
                 SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)}'s ranged weapon broke shooting at {CreatureCatalog.NameOf(creature.Kind)} {creature.Id}");
             if (!blow.Outcome.Hit)

@@ -72,6 +72,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, node.Id, fallen.AgentId,
                     context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 1f));
                 Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
+                context.Practise(rescuer, Simpiens.Simulation.Skills.SkillTable.ForTending(), Simpiens.Simulation.Skills.SkillRules.RescueExperience); // a rescue is practice (K9.2)
                 return IntentResult.Success;
             }
             if (result != IntentResult.InProgress)
@@ -121,6 +122,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, node.Id, fallen.AgentId,
                 context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 2f));
             Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
+            context.Practise(rescuer, Simpiens.Simulation.Skills.SkillTable.ForTending(), Simpiens.Simulation.Skills.SkillRules.RescueExperience); // a rescue is practice (K9.2)
             return IntentResult.Success;
         }
     }

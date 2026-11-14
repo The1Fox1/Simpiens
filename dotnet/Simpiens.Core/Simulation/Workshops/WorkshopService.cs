@@ -16,7 +16,7 @@ namespace Simpiens.Simulation.Workshops
     /// What the workshops need from the simulation: the stall they work from and pay from (Q7), the ledger, the crawlers
     /// they hire, the groups their crews are, and the guild (one role at a time, D6).
     /// </summary>
-    public interface IWorkshopHost
+    public interface IWorkshopHost : Simpiens.Simulation.Skills.ISkillPractice
     {
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
         void UpdateStall(TradeStallData stall);
@@ -507,7 +507,13 @@ namespace Simpiens.Simulation.Workshops
             byte grade = artisan >= 0 ? GradeOf(_artisans[artisan], Tuning(host)) : Grades.Standard;
             uint made = station.Made;
             var step = Crafting.Work(ref station, ref stall, out bool stallChanged, grade);
-            if (station.Made > made && artisan >= 0) _artisans[artisan] = _artisans[artisan].WithPractice((ushort)Math.Min(ushort.MaxValue, _artisans[artisan].Practice + 1));
+            if (station.Made > made && artisan >= 0)
+            {
+                _artisans[artisan] = _artisans[artisan].WithPractice((ushort)Math.Min(ushort.MaxValue, _artisans[artisan].Practice + 1));
+                // A make is practice in the station's skill (Epic 10 Part 3, K9.2)
+                if (host.TryGetCrawler(_artisans[artisan].CrawlerId, out var hand))
+                    host.Practise(hand, Simpiens.Simulation.Skills.SkillTable.ForStation(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience);
+            }
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;

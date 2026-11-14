@@ -27,6 +27,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var (fallen, friend) = FallenWithAFriendBeside(sim, draught: false);
+            var medicine = sim.Host.CrawlerStates.ToDictionary(c => c.AgentId, c => c.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine));
             bool carried = false, halfPace = false;
             uint bleedsOut = fallen.BleedsOutAt;
             for (long t = 0; t < DayClock.Hours(SimulationManager.BleedOutHours) + 100 && (fallen.IsCollapsed || fallen.CarriedBy != default); t++)
@@ -52,6 +53,10 @@ namespace Simpiens.Core.Tests
             var told = new List<ChronicleEvent>();
             sim.Chronicle.GetAllRecentEvents(told, 256);
             Assert.Contains(told, e => e.EventType == ChronicleEventType.CrawlerRescued && e.ActorBId == fallen.AgentId && e.ExtraData == 1f);
+            // A rescue is practice in medicine (Epic 10 Part 3, K9.2)
+            var rescue = told.First(e => e.EventType == ChronicleEventType.CrawlerRescued && e.ActorBId == fallen.AgentId);
+            var rescuer = sim.Host.CrawlerStates.First(c => c.AgentId == rescue.ActorAId);
+            Assert.True(rescuer.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine) >= medicine[rescuer.AgentId] + Simpiens.Simulation.Skills.SkillRules.RescueExperience, "Its rescuer practised medicine.");
         }
 
         [Fact]
@@ -59,6 +64,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var (fallen, friend) = FallenWithAFriendBeside(sim, draught: true);
+            int medicine = friend.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine);
             bool given = false;
             for (long t = 0; t < DayClock.Hours(1) && fallen.IsDowned; t++)
             {
@@ -69,6 +75,7 @@ namespace Simpiens.Core.Tests
             Assert.False(fallen.IsDowned, "The draught stood it up.");
             Assert.Equal(0, friend.Inventory.GetItemCount(ItemType.HealingDraught));
             Assert.True(fallen.Health >= Vitality.RecoveredAt);
+            Assert.Equal(medicine + Simpiens.Simulation.Skills.SkillRules.RescueExperience, friend.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine)); // practice (K9.2)
         }
 
         [Fact]
