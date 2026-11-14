@@ -432,8 +432,10 @@ namespace Simpiens.Testing.Persistence
                 ScoutReportTick = 312u,
                 IsExhaustionCollapsed = true,
                 DepartsAtTick = 2750u,
-                Look = Simpiens.Simulation.People.CrawlerLook.Generate(11, A)
+                Look = Simpiens.Simulation.People.CrawlerLook.Generate(11, A),
+                Skills = Simpiens.Simulation.Skills.SkillSet.Generate(11, A, new AgentPersonality(-0.3f, 0.6f, 0.2f, -0.9f, 0.1f))
             };
+            state.Practise(Simpiens.Simulation.Skills.Skill.Mining, 137, out _); // mid-level experience comes back too
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
             var record = state.CaptureRecord();
@@ -454,6 +456,8 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.Activity.Cycles == 1 && fresh.Activity.FirstCycleTick == 95, "The activity tally came back.");
             Assert(fresh.IsDrifter && fresh.DepartsAtTick == 2750u, "A drifter is still a drifter, leaving at the same tick.");
             Assert(fresh.Look == state.Look && fresh.Look.IsComplete, "The look came back (Epic UI-Beta B1).");
+            Assert(fresh.Skills == state.Skills && fresh.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining) == state.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining)
+                && fresh.Skills != default, "The skills came back, experience and all (Epic 10 Part 3, K9.1).");
 
             bool refused = false;
             try

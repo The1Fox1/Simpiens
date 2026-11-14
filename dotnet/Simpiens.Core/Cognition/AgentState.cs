@@ -120,6 +120,21 @@ namespace Simpiens.Cognition
         /// </summary>
         public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
 
+        /// <summary>
+        /// Its skills (Epic 10 Part 3, K9.1): the experience of each, drawn at spawn and raised by practice on the main thread
+        /// (<see cref="Practise"/>); saved in its record. Cognition reads a copy.
+        /// </summary>
+        public Simpiens.Simulation.Skills.SkillSet Skills { get; set; }
+
+        /// <summary>Adds practice in <paramref name="skill"/>; true when a level was gained, with the level it now has. Main thread.</summary>
+        public bool Practise(Simpiens.Simulation.Skills.Skill skill, int experience, out int level)
+        {
+            var skills = Skills;
+            bool gained = skills.Practise(skill, experience, out level);
+            Skills = skills;
+            return gained;
+        }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 
@@ -490,7 +505,8 @@ namespace Simpiens.Cognition
                 Look = Look,
                 BleedsOutAt = BleedsOutAt,
                 DownedBy = DownedBy,
-                DownedDetail = DownedDetail
+                DownedDetail = DownedDetail,
+                Skills = Skills
             };
         }
 
@@ -533,6 +549,7 @@ namespace Simpiens.Cognition
             BleedsOutAt = record.BleedsOutAt;
             DownedBy = record.DownedBy;
             DownedDetail = record.DownedDetail;
+            Skills = record.Skills;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();

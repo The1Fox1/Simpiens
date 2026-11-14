@@ -61,6 +61,7 @@ namespace Simpiens.Simulation.Persistence
         public Simpiens.Simulation.DeathCause DownedBy;
         public byte DownedDetail;
         private ushort _pad;
+        public Simpiens.Simulation.Skills.SkillSet Skills; // Epic 10 Part 3, K9.1: 16 experiences, inside format 11
     }
 
     /// <summary>

@@ -417,6 +417,8 @@ namespace Simpiens.Core.Session
         {
             ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
             state.Look = CrawlerLook.Generate(seed, state.AgentId);
+            // Its starting skills (Epic 10 Part 3, K9.1, Q19), on their own salt too, leaned by its personality
+            state.Skills = Simpiens.Simulation.Skills.SkillSet.Generate(seed, state.AgentId, state.Personality);
 
             var living = new HashSet<string>(_crawlers.Count);
             for (int i = 0; i < _crawlers.Count; i++)
@@ -431,7 +433,7 @@ namespace Simpiens.Core.Session
             }
             state.GivenName = GivenNames.Draw(seed, state.AgentId, state.Look.Frame, seen, living);
             _identity?.RegisterCustomName(state.AgentId, state.GivenName);
-            SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} is {state.GivenName}: {state.Look.ToString()}");
+            SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} is {state.GivenName}: {state.Look.ToString()}; skills: {state.Skills.ToString()}");
         }
 
         /// <summary>A crawler with a given id and names: its state, its entity in the world and its tick.</summary>

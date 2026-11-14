@@ -121,6 +121,9 @@ namespace Simpiens.Testing.Environment
                 var look = s.Look;
                 for (int g = 0; g < Simpiens.Simulation.People.CrawlerLook.GeneCount; g++) Mix(ref h, (int)look[(Simpiens.Simulation.People.LookGene)g]);
                 Mix(ref h, s.GivenName ?? "-");
+                // Its skills (Epic 10 Part 3, K9.1): each one's experience, drawn at spawn, raised by practice and saved
+                var skills = s.Skills;
+                for (int k = 0; k < Simpiens.Simulation.Skills.SkillTable.Capacity; k++) Mix(ref h, skills.ExperienceAt(k));
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);
