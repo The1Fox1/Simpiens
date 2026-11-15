@@ -39,7 +39,7 @@ namespace Simpiens.Core.Tests
                     carried = true;
                     Assert.True(Vec2.Distance(fallen.Position, sim.Registry.GetEntity(fallen.CarriedBy).Position) < 0.01f, "It rides on its rescuer.");
                     if (fallen.CarriedBy == friend.AgentId && Vec2.Distance(before, friend.Position) > 0f)
-                        halfPace |= Vec2.Distance(before, friend.Position) <= friend.BaseSpeed * Vitality.CarrySpeedFactor * SimulationManager.FixedTickDeltaTime + 0.001f;
+                        halfPace |= Vec2.Distance(before, friend.Position) <= friend.BaseSpeed * Vitality.CarrySpeed(friend) * SimulationManager.FixedTickDeltaTime + 0.001f; // half, and a little more by its medicine (K9.3d)
                 }
             }
             TestContext.Current.TestOutputHelper?.WriteLine($"set down at t{sim.Clock.CurrentTick} at {fallen.Position} (it would have bled out at t{bleedsOut})");

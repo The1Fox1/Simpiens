@@ -110,13 +110,16 @@ namespace Simpiens.Client.Tests
             if (station.Candidates.Count == 0) Assert.StartsWith("Nobody yet.", station.CandidatesNote);
 
             var smith = Willing(sim);
+            var skills = smith.Skills;
+            skills.Set(Simpiens.Simulation.Skills.Skill.Smithing, 5); // by hand: the best smith there can be at the start
+            smith.Skills = skills;
             dashboard.Refresh();
             var row = station.Candidates.FirstOrDefault(c => c.CrawlerId == smith.AgentId);
             Assert.NotNull(row);
             Assert.True(station.Candidates.Count <= StationModel.MaxCandidates);
-            Assert.Equal("Trust 80 · Warmth 60", row.Standing);
+            Assert.Equal("Smithing 5 · Trust 80 · Warmth 60", row.Standing); // its skill at this station first (Epic 10 Part 3, K9.5)
             Assert.Equal(WorkshopRules.ReservationWage(smith, WorkshopTuning.Default), row.Ask);
-            Assert.Equal(smith.AgentId, station.Candidates[0].CrawlerId); // the most trusting first
+            Assert.Equal(smith.AgentId, station.Candidates[0].CrawlerId); // the best hand first, then the most trusting
 
             station.Hire(smith.AgentId);
             Step(sim, dashboard);
@@ -210,10 +213,17 @@ namespace Simpiens.Client.Tests
             station.Build();
             Step(sim, dashboard);
             var smith = Willing(sim);
+            var skills = default(Simpiens.Simulation.Skills.SkillSet); // by hand: a new hand
+            smith.Skills = skills;
             dashboard.Refresh();
             station.Hire(smith.AgentId);
             Step(sim, dashboard);
-            Assert.EndsWith("Standard, 0 made", station.ArtisanState);
+            Assert.EndsWith("Smithing 0 (Novice), makes Standard", station.ArtisanState);
+            skills.Set(Simpiens.Simulation.Skills.Skill.Smithing, 4); // by hand: practised
+            smith.Skills = skills;
+            dashboard.Refresh();
+            Assert.Equal("Smithing 4 (Apprentice)", station.ArtisanSkill);
+            Assert.EndsWith("Smithing 4 (Apprentice), makes Fine", station.ArtisanState); // its band is its grade (K9.3c)
 
             var sm = (SimulationManager)sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithWorn(ItemType.ToolPickaxe, 2)); // by hand: worn pieces handed back

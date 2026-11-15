@@ -117,7 +117,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             var definition = Simpiens.Simulation.Items.ItemCatalog.Get(give.Medicine);
             if (definition == null || !rescuer.Inventory.TryRemoveItem(give.Medicine, 1)) return IntentResult.TargetMissing;
             float before = fallen.Health;
-            ItemUse.Apply(fallen, definition);
+            // Given by a skilled hand it heals more (Epic 10 Part 3, K9.3d)
+            ItemUse.Apply(fallen, definition, Simpiens.Simulation.Skills.SkillRules.HealFactor(rescuer.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForTending())));
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} gave {SimLog.Agent(fallen.AgentId)} {definition.Name}: health {before:F0} -> {fallen.Health:F0}");
             context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, node.Id, fallen.AgentId,
                 context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 2f));

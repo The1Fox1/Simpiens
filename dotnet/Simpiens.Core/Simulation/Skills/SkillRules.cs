@@ -4,8 +4,9 @@ namespace Simpiens.Simulation.Skills
 {
     /// <summary>
     /// The skills' rule (Epic 10 Part 3, K9, Q18–Q20): levels from experience, the bands, what each kind of practice is worth,
-    /// and what a level does for its kind of work. Pure functions and constants, as the combat rule's are. At level 0 every
-    /// factor is 1 and every bonus 0: a crawler with no skill works and fights by the numbers the game had before skills.
+    /// and what a level does for its kind of work. Pure functions and constants, as the combat rule's are. At level 0 a
+    /// crawler fights, makes and tends by the numbers the game had before skills; the harvest alone is centred on a Novice 2
+    /// (<see cref="HarvestBase"/>).
     /// </summary>
     public static class SkillRules
     {
@@ -70,8 +71,16 @@ namespace Simpiens.Simulation.Skills
         /// <summary>"A little damage": a blow's harm rises by this share a level, a fifth more at 10.</summary>
         public const float DamagePerLevel = 0.02f;
 
-        /// <summary>A harvest goes this much faster a level (half again as fast at 10), multiplied with a pickaxe's.</summary>
-        public const float HarvestPerLevel = 0.05f;
+        /// <summary>
+        /// A harvest's pace rises by this a level from <see cref="HarvestBase"/>, multiplied with a pickaxe's: a Novice 2 works
+        /// at the pace before skills, an unskilled hand 8% slower, a Master 10 a third faster. Centred, unlike the other
+        /// factors, because the harvest is the economy's inflow (D51): the outpost's starting hands together bring in what
+        /// they did before skills, and a talent's own trade pays it better.
+        /// </summary>
+        public const float HarvestPerLevel = 0.04f;
+
+        /// <summary>An unskilled hand's harvest pace.</summary>
+        public const float HarvestBase = 0.92f;
 
         /// <summary>A make goes this much faster a level.</summary>
         public const float MakePerLevel = 0.05f;
@@ -84,7 +93,7 @@ namespace Simpiens.Simulation.Skills
 
         public static float HitBonus(int level) => (float)(HitChancePerLevel * Clamp(level));
         public static float DamageFactor(int level) => (float)(1f + (float)(DamagePerLevel * Clamp(level)));
-        public static float HarvestFactor(int level) => (float)(1f + (float)(HarvestPerLevel * Clamp(level)));
+        public static float HarvestFactor(int level) => (float)(HarvestBase + (float)(HarvestPerLevel * Clamp(level)));
         public static float MakeFactor(int level) => (float)(1f + (float)(MakePerLevel * Clamp(level)));
         public static float CarryBonus(int level) => (float)(CarryPerLevel * Clamp(level));
         public static float HealFactor(int level) => (float)(1f + (float)(HealPerLevel * Clamp(level)));

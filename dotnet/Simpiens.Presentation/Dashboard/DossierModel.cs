@@ -114,6 +114,9 @@ namespace Simpiens.Presentation.Dashboard
         /// W1.6b's tool, every slot since Epic 10 Part 3, K1.5): "Hard Hat 64%", "Hazard Gear 80%"; none worn reads <see cref="NoGear"/>.
         /// </summary>
         public WornPieces Equipment { get; } = new WornPieces();
+
+        /// <summary>Its skills, the best four first (Epic 10 Part 3, K9.5): "Smithing 5 · Foraging 4 · Melee 1 · Mining 1"; so a recruit's show before it is signed.</summary>
+        public string Skills { get; private set; } = string.Empty;
         public const string NoGear = "None";
 
         public float Hunger { get; private set; }
@@ -158,6 +161,7 @@ namespace Simpiens.Presentation.Dashboard
             _affinities.Clear();
             _shownRows.Clear();
             Equipment.Refresh(null);
+            Skills = string.Empty;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -175,6 +179,7 @@ namespace Simpiens.Presentation.Dashboard
             Health = agent.Health;
             Describe(node.Id, agent);
             Equipment.Refresh(agent.Inventory);
+            Skills = SkillTexts.Best(agent.Skills, 4);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;

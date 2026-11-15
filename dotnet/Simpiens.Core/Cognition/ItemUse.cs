@@ -30,14 +30,15 @@ namespace Simpiens.Cognition
         /// Each effect moves its stat, bounded only in its own direction: a cut stops at 0, a gain at the stat's maximum
         /// (as the code it replaced: Max(0, hunger − 40), Min(100, health + 30)).
         /// </summary>
-        public static void Apply(AgentState agent, ItemDefinition item)
+        /// <paramref name="healing"/> multiplies what it heals: a medicine given by a skilled hand (Epic 10 Part 3, K9.3d).
+        public static void Apply(AgentState agent, ItemDefinition item, float healing = 1f)
         {
             for (int i = 0; i < item.ConsumeEffectCount; i++)
             {
                 var effect = item.GetConsumeEffect(i);
                 switch (effect.Stat)
                 {
-                    case StatKind.Health: agent.Health = Move(agent.Health, effect.Amount, Vitality.MaxHealth); break;
+                    case StatKind.Health: agent.Health = Move(agent.Health, effect.Amount > 0f ? (float)(effect.Amount * healing) : effect.Amount, Vitality.MaxHealth); break;
                     case StatKind.Hunger: agent.Hunger = Move(agent.Hunger, effect.Amount, NeedMax); break;
                     case StatKind.Energy: agent.Energy = Move(agent.Energy, effect.Amount, NeedMax); break;
                     case StatKind.Social: agent.Social = Move(agent.Social, effect.Amount, NeedMax); break;

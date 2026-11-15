@@ -125,7 +125,9 @@ namespace Simpiens.Cognition.Planning
                     if (price > treasury) continue;
                     if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
                     // What it earns an hour, as near as distance tells: a pickaxe's owner mines faster, so ore pays it better (D36)
-                    score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind) / dist;
+                    // and a skilled hand harvests faster, so its own trade pays it better (Epic 10 Part 3, K9.4, Q21)
+                    score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind)
+                        * Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(context.Skills, record.ResourceKind) / dist;
                 }
 
                 if (!found || score > bestScore || (score == bestScore && record.EntityId.CompareTo(best.EntityId) < 0))

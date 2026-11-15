@@ -21,6 +21,9 @@ namespace Simpiens.Presentation.Dashboard
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
 
+        /// <summary>Its two best skills (Epic 10 Part 3, K9.5): "Melee 4 · Mining 2"; who to put at a party's front and back.</summary>
+        public string Skills { get; internal set; } = string.Empty;
+
         /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
         public string Bunk { get; internal set; } = string.Empty;
 
@@ -133,6 +136,7 @@ namespace Simpiens.Presentation.Dashboard
                 row.Equipment.Refresh(agent.Inventory);
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
+                row.Skills = SkillTexts.Best(agent.Skills, 2);
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
             Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit") + (lodging > 0 ? Invariant($", {lodging}g back for bunks") : string.Empty);

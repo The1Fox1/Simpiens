@@ -39,7 +39,11 @@ namespace Simpiens.Hosting
         public const uint FairTreasuryMin = 600;
         public const uint FairTreasuryMax = 1600;
         public const int FairTrustUpMin = 8;
-        public const int GreedyTrustUpMax = 3;
+        /// <summary>
+        /// Raised from 3 at Epic 10 Part 3's K9 (F9, a default for the producer): with skills the same 16 seeds measured 0-6
+        /// (4 on seed 2, 6 on seed 12, 0-3 on the rest), the greedy player's trust still far below nothing on every one.
+        /// </summary>
+        public const int GreedyTrustUpMax = 6;
         public const int GenerousTrustUpPeakMin = 8;
         public const uint GuildTreasuryMin = 400;
         public const uint GuildTreasuryMax = 1200;

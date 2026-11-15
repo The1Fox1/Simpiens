@@ -72,6 +72,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Its party's group, if it is in one (Epic 10 Part 3, K5.3: party mates come for each other); 0 for none.</summary>
         public readonly byte PartyGroupId;
 
+        /// <summary>Its skills (Epic 10 Part 3, K9.4): a copy, for what its own trade pays it an hour.</summary>
+        public readonly Simpiens.Simulation.Skills.SkillSet Skills;
+
         /// <summary>Collapsed in danger, its clock running (K5.1): it lies where it fell.</summary>
         public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
 
@@ -93,8 +96,10 @@ namespace Simpiens.Cognition.Contracts
                             uint struckAtTick = 0,
                             EntityId struckBy = default,
                             uint bleedsOutAt = 0,
-                            byte partyGroupId = 0)
+                            byte partyGroupId = 0,
+                            in Simpiens.Simulation.Skills.SkillSet skills = default)
         {
+            Skills = skills;
             BleedsOutAt = bleedsOutAt;
             PartyGroupId = partyGroupId;
             StruckAtTick = struckAtTick;

@@ -170,7 +170,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 state.ElapsedTime += context.FixedTickDeltaTime;
                 float gatherDuration = harvest.GatherDuration >= 0f ? harvest.GatherDuration : context.Economy.Day.Actions.HarvestSeconds(resourceData.YieldItem);
-                gatherDuration /= MiningSpeed(agent, resourceData.YieldItem); // a pickaxe speeds mining (D36)
+                gatherDuration /= MiningSpeed(agent, resourceData.YieldItem); // a pickaxe speeds mining (D36), and skill any harvest (K9.3b)
                 if (state.ElapsedTime < gatherDuration)
                 {
                     return IntentResult.InProgress;
@@ -257,7 +257,12 @@ namespace Simpiens.Cognition.Planning.Handlers
         private static bool SameParty(Simpiens.Cognition.AgentState a, Simpiens.Cognition.AgentState b) =>
             a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
             /// <summary>How much faster <paramref name="harvester"/> mines <paramref name="item"/> with what it wears (<see cref="CrawlerStats.MiningSpeed"/>).</summary>
-        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) => CrawlerStats.MiningSpeed(harvester?.Inventory, item);
+        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) =>
+            harvester == null ? 1f : (float)(CrawlerStats.MiningSpeed(harvester.Inventory, item) * SkillSpeed(harvester.Skills, item)); // nobody: the usual pace
+
+        /// <summary>How much faster a crawler with <paramref name="skills"/> harvests <paramref name="item"/> (Epic 10 Part 3, K9.3b): its level in the skill that harvests the item's group; 1 unskilled, and for food.</summary>
+        public static float SkillSpeed(in Simpiens.Simulation.Skills.SkillSet skills, ItemType item) =>
+            Simpiens.Simulation.Skills.SkillRules.HarvestFactor(skills.Level(Simpiens.Simulation.Skills.SkillTable.ForHarvest(item)));
 
         /// <summary>
         /// A mineral unit mined wears every piece worn that wears by the unit (D37; by its rule, whichever slot it is in, Epic

@@ -72,14 +72,17 @@ namespace Simpiens.Simulation.Combat
         public static Combatant ForCrawler(AgentState state, float bodyRadius)
         {
             var worn = state.Inventory;
+            // Its skill at the fight it fights (Epic 10 Part 3, K9.3a, Q20): ranged with a weapon that has a range, melee
+            // otherwise; the hit chance and a little damage. Unskilled, both are the numbers before skills
+            float range = CrawlerStats.Get(worn, StatKind.Range);
+            int level = state.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForFight(range > 0f));
             return new Combatant(state.AgentId, state.Position, bodyRadius, state.Health, standing: !state.IsDowned && state.Health > 0f,
-                attack: CrawlerStats.Get(worn, StatKind.Attack, CombatRules.UnarmedAttack),
+                attack: (float)(CrawlerStats.Get(worn, StatKind.Attack, CombatRules.UnarmedAttack) * Simpiens.Simulation.Skills.SkillRules.DamageFactor(level)),
                 defense: CrawlerStats.Get(worn, StatKind.Defense),
                 reach: CrawlerStats.Get(worn, StatKind.Reach, CombatRules.UnarmedReach),
                 swingInterval: CombatRules.SecondsToTicks(CrawlerStats.Get(worn, StatKind.AttackInterval, CombatRules.UnarmedIntervalSeconds)),
-                range: CrawlerStats.Get(worn, StatKind.Range),
-                // Skills fill it at K9
-                proficiency: 0f);
+                range: range,
+                proficiency: Simpiens.Simulation.Skills.SkillRules.HitBonus(level));
         }
 
         /// <summary>

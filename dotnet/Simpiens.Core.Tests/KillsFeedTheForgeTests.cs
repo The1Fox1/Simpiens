@@ -71,10 +71,11 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Gate seed 18 (K3's DoD's too): K4.4 measured armour from a kill worn on 5 of the 23 gate seeds in ten days, this one's
-        /// first at t33877 (a chitin plate, from three kills' chitin).
+        /// Gate seed 15: K4.4 measured armour from a kill worn on 5 of the 23 gate seeds in ten days; with skills (K9) on 2, this
+        /// one first at t74143 (a chitin plate) and 424242. Noise, not skills: on seeds 21 to 80 it was worn on 18 with skills
+        /// and 19 without.
         /// </summary>
-        private const ulong Seed = 18;
+        private const ulong Seed = 15;
 
         [Fact]
         public void AKillsMaterialsBecomeArmourAResidentWears()

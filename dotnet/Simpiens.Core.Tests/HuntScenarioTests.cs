@@ -65,8 +65,11 @@ namespace Simpiens.Core.Tests
             return run;
         }
 
-        /// <summary>Gate seed 18: K6.4 measured a hunt paid on 21 of the 23 gate seeds in eight days, this one's at t14346 to three hunters.</summary>
-        private const ulong Seed = 18;
+        /// <summary>
+        /// Gate seed 1: K6.4 measured a hunt paid on 21 of the 23 gate seeds in eight days; with skills (K9) on 20, and on 18,
+        /// K6's seed, by one hunter alone. On this one the hunt is posted at t10080 and paid at t13209 to two hunters.
+        /// </summary>
+        private const ulong Seed = 1;
 
         [Fact]
         public void AHuntBountyClearsALair()

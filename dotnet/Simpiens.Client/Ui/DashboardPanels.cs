@@ -33,6 +33,7 @@ namespace Simpiens.Client.Ui
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
+        private readonly TextRuntime _skills; // Epic 10 Part 3, K9.5
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
         private readonly ContainerRuntime _detail, _dossier, _who;
@@ -136,7 +137,8 @@ namespace Simpiens.Client.Ui
             who.Children.Add(_moodLine);
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
-            _dossierDetails.Children.Add(Window.Gap(2f));
+            // No gap under the header, and none of their own before the sections below (the column's spacing breaks them): the
+            // skills' line took those 18 pixels, and at 720 rows the dossier has none to spare (Epic 10 Part 3, K9.5)
             _dossierDetails.Children.Add(Window.SubHeader("NEEDS"));
             _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
             _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
@@ -149,22 +151,25 @@ namespace Simpiens.Client.Ui
             Equipment = new WornLine(icons);
             gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
+            // Its skills, the best first (Epic 10 Part 3, K9.5): one line, as the gear's
+            _skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            _dossierDetails.Children.Add(_skills);
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _dossierDetails.Children.Add(_groups);
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
             UiParts.AddInset(intent);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
             _dossierDetails.Children.Add(intent);
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("FEELINGS (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
             _affinitiesList = Scroll(_dossierDetails, 70f, 2f); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
             // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
@@ -231,6 +236,7 @@ namespace Simpiens.Client.Ui
         public Button CalmButton { get; }
         public Button RecruitButton { get; }
         public string GroupsShown => _groups.Text;
+        public string SkillsShown => _skills.Text;
         public string RecruitShown => _recruitText.Text;
 
         public bool IsShown
@@ -402,6 +408,7 @@ namespace Simpiens.Client.Ui
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
             UiParts.SetText(_groups, dossier.Groups);
+            UiParts.SetText(_skills, dossier.Skills.Length > 0 ? "Skills: " + dossier.Skills : string.Empty);
             UiParts.SetText(_recruitText, dossier.RecruitText);
             RecruitButton.IsEnabled = dossier.CanRecruit;
         }

@@ -32,6 +32,15 @@ namespace Simpiens.Testing.Economy
             TestLog.Log("<color=green>[ToolValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
+        /// <summary>Skills at which a hand harvests at the pace before skills: a Novice 2 at mining and foraging.</summary>
+        private static Simpiens.Simulation.Skills.SkillSet UsualHand()
+        {
+            var skills = default(Simpiens.Simulation.Skills.SkillSet);
+            skills.Set(Simpiens.Simulation.Skills.Skill.Mining, 2);
+            skills.Set(Simpiens.Simulation.Skills.Skill.Foraging, 2);
+            return skills;
+        }
+
         private static ItemInstance Pickaxe(ushort durability)
             => new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: durability);
 
@@ -40,7 +49,10 @@ namespace Simpiens.Testing.Economy
             var registry = new WorldRegistry();
             var sim = new SimulationManager(registry, null);
             var miner = HeadlessEntities.Crawler(registry, sim, null, Vec2.Zero, id: NextGuid(), name: "[Test_Miner]").Agent;
-            Assert(HarvestResourceIntentHandler.MiningSpeed(miner, ItemType.IronOre) == 1f, "Bare-handed, ore is mined at the usual pace.");
+            // An unskilled hand harvests a little slower than the pace before skills, a Novice 2 at it (Epic 10 Part 3, K9.3b)
+            Assert(SimMath.Approximately(HarvestResourceIntentHandler.MiningSpeed(miner, ItemType.IronOre), Simpiens.Simulation.Skills.SkillRules.HarvestFactor(0)), "Bare-handed and unskilled, ore is mined at an unskilled hand's pace.");
+            miner.Skills = UsualHand();
+            Assert(HarvestResourceIntentHandler.MiningSpeed(miner, ItemType.IronOre) == 1f, "Bare-handed, a Novice 2 mines ore at the usual pace.");
             miner.Inventory.TryEquip(Pickaxe(100));
             Assert(SimMath.Approximately(HarvestResourceIntentHandler.MiningSpeed(miner, ItemType.IronOre), 1.5f), "With a pickaxe, ore is mined 1.5 times as fast (D36).");
             Assert(SimMath.Approximately(HarvestResourceIntentHandler.MiningSpeed(miner, ItemType.Glowstone), 1.5f), "Glowstone is a mineral too.");
@@ -57,6 +69,7 @@ namespace Simpiens.Testing.Economy
                 var sim = new SimulationManager(registry, null);
                 var nodeId = CreateResourceNode(registry, sim, Vec2.Zero, item, yield: 5);
                 var crawler = HeadlessEntities.Crawler(registry, sim, null, new Vec2(0.5f, 0f), id: NextGuid(), name: "[Test_Miner]");
+                crawler.Agent.Skills = UsualHand();
                 if (withPickaxe) crawler.Agent.Inventory.TryEquip(Pickaxe(100));
                 var state = Active(crawler.Node, new HarvestResourceIntent(crawler.Node.Id, nodeId, null));
                 int ticks = 0;

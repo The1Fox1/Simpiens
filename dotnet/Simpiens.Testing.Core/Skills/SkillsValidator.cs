@@ -99,12 +99,14 @@ namespace Simpiens.Testing.Skills
 
         private void ValidateLevelZeroChangesNothing()
         {
-            Assert(SkillRules.HitBonus(0) == 0f && SkillRules.DamageFactor(0) == 1f && SkillRules.HarvestFactor(0) == 1f && SkillRules.MakeFactor(0) == 1f
-                && SkillRules.CarryBonus(0) == 0f && SkillRules.HealFactor(0) == 1f, "At level 0 every factor is 1 and every bonus 0.");
-            Assert(Math.Abs(SkillRules.HitBonus(10) - 0.2f) < 1e-6f && Math.Abs(SkillRules.DamageFactor(10) - 1.2f) < 1e-6f && Math.Abs(SkillRules.HarvestFactor(10) - 1.5f) < 1e-6f
+            Assert(SkillRules.HitBonus(0) == 0f && SkillRules.DamageFactor(0) == 1f && SkillRules.MakeFactor(0) == 1f
+                && SkillRules.CarryBonus(0) == 0f && SkillRules.HealFactor(0) == 1f, "At level 0 a fight's, a make's and a rescue's factors are 1 and their bonuses 0.");
+            Assert(Math.Abs(SkillRules.HarvestFactor(0) - 0.92f) < 1e-6f && Math.Abs(SkillRules.HarvestFactor(2) - 1f) < 1e-6f && Math.Abs(SkillRules.HarvestFactor(10) - 1.32f) < 1e-6f,
+                "The harvest is centred: 8% slower unskilled, the pace before skills at Novice 2, a third faster at Master 10.");
+            Assert(Math.Abs(SkillRules.HitBonus(10) - 0.2f) < 1e-6f && Math.Abs(SkillRules.DamageFactor(10) - 1.2f) < 1e-6f
                 && Math.Abs(SkillRules.MakeFactor(10) - 1.5f) < 1e-6f && Math.Abs(SkillRules.CarryBonus(10) - 0.3f) < 1e-6f && Math.Abs(SkillRules.HealFactor(10) - 1.5f) < 1e-6f, "A Master 10's factors.");
-            Assert(SkillRules.HarvestFactor(99) == SkillRules.HarvestFactor(10) && SkillRules.HarvestFactor(-3) == 1f, "Levels outside 0 to 10 count as the nearest.");
-            TestLog.Log("[PASS] Test 4: unskilled, a crawler works and fights by the numbers before skills; a master's are a fifth to a half better.");
+            Assert(SkillRules.HarvestFactor(99) == SkillRules.HarvestFactor(10) && SkillRules.HarvestFactor(-3) == SkillRules.HarvestFactor(0), "Levels outside 0 to 10 count as the nearest.");
+            TestLog.Log("[PASS] Test 4: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
         }
 
         private void ValidateTheDraw()

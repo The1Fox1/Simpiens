@@ -588,7 +588,8 @@ namespace Simpiens.Cognition
                 StruckAtTick,
                 StruckBy,
                 BleedsOutAt,
-                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0);
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
+                Skills);
         }
     }
 }
