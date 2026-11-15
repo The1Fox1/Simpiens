@@ -5,7 +5,7 @@ using Simpiens.Simulation.Items;
 namespace Simpiens.Testing.Economy
 {
     /// <summary>
-    /// The catalogues' test hooks for any test project (Epic 10 Part 3, K1.6): the item catalogue and the slot table with
+    /// The catalogues' test hooks for any test project (Epic 10 Part 3, K1.6; the skills' since K9.6): the item catalogue, the slot table and the skill table with
     /// rows added until the returned scope is disposed, swapped whole between ticks. Tests that use them run serially. Test
     /// only, never shipped: the core keeps the hooks internal.
     /// </summary>
@@ -33,6 +33,30 @@ namespace Simpiens.Testing.Economy
         public const EquipmentSlot Feet = (EquipmentSlot)5;
         public const SlotKind FeetKind = (SlotKind)201;
         public const ItemType Boots = (ItemType)218;
+
+        /// <summary>The skill table with <paramref name="extra"/> added (Epic 10 Part 3, K9.6).</summary>
+        public static IDisposable Skills(params Simpiens.Simulation.Skills.SkillDefinition[] extra) => Simpiens.Simulation.Skills.SkillTable.ExtendForTest(extra);
+
+        /// <summary>
+        /// The skills' proof (K9.6): a new kind of salvage, glowcaps (a resource of a group no skill harvests yet, fungi), and
+        /// Mycology, skill 8, the harvest of fungi, which the diligent lean toward. Both catalogues, until disposed.
+        /// </summary>
+        public static IDisposable MycologyAndGlowcaps()
+        {
+            var items = Items(new ItemDefinition(Glowcap, "Glowcap", "Glowcap", ItemCategory.Resource | Fungi, ItemRarity.Common));
+            var skills = Skills(new Simpiens.Simulation.Skills.SkillDefinition(Mycology, "Mycology", "Mycology", Simpiens.Simulation.Skills.SkillUse.Harvest)
+            {
+                Harvests = Fungi,
+                Lean = Simpiens.Simulation.Skills.SkillLean.Diligent,
+                Practitioner = "mycologist",
+                Order = 7
+            });
+            return new Both(items, skills);
+        }
+
+        public const Simpiens.Simulation.Skills.Skill Mycology = (Simpiens.Simulation.Skills.Skill)8;
+        public const ItemCategory Fungi = (ItemCategory)(1u << 20);
+        public const ItemType Glowcap = (ItemType)219;
 
         private sealed class Both : IDisposable
         {
