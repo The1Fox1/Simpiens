@@ -46,6 +46,7 @@ namespace Simpiens.Client.Tests
         {
             sim.Sectors.SetExplored(Floor1Layout.OvergrowthSectorId, true);
             sim.Sectors.SetExplored(Floor1Layout.DeepSeamSectorId, true);
+            sim.Sectors.SetExplored(Floor1Layout.OldStairSectorId, true); // the web and the gate (Epic 10 Part 3, K10.1b)
         }
 
         [Fact]
@@ -79,7 +80,7 @@ namespace Simpiens.Client.Tests
             using var sim = Outpost();
             var scene = new WorldScene { Mode = mode == "top-down" ? ViewMode.TopDown : ViewMode.Isometric };
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
-            Assert.Empty(CreaturesDrawn(scene)); // both lairs lie in sectors that open uncharted
+            Assert.Empty(CreaturesDrawn(scene)); // every lair lies in a sector that opens uncharted
 
             ChartTheLairs(sim);
             var frames = TestFrames.Of(sim);

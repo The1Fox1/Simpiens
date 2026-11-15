@@ -181,12 +181,14 @@ namespace Simpiens.Client.Tests
         // t0 and the zoomed views unchanged (nobody hurt in them).
         // Epic 10 Part 3 K9 (2026-11-14): skills change how fast crawlers harvest and who works where, so every pin after
         // tick 0 was re-pinned with the render references after a look; labels unchanged.
-        private static readonly (ulong, ulong) PinnedTick0 = (12937878628055227934UL, 14344167986805025999UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (15970571827358726495UL, 14344167986805025999UL);
+        // Epic 10 Part 3 K10.1b (2026-11-15): the floor grows west for the Old Stair, so the view centres further west and every
+        // pin moved with the render references, labels with them, after a look.
+        private static readonly (ulong, ulong) PinnedTick0 = (10265115317408993411UL, 10638611690560153633UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (3720073855361044890UL, 10638611690560153633UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (11483773979755004503UL, 4268601865235128987UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8154952986832287063UL, 4173834597935897353UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (13680053135051072728UL, 7638092815957420050UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (821387435026433562UL, 13801314577213324051UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (5272746028741346296UL, 18192351689350694692UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13761009627820041930UL, 2675439562305966924UL);
     }
 }
