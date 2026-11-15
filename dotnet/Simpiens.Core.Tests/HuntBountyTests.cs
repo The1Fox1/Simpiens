@@ -115,17 +115,13 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void BoldArmedResidentsJoinAndHuntTheLairEmpty()
         {
-            // By hand: the warren charted and its bold residents armed and armoured; the rest is theirs (K6.2)
+            // By hand: the warren charted, its Matriarch slain (Epic 10 Part 3, K10.2a, D58: while she lives nobody braves it alone,
+            // NobodyHuntsTheMatriarchsWarrenAlone) and its bold residents armed and armoured; the rest is theirs (K6.2)
             using var sim = Outpost();
             int warren = WarrenIndex(sim);
             ChartTheWarren(sim);
-            var bold = sim.Host.CrawlerStates.Where(s => !s.IsDrifter && s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent).Take(2).ToList();
-            Assert.NotEmpty(bold); // one on this seed
-            foreach (var b in bold)
-            {
-                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.GlowstoneEdge, Simpiens.Simulation.Items.Grades.Standard)));
-                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.RingCoat, Simpiens.Simulation.Items.Grades.Standard)));
-            }
+            SlayTheMatriarch(sim, warren);
+            var bold = ArmTheBold(sim);
             Post(sim, warren, 60);
             var hunt = sim.Simulation.Hunts[0];
             int[] purses = bold.Select(b => b.Inventory.Gold).ToArray();
@@ -145,6 +141,50 @@ namespace Simpiens.Core.Tests
             sim.Chronicle.GetAllRecentEvents(told, 512);
             Assert.Contains(told, e => e.EventType == Simpiens.Narrative.ChronicleEventType.BountyFulfilled && bold.Any(b => b.AgentId == e.ActorAId));
             Assert.True(Balanced(sim));
+        }
+
+        /// <summary>
+        /// D58 (Epic 10 Part 3, K10.2a): while the Matriarch heads the warren, the bold judge it past what they would brave alone,
+        /// so a hunt posted on it finds no hunter: the warren is the guild's to clear until she falls.
+        /// </summary>
+        [Fact]
+        public void NobodyHuntsTheMatriarchsWarrenAlone()
+        {
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim);
+            ChartTheWarren(sim);
+            var bold = ArmTheBold(sim);
+            var lair = sim.Simulation.Creatures.Lairs[warren].Definition;
+            Assert.True(lair.HasBoss && sim.Simulation.Creatures.Lairs[warren].MemberIn(0) != default, "The Matriarch heads the warren.");
+            foreach (var b in bold) Assert.False(Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned), "Nobody braves her warren alone.");
+            Post(sim, warren, 60);
+            bool joined = false;
+            for (long t = 0; t < DayClock.TicksPerDay && sim.Simulation.Hunts.Count > 0; t++)
+            {
+                sim.Step(1);
+                if (sim.Simulation.Hunts.Count > 0) joined |= sim.Simulation.Hunts[0].Count > 0;
+            }
+            Assert.False(joined, "Nobody joined a hunt on the Matriarch's warren.");
+            Assert.True(Balanced(sim));
+        }
+
+        // The bold residents (two at most), armed with the glowstone edge and the ring coat
+        private static System.Collections.Generic.List<AgentState> ArmTheBold(LocalSimulation sim)
+        {
+            var bold = sim.Host.CrawlerStates.Where(s => !s.IsDrifter && s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent).Take(2).ToList();
+            Assert.NotEmpty(bold); // one on this seed
+            foreach (var b in bold)
+            {
+                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.GlowstoneEdge, Simpiens.Simulation.Items.Grades.Standard)));
+                Assert.True(b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.RingCoat, Simpiens.Simulation.Items.Grades.Standard)));
+            }
+            return bold;
+        }
+
+        private static void SlayTheMatriarch(LocalSimulation sim, int warren)
+        {
+            var creatures = sim.Simulation.Creatures;
+            Assert.True(creatures.Slay((Simpiens.Simulation.Creatures.ICreatureWorld)sim.Simulation, creatures.Lairs[warren].MemberIn(0), (uint)sim.Clock.CurrentTick), "The Matriarch is slain by hand.");
         }
 
         private static void Post(LocalSimulation sim, int lair, ushort reward)

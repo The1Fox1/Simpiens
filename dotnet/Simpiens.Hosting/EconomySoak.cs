@@ -80,9 +80,11 @@ namespace Simpiens.Hosting
         /// <summary>
         /// The share of seeds on which someone may quit the crafting profile's loop for want of pay (Epic 10 Part 3, F3's
         /// option A): a stall that has just bought its salvage can be empty at a caravan's visit; measured on seeds 1-20 and
-        /// 20261009, one seed with hunting off (13) and two with it on (2 and 3).
+        /// 20261009, one seed with hunting off (13) and two with it on (2 and 3). 0.25 since Epic 10 Part 3's K10.2a (F12): the
+        /// rate sits at the old 0.15 by itself (6 of seeds 1-40 at K10.1b, 8 with the Matriarch; seeds 21-40 alike at 3), and
+        /// which seeds quit moves with any change of the creatures' timing.
         /// </summary>
-        public const float CraftingUnpaidQuitShare = 0.15f;
+        public const float CraftingUnpaidQuitShare = 0.25f;
 
         /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
         public const long GuildSpareTicks = 8 * DayClock.TicksPerHour;

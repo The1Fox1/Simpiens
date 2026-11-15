@@ -131,6 +131,16 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>True when lair <paramref name="lairIndex"/> (in the map's order) is charted.</summary>
         public bool IsLairCharted(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (ChartedLairMask & (1UL << lairIndex)) != 0;
 
+        /// <summary>
+        /// Which of the map's lairs have their boss alive (Epic 10 Part 3, K10.2a, D63): bit i set while lair i's boss holds its
+        /// place, so a lair is judged with its boss only while she lives (a slain Matriarch is gone for a week). Defaults to none.
+        /// </summary>
+        public ulong BossLairMask { get; private set; }
+        public void SetBossLairs(ulong mask) => BossLairMask = mask;
+
+        /// <summary>True when lair <paramref name="lairIndex"/>'s boss is alive.</summary>
+        public bool IsBossAlive(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (BossLairMask & (1UL << lairIndex)) != 0;
+
         public bool IsSectorCharted(int sectorId)
         {
             if (sectorId < 0 || sectorId >= 64) return true;

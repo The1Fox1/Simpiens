@@ -60,7 +60,7 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>The Gallery's one rich glowstone seam (D11), at its far west end: a party crosses the flood to reach it.</summary>
         public const string GallerySeam = "gallery.seam";
 
-        /// <summary>The burrow rats' warren in the Overgrowth (Epic 10 Part 3, K2.1); the Matriarch's, from K10.</summary>
+        /// <summary>The burrow rats' warren in the Overgrowth (Epic 10 Part 3, K2.1), headed by the Matriarch (K10.2a).</summary>
         public const string RatWarren = "lair.warren";
         /// <summary>The stone beetles' hollow in the Deep Seam (K2.1).</summary>
         public const string BeetleHollow = "lair.hollow";
@@ -282,7 +282,7 @@ namespace Simpiens.Core.Session.Layouts
             // --- Lairs (Epic 10 Part 3, K2.1; Q5): rats in the Overgrowth, beetles in the Deep Seam, each in its far corner,
             // in sight of one node (overgrowth.3, seam.1) and out of reach of the other two, so a stray meets them and the rest
             // of the sector stays workable ---
-            b.Lair(RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, new Vec2(21f, 16f));
+            b.Lair(RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, new Vec2(21f, 16f), boss: Simpiens.Simulation.Creatures.CreatureKind.Matriarch); // the Matriarch heads it (K10.2a, Q13)
             b.Lair(BeetleHollow, Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle, new Vec2(-21f, 16f));
             // The Old Stair (K10.1): the spinners' web on the approach, whose reach the way from the door to the gate crosses
             // (the survey point stays 9 from its heart, out of its reach and sight); the Gatekeeper before the gate, which it

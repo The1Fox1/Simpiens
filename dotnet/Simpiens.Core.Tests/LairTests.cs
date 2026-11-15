@@ -31,7 +31,7 @@ namespace Simpiens.Core.Tests
             {
                 var c = entity.Creature;
                 Assert.NotNull(c);
-                byte expected = c.Kind == CreatureKind.BurrowRat ? Floor1Layout.OvergrowthSectorId
+                byte expected = c.Kind == CreatureKind.BurrowRat || c.Kind == CreatureKind.Matriarch ? Floor1Layout.OvergrowthSectorId // the warren and its Matriarch (K10.2a)
                     : c.Kind == CreatureKind.StoneBeetle ? Floor1Layout.DeepSeamSectorId : Floor1Layout.OldStairSectorId;
                 Assert.Equal(expected, map.FindSector(entity.Position).Id);
             }
@@ -42,6 +42,7 @@ namespace Simpiens.Core.Tests
             Assert.InRange(beetles, 1, 2);
             Assert.InRange(spinners, 2, 3);
             Assert.Equal(1, keepers);
+            Assert.Equal(1, creatures.Creatures.Count(c => c.Kind == CreatureKind.Matriarch));
 
             var ids = creatures.Creatures.Select(c => c.Id).ToList();
             sim.Step(100);

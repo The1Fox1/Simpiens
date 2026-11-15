@@ -151,6 +151,25 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>True when lair <paramref name="lairIndex"/> is charted.</summary>
         public bool IsCharted(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (_charted & (1UL << lairIndex)) != 0;
 
+        /// <summary>
+        /// Which lairs have their boss alive (Epic 10 Part 3, K10.2a, D63): bit i set while lair i's boss holds its first place.
+        /// The simulation publishes it in every snapshot, so a lair is judged with its boss only while she lives.
+        /// </summary>
+        public ulong BossMask
+        {
+            get
+            {
+                ulong mask = 0UL;
+                for (int l = 0; l < _lairs.Count && l < 64; l++)
+                    if (IsBossAlive(l)) mask |= 1UL << l;
+                return mask;
+            }
+        }
+
+        /// <summary>True while lair <paramref name="lairIndex"/>'s boss holds its place.</summary>
+        public bool IsBossAlive(int lairIndex) =>
+            lairIndex >= 0 && lairIndex < _lairs.Count && _lairs[lairIndex].Definition.HasBoss && _lairs[lairIndex].Pack > 0 && _lairs[lairIndex].MemberIn(0) != default;
+
         /// <summary>Lays out <paramref name="map"/>'s lairs, empty, when the map changes (a respawn or a load); nothing otherwise.</summary>
         public CreatureService Follow(MapDefinition map)
         {

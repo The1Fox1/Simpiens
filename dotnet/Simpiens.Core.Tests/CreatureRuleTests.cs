@@ -53,7 +53,8 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var stray = sim.Host.CrawlerStates[0];
-            var rats = sim.Simulation.Creatures.Creatures.Where(c => c.Kind == CreatureKind.BurrowRat).Select(c => c.Id).ToHashSet();
+            // The warren's pack: its rats and, since K10.2a, its Matriarch, whose bite (6) is two of a rat's
+            var rats = sim.Simulation.Creatures.Creatures.Where(c => c.Kind == CreatureKind.BurrowRat || c.Kind == CreatureKind.Matriarch).Select(c => c.Id).ToHashSet();
             long struckAt = -1, downedAt = -1;
             float health = stray.Health;
             int blows = 0;
@@ -202,9 +203,9 @@ namespace Simpiens.Core.Tests
                     foreach (var c in sim.Simulation.Creatures.Creatures.Where(c => c.Mode == CreatureMode.Chase)) c.NextSwingAt = sim.Clock.CurrentTick + 1;
                 float before = stray.Health;
                 sim.Step(1);
-                if (stray.HurtThisTick > 3.5f)
+                if (stray.HurtThisTick > 6.5f && stray.Health > 0f) // more than any one bite (a rat's 3, the Matriarch's 6, K10.2a)
                 {
-                    together++; // several rats' blows on one tick, all landed together
+                    together++; // several blows on one tick, all landed together
                     Assert.Equal(before - stray.Health, stray.HurtThisTick, 1);
                 }
                 health.Add(stray.Health);

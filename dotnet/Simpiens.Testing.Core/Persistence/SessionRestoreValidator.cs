@@ -273,7 +273,7 @@ namespace Simpiens.Testing.Persistence
             Assert(warren >= 0 && hollow >= 0, "Floor 1 has the warren and the hollow.");
             var rat = Simpiens.Simulation.Creatures.CreatureKind.BurrowRat;
             var beetle = Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
-            // A rat chasing mid-fight with its swing's timer, a hurt one resting, a slain one's place waiting for its return;
+            // A rat chasing mid-fight with its swing's timer, a hurt one resting, the slain Matriarch's place waiting for her return;
             // a beetle roaming toward its goal; the hollow charted
             var packs = new byte[map.Lairs.Count];
             packs[warren] = 3;
@@ -285,14 +285,14 @@ namespace Simpiens.Testing.Persistence
                 Packs = packs,
                 Slots = new[]
                 {
-                    new LairSlotRecord((byte)warren, 0, A, 0u),
-                    new LairSlotRecord((byte)warren, 1, default, 2400u),
+                    new LairSlotRecord((byte)warren, 0, default, 2400u), // the Matriarch's place (K10.2a), waiting for her return
+                    new LairSlotRecord((byte)warren, 1, A, 0u),
                     new LairSlotRecord((byte)warren, 2, B, 0u),
                     new LairSlotRecord((byte)hollow, 0, C, 0u),
                 },
                 Creatures = new[]
                 {
-                    Record(A, rat, warren, 0, new Vec2(19.5f, 14.25f), 20f, Simpiens.Simulation.Creatures.CreatureMode.Chase, target: new EntityId(9u, 9u, 9u, 9u), nextSwingAt: 1337, restUntil: 0, goal: new Vec2(19f, 14f)),
+                    Record(A, rat, warren, 1, new Vec2(19.5f, 14.25f), 20f, Simpiens.Simulation.Creatures.CreatureMode.Chase, target: new EntityId(9u, 9u, 9u, 9u), nextSwingAt: 1337, restUntil: 0, goal: new Vec2(19f, 14f)),
                     Record(B, rat, warren, 2, new Vec2(20.2f, 16.4f), 7.5f, Simpiens.Simulation.Creatures.CreatureMode.Rest, target: default, nextSwingAt: 900, restUntil: 1500, goal: new Vec2(20.2f, 16.4f)),
                     Record(C, beetle, hollow, 0, new Vec2(-19f, 15f), 60f, Simpiens.Simulation.Creatures.CreatureMode.Roam, target: default, nextSwingAt: 0, restUntil: 400, goal: new Vec2(-18.5f, 14.5f)),
                 },
@@ -303,9 +303,9 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(creatures.Capture()), "The creatures restored from their save");
             Assert(creatures.Creatures.Count == 3 && creatures.IdCounter == 9 && creatures.IsCharted(hollow) && !creatures.IsCharted(warren), "The creatures, the id counter and the charted lair come back.");
             Assert(creatures.TryGet(A, out var chaser) && chaser.Mode == Simpiens.Simulation.Creatures.CreatureMode.Chase && chaser.NextSwingAt == 1337 && chaser.Target == new EntityId(9u, 9u, 9u, 9u)
-                && chaser.Position == new Vec2(19.5f, 14.25f) && chaser.Home == Simpiens.Simulation.Creatures.CreatureService.PlaceOf(map.Lairs[warren].Position, 0), "A chase mid-fight comes back with its swing's timer.");
+                && chaser.Position == new Vec2(19.5f, 14.25f) && chaser.Home == Simpiens.Simulation.Creatures.CreatureService.PlaceOf(map.Lairs[warren].Position, 1), "A chase mid-fight comes back with its swing's timer.");
             Assert(creatures.TryGet(B, out var resting) && resting.Health == 7.5f && resting.RestUntil == 1500, "A hurt rat's health and rest come back.");
-            Assert(creatures.Lairs[warren].MemberIn(1) == default && creatures.Lairs[warren].ReturnAt(1) == 2400u && creatures.Lairs[warren].Alive == 2, "A slain rat's place waits for its return.");
+            Assert(creatures.Lairs[warren].MemberIn(0) == default && creatures.Lairs[warren].ReturnAt(0) == 2400u && creatures.Lairs[warren].Alive == 2, "The slain Matriarch's place waits for her return.");
 
             // Refused, before anything changes: another map's lairs, a kind out of its lair, a place past a pack, ids out of order
             var shortPacks = new CreatureSave { Packs = new byte[] { 3 }, Slots = save.Slots, Creatures = save.Creatures };

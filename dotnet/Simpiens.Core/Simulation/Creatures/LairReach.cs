@@ -71,11 +71,14 @@ namespace Simpiens.Simulation.Creatures
             return (float)(CombatRules.HitChance(fighter) * CombatRules.Mitigated(kind.Attack, defense) / kind.SwingIntervalSeconds);
         }
 
-        /// <summary>The danger of <paramref name="lair"/>'s pack on a crawler of <paramref name="defense"/>, its boss's harm with it (K10).</summary>
-        public static float Danger(in LairDefinition lair, float defense)
+        /// <summary>
+        /// The danger of <paramref name="lair"/>'s pack on a crawler of <paramref name="defense"/>, its boss's harm with it while
+        /// <paramref name="bossAlive"/> (K10, D63: a slain Matriarch is gone for a week, and her warren is judged as her brood).
+        /// </summary>
+        public static float Danger(in LairDefinition lair, float defense, bool bossAlive)
         {
             float pack = Danger(CreatureCatalog.Get(lair.Kind), defense);
-            return lair.HasBoss ? (float)(pack + HarmPerSecond(CreatureCatalog.Get(lair.Boss), defense)) : pack;
+            return lair.HasBoss && bossAlive ? (float)(pack + HarmPerSecond(CreatureCatalog.Get(lair.Boss), defense)) : pack;
         }
     }
 }

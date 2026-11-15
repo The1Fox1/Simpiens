@@ -194,11 +194,12 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Gate seed 7: measured (since K8) two sent unarmed against the beetles under the Bold rule losing a member on 2 of the
+        /// Gate seed 8: measured (since K8) two sent unarmed against the beetles under the Bold rule losing a member on 2 of the
         /// 23 gate seeds in eight days (9 before the fight's start sent the whole party in together; with four, the mates carry
-        /// everyone out); here at t21138, and a newcomer settles at t41298.
+        /// everyone out); seed 7 until the Matriarch joined the warren (Epic 10 Part 3, K10.2a) moved every creature's id and
+        /// timing: still 2 of 23 (seeds 8 and 17), here first at t30345.
         /// </summary>
-        private const ulong DeathSeed = 7;
+        private const ulong DeathSeed = 8;
 
         [Fact]
         public void DeathHasItsCost()

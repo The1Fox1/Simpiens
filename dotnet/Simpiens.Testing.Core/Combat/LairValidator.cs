@@ -41,15 +41,17 @@ namespace Simpiens.Testing.Combat
             {
                 var lair = service.Lairs[l];
                 var kind = CreatureCatalog.Get(lair.Definition.Kind);
-                Assert(lair.Pack >= kind.PackMin && lair.Pack <= kind.PackMax && lair.Alive == lair.Pack, $"{lair.Definition.Key}: {lair.Pack} {kind.Name}, all there (range {kind.PackMin}-{kind.PackMax}).");
+                int boss = lair.Definition.HasBoss ? 1 : 0; // the warren's Matriarch (K10.2a)
+                Assert(lair.Pack >= kind.PackMin + boss && lair.Pack <= kind.PackMax + boss && lair.Alive == lair.Pack, $"{lair.Definition.Key}: {lair.Pack} {kind.Name}{(boss > 0 ? " and its boss" : "")}, all there (range {kind.PackMin}-{kind.PackMax}).");
                 expected += lair.Pack;
                 for (int slot = 0; slot < lair.Pack; slot++)
                 {
                     Assert(service.TryGet(lair.MemberIn(slot), out var c), $"{lair.Definition.Key}.{slot}: held by a creature it knows.");
-                    Assert(c.Kind == kind.Id && c.LairIndex == l && c.Slot == slot && c.Health == kind.MaxHealth, $"{c}: of its lair's kind, in its place, whole.");
+                    var held = CreatureCatalog.Get(lair.Definition.KindIn(slot));
+                    Assert(c.Kind == held.Id && c.LairIndex == l && c.Slot == slot && c.Health == held.MaxHealth, $"{c}: of its place's kind, in its place, whole.");
                     Assert(c.Position == CreatureService.PlaceOf(lair.Definition.Position, slot) && c.Home == c.Position, $"{c}: resting at its place.");
                     Assert(world.Entities.TryGetValue(c.Id, out var entity) && entity.Type == EntityType.Creature && entity.Creature == c && entity.Position == c.Position, $"{c}: in the world as a creature entity, its position the creature's.");
-                    Assert(entity.Radius == kind.BodyRadius && entity.BaseSpeed == kind.Speed, $"{c}: its kind's body and speed.");
+                    Assert(entity.Radius == held.BodyRadius && entity.BaseSpeed == held.Speed, $"{c}: its kind's body and speed.");
                 }
             }
             Assert(service.Creatures.Count == expected && world.Entities.Count == expected, $"{expected} creatures, every one in the world.");
@@ -84,8 +86,8 @@ namespace Simpiens.Testing.Combat
                 var (service, _) = Filled(seed);
                 for (int l = 0; l < service.Lairs.Count; l++) seen.Add((l, service.Lairs[l].Pack));
             }
-            Assert(seen.SetEquals(new[] { (0, 3), (0, 4), (1, 1), (1, 2), (2, 2), (2, 3), (3, 1) }), $"Across 60 seeds every pack size in range turns up, and no other ({string.Join(", ", seen)}).");
-            TestLog.Log("[PASS] Test 3: every pack size in its kind's range turns up across the seeds: the warren holds 3 or 4 rats, the hollow 1 or 2 beetles, the web 2 or 3 spinners, the gate its one keeper.");
+            Assert(seen.SetEquals(new[] { (0, 4), (0, 5), (1, 1), (1, 2), (2, 2), (2, 3), (3, 1) }), $"Across 60 seeds every pack size in range turns up, and no other ({string.Join(", ", seen)}).");
+            TestLog.Log("[PASS] Test 3: every pack size in its kind's range turns up across the seeds: the warren holds its Matriarch and 3 or 4 rats, the hollow 1 or 2 beetles, the web 2 or 3 spinners, the gate its one keeper.");
         }
 
         private void ValidateASlainMemberReturnsInItsHours()
@@ -109,7 +111,17 @@ namespace Simpiens.Testing.Combat
             service.Tick(world, due + DayClock.TicksPerDay);
             Assert(service.Creatures.Count == world.Entities.Count, "Nobody more comes: a lair never holds more than its pack.");
             for (int i = 1; i < service.Creatures.Count; i++) Assert(service.Creatures[i - 1].Id.CompareTo(service.Creatures[i].Id) < 0, "Still in id order.");
-            TestLog.Log("[PASS] Test 4: a slain rat leaves the world, and a new one returns to its place two game days on, not a tick before.");
+            // The warren's Matriarch (K10.2a, Q13): slain, she returns to her place after a game week
+            var matriarch = warren.MemberIn(0);
+            Assert(service.TryGet(matriarch, out var her) && her.Kind == CreatureKind.Matriarch, "The warren's first place holds its Matriarch.");
+            uint slainAt = due + DayClock.TicksPerDay;
+            uint week = slainAt + DayClock.Hours(7 * DayClock.HoursPerDay);
+            Assert(service.Slay(world, matriarch, slainAt) && warren.ReturnAt(0) == week, $"Slain, she is due back at t{week}, a game week on.");
+            service.Tick(world, week - 1);
+            Assert(warren.MemberIn(0) == default, "Not a tick before her week is out.");
+            service.Tick(world, week);
+            Assert(service.TryGet(warren.MemberIn(0), out var back2) && back2.Kind == CreatureKind.Matriarch && back2.Health == back2.Definition.MaxHealth, "She is back in her place, whole.");
+            TestLog.Log("[PASS] Test 4: a slain rat leaves the world, and a new one returns to its place two game days on, not a tick before; the Matriarch a game week on.");
         }
 
         private void ValidateThePhaseAllocatesNothing()
@@ -149,13 +161,15 @@ namespace Simpiens.Testing.Combat
             // Her reach, danger and the lone judgement
             var plain = new Simpiens.Simulation.World.LairDefinition("plain", CreatureKind.BurrowRat, heart);
             Assert(LairReach.Of(definition) == SimMath.Max(rat.Leash, matriarch.Leash), "Her lair holds as far as the longer leash.");
-            Assert(LairReach.Danger(definition, 0f) > LairReach.Danger(plain, 0f) && SimMath.Approximately(LairReach.Danger(definition, 0f), LairReach.Danger(plain, 0f) + LairReach.HarmPerSecond(matriarch, 0f)), "Her lair's danger is the brood's and hers.");
+            Assert(LairReach.Danger(definition, 0f, true) > LairReach.Danger(plain, 0f, true) && SimMath.Approximately(LairReach.Danger(definition, 0f, true), LairReach.Danger(plain, 0f, true) + LairReach.HarmPerSecond(matriarch, 0f)), "Her lair's danger is the brood's and hers.");
+            Assert(LairReach.Danger(definition, 0f, false) == LairReach.Danger(plain, 0f, false), "With her slain, her lair's danger is her brood's (D63).");
             var skills = default(Simpiens.Simulation.Skills.SkillSet);
             var armed = new Simpiens.Cognition.Inventory.AgentInventory();
             armed.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(Simpiens.Simulation.Economy.ItemType.IronBlade, Simpiens.Simulation.Items.Grades.Standard));
-            float without = Simpiens.Cognition.Vitality.HarmToClear(plain, skills, armed), with = Simpiens.Cognition.Vitality.HarmToClear(definition, skills, armed);
+            float without = Simpiens.Cognition.Vitality.HarmToClear(plain, true, skills, armed), with = Simpiens.Cognition.Vitality.HarmToClear(definition, true, skills, armed);
+            Assert(Simpiens.Cognition.Vitality.HarmToClear(definition, false, skills, armed) == without, "With her slain, clearing her lair costs what her brood does (D63).");
             Assert(with > without, $"Clearing her lair costs more than her brood alone ({with:0} against {without:0}).");
-            Assert(!Simpiens.Cognition.Vitality.BravesLair(definition, skills, armed, 100f, 100, downed: false), $"Nobody braves her lair alone with an iron blade ({with:0} expected harm).");
+            Assert(!Simpiens.Cognition.Vitality.BravesLair(definition, true, skills, armed, 100f, 100, downed: false), $"Nobody braves her lair alone with an iron blade ({with:0} expected harm).");
 
             // A save wants her in her place
             var save = service.Capture();
@@ -164,7 +178,7 @@ namespace Simpiens.Testing.Combat
             for (int i = 0; i < wrong.Creatures.Length; i++)
                 if (wrong.Creatures[i].Lair == index && wrong.Creatures[i].Slot == 0) wrong.Creatures[i].Kind = CreatureKind.BurrowRat;
             Assert(CreatureService.Check(wrong, map) != null, "A rat in her place is refused.");
-            TestLog.Log($"[PASS] Test 6: a lair headed by its boss: the Matriarch at the heart and {lair.Pack - 1} of her brood; her lair's reach, danger ({LairReach.Danger(definition, 0f):0.0} a second) and cost to clear ({with:0}, {without:0} without her) count her; a save wants her in her place.");
+            TestLog.Log($"[PASS] Test 6: a lair headed by its boss: the Matriarch at the heart and {lair.Pack - 1} of her brood; her lair's reach, danger ({LairReach.Danger(definition, 0f, true):0.0} a second) and cost to clear ({with:0}, {without:0} without her) count her; a save wants her in her place.");
         }
 
         private static (CreatureService Service, FakeWorld World) Filled(ulong seed)
