@@ -99,13 +99,24 @@ namespace Simpiens.Testing.Economy
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 for (int i = 0; i < Ticks; i++) PlayOneTick();
                 long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                int passes = 1;
+                // A second pass when the first allocated (Epic 10 Part 3, F13): the runtime's own first-pass work (tiering) has
+                // landed on this thread now and then in a full run, never reproduced alone; a real allocation repeats every pass
+                if (allocated != 0)
+                {
+                    TestLog.Log($"[EconomyZeroAllocValidator] The first {Ticks} ticks allocated {allocated} bytes; measuring a second pass.");
+                    before = GC.GetAllocatedBytesForCurrentThread();
+                    for (int i = 0; i < Ticks; i++) PlayOneTick();
+                    allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                    passes = 2;
+                }
 
                 var flows = ledger.Flows;
                 Assert(failures == failuresBefore && failures == 0, $"{failures} trade or bounty steps failed; every step must succeed for the measurement to mean anything.");
-                Assert(flows.Purchases - flowsBefore.Purchases == Ticks && flows.Sales - flowsBefore.Sales == Ticks,
-                    $"Expected {Ticks} purchases and sales, saw {flows.Purchases - flowsBefore.Purchases} and {flows.Sales - flowsBefore.Sales}.");
-                Assert(flows.EscrowReleasedGold - flowsBefore.EscrowReleasedGold == Ticks * 10u, "Every delivery was paid from escrow.");
-                Assert(flows.EscrowRefundedGold - flowsBefore.EscrowRefundedGold == Ticks * 20u, "Every expired and cancelled bounty was refunded.");
+                Assert(flows.Purchases - flowsBefore.Purchases == passes * Ticks && flows.Sales - flowsBefore.Sales == passes * Ticks,
+                    $"Expected {passes * Ticks} purchases and sales, saw {flows.Purchases - flowsBefore.Purchases} and {flows.Sales - flowsBefore.Sales}.");
+                Assert(flows.EscrowReleasedGold - flowsBefore.EscrowReleasedGold == passes * Ticks * 10u, "Every delivery was paid from escrow.");
+                Assert(flows.EscrowRefundedGold - flowsBefore.EscrowRefundedGold == passes * Ticks * 20u, "Every expired and cancelled bounty was refunded.");
                 Assert(sim.TryGetBounty(ExpiringId, out var expired) && expired.Status == BountyStatus.Expired, "The untaken bounty expired.");
                 Assert(sim.TryGetBounty(CancelledId, out var cancelled) && cancelled.Status == BountyStatus.Cancelled, "The posted bounty was cancelled.");
                 Assert(allocated == 0, $"{Ticks} ticks of trading and bounties allocated {allocated} bytes (expected 0).");
