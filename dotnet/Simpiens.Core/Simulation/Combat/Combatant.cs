@@ -97,8 +97,14 @@ namespace Simpiens.Simulation.Combat
         /// A creature as a fighter (K0.4): what it brings from its kind, its health from its own record (K2). On its feet while
         /// it has health; practice is a crawler's alone.
         /// </summary>
-        public static Combatant ForCreature(Simpiens.Simulation.Creatures.CreatureDefinition kind, EntityId id, Vec2 position, float health) =>
-            new Combatant(id, position, kind.BodyRadius, health, standing: health > 0f, kind.Attack, kind.Defense, kind.Reach, kind.SwingIntervalTicks, kind.Range);
+        public static Combatant ForCreature(Simpiens.Simulation.Creatures.CreatureDefinition kind, EntityId id, Vec2 position, float health)
+        {
+            // Fury (Epic 10 Part 3, K10.3b, Q13): below its line a kind strikes harder and faster; it follows health, so no state
+            if (kind.InFury(health))
+                return new Combatant(id, position, kind.BodyRadius, health, standing: true, (float)(kind.Attack * kind.FuryAttack), kind.Defense, kind.Reach,
+                    CombatRules.SecondsToTicks((float)(kind.SwingIntervalSeconds * kind.FuryInterval)), kind.Range);
+            return new Combatant(id, position, kind.BodyRadius, health, standing: health > 0f, kind.Attack, kind.Defense, kind.Reach, kind.SwingIntervalTicks, kind.Range);
+        }
 
         public override string ToString() =>
             $"{Id} at {Position}: health {Health:0.#}{(Standing ? string.Empty : " (down)")}, attack {Attack:0.##}, defense {Defense:0.##}, reach {Reach:0.##}, every {SwingInterval} ticks{(IsRanged ? $", range {Range:0.#}" : string.Empty)}";

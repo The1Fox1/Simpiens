@@ -170,6 +170,20 @@ namespace Simpiens.Simulation.Combat
         }
 
         /// <summary>
+        /// One swing over several foes (Epic 10 Part 3, K10.3a; D3: the Gatekeeper's slam): a roll a foe from the attacker's
+        /// stream at <paramref name="tick"/>, in the order <paramref name="foes"/> are given (the caller gives them in id order),
+        /// so the first foe's outcome is what a lone swing at it would be. Writes an outcome a foe, as many as both spans hold,
+        /// and returns how many. Which foes are struck (those in reach) is the caller's.
+        /// </summary>
+        public static int Slam(ulong seed, long tick, in Combatant attacker, System.ReadOnlySpan<Combatant> foes, System.Span<SwingOutcome> outcomes)
+        {
+            var random = RandomFor(seed, attacker.Id, tick);
+            int count = foes.Length < outcomes.Length ? foes.Length : outcomes.Length;
+            for (int i = 0; i < count; i++) outcomes[i] = Swing(ref random, attacker, foes[i]);
+            return count;
+        }
+
+        /// <summary>
         /// Wears what the attacker wields for a swing that landed (Q10: weapons wear per hit; D7): one unit of every piece it
         /// wears by <see cref="WearRule.PerHit"/>, whichever slot it is in (Epic 10 Part 3, K1.3), and nothing for a miss, a
         /// bare hand or a piece that doesn't wear so. Returns true when a piece broke and is gone. Main thread only: it

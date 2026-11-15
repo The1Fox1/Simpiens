@@ -104,6 +104,7 @@ namespace Simpiens.Simulation.Creatures
             }
             var snapshot = world.Snapshot;
             var entities = world.Entities;
+            WholeAgain(entities, tick);
             for (int i = 0; i < _creatures.Count; i++) Step(_creatures[i], snapshot, entities, tick);
 
             _swings.Clear();
@@ -371,12 +372,103 @@ namespace Simpiens.Simulation.Creatures
             var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
             var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
             if (!CombatRules.CanStrike(me, them, tick, c.NextSwingAt)) return;
+            if (kind.Slam && CombatRules.InReach(me, them))
+            {
+                SlamAll(c, me, entities, tick);
+                return;
+            }
             if (!CombatRules.InReach(me, them) && snapshot != null && !snapshot.HasLineOfSight(me.Position, them.Position)) return; // a spit needs a clear line (K8.2a)
             var outcome = CombatRules.Swing(_seed, tick, me, them);
             _swings.Add(new Swing { Attacker = c, Target = quarry, Outcome = outcome });
             if (me.IsRanged) _shots.Add(new ShotRecord(me.Id, them.Id, me.Position, them.Position, outcome.Hit, creature: true));
             c.NextSwingAt = CombatRules.NextSwingAt(tick, me);
             c.SwungAtTick = tick;
+        }
+
+        /// <summary>The most crawlers one slam strikes.</summary>
+        public const int MaxSlammed = 8;
+
+        private readonly WorldEntity[] _slammed = new WorldEntity[MaxSlammed];
+        private readonly Combatant[] _slamFoes = new Combatant[MaxSlammed];
+        private readonly SwingOutcome[] _slamOutcomes = new SwingOutcome[MaxSlammed];
+
+        // The slam (Epic 10 Part 3, K10.3a, Q13: "a slam that strikes everyone in reach"): its quarry in reach and its swing due,
+        // a slamming kind strikes every crawler on its feet in its reach, the nearest eight, one roll a foe in id order (D3), all
+        // decided now with every other swing of the tick (D6); a miss on a foe is still a blow that fell on it
+        private void SlamAll(CreatureState c, in Combatant me, IReadOnlyList<WorldEntity> entities, uint tick)
+        {
+            int count = 0;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var e = entities[i];
+                var agent = e.Agent;
+                if (agent == null || agent.IsDowned || agent.Health <= 0f || agent.HasLeft) continue;
+                var foe = Combatant.ForCrawler(agent, e.Radius);
+                if (!CombatRules.InReach(me, foe)) continue;
+                if (count == MaxSlammed)
+                {
+                    // Full: keep the nearest eight (rare: eight crawlers in one boss's reach)
+                    int far = 0;
+                    for (int k = 1; k < count; k++) if (CombatRules.Gap(me, _slamFoes[k]) > CombatRules.Gap(me, _slamFoes[far])) far = k;
+                    if (CombatRules.Gap(me, foe) >= CombatRules.Gap(me, _slamFoes[far])) continue;
+                    _slammed[far] = e;
+                    _slamFoes[far] = foe;
+                    continue;
+                }
+                _slammed[count] = e;
+                _slamFoes[count] = foe;
+                count++;
+            }
+            // In id order: the rolls follow the foes' ids, never the registry's order
+            for (int i = 1; i < count; i++)
+            {
+                var e = _slammed[i];
+                var foe = _slamFoes[i];
+                int j = i - 1;
+                while (j >= 0 && _slammed[j].Id.CompareTo(e.Id) > 0)
+                {
+                    _slammed[j + 1] = _slammed[j];
+                    _slamFoes[j + 1] = _slamFoes[j];
+                    j--;
+                }
+                _slammed[j + 1] = e;
+                _slamFoes[j + 1] = foe;
+            }
+            int rolled = CombatRules.Slam(_seed, tick, me, new System.ReadOnlySpan<Combatant>(_slamFoes, 0, count), _slamOutcomes);
+            for (int i = 0; i < rolled; i++) _swings.Add(new Swing { Attacker = c, Target = _slammed[i], Outcome = _slamOutcomes[i] });
+            for (int i = 0; i < count; i++) _slammed[i] = null;
+            c.NextSwingAt = CombatRules.NextSwingAt(tick, me);
+            c.SwungAtTick = tick;
+        }
+
+        // Whole between attempts (Epic 10 Part 3, K10.3c, Q13: the Gatekeeper "heals fully once its lair has been empty for a game
+        // hour"): a kind with WholeAfterHours notes the last tick a living crawler stood in its lair's reach (downed ones too: a
+        // fallen crawler there is the fight not over), and once its lair has stood empty that long, it is whole again at once
+        private void WholeAgain(IReadOnlyList<WorldEntity> entities, uint tick)
+        {
+            for (int i = 0; i < _creatures.Count; i++)
+            {
+                var c = _creatures[i];
+                var kind = c.Definition;
+                if (kind == null || kind.WholeAfterHours <= 0 || !c.IsAlive || c.LairIndex < 0 || c.LairIndex >= _lairs.Count) continue;
+                var lair = _lairs[c.LairIndex].Definition;
+                bool visited = false;
+                for (int e = 0; e < entities.Count && !visited; e++)
+                {
+                    var agent = entities[e].Agent;
+                    visited = agent != null && !agent.HasLeft && (agent.Health > 0f || agent.IsDowned) && LairReach.Holds(lair, entities[e].Position);
+                }
+                if (visited)
+                {
+                    c.LastVisitAt = tick;
+                    continue;
+                }
+                if (c.Health < kind.MaxHealth && c.LastVisitAt != 0 && tick - c.LastVisitAt >= kind.WholeAfterTicks)
+                {
+                    c.Health = kind.MaxHealth;
+                    SimLog.Simulation.ZLogInformation($"{CreatureCatalog.NameOf(c.Kind)} {c.Id} stands whole again: its lair has been empty for {kind.WholeAfterHours} game hour(s)");
+                }
+            }
         }
 
         // A ranged creature's ground (K8.3, D48, as a shooting crawler's, K8.2b): inside its keep-away line it steps back from its

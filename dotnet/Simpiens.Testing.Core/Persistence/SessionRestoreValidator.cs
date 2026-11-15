@@ -261,7 +261,7 @@ namespace Simpiens.Testing.Persistence
         // field comes back; a save that doesn't fit the map is refused; a save without the block fills the lairs afresh
         private void ValidateCreaturesRoundTrip()
         {
-            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 72, "A creature's record is 72 bytes, saved as raw memory.");
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 80, "A creature's record is 80 bytes (the last visit to its lair since K10.3c), saved as raw memory.");
             Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<LairSlotRecord>() == 24, "A lair's place is 24 bytes, saved as raw memory.");
             var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
             int warren = -1, hollow = -1;

@@ -66,6 +66,12 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>The first tick it may swing again (the combat rule's D8: the swing's timer is its owner's).</summary>
         public long NextSwingAt { get; set; }
 
+        /// <summary>
+        /// The last tick a living crawler stood in its lair's reach (Epic 10 Part 3, K10.3c), for a kind that stands whole again once
+        /// its lair has been empty long enough; 0 for never. Saved: a save between attempts keeps the clock.
+        /// </summary>
+        public uint LastVisitAt { get; set; }
+
         /// <summary>When it last swung, hit or miss (K2.5's strike pose); 0 for never. Unsaved, as a crawler's <c>StruckAtTick</c> is.</summary>
         public uint SwungAtTick { get; set; }
 

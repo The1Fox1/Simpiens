@@ -211,6 +211,7 @@ namespace Simpiens.Testing.Environment
                     Mix(ref map, c.RestUntil);
                     Mix(ref map, Quantize(c.Goal.X, 1000f));
                     Mix(ref map, Quantize(c.Goal.Y, 1000f));
+                    if (c.LastVisitAt != 0) Mix(ref map, c.LastVisitAt); // a boss's last visitor (K10.3c), once there was one
                 }
             }
 

@@ -39,8 +39,10 @@ namespace Simpiens.Testing.Combat
             ValidateOneRuleOverTwoKindsOfFighter();
             ValidateNothingAllocates();
             ValidateAShotCarriesFallsOffAndWears();
+            ValidateASlamDrawsOnceAFoeInIdOrder();
+            ValidateFuryFollowsHealth();
 
-            TestLog.Log("<color=green>[CombatValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[CombatValidator] ALL 12 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheRollIsSeeded()
@@ -355,6 +357,66 @@ namespace Simpiens.Testing.Combat
             int edge = blade.GetEquipped(EquipmentSlot.Weapon).Durability;
             Assert(!CombatRules.WearOnShot(blade) && blade.GetEquipped(EquipmentSlot.Weapon).Durability == edge, "A blade doesn't wear per shot.");
             TestLog.Log("[PASS] Test 10: a shot carries to its range, its chance holds to half of it and halves at full range; a ranged weapon wears per shot.");
+        }
+
+        /// <summary>
+        /// The slam (Epic 10 Part 3, K10.3a; D3): one swing over several foes draws once a foe, in the order given, from the
+        /// attacker's stream at its tick, so its first foe's outcome is a lone swing's; the same foes give the same outcomes on
+        /// any thread; each hit is the attack cut by that foe's own defense; and it allocates nothing.
+        /// </summary>
+        private void ValidateASlamDrawsOnceAFoeInIdOrder()
+        {
+            var keeper = Combatant.ForCreature(Simpiens.Simulation.Creatures.CreatureCatalog.Get(Simpiens.Simulation.Creatures.CreatureKind.Gatekeeper), new EntityId(77, 0, 0, 0), Vec2.Zero, 400f);
+            var foes = new[] { Fighter(1, new Vec2(1.2f, 0f)), Fighter(2, new Vec2(-1.2f, 0f), defense: 6f), Fighter(3, new Vec2(0f, 1.2f)) };
+            var outcomes = new SwingOutcome[foes.Length];
+            int hits = 0, lone = 0, struck = 0;
+            for (long tick = 1; tick <= 2000; tick++)
+            {
+                Assert(CombatRules.Slam(Seed, tick, keeper, foes, outcomes) == foes.Length, "One outcome a foe.");
+                var random = CombatRules.RandomFor(Seed, keeper.Id, tick);
+                for (int i = 0; i < foes.Length; i++)
+                {
+                    var expected = CombatRules.Swing(ref random, keeper, foes[i]);
+                    Assert(outcomes[i].Hit == expected.Hit && outcomes[i].Damage == expected.Damage, $"t{tick}: foe {i}'s roll is the stream's draw {i}.");
+                    if (outcomes[i].Hit)
+                    {
+                        hits++;
+                        Assert(outcomes[i].Damage == CombatRules.Mitigated(keeper.Attack, foes[i].Defense), "A hit is the attack cut by that foe's own defense.");
+                    }
+                }
+                if (outcomes[0].Hit == CombatRules.Swing(Seed, tick, keeper, foes[0]).Hit) lone++;
+                if (outcomes[0].Hit && outcomes[1].Hit && outcomes[2].Hit) struck++;
+            }
+            Assert(lone == 2000, "Its first foe's outcome is a lone swing's.");
+            float rate = hits / (3f * 2000f);
+            Assert(SimMath.Abs(rate - CombatRules.HitChance(keeper)) < 0.02f, $"Each foe is hit at the chance ({rate:P1}).");
+            var again = new SwingOutcome[foes.Length];
+            CombatRules.Slam(Seed, 1234, keeper, foes, outcomes);
+            System.Threading.Tasks.Task.Run(() => CombatRules.Slam(Seed, 1234, keeper, foes, again)).Wait();
+            for (int i = 0; i < foes.Length; i++) Assert(outcomes[i].Hit == again[i].Hit, "The same slam on another thread.");
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (long tick = 1; tick <= 1000; tick++) CombatRules.Slam(Seed, tick, keeper, foes, outcomes);
+            Assert(System.GC.GetAllocatedBytesForCurrentThread() - before == 0, "A slam allocates nothing.");
+            TestLog.Log($"[PASS] Test 11: a slam draws once a foe in the order given from its swing's stream (all three struck on {struck} of 2,000 swings), each hit cut by that foe's defense, the same on any thread.");
+        }
+
+        /// <summary>
+        /// Fury (Epic 10 Part 3, K10.3b): below its line a kind's attack and swing take their factors, and above it, or for a kind
+        /// without fury, the read is its kind's; it follows health, so a fighter that heals leaves its fury.
+        /// </summary>
+        private void ValidateFuryFollowsHealth()
+        {
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(Simpiens.Simulation.Creatures.CreatureKind.Gatekeeper);
+            var calm = Combatant.ForCreature(kind, default, default, 0.3f * kind.MaxHealth);
+            var raging = Combatant.ForCreature(kind, default, default, 0.2f * kind.MaxHealth);
+            Assert(calm.Attack == kind.Attack && calm.SwingInterval == kind.SwingIntervalTicks, "Above its line, its kind's attack and swing.");
+            Assert(raging.Attack == kind.Attack * kind.FuryAttack && raging.SwingInterval == CombatRules.SecondsToTicks(kind.SwingIntervalSeconds * kind.FuryInterval) && raging.SwingInterval < calm.SwingInterval,
+                $"Below it, harder ({raging.Attack}) and faster (every {raging.SwingInterval} ticks against {calm.SwingInterval}).");
+            Assert(raging.Defense == calm.Defense && raging.Reach == calm.Reach && raging.Standing, "Fury changes the blow, not the body.");
+            Assert(!Combatant.ForCreature(kind, default, default, 0f).Standing, "At no health it is down, not raging.");
+            var beetle = Simpiens.Simulation.Creatures.CreatureCatalog.Get(Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle);
+            Assert(Combatant.ForCreature(beetle, default, default, 1f).Attack == beetle.Attack, "A kind without fury never rages.");
+            TestLog.Log($"[PASS] Test 12: fury follows health: under a quarter the Gatekeeper strikes for {raging.Attack} every {raging.SwingInterval} ticks, above it {calm.Attack} every {calm.SwingInterval}.");
         }
 
         private static Combatant Fighter(uint id, Vec2 position, float attack = CombatRules.UnarmedAttack, float defense = 0f, float proficiency = 0f, bool standing = true) =>

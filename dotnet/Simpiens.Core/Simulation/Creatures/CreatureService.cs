@@ -406,6 +406,7 @@ namespace Simpiens.Simulation.Creatures
                     NextSwingAt = r.NextSwingAt,
                     RestUntil = r.RestUntil,
                     Goal = r.Goal,
+                    LastVisitAt = r.LastVisitAt,
                 };
                 _creatures.Add(creature);
                 Enter(world, creature, kind);

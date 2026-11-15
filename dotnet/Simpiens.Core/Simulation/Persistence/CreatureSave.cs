@@ -52,7 +52,8 @@ namespace Simpiens.Simulation.Persistence
     /// <summary>
     /// A creature as saved: who it is, of what kind, its lair and place; where it is and its health; what it is doing (its
     /// mode, its quarry, its goal, until when it rests) and when it may swing again (the combat rule's D8: saved, so a save
-    /// mid-fight loads byte for byte, K11.1). 72 bytes, with no padding: saved as raw memory.
+    /// mid-fight loads byte for byte, K11.1), and the last tick a crawler stood in its lair (K10.3c). 80 bytes, with no implicit
+    /// padding: saved as raw memory.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct CreatureRecord
@@ -68,6 +69,9 @@ namespace Simpiens.Simulation.Persistence
         public CreatureMode Mode;
         public byte Lair;
         public byte Slot;
+        /// <summary>The last tick a living crawler stood in its lair's reach (Epic 10 Part 3, K10.3c); 0 for never.</summary>
+        public uint LastVisitAt;
+        private uint _pad;
 
         public CreatureRecord(CreatureState creature)
         {
@@ -82,6 +86,8 @@ namespace Simpiens.Simulation.Persistence
             Mode = creature.Mode;
             Lair = (byte)creature.LairIndex;
             Slot = creature.Slot;
+            LastVisitAt = creature.LastVisitAt;
+            _pad = 0;
         }
     }
 }
