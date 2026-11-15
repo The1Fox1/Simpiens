@@ -179,12 +179,14 @@ namespace Simpiens.Client.Tests
         // Epic 10 Part 2's S3 (2026-11-07, D71): at t300 a crawler in the Glow Caves is hurt and wears its red coat, a
         // silhouette item, now part of the hash; both views at t300 re-pinned with the render references, labels unchanged,
         // t0 and the zoomed views unchanged (nobody hurt in them).
+        // Epic 10 Part 3 K9 (2026-11-14): skills change how fast crawlers harvest and who works where, so every pin after
+        // tick 0 was re-pinned with the render references after a look; labels unchanged.
         private static readonly (ulong, ulong) PinnedTick0 = (12937878628055227934UL, 14344167986805025999UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (10024080536634263731UL, 14344167986805025999UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (15970571827358726495UL, 14344167986805025999UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (16238647467431113274UL, 4268601865235128987UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (11483773979755004503UL, 4268601865235128987UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (530121878841030718UL, 7638092815957420050UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14081764154863997278UL, 13801314577213324051UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (13680053135051072728UL, 7638092815957420050UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (821387435026433562UL, 13801314577213324051UL);
     }
 }
