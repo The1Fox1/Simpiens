@@ -16,6 +16,12 @@ namespace Simpiens.Simulation.Creatures
         StoneBeetle = 2,
 
         /// <summary>Spits from range, on the gate's approach (ranged combat is K8; the approach K10).</summary>
-        CaveSpinner = 3
+        CaveSpinner = 3,
+
+        /// <summary>A boss (Epic 10 Part 3, K10, Q13): heads the rats' warren, calls her brood at half health, returns after a game week.</summary>
+        Matriarch = 4,
+
+        /// <summary>A boss (K10, Q13): holds the sealed descent gate in the Old Stair; its slam strikes all in reach; beaten once, it stays beaten.</summary>
+        Gatekeeper = 5
     }
 }

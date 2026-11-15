@@ -73,6 +73,10 @@ namespace Simpiens.Presentation.Art
             ["sling"] = new ItemLook(ItemShapes.Sling, new Rgba32(150, 104, 64), new Rgba32(196, 178, 140), Worn.Hand),
             ["crossbow"] = new ItemLook(ItemShapes.Crossbow, new Rgba32(176, 186, 198), new Rgba32(126, 84, 46), Worn.Hand),
             ["stoneheart-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(70, 64, 92), new Rgba32(196, 120, 220), Worn.Torso),
+            // The bosses' trophies (Epic 10 Part 3, K10): the Matriarch's silvered grey pelt, the Gatekeeper's stone with its
+            // ember core
+            ["matriarch-pelt"] = new ItemLook(ItemShapes.Pelt, new Rgba32(118, 112, 128), new Rgba32(214, 210, 224)),
+            ["keeper-stone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(82, 78, 90), new Rgba32(255, 140, 60)),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

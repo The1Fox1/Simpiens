@@ -204,9 +204,9 @@ namespace Simpiens.Simulation.Creatures
                     lair.SetPack(0);
                     continue;
                 }
-                lair.SetPack(PackSize(seed, l, kind));
+                lair.SetPack(PackOf(seed, l, lair.Definition));
                 for (int slot = 0; slot < lair.Pack; slot++) Spawn(world, lair, (byte)slot, 0u);
-                SimLog.Bootstrap.ZLogInformation($"Lair {lair.Definition.Key}: {lair.Pack} {kind.Name}");
+                SimLog.Bootstrap.ZLogInformation($"Lair {lair.Definition.Key}: {lair.Pack} {kind.Name}{(lair.Definition.HasBoss ? ", headed by " + CreatureCatalog.NameOf(lair.Definition.Boss) : "")}");
             }
         }
 
@@ -263,12 +263,25 @@ namespace Simpiens.Simulation.Creatures
             return pack < MaxPack ? pack : MaxPack;
         }
 
+        /// <summary>
+        /// The places <paramref name="lair"/> holds on <paramref name="seed"/> (K10): its boss's first, if it has one the
+        /// catalogue knows, then its pack's (<see cref="PackSize"/>), at most <see cref="MaxPack"/> in all.
+        /// </summary>
+        public static int PackOf(ulong seed, int lairIndex, in LairDefinition lair)
+        {
+            var kind = CreatureCatalog.Get(lair.Kind);
+            if (kind == null) return 0;
+            int boss = lair.HasBoss && CreatureCatalog.IsDefined(lair.Boss) ? 1 : 0;
+            int pack = boss + PackSize(seed, lairIndex, kind);
+            return pack < MaxPack ? pack : MaxPack;
+        }
+
         /// <summary>Where <paramref name="slot"/> rests around a lair's heart at <paramref name="heart"/>.</summary>
         public static Vec2 PlaceOf(Vec2 heart, int slot) => heart + Places[slot % Places.Length];
 
         private CreatureState Spawn(ICreatureWorld world, LairState lair, byte slot, uint tick)
         {
-            var kind = CreatureCatalog.Get(lair.Definition.Kind);
+            var kind = CreatureCatalog.Get(lair.Definition.KindIn(slot));
             var creature = new CreatureState(NextId(), kind.Id, lair.Index, slot, PlaceOf(lair.Definition.Position, slot));
             creature.RestUntil = tick + RestTicks(creature.Id, tick);
             lair.Hold(slot, creature.Id);
@@ -331,7 +344,7 @@ namespace Simpiens.Simulation.Creatures
             {
                 var c = save.Creatures[i];
                 if (!CreatureCatalog.IsDefined(c.Kind)) return $"a creature of kind {(byte)c.Kind}";
-                if (c.Lair >= lairs || c.Slot >= save.Packs[c.Lair] || map.Lairs[c.Lair].Kind != c.Kind) return $"a {CreatureCatalog.NameOf(c.Kind)} out of its lair";
+                if (c.Lair >= lairs || c.Slot >= save.Packs[c.Lair] || map.Lairs[c.Lair].KindIn(c.Slot) != c.Kind) return $"a {CreatureCatalog.NameOf(c.Kind)} out of its lair";
                 if (i > 0 && save.Creatures[i - 1].Id.CompareTo(c.Id) >= 0) return "creatures out of order";
             }
             return null;

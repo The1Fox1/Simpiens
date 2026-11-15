@@ -98,6 +98,8 @@ namespace Simpiens.Presentation.Art
             ("burrow-rat", 8f),
             ("stone-beetle", 4f),
             ("cave-spinner", 6f),
+            ("matriarch", 8f), // the bosses (Epic 10 Part 3, K10)
+            ("gatekeeper", 2f),
         };
 
         /// <summary>Each crawler state's two frames (<see cref="CrawlerFrames"/>). Shared with isometric.</summary>

@@ -65,6 +65,26 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 30f, Attack = 4f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.5f, Range = 5f,
                 Speed = 1.6f, BodyRadius = 0.35f, Sight = 7f, Leash = 9f, FleeBelow = 0.3f,
                 PackMin = 2, PackMax = 3, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Spinner
+            },
+            // The bosses (Epic 10 Part 3, K10, Q13; placeholder numbers, tuned by K10.6's measurement). The Matriarch heads the
+            // warren (its lair's boss): four rats' worth of health, a rat's quickness and a harder bite; she never flees, calls
+            // her brood to her quarry at half health, and returns after a game week
+            new CreatureDefinition(CreatureKind.Matriarch, "Matriarch", "The Matriarch")
+            {
+                MaxHealth = 80f, Attack = 6f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.2f,
+                Speed = 2.1f, BodyRadius = 0.35f, Sight = 5f, Leash = 6f,
+                PackMin = 1, PackMax = 1, HealHours = 12, RespawnHours = 7 * 24, LootTableId = CreatureLoot.Matriarch,
+                IsBoss = true, CallsBroodBelow = 0.5f
+            },
+            // The Gatekeeper holds the sealed gate: a stone warden, slow and heavily armoured, whose slam strikes everyone in
+            // its reach and who fights in fury under a quarter of its health. It heals nothing by resting, but stands whole again
+            // once its lair has been empty of crawlers for a game hour, and it never returns once beaten
+            new CreatureDefinition(CreatureKind.Gatekeeper, "Gatekeeper", "The Gatekeeper")
+            {
+                MaxHealth = 400f, Attack = 12f, Defense = 8f, Reach = 1f, SwingIntervalSeconds = 2.5f,
+                Speed = 1f, BodyRadius = 0.9f, Sight = 4f, Leash = 4f,
+                PackMin = 1, PackMax = 1, HealHours = 0, RespawnHours = 0, LootTableId = CreatureLoot.Gatekeeper,
+                IsBoss = true, Slam = true, FuryBelow = 0.25f, FuryAttack = 1.5f, FuryInterval = 0.6f, WholeAfterHours = 1
             }
         };
 

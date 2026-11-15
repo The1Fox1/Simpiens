@@ -27,6 +27,8 @@ namespace Simpiens.Simulation.Economy
         FangKnife     = 19, // A rare weapon a rat now and then drops (K4.2, K4.4; placeholder name)
         StoneheartCoat = 20, // A rare coat a beetle now and then drops (K4.2, K4.4; placeholder name)
         Sling         = 21, // A ranged weapon the caravan supplies cheaply (Epic 10 Part 3, K8.1, Q15; placeholder name)
-        Crossbow      = 22 // A ranged weapon made at the forge from ore and a hide (K8.1, Q15; placeholder name)
+        Crossbow      = 22, // A ranged weapon made at the forge from ore and a hide (K8.1, Q15; placeholder name)
+        MatriarchPelt = 23, // The Matriarch's trophy, sure at her slaying (Epic 10 Part 3, K10, Q12; placeholder name)
+        KeeperStone   = 24 // The Gatekeeper's trophy, sure at its slaying (K10, Q12; placeholder name)
     }
 }

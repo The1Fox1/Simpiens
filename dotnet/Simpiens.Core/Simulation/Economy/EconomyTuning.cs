@@ -162,6 +162,9 @@ namespace Simpiens.Simulation.Economy
             // the rare pieces are never the stall's
             items[(int)ItemType.Hide] = new ItemTerms(3, StallRole.Buys, 5, 0); // K4.4 (D25): the forge's, the surplus the caravan's
             items[(int)ItemType.Chitin] = new ItemTerms(5, StallRole.Buys, 8, 0);
+            // The bosses' trophies (Epic 10 Part 3, K10, Q12): the stall buys them dear and the caravan takes them on
+            items[(int)ItemType.MatriarchPelt] = new ItemTerms(30, StallRole.Buys, 36, 0);
+            items[(int)ItemType.KeeperStone] = new ItemTerms(120, StallRole.Buys, 140, 0);
             items[(int)ItemType.LeatherJerkin] = new ItemTerms(45, StallRole.Sells, 35, 0); // made at the forge (K4.4)
             items[(int)ItemType.ChitinPlate] = new ItemTerms(100, StallRole.Sells, 70, 0);
             items[(int)ItemType.FangKnife] = new ItemTerms(150);

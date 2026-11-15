@@ -17,8 +17,17 @@ namespace Simpiens.Simulation.Creatures
     /// </summary>
     public static class LairReach
     {
-        /// <summary>How far from its heart <paramref name="lair"/> holds: its kind's leash; 0 for a kind the catalogue lacks.</summary>
-        public static float Of(in LairDefinition lair) => CreatureCatalog.Get(lair.Kind)?.Leash ?? 0f;
+        /// <summary>
+        /// How far from its heart <paramref name="lair"/> holds: its kind's leash, or its boss's if longer (K10); 0 for a kind
+        /// the catalogue lacks.
+        /// </summary>
+        public static float Of(in LairDefinition lair)
+        {
+            float reach = CreatureCatalog.Get(lair.Kind)?.Leash ?? 0f;
+            if (!lair.HasBoss) return reach;
+            float boss = CreatureCatalog.Get(lair.Boss)?.Leash ?? 0f;
+            return boss > reach ? boss : reach;
+        }
 
         /// <summary>True when <paramref name="position"/> lies within <paramref name="lair"/>'s reach.</summary>
         public static bool Holds(in LairDefinition lair, Vec2 position)
@@ -51,7 +60,22 @@ namespace Simpiens.Simulation.Creatures
             return (float)(kind.PackMin * perSwing / kind.SwingIntervalSeconds);
         }
 
-        /// <summary>The danger of <paramref name="lair"/>'s pack on a crawler of <paramref name="defense"/>.</summary>
-        public static float Danger(in LairDefinition lair, float defense) => Danger(CreatureCatalog.Get(lair.Kind), defense);
+        /// <summary>
+        /// One of <paramref name="kind"/>'s expected harm a second on a crawler of <paramref name="defense"/> (K10: a boss's
+        /// share of its lair's danger). 0 for no kind.
+        /// </summary>
+        public static float HarmPerSecond(CreatureDefinition kind, float defense)
+        {
+            if (kind == null || kind.SwingIntervalSeconds <= 0f) return 0f;
+            var fighter = Combatant.ForCreature(kind, default, default, kind.MaxHealth);
+            return (float)(CombatRules.HitChance(fighter) * CombatRules.Mitigated(kind.Attack, defense) / kind.SwingIntervalSeconds);
+        }
+
+        /// <summary>The danger of <paramref name="lair"/>'s pack on a crawler of <paramref name="defense"/>, its boss's harm with it (K10).</summary>
+        public static float Danger(in LairDefinition lair, float defense)
+        {
+            float pack = Danger(CreatureCatalog.Get(lair.Kind), defense);
+            return lair.HasBoss ? (float)(pack + HarmPerSecond(CreatureCatalog.Get(lair.Boss), defense)) : pack;
+        }
     }
 }

@@ -15,10 +15,10 @@ namespace Simpiens.Presentation.Art
         public const int Size = 16;
         public const int Frames = 2;
 
-        /// <summary>The kinds drawn, by art key: the burrow rat, the stone beetle, the cave spinner.</summary>
-        public static IReadOnlyList<string> Keys { get; } = new[] { "burrow-rat", "stone-beetle", "cave-spinner" };
+        /// <summary>The kinds drawn, by art key: the burrow rat, the stone beetle, the cave spinner, and the bosses (K10): the Matriarch and the Gatekeeper.</summary>
+        public static IReadOnlyList<string> Keys { get; } = new[] { "burrow-rat", "stone-beetle", "cave-spinner", "matriarch", "gatekeeper" };
 
-        private static readonly List<PixelSprite> _all = new List<PixelSprite>(Frames * 3);
+        private static readonly List<PixelSprite> _all = new List<PixelSprite>(Frames * 5);
 
         public static IReadOnlyList<PixelSprite> All => _all;
 
@@ -60,6 +60,15 @@ namespace Simpiens.Presentation.Art
             { 'V', new Rgba32(116, 84, 156, 255) },
             { 'G', new Rgba32(150, 244, 120, 255) },
             { 'l', new Rgba32(94, 80, 116, 255) },
+            // The Matriarch (Epic 10 Part 3, K10; a placeholder until K10.5a): a rat in grizzled grey-violet with a silver ruff
+            { 'X', new Rgba32(112, 104, 124, 255) },
+            { 'x', new Rgba32(78, 72, 90, 255) },
+            { 'W', new Rgba32(210, 206, 222, 255) },
+            // The Gatekeeper (K10; a placeholder until K10.5a): a stone warden with an ember for an eye
+            { 'O', new Rgba32(24, 22, 28, 255) },
+            { 'T', new Rgba32(118, 112, 104, 255) },
+            { 't', new Rgba32(82, 78, 74, 255) },
+            { 'E', new Rgba32(255, 140, 60, 255) },
         };
 
         private static readonly string[] Rat0 =
@@ -182,11 +191,70 @@ namespace Simpiens.Presentation.Art
             "................",
         };
 
+        private static readonly string[] Keeper0 =
+        {
+            "................",
+            "......OOOO......",
+            ".....OTTTTO.....",
+            ".....OTEETO.....",
+            ".....OTTTTO.....",
+            "...OOOTTTTOOO...",
+            "..OTTTTTTTTTTO..",
+            "..OTtTTTTTTtTO..",
+            "..OTtTTTTTTtTO..",
+            "..OTOTTTTTTOTO..",
+            "..OTOTTttTTOTO..",
+            "..OOOTTOOTTOOO..",
+            ".....OTOOTO.....",
+            ".....OTOOTO.....",
+            "....OOTOOTOO....",
+            "................",
+        };
+
+        private static readonly string[] Keeper1 =
+        {
+            "................",
+            "......OOOO......",
+            ".....OTTTTO.....",
+            ".....OTEETO.....",
+            ".....OTTTTO.....",
+            "...OOOTTTTOOO...",
+            "..OTTTTTTTTTTO..",
+            "..OTtTTTTTTtTO..",
+            "..OTtTTTTTTtTO..",
+            "..OTOTTTTTTOTO..",
+            "..OTOTTttTTOTO..",
+            "..OOOTTOOTTOOO..",
+            ".....OTOOTO.....",
+            "....OTO..OTO....",
+            "...OOTO..OTOO...",
+            "................",
+        };
+
         static CreatureSprites()
         {
             Add("burrow-rat", Rat0, Rat1);
             Add("stone-beetle", Beetle0, Beetle1);
             Add("cave-spinner", Spinner0, Spinner1);
+            Add("matriarch", Recolor(Rat0, "FfL", "XxW"), Recolor(Rat1, "FfL", "XxW"));
+            Add("gatekeeper", Keeper0, Keeper1);
+        }
+
+        // A pattern with each of <from>'s keys swapped for <to>'s at the same place (a placeholder kin of another kind)
+        private static string[] Recolor(string[] pattern, string from, string to)
+        {
+            var result = new string[pattern.Length];
+            for (int y = 0; y < pattern.Length; y++)
+            {
+                var row = pattern[y].ToCharArray();
+                for (int x = 0; x < row.Length; x++)
+                {
+                    int at = from.IndexOf(row[x]);
+                    if (at >= 0) row[x] = to[at];
+                }
+                result[y] = new string(row);
+            }
+            return result;
         }
 
         private static void Add(string key, params string[][] frames)

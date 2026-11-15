@@ -10,7 +10,7 @@ namespace Simpiens.Simulation.Creatures
     /// </summary>
     public static class CreatureLoot
     {
-        public const ushort Rat = 1, Beetle = 2, Spinner = 3;
+        public const ushort Rat = 1, Beetle = 2, Spinner = 3, Matriarch = 4, Gatekeeper = 5;
 
         /// <summary>The most stacks a kill drops.</summary>
         public const int MaxDrops = 4;
@@ -32,6 +32,13 @@ namespace Simpiens.Simulation.Creatures
             new LootTable(Spinner, "spinner", 1, 1,
                 LootEntry.ItemDrop(ItemType.Chitin, 1, 1, weight: 60),
                 LootEntry.ItemDrop(ItemType.MedicinalHerb, 1, 1, weight: 30),
-                LootEntry.Nothing(10)));
+                LootEntry.Nothing(10)),
+            // The bosses (K10, Q12: "a boss drops a sure trophy and a rare piece"): every entry drops, once
+            LootTable.EveryEntry(Matriarch, "matriarch",
+                LootEntry.ItemDrop(ItemType.MatriarchPelt),
+                LootEntry.ItemDrop(ItemType.FangKnife)),
+            LootTable.EveryEntry(Gatekeeper, "gatekeeper",
+                LootEntry.ItemDrop(ItemType.KeeperStone),
+                LootEntry.ItemDrop(ItemType.StoneheartCoat)));
     }
 }

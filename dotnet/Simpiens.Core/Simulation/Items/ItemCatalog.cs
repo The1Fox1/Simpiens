@@ -119,6 +119,9 @@ namespace Simpiens.Simulation.Items
             // Materials from kills (Epic 10 Part 3, K4.2, Q12): salvage the stall buys and the forge works (K4.4)
             new ItemDefinition(ItemType.Hide, "Hide", "Hide", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Common),
             new ItemDefinition(ItemType.Chitin, "Chitin", "Chitin", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Uncommon),
+            // The bosses' trophies (Epic 10 Part 3, K10, Q12): sure at a boss's slaying, salvage the stall buys dear
+            new ItemDefinition(ItemType.MatriarchPelt, "MatriarchPelt", "Matriarch's Pelt", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Rare),
+            new ItemDefinition(ItemType.KeeperStone, "KeeperStone", "Keeper's Stone", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Legendary),
             // Armour from the materials (K4.4): the jerkin between the helm and the ring coat, the plate above it
             new ItemDefinition(ItemType.LeatherJerkin, "LeatherJerkin", "Leather Jerkin",
                 ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Common,

@@ -346,6 +346,20 @@ A report on the skill system's foundation came first. It found storage, determin
   - **One DoD moved seed:** on seed 1, a skilled hunter now clears the lair alone at t10450, so `AHuntBountyClearsALair` moves to gate seed 3 (paid at t17755 to three hunters).
   - **Golden didn't move:** nobody braves a lair before t3000 on the golden seeds.
 
+### K10's decisions (2026-11-15 onward), under the producer's AFK directive, for the developer's review
+The go: "Let's close his out by finishing K10-K11. I will not be able to supervise so you will be responsible for overseeing the completion of this epic" (2026-11-15). K9.8's decisions D54–D56 stand by exception. K10.3, marked supervised, is split in the plan so that no part is Very Complex; these are the calls made on the way.
+- **D57, bosses are rows with traits** (A6): `CreatureDefinition` gains `IsBoss`, `Slam` (a swing over every foe in reach), `FuryBelow` with its attack and swing factors, `CallsBroodBelow`, and `WholeAfterHours` (whole again at once after its lair has stood empty of crawlers that long). The rule reads the traits; no code names a kind. The numbers are placeholders until K10.6 measures them:
+  - **the Matriarch:** 80 health (four rats' worth), attack 6, defense 2, a swing every 1.2 s, a rat's quickness, never flees, calls her brood under half her health, back after a game week;
+  - **the Gatekeeper:** 400 health, attack 12, defense 8, reach 1, a swing every 2.5 s, slow, never flees; a slam, fury under a quarter of its health (attack ×1.5, swings ×0.6), no healing at rest but whole once its lair has stood empty a game hour, and it never returns.
+- **D58, the Matriarch heads the warren:** a lair may name a boss beside its pack's kind (`LairDefinition.Boss`). She holds its first place, at the heart, and her brood the places after.
+  - **Why one lair:** the warren's hunt, its clear, its danger, its reach and its emptying all include her, with no second lair stacked on the first.
+  - **What it changes:** the lair's danger is the brood's and hers, and the lone judgement (`HarmToClear`) counts her last: she strikes while the brood falls, then alone until she falls too. So nobody braves the warren alone while she lives. A bold resident with an iron blade expects more harm than its health. The warren is the guild's to clear until she falls; after that it is the bold's again until she returns.
+- **D59, a boss's sure drops** (Q12: "a sure trophy and a rare piece"):
+  - **The mechanism:** a loot table whose every entry drops once (`LootTable.EveryEntry`).
+  - **The trophies:** two new materials. The Matriarch's pelt: the stall buys it at 36g, the caravan takes it at 44g. The Keeper's stone: 140g, and 170g.
+  - **The rare pieces:** the rats' fang knife and the beetles' stoneheart coat, so there is no new equipment.
+  - **Golden is unchanged:** no stall holds a trophy in stock.
+
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
 

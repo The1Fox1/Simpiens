@@ -373,7 +373,7 @@ namespace Simpiens.Testing.Economy
             var prices = new Simpiens.Intervention.UpdateStallPricesCommand(default).With(ItemType.Ration, 18).With(ItemType.IronOre, 0).With(ItemType.Ration, 19);
             Assert(prices.Count == 2 && prices[0].Item == ItemType.Ration && prices[0].Price == 19 && prices[1].Price == 0, "A price command keeps one price per item, in order.");
 
-            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 448, $"The default caravan's exports: 16 ore x 6 + 12 herbs x 7 + 2 glowstone x 70 + 8 hides x 6 + 8 chitin x 10 = 448g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
+            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 706, $"The default caravan's exports: 16 ore x 6 + 12 herbs x 7 + 2 glowstone x 70 + 8 hides x 6 + 8 chitin x 10 + 2 Matriarch's pelts x 44 + 1 Keeper's stone x 170 = 706g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
             var keep = SupplyTuning.Default.Terms(ItemType.Hide);
             Assert(keep.Keep == 6 && SupplyTuning.Default.Terms(ItemType.IronOre).Keep == 0, "The caravan leaves six hides for the forge (Epic 10 Part 3, K4.4, D25), and takes all the ore it may.");
             TestLog.Log("[TradeTransactionValidator] Test 17 Passed: A stall's goods are a table; prices answer by role; price commands carry pairs.");

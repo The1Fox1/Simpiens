@@ -97,10 +97,14 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
-        /// <summary>A lair of <paramref name="kind"/> (Epic 10 Part 3, K2.1): its pack is drawn from the session's seed.</summary>
-        public MapDefinitionBuilder Lair(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position)
+        /// <summary>
+        /// A lair of <paramref name="kind"/> (Epic 10 Part 3, K2.1): its pack is drawn from the session's seed. With a
+        /// <paramref name="boss"/> at its head (K10), or guarding the descent gate.
+        /// </summary>
+        public MapDefinitionBuilder Lair(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position,
+            Simpiens.Simulation.Creatures.CreatureKind boss = Simpiens.Simulation.Creatures.CreatureKind.None, bool guardsGate = false)
         {
-            _lairs.Add(new LairDefinition(key, kind, position));
+            _lairs.Add(new LairDefinition(key, kind, position, boss, guardsGate));
             return this;
         }
 

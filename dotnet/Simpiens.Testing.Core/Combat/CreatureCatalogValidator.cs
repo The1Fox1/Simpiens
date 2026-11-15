@@ -27,8 +27,9 @@ namespace Simpiens.Testing.Combat
             ValidateACreatureFightsThroughTheRule();
             ValidateAKindIsARow();
             ValidateReadingAllocatesNothing();
+            ValidateTheBossesAreWhatQ13Says();
 
-            TestLog.Log("<color=green>[CreatureCatalogValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[CreatureCatalogValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateDefinitionsAreConsistent()
@@ -62,12 +63,17 @@ namespace Simpiens.Testing.Combat
 
                 // Its lair and the day
                 Assert(kind.PackMin >= 1 && kind.PackMax >= kind.PackMin, $"{k}: a pack of {kind.PackMin} to {kind.PackMax}.");
-                Assert(kind.HealHours > 0 && kind.HealPerTick > 0f, $"{k}: heals over {kind.HealHours} game hours at its lair.");
-                Assert(SimMath.Approximately(kind.HealPerTick * kind.HealHours * DayClock.TicksPerHour, kind.MaxHealth), $"{k}: healing over {kind.HealHours} hours makes it whole.");
+                Assert((kind.HealHours > 0 && kind.HealPerTick > 0f) || (kind.HealHours == 0 && kind.WholeAfterHours > 0), $"{k}: heals over {kind.HealHours} game hours at its lair, or stands whole once its lair is left ({kind.WholeAfterHours} h).");
+                Assert(kind.HealHours == 0 || SimMath.Approximately(kind.HealPerTick * kind.HealHours * DayClock.TicksPerHour, kind.MaxHealth), $"{k}: healing over {kind.HealHours} hours makes it whole.");
+                Assert(kind.WholeAfterHours >= 0 && kind.WholeAfterTicks == (kind.WholeAfterHours > 0 ? DayClock.Hours(kind.WholeAfterHours) : 0u), $"{k}: whole after {kind.WholeAfterHours} game hours left alone, or never.");
+                Assert(kind.FuryBelow >= 0f && kind.FuryBelow < 1f && kind.FuryAttack >= 1f && kind.FuryInterval > 0f && kind.FuryInterval <= 1f, $"{k}: fury below {kind.FuryBelow:P0} strengthens it (attack x{kind.FuryAttack}, swing x{kind.FuryInterval}).");
+                Assert(kind.CallsBroodBelow >= 0f && kind.CallsBroodBelow < 1f, $"{k}: calls its brood below {kind.CallsBroodBelow:P0}, or never.");
+                Assert(kind.IsBoss || (!kind.Slam && !kind.HasFury && kind.CallsBroodBelow == 0f && kind.WholeAfterHours == 0), $"{k}: only a boss has a boss's traits.");
                 Assert(kind.RespawnHours >= 0 && kind.RespawnTicks == DayClock.Hours(kind.RespawnHours) && kind.Respawns == kind.RespawnHours > 0, $"{k}: returns after {kind.RespawnHours} game hours, or never.");
                 // What it drops (K4.2): a table that exists, whose rolls fit a kill's drops, of defined items in whole stacks
                 Assert(CreatureLoot.Tables.TryGet(kind.LootTableId, out var loot), $"{k}: its loot table ({kind.LootTableId}) exists.");
-                Assert(loot.MaxRolls <= CreatureLoot.MaxDrops && loot.TotalWeight > 0, $"{k}: at most {CreatureLoot.MaxDrops} stacks a kill ({loot.MaxRolls} rolls).");
+                int stacks = loot.Every ? loot.EntryCount : loot.MaxRolls;
+                Assert(stacks <= CreatureLoot.MaxDrops && loot.TotalWeight > 0, $"{k}: at most {CreatureLoot.MaxDrops} stacks a kill ({stacks}).");
                 for (int e = 0; e < loot.EntryCount; e++)
                 {
                     var entry = loot.GetEntry(e);
@@ -87,13 +93,15 @@ namespace Simpiens.Testing.Combat
             var spinner = CreatureCatalog.Get(CreatureKind.CaveSpinner);
             Assert(rat != null && beetle != null && spinner != null, "Rats, beetles and spinners are defined.");
 
-            // Rats: weak, in packs of three or four, and they flee
+            // Rats: weak, in packs of three or four, and they flee. The vermin are judged among themselves; the bosses (K10) by Test 6
+            var vermin = new List<CreatureDefinition>();
+            foreach (var kind in CreatureCatalog.All) if (!kind.IsBoss) vermin.Add(kind);
             foreach (var kind in CreatureCatalog.All) Assert(kind == rat || kind.MaxHealth > rat.MaxHealth, $"Rats are the weakest ({rat.MaxHealth} against {kind.Name}'s {kind.MaxHealth}).");
             Assert(rat.PackMin == 3 && rat.PackMax == 4 && rat.Flees, "Rats come in packs of three or four, and flee.");
 
             // Beetles: armoured and slow, where a weapon matters; a crawler can walk away from one
-            foreach (var kind in CreatureCatalog.All) Assert(kind == beetle || kind.Defense < beetle.Defense, $"Beetles are the most armoured ({beetle.Defense}).");
-            foreach (var kind in CreatureCatalog.All) Assert(kind == beetle || kind.Speed > beetle.Speed, $"Beetles are the slowest ({beetle.Speed}).");
+            foreach (var kind in vermin) Assert(kind == beetle || kind.Defense < beetle.Defense, $"Beetles are the most armoured ({beetle.Defense}).");
+            foreach (var kind in vermin) Assert(kind == beetle || kind.Speed > beetle.Speed, $"Beetles are the slowest ({beetle.Speed}).");
             Assert(beetle.Speed < CrawlerSpeed && !beetle.Flees, "A crawler walks away from a beetle, which never flees.");
             Assert(CombatRules.Mitigated(CombatRules.UnarmedAttack, beetle.Defense) < 0.6f * CombatRules.UnarmedAttack, "A bare hand barely scratches a beetle.");
 
@@ -101,8 +109,8 @@ namespace Simpiens.Testing.Combat
             Assert(spinner.IsRanged && !rat.IsRanged && !beetle.IsRanged, "Only spinners strike from range.");
 
             // A cleared lair refills after two game days
-            foreach (var kind in CreatureCatalog.All) Assert(kind.RespawnHours == 2 * DayClock.HoursPerDay, $"{kind.Name} returns after 2 game days.");
-            TestLog.Log("[PASS] Test 2: rats are the weakest and flee in packs of three or four; beetles are the most armoured and the slowest; spinners spit; all return after 2 game days.");
+            foreach (var kind in vermin) Assert(kind.RespawnHours == 2 * DayClock.HoursPerDay, $"{kind.Name} returns after 2 game days.");
+            TestLog.Log("[PASS] Test 2: rats are the weakest and flee in packs of three or four; beetles are the most armoured and the slowest of the vermin; spinners spit; all return after 2 game days.");
         }
 
         private void ValidateACreatureFightsThroughTheRule()
@@ -189,6 +197,49 @@ namespace Simpiens.Testing.Combat
 
         private static bool IsKebabCase(string key)
             => !string.IsNullOrEmpty(key) && key[0] != '-' && key[key.Length - 1] != '-' && !key.Contains("--") && key == key.ToLowerInvariant();
+
+        /// <summary>
+        /// Q13's bosses (Epic 10 Part 3, K10): rows with traits. The Matriarch is stronger than her brood, calls it at half
+        /// health and returns after a game week; the Gatekeeper slams, rages under a quarter of its health, stands whole once
+        /// left for a game hour and never returns. Neither flees, and each drops a sure trophy and a rare piece (Q12).
+        /// </summary>
+        private void ValidateTheBossesAreWhatQ13Says()
+        {
+            var rat = CreatureCatalog.Get(CreatureKind.BurrowRat);
+            var matriarch = CreatureCatalog.Get(CreatureKind.Matriarch);
+            var keeper = CreatureCatalog.Get(CreatureKind.Gatekeeper);
+            Assert(matriarch != null && keeper != null && matriarch.IsBoss && keeper.IsBoss, "The Matriarch and the Gatekeeper are bosses.");
+            var drops = new Simpiens.Simulation.Economy.ItemInstance[CreatureLoot.MaxDrops];
+            foreach (var boss in new[] { matriarch, keeper })
+            {
+                Assert(!boss.Flees && boss.PackMin == 1 && boss.PackMax == 1, $"{boss.Name}: one of its kind, and it never flees.");
+                Assert(CreatureLoot.Tables.TryGet(boss.LootTableId, out var loot) && loot.Every && loot.EntryCount == 2, $"{boss.Name}: every entry of its table drops.");
+                var trophy = Simpiens.Simulation.Items.ItemCatalog.Get(loot.GetEntry(0).Item);
+                var piece = Simpiens.Simulation.Items.ItemCatalog.Get(loot.GetEntry(1).Item);
+                Assert(trophy != null && Simpiens.Simulation.Items.ItemCatalog.Is(trophy.Id, Simpiens.Simulation.Items.ItemCategory.Creature) && trophy.Equipment == null, $"{boss.Name}: a sure trophy ({trophy?.Name}).");
+                Assert(piece != null && piece.Equipment != null && piece.Rarity >= Simpiens.Simulation.Items.ItemRarity.Rare, $"{boss.Name}: a sure rare piece ({piece?.Name}).");
+                for (int seed = 1; seed <= 20; seed++)
+                {
+                    int n = Simpiens.Simulation.Items.LootRoller.Roll(CreatureLoot.Tables, boss.LootTableId, (ulong)seed, new EntityId(0, 0, 0, (uint)seed), seed * 7, drops);
+                    Assert(n == 2 && drops[0].Type == trophy.Id && drops[1].Type == piece.Id, $"{boss.Name}: its trophy and its piece on every kill (seed {seed}: {n} drops).");
+                }
+            }
+
+            // The Matriarch: a rat grown strong, who calls her brood at half health and returns after a week
+            Assert(matriarch.MaxHealth > rat.MaxHealth * rat.PackMin && matriarch.Attack > rat.Attack, "The Matriarch outweighs a pack of her brood and bites harder.");
+            Assert(matriarch.CallsBroodBelow == 0.5f && !matriarch.CallsBrood(matriarch.MaxHealth) && matriarch.CallsBrood(0.4f * matriarch.MaxHealth), "She calls her brood under half her health.");
+            Assert(matriarch.RespawnHours == 7 * DayClock.HoursPerDay, "Slain, she returns after a game week.");
+            Assert(!matriarch.Slam && !matriarch.HasFury && matriarch.WholeAfterHours == 0, "She has none of the Gatekeeper's traits.");
+
+            // The Gatekeeper: a slam, fury under a quarter, whole once left a game hour, beaten once
+            Assert(keeper.Slam && keeper.Reach >= 2f * CombatRules.UnarmedReach, "The Gatekeeper's slam reaches past a crawler's arm.");
+            Assert(keeper.FuryBelow == 0.25f && !keeper.InFury(0.3f * keeper.MaxHealth) && keeper.InFury(0.2f * keeper.MaxHealth) && !keeper.InFury(0f), "It rages under a quarter of its health.");
+            Assert(keeper.FuryAttack > 1f && keeper.FuryInterval < 1f, "Fury strikes harder and faster.");
+            Assert(keeper.HealHours == 0 && keeper.WholeAfterHours == 1 && keeper.WholeAfterTicks == DayClock.Hours(1), "It heals nothing resting, but stands whole once its lair has been empty a game hour.");
+            Assert(!keeper.Respawns, "Beaten once, it stays beaten.");
+            foreach (var kind in CreatureCatalog.All) Assert(kind == keeper || kind.MaxHealth < keeper.MaxHealth, $"It is the strongest ({keeper.MaxHealth} against {kind.Name}'s {kind.MaxHealth}).");
+            TestLog.Log($"[PASS] Test 6: the Matriarch ({matriarch.MaxHealth} health, calls her brood at half, back in a week) and the Gatekeeper ({keeper.MaxHealth} health, a slam, fury under a quarter, whole an hour after its lair is left, never back) are rows with traits; each drops a sure trophy and a rare piece.");
+        }
 
         private static void Assert(bool condition, string message)
         {

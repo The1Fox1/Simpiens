@@ -97,7 +97,10 @@ namespace Simpiens.Simulation.Economy
             CaravanTerms.Supplies(ItemType.Sling, stockCap: 2, wholesaleCost: 5, SupplyService.GearSinkName), // K8.1, Q15
             // Creatures' materials (K4.4, D25): about 20% over the stall's price, past six of each kept for the forge
             CaravanTerms.Exports(ItemType.Hide, quota: 8, marketPrice: 6, keep: 6),
-            CaravanTerms.Exports(ItemType.Chitin, quota: 8, marketPrice: 10, keep: 6));
+            CaravanTerms.Exports(ItemType.Chitin, quota: 8, marketPrice: 10, keep: 6),
+            // The bosses' trophies (Epic 10 Part 3, K10): about 20% over the stall's price, none kept
+            CaravanTerms.Exports(ItemType.MatriarchPelt, quota: 2, marketPrice: 44),
+            CaravanTerms.Exports(ItemType.KeeperStone, quota: 1, marketPrice: 170));
 
         /// <summary>The most gold the caravan can pay a stall for its exports in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit

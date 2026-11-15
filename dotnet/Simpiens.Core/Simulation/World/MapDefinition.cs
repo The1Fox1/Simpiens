@@ -168,17 +168,41 @@ namespace Simpiens.Simulation.World
     public readonly struct LairDefinition
     {
         public readonly string Key;
+
+        /// <summary>The kind its pack is of (its brood, under a boss).</summary>
         public readonly Simpiens.Simulation.Creatures.CreatureKind Kind;
 
         /// <summary>The lair's heart: its pack rests around it.</summary>
         public readonly Vec2 Position;
 
-        public LairDefinition(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position)
+        /// <summary>
+        /// A boss that heads the pack (Epic 10 Part 3, K10, Q13: the Matriarch heads the warren), holding the lair's first
+        /// place at its heart, the brood in the places after; None for a lair without one. A boss alone (the Gatekeeper) is a
+        /// lair of its own kind instead.
+        /// </summary>
+        public readonly Simpiens.Simulation.Creatures.CreatureKind Boss;
+
+        /// <summary>
+        /// The lair guards the descent gate (K10, Q13): it is charted with the sector it stands in (the gate is the room's
+        /// landmark), and emptied for good, it breaches the gate.
+        /// </summary>
+        public readonly bool GuardsGate;
+
+        public LairDefinition(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position,
+            Simpiens.Simulation.Creatures.CreatureKind boss = Simpiens.Simulation.Creatures.CreatureKind.None, bool guardsGate = false)
         {
             Key = key;
             Kind = kind;
             Position = position;
+            Boss = boss;
+            GuardsGate = guardsGate;
         }
+
+        /// <summary>True for a lair headed by a boss.</summary>
+        public bool HasBoss => Boss != Simpiens.Simulation.Creatures.CreatureKind.None;
+
+        /// <summary>The kind that holds <paramref name="slot"/>: the boss in the first place of a lair with one, else its pack's kind.</summary>
+        public Simpiens.Simulation.Creatures.CreatureKind KindIn(int slot) => slot == 0 && HasBoss ? Boss : Kind;
     }
 
     /// <summary>Presentation hint: a text label drawn on the map.</summary>

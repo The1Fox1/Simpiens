@@ -59,6 +59,9 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.ChitinPlate] = new ItemText("Chitin plate", "Forged from chitin and ore; turns blows", "Chitin plate", "Chitin plate", "CHITIN PLATE");
             _texts[(int)ItemType.FangKnife] = new ItemText("Fang knife", "A rat's rare fang, quick in the hand", "Fang knife", "Fang knife", "FANG KNIFE");
             _texts[(int)ItemType.StoneheartCoat] = new ItemText("Stoneheart coat", "A beetle's rare heart-shell", "Stoneheart coat", "Stoneheart coat", "STONEHEART COAT");
+            // The bosses' trophies (Epic 10 Part 3, K10)
+            _texts[(int)ItemType.MatriarchPelt] = new ItemText("Matriarch's pelt", "Taken from the warren's Matriarch", "Matriarch's pelt", "Matriarch's pelts", "MATRIARCH'S PELT");
+            _texts[(int)ItemType.KeeperStone] = new ItemText("Keeper's stone", "The Gatekeeper's ember heart", "Keeper's stone", "Keeper's stones", "KEEPER'S STONE");
         }
 
         public static ItemText Of(ItemType item)

@@ -76,7 +76,9 @@ namespace Simpiens.Testing.Economy
                 var id = (ItemType)i;
                 bool wasFood = id == ItemType.None || id == ItemType.Ration;
                 // Creatures' materials (Epic 10 Part 3, K4.2) are salvage too: the stall buys them (K4.4)
-                bool wasSalvage = id == ItemType.IronOre || id == ItemType.MedicinalHerb || id == ItemType.Glowstone || id == ItemType.Hide || id == ItemType.Chitin;
+                // and so are the bosses' trophies (K10)
+                bool wasSalvage = id == ItemType.IronOre || id == ItemType.MedicinalHerb || id == ItemType.Glowstone || id == ItemType.Hide || id == ItemType.Chitin
+                    || id == ItemType.MatriarchPelt || id == ItemType.KeeperStone;
                 Assert(id.IsFoodYield() == wasFood, $"Item {i}: IsFoodYield {id.IsFoodYield()}, was {wasFood}.");
                 Assert(id.IsSalvage() == wasSalvage, $"Item {i}: IsSalvage {id.IsSalvage()}, was {wasSalvage}.");
                 // The one gear slot of G3 took hazard gear only; I4's slots take every equipment item, in its own slot
@@ -101,7 +103,7 @@ namespace Simpiens.Testing.Economy
                     if (i > 0) Assert(members[i] > members[i - 1], $"{group}: id order.");
                 }
             }
-            Assert(ItemCatalog.InCategory(ItemCategory.Resource).Count == 5, "Five resources: ore, herbs, glowstone, and creatures' hide and chitin.");
+            Assert(ItemCatalog.InCategory(ItemCategory.Resource).Count == 7, "Seven resources: ore, herbs, glowstone, creatures' hide and chitin, and the bosses' trophies (Epic 10 Part 3, K10).");
             // No node yields a creature's material (K4.2), and none is mined or picked
             foreach (var item in ItemCatalog.InCategory(ItemCategory.Creature))
             {

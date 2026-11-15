@@ -144,7 +144,16 @@ namespace Simpiens.Cognition
             float eachHarm = Simpiens.Simulation.Creatures.LairReach.Danger(kind, me.Defense) / kind.PackMin;
             float eachTime = kind.MaxHealth / perSecond;
             int n = kind.PackMin;
-            return (float)(eachHarm * eachTime * (n * (n + 1) / 2f));
+            float harm = (float)(eachHarm * eachTime * (n * (n + 1) / 2f));
+            if (!lair.HasBoss) return harm;
+
+            // A boss at the pack's head (Epic 10 Part 3, K10): it strikes while the brood falls, then alone until it falls too
+            var boss = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lair.Boss);
+            if (boss == null) return harm;
+            float onBoss = (float)(Simpiens.Simulation.Combat.CombatRules.HitChance(me) * Simpiens.Simulation.Combat.CombatRules.Mitigated(me.Attack, boss.Defense) / SimMath.Max(0.1f, interval));
+            if (onBoss <= 0f) return float.MaxValue;
+            float bossHarm = Simpiens.Simulation.Creatures.LairReach.HarmPerSecond(boss, me.Defense);
+            return (float)(harm + bossHarm * (n * eachTime + boss.MaxHealth / onBoss));
         }
 
         /// <summary>

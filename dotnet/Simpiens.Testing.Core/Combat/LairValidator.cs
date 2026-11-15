@@ -27,8 +27,9 @@ namespace Simpiens.Testing.Combat
             ValidateEveryPackSizeTurnsUp();
             ValidateASlainMemberReturnsInItsHours();
             ValidateThePhaseAllocatesNothing();
+            ValidateALairHeadedByABoss();
 
-            TestLog.Log("<color=green>[LairValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[LairValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheLairsFillOnTheSeed()
@@ -120,6 +121,50 @@ namespace Simpiens.Testing.Combat
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert(allocated == 0, $"2,000 ticks of the phase allocated {allocated} bytes.");
             TestLog.Log("[PASS] Test 5: the creatures' phase allocates nothing while nobody is due.");
+        }
+
+        /// <summary>
+        /// A lair headed by a boss (Epic 10 Part 3, K10, Q13: the Matriarch heads the warren), on a test variant of the floor:
+        /// the boss holds the first place, at the heart, and the brood the places after; the lair's reach, danger and the lone
+        /// judgement count her; a save's check wants her kind in her place.
+        /// </summary>
+        private void ValidateALairHeadedByABoss()
+        {
+            var heart = new Simpiens.Vec2(-13f, 1f);
+            var map = Floor1Layout.BuildWith(b => b.Lair("test.brood", CreatureKind.BurrowRat, heart, boss: CreatureKind.Matriarch));
+            var service = new CreatureService().Follow(map);
+            var world = new FakeWorld();
+            service.Populate(world, Seed);
+            int index = service.Lairs.Count - 1;
+            var lair = service.Lairs[index];
+            var definition = lair.Definition;
+            var rat = CreatureCatalog.Get(CreatureKind.BurrowRat);
+            var matriarch = CreatureCatalog.Get(CreatureKind.Matriarch);
+            Assert(definition.HasBoss && definition.KindIn(0) == CreatureKind.Matriarch && definition.KindIn(1) == CreatureKind.BurrowRat, "The lair names its boss for its first place, its brood after.");
+            Assert(lair.Pack == 1 + CreatureService.PackSize(Seed, index, rat) && lair.Pack == CreatureService.PackOf(Seed, index, definition), $"Her place and the brood's drawn pack: {lair.Pack}.");
+            Assert(service.TryGet(lair.MemberIn(0), out var her) && her.Kind == CreatureKind.Matriarch && her.Home == heart && her.Health == matriarch.MaxHealth, "The Matriarch rests at the heart, whole.");
+            for (int slot = 1; slot < lair.Pack; slot++)
+                Assert(service.TryGet(lair.MemberIn(slot), out var c) && c.Kind == CreatureKind.BurrowRat, $"Place {slot} holds a rat of her brood.");
+
+            // Her reach, danger and the lone judgement
+            var plain = new Simpiens.Simulation.World.LairDefinition("plain", CreatureKind.BurrowRat, heart);
+            Assert(LairReach.Of(definition) == SimMath.Max(rat.Leash, matriarch.Leash), "Her lair holds as far as the longer leash.");
+            Assert(LairReach.Danger(definition, 0f) > LairReach.Danger(plain, 0f) && SimMath.Approximately(LairReach.Danger(definition, 0f), LairReach.Danger(plain, 0f) + LairReach.HarmPerSecond(matriarch, 0f)), "Her lair's danger is the brood's and hers.");
+            var skills = default(Simpiens.Simulation.Skills.SkillSet);
+            var armed = new Simpiens.Cognition.Inventory.AgentInventory();
+            armed.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(Simpiens.Simulation.Economy.ItemType.IronBlade, Simpiens.Simulation.Items.Grades.Standard));
+            float without = Simpiens.Cognition.Vitality.HarmToClear(plain, skills, armed), with = Simpiens.Cognition.Vitality.HarmToClear(definition, skills, armed);
+            Assert(with > without, $"Clearing her lair costs more than her brood alone ({with:0} against {without:0}).");
+            Assert(!Simpiens.Cognition.Vitality.BravesLair(definition, skills, armed, 100f, 100, downed: false), $"Nobody braves her lair alone with an iron blade ({with:0} expected harm).");
+
+            // A save wants her in her place
+            var save = service.Capture();
+            Assert(CreatureService.Check(save, map) == null, "Her lair's save checks.");
+            var wrong = service.Capture();
+            for (int i = 0; i < wrong.Creatures.Length; i++)
+                if (wrong.Creatures[i].Lair == index && wrong.Creatures[i].Slot == 0) wrong.Creatures[i].Kind = CreatureKind.BurrowRat;
+            Assert(CreatureService.Check(wrong, map) != null, "A rat in her place is refused.");
+            TestLog.Log($"[PASS] Test 6: a lair headed by its boss: the Matriarch at the heart and {lair.Pack - 1} of her brood; her lair's reach, danger ({LairReach.Danger(definition, 0f):0.0} a second) and cost to clear ({with:0}, {without:0} without her) count her; a save wants her in her place.");
         }
 
         private static (CreatureService Service, FakeWorld World) Filled(ulong seed)

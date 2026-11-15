@@ -80,6 +80,45 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>Its kind's loot table (K4); 0 until loot is in play.</summary>
         public ushort LootTableId { get; init; }
 
+        // Boss traits (Epic 10 Part 3, K10, Q13; seam A6: a boss is a row with traits, and the rule reads the traits, never a
+        // kind's name)
+
+        /// <summary>A boss: one of its kind, drawn with a health bar and named by the chronicle.</summary>
+        public bool IsBoss { get; init; }
+
+        /// <summary>Its swing strikes every crawler on its feet in its reach, one roll a foe in id order (the combat rule's D3).</summary>
+        public bool Slam { get; init; }
+
+        /// <summary>The share of its health under which it fights in fury (<see cref="FuryAttack"/>, <see cref="FuryInterval"/>); 0 for never.</summary>
+        public float FuryBelow { get; init; }
+
+        /// <summary>What fury multiplies its attack by.</summary>
+        public float FuryAttack { get; init; } = 1f;
+
+        /// <summary>What fury multiplies the time between its swings by (under 1: faster).</summary>
+        public float FuryInterval { get; init; } = 1f;
+
+        /// <summary>The share of its health under which, chasing, it calls its lair's brood to its quarry; 0 for never.</summary>
+        public float CallsBroodBelow { get; init; }
+
+        /// <summary>
+        /// Game hours its lair's reach must stand empty of crawlers before it is whole again at once (Q13: the Gatekeeper heals
+        /// between attempts); 0 for none. A kind with it usually heals nothing by resting (<see cref="HealHours"/> 0).
+        /// </summary>
+        public int WholeAfterHours { get; init; }
+
+        /// <summary>True for a kind that fights in fury below a line.</summary>
+        public bool HasFury => FuryBelow > 0f;
+
+        /// <summary>True when one of this kind with <paramref name="health"/> fights in fury.</summary>
+        public bool InFury(float health) => FuryBelow > 0f && health > 0f && health < (float)(FuryBelow * MaxHealth);
+
+        /// <summary>True when one of this kind with <paramref name="health"/> calls its brood (if it chases).</summary>
+        public bool CallsBrood(float health) => CallsBroodBelow > 0f && health > 0f && health < (float)(CallsBroodBelow * MaxHealth);
+
+        /// <summary><see cref="WholeAfterHours"/> in ticks; 0 for none.</summary>
+        public uint WholeAfterTicks => WholeAfterHours > 0 ? DayClock.Hours(WholeAfterHours) : 0u;
+
         /// <summary>The swing's interval in whole ticks of physical time.</summary>
         public int SwingIntervalTicks => CombatRules.SecondsToTicks(SwingIntervalSeconds);
 
