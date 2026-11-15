@@ -32,7 +32,7 @@ namespace Simpiens.Cognition
 
         /// <summary>The share of its pace <paramref name="rescuer"/> carries at (Epic 10 Part 3, K9.3d): half, and more by its skill at tending the fallen, four fifths at the most.</summary>
         public static float CarrySpeed(AgentState rescuer) => rescuer == null ? CarrySpeedFactor
-            : (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(rescuer.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForTending())));
+            : (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend())));
 
         /// <summary>Only a crawler at least this bold (personality) and this healthy goes into a hazard sector for its salvage.</summary>
         public const float VentureRiskTolerance = 0.3f;

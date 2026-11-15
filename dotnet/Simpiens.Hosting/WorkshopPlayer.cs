@@ -101,12 +101,12 @@ namespace Simpiens.Hosting
                 // The best hand at this station among those who would take the work (Epic 10 Part 3, K9.4, Q21: the player
                 // hires for skill), the first on a tie
                 var crawlers = _sim.Host.CrawlerStates;
-                var craft = Simpiens.Simulation.Skills.SkillTable.ForStation(_kind);
+                var work = Simpiens.Simulation.Skills.SkillWork.Make(_kind);
                 int best = -1;
                 for (int i = 0; i < crawlers.Count; i++)
                 {
                     if (workshops.CanHire(host, crawlers[i].AgentId, index, _wage, (uint)tick) != WorkshopRules.Check.Ok) continue;
-                    if (best < 0 || crawlers[i].Skills.Level(craft) > crawlers[best].Skills.Level(craft)) best = i;
+                    if (best < 0 || Simpiens.Simulation.Skills.CrawlerSkills.Level(crawlers[i], work) > Simpiens.Simulation.Skills.CrawlerSkills.Level(crawlers[best], work)) best = i;
                 }
                 if (best < 0) return;
                 _commands.QueueInfluence(InfluenceEvent.CreateHireArtisan(SourceId, crawlers[best].AgentId, (byte)index, _wage));

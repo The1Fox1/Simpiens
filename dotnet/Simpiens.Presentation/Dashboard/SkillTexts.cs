@@ -41,12 +41,15 @@ namespace Simpiens.Presentation.Dashboard
             return text.ToString();
         }
 
-        /// <summary>"Smithing 4 (Apprentice)": one skill with its band; empty for no such skill.</summary>
-        public static string WithBand(in SkillSet skills, Skill skill)
+        /// <summary>
+        /// "Smithing 4 (Apprentice)": how good a crawler is at <paramref name="work"/> (its effective level, Epic 10 Part 3,
+        /// K9.8a), named by the skill that answers for it, with its band; empty for work no skill answers.
+        /// </summary>
+        public static string WithBand(in SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in SkillWork work)
         {
-            var definition = SkillTable.Get(skill);
+            var definition = SkillTable.Get(SkillTable.SkillFor(work));
             if (definition == null) return string.Empty;
-            int level = skills.Level(skill);
+            int level = CrawlerSkills.Level(skills, worn, work);
             return Invariant($"{definition.DisplayName} {level} ({SkillRules.NameOf(SkillRules.BandOf(level))})");
         }
     }

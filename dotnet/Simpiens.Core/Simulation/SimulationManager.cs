@@ -183,15 +183,19 @@ namespace Simpiens.Simulation
         /// charted or not (danger is the world's, not what crawlers know of it).
         /// </summary>
         /// <summary>
-        /// Practice (Epic 10 Part 3, K9.2, Q18): adds <paramref name="experience"/> to <paramref name="agent"/>'s
-        /// <paramref name="skill"/>. A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the
-        /// chronicle. Main thread.
+        /// Practice (Epic 10 Part 3, K9.2, Q18), the simulation's one entry for it: adds <paramref name="experience"/> of
+        /// practice at <paramref name="work"/> to <paramref name="agent"/>'s skill for that work (the table's,
+        /// <see cref="Simpiens.Simulation.Skills.SkillTable.SkillFor"/>), no higher than <paramref name="source"/>'s ceiling
+        /// (K9.8a). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
+        /// thread.
         /// </summary>
-        public void Practise(AgentState agent, Simpiens.Simulation.Skills.Skill skill, int experience)
+        public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
         {
-            if (agent == null || skill == Simpiens.Simulation.Skills.Skill.None || experience <= 0) return;
+            if (agent == null || experience <= 0) return;
+            var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
+            if (skill == Simpiens.Simulation.Skills.Skill.None) return;
             var before = agent.Skills.Band(skill);
-            if (!agent.Practise(skill, experience, out int level)) return;
+            if (!agent.Practise(skill, experience, out int level, source.Ceiling)) return;
             var band = Simpiens.Simulation.Skills.SkillRules.BandOf(level);
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} reached {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)} {level} ({Simpiens.Simulation.Skills.SkillRules.NameOf(band)})");
             if (band == before) return;

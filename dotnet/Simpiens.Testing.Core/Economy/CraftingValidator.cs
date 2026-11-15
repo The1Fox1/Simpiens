@@ -159,7 +159,7 @@ namespace Simpiens.Testing.Economy
             public Host(TradeStallData stall) => Stalls.Add(stall);
 
             public IReadOnlyList<TradeStallData> ActiveStalls => Stalls;
-            public void Practise(Simpiens.Cognition.AgentState agent, Simpiens.Simulation.Skills.Skill skill, int experience) => agent?.Practise(skill, experience, out _);
+            public void Practise(Simpiens.Cognition.AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source) => agent?.Practise(Simpiens.Simulation.Skills.SkillTable.SkillFor(work), experience, out _, source.Ceiling);
             public IEconomyLedger EconomyLedger => null;
             public Simpiens.Narrative.INarrativeChronicleService ChronicleService => null;
             public EconomyTuning Economy => EconomyTuning.Default;

@@ -22,6 +22,7 @@ namespace Simpiens.Testing.Skills
             ValidateTheTable();
             ValidateLevelsAndBands();
             ValidateTheSkillSet();
+            ValidateTheSeam();
             ValidateLevelZeroChangesNothing();
             ValidateTheDraw();
             ValidatePersonalityLeansTheDraw();
@@ -45,12 +46,12 @@ namespace Simpiens.Testing.Skills
                 Assert(SkillTable.Get(skill.Id) == skill && SkillTable.IsDefined(skill.Id), $"{skill.Name}: found by id.");
             }
             Assert(SkillTable.Get(Skill.None) == null && SkillTable.Get((Skill)15) == null, "None and undefined ids have no row.");
-            Assert(SkillTable.ForFight(ranged: false) == Skill.Melee && SkillTable.ForFight(ranged: true) == Skill.Ranged, "A fight's skill, in reach and from range.");
-            Assert(SkillTable.ForHarvest(ItemType.IronOre) == Skill.Mining && SkillTable.ForHarvest(ItemType.Glowstone) == Skill.Mining, "Minerals are mined.");
-            Assert(SkillTable.ForHarvest(ItemType.MedicinalHerb) == Skill.Foraging, "Herbs are foraged.");
-            Assert(SkillTable.ForHarvest(ItemType.Ration) == Skill.None && SkillTable.ForHarvest(ItemType.None) == Skill.None, "Food at a plot takes no skill.");
-            Assert(SkillTable.ForStation(StationKind.Forge) == Skill.Smithing && SkillTable.ForStation(StationKind.Still) == Skill.Alchemy && SkillTable.ForStation(StationKind.None) == Skill.None, "Each station's skill.");
-            Assert(SkillTable.ForTending() == Skill.Medicine, "Tending the fallen is medicine.");
+            Assert(SkillTable.SkillFor(SkillWork.Fight(ranged: false)) == Skill.Melee && SkillTable.SkillFor(SkillWork.Fight(ranged: true)) == Skill.Ranged, "A fight's skill, in reach and from range.");
+            Assert(SkillTable.SkillFor(SkillWork.Harvest(ItemType.IronOre)) == Skill.Mining && SkillTable.SkillFor(SkillWork.Harvest(ItemType.Glowstone)) == Skill.Mining, "Minerals are mined.");
+            Assert(SkillTable.SkillFor(SkillWork.Harvest(ItemType.MedicinalHerb)) == Skill.Foraging, "Herbs are foraged.");
+            Assert(SkillTable.SkillFor(SkillWork.Harvest(ItemType.Ration)) == Skill.None && SkillTable.SkillFor(SkillWork.Harvest(ItemType.None)) == Skill.None, "Food at a plot takes no skill.");
+            Assert(SkillTable.SkillFor(SkillWork.Make(StationKind.Forge)) == Skill.Smithing && SkillTable.SkillFor(SkillWork.Make(StationKind.Still)) == Skill.Alchemy && SkillTable.SkillFor(SkillWork.Make(StationKind.None)) == Skill.None, "Each station's skill.");
+            Assert(SkillTable.SkillFor(SkillWork.Tend()) == Skill.Medicine && SkillTable.SkillFor(default(SkillWork)) == Skill.None, "Tending the fallen is medicine; no work, no skill.");
             Assert(SkillTable.InDisplayOrder.Count == all.Count, "Every skill is listed.");
             TestLog.Log("[PASS] Test 1: seven skills, each with an id, a name and a kind of work, and each kind of work finds its skill.");
         }
@@ -88,13 +89,41 @@ namespace Simpiens.Testing.Skills
             Assert(set.Practise(Skill.Mining, 60000, out level) && level == SkillRules.MaxLevel && set.Experience(Skill.Mining) == SkillRules.MaxExperience, "Experience stops at the last level's.");
             Assert(!set.Practise(Skill.Mining, 50, out level) && level == SkillRules.MaxLevel, "A master gains no more.");
             Assert(!set.Practise(Skill.None, 50, out _) && !set.Practise((Skill)16, 50, out _) && !set.Practise(Skill.Melee, 0, out _), "No skill, an id past the room and no experience change nothing.");
+            // What a source can teach (K9.8a): to its ceiling and no further; a skill past it keeps what it has
+            var taught = default(SkillSet);
+            Assert(taught.Practise(Skill.Alchemy, 5000, out level, ceiling: 3) && level == 3 && taught.Experience(Skill.Alchemy) == SkillRules.ExperienceFor(3), "A source that teaches to 3 brings a skill to level 3 and no further.");
+            Assert(!taught.Practise(Skill.Alchemy, 50, out level, ceiling: 3) && level == 3 && taught.Experience(Skill.Alchemy) == SkillRules.ExperienceFor(3), "At its ceiling, a source teaches nothing more.");
+            taught.Set(Skill.Melee, 7);
+            Assert(!taught.Practise(Skill.Melee, 50, out level, ceiling: 5) && level == 7 && taught.Experience(Skill.Melee) == SkillRules.ExperienceFor(7), "A skill past a source's ceiling keeps what it has.");
+            Assert(PracticeSource.Work.Kind == PracticeKind.Work && PracticeSource.Work.Ceiling == SkillRules.MaxLevel
+                && new PracticeSource(PracticeKind.Work, 99).Ceiling == SkillRules.MaxLevel && new PracticeSource(PracticeKind.Work, -1).Ceiling == 0, "The work teaches to the last level; a ceiling is held within the levels.");
             set.Set(Skill.Melee, 6);
             Assert(set.Level(Skill.Melee) == 6 && set.Band(Skill.Melee) == SkillBand.Journeyman && set.ToString() == "Melee 6, Mining 10", "Set to a level; listed in display order.");
             var copy = set;
             Assert(copy == set && copy.Equals(set) && copy.GetHashCode() == set.GetHashCode(), "Two sets alike are equal.");
             copy.Practise(Skill.Medicine, 1, out _);
             Assert(copy != set, "One point of experience tells two sets apart.");
-            TestLog.Log("[PASS] Test 3: a skill set gains levels by practice, to the last level and no further.");
+            TestLog.Log("[PASS] Test 3: a skill set gains levels by practice, to the last level (or a source's ceiling) and no further.");
+        }
+
+        private void ValidateTheSeam()
+        {
+            // How good a crawler is at each kind of work (K9.8a): today its learned level in the skill the table gives the work
+            var set = default(SkillSet);
+            set.Set(Skill.Melee, 4);
+            set.Set(Skill.Ranged, 2);
+            set.Set(Skill.Mining, 6);
+            set.Set(Skill.Smithing, 3);
+            set.Set(Skill.Medicine, 9);
+            Assert(CrawlerSkills.Level(set, null, SkillWork.Fight(ranged: false)) == 4 && CrawlerSkills.Level(set, null, SkillWork.Fight(ranged: true)) == 2, "A fight reads melee in reach, ranged from range.");
+            Assert(CrawlerSkills.Level(set, null, SkillWork.Harvest(ItemType.IronOre)) == 6 && CrawlerSkills.Level(set, null, SkillWork.Harvest(ItemType.MedicinalHerb)) == 0
+                && CrawlerSkills.Level(set, null, SkillWork.Harvest(ItemType.Ration)) == 0, "A harvest reads the skill of the item's group; food takes none.");
+            Assert(CrawlerSkills.Level(set, null, SkillWork.Make(StationKind.Forge)) == 3 && CrawlerSkills.Level(set, null, SkillWork.Make(StationKind.Still)) == 0
+                && CrawlerSkills.Level(set, null, SkillWork.Tend()) == 9, "Making reads the station's skill; tending, medicine.");
+            Assert(CrawlerSkills.Level(set, null, default(SkillWork)) == 0 && CrawlerSkills.Level(null, SkillWork.Tend()) == 0, "No work, or nobody: nothing.");
+            Assert(SkillWork.Make(StationKind.Forge) == SkillWork.Make(StationKind.Forge) && SkillWork.Make(StationKind.Forge) != SkillWork.Make(StationKind.Still)
+                && SkillWork.Harvest(ItemType.IronOre).ToString() == "Harvest IronOre", "A kind of work is a value.");
+            TestLog.Log("[PASS] Test 4: the seam reads how good a crawler is at each kind of work: today, its learned level in the work's skill.");
         }
 
         private void ValidateLevelZeroChangesNothing()
@@ -106,7 +135,7 @@ namespace Simpiens.Testing.Skills
             Assert(Math.Abs(SkillRules.HitBonus(10) - 0.2f) < 1e-6f && Math.Abs(SkillRules.DamageFactor(10) - 1.2f) < 1e-6f
                 && Math.Abs(SkillRules.MakeFactor(10) - 1.5f) < 1e-6f && Math.Abs(SkillRules.CarryBonus(10) - 0.3f) < 1e-6f && Math.Abs(SkillRules.HealFactor(10) - 1.5f) < 1e-6f, "A Master 10's factors.");
             Assert(SkillRules.HarvestFactor(99) == SkillRules.HarvestFactor(10) && SkillRules.HarvestFactor(-3) == SkillRules.HarvestFactor(0), "Levels outside 0 to 10 count as the nearest.");
-            TestLog.Log("[PASS] Test 4: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
+            TestLog.Log("[PASS] Test 5: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
         }
 
         private void ValidateTheDraw()
@@ -147,7 +176,7 @@ namespace Simpiens.Testing.Skills
                 float share = talentOf[(byte)skill.Id] / (float)(talents1 + 2 * talents2);
                 Assert(share > 0.11f && share < 0.18f, $"With no lean each skill is a talent as often as the next ({skill.Name}: {share:P0}).");
             }
-            TestLog.Log($"[PASS] Test 5: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
+            TestLog.Log($"[PASS] Test 6: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
         }
 
         private void ValidatePersonalityLeansTheDraw()
@@ -170,7 +199,7 @@ namespace Simpiens.Testing.Skills
             Assert(boldMelee > timidMelee * 2, $"The bold lean toward melee ({boldMelee} against {timidMelee} of {Crawlers}).");
             Assert(timidRanged > boldRanged * 2, $"The cautious lean toward ranged ({timidRanged} against {boldRanged}).");
             Assert(SkillSet.Lean(SkillLean.None, bold) == 0f && SkillSet.Lean(SkillLean.Bold, bold) == 1f && SkillSet.Lean(SkillLean.Cautious, bold) == -1f, "A lean reads its trait.");
-            TestLog.Log($"[PASS] Test 6: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
+            TestLog.Log($"[PASS] Test 7: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
         }
 
         private static void Assert(bool condition, string message)

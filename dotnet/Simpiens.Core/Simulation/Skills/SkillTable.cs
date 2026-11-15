@@ -6,8 +6,8 @@ namespace Simpiens.Simulation.Skills
     /// <summary>
     /// A skill, by id (Epic 10 Part 3, K9.1, Q17). The id is the skill's place in a crawler's <see cref="SkillSet"/> and in
     /// its save: never reuse one, and keep it under <see cref="SkillTable.Capacity"/>. What a skill is (its words, the work
-    /// that practises it, what leans its draw) is its row in <see cref="SkillTable"/>; code asks the table for the skill of a
-    /// kind of work, not for a skill by name.
+    /// that practises it, what leans its draw) is its row in <see cref="SkillTable"/>; code names the work it does
+    /// (<see cref="SkillWork"/>), not a skill.
     /// </summary>
     public enum Skill : byte
     {
@@ -184,38 +184,37 @@ namespace Simpiens.Simulation.Skills
         /// <summary>A code name for logs: the row's, or the raw id.</summary>
         public static string NameOf(Skill id) => Get(id)?.Name ?? $"Skill{(byte)id}";
 
-        /// <summary>The skill of a fight: in reach, or from range (the first row of that use, in id order); none if no row.</summary>
-        public static Skill ForFight(bool ranged) => FirstOf(ranged ? SkillUse.RangedFight : SkillUse.MeleeFight);
-
-        /// <summary>The skill of tending the fallen; none if no row.</summary>
-        public static Skill ForTending() => FirstOf(SkillUse.Tend);
-
-        /// <summary>The skill that harvests <paramref name="item"/>: the first harvest row (id order) whose group the item is in; none for food and anything no row harvests.</summary>
-        public static Skill ForHarvest(Simpiens.Simulation.Economy.ItemType item)
+        /// <summary>
+        /// The skill that answers for <paramref name="work"/> (Epic 10 Part 3, K9.8a), the first matching row in id order;
+        /// none if no row does:
+        /// <list type="bullet">
+        /// <item>a fight: the row of that use, in reach or from range;</item>
+        /// <item>a harvest: the harvest row whose group the item is in (none for food and anything no row harvests);</item>
+        /// <item>making: the row that works the station;</item>
+        /// <item>tending the fallen: the row of that use.</item>
+        /// </list>
+        /// The skill practice raises and the dossier names. How good a crawler is at the work is
+        /// <see cref="CrawlerSkills.Level(in SkillSet, Simpiens.Cognition.Inventory.IAgentInventory, in SkillWork)"/>.
+        /// </summary>
+        public static Skill SkillFor(in SkillWork work)
         {
             var all = _tables.All;
             for (int i = 0; i < all.Length; i++)
             {
-                if (all[i].Use == SkillUse.Harvest && all[i].Harvests != 0 && ItemCatalog.Is(item, all[i].Harvests)) return all[i].Id;
+                var row = all[i];
+                if (row.Use != work.Use) continue;
+                switch (work.Use)
+                {
+                    case SkillUse.Harvest:
+                        if (row.Harvests != 0 && ItemCatalog.Is(work.Item, row.Harvests)) return row.Id;
+                        break;
+                    case SkillUse.Make:
+                        if (work.Station != StationKind.None && row.Station == work.Station) return row.Id;
+                        break;
+                    default: // no row is of no use: the table refuses one
+                        return row.Id;
+                }
             }
-            return Skill.None;
-        }
-
-        /// <summary>The skill that works a station of <paramref name="kind"/>; none if no row does.</summary>
-        public static Skill ForStation(StationKind kind)
-        {
-            var all = _tables.All;
-            for (int i = 0; i < all.Length; i++)
-            {
-                if (all[i].Use == SkillUse.Make && all[i].Station == kind && kind != StationKind.None) return all[i].Id;
-            }
-            return Skill.None;
-        }
-
-        private static Skill FirstOf(SkillUse use)
-        {
-            var all = _tables.All;
-            for (int i = 0; i < all.Length; i++) if (all[i].Use == use) return all[i].Id;
             return Skill.None;
         }
     }

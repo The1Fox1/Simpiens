@@ -494,9 +494,9 @@ namespace Simpiens.Simulation.Workshops
         public static byte GradeOf(AgentState artisan, StationKind kind) =>
             artisan == null ? Grades.Standard : Simpiens.Simulation.Skills.SkillRules.GradeOf(LevelOf(artisan, kind));
 
-        /// <summary>An artisan's level in the skill that works a station of <paramref name="kind"/>; 0 with no artisan or no such skill.</summary>
+        /// <summary>An artisan's effective level at a station of <paramref name="kind"/>'s makes (Epic 10 Part 3, K9.8a); 0 with no artisan or no such skill.</summary>
         public static int LevelOf(AgentState artisan, StationKind kind) =>
-            artisan == null ? 0 : artisan.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForStation(kind));
+            Simpiens.Simulation.Skills.CrawlerSkills.Level(artisan, Simpiens.Simulation.Skills.SkillWork.Make(kind));
 
         /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
         public CraftStep Work(IWorkshopHost host, int index)
@@ -516,7 +516,7 @@ namespace Simpiens.Simulation.Workshops
             uint made = station.Made;
             var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeFactor(level));
             if (station.Made > made && hand != null)
-                host.Practise(hand, Simpiens.Simulation.Skills.SkillTable.ForStation(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience);
+                host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;

@@ -40,15 +40,19 @@ namespace Simpiens.Simulation.Skills
         }
 
         /// <summary>
-        /// Adds <paramref name="experience"/> to <paramref name="skill"/>, up to the last level's. True when a level was
-        /// gained, with the level it now has.
+        /// Adds <paramref name="experience"/> to <paramref name="skill"/>, up to <paramref name="ceiling"/>'s experience (the
+        /// last level's by default; Epic 10 Part 3, K9.8a: what a source of practice can teach). A skill already past the
+        /// ceiling keeps what it has. True when a level was gained, with the level it now has.
         /// </summary>
-        public bool Practise(Skill skill, int experience, out int level)
+        public bool Practise(Skill skill, int experience, out int level, int ceiling = SkillRules.MaxLevel)
         {
             level = 0;
             if ((byte)skill == 0 || (byte)skill >= SkillTable.Capacity || experience <= 0) return false;
             int before = _experience[(byte)skill];
-            int after = Math.Min(SkillRules.MaxExperience, before + experience);
+            level = SkillRules.LevelOf(before);
+            int most = SkillRules.ExperienceFor(Math.Min(ceiling, SkillRules.MaxLevel));
+            if (before >= most) return false;
+            int after = Math.Min(most, before + experience);
             _experience[(byte)skill] = (ushort)after;
             level = SkillRules.LevelOf(after);
             return level > SkillRules.LevelOf(before);

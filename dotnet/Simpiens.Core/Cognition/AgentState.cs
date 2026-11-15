@@ -126,11 +126,15 @@ namespace Simpiens.Cognition
         /// </summary>
         public Simpiens.Simulation.Skills.SkillSet Skills { get; set; }
 
-        /// <summary>Adds practice in <paramref name="skill"/>; true when a level was gained, with the level it now has. Main thread.</summary>
-        public bool Practise(Simpiens.Simulation.Skills.Skill skill, int experience, out int level)
+        /// <summary>
+        /// Adds practice in <paramref name="skill"/>, up to <paramref name="ceiling"/>; true when a level was gained, with the
+        /// level it now has. Main thread. Internal (Epic 10 Part 3, K9.8a): practice enters through the simulation's
+        /// <see cref="Simpiens.Simulation.Skills.ISkillPractice"/>, by the work done; tests set a skill by hand here.
+        /// </summary>
+        internal bool Practise(Simpiens.Simulation.Skills.Skill skill, int experience, out int level, int ceiling = Simpiens.Simulation.Skills.SkillRules.MaxLevel)
         {
             var skills = Skills;
-            bool gained = skills.Practise(skill, experience, out level);
+            bool gained = skills.Practise(skill, experience, out level, ceiling);
             Skills = skills;
             return gained;
         }

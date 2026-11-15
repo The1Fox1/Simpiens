@@ -29,8 +29,8 @@ namespace Simpiens.Core.Tests
         {
             using var extended = TestCatalogs.MycologyAndGlowcaps();
             Assert.Equal(8, SkillTable.All.Count);
-            Assert.Equal(TestCatalogs.Mycology, SkillTable.ForHarvest(TestCatalogs.Glowcap));
-            Assert.Equal(Skill.Mining, SkillTable.ForHarvest(ItemType.IronOre)); // the others' work keeps its skill
+            Assert.Equal(TestCatalogs.Mycology, SkillTable.SkillFor(SkillWork.Harvest(TestCatalogs.Glowcap)));
+            Assert.Equal(Skill.Mining, SkillTable.SkillFor(SkillWork.Harvest(ItemType.IronOre))); // the others' work keeps its skill
 
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);

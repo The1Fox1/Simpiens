@@ -84,18 +84,41 @@ namespace Simpiens.Core.Tests
             var crawler = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             var skills = default(SkillSet);
             crawler.Skills = skills; // by hand: unskilled
-            ((ISkillPractice)sim.Simulation).Practise(crawler, Skill.Mining, SkillRules.ExperienceFor(2)); // Novice 2: a level, not a band
+            ((ISkillPractice)sim.Simulation).Practise(crawler, Mining, SkillRules.ExperienceFor(2), PracticeSource.Work); // Novice 2: a level, not a band
             Assert.Equal(2, crawler.Skills.Level(Skill.Mining));
             Assert.DoesNotContain(Told(sim), e => e.EventType == ChronicleEventType.SkillBandReached);
-            ((ISkillPractice)sim.Simulation).Practise(crawler, Skill.Mining, SkillRules.ExperienceFor(3) - SkillRules.ExperienceFor(2)); // Apprentice
+            ((ISkillPractice)sim.Simulation).Practise(crawler, Mining, SkillRules.ExperienceFor(3) - SkillRules.ExperienceFor(2), PracticeSource.Work); // Apprentice
             var told = Assert.Single(Told(sim), e => e.EventType == ChronicleEventType.SkillBandReached);
             Assert.Equal(crawler.AgentId, told.ActorAId);
             Assert.Equal((int)Skill.Mining * 256 + (int)SkillBand.Apprentice, (int)told.ExtraData);
             Assert.EndsWith(" is now an apprentice miner.", ((INarrativeFormatter)sim.Services.GetService(typeof(INarrativeFormatter))).FormatEvent(told));
-            ((ISkillPractice)sim.Simulation).Practise(crawler, Skill.None, 500);
-            ((ISkillPractice)sim.Simulation).Practise(null, Skill.Mining, 500);
-            Assert.Equal(SkillRules.ExperienceFor(3), crawler.Skills.Experience(Skill.Mining)); // no skill, nobody: nothing
+            ((ISkillPractice)sim.Simulation).Practise(crawler, default, 500, PracticeSource.Work);
+            ((ISkillPractice)sim.Simulation).Practise(null, Mining, 500, PracticeSource.Work);
+            Assert.Equal(SkillRules.ExperienceFor(3), crawler.Skills.Experience(Skill.Mining)); // no work, nobody: nothing
         }
+
+        /// <summary>
+        /// Practice enters by the work done and its source (K9.8a): the simulation raises the work's skill, no higher than
+        /// what the source can teach; the work itself teaches to the last level.
+        /// </summary>
+        [Fact]
+        public void PracticeIsHeldToWhatItsSourceCanTeach()
+        {
+            using var sim = Outpost();
+            var crawler = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
+            crawler.Skills = default; // by hand: unskilled
+            var practice = (ISkillPractice)sim.Simulation;
+            practice.Practise(crawler, Mining, SkillRules.MaxExperience, new PracticeSource(PracticeKind.Work, 5));
+            Assert.Equal(SkillRules.ExperienceFor(5), crawler.Skills.Experience(Skill.Mining));
+            Assert.Equal(0, crawler.Skills.Experience(Skill.Foraging)); // the work's skill alone
+            practice.Practise(crawler, Mining, 100, new PracticeSource(PracticeKind.Work, 5));
+            Assert.Equal(SkillRules.ExperienceFor(5), crawler.Skills.Experience(Skill.Mining)); // at the ceiling: nothing more
+            practice.Practise(crawler, Mining, SkillRules.MaxExperience, PracticeSource.Work);
+            Assert.Equal(SkillRules.MaxLevel, crawler.Skills.Level(Skill.Mining));
+            Assert.Equal(SkillRules.MaxLevel, CrawlerSkills.Level(crawler, Mining)); // what every effect reads
+        }
+
+        private static readonly SkillWork Mining = SkillWork.Harvest(ItemType.IronOre);
 
         private static List<ChronicleEvent> Told(LocalSimulation sim)
         {

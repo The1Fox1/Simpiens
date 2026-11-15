@@ -197,7 +197,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var harvester = node.Agent;
                 if (harvester != null && yieldItem.IsSalvage()) harvester.Activity.RecordSalvageHarvest(context.CurrentTick);
                 // A unit mined or foraged is practice (Epic 10 Part 3, K9.2)
-                if (harvester != null) context.Practise(harvester, Simpiens.Simulation.Skills.SkillTable.ForHarvest(yieldItem), Simpiens.Simulation.Skills.SkillRules.UnitExperience);
+                if (harvester != null) context.Practise(harvester, Simpiens.Simulation.Skills.SkillWork.Harvest(yieldItem), Simpiens.Simulation.Skills.SkillRules.UnitExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
                 if (harvester != null && ItemCatalog.Is(yieldItem, ItemCategory.Mineral)) WearTool(harvester, node, context);
                 if (SimLog.Traces(SimLog.Economy, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
@@ -258,11 +258,11 @@ namespace Simpiens.Cognition.Planning.Handlers
             a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
             /// <summary>How much faster <paramref name="harvester"/> mines <paramref name="item"/> with what it wears (<see cref="CrawlerStats.MiningSpeed"/>).</summary>
         public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) =>
-            harvester == null ? 1f : (float)(CrawlerStats.MiningSpeed(harvester.Inventory, item) * SkillSpeed(harvester.Skills, item)); // nobody: the usual pace
+            harvester == null ? 1f : (float)(CrawlerStats.MiningSpeed(harvester.Inventory, item) * SkillSpeed(harvester.Skills, harvester.Inventory, item)); // nobody: the usual pace
 
-        /// <summary>How much faster a crawler with <paramref name="skills"/> harvests <paramref name="item"/> (Epic 10 Part 3, K9.3b): its level in the skill that harvests the item's group; 1 unskilled, and for food.</summary>
-        public static float SkillSpeed(in Simpiens.Simulation.Skills.SkillSet skills, ItemType item) =>
-            Simpiens.Simulation.Skills.SkillRules.HarvestFactor(skills.Level(Simpiens.Simulation.Skills.SkillTable.ForHarvest(item)));
+        /// <summary>How much faster a crawler with <paramref name="skills"/>, wearing <paramref name="worn"/>, harvests <paramref name="item"/> (Epic 10 Part 3, K9.3b): its effective level at the harvest (K9.8a), centred on a Novice 2.</summary>
+        public static float SkillSpeed(in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, ItemType item) =>
+            Simpiens.Simulation.Skills.SkillRules.HarvestFactor(Simpiens.Simulation.Skills.CrawlerSkills.Level(skills, worn, Simpiens.Simulation.Skills.SkillWork.Harvest(item)));
 
         /// <summary>
         /// A mineral unit mined wears every piece worn that wears by the unit (D37; by its rule, whichever slot it is in, Epic

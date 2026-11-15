@@ -10,7 +10,7 @@ namespace Simpiens.Core.Tests
     /// <summary>
     /// Code asks the skill table, not a skill (Epic 10 Part 3, K9.6): production code names a skill (Skill.X, other than
     /// None) only in the files below, each with its reason, so a new skill is a row with no code of its own (AGENTS.md,
-    /// "Adding a skill"): the table finds a skill by its kind of work (ForFight, ForHarvest, ForStation, ForTending). The list
+    /// "Adding a skill"): code names the work it does (SkillWork) and the table finds its skill (SkillFor). The list
     /// only shrinks: a file that starts naming skills fails, and so does an entry whose file no longer names any.
     /// </summary>
     public class SkillNamesTests
@@ -43,7 +43,7 @@ namespace Simpiens.Core.Tests
 
             var offenders = naming.Keys.Where(f => !Allowed.ContainsKey(f)).OrderBy(f => f).Select(f => $"{f} ({string.Join(", ", naming[f])})").ToList();
             var stale = Allowed.Keys.Where(f => !naming.ContainsKey(f)).OrderBy(f => f).ToList();
-            Assert.True(offenders.Count == 0, "Ask the skill table (ForFight, ForHarvest, ForStation, ForTending), not a skill: " + string.Join("; ", offenders));
+            Assert.True(offenders.Count == 0, "Name the work (SkillWork), not a skill: " + string.Join("; ", offenders));
             Assert.True(stale.Count == 0, "These files no longer name skills; take them off the list: " + string.Join("; ", stale));
         }
 

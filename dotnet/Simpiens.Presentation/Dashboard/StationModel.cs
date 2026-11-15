@@ -327,7 +327,7 @@ namespace Simpiens.Presentation.Dashboard
             else if (ShiftBlocks.Covers(contract.Shifts, Tick)) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on shift");
             else ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · {OffShiftText(contract.Shifts)}");
             // Its skill at the station and the grade it makes (W4, D55; its practice is its skill since Epic 10 Part 3, K9.3c)
-            ArtisanSkill = agent != null ? SkillTexts.WithBand(agent.Skills, Simpiens.Simulation.Skills.SkillTable.ForStation(state.Kind)) : string.Empty;
+            ArtisanSkill = agent != null ? SkillTexts.WithBand(agent.Skills, agent.Inventory, Simpiens.Simulation.Skills.SkillWork.Make(state.Kind)) : string.Empty;
             ArtisanState += " · " + (ArtisanSkill.Length > 0 ? ArtisanSkill + ", makes " : string.Empty) + Grades.NameOf(WorkshopService.GradeOf(agent, state.Kind));
             DescribeShifts();
         }
@@ -364,13 +364,14 @@ namespace Simpiens.Presentation.Dashboard
             }
             // The best hand at this station first (Epic 10 Part 3, K9.5, Q21), then the most trusting; the registry's order
             // breaks a tie, so the list is the same every refresh
-            var craft = Simpiens.Simulation.Skills.SkillTable.ForStation(workshops[Index].Kind);
+            var work = Simpiens.Simulation.Skills.SkillWork.Make(workshops[Index].Kind);
+            var craft = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
             for (int i = 1; i < _willing.Count; i++) // a stable insertion sort: the list is a handful
             {
                 var item = _willing[i];
                 int j = i - 1;
-                while (j >= 0 && (_willing[j].Crawler.Skills.Level(craft) < item.Crawler.Skills.Level(craft)
-                    || (_willing[j].Crawler.Skills.Level(craft) == item.Crawler.Skills.Level(craft) && _willing[j].Trust < item.Trust)))
+                int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(item.Crawler, work);
+                while (j >= 0 && Before(item.Trust, level, _willing[j].Trust, Simpiens.Simulation.Skills.CrawlerSkills.Level(_willing[j].Crawler, work)))
                 {
                     _willing[j + 1] = _willing[j];
                     j--;
@@ -388,7 +389,7 @@ namespace Simpiens.Presentation.Dashboard
                     Name = _context.FriendlyName(id, DossierModel.UnknownName),
                     HasPortrait = crawler.Look.IsComplete,
                     Portrait = crawler.Look.IsComplete ? PortraitKey.Of(id, crawler, _moods, tick) : default,
-                    Standing = (craft != Simpiens.Simulation.Skills.Skill.None ? Invariant($"{Simpiens.Simulation.Skills.SkillTable.Get(craft).DisplayName} {crawler.Skills.Level(craft)} · ") : string.Empty)
+                    Standing = (craft != Simpiens.Simulation.Skills.Skill.None ? Invariant($"{Simpiens.Simulation.Skills.SkillTable.Get(craft).DisplayName} {Simpiens.Simulation.Skills.CrawlerSkills.Level(crawler, work)} · ") : string.Empty)
                         + Invariant($"Trust {trust} · Warmth {warmth}"),
                     Ask = WorkshopRules.ReservationWage(crawler, tuning),
                 });
@@ -397,6 +398,9 @@ namespace Simpiens.Presentation.Dashboard
                 ? Invariant($"Nobody yet. A cautious resident takes station work once it trusts you (trust {tuning.HireTrust}, warmth {tuning.HireWarmth}): trade fairly and pay its bounties.")
                 : _willing.Count == 1 ? "One resident would take the work." : Invariant($"{_willing.Count} residents would take the work.");
         }
+
+        /// <summary>True when a hand at <paramref name="level"/> with <paramref name="trust"/> goes before one at <paramref name="theirLevel"/> with <paramref name="theirTrust"/>: the better hand, then the more trusting.</summary>
+        private static bool Before(int trust, int level, int theirTrust, int theirLevel) => theirLevel < level || (theirLevel == level && theirTrust < trust);
 
         private void RefreshOrder(StationState state, string station)
         {

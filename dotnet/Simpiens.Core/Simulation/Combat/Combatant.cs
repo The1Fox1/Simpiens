@@ -69,14 +69,22 @@ namespace Simpiens.Simulation.Combat
         /// no defense, <see cref="CombatRules.UnarmedReach"/> and a swing every <see cref="CombatRules.UnarmedIntervalSeconds"/>; a
         /// weapon or armour adds to or multiplies the base, as a pickaxe multiplies harvest speed.
         /// </summary>
-        public static Combatant ForCrawler(AgentState state, float bodyRadius)
+        public static Combatant ForCrawler(AgentState state, float bodyRadius) =>
+            ForCrawler(state.AgentId, state.Position, bodyRadius, state.Health, standing: !state.IsDowned && state.Health > 0f, state.Skills, state.Inventory);
+
+        /// <summary>
+        /// As <see cref="ForCrawler(AgentState, float)"/>, from what a crawler is made of rather than its state: its skills
+        /// and what it wears, which cognition's copy holds too (Epic 10 Part 3, K9.8b: a lair is judged by the fighter the
+        /// fight would build).
+        /// </summary>
+        public static Combatant ForCrawler(EntityId id, Vec2 position, float bodyRadius, float health, bool standing,
+            in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn)
         {
-            var worn = state.Inventory;
             // Its skill at the fight it fights (Epic 10 Part 3, K9.3a, Q20): ranged with a weapon that has a range, melee
             // otherwise; the hit chance and a little damage. Unskilled, both are the numbers before skills
             float range = CrawlerStats.Get(worn, StatKind.Range);
-            int level = state.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForFight(range > 0f));
-            return new Combatant(state.AgentId, state.Position, bodyRadius, state.Health, standing: !state.IsDowned && state.Health > 0f,
+            int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(skills, worn, Simpiens.Simulation.Skills.SkillWork.Fight(range > 0f));
+            return new Combatant(id, position, bodyRadius, health, standing,
                 attack: (float)(CrawlerStats.Get(worn, StatKind.Attack, CombatRules.UnarmedAttack) * Simpiens.Simulation.Skills.SkillRules.DamageFactor(level)),
                 defense: CrawlerStats.Get(worn, StatKind.Defense),
                 reach: CrawlerStats.Get(worn, StatKind.Reach, CombatRules.UnarmedReach),

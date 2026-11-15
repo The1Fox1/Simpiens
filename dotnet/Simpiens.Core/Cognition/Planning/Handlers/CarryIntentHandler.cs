@@ -72,7 +72,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, node.Id, fallen.AgentId,
                     context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 1f));
                 Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
-                context.Practise(rescuer, Simpiens.Simulation.Skills.SkillTable.ForTending(), Simpiens.Simulation.Skills.SkillRules.RescueExperience); // a rescue is practice (K9.2)
+                context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
                 return IntentResult.Success;
             }
             if (result != IntentResult.InProgress)
@@ -118,12 +118,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (definition == null || !rescuer.Inventory.TryRemoveItem(give.Medicine, 1)) return IntentResult.TargetMissing;
             float before = fallen.Health;
             // Given by a skilled hand it heals more (Epic 10 Part 3, K9.3d)
-            ItemUse.Apply(fallen, definition, Simpiens.Simulation.Skills.SkillRules.HealFactor(rescuer.Skills.Level(Simpiens.Simulation.Skills.SkillTable.ForTending())));
+            ItemUse.Apply(fallen, definition, Simpiens.Simulation.Skills.SkillRules.HealFactor(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend())));
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} gave {SimLog.Agent(fallen.AgentId)} {definition.Name}: health {before:F0} -> {fallen.Health:F0}");
             context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, node.Id, fallen.AgentId,
                 context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 2f));
             Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
-            context.Practise(rescuer, Simpiens.Simulation.Skills.SkillTable.ForTending(), Simpiens.Simulation.Skills.SkillRules.RescueExperience); // a rescue is practice (K9.2)
+            context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
             return IntentResult.Success;
         }
     }
