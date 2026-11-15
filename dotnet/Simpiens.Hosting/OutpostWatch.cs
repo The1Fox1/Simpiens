@@ -329,7 +329,7 @@ namespace Simpiens.Hosting
                     float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
                     inKnownLair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f
                         && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
-                    if (inKnownLair) braves = Vitality.BravesLair(map.Lairs[l], state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned);
+                    if (inKnownLair) braves = Vitality.BravesLair(map.Lairs[l], state.Skills, state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned);
                 }
                 // A victor stepping in for its own kill's drop at hand is D24's, not a lone venture
                 bool ownDrop = state.CurrentIntent is Simpiens.Cognition.Contracts.PickUpIntent pick && _sim.Simulation.Piles.TryGet(pick.PileId, out var pile) && pile.ClaimedFor == state.AgentId;

@@ -18,7 +18,8 @@ namespace Simpiens.Core.Tests
     /// buys a blade (over the caravan's cudgel, traded in) with its own gold, braves a known lair it expects to clear (D21),
     /// meets the creatures there, fights back and slays one, within four game days. The days hold, the ledger balances, no
     /// intent handler throws. Gate seed 18: K3.3 measured kills on 7 of the 23 gate seeds in four days, this one's first at
-    /// t14382.
+    /// t14382; with skills on 5, and with a lair judged by the crawler's skill (Epic 10 Part 3, K9.8b) on 6, with no death and
+    /// the days held on all 23 (<see cref="MeasureFightsBackOnTheGateSeeds"/>), this one's first at t19597.
     /// </summary>
     public class ArmedCrawlerScenarioTests
     {
@@ -57,6 +58,59 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, watch.IntentFaults);
             var failures = watch.DayFailures();
             Assert.True(failures.Count == 0, "The days failed:\n  " + string.Join("\n  ", failures));
+        }
+
+        /// <summary>
+        /// The measurement behind the seed (explicit, a minute or two): every gate seed's four days with the forge making
+        /// blades, eight at a time: the first kill and its slayer, the residents who braved a known lair, the deaths and the
+        /// days' checks.
+        /// </summary>
+        [Fact(Explicit = true)]
+        public void MeasureFightsBackOnTheGateSeeds()
+        {
+            var seeds = OutpostWatch.GateSeeds;
+            var lines = new string[seeds.Length];
+            int killed = 0, held = 0, deaths = 0;
+            var gate = new object();
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+            {
+                using var sim = LocalSimulation.Create(seeds[i]);
+                sim.Respawn(OutpostSession.SessionId);
+                new WorkshopPlayer(sim, StationKind.Forge, ItemType.IronBlade);
+                var watch = new OutpostWatch(sim);
+                var braved = new HashSet<EntityId>();
+                long firstKill = -1;
+                while (sim.Clock.CurrentTick < Horizon)
+                {
+                    watch.Run(1);
+                    if (firstKill < 0 && watch.Kills > 0) firstKill = sim.Clock.CurrentTick;
+                    var lairs = sim.Simulation.Creatures.Lairs;
+                    foreach (var crawler in sim.Host.CrawlerStates)
+                    {
+                        if (crawler.IsDrifter || braved.Contains(crawler.AgentId)) continue;
+                        for (int l = 0; l < lairs.Count; l++)
+                        {
+                            if (Simpiens.Simulation.Creatures.LairReach.Holds(lairs[l].Definition, crawler.Position)
+                                && Vitality.BravesLair(lairs[l].Definition, crawler.Skills, crawler.Inventory, crawler.Health, crawler.Personality.RiskTolerancePercent, crawler.IsDowned))
+                            {
+                                braved.Add(crawler.AgentId);
+                                break;
+                            }
+                        }
+                    }
+                }
+                watch.Finish();
+                var failures = watch.DayFailures();
+                lines[i] = $"seed {seeds[i]}: first kill {(firstKill >= 0 ? $"t{firstKill}" : "never")}, kills {watch.Kills}, braved by {braved.Count}, deaths {watch.Deaths}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}";
+                lock (gate)
+                {
+                    if (firstKill >= 0) killed++;
+                    if (failures.Count == 0) held++;
+                    deaths += watch.Deaths;
+                }
+            });
+            foreach (var line in lines) TestContext.Current.TestOutputHelper?.WriteLine(line);
+            TestContext.Current.TestOutputHelper?.WriteLine($"in four days, of {seeds.Length} seeds: a kill on {killed}, the days held on {held}, {deaths} deaths in all");
         }
     }
 }
