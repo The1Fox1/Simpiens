@@ -376,6 +376,23 @@ The go: "Let's close his out by finishing K10-K11. I will not be able to supervi
   - **Under-armed pairs against the beetles:** a death on 2 of 23 seeds, as before (8 and 17 now, 7 and another before). Her slot moved every creature's id and timing, so `DeathHasItsCost` moves to gate seed 8 (a death at t30345, a newcomer at t50505).
   - **Seeds 1–120** 120/120 with and without the guild; the soak 15/15.
 - **F12, the crafting profile's pay-quit band was at the profile's own rate** (K10.2a): with the Matriarch the crafting profile quit for want of pay on 5 of seeds 1–20 (seeds 1, 2, 3, 4, 8), against a band of 15% (3). On seeds 21–40 the rate is the same before and after (3 each). Across 40 seeds it is 6 at K10.1b (15%) and 8 with her (20%), and which seeds quit moves with any change of the creatures' timing. The band (`EconomySoak.CraftingUnpaidQuitShare`) is raised to 25% as a default; F3's option A judged this profile across seeds for exactly this reason. [Basic: a test band; the producer may set it]
+- **D64, the slam** (K10.3a, Q13: "a slam that strikes everyone in reach"):
+  - **When:** its quarry in reach and its swing due, a slamming kind strikes every crawler on its feet in its reach, up to the nearest eight.
+  - **The roll:** one roll a foe from its swing's stream, in id order (`CombatRules.Slam`, as D3 foresaw). The first foe's outcome is what a lone swing at it would be.
+  - **What each blow is:** an ordinary blow on that crawler, decided with every other swing of the tick (D6). It is cut by that crawler's own defense and wears its armour. A miss is still a blow that fell, so the crawler flees and the lair is charted.
+  - **Why the reach matters:** the bows that keep their distance (D46) stand outside it, and the blades in it share every slam.
+- **D65, fury follows health** (K10.3b): under a quarter of its health the Gatekeeper strikes for ×1.5 and swings ×0.6 as often (`Combatant.ForCreature`). There's no state, so a keeper made whole leaves its fury, and a load changes nothing.
+- **D66, whole between attempts** (K10.3c):
+  - **The clock:** the keeper notes the last tick a living crawler stood in its lair's reach. A downed crawler there counts: the fight isn't over. Once that tick is a game hour past, the keeper is whole at once. It heals nothing at rest (`HealHours` 0).
+  - **Saved:** the tick is saved, as `CreatureRecord` grows from 72 to 80 bytes inside format 11.
+  - **The world hash:** it mixes the tick in once it is set, so golden doesn't move until someone visits.
+  - **So an attempt is one fight:** a party that turns back and comes again within the hour meets a hurt keeper. A party that goes home to heal meets a whole one.
+- **D67, beaten once:** the row's `RespawnHours` 0. Its place never refills, across days and saves; nothing new was needed.
+- **F13, a third allocation test failed now and then** (F2, F4's watch):
+  - **What failed:** `EconomyZeroAlloc` failed in two of about ten full runs of the core tests since K10.1a, once with 4,368 bytes. It never failed alone or in four instrumented full runs, where no tick allocated.
+  - **Why it's the measuring:** that fits the runtime's own first-pass work landing on the measuring thread, never the code measured.
+  - **The fix:** a pass that allocates is now measured once more, and the second must allocate nothing. A real allocation repeats every pass.
+  - [Basic: the measuring; watch the other allocation tests]
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
