@@ -1722,3 +1722,15 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Found:** the creatures' pass returned early when no creature was left, keeping the last tick's shots and any asked swings.
 - **Golden re-recorded** in its own commit (`2c34d44`): the caravan stocks slings from its first visit, t2600 on.
 - **K8's gate** (2026-11-12): core 276/276, client 512/512 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.
+
+## 2026-11-14: Epic 10 Part 3, K9, the skill system (at the producer's "Let's tackle the skills system now")
+- **The split:** K9.3, Very Complex and supervised, was done as four parts (combat, the harvest, making, medicine), each a factor read where its work is done, with D49–D53 in the epic for the developer's review.
+- **Skills are a table on the slots' pattern:** `Simulation/Skills/` (its own namespace: cognition reads skills and may read nothing of `People/`), a `SkillTable` of rows by kind of work, a `SkillSet` of 16 experiences in the crawler's record inside format 11. Code asks the table for the skill of a kind of work (`SkillNamesTests`), so the proof (`SkillProofTests`, Mycology) adds a skill as a row.
+- **One entry point for practice:** `ISkillPractice` (`SimulationManager.Practise`), carried by the intent context, the creatures' world and the workshops' host, so every system practises the same way and a band reached is told once.
+- **The harvest is centred, the rest start at today's numbers:** a Novice 2 harvests at the old pace (0.92 + 0.04 a level). Uncentred, the outpost brought in more salvage than the treasury is tuned for (the crafting soak made goods on 14 of 20 seeds; centred, 36 of 40). Combat, making and tending at level 0 are as before skills.
+- **W4's practice moved into the bands** (inside format 11): the contract's practice count and `WorkshopTuning.MakesPerGrade` went; an artisan's grade is its station skill's band.
+- **Deviation from the plan:** the DoD runs seven game days, not three (D53): the forge stands only on day 1.3–2.8, so no seed raised a smith's grade in three.
+- **Measured against a baseline at K9.2, in a worktree** (practice without effects): no live scenario's rate moved beyond noise. The forge loop's 5 → 2 of 23 was 19 → 18 of 60 on seeds 21–80. Three DoDs moved seed for the new timings.
+- **Found:** the greedy soak band (F9, raised to 6); seed 12's trust with any scripted player (F10, untraced); one thrash on seed 64 from a bounty race (F11).
+- **Golden re-recorded twice,** each in its own commit: once for skills in the world hash (K9.1, `c72b835`), once for what they do (`e858402`).
+- **K9's gate** (2026-11-14): core 287/287, client 513/513 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11), the MonoGame and Android compiles clean.

@@ -1,6 +1,6 @@
 # Epic 10, Part 3: Creatures, Combat and the Gatekeeper
 
-- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is done the same day (§4): the measurements (finding F1), the combat rule (D1–D8) and the creature catalogue. The producer approved it the same day: "Approved. Proceed with developing K1". K1, the equipment system, is done the same day: slots as a table, storage for 16 (save format 11, its design approved: "continue with k1.3-k1.6"), stats and wear over every slot, outfitting by slot and by stats (the live scenario `GearByTheSlot`: a venturer wears a hard hat over hazard gear on 17 of the 23 gate seeds), the client from the slot table (hazard gear is now a suit worn on the body), and a slot added as data. The producer's look passed ("K1 looks good") with the go for K2, creatures: K2.1, lairs, done the same day; K2.2, the creature's rule, done the same day and waiting for the developer's review (its decisions D9–D15 below) before K2.3. At the producer's word (2026-11-09: "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now"), the creatures are drawn on the map ahead of K2.3 (K2.5a): simple side-view placeholders in both view modes, mirrored by the way they go, hidden by the fog; the strike pose, the red coat and the inspector come with the steps that make them visible. The developer's "Proceed" (2026-11-10) began K2.3: its decisions D16–D20 below. On F3 the developer chose option A the same day ("Chose A. Proceed"): hunting went live, K2.4 (the creatures saved) and the strike pose followed, and K2's DoD `VerminDriveTheLoneAway` passes on the 23 gate seeds. At the producer's "Continue" the same day the inspector came to show a creature, so K2 is delivered but for the red coat on creatures, which comes with K3, when something can hurt them (§5). K3, melee arms and armour, began the same day and is done on 2026-11-11 (decision D21 below; its DoD `AnArmedCrawlerFightsBack` passes). The producer's look at the first fights passed the same day ("Looks good"), with the AFK directive for K4–K5 ("I will be afk you will be responsible for finishing K4-K5"). K4, loot, is done the same day (decisions D22–D26 below, for the producer's return; its DoD `KillsFeedTheForge` passes). K5, death and rescue, is done the same day under the same directive (decisions D27–D34 below; `TheCarefulLoseFew` passes live; finding F6 recommends moving `AFriendCarriesTheFallenOut` and `DeathHasItsCost` to K7, since nothing can down a crawler in danger in live play before the Clear order). It stopped for the producer's look at death and rescue, which passed by exception with the go "Proceed with K6-K8" (2026-11-11; F6's option A stands). K6, hunting, is done the same day (decisions D35–D37; its DoD `AHuntBountyClearsALair` passes). K7, the guild goes to war, is done on 2026-11-12: the Clear order, the party's fight and the client, with its three DoDs passing (decisions D38–D43 for the developer's review; findings F7 and F8). K8, ranged combat, is done on 2026-11-12 (decisions D44–D48 for the developer's review; its DoD `ArchersHoldTheLine` passes), and it stops for the producer's look at ranged fights. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
+- **Status**: ACTIVE (2026-11-08). The producer gave the go: "The revised epic plan looks good. Please proceed with K0". K0, groundwork, is done the same day (§4): the measurements (finding F1), the combat rule (D1–D8) and the creature catalogue. The producer approved it the same day: "Approved. Proceed with developing K1". K1, the equipment system, is done the same day: slots as a table, storage for 16 (save format 11, its design approved: "continue with k1.3-k1.6"), stats and wear over every slot, outfitting by slot and by stats (the live scenario `GearByTheSlot`: a venturer wears a hard hat over hazard gear on 17 of the 23 gate seeds), the client from the slot table (hazard gear is now a suit worn on the body), and a slot added as data. The producer's look passed ("K1 looks good") with the go for K2, creatures: K2.1, lairs, done the same day; K2.2, the creature's rule, done the same day and waiting for the developer's review (its decisions D9–D15 below) before K2.3. At the producer's word (2026-11-09: "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now"), the creatures are drawn on the map ahead of K2.3 (K2.5a): simple side-view placeholders in both view modes, mirrored by the way they go, hidden by the fog; the strike pose, the red coat and the inspector come with the steps that make them visible. The developer's "Proceed" (2026-11-10) began K2.3: its decisions D16–D20 below. On F3 the developer chose option A the same day ("Chose A. Proceed"): hunting went live, K2.4 (the creatures saved) and the strike pose followed, and K2's DoD `VerminDriveTheLoneAway` passes on the 23 gate seeds. At the producer's "Continue" the same day the inspector came to show a creature, so K2 is delivered but for the red coat on creatures, which comes with K3, when something can hurt them (§5). K3, melee arms and armour, began the same day and is done on 2026-11-11 (decision D21 below; its DoD `AnArmedCrawlerFightsBack` passes). The producer's look at the first fights passed the same day ("Looks good"), with the AFK directive for K4–K5 ("I will be afk you will be responsible for finishing K4-K5"). K4, loot, is done the same day (decisions D22–D26 below, for the producer's return; its DoD `KillsFeedTheForge` passes). K5, death and rescue, is done the same day under the same directive (decisions D27–D34 below; `TheCarefulLoseFew` passes live; finding F6 recommends moving `AFriendCarriesTheFallenOut` and `DeathHasItsCost` to K7, since nothing can down a crawler in danger in live play before the Clear order). It stopped for the producer's look at death and rescue, which passed by exception with the go "Proceed with K6-K8" (2026-11-11; F6's option A stands). K6, hunting, is done the same day (decisions D35–D37; its DoD `AHuntBountyClearsALair` passes). K7, the guild goes to war, is done on 2026-11-12: the Clear order, the party's fight and the client, with its three DoDs passing (decisions D38–D43 for the developer's review; findings F7 and F8). K8, ranged combat, is done on 2026-11-12 (decisions D44–D48 for the developer's review; its DoD `ArchersHoldTheLine` passes), and it stopped for the producer's look at ranged fights, which passed by exception with the producer's "Let's tackle the skills system now" (2026-11-14). K9, the skill system, is done on 2026-11-14 (decisions D49–D53 for the developer's review of the supervised K9.3; its DoD `PracticeMakesAVeteran` passes; findings F9–F11), and it stops for the producer's word. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part3_plan.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-5 is folded in, as UI-3 and UI-4 were into Parts 1 and 2, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 4, Combat & the Gatekeeper (ROADMAP §3). Milestone 4 ends with this part (Q1).
 - **Source**: the draft plan `.agents/epic10_part3_plan.md`. It was first written 2026-10-29 as "the descent", re-scoped by the producer on 2026-11-07 and answered in part the same day. Its design (§1–§4) moved here with the go.
@@ -271,6 +271,53 @@ K8.2 is supervised by the developer; it was split so that no part is Very Comple
 - **Found on the way:** with no creature left alive, the creatures' pass returned before clearing the last tick's shots and any swings asked of it.
 - **The scripted players:** the guild player's clear takes a count of shooters and a bow to wait for, clearing a materials' lair first while the stall holds too few (the crossbow's hides from the rats); the workshop player's extra make keeps up to a count on the shelf.
 
+### K9's decisions (2026-11-14), at the producer's "Let's tackle the skills system now", for the developer's review
+K9.3 is supervised by the developer; it was split so that no part is Very Complex, and its decisions are here for review.
+- **D49, skills as a table** (Q17): `Simulation/Skills/`, a namespace of its own (cognition reads skills, and may read nothing of `People/`).
+  - **A skill** is a `Skill` id (never reused, under 16) and a row of `SkillTable`: its words, the work that practises it (a melee or ranged fight, a harvest of an item group, a station's makes, tending the fallen) and the trait that leans its draw. Seven: Melee, Ranged, Mining, Foraging, Smithing, Alchemy, Medicine.
+  - **Code asks the table** for the skill of a kind of work, never for a skill by name (`SkillNamesTests`), so a skill for a known kind of work is a row (K9.6).
+  - **Saved:** each crawler's `SkillSet` is 16 experiences (32 bytes) in its record, inside format 11, unreleased as K1's slots were.
+- **D50, levels, practice and the draw** (Q18, Q19):
+  - **Levels** run 0–10, a level costing 100 times its number (5,500 in all). The bands: Novice 0–2, Apprentice 3–5, Journeyman 6–8, Master 9–10.
+  - **Practice:**
+    - a blow landed: 10;
+    - a shot, hit or miss: 8 (a shot takes longer than a swing, and half miss at range);
+    - a unit harvested: 10;
+    - a make: 60, so ten take a new hand to Apprentice;
+    - a rescue: 100.
+  - **What is told:** a level gained is logged; a band reached is told in the chronicle.
+  - **The draw** at spawn, on its own salt (residents, drifters and newcomers alike):
+    - each skill starts at a Novice's level: 0 for half, 1 or 2 for the rest;
+    - then one talent at 3–5 (two, at even odds), picked at odds of 1 + 2 × the crawler's lean toward the row's trait: the bold toward melee, the cautious toward ranged, the diligent toward mining and smithing, the sociable toward medicine;
+    - no look enters it.
+- **D51, what a level does** (Q20, K9.3). At level 0 a crawler fights, makes and tends by the numbers before skills.
+  - **Combat:** the hit chance and the damage each rise 2% a level, from melee or ranged by what the fighter wields (`Combatant`).
+  - **The harvest, centred:** its pace is 0.92 + 0.04 a level, multiplied with a pickaxe's. A Novice 2 works at the pace before skills, and a Master 10 a third faster.
+    - **Why centred:** the harvest is the economy's inflow. Uncentred, the outpost's hands brought in more salvage than the stall's treasury is tuned for: the crafting soak made goods on 14 of 20 seeds, with quits for unpaid wages on 4. Centred, it made goods on 36 of 40.
+  - **Making:** a make goes 5% faster a level; its grade is the artisan's band (D52).
+  - **Medicine:** a rescuer carries at half pace plus 3% a level; a medicine given heals 5% more a level.
+  - **Choices** (K9.4, Q21): the salvage choice's pay an hour takes the harvest's pace, so a talent's own trade pays it better. The dossier shows a recruit's skills before it is signed, and the roster's cards a member's best two.
+- **D52, W4's practice moved into the bands** (K9.3c):
+  - **The grade** of what an artisan makes is its station skill's band: Standard for a Novice, Fine for an Apprentice, Masterwork for a Journeyman or a Master.
+  - **What went:** the contract's practice count and `WorkshopTuning.MakesPerGrade`, inside format 11.
+  - **A make is practice** in the station's skill, so ten makes take a new hand to Fine, as W4's did.
+  - **Hiring:** the scripted workshop player hires the best hand for its station's skill. The station window sorts candidates by that skill and names the grade its artisan makes.
+- **D53, the DoD over seven days, not three:**
+  - **Measured on the 23 gate seeds:** a member's melee, a miner's pace and a smith's grade all rose within three days on no seed, within seven on 14, and within ten on 15.
+  - **The smith sets the pace:** the forge stands only on day 1.3–2.8, when the stall affords it, and its first hand needs up to ten makes.
+  - **Why the horizon moved instead:** practice fast enough for three days would bring a Master in a few dozen makes.
+  - **On the default seed,** all three rise by day 4.3.
+- **The live scenarios re-measured** against a baseline at K9.2 (practice without effects), in a worktree. Skills moved no scenario's rate beyond noise:
+
+  | Scenario | Before effects | With effects |
+  | :--- | :--- | :--- |
+  | Hunt paid | 21 of 23 | 20 of 23 |
+  | The workshop loop | 4 of 23 | 3 of 23 |
+  | Armour from a kill, gate seeds | 5 of 23 | 2 of 23 |
+  | Armour from a kill, seeds 21–80 | 19 of 60 | 18 of 60 |
+
+  Three DoDs moved seed for the new timings, and the hazards' scenario too.
+
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.
 
@@ -463,6 +510,17 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 - [x] **K7 re-measured** after K8: armed fours clear a lair on 22 seeds and carry a fallen member out alive on 17, with no death; unarmed pairs lose a member on 2. Two of K7's DoDs moved seed.
 - [x] **The gate** (2026-11-12): core 276/276 (10 explicit measurements not run), client 512/512 in the pinned image (the art pins' 58 new sprites and five renders recorded after a look), golden 3/3 (re-recorded once, for the caravan's slings), the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles with 0 warnings.
 
+### K9. The skill system (done 2026-11-14, `feat/epic10-part3`; at the producer's "Let's tackle the skills system now", its decisions D49–D53 for the developer's review; stops for the producer's word)
+- [x] **Skills as a table** (K9.1, Q17, Q19, D49, D50): seven skills on each crawler, drawn at spawn on their own salt (one talent or two, leaned by personality), saved inside format 11.
+- [x] **Practice** (K9.2, Q18, D50): blows landed, shots, units harvested, makes and rescues; a band reached is told in the chronicle.
+- [x] **What skills do** (K9.3, Q20, D51, D52): the hit chance and damage; the harvest's pace, centred on a Novice 2; a make's grade (its band) and speed, with W4's practice moved into the bands; carrying and healing.
+- [x] **Choices** (K9.4, Q21): the salvage choice weighs the harvest's pace; the scripted workshop player hires the best hand.
+- [x] **The client** (K9.5): skills in the dossier (a recruit's before it is signed) and on the roster's cards; the station window's grade and its candidates by skill; the dossier still fits 720 rows.
+- [x] **A skill added as data** (K9.6): Mycology and glowcaps through the catalogues' test hooks, drawn, practised, quickening their harvest, saved and shown with no code; `SkillNamesTests`; AGENTS.md's "Adding a skill".
+- [x] **The DoD** `PracticeMakesAVeteran` on the default seed (D53): the forge's smith is hired a Novice 2; a member's melee rises 1 to 2 on day 2.9, a resident's mining 0 to 1 on day 3.6 (its pace 0.92 to 0.96), and the smith is Fine on day 4.3, at its fifth make; nobody dies and the days hold.
+- [x] **Re-measured** (K9.7): three DoDs moved seed: `AHuntBountyClearsALair` to 1, `KillsFeedTheForge` to 15 and `TheWorkshopLoopPlaysThrough` to 424242 (its save scenario plays on for 24 hours). The hazards' scenario moved to 20261010.
+- [x] **The gate** (2026-11-14): core 287/287 (12 explicit measurements not run), client 513/513 in the pinned image (23 renders and the 4 picture pins after tick 0 re-recorded after a look), golden 3/3 (re-recorded twice, each in its own commit: skills in the hash, then what they do), the soak 15/15 (with F9's band), seeds 1–120 119/120 with and without the guild (F11: one thrash on seed 64), the MonoGame and Android compiles with 0 warnings.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -550,3 +608,14 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
   - **Also in reckless play:** two sent unarmed against the beetles again and again, gate seed 1's days fail on a member starved for 1,306 ticks. A crawler downed in safety sleeps in a bunk until it is back on its feet before it looks for food (the danger reflexes come before the starvation panic), and this pair was downed often. Worth a look with K11's soak, where the bands are set.
   - **Recommended: (A),** with (B) when K11's profile is written. The guild player stands for a reckless patron here, and the outcome is the economy working.
   - [Basic: a scripted player's policy; the producer decides]
+- **F9 (2026-11-14, K9.3): the greedy soak's band raised from 3 to 6.** With skills, the greedy player's trust rose for 0–6 residents on the 16 measured seeds (4 on seed 2, 6 on seed 12, 0–3 on the rest), still far below the fair player's 8 or more on every seed. The band is there to show that greed costs trust, and it still does. Raised to 6 (`EconomySoak.GreedyTrustUpMax`) as a default. [Basic: a test band; the producer may set it]
+- **F10 (2026-11-14, K9.7): seed 12 now fails on trust with any scripted player.**
+  - **Measured:** F8's seed. With skills, its days fail "trust toward the player rose for only N of 12 (need 8)" in the hunt run (3 of 12, and no hunt is posted), the forge run (1) and the practice run (4). At K9.2, before skills did anything, the hunt and forge runs held.
+  - **Not traced:** F8's cause (the treasury running dry under the players' spending) is the first suspect. The seed's runs in the soak and in the sweeps hold, and no DoD uses it.
+  - **Recommended:** watch it, and trace it with K11's `hunting` soak profile, where the bands are set with a careful player.
+  - [Possibly Complex: an economy trace on one seed; the producer decides when]
+- **F11 (2026-11-14, K9's gate): one thrash on seed 64.**
+  - **Measured:** seeds 1–120 pass 119/120 with and without the guild. Seed 64 fails on two thrashes (four state changes in 0.3 s) at t745.
+  - **The trace:** a crowd at the ore blocked a resident's path, so it gave up its harvest and planned to claim the Gather bounty. Another resident claimed it the same tick (two others lost the same race), and the first planned afresh.
+  - **Not a skill's doing:** nothing in the trace reads a skill. Skills only moved who stood where, and at K9.2 the seed holds. It is the crowding and planning kind of F4 and F5.
+  - [Basic: watch; look at a failed claim's state change if another seed shows one]

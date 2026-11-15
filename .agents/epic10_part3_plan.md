@@ -511,22 +511,22 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 ### K9. The skill system (3–4 days)
 **Complexity:** Very Complex: a new system read by combat, harvest, crafting and rescue (bundling). Split as below. The developer supervises K9.3.
-- [ ] **K9.1 Skills as a table, on each crawler (Q17, Q19):** [Possibly Complex: a catalogue and saved state]
+- [x] **K9.1 Skills as a table, on each crawler (Q17, Q19):** [Possibly Complex: a catalogue and saved state]
   - `Skills`, appendable like the slots, with room for 16 on each crawler;
   - starting skills drawn at spawn on their own salt;
   - saved, with the round-trip validators.
   - The golden hashes are re-recorded in their own commit, since every seed draws skills.
-- [ ] **K9.2 Practice (Q18):** [Possibly Complex: behaviour] experience from swings, shots, units mined and foraged, makes and rescues.
-- [ ] **K9.3 What skills do (Q20):** [Very Complex, supervised by the developer: combat, harvest, crafting and rescue each read skills; W4's practice is folded in]
+- [x] **K9.2 Practice (Q18):** [Possibly Complex: behaviour] experience from swings, shots, units mined and foraged, makes and rescues.
+- [x] **K9.3 What skills do (Q20):** [Very Complex, supervised by the developer: combat, harvest, crafting and rescue each read skills; W4's practice is folded in]
   - **K9.3a combat:** proficiency in the combat rule (A1), from melee or ranged;
   - **K9.3b work:** harvest speed from mining and foraging;
   - **K9.3c making:** a make's grade and speed from smithing and alchemy, with W4's practice migrated into them;
   - **K9.3d medicine:** carrying faster, and draughts given heal more.
-- [ ] **K9.4 Choices (Q21):** [Possibly Complex: cognition] skill raises what work pays an hour; recruits and the roster show skills.
-- [ ] **K9.5 The client:** [Possibly Complex: Gum UI]
+- [x] **K9.4 Choices (Q21):** [Possibly Complex: cognition] skill raises what work pays an hour; recruits and the roster show skills.
+- [x] **K9.5 The client:** [Possibly Complex: Gum UI]
   - skills in the dossier and the roster;
   - a band reached told in the chronicle.
-- **DoD `PracticeMakesAVeteran`:** over three game days on the gate seeds:
+- **DoD `PracticeMakesAVeteran`:** over seven game days (D53; three in the draft), on the default seed, measured on the gate seeds:
   - a guild member's melee rises through fights;
   - a miner gets faster;
   - an artisan's smithing raises its grade;
@@ -534,17 +534,18 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 
 - **The go:** the producer's "Let's tackle the skills system now" (2026-11-14). K8's look at ranged fights passed by exception; its decisions D44–D48 and K7's D38–D43 stand, F8's option A stands. K9.3, Very Complex and supervised, is split below so that no part is Very Complex, its decisions recorded for the developer as K7.2's and K8.2's were.
 - **The plan:**
-  - [ ] **K9.1a The skill table:** [Possibly Complex: a new catalogue on the slots' pattern] `Simulation/Skills/` (its own namespace: cognition reads skills, and may read nothing of `People/`): `Skill` ids (never reused, under 16), `SkillTable` rows (name, the player's word, what work practises it: a melee or ranged fight, a harvest of a category, a station's makes, tending the fallen; which trait leans its draw), `SkillRules` (levels 0–10, a level costing 100 times its number; the bands), `SkillSet` (16 experiences on each crawler, the level derived).
-  - [ ] **K9.1b Starting skills, saved:** [Possibly Complex: saved state and the hash] drawn at spawn on a salt of its own (residents, drifters and newcomers alike): each skill 0–2, and one talent or two at 3–5, the talent's choice leaned by personality; in the crawler's record (inside format 11), the round-trip validators and the world hash. Nothing reads a skill yet: the golden hashes move only because the hash holds them, re-recorded in its own commit.
-  - [ ] **K9.2 Practice:** [Possibly Complex: behaviour across four systems, one helper] `SimulationManager.Practise`: experience for a blow landed, a shot, a unit mined or foraged, a make and a rescue; a level gained is logged, a band reached told in the chronicle.
-  - [ ] **K9.3a Combat:** [Possibly Complex: the combat read] a crawler's proficiency (hit chance) and a little damage from its melee or ranged level, by what it wields. Level 0 is today's numbers.
-  - [ ] **K9.3b Work:** [Basic: one factor beside the pickaxe's] the harvest's time divided by the skill's factor, multiplied with the pickaxe.
-  - [ ] **K9.3c Making:** [Possibly Complex: W4's saved practice migrated] an artisan's grade is its skill's band (Novice Standard, Apprentice Fine, Journeyman and Master Masterwork) and its makes go faster by level; the contract's practice count and the tuning's makes per grade go; a make is practice in the station's skill.
-  - [ ] **K9.3d Medicine:** [Basic: two factors] carrying faster and a draught given healing more, by the rescuer's level; a rescue is practice.
-  - [ ] **K9.4 Choices:** [Possibly Complex: cognition reads skills] the salvage choice's pay an hour takes the skill's factor (the context carries the skills); the scripted workshop player hires the best hand for its station.
-  - [ ] **K9.5 The client:** [Possibly Complex: Gum UI and renders] skills in the dossier (so a recruit's show before it is signed) and on the roster's cards; the station window's artisan line; a band reached in the chronicle's words.
-  - [ ] **K9.6 A skill added as data:** [Basic: the slots' proof repeated] a test adds a skill row for a new kind of work and it is drawn, practised and saved with no code.
-  - [ ] **K9.7 The DoD and the gate:** [Possibly Complex: live scenarios re-measured] `PracticeMakesAVeteran`, measured on the gate seeds first; every live scenario re-measured where skills move it; AGENTS.md's "Adding a skill".
+  - [x] **K9.1a The skill table:** [Possibly Complex: a new catalogue on the slots' pattern] `Simulation/Skills/` (its own namespace: cognition reads skills, and may read nothing of `People/`): `Skill` ids (never reused, under 16), `SkillTable` rows (name, the player's word, what work practises it: a melee or ranged fight, a harvest of a category, a station's makes, tending the fallen; which trait leans its draw), `SkillRules` (levels 0–10, a level costing 100 times its number; the bands), `SkillSet` (16 experiences on each crawler, the level derived).
+  - [x] **K9.1b Starting skills, saved:** [Possibly Complex: saved state and the hash] drawn at spawn on a salt of its own (residents, drifters and newcomers alike): each skill 0–2, and one talent or two at 3–5, the talent's choice leaned by personality; in the crawler's record (inside format 11), the round-trip validators and the world hash. Nothing reads a skill yet: the golden hashes move only because the hash holds them, re-recorded in its own commit.
+  - [x] **K9.2 Practice:** [Possibly Complex: behaviour across four systems, one helper] `SimulationManager.Practise`: experience for a blow landed, a shot, a unit mined or foraged, a make and a rescue; a level gained is logged, a band reached told in the chronicle.
+  - [x] **K9.3a Combat:** [Possibly Complex: the combat read] a crawler's proficiency (hit chance) and a little damage from its melee or ranged level, by what it wields. Level 0 is today's numbers.
+  - [x] **K9.3b Work:** [Basic: one factor beside the pickaxe's] the harvest's time divided by the skill's factor, multiplied with the pickaxe.
+  - [x] **K9.3c Making:** [Possibly Complex: W4's saved practice migrated] an artisan's grade is its skill's band (Novice Standard, Apprentice Fine, Journeyman and Master Masterwork) and its makes go faster by level; the contract's practice count and the tuning's makes per grade go; a make is practice in the station's skill.
+  - [x] **K9.3d Medicine:** [Basic: two factors] carrying faster and a draught given healing more, by the rescuer's level; a rescue is practice.
+  - [x] **K9.4 Choices:** [Possibly Complex: cognition reads skills] the salvage choice's pay an hour takes the skill's factor (the context carries the skills); the scripted workshop player hires the best hand for its station.
+  - [x] **K9.5 The client:** [Possibly Complex: Gum UI and renders] skills in the dossier (so a recruit's show before it is signed) and on the roster's cards; the station window's artisan line; a band reached in the chronicle's words.
+  - [x] **K9.6 A skill added as data:** [Basic: the slots' proof repeated] a test adds a skill row for a new kind of work and it is drawn, practised and saved with no code.
+  - [x] **K9.7 The DoD and the gate:** [Possibly Complex: live scenarios re-measured] `PracticeMakesAVeteran`, measured on the gate seeds first; every live scenario re-measured where skills move it; AGENTS.md's "Adding a skill".
+  - **Done 2026-11-14** (`6bde379`..`bbfab7d`): every step above, with D49–D53 in the epic for the developer's review and findings F9–F11. The gate: core 287/287 (12 explicit measurements not run), client 513/513 in the pinned image (23 renders and the 4 picture pins after tick 0 re-recorded after a look), golden 3/3 (re-recorded twice, each in its own commit: skills in the hash, then what they do), the soak 15/15 (with F9's band), seeds 1–120 119/120 with and without the guild (F11: one thrash on seed 64), the MonoGame and Android compiles with 0 warnings. K9 stops for the producer's word before K10.
 
 ### K10. Bosses and the gate (3–4 days)
 **Complexity:** Very Complex: boss mechanics are new. Split as below. The developer supervises K10.3.
