@@ -5,7 +5,7 @@
 - **Milestone**: Production Milestone 4, Combat & the Gatekeeper (ROADMAP §3). Milestone 4 ends with this part (Q1).
 - **Source**: the draft plan `.agents/epic10_part3_plan.md`. It was first written 2026-10-29 as "the descent", re-scoped by the producer on 2026-11-07 and answered in part the same day. Its design (§1–§4) moved here with the go.
 - **Preceding**: [Epic 10 Part 2](epic-10-part-2.md), workshops and the guildhall; its play session and close-out are still to come. **Builds on**: Epic 8 (groups and directives), Epic 9 (the economy), the item system (I1–I8), Part 1's health and hazards (G2) and gear (G3), Part 2's workshops, grades and 24-hour day, and Epic UI-Beta (the client's UI kit and the red coat).
-- **Following**: Epic 10 Part 4, the descent (Floor 2 and moving the outpost; Milestone 5), not drafted.
+- **Following**: [Epic 11](epic-11.md), the skill system (Milestone 5). **Epic 10 ends with this part** (the producer, 2026-11-15: "Epic 10 will need to end with part 3, it's already too long as is"). The descent, once Part 4, is Epic 12 (Milestone 6), not drafted.
 - **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** as an epic, for its size and for systems with no precedent (combat, creatures, death, ranged, skills). Each milestone is stamped in §2.4. K1, K2, K5, K8, K9 and K10 are split in the plan, which names the steps the developer supervises.
 
 ---
@@ -26,7 +26,7 @@
 **The go (2026-11-08):**
 > The revised epic plan looks good. Please proceed with K0
 
-The producer answers by exception. So the three readings flagged with the answers stand: Q1 (Epic 11 to Milestone 5), Q3 (the downed collapse in danger; Q3a, Q3b) and Q11 (head and body). So do the defaults Q5–Q8, Q10 and Q12–Q21.
+The producer answers by exception. So the three readings flagged with the answers stand: Q1 (Epic 11, then the narrative, to Milestone 5; since 2026-11-15 the narrative is Epic N), Q3 (the downed collapse in danger; Q3a, Q3b) and Q11 (head and body). So do the defaults Q5–Q8, Q10 and Q12–Q21.
 
 What the answers changed:
 - **Ranged combat** joins Part 3 as K8, after the whole melee loop works.
@@ -38,7 +38,7 @@ What the answers changed:
 - **A skill system is K9.** It replaces Q9's veterans and takes over W4's practice.
 - **Milestone 4 ends with Part 3:** a functional combat system.
 
-**What left Part 3:** Floor 2, floors as data, the move and what it carries, and Floor 2's pressure. They go to Part 4, the descent, in Milestone 5, which is not drafted. Scouting as a guild order goes with them; scout bounties already chart sectors.
+**What left Part 3:** Floor 2, floors as data, the move and what it carries, and Floor 2's pressure. They go to Part 4, the descent, in Milestone 5, which is not drafted (since 2026-11-15, Epic 12 in Milestone 6: Epic 10 ends with Part 3). Scouting as a guild order goes with them; scout bounties already chart sectors.
 
 **Sources:**
 - **The game design:**
@@ -55,7 +55,7 @@ Answered rows say so. Every other row is a default that stands by exception.
 
 | # | Question | The producer's answer, or the default | Alternative |
 | :-: | :--- | :--- | :--- |
-| Q1 | **Name, home and the milestone** | **Answered: Milestone 4 ends with Part 3,** a functional combat system.<br>• **Milestone 4** becomes "Combat & the Gatekeeper": Part 3, with Epic UI-5 folded in, in this file.<br>• **Milestone 5,** "Floor Relocation": Part 4, the descent.<br>• **The reading:** for Milestone 4 to end with Part 3, Epic 11 (the MCP chronicles) moves to Milestone 5.<br>Epic 10 closes after Part 4. | — |
+| Q1 | **Name, home and the milestone** | **Answered: Milestone 4 ends with Part 3,** a functional combat system.<br>• **Milestone 4** becomes "Combat & the Gatekeeper": Part 3, with Epic UI-5 folded in, in this file.<br>• **Milestone 5,** "Floor Relocation": Part 4, the descent.<br>• **The reading:** for Milestone 4 to end with Part 3, Epic 11 (the MCP chronicles) moves to Milestone 5.<br>Epic 10 closes after Part 4.<br>• **Since 2026-11-15** (the producer): Epic 10 closes after Part 3; Epic 11 is the skill system (Milestone 5), the descent Epic 12 (Milestone 6) and the chronicles Epic N, unscheduled. | — |
 | Q2 | **Combat** | **Answered: melee first, then ranged; seeded hit rolls.**<br>• **A swing:** a fighter in reach swings on its weapon's interval (about 1.5 s). A seeded roll (`SimRandom`, its own salt) decides hit or miss: about 70% until skills (K9) set it.<br>• **A hit** does the weapon's `Attack`, cut by the target's `Defense` on a curve that never reaches zero (`Defense / (Defense + 10)` to begin with).<br>• **Order:** hits are resolved on the main thread, in one pass after movement, in entity-id order.<br>• **Unarmed,** a crawler hits for 2.<br>• **Ranged** is K8, on the same rule (Q15, Q16). | — |
 | Q3 | **Death** | **Answered: hazards kill too, if the downed crawler is not rescued.** Death is permanent.<br>• At 0 a crawler is downed.<br>• **Downed in danger,** within a hostile creature's reach or in a hazard sector, it collapses. It can't limp out, and it bleeds out over 2 game hours.<br>• **Downed in safety,** it limps to a bunk as today.<br>• **Rescue stops the clock:** a rescuer carries it out of danger, or gives it a draught (at 80 health it stands and walks out).<br>• **When the clock runs out, it dies.**<br>• Creatures turn from a downed crawler to one still standing.<br>• **The reading:** to honour "rescued", the downed can no longer limp out of danger as Part 1's crawlers do. Two sub-defaults follow:<br>&nbsp;&nbsp;– **Q3a:** a downed crawler may drink a draught it carries. Preparing counts as rescue, and draughts are the player's stock at work.<br>&nbsp;&nbsp;– **Q3b:** friends rescue friends, not only party members. Otherwise a lone crawler downed in a hazard always dies. | Q3a: only another crawler can give the draught. Q3b: only the guild rescues |
 | Q4 | **What a death costs** | **Answered: as proposed.**<br>• **The body:** its pack, worn gear and purse lie where it fell, as a loot pile that anyone may recover.<br>• **The guild:** the dead member's contract and kept bunk end, and its party is one short.<br>• **The living:** friends (warmth 30 or more) grieve, through a memory event and a mood. If a member dies under the guild's orders, the other members' trust toward the patron falls.<br>• **Memory:** the chronicle tells it, and the departed list keeps the dead with their cause.<br>• **A newcomer** settles at the Road Gate 2 days after a resident dies, with a new look and name. | — |
@@ -369,7 +369,7 @@ What Parts 1 and 2 leave undone:
 5. **Fighters and workers grow:** every swing, shot, unit mined and make is practice (K9). Survivors become veterans.
 6. **Bows join blades:** ranged fighters hold back and shoot (K8).
 7. **The brood's Matriarch** teaches the guild that a boss needs a party, draughts and armour.
-8. **The gatekeeper** holds the sealed gate at the floor's edge. Breaking it is Part 3's climax and Milestone 4's end; the way down stays dark until Part 4.
+8. **The gatekeeper** holds the sealed gate at the floor's edge. Breaking it is Part 3's climax, Milestone 4's end and Epic 10's; the way down stays dark until Epic 12, the descent.
 
 **The new verbs:** stock arms, post a hunt, order a clearing, rescue the fallen (crawlers do it), and breach.
 
@@ -571,14 +571,14 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 | Left out | Owner |
 | :--- | :--- |
 | The red coat on creatures (K2.5): now that crawlers hurt them (K3.3) | Epic 10 Part 3, after the look at the first fights |
-| Floor 2, floors as data, the move and what moves, the next floor's pressure | Part 4, the descent, in Milestone 5: QUEUED, not drafted |
-| Scouting as a guild order | Part 4, or later; scout bounties chart sectors today |
+| Floor 2, floors as data, the move and what moves, the next floor's pressure | Epic 12, the descent, in Milestone 6: QUEUED, not drafted (Part 4 until 2026-11-15) |
+| Scouting as a guild order | Epic 12, or later; scout bounties chart sectors today |
 | More equipment slots: hands, feet, rings, a sidearm, two-handed weapons that fill two slots | Rows on K1's table, when the design wants them |
 | Ammunition | Later, unless the producer takes Q16's alternative |
 | Random affixes on gear | Later; rare pieces are fixed items (Q11) |
-| Skill decay, passions, and skills beyond the seven | Later (Q17, Q18) |
-| Skill families, skill books, osmosis between crawlers, skills in the planner's goals, talents and gear that modify skills (K9.8's report) | Later, each when designed. K9.8's seam is where each enters: `CrawlerSkills.Level` for what changes how good a crawler is, `SkillTable.SkillFor` and `Practise` for families and sources |
-| A traits record (talents remembered after spawn), what a skill family is (its own experience, or derived from its members), a curve per skill, more than 16 skills (a save format bump) | With the features above |
+| Skill decay, passions, and skills beyond the seven | [Epic 11](epic-11.md), the skill system: passions in S1, Leadership in S5; rust only if measured (its Q5) |
+| Skill families, skill books, osmosis between crawlers, skills in the planner's goals, talents and gear that modify skills (K9.8's report) | [Epic 11](epic-11.md): books and mentors as teachers (S3), passions weighing choices (S1), techniques and callings through the seam (S4, S5); families when a design needs them. K9.8's seam is where each enters: `CrawlerSkills.Level` for what changes how good a crawler is, `SkillTable.SkillFor` and `Practise` for families and sources |
+| A traits record (talents remembered after spawn), what a skill family is (its own experience, or derived from its members), a curve per skill, more than 16 skills (a save format bump) | Epic 11: the traits record in S0; the rest with the features above |
 | Fights between crawlers (the design's "lethal rivalries") | Later, deeper floors |
 | Raids on the outpost | Later (Q5's alternative (b)) |
 | Resurrection | Later |
@@ -586,7 +586,7 @@ Done means fights, deaths and the gate emerge in the live outpost with nothing i
 | Loot tables on nodes and the haul | Later; Part 3 rolls loot only for kills |
 | Procedural bosses (the game design's Phase 4) | After Epic 10 |
 | Art beyond the generated placeholders | The producer's art direction (Epic CLIENT M7) |
-| Tavern rumours written by a language model | Epic 11, in Milestone 5 (Q1's reading) |
+| Tavern rumours written by a language model | Epic N, the agentic narrative, unscheduled (Epic 11 in Milestone 5 until 2026-11-15) |
 | A grieving face of its own in the portrait (D31: grief shows as the frustrated face) | Epic 10 Part 3, K5.8 or later |
 | A dynamic scene when a friend sees a death (D34: the director needs a one-actor interaction) | Epic 10 Part 3, later; the narrative work |
 

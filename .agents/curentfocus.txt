@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-15 (Epic 10 Part 3 ACTIVE: K0-K8 done, K8's look passed by exception with "Let's tackle the skills system now"; K9 the skill system done 2026-11-14 (D49-D53 for review, F9-F11); K9.8 skill foundation reinforcement done 2026-11-15 (D54-D56); stop for the producer's word; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-15 (the roadmap re-sequenced: Epic 10 ends with Part 3; Epic 11 is the skill system [QUEUED, Milestone 5]; the descent is Epic 12 [QUEUED, Milestone 6]; the MCP narrative is Epic N [QUEUED, unscheduled]. Epic 10 Part 3 ACTIVE: K0-K8 done, K8's look passed by exception with "Let's tackle the skills system now"; K9 the skill system done 2026-11-14 (D49-D53 for review, F9-F11); K9.8 skill foundation reinforcement done 2026-11-15 (D54-D56); stop for the producer's word; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -81,7 +81,7 @@ CURRENT FOCUS
   and bosses, with Floor 2 out (to a Part 4, the descent). Its draft (K0-K11) was answered in part the same day:
   melee then ranged on seeded hit rolls, hazards kill the downed if nobody rescues them, death as proposed, an
   appendable equipment system (head and body for now), a skill system as K9, and Milestone 4 ends with Part 3
-  (Part 4 and Epic 11 to a Milestone 5). The rest stands by exception. The go, 2026-11-08: "The revised epic plan
+  (Part 4 and Epic 11, then the narrative, to a Milestone 5; re-sequenced 2026-11-15, below). The rest stands by exception. The go, 2026-11-08: "The revised epic plan
   looks good. Please proceed with K0". K0, groundwork, done the same day on feat/epic10-part3 (one PR for all of
   Part 3): the docs; measurements (F1: hazards alone down nobody on the gate seeds); the combat rule (Combatant,
   CombatRules, D1-D8); the creature catalogue (rats, beetles, spinners as rows). Approved the same day: "Approved.
@@ -120,6 +120,9 @@ CURRENT FOCUS
   a ceiling), and a lair judged by the crawler's skill; D54-D56; AHuntBountyClearsALair moved to gate seed 3; golden
   unchanged.
   NEXT: the producer's word on K9.8, then K10, bosses and the gate.
+  2026-11-15, the producer: "Epic 10 will need to end with part 3, it's already too long as is." Part 3's close-out
+  (with Part 2's) ends Epic 10. Then Epic 11, the skill system (docs/epics/epic-11.md, QUEUED, S0-S9, its Q1-Q16
+  by exception; no plan until the producer's go). The descent, once Part 4, is Epic 12; the MCP narrative is Epic N.
   Nothing pushed.
   Plan: .agents/epic10_part3_plan.md.
   Part 2's play session and close-out stay open beside it.
@@ -143,14 +146,17 @@ OPEN WITH THE PRODUCER
   at M3, motion between ticks, and the header's pause and speed.
 
 ================================================================================
-TRACK A: CORE SIMULATION & COGNITION (Epics 1-11)
+TRACK A: CORE SIMULATION & COGNITION (Epics 1-12, and Epic N unscheduled)
 ================================================================================
 - Epics 1-6, Alpha, 7, Beta [COMPLETED] (foundations, GOAP, needs and watchdog, social affinity, interdependence)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
-- Epic 10: Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K9.8 done; the producer's word on K9.8 is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2); Part 4 the descent (Floor 2, the move; Milestone 5) [QUEUED], not drafted
-- Epic 11: The Agentic Narrative Engine (MCP) [QUEUED] (Milestone 5 since 2026-11-07)
+- Epic 10 (ends with Part 3, the producer 2026-11-15): Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K9.8 done; the producer's word on K9.8 is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2)
+- Epic 11: Skills, the Heart and Engine of a Crawler (Milestone 5) [QUEUED 2026-11-15] (docs/epics/epic-11.md): Craft,
+  Technique, Calling and Legend over K9's foundation, S0-S9; Doctrine and careers later
+- Epic 12: The Descent (Floor 2, the move; Milestone 6) [QUEUED], not drafted (Epic 10 Part 4 until 2026-11-15)
+- Epic N: The Agentic Narrative Engine (MCP) [QUEUED, unscheduled] (Epic 11 until 2026-11-15)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
 

@@ -5,7 +5,7 @@ namespace Simpiens.Narrative
 {
     /// <summary>
     /// Stage 2 extensible asynchronous narrative enrichment contract.
-    /// Provides the architectural integration bridge for Track A Epic 11 (MCP / LLM inference)
+    /// Provides the architectural integration bridge for Track A Epic N, the agentic narrative (MCP / LLM inference)
     /// to enrich high-intensity story beats without modifying the UI presentation layer.
     /// </summary>
     public interface ILlmNarrativeEnricher

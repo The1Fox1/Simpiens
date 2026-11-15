@@ -11,9 +11,9 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
 | The core refactor (not Epic 10) | R1–R6: guards, `SimulationManager`'s split, planners per worker | **Done 2026-11-02**, merged as PR #21; its plan is deleted (ROADMAP §3A) | — | — | — |
 | [`epic10_part2_plan.md`](epic10_part2_plan.md) | Part 2, Milestone 3: workshops and the guildhall, W0–W6, with Epic UI-4 folded in ([epic](../docs/epics/epic-10-part-2.md)) | **ACTIVE 2026-11-04:** W0–W6, milestone T and the stretch done, merged into main as PR #23 (2026-11-07); the play session and the close-out remain | 14–19 | **Very Complex** (epic-sized). W1 and W5 need splitting | A look at W3; a play session at W6 |
 | [`epic10_part3_plan.md`](epic10_part3_plan.md) | Part 3, Milestone 4: creatures, combat and the gatekeeper, K0–K11, with Epic UI-5 folded in ([epic](../docs/epics/epic-10-part-3.md)). Re-scoped by the producer on 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2) and answered in part the same day (melee then ranged, an appendable equipment system, hazards that kill the unrescued, a skill system as K9; Milestone 4 ends here) | **ACTIVE 2026-11-08:** the producer's go ("Please proceed with K0"); K0 done the same day (the combat rule waits for the developer's review) | 29–41 left | **Very Complex** (epic-sized; new systems). K1, K2, K5, K8, K9 and K10 are split, with steps the developer supervises | The go; looks at K3, K5 and K8; a play session at K11 |
-| Part 4 (no plan yet) | Milestone 5, the descent: Floor 2, floors as data, moving the outpost and what moves. Split out of Part 3 on 2026-11-07 | Not drafted | — | — | — |
+| ~~Part 4~~ | No longer Epic 10's: the descent is Epic 12 (Milestone 6) since 2026-11-15, when the producer ended Epic 10 with Part 3 | — | — | — | — |
 
-**Left:** Part 2's play session and close-out; Part 3 about 31–44 agent days; Part 4 not yet estimated.
+**Left:** Part 2's play session and close-out; Part 3's K10 and K11 and its close-out.
 - **Complexity** ([rubric](rules/complexity-grading.md)): every plan, phase and step is stamped. Grep for `[Very Complex` to find the work that needs splitting or supervision.
 - Part 1's numbers rest on measurements (M1–M6).
 - Parts 2 and 3 have no measurements yet, so their estimates are the roughest. Each opens by measuring (W0, L0).
@@ -29,9 +29,9 @@ This file maps those plans and holds what they share. It replaces `.agents/epic1
    - ~~the producer answers the draft's questions;~~ 2026-11-07, in part, the rest by exception;
    - ~~the design part of the draft moves into an epic doc~~ (`docs/epics/epic-10-part-3.md`, 2026-11-08, with the go for K0);
    - then K0–K11.
-5. **Part 4, the descent,** is drafted after Part 3. Its close-out marks Epic 10 COMPLETED, and every plan here is deleted.
+5. **Epic 10 ends with Part 3** (the producer, 2026-11-15: "Epic 10 will need to end with part 3, it's already too long as is"). Part 3's close-out, with Part 2's, marks Epic 10 COMPLETED, and every plan here is deleted.
 
-Epic 11 (the MCP narrative) shares Milestone 5 with Part 4 (since 2026-11-07, so that Milestone 4 ends with Part 3) but is its own epic. Nothing here waits for it.
+After Epic 10 comes Epic 11, the skill system (Milestone 5, `docs/epics/epic-11.md`), then Epic 12, the descent (Milestone 6, once Part 4). The MCP narrative, Epic 11 until 2026-11-15, is Epic N, unscheduled. Nothing here waits for them.
 
 ## What every plan shares
 - **Branches:** one PR per plan into `main`, from one branch cut from `main` (`feat/epic10-part2`), with a commit per step: the producer's rule of 2026-11-02, which replaced one PR per milestone. Never stacked (epic Q10, and G1 and G2's stacked PRs).
@@ -47,7 +47,7 @@ Epic 11 (the MCP narrative) shares Milestone 5 with Part 4 (since 2026-11-07, so
   - its open findings go to the epic, and data still needed for a decision goes to `docs/`;
   - its decisions go to `architecture_history.md`;
   - then the plan is deleted (Documentation Protocol 6).
-  - This index goes with Part 4's close-out.
+  - This index goes with Epic 10's close-out, after Part 3.
 
 ## Gates (every milestone of every plan)
 - `dotnet test dotnet/Simpiens.slnx`. Commit messages give only the counts that ran.

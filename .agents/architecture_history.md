@@ -1748,3 +1748,16 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Measured against a baseline at K9.8a in a worktree: kills in K3's four days 5 → 6 of 23, no deaths; hunts paid 20 of 23 either way, to two or more 8 → 7. `AHuntBountyClearsALair` moved from seed 1 (a skilled hunter now clears alone) to gate seed 3.
   - Golden unchanged: nobody braves a lair before t3000 on the golden seeds.
 - **K9.8's gate** (2026-11-15): core 290/290 (13 explicit not run), client 513/513 in the pinned image, golden 3/3 unchanged, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11, as at K9), the MonoGame and Android compiles clean.
+
+## 2026-11-15: the roadmap re-sequenced; Epic 11 becomes the skill system (the producer's word)
+- **The producer:** "Epic 10 will need to end with part 3, it's already too long as is. After Epic 10 we will move onto Epic 11 which will be re written as the skills epic. The current Epic-11 Agentic Narrative should be renamed Epic-N to signify we don't know when we will get to it."
+- **Epic 10 ends with Part 3.** Part 3's close-out, with Part 2's, marks it COMPLETED. Part 4, the descent, leaves Epic 10.
+- **Epic 11, Skills, the Heart and Engine of a Crawler** (`docs/epics/epic-11.md`, QUEUED), drafted from the research paper of the same day (Claude Doc, "Simpiens Skill System: Research and Long-Term Vision"):
+  - Craft, Technique, Calling and Legend over K9's foundation and K9.8's seam, in S0–S9, each milestone stamped;
+  - Doctrine and careers wait for rival guilds and the descent;
+  - named creatures after the Nemesis system are in (S7), on the producer's call that day to emulate it: every claim of US10926179B2 needs an avatar the player operates, and Simpiens has none;
+  - Q1–Q16 are defaults that stand by exception; the plan follows the go.
+- **Defaults taken, for the producer to overturn:**
+  - Epic 11 is Milestone 5, "Skills and Careers". Floor Relocation moves to Milestone 6.
+  - The descent becomes Epic 12, QUEUED and not drafted. The request didn't place it, and it needed an owner.
+- **Epic N** is the agentic narrative (MCP), unscheduled: an epic with no place in the sequence yet is "Epic N" (ROADMAP §1). Forward references to the narrative's Epic 11 were renamed; dated records (this log, the 2026-10-08 architecture review) keep their words.

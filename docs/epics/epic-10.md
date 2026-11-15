@@ -5,7 +5,7 @@
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
 - **Preceding**: Epic 9 (the outpost economy). **Builds on**: Epic 8 (groups and directives), Epic CORE (the engine-free core, headless tests), Epic CLIENT (the KNI client).
-- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) [Part 3](epic-10-part-3.md) (creatures, combat and the gatekeeper, Milestone 4; ACTIVE since 2026-11-08) and Part 4 (the descent; split out of Part 3 on 2026-11-07).
+- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) [Part 3](epic-10-part-3.md) (creatures, combat and the gatekeeper, Milestone 4; ACTIVE since 2026-11-08) Epic 10 ends with Part 3 (the producer, 2026-11-15); the descent, split out of Part 3 on 2026-11-07 as a Part 4, is [Epic 12](../ROADMAP.md), after [Epic 11](epic-11.md), the skill system.
 
 ---
 
@@ -283,11 +283,11 @@ Each milestone also needs its validators, the golden check and the client's test
 
 | Left out | Owner |
 | :--- | :--- |
-| The descent gate and its boss; moving the outpost to the next floor | The gate and its boss: Epic 10 Part 3 (K10), Milestone 4. The move: Part 4, the descent, Milestone 5 (split out of Part 3 on 2026-11-07) |
+| The descent gate and its boss; moving the outpost to the next floor | The gate and its boss: Epic 10 Part 3 (K10), Milestone 4. The move: Epic 12, the descent, Milestone 6 (split out of Part 3 on 2026-11-07 as a Part 4; its own epic since 2026-11-15) |
 | Workshops, hired artisans and crafting | Epic 10 Part 2 with Epic UI-4, Milestone 3 |
 | Creatures and combat | Epic 10 Part 3 (K0–K3, K8), Milestone 4 |
 | A guild larger than four, barracks and a guildhall | Part 2, the guildhall (W5), Milestone 3 |
-| Tavern rumours written by a language model | Epic 11 |
+| Tavern rumours written by a language model | Epic N, the agentic narrative (Epic 11 until 2026-11-15), unscheduled |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
 | A cognition budget (ROADMAP §3A #8); planners per worker came with the core refactor's R6 (2026-11-02, no measured gain) | A measured need; G1 and G5 measured none (G5: an expedition costs 28% more time over its 800 ticks, far within the tick) |
 | The pickaxe (a harvest tool, a yield bonus; the item system's tool stat, `HarvestSpeed`, is unused until then) | Epic 10 Part 2, the workshops (W1) |
@@ -296,7 +296,7 @@ Each milestone also needs its validators, the golden check and the client's test
 | Gear making lone crawlers bolder (D10 settles it for parties) | Part 2, gear for each hazard (W3) |
 | Several parties at once; a FormParty command (parties that outlive one expedition) | Part 2, the guildhall (W5) |
 | Carrying a downed member | Part 3 (K5, death and rescue) |
-| Expeditions into uncharted sectors (scouting as an order) | Part 4, or later (out of Part 3 since its re-scope, 2026-11-07) |
+| Expeditions into uncharted sectors (scouting as an order) | Epic 12, the descent, or later (out of Part 3 since its re-scope, 2026-11-07) |
 | Loot tables in play (the item refactor's foundation): the haul, node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), conditions (sector, danger, depth, a crawler's stats); the haul stays glowstone | Part 3, creature drops (K4): the first milestone that needs random drops |
 | Rarity in the client (colours, the merchant) | With the first rare drop the player sees |
 | Item data files (JSON) and content tools | The map designer (Epic CLIENT) |

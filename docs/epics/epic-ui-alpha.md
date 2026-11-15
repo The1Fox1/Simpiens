@@ -7,7 +7,7 @@
 - **Architectural Layer**: 
   - **Core Domain Engine**: `Simpiens.Narrative` (Pure C# `IChronicleEventBus`, `ChronicleEvent` ring buffer, `IAgentIdentityService`, `TemplateNarrativeFormatter`)
   - **Presentation Layer**: `Simpiens.UI` (`RelativeTimeFormatter`, `FacilityDashboardPresenter` chronicle feed binding)
-  - **Future Cognitive Bridge**: `INarrativeEnricher` hook (prepares for Track A Epic 11 MCP/LLM integration)
+  - **Future Cognitive Bridge**: `INarrativeEnricher` hook (prepares for Track A Epic N MCP/LLM integration)
 
 ---
 
@@ -24,7 +24,7 @@ This fails to engage the player for three core reasons:
 
 **Epic UI-Alpha** bridges this gap by creating an authoritative **Narrative Chronicle Service** using a **Pipe-and-Filter Event Bus** coupled with **Two-Stage Execution**:
 - **Stage 1 (Immediate / Deterministic)**: Instant zero-alloc template synthesis generates readable prose (`"[1 minute ago] Burt shared information with Bob."`).
-- **Stage 2 (Async LLM Enrichment Hook)**: Provides the extensible foundation for Track A's **Epic 11 (Agentic Narrative Engine)** to asynchronously upgrade dramatic events into rich, context-aware flavor text without modifying UI code.
+- **Stage 2 (Async LLM Enrichment Hook)**: Provides the extensible foundation for Track A's **Epic N (Agentic Narrative Engine)** to asynchronously upgrade dramatic events into rich, context-aware flavor text without modifying UI code.
 
 ---
 
@@ -42,7 +42,7 @@ flowchart TD
         Identity["IAgentIdentityService\n(GUID -> Friendly Name, Title, Pronouns)"]
         Formatter["INarrativeFormatter\n(Strategy Pattern)"]
         TemplateFmt["TemplateNarrativeFormatter\n(Stage 1: Deterministic Zero-Alloc Mad-Libs)"]
-        LlmHook["ILlmNarrativeEnricher\n(Stage 2: Async UniTask / MCP Bridge for Epic 11)"]
+        LlmHook["ILlmNarrativeEnricher\n(Stage 2: Async UniTask / MCP Bridge for Epic N)"]
     end
 
     subgraph Presentation & UI (Track B: Simpiens.UI)
@@ -83,7 +83,7 @@ flowchart TD
      - $< 60\text{s}$: `"[45s ago]"`
      - $\ge 60\text{s}$: `"[1m ago]"`, `"[5m ago]"`, `"[12m ago]"`
 6. **`ILlmNarrativeEnricher` (Stage 2 Pluggable Hook)**:
-   - Async interface hook designed for clean convergence with **Epic 11**. Fulfillable via a lean, pure-C# UniTask JSON-RPC / SSE client without heavy external ASP.NET MCP dependencies, allowing background workers to enrich dramatic chronicle records with LLM prose without changing the UI presenter.
+   - Async interface hook designed for clean convergence with **Epic N**. Fulfillable via a lean, pure-C# UniTask JSON-RPC / SSE client without heavy external ASP.NET MCP dependencies, allowing background workers to enrich dramatic chronicle records with LLM prose without changing the UI presenter.
 
 ---
 
@@ -118,7 +118,7 @@ flowchart TD
   - Friendly name resolution correctness.
   - Zero heap allocation during continuous event emission and querying.
   - Defensive null safety when dependencies are absent.
-- Define `ILlmNarrativeEnricher` contract preparing for Track A Epic 11 integration.
+- Define `ILlmNarrativeEnricher` contract preparing for Track A Epic N integration.
 
 ---
 
