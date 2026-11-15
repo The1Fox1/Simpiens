@@ -74,7 +74,7 @@ namespace Simpiens.Simulation.Skills
         /// <summary>
         /// A harvest's pace rises by this a level from <see cref="HarvestBase"/>, multiplied with a pickaxe's: a Novice 2 works
         /// at the pace before skills, an unskilled hand 8% slower, a Master 10 a third faster. Centred, unlike the other
-        /// factors, because the harvest is the economy's inflow (D51): the outpost's starting hands together bring in what
+        /// factors, because the harvest is the economy's inflow (Epic 10 Part 3, D51): the outpost's starting hands together bring in what
         /// they did before skills, and a talent's own trade pays it better.
         /// </summary>
         public const float HarvestPerLevel = 0.04f;
