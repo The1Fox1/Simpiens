@@ -359,6 +359,16 @@ The go: "Let's close his out by finishing K10-K11. I will not be able to supervi
   - **The trophies:** two new materials. The Matriarch's pelt: the stall buys it at 36g, the caravan takes it at 44g. The Keeper's stone: 140g, and 170g.
   - **The rare pieces:** the rats' fang knife and the beetles' stoneheart coat, so there is no new equipment.
   - **Golden is unchanged:** no stall holds a trophy in stock.
+- **D60, the Old Stair** (K10.1b, Q13's "a new sector at the floor's edge, reached through the Deep Seam"):
+  - **Where:** west of the Deep Seam, a sector of the upper block's size (x −40 to −24, y 6 to 18). Its one door is low in their shared wall (y 6 to 12), clear of the beetle hollow's reach. Below it, the floor's new west strip is solid rock.
+  - **Why west and not north:** the floor stays 42 units tall, so it still fits a 720-row window at one pixel per art pixel, top-down. It grows to 64 units wide (1,024 pixels); at 1280×720 the whole floor still shows at 1:1. The 800×600 test renders crop around the floor's new centre, so every render that shows the map moves.
+  - **What is in it:** no work (no nodes), so nobody goes there but a scout and the guild. It is uncharted at the start, with its survey point inside the door. It holds the sealed gate (a point of interest, `PoiKind.DescentGate`, drawn in K10.5c), the spinners' web on the approach, and the Gatekeeper's lair before the gate.
+  - **Its checks** (the map validator's (o)): the survey point is out of every lair's reach and out of the web's sight, even from the farthest a spinner roams. The straight way from the door to the gate crosses the web's reach. No lair holds a door.
+- **D61, the gate's lair is charted with its sector:** a lair that guards the gate (`LairDefinition.GuardsGate`) is charted once its sector is, since the gate and its keeper are the room's landmark. D17 keeps every other lair to sight or a blow, but nobody walks into a sector with no work, so without this the Gatekeeper would never be known and no Clear could name it.
+- **D62, the spinners' sight and leash 6** (from 7 and 9): with a leash of 9 in a sector 16 wide, their web could not hold the approach and leave the survey point clear at once. K8.3's spitting test holds unchanged.
+- **Found on the way:**
+  - **The watch's entry rule (D37) counted a stand as a step:** on seed 64 a wanderer charted the hollow on its own way in, then stood idle in its reach. When the hour's grace ran out, the watch read that as an entry. An entry is now a step from outside a charted lair's reach to inside it, after the grace. Seeds 1–120 pass 120/120 with and without the guild. Seed 64's two thrashes (F11) still show, and no longer fail its day.
+  - **The bounty board's sector list opened scrolled to its last row:** with the Old Stair the sectors outgrew the list's height, and the first rows opened hidden above it. It now opens on the chosen sector.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

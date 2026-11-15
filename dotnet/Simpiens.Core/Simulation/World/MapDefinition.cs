@@ -10,7 +10,9 @@ namespace Simpiens.Simulation.World
         Bunk,
         SpawnPoint,
         /// <summary>A bunk in the guild's barracks, kept for a member (Epic 10 Part 2, W5.2, D62).</summary>
-        GuildBunk
+        GuildBunk,
+        /// <summary>The sealed descent gate (Epic 10 Part 3, K10.1, Q13): drawn by the view, sealed or breached by the world's flag.</summary>
+        DescentGate
     }
 
     /// <summary>What makes a sector dangerous (Epic 10 G2): the environment, never creatures (producer decision Q2).</summary>

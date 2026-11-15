@@ -115,6 +115,21 @@ namespace Simpiens.Simulation.Creatures
             // Who knows of a lair now (K2.3, D17): a crawler struck by one of its creatures, or one who sees one
             for (int i = 0; i < _swings.Count; i++) Chart(_swings[i].Attacker.LairIndex, _swings[i].Target.Id, struck: true);
             Sightings(snapshot, entities);
+            Landmarks(snapshot);
+        }
+
+        // A lair that guards the descent gate is charted with the sector it stands in (Epic 10 Part 3, K10.1b): the gate and its
+        // keeper are the room's landmark, which a scout's report shows (D17 keeps every other lair to sight or a blow)
+        private void Landmarks(SharedWorldSnapshot snapshot)
+        {
+            if (snapshot == null) return;
+            for (int l = 0; l < _lairs.Count && l < 64; l++)
+            {
+                var lair = _lairs[l].Definition;
+                if (!lair.GuardsGate || IsCharted(l) || !snapshot.IsCharted(lair.Position)) continue;
+                _charted |= 1UL << l;
+                SimLog.Simulation.ZLogInformation($"{lair.Key} is charted with its sector: the gate's keeper is the room's landmark");
+            }
         }
 
         // The crawlers' asked swings, in the order they were asked (the intents' order): each on its feet, at a creature alive

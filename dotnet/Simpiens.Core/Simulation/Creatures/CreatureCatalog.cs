@@ -59,11 +59,13 @@ namespace Simpiens.Simulation.Creatures
                 Speed = 1.2f, BodyRadius = 0.4f, Sight = 4f, Leash = 6f,
                 PackMin = 1, PackMax = 2, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Beetle
             },
-            // Spits from range on the gate's approach (shots come with K8, the approach with K10); runs under 30%
+            // Spits from range on the gate's approach (shots came with K8, the approach with K10); runs under 30%. Sight and leash 6
+            // (from 7 and 9, K10.1b): the Old Stair is a sector of the upper block's size, so its web holds the way to the gate and
+            // leaves the survey point inside the door out of its reach and sight
             new CreatureDefinition(CreatureKind.CaveSpinner, "CaveSpinner", "Cave Spinner")
             {
                 MaxHealth = 30f, Attack = 4f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.5f, Range = 5f,
-                Speed = 1.6f, BodyRadius = 0.35f, Sight = 7f, Leash = 9f, FleeBelow = 0.3f,
+                Speed = 1.6f, BodyRadius = 0.35f, Sight = 6f, Leash = 6f, FleeBelow = 0.3f,
                 PackMin = 2, PackMax = 3, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Spinner
             },
             // The bosses (Epic 10 Part 3, K10, Q13; placeholder numbers, tuned by K10.6's measurement). The Matriarch heads the

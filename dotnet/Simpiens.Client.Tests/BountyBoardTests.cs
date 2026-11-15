@@ -99,9 +99,15 @@ namespace Simpiens.Client.Tests
             Assert.True(lifted <= LiftSeconds, $"The fog took {lifted:F2} s to lift (limit {LiftSeconds} s).");
             TestContext.Current.TestOutputHelper?.WriteLine($"posted Scout Overgrowth for {reward}g; claimed@{claimed}, charted@{charted}, fog gone after {lifted:F2}s");
 
-            // Once the seeded scout charts the Deep Seam too, Scout has nothing left to offer
+            // Once the seeded scout charts the Deep Seam too, only the Old Stair is left (Epic 10 Part 3, K10.1b); charted by hand,
+            // Scout has nothing left to offer
             for (int i = 0; i < 150 && !sectors.IsExplored(Floor1Layout.DeepSeamSectorId); i++) ui.Ticks(20);
             Assert.True(sectors.IsExplored(Floor1Layout.DeepSeamSectorId), "The Deep Seam was never charted.");
+            ui.Click(Centre(game.Play.Dashboard.Header.BountiesButton));
+            Assert.Equal(new[] { (int)Floor1Layout.OldStairSectorId }, game.Session.DashboardModel.Bounties.SectorChoiceIds.ToArray());
+            ui.Click(Centre(game.Play.Dashboard.Header.BountiesButton));
+            sectors.SetExplored(Floor1Layout.OldStairSectorId, true);
+            ui.Ticks(1);
             ui.Click(Centre(game.Play.Dashboard.Header.BountiesButton));
             Assert.Equal(1, board.TypeBox.SelectedIndex);
             Assert.Empty(game.Session.DashboardModel.Bounties.SectorChoiceIds);

@@ -217,9 +217,10 @@ namespace Simpiens.Testing.World
             // start; every place a pack may rest is walkable and reached from the Hub; each lair has a node in its kind's
             // sight (a stray meets it) and one past its leash (the sector stays partly workable), and the sector's door lies
             // past the leash (the way in isn't held)
-            Assert(def.Lairs.Count == 2, $"(l) Floor1 has two lairs, not {def.Lairs.Count}.");
+            Assert(def.Lairs.Count == 4, $"(l) Floor1 has four lairs, not {def.Lairs.Count}.");
             ValidateLair(def, grid, hubRegion, Floor1Layout.RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, Floor1Layout.OvergrowthSectorId);
             ValidateLair(def, grid, hubRegion, Floor1Layout.BeetleHollow, Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle, Floor1Layout.DeepSeamSectorId);
+            ValidateOldStair(def, grid, hubRegion);
 
             // (d) doorways: every connected pair of neighbouring sectors shares a door at least 3 cells wide;
             // the frontier sectors are reached only through the near work sectors
@@ -524,6 +525,71 @@ namespace Simpiens.Testing.World
                 if (!opensOnIt) continue;
                 Assert(Vec2.Distance(door, lair.Position) > definition.Leash, $"(l) Lair '{key}' holds its sector's door at {door}.");
             }
+        }
+
+        /// <summary>
+        /// (o) The Old Stair (Epic 10 Part 3, K10.1b, Q13): a shrouded sector at the floor's west edge, reached only through the
+        /// Deep Seam; the sealed gate in it; the spinners' web and the Gatekeeper's lair, every place walkable and reached from the
+        /// Hub, the gate's lair guarding the gate; its survey point out of every lair's reach and out of the web's sight and roam,
+        /// while the way from the door to the gate crosses the web's reach; and no door held by any lair's reach.
+        /// </summary>
+        private void ValidateOldStair(MapDefinition def, StaticNavGrid grid, int hubRegion)
+        {
+            Assert(def.TryGetSector(Floor1Layout.OldStairSectorId, out var stair) && !stair.StartsExplored && !stair.Facility && stair.Hazard.Kind == HazardKind.None,
+                "(o) The Old Stair is a shrouded sector, neither a facility nor a hazard.");
+            Assert(stair.Bounds.XMin <= def.PlayableBounds.XMin, "(o) The Old Stair lies at the floor's west edge.");
+            Assert(def.TryGetPoi(Floor1Layout.DescentGate, out var gate) && gate.Kind == PoiKind.DescentGate && def.FindSector(gate.Position).Id == stair.Id, "(o) The sealed gate is in the Old Stair.");
+            Assert(def.TryGetLair(Floor1Layout.SpinnerWeb, out var web) && web.Kind == Simpiens.Simulation.Creatures.CreatureKind.CaveSpinner && !web.GuardsGate, "(o) The spinners' web.");
+            Assert(def.TryGetLair(Floor1Layout.GateLair, out var keeper) && keeper.Kind == Simpiens.Simulation.Creatures.CreatureKind.Gatekeeper && keeper.GuardsGate, "(o) The Gatekeeper's lair guards the gate.");
+            Assert(Vec2.Distance(keeper.Position, gate.Position) <= Simpiens.Simulation.Creatures.LairReach.Of(keeper), "(o) The gate lies within its keeper's reach.");
+            int guarding = 0;
+            for (int i = 0; i < def.Lairs.Count; i++) if (def.Lairs[i].GuardsGate) guarding++;
+            Assert(guarding == 1, $"(o) One lair guards the gate, not {guarding}.");
+            foreach (var lair in new[] { web, keeper })
+            {
+                var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lair.Kind);
+                Assert(def.FindSector(lair.Position).Id == stair.Id, $"(o) {lair.Key} lies in the Old Stair.");
+                for (int slot = 0; slot < kind.PackMax; slot++)
+                {
+                    var place = Simpiens.Simulation.Creatures.CreatureService.PlaceOf(lair.Position, slot);
+                    Assert(def.FindSector(place).Id == stair.Id && grid.TryGetRegion(place, out int r) && r == hubRegion, $"(o) {lair.Key}'s place {slot} at {place} is walkable, in the Old Stair, reached from the Hub.");
+                }
+            }
+
+            // The survey point: out of every lair's reach, and out of the web's sight even from the farthest a spinner roams
+            var survey = stair.Anchor;
+            Assert(grid.TryGetRegion(survey, out int sr) && sr == hubRegion, "(o) The survey point is reached from the Hub.");
+            for (int i = 0; i < def.Lairs.Count; i++)
+                Assert(!Simpiens.Simulation.Creatures.LairReach.Holds(def.Lairs[i], survey), $"(o) The survey point lies out of {def.Lairs[i].Key}'s reach.");
+            var spinner = Simpiens.Simulation.Creatures.CreatureCatalog.Get(web.Kind);
+            float roam = (float)(spinner.Leash * Simpiens.Simulation.Creatures.CreatureService.RoamShareOfLeash);
+            Assert(Vec2.Distance(survey, web.Position) - roam >= spinner.Sight, $"(o) A spinner roaming its farthest ({roam}) can't see the survey point ({Vec2.Distance(survey, web.Position):0.0} from its heart, sight {spinner.Sight}).");
+
+            // The way to the gate: the door, and the straight line from it to the keeper crossing the web's reach
+            int stairDoors = 0;
+            Vec2 stairDoor = default;
+            for (int d = 0; d < Floor1Layout.Doors.Count; d++)
+            {
+                var door = Floor1Layout.Doors[d];
+                bool west = def.FindSector(door - new Vec2(0.5f, 0f)).Id == stair.Id, east = def.FindSector(door + new Vec2(0.5f, 0f)).Id == Floor1Layout.DeepSeamSectorId;
+                bool opens = west || def.FindSector(door + new Vec2(0.5f, 0f)).Id == stair.Id || def.FindSector(door + new Vec2(0f, 0.5f)).Id == stair.Id || def.FindSector(door - new Vec2(0f, 0.5f)).Id == stair.Id;
+                if (!opens) continue;
+                Assert(west && east, $"(o) The Old Stair's door at {door} opens on the Deep Seam.");
+                stairDoors++;
+                stairDoor = door;
+            }
+            Assert(stairDoors == 1, $"(o) The Old Stair has one door, not {stairDoors}.");
+            bool crosses = false;
+            for (int k = 0; k <= 20; k++)
+            {
+                var p = stairDoor + (keeper.Position - stairDoor) * (k / 20f);
+                if (Simpiens.Simulation.Creatures.LairReach.Holds(web, p)) crosses = true;
+            }
+            Assert(crosses, "(o) The way from the door to the gate crosses the web's reach: the spinners hold the approach.");
+            for (int i = 0; i < def.Lairs.Count; i++)
+                for (int d = 0; d < Floor1Layout.Doors.Count; d++)
+                    Assert(!Simpiens.Simulation.Creatures.LairReach.Holds(def.Lairs[i], Floor1Layout.Doors[d]), $"(o) {def.Lairs[i].Key} doesn't hold the door at {Floor1Layout.Doors[d]}.");
+            TestLog.Log($"[PASS] (o) The Old Stair: shrouded at the floor's west edge behind the Deep Seam; the gate and its keeper; the web holding the approach, the survey point {Vec2.Distance(survey, web.Position):0.0} from its heart, out of its reach and sight.");
         }
 
         private static bool IsWalkable(StaticNavGrid grid, Vec2 world)

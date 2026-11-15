@@ -35,7 +35,7 @@ namespace Simpiens.Testing.Combat
         private void ValidateTheLairsFillOnTheSeed()
         {
             var (service, world) = Filled(Seed);
-            Assert(service.Lairs.Count == 2, "Floor1's two lairs are at play.");
+            Assert(service.Lairs.Count == 4, "Floor1's four lairs are at play: the warren, the hollow, and the Old Stair's web and gate (K10.1b).");
             int expected = 0;
             for (int l = 0; l < service.Lairs.Count; l++)
             {
@@ -55,7 +55,7 @@ namespace Simpiens.Testing.Combat
             Assert(service.Creatures.Count == expected && world.Entities.Count == expected, $"{expected} creatures, every one in the world.");
             for (int i = 1; i < service.Creatures.Count; i++)
                 Assert(service.Creatures[i - 1].Id.CompareTo(service.Creatures[i].Id) < 0, "The creatures are in id order, the phase's order (A4).");
-            TestLog.Log($"[PASS] Test 1: the lairs fill on the seed: {service.Lairs[0].Pack} rats in the warren, {service.Lairs[1].Pack} beetles in the hollow, each whole in its place.");
+            TestLog.Log($"[PASS] Test 1: the lairs fill on the seed: {service.Lairs[0].Pack} in the warren, {service.Lairs[1].Pack} beetles in the hollow, {service.Lairs[2].Pack} spinners in the web, {service.Lairs[3].Pack} at the gate, each whole in its place.");
         }
 
         private void ValidateTheSameSeedFillsThemTheSame()
@@ -84,8 +84,8 @@ namespace Simpiens.Testing.Combat
                 var (service, _) = Filled(seed);
                 for (int l = 0; l < service.Lairs.Count; l++) seen.Add((l, service.Lairs[l].Pack));
             }
-            Assert(seen.SetEquals(new[] { (0, 3), (0, 4), (1, 1), (1, 2) }), $"Across 60 seeds every pack size in range turns up, and no other ({string.Join(", ", seen)}).");
-            TestLog.Log("[PASS] Test 3: every pack size in its kind's range turns up across the seeds: the warren holds 3 or 4 rats, the hollow 1 or 2 beetles.");
+            Assert(seen.SetEquals(new[] { (0, 3), (0, 4), (1, 1), (1, 2), (2, 2), (2, 3), (3, 1) }), $"Across 60 seeds every pack size in range turns up, and no other ({string.Join(", ", seen)}).");
+            TestLog.Log("[PASS] Test 3: every pack size in its kind's range turns up across the seeds: the warren holds 3 or 4 rats, the hollow 1 or 2 beetles, the web 2 or 3 spinners, the gate its one keeper.");
         }
 
         private void ValidateASlainMemberReturnsInItsHours()

@@ -28,7 +28,7 @@ namespace Simpiens.Core.Tests
             var archer = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             Assert.True(archer.Inventory.TryEquip(Outfitting.NewPiece(ItemType.Crossbow, Grades.Standard)));
             var node = sim.Registry.GetEntity(archer.AgentId);
-            var creature = sim.Simulation.Creatures.Creatures.First(c => c.IsAlive);
+            var creature = sim.Simulation.Creatures.Creatures.First(c => c.IsAlive && !c.Definition.IsRanged && !c.Definition.IsBoss); // a biter of the vermin, as before the Old Stair (K10.1b)
             int life = archer.Inventory.GetEquipped(EquipmentSlot.Weapon).Durability;
 
             // By hand: the creature in the Overgrowth by its west wall (x = 8), the archer 3 units off across the wall

@@ -227,13 +227,18 @@ namespace Simpiens.Client.Ui
             // The sector choices change with the type and the chart: rebuild only when they did
             int signature = _model.SectorChoiceIds.Count * 1000 + (int)_model.Type;
             for (int i = 0; i < _model.SectorChoiceIds.Count; i++) signature = signature * 31 + _model.SectorChoiceIds[i];
-            if (signature != _choicesShown)
+            bool refilled = signature != _choicesShown;
+            if (refilled)
             {
                 SectorBox.Items.Clear();
                 foreach (var label in _model.SectorChoiceLabels) SectorBox.Items.Add(label);
                 _choicesShown = signature;
             }
-            if (SectorBox.SelectedIndex != _model.SelectedSectorIndex) SectorBox.SelectedIndex = _model.SelectedSectorIndex;
+            bool reselected = SectorBox.SelectedIndex != _model.SelectedSectorIndex;
+            if (reselected) SectorBox.SelectedIndex = _model.SelectedSectorIndex;
+            // Its list opens on the choice, not where filling it left the scroll (the last row: with the Old Stair, Epic 10 Part 3,
+            // K10.1b, the sectors outgrew the list's height and the first rows opened hidden above it)
+            if ((refilled || reselected) && SectorBox.SelectedIndex >= 0) SectorBox.ListBox?.ScrollIndexIntoView(SectorBox.SelectedIndex, Gum.Forms.Controls.ScrollIntoViewStyle.Top);
             _binding = false;
 
             UiParts.SetText(_sectorState, _model.SectorState);

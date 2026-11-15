@@ -24,20 +24,24 @@ namespace Simpiens.Core.Tests
             sim.Respawn(OutpostSession.SessionId);
             var creatures = sim.Simulation.Creatures;
             var map = sim.Host.Current.Map;
-            Assert.Equal(2, creatures.Lairs.Count);
+            Assert.Equal(4, creatures.Lairs.Count); // the warren, the hollow, and the Old Stair's web and gate (Epic 10 Part 3, K10.1b)
             var inWorld = sim.Registry.ActiveEntities.Where(e => e.Type == EntityType.Creature).ToList();
             Assert.Equal(creatures.Creatures.Count, inWorld.Count);
             foreach (var entity in inWorld)
             {
                 var c = entity.Creature;
                 Assert.NotNull(c);
-                byte expected = c.Kind == CreatureKind.BurrowRat ? Floor1Layout.OvergrowthSectorId : Floor1Layout.DeepSeamSectorId;
+                byte expected = c.Kind == CreatureKind.BurrowRat ? Floor1Layout.OvergrowthSectorId
+                    : c.Kind == CreatureKind.StoneBeetle ? Floor1Layout.DeepSeamSectorId : Floor1Layout.OldStairSectorId;
                 Assert.Equal(expected, map.FindSector(entity.Position).Id);
             }
             int rats = creatures.Creatures.Count(c => c.Kind == CreatureKind.BurrowRat), beetles = creatures.Creatures.Count(c => c.Kind == CreatureKind.StoneBeetle);
-            TestContext.Current.TestOutputHelper?.WriteLine($"{rats} rats in the warren, {beetles} beetles in the hollow");
+            int spinners = creatures.Creatures.Count(c => c.Kind == CreatureKind.CaveSpinner), keepers = creatures.Creatures.Count(c => c.Kind == CreatureKind.Gatekeeper);
+            TestContext.Current.TestOutputHelper?.WriteLine($"{rats} rats in the warren, {beetles} beetles in the hollow, {spinners} spinners in the web, {keepers} at the gate");
             Assert.InRange(rats, 3, 4);
             Assert.InRange(beetles, 1, 2);
+            Assert.InRange(spinners, 2, 3);
+            Assert.Equal(1, keepers);
 
             var ids = creatures.Creatures.Select(c => c.Id).ToList();
             sim.Step(100);

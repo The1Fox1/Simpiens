@@ -10,10 +10,10 @@ namespace Simpiens.Core.Session.Layouts
     /// and sleep. Near work sectors start explored; the two frontier sectors start shrouded, sit behind the near
     /// sectors, and hold richer nodes. Validated headlessly in Phase 1; spawned as the live map in Phase 3.
     ///
-    ///          x: -24        -8         8         24
-    ///   y 18   +----------+----------+----------+
-    ///          | Deep Seam|  Garden  |Overgrowth|   frontier sectors start shrouded
-    ///   y  6   +---D------+----D-----+------D---+
+    ///  x: -40      -24        -8         8         24
+    ///   y 18   +----------+----------+----------+----------+
+    ///          |Old Stair D Deep Seam|  Garden  |Overgrowth|   frontier sectors start shrouded; the Old Stair (Epic 10
+    ///   y  6   +-gate-----+---D------+----D-----+------D---+   Part 3, K10): the sealed gate at the floor's west edge
     ///          |  Ore     D  stall   D   Herb   |   quarry and grove doors sit beside the stall
     ///          |  Quarry  |fire      |   Grove  |   the hearth has the hub's quiet south-west corner
     ///   y -6   +---D------+-------D--+------D---+
@@ -44,6 +44,7 @@ namespace Simpiens.Core.Session.Layouts
         public const byte DrownedGallerySectorId = 11;
         public const byte WorkshopRowSectorId = 12;
         public const byte GuildhallSectorId = 13;
+        public const byte OldStairSectorId = 14;
 
         /// <summary>
         /// The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them. On the 24-hour day
@@ -63,6 +64,12 @@ namespace Simpiens.Core.Session.Layouts
         public const string RatWarren = "lair.warren";
         /// <summary>The stone beetles' hollow in the Deep Seam (K2.1).</summary>
         public const string BeetleHollow = "lair.hollow";
+        /// <summary>The cave spinners' web on the Old Stair's approach (Epic 10 Part 3, K10.1).</summary>
+        public const string SpinnerWeb = "lair.web";
+        /// <summary>The Gatekeeper's place before the sealed gate (K10.1): it guards the gate, charted with its sector.</summary>
+        public const string GateLair = "lair.gate";
+        /// <summary>The sealed descent gate in the Old Stair's west wall (K10.1, Q13).</summary>
+        public const string DescentGate = "oldstair.gate";
         public const int GallerySeamYield = 4;
         public const uint GlowstoneRegrowTicks = 6000; // ten minutes: rare (Epic 10 G2)
 
@@ -107,6 +114,7 @@ namespace Simpiens.Core.Session.Layouts
             new Vec2(-16f, -18f), // The Sump - The Drowned Gallery (Epic 10 G5)
             new Vec2(4f, -18f),   // Road Gate - Workshop Row (Epic 10 Part 2): the lane runs on from the gate
             new Vec2(8f, -20.5f), // Workshop Row - Guildhall: the guildhall's only door
+            new Vec2(-24f, 9f),   // Deep Seam - Old Stair (Epic 10 Part 3, K10.1): low in the Deep Seam's west wall, clear of the hollow's reach
         };
 
         public static Vec2 HubBunkhouseDoor => Doors[5];
@@ -121,12 +129,21 @@ namespace Simpiens.Core.Session.Layouts
 
         private static MapDefinition Build(System.Action<MapDefinitionBuilder> more = null)
         {
-            var b = new MapDefinitionBuilder("Floor1", new RectF(-24f, -24f, 48f, 42f));
+            // The floor grows west for the Old Stair (Epic 10 Part 3, K10.1), never north: 42 units tall still fits a 720-row window
+            // at one screen pixel per art pixel, top-down; 64 wide is 1,024 pixels
+            var b = new MapDefinitionBuilder("Floor1", new RectF(-40f, -24f, 64f, 42f));
 
-            // --- Outer walls of the 3x2 upper block ---
-            b.WallRun(new Vec2(-24f, 18f), new Vec2(24f, 18f));
-            b.WallRun(new Vec2(-24f, -24f), new Vec2(-24f, 17f));
+            // --- Outer walls of the 3x2 upper block, and the Old Stair's ---
+            b.WallRun(new Vec2(-40f, 18f), new Vec2(24f, 18f));
+            b.WallRun(new Vec2(-24f, -24f), new Vec2(-24f, 6f));
             b.WallRun(new Vec2(24f, -24f), new Vec2(24f, 17f));
+            // The Old Stair (K10.1): west of the Deep Seam, its one door low in their shared wall (y 6..12), out of the beetle
+            // hollow's reach; its own walls on the floor's new west edge
+            b.WallRun(new Vec2(-24f, 12f), new Vec2(-24f, 17f));
+            b.WallRun(new Vec2(-40f, 6f), new Vec2(-24f, 6f));
+            b.WallRun(new Vec2(-40f, 6f), new Vec2(-40f, 17f));
+            // Below the Old Stair the floor's new west strip is solid rock: nothing there to walk
+            b.Wall(new RectF(-40f, -24f, 16f, 30f));
 
             // y = 6: frontier row / work row. Doors: Deep Seam-Ore Quarry (x -16), Garden-Hub (x 0), Overgrowth-Herb Grove (x 16)
             b.WallRun(new Vec2(-24f, 6f), new Vec2(-19f, 6f));
@@ -194,6 +211,10 @@ namespace Simpiens.Core.Session.Layouts
                 new RectF(-8f, -24f, 16f, 6f), facility: true);
             b.Sector(GuildhallSectorId, "Guildhall", "The guild's own hall past the workshop row: barracks where its members sleep, and a yard by the door.",
                 new RectF(8f, -24f, 16f, 6f), facility: true);
+            // The Old Stair (Epic 10 Part 3, K10.1, Q13): at the floor's west edge, reached through the Deep Seam, uncharted at the
+            // start; its survey point inside the door, out of the web's reach and sight
+            b.Sector(OldStairSectorId, "The Old Stair", "An ancient stairwell at the floor's edge, sealed by a great gate. Spinners web its approach, and something of stone keeps the gate.",
+                new RectF(-40f, 6f, 16f, 12f), new Vec2(-26.5f, 9f), 0f, startsExplored: false);
 
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
@@ -263,6 +284,12 @@ namespace Simpiens.Core.Session.Layouts
             // of the sector stays workable ---
             b.Lair(RatWarren, Simpiens.Simulation.Creatures.CreatureKind.BurrowRat, new Vec2(21f, 16f));
             b.Lair(BeetleHollow, Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle, new Vec2(-21f, 16f));
+            // The Old Stair (K10.1): the spinners' web on the approach, whose reach the way from the door to the gate crosses
+            // (the survey point stays 9 from its heart, out of its reach and sight); the Gatekeeper before the gate, which it
+            // guards: charted with the sector, and emptied for good it breaches the gate (Q13)
+            b.Lair(SpinnerWeb, Simpiens.Simulation.Creatures.CreatureKind.CaveSpinner, new Vec2(-34f, 14f));
+            b.Lair(GateLair, Simpiens.Simulation.Creatures.CreatureKind.Gatekeeper, new Vec2(-37f, 9.5f), guardsGate: true);
+            b.Poi(DescentGate, PoiKind.DescentGate, new Vec2(-39.5f, 9.5f), 1.5f);
 
             // --- Labels (sector names near each sector's top edge) ---
             b.Label("Outpost Hub", new Vec2(0f, 4.6f), new Rgba(0.95f, 0.85f, 0.4f));
@@ -278,6 +305,7 @@ namespace Simpiens.Core.Session.Layouts
             b.Label("The Drowned Gallery", new Vec2(-16f, -19.4f), new Rgba(0.35f, 0.6f, 0.8f));
             b.Label("Workshop Row", new Vec2(-3f, -19.4f), new Rgba(0.95f, 0.7f, 0.45f));
             b.Label("Guildhall", new Vec2(16f, -19.4f), new Rgba(0.75f, 0.65f, 0.95f));
+            b.Label("The Old Stair", new Vec2(-32f, 16.6f), new Rgba(0.7f, 0.62f, 0.55f));
 
             more?.Invoke(b);
             return b.Build();

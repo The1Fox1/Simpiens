@@ -142,7 +142,7 @@ namespace Simpiens.Hosting
         /// <summary>A crawler that decided to go before a lair was charted may still be on its way: entries count from a game hour after.</summary>
         public const long KnownLairGraceTicks = DayClock.TicksPerHour;
 
-        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InKnownLair, bool Downed, bool Fighting)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool, bool)>();
+        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InChartedReach, bool Downed, bool Fighting)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool, bool)>();
 
         /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
         public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
@@ -323,22 +323,25 @@ namespace Simpiens.Hosting
                 }
                 // In a known lair's reach (by where it stands), and whether it braves that lair (K3.3, D21): an entry is a step
                 // into the reach unbraved, not a brave crawler's health falling while it is there (K6.4: a hurt hunter)
-                bool inKnownLair = false, braves = false;
+                // A step is judged by where it stands, charted or not: one already standing in a lair's reach when its grace ran out
+                // didn't step in (Epic 10 Part 3, K10.1b: seed 64's wanderer, who charted the hollow on its way in and stood there)
+                bool inKnownLair = false, inChartedReach = false, braves = false;
                 for (int l = 0; l < lairCount && !inKnownLair; l++)
                 {
                     float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
-                    inKnownLair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f
-                        && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                    bool within = LairChartedAt[l] >= 0 && deep > 0f && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                    inChartedReach |= within;
+                    inKnownLair = within && rel - LairChartedAt[l] >= KnownLairGraceTicks;
                     if (inKnownLair) braves = Vitality.BravesLair(map.Lairs[l], state.Skills, state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned);
                 }
                 // A victor stepping in for its own kill's drop at hand is D24's, not a lone venture
                 bool ownDrop = state.CurrentIntent is Simpiens.Cognition.Contracts.PickUpIntent pick && _sim.Simulation.Piles.TryGet(pick.PileId, out var pile) && pile.ClaimedFor == state.AgentId;
-                if (inKnownLair && !was.InKnownLair && !braves && !ownDrop && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
+                if (inKnownLair && !was.InChartedReach && !braves && !ownDrop && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
                 {
                     EntriesIntoKnownLairs++;
                     FirstEntryIntoKnownLair ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position} ({state.CurrentIntent?.GetType().Name})";
                 }
-                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inKnownLair, state.IsDowned, fighting);
+                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inChartedReach, state.IsDowned, fighting);
             }
             if (armed > MostArmed) MostArmed = armed;
         }
