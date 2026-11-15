@@ -35,6 +35,9 @@ namespace Simpiens.Simulation.Persistence
 
         /// <summary>The items on the ground (Epic 10 Part 3, K4.1); null in a save from before: none.</summary>
         public PileSave Piles { get; set; }
+
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.4): <see cref="Simpiens.Simulation.World.WorldFlags"/>.</summary>
+        public ulong Flags { get; set; }
     }
 
     /// <summary>The supply service in a save: its regrowth queue, in its own order, and its counters.</summary>

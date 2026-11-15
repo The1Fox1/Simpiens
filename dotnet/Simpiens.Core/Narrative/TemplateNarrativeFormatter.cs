@@ -180,6 +180,9 @@ namespace Simpiens.Narrative
                     return $"{actorA} is now {(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}.";
                 }
 
+                case ChronicleEventType.GateBreached:
+                    return $"{actorA} broke the Gatekeeper in {sector}: the descent gate stands open, its stairs going down into the dark.";
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 

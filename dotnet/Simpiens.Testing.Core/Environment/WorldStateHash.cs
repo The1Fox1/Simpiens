@@ -214,6 +214,7 @@ namespace Simpiens.Testing.Environment
                     if (c.LastVisitAt != 0) Mix(ref map, c.LastVisitAt); // a boss's last visitor (K10.3c), once there was one
                 }
             }
+            if (sim != null && sim.WorldFlags != Simpiens.Simulation.World.WorldFlags.None) Mix(ref map, (ulong)sim.WorldFlags); // the breach (K10.4), once it happened
 
             // Groups by id, each with its sorted roster; then each crawler's memberships, in id order. A crawler's memberships
             // go as a count and then each one, so a crawler in several groups (Epic 10 G4.3) hashes as one in a single group did

@@ -35,6 +35,7 @@ namespace Simpiens.Simulation
             save.World.Harvested = harvested;
             save.World.Creatures = Creatures.Capture(); // the lairs and their creatures (Epic 10 Part 3, K2.4)
             save.World.Piles = Piles.Capture(); // the items on the ground (K4.1)
+            save.World.Flags = (ulong)WorldFlags; // the gate's breach (K10.4)
 
             var groups = new Simpiens.Simulation.Persistence.GroupSave();
             _groupRegistry?.CaptureTo(groups);
@@ -80,6 +81,7 @@ namespace Simpiens.Simulation
             Creatures.Restore(this, world?.Creatures, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed);
             Piles.Restore(this, world?.Piles, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed); // K4.1
             _economyLedger?.RestoreGroundGold(Piles.TotalGold); // gold on the ground, derived from the piles (K5.4b)
+            WorldFlags = (Simpiens.Simulation.World.WorldFlags)(world?.Flags ?? 0UL); // the gate's breach (K10.4)
 
             if (save.Groups != null) _groupRegistry?.RestoreFrom(save.Groups);
             Guild.RestoreFrom(save.Guild);
@@ -136,6 +138,7 @@ namespace Simpiens.Simulation
         public void ResetState()
         {
             SessionEpoch++;
+            WorldFlags = Simpiens.Simulation.World.WorldFlags.None; // a new session: nothing has happened yet (K10.4)
 
             // Decisions in flight belong to the old session: wait for them, release their snapshots, drop them
             Cognition.Reset();

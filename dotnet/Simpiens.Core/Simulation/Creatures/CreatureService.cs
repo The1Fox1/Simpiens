@@ -166,6 +166,19 @@ namespace Simpiens.Simulation.Creatures
             }
         }
 
+        /// <summary>
+        /// True when lair <paramref name="lairIndex"/> guards the gate and is emptied for good (Epic 10 Part 3, K10.4): none of its
+        /// places held, and none due to refill (its keeper never returns, K10.3d).
+        /// </summary>
+        public bool GuardsGateEmptyForGood(int lairIndex)
+        {
+            if (lairIndex < 0 || lairIndex >= _lairs.Count || !_lairs[lairIndex].Definition.GuardsGate) return false;
+            var lair = _lairs[lairIndex];
+            for (int slot = 0; slot < lair.Pack; slot++)
+                if (lair.MemberIn(slot) != default || lair.ReturnAt(slot) != 0) return false;
+            return lair.Pack > 0;
+        }
+
         /// <summary>True while lair <paramref name="lairIndex"/>'s boss holds its place.</summary>
         public bool IsBossAlive(int lairIndex) =>
             lairIndex >= 0 && lairIndex < _lairs.Count && _lairs[lairIndex].Definition.HasBoss && _lairs[lairIndex].Pack > 0 && _lairs[lairIndex].MemberIn(0) != default;

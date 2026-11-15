@@ -37,6 +37,9 @@ namespace Simpiens.Simulation
         /// <summary>The lairs and their creatures (Epic 10 Part 3, K2).</summary>
         Simpiens.Simulation.Creatures.CreatureService Creatures { get; }
 
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.4): the gate's breach.</summary>
+        Simpiens.Simulation.World.WorldFlags WorldFlags { get; }
+
         /// <summary>The items on the ground (Epic 10 Part 3, K4.1).</summary>
         Simpiens.Simulation.Loot.PileService Piles { get; }
 

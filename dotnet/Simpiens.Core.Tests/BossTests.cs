@@ -147,6 +147,42 @@ namespace Simpiens.Core.Tests
             Assert.DoesNotContain(sim.Simulation.Creatures.Creatures, c => c.Kind == CreatureKind.Gatekeeper);
         }
 
+        /// <summary>
+        /// K10.4: slaying the Gatekeeper breaches the gate: the world's flag, the chronicle's line naming the slayer, saved and
+        /// loaded; a new session starts unbreached. The kill is a crawler's swings asked by hand at a keeper left at 1 health.
+        /// </summary>
+        [Fact]
+        public void SlayingTheGatekeeperBreachesTheGate()
+        {
+            using var sim = Outpost();
+            SlayTheWeb(sim);
+            var keeper = TheKeeper(sim);
+            Assert.Equal(Simpiens.Simulation.World.WorldFlags.None, sim.Simulation.WorldFlags);
+            keeper.Health = 1f;
+            var hero = sim.Host.CrawlerStates.First(c => !c.IsDrifter);
+            var entity = sim.Registry.GetEntity(hero.AgentId);
+            for (int t = 0; t < 200 && (sim.Simulation.WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) == 0; t++)
+            {
+                hero.Position = keeper.Position + new Vec2(1.3f, 0f);
+                hero.NextSwingAt = 0;
+                sim.Simulation.Creatures.AskSwing(entity, keeper.Id);
+                sim.Step(1);
+            }
+            Assert.Equal(Simpiens.Simulation.World.WorldFlags.GateBreached, sim.Simulation.WorldFlags);
+            Assert.DoesNotContain(sim.Simulation.Creatures.Creatures, c => c.Kind == CreatureKind.Gatekeeper);
+            var told = new System.Collections.Generic.List<Simpiens.Narrative.ChronicleEvent>();
+            sim.Chronicle.GetAllRecentEvents(told, 256);
+            Assert.Contains(told, e => e.EventType == Simpiens.Narrative.ChronicleEventType.GateBreached && e.ActorAId == hero.AgentId);
+
+            // Saved and loaded with the world; a respawn starts a world where nothing has happened
+            var save = sim.Host.Capture();
+            Assert.Equal((ulong)Simpiens.Simulation.World.WorldFlags.GateBreached, save.World.Flags);
+            sim.Respawn(OutpostSession.SessionId);
+            Assert.Equal(Simpiens.Simulation.World.WorldFlags.None, sim.Simulation.WorldFlags);
+            Assert.True(sim.Host.TryRestore(save, out var refusal), refusal);
+            Assert.Equal(Simpiens.Simulation.World.WorldFlags.GateBreached, sim.Simulation.WorldFlags);
+        }
+
         private static CreatureState TheKeeper(LocalSimulation sim)
         {
             var service = sim.Simulation.Creatures;

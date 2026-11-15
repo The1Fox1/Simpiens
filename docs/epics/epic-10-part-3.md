@@ -393,6 +393,10 @@ The go: "Let's close his out by finishing K10-K11. I will not be able to supervi
   - **Why it's the measuring:** that fits the runtime's own first-pass work landing on the measuring thread, never the code measured.
   - **The fix:** a pass that allocates is now measured once more, and the second must allocate nothing. A real allocation repeats every pass.
   - [Basic: the measuring; watch the other allocation tests]
+- **D68, the breach** (K10.4, Q13: "a saved world flag, told by the chronicle"):
+  - **The flag:** `WorldFlags.GateBreached` is set the tick the lair that guards the gate is emptied for good (its keeper slain, with no return due). It is owned by the simulation, saved in the world's block (`WorldSave.Flags`), held by the world hash once set, and cleared only by a new session.
+  - **The chronicle:** it tells it as its own event (`GateBreached`, at the highest intensity): the slayer broke the Gatekeeper, and the gate stands open on stairs going down into the dark.
+  - **Nothing walks through:** the stairs beyond are the descent's (Epic 12), so the breach opens nothing on the map; the client draws the gate open (K10.5c).
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

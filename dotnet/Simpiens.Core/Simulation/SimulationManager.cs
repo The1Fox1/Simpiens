@@ -295,7 +295,19 @@ namespace Simpiens.Simulation
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
+
+            // The breach (Epic 10 Part 3, K10.4, Q13): the lair that guards the gate emptied for good (its keeper never returns)
+            if ((WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) == 0 && Creatures.GuardsGateEmptyForGood(creature.LairIndex))
+            {
+                WorldFlags |= Simpiens.Simulation.World.WorldFlags.GateBreached;
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew the {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)}: the descent gate is breached");
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.GateBreached, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind));
+            }
         }
+
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.4): the gate's breach. Saved in the world's block.</summary>
+        public Simpiens.Simulation.World.WorldFlags WorldFlags { get; private set; }
 
         /// <summary>True while the pile with <paramref name="id"/> lies on the ground (K4.3).</summary>
         public bool PileExists(EntityId id) => Piles.TryGet(id, out _);

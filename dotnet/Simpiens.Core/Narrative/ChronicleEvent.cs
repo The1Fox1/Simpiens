@@ -53,7 +53,8 @@ namespace Simpiens.Narrative
         CrawlerDied = 43, // K5.4a: ActorA died; ActorB is what downed it (a creature) or none; the extra is its DeathCause x 256 + the cause's detail (the kind)
         CrawlerRescued = 44, // K5.3: ActorA rescued ActorB; the extra is 1 for a carry out, 2 for a medicine given
         NewcomerArrived = 45, // K5.6: ActorA settled at the outpost, 2 days after a resident's death
-        SkillBandReached = 46 // K9.2: ActorA's practice reached a band; the extra is the skill x 256 + the band
+        SkillBandReached = 46, // K9.2: ActorA's practice reached a band; the extra is the skill x 256 + the band
+        GateBreached = 47 // K10.4: ActorA slew the gate's keeper ActorB and the descent gate is breached; the extra is the keeper's kind
     }
 
     /// <summary>
