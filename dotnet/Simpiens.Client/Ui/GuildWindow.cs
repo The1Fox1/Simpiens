@@ -27,6 +27,9 @@ namespace Simpiens.Client.Ui
         /// <summary>Two lines (Epic 10 Part 2, W5.1), so the guild's eight cards fit a 720-row window.</summary>
         private const float CardHeight = 48f;
 
+        /// <summary>Where a card's middle column (health, standing, gear) begins.</summary>
+        private const float StandingX = 270f;
+
         private readonly GuildModel _model;
         private readonly IconAtlas _icons;
         private readonly TextRuntime _status, _empty, _feedback, _goal, _ruleText, _dispatchText;
@@ -238,14 +241,17 @@ namespace Simpiens.Client.Ui
             nameLine.Children.Add(card.Name);
             nameLine.Children.Add(card.Skills);
             nameLine.Children.Add(card.Unpaid);
-            who.Children.Add(nameLine);
+            // Clipped short of the standing column: a ten-letter name beside two masters' skills would reach it
+            var nameClip = new ContainerRuntime { Width = StandingX - who.X - 8f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ClipsChildren = true };
+            nameClip.Children.Add(nameLine);
+            who.Children.Add(nameClip);
             card.Doing = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             who.Children.Add(card.Doing);
             card.Root.Children.Add(who);
 
             // Middle: health and standing; then gear
             var standing = UiParts.Column(3f);
-            standing.X = 270f;
+            standing.X = StandingX;
             standing.Y = 7f;
             var standingLine = Line(10f);
             card.Health = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
