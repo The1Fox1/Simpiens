@@ -1734,3 +1734,17 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Found:** the greedy soak band (F9, raised to 6); seed 12's trust with any scripted player (F10, untraced); one thrash on seed 64 from a bounty race (F11).
 - **Golden re-recorded twice,** each in its own commit: once for skills in the world hash (K9.1, `c72b835`), once for what they do (`e858402`).
 - **K9's gate** (2026-11-14): core 287/287, client 513/513 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11), the MonoGame and Android compiles clean.
+
+## 2026-11-15: Epic 10 Part 3, K9.8, skill foundation reinforcement (at the producer's "Add K9.8 Skill foundation reinforcement")
+- **Why:** a report on the skill system's foundation found storage, determinism and the write path sound. The read path wasn't: every effect read the raw learned level, and one kind of work answered to exactly one skill. Both sit under skill families, books, osmosis, skills in the planner, and talents or gear that modify skills. The producer took the report's "do now" items; the rest wait for their features (the epic's §5).
+- **A seam keyed by the kind of work** (K9.8a, `a0cce97`, D54, D55):
+  - `SkillWork`, `SkillTable.SkillFor`, `CrawlerSkills.Level(skills, worn, work)` (the effective level, a pure function of what cognition's copy holds), and `ISkillPractice.Practise(agent, work, experience, source)` with a `PracticeSource` ceiling. `AgentState.Practise` is internal.
+  - `SkillReadsTests` keeps learned reads to the seam, practice's entry and the dossier's list.
+  - It was keyed by the work, not the skill, so a family, a narrower skill or gear's bonus changes the table and the seam, never the callers.
+  - No behaviour change: golden and the renders held.
+- **A lair judged as the fight is** (K9.8b, `592f0ac`, D56):
+  - `HarmToClear` builds the crawler's `Combatant` from its skills and gear, its swing in whole ticks.
+  - This was a live disagreement between cognition and the fight: a veteran judged a lair at the unskilled 70%.
+  - Measured against a baseline at K9.8a in a worktree: kills in K3's four days 5 → 6 of 23, no deaths; hunts paid 20 of 23 either way, to two or more 8 → 7. `AHuntBountyClearsALair` moved from seed 1 (a skilled hunter now clears alone) to gate seed 3.
+  - Golden unchanged: nobody braves a lair before t3000 on the golden seeds.
+- **K9.8's gate** (2026-11-15): core 290/290 (13 explicit not run), client 513/513 in the pinned image, golden 3/3 unchanged, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11, as at K9), the MonoGame and Android compiles clean.

@@ -552,7 +552,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 - **The go:** the producer's "Add K9.8 Skill foundation reinforcement. To the plan and begin executing exactly what you laid out for do now" (2026-11-15), after the report on the skill system's foundation. The report found that skill storage, determinism and the write path are sound. The read path isn't: nothing has an effective level, and one kind of work answers to exactly one skill. Both sit under the features on the table (skill families, skill books, osmosis, skills in the planner, talents and gear that modify skills).
 - **What it leaves for each feature to design:** a traits record (talents), what a family is (its own experience, or derived from its members), the 16-skill cap, a curve per skill, books and osmosis.
 - **The plan:**
-  - [ ] **K9.8a A seam keyed by the kind of work, read and write:** [Possibly Complex: a seam under every skill read and every grant of practice; no behaviour change, golden unchanged]
+  - [x] **K9.8a A seam keyed by the kind of work, read and write:** [Possibly Complex: a seam under every skill read and every grant of practice; no behaviour change, golden unchanged]
     - `SkillWork` names a kind of work: a fight in reach or from range, a harvest of an item, a station's makes, tending the fallen.
     - `SkillTable.SkillFor(work)` replaces `ForFight`, `ForHarvest`, `ForStation` and `ForTending`.
     - `CrawlerSkills.Level(skills, worn, work)` is the effective level: a pure function of what cognition's copy also holds, so the main thread and cognition read the same number. Today it is the learned level; gear's and traits' say will enter here.
@@ -561,11 +561,19 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
     - Every effect (combat, the harvest, making, carrying, healing), choice (the salvage choice, the scripted workshop player's hire) and the station window's lines go through the seam.
     - A guard test: production code reads a skill's level (`.Level(`, `.Band(`, `.Experience(`) only in the seam, the chronicle's band reached and the display of learned skills.
     - AGENTS.md's "Adding a skill".
-  - [ ] **K9.8b The lair judged as the fight is:** [Basic code; a behaviour change, so golden is re-recorded in its own commit]
+  - [x] **K9.8b The lair judged as the fight is:** [Basic code; a behaviour change, so golden is re-recorded in its own commit]
     - `Vitality.HarmToClear` judges a lair by the crawler as the fight builds it (`Combatant.ForCrawler` from its skills and gear): its skilled hit chance and damage, and its swing in whole ticks. Until now it judged at the unskilled 70%.
     - `BravesLair`'s callers pass the skills: the lair's danger, hunting, the scripted hunt player and the watch.
     - Re-measure K3's DoD (`AnArmedCrawlerFightsBack`) and the scenarios that brave or hunt a lair.
-  - [ ] **K9.8c The gate:** [Possibly Complex: re-measure where K9.8b moves a scenario] core and client tests, golden, the soak, seeds 1–120 with and without the guild, the MonoGame and Android compiles; the docs.
+  - [x] **K9.8c The gate:** [Possibly Complex: re-measure where K9.8b moves a scenario] core and client tests, golden, the soak, seeds 1–120 with and without the guild, the MonoGame and Android compiles; the docs.
+  - **Done 2026-11-15** (`a0cce97`, `592f0ac`): decisions D54–D56 in the epic. K9.8b moved one DoD: `AHuntBountyClearsALair` goes to gate seed 3. Golden didn't move, since nobody braves a lair before t3000 on the golden seeds, so there was nothing to re-record. The gate:
+    - core 290/290 (13 explicit measurements not run);
+    - client 513/513 in the pinned image, renders unchanged;
+    - golden 3/3, unchanged;
+    - the soak 15/15;
+    - seeds 1–120 119/120 with and without the guild (F11's thrash on seed 64, as at K9);
+    - the MonoGame and Android compiles with 0 warnings.
+  - K9.8 stops for the producer's word before K10.
 
 ### K10. Bosses and the gate (3–4 days)
 **Complexity:** Very Complex: boss mechanics are new. Split as below. The developer supervises K10.3.
