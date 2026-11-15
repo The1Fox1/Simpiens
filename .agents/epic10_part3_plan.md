@@ -602,19 +602,20 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - **The gate's lair is charted with its sector:** D17 keeps charting by sight or by a blow, and nobody goes to a sector with no work in it, so a lair the map marks as guarding the gate is known once a scout's report charts the room it stands in. The spinners on the approach are charted as any lair is.
   - **The breach** is the gate's lair emptied for good: the Gatekeeper never returns, and its slaying sets the world's flag.
 - **The plan:**
-  - [ ] **K10.1a Boss traits and the two kinds:** [Possibly Complex: catalogue fields and rows, a lair's boss; no live change, golden unchanged]
+  - [x] **K10.1a Boss traits and the two kinds:** [Possibly Complex: catalogue fields and rows, a lair's boss; no live change, golden unchanged]
     - `CreatureDefinition`'s boss traits: `IsBoss`, `Slam`, `FuryBelow` with its attack and swing factors, `CallsBroodBelow`, `WholeAfterHours`; `CreatureKind.Matriarch` (4) and `Gatekeeper` (5), their rows and loot tables (each a sure trophy and a rare piece, Q12).
     - `LairDefinition.Boss` (a kind beside the pack, in the first place) and `GuardsGate`; the lair's pack, danger, reach and the lone judgement (`HarmToClear`) count the boss; the save's check accepts a boss in its lair's first place.
     - Placeholder sprites for both kinds (`CreatureSprites`, both tables), so `ArtCompletenessTests` holds; the 64×64 art comes in K10.5a.
     - Validators: the catalogue's shape for bosses, the lair's pack and judgement with a boss.
-  - [ ] **K10.1b The Old Stair:** [Possibly Complex: a map change; golden and renders re-recorded in their own commits]
+  - [x] **K10.1b The Old Stair:** [Possibly Complex: a map change; golden and renders re-recorded in their own commits]
     - the sector, its walls and door, uncharted at the start, its survey point inside the door;
     - the sealed gate on its west wall (a point of interest the view draws);
     - the spinners' lair on its approach, their leash and sight 6 (from 9 and 7) so that the survey point stays out of their reach and sight while the way to the gate crosses it;
     - the Gatekeeper's lair at the gate, charted with its sector (`GuardsGate`);
     - the map validators (14 sectors, the new door, reachability); the 23 gate seeds and seeds 1–120 re-measured.
-  - [ ] **K10.2a The Matriarch in the warren:** [Possibly Complex: a behaviour change on every seed; golden re-recorded in its own commit] the warren's boss, in its first place; she returns after a game week; the re-measure of the scenarios that hunt or clear the warren.
-  - [ ] **K10.2b She calls her brood:** [Basic: a rule beside `Provoke`, stateless] while she chases below her call's line, every brood member of her lair that is resting, roaming or going home, and not wounded past its own line, turns on her quarry. Stateless, so a load changes nothing.
+  - [x] **K10.2a The Matriarch in the warren:** [Possibly Complex: a behaviour change on every seed; golden re-recorded in its own commit] the warren's boss, in its first place; she returns after a game week; the re-measure of the scenarios that hunt or clear the warren.
+  - [x] **K10.2b She calls her brood:** [Basic: a rule beside `Provoke`, stateless] while she chases below her call's line, every brood member of her lair that is resting, roaming or going home, and not wounded past its own line, turns on her quarry. Stateless, so a load changes nothing.
+  - **Done so far** (2026-11-15): K10.1a (the traits, the kinds, the trophies, D57–D59), K10.1b (the Old Stair, D60–D62; golden and 27 renders re-recorded in their own commits), K10.2a (the Matriarch in the warren, D63, F12; golden re-recorded), K10.2b (the call; golden unchanged). Found on the way: the watch's entry rule counted a stand as a step (seed 64), the board's sector list opened scrolled to its end.
   - [ ] **K10.3a The slam:** [Possibly Complex: the combat rule's swing over several foes, D3] a kind with `Slam` strikes every crawler on its feet in its reach with one swing, one draw a foe in id order from the swing's stream; `CombatValidator`'s test.
   - [ ] **K10.3b Fury:** [Basic: a derived read in `Combatant.ForCreature`] below its fury line a kind's attack and swing take their factors; no state (it follows health).
   - [ ] **K10.3c Whole between attempts:** [Possibly Complex: saved state] `CreatureState.EmptySince`, the tick its lair's reach last held a living crawler, saved in `CreatureRecord` (inside format 11, its size pin moved); once its lair has stood empty that long, a kind with `WholeAfterHours` is whole again; a kind that heals by resting doesn't use it. Round-trip validators.

@@ -267,6 +267,7 @@ namespace Simpiens.Simulation.Creatures
                         if (WalkTo(c, kind, c.Home, snapshot, tick) != Walk.Walking) Rest(c, tick);
                         break;
                     }
+                    if (kind.CallsBrood(c.Health)) CallBrood(c, quarry); // a boss calls her brood to her quarry (K10.2b, Q13)
                     var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
                     var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
                     if (me.IsRanged && Keep(c, kind, me, them, heart, snapshot)) break; // a spitter keeps its distance (K8.3)
@@ -331,6 +332,27 @@ namespace Simpiens.Simulation.Creatures
             c.Target = best.Id;
             c.ForgetPath();
             return true;
+        }
+
+        // The call (Epic 10 Part 3, K10.2b, Q13: the Matriarch "calls her brood to her at half health"): while a boss chases under
+        // its call's line, every one of its lair's brood that rests, roams or goes home, and isn't wounded past its own line,
+        // turns on the boss's quarry within its leash. Stateless: it holds while she is under the line, so a load changes nothing.
+        // The brood after her in id order answer this tick, those before her the next
+        private void CallBrood(CreatureState boss, WorldEntity quarry)
+        {
+            if (boss.LairIndex < 0 || boss.LairIndex >= _lairs.Count) return;
+            var heart = _lairs[boss.LairIndex].Definition.Position;
+            for (int i = 0; i < _creatures.Count; i++)
+            {
+                var mate = _creatures[i];
+                if (mate == boss || mate.LairIndex != boss.LairIndex || !mate.IsAlive) continue;
+                if (mate.Mode == CreatureMode.Chase || mate.Mode == CreatureMode.Flee) continue;
+                var kind = mate.Definition;
+                if (kind == null || Wounded(mate, kind) || !IsQuarry(quarry, kind, heart)) continue;
+                mate.Mode = CreatureMode.Chase;
+                mate.Target = quarry.Id;
+                mate.ForgetPath();
+            }
         }
 
         // A crawler worth chasing: on its feet (until K5 a downed crawler limps out, as from a hazard), and within the leash
