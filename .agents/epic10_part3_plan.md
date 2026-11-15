@@ -576,7 +576,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - K9.8 stops for the producer's word before K10.
 
 ### K10. Bosses and the gate (3–4 days)
-**Complexity:** Very Complex: boss mechanics are new. Split as below. The developer supervises K10.3.
+**Complexity:** Very Complex: boss mechanics are new. Split as below so that no part is Very Complex (K10.3 was marked supervised; with the developer away it is split into K10.3a–d, its decisions recorded for review).
 - [ ] **K10.1 The Old Stair:** [Possibly Complex: a map change, with golden and renders re-recorded]
   - the new sector at the floor's edge, uncharted at the start;
   - the sealed gate;
@@ -594,14 +594,51 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - the gate on the map;
   - the breach's cutscene.
 - **DoD `TheGuildBreaksTheGatekeeper`:** on the default seed the scripted player scouts the Old Stair, arms and kits the guild, and breaks the Gatekeeper. More than one attempt is allowed; the bound is set at K10's first measurement.
+- **The go:** the producer's "Let's close his out by finishing K10-K11. I will not be able to supervise so you will be responsible for overseeing the completion of this epic" (2026-11-15), after K9.8's report (its D54–D56 stand by exception). With nobody to supervise, K10.3 is split below so that no part is Very Complex, and every decision is recorded in the epic for the developer's review on return (`.agents/local/directive_epic10-part3-k10-k11_afk_2026-11-15.md`).
+- **The shape, by default** (the epic's decisions from D57; the producer answers by exception):
+  - **Bosses are rows with traits** (A6): a boss, a slam over every foe in reach, fury below a line, a call to its brood below a line, whole again once its lair has stood empty of crawlers for some game hours. The rule reads the traits; no kind's name appears in code.
+  - **The Matriarch heads the warren** as its boss: a lair may name a boss beside its kind, who holds its first place, so the warren is one lair (its hunt, its clear, its danger and its emptying include her).
+  - **The Old Stair lies west of the Deep Seam,** a sector of the size the upper block's are (x −40 to −24, y 6 to 18), its one door in the Deep Seam's west wall (y 6 to 12, clear of the hollow's reach). West, not north: the floor stays 42 units tall, so it still fits a 720-row window top-down at one pixel per art pixel; it grows to 64 units wide (1,024 pixels).
+  - **The gate's lair is charted with its sector:** D17 keeps charting by sight or by a blow, and nobody goes to a sector with no work in it, so a lair the map marks as guarding the gate is known once a scout's report charts the room it stands in. The spinners on the approach are charted as any lair is.
+  - **The breach** is the gate's lair emptied for good: the Gatekeeper never returns, and its slaying sets the world's flag.
+- **The plan:**
+  - [ ] **K10.1a Boss traits and the two kinds:** [Possibly Complex: catalogue fields and rows, a lair's boss; no live change, golden unchanged]
+    - `CreatureDefinition`'s boss traits: `IsBoss`, `Slam`, `FuryBelow` with its attack and swing factors, `CallsBroodBelow`, `WholeAfterHours`; `CreatureKind.Matriarch` (4) and `Gatekeeper` (5), their rows and loot tables (each a sure trophy and a rare piece, Q12).
+    - `LairDefinition.Boss` (a kind beside the pack, in the first place) and `GuardsGate`; the lair's pack, danger, reach and the lone judgement (`HarmToClear`) count the boss; the save's check accepts a boss in its lair's first place.
+    - Placeholder sprites for both kinds (`CreatureSprites`, both tables), so `ArtCompletenessTests` holds; the 64×64 art comes in K10.5a.
+    - Validators: the catalogue's shape for bosses, the lair's pack and judgement with a boss.
+  - [ ] **K10.1b The Old Stair:** [Possibly Complex: a map change; golden and renders re-recorded in their own commits]
+    - the sector, its walls and door, uncharted at the start, its survey point inside the door;
+    - the sealed gate on its west wall (a point of interest the view draws);
+    - the spinners' lair on its approach, their leash and sight 6 (from 9 and 7) so that the survey point stays out of their reach and sight while the way to the gate crosses it;
+    - the Gatekeeper's lair at the gate, charted with its sector (`GuardsGate`);
+    - the map validators (14 sectors, the new door, reachability); the 23 gate seeds and seeds 1–120 re-measured.
+  - [ ] **K10.2a The Matriarch in the warren:** [Possibly Complex: a behaviour change on every seed; golden re-recorded in its own commit] the warren's boss, in its first place; she returns after a game week; the re-measure of the scenarios that hunt or clear the warren.
+  - [ ] **K10.2b She calls her brood:** [Basic: a rule beside `Provoke`, stateless] while she chases below her call's line, every brood member of her lair that is resting, roaming or going home, and not wounded past its own line, turns on her quarry. Stateless, so a load changes nothing.
+  - [ ] **K10.3a The slam:** [Possibly Complex: the combat rule's swing over several foes, D3] a kind with `Slam` strikes every crawler on its feet in its reach with one swing, one draw a foe in id order from the swing's stream; `CombatValidator`'s test.
+  - [ ] **K10.3b Fury:** [Basic: a derived read in `Combatant.ForCreature`] below its fury line a kind's attack and swing take their factors; no state (it follows health).
+  - [ ] **K10.3c Whole between attempts:** [Possibly Complex: saved state] `CreatureState.EmptySince`, the tick its lair's reach last held a living crawler, saved in `CreatureRecord` (inside format 11, its size pin moved); once its lair has stood empty that long, a kind with `WholeAfterHours` is whole again; a kind that heals by resting doesn't use it. Round-trip validators.
+  - [ ] **K10.3d Beaten once:** [Basic: the row's `RespawnHours` 0] a slain Gatekeeper never returns, across a save; tests.
+  - [ ] **K10.4 The breach:** [Possibly Complex: a saved world flag, the chronicle] `WorldFlags.GateBreached` in the world's block and the world hash, set the tick the gate's lair is emptied for good; the chronicle's `GateBreached` and its line; the round-trip validators.
+  - [ ] **K10.5a Boss art:** [Possibly Complex: art and pins] the Matriarch (a rat half again as big) and the Gatekeeper (up to 64×64, a stone warden) in both view modes; the art pins after a look at the sheet.
+  - [ ] **K10.5b Health bars:** [Possibly Complex: a presentation feed and drawing] the frames carry a creature's health share; a boss's bar above it on the map, both view modes, from the UI kit's colours.
+  - [ ] **K10.5c The gate on the map:** [Possibly Complex: a prop drawn by a world flag] the gate sealed, and once breached open on stairs going down into the dark; the frames carry the flag.
+  - [ ] **K10.5d The breach's cutscene:** [Possibly Complex: a hard cutscene] written with `CutsceneBuilder`, played once when the frames first see the breach; the words for the board, the tracker and the inspector name the bosses.
+  - [ ] **K10.6 The DoD:** [Possibly Complex: a live scenario and the bosses tuned by measurement] the scripted guild player clears in order (the web, then the gate), with draughts; `TheGuildBreaksTheGatekeeper` on the default seed, measured on the gate seeds first, its bound on attempts recorded; the renders recorded in the pinned image after a look.
 
 ### K11. The gate (2–3 days)
 **Complexity:** Possibly Complex: the whole part's scenarios and bands; the close-out is Basic.
-- [ ] **K11.1 Every scenario together,** [Possibly Complex] with a save mid-fight, a bleeding crawler and a crawler being carried, each loaded byte for byte.
-- [ ] **K11.2 The soak's `hunting` profile:** [Possibly Complex: bands set with the producer] treasuries, kills, rescues and deaths per day.
-- [ ] **K11.3 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] with and without the guild.
-- [ ] **K11.4 The producer's play session.** [Possibly Complex: grade each fix it asks for]
-- [ ] **K11.5 Part 3's close-out:** [Basic]
-  - the roadmap: Part 3 COMPLETED, and Milestone 4 COMPLETED;
-  - the epic doc, the focus file, `architecture_history.md`, the economy model and AGENTS.md;
-  - this plan deleted.
+- **Under the same go** (K10's). The play session (K11.4) is the producer's: its brief is written for the producer's return, and Part 3 is marked COMPLETED only after it.
+- **The plan:**
+  - [ ] **K11.1a Every scenario together:** [Possibly Complex: a live scenario over every player] the workshop, hunt and guild players on one seed through the gate's breach, the day's checks, deaths and rescues counted.
+  - [ ] **K11.1b Saves at the hard moments:** [Possibly Complex: save and load] a save mid-fight, one with a crawler bleeding out and one with a crawler being carried, each loaded to the same world hash as the run that went on, byte for byte.
+  - [ ] **K11.2 The soak's `hunting` profile:** [Possibly Complex: bands by default, for the producer] the workshop player making blades, the hunt player and the guild clearing, over three days on its seeds: treasuries, kills, rescues and deaths a day, bands proposed from the measurement; F8's option B (the guild player's reserve) and F10's trace with it.
+  - [ ] **K11.3 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] with and without the guild.
+  - [ ] **K11.4 The producer's play session:** [Basic: a brief] what to play and what to look at, in the epic's §4.
+  - [ ] **K11.5 Part 3's close-out:** [Basic] the epic doc, the focus file, `architecture_history.md`, the economy model and AGENTS.md reconciled; the roadmap's Part 3 and Milestone 4 marked COMPLETED once the play session passes, and this plan deleted then.
+- **What the milestone holds** (the draft's lines, kept for reference; the plan above splits them):
+  - every scenario together, with a save mid-fight, a bleeding crawler and a crawler being carried, each loaded byte for byte;
+  - the soak's `hunting` profile: treasuries, kills, rescues and deaths per day;
+  - seeds 1–120 with and without the guild;
+  - the producer's play session (grade each fix it asks for);
+  - Part 3's close-out: the roadmap (Part 3 and Milestone 4 COMPLETED), the docs, this plan deleted.
