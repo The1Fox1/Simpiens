@@ -1,9 +1,9 @@
 # Epic 11: Skills, the Heart and Engine of a Crawler
 
-- **Status**: QUEUED (2026-11-15). The producer asked for it the same day: "create a new Epic focused on the Skill system heart and engine". No work has started. It follows Epic 10, which ends with Part 3. Its questions (§0) are defaults that stand by exception.
+- **Status**: ACTIVE (2026-11-16). The producer gave the go for plan 1: "Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft". Plan 1, Craft (S0–S3), is under way on `feat/epic11-craft`. QUEUED from 2026-11-15, when the producer asked for it: "create a new Epic focused on the Skill system heart and engine". It follows Epic 10, which ends with Part 3. Its questions (§0) are defaults that stand by exception.
 - **Plans** (2026-11-16, at the producer's "Prepare to work on Epic 11. Decide how many implementation plans you will need ... and have the first one drafted and ready to start"):
   - **Four,** one PR each, along the epic's layers: Craft (S0–S3), Technique and Calling (S4–S5), Legend (S6–S7), Masterworks and the gate (S8–S9). Why four, the order and the shared rules: `.agents/epic11_plan.md`.
-  - **The first, Craft,** is drafted and ready to start: `.agents/epic11_craft_plan.md` (decisions D1–D12 as defaults, every step stamped). Work starts at the producer's go.
+  - **The first, Craft,** is drafted and ready to start: `.agents/epic11_craft_plan.md` (decisions D1–D12 as defaults, every step stamped). Under way since the producer's go (2026-11-16).
   - **Each later plan** is drafted when the one before it merges, from what that plan measured.
 - **Track**: Track A: Core Simulation & Cognition Engine. Its UI is the KNI client's and is built here, as Epic 10 folded in UI-3 to UI-5.
 - **Milestone**: Production Milestone 5, Skills and Careers (ROADMAP §3; Q2).

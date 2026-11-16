@@ -131,6 +131,7 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 - ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
 - ~~**Made goods** (the pickaxe, draughts, gear for each hazard):~~ delivered by Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
 - **The whole loop's balance** (Epic 10 Part 2's F14, joined by Part 3's F14, F8 and F10). This is open and the producer's decision, and unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands (§7) with it.
+  - **The producer's word (2026-11-16):** "Economy flukes are tolerable until they completely ruin our testing scenarios." So the economy is left as it is until a scenario breaks on it. A test's band that drifts with the economy is judged across seeds, as F3's option A did, rather than tuned around.
   - **What happens:**
     - With both stations and a guild of eight, the stall ends day 3 at 1–390g, where the fair player ends at 771–1,277g.
     - On the default seed it affords the forge and a guild of eight, but never the still as well.

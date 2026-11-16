@@ -40,6 +40,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - Save format 11. `CrawlerRecord` ends with `Skills`.
   - The stall's goods table holds 24 (`TradeStallData.GoodsCapacity`).
 - **Open, and pressed by S2:** the whole loop's economy (Epic 10 Part 2's F14, joined by Part 3's F14, F8 and F10; `docs/economy-model.md` §8). Upkeep adds a cost to a loop that is already strained, so S2.4 measures it beside those findings and the producer sets the bands.
+  - **The producer's word (2026-11-16, with the go):** "Economy flukes are tolerable until they completely ruin our testing scenarios." So nothing in this plan retunes the economy for its own sake. A scenario or band broken by an economy fluke is judged across seeds first. The loop is retuned only if no seed choice saves the scenario, and then it is flagged to the producer.
 
 ## 1. Decisions proposed (defaults; the producer answers by exception)
 - **D1, the traits record** (A3): `CrawlerTraits` lives in `Simulation/Skills/`, because cognition reads it and may read nothing of `People/`. It is a fixed, unmanaged record of 256 bytes, its size pinned, in `CrawlerRecord` after `Skills`. Its sections:
@@ -273,3 +274,4 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ## Log
 - 2026-11-16: drafted after Epic 10's close-out merged (PR #24, `30c931b`); waiting for the producer's go to start S0.
+- 2026-11-16: the go ("Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft"). S0 begins.
